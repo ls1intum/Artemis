@@ -66,8 +66,6 @@
 @source './app/course/manage/control-center/about-athena-modal';
 @source './app/course/request';
 @source './app/course/overview/course-statistics';
-@source './app/core/about-us';
-@source './app/core/usage-statistics';
 @source './app/course/shared/course-sidebar-toggle-button';
 @source './app/course/manage/course-lti-configuration';
 @source './app/course/manage/course-material-import';
@@ -78,8 +76,7 @@
 @source './app/programming/manage/grading/feedback-analysis';
 @source './app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students';
 @source './app/programming/shared/commits-info';
-@source './app/core/feature-overview';
-@source './app/core/layouts/footer';
+@source './app/programming/shared/diff-review-banner';
 @source './app/course/overview/setup-passkey-modal';
 @source './app/course/overview/courses';
 @source './app/course/overview/course-registration';
@@ -203,8 +200,6 @@
 }
 
 /* Button action groups migrated to TUM AET UI; keep their layout utilities explicit. */
-@source './app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component.html';
-@source './app/core/legal/data-export/data-export.component.html';
 @source './app/course/manage/control-center/athena-enabled/athena-enabled.component.html';
 @source './app/course/manage/course-material-import/course-material-import-dialog.component.html';
 @source './app/course/manage/course-scores/course-scores.component.html';
@@ -227,8 +222,7 @@
 @source './app/atlas';
 @source './app/calendar';
 @source './app/communication';
-@source './app/core/alert';
-@source './app/core/navbar/global-search/components/modal';
+@source './app/core';
 @source './app/editor';
 @source './app/exam';
 @source './app/exercise';
@@ -252,3 +246,7 @@
 @source './app/text';
 @source './app/tutorialgroup';
 @source './app/videosource';
+
+/* Participation build and repository export controls live outside the migrated exercise module. */
+@source './app/programming/shared/actions';
+@source './app/programming/manage/assess/repo-export/export-button';

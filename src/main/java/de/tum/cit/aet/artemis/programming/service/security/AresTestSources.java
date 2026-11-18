@@ -343,28 +343,11 @@ final class AresTestSources {
      * @param bodyStart the offset of the brace that opens the body of the matched type
      */
     private static Declaration declaration(String masked, Matcher matcher, int bodyStart) {
-        int bodyEnd = closingBrace(masked, bodyStart);
+        int bodyEnd = AresPolicyAnnotations.matchingBrace(masked, bodyStart);
         String header = masked.substring(matcher.end(), bodyStart);
         Matcher superclass = SUPERCLASS.matcher(header);
         String superclassName = superclass.find() ? superclass.group(1) : null;
         return new Declaration(matcher.start(), bodyStart, bodyEnd < 0 ? masked.length() : bodyEnd, matcher.group(1).startsWith("@"), matcher.group(2), superclassName);
-    }
-
-    private static int closingBrace(String masked, int open) {
-        int depth = 0;
-        for (int index = open; index < masked.length(); index++) {
-            char character = masked.charAt(index);
-            if (character == '{') {
-                depth++;
-            }
-            else if (character == '}') {
-                depth--;
-                if (depth == 0) {
-                    return index;
-                }
-            }
-        }
-        return -1;
     }
 
     private static String qualify(@Nullable String packageName, String simpleName) {

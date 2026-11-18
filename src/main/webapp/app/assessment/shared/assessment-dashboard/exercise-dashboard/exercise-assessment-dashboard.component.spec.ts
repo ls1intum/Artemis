@@ -16,7 +16,7 @@ import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-he
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
@@ -62,7 +62,7 @@ import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboa
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
-import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import type { TutorParticipation } from 'app/openapi/model/tutor-participation';
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/language-table-cell/language-table-cell.component';
@@ -97,8 +97,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let exerciseService: ExerciseService;
     let exerciseServiceGetForTutorsStub: MockInstance;
     let exerciseServiceGetStatsForTutorsStub: MockInstance;
-
-    let tutorParticipationService: TutorParticipationService;
 
     let accountService: AccountService;
 
@@ -249,7 +247,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         { provide: ProfileService, useClass: MockProfileService },
         MockProvider(ExerciseService),
         MockProvider(AlertService),
-        MockProvider(TutorParticipationService),
         MockProvider(ArtemisMarkdownService),
         MockProvider(ComplaintService),
         MockProvider(ArtemisDatePipe),
@@ -281,7 +278,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         vi.spyOn(submissionService, 'getSubmissionsWithComplaintsForTutor').mockReturnValue(of(new HttpResponse({ body: [] })));
         const router = fixture.debugElement.injector.get(Router);
         navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-        tutorParticipationService = TestBed.inject(TutorParticipationService);
         exerciseServiceGetForTutorsStub = vi.spyOn(exerciseService, 'getForTutors');
         exerciseServiceGetStatsForTutorsStub = vi.spyOn(exerciseService, 'getStatsForTutors');
         exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: modelingExercise, headers: new HttpHeaders() })));
@@ -565,31 +561,50 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should call readInstruction', () => {
-        const tutorParticipationServiceCreateStub = vi.spyOn(tutorParticipationService, 'create');
-        const dto: TutorParticipationDTO = {
+        const dto: TutorParticipation = {
             id: 1,
             exerciseId: comp.exerciseId(),
             tutorId: 2,
-            status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+            status: 'REVIEWED_INSTRUCTIONS',
+            trainedExampleSubmissions: [{ id: 5, usedForTutorial: false }],
         };
-
-        tutorParticipationServiceCreateStub.mockImplementation(() => {
-            expect(comp.isLoading()).toBe(true);
-            return of(new HttpResponse({ body: dto, headers: new HttpHeaders() }));
-        });
+        const http = TestBed.inject(HttpTestingController);
 
         expect(comp.tutorParticipation()).toBeUndefined();
         expect(comp.isLoading()).toBe(false);
 
         comp.readInstruction();
 
-        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledTimes(1);
-        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledWith(comp.exerciseId());
+        expect(comp.isLoading()).toBe(true);
+        const request = http.expectOne(`/api/assessment/exercises/${comp.exerciseId()}/tutor-participations`);
+        expect(request.request.method).toBe('POST');
+        request.flush(dto);
 
         expect(comp.isLoading()).toBe(false);
 
-        expect(comp.tutorParticipation()).toEqual(dto);
+        expect(comp.tutorParticipation()).toEqual({
+            id: 1,
+            status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+            trainedExampleSubmissions: [{ id: 5, usedForTutorial: false, assessmentExplanation: undefined }],
+        });
         expect(comp.tutorParticipationStatus()).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+    });
+
+    it('starts a fresh tutor participation whose response has no trained example submissions', () => {
+        const alertService = TestBed.inject(AlertService);
+        const successSpy = vi.spyOn(alertService, 'success');
+        const http = TestBed.inject(HttpTestingController);
+
+        comp.readInstruction();
+
+        const request = http.expectOne(`/api/assessment/exercises/${comp.exerciseId()}/tutor-participations`);
+        expect(request.request.method).toBe('POST');
+        request.flush({ id: 3, exerciseId: comp.exerciseId(), tutorId: 2, status: 'REVIEWED_INSTRUCTIONS' });
+
+        expect(comp.tutorParticipation()).toEqual({ id: 3, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS, trainedExampleSubmissions: undefined });
+        expect(comp.tutorParticipationStatus()).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
+        expect(comp.isLoading()).toBe(false);
     });
 
     describe('test calls for all exercise types', () => {

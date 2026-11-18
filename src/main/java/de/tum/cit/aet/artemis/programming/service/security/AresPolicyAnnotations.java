@@ -485,21 +485,8 @@ final class AresPolicyAnnotations {
     /**
      * @return the offset of the brace that closes the one at {@code open}, or -1 if there is none
      */
-    private static int matchingBrace(String masked, int open) {
-        int depth = 0;
-        for (int index = open; index < masked.length(); index++) {
-            char character = masked.charAt(index);
-            if (character == '{') {
-                depth++;
-            }
-            else if (character == '}') {
-                depth--;
-                if (depth == 0) {
-                    return index;
-                }
-            }
-        }
-        return -1;
+    static int matchingBrace(String masked, int open) {
+        return matchingBracket(masked, open, '{', '}');
     }
 
     private static boolean simpleNameRefersToAres(String masked) {
@@ -530,13 +517,20 @@ final class AresPolicyAnnotations {
      * @return the offset of the parenthesis that closes the one at {@code open}, or -1 if there is none
      */
     private static int matchingParenthesis(String masked, int open) {
+        return matchingBracket(masked, open, '(', ')');
+    }
+
+    /**
+     * @return the offset of the {@code closing} bracket that closes the {@code opening} one at {@code open}, counting nested pairs, or -1 if there is none
+     */
+    private static int matchingBracket(String masked, int open, char opening, char closing) {
         int depth = 0;
         for (int index = open; index < masked.length(); index++) {
             char character = masked.charAt(index);
-            if (character == '(') {
+            if (character == opening) {
                 depth++;
             }
-            else if (character == ')') {
+            else if (character == closing) {
                 depth--;
                 if (depth == 0) {
                     return index;

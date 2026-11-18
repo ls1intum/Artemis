@@ -83,28 +83,15 @@
                 emptyTitle="artemisApp.buildQueue.noFinishedBuilds"
                 style="--table-layout-offset: 24rem"
             >
-                <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
-                    <div jhi-build-job-search class="flex min-w-0 items-center gap-2" [(searchTerm)]="searchTerm" (searchRequested)="triggerLoadFinishedJobs()"></div>
-                    <tumaet-ui-button size="small" severity="secondary" (clicked)="loadFinishedBuildJobs()" [ariaLabel]="'metrics.refresh.button' | artemisTranslate">
-                        <fa-icon [icon]="faSync" />
-                        <span class="hidden md:inline" jhiTranslate="metrics.refresh.button"></span>
-                    </tumaet-ui-button>
-                    @if (isLoading()) {
-                        <span class="text-muted-color text-sm" jhiTranslate="artemisApp.buildQueue.filter.search.loading"></span>
-                    }
-                    <span class="flex-1"></span>
-                    <tumaet-ui-button
-                        size="small"
-                        [severity]="finishedBuildJobFilter()?.numberOfAppliedFilters ? 'success' : 'secondary'"
-                        (clicked)="this.openFilterModal()"
-                        [ariaLabel]="'artemisApp.buildQueue.filter.open' | artemisTranslate: { num: appliedFilterCount() }"
-                    >
-                        <fa-icon [icon]="faFilter" />
-                        <span class="hidden md:inline">
-                            <span jhiTranslate="artemisApp.buildQueue.filter.open" [translateValues]="{ num: appliedFilterCount() }"></span>
-                        </span>
-                    </tumaet-ui-button>
-                </div>
+                <jhi-finished-builds-toolbar
+                    tumAetUiTableToolbar
+                    [(searchTerm)]="searchTerm"
+                    [loading]="isLoading()"
+                    [appliedFilterCount]="appliedFilterCount()"
+                    (searchRequested)="triggerLoadFinishedJobs()"
+                    (refreshRequested)="loadFinishedBuildJobs()"
+                    (filterRequested)="openFilterModal()"
+                />
                 <jhi-finished-jobs-table
                     class="block"
                     [buildJobs]="finishedBuildJobs()"

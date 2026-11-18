@@ -121,7 +121,7 @@ when diagnosing badges or a manually dispatched recovery. See [workflow policy](
 
 Affected tests emit separate **Sonar Client Coverage** (selected-spec LCOV) and **Sonar Server
 Coverage** (selected execution data). Sonar generates Java XML on a GitHub-hosted runner. These
-partial reports never feed full-project badges or Codacy; no test suite is rerun for analysis.
+reports are reused for analysis. Full-project badges use full-suite reports.
 Missing or failed producer data cannot be imported as successful coverage.
 
 Fork and token-restricted PRs (including Dependabot) use a secretless exact-head/source-branch/target/public-gate verifier. A maintainer must
@@ -130,6 +130,21 @@ branch's **Sonar** workflow with `pull_request_number=<number>`, then rerun only
 verification job. Never automatically execute fork build scripts with the token. See the workflow
 policy for the promotion procedure. Head or target changes invalidate evidence. Metadata-only
 edits neither replace canonical validation nor cancel active coverage reporting.
+
+## Diagnose a Sonar duplication failure
+
+The existing Sonar job requires zero newly duplicated lines in PRs and reports absolute line/block
+counts in its summary. A displayed 0.0% can still contain duplicate lines. Inspect the exact-head
+PR analysis and its duplication blocks; share the repeated behavior without changing scan scope
+or detection thresholds. The guard verifies the current open PR head/target and analysis identity
+before and after reading metrics. A valid Sonar response for the PR with `component.measures: []`
+can pass when the PR changes fewer than 3,000 files and GitHub returns the complete file list
+with every path outside Sonar's source roots. The GitHub comparison must still match after the
+final Sonar request. A missing body or invalid response fails before GitHub lists the files.
+Partial metrics, API failures, and replaced analyses also fail verification.
+If the analysis was replaced, verify the current head and rerun verification once; no new build or
+scan is needed when a passing exact-head analysis already exists. See the
+[Sonar workflow policy](../../.github/workflows/README.md#the-code-quality-analyses).
 
 ## Investigate Scorecard findings
 

@@ -30,6 +30,7 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { BuildLogEntryArray } from 'app/localci/shared/entities/build-log.model';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import {
@@ -80,9 +81,10 @@ describe('CodeEditorContainerIntegration', () => {
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
     let getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
 
-    const result = { id: 3, successful: false, completionDate: dayjs().subtract(2, 'days') };
+    let result: Result;
 
     beforeEach(async () => {
+        result = { id: 3, successful: false, completionDate: dayjs().subtract(2, 'days') };
         await TestBed.configureTestingModule({
             providers: [
                 CodeEditorConflictStateService,
@@ -115,7 +117,7 @@ describe('CodeEditorContainerIntegration', () => {
         const codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
         const codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
         const participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
-        const resultService = TestBed.inject(ResultService);
+        const resultApi = TestBed.inject(ResultApi);
         const buildLogService = TestBed.inject(CodeEditorBuildLogService);
         const programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         conflictService = TestBed.inject(CodeEditorConflictStateService);
@@ -131,7 +133,7 @@ describe('CodeEditorContainerIntegration', () => {
         subscribeForLatestResultOfParticipationStub = vi
             .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
             .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
-        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult');
+        getFeedbackDetailsForResultStub = vi.spyOn(resultApi, 'getResultDetails');
         getBuildLogsStub = vi.spyOn(buildLogService, 'getBuildLogs');
         getFileStub = vi.spyOn(codeEditorRepositoryFileService, 'getFile');
         saveFilesStub = vi.spyOn(codeEditorRepositoryFileService, 'updateFiles');
@@ -215,7 +217,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // called by build output
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.submissions![0].results![0]);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.submissions![0].results![0].id);
     };
 
     const loadFile = async (fileName: string, fileContent: string) => {
@@ -301,7 +303,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.submissions![0].results![0]);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.submissions![0].results![0].id);
 
         await containerFixture.whenStable();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
