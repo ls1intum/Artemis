@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -127,7 +126,7 @@ public class GenerationOrchestrationService {
                     client.send(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.RENEW, claim.identity(), null));
                     renewAt = Instant.now().plusSeconds(10);
                 }
-                if (Instant.now().isAfter(deadline.plus(Duration.ofMinutes(5)))) {
+                if (Instant.now().isAfter(deadline.plus(GenerationAssignment.AUTHORING_DRAIN_WINDOW))) {
                     throw new IllegalStateException("Worker did not finish within the authoring drain window");
                 }
                 client.receive(claim, event -> {
@@ -191,7 +190,7 @@ public class GenerationOrchestrationService {
         return new GenerationParameters(settings.name(), settings.maxTurns(), settings.maxTokensPerJob(), settings.maxJobDuration(), settings.contextWindowTokens(),
                 options == null ? null : options.getModel(), options == null ? null : options.getReasoningEffort(), options == null ? null : options.getTemperature(),
                 options == null ? null : options.getTopP(), options == null ? null : options.getMaxCompletionTokens(), settings.stagedGeneration(), settings.stagedContext(),
-                options == null ? null : options.getVerbosity(), properties.getCachedInputTokenWeight());
+                options == null ? null : options.getVerbosity(), properties.getCachedInputTokenWeight(), settings.repairModel());
     }
 
     private boolean matchesAccount(GenerationOutput output, User user, ProgrammingExercise exercise) {

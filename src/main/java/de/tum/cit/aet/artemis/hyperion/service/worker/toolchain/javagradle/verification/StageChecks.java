@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.WorkspaceArchive;
@@ -53,8 +54,10 @@ public class StageChecks {
 
     private static final Logger log = LoggerFactory.getLogger(StageChecks.class);
 
+    private static final String CONTRACT_RISK_INVENTORY_HEADING = "## Contract Risk Inventory";
+
     private static final List<String> REQUIRED_SPEC_HEADINGS = List.of("## Rules", "## Worked Examples", "## Design", "## Public API", "## Testing Strategy",
-            "## Contract Risk Inventory", "## Diagram");
+            CONTRACT_RISK_INVENTORY_HEADING);
 
     /** The only template-status tokens a SPEC.md '## Design' data row may carry; 'student-creates' additionally arms the template omit-gate. */
     private static final Set<String> TEMPLATE_STATUS_TOKENS = Set.of("given", "stubbed", "student-creates");
@@ -98,13 +101,13 @@ public class StageChecks {
         if (!path.startsWith("template/")) {
             return Optional.empty();
         }
-        List<String> restoredTypes = specStudentCreatedTypes(approved.get()).stream().filter(type -> ExerciseIntegrityGate.pathOrContentRepresentsType(path, content, type))
+        List<String> restoredTypes = specStudentCreatedTypes(approved.get()).stream().filter(type -> ApprovedOwnershipGate.pathOrContentRepresentsType(path, content, type))
                 .toList();
         if (restoredTypes.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of("ERROR: the approved specification assigns these types to students to create: " + restoredTypes
-                + ". Do not restore or pre-create their declarations in the template, and do not put their seam IDs on unrelated collaborators. Test the student-created types "
+                + ". Do not restore or pre-create their declarations in the template, and do not put TODOs for them on unrelated collaborators. Test the student-created types "
                 + "through Class.forName/reflection (and a dynamic proxy where the context needs an interface instance), as shown by the seeded test utilities.");
     }
 
@@ -192,153 +195,170 @@ public class StageChecks {
     private StageCheckResult checkSpec(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise) {
         String spec = Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "SPEC.md"), "");
         if (spec.isBlank()) {
-            return StageCheckResult.failed("SPEC.md is missing or empty. Write /workspace/SPEC.md with '## Rules' (numbered R1..Rn), a '## Worked Examples' "
-                    + "table, a '## Design' table, a compact '## Public API' contract, a '## Testing Strategy', a '## Contract Risk Inventory', and a '## Diagram' decision "
-                    + "before continuing.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.CONTENT,
+                    "SPEC.md is missing or empty. Write /workspace/SPEC.md with '## Rules' (numbered R1..Rn), a '## Worked Examples' "
+                            + "table, a '## Design' table, a compact '## Public API' contract, a '## Testing Strategy', and a '## Contract Risk Inventory' before "
+                            + "continuing.");
         }
         Set<String> exactSpecLines = spec.lines().map(String::strip).collect(Collectors.toSet());
         List<String> missingSpecSections = REQUIRED_SPEC_HEADINGS.stream().filter(heading -> !exactSpecLines.contains(heading)).toList();
         if (!missingSpecSections.isEmpty()) {
-            return StageCheckResult.failed("SPEC.md is missing required section(s): " + missingSpecSections + ". Add them before continuing.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.SECTIONS,
+                    "SPEC.md is missing required section(s): " + missingSpecSections + ". Add them before continuing.");
         }
         if (ProblemStatementBindingChecker.hasTaskBindings(spec) || spec.contains("@startuml")) {
-            return StageCheckResult.failed("SPEC.md must not contain [task] bindings or PlantUML diagrams — those belong to the final statement, written once tests exist. "
-                    + "Remove them; keep the spec to rules and worked examples.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.STATEMENT_SEPARATION,
+                    "SPEC.md must not contain [task] bindings or PlantUML diagrams — those belong to the final statement, written once tests exist. "
+                            + "Remove them; keep the spec to rules and worked examples.");
         }
         List<String> workedExampleRows = workedExampleDataRows(spec);
         if (workedExampleRows.size() < 2) {
-            return StageCheckResult.failed("The '## Worked Examples' table needs at least two data rows (| Rules | Input | Expected |) with replayable observable outcomes.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.EXAMPLES,
+                    "The '## Worked Examples' table needs at least two data rows (| Rules | Input | Expected |) with replayable observable outcomes.");
         }
         List<DesignRow> designRows = designTableRows(spec);
         if (designRows.isEmpty()) {
-            return StageCheckResult.failed("The '## Design' section has no data rows. It must be a table (| Type | Role | Template status |) listing every type with its "
-                    + "Template status: exactly one of 'given', 'stubbed', 'student-creates'.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.DESIGN,
+                    "The '## Design' section has no data rows. It must be a table (| Type | Role | Template status |) listing every type with its "
+                            + "Template status: exactly one of 'given', 'stubbed', 'student-creates'.");
         }
         List<String> rowsWithoutStatus = designRows.stream().filter(row -> row.status() == null).map(DesignRow::type).toList();
         if (!rowsWithoutStatus.isEmpty()) {
-            return StageCheckResult.failed("These '## Design' rows have no valid final Template status cell: " + rowsWithoutStatus
-                    + ". Replace each row's LAST cell with exactly one bare token from " + TEMPLATE_STATUS_TOKENS
-                    + " — no 'absent', parentheses, or explanation. Do not move the token into the Role cell; the later template gate reads the final cell only.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.OWNERSHIP_STATUS,
+                    "These '## Design' rows have no valid final Template status cell: " + rowsWithoutStatus + ". Replace each row's LAST cell with exactly one bare token from "
+                            + TEMPLATE_STATUS_TOKENS
+                            + " — no 'absent', parentheses, or explanation. Do not move the token into the Role cell; the later template gate reads the final cell only.");
         }
         List<String> designTypes = designRows.stream().map(DesignRow::type).toList();
         List<String> duplicateDesignTypes = designTypes.stream().filter(type -> Collections.frequency(designTypes, type) > 1).distinct().toList();
         if (!duplicateDesignTypes.isEmpty()) {
-            return StageCheckResult.failed("The Design table declares the same type more than once: " + duplicateDesignTypes
-                    + ". Keep one authoritative row per type so template ownership cannot contradict itself.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.UNIQUE_TYPES, "The Design table declares the same type more than once: "
+                    + duplicateDesignTypes + ". Keep one authoritative row per type so template ownership cannot contradict itself.");
         }
-        List<String> unenforceableCreatedTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type)
-                .filter(type -> !isEnforceableTypeName(type)).toList();
-        if (!unenforceableCreatedTypes.isEmpty()) {
-            return StageCheckResult.failed("These '## Design' rows are marked 'student-creates' but their Type cell is not a bare type name the later gates can look for: "
-                    + unenforceableCreatedTypes + ". Write one bare type name per row (no generics, package prefix, emphasis, parenthetical, or second type in the same cell) — "
-                    + "otherwise nothing can enforce that the template omits it.");
+        List<String> invalidDesignTypes = designRows.stream().map(DesignRow::type).filter(type -> !isEnforceableTypeName(type)).toList();
+        if (!invalidDesignTypes.isEmpty()) {
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.TYPE_NAMES,
+                    "These '## Design' Type cells are not exact simple Java type names: " + invalidDesignTypes
+                            + ". Use one bare name per row for given, stubbed, and student-created types (no generics, package prefix, emphasis, parenthetical, or second type). "
+                            + "Keep package declarations in the Java Public API blocks; correct the Design cells, not the Java type declarations.");
         }
         Set<String> studentCreatedTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type).filter(StageChecks::isEnforceableTypeName)
                 .collect(Collectors.toSet());
         ApprovedStructuralContract.ParseResult structuralContract = ApprovedStructuralContract.parse(spec, Set.copyOf(designTypes), studentCreatedTypes);
         if (!structuralContract.valid()) {
-            return StageCheckResult.failed("The Java Public API is not a complete machine-checkable contract for student-created types: " + structuralContract.errors()
-                    + ". Put each exact type declaration and all of its public/protected constructors, methods, and deliberately exposed fields in fenced ```java blocks. "
-                    + "Use signatures only; do not replace them with prose or include private implementation details.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.PUBLIC_API,
+                    "The Java Public API is not a complete machine-checkable contract for student-created types: " + structuralContract.errors()
+                            + ". Put each exact type declaration and all of its public/protected constructors, methods, and deliberately exposed fields in fenced ```java blocks. "
+                            + "Use signatures only; do not replace them with prose or include private implementation details.");
         }
 
         Set<String> memberOwners = structuralContract.contract().studentCreatedMemberOwners();
         List<String> givenMemberOwners = designRows.stream().filter(row -> "given".equals(row.status()) && memberOwners.contains(row.type())).map(DesignRow::type).toList();
         if (!givenMemberOwners.isEmpty()) {
-            return StageCheckResult.failed("Given types cannot contain @studentCreates members: " + givenMemberOwners
-                    + ". Mark the existing owner stubbed and assign its new declarations to a Testing Strategy seam.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.OWNED_MEMBERS, "Given types cannot contain @studentCreates members: "
+                    + givenMemberOwners + ". Mark the existing owner stubbed and assign its new declarations to a Testing Strategy seam.");
         }
         Set<String> templateTypes = designRows.stream().filter(row -> !"student-creates".equals(row.status())).map(DesignRow::type).collect(Collectors.toSet());
         List<String> impossibleTemplateDependencies = structuralContract.contract().templateDependencies(templateTypes, studentCreatedTypes);
         if (!impossibleTemplateDependencies.isEmpty()) {
-            return StageCheckResult.failed("These given or stubbed Java types have Public API signatures that reference a student-created type absent from the template: "
-                    + impossibleTemplateDependencies
-                    + ". Every given or stubbed type must be present in the compiling template. Choose a coherent ownership graph before approval: make the dependent "
-                    + "collaborator student-created too, or ship the referenced abstraction as stubbed/given. Do not erase the typed API or replace it with Object/reflection just "
-                    + "to bypass this contradiction.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.TYPE_DEPENDENCIES,
+                    "These given or stubbed Java types have Public API signatures that reference a student-created type absent from the template: " + impossibleTemplateDependencies
+                            + ". Every given or stubbed type must be present in the compiling template. Choose a coherent ownership graph before approval: make the dependent "
+                            + "collaborator student-created too, or ship the referenced abstraction as stubbed/given. Do not erase the typed API or replace it with Object/reflection just "
+                            + "to bypass this contradiction.");
         }
 
         List<TestingStrategyRow> testingRows = testingStrategyRows(spec);
         List<String> seamIds = testingRows.stream().map(TestingStrategyRow::seamId).toList();
         if (seamIds.isEmpty()) {
-            return StageCheckResult.failed("The '## Testing Strategy' section needs a table with one data row per independently actionable unit of student work. Give each row a "
-                    + "stable seam ID in its first cell (S1, S2, ...); tests and statement tasks use these IDs to preserve the plan without creating one task per test.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.WORK_SEAMS,
+                    "The '## Testing Strategy' section needs a table with one data row per independently actionable unit of student work. Give each row a "
+                            + "stable seam ID in its first cell (S1, S2, ...); tests and statement tasks use these IDs to preserve the plan without creating one task per test.");
         }
         List<String> testingHeaders = testingStrategyHeaders(spec);
         String ownerHeader = testingHeaders.size() > 1 ? testingHeaders.get(1) : "";
         if (!"Owner type".equalsIgnoreCase(ownerHeader)) {
-            return StageCheckResult.failed("The second Testing Strategy column must be named 'Owner type'; found '" + ownerHeader
-                    + "'. Put one exact bare Design type in that column so ownership is explicit rather than inferred from prose.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.OWNER_COLUMN, "The second Testing Strategy column must be named 'Owner type'; found '"
+                    + ownerHeader + "'. Put one exact bare Design type in that column so ownership is explicit rather than inferred from prose.");
         }
         String responsibilityHeader = testingHeaders.size() > 2 ? testingHeaders.get(2) : "";
         if (!"Observable responsibility".equalsIgnoreCase(responsibilityHeader)) {
-            return StageCheckResult.failed("The third Testing Strategy column must be named 'Observable responsibility'; found '" + responsibilityHeader
-                    + "'. State the behavior, collaboration, or state transition this seam grades so later tests do not infer the contract from a type name.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.RESPONSIBILITY_COLUMN,
+                    "The third Testing Strategy column must be named 'Observable responsibility'; found '" + responsibilityHeader
+                            + "'. State the behavior, collaboration, or state transition this seam grades so later tests do not infer the contract from a type name.");
         }
         if (testingHeaders.stream().noneMatch("Weight"::equalsIgnoreCase)) {
-            return StageCheckResult.failed("The Testing Strategy table needs a column named exactly 'Weight'; found " + testingHeaders
-                    + ". Put the numeric seam weight tier (1, 2, or 3) there so Artemis can parse it without guessing from prose.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.WEIGHT_COLUMN,
+                    "The Testing Strategy table needs a column named exactly 'Weight'; found " + testingHeaders
+                            + ". Put the numeric seam weight tier (1, 2, or 3) there so Artemis can parse it without guessing from prose.");
         }
         List<String> malformedSeamIds = seamIds.stream().filter(id -> !SEAM_ID.matcher(id).matches()).toList();
         if (!malformedSeamIds.isEmpty()) {
-            return StageCheckResult.failed("These Testing Strategy rows have no stable seam ID: " + malformedSeamIds
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.SEAM_IDS, "These Testing Strategy rows have no stable seam ID: " + malformedSeamIds
                     + ". Use S1, S2, ... in the first column. Describe the work in the remaining cells; do not use a prose label as the identifier.");
         }
         List<String> duplicateSeamIds = seamIds.stream().filter(id -> Collections.frequency(seamIds, id) > 1).distinct().toList();
         if (!duplicateSeamIds.isEmpty()) {
-            return StageCheckResult.failed("The Testing Strategy contains duplicate seam IDs: " + duplicateSeamIds
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.UNIQUE_SEAMS, "The Testing Strategy contains duplicate seam IDs: " + duplicateSeamIds
                     + ". One seam is one independently actionable unit of student work; merge its partitions into one row or assign genuinely different work a new ID.");
         }
         List<String> malformedOwners = testingRows.stream().filter(row -> !isEnforceableTypeName(row.ownerType())).map(TestingStrategyRow::seamId).toList();
         if (!malformedOwners.isEmpty()) {
-            return StageCheckResult.failed("These Testing Strategy rows have no enforceable Owner type: " + malformedOwners
-                    + ". Add an Owner type column and put one bare type name from the Design table in every row. This exact link determines whether and where the template "
-                    + "may carry that seam's TODO breadcrumb.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.OWNER_NAMES,
+                    "These Testing Strategy rows have no enforceable Owner type: " + malformedOwners
+                            + ". Add an Owner type column and put one bare type name from the Design table in every row. This exact link determines whether and where the template "
+                            + "must carry that seam's TODO.");
         }
         List<String> missingResponsibilities = testingRows.stream().filter(row -> row.observableResponsibility().isBlank()).map(TestingStrategyRow::seamId).toList();
         if (!missingResponsibilities.isEmpty()) {
-            return StageCheckResult.failed("These Testing Strategy seams do not state an Observable responsibility: " + missingResponsibilities
-                    + ". Describe the student-owned behavior each seam grades; an owner type alone is not a testing strategy.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.RESPONSIBILITIES,
+                    "These Testing Strategy seams do not state an Observable responsibility: " + missingResponsibilities
+                            + ". Describe the student-owned behavior each seam grades; an owner type alone is not a testing strategy.");
         }
         List<String> invalidWeights = testingRows.stream().filter(row -> !WEIGHT_TIER.matcher(row.weightTier()).matches()).map(TestingStrategyRow::seamId).toList();
         if (!invalidWeights.isEmpty()) {
-            return StageCheckResult.failed("These Testing Strategy seams do not use a weight tier of exactly 1, 2, or 3: " + invalidWeights
-                    + ". Put the seam's Artemis test-case weight in the fourth column.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.WEIGHTS, "These Testing Strategy seams do not use a weight tier of exactly 1, 2, or 3: "
+                    + invalidWeights + ". Put the seam's Artemis test-case weight in the fourth column.");
         }
         Map<String, String> designStatusByType = designRows.stream().collect(Collectors.toMap(DesignRow::type, DesignRow::status, (first, ignored) -> first, LinkedHashMap::new));
         List<String> unknownOwners = testingRows.stream().filter(row -> !designStatusByType.containsKey(row.ownerType())).map(row -> row.seamId() + "->" + row.ownerType())
                 .toList();
         if (!unknownOwners.isEmpty()) {
-            return StageCheckResult.failed("These Testing Strategy owner links do not name a type in the Design table: " + unknownOwners
-                    + ". Use the exact bare Design type that owns the student work; do not encode ownership in prose.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.KNOWN_OWNERS,
+                    "These Testing Strategy owner links do not name a type in the Design table: " + unknownOwners
+                            + ". Use the exact bare Design type that owns the student work; do not encode ownership in prose.");
         }
         List<String> givenOwners = testingRows.stream().filter(row -> "given".equals(designStatusByType.get(row.ownerType()))).map(row -> row.seamId() + "->" + row.ownerType())
                 .toList();
         if (!givenOwners.isEmpty()) {
-            return StageCheckResult.failed("These Testing Strategy seams assign student work to a Design type marked given: " + givenOwners
-                    + ". A graded seam must be owned by a stubbed or student-creates type; either correct the ownership or remove work that students do not perform.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.LEARNER_OWNERS,
+                    "These Testing Strategy seams assign student work to a Design type marked given: " + givenOwners
+                            + ". A graded seam must be owned by a stubbed or student-creates type; either correct the ownership or remove work that students do not perform.");
         }
         List<String> hiddenCells = hiddenVariantCells(spec);
         if (hiddenCells.size() != seamIds.size() || hiddenCells.stream().anyMatch(cell -> !cell.equals("yes") && !cell.equals("no"))) {
-            return StageCheckResult.failed("Every Testing Strategy row must end with exactly 'yes' or 'no' in the Hidden variant column. This structured decision controls "
-                    + "which seams need an AFTER_DUE_DATE overfit-resistance test; prose or a missing cell cannot be enforced.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.HIDDEN_VARIANTS,
+                    "Every Testing Strategy row must end with exactly 'yes' or 'no' in the Hidden variant column. This structured decision controls "
+                            + "which seams need an AFTER_DUE_DATE overfit-resistance test; prose or a missing cell cannot be enforced.");
         }
         if (!exercise.hasDueDate() && hiddenCells.stream().anyMatch("yes"::equals)) {
-            return StageCheckResult.failed("The Testing Strategy requests hidden after-due-date coverage, but this exercise has no due date. Mark every Hidden variant cell 'no'; "
-                    + "otherwise AFTER_DUE_DATE tests would remain hidden indefinitely.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.HIDDEN_DEADLINE,
+                    "The Testing Strategy requests hidden after-due-date coverage, but this exercise has no due date. Mark every Hidden variant cell 'no'; "
+                            + "otherwise AFTER_DUE_DATE tests would remain hidden indefinitely.");
         }
         List<RiskInventoryRow> riskRows = riskInventoryRows(spec);
         List<String> riskSeamIds = riskRows.stream().map(RiskInventoryRow::seamId).toList();
         List<String> duplicateRiskSeams = riskSeamIds.stream().filter(id -> Collections.frequency(riskSeamIds, id) > 1).distinct().toList();
         if (!duplicateRiskSeams.isEmpty()) {
-            return StageCheckResult.failed("The Contract Risk Inventory contains duplicate seam IDs: " + duplicateRiskSeams
-                    + ". Keep one row per Testing Strategy seam and combine that seam's admitted partitions in its row.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.UNIQUE_RISK_SEAMS, "The Contract Risk Inventory contains duplicate seam IDs: "
+                    + duplicateRiskSeams + ". Keep one row per Testing Strategy seam and combine that seam's admitted partitions in its row.");
         }
         List<String> missingRiskSeams = seamIds.stream().filter(id -> !riskSeamIds.contains(id)).toList();
         List<String> unknownRiskSeams = riskSeamIds.stream().filter(id -> !seamIds.contains(id)).toList();
         if (!missingRiskSeams.isEmpty() || !unknownRiskSeams.isEmpty()) {
-            return StageCheckResult.failed("The Contract Risk Inventory must cover every Testing Strategy seam exactly once. Missing seams: " + missingRiskSeams
-                    + "; unknown seams: " + unknownRiskSeams + ".");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.RISK_COVERAGE,
+                    "The Contract Risk Inventory must cover every Testing Strategy seam exactly once. Missing seams: " + missingRiskSeams + "; unknown seams: " + unknownRiskSeams
+                            + ".");
         }
         String rulesSection = section(spec, "## Rules");
         Set<String> declaredRuleIds = RULE_ID_IN_TEXT.matcher(rulesSection).results().map(java.util.regex.MatchResult::group).collect(Collectors.toSet());
@@ -347,15 +367,16 @@ public class StageChecks {
             return riskPartitionIds(row).isEmpty() || citedRules.isEmpty() || citedRules.stream().anyMatch(rule -> !declaredRuleIds.contains(rule));
         }).map(RiskInventoryRow::seamId).toList();
         if (!invalidRiskRows.isEmpty()) {
-            return StageCheckResult.failed("These Contract Risk Inventory rows do not cite a declared rule and enumerate stable admitted-partition IDs: " + invalidRiskRows
-                    + ". Cite exact R IDs and write every semicolon-delimited partition as <seam>.P<n>: <concrete legal distinction>, for example S1.P1: ordinary values; "
-                    + "S1.P2: integer extrema.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.RISK_PARTITIONS,
+                    "These Contract Risk Inventory rows do not cite a declared rule and enumerate stable admitted-partition IDs: " + invalidRiskRows
+                            + ". Cite exact R IDs and write every semicolon-delimited partition as <seam>.P<n>: <concrete legal distinction>, for example S1.P1: ordinary values; "
+                            + "S1.P2: integer extrema.");
         }
         List<String> allRiskPartitionIds = riskRows.stream().flatMap(row -> riskPartitionIds(row).stream()).toList();
         List<String> duplicateRiskPartitionIds = allRiskPartitionIds.stream().filter(id -> Collections.frequency(allRiskPartitionIds, id) > 1).distinct().toList();
         if (!duplicateRiskPartitionIds.isEmpty()) {
-            return StageCheckResult.failed("The Contract Risk Inventory reuses partition IDs " + duplicateRiskPartitionIds
-                    + ". Give every admitted partition one unique stable ID so executable tests can trace to it.");
+            return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.UNIQUE_RISK_PARTITIONS, "The Contract Risk Inventory reuses partition IDs "
+                    + duplicateRiskPartitionIds + ". Give every admitted partition one unique stable ID so executable tests can trace to it.");
         }
         String echo = designRows.stream().map(row -> row.type() + "=" + row.status()).collect(Collectors.joining(", "));
         String seamEcho = testingRows.stream().map(row -> row.seamId() + "->" + row.ownerType() + "(" + designStatusByType.get(row.ownerType()) + ")")
@@ -377,7 +398,7 @@ public class StageChecks {
                         + "that updates the same counter passes — and it forces machinery into the student's contract that the exercise does not need. Reading the student's "
                         + "source file is rejected outright. State the rule in terms of the result the student must produce, and put the technique in the prose.";
         return StageCheckResult.passed("Specification accepted. Parsed template plan the later gates will enforce: " + echo + ". Parsed work ownership: " + seamEcho
-                + ". A student-creates type is absent from the template and therefore has no template TODO; a stubbed owner carries its own seam TODO." + reflectionConsequence
+                + ". A student-creates type is absent from the template and therefore has no template TODO; a stubbed owner carries its own TODO." + reflectionConsequence
                 + techniqueAdvice);
     }
 
@@ -578,14 +599,14 @@ public class StageChecks {
 
     /** Invalid and incomplete rows are retained so the SPEC gate can reject them with their exact seam ID. */
     static List<RiskInventoryRow> riskInventoryRows(String spec) {
-        int start = spec.indexOf("## Contract Risk Inventory");
+        int start = spec.indexOf(CONTRACT_RISK_INVENTORY_HEADING);
         if (start < 0) {
             return List.of();
         }
         List<RiskInventoryRow> rows = new ArrayList<>();
         boolean pastHeader = false;
         for (String line : spec.substring(start).lines().map(String::strip).toList()) {
-            if (line.startsWith("## ") && !line.startsWith("## Contract Risk Inventory")) {
+            if (line.startsWith("## ") && !line.startsWith(CONTRACT_RISK_INVENTORY_HEADING)) {
                 break;
             }
             if (!line.startsWith("|")) {
@@ -617,14 +638,40 @@ public class StageChecks {
             return List.of();
         }
         List<String> ids = new ArrayList<>();
-        for (String partition : row.admittedPartitions().split(";")) {
-            java.util.regex.Matcher matcher = RISK_PARTITION.matcher(partition.strip());
+        for (String partition : splitRiskPartitions(row.admittedPartitions())) {
+            java.util.regex.Matcher matcher = RISK_PARTITION.matcher(normalizeTestingCell(partition.replace("`", "")));
             if (!matcher.matches() || !matcher.group(1).startsWith(row.seamId() + ".")) {
                 return List.of();
             }
             ids.add(matcher.group(1));
         }
         return List.copyOf(ids);
+    }
+
+    private static List<String> splitRiskPartitions(String cell) {
+        List<String> partitions = new ArrayList<>();
+        int depth = 0;
+        int start = 0;
+        for (int index = 0; index < cell.length(); index++) {
+            char character = cell.charAt(index);
+            if (character == '(') {
+                depth++;
+            }
+            else if (character == ')') {
+                if (--depth < 0) {
+                    return List.of("");
+                }
+            }
+            else if (character == ';' && depth == 0) {
+                partitions.add(cell.substring(start, index));
+                start = index + 1;
+            }
+        }
+        if (depth != 0) {
+            return List.of("");
+        }
+        partitions.add(cell.substring(start));
+        return partitions;
     }
 
     private static String section(String document, String heading) {
@@ -670,6 +717,43 @@ public class StageChecks {
         return Stream.of(byName, byDeclaration).flatMap(String::lines).map(String::strip).filter(line -> !line.isBlank()).distinct().collect(Collectors.joining("\n"));
     }
 
+    /**
+     * Reports supplied code that needs a learner-created type or method absent from the starter. This is evidence for contract review, never permission to add learner work by
+     * changing one ownership cell. The controller must reconcile the whole specification through its bounded review path.
+     *
+     * @param sandbox   active generation sandbox
+     * @param sessionId session with an approved specification
+     * @return dependency evidence, or empty when no contradiction was established
+     */
+    public Optional<String> givenOwnershipConflict(InteractiveSandbox sandbox, String sessionId) {
+        return givenOwnershipConflict(sandbox, sessionId, null);
+    }
+
+    private Optional<String> givenOwnershipConflict(InteractiveSandbox sandbox, String sessionId, @Nullable AgentVerifyReport report) {
+        String approved = approvedSpecs.approved(sessionId).orElse(null);
+        if (approved == null || (specStudentCreatedTypes(approved).isEmpty() && (report == null || !report.solutionPassed() || report.templateCompiled()))) {
+            return Optional.empty();
+        }
+        JavaSourceSnapshot sources;
+        try {
+            sources = JavaSourceSnapshot.capture(sandbox, sessionId);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not inspect given-type dependencies for session {} ({})", sessionId, e.getClass().getSimpleName());
+            return Optional.empty();
+        }
+        List<String> dependencies = new ArrayList<>(ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(designTableRows(approved), specStudentCreatedTypes(approved),
+                sources.templateFiles(), sources.solutionFiles()));
+        if (report != null) {
+            dependencies.addAll(ApprovedOwnershipGate.givenCallsToAbsentMembers(approved, sources.templateFiles(), sources.solutionFiles(), report));
+        }
+        return dependencies.isEmpty() ? Optional.empty()
+                : Optional.of("The approved supplied types depend on learner-created types, methods or constructors absent from the starter: " + dependencies
+                        + ". A given type must be complete and identical in both repositories, so this contract cannot produce a compilable starter as written. "
+                        + "Return the complete contract to specification review. Preserve the brief's learner responsibilities; reconcile ownership, supplied demonstrations, "
+                        + "rules and grading together. Do not turn supplied support into extra learner TODOs by changing only its Design row.");
+    }
+
     private StageCheckResult checkTests(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> seedTestsFiles,
             SeededStructuralTests seededStructuralTests) {
         Set<String> seededStructuralTestNames = seededStructuralTests.testNames();
@@ -681,6 +765,12 @@ public class StageChecks {
             return new StageCheckResult(false, "Could not run the differential self-check: " + e.getMessage(), null);
         }
         String observation = report.toTestsStageObservation();
+        if (report.solutionPassed() || !report.templateCompiled()) {
+            Optional<String> conflict = givenOwnershipConflict(sandbox, sessionId, report);
+            if (conflict.isPresent()) {
+                return StageCheckResult.ownershipRedesignRequired(conflict.get() + "\n" + observation, report);
+            }
+        }
         if (!report.wouldBeAccepted()) {
             List<String> studentCreatedTypes = enforcedStudentCreatedTypes(sandbox, sessionId);
             String ownershipRepair = studentCreatedTypes.isEmpty() ? ""
@@ -703,17 +793,25 @@ public class StageChecks {
             plan = GeneratedTestPlan.parse(planJson);
         }
         catch (IllegalArgumentException e) {
-            return new StageCheckResult(false, "The differential passed, but test-plan.json is invalid: " + e.getMessage(), report);
+            return failedTestPlan("The differential passed, but test-plan.json is invalid: " + e.getMessage(), report, seededStructuralTestNames);
         }
         String specification = authoritativeSpec(sandbox, sessionId);
         List<String> planReasons = ExerciseIntegrityGate.approvedTestPlanReasons(specification, planJson, report.exactTestNames(), exercise.hasDueDate(),
                 seededStructuralTestNames);
         if (!planReasons.isEmpty()) {
-            return new StageCheckResult(false, "The differential passed, but the grading plan does not implement the approved Testing Strategy:\n" + String.join("\n", planReasons),
-                    report);
+            return failedTestPlan("The differential passed, but the grading plan does not implement the approved Testing Strategy:\n" + String.join("\n", planReasons), report,
+                    seededStructuralTestNames);
         }
         String planSummary = "Grading plan accepted: " + plan.tests().size() + " test(s), " + plan.hiddenEntries().size() + " hidden until the due date.";
         return new StageCheckResult(true, observation + "\n" + planSummary, report);
+    }
+
+    private static StageCheckResult failedTestPlan(String reason, AgentVerifyReport report, Set<String> seededStructuralTestNames) {
+        List<String> behavioralNames = report.exactTestNames().stream().filter(name -> !seededStructuralTestNames.contains(name)).toList();
+        return new StageCheckResult(false, reason + "\nThese are the verified behavioral test names: " + behavioralNames
+                + ". Copy them verbatim into test-plan.json; do not add a class prefix unless it appears here. "
+                + "Each executed test has exactly one plan entry and one visibility. A fresh hidden variant needs a distinct JUnit method; duplicating a name does not create another test. "
+                + "Repair the plan rather than inspecting Gradle internals. Server-seeded structural checks are managed separately: " + seededStructuralTestNames + ".", report);
     }
 
     private StageCheckResult checkStatement(InteractiveSandbox sandbox, String sessionId, @Nullable AgentVerifyReport lastTestsReport, Set<String> seededStructuralTestNames) {
@@ -807,10 +905,8 @@ public class StageChecks {
                     + "frame the goal as \"we\" and the work as \"you\" with imperative tasks ('Define ...', 'Implement ...').");
         }
         String authoritativeSpec = authoritativeSpec(sandbox, sessionId);
-        boolean diagramPromised = ProblemStatementBindingChecker.specPromisesDiagram(authoritativeSpec);
-        if (diagramPromised && !statement.contains("@startuml")) {
-            return StageCheckResult.failed("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram after "
-                    + "the tasks it illustrates (with testsColor links). The accepted diagram decision cannot be revoked after the specification gate.");
+        if (ApprovedOwnershipGate.diagramRequired(authoritativeSpec) && !statement.contains("@startuml")) {
+            return StageCheckResult.failed("The statement contains no @startuml class diagram, but this exercise requires one. " + AgentSystemPrompt.DIAGRAM_REQUIREMENT_RULE);
         }
         List<String> duplicateHeadings = ProblemStatementBindingChecker.duplicateHeadings(statement);
         if (!duplicateHeadings.isEmpty()) {
@@ -823,8 +919,8 @@ public class StageChecks {
         }
         List<String> bareTasks = ProblemStatementBindingChecker.tasksWithoutInstruction(statement);
         if (!bareTasks.isEmpty()) {
-            return StageCheckResult.failed("These [task] bindings have no student-facing instruction before the next task or heading: " + bareTasks
-                    + ". Follow each task with concise imperative prose naming the types or members the student must implement; a checkbox alone is not an exercise instruction.");
+            return StageCheckResult.failed("These [task] bindings have no student-facing instruction following the binding or in its preceding numbered task block: " + bareTasks
+                    + ". Add concise imperative prose naming the types or members the student must implement after the binding or in its preceding numbered task block; a checkbox alone is not an exercise instruction.");
         }
         return StageCheckResult.passed("");
     }

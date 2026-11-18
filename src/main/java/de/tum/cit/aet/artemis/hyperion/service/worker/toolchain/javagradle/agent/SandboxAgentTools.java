@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.api.SandboxUnavailableException;
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopRunner;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.AuthoringProgress;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.SubmitVetoAware;
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
@@ -47,7 +48,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.works
  * Nothing here is synchronized: one session's tool calls are serial, and the volatile fields exist only because the orchestrator may hand a stage over from a different thread
  * between two of them.
  */
-public class SandboxAgentTools implements SubmitVetoAware {
+public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
 
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
 
@@ -107,6 +108,37 @@ public class SandboxAgentTools implements SubmitVetoAware {
 
     private int bashSequence = 0;
 
+    private long structuredMutations;
+
+    private long verificationChecks;
+
+    private int remainingFailures = Integer.MAX_VALUE;
+
+    private boolean lastCheckPassed;
+
+    private boolean repairModelUsed;
+
+    @Override
+    public boolean claimRepairModelHandoff() {
+        if (repairModelUsed) {
+            return false;
+        }
+        repairModelUsed = true;
+        return true;
+    }
+
+    @Override
+    public AuthoringProgress.Snapshot authoringProgress() {
+        return new AuthoringProgress.Snapshot(structuredMutations, verificationChecks, remainingFailures, lastCheckPassed && !dirtySinceLastPassingCheck);
+    }
+
+    private void recordVerification(boolean passed, @Nullable AgentVerifyReport report) {
+        verificationChecks++;
+        lastCheckPassed = passed;
+        remainingFailures = passed ? 0
+                : report == null ? Integer.MAX_VALUE : Math.max(1, report.solutionFailedNames().size() + report.templateWronglyPassing().size() + report.blockingReasons().size());
+    }
+
     private boolean sandboxSessionTerminated;
 
     /** {@code null} means the session is unstaged, which is what makes {@code verify} and {@code submit} run the full differential instead of one stage's check. */
@@ -138,6 +170,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * opportunistically by an in-loop TESTS check and authoritatively by {@link #recordLastTestsReport}.
      */
     private final AtomicReference<AgentVerifyReport> lastTestsReport = new AtomicReference<>();
+
+    private final AtomicReference<AgentVerifyReport> firstReferenceTestFailure = new AtomicReference<>();
 
     public SandboxAgentTools(InteractiveSandbox sandbox, String sessionId, DifferentialVerifier verifier, GenerationInput exercise) {
         this(sandbox, sessionId, verifier, exercise, Map.of(), false, null);
@@ -362,6 +396,9 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (packageRejection != null) {
             return packageRejection + " No file was written; the workspace is unchanged.";
         }
+        if (hasSameContent(safe, content)) {
+            return "No change: '" + safe + "' already has this exact content. Use verify to inspect the outstanding failure; change the implementation before writing again.";
+        }
         try (InputStream archive = WorkspaceArchive.buildWorkspaceTarStream(Map.of(safe, content), Map.of())) {
             sandbox.copyIn(sessionId, WORKSPACE, archive);
         }
@@ -369,8 +406,19 @@ public class SandboxAgentTools implements SubmitVetoAware {
             return "ERROR: could not write '" + safe + "': " + failure.getMessage();
         }
         latestMutationContent = content;
+        structuredMutations++;
         markDirty();
         return "Wrote " + content.length() + " characters to " + safe;
+    }
+
+    private boolean hasSameContent(String path, String content) {
+        try {
+            return content.equals(readCompleteFile(path));
+        }
+        catch (IOException | UncheckedIOException | WorkspaceArchive.RejectedWorkspaceEntryException failure) {
+            // Equality is unknown for a missing or unreadable file. A successful replacement still invalidates verification.
+            return false;
+        }
     }
 
     /**
@@ -466,6 +514,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (!"DELETED".equals(result.stdout())) {
             return "ERROR: could not determine whether '" + safe + "' was deleted.";
         }
+        structuredMutations++;
         markDirty();
         return "Deleted " + safe;
     }
@@ -485,18 +534,20 @@ public class SandboxAgentTools implements SubmitVetoAware {
     @Tool(name = "bash", description = AgentToolDescriptions.BASH)
     public String bash(@ToolParam(description = AgentToolDescriptions.BASH_COMMAND) String command) {
         if (command == null || command.isBlank()) {
-            return "exit=64\nNo command provided. Put the shell command in the \"command\" field as a single string, e.g. {\"command\": \"ls -R\"}.";
+            return "ERROR: no command provided. Put the shell command in the \"command\" field as a single string, e.g. {\"command\": \"ls -R\"}.";
         }
         // Rejected up front rather than run: the shell's failure on an argv array reads to the model like a problem with the command, so it retries the same array form.
-        if (isRenderedArgvArray(command)) {
-            return "exit=2\nThe command must be a single shell string, e.g. {\"command\":\"ls -R\"}. You sent a JSON array, which I cannot run. Re-send it as one string.";
+        if (AgentShellCommand.isRenderedArgvArray(command)) {
+            return SandboxPathPolicy
+                    .deniedCommand("The command must be a single shell string, e.g. {\"command\":\"ls -R\"}. You sent a JSON array, which I cannot run. Re-send it as one string.");
         }
         // `apply_patch` is not installed, so the shell would exit 127 and leave the workspace unchanged while the model believes the edit landed. Reject it loudly instead.
-        if (isApplyPatchInvocation(command)) {
-            return "exit=2\napply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.";
+        if (AgentShellCommand.isApplyPatchInvocation(command)) {
+            return SandboxPathPolicy.deniedCommand("apply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.");
         }
         if (SandboxPathPolicy.mutatesManagedBuildInfrastructure(command)) {
-            return "exit=2\nDo not modify tests-repository build/harness files such as tests/build.gradle. They are seeded by Artemis and graded verbatim; edit only test source files under tests/test/<package path>/ instead.";
+            return SandboxPathPolicy.deniedCommand("Do not modify tests-repository build/harness files such as tests/build.gradle. They are seeded by Artemis and graded "
+                    + "verbatim; edit only test source files under tests/test/<package path>/ instead.");
         }
         // Refused rather than run: one javap dump of the Ares security implementation is enough to start a run-long bytecode study that never writes a test.
         if (SandboxPathPolicy.inspectsDependencyArtifacts(command)) {
@@ -559,7 +610,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * is still there and reading it is still cheap, and a stage budgeted for a handful of turns can
      * spend all of them re-reading a guide it was already given, then fail its gate for a document it
      * never wrote. The later stages have no inline contract and read the same directory legitimately,
-     * which is why this is scoped to one stage rather than removed from the workspace.
+     * which is why this is scoped to one stage rather than removed from the workspace. The learner-test assessment guide remains available because the form contract does not
+     * explain that runtime capability.
      *
      * The refusal names the alternative rather than only forbidding, so the model spends its next turn
      * writing instead of retrying the same read.
@@ -569,11 +621,12 @@ public class SandboxAgentTools implements SubmitVetoAware {
      */
     @Nullable
     private String unreadableInCurrentStage(String path) {
-        if (currentStage != GenerationStage.SPEC || !path.startsWith("reference/")) {
+        if (currentStage != GenerationStage.SPEC || !path.startsWith("reference/") || path.equals("reference/style/student-tests.md")
+                || path.equals("reference/style/runtime-observation.md")) {
             return null;
         }
         return "REFUSED: '" + path + "' is not readable in the specification stage. The complete SPEC.md section and table contract is in your instructions, "
-                + "so this directory holds nothing you need here. Write /workspace/SPEC.md now.";
+                + "so this file adds no needed form guidance here. Write /workspace/SPEC.md now.";
     }
 
     /**
@@ -585,9 +638,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
     public void enterStage(GenerationStage stage) {
         this.repairWritableRoots.set(null);
         this.currentStage = stage;
-        this.dirtySinceLastPassingCheck = true;
-        this.cachedPassingCheckStage = null;
-        this.cachedPassingCheck.set(null);
+        if (stage == GenerationStage.SPEC) {
+            firstReferenceTestFailure.set(null);
+        }
+        resetVerificationProgress();
     }
 
     /**
@@ -599,6 +653,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
     public void enterRepairScope(Set<String> writableRoots) {
         this.currentStage = null;
         this.repairWritableRoots.set(Set.copyOf(writableRoots));
+        resetVerificationProgress();
     }
 
     public void exitRepairScope() {
@@ -731,9 +786,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
     public void exitStagedGeneration() {
         this.currentStage = null;
         this.repairWritableRoots.set(null);
-        this.dirtySinceLastPassingCheck = true;
-        this.cachedPassingCheckStage = null;
-        this.cachedPassingCheck.set(null);
+        resetVerificationProgress();
     }
 
     /**
@@ -758,6 +811,26 @@ public class SandboxAgentTools implements SubmitVetoAware {
      */
     public void recordLastTestsReport(@Nullable AgentVerifyReport report) {
         this.lastTestsReport.set(report);
+        if (report != null && report.solutionTests() > 0 && !report.solutionPassed() && !report.solutionFailureEvidence().isEmpty()) {
+            firstReferenceTestFailure.compareAndSet(null, report);
+        }
+    }
+
+    /**
+     * Returns the first executed reference test failure for the current contract, even if later edits made its grader pass.
+     *
+     * @return the native report, or empty before any such failure
+     */
+    public Optional<AgentVerifyReport> firstReferenceTestFailure() {
+        return Optional.ofNullable(firstReferenceTestFailure.get());
+    }
+
+    private void resetVerificationProgress() {
+        this.dirtySinceLastPassingCheck = true;
+        this.cachedPassingCheckStage = null;
+        this.cachedPassingCheck.set(null);
+        this.lastCheckPassed = false;
+        this.remainingFailures = Integer.MAX_VALUE;
     }
 
     private void markDirty() {
@@ -809,9 +882,13 @@ public class SandboxAgentTools implements SubmitVetoAware {
             return screenObservation("tool/verify", formatStageCheckObservation(runStageCheck(stage)));
         }
         if (verifier == null || exercise == null) {
-            return "ERROR: the verify tool is unavailable in this session. Fall back to `sh verify.sh solution` and `sh verify.sh template` via bash.";
+            return "ERROR: the verify tool is unavailable in this session. Stop and report this configuration failure. Internal verification scripts remove sources for isolation and require server-managed restoration; they are not a shell fallback.";
         }
         AgentVerifyReport report = verifier.selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, refreshStructuralOracle());
+        recordVerification(report.wouldBeAccepted(), report);
+        if (report.wouldBeAccepted()) {
+            dirtySinceLastPassingCheck = false;
+        }
         return screenObservation("tool/verify", report.toObservation());
     }
 
@@ -835,12 +912,23 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (stage != null) {
             StageCheckResult result = runStageCheck(stage);
             // Assigned rather than only set on rejection, so a passing resubmit can never be blocked by a veto a caller failed to consume after an earlier rejection.
-            submitVetoed = !result.passed();
+            submitVetoed = !result.passed() && !result.contractRedesignRequired();
+            if (result.contractRedesignRequired()) {
+                return screenObservation("tool/submit",
+                        "Submitted for controller-owned specification review; this candidate has not passed verification.\n" + formatStageCheckObservation(result));
+            }
             if (submitVetoed) {
                 return screenObservation("tool/submit", "SUBMIT REJECTED — fix these and resubmit:\n" + formatStageCheckObservation(result));
             }
         }
         return "Submitted for verification" + (summary == null || summary.isBlank() ? "." : ": " + summary);
+    }
+
+    @Override
+    public Optional<String> pendingCompletionFeedback() {
+        return currentStage == null ? Optional.empty()
+                : Optional.of("This stage is not submitted. Write its artifact through the file tools, then call submit by itself. "
+                        + "A specification, source file, or completion report returned only as chat text does not write or submit the workspace.");
     }
 
     @Override
@@ -859,8 +947,9 @@ public class SandboxAgentTools implements SubmitVetoAware {
             refreshStructuralOracle();
         }
         StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport.get(), seededStructuralTests.get());
+        recordVerification(result.passed(), result.report());
         if (stage == GenerationStage.TESTS && result.report() != null) {
-            lastTestsReport.set(result.report());
+            recordLastTestsReport(result.report());
         }
         if (result.passed()) {
             dirtySinceLastPassingCheck = false;
@@ -878,38 +967,6 @@ public class SandboxAgentTools implements SubmitVetoAware {
         }
         String verdict = result.passed() ? "MECHANICAL PRECHECK: PASS" : "MECHANICAL PRECHECK: FAIL";
         return observation == null || observation.isBlank() ? verdict : verdict + "\n" + observation;
-    }
-
-    /**
-     * Matches the first shell word rather than a substring, so a command that merely mentions the name ({@code grep apply_patch}) still runs. A path prefix and a trailing
-     * heredoc are tolerated.
-     */
-    static boolean isApplyPatchInvocation(String command) {
-        String trimmed = command.strip();
-        int firstWordEnd = trimmed.length();
-        for (int i = 0; i < trimmed.length(); i++) {
-            char c = trimmed.charAt(i);
-            if (c == ' ' || c == '\t' || c == '\n' || c == '<' || c == '\r') {
-                firstWordEnd = i;
-                break;
-            }
-        }
-        String firstWord = trimmed.substring(0, firstWordEnd);
-        int lastSlash = firstWord.lastIndexOf('/');
-        String program = lastSlash >= 0 ? firstWord.substring(lastSlash + 1) : firstWord;
-        return "apply_patch".equals(program);
-    }
-
-    /**
-     * Whether the command is the {@code List.toString()} render of a JSON argv array (e.g. {@code [bash, -lc, ls -R]}), which is what arrives when the model sends
-     * {@code {"command":[...]}}
-     * instead of a shell string. A POSIX {@code [ -f x ]} test has a space after the bracket and a single-element {@code [foo]} has no comma, so neither is caught.
-     */
-    static boolean isRenderedArgvArray(String command) {
-        String stripped = command.strip();
-        int comma = stripped.indexOf(',', 2);
-        return stripped.length() >= 4 && stripped.charAt(0) == '[' && " \t\n\u000B\f\r".indexOf(stripped.charAt(1)) < 0 && stripped.endsWith("]") && comma >= 0
-                && comma < stripped.length() - 1;
     }
 
     static boolean mutatesManagedBuildInfrastructure(String command) {

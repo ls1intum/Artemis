@@ -30,6 +30,98 @@ class ApprovedStructuralContractTest {
         assertThat(oracle.at("/genericApi/signatures").toString()).contains("superclass:Enum<RoastProfile>", "method:labels[]:List<String>");
     }
 
+    /** Ares matches member annotations exactly and reads an absent list as none, so an approved {@code @Test} must reach the oracle or a correct solution fails testMethods. */
+    @Test
+    void approvedAnnotationsReachTheOracleAsAresSimpleNames() {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                @DisplayName("validator") public class CommandLineValidatorTest {
+                    @Deprecated public String label;
+                    @Deprecated public CommandLineValidatorTest() { ... }
+                    @org.junit.jupiter.api.Test @SuppressWarnings("unused") public void testNullInput();
+                    @Override public String toString();
+                    public void helper();
+                }
+                ```
+                """, Set.of("CommandLineValidatorTest"));
+
+        assertThat(parsed.errors()).isEmpty();
+        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example")).get(0);
+        assertThat(oracle.at("/class/annotations").toString()).isEqualTo("[\"DisplayName\"]");
+        assertThat(oracle.at("/attributes/0/annotations").toString()).isEqualTo("[\"Deprecated\"]");
+        assertThat(oracle.at("/constructors/0/annotations").toString()).isEqualTo("[\"Deprecated\"]");
+        JsonNode methods = oracle.get("methods");
+        assertThat(methods.findValues("name").stream().map(JsonNode::asString)).containsExactly("testNullInput", "toString", "helper");
+        // Compiler-only annotations never reach runtime reflection, so they are left out like the absent list of an unannotated member.
+        assertThat(methods.get(0).get("annotations").toString()).isEqualTo("[\"Test\"]");
+        assertThat(methods.get(1).has("annotations")).isFalse();
+        assertThat(methods.get(2).has("annotations")).isFalse();
+
+        String solution = """
+                package example;
+                import org.junit.jupiter.api.Test;
+                @DisplayName("validator") public class CommandLineValidatorTest {
+                    @Deprecated public String label;
+                    @Deprecated public CommandLineValidatorTest() {}
+                    @Test public void testNullInput() {}
+                    @Override public String toString() { return ""; }
+                    public void helper() {}
+                }
+                """;
+        assertThat(parsed.contract().solutionOracleMismatches(Map.of("example/CommandLineValidatorTest.java", solution), "example")).isEmpty();
+        assertThat(parsed.contract().solutionOracleMismatches(Map.of("example/CommandLineValidatorTest.java", solution.replace("@Test public", "public")), "example"))
+                .singleElement().asString().contains("testNullInput");
+    }
+
+    /** A Public API block may omit the import of a {@code java.lang.annotation} type; its retention still decides whether the oracle requires it. */
+    @Test
+    void anUnimportedSourceRetainedAnnotationStaysOutOfTheOracle() {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Buffer {
+                    @Native public static final int DEFAULT_SIZE = 10;
+                }
+                ```
+                """, Set.of("Buffer"));
+
+        assertThat(parsed.errors()).isEmpty();
+        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example")).get(0);
+        assertThat(oracle.at("/attributes/0").has("annotations")).as("@Native has source retention").isFalse();
+    }
+
+    /** Ares sees only runtime-retained annotations; one the compiler discards must not reach the oracle, or a matching solution fails its structural check. */
+    @Test
+    void annotationsWithoutRuntimeRetentionStayOutOfTheOracle() {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Buffer {
+                    @java.lang.annotation.Native public static final int DEFAULT_SIZE = 10;
+                    @Deprecated public static final int LEGACY_SIZE = 5;
+                    @SafeVarargs @SuppressWarnings("unchecked") public static final void fill(Object first);
+                }
+                ```
+                """, Set.of("Buffer"));
+
+        assertThat(parsed.errors()).isEmpty();
+        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example")).get(0);
+        assertThat(oracle.at("/attributes/0/name").asString()).isEqualTo("DEFAULT_SIZE");
+        assertThat(oracle.at("/attributes/0").has("annotations")).as("@Native has source retention").isFalse();
+        assertThat(oracle.at("/attributes/1/annotations").toString()).isEqualTo("[\"Deprecated\"]");
+        assertThat(oracle.at("/methods/0/annotations").toString()).isEqualTo("[\"SafeVarargs\"]");
+        String solution = """
+                package example;
+                public class Buffer {
+                    @java.lang.annotation.Native public static final int DEFAULT_SIZE = 10;
+                    @Deprecated public static final int LEGACY_SIZE = 5;
+                    @SafeVarargs @SuppressWarnings("unchecked") public static final void fill(Object first) {}
+                }
+                """;
+        assertThat(parsed.contract().solutionOracleMismatches(Map.of("example/Buffer.java", solution), "example")).isEmpty();
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "extends", "implements" })
     void genericSupertypesRetainTheirApprovedArguments(String relationship) {
@@ -191,11 +283,29 @@ class ApprovedStructuralContractTest {
         assertThat(parsed.errors()).isEmpty();
         assertThat(parsed.contract().templateSurfaceReasons(Map.of("Palette.java", "public class Palette { public int size() { return 0; } }"), Set.of("Palette"))).isEmpty();
         assertThat(parsed.contract().templateSurfaceReasons(Map.of("Palette.java", "public class Palette { public int size() { return 0; } public void add(String color) {} }"),
-                Set.of("Palette"))).anyMatch(reason -> reason.contains("extra") && reason.contains("add"));
+                Set.of("Palette")))
+                .anyMatch(reason -> reason.contains("extra") && reason.contains("add") && reason.contains("@studentCreates") && reason.contains("solution-only declarations")
+                        && reason.contains("supplied callers"));
         assertThat(parsed.contract().templateSurfaceReasons(Map.of("Palette.java", "public class Palette {}"), Set.of("Palette")))
                 .anyMatch(reason -> reason.contains("missing") && reason.contains("size"));
         assertThat(parsed.contract().solutionSurfaceReasons(Map.of("Palette.java", "public class Palette { public int size() { return 0; } }")))
                 .anyMatch(reason -> reason.contains("missing") && reason.contains("add"));
+    }
+
+    @Test
+    void unapprovedHelperIsNotMisreportedAsStudentDeclarationWork() {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Palette {
+                    public int size();
+                }
+                ```
+                """, Set.of("Palette"), Set.of());
+
+        assertThat(parsed.errors()).isEmpty();
+        assertThat(parsed.contract().templateSurfaceReasons(Map.of("Palette.java", "public class Palette { public int size() { return 0; } public void debug() {} }"),
+                Set.of("Palette"))).anyMatch(reason -> reason.contains("extra") && reason.contains("debug")).noneMatch(reason -> reason.contains("solution-only declarations"));
     }
 
     @Test

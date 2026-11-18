@@ -42,6 +42,20 @@ class HyperionEffortProfileServiceTest {
     }
 
     @Test
+    void repairModelIsInheritedOverriddenAndPreservedWhenBoundsNarrow() {
+        var standard = profile("Standard");
+        var thorough = profile("Thorough");
+        thorough.setRepairModel("specialist");
+        var properties = propertiesWith(Map.of("standard", standard, "thorough", thorough));
+        properties.setRepairModel("deployment-repair");
+        var service = new HyperionEffortProfileService(properties, MODEL_DEFAULTS);
+        assertThat(service.resolve("standard").repairModel()).isEqualTo("deployment-repair");
+        assertThat(service.resolve("thorough").tightenedBy(100_000L, Duration.ofMinutes(5)).repairModel()).isEqualTo("specialist");
+        thorough.setRepairModel(" ");
+        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(properties, MODEL_DEFAULTS));
+    }
+
+    @Test
     void withoutConfiguredProfiles_everyRunUsesTheDeploymentDefaultAndNoneIsSelectable() {
         HyperionAgentProperties properties = new HyperionAgentProperties();
         properties.setMaxTurns(60);

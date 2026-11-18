@@ -17,8 +17,19 @@ import org.springframework.context.annotation.Lazy;
 @ConfigurationProperties(prefix = "artemis.hyperion.agent")
 public class HyperionAgentProperties {
 
-    /** Hard cap on model turns for one attempt of a run. Bounds an attempt, not the whole run. */
+    /** Hard cap on authoring turns shared by all stages and repairs of a run. */
     private int maxTurns = 60;
+
+    @Nullable
+    private String repairModel;
+
+    public @Nullable String getRepairModel() {
+        return repairModel;
+    }
+
+    public void setRepairModel(@Nullable String repairModel) {
+        this.repairModel = repairModel;
+    }
 
     /**
      * Wall-clock deadline for one run. Also the basis of the budget reservation TTL and the staged authoring budget.
@@ -152,6 +163,17 @@ public class HyperionAgentProperties {
 
         @Nullable
         private String model;
+
+        @Nullable
+        private String repairModel;
+
+        public @Nullable String getRepairModel() {
+            return repairModel;
+        }
+
+        public void setRepairModel(@Nullable String repairModel) {
+            this.repairModel = repairModel;
+        }
 
         @Nullable
         private Double temperature;

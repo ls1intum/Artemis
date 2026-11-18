@@ -75,7 +75,8 @@ class WorkerMessageCodecTest {
         var identity = identity();
         var seed = new WorkspaceSnapshot(List.of(new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { -1, 0, 42 }, false),
                 new WorkspaceFile("template/src/.gitkeep", new byte[0], false), new WorkspaceFile("tests/gradlew", new byte[] { 35, 33 }, true)));
-        var parameters = new GenerationParameters(effortProfile, 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS");
+        var parameters = new GenerationParameters(effortProfile, 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS", null, 0.5,
+                "repair-model");
         var assignment = new GenerationAssignment(identity, new ExerciseBrief("Stack", "stack", "de.example", null, "Create a stack", ExerciseBrief.Mode.GENERATE), parameters,
                 seed, Instant.parse("2026-09-08T12:00:00Z"), IMAGE, new GradingContext(true, java.util.Set.of("testPush"), java.util.Set.of("testPush")));
         var command = new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.START, identity, assignment);
@@ -155,6 +156,23 @@ class WorkerMessageCodecTest {
         assertThatThrownBy(() -> wire.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
         identity.remove(field);
         assertThatThrownBy(() -> wire.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void findingLocationsRoundTripAndUnlocatedFindingsKeepTheirWireShape() {
+        var id = identity();
+        var located = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "Survivor", "Add a test",
+                new SpecFidelityReport.Location(SpecFidelityReport.Location.Repository.SOLUTION, "src/de/test/Sorter.java", 4, 6));
+        var unlocated = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "Contradiction", "Review edge cases");
+        var output = new GenerationOutput(new WorkspaceSnapshot(List.of()), new VerificationResult(false, false, false, 0, List.of()), null,
+                new SpecFidelityReport(List.of(located, unlocated)), "RUN_FAILED", null, GenerationOutput.AccountingState.INCOMPLETE, "standard");
+        var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.FINISHED, id, false, IMAGE, null,
+                null, output);
+
+        assertThat(decodeEvent(encode(event))).isEqualTo(event);
+        var json = expandPayload(encode(event));
+        assertThat(json.at("/payload/review/findings/0/location/path").asString()).isEqualTo("src/de/test/Sorter.java");
+        assertThat(json.at("/payload/review/findings/1").has("location")).isFalse();
     }
 
     @ParameterizedTest

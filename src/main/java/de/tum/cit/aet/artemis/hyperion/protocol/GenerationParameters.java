@@ -11,11 +11,21 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GenerationParameters(String effortProfile, int maxTurns, long maxTokens, Duration maxDuration, int contextWindowTokens, @Nullable String model,
         @Nullable String reasoningEffort, @Nullable Double temperature, @Nullable Double topP, @Nullable Integer maxCompletionTokens, boolean stagedGeneration,
-        String stagedContext, @Nullable String verbosity, double cachedInputTokenWeight) {
+        String stagedContext, @Nullable String verbosity, double cachedInputTokenWeight, @Nullable String repairModel) {
+
+    public GenerationParameters(String effortProfile, int maxTurns, long maxTokens, Duration maxDuration, int contextWindowTokens, @Nullable String model,
+            @Nullable String reasoningEffort, @Nullable Double temperature, @Nullable Double topP, @Nullable Integer maxCompletionTokens, boolean stagedGeneration,
+            String stagedContext, @Nullable String verbosity, double cachedInputTokenWeight) {
+        this(effortProfile, maxTurns, maxTokens, maxDuration, contextWindowTokens, model, reasoningEffort, temperature, topP, maxCompletionTokens, stagedGeneration, stagedContext,
+                verbosity, cachedInputTokenWeight, null);
+    }
 
     public GenerationParameters {
         // NON_EMPTY omits the empty profile; an absent wire value selects deployment defaults.
         effortProfile = effortProfile == null ? "" : effortProfile;
+        if (repairModel != null && repairModel.isBlank()) {
+            throw new IllegalArgumentException("repair-model must not be blank");
+        }
         if (effortProfile.length() > 64 || maxTurns <= 0 || maxTokens <= 0 || maxDuration == null || !maxDuration.isPositive() || contextWindowTokens <= 0
                 || !Double.isFinite(cachedInputTokenWeight) || cachedInputTokenWeight <= 0 || cachedInputTokenWeight > 1
                 || !Set.of("CONTINUOUS", "FRESH").contains(stagedContext)) {

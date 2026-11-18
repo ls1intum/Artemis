@@ -62,7 +62,8 @@ public class HyperionEffortProfileService {
         // Validated eagerly, before any profile can inherit it: an invalid deployment default would otherwise surface only on the first run that used it.
         validateStagedContext(properties.getStagedContext());
         HyperionGenerationSettings deploymentDefault = new HyperionGenerationSettings("", null, properties.getMaxTurns(), properties.getMaxJobDuration(),
-                properties.getMaxTokensPerJob(), properties.isStagedGeneration(), properties.getStagedContext(), properties.getContextWindowTokens(), null, true, false);
+                properties.getMaxTokensPerJob(), properties.isStagedGeneration(), properties.getStagedContext(), properties.getContextWindowTokens(), null, true, false,
+                properties.getRepairModel());
         if (properties.getProfiles().size() > MAX_PROFILES) {
             throw new IllegalArgumentException("artemis.hyperion.agent.profiles must not configure more than " + MAX_PROFILES + " effort profiles");
         }
@@ -118,7 +119,7 @@ public class HyperionEffortProfileService {
             throw new IllegalArgumentException("Hyperion effort profile '" + name + "': label must contain at most 100 characters");
         }
         return new HyperionGenerationSettings(name, label, maxTurns, maxJobDuration, maxTokensPerJob, stagedGeneration, stagedContext, contextWindowTokens, chatOptions,
-                engineDefaults, providerOptionsOverride);
+                engineDefaults, providerOptionsOverride, profile.getRepairModel() == null ? properties.getRepairModel() : profile.getRepairModel());
     }
 
     private static void validateProviderOptions(String name, HyperionAgentProperties.EffortProfileProperties profile) {

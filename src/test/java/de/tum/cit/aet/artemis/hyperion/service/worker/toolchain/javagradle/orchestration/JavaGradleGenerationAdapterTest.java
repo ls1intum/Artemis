@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
@@ -89,6 +90,26 @@ class JavaGradleGenerationAdapterTest {
         assertThat(engine.requestCancel(assignment(Instant.now()).identity())).isFalse();
         verifyNoInteractions(observer);
         verify(executionSandbox, org.mockito.Mockito.never()).createSession();
+    }
+
+    @Test
+    void cooperativeStopLetsVerificationDrainButCancellationStillStopsIt() {
+        AtomicBoolean cancelled = new AtomicBoolean();
+        var signal = new de.tum.cit.aet.artemis.aiworker.api.WorkloadApi.StopSignal(cancelled::get, () -> true);
+        var stopVerification = JavaGradleGenerationAdapterService.stopVerification(signal, Instant.now().minusSeconds(1));
+
+        assertThat(signal.getAsBoolean()).isTrue();
+        assertThat(stopVerification.getAsBoolean()).isFalse();
+        cancelled.set(true);
+        assertThat(stopVerification.getAsBoolean()).isTrue();
+    }
+
+    @Test
+    void verificationDrainCannotOutliveTheCoordinatorWindowOrIgnorePlainCancellation() {
+        var softStop = new de.tum.cit.aet.artemis.aiworker.api.WorkloadApi.StopSignal(() -> false, () -> true);
+        assertThat(JavaGradleGenerationAdapterService.stopVerification(softStop, Instant.now().minus(GenerationAssignment.AUTHORING_DRAIN_WINDOW).minusSeconds(1)).getAsBoolean())
+                .isTrue();
+        assertThat(JavaGradleGenerationAdapterService.stopVerification(() -> true, Instant.now().plusSeconds(300)).getAsBoolean()).isTrue();
     }
 
     @Test

@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +50,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentTranscriptWriter;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.BriefLearningGoals;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedSpecRegistry;
@@ -142,7 +144,7 @@ class StagedGenerationRunnerTest {
                 return found(layout);
             }
             if (command.length > 0 && "grep".equals(command[0])) {
-                return found("TODO S1:");
+                return found("TODO:");
             }
             return found("");
         }
@@ -210,6 +212,13 @@ class StagedGenerationRunnerTest {
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "FRESH");
     }
 
+    private static SpecFidelityCritic mockSpecificationReviewer() {
+        var reviewer = mock(SpecFidelityCritic.class);
+        when(reviewer.reviewSpecificationWithExecution(anyString(), any(), anyString(), any(), anyString(), any(), any()))
+                .thenReturn(new SpecFidelityCritic.SpecificationReview(true, List.of()));
+        return reviewer;
+    }
+
     private static AgentLoopResult completed(int turns, String message) {
         return new AgentLoopResult(AgentLoopResult.Status.COMPLETED, turns, message);
     }
@@ -224,6 +233,11 @@ class StagedGenerationRunnerTest {
                 List.of());
     }
 
+    private static AgentVerifyReport nondiscriminatingReport() {
+        return new AgentVerifyReport(1, true, List.of(), List.of(), 1, true, false, List.of(), List.of("testFoo"), List.of("testFoo"), List.of(), List.of(), false,
+                List.of("the starter passes every student test"));
+    }
+
     private static AgentVerifyReport failingReport() {
         return new AgentVerifyReport(1, false, List.of("testFoo"), List.of(), 1, true, false, List.of(), List.of(), List.of("testFoo"), List.of(), List.of(), false,
                 List.of("the solution does not pass"));
@@ -234,8 +248,399 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
+    void aNonDiscriminatingAssessmentReopensAndReapprovesTheContractBeforeStatementAuthoring() {
+        var reviewer = mockSpecificationReviewer();
+        var goals = new BriefLearningGoals("brief", List.of(new BriefLearningGoals.Goal("G1", "brief")));
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any()))
+                .thenReturn(new SpecFidelityCritic.SpecificationReview(true, List.of()).withBriefLearningGoals(goals));
+        when(reviewer.reviewSpecification(anyString(), any(), anyString(), any(SpecFidelityCritic.SpecificationReview.class), any(), any())).thenAnswer(invocation -> {
+            SpecFidelityCritic.SpecificationReview prior = invocation.getArgument(3);
+            assertThat(prior.riskHistory()).singleElement().asString().contains("unchanged template");
+            assertThat(prior.briefLearningGoals()).isEqualTo(goals);
+            return new SpecFidelityCritic.SpecificationReview(true, false, false, List.of(), "The revised API addresses the counterexample", null, prior.riskHistory())
+                    .withBriefLearningGoals(goals);
+        });
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
+        AtomicInteger calls = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            if (calls.incrementAndGet() == 3) {
+                assertThat(approvedSpecs.approved("s")).isEmpty();
+                assertThat(invocation.<String>getArgument(1)).contains("executable evidence", "Preserve the instructor brief");
+                sandbox.specMarkdown = VALID_SPEC_DOCUMENT.replace("computes a result", "computes an observable result");
+            }
+            return completed(1, "done");
+        });
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), passingReport("testFoo"));
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(calls).hasValue(5);
+        assertThat(approvedSpecs.approved("s")).hasValue(sandbox.specMarkdown);
+        assertThat(approvedSpecs.learningGoals("s")).contains(goals);
+        verify(reviewer).reviewSpecification(anyString(), anyString(), any(), any());
+        verify(reviewer).reviewSpecification(anyString(), any(), anyString(), any(SpecFidelityCritic.SpecificationReview.class), any(), any());
+        InOrder stages = inOrder(baseTools);
+        stages.verify(baseTools).enterStage(GenerationStage.SPEC);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.SPEC);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void aPassingGraderCannotFreezeAContradictionFoundFromExecutionEvidence() {
+        var reviewer = mockSpecificationReviewer();
+        var goals = new BriefLearningGoals("brief", List.of(new BriefLearningGoals.Goal("G1", "brief")));
+        var accepted = new SpecFidelityCritic.SpecificationReview(true, List.of()).withBriefLearningGoals(goals);
+        var conflict = new SpecFidelityCritic.SpecificationReview(true, false, true, List.of("The worked example conflicts with the stated computation"),
+                "An executed expectation does not agree with the rule", null).withBriefLearningGoals(goals);
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(accepted);
+        when(reviewer.reviewSpecification(anyString(), any(), anyString(), any(SpecFidelityCritic.SpecificationReview.class), any(), any())).thenReturn(accepted);
+        when(reviewer.reviewSpecificationWithExecution(anyString(), any(), anyString(), any(), anyString(), any(), any())).thenReturn(conflict, accepted);
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
+        AtomicInteger calls = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            if (calls.incrementAndGet() == 3) {
+                assertThat(approvedSpecs.approved("s")).isEmpty();
+                assertThat(invocation.<String>getArgument(1)).contains("worked example conflicts");
+                sandbox.specMarkdown = VALID_SPEC_DOCUMENT.replace("| R1 | 2 | 4 |", "| R1 | 2 | 8 |");
+            }
+            return completed(1, "done");
+        });
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(calls).hasValue(5);
+        assertThat(approvedSpecs.learningGoals("s")).contains(goals);
+        assertThat(approvedSpecs.approved("s")).contains(sandbox.specMarkdown);
+    }
+
+    @Test
+    void mechanicalSpecificationProgressCanReachTheRemainingStagesAfterThreeCorrections() {
+        var settings = new HyperionGenerationSettings("pilot", null, 180, Duration.ofHours(2), 6_000_000, true, "FRESH", 131_072, null, false, false);
+        var reviewer = mockSpecificationReviewer();
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any()))
+                .thenReturn(new SpecFidelityCritic.SpecificationReview(true, List.of("The approved learning goal still needs a coherent correction.")));
+        when(reviewer.reviewSpecification(anyString(), any(), anyString(), any(), any(), any())).thenReturn(new SpecFidelityCritic.SpecificationReview(true, List.of()));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH")
+                .forSettings(settings, agentLoopRunner, reviewer);
+        AtomicInteger calls = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            sandbox.specMarkdown = switch (calls.incrementAndGet()) {
+                case 1 -> "## Rules\nR1. Computes a result.";
+                case 2 -> VALID_SPEC_DOCUMENT + "\n@startuml";
+                case 3 -> VALID_SPEC_DOCUMENT.replace("| R1 | 3 | 9 |", "");
+                case 4 -> VALID_SPEC_DOCUMENT.replace("| Calculator | computes the result | stubbed |", "");
+                default -> VALID_SPEC_DOCUMENT;
+            };
+            return completed(1, "current edit");
+        });
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(approvedSpecs.approved("s")).contains(VALID_SPEC_DOCUMENT);
+        assertThat(calls).hasValue(8);
+        verify(reviewer).reviewSpecification(eq("brief"), isNull(), anyString(), any(), any(), any());
+        verify(baseTools).enterStage(GenerationStage.TESTS);
+        verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void aLargeConfiguredBudgetReachesExecutableAuthoringWithoutAHiddenCap() {
+        var settings = new HyperionGenerationSettings("pilot", null, 180, Duration.ofHours(2), 6_000_000, true, "FRESH", 200_000, null, false, false);
+        runner = runner.forSettings(settings, agentLoopRunner, null);
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+        assertThat(run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY).status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        ArgumentCaptor<Integer> limits = ArgumentCaptor.forClass(Integer.class);
+        verify(agentLoopRunner, times(3)).run(anyString(), anyString(), any(), limits.capture(), any(), any(), any());
+        assertThat(limits.getAllValues().get(1)).isGreaterThan(83).isLessThan(180);
+    }
+
+    @Test
+    void aFullyPassingStarterReopensItsContractInsteadOfRepeatingTestOnlyRepairs() {
+        var nondiscriminating = new AgentVerifyReport(1, true, List.of(), List.of(), 1, true, false, List.of(), List.of("testFoo"), List.of("testFoo"), List.of(), List.of(), false,
+                List.of("the starter passes every student test"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminating, passingReport("testFoo"));
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(approvedSpecs.approved("s")).hasValue(sandbox.specMarkdown);
+        InOrder stages = inOrder(baseTools);
+        stages.verify(baseTools).enterStage(GenerationStage.SPEC);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.SPEC);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void repeatedNonDiscriminatingAssessmentStopsBeforeStatementOrOuterRepairs() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport());
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(result.finalMessage()).contains("no further contract redesign");
+        verify(baseTools, never()).enterStage(GenerationStage.STATEMENT);
+        verify(agentLoopRunner, times(4)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void anAuthoritativeCounterexampleReentersNormalSpecReviewOnlyOncePerSession() {
+        approvedSpecs.approve("s", VALID_SPEC_DOCUMENT);
+        var continuation = runner.requestAssessmentRedesign(exercise, "s", java.time.Instant.now(), "executed print-only bypass", List.of("concept objection"));
+        assertThat(continuation).isNotNull();
+        assertThat(continuation.stage()).isEqualTo(GenerationStage.SPEC);
+        assertThat(continuation.assessmentCounterexample()).isEqualTo("executed print-only bypass");
+        assertThat(approvedSpecs.approved("s")).isEmpty();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+
+        var resumed = resume(continuation);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(resumed.unresolvedConceptFindings()).containsExactly("concept objection");
+        assertThat(approvedSpecs.approved("s")).hasValue(VALID_SPEC_DOCUMENT);
+        assertThat(runner.requestAssessmentRedesign(exercise, "s", java.time.Instant.now(), "another proof", List.of())).isNull();
+        InOrder stages = inOrder(baseTools);
+        stages.verify(baseTools).enterStage(GenerationStage.SPEC);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void anApprovedRedesignResumesOnlyItsExecutableStageWithinAnotherExistingAttempt() {
+        StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
+        assertThat(approvedSpecs.approved("s")).hasValue(continuation.approvedSpecification());
+        continuation = new StagedAssessmentContinuation(continuation.startedAt(), continuation.reentriesRemaining(), continuation.approvedSpecification(), continuation.feedback(),
+                List.of("retained specification objection"), List.of("retained concept objection"), continuation.stage(), continuation.assessmentCounterexample());
+
+        var resumed = resume(continuation);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(resumed.result().turns()).isLessThanOrEqualTo(40);
+        assertThat(resumed.assessmentContinuation()).isNull();
+        assertThat(resumed.unresolvedSpecificationFindings()).containsExactly("retained specification objection");
+        assertThat(resumed.unresolvedConceptFindings()).containsExactly("retained concept objection");
+        InOrder stages = inOrder(baseTools);
+        stages.verify(baseTools).enterStage(GenerationStage.SPEC);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.SPEC);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void aContinuationCannotReopenTheContractAgainWhenItsTestsStillAcceptABypass() {
+        StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
+
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport());
+        var resumed = resume(continuation);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(resumed.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
+        assertThat(resumed.assessmentContinuation()).isNull();
+        verify(baseTools, times(2)).enterStage(GenerationStage.SPEC);
+        verify(baseTools, never()).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void anExecutableContinuationCannotResetTheOriginalAuthoringDeadline() {
+        var beginning = java.time.Instant.parse("2026-01-01T00:00:00Z");
+        runner.setClockForTests(() -> beginning);
+        StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
+        runner.setClockForTests(() -> beginning.plus(Duration.ofHours(1)));
+
+        var resumed = resume(continuation);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(resumed.result().turns()).isZero();
+        assertThat(resumed.assessmentContinuation()).isNull();
+        verify(agentLoopRunner, times(4)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void anExecutableContinuationRequiresItsExactApprovedSpecification() {
+        StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
+        approvedSpecs.forget("s");
+        approvedSpecs.approve("s", "replacement approval");
+
+        var resumed = resume(continuation);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(resumed.result().stopCause()).contains("approved contract changed");
+        verify(agentLoopRunner, times(4)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void anUnfinishedContinuationCannotCreateAnotherContinuationOrReachStatement() {
+        StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
+        doAnswer(invocation -> new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, invocation.getArgument(3), "still incomplete")).when(agentLoopRunner).run(anyString(),
+                anyString(), any(), anyInt(), any(), any(), any());
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(failingReport());
+
+        var resumed = resume(continuation);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(resumed.assessmentContinuation()).isNull();
+        verify(baseTools, never()).enterStage(GenerationStage.STATEMENT);
+    }
+
+    private int exhaustedAssessmentTurns;
+
+    private StagedAssessmentContinuation exhaustRedesignedAssessment() {
+        return exhaustRedesignedAssessment(4);
+    }
+
+    private StagedAssessmentContinuation exhaustRedesignedAssessment(int exhaustedCall) {
+        var settings = new HyperionGenerationSettings("small", null, 40, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
+        runner = runner.forSettings(settings, agentLoopRunner, null);
+        if (exhaustedCall == 4) {
+            when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), failingReport(), passingReport("testFoo"));
+        }
+        else {
+            when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), failingReport(), failingReport(),
+                    passingReport("testFoo"));
+        }
+        AtomicInteger calls = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            int budget = invocation.getArgument(3);
+            int call = calls.incrementAndGet();
+            int used = switch (call) {
+                case 1 -> 3;
+                case 2 -> 15;
+                case 3 -> 5;
+                case 4 -> exhaustedCall == 4 ? budget : 1;
+                case 5 -> exhaustedCall == 5 ? budget : 1;
+                default -> 1;
+            };
+            assertThat(used).isLessThanOrEqualTo(budget);
+            return new AgentLoopResult(call == exhaustedCall ? AgentLoopResult.Status.BUDGET_EXHAUSTED : AgentLoopResult.Status.COMPLETED, used, "current artifacts");
+        });
+        var paused = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY);
+        assertThat(paused.result().status()).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
+        assertThat(paused.result().turns()).isLessThanOrEqualTo(40);
+        exhaustedAssessmentTurns = paused.result().turns();
+        assertThat(paused.assessmentContinuation()).isNotNull();
+        return paused.assessmentContinuation();
+    }
+
+    private StagedGenerationRunner.StagedRunOutcome resume(StagedAssessmentContinuation continuation) {
+        return runner.resume(continuation, exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY,
+                true, false, null, null);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = { 4, 5 })
+    void redesignedTestsCanContinueWithOnlyTheActualSharedTurnsLeft(int exhaustedCall) {
+        var continuation = exhaustRedesignedAssessment(exhaustedCall);
+        int remaining = 40 - exhaustedAssessmentTurns;
+        var settings = new HyperionGenerationSettings("remaining", null, remaining, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
+        runner = runner.forSettings(settings, agentLoopRunner, null);
+
+        var resumed = resume(continuation);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(resumed.result().turns()).isLessThanOrEqualTo(remaining);
+        assertThat(exhaustedAssessmentTurns + resumed.result().turns()).isLessThanOrEqualTo(40);
+        verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void anOuterAssessmentRedesignAlsoReservesItsExecutableContinuation() {
+        int exhaustedCall = 2;
+        var settings = new HyperionGenerationSettings("small", null, 40, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
+        runner = runner.forSettings(settings, agentLoopRunner, null);
+        approvedSpecs.approve("s", VALID_SPEC_DOCUMENT);
+        var redesign = runner.requestAssessmentRedesign(exercise, "s", java.time.Instant.now(), "executed bypass", List.of());
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(failingReport(), passingReport("testFoo"));
+        AtomicInteger calls = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            int used = calls.incrementAndGet() == exhaustedCall ? invocation.getArgument(3) : 1;
+            return new AgentLoopResult(calls.get() == exhaustedCall ? AgentLoopResult.Status.BUDGET_EXHAUSTED : AgentLoopResult.Status.COMPLETED, used, "current artifacts");
+        });
+
+        var paused = resume(redesign);
+        assertThat(paused.assessmentContinuation()).isNotNull();
+        int remaining = 40 - paused.result().turns();
+        runner = runner.withTurnLimit(remaining);
+        var resumed = resume(paused.assessmentContinuation());
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(paused.result().turns() + resumed.result().turns()).isLessThanOrEqualTo(40);
+    }
+
+    @Test
+    void assessmentRedesignCannotExceedTheSharedTurnBudget() {
+        var settings = new HyperionGenerationSettings("small", null, 24, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
+        runner = runner.forSettings(settings, agentLoopRunner, null);
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> completed(invocation.getArgument(3), "done"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport());
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(result.turns()).isLessThanOrEqualTo(24);
+        verify(agentLoopRunner, times(2)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(baseTools, never()).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void cancellationAfterTheTestsGatePreservesTheExistingApprovalAndDoesNotStartStatementAuthoring() {
+        AtomicBoolean cancelled = new AtomicBoolean();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenAnswer(invocation -> {
+            cancelled.set(true);
+            return passingReport("testFoo");
+        });
+
+        AgentLoopResult result = run(cancelled::get, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.CANCELLED);
+        assertThat(approvedSpecs.approved("s")).hasValue(VALID_SPEC_DOCUMENT);
+        verify(agentLoopRunner, times(2)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void anUnbuiltRedesignCannotReachTheStatementOrEscapeIntoOrdinaryRepair() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), failingReport(), failingReport());
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(result.stopCause()).contains("redesigned contract has not passed");
+        verify(baseTools, never()).enterStage(GenerationStage.STATEMENT);
+        verify(agentLoopRunner, times(5)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void assessmentRedesignDiscardsTheRejectedContinuousConversation() {
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "CONTINUOUS");
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), passingReport("testFoo"));
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any()))
+                .thenReturn(new AgentLoopRunner.AgentLoopSession(completed(1, "done"), List.of(new UserMessage("rejected artifact trajectory"))));
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Message>> conversations = ArgumentCaptor.forClass(List.class);
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        verify(agentLoopRunner, times(5)).runSession(anyString(), conversations.capture(), anyString(), any(), anyInt(), any(), any(), any());
+        assertThat(conversations.getAllValues()).containsOnlyNulls();
+    }
+
+    @Test
     void conceptDiscoveryAndAllStagesShareTheResolvedTurnCap() {
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer,
                 new ExerciseConceptSelector(agentLoopRunner, reviewer), "FRESH");
         var settings = new HyperionGenerationSettings("small", null, 30, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
@@ -259,7 +664,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void specificationRefinementsCannotExceedTheResolvedTurnCap() {
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         var rejected = new SpecFidelityCritic.SpecificationReview(true, List.of("A rule is missing."));
         when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(rejected);
         when(reviewer.reviewSpecification(anyString(), isNull(), anyString(), any(), any(), any())).thenReturn(rejected);
@@ -278,7 +683,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void resolvedSmallTurnCapBoundsStagedAuthoring() {
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         var settings = new HyperionGenerationSettings("small", null, 10, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
         runner = runner.forSettings(settings, agentLoopRunner, reviewer);
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> completed(invocation.getArgument(3), "spec"));
@@ -373,8 +778,9 @@ class StagedGenerationRunnerTest {
 
         verify(agentLoopRunner, times(3)).run(anyString(), prompts.capture(), any(), anyInt(), any(), any(), any());
         String statementPrompt = prompts.getAllValues().get(2);
-        assertThat(statementPrompt).contains("raw brief", "ACCEPTED STATEMENT HANDOFF", "`[task][Student-facing title](exactTestName)`",
-                "Bind every visible test below exactly once", "S1: visibleCase")
+        assertThat(statementPrompt)
+                .contains("raw brief", "ACCEPTED STATEMENT HANDOFF", "`[task][Student-facing title](exactTestName)`", "Bind every visible test below exactly once",
+                        "S1: visibleCase", "=== DIAGRAM ===", "This exercise does not require a class diagram")
                 .doesNotContain("INITIAL WORKSPACE LAYOUT", "reference/problem-statement.md", "hiddenCase", "MECHANICAL PRECHECK");
     }
 
@@ -413,7 +819,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void semanticSpecificationReviewRefinesBeforeFreezing() {
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         SpecFidelityCritic.SpecificationReview firstReview = new SpecFidelityCritic.SpecificationReview(true, List.of("the collaboration is incomplete"));
         when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(firstReview);
         when(reviewer.reviewSpecification(anyString(), isNull(), anyString(), eq(firstReview), any(), any()))
@@ -436,7 +842,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void exhaustedSpecificationReviewFindingsRemainAttachedToTheStagedOutcome() {
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         SpecFidelityCritic.SpecificationReview unresolvedReview = new SpecFidelityCritic.SpecificationReview(true, List.of("R1 still invents a source-level technique"));
         when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(unresolvedReview);
         when(reviewer.reviewSpecification(anyString(), isNull(), anyString(), any(), any(), any())).thenReturn(unresolvedReview);
@@ -456,7 +862,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void repeatedLearningFitDirectionReselectsInsteadOfOptimizingAnotherRewrite() {
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
         ExerciseConceptSelector.ConceptSelection initialConcept = new ExerciseConceptSelector.ConceptSelection(true, 1, "initial concept", 1, List.of(), "", "");
         ExerciseConceptSelector.ConceptSelection replacementConcept = new ExerciseConceptSelector.ConceptSelection(true, 2, "replacement concept", 1, List.of(), "", "");
@@ -489,7 +895,7 @@ class StagedGenerationRunnerTest {
      */
     @Test
     void aReplacementConceptThatNeverArrivesKeepsTheSpecificationTheRunAlreadyReviewed() {
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
         when(conceptSelector.select(eq("brief"), eq(""), anyInt(), any(), any(), any()))
                 .thenReturn(new ExerciseConceptSelector.ConceptSelection(true, 1, "initial concept", 1, List.of(), "", ""));
@@ -518,7 +924,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void authoritativeStatementRefinesItsContractWithoutReplacingTheInstructorConcept() {
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
         SpecFidelityCritic.SpecificationReview firstReview = new SpecFidelityCritic.SpecificationReview(true, false, true, List.of("make the global tie rule explicit"), "",
                 "TOO_SHALLOW");
@@ -543,7 +949,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void unavailableOptionalConceptReviewFallsBackToTheBriefAndMandatorySpecificationReview() {
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
         when(conceptSelector.select(eq("brief"), eq(""), anyInt(), any(), any(), any()))
                 .thenReturn(new ExerciseConceptSelector.ConceptSelection(false, null, null, 1, List.of(), "Concept review was unavailable.", ""));
@@ -569,7 +975,7 @@ class StagedGenerationRunnerTest {
         ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
         when(conceptSelector.select(eq("brief"), eq(""), anyInt(), any(), any(), any()))
                 .thenReturn(new ExerciseConceptSelector.ConceptSelection(true, null, null, 2, List.of(), "Every candidate invented a constraint.", ""));
-        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, mock(SpecFidelityCritic.class),
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, mockSpecificationReviewer(),
                 conceptSelector, "FRESH");
 
         StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
@@ -584,7 +990,7 @@ class StagedGenerationRunnerTest {
     @Test
     void aRejectedConceptWithAFallbackIsBuiltAnywayInsteadOfProducingNothing() {
         // The gate still admitted no candidate, but a completed rejection is a design objection rather than a failure, so the run produces a draft plus the objections.
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         when(reviewer.reviewSpecification(anyString(), anyString(), anyString(), any(), any()))
                 .thenReturn(new SpecFidelityCritic.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer,
@@ -606,7 +1012,7 @@ class StagedGenerationRunnerTest {
     @Test
     void everyObjectionRaisedAgainstTheFallbackConceptSurvivesAsAnInstructorNote() {
         // Both reviewer voices reach the instructor verbatim: the selector's per-candidate comparison and the focused admission audit.
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         when(reviewer.reviewSpecification(anyString(), anyString(), anyString(), any(), any()))
                 .thenReturn(new SpecFidelityCritic.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer,
@@ -629,24 +1035,26 @@ class StagedGenerationRunnerTest {
     @Test
     void objectionsAgainstTheFallbackConceptSurviveAStageFailureLaterInTheRun() {
         // Every exit of the stage machine carries them, so a run that died at a later gate can still say which contested design it was building.
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         when(reviewer.reviewSpecification(anyString(), anyString(), anyString(), any(), any()))
                 .thenReturn(new SpecFidelityCritic.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer,
                 rejectingSelectorWithFallback(), "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"),
-                new AgentLoopResult(AgentLoopResult.Status.ERROR, 2, "the provider failed"));
+                new AgentLoopResult(AgentLoopResult.Status.ERROR, 2, "the provider failed", "The agent session stopped: The AI service returned no usable response on turn 2."));
 
         StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
                 () -> SeededStructuralTests.EMPTY, true, true, null);
 
         assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(outcome.result().stopCause()).as("the stage session's stop cause survives the staged run")
+                .isEqualTo("The agent session stopped: The AI service returned no usable response on turn 2.");
         assertThat(outcome.unresolvedConceptFindings()).isNotEmpty();
     }
 
     @Test
     void theFallbackConceptIsWhatTheSpecificationStageIsAskedToInstantiate() {
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         when(reviewer.reviewSpecification(anyString(), anyString(), anyString(), any(), any()))
                 .thenReturn(new SpecFidelityCritic.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer,
@@ -675,7 +1083,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void exhaustedStatementGatePreservesUnresolvedApprovedSpecificationFindings() {
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         when(reviewer.reviewSpecification(anyString(), anyString(), any(), any()))
                 .thenReturn(new SpecFidelityCritic.SpecificationReview(false, false, false, List.of(), "malformed verdict"));
         stageCheckService = mock(StageChecks.class);
@@ -697,7 +1105,7 @@ class StagedGenerationRunnerTest {
     @Test
     void unavailableSpecificationReviewFailsOpenAndFreezesTheMechanicallyValidSpec() {
         // Fail open on the subjective axis: a reviewer that cannot return a well-formed verdict must not discard a specification that already passed the mechanical gate.
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         when(reviewer.reviewSpecification(anyString(), anyString(), any(), any()))
                 .thenReturn(new SpecFidelityCritic.SpecificationReview(false, false, false, List.of(), "malformed verdict"));
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
@@ -717,7 +1125,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void inconclusiveSpecificationReviewPreservesItsGroundedRiskHistoryForInstructorReview() {
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         List<String> groundedRisks = List.of("Omission — brief requires elevators never move but SPEC does not preserve that guarantee",
                 "Ambiguity — int distance subtraction can overflow at the admitted extremes");
         when(reviewer.reviewSpecification(anyString(), anyString(), any(), any()))
@@ -737,15 +1145,16 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
-    void failedBestSpecificationRestoreKeepsUncertaintyAttachedToTheDraftActuallyApproved() {
+    void inconclusiveReviewFreezesTheLatestGatePassingRevisionRatherThanAnOlderMeasuredOne() {
         String measuredDraft = VALID_SPEC_DOCUMENT + "\n<!-- measured -->\n";
         String unmeasuredDraft = VALID_SPEC_DOCUMENT + "\n<!-- unmeasured -->\n";
         sandbox.specMarkdown = measuredDraft;
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         SpecFidelityCritic.SpecificationReview firstReview = new SpecFidelityCritic.SpecificationReview(true, List.of("measured concern"));
         when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(firstReview);
+        // Like the real critic, a malformed verdict keeps the risk history of the review it followed.
         when(reviewer.reviewSpecification(anyString(), isNull(), anyString(), eq(firstReview), any(), any()))
-                .thenReturn(new SpecFidelityCritic.SpecificationReview(false, false, false, List.of(), "malformed verdict"));
+                .thenReturn(new SpecFidelityCritic.SpecificationReview(false, false, false, List.of(), "malformed verdict", null, firstReview.riskHistory()));
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
         AtomicInteger calls = new AtomicInteger();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
@@ -754,15 +1163,17 @@ class StagedGenerationRunnerTest {
             }
             return completed(1, "done");
         });
-        when(baseTools.writeFile("SPEC.md", measuredDraft)).thenReturn("ERROR: workspace unavailable");
         when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
 
         StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
                 () -> SeededStructuralTests.EMPTY);
 
         assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        // The latest gate-passing revision is frozen rather than the older measured draft, but a comment-only revision does not answer the measured concern: it stays for
+        // instructor review.
         assertThat(approvedSpecs.approved("s")).contains(unmeasuredDraft);
-        assertThat(outcome.unresolvedSpecificationFindings()).singleElement().asString().contains("quality review was inconclusive").doesNotContain("measured concern");
+        verify(baseTools, never()).writeFile("SPEC.md", measuredDraft);
+        assertThat(outcome.unresolvedSpecificationFindings()).anyMatch(finding -> finding.contains("measured concern"));
     }
 
     @Test
@@ -777,8 +1188,40 @@ class StagedGenerationRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         assertThat(result.finalMessage()).contains("could not be read back", "unfrozen contract");
+        assertThat(result.stopCause()).startsWith("SPEC.md passed its consistency gate but could not be read back").doesNotContain("spec\n");
         assertThat(approvedSpecs.approved("s")).isEmpty();
         verify(baseTools, never()).enterStage(GenerationStage.TESTS);
+    }
+
+    @Test
+    void anOwnershipConflictRevisesTheWholeContractBeforeStatementAuthoring() {
+        String revised = VALID_SPEC_DOCUMENT + "\nReconciled supplied support and learner tasks.\n";
+        stageCheckService = mock(StageChecks.class);
+        var conflict = StageCheckResult.ownershipRedesignRequired("Supplied Demo depends on missing learner type Player", passingReport("testFoo"));
+        when(stageCheckService.check(any(), any(), anyString(), any(), anyMap(), any(), any(SeededStructuralTests.class))).thenReturn(StageCheckResult.passed("spec"), conflict,
+                StageCheckResult.passed("revised spec"), new StageCheckResult(true, "tests", passingReport("testFoo")), StageCheckResult.passed("statement"));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "FRESH");
+        AtomicInteger calls = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            int call = calls.incrementAndGet();
+            if (call == 3) {
+                assertThat(approvedSpecs.approved("s")).isEmpty();
+                sandbox.specMarkdown = revised;
+            }
+            if (call == 5) {
+                assertThat(approvedSpecs.approved("s")).contains(revised);
+            }
+            return completed(1, "done");
+        });
+        List<String> published = new ArrayList<>();
+
+        var outcome = runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY, true,
+                published::add);
+
+        assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(published).containsExactly(VALID_SPEC_DOCUMENT, revised);
+        assertThat(calls).hasValue(5);
+        verify(baseTools, times(2)).enterStage(GenerationStage.SPEC);
     }
 
     @Test
@@ -861,7 +1304,7 @@ class StagedGenerationRunnerTest {
         // The companion of the test above, differing only in the configured deadline: only a budget derived from artemis.hyperion.agent.max-job-duration lets the same elapsed 23
         // minutes reach all three stages, so any private wall-clock ceiling at or below 23 minutes fails here.
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, null, null, "FRESH",
-                Duration.ofMinutes(60));
+                Duration.ofMinutes(60), 83);
         AtomicBoolean firstPhaseCompleted = new AtomicBoolean();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
             firstPhaseCompleted.set(true);
@@ -921,7 +1364,7 @@ class StagedGenerationRunnerTest {
         String draftC = VALID_SPEC_DOCUMENT + "\n<!-- draft C -->\n";
         String draftD = VALID_SPEC_DOCUMENT + "\n<!-- draft D -->\n";
         sandbox.specMarkdown = draftA;
-        SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
+        SpecFidelityCritic reviewer = mockSpecificationReviewer();
         Answer<SpecFidelityCritic.SpecificationReview> reviewCurrentSpecification = invocation -> {
             String current = sandbox.specMarkdown;
             if (current.equals(draftA)) {

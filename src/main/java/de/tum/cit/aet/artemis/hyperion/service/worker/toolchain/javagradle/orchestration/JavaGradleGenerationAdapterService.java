@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
+import de.tum.cit.aet.artemis.aiworker.api.WorkloadApi;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity;
@@ -149,9 +150,9 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         var progress = progressSink(observer);
         var resources = new GenerationResources();
         var commands = new SandboxBuildCommands(resources);
-        var workspace = new GenerationWorkspace(commands, resources);
+        var workspace = new GenerationWorkspace(resources);
         var approvedSpecs = new ApprovedSpecRegistry();
-        var verifier = new DifferentialVerifier(commands, approvedSpecs);
+        var verifier = new DifferentialVerifier(commands, approvedSpecs, stopVerification(cancelled, assignment.authoringDeadline()));
         var stageChecks = new StageChecks(verifier, approvedSpecs);
         var prompt = new AgentSystemPrompt(commands);
         var runner = new AgentLoopRunner(models, parameters.contextWindowTokens(), Duration.ofMinutes(5), cooldown);
@@ -159,13 +160,14 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         var critic = new SpecFidelityCritic(ChatClient.create(new HarmonyScrubbingChatModel(model)), mapper, new PromptTemplates(), model.getOptions().getModel(),
                 Duration.ofMinutes(5), cooldown, parameters.contextWindowTokens(), models);
         var stages = new StagedGenerationRunner(runner, prompt, stageChecks, transcripts, approvedSpecs, critic, new ExerciseConceptSelector(runner, critic),
-                parameters.stagedContext(), parameters.maxDuration());
+                parameters.stagedContext(), parameters.maxDuration(), parameters.maxTurns());
         var orchestrator = new GenerationOrchestrator(sandbox.forExecution(assignment.identity().executionId()), workspace, runner, verifier, prompt,
                 new StructuralOracleSeeder(workspace, approvedSpecs), critic, parameters.maxTurns(), maxSemanticRepairs, stages, parameters.stagedGeneration(), stageChecks,
                 transcripts, approvedSpecs);
         var brief = assignment.brief();
+        boolean adaptation = brief.mode() == ExerciseBrief.Mode.ADAPT;
         var input = new GenerationInput(assignment.identity().exerciseId(), brief.namespace(), brief.problemStatement(), assignment.gradingContext().hasDueDate(),
-                assignment.gradingContext().baselineGradedTestNames(), brief.mode() == ExerciseBrief.Mode.ADAPT ? assignment.gradingContext().baselineHiddenTestNames() : Set.of(),
+                adaptation ? assignment.gradingContext().baselineGradedTestNames() : Set.of(), adaptation ? assignment.gradingContext().baselineHiddenTestNames() : Set.of(),
                 brief.resolvedBuildTool());
         Consumer<GenerationProgress.FileChange> files = change -> observer.progress("Updated " + change.path(), new GenerationProgress(null, null, change, null));
         active.put(assignment.identity(), orchestrator);
@@ -178,6 +180,13 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         finally {
             active.remove(assignment.identity(), orchestrator);
         }
+    }
+
+    static BooleanSupplier stopVerification(BooleanSupplier stopping, Instant authoringDeadline) {
+        BooleanSupplier cancelled = stopping instanceof WorkloadApi.StopSignal signal ? signal.cancelled() : stopping;
+        Instant drainDeadline = authoringDeadline.isAfter(Instant.MAX.minus(GenerationAssignment.AUTHORING_DRAIN_WINDOW)) ? Instant.MAX
+                : authoringDeadline.plus(GenerationAssignment.AUTHORING_DRAIN_WINDOW);
+        return () -> cancelled.getAsBoolean() || !Instant.now().isBefore(drainDeadline);
     }
 
     static BooleanSupplier stopAuthoring(BooleanSupplier cancelled, WorkerUsageRecorder usage, Instant authoringDeadline) {
@@ -218,7 +227,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
             builder.verbosity(parameters.verbosity());
         }
         return new HyperionGenerationSettings(parameters.effortProfile(), null, parameters.maxTurns(), parameters.maxDuration(), parameters.maxTokens(),
-                parameters.stagedGeneration(), parameters.stagedContext(), parameters.contextWindowTokens(), builder.build(), false, true);
+                parameters.stagedGeneration(), parameters.stagedContext(), parameters.contextWindowTokens(), builder.build(), false, true, parameters.repairModel());
     }
 
     private static String boundedSpec(String spec) {

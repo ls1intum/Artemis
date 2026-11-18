@@ -673,9 +673,12 @@ class GenerationTaskServiceTest {
         verify(reviewService).attachFindings(eq(exercise), eq(user), eq(report), eq(17L), eq(Map.of(RepositoryType.SOLUTION, "solution-commit")));
     }
 
-    @Test
-    void mechanicallyVerifiedRunWithBlockingQualityFinding_persistsLiveForInstructorReview() {
-        SpecFidelityReport report = SpecFidelityReport.qualityReviewUnavailable("The reviewer returned no usable verdict.");
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(value = SpecFidelityReport.Kind.class, names = { "QUALITY_REVIEW_UNAVAILABLE", "EXECUTABLE_WEAK_TEST_ORACLE",
+            "EXECUTABLE_EVIDENCE_UNAVAILABLE" })
+    void mechanicallyVerifiedRunWithBlockingQualityFinding_persistsLiveForInstructorReview(SpecFidelityReport.Kind kind) {
+        SpecFidelityReport report = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(kind, "Assessment requires review", "Executed grading defect or missing quality evidence.")));
         when(reviewService.attachFindings(any(), any(), any(), anyLong(), anyMap())).thenReturn(1);
 
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()), report));
