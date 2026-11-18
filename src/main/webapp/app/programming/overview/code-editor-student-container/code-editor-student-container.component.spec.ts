@@ -13,7 +13,8 @@ import { BehaviorSubject, Subject, of } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ActivatedRoute, Params } from '@angular/router';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-import { HttpResponse } from '@angular/common/http';
+import { ResultApi } from 'app/openapi/api/result-api';
+import type { Feedback as FeedbackResponse } from 'app/openapi/model/feedback';
 import { Feedback, FeedbackType, NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
@@ -52,6 +53,7 @@ describe('CodeEditorStudentContainerComponent', () => {
                         },
                     },
                 },
+                MockProvider(ResultApi),
                 MockProvider(DomainService),
                 MockProvider(SubmissionPolicyService),
                 MockProvider(AlertService),
@@ -163,7 +165,7 @@ describe('CodeEditorStudentContainerComponent', () => {
     });
     describe('an earlier submission from the result history', () => {
         const commitHash = 'a'.repeat(40);
-        let resultService: ResultService;
+        let resultApi: ResultApi;
 
         const participationWithAllResults = (): ProgrammingExerciseStudentParticipation =>
             ({
@@ -175,7 +177,7 @@ describe('CodeEditorStudentContainerComponent', () => {
             }) as ProgrammingExerciseStudentParticipation;
 
         beforeEach(() => {
-            resultService = TestBed.inject(ResultService);
+            resultApi = TestBed.inject(ResultApi);
             TestBed.inject(ActivatedRoute).params = of({ participationId: studentParticipation.id, submissionId: '7', resultId: '72' });
             vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
         });
@@ -183,16 +185,16 @@ describe('CodeEditorStudentContainerComponent', () => {
         it('should load only the routed submission and result, with the feedback of that result', () => {
             const latestSpy = vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
             vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(participationWithAllResults()));
-            const feedbacks: Feedback[] = [{ id: 5, detailText: 'Check the loop' }];
-            const detailsSpy = vi.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: feedbacks })));
+            const feedbacks: FeedbackResponse[] = [{ id: 5, detailText: 'Check the loop' }];
+            const detailsSpy = vi.spyOn(resultApi, 'getResultDetails').mockReturnValue(of(feedbacks));
 
             comp.ngOnInit();
 
             expect(latestSpy).not.toHaveBeenCalled();
-            expect(detailsSpy).toHaveBeenCalledExactlyOnceWith(studentParticipation.id, expect.objectContaining({ id: 72 }));
+            expect(detailsSpy).toHaveBeenCalledExactlyOnceWith(studentParticipation.id, 72);
             expect(comp.viewedSubmission()?.commitHash).toBe(commitHash);
             expect(comp.participation().submissions).toHaveLength(1);
-            expect(comp.participation().submissions![0].results).toEqual([expect.objectContaining({ id: 72, feedbacks })]);
+            expect(comp.participation().submissions![0].results).toEqual([expect.objectContaining({ id: 72, feedbacks: [expect.objectContaining(feedbacks[0])] })]);
             expect(comp.latestResult()?.id).toBe(72);
             // the problem statement beside the editor shows the tasks of this result
             expect(comp.earlierSubmissionParticipation()).toBe(comp.participation());
@@ -204,7 +206,7 @@ describe('CodeEditorStudentContainerComponent', () => {
             const params = new Subject<Params>();
             TestBed.inject(ActivatedRoute).params = params;
             vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockImplementation(() => of(participationWithAllResults()));
-            vi.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: [] })));
+            vi.spyOn(resultApi, 'getResultDetails').mockReturnValue(of([]));
 
             comp.ngOnInit();
             params.next({ participationId: studentParticipation.id, submissionId: '9', resultId: '72' });
@@ -218,19 +220,19 @@ describe('CodeEditorStudentContainerComponent', () => {
 
         it('should list the AI feedback about a whole file of an earlier result, but not its feedback on a line or of the tests', () => {
             vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(participationWithAllResults()));
-            const fileWide: Feedback = { id: 1, type: FeedbackType.AUTOMATIC, text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}File Main.java`, detailText: 'Split the class' };
-            const onLine: Feedback = {
+            const fileWide: FeedbackResponse = { id: 1, type: 'AUTOMATIC', text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}File Main.java`, detailText: 'Split the class' };
+            const onLine: FeedbackResponse = {
                 id: 2,
-                type: FeedbackType.AUTOMATIC,
+                type: 'AUTOMATIC',
                 text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}Rename the loop variable`,
                 reference: 'file:Main.java_line:3',
             };
-            const testFeedback: Feedback = { id: 3, type: FeedbackType.AUTOMATIC, text: 'testAdd', positive: false };
-            vi.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: [fileWide, onLine, testFeedback] })));
+            const testFeedback: FeedbackResponse = { id: 3, type: 'AUTOMATIC', text: 'testAdd', positive: false };
+            vi.spyOn(resultApi, 'getResultDetails').mockReturnValue(of([fileWide, onLine, testFeedback]));
 
             comp.ngOnInit();
 
-            expect(comp.unreferencedFeedback).toEqual([fileWide]);
+            expect(comp.unreferencedFeedback).toEqual([expect.objectContaining(fileWide)]);
         });
 
         it('should not list AI feedback about a whole file for the latest result, whose result control opens it', () => {

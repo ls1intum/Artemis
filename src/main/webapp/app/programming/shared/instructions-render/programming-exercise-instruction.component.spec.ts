@@ -27,11 +27,10 @@ import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/sha
 import { ProgrammingExercisePlantUmlService } from 'app/programming/shared/instructions-render/services/programming-exercise-plant-uml.service';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { HttpResponse } from '@angular/common/http';
 import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -293,7 +292,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         };
         const aiFeedback: Result = { id: 5, assessmentType: AssessmentType.AUTOMATIC_ATHENA, feedbacks: [] };
         const testResult: Result = { id: 3, assessmentType: AssessmentType.AUTOMATIC };
-        const testFeedback: Feedback[] = [{ id: 7, positive: true }];
         // a manual result before the assessment due date is not shown to the student
         const unreleasedManualResult: Result = { id: 4, assessmentType: AssessmentType.SEMI_AUTOMATIC, completionDate: dayjs() };
         const getAllResults = vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(
@@ -305,7 +303,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 ],
             } as ProgrammingExerciseStudentParticipation),
         );
-        vi.spyOn(TestBed.inject(ResultService), 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: testFeedback })));
+        vi.spyOn(TestBed.inject(ResultApi), 'getResultDetails').mockReturnValue(of([{ id: 7, positive: true }]));
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('participation', { id: 2, submissions: [{ id: 9, results: [aiFeedback] }] } as Participation);
@@ -314,7 +312,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         expect(getAllResults).toHaveBeenCalledWith(2);
         expect(comp.latestResult?.id).toBe(testResult.id);
-        expect(comp.latestResult?.feedbacks).toEqual(testFeedback);
+        expect(comp.latestResult?.feedbacks).toEqual([expect.objectContaining({ id: 7, positive: true })]);
     });
 
     it('should not let the pending lookup of an earlier submission overwrite the result of a newer build', () => {
@@ -327,7 +325,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         };
         const pendingLookup = new Subject<ProgrammingExerciseStudentParticipation>();
         vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(pendingLookup);
-        vi.spyOn(TestBed.inject(ResultService), 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(TestBed.inject(ResultApi), 'getResultDetails').mockReturnValue(of([]));
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
         fixture.componentRef.setInput('exercise', exercise);
         // submission A's latest result is AI feedback, so its test result is looked up

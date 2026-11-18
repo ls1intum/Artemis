@@ -32,7 +32,8 @@ import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/pr
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
+import { toFeedbacksOfResult } from 'app/assessment/shared/util/feedback-response.util';
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -59,7 +60,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     private domainService = inject(DomainService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private submissionPolicyService = inject(SubmissionPolicyService);
-    private resultService = inject(ResultService);
+    private resultApi = inject(ResultApi);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private route = inject(ActivatedRoute);
 
@@ -196,7 +197,9 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
                 switchMap((result) =>
                     result.feedbacks
                         ? of(result)
-                        : this.resultService.getFeedbackDetailsForResult(participationId, result).pipe(map((response) => cloneWith(result, { feedbacks: response.body ?? [] }))),
+                        : this.resultApi
+                              .getResultDetails(participationId, result.id!)
+                              .pipe(map((feedbacks) => cloneWith(result, { feedbacks: toFeedbacksOfResult(feedbacks, result) }))),
                 ),
             )
             .subscribe((result) => {
@@ -235,7 +238,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
                 }
                 const feedbacks$ = result.feedbacks
                     ? of(result.feedbacks)
-                    : this.resultService.getFeedbackDetailsForResult(participationId, result).pipe(map((response) => response.body ?? []));
+                    : this.resultApi.getResultDetails(participationId, result.id!).pipe(map((feedbacks) => toFeedbacksOfResult(feedbacks, result)));
                 return feedbacks$.pipe(
                     map((feedbacks) => {
                         result.feedbacks = feedbacks;
