@@ -123,7 +123,7 @@ public class ProgrammingExerciseUpdateMappingService {
         if (!Objects.equals(original.staticCodeAnalysis(), updateDTO.staticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
-        validateParticipationModes(updateDTO);
+        validateParticipationModes(updatedProgrammingExercise);
 
         // Verify that the checkout directories have not been changed
         validateCheckoutPathsUnchanged(original, buildConfig);
@@ -144,13 +144,15 @@ public class ProgrammingExerciseUpdateMappingService {
     }
 
     /**
-     * Requires at least one participation mode, the online editor, the offline IDE or, where Theia is enabled, the online IDE.
+     * Requires at least one participation mode, the online editor, the offline IDE or, where Theia is enabled, the online IDE. The modes are read from the exercise with the
+     * update applied, because a mode that the request leaves out keeps its stored value.
      */
-    private void validateParticipationModes(UpdateProgrammingExerciseDTO updateDTO) {
-        boolean onlineEditorOrOfflineIde = Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) || Boolean.TRUE.equals(updateDTO.allowOfflineIde());
+    private void validateParticipationModes(ProgrammingExercise updatedProgrammingExercise) {
+        boolean onlineEditorOrOfflineIde = Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor())
+                || Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde());
         if (moduleFeatureService.isTheiaEnabled()) {
             // Require 1 / 3 participation modes to be enabled
-            if (!onlineEditorOrOfflineIde && !updateDTO.allowOnlineIde()) {
+            if (!onlineEditorOrOfflineIde && !updatedProgrammingExercise.isAllowOnlineIde()) {
                 throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
                         "noParticipationModeAllowed");
             }

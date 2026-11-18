@@ -110,6 +110,8 @@ public class ProgrammingExerciseReEvaluationService {
             programmingExerciseUpdateMappingService.apply(updateDTO, programmingExercise, buildConfig, hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
             // The re-evaluation refuses what the update refuses
             programmingExerciseUpdateMappingService.validateUpdatedExercise(updateDTO, programmingExercise, buildConfig, originalSettings, false);
+            // so does the update, but only after the re-evaluation has written, which must not happen for a request that is refused
+            programmingExerciseCreationUpdateService.validateProblemStatementLength(programmingExercise.getProblemStatement());
             // the default branch cannot be changed
             buildConfig.setBranch(originalBranch);
 

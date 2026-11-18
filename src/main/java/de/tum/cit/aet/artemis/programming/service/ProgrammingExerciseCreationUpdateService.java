@@ -662,7 +662,12 @@ public class ProgrammingExerciseCreationUpdateService {
         }
     }
 
-    private void validateProblemStatementLength(@Nullable String problemStatement) {
+    /**
+     * Refuses a problem statement that is longer than the maximum length.
+     *
+     * @param problemStatement the problem statement, which may be absent
+     */
+    public void validateProblemStatementLength(@Nullable String problemStatement) {
         if (problemStatement != null && problemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
             throw new BadRequestAlertException("The problem statement must not exceed " + MAX_PROBLEM_STATEMENT_LENGTH + " characters", "ProgrammingExercise",
                     "problemStatementTooLong");
