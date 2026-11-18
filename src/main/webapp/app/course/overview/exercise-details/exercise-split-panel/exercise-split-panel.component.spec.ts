@@ -15,6 +15,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { User } from 'app/account/user/user.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { ExerciseSplitPanelComponent } from 'app/course/overview/exercise-details/exercise-split-panel/exercise-split-panel.component';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -507,6 +508,28 @@ describe('ExerciseSplitPanelComponent details panel with its real template', () 
         expect(downloads[1].componentInstance.includeTests()).toBe(true);
     });
 
+    it('should show the tasks of the earlier submission the editor shows, and the latest ones again afterwards', () => {
+        fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+        render({ type: ExerciseType.PROGRAMMING }, 'graded');
+        const problemStatement = () => fixture.debugElement.query(By.directive(ProblemStatementComponent)).componentInstance as ProblemStatementComponent;
+        expect(problemStatement().participationInput()).toBe(gradedParticipation);
+        expect(problemStatement().followLatestResult()).toBe(true);
+
+        const earlierSubmission = { id: 1, submissions: [{ id: 7 }] } as StudentParticipation;
+        const viewed = signal<StudentParticipation | undefined>(earlierSubmission);
+        fixture.componentInstance.onOutletActivate({ submitExercise: () => {}, earlierSubmissionParticipation: viewed });
+        fixture.detectChanges();
+
+        expect(problemStatement().participationInput()).toBe(earlierSubmission);
+        expect(problemStatement().followLatestResult()).toBe(false);
+
+        viewed.set(undefined);
+        fixture.detectChanges();
+
+        expect(problemStatement().participationInput()).toBe(gradedParticipation);
+        expect(problemStatement().followLatestResult()).toBe(true);
+    });
+
     it('should explain at the top of the details of a team exercise that practice is individual', () => {
         render({ type: ExerciseType.TEXT, teamMode: true }, 'graded');
 
@@ -516,6 +539,21 @@ describe('ExerciseSplitPanelComponent details panel with its real template', () 
         const information = fixture.nativeElement.querySelector('jhi-exercise-headers-information');
         expect(information).not.toBeNull();
         expect(hint()!.compareDocumentPosition(information) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('should share the result selected in the information boxes with the title bar and pass it back to them', () => {
+        render({ type: ExerciseType.TEXT }, 'graded');
+        const informationElement = fixture.debugElement.query(By.directive(ExerciseHeadersInformationComponent));
+        const information = informationElement.componentInstance as ExerciseHeadersInformationComponent;
+        const selected = { id: 3 } as Result;
+
+        informationElement.triggerEventHandler('displayedResultChange', selected);
+        expect(fixture.componentInstance.displayedResult()).toBe(selected);
+
+        const other = { id: 4 } as Result;
+        fixture.componentRef.setInput('displayedResult', other);
+        fixture.detectChanges();
+        expect(information.displayedResult()).toBe(other);
     });
 
     it('should remind the student in the practice view of a team exercise that the work is their own', () => {

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.course.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForCourseOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ResultOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -129,11 +131,22 @@ class CourseOverviewExerciseVisibilityTest {
 
         var response = service.getCourseExercisesForOverview(course, student);
 
+        // The AI feedback only copies a test score, so the test result is the one shown; the AI feedback is sent along with it
         var submission = response.exercises().iterator().next().studentParticipations().iterator().next().submissions().iterator().next();
-        assertThat(submission.results()).singleElement().satisfies(result -> {
-            assertThat(result.id()).isEqualTo(20L);
-            assertThat(result.assessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
-        });
+        assertThat(submission.results()).extracting(ResultOverviewDTO::id).containsExactly(19L, 20L);
+    }
+
+    @Test
+    void sendsTheTestResultAlongWithALaterAiFeedbackOfAnAutomaticallyAssessedExercise() {
+        prepare(exercise(ExerciseType.PROGRAMMING, null, null),
+                List.of(row(10L, PAST, true, null, 19L, true, PAST, AssessmentType.AUTOMATIC), row(10L, PAST, true, null, 20L, true, PAST, AssessmentType.AUTOMATIC_ATHENA)));
+
+        var response = service.getCourseExercisesForOverview(course, student);
+
+        // An exercise group card grades by the test result, so it must not get the AI feedback alone
+        var submission = response.exercises().iterator().next().studentParticipations().iterator().next().submissions().iterator().next();
+        assertThat(submission.results()).extracting(ResultOverviewDTO::id, ResultOverviewDTO::assessmentType).containsExactly(tuple(19L, AssessmentType.AUTOMATIC),
+                tuple(20L, AssessmentType.AUTOMATIC_ATHENA));
     }
 
     @ParameterizedTest

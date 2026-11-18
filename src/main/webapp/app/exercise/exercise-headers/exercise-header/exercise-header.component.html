@@ -27,6 +27,7 @@
         <div #pills data-testid="exercise-header-pills" class="flex items-center shrink-0">
             <jhi-exercise-headers-information
                 placement="titleBar"
+                [(displayedResult)]="displayedResult"
                 [exercise]="exercise()"
                 [studentParticipation]="activeParticipation()"
                 [course]="exercise().course"
