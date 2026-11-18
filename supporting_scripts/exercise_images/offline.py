@@ -97,6 +97,18 @@ def build_script(phases: list[Phase]) -> str:
     return "\n".join(lines)
 
 
+def make_writable(repository: Path) -> None:
+    """Lets every user of the container change the mounted repository.
+
+    The build agent copies the repositories into the container, where the build user owns them. A bind mount keeps the owner of the host
+    (the user of the runner), so the build user of the image (`artemis_user`) could not delete or replace a file of the tests, which phases
+    of C do, and the build would fail for a reason that production does not have.
+    """
+    for path in [repository, *repository.rglob("*")]:
+        if not path.is_symlink():
+            path.chmod(path.stat().st_mode | (0o777 if path.is_dir() else 0o666))
+
+
 def docker_command(repository: Path, script: Path, image: str, platform: str | None = None) -> list[str]:
     """The ``docker run`` that builds ``repository`` in ``image`` without a network.
 
@@ -117,6 +129,7 @@ def verify(templates_dir: Path, variant: Variant, image: str, work_dir: Path, pl
     """Assembles the repositories of ``variant`` and runs their build phases in ``image`` without a network."""
     repository = work_dir / variant.name / "testing-dir"
     assemble(templates_dir, variant, repository)
+    make_writable(repository)
     script = work_dir / variant.name / "build.sh"
     phases = load_phases(templates_dir, variant.language, variant.phases_file)
     script.write_text(build_script(phases), encoding="utf-8")
@@ -132,6 +145,7 @@ def verify(templates_dir: Path, variant: Variant, image: str, work_dir: Path, pl
             break
         # The failed attempt left build products behind, start from the assembled repository again
         assemble(templates_dir, variant, repository)
+        make_writable(repository)
 
     missing = sorted({next(finding for finding in findings if finding) for findings in MISSING_ARTIFACT.findall(output)})
     if completed.returncode != 0 and not missing:

@@ -172,6 +172,19 @@ class OfflineTest(unittest.TestCase):
         self.assertIn("--network", command)
         self.assertEqual(command[command.index("--network") + 1], "none")
 
+    def test_the_mounted_repository_is_writable_for_the_build_user_of_the_image(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory) / "testing-dir"
+            (repository / "tests").mkdir(parents=True)
+            report = repository / "tests" / "Tests.py"
+            report.write_text("print()", encoding="utf-8")
+            report.chmod(0o644)
+            (repository / "tests").chmod(0o755)
+            offline.make_writable(repository)
+            self.assertEqual(report.stat().st_mode & 0o666, 0o666)
+            self.assertEqual((repository / "tests").stat().st_mode & 0o777, 0o777)
+            self.assertEqual(repository.stat().st_mode & 0o777, 0o777)
+
     def test_pub_does_not_retry_failed_requests_for_minutes(self):
         command = offline.docker_command(Path("testing-dir"), Path("build.sh"), "image:1")
         self.assertEqual(command[command.index("-e") + 1], "PUB_MAX_HTTP_RETRIES=0")
