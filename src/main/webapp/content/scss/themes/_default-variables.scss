@@ -287,6 +287,27 @@ $update-footer-background: white;
 // Edit Quiz
 $quiz-mapping-letter-number-mixin-color: white;
 
+// Quiz mapping editor and statistics (the same in both themes: these colours sit on question images and white drop locations)
+$quiz-mapping-number-background: #696969;
+$quiz-mapping-unlink-background: rgba(0, 0, 0, 0.5);
+$quiz-mapping-color-0: #2c3e50;
+$quiz-mapping-color-1: #2980b9;
+$quiz-mapping-color-2: #c0392b;
+$quiz-mapping-color-3: #27ae60;
+$quiz-mapping-color-4: #f1c40f;
+$quiz-mapping-color-5: #e67e22;
+$quiz-mapping-color-6: #8e44ad;
+$quiz-mapping-color-7: #1abc9c;
+$quiz-drop-list-receiving-background: rgba(173, 216, 230, 0.8);
+$quiz-drop-list-dragging-background: rgb(144, 238, 144);
+$quiz-statistic-picture-background: #fefefe;
+$quiz-statistic-drag-item-border: #696969;
+$quiz-statistic-drag-item-background: #fafafa;
+$quiz-statistic-letter-background: #428bca;
+$quiz-statistic-letter-solution-background: #5cb85c;
+$quiz-participation-overlay-shadow-near: rgba(0, 0, 0, 0.16);
+$quiz-participation-overlay-shadow-far: rgba(0, 0, 0, 0.23);
+
 $edit-quiz-footer-background: white;
 $quiz-exercise-detail-max-score-background: whitesmoke;
 $quiz-exercise-detail-max-score-color: black;
@@ -315,7 +336,6 @@ $quiz-participation-footer-content-quiz-score-color: $success;
 $quiz-participation-footer-content-quiz-score-incorrect-color: black;
 $quiz-participation-footer-content-time-warning-color: $warning;
 $quiz-participation-footer-content-time-critical-color: $danger;
-$quiz-participation-quiz-is-over-border-color: #3c763d;
 $quiz-participation-refresh-overlay-active-background: rgba(255, 255, 255, 0.6);
 $quiz-participation-btn-circle-light-border-color: white;
 
@@ -433,6 +453,14 @@ $lecture-unit-card-body-background: white;
 $lecture-unit-card-header-background: rgba($overview-light-border-color, 0.3);
 $lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
 $lecture-unit-card-hover-shadow: $primary;
+
+// Page ribbon (development, test server and exam test run)
+$page-ribbon-box-background: $white;
+$page-ribbon-box-shadow: rgba($black, 0.1);
+$page-ribbon-background: #a00;
+$page-ribbon-color: $white;
+$page-ribbon-shadow: rgba($black, 0.25);
+$page-ribbon-text-shadow: rgba($black, 0.35);
 
 // Notification sidebar
 $notification-sb-background: $brighter-body-bg;

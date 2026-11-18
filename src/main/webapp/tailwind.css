@@ -57,47 +57,16 @@
 }
 
 /* Scanning may precede a module becoming fully Bootstrap-free; the migration rule checks locked paths are covered. */
-@source './app/shared-ui/components/buttons/button';
-@source './app/shared-ui/table-view';
-@source './app/atlas/shared/standardized-competencies';
-@source './app/atlas/shared/competency-selection';
-@source './app/shared-ui/form/title-channel-name';
-@source './app/atlas/manage/import-standardized-competencies';
 @source './app/programming/manage/code-editor/instructor-and-editor-container';
 @source './app/programming/manage/detail';
 @source './app/programming/manage/vcs-repository-access-log-view';
 @source './app/programming/manage/status';
 @source './app/programming/shared/instructions-render/step-wizard';
-@source './app/quiz/manage/detail';
-@source './app/quiz/manage/manage-buttons';
-@source './app/quiz/manage/lifecyle-buttons';
-@source './app/text/manage/detail';
 @source './app/course/manage/athena-settings-update';
 @source './app/course/manage/control-center/about-athena-modal';
-@source './app/editor/markdown-editor';
-@source './app/communication/message-editor';
-@source './app/communication/posting-markdown-editor';
 @source './app/course/request';
 @source './app/course/overview/course-statistics';
-@source './app/shared-ui/user-import';
-@source './app/shared-ui/confirm-entity-name';
-@source './app/shared-ui/delete-dialog';
-@source './app/core/about-us';
-@source './app/core/usage-statistics';
-@source './app/shared-ui/components/resizable-panels';
-@source './app/shared-ui/components/buttons/confirm-autofocus-button';
-@source './app/shared-ui/loading-indicator-overlay';
-@source './app/shared-ui/loading-indicator-container';
-@source './app/shared-ui/components/checklist-check';
-@source './app/shared-ui/information-box';
-@source './app/shared-ui/detail-overview-list';
 @source './app/course/shared/course-sidebar-toggle-button';
-@source './app/atlas/shared/competency-contribution';
-@source './app/atlas/manage/competency-management';
-@source './app/atlas/manage/import';
-@source './app/atlas/manage/import-list';
-@source './app/atlas/manage/learning-paths-table';
-@source './app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-members';
 @source './app/course/manage/course-lti-configuration';
 @source './app/course/manage/course-material-import';
 @source './app/course/manage/course-scores';
@@ -107,30 +76,12 @@
 @source './app/programming/manage/grading/feedback-analysis';
 @source './app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students';
 @source './app/programming/shared/commits-info';
-@source './app/quiz/manage/list-edit-existing';
-@source './app/quiz/overview/course-training/course-training-quiz/leaderboard';
-@source './app/shared-ui/form/form-footer';
-@source './app/text/manage/tutor-effort';
-@source './app/atlas/manage/orchestration-trigger';
-@source './app/atlas/shared/orchestration-result-dialog';
-@source './app/core/feature-overview';
-@source './app/core/layouts/footer';
+@source './app/programming/shared/diff-review-banner';
 @source './app/course/overview/setup-passkey-modal';
 @source './app/course/overview/courses';
 @source './app/course/overview/course-registration';
 @source './app/course/sidebar';
-@source './app/communication/faq';
-@source './app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component.html';
-@source './app/communication/posting-create-edit-modal/post-create-edit-modal';
-@source './app/shared-ui/profile-picture';
-@source './app/shared-ui/components/buttons/copy-to-clipboard-button';
-@source './app/shared-ui/components/buttons/code-button';
-@source './app/quiz/manage/apollon-diagrams';
-@source './app/quiz/manage/question-reevaluation-actions';
-@source './app/communication/saved-posting-banner';
-@source './app/quiz/manage/statistics/question-statistics-chart';
 @source './app/course/manage/update';
-@source './app/text/overview/text-editor';
 @source './app/programming/shared/programming-exercise-update-timeline';
 @source './app/programming/shared/build-window-notice';
 @source './app/programming/manage/update/update-components/build-time-window';
@@ -189,6 +140,11 @@
     --tumaet-ui-state-info: var(--info);
     --tumaet-ui-state-info-contrast: var(--black);
     --tumaet-ui-state-info-foreground: var(--artemis-alert-info-color);
+
+    /* A solid success button shows a white label on a slightly darker green: black text on the plain green was hard to read, and white on the plain green would fall
+       below AA. Only the button roles change, so the success status colour that messages, tags and badges use stays as it is. */
+    --tumaet-ui-button-success-background: color-mix(in srgb, var(--success) 80%, black);
+    --tumaet-ui-button-success-contrast: var(--white);
     --tumaet-ui-tooltip-background: var(--artemis-dark);
     --tumaet-ui-tooltip-color: var(--tooltip-color);
 }
@@ -211,6 +167,10 @@
     --tumaet-ui-state-warning-contrast: var(--artemis-alert-warning-background);
     --tumaet-ui-state-info: var(--artemis-alert-info-color);
     --tumaet-ui-state-info-contrast: var(--artemis-alert-info-background);
+
+    /* The dark theme keeps the success button of the kit, which follows the status colour. The light override above must not reach it. */
+    --tumaet-ui-button-success-background: var(--tumaet-ui-state-success);
+    --tumaet-ui-button-success-contrast: var(--tumaet-ui-state-success-contrast);
 }
 
 /* Keep navbar trigger colors local; portalled content retains the body theme. */
@@ -239,16 +199,6 @@
 }
 
 /* Button action groups migrated to TUM AET UI; keep their layout utilities explicit. */
-@source './app/atlas/manage/competency-management/competency-management-table.component.html';
-@source './app/atlas/manage/competency-management/competency-management.component.html';
-@source './app/atlas/manage/competency-management/import-all-competencies.component.html';
-@source './app/atlas/manage/generate-competencies/competency-recommendation-detail.component.html';
-@source './app/atlas/manage/import/import-course-competencies.component.html';
-@source './app/atlas/manage/learning-paths-configuration/learning-paths-configuration.component.html';
-@source './app/communication/answer-post/answer-post.component.html';
-@source './app/communication/posting-reactions-bar/posting-reactions-bar.component.html';
-@source './app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component.html';
-@source './app/core/legal/data-export/data-export.component.html';
 @source './app/course/manage/control-center/athena-enabled/athena-enabled.component.html';
 @source './app/course/manage/course-material-import/course-material-import-dialog.component.html';
 @source './app/course/manage/course-scores/course-scores.component.html';
@@ -262,27 +212,17 @@
 @source './app/programming/manage/version-history/programming-exercise-version-programming-metadata.component.html';
 @source './app/programming/shared/actions/trigger-build-button/programming-exercise-trigger-build-button.component.html';
 @source './app/programming/shared/code-editor/actions/code-editor-actions.component.html';
-@source './app/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component.html';
-@source './app/quiz/manage/export/quiz-exercise-export.component.html';
-@source './app/quiz/manage/list-edit-existing/quiz-question-list-edit-existing.component.html';
-@source './app/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component.html';
-@source './app/quiz/manage/re-evaluate/quiz-re-evaluate.component.html';
-@source './app/quiz/manage/re-evaluate/warning/quiz-re-evaluate-warning.component.html';
-@source './app/quiz/manage/short-answer-question/short-answer-question-edit.component.html';
-@source './app/quiz/manage/statistics/quiz-statistics-footer/quiz-statistics-footer.component.html';
-@source './app/quiz/manage/update/quiz-exercise-update.component.html';
-@source './app/quiz/overview/participation/quiz-participation.component.html';
-@source './app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component.html';
-@source './app/shared-ui/export/modal/export-modal.component.html';
-@source './app/shared-ui/form/form-footer/form-footer.component.html';
-@source './app/text/manage/example-text-submission/example-text-submission.component.html';
 
 /* The migrated modules and components: Tailwind scans every template and component in them. eslint.config.mjs and stylelint.config.json lock the same list. */
 @source './app/account';
 @source './app/admin';
 @source './app/aiworker';
 @source './app/assessment';
+@source './app/atlas';
 @source './app/calendar';
+@source './app/communication';
+@source './app/core';
+@source './app/editor';
 @source './app/exam';
 @source './app/exercise';
 @source './app/fileupload';
@@ -298,10 +238,14 @@
 @source './app/notification';
 @source './app/plagiarism';
 @source './app/presentation';
+@source './app/quiz';
 @source './app/shared';
+@source './app/shared-ui';
 @source './app/sharing';
+@source './app/text';
 @source './app/tutorialgroup';
 @source './app/videosource';
-@source './app/core/alert';
-@source './app/shared-ui/user-registration-modal';
-@source './app/core/navbar/global-search/components/modal';
+
+/* Participation build and repository export controls live outside the migrated exercise module. */
+@source './app/programming/shared/actions';
+@source './app/programming/manage/assess/repo-export/export-button';

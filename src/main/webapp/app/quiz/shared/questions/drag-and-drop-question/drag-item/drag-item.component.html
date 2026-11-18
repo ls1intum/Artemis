@@ -14,7 +14,9 @@
                     <span>{{ dragItem().text }}</span>
                     <div *cdkDragPlaceholder></div>
                     <div *cdkDragPreview matchSize>
-                        <div style="border: 1px solid #000; background: white; color: black; padding: 4px; overflow: hidden; text-overflow: ellipsis">{{ dragItem().text }}</div>
+                        <div class="overflow-hidden text-ellipsis border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background) p-1 text-(--tumaet-ui-text-color)">
+                            {{ dragItem().text }}
+                        </div>
                     </div>
                 </div>
             </div>

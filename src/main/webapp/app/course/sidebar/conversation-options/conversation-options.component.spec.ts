@@ -1,9 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationOptionsComponent } from 'app/course/sidebar/conversation-options/conversation-options.component';
+import {
+    ConversationDetailDialogComponent,
+    ConversationDetailTabs,
+} from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -57,7 +61,7 @@ examples.forEach((conversation) => {
                     MockProvider(ConversationService),
                     MockProvider(CourseConversationsService),
                     MockProvider(AlertService),
-                    MockProvider(DialogService),
+                    MockProvider(TumAetUiDialogService),
                     { provide: CommunicationService, useClass: MockCommunicationService },
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
@@ -77,6 +81,17 @@ examples.forEach((conversation) => {
 
         afterEach(() => {
             vi.useRealTimers();
+        });
+
+        it('should center the three-dots icon in its button with symmetric horizontal padding', () => {
+            const toggle = fixture.nativeElement.querySelector('[data-testid="conversation-options-toggle"]') as HTMLElement;
+
+            expect(toggle).not.toBeNull();
+            // An asymmetric padding (ps-0 with pe-1) pushed the icon toward the left edge of the grey hover container.
+            expect(toggle.classList).toContain('px-1!');
+            expect(toggle.classList).not.toContain('ps-0');
+            expect(toggle.classList).not.toContain('pe-1');
+            expect(toggle.classList).toContain('justify-center');
         });
 
         it('should create', () => {
@@ -179,8 +194,8 @@ examples.forEach((conversation) => {
             vi.useFakeTimers();
             fixture.detectChanges();
             await vi.advanceTimersByTimeAsync(301);
-            const dialogService = TestBed.inject(DialogService);
-            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: of(undefined) } as any);
+            const dialogService = TestBed.inject(TumAetUiDialogService);
+            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: of(undefined) } as unknown as TumAetUiDialogRef);
             fixture.detectChanges();
 
             const dialogOpenButton = fixture.debugElement.nativeElement.querySelector('.setting');
@@ -188,6 +203,14 @@ examples.forEach((conversation) => {
             await vi.advanceTimersByTimeAsync(301);
             await fixture.whenStable();
             expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(openDialogSpy).toHaveBeenCalledWith(
+                ConversationDetailDialogComponent,
+                expect.objectContaining({
+                    showHeader: false,
+                    ariaLabel: expect.any(String),
+                    data: expect.objectContaining({ selectedTab: ConversationDetailTabs.SETTINGS, activeConversation: component.conversation() }),
+                }),
+            );
         });
     });
 });

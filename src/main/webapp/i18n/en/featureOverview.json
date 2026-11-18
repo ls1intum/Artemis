@@ -23,8 +23,8 @@
                 },
                 "examMode": {
                     "title": "Two exam modes available",
-                    "shortDescription": "Choose between a normal exam and a test exam.",
-                    "descriptionTextOne": "Artemis supports two exam modes. The conduction of normal exams and test exams. \n\nThe normal exam mode is suitable for conducting end-of-semester exams. Students can view and work on the exam between the configured working time. Afterwards you can perform a manual or automated evaluation of the students' submissions. The results will be published on the specified date. \n\nTest exams provide you with the possibility to provide students with a practice opportunity for the end-of-semester exam. The main difference is that you choose a working window within which students can freely start the exam. Students then have the configured working time to complete the exam. After submitting, students immediately get the automated assessment for programming and quizzes. Manual correction of the submissions is not necessary."
+                    "shortDescription": "Choose between a normal exam and a practice exam.",
+                    "descriptionTextOne": "Artemis supports two exam modes. The conduction of normal exams and practice exams. \n\nThe normal exam mode is suitable for conducting end-of-semester exams. Students can view and work on the exam between the configured working time. Afterwards you can perform a manual or automated evaluation of the students' submissions. The results will be published on the specified date. \n\nPractice exams provide you with the possibility to provide students with a practice opportunity for the end-of-semester exam. The main difference is that you choose a working window within which students can freely start the exam. Students then have the configured working time to complete the exam. After submitting, students immediately get the automated assessment for programming and quizzes. Manual correction of the submissions is not necessary."
                 },
                 "exerciseTypes": {
                     "title": "Multiple Exercise Types",
@@ -148,8 +148,8 @@
                 },
                 "examMode": {
                     "title": "Two exam modes",
-                    "shortDescription": "Artemis offers exams and test exams.",
-                    "descriptionTextOne": "Artemis supports two exam modes. The conduction of normal exams and test exams. \n\nThe normal exam mode is used for end-of-semester exams. As a student you are able to view and edit the exam between the scheduled working time. The results will be published on the specified date. \n\nTest exams provide you with a practice opportunity for the end-of-semester exams. The main difference is that you can start the test exam at any time during the working window. You will then have the specified working time available to complete the test exam. After submitting the test exam, you will see the automated assessment for programming and quiz exercises."
+                    "shortDescription": "Artemis offers exams and practice exams.",
+                    "descriptionTextOne": "Artemis supports two exam modes. The conduction of normal exams and practice exams. \n\nThe normal exam mode is used for end-of-semester exams. As a student you are able to view and edit the exam between the scheduled working time. The results will be published on the specified date. \n\nPractice exams provide you with a practice opportunity for the end-of-semester exams. The main difference is that you can start the practice exam at any time during the working window. You will then have the specified working time available to complete the practice exam. After submitting the practice exam, you will see the automated assessment for programming and quiz exercises."
                 },
                 "offline": {
                     "title": "Continue Working Offline",

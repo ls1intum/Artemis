@@ -9,5 +9,7 @@ export interface VcsAccessLogDTO extends BaseEntity {
     repositoryActionType: string;
     authenticationMechanism: string;
     commitHash?: string;
+    /** Whether a build agent made the access, for example to clone the repository for a build, rather than a person. */
+    buildAgent?: boolean;
     timestamp: dayjs.Dayjs;
 }

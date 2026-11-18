@@ -107,7 +107,7 @@
                     "file-upload": "File Upload Exercise",
                     "exercise": "Exercise",
                     "exam": "Exam",
-                    "test-exam": "Test Exam",
+                    "test-exam": "Practice Exam",
                     "lecture": "Lecture",
                     "lecture-unit": "Lecture Unit",
                     "faq": "FAQ",
@@ -371,7 +371,7 @@
             "confirmpassword.placeholder": "Confirm the new password",
             "email": "Email",
             "email.placeholder": "Your email",
-            "email.pattern": "Please use an email with the following pattern:",
+            "email.pattern": "Allowed email addresses:",
             "cancel": "Cancel",
             "confirm": "Confirm",
             "refresh": "Refresh",
@@ -413,7 +413,7 @@
                     "invalid": "Your email is invalid.",
                     "minlength": "Your email is required to be at least 5 characters.",
                     "maxlength": "Your email cannot be longer than 100 characters.",
-                    "pattern": "Your email does not follow the required pattern."
+                    "notAllowed": "This email address is not allowed."
                 }
             }
         },
@@ -473,6 +473,7 @@
         "quickActions": "Quick Actions",
         "controlCenter": "Control Center",
         "action": {
+            "deleteAll": "Delete All",
             "add": "Add",
             "create": "Create",
             "addblob": "Add blob",

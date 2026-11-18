@@ -378,7 +378,7 @@
 }
 
 /* While a drag is in progress the pointer is captured by the panel and may no longer be over the divider. */
-.card-resizable > :is(.rg-main-bottom, .rg-bottom-bottom, .rg-sidebar-left, .rg-sidebar-right)::after {
+.resizable-dragging > :is(.rg-main-bottom, .rg-bottom-bottom, .rg-sidebar-left, .rg-sidebar-right)::after {
     border-color: var(--primary);
 }
 

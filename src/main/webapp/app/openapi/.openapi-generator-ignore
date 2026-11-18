@@ -30,14 +30,20 @@
 
 # The following entries are pre-populated based on the input obtained via
 # the option `openapiGeneratorIgnoreList` (--openapi-generator-ignore-list in CLI for example).
+api/result-resources.ts
+api/presentation-assessment-resources.ts
+api/rating-resources.ts
+api/grade-step-resources.ts
 api/admin-lti-configuration-resources.ts
 api/hyperion-quiz-question-generation-resources.ts
+api/assessment-upload-resources.ts
 api/quiz-submission-resources.ts
 api/hyperion-authoring-run-resources.ts
 api/ingestion-browser-resources.ts
 api/tutorial-group-session-resources.ts
 api/tutorial-groups-configuration-resources.ts
 api/quiz-exercise-evaluation-resources.ts
+api/tutor-participation-resources.ts
 api/quiz-statistics-resources.ts
 api/hyperion-exercise-variant-resources.ts
 api/hyperion-programming-variant-resources.ts
@@ -46,7 +52,9 @@ api/hyperion-problem-statement-resources.ts
 api/quiz-exercise-deletion-resources.ts
 api/lti-resources.ts
 api/quiz-training-resources.ts
+api/long-feedback-text-resources.ts
 api/admin-hyperion-generation-resources.ts
+api/example-submission-resources.ts
 api/quiz-exercise-batch-resources.ts
 api/quiz-assessment-resources.ts
 api/tutorial-group-resources.ts
@@ -55,7 +63,10 @@ api/quiz-participation-resources.ts
 api/hyperion-assessment-criteria-generation-resources.ts
 api/admin-ai-worker-resources.ts
 api/athena-resources.ts
+api/bonus-resources.ts
 api/quiz-exercise-retrieval-resources.ts
+api/grading-scale-resources.ts
+api/participant-score-resources.ts
 api/global-search-resources.ts
 api/admin-hyperion-generation-monitoring-resources.ts
 api/tutorial-group-free-period-resources.ts
@@ -63,4 +74,7 @@ api/hyperion-quiz-question-pool-resources.ts
 api/quiz-exercise-resources.ts
 api/hyperion-faq-resources.ts
 api/calendar-resources.ts
+api/tutor-effort-resources.ts
+api/complaint-resources.ts
+api/complaint-response-resources.ts
 api/quiz-exercise-creation-update-resources.ts
