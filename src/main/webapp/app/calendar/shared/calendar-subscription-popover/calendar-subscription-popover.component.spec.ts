@@ -138,6 +138,30 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
         expect(content.classList.contains('max-h-[75dvh]')).toBe(true);
     });
 
+    it('gives the content on a small screen the width that its rows need, and never more than the screen has', () => {
+        fixture.componentRef.setInput('isMobile', true);
+        fixture.detectChanges();
+        openPopover();
+        const content = shown('subscription-popover-content') as HTMLElement;
+
+        // a narrower box clips the language selection and the two columns of checkboxes, as the content scrolls
+        expect(content.classList.contains('w-80')).toBe(true);
+        expect(content.classList.contains('max-w-[calc(100vw-4rem)]')).toBe(true);
+        expect(content.classList.contains('w-156')).toBe(false);
+    });
+
+    it('lets the buttons of the confirmation and the checkboxes wrap on a small screen', () => {
+        fixture.componentRef.setInput('isMobile', true);
+        fixture.detectChanges();
+        openPopover();
+        click('subscription-link-reset-button');
+
+        const buttons = shown('subscription-link-reset-confirm')!.parentElement!;
+        const checkboxes = shown('lecture-events-checkbox-label')!.parentElement!.parentElement!.parentElement!;
+        expect(buttons.classList.contains('flex-wrap')).toBe(true);
+        expect(checkboxes.classList.contains('flex-wrap')).toBe(true);
+    });
+
     it('starts without a pending confirmation each time it is opened', () => {
         component.confirmingReset.set(true);
         const button = document.createElement('button');

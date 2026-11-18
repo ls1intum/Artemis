@@ -1,5 +1,5 @@
 <tumaet-ui-popover #calendarSubscriptionPopover [ariaLabel]="'artemisApp.calendar.subscriptionPopover.title' | artemisTranslate" placement="bottom">
-    <div class="flex max-h-[75dvh] flex-col gap-2 overflow-y-auto" data-testid="subscription-popover-content" [class]="isMobile() ? 'w-60' : 'w-156'">
+    <div class="flex max-h-[75dvh] flex-col gap-2 overflow-y-auto" data-testid="subscription-popover-content" [class]="isMobile() ? 'w-80 max-w-[calc(100vw-4rem)]' : 'w-156'">
         <h5 class="m-0!" jhiTranslate="artemisApp.calendar.subscriptionPopover.title"></h5>
         <span jhiTranslate="artemisApp.calendar.subscriptionPopover.configurationExplanation"></span>
         @if (isMobile()) {
@@ -11,7 +11,7 @@
                 optionLabel="label"
                 optionValue="value"
             />
-            <div class="flex gap-6!">
+            <div class="flex flex-wrap gap-x-6! gap-y-2">
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center gap-1">
                         <tumaet-ui-checkbox
@@ -138,7 +138,7 @@
         @if (!resetting()) {
             @if (confirmingReset()) {
                 <span data-testid="subscription-link-reset-explanation" jhiTranslate="artemisApp.calendar.subscriptionPopover.resetExplanation"></span>
-                <div class="flex gap-2">
+                <div class="flex flex-wrap gap-2">
                     <button
                         type="button"
                         tumAetUiButton
