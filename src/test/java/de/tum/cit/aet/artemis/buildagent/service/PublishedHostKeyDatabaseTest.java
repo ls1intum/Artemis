@@ -152,9 +152,12 @@ class PublishedHostKeyDatabaseTest {
         Supplier<Set<String>> fetcher = () -> calls.getAndIncrement() == 0 ? published(PUBLISHED_KEY) : Set.of();
         var database = new PublishedHostKeyDatabase(fetcher, Mode.REQUIRED, clock::get);
         assertThat(accept(database, PUBLISHED_KEY)).isTrue();
+        assertThat(calls).hasValue(1);
 
-        clock.addAndGet(PublishedHostKeyDatabase.FAILURE_CACHE_DURATION.toNanos());
+        // the cached fingerprints are too old now, so the core node is asked again, and it does not answer
+        clock.addAndGet(PublishedHostKeyDatabase.CACHE_DURATION.toNanos() + 1);
         assertThat(accept(database, PUBLISHED_KEY)).isTrue();
+        assertThat(calls).hasValue(2);
         assertThat(accept(database, OTHER_KEY)).isFalse();
     }
 }

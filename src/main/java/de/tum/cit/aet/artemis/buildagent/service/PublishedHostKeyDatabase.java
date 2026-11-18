@@ -52,7 +52,7 @@ class PublishedHostKeyDatabase implements ServerKeyDatabase {
 
     private static final Logger log = LoggerFactory.getLogger(PublishedHostKeyDatabase.class);
 
-    private static final Duration CACHE_DURATION = Duration.ofMinutes(5);
+    static final Duration CACHE_DURATION = Duration.ofMinutes(5);
 
     /** How long a failed fetch is remembered, during which the core node is not asked again and the warning is not repeated. */
     static final Duration FAILURE_CACHE_DURATION = Duration.ofSeconds(30);
