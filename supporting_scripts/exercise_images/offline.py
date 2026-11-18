@@ -81,6 +81,9 @@ def docker_command(repository: Path, script: Path, image: str, platform: str | N
     The mount sources are made absolute: Docker reads a relative source such as ``results/java/testing-dir`` as the name of a volume.
     """
     command = ["docker", "run", "--rm", "--network", "none"]
+    # pub retries a request that fails with exponential backoff, which took about 20 minutes per build without a network. A package the image
+    # does not hold still fails at once, a cached one needs no request.
+    command += ["-e", "PUB_MAX_HTTP_RETRIES=0"]
     if platform:
         command += ["--platform", platform]
     # The destination paths are inside the container

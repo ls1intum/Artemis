@@ -170,6 +170,11 @@ class OfflineTest(unittest.TestCase):
         self.assertEqual(len(sources), 2)
         self.assertTrue(all(source.startswith("/") for source in sources), sources)
         self.assertIn("--network", command)
+        self.assertEqual(command[command.index("--network") + 1], "none")
+
+    def test_pub_does_not_retry_failed_requests_for_minutes(self):
+        command = offline.docker_command(Path("testing-dir"), Path("build.sh"), "image:1")
+        self.assertEqual(command[command.index("-e") + 1], "PUB_MAX_HTTP_RETRIES=0")
 
 
 class VerifyLogTest(unittest.TestCase):
