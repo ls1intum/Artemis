@@ -205,13 +205,9 @@ public class PublicUserJwtResource {
             authentication = saml2Service.get().handleAuthentication(authentication, saml2Authentication.getCredentials(), request);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
-        catch (UserNotActivatedException e) {
-            // If the exception is not caught, a 401 is returned.
-            // That does not match the actual reason and would trigger authentication in the client
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", e.getMessage()).build();
-        }
-        catch (AccessForbiddenException e) {
-            // The login name belongs to an account that the identity provider does not manage. The client shows the message instead of a bare "Forbidden"
+        catch (UserNotActivatedException | AccessForbiddenException e) {
+            // If a not activated user were not caught, a 401 would be returned. That does not match the actual reason and would trigger authentication in the client.
+            // The same holds for a login name that belongs to an account that the identity provider does not manage: the client shows the message instead of a bare "Forbidden"
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", e.getMessage()).build();
         }
 

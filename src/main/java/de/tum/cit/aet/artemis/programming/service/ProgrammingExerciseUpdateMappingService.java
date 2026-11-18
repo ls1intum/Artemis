@@ -123,29 +123,10 @@ public class ProgrammingExerciseUpdateMappingService {
         if (!Objects.equals(original.staticCodeAnalysis(), updateDTO.staticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
-        // Check if Theia is enabled
-        if (moduleFeatureService.isTheiaEnabled()) {
-            // Require 1 / 3 participation modes to be enabled
-            if (!Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) && !Boolean.TRUE.equals(updateDTO.allowOfflineIde()) && !updateDTO.allowOnlineIde()) {
-                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
-                        "noParticipationModeAllowed");
-            }
-        }
-        else {
-            // Require 1 / 2 participation modes to be enabled
-            if (!Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) && !Boolean.TRUE.equals(updateDTO.allowOfflineIde())) {
-                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", ENTITY_NAME,
-                        "noParticipationModeAllowed");
-            }
-        }
+        validateParticipationModes(updateDTO);
 
         // Verify that the checkout directories have not been changed
-        var updatedBuildConfig = buildConfig;
-        if (!Objects.equals(original.assignmentCheckoutPath(), updatedBuildConfig != null ? updatedBuildConfig.getAssignmentCheckoutPath() : null)
-                || !Objects.equals(original.solutionCheckoutPath(), updatedBuildConfig != null ? updatedBuildConfig.getSolutionCheckoutPath() : null)
-                || !Objects.equals(original.testCheckoutPath(), updatedBuildConfig != null ? updatedBuildConfig.getTestCheckoutPath() : null)) {
-            throw new BadRequestAlertException("The custom checkout paths cannot be changed!", ENTITY_NAME, "checkoutDirectoriesChanged");
-        }
+        validateCheckoutPathsUnchanged(original, buildConfig);
 
         // Verify that the programming language supports the selected network access option
         programmingExerciseValidationService.validateDockerFlags(buildConfig);
@@ -159,6 +140,35 @@ public class ProgrammingExerciseUpdateMappingService {
         // Forbid changing the course the exercise belongs to
         if (!Objects.equals(original.courseId(), updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
             throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
+        }
+    }
+
+    /**
+     * Requires at least one participation mode, the online editor, the offline IDE or, where Theia is enabled, the online IDE.
+     */
+    private void validateParticipationModes(UpdateProgrammingExerciseDTO updateDTO) {
+        boolean onlineEditorOrOfflineIde = Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) || Boolean.TRUE.equals(updateDTO.allowOfflineIde());
+        if (moduleFeatureService.isTheiaEnabled()) {
+            // Require 1 / 3 participation modes to be enabled
+            if (!onlineEditorOrOfflineIde && !updateDTO.allowOnlineIde()) {
+                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
+                        "noParticipationModeAllowed");
+            }
+        }
+        else if (!onlineEditorOrOfflineIde) {
+            // Require 1 / 2 participation modes to be enabled
+            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", ENTITY_NAME,
+                    "noParticipationModeAllowed");
+        }
+    }
+
+    private static void validateCheckoutPathsUnchanged(OriginalSettings original, ProgrammingExerciseBuildConfig updatedBuildConfig) {
+        String assignmentCheckoutPath = updatedBuildConfig != null ? updatedBuildConfig.getAssignmentCheckoutPath() : null;
+        String solutionCheckoutPath = updatedBuildConfig != null ? updatedBuildConfig.getSolutionCheckoutPath() : null;
+        String testCheckoutPath = updatedBuildConfig != null ? updatedBuildConfig.getTestCheckoutPath() : null;
+        if (!Objects.equals(original.assignmentCheckoutPath(), assignmentCheckoutPath) || !Objects.equals(original.solutionCheckoutPath(), solutionCheckoutPath)
+                || !Objects.equals(original.testCheckoutPath(), testCheckoutPath)) {
+            throw new BadRequestAlertException("The custom checkout paths cannot be changed!", ENTITY_NAME, "checkoutDirectoriesChanged");
         }
     }
 
