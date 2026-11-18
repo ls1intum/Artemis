@@ -526,7 +526,11 @@ class LocalVCAccessLogRecorderServiceTest {
 
             assertThat(stored).hasValue(1);
             assertThat(timeOfRetry.get()).as("the time of the first attempt, taken before it started").isBetween(before, timeInsideTheFirstAttempt.get());
-            verify(vcsAccessLogService, times(1)).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
+            // the retry writes the same event as the first attempt, with the time added
+            verify(vcsAccessLogService, times(1)).createAccessLog(testUser, testParticipation.getId(), RepositoryActionType.CLONE, AuthenticationMechanism.SSH, "head", "10.0.0.2");
+            verify(vcsAccessLogService, times(1)).createAccessLog(testUser, testParticipation.getId(), RepositoryActionType.CLONE, AuthenticationMechanism.SSH, "head", "10.0.0.2",
+                    timeOfRetry.get());
+            verifyNoMoreInteractions(vcsAccessLogService);
             assertThat(Thread.currentThread().isInterrupted()).as("the interrupt is not lost").isTrue();
         }
         finally {
@@ -539,12 +543,18 @@ class LocalVCAccessLogRecorderServiceTest {
         var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
         doThrow(new IllegalStateException("the database is away")).when(vcsAccessLogService).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
 
-        accessLogRecorder.recordFetch(subject, auditOfAClone());
+        try {
+            accessLogRecorder.recordFetch(subject, auditOfAClone());
 
-        verify(vcsAccessLogService, times(1)).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
-        // no other attempt either, for example one with a time
-        verifyNoMoreInteractions(vcsAccessLogService);
-        assertThat(Thread.currentThread().isInterrupted()).isFalse();
+            verify(vcsAccessLogService, times(1)).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
+            // no other attempt either, for example one with a time
+            verifyNoMoreInteractions(vcsAccessLogService);
+            assertThat(Thread.currentThread().isInterrupted()).isFalse();
+        }
+        finally {
+            // a regression that sets the flag must not leave it set for the next test
+            Thread.interrupted();
+        }
     }
 
     @Test
