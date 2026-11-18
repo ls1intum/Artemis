@@ -30,8 +30,8 @@ import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from './extensions
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
-import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
+import { toFeedbacksOfResult } from 'app/assessment/shared/util/feedback-response.util';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { findLatestResult } from 'app/foundation/util/utils';
@@ -65,7 +65,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
 
     private viewContainerRef = inject(ViewContainerRef);
     private elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
-    private resultService = inject(ResultService);
+    private resultApi = inject(ResultApi);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private programmingExerciseTaskWrapper = inject(ProgrammingExerciseTaskExtensionWrapper);
     private programmingExercisePlantUmlWrapper = inject(ProgrammingExercisePlantUmlExtensionWrapper);
@@ -447,10 +447,9 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         const currentParticipation = this.participation();
-        return this.resultService.getFeedbackDetailsForResult(currentParticipation!.id, result).pipe(
-            map((res) => res && res.body),
-            map((feedbacks: Feedback[] | null) => {
-                result.feedbacks = feedbacks ?? undefined;
+        return this.resultApi.getResultDetails(currentParticipation!.id!, result.id!).pipe(
+            map((feedbacks) => {
+                result.feedbacks = toFeedbacksOfResult(feedbacks, result);
                 return result;
             }),
             catchError(() => of(result)),
