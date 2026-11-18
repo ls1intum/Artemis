@@ -47,33 +47,20 @@ export function isImageSourceAllowed(src: string | null): boolean {
  */
 export function srcsetAddresses(srcset: string): string[] {
     const addresses: string[] = [];
-    const length = srcset.length;
-    let position = 0;
-    while (position < length) {
-        while (position < length && (isHtmlWhitespace(srcset[position]) || srcset[position] === ',')) {
-            position++;
-        }
-        if (position >= length) {
-            break;
-        }
+    let position = skipWhile(srcset, 0, isSeparator);
+    while (position < srcset.length) {
         const start = position;
-        while (position < length && !isHtmlWhitespace(srcset[position])) {
-            position++;
-        }
+        position = skipWhile(srcset, position, (character) => !isHtmlWhitespace(character));
         let address = srcset.substring(start, position);
         if (address.endsWith(',')) {
-            // a loop and not a regular expression: one that looks for the commas at the end tries every comma of a long run in the middle as well
-            let end = address.length;
-            while (end > 0 && address[end - 1] === ',') {
-                end--;
-            }
-            address = address.substring(0, end);
+            address = withoutTrailingCommas(address);
         } else {
             position = skipDescriptors(srcset, position);
         }
         if (address) {
             addresses.push(address);
         }
+        position = skipWhile(srcset, position, isSeparator);
     }
     return addresses;
 }
@@ -83,6 +70,31 @@ function isHtmlWhitespace(character: string): boolean {
     return character === ' ' || character === '\t' || character === '\n' || character === '\f' || character === '\r';
 }
 
+/** What lies between two candidates of a `srcset`. */
+function isSeparator(character: string): boolean {
+    return isHtmlWhitespace(character) || character === ',';
+}
+
+/** The position of the first character from `from` on that `matches` does not accept, which is the end of the text if there is none. */
+function skipWhile(text: string, from: number, matches: (character: string) => boolean): number {
+    let position = from;
+    while (position < text.length && matches(text[position])) {
+        position++;
+    }
+    return position;
+}
+
+/** A loop and not a regular expression: one that looks for the commas at the end tries every comma of a long run in the middle as well. */
+function withoutTrailingCommas(address: string): string {
+    let end = address.length;
+    while (end > 0 && address[end - 1] === ',') {
+        end--;
+    }
+    return address.substring(0, end);
+}
+
+type DescriptorState = 'descriptor' | 'parentheses' | 'after';
+
 /**
  * Moves behind the descriptors of a candidate, with the states of the HTML standard: a comma ends the candidate except inside parentheses, and the first closing
  * parenthesis leaves them again, whatever was opened before.
@@ -91,36 +103,35 @@ function isHtmlWhitespace(character: string): boolean {
  * @returns the position behind the descriptors, which is the start of the next candidate or the end of the value
  */
 function skipDescriptors(srcset: string, from: number): number {
-    const length = srcset.length;
-    let position = from;
-    while (position < length && isHtmlWhitespace(srcset[position])) {
-        position++;
-    }
-    let state: 'descriptor' | 'parentheses' | 'after' = 'descriptor';
-    while (position < length) {
+    let position = skipWhile(srcset, from, isHtmlWhitespace);
+    let state: DescriptorState = 'descriptor';
+    while (position < srcset.length) {
         const character = srcset[position];
-        if (state === 'descriptor') {
-            if (isHtmlWhitespace(character)) {
-                state = 'after';
-            } else if (character === ',') {
-                return position + 1;
-            } else if (character === '(') {
-                state = 'parentheses';
-            }
-            position++;
-        } else if (state === 'parentheses') {
-            if (character === ')') {
-                state = 'descriptor';
-            }
-            position++;
-        } else if (isHtmlWhitespace(character)) {
-            position++;
-        } else {
+        if (state === 'after' && !isHtmlWhitespace(character)) {
             // the next descriptor starts, which is read again in the state for descriptors
             state = 'descriptor';
+            continue;
         }
+        if (state === 'descriptor' && character === ',') {
+            return position + 1;
+        }
+        state = nextDescriptorState(state, character);
+        position++;
     }
     return position;
+}
+
+function nextDescriptorState(state: DescriptorState, character: string): DescriptorState {
+    if (state === 'parentheses') {
+        return character === ')' ? 'descriptor' : 'parentheses';
+    }
+    if (state === 'descriptor') {
+        if (isHtmlWhitespace(character)) {
+            return 'after';
+        }
+        return character === '(' ? 'parentheses' : 'descriptor';
+    }
+    return 'after';
 }
 
 /**

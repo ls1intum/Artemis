@@ -240,14 +240,15 @@ function areFunctionAddressesAllowed(value: string | null): boolean {
     if (/\\|\/\*|(?:image-set|image|element|cross-fade|paint|src)\s*\(/i.test(value)) {
         return false;
     }
-    // A `url(` without a closing parenthesis behind it is read to the end of the value, so it must not pass unchecked. This is decided before the matcher below runs, because
-    // that matcher fails on exactly such a value, and only after it has tried every way to split the white space that follows the opening parenthesis.
+    // A `url(` without a closing parenthesis behind it is read to the end of the value, so it must not pass unchecked. This is decided before the matcher below runs, so that
+    // the matcher is never asked to fail on a long value.
     const openings = [...value.matchAll(/url\s*\(/gi)];
     const lastOpening = openings.at(-1);
     if (lastOpening && !value.includes(')', lastOpening.index)) {
         return false;
     }
-    const matches = [...value.matchAll(/url\s*\(\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\s*\)/gi)];
+    // The parts of the matcher do not overlap: white space is skipped before the address, which an unquoted address does not start with, and after a quoted one.
+    const matches = [...value.matchAll(/url\s*\(\s*(?:"([^"]*)"\s*|'([^']*)'\s*|([^)\s][^)]*)?)\)/gi)];
     // a `url(` inside the address of an earlier one is not matched of its own, so it must not pass unchecked either
     if (matches.length !== openings.length) {
         return false;
@@ -266,27 +267,26 @@ function restrictImageAttributes(node: Element): void {
     if (!hasImageHostRestriction()) {
         return;
     }
-    if ((node.tagName === 'IMG' || node.tagName === 'SOURCE') && !isImageSourceSetAllowed(node.getAttribute('srcset'))) {
-        node.removeAttribute('srcset');
+    if (node.tagName === 'IMG' || node.tagName === 'SOURCE') {
+        removeUnlessAllowed(node, ['srcset'], isImageSourceSetAllowed);
     }
-    if (node.tagName === 'VIDEO' && !isImageSourceAllowed(node.getAttribute('poster'))) {
-        node.removeAttribute('poster');
+    if (node.tagName === 'VIDEO') {
+        removeUnlessAllowed(node, ['poster'], isImageSourceAllowed);
     }
-    if (node.hasAttribute?.('background') && !isImageSourceAllowed(node.getAttribute('background'))) {
-        node.removeAttribute('background');
-    }
+    removeUnlessAllowed(node, ['background'], isImageSourceAllowed);
     // SVG presentation attributes can name an image in `url(...)` as well, a reference to an element of the same document (`#id`) stays
-    for (const attribute of SVG_URL_ATTRIBUTES) {
-        if (node.hasAttribute?.(attribute) && !areFunctionAddressesAllowed(node.getAttribute(attribute))) {
-            node.removeAttribute(attribute);
-        }
-    }
+    removeUnlessAllowed(node, SVG_URL_ATTRIBUTES, areFunctionAddressesAllowed);
     // An image inside an SVG names its address in `href`, an `feImage` filter primitive in the same way
     if (['image', 'feimage'].includes(node.tagName?.toLowerCase())) {
-        for (const attribute of ['href', 'xlink:href']) {
-            if (node.hasAttribute?.(attribute) && !isImageSourceAllowed(node.getAttribute(attribute))) {
-                node.removeAttribute(attribute);
-            }
+        removeUnlessAllowed(node, ['href', 'xlink:href'], isImageSourceAllowed);
+    }
+}
+
+/** Removes each of the attributes of the node whose value `isAllowed` does not accept. */
+function removeUnlessAllowed(node: Element, attributes: readonly string[], isAllowed: (value: string | null) => boolean): void {
+    for (const attribute of attributes) {
+        if (node.hasAttribute?.(attribute) && !isAllowed(node.getAttribute(attribute))) {
+            node.removeAttribute(attribute);
         }
     }
 }
