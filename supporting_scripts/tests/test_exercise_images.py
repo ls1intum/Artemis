@@ -296,6 +296,20 @@ class TestReportTest(unittest.TestCase):
             (repository / "other" / "valid.xml").write_text('<?xml version="1.0"?>\n<testsuites><testsuite name="s"><testcase name="x"/></testsuite></testsuites>', encoding="utf-8")
             self.assertEqual(offline.missing_reports(repository, self.PHASES), [])
 
+    def test_a_report_with_a_failed_test_case_does_not_pass_even_next_to_a_passing_one(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            (repository / "tests").mkdir()
+            (repository / "other").mkdir()
+            (repository / "tests" / "report.xml").write_text('<testsuite><testcase name="a"/><testcase name="b"><failure message="x"/></testcase></testsuite>', encoding="utf-8")
+            self.assertEqual(offline.missing_reports(repository, self.PHASES), ["The phase test left a test report with 1 failed of 2 test cases (tests/report.xml)"])
+            (repository / "other" / "a.xml").write_text('<testsuite><testcase name="x"/></testsuite>', encoding="utf-8")
+            self.assertEqual(len(offline.missing_reports(repository, self.PHASES)), 1)
+            (repository / "tests" / "report.xml").write_text('<testsuite><testcase name="a"><error type="E"/></testcase><testcase name="b"><skipped/></testcase></testsuite>', encoding="utf-8")
+            self.assertEqual(offline.missing_reports(repository, self.PHASES), ["The phase test left a test report with 1 failed of 2 test cases (tests/report.xml)"])
+            (repository / "tests" / "report.xml").write_text('<testsuite><testcase name="a"/><testcase name="b"><skipped/></testcase></testsuite>', encoding="utf-8")
+            self.assertEqual(offline.missing_reports(repository, self.PHASES), [])
+
     def test_a_missing_report_or_one_without_a_test_case_is_reported(self):
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory)

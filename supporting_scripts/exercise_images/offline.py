@@ -44,29 +44,34 @@ def checkout_directories(text: str) -> str:
     return text.replace("${studentParentWorkingDirectoryName}", ASSIGNMENT_DIRECTORY).replace("${testWorkingDirectory}", TEST_DIRECTORY)
 
 
-def has_test_case(report: Path) -> bool:
-    """Whether ``report`` is a complete JUnit file (``testsuite`` or ``testsuites``) with at least one ``testcase`` element.
+def read_report(report: Path) -> tuple[int, int] | None:
+    """The number of test cases and of failed ones (a ``failure`` or ``error`` element) of a complete JUnit file, or ``None`` for anything else.
 
-    A truncated or otherwise malformed file does not count, and neither does one with a DOCTYPE or entity declaration: the standard library
-    parser expands entities, and a test report has no use for them.
+    A complete file has ``testsuite`` or ``testsuites`` as its root. A truncated or otherwise malformed file is none, and so is one with a
+    DOCTYPE or entity declaration: the standard library parser expands entities, and a test report has no use for them.
     """
     text = report.read_text(encoding="utf-8", errors="replace")
     if "<!DOCTYPE" in text or "<!ENTITY" in text:
-        return False
+        return None
     try:
         root = ET.fromstring(text.lstrip("\ufeff"))  # noqa: S314 - no DOCTYPE or entity declaration, checked above
     except ET.ParseError:
-        return False
-    names = [element.tag.rpartition("}")[2] for element in root.iter()]
-    return names[0] in ("testsuite", "testsuites") and "testcase" in names
+        return None
+    if root.tag.rpartition("}")[2] not in ("testsuite", "testsuites"):
+        return None
+    cases = [element for element in root.iter() if element.tag.rpartition("}")[2] == "testcase"]
+    failed = [case for case in cases if any(child.tag.rpartition("}")[2] in ("failure", "error") for child in case)]
+    return len(cases), len(failed)
 
 
 def missing_reports(repository: Path, phases: list[Phase]) -> list[str]:
-    """The phases that were meant to leave a test report (JUnit XML) and left none with a test case.
+    """The phases that were meant to leave a test report (JUnit XML) and left none with a test case, or one with a failed test case.
 
     The test phases of several languages hide the exit status of the test run (``|| true``, a pipe through a converter), so a run that could
     not even start, for example because a library of the tests is missing in the image, still ends with exit status 0. Its report is the
-    evidence. Static code analysis phases (``forceRun``) and result files of other formats are not looked at.
+    evidence, and so is a failed test case in it (the tests of the C templates record a sanitizer that cannot link as a failure). The
+    templates are built from their solution, so every test has to pass. Static code analysis phases (``forceRun``) and result files of
+    other formats are not looked at.
 
     The reports are looked at after the whole build, so a phase whose result paths another phase also writes (the structural and the
     behavior stage of the sequential Java and Kotlin builds share ``**/target/surefire-reports/*.xml``) can be satisfied by the report of
@@ -78,9 +83,13 @@ def missing_reports(repository: Path, phases: list[Phase]) -> list[str]:
         patterns = [checkout_directories(path) for path in phase.result_paths if path.endswith(".xml")]
         if phase.force_run or not patterns:
             continue
-        reports = {report for pattern in patterns for report in repository.glob(pattern) if report.is_file()}
-        if not any(has_test_case(report) for report in reports):
+        reports = {report: read_report(report) for pattern in patterns for report in repository.glob(pattern) if report.is_file()}
+        if not any(counts and counts[0] for counts in reports.values()):
             problems.append(f"The phase {phase.name} left no test report with a test case ({', '.join(patterns)})")
+        # Every report counts, a failed test in one of them is not made up for by passing tests in another
+        for report, counts in sorted(reports.items()):
+            if counts and counts[1]:
+                problems.append(f"The phase {phase.name} left a test report with {counts[1]} failed of {counts[0]} test cases ({report.relative_to(repository).as_posix()})")
     return problems
 
 
