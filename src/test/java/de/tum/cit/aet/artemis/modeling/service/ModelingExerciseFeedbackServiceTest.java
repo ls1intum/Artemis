@@ -29,10 +29,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.AthenaFeedbackRequestRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
+import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -184,6 +186,22 @@ class ModelingExerciseFeedbackServiceTest {
         verify(athenaFeedbackRequestRepository, never()).failAthenaFeedbackRequest(any());
     }
 
+    @Test
+    void reservationRejectionDoesNotAttachBroadcastOrDispatch() throws Exception {
+        ModelingSubmission submission = new ModelingSubmission();
+        submission.setId(7L);
+        submission.setModel(NON_EMPTY_MODEL);
+        when(userRepository.getUser()).thenReturn(new User());
+        when(athenaFeedbackRequestRepository.reserveAthenaFeedbackRequest(submission))
+                .thenThrow(new de.tum.cit.aet.artemis.core.exception.BadRequestAlertException("Duplicate", "submission", "duplicate"));
+
+        newService(Optional.of(athenaFeedbackApi)).generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise, submission);
+
+        assertThat(submission.getResults()).isEmpty();
+        verifyNoInteractions(resultWebsocketService);
+        verify(athenaFeedbackApi, never()).getModelingFeedbackSuggestions(any(), any(), eq(false), any());
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
     void exposesPersistedPendingResultBeforeAthenaCompletes(boolean testExam) throws Exception {
@@ -193,7 +211,11 @@ class ModelingExerciseFeedbackServiceTest {
         submission.setSubmitted(true);
         submission.setSubmissionDate(java.time.ZonedDateTime.now());
         submission.setParticipation(participation);
-        participation.addSubmission(submission);
+        ModelingSubmission participationSubmission = new ModelingSubmission();
+        participationSubmission.setId(submission.getId());
+        participationSubmission.setSubmitted(true);
+        participationSubmission.setSubmissionDate(submission.getSubmissionDate());
+        participation.addSubmission(participationSubmission);
         CountDownLatch athenaStarted = new CountDownLatch(1);
         CountDownLatch releaseAthena = new CountDownLatch(1);
         CountDownLatch completed = new CountDownLatch(1);
@@ -201,7 +223,9 @@ class ModelingExerciseFeedbackServiceTest {
         AtomicReference<java.time.ZonedDateTime> pendingDeadline = new AtomicReference<>();
         when(userRepository.getUser()).thenReturn(new User());
         if (!testExam) {
-            when(participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID)).thenReturn(participation);
+            StudentParticipation reloadedParticipation = new StudentParticipation();
+            reloadedParticipation.addSubmission(submission);
+            when(participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID)).thenReturn(reloadedParticipation);
         }
         when(athenaFeedbackRequestRepository.reserveAthenaFeedbackRequest(any())).thenAnswer(invocation -> {
             Result result = new Result();
@@ -238,6 +262,8 @@ class ModelingExerciseFeedbackServiceTest {
                 service.handleNonGradedFeedbackRequest(participation, modelingExercise);
             }
             assertThat(athenaStarted.await(2, TimeUnit.SECONDS)).isTrue();
+            assertThat(submission.getLatestResult()).isNotNull();
+            assertThat(participationSubmission.getLatestResult()).isSameAs(submission.getLatestResult());
             assertThat(pendingId.get()).as("Reloads need a persisted pending result id").isEqualTo(11L);
             assertThat(pendingDeadline.get()).as("Pending feedback has a retry deadline").isAfter(java.time.ZonedDateTime.now());
         }
@@ -245,6 +271,67 @@ class ModelingExerciseFeedbackServiceTest {
             releaseAthena.countDown();
             assertThat(completed.await(2, TimeUnit.SECONDS)).isTrue();
         }
+    }
+
+    @Test
+    void preservesFeedbackContentAndCompletedResultThroughSharedScheduling() throws Exception {
+        ModelingSubmission submission = new ModelingSubmission();
+        submission.setId(7L);
+        submission.setModel(NON_EMPTY_MODEL);
+        User requestingUser = new User();
+        when(userRepository.getUser()).thenReturn(requestingUser);
+        when(athenaFeedbackApi.getModelingFeedbackSuggestions(modelingExercise, submission, false, requestingUser)).thenReturn(List
+                .of(new ModelingFeedbackDTO(null, 1L, 7L, "Correct", "Useful feedback", 4.0, null, "n1"), new ModelingFeedbackDTO(null, 1L, 7L, "Ignored", null, 9.0, null, "n2")));
+        CountDownLatch completed = new CountDownLatch(1);
+        AtomicReference<Result> completedResult = new AtomicReference<>();
+        doAnswer(invocation -> {
+            Result result = invocation.getArgument(1);
+            if (Boolean.TRUE.equals(result.isSuccessful())) {
+                completedResult.set(result);
+                completed.countDown();
+            }
+            return null;
+        }).when(resultWebsocketService).broadcastNewResult(eq(participation), any(Result.class));
+
+        newService(Optional.of(athenaFeedbackApi)).generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise, submission);
+
+        assertThat(completed.await(2, TimeUnit.SECONDS)).isTrue();
+        Result result = completedResult.get();
+        assertThat(result).isSameAs(submission.getLatestResult());
+        assertThat(result.getScore()).isEqualTo(40.0);
+        assertThat(result.isRated()).isTrue();
+        assertThat(result.getFeedbacks()).singleElement().satisfies(item -> {
+            assertThat(item.getText()).isEqualTo("Correct");
+            assertThat(item.getDetailText()).isEqualTo("Useful feedback");
+            assertThat(item.getCredits()).isEqualTo(4.0);
+            assertThat(item.getType()).isEqualTo(FeedbackType.AUTOMATIC);
+        });
+        assertThat(result.getFeedbacks().iterator().next().getReference()).isEqualTo("n1");
+        verify(athenaFeedbackRequestRepository, never()).failAthenaFeedbackRequest(any());
+    }
+
+    @Test
+    void broadcastsPersistedWorkerFailure() throws Exception {
+        ModelingSubmission submission = new ModelingSubmission();
+        submission.setId(7L);
+        submission.setModel(NON_EMPTY_MODEL);
+        when(userRepository.getUser()).thenReturn(new User());
+        when(athenaFeedbackApi.getModelingFeedbackSuggestions(eq(modelingExercise), eq(submission), eq(false), any())).thenThrow(new IllegalStateException("Athena unavailable"));
+        CountDownLatch failureBroadcast = new CountDownLatch(1);
+        when(athenaFeedbackRequestRepository.failAthenaFeedbackRequest(any())).thenReturn(true);
+        doAnswer(invocation -> {
+            Result result = invocation.getArgument(1);
+            if (Boolean.FALSE.equals(result.isSuccessful())) {
+                failureBroadcast.countDown();
+            }
+            return null;
+        }).when(resultWebsocketService).broadcastNewResult(eq(participation), any(Result.class));
+
+        newService(Optional.of(athenaFeedbackApi)).generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise, submission);
+
+        assertThat(failureBroadcast.await(2, TimeUnit.SECONDS)).isTrue();
+        assertThat(submission.getLatestResult().isSuccessful()).isFalse();
+        verify(athenaFeedbackRequestRepository, never()).completeAthenaFeedbackRequest(any(), org.mockito.ArgumentMatchers.anyDouble(), any(), any());
     }
 
 }

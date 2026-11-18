@@ -1,9 +1,10 @@
 import { OnDestroy, Service, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, Subscription, finalize, of, shareReplay, tap } from 'rxjs';
+import { Observable, finalize, of, shareReplay, tap } from 'rxjs';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { onUserChange } from 'app/core/auth/user-change.util';
 import { currentNavigationId } from 'app/course/overview/services/navigation-scope';
 
 /**
@@ -26,18 +27,7 @@ export class CourseAvailableTabsService implements OnDestroy {
     private readonly state = signal<{ courseId: number; navigationId: number; tabs: CourseAvailableTabs } | undefined>(undefined);
     private inFlightRequest?: { courseId: number; navigationId: number; observable: Observable<CourseAvailableTabs> };
 
-    private currentUserId?: number;
-    private readonly authenticationStateSubscription: Subscription;
-
-    constructor() {
-        this.currentUserId = this.accountService.userIdentity()?.id;
-        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
-            if (this.currentUserId !== user?.id) {
-                this.currentUserId = user?.id;
-                this.clear();
-            }
-        });
-    }
+    private readonly authenticationStateSubscription = onUserChange(this.accountService, () => this.clear());
 
     ngOnDestroy(): void {
         this.clear();
