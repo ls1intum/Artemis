@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fails when the exercise templates pin dependency versions their default image does not hold.
 
-Covers Java, Kotlin, Rust, JavaScript, TypeScript and Swift.
+Covers Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart and C#.
 
 Compares the build files of ``src/main/resources/templates`` with the template project of the image configured in
 ``application.yml``, read from the image repository at the image's tag. It needs no Docker and downloads no dependency, so

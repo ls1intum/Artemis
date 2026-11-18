@@ -22,6 +22,25 @@ describe('user settings routes', () => {
         ]);
     });
 
+    it('keeps legacy redirects after canonical pages in their original order', () => {
+        expect(routes[0].children?.slice(9).map((route) => route.path)).toEqual([
+            'account',
+            'notifications',
+            'science',
+            'passkeys',
+            'ssh',
+            'ssh/add',
+            'ssh/fingerprints',
+            'ssh/view/:keyId',
+            'vcs-token',
+            'access-tokens',
+            'agent-access',
+            'llm-usage',
+            'ide-preferences',
+            'quiz-training',
+        ]);
+    });
+
     it('provides SSH detail pages with the existing SSH title', () => {
         const sshRoutes = routes[0].children?.filter((route) => route.path?.startsWith('credentials/ssh/'));
 

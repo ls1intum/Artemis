@@ -89,6 +89,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipati
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.VcsAccessLogOperations;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 @Profile(PROFILE_CORE)
@@ -505,7 +506,7 @@ public class ProgrammingExerciseParticipationResource {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         log.info("Fetching VCS access logs for participation ID: {}", participationId);
         List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.get().findAllByParticipationId(participationId);
-        var vcsAccessLogDTOs = vcsAccessLogs.stream().map(VcsAccessLogDTO::of).toList();
+        var vcsAccessLogDTOs = VcsAccessLogOperations.oneEntryPerOperation(vcsAccessLogs).stream().map(VcsAccessLogDTO::of).toList();
         return ResponseEntity.ok(vcsAccessLogDTOs);
     }
 
@@ -735,7 +736,7 @@ public class ProgrammingExerciseParticipationResource {
         var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
 
         List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.get().findAllByParticipationId(participation.getId());
-        var vcsAccessLogDTOs = vcsAccessLogs.stream().map(VcsAccessLogDTO::of).toList();
+        var vcsAccessLogDTOs = VcsAccessLogOperations.oneEntryPerOperation(vcsAccessLogs).stream().map(VcsAccessLogDTO::of).toList();
         return ResponseEntity.ok(vcsAccessLogDTOs);
     }
 

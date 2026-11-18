@@ -11,6 +11,9 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -37,6 +40,17 @@ public record GradingCriterionDTO(Long id, String title, List<GradingInstruction
                         Comparator.comparingLong(GradingInstruction::getSortOrder).thenComparing(GradingInstruction::getId, Comparator.nullsLast(Comparator.naturalOrder())))
                         .map(GradingInstructionDTO::of).toList();
         return new GradingCriterionDTO(gradingCriterion.getId(), gradingCriterion.getTitle(), instructions);
+    }
+
+    /**
+     * Maps update-request criteria without initializing a lazy collection. Null means absent; an initialized empty
+     * collection means that all criteria should be removed.
+     *
+     * @param criteria criteria from the exercise
+     * @return the mapped criteria, or null when absent or not initialized
+     */
+    public static @Nullable List<GradingCriterionDTO> ofAllIfInitialized(@Nullable Collection<GradingCriterion> criteria) {
+        return criteria != null && Hibernate.isInitialized(criteria) ? ofAll(criteria) : null;
     }
 
     /**

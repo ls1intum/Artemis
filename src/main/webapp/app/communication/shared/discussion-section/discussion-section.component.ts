@@ -18,7 +18,7 @@ import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
@@ -41,7 +41,9 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         MessageInlineInputComponent,
         ArtemisTranslatePipe,
         TranslateDirective,
-        NgbTooltipModule,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiTooltipDirective,
         SearchFilterComponent,
         ResizableDirective,
     ],

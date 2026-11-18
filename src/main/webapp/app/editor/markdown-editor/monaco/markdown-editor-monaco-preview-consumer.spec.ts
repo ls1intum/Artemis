@@ -9,7 +9,6 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
-import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
@@ -119,8 +118,8 @@ describe('MarkdownEditorMonacoComponent with the programming exercise instructio
             ],
         })
             .overrideComponent(MarkdownEditorMonacoComponent, {
-                remove: { imports: [MonacoEditorComponent, PostingButtonComponent, RedirectToIrisButtonComponent] },
-                add: { imports: [MockComponent(MonacoEditorComponent), MockComponent(PostingButtonComponent), MockComponent(RedirectToIrisButtonComponent)] },
+                remove: { imports: [MonacoEditorComponent, RedirectToIrisButtonComponent] },
+                add: { imports: [MockComponent(MonacoEditorComponent), MockComponent(RedirectToIrisButtonComponent)] },
             })
             .compileComponents();
         globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;

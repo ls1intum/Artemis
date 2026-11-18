@@ -24,7 +24,7 @@
                 </button>
             }
         </div>
-        @if (exam() && !exam()?.testExam) {
+        @if (exam() && isRealExam(exam())) {
             <div [tumAetUiTooltip]="testRunCanBeAssessed() ? '' : ('artemisApp.examManagement.testRun.assessTestRunDisabled' | artemisTranslate)">
                 @if (course()?.isAtLeastInstructor) {
                     <a

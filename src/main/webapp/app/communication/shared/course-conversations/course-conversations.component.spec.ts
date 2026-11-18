@@ -19,8 +19,7 @@ import { ConversationMessagesComponent } from 'app/communication/course-conversa
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { BehaviorSubject, EMPTY, Subject, of, throwError } from 'rxjs';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CommunicationService } from 'app/communication/service/communication.service';
@@ -83,7 +82,7 @@ examples.forEach((activeConversation) => {
         let setActiveConversationSpy: ReturnType<typeof vi.spyOn>;
         let courseConversationsService: CourseConversationsService;
         let courseOverviewService: CourseOverviewService;
-        let dialogService: DialogService;
+        let dialogService: TumAetUiDialogService;
         let courseSidebarService: CourseSidebarService;
         let activatedRoute: ActivatedRoute;
         let breakpoint$: BehaviorSubject<BreakpointState>;
@@ -95,8 +94,6 @@ examples.forEach((activeConversation) => {
         // @ts-ignore
         MockInstance(ConversationGlobalSearchComponent, 'searchElement', signal([new ElementRef(document.createElement('div'))]));
         MockInstance(ConversationThreadSidebarComponent, 'threadContainer', signal(new ElementRef(document.createElement('div'))));
-        const dummyTooltip = { close: vi.fn() } as unknown as NgbTooltip;
-        MockInstance(ConversationThreadSidebarComponent, 'expandTooltip', signal(dummyTooltip));
 
         beforeEach(() => {
             vi.useFakeTimers();
@@ -128,7 +125,6 @@ examples.forEach((activeConversation) => {
                     FormsModule,
                     ReactiveFormsModule,
                     FontAwesomeModule,
-                    NgbTooltip,
                 ],
                 declarations: [LoadingIndicatorContainerStubComponent],
                 providers: [
@@ -159,7 +155,7 @@ examples.forEach((activeConversation) => {
                         },
                     },
                     MockProvider(CourseOverviewService),
-                    MockProvider(DialogService),
+                    MockProvider(TumAetUiDialogService),
                     MockProvider(CourseConversationsService),
                     MockProvider(SidebarEventService),
                     MockProvider(ProfileService),
@@ -239,7 +235,7 @@ examples.forEach((activeConversation) => {
             setActiveConversationSpy = vi.spyOn(courseConversationsService, 'setActiveConversation');
             acceptCodeOfConductSpy = vi.spyOn(courseConversationsService, 'acceptCodeOfConduct');
             vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
-            dialogService = TestBed.inject(DialogService);
+            dialogService = TestBed.inject(TumAetUiDialogService);
             component.sidebarConversations.set([]);
 
             vi.spyOn(courseOverviewService, 'mapConversationsToSidebarCardElements').mockReturnValue([
@@ -456,7 +452,7 @@ examples.forEach((activeConversation) => {
 
         describe('Dialog Opening', () => {
             const mockOnClose = new Subject<any>();
-            const mockDialogRef = { onClose: mockOnClose.asObservable(), close: vi.fn() } as unknown as DynamicDialogRef;
+            const mockDialogRef = { onClose: mockOnClose.asObservable(), close: vi.fn() } as unknown as TumAetUiDialogRef;
 
             beforeEach(() => {
                 // Set a mock course with id 1
@@ -466,19 +462,32 @@ examples.forEach((activeConversation) => {
             it('should open the group chat creation dialog', () => {
                 const spy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
                 component.openCreateGroupChatDialog();
-                expect(spy).toHaveBeenCalledExactlyOnceWith(GroupChatCreateDialogComponent, expect.anything());
+                expect(spy).toHaveBeenCalledExactlyOnceWith(
+                    GroupChatCreateDialogComponent,
+                    expect.objectContaining({ showHeader: false, autoFocus: 'first-tabbable', ariaLabel: expect.any(String), data: { course: component.course() } }),
+                );
             });
 
             it('should open the one-to-one chat creation dialog', () => {
                 const spy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
                 component.openCreateOneToOneChatDialog();
-                expect(spy).toHaveBeenCalledExactlyOnceWith(OneToOneChatCreateDialogComponent, expect.anything());
+                expect(spy).toHaveBeenCalledExactlyOnceWith(
+                    OneToOneChatCreateDialogComponent,
+                    expect.objectContaining({ showHeader: false, autoFocus: 'first-tabbable', ariaLabel: expect.any(String), data: { course: component.course() } }),
+                );
             });
 
             it('should open the channel overview dialog', () => {
                 const spy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
                 component.openChannelOverviewDialog();
-                expect(spy).toHaveBeenCalledExactlyOnceWith(ChannelsOverviewDialogComponent, expect.anything());
+                expect(spy).toHaveBeenCalledExactlyOnceWith(
+                    ChannelsOverviewDialogComponent,
+                    expect.objectContaining({
+                        showHeader: false,
+                        ariaLabel: expect.any(String),
+                        data: { course: component.course(), createChannelFn: undefined, channelSubType: undefined },
+                    }),
+                );
             });
 
             it('should open the create channel dialog when onCreateChannelPressed is called', () => {
@@ -487,7 +496,10 @@ examples.forEach((activeConversation) => {
 
                 component.openCreateChannelDialog();
 
-                expect(spy).toHaveBeenCalledExactlyOnceWith(ChannelsCreateDialogComponent, expect.anything());
+                expect(spy).toHaveBeenCalledExactlyOnceWith(
+                    ChannelsCreateDialogComponent,
+                    expect.objectContaining({ showHeader: false, autoFocus: 'first-tabbable', ariaLabel: expect.any(String), data: { course: component.course() } }),
+                );
             });
 
             for (const kind of ['group', 'direct'] as const) {
@@ -499,7 +511,7 @@ examples.forEach((activeConversation) => {
                     vi.mocked(courseOverviewService.mapConversationsToSidebarCardElements).mockReturnValue(replacement);
                     const create = kind === 'group' ? vi.mocked(courseConversationsService.createGroupChat) : vi.mocked(courseConversationsService.createOneToOneChat);
                     create.mockReturnValue(outcome === 'error' ? throwError(() => new Error('conversation reload failed')) : EMPTY);
-                    const ref = new DynamicDialogRef();
+                    const ref = new TumAetUiDialogRef(vi.fn(), vi.fn());
                     vi.spyOn(dialogService, 'open').mockReturnValue(ref);
                     if (kind === 'group') component.openCreateGroupChatDialog();
                     else component.openCreateOneToOneChatDialog();
@@ -535,7 +547,7 @@ examples.forEach((activeConversation) => {
                 const previousSidebar = component.sidebarData();
                 const previousCards = component.sidebarConversations();
                 const selected = generateExampleChannelDTO({ id: 77, unreadMessagesCount: 2 } as ChannelDTO);
-                const ref = new DynamicDialogRef();
+                const ref = new TumAetUiDialogRef(vi.fn(), vi.fn());
                 vi.spyOn(dialogService, 'open').mockReturnValue(ref);
                 vi.mocked(courseConversationsService.forceRefresh).mockReturnValue(failed ? throwError(() => new Error('reload failed')) : EMPTY);
                 setActiveConversationSpy.mockClear();
@@ -1437,13 +1449,14 @@ describe('CourseConversationsComponent membership updates with the conversation 
                 MockProvider(ChannelService),
                 MockProvider(WebsocketService),
                 MockProvider(CourseOverviewService),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 MockProvider(AlertService),
                 MockProvider(FaqService),
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: {} },
                 { provide: BreakpointObserver, useValue: { observe: () => of({ matches: false, breakpoints: {} }), isMatched: () => false } },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(CourseConversationsComponent, {

@@ -69,6 +69,7 @@ import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -2973,7 +2974,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void participateInTestExamTextExerciseOnlyWithAnAttemptThatWasNotHandedIn() throws Exception {
         TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         Exam testExam = examTextExercise.getExam();
-        testExam.setTestExam(true);
+        testExam.setExamMode(ExamMode.TEST);
         testExam.setStartDate(ZonedDateTime.now().minusHours(2));
         testExam.setEndDate(ZonedDateTime.now().plusHours(1));
         testExam.setWorkingTime(60 * 60);
