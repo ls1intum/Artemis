@@ -267,6 +267,7 @@ public class ParticipationUtilService {
     public Result createSubmissionAndResult(StudentParticipation studentParticipation, long scoreAwarded, boolean rated) {
         Exercise exercise = studentParticipation.getExercise();
         var submission = getSubmission(studentParticipation, exercise);
+        submission.setSubmitted(true);
         submission.setSubmissionDate(ZonedDateTime.now().minusWeeks(1));
         submission = submissionRepository.save(submission);
 

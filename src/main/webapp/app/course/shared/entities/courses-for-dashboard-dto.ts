@@ -1,3 +1,4 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { CourseForDashboardDTO, CourseForDashboardResponseDTO, courseForDashboardFromDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
@@ -18,7 +19,7 @@ export interface ActiveExamForCourseDashboardDTO {
     title: string;
     startDate: string;
     endDate: string;
-    testExam: boolean;
+    examMode: ExamMode;
     examMaxPoints?: number;
     course: ActiveExamCourseReferenceDTO;
 }

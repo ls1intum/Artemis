@@ -68,7 +68,16 @@
             </ng-container>
         </tumaet-ui-form-field>
 
-        <tumaet-ui-form-field controlId="email" required [invalid]="settingsForm.email().invalid() && (settingsForm.email().dirty() || settingsForm.email().touched())">
+        <tumaet-ui-form-field
+            controlId="email"
+            required
+            [hint]="
+                allowedEmailPatternHint && !settingsForm.email().disabled()
+                    ? ('settings.messages.validate.email.hint' | artemisTranslate: { pattern: allowedEmailPatternHint })
+                    : undefined
+            "
+            [invalid]="settingsForm.email().invalid() && (settingsForm.email().dirty() || settingsForm.email().touched())"
+        >
             <span id="email-label" tumAetUiFormFieldLabel jhiTranslate="global.form.email"></span>
             <input
                 aria-labelledby="email-label"
@@ -89,8 +98,12 @@
                     <small jhiTranslate="global.messages.validate.email.minlength"></small>
                 } @else if (settingsForm.email().getError('maxLength')) {
                     <small jhiTranslate="global.messages.validate.email.maxlength"></small>
-                } @else if (settingsForm.email().getError('pattern')) {
-                    <small jhiTranslate="settings.messages.validate.email.pattern" [translateValues]="{ pattern: allowedEmailPatternReadable }"></small>
+                } @else if (settingsForm.email().getError('emailNotAllowed')) {
+                    <small jhiTranslate="settings.messages.validate.email.notAllowed"></small>
+                    @if (allowedEmailPatternHint) {
+                        <!-- the hint of the field is hidden while the field shows an error, so the allowed addresses are named here -->
+                        <small jhiTranslate="settings.messages.validate.email.hint" [translateValues]="{ pattern: allowedEmailPatternHint }"></small>
+                    }
                 }
             </ng-container>
         </tumaet-ui-form-field>
@@ -100,7 +113,13 @@
         <button tumAetUiButton type="button" severity="secondary" variant="outlined" (click)="visible.set(false)">
             <span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button tumAetUiButton data-testid="account-settings-save-button" type="submit" form="account-settings-form" [disabled]="settingsForm().invalid() || !settingsChanged()">
+        <button
+            tumAetUiButton
+            data-testid="account-settings-save-button"
+            type="submit"
+            form="account-settings-form"
+            [disabled]="settingsForm().invalid() || settingsForm().pending() || !settingsChanged()"
+        >
             <span jhiTranslate="entity.action.save"></span>
         </button>
     </ng-template>

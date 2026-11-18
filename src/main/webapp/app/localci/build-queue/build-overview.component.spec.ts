@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
+import { By } from '@angular/platform-browser';
+import { FinishedBuildsToolbarComponent } from 'app/localci/shared/finished-builds-toolbar.component';
 import { BuildOverviewComponent } from 'app/localci/build-queue/build-overview.component';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import dayjs from 'dayjs/esm';
@@ -14,7 +16,8 @@ import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
 import * as DownloadUtil from 'app/foundation/util/download.util';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -300,6 +303,10 @@ describe('BuildQueueComponent', () => {
             schemas: [NO_ERRORS_SCHEMA],
         });
 
+        TestBed.overrideComponent(BuildOverviewComponent, {
+            remove: { imports: [BuildJobStatisticsComponent] },
+            add: { imports: [MockComponent(BuildJobStatisticsComponent)] },
+        });
         await TestBed.compileComponents();
 
         fixture = TestBed.createComponent(BuildOverviewComponent);
@@ -308,6 +315,34 @@ describe('BuildQueueComponent', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+    });
+
+    it('binds the shared finished-build toolbar to overview search, loading and filter actions', () => {
+        const search = vi.spyOn(component, 'triggerLoadFinishedJobs');
+        const refresh = vi.spyOn(component, 'loadFinishedBuildJobs');
+        const filter = vi.spyOn(component, 'openFilterModal');
+        fixture.detectChanges();
+        component.searchTerm = 'overview search';
+        component.isLoading.set(true);
+        const appliedFilters = new FinishedBuildJobFilter();
+        appliedFilters.numberOfAppliedFilters = 2;
+        component.finishedBuildJobFilter.set(appliedFilters);
+        fixture.detectChanges();
+        const toolbar = fixture.debugElement.query(By.directive(FinishedBuildsToolbarComponent)).componentInstance as FinishedBuildsToolbarComponent;
+        expect(toolbar.searchTerm()).toBe('overview search');
+        expect(toolbar.loading()).toBe(true);
+        expect(toolbar.appliedFilterCount()).toBe(2);
+        toolbar.searchTerm.set('edited search');
+        expect(component.searchTerm).toBe('edited search');
+        search.mockClear();
+        refresh.mockClear();
+        toolbar.searchRequested.emit();
+        expect(search).toHaveBeenCalledOnce();
+        expect(refresh).not.toHaveBeenCalled();
+        toolbar.refreshRequested.emit();
+        expect(refresh).toHaveBeenCalledOnce();
+        toolbar.filterRequested.emit();
+        expect(filter).toHaveBeenCalledOnce();
     });
 
     it('should initialize', () => {

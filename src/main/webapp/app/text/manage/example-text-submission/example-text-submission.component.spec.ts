@@ -29,12 +29,10 @@ import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { DialogService } from 'primeng/dynamicdialog';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { DebugElement } from '@angular/core';
-import { ConfirmAutofocusModalComponent } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -80,19 +78,16 @@ describe('ExampleTextSubmissionComponent', () => {
                 FaIconComponent,
                 ExampleTextSubmissionComponent,
                 MockDirective(TranslateDirective),
-                MockComponent(ConfirmAutofocusModalComponent),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(ScoreDisplayComponent),
                 MockComponent(TextAssessmentAreaComponent),
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockComponent(HelpIconComponent),
-                ConfirmAutofocusButtonComponent,
+                MockComponent(ConfirmAutofocusButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
-                // The component renders the real ConfirmAutofocusButtonComponent, which injects PrimeNG DialogService.
-                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
                 {
                     provide: ActivatedRoute,
                     useValue: route,
@@ -125,7 +120,7 @@ describe('ExampleTextSubmissionComponent', () => {
                     imports: [
                         MockDirective(TranslateDirective),
                         MockComponent(HelpIconComponent),
-                        ConfirmAutofocusButtonComponent,
+                        MockComponent(ConfirmAutofocusButtonComponent),
                         MockComponent(ResizeableContainerComponent),
                         MockComponent(ScoreDisplayComponent),
                         MockComponent(TextAssessmentAreaComponent),

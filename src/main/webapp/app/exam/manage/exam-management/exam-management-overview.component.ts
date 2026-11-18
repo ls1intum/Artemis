@@ -1,3 +1,4 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -50,6 +51,8 @@ export class ExamManagementOverviewComponent implements OnDestroy {
     private examManagementComponent = inject(ExamManagementComponent);
     private sortService = inject(SortService);
     private router = inject(Router);
+
+    protected readonly ExamMode = ExamMode;
 
     readonly course = this.examManagementComponent.course;
     readonly exams = this.examManagementComponent.exams;

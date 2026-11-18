@@ -154,7 +154,7 @@ test.describe('Import exercises', () => {
                 const questionId = exercise.quizQuestions![0].id!;
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
                 await quizExerciseParticipation.startIndividualQuizBatch();
-                await page.waitForSelector('.quiz-waiting-for-start-overlay', { state: 'hidden' });
+                await page.getByTestId('quiz-waiting-for-start').waitFor({ state: 'hidden' });
                 await quizExerciseShortAnswerQuiz.typeAnswer(0, 1, questionId, 'give');
                 await quizExerciseShortAnswerQuiz.typeAnswer(1, 1, questionId, 'let');
                 await quizExerciseShortAnswerQuiz.typeAnswer(2, 1, questionId, 'run');

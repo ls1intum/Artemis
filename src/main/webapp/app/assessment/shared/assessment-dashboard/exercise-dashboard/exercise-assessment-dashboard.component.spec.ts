@@ -31,7 +31,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Language } from 'app/course/shared/entities/course.model';
-import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -71,6 +71,7 @@ import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import dayjs from 'dayjs/esm';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
@@ -894,11 +895,30 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
     });
 
-    it('generate exercise detail link', () => {
-        comp.exercise.set(modelingExercise);
+    it('generate exercise detail link of a course exercise', () => {
+        comp.exercise.set({ ...modelingExercise, exerciseGroup: undefined });
         comp.courseId.set(4);
         const exerciseDetailsLink = comp.exerciseDetailsLink();
         expect(exerciseDetailsLink).toEqual(['/course-management', 4, ExerciseType.MODELING + '-exercises', modelingExercise.id]);
+    });
+
+    it('generates the exercise detail link of an exam exercise below its exam', () => {
+        comp.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, id: 7, exerciseGroup: { id: 8, exam: { id: 9 } } as ExerciseGroup });
+        comp.courseId.set(4);
+        expect(comp.exerciseDetailsLink()).toEqual(['/course-management', 4, 'exams', 9, 'exercise-groups', 8, 'programming-exercises', 7]);
+    });
+
+    it.each([
+        { description: 'a tutor of an exam programming exercise', editor: false, group: true, type: ExerciseType.PROGRAMMING, expected: false },
+        { description: 'an editor of an exam programming exercise', editor: true, group: true, type: ExerciseType.PROGRAMMING, expected: true },
+        { description: 'a tutor of an exam modeling exercise, which the server gives to tutors', editor: false, group: true, type: ExerciseType.MODELING, expected: true },
+        { description: 'a tutor of a course exercise', editor: false, group: false, type: ExerciseType.PROGRAMMING, expected: true },
+    ])('should offer the exercise details to $description: $expected', ({ editor, group, type, expected }) => {
+        vi.spyOn(accountService, 'isAtLeastEditorInCourseWithId').mockReturnValue(editor);
+        comp.courseId.set(4);
+        comp.exercise.set({ ...exercise, type, exerciseGroup: group ? ({ id: 8, exam: { id: 9 } } as ExerciseGroup) : undefined });
+
+        expect(comp.canOpenExerciseDetails()).toBe(expected);
     });
 
     it('should toggle second correction', () => {
