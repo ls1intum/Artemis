@@ -145,6 +145,10 @@ export class TumAetUiPopoverComponent implements OnDestroy {
         this.positionSub = undefined;
         const closing = this.overlayRef;
         this.overlayRef = undefined;
+        if (!this.isModal()) {
+            // Without a focus trap, Tab could walk into the panel while it fades out, and the focus would vanish with it.
+            closing?.overlayElement?.setAttribute('inert', '');
+        }
         this.openState.set(false);
         this.openChange.emit(false);
         this.fadeOutAndDispose(closing);
@@ -208,12 +212,22 @@ export class TumAetUiPopoverComponent implements OnDestroy {
     }
 
     /**
+     * @internal The trigger of a hover popover is being removed. Nothing reports the pointer or the focus leaving a
+     * removed element, so the popover is asked to close as after a normal exit; it stays while the panel is in use.
+     */
+    triggerRemoved(): void {
+        this.pointerOverTrigger = false;
+        this.keptUntilDismissed = false;
+        this.scheduleHoverClose();
+    }
+
+    /**
      * @internal The pointer or the focus left the trigger or the panel of a hover popover. It closes after a short
      * delay, unless the pointer or the keyboard focus is on one of the two by then; whichever leaves last asks again.
      */
     scheduleHoverClose(): void {
         this.cancelHoverClose();
-        if (this.isOpen() && !this.keptUntilDismissed) {
+        if (this.isOpen() && !this.destroyed && !this.keptUntilDismissed) {
             this.hoverCloseTimer = setTimeout(() => {
                 if (!this.pointerOverTrigger && !this.pointerOverPanel && !this.triggerHoldsKeyboardFocus() && !this.panelHoldsFocus()) {
                     this.close();
@@ -268,6 +282,14 @@ export class TumAetUiPopoverComponent implements OnDestroy {
                 event.preventDefault();
             }
             this.close();
+            return;
+        }
+        // A positive `tabindex` in the panel puts its controls into the page-wide order, where the browser would
+        // leave the panel between them. The panel then moves the focus itself; otherwise the browser's order is the panel's.
+        const position = tabbable.indexOf(this.document.activeElement as HTMLElement);
+        if (position >= 0 && tabbable.some((element) => element.tabIndex > 0)) {
+            tabbable[position + (event.shiftKey ? -1 : 1)].focus();
+            event.preventDefault();
         }
     }
 
@@ -282,6 +304,8 @@ export class TumAetUiPopoverComponent implements OnDestroy {
             candidates.filter(
                 (element) =>
                     this.interactivityChecker.isFocusable(element, { ignoreVisibility: true }) &&
+                    // Also covers a control inside a disabled fieldset, which carries no `disabled` attribute itself.
+                    !element.matches(':disabled') &&
                     this.interactivityChecker.isTabbable(element) &&
                     (typeof element.checkVisibility !== 'function' || element.checkVisibility({ visibilityProperty: true })),
             ),

@@ -27,6 +27,7 @@ import { RouterLink } from '@angular/router';
 import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 describe('HomeComponent', () => {
+    const originalPublicKeyCredential = Object.getOwnPropertyDescriptor(window, 'PublicKeyCredential');
     let component: HomeComponent;
     let fixture: ComponentFixture<HomeComponent>;
     let loginService: LoginService;
@@ -94,6 +95,12 @@ describe('HomeComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        // Several specs replace the global; an assignment is not undone by restoring the mocks.
+        if (originalPublicKeyCredential) {
+            Object.defineProperty(window, 'PublicKeyCredential', originalPublicKeyCredential);
+        } else {
+            delete (window as any).PublicKeyCredential;
+        }
     });
 
     it('should create the component', () => {

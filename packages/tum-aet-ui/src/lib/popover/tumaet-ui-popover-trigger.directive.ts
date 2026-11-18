@@ -1,4 +1,4 @@
-import { Directive, ElementRef, inject, input } from '@angular/core';
+import { Directive, ElementRef, OnDestroy, inject, input } from '@angular/core';
 import { TumAetUiPopoverComponent } from './tumaet-ui-popover.component';
 
 /** How long after a finger was lifted its click may arrive and still count as the same tap. */
@@ -28,7 +28,7 @@ const TAP_CLICK_WINDOW_MS = 1000;
         '[attr.aria-expanded]': "popover().isOpen() ? 'true' : 'false'",
     },
 })
-export class TumAetUiPopoverTriggerDirective {
+export class TumAetUiPopoverTriggerDirective implements OnDestroy {
     private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
     /** When a finger was last lifted on the trigger, in the time base of the events. */
     private touchReleasedAt?: number;
@@ -85,6 +85,12 @@ export class TumAetUiPopoverTriggerDirective {
         // `keydown.tab` only matches Tab without modifiers, so Shift+Tab leaves the trigger backwards as usual.
         if (this.opensOnHover() && this.popover().isOpen() && this.popover().focusFirstControl()) {
             event.preventDefault();
+        }
+    }
+
+    ngOnDestroy(): void {
+        if (this.opensOnHover()) {
+            this.popover().triggerRemoved();
         }
     }
 

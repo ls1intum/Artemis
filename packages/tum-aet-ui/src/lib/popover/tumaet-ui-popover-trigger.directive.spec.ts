@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { By } from '@angular/platform-browser';
@@ -300,11 +300,18 @@ describe('TumAetUiPopoverTriggerDirective with a hover popover', () => {
 
     it('follows the mouse again when a listener closed a popover the moment a tap opened it', () => {
         const popover = fixture.debugElement.query(By.directive(TumAetUiPopoverComponent)).componentInstance as TumAetUiPopoverComponent;
-        const subscription = popover.openChange.subscribe((open) => open && popover.close());
-        touch(trigger, 'pointerup');
+        const changes: boolean[] = [];
+        const subscription = popover.openChange.subscribe((open) => {
+            changes.push(open);
+            if (open) {
+                popover.close();
+            }
+        });
+        touch(trigger, 'pointerenter', 'pointerdown', 'pointerup', 'pointerleave');
         trigger.click();
         subscription.unsubscribe();
         fixture.detectChanges();
+        expect(changes).toEqual([true, false]);
         expect(isOpen()).toBe(false);
 
         hover();
@@ -388,6 +395,41 @@ describe('TumAetUiPopoverTriggerDirective with a hover popover', () => {
         expect(isOpen()).toBe(false);
     });
 
+    it('takes the closing panel out of the Tab order while it fades out', () => {
+        const original = Element.prototype.animate;
+        Element.prototype.animate = (() => ({ finished: new Promise<void>(() => {}) })) as unknown as typeof Element.prototype.animate;
+        try {
+            trigger.focus();
+            fixture.detectChanges();
+            inPanel('last').focus();
+            const closingPanel = panel()!;
+
+            tab(inPanel('last'));
+            fixture.detectChanges();
+
+            expect(closingPanel.isConnected).toBe(true);
+            expect(closingPanel.closest('[inert]')).not.toBeNull();
+            expect(closingPanel.contains(document.activeElement)).toBe(false);
+        } finally {
+            Element.prototype.animate = original;
+        }
+    });
+
+    it('skips a control inside a disabled fieldset when Tab enters the panel', () => {
+        const fieldset = document.createElement('fieldset');
+        fieldset.disabled = true;
+        const blocked = document.createElement('button');
+        fieldset.appendChild(blocked);
+        trigger.focus();
+        fixture.detectChanges();
+        panel()!.prepend(fieldset);
+
+        const event = tab(trigger);
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(inPanel('first'));
+    });
+
     it('returns to the trigger on Shift+Tab from the first control', () => {
         trigger.focus();
         fixture.detectChanges();
@@ -451,13 +493,26 @@ describe('TumAetUiPopoverTriggerDirective with positive tabindex values in a hov
         expect(document.activeElement).toBe(inPanel('earlier'));
     });
 
-    it('stays in the panel on Tab from a control with a positive tabindex that is not the last in the order', () => {
+    it('walks the panel in the order of the tabindex values, which the browser would leave the panel for', () => {
         inPanel('earlier').focus();
 
-        const event = tab(inPanel('earlier'));
+        const first = tab(inPanel('earlier'));
+        expect(first.defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(inPanel('later'));
 
-        expect(event.defaultPrevented).toBe(false);
+        const second = tab(inPanel('later'));
+        expect(second.defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(inPanel('unprioritized'));
         expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('walks the panel backwards in the same order on Shift+Tab', () => {
+        inPanel('unprioritized').focus();
+
+        const event = tab(inPanel('unprioritized'), true);
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(inPanel('later'));
     });
 
     it('leaves the panel on Tab from the last control of the order, which has no positive tabindex', () => {
@@ -478,5 +533,79 @@ describe('TumAetUiPopoverTriggerDirective with positive tabindex values in a hov
 
         expect(event.defaultPrevented).toBe(true);
         expect(document.activeElement).toBe(trigger);
+    });
+});
+
+@Component({
+    template: `
+        <tumaet-ui-popover #pop openOn="hover" ariaLabel="Theme options" (openChange)="open = $event">
+            <button data-testid="inside">Inside</button>
+        </tumaet-ui-popover>
+        @if (showTrigger()) {
+            <button [tumAetUiPopoverTrigger]="pop" data-testid="trigger">Theme</button>
+        }
+    `,
+    imports: [TumAetUiPopoverTriggerDirective, TumAetUiPopoverComponent],
+})
+class RemovableTriggerHostComponent {
+    readonly showTrigger = signal(true);
+    open = false;
+}
+
+describe('TumAetUiPopoverTriggerDirective whose trigger is removed', () => {
+    let fixture: ComponentFixture<RemovableTriggerHostComponent>;
+    let host: RemovableTriggerHostComponent;
+
+    beforeEach(async () => {
+        vi.useFakeTimers();
+        await TestBed.configureTestingModule({ imports: [RemovableTriggerHostComponent] }).compileComponents();
+        fixture = TestBed.createComponent(RemovableTriggerHostComponent);
+        host = fixture.componentInstance;
+        document.body.appendChild(fixture.nativeElement);
+        fixture.detectChanges();
+        fixture.nativeElement.querySelector('[data-testid="trigger"]').dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        fixture.nativeElement.remove();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    function removeTrigger(): void {
+        host.showTrigger.set(false);
+        fixture.detectChanges();
+    }
+
+    it('closes the popover although no pointer leave is reported for the removed trigger', () => {
+        expect(host.open).toBe(true);
+
+        removeTrigger();
+        vi.advanceTimersByTime(300);
+
+        expect(host.open).toBe(false);
+    });
+
+    it('keeps the popover while the focus is in its panel', () => {
+        document.querySelector<HTMLElement>('[data-testid="inside"]')!.focus();
+
+        removeTrigger();
+        vi.advanceTimersByTime(300);
+
+        expect(host.open).toBe(true);
+    });
+
+    it('does not arm a close on a popover that is already destroyed', () => {
+        const popover = fixture.debugElement.query(By.directive(TumAetUiPopoverComponent)).componentInstance as TumAetUiPopoverComponent;
+        const closeSpy = vi.spyOn(popover, 'close');
+
+        fixture.destroy();
+        // What a trigger does that is torn down after its popover.
+        popover.triggerRemoved();
+        vi.advanceTimersByTime(300);
+
+        expect(closeSpy).not.toHaveBeenCalled();
     });
 });
