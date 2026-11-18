@@ -19,8 +19,7 @@ import { ComplaintService } from 'app/assessment/shared/services/complaint.servi
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
-import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { IncludedInScoreBadgeComponent } from '../included-in-score-badge/included-in-score-badge.component';
+import { NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -37,8 +36,6 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
         NgTemplateOutlet,
         FaIconComponent,
         ExerciseCategoriesComponent,
-        NgClass,
-        IncludedInScoreBadgeComponent,
         TranslateDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -83,6 +80,36 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
     readonly bonusPointsInformation = computed<InformationBox>(() => ({
         title: 'artemisApp.courseOverview.exerciseDetails.bonus',
         content: { type: 'string', value: this.exercise().bonusPoints ?? 0 },
+    }));
+    readonly scoreInclusionInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.exercise.includedInOverallScore',
+        content: { type: 'string', value: this.exercise().includedInOverallScore ?? '' },
+        tooltip:
+            this.exercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS
+                ? 'artemisApp.exercise.includedAsBonusTooltip'
+                : 'artemisApp.exercise.notIncludedTooltip',
+        isContentComponent: true,
+    }));
+    readonly categoriesInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.exercise.categories',
+        content: { type: 'categories', value: this.exercise() },
+        isContentComponent: true,
+    }));
+    readonly releaseInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.courseOverview.exerciseList.notReleased',
+        content: { type: 'dateTime', value: this.exercise().releaseDate },
+        isContentComponent: true,
+    }));
+    readonly difficultyInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.exercise.difficulty',
+        content: { type: 'string', value: this.exercise().difficulty ?? '' },
+        isContentComponent: true,
+    }));
+    readonly nextDateInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.courseOverview.exerciseDetails.' + this.nextRelevantDateLabel(),
+        content: { type: 'dateTime', value: this.nextRelevantDate() },
+        contentColor: this.nextRelevantDateStatusBadge() === 'bg-state-danger' ? 'danger' : undefined,
+        isContentComponent: true,
     }));
     readonly dueDateInformation = computed<InformationBox | undefined>(() => {
         const exam = this.exam();

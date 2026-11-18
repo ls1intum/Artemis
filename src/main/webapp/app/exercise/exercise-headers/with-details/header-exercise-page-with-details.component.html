@@ -17,9 +17,6 @@
                             jhiTranslate="artemisApp.exam.testRun.testRun"
                         ></span>
                     }
-                    @if ((exercise().releaseDate && dayjs(exercise().releaseDate).isAfter(dayjs())) || exercise().difficulty || exerciseCategories()?.length) {
-                        <jhi-exercise-categories [exercise]="exercise()" [showTags]="{ difficulty: true, notReleased: true }" [ngClass]="'badge-row'" />
-                    }
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2"><ng-content select="[headerActions]" /></div>
@@ -31,8 +28,15 @@
                 @if (exercise().bonusPoints) {
                     <jhi-information-box [informationBoxData]="bonusPointsInformation()" />
                 }
-                @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                    <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" />
+                @if (exercise().includedInOverallScore && exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                    <jhi-information-box [informationBoxData]="scoreInclusionInformation()">
+                        <span
+                            contentComponent
+                            [jhiTranslate]="
+                                'artemisApp.exercise.' + (exercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 'includedAsBonus' : 'notIncluded')
+                            "
+                        ></span>
+                    </jhi-information-box>
                 }
             }
             @if (exercise().assessmentType && exercise().type === ExerciseType.PROGRAMMING) {
@@ -58,6 +62,32 @@
                     </span>
                 </jhi-information-box>
             }
+            @let difficulty = exercise().difficulty;
+            @if (difficulty) {
+                <jhi-information-box [informationBoxData]="difficultyInformation()">
+                    <span
+                        contentComponent
+                        [class.text-state-success]="difficulty === 'EASY'"
+                        [class.text-state-warning]="difficulty === 'MEDIUM'"
+                        [class.text-state-danger]="difficulty === 'HARD'"
+                        [jhiTranslate]="'artemisApp.exercise.' + difficulty.toLowerCase()"
+                    ></span>
+                </jhi-information-box>
+            }
+            @if (exercise().releaseDate && dayjs(exercise().releaseDate).isAfter(dayjs())) {
+                <jhi-information-box
+                    [informationBoxData]="releaseInformation()"
+                    [tumAetUiTooltip]="('artemisApp.courseOverview.exerciseList.notReleasedTooltip' | artemisTranslate) + (exercise().releaseDate | artemisDate)"
+                >
+                    <span contentComponent>{{ exercise().releaseDate | artemisDate }}</span>
+                </jhi-information-box>
+            }
+            @if (exerciseCategories()?.length) {
+                <jhi-information-box [informationBoxData]="categoriesInformation()">
+                    <jhi-exercise-categories contentComponent [exercise]="exercise()" [isSmall]="true" />
+                </jhi-information-box>
+            }
+            <ng-container [ngTemplateOutlet]="nextRelevantDateBadge" />
         </div>
         @if (submissionPolicy() && submissionPolicy()!.active) {
             <div class="flex flex-wrap items-center gap-1 text-sm">
@@ -82,12 +112,10 @@
         <div class="flex flex-wrap items-center justify-end gap-2 self-start text-sm" data-testid="exercise-header-statuses">
             @if (!nextRelevantDateLabel() || (nextRelevantDateLabel() !== 'releaseDate' && nextRelevantDateLabel() !== 'startDate')) {
             } @else {
-                <ng-container [ngTemplateOutlet]="nextRelevantDateBadge" />
                 <ng-container [ngTemplateOutlet]="presentationScoreSummary" />
             }
             @if (!nextRelevantDateLabel() || (nextRelevantDateLabel() !== 'assessmentDue' && nextRelevantDateLabel() !== 'complaintDue')) {
             } @else {
-                <ng-container [ngTemplateOutlet]="nextRelevantDateBadge" />
                 <ng-container [ngTemplateOutlet]="presentationScoreSummary" />
             }
             @if (!nextRelevantDate() && canComplainLaterOn()) {
@@ -108,18 +136,12 @@
 
 <ng-template #nextRelevantDateBadge>
     @if (nextRelevantDate() && (!exam() || !isTestRun())) {
-        <div class="font-medium">
-            {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() | artemisTranslate }}
-            <span
-                [ngClass]="nextRelevantDateStatusBadge()"
-                class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold"
-                [tumAetUiTooltip]="
-                    'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate }
-                "
-            >
-                {{ nextRelevantDate() | artemisTimeAgo }}
-            </span>
-        </div>
+        <jhi-information-box
+            [informationBoxData]="nextDateInformation()"
+            [tumAetUiTooltip]="'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate }"
+        >
+            <span contentComponent [class.text-state-danger]="nextDateInformation().contentColor === 'danger'">{{ nextRelevantDate() | artemisDate }}</span>
+        </jhi-information-box>
     }
 </ng-template>
 

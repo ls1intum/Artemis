@@ -31,11 +31,6 @@
                 text-overflow: ellipsis;
                 overflow: hidden;
             }
-
-            ::ng-deep .badge-row {
-                display: flex;
-                flex-wrap: wrap;
-            }
         }
     }
 
