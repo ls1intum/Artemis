@@ -95,8 +95,9 @@ SOURCES = {
         Source("c_sharp/exercise/assignment.csproj", "test.csproj"),
         Source("c_sharp/solution/assignment.csproj", "test.csproj"),
     ],
-    # The image is a Go toolchain without cached modules and sets GOTOOLCHAIN=local. A `go` directive (or toolchain line) newer than its
-    # toolchain makes every build fail ("requires go >= ..."), so the templates must not ask for more than the image has.
+    # The image is a Go toolchain without cached modules and sets GOTOOLCHAIN=local. A `go` directive newer than its toolchain makes every
+    # build fail ("requires go >= ..."), so the templates must not ask for more than the image has. A `toolchain` line is only a suggestion
+    # that Go ignores with GOTOOLCHAIN=local, so it is not compared.
     "go": [
         Source("go/test/go.mod", "Dockerfile"),
         Source("go/exercise/go.mod", "Dockerfile"),
@@ -367,17 +368,16 @@ def _release(version: str) -> tuple[int, ...]:
 
 
 def go_mod_versions(text: str) -> Versions:
-    """The Go version a ``go.mod`` asks for (``go`` directive) and its ``toolchain`` line, if any."""
+    """The Go version a ``go.mod`` requires (its ``go`` directive).
+
+    The ``toolchain`` line is not read: it only suggests a toolchain to switch to, and the image sets ``GOTOOLCHAIN=local``, so Go builds with
+    its own toolchain as long as that satisfies the ``go`` directive (``go 1.23`` with ``toolchain go1.24.0`` builds with Go 1.23.3).
+    """
     versions: Versions = {}
     for line in text.splitlines():
-        match = re.fullmatch(r"\s*(go|toolchain)\s+(\S+)\s*(?://.*)?", line)
+        match = re.fullmatch(r"\s*go\s+(\S+)\s*(?://.*)?", line)
         if match:
-            version = match.group(2)
-            if match.group(1) == "toolchain" and version == "default":
-                # `toolchain default` is no version requirement, it selects the default toolchain
-                continue
-            # A toolchain line names the toolchain (`go1.23.5`), the directive the language version (`1.23.5`)
-            versions.setdefault(GO_TOOLCHAIN, set()).add(version.removeprefix("go") if match.group(1) == "toolchain" else version)
+            versions.setdefault(GO_TOOLCHAIN, set()).add(match.group(1))
     return versions
 
 

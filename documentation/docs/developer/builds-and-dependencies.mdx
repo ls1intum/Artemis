@@ -136,7 +136,7 @@ It has to pin the same versions as the test templates in `src/main/resources/tem
 | Ruby | repository root (`Gemfile`, `Gemfile.lock`) | the gems in every `Gemfile.lock` of the templates (regular and static code analysis, test, exercise and solution), which the lock file of the image has to contain |
 | Dart | repository root (`pubspec.yaml`, `pubspec.lock`) | the packages in `pubspec.lock` of the test project and of the assignment |
 | C# | repository root (`test.csproj`) | the NuGet packages and the target framework in `test.csproj` and in the project files of the assignment |
-| Go | `Dockerfile` (base image `golang`) | the `go` directive (and `toolchain` line) of every `go.mod` must not be newer than the Go version of the image |
+| Go | `Dockerfile` (base image `golang`) | the `go` directive of every `go.mod` must not be newer than the Go version of the image (a `toolchain` line is ignored, the image sets `GOTOOLCHAIN=local`) |
 | Haskell | `Dockerfile` and `stack-config/global-project/stack.yaml` | the `resolver` of every `stack.yaml` is the Stackage snapshot of the image, and the test project only depends on packages the Dockerfile builds ahead (`base` and the local libraries excepted) |
 
 A version that the image does not hold is downloaded by every build of every exercise (from Maven Central, crates.io, the npm registry, RubyGems, pub.dev, NuGet or GitHub),

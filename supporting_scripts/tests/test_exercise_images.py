@@ -863,7 +863,7 @@ class GoAndHaskellTest(unittest.TestCase):
     GO = sync_check.GO_TOOLCHAIN
 
     def test_go_mod_and_dockerfile_name_the_go_version(self):
-        self.assertEqual(sync_check.versions_of("go.mod", "module artemis/test\n\ngo 1.23.2\n\ntoolchain go1.23.5\n"), {self.GO: {"1.23.2", "1.23.5"}})
+        self.assertEqual(sync_check.versions_of("go.mod", "module artemis/test\n\ngo 1.23.2\n\ntoolchain go1.23.5\n"), {self.GO: {"1.23.2"}})
         self.assertEqual(sync_check.versions_of("Dockerfile", GO_DOCKERFILE), {self.GO: {"1.23.3"}})
         self.assertEqual(sync_check.versions_of("Dockerfile", "FROM docker.io/library/golang:1.24.2-bookworm\n"), {self.GO: {"1.24.2"}})
 
@@ -874,7 +874,6 @@ class GoAndHaskellTest(unittest.TestCase):
         self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23\n"), image), [])
         self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23.4\n"), image), [f"{self.GO} 1.23.4 is newer than the image (1.23.3)"])
         self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24\n"), image), [f"{self.GO} 1.24 is newer than the image (1.23.3)"])
-        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23\ntoolchain go1.24.0\n"), image), [f"{self.GO} 1.24.0 is newer than the image (1.23.3)"])
         # 1.9 is older than 1.10, which a comparison of the strings would get wrong
         self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.9\n"), sync_check.versions_of("Dockerfile", "FROM golang:1.10.1\n")), [])
 
@@ -892,9 +891,13 @@ class GoAndHaskellTest(unittest.TestCase):
         self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.20\n"), sync_check.versions_of("Dockerfile", "FROM golang:1.20rc1\n")), [f"{self.GO} 1.20 is newer than the image (1.20rc1)"])
         self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24beta1\n"), rc_image), [])
 
-    def test_toolchain_default_is_no_version_requirement(self):
-        self.assertEqual(sync_check.versions_of("go.mod", "go 1.23\ntoolchain default\n"), {self.GO: {"1.23"}})
-        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23\ntoolchain default\n"), sync_check.versions_of("Dockerfile", GO_DOCKERFILE)), [])
+    def test_a_toolchain_line_is_ignored_because_the_image_does_not_switch_toolchains(self):
+        image = sync_check.versions_of("Dockerfile", GO_DOCKERFILE)
+        for line in ("toolchain go1.24.0", "toolchain default", "toolchain go1.23.3"):
+            self.assertEqual(sync_check.versions_of("go.mod", f"go 1.23\n{line}\n"), {self.GO: {"1.23"}})
+            self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", f"go 1.23\n{line}\n"), image), [])
+        # the go directive of the same file still counts
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24.0\ntoolchain go1.23.3\n"), image), [f"{self.GO} 1.24.0 is newer than the image (1.23.3)"])
         self.assertEqual(len(sync_check.compare(sync_check.versions_of("go.mod", "go default\n"), sync_check.versions_of("Dockerfile", GO_DOCKERFILE))), 1)
 
     def test_a_rolling_go_tag_names_no_version(self):
