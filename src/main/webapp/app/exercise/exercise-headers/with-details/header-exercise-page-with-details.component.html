@@ -67,9 +67,9 @@
                 <jhi-information-box [informationBoxData]="difficultyInformation()">
                     <span
                         contentComponent
-                        [class.text-state-success]="difficulty === 'EASY'"
-                        [class.text-state-warning]="difficulty === 'MEDIUM'"
-                        [class.text-state-danger]="difficulty === 'HARD'"
+                        [class.text-state-success]="difficulty === DifficultyLevel.EASY"
+                        [class.text-state-warning]="difficulty === DifficultyLevel.MEDIUM"
+                        [class.text-state-danger]="difficulty === DifficultyLevel.HARD"
                         [jhiTranslate]="'artemisApp.exercise.' + difficulty.toLowerCase()"
                     ></span>
                 </jhi-information-box>
