@@ -74,7 +74,7 @@ public class ProgrammingExerciseReEvaluationResource {
      *
      * @param exerciseId                                  of the exercise
      * @param updateDTO                                   the DTO containing the ProgrammingExercise data to re-evaluate and update
-     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not, which defaults to false
      * @param hyperionCompetencyIds                       IDs of links inferred through Hyperion's checklist
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the ProgrammingExercise is not valid,
      *         or with status 409 (Conflict) if given exerciseId is not same as in the object of the request body, or with status 429 (Too Many Requests) if the user requested
@@ -85,7 +85,7 @@ public class ProgrammingExerciseReEvaluationResource {
     @EnforceAtLeastEditorInExercise
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExerciseResponseDTO> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody UpdateProgrammingExerciseDTO updateDTO,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate,
+            @RequestParam(value = "deleteFeedback", defaultValue = "false") Boolean deleteFeedbackAfterGradingInstructionUpdate,
             @RequestParam(name = "hyperionCompetencyId", required = false) Set<Long> hyperionCompetencyIds) {
         log.debug("REST request to re-evaluate ProgrammingExercise with id: {}", updateDTO.id());
         rateLimitService.enforceBudget(userRepository.getCurrentUserLogin(), RateLimitType.RE_EVALUATION);

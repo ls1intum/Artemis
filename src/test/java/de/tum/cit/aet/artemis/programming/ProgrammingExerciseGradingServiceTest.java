@@ -631,6 +631,26 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     /**
+     * A request that does not say whether the feedback is deleted keeps it, instead of failing because the flag is missing.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldReEvaluateTheExerciseWithoutTheFlagToDeleteFeedback() throws Exception {
+        programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseService
+                .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
+        createTestCases(false);
+        createTestParticipations();
+
+        final String endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate";
+        request.putWithResponseBody(endpoint, UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
+                ProgrammingExercise.class, HttpStatus.OK);
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+    }
+
+    /**
      * The re-evaluation refuses an automatically assessed exercise whose test case weights are invalid, like the update does.
      */
     @Test
