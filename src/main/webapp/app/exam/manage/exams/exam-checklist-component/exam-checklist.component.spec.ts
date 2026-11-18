@@ -36,6 +36,7 @@ import deExam from '../../../../../i18n/de/exam.json';
 import enPlagiarism from '../../../../../i18n/en/plagiarism.json';
 import dePlagiarism from '../../../../../i18n/de/plagiarism.json';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -194,7 +195,7 @@ describe('ExamChecklistComponent', () => {
             examManagementService = TestBed.inject(ExamManagementService);
             const checklist = Object.assign(new ExamChecklist(), { numberOfExamsStarted: 3, numberOfExamsSubmitted: 2, numberOfTotalParticipationsForAssessment: 3 }, stats);
             vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(checklist));
-            const testedExam = Object.assign(new Exam(), { id: 1, testExam: false, course: { id: 1, isAtLeastInstructor: true } }, examOverrides);
+            const testedExam = Object.assign(new Exam(), { id: 1, examMode: ExamMode.REAL, course: { id: 1, isAtLeastInstructor: true } }, examOverrides);
             examChecklistComponentFixture.componentRef.setInput('exam', testedExam);
             return testedExam;
         };
@@ -236,7 +237,7 @@ describe('ExamChecklistComponent', () => {
             { description: 'already generated on the coverpage', initialGenerated: 1, generatedAfterStart: 1 },
             { description: 'created after the initial statistics', initialGenerated: 0, generatedAfterStart: 2 },
         ])('should use the authoritative total for a test exam $description', ({ initialGenerated, generatedAfterStart }) => {
-            setUp({ testExam: true }, { numberOfGeneratedStudentExams: initialGenerated, numberOfExamsStarted: 0 });
+            setUp({ examMode: ExamMode.TEST }, { numberOfGeneratedStudentExams: initialGenerated, numberOfExamsStarted: 0 });
             const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
             examChecklistComponentFixture.detectChanges();
             expect(component.numberOfGeneratedStudentExams()).toBe(initialGenerated);
@@ -252,7 +253,7 @@ describe('ExamChecklistComponent', () => {
         });
 
         it('should retain the initial nonzero baseline while start events arrive', () => {
-            setUp({ testExam: true });
+            setUp({ examMode: ExamMode.TEST });
             const initial = new Subject<ExamChecklist>();
             const refreshedCounts = new Subject<ExamConductionCounts>();
             const fetchCounts = vi.spyOn(examChecklistService, 'getExamConductionCounts').mockReturnValue(refreshedCounts);
@@ -277,7 +278,7 @@ describe('ExamChecklistComponent', () => {
         });
 
         it('should cancel stale counts and unsubscribe on exam change and destroy', () => {
-            setUp({ testExam: true }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
+            setUp({ examMode: ExamMode.TEST }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
             const previous = new Subject<ExamConductionCounts>();
             const current = new Subject<ExamConductionCounts>();
             vi.spyOn(examChecklistService, 'getExamConductionCounts').mockReturnValueOnce(previous).mockReturnValue(current);
@@ -304,7 +305,7 @@ describe('ExamChecklistComponent', () => {
         it('should coalesce overlapping starts without repeating the full checklist', () => {
             vi.useFakeTimers();
             try {
-                setUp({ testExam: true }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
+                setUp({ examMode: ExamMode.TEST }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
                 const baseline = Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0 });
                 vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(baseline));
                 const first = new Subject<ExamConductionCounts>();
@@ -336,7 +337,7 @@ describe('ExamChecklistComponent', () => {
 
         it('should keep the number of generated student exams of a regular exam when a student starts', () => {
             // the student exams of a regular exam exist before anybody starts, so a start does not create one
-            setUp({ testExam: false }, { numberOfGeneratedStudentExams: 12, numberOfExamsStarted: 3 });
+            setUp({ examMode: ExamMode.REAL }, { numberOfGeneratedStudentExams: 12, numberOfExamsStarted: 3 });
             const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
             examChecklistComponentFixture.detectChanges();
 
@@ -478,7 +479,10 @@ describe('ExamChecklistComponent', () => {
 
         const render = ({ testExam = false, plagiarismActive = true, instructor = true } = {}) => {
             getProfileInfoSub.mockReturnValue({ activeModuleFeatures: plagiarismActive ? [MODULE_FEATURE_TEXT, MODULE_FEATURE_PLAGIARISM] : [MODULE_FEATURE_TEXT] });
-            examChecklistComponentFixture.componentRef.setInput('exam', Object.assign(new Exam(), { id: 1, testExam, course: { id: 1, isAtLeastInstructor: instructor } }));
+            examChecklistComponentFixture.componentRef.setInput(
+                'exam',
+                Object.assign(new Exam(), { id: 1, examMode: testExam ? ExamMode.TEST : ExamMode.REAL, course: { id: 1, isAtLeastInstructor: instructor } }),
+            );
             examChecklistComponentFixture.componentRef.setInput('getExamRoutesByIdentifier', (identifier: string) => ['/course-management', 1, 'exams', 1, identifier]);
             examChecklistComponentFixture.detectChanges();
             return examChecklistComponentFixture.nativeElement as HTMLElement;
