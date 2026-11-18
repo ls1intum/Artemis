@@ -1073,6 +1073,8 @@
                         "failed": "Commit fehlgeschlagen — nichts wurde gespeichert",
                         "failedKept": "Deine Änderungen bleiben ungespeichert.",
                         "failedGeneric": "Das Test-Repository konnte nicht geändert werden.",
+                        "processingFailed": "Committet, aber die Builds wurden nicht gestartet",
+                        "processingFailedText": "Commit {{ hash }} wurde gepusht und die Richtlinien zeigen ihn, aber Artemis konnte die Builds der Vorlage und der Lösung nicht starten. Versuche es erneut, um sie zu starten.",
                         "retry": "Erneut versuchen",
                         "tooOld": "Festgelegte Version zu alt für diese Richtlinie",
                         "tooOldText": "Ares2 {{ version }} unterstützt diese Einstellungen der Richtlinien nicht, daher würde jeder Test fehlschlagen. Wähle ein neueres Release.",

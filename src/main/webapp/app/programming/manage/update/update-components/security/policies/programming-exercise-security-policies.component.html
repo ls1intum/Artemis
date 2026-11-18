@@ -191,6 +191,19 @@
                         </span>
                     </tumaet-ui-message>
                 }
+                @case ('processingFailed') {
+                    <tumaet-ui-message class="sp-message-fill" severity="warn" [icon]="faTriangleExclamation" role="alert" data-testid="security-banner-processing-failed">
+                        <span class="sp-message-row">
+                            <span class="sp-grow">
+                                <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.processingFailed'"></span>
+                                <span class="text-sm">{{ prefix + 'banner.processingFailedText' | artemisTranslate: { hash: current.hash ?? '' } }}</span>
+                            </span>
+                            <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="retryCommit()" data-testid="security-banner-retry">
+                                {{ prefix + 'banner.retry' | artemisTranslate }}
+                            </button>
+                        </span>
+                    </tumaet-ui-message>
+                }
                 @case ('orphaned') {
                     <tumaet-ui-message severity="warn" [icon]="faTriangleExclamation" role="alert" dismissible (dismissed)="dismissBanner()" data-testid="security-banner-orphaned">
                         <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.orphaned'"></span>

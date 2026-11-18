@@ -98,6 +98,11 @@ export interface EditorPolicy {
     extraClasses: string[];
     /** The name with the unsaved changes; it determines the file name. */
     name: string;
+    /**
+     * Whether a new policy got a language configuration of its own, e.g. from an imported file, so it keeps it instead of following the committed policies
+     * when dependency scanning is switched.
+     */
+    ownLanguageConfiguration?: boolean;
 }
 
 /** The unsaved changes of a policy, by kind, as the commit bar lists them. */

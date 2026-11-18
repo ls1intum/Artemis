@@ -1073,6 +1073,8 @@
                         "failed": "Commit failed — nothing was saved",
                         "failedKept": "Your changes stay unsaved.",
                         "failedGeneric": "The tests repository could not be changed.",
+                        "processingFailed": "Committed, but the builds did not start",
+                        "processingFailedText": "Commit {{ hash }} was pushed, so the policies show it, but Artemis could not start the builds of the template and solution. Retry to start them.",
                         "retry": "Retry",
                         "tooOld": "Pinned version too old for this policy",
                         "tooOldText": "Ares2 {{ version }} does not support these settings of the policies, so every test would fail. Choose a newer release.",

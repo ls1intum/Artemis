@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { Subject, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -54,6 +53,7 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
             importPolicy: vi.fn(),
             getTestStructure: vi.fn().mockReturnValue(of({ testClasses: [] })),
             getTemplateFiles: vi.fn().mockReturnValue(of({ paths: [] })),
+            getConfig: vi.fn().mockReturnValue(of(configured())),
         };
         TestBed.configureTestingModule({
             providers: [
@@ -160,6 +160,37 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
 
         expect(comp.changeText()).toBe(`${prefix}.restrictions.other`);
         expect(comp.discardQuestion().key).toBe('artemisApp.programmingExercise.security.advanced.discard.question.other');
+    });
+
+    it('shows the pushed policies after a commit whose builds did not start, so Discard returns to them, and resumes the builds with the same request', () => {
+        create(configured(), false);
+        const configs: SecurityFrameworkConfig[] = [];
+        comp.configChange.subscribe((config) => configs.push(config));
+        const policy = comp.policies()[0];
+        const granted = withRows(policy.working!, 'packages', [{ packageName: 'org.apache.commons' }]);
+        comp['onPolicyChange']({ ...policy, working: granted });
+        const pushed = editor('b'.repeat(40), granted);
+        service.commitPolicies.mockReturnValueOnce(
+            throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'error.securityFrameworkProcessingFailed', title: 'The builds could not be started.' } })),
+        );
+        service.getPolicies.mockReturnValue(of(pushed));
+
+        comp['commit']('Grant commons');
+
+        expect(comp.banner()).toEqual({ kind: 'processingFailed', hash: 'bbbbbbb' });
+        expect(comp.editor()?.baseCommitHash).toBe('b'.repeat(40));
+        expect(comp.totalChanges()).toBe(0);
+        expect(configs).toEqual([configured()]);
+        comp['onPolicyChange']({ ...comp.policies()[0], working: withRows(granted, 'packages', []) });
+        comp['discard']();
+        expect(comp.policies()[0].working?.packages).toEqual([{ packageName: 'org.apache.commons' }]);
+        expect(comp.banner()?.kind).toBe('processingFailed');
+
+        service.commitPolicies.mockReturnValueOnce(of({ editor: pushed, config: configured() }));
+        comp['retryCommit']();
+        expect(service.commitPolicies).toHaveBeenCalledTimes(2);
+        expect(service.commitPolicies.mock.calls[1][1]).toEqual(service.commitPolicies.mock.calls[0][1]);
+        expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'committed', hash: 'bbbbbbb' }));
     });
 
     it('removes the file of a deleted committed policy with the commit', () => {
@@ -418,17 +449,25 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.structure()?.testClasses?.[0].testCases).toEqual(['added']);
     });
 
-    it('keeps the imported language configuration of a new policy when a reload brings the same committed configuration', () => {
+    it('keeps the imported language configuration of a new policy across reloads, whatever the committed configuration', () => {
         const scanning = 'JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION';
         create(configured(), false);
         comp['addPolicy']();
         const added = comp.policies()[1];
-        comp['onPolicyChange'](cloneWith(added, { working: cloneWith(added.working!, { languageConfiguration: scanning }) }));
-        service.getPolicies.mockReturnValue(of(editor('d'.repeat(40))));
+        const path = comp.paths().get(added.id)!;
+        service.importPolicy.mockReturnValueOnce(of({ policyPath: path, document: { ...DOCUMENT, policyPath: path, languageConfiguration: scanning } }));
+        comp['openYaml'](added);
+        comp['importYaml']({ content: 'scanning', policyPath: path });
+        const configurationOfAdded = () => comp.policies().find((policy) => policy.id === added.id)?.working?.languageConfiguration;
+        expect(configurationOfAdded()).toBe(scanning);
 
+        // Someone switches dependency scanning on and off again; the imported configuration stays both times.
+        service.getPolicies.mockReturnValue(of(editor('d'.repeat(40), { ...DOCUMENT, languageConfiguration: scanning })));
         comp['reload']();
-
-        expect(comp.policies().find((policy) => policy.id === added.id)?.working?.languageConfiguration).toBe(scanning);
+        expect(configurationOfAdded()).toBe(scanning);
+        service.getPolicies.mockReturnValue(of(editor('e'.repeat(40))));
+        comp['reload']();
+        expect(configurationOfAdded()).toBe(scanning);
     });
 
     it('lets a new policy with the configuration it started from follow a switch of dependency scanning', () => {

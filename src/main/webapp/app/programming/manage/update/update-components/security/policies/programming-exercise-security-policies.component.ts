@@ -90,6 +90,8 @@ type Banner =
     | { kind: 'committed'; titleKey: string; textKey: string; hash: string }
     | { kind: 'conflict'; authorName?: string; hash?: string }
     | { kind: 'failed'; message: string; commitMessage: string; retry?: 'review' }
+    /** The change is pushed, but the builds it should start did not; Retry resumes them. */
+    | { kind: 'processingFailed'; hash?: string }
     | { kind: 'orphaned'; files: string }
     | { kind: 'info'; text: string };
 
@@ -535,6 +537,37 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         this.load(this.exerciseId());
     }
 
+    /**
+     * Loads the policies of a change that was pushed although its processing failed. A commit of the unsaved changes made exactly them, since editing is
+     * paused while it runs, so they are replaced; a commit of dependency scanning kept them, so they are rebased.
+     */
+    private loadPushed(keepUnsaved: boolean): void {
+        const request = ++this.loadRequests;
+        this.loading.set(true);
+        this.securityService.getPolicies(this.exerciseId()).subscribe({
+            next: (editor) => {
+                if (request !== this.loadRequests) {
+                    return;
+                }
+                this.loading.set(false);
+                if (keepUnsaved) {
+                    this.rebaseOnto(editor, false);
+                } else {
+                    this.applyEditor(editor);
+                }
+                if (this.banner()?.kind === 'processingFailed') {
+                    this.banner.set({ kind: 'processingFailed', hash: editor.lastCommit?.hash.substring(0, 7) });
+                }
+            },
+            error: () => {
+                if (request === this.loadRequests) {
+                    this.loading.set(false);
+                }
+            },
+        });
+        this.securityService.getConfig(this.exerciseId()).subscribe({ next: (config) => this.configChange.emit(config), error: () => undefined });
+    }
+
     private applyEditor(editor: SecurityPolicyEditor): void {
         this.editor.set(editor);
         this.refreshStructure();
@@ -570,9 +603,6 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private rebaseOnto(editor: SecurityPolicyEditor, announce: boolean): void {
         const previous = this.policies();
         const deleted = this.deletedPolicies();
-        // The configuration a new policy starts from, see addPolicy.
-        const previousConfiguration =
-            [...previous, ...deleted].find((policy) => policy.base)?.base?.languageConfiguration ?? this.editor()?.newPolicyTemplate?.languageConfiguration;
         this.editor.set(editor);
         this.refreshStructure();
         const files = editor.policies ?? [];
@@ -589,12 +619,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 return old && changed(old) ? rebasePolicy(old, file) : editorPolicyOf(file);
             });
         const languageConfiguration = files.find((file) => file.document)?.document?.languageConfiguration;
-        // A new policy follows the committed policies, e.g. when dependency scanning was switched, as long as it still has the configuration it started
-        // from; one the instructor gave another configuration, e.g. by importing a file, keeps it.
+        // A new policy follows the committed policies, e.g. when dependency scanning was switched, unless the instructor gave it a configuration of its own.
         const added = previous
             .filter((policy) => isNewPolicy(policy))
             .map((policy) =>
-                policy.working && languageConfiguration && policy.working.languageConfiguration === previousConfiguration
+                policy.working && languageConfiguration && !policy.ownLanguageConfiguration
                     ? cloneWith(policy, { working: cloneWith(policy.working, { languageConfiguration }) })
                     : policy,
             );
@@ -996,6 +1025,12 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                         },
                         error: () => undefined,
                     });
+                } else if (isProcessingFailure(error)) {
+                    // The push succeeded, so the committed policies are the pushed ones, and Discard must return to them. Retry sends the same request again,
+                    // whose processing the server resumes instead of applying the change twice; it keeps what was edited meanwhile.
+                    this.failedRequest = { change, keepUnsaved: true, scan };
+                    this.banner.set({ kind: 'processingFailed' });
+                    this.loadPushed(keepUnsaved);
                 } else {
                     this.failedRequest = { change, keepUnsaved, scan };
                     this.banner.set({ kind: 'failed', message: this.errorMessage(error), commitMessage: change.commitMessage ?? this.defaultCommitMessage() });
@@ -1011,7 +1046,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     protected retryCommit(): void {
         const banner = this.banner();
         const request = this.failedRequest;
-        if (banner?.kind === 'failed' && banner.retry === 'review') {
+        if (banner?.kind === 'processingFailed' && request) {
+            this.runCommit(request.change, request.keepUnsaved, request.scan);
+        } else if (banner?.kind === 'failed' && banner.retry === 'review') {
             this.openReview();
         } else if (request?.scan) {
             this.runCommit(request.change, request.keepUnsaved, request.scan);
@@ -1029,7 +1066,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         this.dropPendingYamlRequests();
         this.deletedPolicies.set([]);
         this.stagedVersion.set(undefined);
-        this.banner.set(announce ? { kind: 'info', text: this.translateService.instant(`${PREFIX}.banner.discarded`) } : undefined);
+        // The builds of a pushed change that did not start still wait for Retry, which discarding does not affect.
+        if (this.banner()?.kind !== 'processingFailed') {
+            this.banner.set(announce ? { kind: 'info', text: this.translateService.instant(`${PREFIX}.banner.discarded`) } : undefined);
+        }
     }
 
     readonly discardHeader: SecurityTranslatable = { key: `${PREFIX}.discard.title` };
@@ -1110,7 +1150,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                     const document = cloneWith(imported.document, { policyPath: current.working.policyPath });
                     const classes = classesOfTests(current.tests);
                     const extraClasses = (document.testClasses ?? []).filter((testClass) => !testClass.includes('#') && !classes.includes(testClass));
-                    this.onPolicyChange(withAssignment(cloneWith(current, { working: document }), current.tests, extraClasses));
+                    // A new policy that imports another language configuration keeps it from now on, see rebaseOnto.
+                    const ownLanguageConfiguration =
+                        !!current.ownLanguageConfiguration || (isNewPolicy(current) && document.languageConfiguration !== current.working.languageConfiguration);
+                    this.onPolicyChange(withAssignment(cloneWith(current, { working: document, ownLanguageConfiguration }), current.tests, extraClasses));
                     this.yamlUnsaved.set(undefined);
                     this.renderYamlUnsaved();
                     const changes = this.summaries().get(policy.id)?.total ?? 0;
@@ -1167,4 +1210,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         }
         return body?.title ?? body?.detail ?? this.translateService.instant(`${PREFIX}.banner.failedGeneric`);
     }
+}
+
+/** Whether the server pushed the change but could not process it, e.g. start the builds; repeating the request resumes the processing. */
+function isProcessingFailure(error: HttpErrorResponse): boolean {
+    return (error.error as { message?: string } | null | undefined)?.message === 'error.securityFrameworkProcessingFailed';
 }
