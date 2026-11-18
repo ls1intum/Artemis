@@ -197,6 +197,9 @@ public class HyperionQuizQuestionFilterService {
         StringBuilder rendered = new StringBuilder();
         for (GeneratedQuizAnswerOptionDTO option : options) {
             rendered.append("- [").append(option.correct() ? "correct" : "wrong").append("] ").append(option.text()).append('\n');
+            if (option.explanation() != null) {
+                rendered.append("  Explanation: ").append(option.explanation()).append('\n');
+            }
         }
         return rendered.toString().strip();
     }

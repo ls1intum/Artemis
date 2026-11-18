@@ -32,8 +32,8 @@ final class HyperionQuizQuestionChecks {
 
     /**
      * Length limits under which a question can be stored in a quiz: the quiz editor accepts titles below 250 characters, and a quiz
-     * question stores up to 5,000 characters of text and 2,000 of explanation. They must not exceed the quiz question's columns; options
-     * keep the limit of {@code GeneratedQuizAnswerOptionDTO}.
+     * question stores up to 5,000 characters of text and 2,000 of explanation, and an answer option 500 characters of explanation. They must not
+     * exceed the columns of the quiz question and the answer option; option texts keep the limit of {@code GeneratedQuizAnswerOptionDTO}.
      */
     private static final int MAX_QUESTION_TITLE_LENGTH = 249;
 
@@ -42,6 +42,8 @@ final class HyperionQuizQuestionChecks {
     private static final int MAX_EXPLANATION_LENGTH = 2_000;
 
     private static final int MAX_OPTION_TEXT_LENGTH = 2_000;
+
+    private static final int MAX_OPTION_EXPLANATION_LENGTH = 500;
 
     /** Options a multiple-choice question may mark correct at most when the caller names no bound. */
     private static final int MAX_CORRECT_OPTIONS_MULTIPLE_CHOICE = 3;
@@ -110,7 +112,7 @@ final class HyperionQuizQuestionChecks {
         TYPE_NOT_REQUESTED,
         /** The title or the question text is empty. */
         BLANK_TEXT,
-        /** The title, the question text, the explanation or an option exceeds its length limit. */
+        /** The title, the question text, an explanation or an option exceeds its length limit. */
         TEXT_TOO_LONG,
         /** The question names a tableau, figure or program whose data it does not contain. */
         DANGLING_REFERENCE,
@@ -162,7 +164,8 @@ final class HyperionQuizQuestionChecks {
             return Optional.of(Defect.BLANK_TEXT);
         }
         if (question.title().length() > MAX_QUESTION_TITLE_LENGTH || question.questionText().length() > MAX_QUESTION_TEXT_LENGTH
-                || (question.explanation() != null && question.explanation().length() > MAX_EXPLANATION_LENGTH)) {
+                || (question.explanation() != null && question.explanation().length() > MAX_EXPLANATION_LENGTH)
+                || question.options().stream().anyMatch(option -> option.explanation() != null && option.explanation().length() > MAX_OPTION_EXPLANATION_LENGTH)) {
             return Optional.of(Defect.TEXT_TOO_LONG);
         }
         if (DANGLING_REFERENCE.matcher(question.questionText()).find() && !question.questionText().contains("\n")) {
@@ -175,7 +178,8 @@ final class HyperionQuizQuestionChecks {
         if (listsOptionsInQuestionText(question)) {
             return Optional.of(Defect.OPTIONS_IN_QUESTION_TEXT);
         }
-        if (hasUndelimitedMath(question.questionText()) || question.options().stream().anyMatch(option -> hasUndelimitedMath(option.text()))
+        if (hasUndelimitedMath(question.questionText())
+                || question.options().stream().anyMatch(option -> hasUndelimitedMath(option.text()) || (option.explanation() != null && hasUndelimitedMath(option.explanation())))
                 || (question.explanation() != null && hasUndelimitedMath(question.explanation()))) {
             return Optional.of(Defect.UNDELIMITED_MATH);
         }

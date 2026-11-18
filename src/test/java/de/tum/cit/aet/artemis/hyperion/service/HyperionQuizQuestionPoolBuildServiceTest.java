@@ -732,22 +732,23 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     @Test
     void toQuestion_fallsBackToTheRequestedTypeWhenTheModelOmitsIt() {
         HyperionQuizQuestionPoolQuestionMapper.PoolQuestionOutput generated = new HyperionQuizQuestionPoolQuestionMapper.PoolQuestionOutput(null, "Loop count",
-                "How often does the body run?", 1, List.of(new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("5 times", true),
-                        new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("4 times", false)),
+                "How often does the body run?", 1,
+                List.of(new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("5 times", true, "The body runs once per value from 0 to 4."),
+                        new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("4 times", false, " ")),
                 "The condition is checked before every iteration.");
 
         Optional<GeneratedQuizQuestionDTO> question = HyperionQuizQuestionPoolQuestionMapper.toQuestion(generated, QuizQuestionGenerationType.SINGLE_CHOICE);
 
         assertThat(question).hasValueSatisfying(mapped -> {
             assertThat(mapped.type()).isEqualTo(QuizQuestionGenerationType.SINGLE_CHOICE);
-            assertThat(mapped.options()).hasSize(2);
+            assertThat(mapped.options()).extracting(GeneratedQuizAnswerOptionDTO::explanation).containsExactly("The body runs once per value from 0 to 4.", null);
             assertThat(mapped.explanation()).isEqualTo("The condition is checked before every iteration.");
         });
     }
 
     @Test
     void toQuestion_matchesTypeNamesIgnoringCaseAndSeparators() {
-        List<HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput> options = List.of(new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("A", true));
+        List<HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput> options = List.of(new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("A", true, null));
 
         assertThat(HyperionQuizQuestionPoolQuestionMapper.toQuestion(new HyperionQuizQuestionPoolQuestionMapper.PoolQuestionOutput("single_choice", "T", "Q", null, options, null),
                 QuizQuestionGenerationType.SINGLE_CHOICE)).hasValueSatisfying(mapped -> assertThat(mapped.type()).isEqualTo(QuizQuestionGenerationType.SINGLE_CHOICE));
@@ -764,8 +765,8 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     void toQuestion_rewritesParenthesisAndBracketMathAsDollarMath() {
         HyperionQuizQuestionPoolQuestionMapper.PoolQuestionOutput generated = new HyperionQuizQuestionPoolQuestionMapper.PoolQuestionOutput(null, "Dual",
                 "Consider \\(\\max 5x_1\\) subject to\n\\[x_1 \\leq 4\\]\nand the code `f(\\(x\\))`.", 1,
-                List.of(new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("\\(y_1 \\geq 5\\)", true),
-                        new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("$y_1 \\leq 5$", false)),
+                List.of(new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("\\(y_1 \\geq 5\\)", true, "Holds since \\(y_1 = 5\\)."),
+                        new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("$y_1 \\leq 5$", false, null)),
                 "Because \\(y_1 \\geq 5\\).");
 
         Optional<GeneratedQuizQuestionDTO> question = HyperionQuizQuestionPoolQuestionMapper.toQuestion(generated, QuizQuestionGenerationType.SINGLE_CHOICE);
@@ -773,6 +774,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         assertThat(question).hasValueSatisfying(mapped -> {
             assertThat(mapped.questionText()).isEqualTo("Consider $\\max 5x_1$ subject to\n$$x_1 \\leq 4$$\nand the code `f(\\(x\\))`.");
             assertThat(mapped.options()).extracting(GeneratedQuizAnswerOptionDTO::text).containsExactly("$y_1 \\geq 5$", "$y_1 \\leq 5$");
+            assertThat(mapped.options()).extracting(GeneratedQuizAnswerOptionDTO::explanation).containsExactly("Holds since $y_1 = 5$.", null);
             assertThat(mapped.explanation()).isEqualTo("Because $y_1 \\geq 5$.");
         });
     }
