@@ -278,29 +278,38 @@ class TestReportTest(unittest.TestCase):
         for file in sorted((TEMPLATES_DIR / "phases").glob("*/*.yaml")):
             with self.subTest(file=file.relative_to(TEMPLATES_DIR).as_posix()):
                 text = file.read_text(encoding="utf-8")
-                self.assertEqual(self.declared_result_paths(text), sum(len(phase.result_paths) for phase in phases.load_phases(TEMPLATES_DIR, file.parent.name, file.name)))
+                self.assertEqual(self.declared_result_paths(text), [path for phase in phases.load_phases(TEMPLATES_DIR, file.parent.name, file.name) for path in phase.result_paths])
 
     @staticmethod
-    def declared_result_paths(text: str) -> int:
-        """The number of result paths a phase file declares, counted from the text and independent of the parser: the entries of an inline list,
-        or the ``- `` lines up to the next key of the phase, wherever a comment or a blank line sits between them."""
-        total = 0
+    def declared_result_paths(text: str) -> list[str]:
+        """The result paths a phase file declares, read from the text without the phase parser: the entries of an inline list (a comma inside
+        quotes is no separator), or the ``-`` lines up to the next key of the phase, wherever a comment or a blank line sits between them."""
+
+        def value(entry: str) -> str:
+            entry = entry.strip()
+            if entry[:1] in ("'", '"'):
+                return entry[1 : entry.index(entry[0], 1)]
+            return re.sub(r"\s+#.*$", "", entry)
+
+        paths: list[str] = []
         for key in re.finditer(r"^  resultPaths:[ \t]*(.*)$", text, re.MULTILINE):
             inline = key.group(1)
             if inline.startswith("["):
-                total += len([item for item in inline[1 : inline.rfind("]")].split(",") if item.strip()])
+                body = inline[1 : inline.rfind("]")]
+                paths += [value(item) for item in re.findall(r"""'(?:[^']|'')*'|"(?:[^"\\]|\\.)*"|[^,\s][^,]*""", body)]
             else:
                 block = re.split(r"^(?:  \w+:|- )", text[key.end() :], maxsplit=1, flags=re.MULTILINE)[0]
-                total += len(re.findall(r"^\s*- ", block, re.MULTILINE))
-        return total
+                paths += [value(entry) for entry in re.findall(r"^\s*-[ \t]+(.*)$", block, re.MULTILINE)]
+        return paths
 
-    def test_the_count_of_declared_result_paths_does_not_depend_on_the_layout(self):
+    def test_the_declared_result_paths_do_not_depend_on_the_layout(self):
         text = (
-            "- name: a\n  resultPaths: ['x/*.xml', 'y.xml']\n  script: x\n"
-            "- name: b\n  resultPaths:\n    - 'x/*.xml'\n    # comment between the entries\n\n    - y.xml\n  script: |\n    - not a path\n"
+            "- name: a\n  resultPaths: ['x/*.xml', 'reports/a,b.xml']\n  script: x\n"
+            "- name: b\n  resultPaths:\n    - 'x/*.xml'\n    # comment between the entries\n\n    - y.xml\n    -\ttab.xml\n  script: |\n    - not a path\n"
         )
-        self.assertEqual(self.declared_result_paths(text), 4)
-        self.assertEqual([len(phase.result_paths) for phase in phases.parse_phases(text)], [2, 2])
+        expected = ["x/*.xml", "reports/a,b.xml", "x/*.xml", "y.xml", "tab.xml"]
+        self.assertEqual(self.declared_result_paths(text), expected)
+        self.assertEqual([path for phase in phases.parse_phases(text) for path in phase.result_paths], expected)
 
     def test_a_truncated_or_malformed_report_does_not_count_but_another_valid_one_does(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -999,6 +1008,10 @@ class GoAndHaskellTest(unittest.TestCase):
         self.assertNotIn("package other-package", sync_check.versions_of("Dockerfile", other))
         self.assertIn("package tasty", sync_check.versions_of("Dockerfile", other))
         self.assertEqual(sync_check.compare(sync_check.versions_of("test.cabal", TEST_CABAL), sync_check.versions_of("Dockerfile", other)), ["package tasty-hunit is not in the image"])
+        # what follows a standalone `--` belongs to the program that stack runs, not to stack
+        exec_only = HASKELL_DOCKERFILE.replace("            --package tasty-hunit \\\n", "") + "RUN stack exec echo -- --package tasty-hunit\n"
+        self.assertNotIn("package tasty-hunit", sync_check.versions_of("Dockerfile", exec_only))
+        self.assertIn("package tasty", sync_check.versions_of("Dockerfile", exec_only))
         # the continuation lines of the command count, and so does a command of its own RUN instruction
         self.assertEqual(sorted(sync_check.versions_of("Dockerfile", HASKELL_DOCKERFILE + "RUN stack build --package extra\n")), ["package QuickCheck", "package extra", "package tasty", "package tasty-hunit"])
 

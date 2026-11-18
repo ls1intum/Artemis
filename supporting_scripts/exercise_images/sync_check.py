@@ -451,7 +451,9 @@ def dockerfile_versions(text: str) -> Versions:
             continue
         for command in re.split(r"&&|\|\||[;|]", instruction):
             if re.match(r"\s*(?:RUN\s+)?(?:\w+=\S*\s+)*stack\s", command, re.IGNORECASE):
-                for match in re.finditer(r"--package\s+([A-Za-z][\w-]*)", command):
+                # Behind a standalone `--` the arguments belong to the program that stack runs (`stack exec echo -- --package x`)
+                stack_options = re.split(r"\s--(?:\s|$)", command, maxsplit=1)[0]
+                for match in re.finditer(r"--package\s+([A-Za-z][\w-]*)", stack_options):
                     versions[f"package {match.group(1)}"] = {"cached"}
     return versions
 
