@@ -21,6 +21,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -44,7 +45,11 @@ import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseOverviewDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ResultOverviewDTO;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
@@ -101,6 +106,9 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
     @Autowired
     private ProgrammingSubmissionService programmingSubmissionService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
 
     @Override
     protected String getTestPrefix() {
@@ -205,6 +213,51 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(programmingSubmissionService.getLatestPendingSubmission(participation.getId(), false)).isEmpty();
         assertThat(resultRepository.findLatestResultWithFeedbacksBySubmissionId(submissionId, ZonedDateTime.now())).map(Result::getId).contains(finalizedResult.getId());
         assertThat(resultRepository.findLatestVisibleResultIdForParticipation(participation.getId(), ZonedDateTime.now())).contains(finalizedResult.getId());
+    }
+
+    /**
+     * While an assessed submission is rebuilt, the course overview keeps showing the assessment: the build's result stays without a completion date
+     * until its last container has finished and must not replace the grade in the meantime.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTheCourseOverviewKeepsTheAssessmentWhileARebuildIsRunning() throws Exception {
+        BuildContainerDTO containerA = new BuildContainerDTO("container_a", "image-a:1",
+                List.of(new BuildPhaseDTO("phase_a", "echo a", BuildPhaseCondition.ALWAYS, false, List.of("results/a/*.xml"))));
+        BuildContainerDTO containerB = new BuildContainerDTO("container_b", "image-b:2",
+                List.of(new BuildPhaseDTO("phase_b", "echo b", BuildPhaseCondition.ALWAYS, false, List.of("results/b/*.xml"))));
+        ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(containerA, containerB)).toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+        // without due dates the assessment is released and the build's result is rated
+        programmingExercise.setDueDate(null);
+        programmingExercise.setAssessmentDueDate(null);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "3234567890123456789012345678901234567890";
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setCommitHash(commitHash);
+        submission.setSubmissionDate(ZonedDateTime.now().minusHours(2));
+        submission.setType(SubmissionType.MANUAL);
+        submission.setSubmitted(true);
+        submission.setParticipation(participation);
+        submission = programmingSubmissionRepository.save(submission);
+        Result assessment = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1), submission);
+
+        // the instructor rebuilds the same commit: container_a has finished, container_b is still running
+        BuildResult resultA = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, resultA, false, "container_a", null).result();
+        assertThat(aggregatedResult.getCompletionDate()).isNull();
+        assertThat(aggregatedResult.isRated()).isTrue();
+
+        CourseExercisesForOverviewDTO overview = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK,
+                CourseExercisesForOverviewDTO.class);
+
+        ExerciseOverviewDTO exercise = overview.exercises().stream().filter(candidate -> candidate.id().equals(programmingExercise.getId())).findFirst().orElseThrow();
+        assertThat(exercise.studentParticipations()).singleElement().satisfies(studentParticipation -> assertThat(studentParticipation.submissions()).singleElement()
+                .satisfies(shownSubmission -> assertThat(shownSubmission.results()).extracting(ResultOverviewDTO::id).containsExactly(assessment.getId())));
     }
 
     /** Finalize itself persists the lock-repository policy's unrated flag; this test calls it outside a transaction. */
