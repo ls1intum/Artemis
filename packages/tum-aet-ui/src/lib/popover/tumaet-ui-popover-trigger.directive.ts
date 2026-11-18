@@ -32,6 +32,8 @@ export class TumAetUiPopoverTriggerDirective implements OnDestroy {
     private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
     /** When a finger was last lifted on the trigger, in the time base of the events. */
     private touchReleasedAt?: number;
+    /** The popover this trigger last asked to open or close, which is the one to tell when the trigger goes away. */
+    private engagedPopover?: TumAetUiPopoverComponent;
     readonly popover = input.required<TumAetUiPopoverComponent>({ alias: 'tumAetUiPopoverTrigger' });
 
     protected onClick(event: Event): void {
@@ -89,12 +91,15 @@ export class TumAetUiPopoverTriggerDirective implements OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.opensOnHover()) {
-            this.popover().triggerRemoved();
-        }
+        // Not read from the input: a trigger that is destroyed before its first change detection has no value yet.
+        this.engagedPopover?.triggerRemoved();
     }
 
     private opensOnHover(): boolean {
-        return this.popover().openOn() === 'hover';
+        const hover = this.popover().openOn() === 'hover';
+        if (hover) {
+            this.engagedPopover = this.popover();
+        }
+        return hover;
     }
 }

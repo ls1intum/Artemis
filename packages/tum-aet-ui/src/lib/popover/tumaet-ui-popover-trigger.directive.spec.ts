@@ -29,6 +29,12 @@ describe('TumAetUiPopoverTriggerDirective', () => {
         vi.restoreAllMocks();
     });
 
+    it('can be destroyed before its first change detection, when the popover input has no value yet', () => {
+        const untouched = TestBed.createComponent(PopoverTriggerHostComponent);
+
+        expect(() => untouched.destroy()).not.toThrow();
+    });
+
     it('exposes aria-haspopup and a collapsed aria-expanded initially', () => {
         expect(button.getAttribute('aria-haspopup')).toBe('dialog');
         expect(button.getAttribute('aria-expanded')).toBe('false');
