@@ -351,7 +351,7 @@ GO_VERSION = re.compile(r"(\d+)\.(\d+)(?:\.(\d+))?(?:(beta|rc)(\d+))?")
 
 
 def _release(version: str) -> tuple[int, ...]:
-    """A Go version as a comparable tuple, in the order of Go: ``1.23rc1`` < ``1.23`` (= ``1.23.0``) < ``1.23.2``.
+    """A Go version as a comparable tuple, in the order of Go: ``1.24`` (language version) < ``1.24rc1`` < ``1.24.0`` < ``1.24.2``.
 
     Raises ``ValueError`` for a version that is not in the notation of Go, which a comparison could not rely on.
     """
@@ -359,6 +359,10 @@ def _release(version: str) -> tuple[int, ...]:
     if not match:
         raise ValueError(f"{version} is not a Go version")
     major, minor, patch, stage, stage_number = match.groups()
+    if patch is None and stage is None and int(major) == 1 and int(minor) >= 21:
+        # Since Go 1.21 `1.24` is the language version, which any toolchain of that release accepts, the release candidates included
+        # (``gover.Compare``: 1.24 < 1.24rc1 < 1.24.0). Before that, `1.20` was the release itself.
+        return int(major), int(minor), 0, -1, 0
     return int(major), int(minor), int(patch or 0), {"beta": 0, "rc": 1, None: 2}[stage], int(stage_number or 0)
 
 
@@ -369,6 +373,9 @@ def go_mod_versions(text: str) -> Versions:
         match = re.fullmatch(r"\s*(go|toolchain)\s+(\S+)\s*(?://.*)?", line)
         if match:
             version = match.group(2)
+            if match.group(1) == "toolchain" and version == "default":
+                # `toolchain default` is no version requirement, it selects the default toolchain
+                continue
             # A toolchain line names the toolchain (`go1.23.5`), the directive the language version (`1.23.5`)
             versions.setdefault(GO_TOOLCHAIN, set()).add(version.removeprefix("go") if match.group(1) == "toolchain" else version)
     return versions
@@ -384,6 +391,9 @@ def cabal_packages(text: str) -> Versions:
     """The packages a cabal file depends on without its own libraries and ``base``.
 
     Executables and test suites are no dependencies, so a package that has the name of one of them is still compared.
+
+    Only the names are compared, not the version bounds (``tasty == 1.*``): the image records a cached package without a version. A bound that
+    the snapshot of the image cannot satisfy is not found by the pull request check but by the nightly build without network access.
     """
     local = {match.group(1) for match in re.finditer(r"^library\s+(\S+)", text, re.MULTILINE)}
     local |= {match.group(1) for match in re.finditer(r"^name:\s*(\S+)", text, re.MULTILINE)}
@@ -413,7 +423,10 @@ def dockerfile_versions(text: str) -> Versions:
     stages = [match.group(1) for line in lines if (match := re.match(r"\s*FROM\s+(?:--\S+\s+)*(\S+)", line, re.IGNORECASE))]
     published = re.fullmatch(r"(?:\S*/)?golang:(\d+\.\d+(?:\.\d+)?(?:(?:beta|rc)\d+)?)(?:[-@]\S*)?", stages[-1]) if stages else None
     if published:
-        versions[GO_TOOLCHAIN] = {published.group(1)}
+        tag = published.group(1)
+        # `golang:1.24` is a rolling tag, which holds the latest patch release of its minor version at the time of the build. The tag cannot
+        # tell which one, so it names no version.
+        versions[GO_TOOLCHAIN] = {tag if GO_VERSION.fullmatch(tag) and (tag.count(".") == 2 or "rc" in tag or "beta" in tag) else f"{tag} (rolling tag)"}
     for match in re.finditer(r"--package\s+([A-Za-z][\w-]*)", "\n".join(lines)):
         versions[f"package {match.group(1)}"] = {"cached"}
     return versions
@@ -459,10 +472,15 @@ def compare(template: Versions, image: Versions) -> list[str]:
                 problems.append(f"{label} is not in the image")
             elif coordinate in AT_MOST_COORDINATES:
                 try:
-                    if any(_release(version) > _release(newest) for newest in held):
-                        problems.append(f"{label} is newer than the image ({', '.join(sorted(held))})")
+                    wanted_release = _release(version)
                 except ValueError as error:
                     problems.append(f"{label} cannot be compared with the image ({', '.join(sorted(held))}): {error}")
+                    continue
+                try:
+                    if any(wanted_release > _release(newest) for newest in held):
+                        problems.append(f"{label} is newer than the image ({', '.join(sorted(held))})")
+                except ValueError:
+                    problems.append(f"{label} cannot be compared: the image does not name a full Go version ({', '.join(sorted(held))}), pin a patch release such as golang:1.23.3")
             elif version not in held:
                 problems.append(f"{label} differs from the image ({', '.join(sorted(held))})")
     return problems

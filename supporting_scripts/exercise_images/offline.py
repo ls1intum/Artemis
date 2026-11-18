@@ -6,6 +6,7 @@ image does not hold into a failed build, instead of a silent download from Maven
 
 import re
 import subprocess
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -43,12 +44,34 @@ def checkout_directories(text: str) -> str:
     return text.replace("${studentParentWorkingDirectoryName}", ASSIGNMENT_DIRECTORY).replace("${testWorkingDirectory}", TEST_DIRECTORY)
 
 
+def has_test_case(report: Path) -> bool:
+    """Whether ``report`` is a complete JUnit file (``testsuite`` or ``testsuites``) with at least one ``testcase`` element.
+
+    A truncated or otherwise malformed file does not count, and neither does one with a DOCTYPE or entity declaration: the standard library
+    parser expands entities, and a test report has no use for them.
+    """
+    text = report.read_text(encoding="utf-8", errors="replace")
+    if "<!DOCTYPE" in text or "<!ENTITY" in text:
+        return False
+    try:
+        root = ET.fromstring(text.lstrip("\ufeff"))  # noqa: S314 - no DOCTYPE or entity declaration, checked above
+    except ET.ParseError:
+        return False
+    names = [element.tag.rpartition("}")[2] for element in root.iter()]
+    return names[0] in ("testsuite", "testsuites") and "testcase" in names
+
+
 def missing_reports(repository: Path, phases: list[Phase]) -> list[str]:
     """The phases that were meant to leave a test report (JUnit XML) and left none with a test case.
 
     The test phases of several languages hide the exit status of the test run (``|| true``, a pipe through a converter), so a run that could
     not even start, for example because a library of the tests is missing in the image, still ends with exit status 0. Its report is the
     evidence. Static code analysis phases (``forceRun``) and result files of other formats are not looked at.
+
+    The reports are looked at after the whole build, so a phase whose result paths another phase also writes (the structural and the
+    behavior stage of the sequential Java and Kotlin builds share ``**/target/surefire-reports/*.xml``) can be satisfied by the report of
+    the other one. Those builds do not hide the exit status of Maven or Gradle, and every other sequential build has a result path per
+    stage, so the verdict only misses a stage that exits with 0 and writes nothing next to a stage that wrote a report.
     """
     problems = []
     for phase in phases:
@@ -56,7 +79,7 @@ def missing_reports(repository: Path, phases: list[Phase]) -> list[str]:
         if phase.force_run or not patterns:
             continue
         reports = {report for pattern in patterns for report in repository.glob(pattern) if report.is_file()}
-        if not any("<testcase" in report.read_text(encoding="utf-8", errors="replace") for report in reports):
+        if not any(has_test_case(report) for report in reports):
             problems.append(f"The phase {phase.name} left no test report with a test case ({', '.join(patterns)})")
     return problems
 

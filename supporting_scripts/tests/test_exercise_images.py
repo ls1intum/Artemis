@@ -259,6 +259,43 @@ class TestReportTest(unittest.TestCase):
         self.assertEqual(self.PHASES[1].result_paths, ("analysis.xml",))
         self.assertEqual(phases.load_phases(TEMPLATES_DIR, "c", "gcc.yaml")[-1].result_paths, ("test-reports/*.xml",))
 
+    def test_a_phase_with_an_inline_list_or_comments_keeps_its_result_paths(self):
+        text = (
+            "- name: a\n  script: x\n  resultPaths: ['test-reports/*.xml', \"b # c.xml\"]  # JUnit\n"
+            "- name: b\n  script: x\n  resultPaths:\n    - 'test-reports/*.xml' # JUnit\n    - \"has # inside.xml\"\n    - plain.xml # comment\n    - 'it''s.xml'\n"
+            "- name: c\n  script: x\n  resultPaths: []\n"
+        )
+        self.assertEqual(phases.parse_phases(text)[0].result_paths, ("test-reports/*.xml", "b # c.xml"))
+        self.assertEqual(phases.parse_phases(text)[1].result_paths, ("test-reports/*.xml", "has # inside.xml", "plain.xml", "it's.xml"))
+        self.assertEqual(phases.parse_phases(text)[2].result_paths, ())
+
+    def test_result_paths_in_a_form_that_is_not_read_are_refused_instead_of_dropped(self):
+        for value in ("test-reports/*.xml", "{a: b}"):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                phases.parse_phases(f"- name: a\n  script: x\n  resultPaths: {value}\n")
+
+    def test_every_result_path_of_the_templates_is_read(self):
+        for file in sorted((TEMPLATES_DIR / "phases").glob("*/*.yaml")):
+            with self.subTest(file=file.relative_to(TEMPLATES_DIR).as_posix()):
+                text = file.read_text(encoding="utf-8")
+                declared = sum(len(block.strip().splitlines()) for block in re.findall(r"^  resultPaths:\n((?:    - .*\n?)+)", text, re.MULTILINE))
+                self.assertEqual(declared, sum(len(phase.result_paths) for phase in phases.load_phases(TEMPLATES_DIR, file.parent.name, file.name)))
+                self.assertEqual(text.count("resultPaths:"), len(re.findall(r"^  resultPaths:\n    - ", text, re.MULTILINE)), "a result path list in a form the check does not read")
+
+    def test_a_truncated_or_malformed_report_does_not_count_but_another_valid_one_does(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            (repository / "tests").mkdir()
+            (repository / "other").mkdir()
+            (repository / "tests" / "report.xml").write_text('<testsuites><testsuite><testcase name="x">', encoding="utf-8")
+            self.assertEqual(len(offline.missing_reports(repository, self.PHASES)), 1)
+            (repository / "other" / "empty.xml").write_text("<testsuite/>", encoding="utf-8")
+            (repository / "other" / "not-junit.xml").write_text('<report><testcase name="x"/></report>', encoding="utf-8")
+            (repository / "other" / "entity.xml").write_text('<!DOCTYPE x [<!ENTITY e "v">]><testsuite><testcase name="&e;"/></testsuite>', encoding="utf-8")
+            self.assertEqual(len(offline.missing_reports(repository, self.PHASES)), 1)
+            (repository / "other" / "valid.xml").write_text('<?xml version="1.0"?>\n<testsuites><testsuite name="s"><testcase name="x"/></testsuite></testsuites>', encoding="utf-8")
+            self.assertEqual(offline.missing_reports(repository, self.PHASES), [])
+
     def test_a_missing_report_or_one_without_a_test_case_is_reported(self):
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory)
@@ -814,7 +851,7 @@ class GoAndHaskellTest(unittest.TestCase):
     def test_go_mod_and_dockerfile_name_the_go_version(self):
         self.assertEqual(sync_check.versions_of("go.mod", "module artemis/test\n\ngo 1.23.2\n\ntoolchain go1.23.5\n"), {self.GO: {"1.23.2", "1.23.5"}})
         self.assertEqual(sync_check.versions_of("Dockerfile", GO_DOCKERFILE), {self.GO: {"1.23.3"}})
-        self.assertEqual(sync_check.versions_of("Dockerfile", "FROM docker.io/library/golang:1.24-bookworm\n"), {self.GO: {"1.24"}})
+        self.assertEqual(sync_check.versions_of("Dockerfile", "FROM docker.io/library/golang:1.24.2-bookworm\n"), {self.GO: {"1.24.2"}})
 
     def test_a_go_version_newer_than_the_image_is_reported_but_an_older_one_is_not(self):
         image = sync_check.versions_of("Dockerfile", GO_DOCKERFILE)
@@ -834,8 +871,25 @@ class GoAndHaskellTest(unittest.TestCase):
         rc_image = sync_check.versions_of("Dockerfile", "FROM golang:1.24rc1\n")
         self.assertEqual(rc_image, {self.GO: {"1.24rc1"}})
         self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24rc1\n"), rc_image), [])
-        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24\n"), rc_image), [f"{self.GO} 1.24 is newer than the image (1.24rc1)"])
+        # `go 1.24` is the language version, which a release candidate of 1.24 accepts; `go 1.24.0` is the first release, which it does not
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24\n"), rc_image), [])
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24.0\n"), rc_image), [f"{self.GO} 1.24.0 is newer than the image (1.24rc1)"])
+        # before Go 1.21 `1.20` was the release itself
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.20\n"), sync_check.versions_of("Dockerfile", "FROM golang:1.20rc1\n")), [f"{self.GO} 1.20 is newer than the image (1.20rc1)"])
         self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24beta1\n"), rc_image), [])
+
+    def test_toolchain_default_is_no_version_requirement(self):
+        self.assertEqual(sync_check.versions_of("go.mod", "go 1.23\ntoolchain default\n"), {self.GO: {"1.23"}})
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23\ntoolchain default\n"), sync_check.versions_of("Dockerfile", GO_DOCKERFILE)), [])
+        self.assertEqual(len(sync_check.compare(sync_check.versions_of("go.mod", "go default\n"), sync_check.versions_of("Dockerfile", GO_DOCKERFILE))), 1)
+
+    def test_a_rolling_go_tag_names_no_version(self):
+        rolling = sync_check.versions_of("Dockerfile", "FROM golang:1.24-bookworm\n")
+        self.assertEqual(rolling, {self.GO: {"1.24 (rolling tag)"}})
+        problems = sync_check.compare(sync_check.versions_of("go.mod", "go 1.24.1\n"), rolling)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("the image does not name a full Go version", problems[0])
+        self.assertEqual(sync_check.versions_of("Dockerfile", "FROM golang:1.23.3-bookworm\n"), {self.GO: {"1.23.3"}})
 
     def test_a_directive_that_is_not_a_go_version_is_reported_instead_of_ignored(self):
         problems = sync_check.compare(sync_check.versions_of("go.mod", "go latest\n"), sync_check.versions_of("Dockerfile", GO_DOCKERFILE))
