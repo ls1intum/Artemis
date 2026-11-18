@@ -12,7 +12,7 @@
     } @else {
         @for (feature of features; track feature.key) {
             @let featureKey = 'artemisApp.course.athenaConfig.' + feature.key;
-            <div class="rounded-lg border border-solid border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-6 py-5!">
+            <div class="rounded-lg border border-solid border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-4! py-5! sm:px-6!">
                 <div class="flex items-start gap-3!">
                     <tumaet-ui-toggle-switch
                         class="shrink-0"
@@ -41,7 +41,7 @@
                         <div class="mt-[1rem] flex flex-col gap-[1rem]">
                             @for (style of feedbackStyles; track style.field) {
                                 @let styleKey = 'artemisApp.course.athenaConfig.' + style.field;
-                                <div class="rounded-lg border border-(--border-color) bg-(--module-bg) p-[1rem]" [attr.data-testid]="'athena-settings-' + style.testId">
+                                <div class="rounded-lg border border-(--border-color) bg-(--module-bg) p-3! sm:p-[1rem]!" [attr.data-testid]="'athena-settings-' + style.testId">
                                     <span class="block font-medium" [jhiTranslate]="styleKey + '.label'"></span>
                                     <small class="block text-sm text-(--text-body-secondary)" [jhiTranslate]="styleKey + '.tooltip'"></small>
 
@@ -102,9 +102,10 @@
                                     <!-- Example feedback, rendered with the same component a student's text exercise result uses: the
                                          feedback is attached to a sentence of a sample submission and shows the title and
                                          description Athena returns, so the selected level's effect is concrete. Boxed on a tinted
-                                         surface like the example conversation on Iris's settings page. -->
+                                         surface like the example conversation on Iris's settings page. On a phone the nested boxes keep
+                                         less padding, so the example feedback keeps room for its title. -->
                                     <div
-                                        class="mt-[1rem] rounded-lg bg-(--hover-slightly-darker-body-bg) p-[1rem]"
+                                        class="mt-[1rem] rounded-lg bg-(--hover-slightly-darker-body-bg) p-2 sm:p-[1rem]!"
                                         [attr.data-testid]="'athena-settings-' + style.testId + '-example-box'"
                                     >
                                         <small class="mb-2 block text-(--text-body-secondary)" jhiTranslate="artemisApp.course.athenaConfig.exampleFeedbackLabel"></small>
