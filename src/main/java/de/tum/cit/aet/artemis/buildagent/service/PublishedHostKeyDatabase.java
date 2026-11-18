@@ -154,10 +154,12 @@ class PublishedHostKeyDatabase implements ServerKeyDatabase {
      */
     synchronized Set<String> publishedFingerprints(boolean forceRefresh, String presented) {
         long now = nanoClock.getAsLong();
-        if (!forceRefresh && !cachedFingerprints.get().isEmpty() && now - cachedAtNanos < CACHE_DURATION.toNanos()) {
+        boolean cacheIsFresh = !cachedFingerprints.get().isEmpty() && now - cachedAtNanos < CACHE_DURATION.toNanos();
+        if (!forceRefresh && cacheIsFresh) {
             return cachedFingerprints.get();
         }
-        if (forceRefresh && cachedFingerprints.get().contains(presented)) {
+        // Only a recent snapshot is reused for a key that another connection just found, as an old one has to be read again
+        if (forceRefresh && cacheIsFresh && cachedFingerprints.get().contains(presented)) {
             return cachedFingerprints.get();
         }
         if (lastFetchFailed && now - lastFailureAtNanos < FAILURE_CACHE_DURATION.toNanos()) {
@@ -167,8 +169,9 @@ class PublishedHostKeyDatabase implements ServerKeyDatabase {
         Set<String> fetched = fingerprintFetcher.get();
         if (fetched.isEmpty()) {
             // A fingerprint that was published before still counts when the core node cannot be asked right now
+            // The cooldown starts when the request has failed, so that a timeout and an immediate failure wait the same time
             lastFetchFailed = true;
-            lastFailureAtNanos = now;
+            lastFailureAtNanos = nanoClock.getAsLong();
             return cachedFingerprints.get();
         }
         lastFetchFailed = false;

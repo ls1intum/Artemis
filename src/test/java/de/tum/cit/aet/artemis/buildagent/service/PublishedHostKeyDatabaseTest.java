@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -132,10 +133,55 @@ class PublishedHostKeyDatabaseTest {
         assertThat(accept(database, PUBLISHED_KEY)).isTrue();
         assertThat(calls).hasValue(1);
 
-        clock.addAndGet(PublishedHostKeyDatabase.FAILURE_CACHE_DURATION.toNanos() + 1);
+        // the wait is thirty seconds, whatever the constant is: just before it nothing is asked, at it the core node is asked again
+        clock.addAndGet(Duration.ofSeconds(30).toNanos() - 1);
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
+        assertThat(calls).hasValue(1);
+        clock.addAndGet(1);
         assertThat(accept(database, PUBLISHED_KEY)).isTrue();
 
         assertThat(calls).hasValue(2);
+    }
+
+    @Test
+    void theWaitAfterAFailedFetchStartsWhenTheFetchHasFailed() {
+        var calls = new AtomicInteger();
+        var clock = new AtomicLong();
+        // the request takes five seconds before it fails
+        Supplier<Set<String>> fetcher = () -> {
+            calls.incrementAndGet();
+            clock.addAndGet(Duration.ofSeconds(5).toNanos());
+            return Set.of();
+        };
+        var database = new PublishedHostKeyDatabase(fetcher, Mode.IF_AVAILABLE, clock::get);
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
+        assertThat(calls).hasValue(1);
+
+        clock.addAndGet(Duration.ofSeconds(30).toNanos() - 1);
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
+        assertThat(calls).as("thirty seconds after the failure, not after the start of the request").hasValue(1);
+
+        clock.addAndGet(1);
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
+        assertThat(calls).hasValue(2);
+    }
+
+    @Test
+    void readsTheFingerprintsAgainInsteadOfReusingASnapshotThatIsTooOld() {
+        var calls = new AtomicInteger();
+        var clock = new AtomicLong();
+        Supplier<Set<String>> fetcher = () -> calls.getAndIncrement() == 0 ? published(PUBLISHED_KEY) : published(OTHER_KEY);
+        var database = new PublishedHostKeyDatabase(fetcher, Mode.REQUIRED, clock::get);
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
+        assertThat(calls).hasValue(1);
+        String fingerprint = HashUtils.getSha256Fingerprint(PUBLISHED_KEY);
+
+        // a connection that missed the cache earlier resumes with a snapshot that has expired, and the core node no longer publishes the key
+        clock.addAndGet(PublishedHostKeyDatabase.CACHE_DURATION.toNanos() + 1);
+        Set<String> found = database.publishedFingerprints(true, fingerprint);
+
+        assertThat(calls).as("an old snapshot is not enough for a key that was found in it").hasValue(2);
+        assertThat(found).doesNotContain(fingerprint);
     }
 
     @Test
