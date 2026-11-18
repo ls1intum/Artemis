@@ -119,7 +119,7 @@ public class CalendarSubscriptionService {
                 }
                 return createSubscriptionTokenForUser(userLogin);
             }
-            catch (DataIntegrityViolationException ignored) {
+            catch (DataIntegrityViolationException _) {
                 // the new token equals the token of another user, which is astronomically rare, so a fresh one is tried
             }
         }
