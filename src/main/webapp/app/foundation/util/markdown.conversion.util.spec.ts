@@ -180,7 +180,9 @@ describe('markdown.conversion.util', () => {
             ['an import', '@import url(https://unlisted.example/s.css)'],
         ])('removes %s from a style that is kept', (_description, style) => {
             const container = document.createElement('div');
-            container.innerHTML = `<p style="color: red; ${style}">text</p>`;
+            container.innerHTML = '<p>text</p>';
+            // set as an attribute: a quote in the style would end an attribute that is written in markup
+            container.querySelector('p')!.setAttribute('style', `color: red; ${style}`);
             container.querySelectorAll('*').forEach((element) => restrictRenderedAttributes(element, true));
 
             const paragraph = container.querySelector('p')!;

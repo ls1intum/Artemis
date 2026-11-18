@@ -9,8 +9,25 @@ let allowedImageHosts: string[] = [];
 export function setAllowedImageHosts(configuredHosts: string | undefined): void {
     allowedImageHosts = (configuredHosts ?? '')
         .split(',')
-        .map((host) => host.trim().toLowerCase())
+        .map((host) => normalizeHost(host.trim().toLowerCase()))
         .filter((host) => host.length > 0);
+}
+
+/**
+ * The form of a configured host that the browser compares with: a host name with special characters is in its ASCII form (`xn--...`) in the address of an image, and
+ * only there. An entry that is no plain host name, for example one with a port or a path, stays as it is written, so it does not match more than it says.
+ * @param host the configured host, in lower case, which may start with `*.`
+ */
+function normalizeHost(host: string): string {
+    const wildcard = host.startsWith('*.');
+    const name = wildcard ? host.substring(2) : host;
+    try {
+        const url = new URL(`https://${name}`);
+        const isPlainHost = url.host === url.hostname && url.pathname === '/' && !url.search && !url.hash && !url.username && !url.password;
+        return isPlainHost && url.hostname ? (wildcard ? '*.' : '') + url.hostname : host;
+    } catch {
+        return host;
+    }
 }
 
 /**
@@ -135,13 +152,41 @@ function nextDescriptorState(state: DescriptorState, character: string): Descrip
 }
 
 /**
+ * Splits a `style` attribute at the semicolons that end a declaration, and not at those inside a string or inside parentheses, so that a value like `'Research; Group'`
+ * stays as it was written.
+ * @param style the value of a `style` attribute
+ */
+function splitDeclarations(style: string): string[] {
+    const declarations: string[] = [];
+    let quote: string | undefined;
+    let depth = 0;
+    let start = 0;
+    for (let position = 0; position < style.length; position++) {
+        const character = style[position];
+        if (quote) {
+            quote = character === quote ? undefined : quote;
+        } else if (character === '"' || character === "'") {
+            quote = character;
+        } else if (character === '(') {
+            depth++;
+        } else if (character === ')' && depth > 0) {
+            depth--;
+        } else if (character === ';' && depth === 0) {
+            declarations.push(style.substring(start, position));
+            start = position + 1;
+        }
+    }
+    declarations.push(style.substring(start));
+    return declarations;
+}
+
+/**
  * The declarations of a `style` attribute that cannot load an image. A declaration with a function that takes an address, such as `url()` or `image-set()`, is left out,
  * and so is every declaration with a backslash or a comment, as an escape can spell a function name in a way that a text search does not see.
  * @param style the value of a `style` attribute
  */
 export function styleWithoutImages(style: string): string {
-    return style
-        .split(';')
+    return splitDeclarations(style)
         .map((declaration) => declaration.trim())
         .filter((declaration) => declaration.length > 0 && !/\\|\/\*|@import|(?:url|image-set|image|element|cross-fade|paint|src)\s*\(/i.test(declaration))
         .join(';');
