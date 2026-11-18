@@ -241,7 +241,7 @@ class AssemblyTest(unittest.TestCase):
 
     def test_every_variant_is_assembled_without_leftover_markers_or_placeholders(self):
         marker = re.compile(r"%[a-z-]+-(start|stop)%|\$\{(packageName|packageNameFolder|exerciseName|exerciseNamePomXml|studentWorkingDirectory|"
-                            r"studentParentWorkingDirectoryName|studentWorkingDirectoryNoSlash|packaging|mavenCentralMirrorUrl)\}")
+                            r"studentParentWorkingDirectoryName|studentWorkingDirectoryNoSlash|packaging|mavenCentralMirrorUrl|testWorkingDirectory|solutionWorkingDirectory)\}")
         for variant in assembly.VARIANTS:
             with self.subTest(variant=variant.name), tempfile.TemporaryDirectory() as directory:
                 target = Path(directory) / "testing-dir"
@@ -249,7 +249,7 @@ class AssemblyTest(unittest.TestCase):
                 package_folder = Path(*assembly.PACKAGE_NAME.split("."))
                 for file in target.rglob("*"):
                     self.assertNotIn("${", file.name, f"{file.relative_to(target)} has a leftover placeholder in its name")
-                    if file.is_file() and file.suffix in (".xml", ".gradle", ".java", ".kt", ".json", ".yaml", ".properties", ".swift", ".rs", ".rb", ".dart", ".cs", ".csproj", ".lock"):
+                    if file.is_file() and file.suffix in (".xml", ".gradle", ".java", ".kt", ".json", ".yaml", ".properties", ".swift", ".rs", ".rb", ".dart", ".cs", ".csproj", ".lock", ".go", ".mod", ".cabal", ".sh", ".py", ".R", ".c", ".cpp", ".hpp", ".txt", ".bats", ".m", ".ml", ".dune"):
                         self.assertIsNone(marker.search(file.read_text(encoding="utf-8")), f"{file.relative_to(target)} has a leftover placeholder")
                 if not variant.is_jvm:
                     self.assertTrue((target / "assignment").is_dir())
@@ -296,8 +296,26 @@ class AssemblyTest(unittest.TestCase):
             self.assertIn("../assignment/assignment.csproj", (csharp / "tests" / "test.csproj").read_text(encoding="utf-8"))
             self.assertTrue((csharp / "assignment" / "assignment.csproj").is_file())
 
+    def test_the_checkout_directories_are_the_ones_of_the_server(self):
+        """``RepositoryCheckoutService`` decides where each language checks out its test and solution repository; the assembly has to agree for every variant."""
+        source = (TEMPLATES_DIR.parents[1] / "java/de/tum/cit/aet/artemis/programming/service/RepositoryCheckoutService.java").read_text(encoding="utf-8")
+
+        def languages_of(start: str, end: str, directory: str) -> set[str]:
+            block = source.split(start, 1)[1].split(end, 1)[0]
+            cases = re.findall(r"case ([A-Z_, \n]+?)\s*->\s*\"([a-z]*)\"", block)
+            return {language.strip().lower() for names, value in cases if value == directory for language in names.split(",") if language.strip()}
+
+        test_languages = languages_of("TEST {", "SOLUTION {", "tests")
+        solution_languages = languages_of("SOLUTION {", "interface CustomizableCheckoutPath", "solution")
+        self.assertTrue({"c", "ruby", "c_sharp"} <= test_languages, test_languages)
+        self.assertEqual(solution_languages, {"haskell", "ocaml"})
+        for variant in assembly.VARIANTS:
+            with self.subTest(variant=variant.name):
+                self.assertEqual(variant.test_directory == "tests", variant.language in test_languages)
+                self.assertEqual(variant.language in assembly.SOLUTION_DIRECTORY_LANGUAGES, variant.language in solution_languages)
+
     def test_the_test_repository_is_checked_out_like_the_server_does(self):
-        self.assertEqual({variant.language for variant in assembly.VARIANTS if variant.test_directory}, {"ruby", "dart", "c_sharp"})
+        self.assertEqual({variant.language for variant in assembly.VARIANTS if variant.test_directory}, set(assembly.TEST_DIRECTORY_LANGUAGES) & {variant.language for variant in assembly.VARIANTS})
         script = offline.build_script(phases.parse_phases("- name: tests\n  script: |-\n    cd \"${testWorkingDirectory}\"\n    cd \"${studentParentWorkingDirectoryName}\"\n"))
         self.assertIn('cd "tests"', script)
         self.assertIn('cd "assignment"', script)
@@ -694,6 +712,107 @@ class RubyDartAndCSharpTest(unittest.TestCase):
                 repository = image.split("/")[-1].split(":")[0]
                 self.assertEqual(sorted(set(requested)), [f"https://raw.githubusercontent.com/ls1intum/{repository}/{image.rpartition(':')[2]}/{file}" for file in root_files])
                 self.assertTrue(problems, "an empty image project holds none of the versions the templates pin")
+
+
+GO_DOCKERFILE = "FROM golang:1.23.3\n\nRUN go install github.com/jstemmer/go-junit-report/v2@latest\n"
+HASKELL_DOCKERFILE = """\
+FROM docker.io/library/debian:13
+RUN stack setup \\
+    && stack ghc \\
+            --package QuickCheck \\
+            --package tasty \\
+            --package tasty-hunit \\
+            -- --version
+"""
+TEST_CABAL = """\
+name: test
+common common-all
+  build-depends:
+    base == 4.*
+
+common common-tests
+  import: common-all
+  -- the comment names a package that is not used
+  -- build-depends: not-used
+  build-depends:
+    tasty == 1.*,
+    QuickCheck == 2.*,
+    solution
+  mixins:
+    solution (Exercise as Solution)
+
+library submission
+  import: common-all
+  hs-source-dirs: assignment/src
+
+library solution
+  import: common-all
+
+executable test
+  import: common-tests
+  build-depends: submission, tasty-hunit == 0.*
+"""
+
+
+class GoAndHaskellTest(unittest.TestCase):
+    def test_go_mod_and_dockerfile_name_the_go_version(self):
+        self.assertEqual(sync_check.versions_of("go.mod", "module artemis/test\n\ngo 1.23.2\n\ntoolchain go1.23.5\n"), {"go": {"1.23.2", "1.23.5"}})
+        self.assertEqual(sync_check.versions_of("Dockerfile", GO_DOCKERFILE), {"go": {"1.23.3"}})
+        self.assertEqual(sync_check.versions_of("Dockerfile", "FROM docker.io/library/golang:1.24\n"), {"go": {"1.24"}})
+
+    def test_a_go_version_newer_than_the_image_is_reported_but_an_older_one_is_not(self):
+        image = sync_check.versions_of("Dockerfile", GO_DOCKERFILE)
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23.3\n"), image), [])
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.22\n"), image), [])
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23\n"), image), [])
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23.4\n"), image), ["go 1.23.4 is newer than the image (1.23.3)"])
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24\n"), image), ["go 1.24 is newer than the image (1.23.3)"])
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23\ntoolchain go1.24.0\n"), image), ["go 1.24.0 is newer than the image (1.23.3)"])
+        # 1.9 is older than 1.10, which a comparison of the strings would get wrong
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.9\n"), sync_check.versions_of("Dockerfile", "FROM golang:1.10.1\n")), [])
+
+    def test_the_resolver_has_to_be_the_snapshot_of_the_image(self):
+        self.assertEqual(sync_check.versions_of("stack.yaml", "resolver: lts-22.37\n\npackages:\n- .\n"), {"resolver": {"lts-22.37"}})
+        self.assertEqual(
+            sync_check.compare(sync_check.versions_of("stack.yaml", "resolver: lts-23.1\n"), sync_check.versions_of("stack.yaml", "# keep in sync\nresolver: lts-22.37\n")),
+            ["resolver lts-23.1 differs from the image (lts-22.37)"],
+        )
+
+    def test_a_cabal_file_lists_its_dependencies_without_its_own_libraries_base_and_comments(self):
+        self.assertEqual(sync_check.versions_of("test.cabal", TEST_CABAL), {"package QuickCheck": {"cached"}, "package tasty": {"cached"}, "package tasty-hunit": {"cached"}})
+        self.assertEqual(sync_check.versions_of("solution.cabal", "name: solution\nlibrary\n  build-depends:\n    base == 4.*\n"), {})
+
+    def test_a_package_the_image_did_not_build_ahead_is_reported(self):
+        image = sync_check.versions_of("Dockerfile", HASKELL_DOCKERFILE)
+        self.assertEqual(sorted(image), ["package QuickCheck", "package tasty", "package tasty-hunit"])
+        self.assertEqual(sync_check.compare(sync_check.versions_of("test.cabal", TEST_CABAL), image), [])
+        raised = TEST_CABAL.replace("tasty-hunit == 0.*", "tasty-hunit == 0.*, containers-extra == 1.*")
+        self.assertEqual(sync_check.compare(sync_check.versions_of("test.cabal", raised), image), ["package containers-extra is not in the image"])
+
+    def test_the_files_of_the_image_repositories_are_read_at_the_image_tag(self):
+        for language, image, repository, files in (
+            ("go", "ghcr.io/ls1intum/artemis-go-docker:v1.1.0", "ls1intum/artemis-go-docker", ("Dockerfile",)),
+            ("haskell", "ghcr.io/uni-passau-artemis/artemis-haskell:v22.37.0", "uni-passau-artemis/artemis-haskell", ("Dockerfile", "stack-config/global-project/stack.yaml")),
+        ):
+            with self.subTest(language=language):
+                requested: list[str] = []
+
+                def fetch(url: str) -> str:
+                    requested.append(url)
+                    return ""
+
+                problems = sync_check.check_language(language, image, fetch=fetch)
+                tag = image.rpartition(":")[2]
+                self.assertEqual(sorted(set(requested)), sorted(f"https://raw.githubusercontent.com/{repository}/{tag}/{file}" for file in files))
+                self.assertTrue(problems, "an empty image holds none of the versions the templates ask for")
+
+    def test_the_templates_name_a_go_version_and_a_resolver(self):
+        for entry in sync_check.SOURCES["go"] + sync_check.SOURCES["haskell"]:
+            with self.subTest(file=entry.template_file):
+                text = (TEMPLATES_DIR / entry.template_file).read_text(encoding="utf-8")
+                found = sync_check.versions_of(entry.template_file, text)
+                if entry.template_file.endswith(("go.mod", "stack.yaml")):
+                    self.assertTrue(found, "the parser found no version in the template, so the check would pass for any image")
 
 
 class FetchFailureTest(unittest.TestCase):

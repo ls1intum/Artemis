@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds the exercise templates of Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart and C# in their default images without network access.
+"""Builds the exercise templates of Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart, C#, Python, R, C, C++, Go, OCaml, Bash, VHDL, Assembler and Haskell in their default images without network access.
 
 Assembles the test and assignment repositories like the server does, runs the build phases of
 ``src/main/resources/templates/phases`` in the image configured in ``application.yml`` and fails when a build needs
@@ -42,7 +42,8 @@ def main() -> int:
         if not separator or not image or language not in languages:
             parser.error(f"--image expects LANGUAGE=IMAGE with LANGUAGE one of {sorted(languages)}: {item}")
         overrides[language] = image
-    defaults = {language: images["default"] for language, images in configured_images().items() if "default" in images}
+    configured = configured_images()
+    defaults = {language: images["default"] for language, images in configured.items() if "default" in images}
     selected = [variant for variant in VARIANTS if (not args.variant or variant.name in args.variant) and (not args.language or variant.language in args.language)]
     unknown = set(args.variant or []) - {variant.name for variant in VARIANTS}
     if unknown:
@@ -54,7 +55,8 @@ def main() -> int:
     work_dir.mkdir(parents=True, exist_ok=True)
     failed = 0
     for variant in selected:
-        image = overrides.get(variant.language, defaults[variant.language])
+        # A project type can have an image of its own (C has `fact`), the other project types use the default image of the language
+        image = overrides.get(variant.language) or configured[variant.language].get(variant.project_type or "", defaults[variant.language])
         print(f"::group::{variant.name} in {image}", flush=True)
         result = verify(TEMPLATES_DIR, variant, image, work_dir, args.platform)
         print(f"{'PASSED' if result.passed else 'FAILED'}: {variant.name} ({result.log})", flush=True)

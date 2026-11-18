@@ -1,6 +1,6 @@
 name: Nightly Exercise Images
 
-# Builds the Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart and C# exercise templates in the default images of application.yml in a container without
+# Builds the Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart, C#, Python, R, C, C++, Go, OCaml, Bash, VHDL, Assembler and Haskell exercise templates in the default images of application.yml in a container without
 # network access, so that a dependency the image does not hold fails the build instead of being downloaded from
 # the network. This is the expensive counterpart of the pull request check (ci-exercise-images.yml): it pulls the
 # images and runs the real build phases, but catches what a version comparison cannot (a transitive dependency, a plugin
@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [java, kotlin, rust, javascript, typescript, swift, ruby, dart, c_sharp]
+        language: [java, kotlin, rust, javascript, typescript, swift, ruby, dart, c_sharp, python, r, c, c_plus_plus, go, ocaml, bash, vhdl, assembler, haskell]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0

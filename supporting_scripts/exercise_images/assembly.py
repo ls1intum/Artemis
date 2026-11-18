@@ -22,12 +22,17 @@ BUILD_STAGES = ("structural", "behavior")
 # Languages whose test repository is assembled from `projectTemplate`, test files and build stages instead of being copied
 JVM_LANGUAGES = ("java", "kotlin")
 # Languages with a restricted package name; the others use a Java package name
-PACKAGE_NAMES = {"swift": "SortingExample", "dart": "sorting_example"}
+PACKAGE_NAMES = {"swift": "SortingExample", "dart": "sorting_example", "go": "sorting"}
 NAME_PLACEHOLDERS = ("${packageNameFolder}", "${packageNameFile}")
 # Languages whose test repository is not checked out into the root of the working directory but next to the assignment
 # (``RepositoryCheckoutService.RepositoryCheckoutPath.TEST``). Their build phases and project files refer to it as ``${testWorkingDirectory}``.
 TEST_DIRECTORY = "tests"
-TEST_DIRECTORY_LANGUAGES = ("ruby", "dart", "c_sharp")
+TEST_DIRECTORY_LANGUAGES = ("ruby", "dart", "c_sharp", "c", "vhdl", "assembler", "ocaml", "go", "bash")
+# Languages whose build also needs the solution repository, checked out into ``solution`` (``RepositoryCheckoutPath.SOLUTION``)
+SOLUTION_DIRECTORY = "solution"
+SOLUTION_DIRECTORY_LANGUAGES = ("haskell", "ocaml")
+# Languages whose templates are grouped by project type below the language directory (``c/gcc``), not by ``test``/``solution`` directly
+PROJECT_TYPE_DIRECTORY_LANGUAGES = ("c",)
 
 
 @dataclass(frozen=True)
@@ -105,6 +110,25 @@ VARIANTS = [
     Variant("c_sharp", None),
     Variant("c_sharp", None, static_code_analysis=True),
     Variant("c_sharp", None, sequential=True),
+    Variant("python", None),
+    Variant("python", None, static_code_analysis=True),
+    Variant("python", None, sequential=True),
+    Variant("r", None),
+    Variant("r", None, static_code_analysis=True),
+    Variant("c", "gcc"),
+    Variant("c", "fact"),
+    Variant("c_plus_plus", None),
+    Variant("c_plus_plus", None, static_code_analysis=True),
+    Variant("go", None),
+    Variant("go", None, static_code_analysis=True),
+    Variant("go", None, sequential=True),
+    Variant("ocaml", None),
+    Variant("bash", None),
+    Variant("vhdl", None),
+    Variant("assembler", None),
+    # Not built sequentially: `./run.sh -s` of both stages deletes the solution and the tests after the first stage, so the second stage can
+    # never build (the template problem is independent of the image).
+    Variant("haskell", None),
 ]
 
 
@@ -196,12 +220,16 @@ def replace_placeholders(root: Path, variant: Variant) -> None:
 def _assemble_copied(templates_dir: Path, variant: Variant, target: Path) -> None:
     """A language without a special test structure: the test template as it is, the solution next to it."""
     language_dir = templates_dir / variant.language
+    if variant.language in PROJECT_TYPE_DIRECTORY_LANGUAGES and variant.project_type:
+        language_dir = language_dir / variant.project_type
     test_repository = target / variant.test_directory
     _copy_tree(language_dir / "test", test_repository)
     if variant.static_code_analysis:
         # Copied afterwards, so that it overwrites the files of the regular test template (`hasSeparateStaticCodeAnalysisTemplateFiles`)
         _copy_tree(language_dir / "staticCodeAnalysis" / "test", test_repository)
     _copy_tree(language_dir / "solution", target / ASSIGNMENT_DIRECTORY)
+    if variant.language in SOLUTION_DIRECTORY_LANGUAGES:
+        _copy_tree(language_dir / "solution", target / SOLUTION_DIRECTORY)
     if variant.static_code_analysis:
         # Ruby and Dart also overwrite files of the assignment (the build file with the analysis tool and its configuration)
         _copy_tree(language_dir / "staticCodeAnalysis" / "solution", target / ASSIGNMENT_DIRECTORY)

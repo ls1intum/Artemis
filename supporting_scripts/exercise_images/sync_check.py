@@ -95,7 +95,29 @@ SOURCES = {
         Source("c_sharp/exercise/assignment.csproj", "test.csproj"),
         Source("c_sharp/solution/assignment.csproj", "test.csproj"),
     ],
+    # The image is a Go toolchain without cached modules and sets GOTOOLCHAIN=local. A `go` directive (or toolchain line) newer than its
+    # toolchain makes every build fail ("requires go >= ..."), so the templates must not ask for more than the image has.
+    "go": [
+        Source("go/test/go.mod", "Dockerfile"),
+        Source("go/exercise/go.mod", "Dockerfile"),
+        Source("go/solution/go.mod", "Dockerfile"),
+    ],
+    # The image caches the Stackage snapshot (global project) and the test libraries of the test project. The resolver of the templates
+    # has to be the snapshot of the image, and the test project may only use packages the image cached (the local libraries and `base`
+    # excepted, they are not downloaded).
+    "haskell": [
+        Source("haskell/test/stack.yaml", "stack-config/global-project/stack.yaml"),
+        Source("haskell/exercise/stack.yaml", "stack-config/global-project/stack.yaml"),
+        Source("haskell/solution/stack.yaml", "stack-config/global-project/stack.yaml"),
+        Source("haskell/test/test.cabal", "Dockerfile"),
+        Source("haskell/exercise/exercise.cabal", "Dockerfile"),
+        Source("haskell/solution/solution.cabal", "Dockerfile"),
+    ],
 }
+# Coordinates whose template version may be lower than the one of the image (a toolchain that is at least as new as requested)
+AT_MOST_COORDINATES = {"go"}
+# Packages every GHC installation has without a download
+HASKELL_BOOT_PACKAGES = {"base"}
 
 
 def _resolve(value: str, properties: dict[str, str]) -> str:
@@ -323,7 +345,69 @@ def csproj_versions(text: str) -> Versions:
     return versions
 
 
+def _release(version: str) -> tuple[int, ...]:
+    """``1.23`` and ``1.23.2`` as comparable tuples; a Go release without a patch number is its ``.0``."""
+    numbers = tuple(int(part) for part in version.split("."))
+    return numbers + (0,) * (3 - len(numbers))
+
+
+def go_mod_versions(text: str) -> Versions:
+    """The Go version a ``go.mod`` asks for (``go`` directive) and its ``toolchain`` line, if any."""
+    versions: Versions = {}
+    for line in text.splitlines():
+        match = re.fullmatch(r"\s*(?:go|toolchain)\s+(?:go)?(\d+(?:\.\d+){1,2})\s*(?://.*)?", line)
+        if match:
+            versions.setdefault("go", set()).add(match.group(1))
+    return versions
+
+
+def stack_resolver(text: str) -> Versions:
+    """The Stackage snapshot (``resolver``) of a ``stack.yaml``."""
+    match = re.search(r"^resolver:\s*(\S+)", text, re.MULTILINE)
+    return {"resolver": {match.group(1)}} if match else {}
+
+
+def cabal_packages(text: str) -> Versions:
+    """The packages a cabal file depends on without the ones it defines itself (its libraries and executables) and ``base``."""
+    local = {match.group(1) for match in re.finditer(r"^(?:library|executable|test-suite|benchmark)\s+(\S+)", text, re.MULTILINE)}
+    local |= {match.group(1) for match in re.finditer(r"^name:\s*(\S+)", text, re.MULTILINE)}
+    packages: set[str] = set()
+    lines = [line for line in text.splitlines() if not line.lstrip().startswith("--")]
+    for number, line in enumerate(lines):
+        field = re.fullmatch(r"(\s*)build-depends:\s*(.*)", line)
+        if not field:
+            continue
+        entries = [field.group(2)]
+        for following in lines[number + 1 :]:
+            if following.strip() and len(following) - len(following.lstrip()) <= len(field.group(1)):
+                break
+            entries.append(following)
+        for entry in ",".join(entries).split(","):
+            match = re.match(r"\s*([A-Za-z][\w-]*)", entry)
+            if match:
+                packages.add(match.group(1))
+    return {f"package {name}": {"cached"} for name in sorted(packages - local - HASKELL_BOOT_PACKAGES)}
+
+
+def dockerfile_versions(text: str) -> Versions:
+    """The Go toolchain of the base image and the Haskell packages (``--package``) the image builds ahead."""
+    versions: Versions = {}
+    for match in re.finditer(r"^FROM\s+(?:\S*/)?golang:(\d+(?:\.\d+){1,2})", text, re.MULTILINE):
+        versions.setdefault("go", set()).add(match.group(1))
+    for match in re.finditer(r"--package\s+([A-Za-z][\w-]*)", text):
+        versions[f"package {match.group(1)}"] = {"cached"}
+    return versions
+
+
 def versions_of(file_name: str, text: str, properties: dict[str, str] | None = None) -> Versions:
+    if file_name.endswith("go.mod"):
+        return go_mod_versions(text)
+    if file_name.endswith("stack.yaml"):
+        return stack_resolver(text)
+    if file_name.endswith(".cabal"):
+        return cabal_packages(text)
+    if file_name.endswith("Dockerfile"):
+        return dockerfile_versions(text)
     if file_name.endswith("Cargo.lock"):
         return cargo_lock_versions(text)
     if file_name.endswith("Gemfile.lock"):
@@ -349,10 +433,15 @@ def compare(template: Versions, image: Versions) -> list[str]:
     for coordinate, wanted in sorted(template.items()):
         held = image.get(coordinate)
         for version in sorted(wanted):
+            # A package the image caches has no version to name (``cached``)
+            label = coordinate if version == "cached" else f"{coordinate} {version}"
             if held is None:
-                problems.append(f"{coordinate} {version} is not in the image")
+                problems.append(f"{label} is not in the image")
+            elif coordinate in AT_MOST_COORDINATES:
+                if any(_release(version) > _release(newest) for newest in held):
+                    problems.append(f"{label} is newer than the image ({', '.join(sorted(held))})")
             elif version not in held:
-                problems.append(f"{coordinate} {version} differs from the image ({', '.join(sorted(held))})")
+                problems.append(f"{label} differs from the image ({', '.join(sorted(held))})")
     return problems
 
 

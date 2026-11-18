@@ -123,7 +123,7 @@ in [Keeping the images in sync](#keeping-the-images-in-sync-with-the-templates) 
 
 ## Keeping the images in sync with the templates
 
-The images of Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart and C# hold the dependencies of a copy of the test template in their repository.
+The images of Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart, C#, Go and Haskell hold the dependencies or the toolchain of a copy of the test template in their repository.
 It has to pin the same versions as the test templates in `src/main/resources/templates`:
 
 | Language | Cached project in the image repository | What has to match the templates |
@@ -136,6 +136,8 @@ It has to pin the same versions as the test templates in `src/main/resources/tem
 | Ruby | repository root (`Gemfile`, `Gemfile.lock`) | the gems in every `Gemfile.lock` of the templates (regular and static code analysis, test, exercise and solution), which the lock file of the image has to contain |
 | Dart | repository root (`pubspec.yaml`, `pubspec.lock`) | the packages in `pubspec.lock` of the test project and of the assignment |
 | C# | repository root (`test.csproj`) | the NuGet packages and the target framework in `test.csproj` and in the project files of the assignment |
+| Go | `Dockerfile` (base image `golang`) | the `go` directive (and `toolchain` line) of every `go.mod` must not be newer than the Go version of the image |
+| Haskell | `Dockerfile` and `stack-config/global-project/stack.yaml` | the `resolver` of every `stack.yaml` is the Stackage snapshot of the image, and the test project only depends on packages the Dockerfile builds ahead (`base` and the local libraries excepted) |
 
 A version that the image does not hold is downloaded by every build of every exercise (from Maven Central, crates.io, the npm registry, RubyGems, pub.dev, NuGet or GitHub),
 which costs build time and runs into rate limits.
@@ -152,6 +154,7 @@ Two checks keep both sides together without downloading any dependency in the pu
   build and a tracking issue. This catches what a version comparison cannot, for example a transitive dependency or a changed build phase.
   You can run it locally for one language, e.g. `--language kotlin`. Add `--platform linux/amd64` for an image that is not published for your CPU
   (the Kotlin, Rust, Ruby, Dart and C# images are only published for amd64, and the npm packages of the JavaScript and TypeScript image depend on the CPU).
+  The `c-gcc` variant fails on a case-insensitive file system such as the default one of macOS: its phase removes `makefile`, which is the same file as the `Makefile` of the assignment there. It passes on Linux, which is where the nightly workflow runs.
 
 To change a version that is part of an image:
 
@@ -166,9 +169,11 @@ To change a version that is part of an image:
 3. Change the versions in the templates and the image tag in `application.yml` in one pull request in Artemis. The pull request check
    fails as long as the tag in `application.yml` does not hold what the templates pin.
 
-The other languages are not checked yet or do not need it. The table in [Choose a Programming Language](/instructor/exercises/programming-exercise#supported-programming-languages) shows the status of every language. In short:
+The other languages cache no dependency that a template pins. The table in [Choose a Programming Language](/instructor/exercises/programming-exercise#supported-programming-languages) shows the status of every language. In short:
 
-- **Not needed**: the template pins nothing that its image has to cache. Python, C, C++, VHDL, assembler, OCaml, R, Bash and MATLAB use the standard library or tools the image installs. Go is the same: the test template imports only the standard library and the student module through a local `replace`, so `go test` fetches no module, which a one-off offline build confirmed (compile, tests and `golangci-lint` ran in the Go image without network access; the nightly workflow does not cover Go). Two things couple the Go template to its image without downloading a dependency: the `go` directive of `go.mod` must not be newer than the Go version of the image (otherwise Go downloads a toolchain), and `.golangci.yml` must match the major version of `golangci-lint` in the image.
-- **Not checked yet**: Haskell uses an external image that has not been assessed.
-- **Ruby, Dart and C#** check out the test repository into `tests` next to the `assignment` directory, so the offline build does the same. The image of each caches the lock file of one project (`bundler install`, `dart pub get`, `dotnet restore`) and the tools the phases call (`junitreport` and `analyze_sarif` in the Dart image, the analyzers of the .NET SDK for C#). Those tools are not pinned in the templates, so only the offline build notices a change there. The Ruby image has a single `Gemfile.lock`, which has to be a superset of the lock files of all templates; the static code analysis test project is that superset.
+- **Nothing to compare**: Python, C, C++, VHDL, assembler, OCaml, R and Bash use the standard library or tools the image installs (pytest, `junit-xml`, Catch2, `bats`, `testthat` and so on). The pull request check has nothing to compare, but the nightly workflow builds all of them in their image without network access, so a template that starts to need something the image does not have fails there. MATLAB is the exception: it needs a license server and is not built.
+- **Go** imports only the standard library and the student module through a local `replace`, so `go test` fetches no module. The image sets `GOTOOLCHAIN=local`, so a `go` directive newer than the Go version of the image makes every build of every Go exercise fail (the check compares them), and `.golangci.yml` has to match the major version of `golangci-lint` in the image.
+- **Haskell** uses an external image ([uni-passau-artemis/artemis-haskell](https://github.com/uni-passau-artemis/artemis-haskell)). Its tag is the Stackage snapshot (`v22.37.0` for `lts-22.37`), which is the `resolver` of the templates. The sequential variant is not built nightly: both of its stages run `./run.sh -s`, which deletes the solution and the tests after the first stage, so the second stage cannot build, whatever the image holds.
+- **Layout of the checkouts**: Ruby, Dart, C#, C, VHDL, assembler, OCaml, Go and Bash (and MATLAB) check the test repository out into `tests` next to the `assignment` directory, so the offline build does the same. Haskell and OCaml also check the solution repository out into `solution`. `RepositoryCheckoutService` decides this for every language, and a unit test compares the assembly with it. The static code analysis files of the solution (`staticCodeAnalysis/solution`, used by Ruby and Dart) are copied into the assignment.
+- **Ruby, Dart and C#** cache the lock file of one project each (`bundler install`, `dart pub get`, `dotnet restore`) and the tools the phases call (`junitreport` and `analyze_sarif` in the Dart image, the analyzers of the .NET SDK for C#). Those tools are not pinned in the templates, so only the offline build notices a change there. The Ruby image has a single `Gemfile.lock`, which has to be a superset of the lock files of all templates; the static code analysis test project is that superset.
 - **Swift** pins no `Package.resolved`, so its check compares the declared packages and version requirements. The image resolves them once, and SwiftPM finds any version a requirement allows in the cached clones. The Xcode project type has no build phases for the build agents (`templates/phases/swift` only covers the plain project type), so there is nothing to check for it.
