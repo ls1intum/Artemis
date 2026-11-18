@@ -175,6 +175,29 @@ describe('ExerciseScoresExportButtonComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it.each([
+        [0, false, false],
+        [1, true, false],
+        [2, true, true],
+    ] as const)('selects result export option %s from the nested dropdown', async (index, withTestCases, withFeedback) => {
+        fixture.componentRef.setInput('exercise', exercise1);
+        fixture.componentRef.setInput('inDropdown', true);
+        const exportResults = vi.spyOn(component, 'exportResults').mockImplementation(() => {});
+        fixture.detectChanges();
+        const trigger: HTMLButtonElement = fixture.nativeElement.querySelector('#export-results-dropdown');
+        trigger.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const options = document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]');
+        expect(options).toHaveLength(3);
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+        options[index].click();
+        fixture.detectChanges();
+        expect(exportResults).toHaveBeenCalledExactlyOnceWith(withTestCases, withFeedback);
+        expect(document.querySelector('[role="menu"]')).toBeNull();
+    });
+
     it('should not start the export if the exercise has no results', () => {
         // GIVEN
         const exportCSVStub = vi.spyOn(resultService, 'triggerDownloadCSV');
