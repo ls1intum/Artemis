@@ -428,7 +428,7 @@ class SecurityPolicyEditorServiceTest {
             assertThat(revWalk.parseCommit(repository.resolve("refs/heads/main")).getFullMessage()).startsWith("Allow writing logs\n\n")
                     .contains("Security-Framework-Action: policy");
         }
-        verify(localVCPushProcessingService).processNewPush(eq(pushedHead()), any(), any(), any(), any(), any());
+        verify(localVCPushProcessingService).processNewPush(eq(pushedHead()), any(), any(), any(), any());
     }
 
     @Test
@@ -489,7 +489,7 @@ class SecurityPolicyEditorServiceTest {
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(changed, BOTH_CLASSES)), user))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
         assertThat(pushedHead()).isEqualTo(concurrentHead);
-        verify(localVCPushProcessingService, never()).processNewPush(any(), any(), any(), any(), any(), any());
+        verify(localVCPushProcessingService, never()).processNewPush(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -692,16 +692,16 @@ class SecurityPolicyEditorServiceTest {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyChangeDTO change = change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest")),
                 added(withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of("de.example.StressTest")), List.of("de.example.StressTest")));
-        doThrow(new VersionControlException("Build trigger failed")).when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any(), any());
+        doThrow(new VersionControlException("Build trigger failed")).when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any());
 
         assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change, user));
         String pushed = pushedHead();
 
-        doNothing().when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any(), any());
+        doNothing().when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any());
         editorService.commit(exercise(), change, user);
 
         assertThat(pushedHead()).isEqualTo(pushed);
-        verify(localVCPushProcessingService, times(2)).processNewPush(eq(pushed), any(), any(), any(), any(), any());
+        verify(localVCPushProcessingService, times(2)).processNewPush(eq(pushed), any(), any(), any(), any());
 
         // Another change from the same base commit is still a conflict.
         SecurityPolicyChangeDTO other = change(editor, edited(loadedPolicy(editor), BOTH_CLASSES));
@@ -714,15 +714,15 @@ class SecurityPolicyEditorServiceTest {
         pushToTests("README.md", "An unrelated change\n");
         SecurityPolicyChangeDTO change = change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest")),
                 added(withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of("de.example.StressTest")), List.of("de.example.StressTest")));
-        doThrow(new VersionControlException("Build trigger failed")).when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any(), any());
+        doThrow(new VersionControlException("Build trigger failed")).when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any());
 
         assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change, user));
         String pushed = pushedHead();
-        doNothing().when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any(), any());
+        doNothing().when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any());
         editorService.commit(exercise(), change, user);
 
         assertThat(pushedHead()).isEqualTo(pushed);
-        verify(localVCPushProcessingService, times(2)).processNewPush(eq(pushed), any(), any(), any(), any(), any());
+        verify(localVCPushProcessingService, times(2)).processNewPush(eq(pushed), any(), any(), any(), any());
     }
 
     @Test
