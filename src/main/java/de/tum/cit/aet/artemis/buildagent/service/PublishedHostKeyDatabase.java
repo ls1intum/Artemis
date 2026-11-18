@@ -108,6 +108,11 @@ class PublishedHostKeyDatabase implements ServerKeyDatabase {
             return true;
         }
         if (published.isEmpty()) {
+            if (Thread.currentThread().isInterrupted()) {
+                // The reading was cut short by an interrupt of this connection. That is no answer of the core node, so the key is not taken for one that could not be compared.
+                log.debug("The SSH host key of {} was not accepted, because the reading of the fingerprints of the core node was interrupted", connectAddress);
+                return false;
+            }
             if (mode == Mode.REQUIRED) {
                 log.error(
                         "The SSH host key of {} was not accepted: its fingerprint {} could not be compared, because the core node does not publish its fingerprints or they cannot be read over https. "
@@ -168,10 +173,13 @@ class PublishedHostKeyDatabase implements ServerKeyDatabase {
         }
         Set<String> fetched = fingerprintFetcher.get();
         if (fetched.isEmpty()) {
+            // A request that an interrupt cut short says nothing about the core node, and the wait for a failure would hold for the connections of others, so it is not remembered
+            if (!Thread.currentThread().isInterrupted()) {
+                // The cooldown starts when the request has failed, so that a timeout and an immediate failure wait the same time
+                lastFetchFailed = true;
+                lastFailureAtNanos = nanoClock.getAsLong();
+            }
             // A fingerprint that was published before still counts when the core node cannot be asked right now
-            // The cooldown starts when the request has failed, so that a timeout and an immediate failure wait the same time
-            lastFetchFailed = true;
-            lastFailureAtNanos = nanoClock.getAsLong();
             return cachedFingerprints.get();
         }
         lastFetchFailed = false;

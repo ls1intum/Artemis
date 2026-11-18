@@ -22,6 +22,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import de.tum.cit.aet.artemis.buildagent.service.PublishedHostKeyDatabase.Mode;
 import de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils;
@@ -164,6 +166,36 @@ class PublishedHostKeyDatabaseTest {
         clock.addAndGet(1);
         assertThat(accept(database, PUBLISHED_KEY)).isTrue();
         assertThat(calls).hasValue(2);
+    }
+
+    @ParameterizedTest
+    @EnumSource(Mode.class)
+    void anInterruptedReadIsNeitherAcceptedWithoutAComparisonNorRememberedAsAFailureOfTheCoreNode(Mode mode) {
+        var calls = new AtomicInteger();
+        // the first connection is interrupted while it waits for the core node, which is the case when a clone is cancelled, and a thread that is interrupted cannot wait
+        Supplier<Set<String>> fetcher = () -> {
+            int call = calls.incrementAndGet();
+            if (Thread.currentThread().isInterrupted()) {
+                return Set.of();
+            }
+            if (call == 1) {
+                Thread.currentThread().interrupt();
+                return Set.of();
+            }
+            return published(PUBLISHED_KEY);
+        };
+        var database = new PublishedHostKeyDatabase(fetcher, mode);
+
+        try {
+            assertThat(accept(database, PUBLISHED_KEY)).as("the interrupted connection is not taken for one that could not be compared").isFalse();
+        }
+        finally {
+            Thread.interrupted();
+        }
+
+        // another connection asks the core node at once, and does not wait for the end of a failure that never happened
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
+        assertThat(calls).as("one more read, which is not held back by a wait of thirty seconds").hasValue(3);
     }
 
     @Test
