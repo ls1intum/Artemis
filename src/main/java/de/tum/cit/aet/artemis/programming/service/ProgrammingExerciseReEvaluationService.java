@@ -124,9 +124,6 @@ public class ProgrammingExerciseReEvaluationService {
             ProgrammingExercise savedExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(programmingExercise, buildConfig, null, originalCompetencyIds,
                     originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalBuildAndTestOffset, originalProblemStatement);
 
-            // The update leaves the lazy policy unchanged; return the stored policy and make it available before versioning runs.
-            savedExercise.setSubmissionPolicy(submissionPolicyRepository.findByProgrammingExerciseId(savedExercise.getId()));
-
             // Apply all post-save side effects that the normal update path performs
             exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
             if (lease.coordinated()) {
@@ -137,6 +134,9 @@ public class ProgrammingExerciseReEvaluationService {
             }
             participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedExercise, originalDueDate);
             slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, savedExercise));
+            // The update leaves the lazy policy unchanged; return the stored policy and make it available before versioning runs. It is read after the effects above, so that a
+            // failed read cannot keep them from running: a retry would take the saved due date for the original one and see no change.
+            savedExercise.setSubmissionPolicy(submissionPolicyRepository.findByProgrammingExerciseId(savedExercise.getId()));
             if (lease.coordinated()) {
                 exerciseVersionService.createExerciseVersionSynchronously(savedExercise, user);
             }
