@@ -261,8 +261,6 @@ artifact. Coverage reporters show the validation scope and only publish tables f
   API, which stops at 3000, so the filters may not have seen all of them. That covers the server
   suite, the client suite, E2E, the PR image and the Liquibase checks (`has_liquibase`). Draft test/E2E
   deferral still applies; the image remains available and promotion enables normal test execution.
-- Codacy coverage is uploaded by the server report job only, so an internal pull request that skips
-  the server suite uploads none.
 
 ### Selecting tests within a pull request
 
@@ -561,8 +559,7 @@ then dispatch the workflow. For local rendering and tests, see
 
 **SonarQube Cloud is a required pre-merge quality gate** for relevant ready PRs. The scanner waits
 for the server verdict; scanner, upload, timeout and quality-gate failures fail **All required CI
-Passed**. No additional branch-protection check or repository permission is needed. Codacy remains
-a separate external service.
+Passed**. The Codacy integration is disabled for Artemis.
 
 PR analysis uses the PR number, exact head SHA, original source branch and actual target branch.
 All configured **new-code** conditions apply: reliability, security, maintainability, coverage,
@@ -586,10 +583,10 @@ upload existing execution data as **Sonar Server Coverage**. A trusted XML-only 
 task generates the selected Java report on the Sonar runner after compilation, without rerunning
 tests or generating the full module/HTML/coverage-verification graph.
 
-Only reports with successful matching test producers are imported. Selected reports remain partial:
-they are never used for full-project badges or Codacy coverage, and unexecuted changed lines count
-as uncovered. The configured Sonar coverage conditions still apply. There are no old-revision
-substitutions, PR coverage exclusions or forced complete suites solely for Sonar.
+Sonar imports reports with successful matching test producers. Full-project badges use full-suite
+reports. In Sonar's selected reports, unexecuted changed lines count as uncovered. The configured
+Sonar coverage conditions still apply. There are no old-revision substitutions, PR coverage
+exclusions or forced complete suites solely for Sonar.
 
 ### Fork and token-restricted PRs
 

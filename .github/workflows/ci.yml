@@ -574,10 +574,7 @@ jobs:
       # `!= 'false'`, so that an output that went missing runs the suite instead of silently skipping it.
       run_server_tests: ${{ needs.detect-changes.outputs.run_server_tests != 'false' }}
       run_client_tests: ${{ needs.detect-changes.outputs.run_client_tests != 'false' }}
-      is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
       pr_author: ${{ github.event.pull_request.user.login || '' }}
-    secrets:
-      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
   # In-run coverage table for INTERNAL PRs — posts as soon as `test` finishes (~28 min) instead of
   # waiting for the whole run, which the slow e2e tail delays to ~120 min (and with it the

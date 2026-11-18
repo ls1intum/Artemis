@@ -2,7 +2,7 @@
 id: code-quality-analysis
 title: Code Quality Analysis
 sidebar_label: Code Quality Analysis
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-18
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -19,25 +19,21 @@ the large-class and complex-bean ceilings in `supporting_scripts/analyze_java_fi
 over-fetch detector in `supporting_scripts/find_slow_queries.py`, and the per-module coverage floors
 in `gradle/jacoco.gradle`. This is where a quality problem actually stops you.
 
-**Codacy is signal, not a gate.** It cannot block a merge and should not be read as a summary of the list above.
-SonarQube Cloud is the exception: its new-code quality gate is required for relevant ready pull requests, see
-[SonarQube Cloud](#sonarqube-cloud).
+The [SonarQube Cloud](#sonarqube-cloud) new-code quality gate is also required for relevant ready pull requests.
 
 ## Codacy
 
-Codacy analyzes every `develop` commit on its own infrastructure. Nothing in this repository triggers
-it, and no CI job depends on it. It serves the `code quality` badge in the root `README.md`, and that
-badge links to the repository dashboard at
-[app.codacy.com](https://app.codacy.com/gh/ls1intum/Artemis/dashboard?branch=develop).
+Artemis has disabled Codacy status checks and cloud analysis. The repository dashboard shows the
+last available analysis. [Codacy dashboard](https://app.codacy.com/gh/ls1intum/Artemis/dashboard?branch=develop)
 
-Its analysis scope comes from `.codacy.yaml`, which Codacy reads from `develop`. That file has two
+The retained `.codacy.yaml` defines the analysis scope for Codacy. That file has two
 layers: a repository-wide `exclude_paths` floor that every engine inherits, and per-engine
 `exclude_paths` beneath it. The floor exists because **tools can only be enabled in Codacy Cloud, not
 from the configuration file** — the set of active engines therefore changes without any commit to
 this repository, and a per-engine list would silently fail to cover a newly enabled engine.
 
 <Callout variant={CalloutVariant.info}>
-    A Codacy "A" is narrower than it sounds. The active pattern set is essentially static application
+    A Codacy "A" is narrower than it sounds. The previous pattern set was primarily static application
     security testing, so the grade reflects how few flagged findings there are per line. It says
     nothing about the architecture rules, the signal-API rules, the cloning rules, or the coverage
     floors that CI actually enforces.

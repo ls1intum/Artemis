@@ -121,7 +121,7 @@ when diagnosing badges or a manually dispatched recovery. See [workflow policy](
 
 Affected tests emit separate **Sonar Client Coverage** (selected-spec LCOV) and **Sonar Server
 Coverage** (selected execution data). Sonar generates Java XML on a GitHub-hosted runner. These
-partial reports never feed full-project badges or Codacy; no test suite is rerun for analysis.
+reports are reused for analysis. Full-project badges use full-suite reports.
 Missing or failed producer data cannot be imported as successful coverage.
 
 Fork and token-restricted PRs (including Dependabot) use a secretless exact-head/source-branch/target/public-gate verifier. A maintainer must
