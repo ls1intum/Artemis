@@ -255,6 +255,41 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(service.commitPolicies.mock.calls[1][1]).toEqual(service.commitPolicies.mock.calls[0][1]);
     });
 
+    it('keeps repeated reads of the pushed policies pending, and lets no obsolete one unlock a newer commit', () => {
+        create(configured(), false);
+        const policy = comp.policies()[0];
+        const granted = withRows(policy.working!, 'packages', [{ packageName: 'org.apache.commons' }]);
+        comp['onPolicyChange']({ ...policy, working: granted });
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'error.securityFrameworkProcessingFailed' } })));
+        service.getPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp['commit']('Grant commons');
+        expect(comp.isCommitting()).toBe(false);
+
+        const first = new Subject<SecurityPolicyEditor>();
+        const second = new Subject<SecurityPolicyEditor>();
+        service.getPolicies.mockReturnValueOnce(first).mockReturnValueOnce(second);
+        comp['retryLoad']();
+        expect(comp.isCommitting()).toBe(true);
+        comp['retryLoad']();
+        second.next(editor('b'.repeat(40), granted));
+        second.complete();
+        expect(comp.isCommitting()).toBe(false);
+
+        // A newer commit runs while the first, obsolete read answers.
+        comp['onPolicyChange']({ ...comp.policies()[0], working: withRows(granted, 'packages', []) });
+        const commit = new Subject<{ editor: SecurityPolicyEditor; config: SecurityFrameworkConfig }>();
+        service.commitPolicies.mockReturnValueOnce(commit);
+        comp['commit']('Revoke commons');
+        expect(comp.isCommitting()).toBe(true);
+        first.next(editor('a'.repeat(40)));
+        first.complete();
+
+        expect(comp.isCommitting()).toBe(true);
+        expect(comp.editingDisabled()).toBe(true);
+        commit.next({ editor: editor('c'.repeat(40)), config: configured() });
+        expect(comp.isCommitting()).toBe(false);
+    });
+
     it('removes the file of a deleted committed policy with the commit', () => {
         create(configured(), false);
         comp['askDeletePolicy'](comp.policies()[0]);

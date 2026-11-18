@@ -517,7 +517,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     /** Loads the policies and replaces every unsaved change. */
     private load(exerciseId: number): void {
         const request = ++this.loadRequests;
-        this.pendingRecovery = undefined;
+        if (this.pendingRecovery) {
+            // This load supersedes the reads of a pushed but unprocessed commit, which therefore no longer end its pending state.
+            this.pendingRecovery = undefined;
+            this.setCommitPending(false);
+        }
         this.loading.set(true);
         this.loadFailed.set(false);
         this.securityService.getPolicies(exerciseId).subscribe({
@@ -553,15 +557,18 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private loadPushed(keepUnsaved: boolean): void {
         const request = ++this.loadRequests;
         this.pendingRecovery = { keepUnsaved };
+        // A repeated read, after the first one failed, is part of the commit as well.
+        this.setCommitPending(true);
         this.loading.set(true);
         forkJoin({
             editor: this.securityService.getPolicies(this.exerciseId()).pipe(catchError(() => of(undefined))),
             config: this.securityService.getConfig(this.exerciseId()).pipe(catchError(() => of(undefined))),
         }).subscribe(({ editor, config }) => {
-            this.setCommitPending(false);
+            // A newer read or a newer commit owns the pending state, so an obsolete answer changes nothing, not even that state.
             if (request !== this.loadRequests) {
                 return;
             }
+            this.setCommitPending(false);
             this.loading.set(false);
             if (config) {
                 this.configChange.emit(config);
@@ -986,8 +993,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         this.runCommit(this.buildChange(commitMessage), false, undefined);
     }
 
-    /** Records whether a commit waits for its answer and tells the card. */
+    /** Records whether a commit waits for its answer and tells the card when that changes. */
     private setCommitPending(pending: boolean): void {
+        if (this.commitPending() === pending) {
+            return;
+        }
         this.commitPending.set(pending);
         this.committingChange.emit(pending);
     }
