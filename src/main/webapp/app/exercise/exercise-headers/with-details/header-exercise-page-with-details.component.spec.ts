@@ -42,7 +42,7 @@ describe('HeaderExercisePageWithDetails', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ExerciseTypePipe),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(ArtemisServerDateService, { now: () => dayjs() })],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(HeaderExercisePageWithDetailsComponent);
