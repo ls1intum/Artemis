@@ -120,7 +120,11 @@ The selected distributed-data provider supplies the shared client.
 Startup rejects `core`, `localci`, `localvc`, and `buildagent` with `aiworker`,
 and rejects any attempt to turn the HTTP server back on. Do not run this profile
 on a core node. Keep the core container away from the worker's Docker socket.
-Preload a qualified, digest-pinned sandbox image on the isolated daemon.
+Like the build agents' default build images, the sandbox has its own toolchain version.
+The shipped default is `ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-1`.
+The worker reuses the local image if present and pulls it only when missing. Before accepting jobs,
+it resolves the reference to an immutable local image ID. Registry access is not needed to reuse a cached image.
+An Artemis upgrade can keep using the same sandbox version; no image is selected from the Artemis commit.
 Configuration files containing secrets must be readable only by the deployment account
 and worker UID, and mounted read-only.
 
@@ -139,7 +143,8 @@ artemis:
         provider: hazelcast # Or redis, matching the core nodes.
     aiworker:
         id: worker-1
-        image: registry.example/hyperion-java-gradle@sha256:<qualified-digest>
+        # Optional: override the shipped toolchain version for a private registry or custom image.
+        # image: registry.example/hyperion-sandbox@sha256:<digest>
         max-concurrent-executions: 1
         runtime: runc
         memory-bytes: 2147483648
@@ -150,7 +155,9 @@ artemis:
         shutdown-timeout: PT2M
 ```
 
-Replace the digest placeholder with the image's actual 64-digit SHA-256 digest.
+Leave `image` unset for normal deployments, including local and pull-request Artemis builds.
+An override can be a versioned tag, a registry digest or a local SHA-256 image ID.
+Use a new version when changing the toolchain; do not overwrite published version tags.
 The environment-based entry point also accepts `AI_WORKER_ID` and `AI_WORKER_SANDBOX_IMAGE`.
 The workload defaults to `hyperion-generation`, schema `1`, profile `java-gradle`; set
 `artemis.aiworker.workload` and `artemis.aiworker.profile` only for another installed workload. Configure provider access through
@@ -243,7 +250,7 @@ Set `artemis_aiworker_ids` on eligible core nodes. Hyperion generation starts wo
 coordination automatically; set `artemis_aiworker_enabled` only for coordination
 without Hyperion generation.
 
-The role validates inputs, protects rendered secrets and preloads the sandbox image.
+The role validates inputs, protects rendered secrets and preloads a configured sandbox image; otherwise the worker pulls the published one.
 It does not provision the provider, firewall or isolation boundary, or drain jobs.
 Stop new admission and drain active work and persistence before replacing a worker.
 Shared-host rootless deployment requires separate provisioning outside this role.

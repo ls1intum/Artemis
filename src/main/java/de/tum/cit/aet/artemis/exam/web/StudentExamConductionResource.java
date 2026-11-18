@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.conduction.StudentExamForConductionDTO;
@@ -167,11 +168,13 @@ public class StudentExamConductionResource {
             throw new AccessForbiddenException("The exam content is not available after submission until the summary is published");
         }
 
-        if (!Boolean.TRUE.equals(studentExam.isStarted())) {
+        boolean newlyStarted = !Boolean.TRUE.equals(studentExam.isStarted());
+        prepareStudentExamForConduction(request, studentExam, audience);
+
+        // Preparation commits the started state through the repository before observers refresh their counts.
+        if (newlyStarted && !studentExam.isTestRun()) {
             websocketMessagingService.sendMessage(ExamWebsocketTopics.EXAM_STARTED.at(examId), "");
         }
-
-        prepareStudentExamForConduction(request, studentExam, audience);
 
         log.info("getStudentExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
                 currentUser.getLogin());
@@ -235,12 +238,24 @@ public class StudentExamConductionResource {
 
         // In case the studentExam is not yet started, a new participation with a specific initialization date should be created - isStarted uses Boolean
         // Test runs are already prepared when they are created.
-        if (studentExam.isTestExam() && !studentExam.isTestRun()) {
+        // The supervised session of a practice exam is conducted like a real exam, but its participations are linked to the student exam like those of
+        // a practice attempt. Participations that the bulk preparation did not create therefore have to be set up and linked here as well, otherwise
+        // the conduction, the programming authorization and the summary would not find them.
+        boolean isSupervisedSession = studentExam.getExam().getExamMode() == ExamMode.TEST_WITH_SUPERVISED_SESSION && !studentExam.getExam().isTestOrPractice(now());
+        if ((studentExam.getExam().isTestOrPractice(now()) || isSupervisedSession) && !studentExam.isTestRun()) {
             boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
             if (setupTestExamNeeded) {
-
-                // Set up new participations for the Exercises
-                studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
+                // For practice exams with a supervised session it can happen that the student has not started their
+                // prepared (supervised session) attempt and therefore the participations are already prepared
+                boolean isFullyPrepared = false;
+                if (studentExam.getExam().getExamMode() == ExamMode.TEST_WITH_SUPERVISED_SESSION) {
+                    var studentExamWithParticipations = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExam.getId());
+                    isFullyPrepared = studentExamWithParticipations.getStudentParticipations().size() == studentExam.getExercises().size();
+                }
+                if (!isFullyPrepared) {
+                    // Set up new participations for the Exercises
+                    studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
+                }
             }
         }
 
