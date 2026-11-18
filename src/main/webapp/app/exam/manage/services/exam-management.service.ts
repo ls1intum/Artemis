@@ -1,3 +1,4 @@
+import { ExamConductionCounts } from 'app/exam/shared/entities/exam-conduction-counts.model';
 import { Service, inject } from '@angular/core';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
@@ -206,6 +207,10 @@ export class ExamManagementService {
     getExamStatistics(courseId: number, examId: number, audience: 'tutor' | 'instructor' = 'tutor'): Observable<HttpResponse<ExamChecklist>> {
         const suffix = audience === 'instructor' ? '/for-instructor' : '';
         return this.http.get<ExamChecklist>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics${suffix}`, { observe: 'response' });
+    }
+
+    getExamConductionCounts(courseId: number, examId: number): Observable<ExamConductionCounts> {
+        return this.http.get<ExamConductionCounts>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics/conduction`);
     }
 
     /**

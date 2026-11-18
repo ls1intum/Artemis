@@ -1,25 +1,44 @@
 @if (isInitialized) {
-    <div>
-        <div class="modal-header">
-            <h4 class="modal-title">{{ translationKeys?.titleKey | artemisTranslate: translationParameters }}</h4>
-            <button type="button" class="btn-close" (click)="clear()"></button>
+    <div class="flex flex-col gap-4!">
+        <div class="flex items-start justify-between gap-2 pt-4!">
+            <h4 class="m-0 text-xl! font-medium!">{{ translationKeys?.titleKey | artemisTranslate: translationParameters }}</h4>
+            <button
+                type="button"
+                tumAetUiButton
+                severity="secondary"
+                variant="text"
+                rounded
+                class="size-8 shrink-0 p-0"
+                data-testid="dialog-close-button"
+                [attr.aria-label]="'entity.action.close' | artemisTranslate"
+                (click)="clear()"
+            >
+                <fa-icon [icon]="faXmark" />
+            </button>
         </div>
-        <div class="modal-body">
-            <p>
+        <div class="flex flex-col gap-2">
+            <p class="m-0">
                 <strong>{{ translationKeys?.questionKey | artemisTranslate: translationParameters }}</strong>
             </p>
-            <p>
+            <p class="m-0">
                 {{ translationKeys?.descriptionKey | artemisTranslate: translationParameters }}
             </p>
             @if (!canBeUndone) {
-                <p>
-                    <span class="text-danger">{{ 'entity.action.notUndoable' | artemisTranslate: translationParameters }}</span>
-                </p>
+                <p class="m-0 text-state-danger">{{ 'entity.action.notUndoable' | artemisTranslate: translationParameters }}</p>
             }
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary cancel" (click)="clear()" jhiTranslate="entity.action.cancel"></button>
-            <button type="button" class="btn confirm" [class.btn-danger]="isDangerousAction" [class.btn-primary]="!isDangerousAction" (click)="confirm()">
+        <div class="flex justify-end gap-2">
+            <button
+                type="button"
+                tumAetUiButton
+                severity="secondary"
+                variant="outlined"
+                class="cancel"
+                cdkFocusInitial
+                (click)="clear()"
+                jhiTranslate="entity.action.cancel"
+            ></button>
+            <button type="button" tumAetUiButton class="confirm" [severity]="isDangerousAction ? 'danger' : 'primary'" (click)="confirm()">
                 {{ translationKeys?.confirmButtonKey | artemisTranslate }}
             </button>
         </div>

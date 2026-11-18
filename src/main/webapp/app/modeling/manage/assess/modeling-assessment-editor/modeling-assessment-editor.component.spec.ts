@@ -378,6 +378,37 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.loadingFeedbackSuggestions()).toBe(false);
         });
 
+        it('should make the assessment valid as soon as the suggestions are applied, without editing a feedback first', async () => {
+            const submission = getSubmissionWithData();
+            (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
+            submission.results![0].feedbacks = [];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            const suggestion = { ...new Feedback(), reference: 'element:1', credits: 2, type: FeedbackType.MANUAL };
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([suggestion]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            // The suggestion is part of the assessment ...
+            expect(component.referencedFeedback).toContainEqual(suggestion);
+            // ... and so is the validity that enables the Submit button, which used to stay false until a feedback was edited.
+            expect(component.assessmentsAreValid()).toBe(true);
+        });
+
+        it('should keep the assessment invalid when a suggestion has no credits yet', async () => {
+            const submission = getSubmissionWithData();
+            (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
+            submission.results![0].feedbacks = [];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            const suggestion = { ...new Feedback(), reference: 'element:1', credits: undefined, type: FeedbackType.MANUAL };
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([suggestion]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(component.assessmentsAreValid()).toBe(false);
+        });
+
         it('should not re-fetch feedback suggestions when the submission already has a persisted adapted suggestion', async () => {
             // Referenced modeling suggestions are typed AUTOMATIC, so a saved adapted suggestion alone still looked
             // like "only automatic feedback" (a fresh assessment) to the old gate, causing it to refetch and

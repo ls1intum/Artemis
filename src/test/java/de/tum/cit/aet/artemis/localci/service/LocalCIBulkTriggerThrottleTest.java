@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +53,11 @@ class LocalCIBulkTriggerThrottleTest {
             sleeps.add(duration);
             nowNanos.addAndGet(duration.toNanos());
         });
+    }
+
+    @AfterEach
+    void clearInterrupt() {
+        Thread.interrupted();
     }
 
     private LocalCIBulkTriggerThrottle throttleWithTotalWait(Duration maxTotalWait, LocalCIBulkTriggerThrottle.Sleeper sleeper) {
@@ -189,7 +195,7 @@ class LocalCIBulkTriggerThrottleTest {
         interrupted.awaitCapacity();
 
         assertThat(sleeps).as("the second call does not sleep").hasSize(1);
-        assertThat(Thread.currentThread().isInterrupted()).as("the flag is left alone so the caller's own pauses keep working").isFalse();
+        assertThat(Thread.currentThread().isInterrupted()).as("the caller must observe cancellation after queueing the remaining builds").isTrue();
     }
 
     @Test

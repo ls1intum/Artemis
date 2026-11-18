@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
+
 /**
  * Configuration properties for rate limiting functionality.
  *
@@ -98,6 +100,12 @@ public class RateLimitingProperties {
     private Integer contentSearchRequestsPerMinute;
 
     /**
+     * Requests per minute for the check whether an email address is allowed by the configured restriction.
+     * If not specified, uses the default from {@link RateLimitType#EMAIL_ADDRESS_CHECK}.
+     */
+    private Integer emailAddressCheckRequestsPerMinute;
+
+    /**
      * Requests per minute for the build agent clone-token check on the git https path.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#BUILD_AGENT_CLONE_TOKEN}.
      */
@@ -120,6 +128,30 @@ public class RateLimitingProperties {
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#SERVICE_CREDENTIAL_FAILURE}.
      */
     private Integer serviceCredentialFailureRequestsPerMinute;
+
+    /**
+     * Requests per minute and user for the conversion of a modeling diagram to a PDF document.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#APOLLON_CONVERSION}.
+     */
+    private Integer apollonConversionRequestsPerMinute;
+
+    /**
+     * Requests per minute and user for joining a quiz batch with its password.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#QUIZ_BATCH_JOIN}.
+     */
+    private Integer quizBatchJoinRequestsPerMinute;
+
+    /**
+     * Requests per minute and user for the manual build of a programming exercise participation.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#PROGRAMMING_BUILD_TRIGGER}.
+     */
+    private Integer programmingBuildTriggerRequestsPerMinute;
+
+    /**
+     * Requests per minute and user for sending a course request.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#COURSE_REQUEST}.
+     */
+    private Integer courseRequestRequestsPerMinute;
 
     public List<String> getExemptAddresses() {
         return exemptAddresses;
@@ -209,6 +241,14 @@ public class RateLimitingProperties {
         this.contentSearchRequestsPerMinute = contentSearchRequestsPerMinute;
     }
 
+    public Integer getEmailAddressCheckRequestsPerMinute() {
+        return emailAddressCheckRequestsPerMinute;
+    }
+
+    public void setEmailAddressCheckRequestsPerMinute(Integer emailAddressCheckRequestsPerMinute) {
+        this.emailAddressCheckRequestsPerMinute = emailAddressCheckRequestsPerMinute;
+    }
+
     public Integer getOnlineResourceFetchRequestsPerMinute() {
         return onlineResourceFetchRequestsPerMinute;
     }
@@ -239,5 +279,37 @@ public class RateLimitingProperties {
 
     public void setFailedLoginRequestsPerMinute(Integer failedLoginRequestsPerMinute) {
         this.failedLoginRequestsPerMinute = failedLoginRequestsPerMinute;
+    }
+
+    public Integer getApollonConversionRequestsPerMinute() {
+        return apollonConversionRequestsPerMinute;
+    }
+
+    public void setApollonConversionRequestsPerMinute(Integer apollonConversionRequestsPerMinute) {
+        this.apollonConversionRequestsPerMinute = apollonConversionRequestsPerMinute;
+    }
+
+    public Integer getQuizBatchJoinRequestsPerMinute() {
+        return quizBatchJoinRequestsPerMinute;
+    }
+
+    public void setQuizBatchJoinRequestsPerMinute(Integer quizBatchJoinRequestsPerMinute) {
+        this.quizBatchJoinRequestsPerMinute = quizBatchJoinRequestsPerMinute;
+    }
+
+    public Integer getProgrammingBuildTriggerRequestsPerMinute() {
+        return programmingBuildTriggerRequestsPerMinute;
+    }
+
+    public void setProgrammingBuildTriggerRequestsPerMinute(Integer programmingBuildTriggerRequestsPerMinute) {
+        this.programmingBuildTriggerRequestsPerMinute = programmingBuildTriggerRequestsPerMinute;
+    }
+
+    public Integer getCourseRequestRequestsPerMinute() {
+        return courseRequestRequestsPerMinute;
+    }
+
+    public void setCourseRequestRequestsPerMinute(Integer courseRequestRequestsPerMinute) {
+        this.courseRequestRequestsPerMinute = courseRequestRequestsPerMinute;
     }
 }

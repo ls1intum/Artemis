@@ -6,16 +6,15 @@ import { onError } from 'app/foundation/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-learning-paths-state',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FontAwesomeModule, NgClass],
+    imports: [TranslateDirective, ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent],
     templateUrl: './learning-paths-state.component.html',
-    styleUrls: ['./learning-paths-state.component.scss', '../learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
 export class LearningPathsStateComponent {
     private readonly learningPathApiService = inject(LearningPathApiService);
@@ -32,10 +31,10 @@ export class LearningPathsStateComponent {
         [HealthStatus.NO_RELATIONS]: `${this.baseTranslationKey}.noRelations`,
     };
 
-    readonly stateCssClasses: Record<HealthStatus, string> = {
-        [HealthStatus.MISSING]: 'warning-state',
-        [HealthStatus.NO_COMPETENCIES]: 'danger-state',
-        [HealthStatus.NO_RELATIONS]: 'warning-state',
+    readonly stateBorderClasses: Record<HealthStatus, string> = {
+        [HealthStatus.MISSING]: 'border-state-warning',
+        [HealthStatus.NO_COMPETENCIES]: 'border-state-danger',
+        [HealthStatus.NO_RELATIONS]: 'border-state-warning',
     };
 
     readonly courseId = input.required<number>();

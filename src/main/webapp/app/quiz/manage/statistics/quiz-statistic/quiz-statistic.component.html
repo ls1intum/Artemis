@@ -1,10 +1,10 @@
 @if (quizExercise(); as quizExercise) {
     <div>
-        <div class="row">
-            <div class="col-md-8 offset-md-2 text-center">
+        <div class="grid grid-cols-12 gap-x-6!">
+            <div class="col-span-12 md:col-span-8 md:col-start-3 text-center">
                 <h3>{{ quizExercise.title }}</h3>
-                <div class="row">
-                    <div class="col-md-4 text-start">
+                <div class="grid grid-cols-12 gap-x-6!">
+                    <div class="col-span-12 md:col-span-4 text-start">
                         <h4 jhiTranslate="artemisApp.showStatistic.quizQuestions"></h4>
                         @if (quizExercise.quizQuestions) {
                             <ol>
@@ -24,10 +24,10 @@
                             </ol>
                         }
                     </div>
-                    <div class="col-md-8 text-center">
+                    <div class="col-span-12 md:col-span-8 text-center">
                         <p>&nbsp;</p>
-                        <div class="row">
-                            <div class="col-md-7 text-start">
+                        <div class="grid grid-cols-12 gap-x-6!">
+                            <div class="col-span-12 md:col-span-7 text-start">
                                 <p id="text" class="chart-title-text">
                                     @if (rated) {
                                         <span jhiTranslate="artemisApp.showStatistic.quizStatistic.titleRated"></span>
@@ -37,7 +37,7 @@
                                     }
                                 </p>
                             </div>
-                            <div class="col-md-5 text-end">
+                            <div class="col-span-12 md:col-span-5 text-end">
                                 <p class="chart-title-text">
                                     <span>{{ participants }} </span><span jhiTranslate="artemisApp.showStatistic.participants"></span>
                                 </p>
@@ -53,9 +53,9 @@
                                 "
                             />
                         </div>
-                        <div class="col-md-12 text-center button-row">
-                            <button (click)="switchRated()" type="button" class="btn btn-primary">
-                                <fa-icon [icon]="faSync" />&nbsp;
+                        <div class="text-center button-row">
+                            <button (click)="switchRated()" type="button" tumAetUiButton>
+                                <fa-icon [icon]="faSync" />
                                 @if (rated) {
                                     <span jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
                                 }

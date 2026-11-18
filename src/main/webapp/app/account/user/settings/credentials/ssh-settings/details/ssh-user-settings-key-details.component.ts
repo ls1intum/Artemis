@@ -48,7 +48,9 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
 
     readonly documentationType: DocumentationType = 'SshSetup';
     readonly invalidKeyFormat = 'invalidKeyFormat';
-    readonly keyAlreadyExists = 'keyAlreadyExists';
+    readonly keyNotAccepted = 'keyNotAccepted';
+    readonly keyExpiryDateInPast = 'keyExpiryDateInPast';
+    readonly tooManyKeys = 'tooManyKeys';
     readonly keyLabelTooLong = 'keyLabelTooLong';
 
     protected readonly faEdit = faEdit;
@@ -147,7 +149,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
                 const errorKey = error.error.errorKey;
-                if ([this.invalidKeyFormat, this.keyAlreadyExists, this.keyLabelTooLong].indexOf(errorKey) > -1) {
+                if ([this.invalidKeyFormat, this.keyNotAccepted, this.keyLabelTooLong, this.keyExpiryDateInPast, this.tooManyKeys].indexOf(errorKey) > -1) {
                     this.alertService.error(`artemisApp.userSettings.sshSettingsPage.${errorKey}`);
                 } else {
                     this.alertService.error('artemisApp.userSettings.sshSettingsPage.saveFailure');
