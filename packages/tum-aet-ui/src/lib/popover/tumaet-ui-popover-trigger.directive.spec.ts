@@ -234,19 +234,20 @@ describe('TumAetUiPopoverTriggerDirective with a hover popover', () => {
         expect(isOpen()).toBe(false);
     });
 
-    it('stays open after a finger that opened it was lifted, until a tap elsewhere', () => {
-        trigger.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' }));
-        fixture.detectChanges();
-        expect(isOpen()).toBe(true);
+    const touch = (target: HTMLElement, ...types: string[]) => types.forEach((type) => target.dispatchEvent(new PointerEvent(type, { pointerType: 'touch' })));
 
-        trigger.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'touch' }));
+    it('opens on a tap and stays open after the finger was lifted, until a tap elsewhere', () => {
+        touch(trigger, 'pointerenter', 'pointerdown');
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
+
+        touch(trigger, 'pointerup', 'pointerleave');
         vi.advanceTimersByTime(1000);
         fixture.detectChanges();
         expect(isOpen()).toBe(true);
 
         // Touching the panel and lifting the finger again, and the trigger losing focus, do not close it either.
-        panel()!.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' }));
-        panel()!.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'touch' }));
+        touch(panel()!, 'pointerenter', 'pointerleave');
         trigger.dispatchEvent(new Event('blur'));
         vi.advanceTimersByTime(1000);
         fixture.detectChanges();
@@ -257,13 +258,38 @@ describe('TumAetUiPopoverTriggerDirective with a hover popover', () => {
         expect(isOpen()).toBe(false);
     });
 
-    it('follows the mouse again after a popover that was opened by touch has been dismissed', () => {
-        trigger.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' }));
+    it('does not open when a finger on the trigger starts a scroll', () => {
+        touch(trigger, 'pointerenter', 'pointerdown', 'pointercancel', 'pointerleave');
+        vi.advanceTimersByTime(1000);
+        fixture.detectChanges();
+
+        expect(isOpen()).toBe(false);
+    });
+
+    it('follows the mouse again after a popover that was opened by a tap has been dismissed', () => {
+        touch(trigger, 'pointerenter', 'pointerdown', 'pointerup', 'pointerleave');
         fixture.detectChanges();
         document.body.click();
         fixture.detectChanges();
 
         hover();
+        expect(isOpen()).toBe(true);
+        trigger.dispatchEvent(new Event('pointerleave'));
+        vi.advanceTimersByTime(300);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
+    });
+
+    it('follows the mouse again when a listener closed a popover the moment a tap opened it', () => {
+        const popover = fixture.debugElement.query(By.directive(TumAetUiPopoverComponent)).componentInstance as TumAetUiPopoverComponent;
+        const subscription = popover.openChange.subscribe((open) => open && popover.close());
+        touch(trigger, 'pointerup');
+        subscription.unsubscribe();
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
+
+        hover();
+        expect(isOpen()).toBe(true);
         trigger.dispatchEvent(new Event('pointerleave'));
         vi.advanceTimersByTime(300);
         fixture.detectChanges();

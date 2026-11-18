@@ -77,7 +77,7 @@ export class TumAetUiPopoverComponent implements OnDestroy {
     private hoverCloseTimer?: ReturnType<typeof setTimeout>;
     private pointerOverPanel = false;
     private pointerOverTrigger = false;
-    /** Set once a touch opened or touched the trigger of a hover popover: it then waits for an explicit dismissal. */
+    /** Set once a tap on the trigger opened or kept a hover popover: it then waits for an explicit dismissal. */
     private keptUntilDismissed = false;
     /** Set while this popover hands focus back to its trigger, which must not count as focusing it anew. */
     private returningFocus = false;
@@ -189,7 +189,7 @@ export class TumAetUiPopoverComponent implements OnDestroy {
 
     /**
      * @internal The pointer entered the trigger of a hover popover, or the trigger received focus.
-     * @param keepUntilDismissed set for a touch, which cannot hover: the popover then ignores the pointer and the
+     * @param keepUntilDismissed set for a tap, which cannot hover: the popover then ignores the pointer and the
      *     focus leaving, and closes on a tap elsewhere, on Escape or when Tab leaves the panel.
      */
     openFromTrigger(origin: ElementRef<HTMLElement>, keepUntilDismissed = false): void {
@@ -197,10 +197,9 @@ export class TumAetUiPopoverComponent implements OnDestroy {
             return;
         }
         this.cancelHoverClose();
+        // Before opening: an `openChange` listener may close the popover at once, and only closing clears the flag.
+        this.keptUntilDismissed ||= keepUntilDismissed;
         this.open(origin);
-        if (keepUntilDismissed) {
-            this.keptUntilDismissed = true;
-        }
     }
 
     /** @internal The pointer entered or left the trigger of a hover popover. */

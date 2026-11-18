@@ -113,6 +113,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     };
 
     private wasSignedIn = false;
+    private destroyed = false;
 
     constructor() {
         // A logout can create this page while the user is still signed in: the identity lookup then stores the account
@@ -158,6 +159,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.destroyed = true;
         this.webauthnService.stopConditionalMediation();
     }
 
@@ -175,7 +177,9 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             return;
         }
         const isAvailable = await PublicKeyCredential.isConditionalMediationAvailable();
-        if (isAvailable) {
+        // The page may be gone or the user signed in by now: a request started then would outlive its page, replace
+        // the request of a newer sign-in page, or run for a user who needs no sign-in.
+        if (isAvailable && !this.destroyed && !this.accountService.userIdentity()) {
             this.webauthnService.startConditionalMediation(
                 () => this.handleLoginSuccess(),
                 () => this.refocusUsernameFieldForPasskeyAutofill(),

@@ -7,7 +7,7 @@ import { TumAetUiPopoverComponent } from './tumaet-ui-popover.component';
  *
  * What opens the popover follows its `openOn` input. By default a click toggles it. With `openOn="hover"` it opens
  * while the pointer or the keyboard focus is on the trigger, a click is left to the trigger's own handler, and Tab
- * moves from the trigger into the open panel. Opened by touch, it stays until it is dismissed.
+ * moves from the trigger into the open panel. Opened by a tap, it stays until it is dismissed.
  *
  * Usage: `<button [tumAetUiPopoverTrigger]="pop">Details</button> <tumaet-ui-popover #pop>...</tumaet-ui-popover>`
  */
@@ -18,6 +18,7 @@ import { TumAetUiPopoverComponent } from './tumaet-ui-popover.component';
         '(pointerenter)': 'onPointer(true, $event)',
         '(focus)': 'onEnter()',
         '(pointerleave)': 'onPointer(false, $event)',
+        '(pointerup)': 'onPointerUp($event)',
         '(blur)': 'onLeave()',
         '(keydown.tab)': 'onTab($event)',
         '[attr.aria-haspopup]': "'dialog'",
@@ -39,10 +40,8 @@ export class TumAetUiPopoverTriggerDirective {
             return;
         }
         if (event.pointerType === 'touch') {
-            // A finger does not hover: it leaves the trigger the moment it is lifted, which must not close the popover.
-            if (over) {
-                this.popover().openFromTrigger(this.elementRef, true);
-            }
+            // A finger does not hover. It enters before the browser knows whether this is a tap or the start of a
+            // scroll, and it leaves the moment it is lifted, so neither opens or closes; see onPointerUp.
             return;
         }
         this.popover().setPointerOverTrigger(over);
@@ -50,6 +49,13 @@ export class TumAetUiPopoverTriggerDirective {
             this.onEnter();
         } else {
             this.onLeave();
+        }
+    }
+
+    protected onPointerUp(event: PointerEvent): void {
+        // A finger lifted on the trigger completes a tap; a scroll ends in `pointercancel` and never gets here.
+        if (this.opensOnHover() && event.pointerType === 'touch') {
+            this.popover().openFromTrigger(this.elementRef, true);
         }
     }
 

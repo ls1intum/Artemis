@@ -110,6 +110,7 @@ describe('HomeComponent', () => {
         expect(component.account()).toBeDefined();
         expect(component.loading()).toBe(true);
         expect(wrapper.hidden).toBe(true);
+        expect(prefillSpy).not.toHaveBeenCalled();
 
         accountService.userIdentity.set(undefined);
         await fixture.whenStable();
@@ -508,6 +509,25 @@ describe('HomeComponent', () => {
             expect(window.PublicKeyCredential!.isConditionalMediationAvailable).toHaveBeenCalledOnce();
             expect(startSpy).toHaveBeenCalledOnce();
             expect(startSpy).toHaveBeenCalledWith(expect.any(Function), expect.any(Function));
+        });
+
+        it('should not start conditional mediation when the page is destroyed or the user signed in during the capability check', async () => {
+            component.isPasskeyEnabled.set(true);
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
+            (window as any).PublicKeyCredential = {
+                isConditionalMediationAvailable: vi.fn().mockResolvedValue(true),
+            };
+
+            const accountService = TestBed.inject(AccountService);
+            accountService.userIdentity.set({ id: 99, login: 'admin' } as User);
+            await component.prefillPasskeysIfPossible();
+            expect(startSpy).not.toHaveBeenCalled();
+
+            accountService.userIdentity.set(undefined);
+            const pending = component.prefillPasskeysIfPossible();
+            fixture.destroy();
+            await pending;
+            expect(startSpy).not.toHaveBeenCalled();
         });
 
         it('should not call startConditionalMediation if passkey is disabled', async () => {
