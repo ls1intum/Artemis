@@ -467,6 +467,25 @@ class ProgrammingExerciseValidationServiceTest {
     }
 
     @Test
+    void validateDockerImageRegistry_ignoresABuildPlanConfigurationThatIsTheJsonTextNull() {
+        validationService = serviceWithAllowedRegistries("ghcr.io");
+        ProgrammingExerciseBuildConfig nothingToRead = new ProgrammingExerciseBuildConfig();
+        nothingToRead.setBuildPlanConfiguration("null");
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry(nothingToRead)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildPhaseNames_rejectsABuildPlanConfigurationThatIsTheJsonTextNull() {
+        when(profileService.isLocalCIActive()).thenReturn(true);
+        ProgrammingExerciseBuildConfig nothingToRead = new ProgrammingExerciseBuildConfig();
+        nothingToRead.setBuildPlanConfiguration("null");
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildPhaseNames(nothingToRead))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("invalidBuildPlanConfiguration"));
+    }
+
+    @Test
     void validateBuildConfigSize_rejectsABranchRegexThatCannotBeCompiled() {
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
         buildConfig.setAllowBranching(true);

@@ -415,7 +415,11 @@ public class ProgrammingExerciseValidationService {
             return;
         }
         try {
-            validateDockerImageRegistry(BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration).dockerImage());
+            BuildPlanPhasesDTO buildPlan = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration);
+            // The JSON text null has no content to check, and the validation of the build phases rejects it
+            if (buildPlan != null) {
+                validateDockerImageRegistry(buildPlan.dockerImage());
+            }
         }
         catch (JacksonException e) {
             // an unreadable configuration is rejected by the validation of the build phases
@@ -455,13 +459,18 @@ public class ProgrammingExerciseValidationService {
             throw new BadRequestAlertException("The build config is invalid", "programmingExercise", "invalidBuildConfig");
         }
 
-        List<BuildPhaseDTO> phases;
+        BuildPlanPhasesDTO buildPlan;
         try {
-            phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration()).phases();
+            buildPlan = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration());
         }
         catch (JacksonException e) {
             throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
         }
+        // The JSON text null is read as no configuration at all, which is no valid one
+        if (buildPlan == null) {
+            throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
+        }
+        List<BuildPhaseDTO> phases = buildPlan.phases();
 
         if (phases == null) {
             return; // default will be used when saving
