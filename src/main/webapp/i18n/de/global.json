@@ -473,6 +473,7 @@
         "quickActions": "Schnellzugriff",
         "controlCenter": "Kontrollzentrum",
         "action": {
+            "deleteAll": "Alle löschen",
             "add": "Hinzufügen",
             "create": "Erstellen",
             "addblob": "Blob hinzufügen",
