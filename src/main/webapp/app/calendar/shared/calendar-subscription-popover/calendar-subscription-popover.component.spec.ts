@@ -10,8 +10,16 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
     let fixture: ComponentFixture<CalendarSubscriptionPopoverComponent>;
     let component: CalendarSubscriptionPopoverComponent;
 
+    const clipboardBefore = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+
     afterEach(() => {
         vi.restoreAllMocks();
+        // a test that replaced the clipboard must not leave its stub to the next one
+        if (clipboardBefore) {
+            Object.defineProperty(navigator, 'clipboard', clipboardBefore);
+        } else {
+            Reflect.deleteProperty(navigator, 'clipboard');
+        }
     });
 
     beforeEach(async () => {
@@ -64,7 +72,25 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
         component.copySubscriptionUrlToClipboard();
 
         expect(writeText).toHaveBeenCalledWith(component.subscriptionUrl());
-        expect(component.copiedUrl()).toBe(true);
+        expect(component.copiedUrl()).toBe(component.subscriptionUrl());
+        expect(component.copyConfirmed()).toBe(true);
+        vi.unstubAllGlobals();
+    });
+
+    it('shows the check mark only for the link that was copied, not for the new one after a reset or a change of the options', () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        vi.stubGlobal('navigator', { clipboard: { writeText } });
+        component.copySubscriptionUrlToClipboard();
+        expect(component.copyConfirmed()).toBe(true);
+
+        component.selectedLanguage.set('GERMAN');
+        fixture.detectChanges();
+        expect(component.copiedUrl()).not.toBe(component.subscriptionUrl());
+        expect(component.copyConfirmed()).toBe(false);
+
+        component.selectedLanguage.set('ENGLISH');
+        fixture.detectChanges();
+        expect(component.copyConfirmed()).toBe(true);
         vi.unstubAllGlobals();
     });
 
@@ -188,7 +214,7 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
         component.copySubscriptionUrlToClipboard();
 
         expect(writeText).not.toHaveBeenCalled();
-        expect(component.copiedUrl()).toBe(false);
+        expect(component.copiedUrl()).toBeUndefined();
 
         fixture.componentRef.setInput('resetting', false);
         component.copySubscriptionUrlToClipboard();

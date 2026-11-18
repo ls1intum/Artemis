@@ -41,7 +41,8 @@ export class CalendarSubscriptionPopoverComponent {
     /** Emitted when the user confirms that the subscription link is replaced by a new one. */
     subscriptionResetRequested = output<void>();
     confirmingReset = signal(false);
-    copiedUrl = signal(false);
+    /** The link that was copied last, for the short time that the check mark says so. */
+    copiedUrl = signal<string | undefined>(undefined);
     includeLectureEvents = signal(true);
     includeExerciseEvents = signal(true);
     includeTutorialEvents = signal(true);
@@ -53,10 +54,12 @@ export class CalendarSubscriptionPopoverComponent {
     selectedLanguage = signal<'ENGLISH' | 'GERMAN'>('ENGLISH');
     languageOptions = computed(() => this.computeLanguageOptions());
     subscriptionUrl = computed<string>(() => this.buildCalendarSubscriptionURL());
+    /** The check mark is only for the link that is shown: after a reset or a change of the options, the copied link is not the one on display. */
+    copyConfirmed = computed(() => this.copiedUrl() !== undefined && this.copiedUrl() === this.subscriptionUrl());
 
     constructor() {
         effect(() => {
-            if (this.copiedUrl()) {
+            if (this.copiedUrl() !== undefined) {
                 return this.setTimerToToggleBackCopiedUrl();
             }
             return undefined;
@@ -66,7 +69,7 @@ export class CalendarSubscriptionPopoverComponent {
     copySubscriptionUrlToClipboard() {
         const url = this.subscriptionUrl();
         if (url && !this.resetting()) {
-            this.copiedUrl.set(true);
+            this.copiedUrl.set(url);
             void navigator.clipboard.writeText(url);
         }
     }
@@ -113,7 +116,7 @@ export class CalendarSubscriptionPopoverComponent {
 
     private setTimerToToggleBackCopiedUrl(): () => void {
         const id = window.setTimeout(() => {
-            this.copiedUrl.set(false);
+            this.copiedUrl.set(undefined);
         }, 1500);
         return () => clearTimeout(id);
     }

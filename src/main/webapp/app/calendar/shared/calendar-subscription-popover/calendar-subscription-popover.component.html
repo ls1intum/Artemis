@@ -127,7 +127,7 @@
                     [attr.aria-label]="'artemisApp.calendar.subscriptionPopover.copyButtonLabel' | artemisTranslate"
                     (click)="copySubscriptionUrlToClipboard()"
                 >
-                    @if (copiedUrl()) {
+                    @if (copyConfirmed()) {
                         <fa-icon [icon]="faCheck" />
                     } @else {
                         <fa-icon [icon]="faCopy" />
