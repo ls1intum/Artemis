@@ -203,6 +203,7 @@
 @source './app/atlas';
 @source './app/calendar';
 @source './app/communication';
+@source './app/app.component.html';
 @source './app/core';
 @source './app/course';
 @source './app/editor';

@@ -1,14 +1,4 @@
-<p-dialog
-    [(visible)]="visible"
-    [modal]="true"
-    [closable]="true"
-    [closeOnEscape]="true"
-    [dismissableMask]="false"
-    [draggable]="false"
-    [appendTo]="'body'"
-    [style]="{ width: '70dvw' }"
-    [header]="'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.title' | artemisTranslate"
->
+<tumaet-ui-dialog [(visible)]="visible" size="large" [header]="'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.title' | artemisTranslate">
     <div class="unenrollment-info">
         <div>
             {{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.confirmationQuestion' | artemisTranslate }}
@@ -24,17 +14,21 @@
             </div>
         }
     </div>
-    <form class="unenrollment-confirmation" [formGroup]="confirmationForm" style="margin-top: 1rem">
-        <label class="form-control-label" for="field_confirmation_input" jhiTranslate="artemisApp.courseOverview.exerciseList.details.unenrollmentModal.confirmationInput"></label>
-        <input type="text" class="form-control" name="confirmationInput" id="field_confirmation_input" formControlName="confirmationInput" required />
+    <form class="unenrollment-confirmation mt-4!" [formGroup]="confirmationForm">
+        <tumaet-ui-form-field
+            controlId="field_confirmation_input"
+            [label]="'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.confirmationInput' | artemisTranslate"
+        >
+            <input tumAetUiInput class="w-full" type="text" name="confirmationInput" id="field_confirmation_input" formControlName="confirmationInput" required />
+        </tumaet-ui-form-field>
     </form>
     <ng-template #footer>
-        <button type="button" class="btn btn-outline-secondary" id="course-unenrollment-cancel-button" (click)="onCancel()">
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" id="course-unenrollment-cancel-button" (click)="onCancel()">
             <fa-icon [icon]="faXmark" />
-            <span class="d-sm-inline" jhiTranslate="artemisApp.courseOverview.exerciseList.details.unenrollmentModal.cancelButton"></span>
+            <span jhiTranslate="artemisApp.courseOverview.exerciseList.details.unenrollmentModal.cancelButton"></span>
         </button>
-        <button type="button" class="btn btn-danger" id="course-unenrollment-accept-button" [disabled]="!isValidInput" (click)="onUnenroll()">
-            <span class="d-sm-inline" jhiTranslate="artemisApp.courseOverview.exerciseList.details.unenrollmentModal.acceptButton"></span>
+        <button type="button" tumAetUiButton severity="danger" id="course-unenrollment-accept-button" [disabled]="!isValidInput" (click)="onUnenroll()">
+            <span jhiTranslate="artemisApp.courseOverview.exerciseList.details.unenrollmentModal.acceptButton"></span>
         </button>
     </ng-template>
-</p-dialog>
+</tumaet-ui-dialog>

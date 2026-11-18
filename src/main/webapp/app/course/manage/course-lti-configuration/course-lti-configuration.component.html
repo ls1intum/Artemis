@@ -1,20 +1,24 @@
 <form name="editForm" role="form" novalidate>
-    <div class="modal-header lti-edit-button">
-        <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.configurationForCourse" [translateValues]="{ title: course()?.title }">
+    <div class="lti-edit-button flex shrink-0 items-center">
+        <h4 class="mb-0!" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.configurationForCourse" [translateValues]="{ title: course()?.title }">
             LTI Configuration for course {{ course()?.title }}
         </h4>
         @if (course()?.isAtLeastInstructor) {
             <div class="controls">
-                <a id="lti-config" [routerLink]="['/course-management', course()?.id!, 'lti-configuration', 'edit']" class="btn btn-warning btn-md">
-                    <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+                <a id="lti-config" [routerLink]="['/course-management', course()?.id!, 'lti-configuration', 'edit']" tumAetUiButton severity="warn">
+                    <fa-icon [icon]="faWrench" /><span jhiTranslate="entity.action.edit">Edit</span>
                 </a>
             </div>
         }
     </div>
-    <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs mt-4">
-        <ng-container ngbNavItem [ngbNavItem]="1">
-            <a ngbNavLink jhiTranslate="artemisApp.lti.generalConfiguration"></a>
-            <ng-template ngbNavContent>
+    <tumaet-ui-tabs [(value)]="activeTab" class="mt-6!">
+        <tumaet-ui-tab-list>
+            <tumaet-ui-tab [value]="1" jhiTranslate="artemisApp.lti.generalConfiguration" />
+            <tumaet-ui-tab [value]="2" jhiTranslate="artemisApp.lti.exercises" />
+            <tumaet-ui-tab [value]="3" jhiTranslate="artemisApp.lti.lectures" />
+        </tumaet-ui-tab-list>
+        <tumaet-ui-tab-panels class="mt-2">
+            <tumaet-ui-tab-panel [value]="1">
                 <dt>
                     <span jhiTranslate="artemisApp.lti.userPrefix"></span>
                 </dt>
@@ -27,7 +31,7 @@
                 <dd>
                     <span jhiTranslate="{{ onlineCourseConfiguration()?.requireExistingUser ? 'global.generic.yes' : 'global.generic.no' }}"></span>
                 </dd>
-                <div class="form-group">
+                <div class="mb-4!">
                     <dt>
                         <span>{{ 'LTI Version' }}</span>
                     </dt>
@@ -39,7 +43,11 @@
                     <dt>
                         <span jhiTranslate="artemisApp.lti13.externalToolSettings"></span>
                         @if (missingLti13ConfigurationField()) {
-                            <fa-icon [icon]="faExclamationTriangle" class="text-warning" ngbTooltip="{{ 'artemisApp.lti13.missingConfigurationWarning' | artemisTranslate }}" />
+                            <fa-icon
+                                [icon]="faExclamationTriangle"
+                                class="text-state-warning"
+                                [tumAetUiTooltip]="'artemisApp.lti13.missingConfigurationWarning' | artemisTranslate"
+                            />
                         }
                         <jhi-help-icon text="artemisApp.lti13.externalToolSettingsTooltip" />
                     </dt>
@@ -138,13 +146,10 @@
                         </dd>
                     </div>
                 }
-            </ng-template>
-        </ng-container>
-        <ng-container ngbNavItem [ngbNavItem]="2">
-            <a ngbNavLink jhiTranslate="artemisApp.lti.exercises"></a>
-            <ng-template ngbNavContent>
-                <div class="row">
-                    <div class="col-12 mx-auto">
+            </tumaet-ui-tab-panel>
+            <tumaet-ui-tab-panel [value]="2">
+                <div>
+                    <div>
                         <tumaet-ui-table-layout class="[--table-layout-offset:20rem]" [empty]="exercises().length === 0">
                             <table tumAetUiTable size="small" striped [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
                                 <thead>
@@ -192,13 +197,10 @@
                         </tumaet-ui-table-layout>
                     </div>
                 </div>
-            </ng-template>
-        </ng-container>
-        <ng-container ngbNavItem [ngbNavItem]="3">
-            <a ngbNavLink jhiTranslate="artemisApp.lti.lectures"></a>
-            <ng-template ngbNavContent>
-                <div class="row">
-                    <div class="col-12 mx-auto">
+            </tumaet-ui-tab-panel>
+            <tumaet-ui-tab-panel [value]="3">
+                <div>
+                    <div>
                         <tumaet-ui-table-layout class="[--table-layout-offset:20rem]" [empty]="lectures().length === 0">
                             <table tumAetUiTable size="small" striped [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
                                 <thead>
@@ -238,10 +240,7 @@
                         </tumaet-ui-table-layout>
                     </div>
                 </div>
-            </ng-template>
-        </ng-container>
-    </nav>
-    <div class="modal-body">
-        <div [ngbNavOutlet]="nav" class="mt-2"></div>
-    </div>
+            </tumaet-ui-tab-panel>
+        </tumaet-ui-tab-panels>
+    </tumaet-ui-tabs>
 </form>

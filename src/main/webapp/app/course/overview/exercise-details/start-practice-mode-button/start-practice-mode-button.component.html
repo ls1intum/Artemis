@@ -17,54 +17,53 @@
             [tumAetUiTooltip]="teamHint"
             tumAetUiTooltipDescribesHost="false"
             [attr.aria-describedby]="isTeamExercise() ? teamHintId : null"
-            [ngbPopover]="popContent"
-            (hidden)="restoreTeamHintDescription()"
-            [autoClose]="'outside'"
-            placement="right auto"
-            container="body"
+            [tumAetUiPopoverTrigger]="practicePopover"
         ></button>
-        <ng-template #popContent>
-            <div class="start-practice-popover">
-                <h5 jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></h5>
-                <p jhiTranslate="artemisApp.exerciseActions.practiceMode.explanation"></p>
-                @if (isTeamExercise()) {
-                    <p data-testid="start-practice-popover-team-hint" jhiTranslate="artemisApp.exerciseActions.practiceMode.teamHint"></p>
-                }
-                @if (gradedStudentParticipation()) {
-                    <p jhiTranslate="artemisApp.exerciseActions.practiceMode.repositoryChoice"></p>
-                }
-                <div class="button-footer">
-                    <button
-                        type="button"
-                        jhi-exercise-action-button
-                        [buttonIcon]="faPlayCircle"
-                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                        [buttonLabel]="
-                            (gradedStudentParticipation() ? 'artemisApp.exerciseActions.practiceMode.practiceWithTemplate' : 'artemisApp.exerciseActions.practice')
-                                | artemisTranslate
-                        "
-                        [buttonLoading]="startingPracticeMode()"
-                        [smallButton]="smallButtons()"
-                        [hideLabelMobile]="false"
-                        (click)="startPractice(false)"
-                    ></button>
+        <tumaet-ui-popover #practicePopover placement="right" [ariaLabel]="'artemisApp.exerciseActions.practiceMode.title' | artemisTranslate">
+            <!-- Rendered only while open, so a closed popover adds no further buttons to the page. -->
+            @if (practicePopover.isOpen()) {
+                <div class="start-practice-popover">
+                    <h5 jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></h5>
+                    <p jhiTranslate="artemisApp.exerciseActions.practiceMode.explanation"></p>
+                    @if (isTeamExercise()) {
+                        <p data-testid="start-practice-popover-team-hint" jhiTranslate="artemisApp.exerciseActions.practiceMode.teamHint"></p>
+                    }
                     @if (gradedStudentParticipation()) {
+                        <p jhiTranslate="artemisApp.exerciseActions.practiceMode.repositoryChoice"></p>
+                    }
+                    <div class="button-footer">
                         <button
                             type="button"
                             jhi-exercise-action-button
-                            class="ms-2"
                             [buttonIcon]="faPlayCircle"
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            [buttonLabel]="'artemisApp.exerciseActions.practiceMode.practiceWithGradedParticipation' | artemisTranslate"
+                            [buttonLabel]="
+                                (gradedStudentParticipation() ? 'artemisApp.exerciseActions.practiceMode.practiceWithTemplate' : 'artemisApp.exerciseActions.practice')
+                                    | artemisTranslate
+                            "
                             [buttonLoading]="startingPracticeMode()"
                             [smallButton]="smallButtons()"
                             [hideLabelMobile]="false"
-                            (click)="startPractice(true)"
+                            (click)="startPractice(false)"
                         ></button>
-                    }
+                        @if (gradedStudentParticipation()) {
+                            <button
+                                type="button"
+                                jhi-exercise-action-button
+                                class="ms-2"
+                                [buttonIcon]="faPlayCircle"
+                                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                                [buttonLabel]="'artemisApp.exerciseActions.practiceMode.practiceWithGradedParticipation' | artemisTranslate"
+                                [buttonLoading]="startingPracticeMode()"
+                                [smallButton]="smallButtons()"
+                                [hideLabelMobile]="false"
+                                (click)="startPractice(true)"
+                            ></button>
+                        }
+                    </div>
                 </div>
-            </div>
-        </ng-template>
+            }
+        </tumaet-ui-popover>
     } @else {
         <button
             type="button"

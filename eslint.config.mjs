@@ -789,6 +789,8 @@ export default tseslint.config(
             'src/main/webapp/app/shared-ui/components/checklist-check/**/*.html',
             'src/main/webapp/app/shared-ui/information-box/**/*.html',
             'src/main/webapp/app/shared-ui/detail-overview-list/detail-overview-list.component.html',
+            // The application shell itself; its providers in app.config.ts and app.main.ts follow with the last module.
+            'src/main/webapp/app/app.component.html',
             ...migratedFolders('html'),
         ],
         languageOptions: {
@@ -808,7 +810,7 @@ export default tseslint.config(
         // are laid out with Tailwind and must say which value they mean. Add a folder
         // here once it is scanned by tailwind.css (`migration-source-coverage` checks this) and its findings are fixed.
         // See client-development.mdx (### Styling).
-        files: [...migratedFolders('html')],
+        files: ['src/main/webapp/app/app.component.html', ...migratedFolders('html')],
         languageOptions: {
             parser: angularTemplateParser,
         },

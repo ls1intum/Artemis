@@ -76,6 +76,7 @@
                 "src/main/webapp/app/text/**/*.scss",
                 "src/main/webapp/app/core/**/*.scss",
                 "src/main/webapp/app/course/**/*.scss",
+                "src/main/webapp/app/app.component.scss",
                 "src/main/webapp/app/programming/manage/detail/**/*.scss",
                 "src/main/webapp/app/programming/manage/vcs-repository-access-log-view/**/*.scss",
                 "src/main/webapp/app/quiz/manage/detail/**/*.scss",
@@ -132,7 +133,8 @@
                 "src/main/webapp/app/editor/**/*.scss",
                 "src/main/webapp/app/text/**/*.scss",
                 "src/main/webapp/app/core/**/*.scss",
-                "src/main/webapp/app/course/**/*.scss"
+                "src/main/webapp/app/course/**/*.scss",
+                "src/main/webapp/app/app.component.scss"
             ],
             "customSyntax": "postcss-scss",
             "rules": {
