@@ -393,7 +393,8 @@ class ProgrammingExerciseValidationServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "registry.example.org/team/image:1", "ubuntu:24.04", "library/ubuntu", "docker.io/library/ubuntu", "localhost:5000/image", "Other/team/image" })
+    @ValueSource(strings = { "registry.example.org/team/image:1", "ubuntu:24.04", "library/ubuntu", "docker.io/library/ubuntu", "localhost:5000/image", "Other/team/image",
+            "ghcr.io:443/ls1intum/image" })
     void validateDockerImageRegistry_rejectsAnImageOfAnotherRegistry(String dockerImage) {
         validationService = serviceWithAllowedRegistries("ghcr.io");
 
