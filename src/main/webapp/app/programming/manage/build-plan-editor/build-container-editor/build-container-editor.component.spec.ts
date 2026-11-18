@@ -14,6 +14,7 @@ import { BuildContainer } from 'app/programming/shared/entities/build-plan-phase
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 
 describe('BuildContainerEditorComponent', () => {
     let fixture: ComponentFixture<BuildContainerEditorComponent>;
@@ -173,6 +174,18 @@ describe('BuildContainerEditorComponent', () => {
             expect(component.container().dockerFlags?.network).toBeUndefined();
         });
 
+        it('should drop a resource limit that is cleared in its field, so the limit of the exercise applies again', async () => {
+            fixture.componentRef.setInput('container', { ...container, dockerFlags: { cpuCount: 2 } });
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            typeIntoInputNumber(getField('field_container_cpu_count_0').nativeElement, '');
+            fixture.detectChanges();
+
+            expect(component.container().dockerFlags?.cpuCount).toBeUndefined();
+            expect(component.isCpuCountValid()).toBe(true);
+        });
+
         it('should take a resource limit from its field and drop it again when the field is emptied', () => {
             fixture.componentRef.setInput('container', { ...container, dockerFlags: {} });
             fixture.detectChanges();
@@ -287,6 +300,20 @@ describe('BuildContainerEditorComponent as the only container of a build plan', 
         expect(settingFields.filter(isShown)).toEqual([]);
         expect(isShown('field_container_image_0')).toBe(true);
         expect(fixture.debugElement.query(By.directive(BuildPhasesEditorComponent))).not.toBeNull();
+    });
+
+    it('should drop a timeout that is cleared in its field and collapse the settings again', async () => {
+        render({ ...plainContainer, timeoutSeconds: 90 }, 1);
+        await fixture.whenStable();
+        expect(isShown('field_container_timeout_0')).toBe(true);
+
+        typeIntoInputNumber(fixture.nativeElement.querySelector('#field_container_timeout_0'), '');
+        fixture.detectChanges();
+
+        // a cleared field leaves the timeout to the exercise, rather than holding an invalid one that blocks saving
+        expect(fixture.componentInstance.container().timeoutSeconds).toBeUndefined();
+        expect(fixture.componentInstance.isTimeoutValid()).toBe(true);
+        expect(settingFields.filter(isShown)).toEqual([]);
     });
 
     it('should show the settings once the build plan has a second container', () => {

@@ -43,8 +43,13 @@ function envVarsOf(rows: [string, string][]): EnvVars | undefined {
 }
 
 /** Edits a single build container of a build plan: its name, image, timeout, repositories, Docker flags and phases. */
-/** what a number field hands to its change handler: a number, the raw text, or null once it is cleared */
-type NumberFieldValue = number | string | null;
+/** what a number field hands to its change handler: a number, the raw text, or null or undefined once it is cleared */
+type NumberFieldValue = number | string | null | undefined;
+
+/** the number a field holds, or undefined for a cleared field, which leaves the setting to the exercise */
+function numberOf(value: NumberFieldValue): number | undefined {
+    return value === null || value === undefined || value === '' ? undefined : Number(value);
+}
 
 @Component({
     selector: 'jhi-build-container-editor',
@@ -175,8 +180,7 @@ export class BuildContainerEditorComponent {
     }
 
     setTimeoutSeconds(value: NumberFieldValue): void {
-        const timeoutSeconds = value === null || value === '' ? undefined : Number(value);
-        this.container.update((container) => cloneWith(container, { timeoutSeconds }));
+        this.container.update((container) => cloneWith(container, { timeoutSeconds: numberOf(value) }));
     }
 
     setPhases(phases: BuildPhase[]): void {
@@ -215,16 +219,16 @@ export class BuildContainerEditorComponent {
         this.updateDockerFlags({ network: network || undefined });
     }
 
-    setCpuCount(value: number | string | null): void {
-        this.updateDockerFlags({ cpuCount: this.resourceLimitOf(value) });
+    setCpuCount(value: NumberFieldValue): void {
+        this.updateDockerFlags({ cpuCount: numberOf(value) });
     }
 
-    setMemory(value: number | string | null): void {
-        this.updateDockerFlags({ memory: this.resourceLimitOf(value) });
+    setMemory(value: NumberFieldValue): void {
+        this.updateDockerFlags({ memory: numberOf(value) });
     }
 
-    setMemorySwap(value: number | string | null): void {
-        this.updateDockerFlags({ memorySwap: this.resourceLimitOf(value) });
+    setMemorySwap(value: NumberFieldValue): void {
+        this.updateDockerFlags({ memorySwap: numberOf(value) });
     }
 
     addEnvVar(): void {
@@ -246,10 +250,6 @@ export class BuildContainerEditorComponent {
     private setEnvVarRows(rows: [string, string][]): void {
         this.envVarRows.set(rows);
         this.updateDockerFlags({ env: envVarsOf(rows) });
-    }
-
-    private resourceLimitOf(value: number | string | null): number | undefined {
-        return value === null || value === '' ? undefined : Number(value);
     }
 
     private updateDockerFlags(overrides: BuildContainerDockerFlags): void {
