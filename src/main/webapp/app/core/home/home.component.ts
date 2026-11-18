@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { AfterViewChecked, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/account/user/user.model';
@@ -111,6 +111,23 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             this.isCheckingIdentifier.set(false);
         }
     };
+
+    private wasSignedIn = false;
+
+    constructor() {
+        // A logout can create this page while the user is still signed in: the identity lookup then stores the account
+        // and leaves the page in its loading state, which hides the form. Show it again once the session has ended.
+        effect(() => {
+            const signedIn = !!this.accountService.userIdentity();
+            if (this.wasSignedIn && !signedIn) {
+                untracked(() => {
+                    this.account.set(undefined);
+                    this.loading.set(false);
+                });
+            }
+            this.wasSignedIn = signedIn;
+        });
+    }
 
     ngOnInit() {
         window.addEventListener('pageshow', this.onPageShow);

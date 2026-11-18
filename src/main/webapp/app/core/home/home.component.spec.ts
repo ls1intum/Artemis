@@ -4,6 +4,7 @@ import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { HomeComponent } from './home.component';
 import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -97,6 +98,25 @@ describe('HomeComponent', () => {
 
     it('should create the component', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('should show the form again when the session ends after the page was created while signed in', async () => {
+        const accountService = TestBed.inject(AccountService);
+        const wrapper = (fixture.nativeElement as HTMLElement).firstElementChild as HTMLElement;
+        accountService.userIdentity.set({ id: 99, login: 'admin' } as User);
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(component.account()).toBeDefined();
+        expect(component.loading()).toBe(true);
+        expect(wrapper.hidden).toBe(true);
+
+        accountService.userIdentity.set(undefined);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.account()).toBeUndefined();
+        expect(component.loading()).toBe(false);
+        expect(wrapper.hidden).toBe(false);
     });
 
     it('should initialize with profile info and prefilled username', () => {
