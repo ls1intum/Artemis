@@ -935,10 +935,10 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     Set<Result> findLatestResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
 
     /**
-     * Finds the latest results for the given submission IDs, including the assessment note.
+     * Finds the latest completed results for the given submission IDs, including the assessment note. Results still being built or assessed have no completion date yet.
      *
      * @param submissionIds the submission IDs for which to find the latest results
-     * @return a set of latest results with assessment notes
+     * @return a set of latest completed results with assessment notes
      */
     @Query("""
             SELECT r
@@ -949,7 +949,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                  SELECT MAX(r2.id)
                  FROM Result r2
                  WHERE r2.submission.id = r.submission.id
-                 AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
+                 AND r2.completionDate IS NOT NULL AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                )
             """)
     Set<Result> findLatestResultsWithAssessmentNoteBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
