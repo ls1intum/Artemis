@@ -10,10 +10,10 @@
 
 
 export interface IndexedEntity {
-    type?: string;
-    entityId?: number;
-    title?: string;
-    lectureId?: number;
-    ingestedAt?: string;
-    expected?: boolean;
+    type: string;
+    entityId: number;
+    title?: string | null;
+    lectureId?: number | null;
+    ingestedAt?: string | null;
+    expected: boolean;
 }

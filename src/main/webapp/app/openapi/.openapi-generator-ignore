@@ -54,6 +54,7 @@ api/hyperion-assessment-criteria-generation-resources.ts
 api/admin-ai-worker-resources.ts
 api/athena-resources.ts
 api/quiz-exercise-retrieval-resources.ts
+api/ingestion-coverage-resources.ts
 api/global-search-resources.ts
 api/admin-hyperion-generation-monitoring-resources.ts
 api/tutorial-group-free-period-resources.ts

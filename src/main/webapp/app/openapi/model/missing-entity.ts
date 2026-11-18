@@ -10,8 +10,8 @@
 
 
 export interface MissingEntity {
-    type?: string;
-    entityId?: number;
-    title?: string;
-    lectureId?: number;
+    type: string;
+    entityId: number;
+    title?: string | null;
+    lectureId?: number | null;
 }

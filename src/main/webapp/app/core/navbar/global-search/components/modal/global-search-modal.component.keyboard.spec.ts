@@ -17,6 +17,7 @@ import { OsDetectorService } from 'app/core/navbar/global-search/services/os-det
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
+import { CourseForSearchFilter } from 'app/openapi/model/course-for-search-filter';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
@@ -88,7 +89,10 @@ describe('GlobalSearchModalComponent keyboard integration', () => {
                 },
                 { provide: SearchOverlayService, useValue: overlay },
                 { provide: OsDetectorService, useValue: { isActionKey: vi.fn(() => false), isMac: vi.fn(() => false) } },
-                { provide: GlobalSearchApi, useValue: { globalSearch: vi.fn(() => of([])) } },
+                {
+                    provide: GlobalSearchApi,
+                    useValue: { globalSearch: vi.fn(() => of([])), getCourseFilterOptions: vi.fn(() => of<CourseForSearchFilter[]>([])) },
+                },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn(() => true) } },
                 { provide: CourseStorageService, useValue: { getCourse: vi.fn(() => ({ id: 7, title: 'Algorithms' })), getCourses: vi.fn(() => []) } },
                 { provide: IrisSearchAnswerService, useValue: { ask } },

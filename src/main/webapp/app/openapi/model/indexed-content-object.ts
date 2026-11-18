@@ -10,6 +10,6 @@
 
 
 export interface IndexedContentObject {
-    ingestedAt?: string;
+    ingestedAt?: string | null;
     properties?: { [key: string]: any | null; };
 }
