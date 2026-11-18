@@ -13,7 +13,7 @@ import { User } from 'app/account/user/user.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { FileService } from 'app/foundation/service/file.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -24,7 +24,7 @@ describe('PostingContentPartComponent', () => {
     let debugElement: DebugElement;
     let router: Router;
     let fileService: FileService;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let openAttachmentSpy: ReturnType<typeof vi.spyOn>;
     let navigateByUrlSpy: ReturnType<typeof vi.spyOn>;
     let accountService: AccountService;
@@ -34,7 +34,6 @@ describe('PostingContentPartComponent', () => {
     });
 
     beforeEach(async () => {
-        const mockDialogService = { open: vi.fn() } as unknown as DialogService;
         TestBed.configureTestingModule({
             imports: [MockRouterLinkDirective, MockQueryParamsDirective],
             providers: [
@@ -49,12 +48,9 @@ describe('PostingContentPartComponent', () => {
                 },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn() } },
             ],
-        })
-            // DialogService is provided at the component level, so override it on the component for the mock to take effect.
-            .overrideComponent(PostingContentPartComponent, {
-                set: { providers: [{ provide: DialogService, useValue: mockDialogService }] },
-            });
+        });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(PostingContentPartComponent);
         component = fixture.componentInstance;
@@ -62,8 +58,7 @@ describe('PostingContentPartComponent', () => {
         router = TestBed.inject(Router);
         fileService = TestBed.inject(FileService);
         accountService = TestBed.inject(AccountService);
-        // DialogService is provided at the component level, so resolve it from the component's own injector.
-        dialogService = fixture.debugElement.injector.get(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
         openAttachmentSpy = vi.spyOn(fileService, 'downloadFile');
     });
@@ -237,7 +232,7 @@ describe('PostingContentPartComponent', () => {
                 EnlargeSlideImageComponent,
                 expect.objectContaining({
                     data: { slideToReference, imageAlt: 'artemisApp.communication.imagePreviewAlt' },
-                    modal: true,
+                    size: 'large',
                     closable: true,
                     dismissableMask: true,
                     closeOnEscape: true,

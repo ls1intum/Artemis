@@ -68,7 +68,7 @@ class LocalVCPrePushHookTest {
         User user = new User();
         user.setId(1L);
         user.setLogin("ge12abc");
-        hook = new LocalVCPrePushHook(localVCServletService, user);
+        hook = new LocalVCPrePushHook(localVCServletService, user, new GitOperationAudit());
     }
 
     @AfterEach
@@ -123,14 +123,29 @@ class LocalVCPrePushHookTest {
         return new ReceiveCommand(ObjectId.zeroId(), newId, refName);
     }
 
+    /**
+     * A receive process that has received the given commands, as JGit's has when it calls the hooks. A process that has not received any has no list of commands, which the
+     * hook reads to tell whether the push brought commands.
+     */
+    private ReceivePack receivePackOf(ReceiveCommand... commands) {
+        List<ReceiveCommand> received = List.of(commands);
+        return new ReceivePack(repository) {
+
+            @Override
+            public List<ReceiveCommand> getAllCommands() {
+                return received;
+            }
+        };
+    }
+
     private void run(ReceiveCommand... commands) {
-        hook.onPreReceive(new ReceivePack(repository), List.of(commands));
+        hook.onPreReceive(receivePackOf(commands), List.of(commands));
     }
 
     @Test
     void onPreReceive_withoutAnyCommand_doesNothing() {
         // A push that updates no ref has nothing to judge, and there is no command to reject on either.
-        hook.onPreReceive(new ReceivePack(repository), List.of());
+        hook.onPreReceive(receivePackOf(), List.of());
     }
 
     @Test
@@ -518,7 +533,7 @@ class LocalVCPrePushHookTest {
         // the commit does not exist in the repository: the commands alone decide
         ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), Constants.R_HEADS + "feature");
 
-        hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+        hook.examineBeforeObjects(receivePackOf(command), List.of(command));
 
         assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
         assertThat(command.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
@@ -530,7 +545,7 @@ class LocalVCPrePushHookTest {
         for (String refName : List.of("refs/tags/v1", "refs/notes/x", "refs/x", "HEAD", "refs/heads/")) {
             ReceiveCommand command = receive(id, refName);
 
-            hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+            hook.examineBeforeObjects(receivePackOf(command), List.of(command));
 
             assertThat(command.getResult()).as(refName).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
             assertThat(command.getMessage()).as(refName).isEqualTo("You can only push to a branch.");
@@ -541,7 +556,7 @@ class LocalVCPrePushHookTest {
     void examineBeforeObjects_doesNotEvaluateTheBranchExpressionForAPushToTheDefaultBranch() {
         ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), DEFAULT_REF);
 
-        hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+        hook.examineBeforeObjects(receivePackOf(command), List.of(command));
 
         verify(localVCServletService, never()).isBranchNameAllowedForRepository(any(), anyString());
     }
@@ -550,7 +565,7 @@ class LocalVCPrePushHookTest {
     void examineBeforeObjects_acceptsTheDefaultBranchWithoutLookingAtTheObjects() {
         ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), DEFAULT_REF);
 
-        hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+        hook.examineBeforeObjects(receivePackOf(command), List.of(command));
 
         assertThat(command.getResult()).as("the content is judged later, when the objects are there").isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
     }
@@ -560,14 +575,14 @@ class LocalVCPrePushHookTest {
         ReceiveCommand first = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), DEFAULT_REF);
         ReceiveCommand second = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), Constants.R_HEADS + "other");
 
-        hook.examineBeforeObjects(new ReceivePack(repository), List.of(first, second));
+        hook.examineBeforeObjects(receivePackOf(first, second), List.of(first, second));
 
         assertThat(List.of(first, second)).allSatisfy(command -> assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON));
     }
 
     @Test
     void examineBeforeObjects_withoutCommandsDoesNothing() {
-        hook.examineBeforeObjects(new ReceivePack(repository), List.of());
+        hook.examineBeforeObjects(receivePackOf(), List.of());
     }
 
     @Test
@@ -575,7 +590,7 @@ class LocalVCPrePushHookTest {
         ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), DEFAULT_REF);
         command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "rejected earlier");
 
-        hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+        hook.examineBeforeObjects(receivePackOf(command), List.of(command));
 
         assertThat(command.getMessage()).isEqualTo("rejected earlier");
     }
@@ -585,9 +600,9 @@ class LocalVCPrePushHookTest {
         when(localVCServletService.isBranchNameAllowedForRepository(any(), anyString())).thenReturn(LocalVCServletService.BranchingStatus.NAME_DOES_NOT_MATCH_REGEX);
         ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), Constants.R_HEADS + "feature");
 
-        hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+        hook.examineBeforeObjects(receivePackOf(command), List.of(command));
         String message = command.getMessage();
-        hook.examineBeforeObjects(new ReceivePack(repository), List.of(command));
+        hook.examineBeforeObjects(receivePackOf(command), List.of(command));
 
         assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
         assertThat(command.getMessage()).isEqualTo(message);

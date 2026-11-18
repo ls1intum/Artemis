@@ -60,7 +60,7 @@
                 "submissions": "Submissions of the counted students and of all teams in these courses, whenever they were made.",
                 "builds": "Finished builds, whenever they ran. Only shown if the instance builds with local CI. Build jobs are deleted after one year by default, so builds are only shown for semesters that started within that period.",
                 "averageBuildDuration": "Average duration of the successful builds.",
-                "exams": "Real exams of these courses. Test exams, and exams whose title starts with \"test\" or \"mock\", are not counted. Only shown if the instance offers exams.",
+                "exams": "Real exams of these courses. Practice exams, and exams whose title starts with \"test\" or \"mock\", are not counted. Only shown if the instance offers exams.",
                 "examRegistrations": "Not unique: a student registered for three of these exams is counted three times.",
                 "examParticipations": "Not unique: students who started the exam. A student who took three of these exams is counted three times.",
                 "communication": "Totals over the courses of the semester, whenever they happened, including what tutors, instructors and the system did.",

@@ -190,6 +190,22 @@ public class CompetencyExerciseLinkService {
         if (competencyRepositoryApi.isEmpty()) {
             return;
         }
+        exercise.setCompetencyLinks(resolveCompetencyLinksForCreation(exercise, competencyLinks));
+    }
+
+    /**
+     * Resolves all selected competency identifiers before a new exercise is persisted, keeping only links from its course.
+     * Missing competencies fail even when they belonged to another course; existing ones from another course are skipped.
+     * The returned links must be rebound to the saved exercise before they are persisted.
+     *
+     * @param exercise        the new exercise whose course determines which links to keep
+     * @param competencyLinks the submitted links to resolve
+     * @return resolved links, preserving their weights and origin
+     */
+    public Set<CompetencyExerciseLink> resolveCompetencyLinksForCreation(Exercise exercise, Set<CompetencyExerciseLink> competencyLinks) {
+        if (competencyLinks == null || competencyLinks.isEmpty() || competencyRepositoryApi.isEmpty()) {
+            return new HashSet<>();
+        }
         // Load each competency individually as a managed entity. Using findAllById on the
         // abstract CourseCompetency (SINGLE_TABLE inheritance) can return empty results
         // under Hibernate 6.6+ due to polymorphic query issues.
@@ -207,6 +223,6 @@ public class CompetencyExerciseLinkService {
             resolvedLink.setGeneratedByAi(link.isGeneratedByAi());
             resolvedLinks.add(resolvedLink);
         }
-        exercise.setCompetencyLinks(resolvedLinks);
+        return resolvedLinks;
     }
 }

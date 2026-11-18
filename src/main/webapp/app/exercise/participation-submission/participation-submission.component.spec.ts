@@ -32,7 +32,7 @@ import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-u
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 
-import { Submission, SubmissionExerciseType, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -44,6 +44,8 @@ import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
