@@ -81,50 +81,61 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
         expect(component.examsIsLastSelectedEventType()).toBe(false);
     });
 
+    /** The anchors of the popovers that a test opened, which are removed after the test even if it fails. */
+    const anchors: HTMLElement[] = [];
+    afterEach(() => anchors.splice(0).forEach((anchor) => anchor.remove()));
+
+    /** The content of the popover is only in the document while it is open. */
+    const openPopover = () => {
+        const origin = document.createElement('button');
+        anchors.push(origin);
+        document.body.appendChild(origin);
+        component.open({ currentTarget: origin } as unknown as Event);
+        fixture.detectChanges();
+    };
+    const shown = (testId: string) => document.querySelector(`[data-testid="${testId}"]`);
+    const click = (testId: string) => {
+        (shown(testId) as HTMLElement).click();
+        fixture.detectChanges();
+    };
+
     it('asks for a confirmation before it requests a new subscription link', () => {
         const resetSpy = vi.fn();
         component.subscriptionResetRequested.subscribe(resetSpy);
+        openPopover();
 
-        expect(component.confirmingReset()).toBe(false);
-        component.confirmingReset.set(true);
-        component.confirmingReset.set(false);
+        // the first button only asks, and cancelling the question requests nothing
+        click('subscription-link-reset-button');
+        expect(shown('subscription-link-reset-explanation')).not.toBeNull();
+        expect(resetSpy).not.toHaveBeenCalled();
+        click('subscription-link-reset-cancel');
+        expect(shown('subscription-link-reset-explanation')).toBeNull();
+        expect(shown('subscription-link-reset-button')).not.toBeNull();
         expect(resetSpy).not.toHaveBeenCalled();
 
-        component.confirmingReset.set(true);
-        component.resetSubscriptionLink();
+        // only the confirmation requests a new link
+        click('subscription-link-reset-button');
+        click('subscription-link-reset-confirm');
 
         expect(resetSpy).toHaveBeenCalledOnce();
         expect(component.confirmingReset()).toBe(false);
     });
 
-    /** The content of the popover is only in the document while it is open. */
-    const openPopover = () => {
-        const origin = document.createElement('button');
-        document.body.appendChild(origin);
-        component.open({ currentTarget: origin } as unknown as Event);
-        fixture.detectChanges();
-        return origin;
-    };
-    const shown = (testId: string) => document.querySelector(`[data-testid="${testId}"]`);
-
     it('keeps the buttons of the confirmation in the content that scrolls', () => {
-        const origin = openPopover();
-        component.confirmingReset.set(true);
-        fixture.detectChanges();
+        openPopover();
+        click('subscription-link-reset-button');
         const content = shown('subscription-popover-content') as HTMLElement;
 
         expect(content.contains(shown('subscription-link-reset-confirm'))).toBe(true);
         expect(content.contains(shown('subscription-link-reset-cancel'))).toBe(true);
-        origin.remove();
     });
 
     it('lets the content scroll when it is taller than the screen', () => {
-        const origin = openPopover();
+        openPopover();
         const content = shown('subscription-popover-content') as HTMLElement;
 
         expect(content.classList.contains('overflow-y-auto')).toBe(true);
         expect(content.classList.contains('max-h-[75dvh]')).toBe(true);
-        origin.remove();
     });
 
     it('starts without a pending confirmation each time it is opened', () => {
@@ -139,8 +150,17 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
     it('offers neither the link nor its copy action while the link is replaced', () => {
         const writeText = vi.fn().mockResolvedValue(undefined);
         Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+        openPopover();
+        expect(shown('subscription-link-copy-button')).not.toBeNull();
+        expect(shown('subscription-link-reset-pending')).toBeNull();
 
         fixture.componentRef.setInput('resetting', true);
+        fixture.detectChanges();
+        // the message replaces the link, and the buttons of the reset are gone as well
+        expect(shown('subscription-link-reset-pending')).not.toBeNull();
+        expect(shown('subscription-link-copy-button')).toBeNull();
+        expect(document.querySelector('[data-testid="subscription-popover-content"] textarea')).toBeNull();
+        expect(shown('subscription-link-reset-button')).toBeNull();
         component.copySubscriptionUrlToClipboard();
 
         expect(writeText).not.toHaveBeenCalled();
