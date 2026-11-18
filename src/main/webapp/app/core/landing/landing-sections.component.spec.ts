@@ -49,7 +49,7 @@ function expectSafeExternalLinks(anchors: HTMLAnchorElement[]): void {
         expect(anchor.getAttribute('href')).toMatch(/^https:\/\//);
         expect(anchor.getAttribute('target')).toBe('_blank');
         expect(anchor.getAttribute('rel')).toContain('noopener');
-        expect(anchor.querySelector('.visually-hidden')?.textContent).toContain('landing.opensInNewTab');
+        expect(anchor.querySelector('.sr-only')?.textContent).toContain('landing.opensInNewTab');
     }
 }
 
