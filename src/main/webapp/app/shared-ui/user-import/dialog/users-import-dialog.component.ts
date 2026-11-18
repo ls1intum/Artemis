@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, ViewEncapsulation, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
@@ -58,6 +58,7 @@ export class UsersImportDialogComponent implements OnDestroy {
 
     readonly usersToImport = signal<StudentDTO[]>([]);
     readonly examUsersToImport = signal<ExamUserDTO[]>([]);
+    readonly previewUsers = computed<ExamUserDTO[]>(() => (this.examUserMode() ? this.examUsersToImport() : this.usersToImport()));
     notFoundUsers: Partial<StudentDTO>[] = [];
     rejectedStaffUsers: Partial<StudentDTO>[] = [];
 

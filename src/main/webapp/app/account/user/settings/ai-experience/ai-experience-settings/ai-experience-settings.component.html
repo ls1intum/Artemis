@@ -1,76 +1,65 @@
-<p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.description"></p>
-<hr />
-
-<h5 jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.yourAiMode"></h5>
-
-<tumaet-ui-card class="mt-4! block">
-    @if (currentSelection() === LLMSelectionDecision.CLOUD_AI) {
-        <h6 class="font-bold" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.cloudTitle"></h6>
-        <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.cloudDescription"></p>
-        <p class="text-muted-color">
-            <small jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.selectedOn" [translateValues]="{ date: (selectionDate() | artemisDate: 'long-date') }"></small>
-        </p>
-    } @else if (currentSelection() === LLMSelectionDecision.LOCAL_AI) {
-        <h6 class="font-bold" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.localTitle"></h6>
-        <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.localDescription"></p>
-        <p class="text-muted-color">
-            <small jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.selectedOn" [translateValues]="{ date: (selectionDate() | artemisDate: 'long-date') }"></small>
-        </p>
-    } @else if (currentSelection() === LLMSelectionDecision.NO_AI) {
-        <h6 class="font-bold" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noAiTitle"></h6>
-        <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noAiDescription"></p>
-        <p class="text-muted-color">
-            <small jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.selectedOn" [translateValues]="{ date: (selectionDate() | artemisDate: 'long-date') }"></small>
-        </p>
-    } @else {
-        <h6 class="font-bold" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noSelectionTitle"></h6>
-        <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noSelectionDescription"></p>
-    }
-
-    <div class="mt-4! flex items-center gap-4!">
-        @if (currentSelection()) {
-            <tumaet-ui-button [disabled]="selectionPending()" (clicked)="openSelectionModal()">
-                <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.changeSelection"></span>
-            </tumaet-ui-button>
-        } @else {
-            <tumaet-ui-button [disabled]="selectionPending()" (clicked)="openSelectionModal()">
-                <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.chooseNow"></span>
-            </tumaet-ui-button>
-        }
-        <a routerLink="/ai-experience-info" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.learnMore"></a>
-    </div>
-</tumaet-ui-card>
-
-@if (irisEnabled) {
-    <hr />
-
-    <h5 jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataManagement"></h5>
-    <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataManagementInfo"></p>
-
-    @if (hasData) {
-        <p class="mt-2">
-            <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataStats" [translateValues]="{ sessions: sessionCount(), messages: messageCount() }"></span>
-        </p>
-        <div class="mt-2">
-            <button
-                type="button"
-                tumAetUiButton
-                severity="danger"
-                size="small"
-                jhiDeleteButton
-                [renderButtonStyle]="false"
-                [actionType]="ActionType.Cleanup"
-                [renderButtonText]="false"
-                [deleteQuestion]="'artemisApp.userSettings.aiExperienceSettingsPage.deleteQuestion'"
-                [entityTitle]="'delete all'"
-                [deleteConfirmationText]="'artemisApp.userSettings.aiExperienceSettingsPage.typeDeleteAllToConfirm'"
-                (delete)="deleteAllIrisInteractions()"
-                [dialogError]="dialogError$"
-            >
-                <span jhiTranslate="entity.action.cleanup"></span>
-            </button>
+<div class="flex flex-col gap-10">
+    <section class="flex flex-col gap-6!">
+        <div class="flex flex-col gap-3.5">
+            <h2 class="m-0! text-xl! leading-none! font-bold!" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.yourAiMode"></h2>
+            <p class="m-0!" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.description"></p>
         </div>
-    } @else {
-        <p class="mt-2 text-muted-color" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noData"></p>
+        <div class="flex flex-col gap-3.5">
+            <jhi-ai-mode-selector [currentSelection]="currentSelection()" [disabled]="isSavingConsent()" [isOnPremiseEnabled]="isOnPremiseEnabled" (choice)="selectMode($event)" />
+            <a class="self-center" routerLink="/ai-experience-info" jhiTranslate="artemisApp.llmSelectionPopup.disclaimerButton"></a>
+        </div>
+    </section>
+    @if (irisEnabled) {
+        <section class="flex flex-col gap-6!">
+            <div class="flex flex-col gap-3.5">
+                <h2 class="m-0! text-xl! leading-none! font-bold!" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataManagement"></h2>
+                <p class="m-0!" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataManagementInfo"></p>
+            </div>
+
+            @if (hasData) {
+                <tumaet-ui-card class="w-fit max-w-full self-center border border-border!">
+                    <div class="grid grid-cols-1 items-center gap-x-10 gap-y-6! lg:grid-cols-[minmax(0,1fr)_auto_auto]">
+                        <div class="flex flex-col justify-center gap-2 lg:self-stretch lg:border-e lg:border-border lg:pe-10">
+                            <h3 class="m-0! text-base! font-semibold!" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.irisConversations"></h3>
+                            <p class="m-0! text-sm text-muted-color" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.conversationScope"></p>
+                        </div>
+                        <dl class="m-0! grid grid-cols-[max-content_max-content] justify-self-start gap-10 text-start">
+                            <div class="flex flex-col gap-1">
+                                <dt class="text-sm font-normal! text-muted-color" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.chatCountLabel"></dt>
+                                <dd class="m-0! text-3xl! font-semibold!">{{ sessionCount() }}</dd>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <dt class="text-sm font-normal! text-muted-color" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.messageCountLabel"></dt>
+                                <dd class="m-0! text-3xl! font-semibold!">{{ messageCount() }}</dd>
+                            </div>
+                        </dl>
+                        <button
+                            class="justify-self-start"
+                            type="button"
+                            tumAetUiButton
+                            severity="danger"
+                            size="small"
+                            jhiDeleteButton
+                            [attr.aria-label]="'entity.action.deleteAll' | artemisTranslate"
+                            [renderButtonStyle]="false"
+                            [actionType]="ActionType.Cleanup"
+                            [renderButtonText]="false"
+                            [deleteQuestion]="'artemisApp.userSettings.aiExperienceSettingsPage.deleteQuestion'"
+                            [entityTitle]="'delete all'"
+                            [deleteConfirmationText]="'artemisApp.userSettings.aiExperienceSettingsPage.typeDeleteAllToConfirm'"
+                            (delete)="deleteAllIrisInteractions()"
+                            [dialogError]="dialogError$"
+                        >
+                            <span jhiTranslate="entity.action.deleteAll"></span>
+                        </button>
+                    </div>
+                </tumaet-ui-card>
+            } @else {
+                <div class="flex flex-col items-center gap-4! text-center">
+                    <fa-icon [icon]="faGhost" class="text-6xl text-muted-color" aria-hidden="true" />
+                    <p class="m-0! text-muted-color" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.noData"></p>
+                </div>
+            }
+        </section>
     }
-}
+</div>

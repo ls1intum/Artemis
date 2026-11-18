@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
@@ -149,7 +150,7 @@ public class ExamDemoService {
         ZonedDateTime now = ZonedDateTime.now();
         Exam exam = new Exam();
         exam.setTitle(TEST_EXAM_TITLE);
-        exam.setTestExam(true);
+        exam.setExamMode(ExamMode.TEST);
         exam.setVisibleDate(now.minusWeeks(2));
         exam.setStartDate(now.minusWeeks(1));
         exam.setEndDate(now.plusYears(1));
