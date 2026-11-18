@@ -2,6 +2,7 @@
     <div class="flex flex-col gap-2 mb-4!">
         <label class="font-semibold" [for]="idPrefix() + 'title'" jhiTranslate="artemisApp.courseRequest.form.title"></label>
         <input
+            [id]="idPrefix() + 'title'"
             [tumAetUiInputId]="idPrefix() + 'title'"
             type="text"
             tumAetUiInput
@@ -18,6 +19,7 @@
     <div class="flex flex-col gap-2 mb-4!">
         <label class="font-semibold" [for]="idPrefix() + 'shortName'" jhiTranslate="artemisApp.courseRequest.form.shortName"></label>
         <input
+            [id]="idPrefix() + 'shortName'"
             [tumAetUiInputId]="idPrefix() + 'shortName'"
             type="text"
             tumAetUiInput
@@ -126,6 +128,7 @@
     <div class="flex flex-col gap-2 mb-4!">
         <label class="font-semibold" [for]="idPrefix() + 'reason'" jhiTranslate="artemisApp.courseRequest.form.reason"></label>
         <textarea
+            [id]="idPrefix() + 'reason'"
             [tumAetUiInputId]="idPrefix() + 'reason'"
             tumAetUiTextarea
             class="w-full"
