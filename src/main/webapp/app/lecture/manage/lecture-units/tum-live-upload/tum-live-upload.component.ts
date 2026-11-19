@@ -3,15 +3,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressBarComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumLiveUploadService, TumLiveUploadState } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
-import { EMPTY, Subscription, catchError, interval, switchMap, timer } from 'rxjs';
+import { TumLiveTransferError, TumLiveUploadService, TumLiveUploadState } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
+import { Subscription, interval, timer } from 'rxjs';
 
 /** How often the state of an upload that TUM.Live converts is read again. */
 const POLL_INTERVAL_MS = 15_000;
 
 /**
- * Uploads the video of an attachment video unit to the course's TUM.Live course. Shown only when the course is connected. The file goes from the browser
- * straight to TUM.Live; Artemis attaches the converted video in the background, so the page may be left while TUM.Live converts it.
+ * Uploads the video of an attachment video unit to the course's TUM.Live course. Shown only when the course is connected. Artemis forwards the file to
+ * TUM.Live and attaches the converted video in the background, so the page may be left while TUM.Live converts it.
  */
 @Component({
     selector: 'jhi-tum-live-upload',
@@ -33,13 +33,14 @@ export class TumLiveUploadComponent {
     readonly file = signal<File | undefined>(undefined);
     /** The share of the file sent so far, while it is sent. */
     readonly transferProgress = signal<number | undefined>(undefined);
-    readonly transferError = signal<string | undefined>(undefined);
+    readonly transferError = signal<TumLiveTransferError | undefined>(undefined);
     readonly attachedNow = signal(false);
-    /** Set while a cancelled start or a discard is still answered; a new upload waits for it, since the server would reuse the reference it gives up. */
+    /** Set while a cancelled start or a discard is still answered, so the editor waits for the pending upload to be released. */
     readonly busy = signal(false);
 
     private transfer?: Subscription;
     private poll?: Subscription;
+    private stateRead?: Subscription;
     /** Reads the state again after reading it failed, so the section comes back without opening the editor again. */
     private retry?: Subscription;
     /** The reference of the upload this page is sending, once the server named it, and the unit it is for. */
@@ -115,7 +116,17 @@ export class TumLiveUploadComponent {
                         this.transferred.emit();
                         this.load(this.lectureUnitId());
                     },
-                    error: (error: Error) => this.giveUp(unitId, target.ref, error.message),
+                    error: (error: TumLiveTransferError) => {
+                        if (error.status === 409) {
+                            // Another request may already be sending this reference. Keep its upload pending.
+                            this.activeRef = undefined;
+                            this.transferProgress.set(undefined);
+                            this.transferError.set(error);
+                            this.load(this.lectureUnitId());
+                        } else {
+                            this.giveUp(unitId, target.ref, error);
+                        }
+                    },
                 });
             },
             error: () => {
@@ -162,10 +173,10 @@ export class TumLiveUploadComponent {
         }
     }
 
-    private giveUp(unitId: number, ref: string, message: string): void {
+    private giveUp(unitId: number, ref: string, error: TumLiveTransferError): void {
         this.activeRef = undefined;
         this.transferProgress.set(undefined);
-        this.transferError.set(message);
+        this.transferError.set(error);
         this.discard(unitId, ref);
     }
 
@@ -189,7 +200,8 @@ export class TumLiveUploadComponent {
     private load(lectureUnitId: number): void {
         this.retry?.unsubscribe();
         this.retry = undefined;
-        this.tumLiveUploadService
+        this.stateRead?.unsubscribe();
+        this.stateRead = this.tumLiveUploadService
             .getState(lectureUnitId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
@@ -206,6 +218,9 @@ export class TumLiveUploadComponent {
     private apply(state: TumLiveUploadState): void {
         const watched = this.state()?.pendingRef ?? this.startedRef;
         this.state.set(state);
+        if (!state.pendingRef && this.transferError()?.translationKey === 'error.tumLiveUploadInProgress') {
+            this.transferError.set(undefined);
+        }
         // Attached is the upload that was pending, or that this page started, and is now the one the unit shows; a discarded or dropped one is not.
         if (watched && !state.pendingRef && state.attachedRef === watched) {
             this.startedRef = undefined;
@@ -217,12 +232,8 @@ export class TumLiveUploadComponent {
         }
         if (state.pendingRef && !this.poll) {
             this.poll = interval(POLL_INTERVAL_MS)
-                .pipe(
-                    // A failed request is skipped, so polling goes on.
-                    switchMap(() => this.tumLiveUploadService.getState(this.lectureUnitId()).pipe(catchError(() => EMPTY))),
-                    takeUntilDestroyed(this.destroyRef),
-                )
-                .subscribe({ next: (next) => this.apply(next) });
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe(() => this.load(this.lectureUnitId()));
         } else if (!state.pendingRef && this.poll) {
             this.poll.unsubscribe();
             this.poll = undefined;
