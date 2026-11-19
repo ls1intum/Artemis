@@ -291,7 +291,53 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         var responseBody = JsonObjectMapper.get().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
         });
-        assertThat(tokenProvider.validateTokenForAuthority(responseBody.get("access_token").toString(), null)).isTrue();
+        assertThat(responseBody).doesNotContainKey("access_token");
+    }
+
+    @Test
+    @WithAnonymousUser
+    void testJWTAuthenticationReturnsTheTokenInTheBodyOnlyWhenRequested() throws Exception {
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(USERNAME);
+        loginVM.setPassword(USER_PASSWORD);
+        loginVM.setRememberMe(true);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate?returnToken=true", loginVM, HttpStatus.OK, httpHeaders);
+        AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
+
+        var responseBody = JsonObjectMapper.get().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
+        });
+        String accessToken = responseBody.get("access_token").toString();
+        assertThat(tokenProvider.validateTokenForAuthority(accessToken, null)).isTrue();
+        assertThat(tokenProvider.getAuthentication(accessToken).getName()).isEqualTo(USERNAME);
+        assertThat(accessToken).isEqualTo(response.getCookie("jwt").getValue());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void testJWTAuthenticationWithToolReturnsTheToolTokenInTheBody() throws Exception {
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(USERNAME);
+        loginVM.setPassword(USER_PASSWORD);
+        loginVM.setRememberMe(true);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        // Tools such as Scorpio sign in with the tool parameter only and read the token from the body
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate?tool=" + ToolTokenType.SCORPIO, loginVM, HttpStatus.OK, httpHeaders);
+
+        var responseBody = JsonObjectMapper.get().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
+        });
+        assertThat(responseBody).containsKey("access_token");
+        String token = responseBody.get("access_token").toString();
+        assertThat(tokenProvider.validateTokenForAuthority(token, null)).isTrue();
+        assertThat(tokenProvider.getAuthentication(token).getName()).isEqualTo(USERNAME);
+        assertThat(token).isEqualTo(response.getCookie("jwt").getValue());
+        assertThat(tokenProvider.getClaim(token, "tools", String.class).split(",")).contains(ToolTokenType.SCORPIO.toString());
     }
 
     /**
