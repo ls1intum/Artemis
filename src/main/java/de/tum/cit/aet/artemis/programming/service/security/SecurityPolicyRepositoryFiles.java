@@ -24,7 +24,6 @@ import java.util.function.Predicate;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
@@ -242,7 +241,7 @@ public final class SecurityPolicyRepositoryFiles {
         }
         summaries.forEach(summary -> summary.problems().forEach(problem -> reasons.add(new SecurityFrameworkState.UnsupportedReason(summary.path(), problem))));
         if (!usesAres1) {
-            reasons.addAll(testClassReasons(testClasses));
+            reasons.addAll(testClassReasons(testClasses, summaries));
         }
         return reasons;
     }
@@ -287,13 +286,15 @@ public final class SecurityPolicyRepositoryFiles {
         return type.superclass().stream().filter(allTypeNames::contains).findFirst();
     }
 
-    private static List<SecurityFrameworkState.UnsupportedReason> testClassReasons(List<AresTestSources.TypeDeclaration> testClasses) {
+    private static List<SecurityFrameworkState.UnsupportedReason> testClassReasons(List<AresTestSources.TypeDeclaration> testClasses, List<AresTestSources.Summary> summaries) {
         if (!testClasses.isEmpty() && testClasses.stream().noneMatch(testClass -> testClass.registersSandbox() || !testClass.policies().isEmpty())) {
             return List.of(new SecurityFrameworkState.UnsupportedReason(testClasses.getFirst().qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.NO_ARES_2));
         }
         List<SecurityFrameworkState.UnsupportedReason> reasons = new ArrayList<>();
         Map<String, AresTestSources.TypeDeclaration> testClassesByName = new HashMap<>();
         testClasses.forEach(testClass -> testClassesByName.put(testClass.qualifiedName(), testClass));
+        Map<String, AresTestSources.TypeDeclaration> typesByName = new HashMap<>();
+        summaries.forEach(summary -> summary.topLevelTypes().forEach(type -> typesByName.putIfAbsent(type.qualifiedName(), type)));
         for (AresTestSources.TypeDeclaration testClass : testClasses) {
             if (testClass.policies().size() != 1) {
                 reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(),
@@ -303,7 +304,7 @@ public final class SecurityPolicyRepositoryFiles {
             if (!testClass.registersSandbox()) {
                 reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES));
             }
-            if (hasActiveMethodPolicyWhileSwitchedOff(testClass, testClassesByName)) {
+            if (hasActiveMethodPolicyWhileSwitchedOff(testClass, testClassesByName, typesByName)) {
                 reasons.add(
                         new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS));
             }
@@ -317,7 +318,8 @@ public final class SecurityPolicyRepositoryFiles {
      * annotation of the method where it is declared before the one of the class that runs it, unless a class in between overrides the method. Neither the
      * state of the class nor its assignments could show that, so such a class is not supported.
      */
-    private static boolean hasActiveMethodPolicyWhileSwitchedOff(AresTestSources.TypeDeclaration testClass, Map<String, AresTestSources.TypeDeclaration> testClassesByName) {
+    private static boolean hasActiveMethodPolicyWhileSwitchedOff(AresTestSources.TypeDeclaration testClass, Map<String, AresTestSources.TypeDeclaration> testClassesByName,
+            Map<String, AresTestSources.TypeDeclaration> typesByName) {
         if (testClass.policies().size() != 1 || !testClass.policies().getFirst().isEvaluable() || testClass.policies().getFirst().isActivated()) {
             return false;
         }
@@ -328,9 +330,9 @@ public final class SecurityPolicyRepositoryFiles {
             chain.add(declaring.get());
             declaring = superclassOf(declaring.get(), testClassesByName.keySet()).map(testClassesByName::get);
         }
-        // A member type of a class in the chain is inherited by the classes below it and shadows an import of the same simple name there.
-        Set<String> memberTypes = new HashSet<>();
-        chain.forEach(type -> memberTypes.addAll(type.memberTypes()));
+        // A member type shadows an import of the same simple name in the class that declares or inherits it, not in its superclasses.
+        Map<String, Set<String>> memberTypes = new HashMap<>();
+        chain.forEach(type -> memberTypes.put(type.qualifiedName(), AresTestSources.memberTypesInScope(type, typesByName)));
         for (int index = 0; index < chain.size(); index++) {
             AresTestSources.TypeDeclaration type = chain.get(index);
             for (Map.Entry<String, AresPolicyAnnotations.Annotation> methodPolicy : type.methodPolicies().entrySet()) {
@@ -350,9 +352,10 @@ public final class SecurityPolicyRepositoryFiles {
      * e.g. through wildcard imports of {@code java.util.*} and {@code java.sql.*}, or that a member type of the class hierarchy may shadow.
      *
      * @param subclasses  the classes between the class that runs the tests and the type, including the former
-     * @param memberTypes the simple names of the member types of the classes from the class that runs the tests up to the root of the hierarchy
+     * @param memberTypes the simple names of the member types in scope in each class of the hierarchy, by its qualified name
      */
-    private static boolean isOverridden(AresTestSources.TypeDeclaration type, String method, List<AresTestSources.TypeDeclaration> subclasses, Set<String> memberTypes) {
+    private static boolean isOverridden(AresTestSources.TypeDeclaration type, String method, List<AresTestSources.TypeDeclaration> subclasses,
+            Map<String, Set<String>> memberTypes) {
         List<AresTestCases.TestSignature> signatures = type.testSignatures().stream().filter(signature -> signature.name().equals(method)).toList();
         if (signatures.size() != 1) {
             return false;
@@ -361,9 +364,11 @@ public final class SecurityPolicyRepositoryFiles {
         if (signature.dependsOnPackage()) {
             return false;
         }
+        Set<String> signatureMemberTypes = memberTypes.get(type.qualifiedName());
         for (AresTestSources.TypeDeclaration subclass : subclasses) {
             boolean canOverride = signature.visibleInOtherPackages() || subclass.packageName().equals(type.packageName());
-            if (canOverride && subclass.testSignatures().stream().anyMatch(candidate -> isSameSignature(candidate, signature, memberTypes))) {
+            Set<String> candidateMemberTypes = memberTypes.get(subclass.qualifiedName());
+            if (canOverride && subclass.testSignatures().stream().anyMatch(candidate -> isSameSignature(candidate, candidateMemberTypes, signature, signatureMemberTypes))) {
                 return true;
             }
         }
@@ -371,12 +376,13 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * @return whether the candidate declares the signature: the same text, with no type name of either resolved through an import that an inherited member
-     *         type may shadow instead
+     * @return whether the candidate declares the signature: the same text, with no type name of either resolved through an import that a member type in
+     *         scope of its class shadows instead
      */
-    private static boolean isSameSignature(AresTestCases.TestSignature candidate, AresTestCases.TestSignature signature, Set<String> memberTypes) {
-        Stream<String> importedNames = Stream.concat(candidate.importedNames().stream(), signature.importedNames().stream());
-        return candidate.text().equals(signature.text()) && importedNames.noneMatch(memberTypes::contains);
+    private static boolean isSameSignature(AresTestCases.TestSignature candidate, Set<String> candidateMemberTypes, AresTestCases.TestSignature signature,
+            Set<String> signatureMemberTypes) {
+        return candidate.text().equals(signature.text()) && candidate.importedNames().stream().noneMatch(candidateMemberTypes::contains)
+                && signature.importedNames().stream().noneMatch(signatureMemberTypes::contains);
     }
 
     private static SecurityFrameworkState.PolicyFile policyFile(String path, List<String> referencedBy, PolicyFileReader reader, boolean verifiedAresVersion) {

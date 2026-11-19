@@ -806,6 +806,119 @@ class SecurityPolicyRepositoryFilesTest {
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS, "de.example.MoreSortingTest");
     }
 
+    @Test
+    void aTypeVariableOfAMemberTypeDoesNotShadowAnImportedParameterType() throws IOException {
+        writeBuildFile();
+        String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
+        String override = """
+                package de.example;
+
+                import java.util.Date;
+
+                import org.junit.jupiter.api.Test;
+
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+
+                @Public
+                %s
+                class MoreSortingTest extends SortingTest {
+
+                    static class Helper<Date> {
+                    }
+
+                    @Test
+                    public void runs(Date date) {
+                    }
+                }
+                """.formatted(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        writeSource("test/de/example/MoreSortingTest.java", override);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // The type variable Date is in scope in the body of Helper only, so runs(Date) names java.util.Date and overrides the inherited test.
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", false);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = { "void helper() { class Date { } }|false", "static class Outer { static class Date { } }|false", "public static class Date { }|true" })
+    void onlyADirectMemberTypeOfASuperclassShadowsAnImportedParameterType(String parentMember, boolean unsupported) throws IOException {
+        writeBuildFile();
+        String annotated = "    " + parentMember + "\n\n    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
+        writeSource("test/de/example/MoreSortingTest.java", importingOverride("MoreSortingTest extends SortingTest", "public void runs(Date date)"));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // A local type of a method and a type nested in a member type are no member types, so runs(Date) names java.util.Date and overrides the test.
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", unsupported);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = { "class SortingTest|MoreSortingTest extends SortingTest implements Dates",
+            "class SortingTest implements Dates|MoreSortingTest extends SortingTest", "class SortingTest implements MoreDates|MoreSortingTest extends SortingTest" })
+    void aMemberTypeInheritedFromAnInterfaceShadowsAnImportedParameterType(String parentDeclaration, String childDeclaration) throws IOException {
+        writeBuildFile();
+        String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
+        String parent = TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated);
+        writeSource("test/de/example/SortingTest.java", parent.replace("class SortingTest", parentDeclaration));
+        writeSource("test/de/example/Dates.java", "package de.example;\n\ninterface Dates {\n\n    class Date {\n    }\n}\n");
+        writeSource("test/de/example/MoreDates.java", "package de.example;\n\ninterface MoreDates extends java.io.Serializable, Dates {\n}\n");
+        writeSource("test/de/example/MoreSortingTest.java", importingOverride(childDeclaration, "public void runs(Date date)"));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // Dates.Date shadows the import in every class that implements Dates, so runs(Date) is an overload and the inherited test still runs with the sandbox.
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", true);
+    }
+
+    @Test
+    void aMemberTypeOfASubclassDoesNotShadowTheParameterTypeOfAnOverrideInItsSuperclass() throws IOException {
+        writeBuildFile();
+        String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
+        String middle = importingOverride("MiddleSortingTest extends SortingTest", "public void runs(Date date)");
+        writeSource("test/de/example/MiddleSortingTest.java", middle.replace(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION));
+        String leaf = importingOverride("MoreSortingTest extends MiddleSortingTest", "public void check()");
+        writeSource("test/de/example/MoreSortingTest.java", leaf.replace("    @Test\n", "    static class Date {\n    }\n\n    @Test\n"));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // MiddleSortingTest overrides runs(java.util.Date); the member type Date of MoreSortingTest is not in scope there.
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", false);
+    }
+
+    /**
+     * @return a switched-off test class that imports {@code java.util.Date} and declares one test method
+     */
+    private static String importingOverride(String declaration, String method) {
+        return """
+                package de.example;
+
+                import java.util.Date;
+
+                import org.junit.jupiter.api.Test;
+
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+
+                @Public
+                %s
+                class %s {
+
+                    @Test
+                    %s {
+                    }
+                }
+                """.formatted(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION, declaration, method);
+    }
+
+    private void assertKeepsAnInheritedActivePolicy(String testClass, boolean expected) {
+        SecurityFrameworkState.UnsupportedReason reason = new SecurityFrameworkState.UnsupportedReason(testClass,
+                SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS);
+        if (expected) {
+            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).contains(reason);
+        }
+        else {
+            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).doesNotContain(reason);
+        }
+    }
+
     @ParameterizedTest
     @CsvSource({ "protected, false", "'', true" })
     void theModifiersOfAnInheritedTestMethodMayPrecedeItsAnnotations(String modifier, boolean unsupported) throws IOException {

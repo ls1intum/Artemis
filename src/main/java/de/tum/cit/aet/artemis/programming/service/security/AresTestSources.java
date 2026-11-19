@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,6 +46,9 @@ final class AresTestSources {
     private static final String END_OF_IDENTIFIER = AresPolicyAnnotations.END_OF_IDENTIFIER;
 
     private static final Pattern SUPERCLASS = Pattern.compile("^\\s*+(?:<[^{]*?>\\s*+)?extends\\s+([\\p{javaJavaIdentifierPart}.]+)");
+
+    /** Separates the names in the clauses {@code extends} and {@code implements} of a type declaration. */
+    private static final Pattern SUPERTYPE_SEPARATOR = Pattern.compile("[\\s,]+");
 
     private static final String JUNIT_API_PACKAGE = "org.junit.jupiter.api";
 
@@ -120,6 +125,7 @@ final class AresTestSources {
      * @param qualifiedName    the name including the package of the file
      * @param superclass       the fully qualified names the class it extends may have: the one its single-type import or qualified name gives, or else the
      *                             one in its own package and one per wildcard import; empty if it extends nothing
+     * @param supertypes       the fully qualified names each type it extends or implements may have, resolved like the superclass, which they include
      * @param policies         its own Ares {@code @Policy} annotations
      * @param methodPolicies   the Ares {@code @Policy} annotations of its methods, by the name of the method; Ares applies such an annotation instead of the
      *                             one of the class to that test case
@@ -129,7 +135,7 @@ final class AresTestSources {
      * @param testSignatures   the signatures of its test methods, in the order of the source, which decide whether a subclass overrides one of them
      * @param memberTypes      the simple names of the types declared in its body, which its subclasses inherit as member types
      */
-    record TypeDeclaration(String simpleName, String qualifiedName, List<String> superclass, List<AresPolicyAnnotations.Annotation> policies,
+    record TypeDeclaration(String simpleName, String qualifiedName, List<String> superclass, List<List<String>> supertypes, List<AresPolicyAnnotations.Annotation> policies,
             Map<String, AresPolicyAnnotations.Annotation> methodPolicies, boolean registersSandbox, boolean containsTests, List<AresTestCases.TestSignature> testSignatures,
             Set<String> memberTypes) {
 
@@ -160,7 +166,7 @@ final class AresTestSources {
     record Summary(String path, List<TypeDeclaration> topLevelTypes, List<SecurityFrameworkState.UnsupportedReasonType> problems, boolean usesAres1, List<String> aresApis) {
     }
 
-    private record Declaration(int start, int bodyStart, int bodyEnd, boolean annotationType, String simpleName, @Nullable String superclass) {
+    private record Declaration(int start, int bodyStart, int bodyEnd, boolean annotationType, String simpleName, @Nullable String superclass, List<String> supertypes) {
     }
 
     private AresTestSources() {
@@ -339,18 +345,43 @@ final class AresTestSources {
                     testSignatures.add(signature);
                 }
             });
+            // A type declared directly in the body is a member type; a local type of a method or a type nested in a member type is none.
             Set<String> memberTypes = new HashSet<>();
             Matcher memberType = AresPolicyAnnotations.TYPE_DECLARATION.matcher(masked);
             while (memberType.find()) {
-                if (declaration.bodyStart() < memberType.start() && memberType.start() < declaration.bodyEnd()) {
+                if (declaration.bodyStart() < memberType.start() && memberType.start() < declaration.bodyEnd() && depth[memberType.start()] == 1) {
                     memberTypes.add(memberType.group(2));
                 }
             }
-            types.add(new TypeDeclaration(declaration.simpleName(), qualifiedName, superclass, List.copyOf(policiesByType.get(index)),
+            List<List<String>> supertypes = declaration.supertypes().stream().map(name -> resolveTypeName(masked, packageName, name)).toList();
+            types.add(new TypeDeclaration(declaration.simpleName(), qualifiedName, superclass, supertypes, List.copyOf(policiesByType.get(index)),
                     Collections.unmodifiableMap(new LinkedHashMap<>(methodPoliciesByType.get(index))), registers[index], tests[index], List.copyOf(testSignatures),
                     Set.copyOf(memberTypes)));
         }
         return types;
+    }
+
+    /**
+     * The member types that are in scope in the body of a type and shadow a single-type import of the same simple name there: its own and those it inherits
+     * from its superclasses and superinterfaces. Like Java, the first candidate name of a supertype that exists wins. The member types of a type outside
+     * the repository, e.g. of a library, are unknown.
+     *
+     * @param type  a top-level type of the repository
+     * @param types the top-level types of the repository, by their qualified names
+     * @return the simple names of the member types
+     */
+    static Set<String> memberTypesInScope(TypeDeclaration type, Map<String, TypeDeclaration> types) {
+        Set<String> memberTypes = new HashSet<>();
+        Set<String> visited = new HashSet<>();
+        Deque<TypeDeclaration> pending = new ArrayDeque<>(List.of(type));
+        while (!pending.isEmpty()) {
+            TypeDeclaration current = pending.pop();
+            if (visited.add(current.qualifiedName())) {
+                memberTypes.addAll(current.memberTypes());
+                current.supertypes().forEach(candidates -> candidates.stream().filter(types::containsKey).findFirst().map(types::get).ifPresent(pending::push));
+            }
+        }
+        return memberTypes;
     }
 
     /**
@@ -420,7 +451,43 @@ final class AresTestSources {
         String header = masked.substring(matcher.end(), bodyStart);
         Matcher superclass = SUPERCLASS.matcher(header);
         String superclassName = superclass.find() ? superclass.group(1) : null;
-        return new Declaration(matcher.start(), bodyStart, bodyEnd < 0 ? masked.length() : bodyEnd, matcher.group(1).startsWith("@"), matcher.group(2), superclassName);
+        return new Declaration(matcher.start(), bodyStart, bodyEnd < 0 ? masked.length() : bodyEnd, matcher.group(1).startsWith("@"), matcher.group(2), superclassName,
+                supertypeNames(header));
+    }
+
+    /**
+     * @param header the part of a type declaration between its name and its body
+     * @return the names of the types it extends or implements as written, without their type arguments; the record components, the annotations and the
+     *         permitted subclasses are none
+     */
+    private static List<String> supertypeNames(String header) {
+        StringBuilder outsideBrackets = new StringBuilder();
+        int nesting = 0;
+        for (char character : header.toCharArray()) {
+            if (character == '<' || character == '(') {
+                nesting++;
+            }
+            else if (character == '>' || character == ')') {
+                nesting = Math.max(0, nesting - 1);
+            }
+            else if (nesting == 0) {
+                outsideBrackets.append(character);
+            }
+        }
+        List<String> names = new ArrayList<>();
+        boolean supertype = false;
+        for (String token : SUPERTYPE_SEPARATOR.split(outsideBrackets)) {
+            if ("permits".equals(token)) {
+                break;
+            }
+            if ("extends".equals(token) || "implements".equals(token)) {
+                supertype = true;
+            }
+            else if (supertype && !token.isEmpty() && !token.startsWith("@")) {
+                names.add(token);
+            }
+        }
+        return names;
     }
 
     private static String qualify(@Nullable String packageName, String simpleName) {

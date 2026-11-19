@@ -182,18 +182,29 @@ final class AresTestCases {
     }
 
     /**
+     * The type variables a generic type declares, which are in scope between the braces of its body.
+     */
+    private record TypeVariableScope(int bodyStart, int bodyEnd, Set<String> names) {
+    }
+
+    /**
      * @param masked the masked content of a Java file
      * @return the signatures of its test method declarations, by the offset of their names
      */
     static Map<Integer, TestSignature> testSignatures(String masked) {
         Map<Integer, TestSignature> signatures = new HashMap<>();
         Map<String, String> imported = importedTypes(masked);
-        // The type variables of the types the file declares are in scope in their methods; a type argument elsewhere, e.g. of a field, declares none.
-        Set<String> typeVariablesOfTypes = new HashSet<>();
+        // The type variables of a type the file declares are in scope in its body only, e.g. not in the methods of the class that declares a generic member
+        // type; a type argument elsewhere, e.g. of a field, declares none.
+        List<TypeVariableScope> typeVariableScopes = new ArrayList<>();
         Matcher type = AresPolicyAnnotations.TYPE_DECLARATION.matcher(masked);
         while (type.find()) {
             int body = masked.indexOf('{', type.end());
-            typeVariablesOfTypes.addAll(typeVariables(masked.substring(type.end(), body < 0 ? masked.length() : body)));
+            Set<String> names = body < 0 ? Set.of() : typeVariables(masked.substring(type.end(), body));
+            if (!names.isEmpty()) {
+                int bodyEnd = AresPolicyAnnotations.matchingBrace(masked, body);
+                typeVariableScopes.add(new TypeVariableScope(body, bodyEnd < 0 ? masked.length() : bodyEnd, names));
+            }
         }
         for (MatchResult annotation : testAnnotations(masked)) {
             MatchResult method = methodAfter(masked, annotation.end());
@@ -205,8 +216,8 @@ final class AresTestCases {
                 boolean visible = VISIBLE_IN_OTHER_PACKAGES.matcher(masked.substring(memberStart, method.start(1))).find();
                 int declaration = method.start(1);
                 // The type parameters of the method itself precede its return type.
-                Set<String> typeVariables = new HashSet<>(typeVariablesOfTypes);
-                typeVariables.addAll(typeVariables(masked.substring(memberStart, declaration)));
+                Set<String> typeVariables = typeVariables(masked.substring(memberStart, declaration));
+                typeVariableScopes.stream().filter(scope -> scope.bodyStart() < declaration && declaration < scope.bodyEnd()).forEach(scope -> typeVariables.addAll(scope.names()));
                 Set<String> importedNames = new HashSet<>();
                 UnaryOperator<String> resolve = simpleName -> {
                     String resolved = importedType(masked, simpleName, declaration, imported, typeVariables);
