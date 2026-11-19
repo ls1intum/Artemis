@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -124,9 +125,17 @@ final class AresTestSources {
      * @param registersSandbox whether it registers the Ares sandbox through {@code @Public} or {@code @Hidden} on the type or {@code @PublicTest} or
      *                             {@code @HiddenTest} on a method
      * @param containsTests    whether one of its methods is a JUnit or Ares test
+     * @param testSignatures   the signatures of its test methods, in the order of the source, which decide whether a subclass overrides one of them
      */
     record TypeDeclaration(String simpleName, String qualifiedName, List<String> superclass, List<AresPolicyAnnotations.Annotation> policies,
-            Map<String, AresPolicyAnnotations.Annotation> methodPolicies, boolean registersSandbox, boolean containsTests) {
+            Map<String, AresPolicyAnnotations.Annotation> methodPolicies, boolean registersSandbox, boolean containsTests, List<AresTestCases.TestSignature> testSignatures) {
+
+        /**
+         * @return the package of the type; empty for the default package
+         */
+        String packageName() {
+            return qualifiedName.length() > simpleName.length() ? qualifiedName.substring(0, qualifiedName.length() - simpleName.length() - 1) : "";
+        }
 
         /**
          * @return whether the type takes part in the sandbox decision: it is a test class or carries a {@code @Policy}
@@ -313,12 +322,19 @@ final class AresTestSources {
             List<List<AresPolicyAnnotations.Annotation>> policiesByType, List<Map<String, AresPolicyAnnotations.Annotation>> methodPoliciesByType, boolean[] registers,
             boolean[] tests) {
         List<TypeDeclaration> types = new ArrayList<>();
+        Map<Integer, AresTestCases.TestSignature> signatures = new TreeMap<>(AresTestCases.testSignatures(masked));
         for (int index = 0; index < declarations.size(); index++) {
             Declaration declaration = declarations.get(index);
             String qualifiedName = qualify(packageName, declaration.simpleName());
             List<String> superclass = declaration.superclass() == null ? List.of() : resolveTypeName(masked, packageName, declaration.superclass());
+            List<AresTestCases.TestSignature> testSignatures = new ArrayList<>();
+            signatures.forEach((offset, signature) -> {
+                if (declaration.bodyStart() < offset && offset < declaration.bodyEnd()) {
+                    testSignatures.add(signature);
+                }
+            });
             types.add(new TypeDeclaration(declaration.simpleName(), qualifiedName, superclass, List.copyOf(policiesByType.get(index)),
-                    Collections.unmodifiableMap(new LinkedHashMap<>(methodPoliciesByType.get(index))), registers[index], tests[index]));
+                    Collections.unmodifiableMap(new LinkedHashMap<>(methodPoliciesByType.get(index))), registers[index], tests[index], List.copyOf(testSignatures)));
         }
         return types;
     }

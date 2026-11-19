@@ -313,20 +313,48 @@ public final class SecurityPolicyRepositoryFiles {
     /**
      * Ares applies the annotation of a test method instead of the one of its class, so an active method annotation in a class whose annotation switches the
      * sandbox off runs that test with the sandbox. That holds for the test methods the class inherits from other test classes as well, because Ares reads the
-     * annotation of the method where it is declared before the one of the class that runs it. Neither the state of the class nor its assignments could show
-     * that, so such a class is not supported.
+     * annotation of the method where it is declared before the one of the class that runs it, unless a class in between overrides the method. Neither the
+     * state of the class nor its assignments could show that, so such a class is not supported.
      */
     private static boolean hasActiveMethodPolicyWhileSwitchedOff(AresTestSources.TypeDeclaration testClass, Map<String, AresTestSources.TypeDeclaration> testClassesByName) {
         if (testClass.policies().size() != 1 || !testClass.policies().getFirst().isEvaluable() || testClass.policies().getFirst().isActivated()) {
             return false;
         }
         Set<String> visited = new HashSet<>();
+        List<AresTestSources.TypeDeclaration> subclasses = new ArrayList<>();
         Optional<AresTestSources.TypeDeclaration> declaring = Optional.of(testClass);
         while (declaring.isPresent() && visited.add(declaring.get().qualifiedName())) {
-            if (declaring.get().methodPolicies().values().stream().anyMatch(annotation -> annotation.isEvaluable() && annotation.isActivated())) {
+            AresTestSources.TypeDeclaration type = declaring.get();
+            for (Map.Entry<String, AresPolicyAnnotations.Annotation> methodPolicy : type.methodPolicies().entrySet()) {
+                AresPolicyAnnotations.Annotation annotation = methodPolicy.getValue();
+                if (annotation.isEvaluable() && annotation.isActivated() && !isOverridden(type, methodPolicy.getKey(), subclasses)) {
+                    return true;
+                }
+            }
+            subclasses.add(type);
+            declaring = superclassOf(type, testClassesByName.keySet()).map(testClassesByName::get);
+        }
+        return false;
+    }
+
+    /**
+     * Whether a subclass overrides the test method, so that JUnit runs the override with its own annotations instead: it declares a test method with the
+     * same signature, and is in the same package unless the method is public or protected. A name that several test methods of the type share is never
+     * overridden as a whole, so it counts as inherited.
+     *
+     * @param subclasses the classes between the class that runs the tests and the type, including the former
+     */
+    private static boolean isOverridden(AresTestSources.TypeDeclaration type, String method, List<AresTestSources.TypeDeclaration> subclasses) {
+        List<AresTestCases.TestSignature> signatures = type.testSignatures().stream().filter(signature -> signature.name().equals(method)).toList();
+        if (signatures.size() != 1) {
+            return false;
+        }
+        AresTestCases.TestSignature signature = signatures.getFirst();
+        for (AresTestSources.TypeDeclaration subclass : subclasses) {
+            boolean canOverride = signature.visibleInOtherPackages() || subclass.packageName().equals(type.packageName());
+            if (canOverride && subclass.testSignatures().stream().anyMatch(candidate -> candidate.text().equals(signature.text()))) {
                 return true;
             }
-            declaring = superclassOf(declaring.get(), testClassesByName.keySet()).map(testClassesByName::get);
         }
         return false;
     }

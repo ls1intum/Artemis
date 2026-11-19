@@ -16,6 +16,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.programming.domain.security.SecurityActivationStatus;
@@ -515,6 +516,44 @@ class SecurityPolicyRepositoryFilesTest {
         writeSource("test/de/example/SortingTest.java", withMethodPolicy);
 
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS, "de.example.MoreSortingTest");
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "de.example, void, false", "de.other, void, true", "de.other, public void, false" })
+    void aSwitchedOffSubclassThatOverridesTheActiveTestMethodRunsItWithoutTheSandbox(String subclassPackage, String declaration, boolean unsupported) throws IOException {
+        writeBuildFile();
+        String withMethodPolicy = TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()",
+                "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    " + declaration + " runs()");
+        writeSource("test/de/example/SortingTest.java", withMethodPolicy);
+        String override = """
+                package %s;
+
+                import org.junit.jupiter.api.Test;
+
+                import de.example.SortingTest;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+
+                @Public
+                %s
+                class MoreSortingTest extends SortingTest {
+
+                    @Test
+                    public void runs() {
+                    }
+                }
+                """.formatted(subclassPackage, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        writeSource("test/" + subclassPackage.replace('.', '/') + "/MoreSortingTest.java", override);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // JUnit runs the override, which has no annotation of its own, unless a package-private method of another package cannot be overridden.
+        SecurityFrameworkState.UnsupportedReason reason = new SecurityFrameworkState.UnsupportedReason(subclassPackage + ".MoreSortingTest",
+                SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS);
+        if (unsupported) {
+            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).contains(reason);
+        }
+        else {
+            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).doesNotContain(reason);
+        }
     }
 
     @Test

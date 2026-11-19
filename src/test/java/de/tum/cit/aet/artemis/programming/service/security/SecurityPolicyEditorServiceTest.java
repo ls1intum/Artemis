@@ -410,8 +410,8 @@ class SecurityPolicyEditorServiceTest {
         });
         // A preview of a single policy whose test is still assigned to another one shows the policy without the test classes.
         SecurityPolicyDocumentDTO other = withTestClasses(loadedPolicy(editor), "OtherPolicy.yaml", List.of("de.example.StressTest"));
-        assertThat(editorService.preview(exercise(), change(editor, added(other, List.of("de.example.StressTest")))).files()).extracting(SecurityPolicyPreviewDTO.FileDTO::path)
-                .containsExactly("OtherPolicy.yaml");
+        SecurityPolicyChangeDTO singlePolicy = change(editor, added(other, List.of("de.example.StressTest")));
+        assertThat(editorService.preview(exercise(), singlePolicy).files()).extracting(SecurityPolicyPreviewDTO.FileDTO::path).containsExactly("OtherPolicy.yaml");
         assertThat(pushedHead()).isEqualTo(editor.baseCommitHash());
     }
 

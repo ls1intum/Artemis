@@ -904,6 +904,36 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.banner()?.kind).toBe('committed');
     });
 
+    it('keeps replacing the submitted drafts when a retry of the builds fails again before the pushed policies were read', () => {
+        create(configured(), false);
+        comp['addPolicy']();
+        const draft = comp.policies()[1];
+        comp['onPolicyChange'](withAssignment(draft, ['de.example.SortingTest#merge'], []));
+        const path = comp.paths().get(draft.id)!;
+        const committed = editor('b'.repeat(40));
+        const pushed: SecurityPolicyEditor = {
+            ...committed,
+            policies: [...committed.policies!, { policyPath: path, content: '', document: { ...DOCUMENT, policyPath: path }, assignedTests: ['de.example.SortingTest#merge'] }],
+        };
+        const processingFailed = () => throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'error.securityFrameworkProcessingFailed' } }));
+        service.commitPolicies.mockReturnValueOnce(processingFailed());
+        service.getPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp['commit']('Add a policy');
+
+        // The retry of the builds fails again, and so does the read of the pushed policies.
+        service.commitPolicies.mockReturnValueOnce(processingFailed());
+        service.getPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp['retryCommit']();
+        expect(comp.loadFailed()).toBe(true);
+
+        // Reading them now replaces the submitted drafts, as the original commit would have.
+        service.getPolicies.mockReturnValueOnce(of(pushed));
+        comp['retryLoad']();
+
+        expect(comp.policies().map((policy) => policy.file?.policyPath)).toEqual(['SecurityPolicy.yaml', path]);
+        expect(comp.totalChanges()).toBe(0);
+    });
+
     it('names the problems of a policy without a name, with an invalid hidden period and of two policies in one file', () => {
         create(configured(), false);
         const policy = comp.policies()[0];

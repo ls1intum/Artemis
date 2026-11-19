@@ -104,7 +104,7 @@ lists the reasons, which can be:
 - The build file does not pin an Ares version through `aresVersion` (Gradle) or `ares.version` (Maven).
 - A `@Policy` annotation is on a field or a nested class, on an annotation type, on a method that is not a test, or on two methods of the same name.
 - A test method has an active `@Policy` annotation of its own, although the annotation of its test class switches the sandbox off.
-  This includes a test method the class inherits from another test class.
+  This includes a test method the class inherits from another test class without overriding it.
 - Tests or Ares annotations are inside a nested class.
 - A file declares several top-level types that are test classes or carry a `@Policy` annotation.
 - A test class registers Ares but has no `@Policy` annotation of its own.

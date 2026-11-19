@@ -1140,7 +1140,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                     // whose processing the server resumes instead of applying the change twice; it keeps what was edited meanwhile.
                     this.unprocessed = { request: { change, keepUnsaved: true, scan } };
                     this.banner.set(this.processingFailedBanner());
-                    this.loadPushed(keepUnsaved);
+                    // A failed retry of a change whose pushed policies were not read yet keeps the recovery mode of the original commit.
+                    this.loadPushed(this.pendingRecovery?.keepUnsaved ?? keepUnsaved);
                 } else {
                     this.failedRequest = { change, keepUnsaved, scan };
                     this.banner.set({ kind: 'failed', message: this.errorMessage(error), commitMessage: change.commitMessage ?? this.defaultCommitMessage() });

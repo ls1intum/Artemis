@@ -46,6 +46,17 @@ final class AresTestCases {
 
     private static final Set<String> NOT_METHOD_NAMES = Set.of("if", "for", "while", "switch", "catch", "synchronized", "return", "new");
 
+    /** A modifier that lets a subclass in another package override a method. Masked comments and literals cannot contain it. */
+    private static final Pattern VISIBLE_IN_OTHER_PACKAGES = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})(?:public|protected)(?!\\p{javaJavaIdentifierPart})");
+
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+
+    /** The modifier {@code final} of a parameter. */
+    private static final Pattern FINAL_MODIFIER = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})final(?!\\p{javaJavaIdentifierPart})");
+
+    /** The name of a parameter at the end of its declaration, with the brackets of an array declared after the name, e.g. {@code values[]}. */
+    private static final Pattern PARAMETER_NAME = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\s*((?:\\[\\s*])*)\\s*$");
+
     private AresTestCases() {
         throw new UnsupportedOperationException("Utility class");
     }
@@ -108,6 +119,93 @@ final class AresTestCases {
      */
     static Set<Integer> testDeclarationOffsets(String source) {
         return testMethods(source).declarations();
+    }
+
+    /**
+     * What decides whether a method of a subclass overrides a test method: the name and the erased types of its parameters, and its visibility.
+     *
+     * @param name                   the name of the method
+     * @param text                   the name with the simple names of the erased parameter types, e.g. {@code check(int,List,String[])}
+     * @param visibleInOtherPackages whether it is public or protected, so that a subclass in another package overrides it, too
+     */
+    record TestSignature(String name, String text, boolean visibleInOtherPackages) {
+    }
+
+    /**
+     * @param masked the masked content of a Java file
+     * @return the signatures of its test method declarations, by the offset of their names
+     */
+    static Map<Integer, TestSignature> testSignatures(String masked) {
+        Map<Integer, TestSignature> signatures = new HashMap<>();
+        Matcher annotation = TEST_ANNOTATION.matcher(masked);
+        while (annotation.find()) {
+            MatchResult method = methodAfter(masked, annotation.end());
+            if (method != null && !signatures.containsKey(method.start(1))) {
+                int close = AresPolicyAnnotations.matchingParenthesis(masked, method.end() - 1);
+                String parameters = masked.substring(method.end(), close < 0 ? masked.length() : close);
+                // The modifiers precede the name, also before the annotations; the previous member ends with a semicolon or a brace.
+                int memberStart = Math.max(Math.max(masked.lastIndexOf(';', annotation.start()), masked.lastIndexOf('}', annotation.start())),
+                        masked.lastIndexOf('{', annotation.start())) + 1;
+                boolean visible = VISIBLE_IN_OTHER_PACKAGES.matcher(masked.substring(memberStart, method.start(1))).find();
+                signatures.put(method.start(1), new TestSignature(method.group(1), method.group(1) + "(" + parameterTypes(parameters) + ")", visible));
+            }
+        }
+        return signatures;
+    }
+
+    /**
+     * @return the simple names of the erased types of the parameters, separated by commas; a variable arity parameter is an array
+     */
+    private static String parameterTypes(String parameters) {
+        List<String> types = new ArrayList<>();
+        StringBuilder parameter = new StringBuilder();
+        int typeArguments = 0;
+        int position = 0;
+        while (position < parameters.length()) {
+            char character = parameters.charAt(position);
+            if (character == '@') {
+                // An annotation of the parameter, with its arguments, which may contain commas.
+                Matcher name = ANNOTATION_NAME.matcher(parameters).region(position, parameters.length());
+                position = name.lookingAt() ? skipArguments(parameters, skipWhitespace(parameters, name.end())) : position + 1;
+                continue;
+            }
+            if (character == '<') {
+                typeArguments++;
+            }
+            else if (character == '>') {
+                typeArguments--;
+            }
+            else if (character == ',' && typeArguments == 0) {
+                types.add(erasedType(parameter.toString()));
+                parameter.setLength(0);
+            }
+            else if (typeArguments == 0) {
+                parameter.append(character);
+            }
+            position++;
+        }
+        if (!parameter.toString().isBlank()) {
+            types.add(erasedType(parameter.toString()));
+        }
+        return String.join(",", types);
+    }
+
+    /**
+     * @param parameter the declaration of a parameter without its annotations and type arguments, e.g. {@code final java.util.List values}
+     * @return the simple name of its type, with the brackets of an array, e.g. {@code List} or {@code String[]}
+     */
+    private static String erasedType(String parameter) {
+        String declaration = FINAL_MODIFIER.matcher(parameter).replaceAll(" ").strip();
+        Matcher name = PARAMETER_NAME.matcher(declaration);
+        String dimensions = "";
+        if (name.find()) {
+            dimensions = WHITESPACE.matcher(name.group(1)).replaceAll("");
+            declaration = declaration.substring(0, name.start());
+        }
+        String type = WHITESPACE.matcher(declaration).replaceAll("").replace("...", "[]") + dimensions;
+        int arrayStart = type.indexOf('[');
+        String baseType = arrayStart < 0 ? type : type.substring(0, arrayStart);
+        return baseType.substring(baseType.lastIndexOf('.') + 1) + (arrayStart < 0 ? "" : type.substring(arrayStart));
     }
 
     /**

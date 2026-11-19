@@ -106,6 +106,31 @@ class AresTestCasesTest {
     }
 
     @Test
+    void readsTheSignaturesThatDecideWhetherASubclassOverridesATestMethod() {
+        String source = """
+                class SortingTest {
+
+                    @Test
+                    void check() {
+                    }
+
+                    @ParameterizedTest
+                    @ValueSource(ints = { 1, 2 })
+                    protected void check(@AggregateWith(Sizes.class) final java.util.Map<String, List<Integer>> sizes, int values[], String... names) {
+                    }
+
+                    public @Test void sorts(List<String> values) {
+                    }
+                }
+                """;
+
+        AresTestCases.TestSignature check = new AresTestCases.TestSignature("check", "check()", false);
+        AresTestCases.TestSignature overload = new AresTestCases.TestSignature("check", "check(Map,int[],String[])", true);
+        AresTestCases.TestSignature sorts = new AresTestCases.TestSignature("sorts", "sorts(List)", true);
+        assertThat(AresTestCases.testSignatures(AresPolicyAnnotations.mask(source)).values()).containsExactlyInAnyOrder(check, overload, sorts);
+    }
+
+    @Test
     void ignoresAnnotationsWhoseNameOnlyStartsWithTheNameOfATestAnnotation() {
         String source = """
                 class SortingTest {
