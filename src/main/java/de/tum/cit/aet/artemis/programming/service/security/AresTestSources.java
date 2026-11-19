@@ -53,8 +53,12 @@ final class AresTestSources {
     private static final Map<String, Pattern> JUNIT_TEST_MARKER_USES = JUNIT_TEST_MARKERS.entrySet().stream()
             .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, marker -> Pattern.compile(annotationUse(marker.getValue(), marker.getKey()))));
 
+    private static final String JUNIT_EXTENSION_PACKAGE = "org.junit.jupiter.api.extension";
+
+    private static final String EXTEND_WITH_NAME = "ExtendWith";
+
     /** The uses of JUnit's {@code @ExtendWith}. */
-    private static final Pattern EXTEND_WITH = Pattern.compile(annotationUse("org.junit.jupiter.api.extension", "ExtendWith"));
+    private static final Pattern EXTEND_WITH = Pattern.compile(annotationUse(JUNIT_EXTENSION_PACKAGE, EXTEND_WITH_NAME));
 
     private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\p{javaJavaIdentifierPart}.]+)\\s*;");
 
@@ -425,11 +429,15 @@ final class AresTestSources {
     }
 
     /**
-     * @return whether the offset lies in the argument list of an {@code @ExtendWith} annotation
+     * @return whether the offset lies in the argument list of JUnit's {@code @ExtendWith}; an annotation of the same simple name that an import or a declaration
+     *         of the file gives to another type does not count
      */
     private static boolean isInExtendWith(String masked, int offset) {
         Matcher extendWith = EXTEND_WITH.matcher(masked);
         while (extendWith.find() && extendWith.end() <= offset) {
+            if (extendWith.group(1) == null && !simpleNameMayReferTo(masked, EXTEND_WITH_NAME, JUNIT_EXTENSION_PACKAGE + "." + EXTEND_WITH_NAME, extendWith.start())) {
+                continue;
+            }
             int open = extendWith.end();
             while (open < masked.length() && Character.isWhitespace(masked.charAt(open))) {
                 open++;
