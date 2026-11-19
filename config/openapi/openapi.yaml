@@ -1757,6 +1757,28 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
+  /api/lecture/lecture-units/{lectureUnitId}/tumlive-upload/file:
+    post:
+      tags: [tum-live-upload]
+      operationId: transferUpload
+      parameters:
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: ref
+        in: query
+        required: true
+        schema: {type: string}
+      requestBody:
+        content:
+          application/octet-stream:
+            schema: {type: string, format: binary}
+          video/mp4:
+            schema: {type: string, format: binary}
+        required: true
+      responses:
+        '204': {description: No Content}
   /api/lecture/courses/{courseId}/lectures:
     get:
       tags: [lecture]
