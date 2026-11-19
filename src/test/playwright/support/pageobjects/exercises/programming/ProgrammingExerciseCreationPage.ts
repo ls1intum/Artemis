@@ -22,8 +22,13 @@ export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPag
         await shortNameField.fill(shortName);
     }
 
+    /**
+     * Picks the programming language in the TUM AET UI select, which opens a listbox rather than being a native select.
+     * @param programmingLanguage the language to pick; its option is labelled with the language name, e.g. "Java" for JAVA
+     */
     async setProgrammingLanguage(programmingLanguage: ProgrammingLanguage) {
-        await this.page.locator('#field_programmingLanguage').selectOption(programmingLanguage);
+        await this.page.locator('#field_programmingLanguage').click();
+        await this.page.getByRole('option', { name: new RegExp(`^${programmingLanguage}$`, 'i') }).click();
     }
 
     async setPackageName(packageName: string) {

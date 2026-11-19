@@ -2,9 +2,11 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 @import 'src/main/webapp/content/scss/artemis-mixins';
 
-// Then, we include bootstrap so that it can use some magic functions to compute new values based on those customizations
-// The order is very important, otherwise the background and the button colors might not work correctly
-@import 'node_modules/bootstrap/scss/bootstrap';
+// The element defaults (body, headings, links, tables, form controls) that every page builds on.
+@import 'src/main/webapp/content/scss/base';
+
+// The bare utility classes that have to win over those defaults and over component stylesheets.
+@import 'src/main/webapp/content/scss/utilities';
 
 // Needed for mathematical formulas in markdown editor
 
@@ -19,11 +21,31 @@
 
 // Needed for the in-house GitHub-style markdown alerts and markdown callouts
 @import 'src/main/webapp/content/scss/github-alerts';
-@import 'primeicons/primeicons.css';
 @import '@angular/cdk/a11y-prebuilt.css';
 
-// Transitional Bootstrap buttons share the TUM AET UI palette and sizing.
-@import 'button-colors';
+// Tables of rendered markdown (problem statements, posts, FAQs): the markdown renderer puts `class="table"` on every
+// table it emits.
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    vertical-align: top;
+    border-color: $markdown-table-border-color;
+
+    > :not(caption) > * > * {
+        padding: 0.5rem;
+        color: $markdown-table-color;
+        background-color: transparent;
+        border-bottom-width: 1px;
+    }
+
+    > tbody {
+        vertical-align: inherit;
+    }
+
+    > thead {
+        vertical-align: bottom;
+    }
+}
 
 // Smooth transition between themes. SVG is excluded: `background` is not rendered on SVG elements,
 // so the transition can never be seen there, yet it still marks every node of an SVG subtree as
@@ -70,7 +92,7 @@ html:fullscreen:has(> body > .apollon-fullscreen-frame) > .cdk-overlay-container
 }
 
 /* ==============================================================
-Bootstrap tweaks
+Typography and links
 ===============================================================*/
 
 body,
@@ -81,17 +103,12 @@ h4 {
     font-weight: 400;
 }
 
-/* like fw-bold or fw-normal, but with weight 500 */
-.fw-medium {
-    font-weight: 500 !important;
-}
-
-a:not(.btn, .tumaet-ui-btn, .tumaet-ui-list-item-action, .tumaet-ui-menu-item, .dropdown-item, .page-link, .nav-link, .tab-link) {
+a:not(.tumaet-ui-btn, .tumaet-ui-list-item-action, .tumaet-ui-menu-item, .tab-link) {
     color: $link-color;
     cursor: pointer;
 }
 
-/* bootstrap 5 underlines links by default */
+/* `_base.scss` underlines links by default */
 a {
     text-decoration: none !important;
 }
@@ -112,7 +129,7 @@ a {
  * separate `:not()` clauses raises this rule past those overrides, and the anchor underline comes back on top of the
  * one they draw themselves — a double underline under the label plus a stray dash beside the icon.
  */
-a:not(.btn, .tumaet-ui-btn, .tumaet-ui-list-item-action, .tumaet-ui-menu-item, .tab-link):hover {
+a:not(.tumaet-ui-btn, .tumaet-ui-list-item-action, .tumaet-ui-menu-item, .tab-link):hover {
     text-decoration: underline !important;
 }
 
@@ -139,32 +156,12 @@ a.disabled {
     min-width: 0;
 }
 
-/*
- The following line makes sure the behavior of the buttons is consistent with a previous Bootstrap version 4.1.x
- TODO: In the future, we should find a better solution to displays buttons with wraps
- */
-.btn {
-    white-space: nowrap;
-}
-
-a.btn {
-    -webkit-appearance: none !important;
-}
-
-.popover {
-    max-width: 100%;
-}
-
 .border-lightgrey {
     border-color: $border-lightgrey;
 }
 
 .text-lightgrey {
     color: $text-lightgrey;
-}
-
-.form-group {
-    margin-bottom: 1rem;
 }
 
 .form-inline {
@@ -174,30 +171,9 @@ a.btn {
     text-align: left;
 }
 
-.form-control,
-.form-control-sm,
-.form-select,
-.form-check-input,
-.form-control:focus,
-.form-control:focus-visible,
 textarea {
     background-color: $form-control-focus-background;
     color: $form-control-color !important;
-}
-
-.form-inline .form-control {
-    display: inline-block;
-    width: auto;
-}
-
-.form-check-input:checked {
-    background-color: $primary;
-}
-
-.btn-primary input,
-.btn input {
-    position: absolute;
-    clip-path: inset(50%);
 }
 
 /* ==========================================================================
@@ -240,10 +216,6 @@ Generic styles
 .ng-valid[required]:not([class*='tumaet-ui-']),
 .ng-valid.required:not([class*='tumaet-ui-']) {
     border-left: 5px solid $ng-valid-border;
-
-    &.form-check-input {
-        border: 1px solid $ng-valid-border;
-    }
 }
 
 /*
@@ -257,10 +229,6 @@ Generic styles
 .ng-invalid.ng-dirty:not(form):not(:has(.ng-invalid)):not([class*='tumaet-ui-']),
 .ng-invalid.ng-touched:not(form):not(:has(.ng-invalid)):not([class*='tumaet-ui-']) {
     border-left: 5px solid $ng-invalid-border;
-
-    &.form-check-input {
-        border: 1px solid $ng-invalid-border;
-    }
 }
 
 /* other generic styles */
@@ -270,13 +238,9 @@ Generic styles
     background-color: $error-background;
 }
 
-.invalid-feedback {
-    display: block;
-}
+// Host-side compensation for the TUM AET UI package.
 
-// Host-side compensation for the TUM AET UI package while Artemis still loads Bootstrap; drop both once it is gone.
-
-// Bootstrap Reboot's unlayered `border-width: 0` beats the package's layered `tumaet:border-b` utility.
+// The unlayered `border-width: 0` that `_base.scss` sets on table cells beats the package's layered `tumaet:border-b` utility.
 .tumaet-ui-table {
     thead th,
     tbody td {
@@ -306,27 +270,6 @@ a[tumAetUiButton].disabled {
     max-width: 30vw !important;
 }
 
-// Should be used with a width restriction of your choice.
-.popover-text-truncate-4-lines > .popover-body {
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    // Show only the first four lines (limiting height with something else than lines is not possible).
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    line-clamp: 4;
-    -webkit-box-orient: vertical;
-
-    // Add a margin at the bottom and solve problem in Chromium-based browsers,
-    // that an additional line after the ellipsis end is shown.
-    margin-bottom: 1em;
-    padding-bottom: 0;
-}
-
-.mt-n3 {
-    margin-top: -1rem;
-}
-
 .break {
     white-space: normal;
     word-break: break-all;
@@ -343,7 +286,7 @@ a[tumAetUiButton].disabled {
     min-width: 100vw;
     overflow-y: auto;
     overflow-x: hidden;
-    background-color: var(--bs-body-bg);
+    background-color: var(--body-bg);
 }
 
 .main-container {
@@ -389,8 +332,7 @@ a:hover {
 entity tables helpers
 ========================================================================== */
 
-/* Remove Bootstrap padding from the element
-   http://stackoverflow.com/questions/19562903/remove-padding-from-columns-in-bootstrap-3 */
+/* Remove the padding from an element */
 $padding-sides: 'left', 'right', 'top', 'bottom', 'all';
 
 @each $side in $padding-sides {
@@ -405,8 +347,6 @@ $padding-sides: 'left', 'right', 'top', 'bottom', 'all';
     }
 }
 
-/* bootstrap 3 input-group 100% width
-   http://stackoverflow.com/questions/23436430/bootstrap-3-input-group-100-width */
 .width-min {
     width: 1% !important;
 }
@@ -422,52 +362,9 @@ $padding-sides: 'left', 'right', 'top', 'bottom', 'all';
     justify-content: flex-end;
 }
 
-/* ==========================================================================
-entity detail page css
-========================================================================== */
-.row.jh-entity-details > {
-    dd {
-        margin-bottom: 15px;
-    }
-}
-
-@media screen and (min-width: 768px) {
-    .row.jh-entity-details > {
-        dt {
-            margin-bottom: 15px;
-        }
-
-        dd {
-            border-bottom: 1px solid $jh-entity-details-dd-border;
-            padding-left: 180px;
-            margin-left: 0;
-        }
-    }
-}
-
 .editor-outline-background {
     background: $editor-outline-background;
     max-width: max-content;
-}
-
-/* ==========================================================================
-ui bootstrap tweaks
-========================================================================== */
-.nav,
-.pagination,
-.carousel,
-.card-title a {
-    cursor: pointer;
-}
-
-.datetime-picker-dropdown > li.date-picker-menu div > table .btn-default,
-.uib-datepicker-popup > li > div.uib-datepicker > table .btn-default {
-    border: 0;
-}
-
-.datetime-picker-dropdown > li.date-picker-menu div > table:focus,
-.uib-datepicker-popup > li > div.uib-datepicker > table:focus {
-    outline: none;
 }
 
 .thread-dump-modal-lock {
@@ -477,40 +374,8 @@ ui bootstrap tweaks
     white-space: nowrap;
 }
 
-.card-header {
-    padding: 10px 15px;
-    border-bottom: 1px solid transparent;
-    border-top-right-radius: 3px;
-    border-top-left-radius: 3px;
-}
-
-.card-header > .dropdown .dropdown-toggle {
-    color: inherit;
-}
-
-.card-title {
-    margin-top: 0;
-    margin-bottom: 0;
-    font-size: 16px;
-    color: inherit;
-}
-
 .resizable-dragging {
     user-select: none;
-}
-
-.card-title > a,
-.card-title > small,
-.card-title > .small,
-.card-title > small > a,
-.card-title > .small > a {
-    color: inherit;
-}
-
-.card-body {
-    input {
-        max-width: 100%;
-    }
 }
 
 .header-container {
@@ -589,24 +454,6 @@ b {
 .positive {
     color: $positive-color;
     background-color: $positive-background;
-}
-
-table {
-    .col-xs-1 {
-        width: 8.3333%;
-    }
-
-    .col-xs-2 {
-        width: 16.6667%;
-    }
-
-    .col-xs-3 {
-        width: 25%;
-    }
-
-    .col-xs-6 {
-        width: 50%;
-    }
 }
 
 pre {
@@ -767,18 +614,11 @@ code.password:hover {
 
 // Kit overlays (dialogs, calendars, select panels, tooltips) open in this one container, so they all share one layer.
 // Stacking order of the layers an Artemis page can show, lowest first:
-//   1000       Bootstrap dropdowns, PrimeNG overlays and menus
 //   1049-1053  Iris onboarding tour: click guard 1049, tour root and spotlight 1050, card 1051, coach mark 1052, highlighted target 1053
-//   1050/1055  Bootstrap modal backdrop / NgbModal
-//   1060-1090  Bootstrap popover, tooltip and toast; also the context picker's PrimeNG panel while tour step 1 is active (1060)
-//   1102+      PrimeNG dialogs (PrimeNG modal base 1100, +2 per stacked layer)
 //   1200       this container: kit dialogs and everything the kit opens above them
-//   1402+      PrimeNG confirmation dialogs (DeleteDialogService, baseZIndex CONFIRMATION_DIALOG_BASE_Z_INDEX 300 on top of 1100)
 //   100000     alert overlay
-// The container must stay above PrimeNG dialogs, so a calendar opened inside a PrimeNG dialog (competency import, submission and
-// repository export) is visible. A confirmation opened from inside a kit dialog (delete button in the presentation edit dialog)
-// has to stay above this container, which is why those PrimeNG dialogs carry an explicit base z-index instead of the default.
-// `delete-dialog-layering.spec.ts` compiles this file and checks the order.
+// `delete-dialog-layering.spec.ts` compiles this file and checks that a confirmation opened from inside a kit dialog
+// (delete button in the presentation edit dialog) stacks above it.
 .cdk-overlay-container {
     z-index: 1200;
 }
@@ -900,19 +740,6 @@ del.diffmod {
     max-width: 100%;
 }
 
-.ngb-tooltip-window {
-    padding: 0;
-    width: 200px !important;
-
-    > div {
-        margin: auto !important;
-    }
-}
-
-.warning-modal-window .modal-dialog {
-    width: 50%;
-}
-
 // Onboarding stacking context. The click-guard sits at 1049 and the spotlight blocker at 1050
 // (defined in iris-onboarding-modal.component.scss). The active target must rise above both so
 // the user's clicks reach the real UI element. Overlays opened from that target, such as the
@@ -941,17 +768,7 @@ body[data-onboarding-active-step='3'] [data-onboarding-target='info-icon'] {
     }
 }
 
-/* Bootstrap 5 specific fix for flickering tooltips */
-.tooltip {
-    pointer-events: none;
-}
-
-.small-tooltip {
-    font-size: 0.75rem;
-    line-height: 1.2;
-}
-
-/* Boostrap 5 Print Styles (https://github.com/coliff/bootstrap-print-css/) */
+/* Print styles */
 @media print {
     *,
     *::before,
@@ -960,7 +777,7 @@ body[data-onboarding-active-step='3'] [data-onboarding-target='info-icon'] {
         box-shadow: none !important;
     }
 
-    a:not(.btn) {
+    a {
         text-decoration: underline;
     }
 
@@ -1003,14 +820,6 @@ body[data-onboarding-active-step='3'] [data-onboarding-target='info-icon'] {
         min-width: 992px !important;
     }
 
-    .container {
-        min-width: 992px !important;
-    }
-
-    .badge {
-        border: 1px solid #000;
-    }
-
     .table {
         border-collapse: collapse !important;
     }
@@ -1018,22 +827,6 @@ body[data-onboarding-active-step='3'] [data-onboarding-target='info-icon'] {
     .table td,
     .table th {
         background-color: #fff !important;
-    }
-
-    .table-bordered th,
-    .table-bordered td {
-        border: 1px solid #dee2e6 !important;
-    }
-
-    .table-dark {
-        color: inherit;
-    }
-
-    .table-dark th,
-    .table-dark td,
-    .table-dark thead th,
-    .table-dark tbody + tbody {
-        border-color: #dee2e6;
     }
 }
 
@@ -1045,38 +838,9 @@ body[data-onboarding-active-step='3'] [data-onboarding-target='info-icon'] {
         overflow: visible !important;
     }
 
-    .container {
-        min-width: 0 !important;
-    }
-
-    .card,
-    .card-header,
-    .card-footer {
-        display: block !important;
-        border: 1px solid #000;
-    }
-
-    /* Print detail views with full width */
-    .row.justify-content-center > .col-8 {
-        width: 100% !important;
-    }
-
-    /* Hide buttons that are not part of a group */
-    :not(.btn-group) > {
-        button,
-        .btn {
-            display: none !important;
-        }
-    }
-
-    /* Adjust border with for button groups so they can be printed */
-    div.btn-group > .btn.selected {
-        border-width: 4px;
-    }
-
-    /* Hide navbar toggle */
-    [data-toggle='collapse'] {
-        display: none;
+    /* Hide buttons */
+    button {
+        display: none !important;
     }
 
     /* Add columns to description list to avoid long pages */
@@ -1092,7 +856,6 @@ body[data-onboarding-active-step='3'] [data-onboarding-target='info-icon'] {
 
     /* Hide popovers and notifications */
     .connection-warning,
-    .popover,
     .alert-wrap {
         display: none;
     }
@@ -1124,42 +887,8 @@ body[data-onboarding-active-step='3'] [data-onboarding-target='info-icon'] {
     }
 }
 
-.accordion-body {
-    background: $brighter-body-bg;
-    max-height: 50vh;
-    overflow: scroll;
-    padding: 0 0.5rem;
-}
-
-.mat-autocomplete-panel.mat-autocomplete-visible {
-    box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
-}
-
-.cdk-overlay-container .cdk-overlay-pane .mat-select-panel {
-    background: $communication-course-discussion-select-bg;
-    -webkit-box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
-    -moz-box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
-    box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
-    min-width: fit-content;
-}
-
-.mat-form-field-outline {
-    top: -0.1rem !important;
-    color: $mat-form-field-outline;
-}
-
-.mat-form-field-appearance-outline {
-    --mdc-outlined-text-field-outline-width: 1px;
-    --mdc-outlined-text-field-container-shape: 4px;
-}
-
 body.transparent-background {
     background: transparent;
-}
-
-.tooltip-wide .tooltip-inner {
-    max-width: 600px !important;
-    width: 600px !important;
 }
 
 /* Course Overview Content Pages with Sidebar */
@@ -1168,7 +897,7 @@ body.transparent-background {
 }
 
 .body-bg {
-    background-color: var(--bs-body-bg);
+    background-color: var(--body-bg);
 }
 
 /*
@@ -1241,8 +970,8 @@ body.transparent-background {
  * filters. Same frame as the shell title bars so all three shells read alike: `--title-bar-content-height` of content
  * with `--title-bar-padding-block` above and below, i.e. `--title-bar-height` in total.
  *
- * Pair it with `px-*` for the horizontal padding rather than `p-*`, so Bootstrap's `!important` spacing utility does
- * not overrule the vertical padding set here.
+ * Pair it with `px-*` for the horizontal padding rather than `p-*`, so the important `p-*` utility does not overrule
+ * the vertical padding set here.
  */
 .page-top-bar {
     box-sizing: border-box;
@@ -1251,18 +980,6 @@ body.transparent-background {
 
     @include title-bar-compact-controls;
     @include title-bar-size-container;
-
-    /*
-     * Unlike the shell bars these hold text inputs, which carry their own padding and would otherwise stay taller.
-     *
-     * A minimum rather than a fixed height: the communication search is a `.form-control` that wraps a badge per
-     * selected conversation and author, and pinning it would leave the wrapped rows overflowing the bar. A single-row
-     * control still lands on the contract height, so the bar is 40px in the state it is in almost all of the time.
-     */
-    .form-control {
-        min-height: var(--title-bar-content-height);
-        padding-block: 0;
-    }
 }
 
 /*
@@ -1320,8 +1037,8 @@ body.transparent-background {
  * therefore tracks `--footer-height`, which follows the footer as it grows — it wraps on narrow viewports and carries
  * an extra git line in dev. The shells reach the same result by subtracting both values in `shell-content-height`.
  *
- * Keep all three margins here rather than mixing in Bootstrap's spacing utilities: those are declared `!important`, so
- * a partial override loses and leaves the card tucked behind the footer.
+ * Keep all three margins here rather than mixing in spacing utilities: those are declared `!important`, so a partial
+ * override loses and leaves the card tucked behind the footer.
  */
 .page-content-card {
     margin: var(--spacing-divider) var(--spacing-divider) calc(var(--footer-height) + var(--spacing-divider));
@@ -1583,7 +1300,7 @@ jhi-iris-base-chatbot .interim-message .bubble-left p:last-child {
 
         th,
         td {
-            border: 1px solid var(--bs-border-color);
+            border: 1px solid var(--border-color);
             padding: 6px 10px;
         }
 
@@ -1596,18 +1313,6 @@ jhi-iris-base-chatbot .interim-message .bubble-left p:last-child {
         display: block;
         overflow-x: auto;
     }
-}
-
-// Tooltip for the generative AI disclaimer icon in the feedback suggestions banner.
-.feedback-suggestions-ai-tooltip,
-.feedback-suggestions-ai-tooltip .p-tooltip-text {
-    max-width: 400px !important;
-    white-space: normal;
-}
-
-// Override Bootstrap's default popover max-width for AI feedback popover.
-.ai-feedback-popover {
-    max-width: 500px;
 }
 
 // Compact metadata layout for the narrow left panel in Iris split view
@@ -1660,13 +1365,6 @@ jhi-iris-base-chatbot .interim-message .bubble-left p:last-child {
     img {
         display: none;
     }
-}
-
-// ng-bootstrap typeahead: ensure long suggestion lists are scrollable
-ngb-typeahead-window.dropdown-menu.show {
-    max-height: min(40dvh, 22rem);
-    overflow-y: auto !important;
-    will-change: unset !important;
 }
 
 /* Iris inline answer — overrides that cannot be scoped inside the component */
