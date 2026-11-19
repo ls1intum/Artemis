@@ -45,13 +45,18 @@ final class AresTestCases {
      */
     private static final Pattern TEST_ANNOTATION = Pattern.compile("@\\s*((?:[\\w$]+\\s*\\.\\s*)*+)(" + TEST_ANNOTATION_NAMES + ")(?!\\p{javaJavaIdentifierPart})");
 
+    /** The name of a type variable, group 1, followed by its bound or by the separator, which stays unconsumed. */
+    private static final String TYPE_VARIABLE_NAME = "(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\s*(?=extends(?!\\p{javaJavaIdentifierPart})|[,>&])";
+
+    /** The annotations of a type variable, e.g. {@code @Marker} or {@code @Size(max = 3)}, which precede its name. */
+    private static final String TYPE_VARIABLE_ANNOTATIONS = "(?:@\\s*[\\w$]+(?:\\s*\\.\\s*[\\w$]+)*+\\s*(?:\\([^()]*\\))?\\s*)*+";
+
     /**
-     * A name in angle brackets that may declare a type variable, e.g. {@code Date} in {@code <X, Date extends java.sql.Date>}, group 1 being the name. The
-     * separator after the name stays unconsumed, so the next name after a comma is found as well. It also matches a type argument such as {@code String}
-     * in {@code List<String>}, which only makes the check more cautious.
+     * A name in angle brackets that may declare a type variable, e.g. {@code Date} in {@code <X, @Marker Date extends java.sql.Date>}, group 1 being the
+     * name. Its annotations are skipped, and the separator after the name stays unconsumed, so the next name after a comma is found as well. It also matches
+     * a type argument such as {@code String} in {@code List<String>}, which only makes the check more cautious.
      */
-    private static final Pattern TYPE_VARIABLE = Pattern
-            .compile("[<,]\\s*(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\s*(?=extends(?!\\p{javaJavaIdentifierPart})|[,>&])");
+    private static final Pattern TYPE_VARIABLE = Pattern.compile("[<,]\\s*" + TYPE_VARIABLE_ANNOTATIONS + TYPE_VARIABLE_NAME);
 
     /** A single-type import, group 1 being the imported type; a static import names a member and is no type import. */
     private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s+(?!static\\s)([\\p{javaJavaIdentifierPart}.\\s]+?)\\s*;");
@@ -336,11 +341,15 @@ final class AresTestCases {
         int arrayStart = type.indexOf('[');
         String baseType = arrayStart < 0 ? type : type.substring(0, arrayStart);
         String arrayDimensions = arrayStart < 0 ? "" : type.substring(arrayStart);
-        if (baseType.indexOf('.') >= 0 || PRIMITIVE_TYPES.contains(baseType)) {
+        int dot = baseType.indexOf('.');
+        String firstName = dot < 0 ? baseType : baseType.substring(0, dot);
+        // A name that starts with a package, by the Java naming conventions in lower case, is fully qualified; one that starts with a type, e.g.
+        // Outer.Inner, depends on what that type resolves to in the file.
+        if (PRIMITIVE_TYPES.contains(baseType) || (dot >= 0 && Character.isLowerCase(firstName.charAt(0)))) {
             return baseType + arrayDimensions;
         }
-        String resolvedType = resolve.apply(baseType);
-        return (resolvedType != null ? resolvedType : UNRESOLVED_TYPE + baseType) + arrayDimensions;
+        String resolvedType = resolve.apply(firstName);
+        return (resolvedType != null ? resolvedType + baseType.substring(firstName.length()) : UNRESOLVED_TYPE + baseType) + arrayDimensions;
     }
 
     /**

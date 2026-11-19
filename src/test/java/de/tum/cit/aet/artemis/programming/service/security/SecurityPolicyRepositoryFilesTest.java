@@ -630,7 +630,7 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "<Date extends java.sql.Date>", "<X, Date extends java.sql.Date>" })
+    @ValueSource(strings = { "<Date extends java.sql.Date>", "<X, Date extends java.sql.Date>", "<@Deprecated Date extends java.sql.Date>" })
     void anOverrideWhoseParameterTypeIsATypeVariableKeepsTheInheritedPolicy(String typeParameters) throws IOException {
         writeBuildFile();
         String methodPolicy = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n";
@@ -659,6 +659,44 @@ class SecurityPolicyRepositoryFilesTest {
 
         // The type variable Date erases to java.sql.Date, so runs(Date) is an overload and the inherited test still runs with the sandbox.
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS, "de.example.MoreSortingTest");
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "a.Outer, false", "b.Outer, true" })
+    void anOverrideMustNameTheSameOuterTypeForANestedParameterType(String childImport, boolean unsupported) throws IOException {
+        writeBuildFile();
+        String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(Outer.Inner value)";
+        String parent = TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated);
+        writeSource("test/de/example/SortingTest.java", parent.replace("import org.junit.jupiter.api.Test;", "import a.Outer;\nimport org.junit.jupiter.api.Test;"));
+        String override = """
+                package de.example;
+
+                import %s;
+                import org.junit.jupiter.api.Test;
+
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+
+                @Public
+                %s
+                class MoreSortingTest extends SortingTest {
+
+                    @Test
+                    public void runs(Outer.Inner value) {
+                    }
+                }
+                """.formatted(childImport, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        writeSource("test/de/example/MoreSortingTest.java", override);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // Outer.Inner names a.Outer.Inner in one file and b.Outer.Inner in the other, so only the same import makes it an override.
+        SecurityFrameworkState.UnsupportedReason reason = new SecurityFrameworkState.UnsupportedReason("de.example.MoreSortingTest",
+                SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS);
+        if (unsupported) {
+            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).contains(reason);
+        }
+        else {
+            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).doesNotContain(reason);
+        }
     }
 
     @Test
