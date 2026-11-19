@@ -153,7 +153,7 @@ class WorkerAdvisoryAccountingStopTest {
     }
 
     private static ChatResponse accounted(String text) {
-        var metadata = ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("reviewer", "request", 10, 2, 0L)).getMetadata();
+        var metadata = ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("reviewer", "request", 10, 2, 0L, null)).getMetadata();
         return new ChatResponse(List.of(new Generation(new AssistantMessage(text))), metadata);
     }
 }

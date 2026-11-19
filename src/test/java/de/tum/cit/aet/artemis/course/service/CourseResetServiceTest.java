@@ -140,8 +140,6 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         request.setModel("gpt-4");
         request.setNumInputTokens(100);
         request.setNumOutputTokens(50);
-        request.setCostPerMillionInputTokens(30.0f);
-        request.setCostPerMillionOutputTokens(60.0f);
         request.setServicePipelineId("test-pipeline");
         request.setTrace(trace);
         llmTokenUsageRequestTestRepository.save(request);
@@ -173,8 +171,6 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
             request.setModel("gpt-4");
             request.setNumInputTokens(100 * (i + 1));
             request.setNumOutputTokens(50 * (i + 1));
-            request.setCostPerMillionInputTokens(30.0f);
-            request.setCostPerMillionOutputTokens(60.0f);
             request.setServicePipelineId("pipeline-" + i);
             request.setTrace(trace);
             llmTokenUsageRequestTestRepository.save(request);

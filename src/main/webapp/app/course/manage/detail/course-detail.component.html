@@ -79,11 +79,20 @@
                                 [currentMax]="courseDTO()?.currentMaxAverageScore"
                             />
                             @if (irisChatEnabled() || isAthenaEnabled() || isHyperionEnabled() || isAtlasEnabled()) {
+                                @let llmStats = courseDTO();
                                 <jhi-course-detail-doughnut-chart
                                     class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4!"
+                                    data-testid="course-llm-cost"
                                     [course]="course()!"
                                     [contentType]="DoughnutChartType.CURRENT_LLM_COST"
-                                    [showText]="courseDTO()?.currentTotalLlmCostInEur + ' €'"
+                                    [showText]="
+                                        llmStats
+                                            ? llmStats.currentTotalLlmCostInUsd === 0 && llmStats.unpricedLlmRequestCount > 0
+                                                ? ('artemisApp.course.detail.llmCostNotPriced' | artemisTranslate)
+                                                : (llmStats.unpricedLlmRequestCount > 0 ? '≥ ' : '') + (llmStats.currentTotalLlmCostInUsd | number: '1.2-8') + ' USD'
+                                            : undefined
+                                    "
+                                    [unpricedRequests]="llmStats?.unpricedLlmRequestCount ?? 0"
                                     [currentMax]="0"
                                 />
                             }
