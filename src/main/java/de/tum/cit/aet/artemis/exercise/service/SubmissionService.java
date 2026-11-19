@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.LockedAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -463,24 +464,51 @@ public class SubmissionService {
     }
 
     /**
-     * This method is used to create a copy of a result, used in the exam mode with correctionRound > 1,
-     * because an assessment with current correctionRound > 1 contains all previous work,
-     * which the tutor can then edit. Assigns the newly created Result to the submission
+     * Builds, without saving it, the manual result the current user starts to assess the submission with in the given correction round. From the second round on, the
+     * result is a copy of the result of the previous round, because an assessment in a later round contains all previous work, which the tutor can then edit.
      *
-     * @param submission submission to which the new Result is assigned
-     * @param oldResult  result to copy from
-     * @return the newly created copy of the oldResult
+     * @param submission      the submission the result belongs to
+     * @param correctionRound the correction round of the result
+     * @return the new result with its feedback copies, not persisted yet
      */
-    public Result copyResultFromPreviousRoundAndSave(Submission submission, Result oldResult) {
-        if (oldResult == null) {
-            return saveNewEmptyResult(submission);
-        }
+    private Result buildManualResultForCorrectionRound(Submission submission, int correctionRound) {
         Result newResult = new Result();
-        setExerciseIdFromSubmission(submission, newResult);
-        // Set before copying the feedback, which saves the result: the result owns the foreign key to its submission.
         newResult.setSubmission(submission);
-        copyFeedbackToNewResult(newResult, oldResult);
-        return copyResultContentAndAddToSubmission(submission, newResult, oldResult);
+        newResult.setExerciseId(submission.getParticipation().getExercise().getId());
+        newResult.setAssessor(userRepository.getUser());
+        newResult.setCorrectionRound(correctionRound);
+        newResult.setAssessmentType(AssessmentType.MANUAL);
+
+        Result previousRoundResult = submission.getResultForCorrectionRound(correctionRound - 1);
+        if (previousRoundResult != null) {
+            // The copies are saved together with the result through its cascade, so nothing is written before the round is known to be free.
+            if (previousRoundResult.getFeedbacks() != null) {
+                previousRoundResult.getFeedbacks().forEach(feedback -> newResult.addFeedback(feedbackService.copyFeedback(feedback)));
+            }
+            copyTypedFeedbackToResult(newResult, previousRoundResult);
+            newResult.setScore(previousRoundResult.getScore());
+            newResult.setRated(previousRoundResult.isRated());
+            newResult.copyProgrammingExerciseCounters(previousRoundResult);
+        }
+        return newResult;
+    }
+
+    /**
+     * Creates the manual result of the current user for the given correction round, unless another tutor has created a manual result of that round in the meantime.
+     *
+     * @param submission      the submission the result belongs to
+     * @param correctionRound the correction round of the result
+     * @return the created result, which is also added to the submission
+     * @throws LockedAlertException if another tutor created a manual result of the round since the submission was loaded
+     */
+    private Result createManualResultForCorrectionRound(Submission submission, int correctionRound) {
+        Result newResult = buildManualResultForCorrectionRound(submission, correctionRound);
+        // Nothing is written for a submission another tutor locked in the meantime: saving that tutor's result from here could overwrite or remove its feedback.
+        Result savedResult = resultRepository.saveManualResultIfCorrectionRoundIsFree(submission.getId(), correctionRound, newResult)
+                .orElseThrow(() -> new LockedAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed"));
+        submission.addResult(savedResult);
+        submissionRepository.save(submission);
+        return savedResult;
     }
 
     /**
@@ -668,22 +696,20 @@ public class SubmissionService {
 
     /**
      * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e.
-     * the client will not allow tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
+     * the client will not allow tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first, atomically,
+     * so that two tutors who open the submission at the same time do not both create a result for the round.
      *
      * @param submission      the submission to lock
      * @param correctionRound the correction round to lock the submission for, must not be negative
      * @return the locked result
      * @throws BadRequestAlertException if the correction round is negative
+     * @throws LockedAlertException     if another tutor created the result of the round since the submission was loaded
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         Result result = submission.getResultForCorrectionRound(correctionRound);
-        if (result == null && correctionRound > 0) {
-            // copy the result of the previous correction round
-            result = copyResultFromPreviousRoundAndSave(submission, submission.getResultForCorrectionRound(correctionRound - 1));
-        }
-        else if (result == null) {
-            result = saveNewEmptyResult(submission);
+        if (result == null) {
+            result = createManualResultForCorrectionRound(submission, correctionRound);
         }
 
         if (result.getAssessor() == null) {
