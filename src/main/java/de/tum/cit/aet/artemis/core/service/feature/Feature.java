@@ -5,5 +5,5 @@ package de.tum.cit.aet.artemis.core.service.feature;
 // AtlasML and Memiris are retired and kept only for their positions; see FeatureToggleService#RETIRED_FEATURES.
 public enum Feature {
     ProgrammingExercises, PlagiarismChecks, Exports, LearningPaths, Science, StandardizedCompetencies, TutorSuggestions, AtlasML, AtlasAgent, Memiris, LectureContentProcessing,
-    RateLimit, GlobalSearch, AutonomousTutor, Deimos, IrisProactiveStruggle, GlobalSearchReconcile, GlobalSearchReconcileOrphan, PresentationAssessments
+    RateLimit, GlobalSearch, AutonomousTutor, Deimos, IrisProactiveStruggle, GlobalSearchReconcile, GlobalSearchReconcileOrphan, PresentationAssessments, SmartQuizzes
 }
