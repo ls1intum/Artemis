@@ -129,8 +129,8 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
     int deleteWithoutUnitAndPendingUploadByIdIn(@Param("ids") Collection<Long> ids);
 
     /**
-     * Starts an upload for a unit, or returns the one that is pending: a unit has at most one pending upload, and repeating the start must not leave the first
-     * reference behind. A pending upload through another grant, made before the course was connected to TUM.Live again, moves to the cleanup queue instead.
+     * Starts an upload for a unit or returns its pending upload so the service can reject a competing start. A pending upload through an earlier grant moves
+     * to the cleanup queue when the course has been connected to TUM.Live again.
      *
      * @param lectureUnitId the attachment video unit
      * @param integrationId the TUM.Live integration
@@ -166,17 +166,17 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
     }
 
     /**
-     * Stores the TUM.Live lecture of the pending upload, if it is still the pending one.
+     * Claims the pending reference for one transfer by recording its TUM.Live lecture. A reference with a lecture is never claimed again.
      *
      * @param lectureUnitId the attachment video unit
      * @param ref           the pending reference
      * @param streamId      its TUM.Live lecture
-     * @return whether the upload was still pending
+     * @return whether the pending upload was claimed
      */
     @Transactional
     default boolean recordPendingStream(long lectureUnitId, String ref, long streamId) {
         var pending = findAttachmentVideoUnitForUpdateById(lectureUnitId).flatMap(ignored -> findForUpdateByLectureUnitId(lectureUnitId))
-                .filter(upload -> ref.equals(upload.getPendingRef()));
+                .filter(upload -> ref.equals(upload.getPendingRef()) && upload.getPendingStreamId() == null);
         if (pending.isEmpty()) {
             return false;
         }

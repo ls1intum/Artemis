@@ -4,7 +4,7 @@ import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressBarC
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumLiveTransferError, TumLiveUploadService, TumLiveUploadState } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
-import { EMPTY, Subscription, catchError, interval, switchMap, timer } from 'rxjs';
+import { Subscription, interval, timer } from 'rxjs';
 
 /** How often the state of an upload that TUM.Live converts is read again. */
 const POLL_INTERVAL_MS = 15_000;
@@ -35,11 +35,12 @@ export class TumLiveUploadComponent {
     readonly transferProgress = signal<number | undefined>(undefined);
     readonly transferError = signal<TumLiveTransferError | undefined>(undefined);
     readonly attachedNow = signal(false);
-    /** Set while a cancelled start or a discard is still answered; a new upload waits for it, since the server would reuse the reference it gives up. */
+    /** Set while a cancelled start or a discard is still answered, so the editor waits for the pending upload to be released. */
     readonly busy = signal(false);
 
     private transfer?: Subscription;
     private poll?: Subscription;
+    private stateRead?: Subscription;
     /** Reads the state again after reading it failed, so the section comes back without opening the editor again. */
     private retry?: Subscription;
     /** The reference of the upload this page is sending, once the server named it, and the unit it is for. */
@@ -199,7 +200,8 @@ export class TumLiveUploadComponent {
     private load(lectureUnitId: number): void {
         this.retry?.unsubscribe();
         this.retry = undefined;
-        this.tumLiveUploadService
+        this.stateRead?.unsubscribe();
+        this.stateRead = this.tumLiveUploadService
             .getState(lectureUnitId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
@@ -230,12 +232,8 @@ export class TumLiveUploadComponent {
         }
         if (state.pendingRef && !this.poll) {
             this.poll = interval(POLL_INTERVAL_MS)
-                .pipe(
-                    // A failed request is skipped, so polling goes on.
-                    switchMap(() => this.tumLiveUploadService.getState(this.lectureUnitId()).pipe(catchError(() => EMPTY))),
-                    takeUntilDestroyed(this.destroyRef),
-                )
-                .subscribe({ next: (next) => this.apply(next) });
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe(() => this.load(this.lectureUnitId()));
         } else if (!state.pendingRef && this.poll) {
             this.poll.unsubscribe();
             this.poll = undefined;

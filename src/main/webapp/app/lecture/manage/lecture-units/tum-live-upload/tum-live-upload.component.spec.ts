@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
@@ -176,6 +177,22 @@ describe('TumLiveUploadComponent', () => {
         expect(discardSpy).toHaveBeenCalledWith(7, 'reference-a-0000');
     });
 
+    it('does not discard another editor’s reservation after cancelling a conflicting start', () => {
+        render({ connected: true });
+        const start = new Subject<{ ref: string; uploadUrl: string }>();
+        vi.spyOn(service, 'start').mockReturnValue(start);
+        const transferSpy = vi.spyOn(service, 'transfer');
+        const discardSpy = vi.spyOn(service, 'discard');
+        chooseFile();
+        component.upload();
+        component.cancel();
+        start.error(new HttpErrorResponse({ status: 409 }));
+
+        expect(component.busy()).toBe(false);
+        expect(transferSpy).not.toHaveBeenCalled();
+        expect(discardSpy).not.toHaveBeenCalled();
+    });
+
     it('starts no new upload until a cancelled start and its discard are answered', () => {
         render({ connected: true });
         const startA = new Subject<{ ref: string; uploadUrl: string }>();
@@ -247,6 +264,34 @@ describe('TumLiveUploadComponent', () => {
         vi.advanceTimersByTime(30_000);
 
         expect(attached).toHaveBeenCalledOnce();
+    });
+
+    it('ignores a stale poll when a transfer conflict triggers a fresh read', () => {
+        vi.useFakeTimers();
+        const pending = { connected: true, pendingRef: 'reference-a-0000' };
+        render({ connected: true });
+        const transfer = new Subject<TumLiveTransferEvent>();
+        vi.spyOn(service, 'start').mockReturnValue(of({ ref: pending.pendingRef, uploadUrl: '/transfer' }));
+        vi.spyOn(service, 'transfer').mockReturnValue(transfer);
+        chooseFile();
+        component.upload();
+        state.next(pending);
+
+        const stalePoll = new Subject<TumLiveUploadState>();
+        vi.spyOn(service, 'getState').mockReturnValueOnce(stalePoll).mockReturnValue(of(pending));
+        vi.advanceTimersByTime(15_000);
+        expect(stalePoll.observed).toBe(true);
+
+        transfer.error(new TumLiveTransferError('HTTP 409', 409, 'error.tumLiveUploadInProgress'));
+        stalePoll.next({ connected: true });
+        expect(stalePoll.observed).toBe(false);
+        expect(component.state()).toEqual(pending);
+        expect(component.transferError()?.status).toBe(409);
+
+        vi.spyOn(service, 'getState').mockReturnValue(of({ connected: true }));
+        vi.advanceTimersByTime(15_000);
+        expect(component.state()?.pendingRef).toBeUndefined();
+        expect(component.transferError()).toBeUndefined();
     });
 
     it('reads the state again after reading it failed, and then shows the section', () => {

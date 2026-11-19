@@ -91,10 +91,27 @@ class TumLiveUploadServiceTest {
     @Test
     void startReservesAReferenceThroughTheCoursesGrant() {
         when(api.findUploadConnection(7L)).thenReturn(Optional.of(new GocastUploadConnectionDTO(17, 23, "algo")));
+        when(uploadRepository.startPending(eq(UNIT_ID), eq(17L), eq(23L), eq("algo"), anyString(), any())).thenAnswer(invocation -> {
+            ZonedDateTime now = invocation.getArgument(5);
+            var upload = pending(now, null);
+            upload.startPending(invocation.getArgument(4), 23, "algo", null, now);
+            return upload;
+        });
+
+        String ref = service.start(unit());
+
+        assertThat(ref).isNotBlank();
+        verify(uploadRepository).startPending(eq(UNIT_ID), eq(17L), eq(23L), eq("algo"), eq(ref), any());
+        verify(api, never()).createUpload(anyLong(), anyString(), anyString());
+    }
+
+    @Test
+    void aSecondEditorCannotAcquireTheExistingReservation() {
+        when(api.findUploadConnection(7L)).thenReturn(Optional.of(new GocastUploadConnectionDTO(17, 23, "algo")));
         when(uploadRepository.startPending(eq(UNIT_ID), eq(17L), eq(23L), eq("algo"), anyString(), any())).thenReturn(pending(ZonedDateTime.now(), null));
 
-        assertThat(service.start(unit())).isEqualTo(REF);
-        verify(api, never()).createUpload(anyLong(), anyString(), anyString());
+        assertThatThrownBy(() -> service.start(unit())).isInstanceOf(ConflictException.class);
+        verify(uploadRepository, never()).discardPending(anyLong(), anyString(), any(), any());
     }
 
     @Test
@@ -158,8 +175,17 @@ class TumLiveUploadServiceTest {
     }
 
     @Test
-    void transferReportsAnUploadThatIsAlreadyBeingTransferred() {
+    void aReferenceWithARecordedStreamCannotBeTransferredAgain() {
         when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(pending(ZonedDateTime.now(), 55L)));
+
+        assertThatThrownBy(() -> service.transfer(unit(), REF, InputStream.nullInputStream())).isInstanceOf(ConflictException.class);
+        verify(api, never()).createUpload(anyLong(), anyString(), anyString());
+        verify(uploadRepository, never()).discardPending(anyLong(), anyString(), any(), any());
+    }
+
+    @Test
+    void transferReportsAnUploadThatIsAlreadyBeingTransferred() {
+        when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(pending(ZonedDateTime.now(), null)));
         when(api.createUpload(eq(23L), eq(REF), anyString())).thenThrow(new GocastIntegrationException("refused", HttpStatus.CONFLICT));
 
         assertThatThrownBy(() -> service.transfer(unit(), REF, InputStream.nullInputStream())).isInstanceOf(ConflictException.class)

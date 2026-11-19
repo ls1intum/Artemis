@@ -110,6 +110,16 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
+    void onlyTheFirstTransferOfAReferenceCanRecordItsStream() {
+        var now = ZonedDateTime.now();
+        uploadRepository.startPending(unit.getId(), 17, 23, "algo", ref("first"), now);
+
+        assertThat(uploadRepository.recordPendingStream(unit.getId(), ref("first"), 55)).isTrue();
+        assertThat(uploadRepository.recordPendingStream(unit.getId(), ref("first"), 56)).isFalse();
+        assertThat(uploadRepository.findByLectureUnitId(unit.getId()).orElseThrow().getPendingStreamId()).isEqualTo(55);
+    }
+
+    @Test
     void replacementQueuesTheOldLectureWhenTheNewOneIsAttached() {
         var now = ZonedDateTime.now();
         uploadRepository.startPending(unit.getId(), 17, 23, "algo", ref("first"), now);
@@ -453,6 +463,8 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
         mockMvc.perform(post("/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload")).andExpect(status().isConflict());
         mockMvc.perform(post("/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload/file").param("ref", ref("test")).contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .content(new byte[] { 1 })).andExpect(status().isConflict());
+        mockMvc.perform(post("/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload/file").param("ref", ref("test")).contentType("video/mp4").content(new byte[] { 1 }))
+                .andExpect(status().isConflict());
         mockMvc.perform(delete("/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload").param("ref", ref("none"))).andExpect(status().isNoContent());
     }
 

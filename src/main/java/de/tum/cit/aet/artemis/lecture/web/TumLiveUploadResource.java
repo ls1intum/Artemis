@@ -65,7 +65,8 @@ public class TumLiveUploadResource {
      * POST lecture-units/:lectureUnitId/tumlive-upload : Reserves an upload reference.
      *
      * @param lectureUnitId the attachment video unit
-     * @return the pending reference and the Artemis URL that accepts the file; 409 if the course is not connected
+     * @return the pending reference and the Artemis URL that accepts the file, or HTTP 409 if the course is disconnected or already has a pending upload for
+     *         this unit
      */
     @PostMapping("lecture-units/{lectureUnitId}/tumlive-upload")
     @EnforceAtLeastEditorInLectureUnit
@@ -82,11 +83,13 @@ public class TumLiveUploadResource {
      * @param file          the request body
      * @return 204 once TUM.Live accepts the file
      */
-    @PostMapping(value = "lecture-units/{lectureUnitId}/tumlive-upload/file", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @PostMapping(value = "lecture-units/{lectureUnitId}/tumlive-upload/file", consumes = { MediaType.APPLICATION_OCTET_STREAM_VALUE, "video/mp4" })
     @EnforceAtLeastEditorInLectureUnit
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(requestBody = @RequestBody(required = true, content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE, schema = @Schema(type = "string", format = "binary"))))
+    @Operation(requestBody = @RequestBody(required = true, content = {
+            @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE, schema = @Schema(type = "string", format = "binary")),
+            @Content(mediaType = "video/mp4", schema = @Schema(type = "string", format = "binary")) }))
     public ResponseEntity<Void> transferUpload(@PathVariable long lectureUnitId, @RequestParam String ref, @Parameter(hidden = true) InputStream file) {
         tumLiveUploadService.transfer(findUnit(lectureUnitId), ref, file);
         return ResponseEntity.noContent().build();

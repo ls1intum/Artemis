@@ -1774,6 +1774,8 @@ paths:
         content:
           application/octet-stream:
             schema: {type: string, format: binary}
+          video/mp4:
+            schema: {type: string, format: binary}
         required: true
       responses:
         '204': {description: No Content}

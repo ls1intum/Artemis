@@ -1,20 +1,31 @@
 package de.tum.cit.aet.artemis.videosource.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.io.SequenceInputStream;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.time.Duration;
+import java.util.Collections;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClient;
 
+import de.tum.cit.aet.artemis.videosource.config.GocastConfiguration;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
+import de.tum.cit.aet.artemis.videosource.dto.GocastUploadTargetDTO;
 import de.tum.cit.aet.artemis.videosource.repository.GocastConnectionRepository;
 import de.tum.cit.aet.artemis.videosource.repository.GocastConnectionRepository.BindingSnapshot;
 
@@ -33,6 +44,32 @@ class GocastRecordingServiceTest {
 
     private static BindingSnapshot binding(GocastBindingStatus status) {
         return new BindingSnapshot(7, 17, 456, 23, 0, status, "algo", "Algorithms", "enrolled");
+    }
+
+    @Test
+    @Timeout(10)
+    void outboundUploadTimesOutWhileThePeerDoesNotRead() throws Exception {
+        try (var listener = new ServerSocket()) {
+            listener.setReceiveBufferSize(1024);
+            listener.bind(new InetSocketAddress("127.0.0.1", 0));
+            listener.setSoTimeout(1000);
+            var uploadClient = new GocastConfiguration().gocastUploadRestClient(Duration.ofSeconds(1));
+            var recordingService = new GocastRecordingService(connectionRepository, connectorService, new TumLiveService(RestClient.builder(), "https://live.rbg.tum.de/api/v2"),
+                    uploadClient);
+            var target = new GocastUploadTargetDTO(42, "http://127.0.0.1:" + listener.getLocalPort() + "/upload");
+            // 64 MiB is larger than the socket buffers, but the input itself only allocates one block for its contents.
+            var block = new byte[64 * 1024];
+            var blocks = IntStream.range(0, 1024).mapToObj(_ -> new ByteArrayInputStream(block)).toList();
+            try (var video = new SequenceInputStream(Collections.enumeration(blocks))) {
+                assertThatThrownBy(() -> recordingService.transferUpload(target, video)).isInstanceOfSatisfying(GocastIntegrationException.class,
+                        failure -> assertThat(failure.getUpstreamStatus()).isEqualTo(HttpStatus.BAD_GATEWAY));
+            }
+            // The peer did receive the start of the request. It never drained the body or returned a response.
+            try (var peer = listener.accept()) {
+                peer.setSoTimeout(1000);
+                assertThat(peer.getInputStream().read()).isEqualTo('P');
+            }
+        }
     }
 
     @Test

@@ -102,9 +102,12 @@ public class TumLiveUploadService {
     public String start(AttachmentVideoUnit unit) {
         GocastBindingApi api = gocastBindingApi.orElseThrow(() -> notConnected());
         GocastUploadConnectionDTO connection = api.findUploadConnection(unit.getLecture().getCourse().getId()).orElseThrow(TumLiveUploadService::notConnected);
-        TumLiveUnitUpload upload = uploadRepository.startPending(unit.getId(), connection.integrationId(), connection.grantId(), connection.courseSlug(), newReference(),
-                ZonedDateTime.now());
-        return upload.getPendingRef();
+        String ref = newReference();
+        TumLiveUnitUpload upload = uploadRepository.startPending(unit.getId(), connection.integrationId(), connection.grantId(), connection.courseSlug(), ref, ZonedDateTime.now());
+        if (!ref.equals(upload.getPendingRef())) {
+            throw uploadInProgress();
+        }
+        return ref;
     }
 
     /**
@@ -118,6 +121,9 @@ public class TumLiveUploadService {
         GocastBindingApi api = gocastBindingApi.orElseThrow(TumLiveUploadService::notConnected);
         TumLiveUnitUpload upload = uploadRepository.findByLectureUnitId(unit.getId()).filter(pending -> ref.equals(pending.getPendingRef()))
                 .orElseThrow(TumLiveUploadService::uploadNoLongerPending);
+        if (upload.getPendingStreamId() != null) {
+            throw uploadInProgress();
+        }
         // Creating a new ticket invalidates an unused one in TUM.Live. Only one request may issue and spend a ticket for this reference at a time.
         String owner = newReference();
         if (activeTransfers.putIfAbsent(ref, owner) != null) {

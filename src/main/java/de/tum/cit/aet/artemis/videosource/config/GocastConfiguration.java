@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 @Configuration
@@ -44,14 +43,15 @@ public class GocastConfiguration {
     /**
      * Creates a client for upload tickets, separate from the API-key client and without URI observations.
      *
+     * @param uploadMaxAge the deadline for the complete outbound request, including a stalled write
      * @return the streaming upload client
      */
     @Bean
-    public RestClient gocastUploadRestClient() {
-        var requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(CONNECT_TIMEOUT);
-        requestFactory.setReadTimeout(Duration.ofMinutes(2));
-        requestFactory.setChunkSize(64 * 1024);
+    public RestClient gocastUploadRestClient(@Value("${artemis.tum-live.upload-max-age:PT6H}") Duration uploadMaxAge) {
+        var httpClient = HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT).followRedirects(HttpClient.Redirect.NEVER).version(HttpClient.Version.HTTP_1_1).build();
+        var requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        // The factory cancels the HTTP exchange when this deadline expires, including while the request body is being sent.
+        requestFactory.setReadTimeout(uploadMaxAge);
         return RestClient.builder().requestFactory(requestFactory).build();
     }
 
