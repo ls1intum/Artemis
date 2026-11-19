@@ -53,8 +53,9 @@ final class AresTestCases {
 
     /**
      * A name in angle brackets that may declare a type variable, e.g. {@code Date} in {@code <X, @Marker Date extends java.sql.Date>}, group 1 being the
-     * name. Its annotations are skipped, and the separator after the name stays unconsumed, so the next name after a comma is found as well. It also matches
-     * a type argument such as {@code String} in {@code List<String>}, which only makes the check more cautious.
+     * name. Its annotations are skipped, and the separator after the name stays unconsumed, so the next name after a comma is found as well. It is only
+     * searched in the headers of types and methods, where it also matches a type argument such as {@code String} in a return type {@code List<String>}, which
+     * only makes the check more cautious.
      */
     private static final Pattern TYPE_VARIABLE = Pattern.compile("[<,]\\s*" + TYPE_VARIABLE_ANNOTATIONS + TYPE_VARIABLE_NAME);
 
@@ -188,10 +189,12 @@ final class AresTestCases {
     static Map<Integer, TestSignature> testSignatures(String masked) {
         Map<Integer, TestSignature> signatures = new HashMap<>();
         Map<String, String> imported = importedTypes(masked);
-        Set<String> typeVariables = new HashSet<>();
-        Matcher typeVariable = TYPE_VARIABLE.matcher(masked);
-        while (typeVariable.find()) {
-            typeVariables.add(typeVariable.group(1));
+        // The type variables of the types the file declares are in scope in their methods; a type argument elsewhere, e.g. of a field, declares none.
+        Set<String> typeVariablesOfTypes = new HashSet<>();
+        Matcher type = AresPolicyAnnotations.TYPE_DECLARATION.matcher(masked);
+        while (type.find()) {
+            int body = masked.indexOf('{', type.end());
+            typeVariablesOfTypes.addAll(typeVariables(masked.substring(type.end(), body < 0 ? masked.length() : body)));
         }
         for (MatchResult annotation : testAnnotations(masked)) {
             MatchResult method = methodAfter(masked, annotation.end());
@@ -202,6 +205,9 @@ final class AresTestCases {
                 int memberStart = memberStart(masked, annotation.start());
                 boolean visible = VISIBLE_IN_OTHER_PACKAGES.matcher(masked.substring(memberStart, method.start(1))).find();
                 int declaration = method.start(1);
+                // The type parameters of the method itself precede its return type.
+                Set<String> typeVariables = new HashSet<>(typeVariablesOfTypes);
+                typeVariables.addAll(typeVariables(masked.substring(memberStart, declaration)));
                 UnaryOperator<String> resolve = simpleName -> importedType(masked, simpleName, declaration, imported, typeVariables);
                 String text = method.group(1) + "(" + parameterTypes(parameters, resolve) + ")";
                 signatures.put(method.start(1), new TestSignature(method.group(1), text, visible));
@@ -259,6 +265,19 @@ final class AresTestCases {
             }
         }
         return annotations;
+    }
+
+    /**
+     * @param header the masked header of a type or a method, up to its body or its name
+     * @return the names it may declare as type variables, see {@link #TYPE_VARIABLE}
+     */
+    private static Set<String> typeVariables(String header) {
+        Set<String> names = new HashSet<>();
+        Matcher typeVariable = TYPE_VARIABLE.matcher(header);
+        while (typeVariable.find()) {
+            names.add(typeVariable.group(1));
+        }
+        return names;
     }
 
     /**

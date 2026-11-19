@@ -699,6 +699,46 @@ class SecurityPolicyRepositoryFilesTest {
         }
     }
 
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = { "MoreSortingTest|    java.util.Map<String, Date> dates;|false", "MoreSortingTest<Date extends java.sql.Date>||true" })
+    void onlyATypeVariableInScopeShadowsAnImportedParameterType(String declaration, String field, boolean unsupported) throws IOException {
+        writeBuildFile();
+        String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
+        String override = """
+                package de.example;
+
+                import java.util.Date;
+
+                import org.junit.jupiter.api.Test;
+
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+
+                @Public
+                %s
+                class %s extends SortingTest {
+
+                %s
+
+                    @Test
+                    public void runs(Date date) {
+                    }
+                }
+                """.formatted(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION, declaration, field == null ? "" : field);
+        writeSource("test/de/example/MoreSortingTest.java", override);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // Date in the type argument of a field declares nothing, so runs(Date) overrides the inherited test; a type variable of the class shadows the import.
+        SecurityFrameworkState.UnsupportedReason reason = new SecurityFrameworkState.UnsupportedReason("de.example.MoreSortingTest",
+                SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS);
+        if (unsupported) {
+            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).contains(reason);
+        }
+        else {
+            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).doesNotContain(reason);
+        }
+    }
+
     @Test
     void anOverrideWhoseParameterTypeIsShadowedByAMemberTypeKeepsTheInheritedPolicy() throws IOException {
         writeBuildFile();
