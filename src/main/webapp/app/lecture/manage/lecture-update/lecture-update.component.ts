@@ -1,4 +1,4 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { Observable, Subscription, of } from 'rxjs';
 import { FormsModule } from '@angular/forms';
@@ -456,11 +456,11 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
 
     /**
      * @callback callback after saving a lecture, handles appropriate action in case of error
-     * @param result The Http response from the server
+     * @param result The saved lecture
      */
-    protected subscribeToSaveResponse(result: Observable<HttpResponse<Lecture>>) {
+    protected subscribeToSaveResponse(result: Observable<Lecture>) {
         result.subscribe({
-            next: (response: HttpResponse<Lecture>) => this.onSaveSuccess(response.body!),
+            next: (lecture: Lecture) => this.onSaveSuccess(lecture),
             error: (error: HttpErrorResponse) => this.onSaveError(error),
         });
     }
