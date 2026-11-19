@@ -51,7 +51,6 @@ catalog:
   eslint-plugin-storybook: 10.6.7
   jsdom: 30.0.1
   lodash-es: 4.18.1
-  ng-packagr: 22.3.0
   postcss: 8.5.32
   publint: 0.3.25
   playwright: 1.65.0
