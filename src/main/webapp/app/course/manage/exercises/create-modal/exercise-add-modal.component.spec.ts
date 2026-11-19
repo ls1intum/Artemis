@@ -152,7 +152,7 @@ describe('ExerciseAddModalComponent', () => {
             expect(card?.textContent).toContain('artemisApp.exerciseManagement.type.PROGRAMMING');
             expect(card?.textContent).toContain('artemisApp.hyperion.generation.entry.description');
             expect(card?.tagName).toBe('BUTTON');
-            expect(card?.querySelector('.card-icon-wrapper')).not.toBeNull();
+            expect(card?.querySelector('.option-icon-wrapper')).not.toBeNull();
             expect(card?.querySelector('h6')).not.toBeNull();
             expect(card?.textContent).not.toContain('artemisApp.exerciseManagement.addModal.cardDescription.PROGRAMMING');
         });

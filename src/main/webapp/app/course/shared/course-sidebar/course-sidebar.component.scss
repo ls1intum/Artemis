@@ -19,7 +19,7 @@ $transition-color-length: 0.2s;
     position: relative;
     content: '';
     border-radius: 50%;
-    background-color: var(--bs-danger);
+    background-color: var(--danger);
     padding-left: 0.7rem;
     top: -5px;
     right: 0;
@@ -27,8 +27,7 @@ $transition-color-length: 0.2s;
     font-size: xx-small;
 }
 
-.newMessage::after,
-.dropdown-content > .nav-item > .newMessage::after {
+.newMessage::after {
     @extend %message-block;
 
     margin-left: 0.25rem;
@@ -109,18 +108,42 @@ $transition-color-length: 0.2s;
     }
 }
 
-.nav-link {
+/*
+ * A sidebar entry: a link, the toggle of the "more" menu, or an action. The colour is set here because a layered
+ * utility would lose to the unlayered anchor colour of global.scss.
+ */
+.nav-link-sidebar {
+    display: block;
     white-space: nowrap;
-    color: var(--bs-body-color);
+    color: var(--body-color);
+    text-decoration: none;
+    transition: color 0.15s ease-in-out;
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: -2px;
+    }
 }
 
-.dropdown-content .nav-link-sidebar {
-    justify-content: flex-start;
+// The toggle of the "more" menu is a button that looks like the links around it.
+button.nav-link-sidebar {
+    width: 100%;
+    border: 0;
+    background: none;
+    font: inherit;
+    text-align: start;
 }
 
+// Hidden wins over the display the rules of this file give an entry.
 .collapsed .nav-link-sidebar {
     display: flex;
     justify-content: center;
+}
+
+// Hidden wins over the display the rules of this file give an entry, so this comes after them.
+.nav-link-sidebar[hidden],
+.collapsed .nav-link-sidebar[hidden] {
+    display: none;
 }
 
 .nav-link-sidebar:hover,
@@ -133,7 +156,7 @@ $transition-color-length: 0.2s;
 // Overrides the hover underline from `global.scss`, because only the label span below should be underlined — the
 // anchor also holds the icon, so an underline on it draws a second line under the label and a dash beside the icon.
 // See the comment in `global.scss` for why the exclusions belong in one `:not()` argument list.
-a:not(.btn, .tab-link):hover {
+a:not(.tumaet-ui-btn, .tab-link):hover {
     text-decoration: none !important;
 }
 
@@ -151,51 +174,40 @@ a:not(.btn, .tab-link):hover {
     }
 }
 
-.dropdown-content {
-    overflow-y: auto;
+/*
+ * The "more" menu renders in an overlay, but its template belongs to this component, so these rules reach it. Entries
+ * look like the sidebar entries they stand in for, on a surface as narrow as the sidebar.
+ */
+.more-menu {
+    min-width: 10rem;
+    max-width: var(--sidebar-nav-width);
+    padding: 0;
     background-color: var(--dropdown-bg);
-    border: 1px solid var(--border-color);
-    z-index: 3000;
+    border-color: var(--border-color);
     border-radius: 0.25rem;
+    box-shadow: none;
 
     &.fixedContentSize {
-        max-height: 171px; // To avoid cut offs in the dropdown menu content (4 items)
+        max-height: 171px; // To avoid cut offs in the menu content (4 items)
     }
-}
 
-.dropdown-menu {
-    max-width: var(--sidebar-nav-width);
-}
+    .nav-link-sidebar {
+        display: flex;
+        justify-content: flex-start;
+        gap: 0;
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
 
-.dropdown-courses.active {
-    display: block;
-}
-
-.dropdown-toggle::after {
-    display: none;
+    .more-menu-action {
+        padding: 0.5rem 1rem;
+    }
 }
 
 @media print {
     :host {
         display: none; /* Hide the sidebar when printing */
     }
-}
-
-// Without ng-deep we fail to override the styles from the tooltip
-::ng-deep .double-arrow-tooltip {
-    // without this styling the tooltip is positioned with some distance to the left of the collapse icon when the sidebar is expanded.
-    // the margin bottom ensures the tooltip does not overlap with the collapse icon
-    margin-left: 0.8rem !important;
-}
-
-::ng-deep .double-arrow-tooltip-no-bottom-items {
-    left: 5.75rem !important;
-    margin-bottom: 0.25rem !important;
-}
-
-::ng-deep .double-arrow-tooltip-collapsed {
-    // without this styling the tooltip is positioned with too much distance to the right of the collapse icon when the sidebar is collapsed.
-    margin-left: -0.5rem !important;
 }
 
 // An image icon (SidebarItem.iconImage), sized like a fixed-width fa-icon and painted in the current text colour
