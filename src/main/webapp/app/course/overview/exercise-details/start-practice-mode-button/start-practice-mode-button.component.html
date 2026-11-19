@@ -19,10 +19,10 @@
             [attr.aria-describedby]="isTeamExercise() ? teamHintId : null"
             [tumAetUiPopoverTrigger]="practicePopover"
         ></button>
-        <tumaet-ui-popover #practicePopover placement="right" [ariaLabel]="'artemisApp.exerciseActions.practiceMode.title' | artemisTranslate">
+        <tumaet-ui-popover #practicePopover placement="bottom" alignment="end" [ariaLabel]="'artemisApp.exerciseActions.practiceMode.title' | artemisTranslate">
             <!-- Rendered only while open, so a closed popover adds no further buttons to the page. -->
             @if (practicePopover.isOpen()) {
-                <div class="start-practice-popover">
+                <div class="start-practice-popover text-sm">
                     <h5 jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></h5>
                     <p jhiTranslate="artemisApp.exerciseActions.practiceMode.explanation"></p>
                     @if (isTeamExercise()) {

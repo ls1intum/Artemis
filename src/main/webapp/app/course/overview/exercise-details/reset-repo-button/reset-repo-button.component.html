@@ -22,7 +22,7 @@
     <tumaet-ui-popover #resetPopover placement="top" alignment="start" [ariaLabel]="'artemisApp.exerciseActions.resetRepository.label' | artemisTranslate">
         <!-- Rendered only while open, so every opening starts with an empty confirmation. -->
         @if (resetPopover.isOpen()) {
-            <form style="max-width: 660px" #resetForm="ngForm">
+            <form class="text-sm" style="max-width: 660px" #resetForm="ngForm">
                 <h5>{{ 'artemisApp.exerciseActions.resetRepository.title' + (practiceParticipation() ? 'Practice' : 'Graded') | artemisTranslate }}</h5>
                 <p jhiTranslate="artemisApp.exerciseActions.resetRepository.explanation"></p>
                 @if (exercise().allowOfflineIde) {
