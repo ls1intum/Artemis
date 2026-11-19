@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -117,7 +118,8 @@ public class StudentExamAthenaFeedbackService {
         // course has formative feedback enabled - otherwise a request could reserve a cap slot without ever
         // generating feedback.
         // Athena's configuration is lazy and an exam does not otherwise need it, so this is where it gets read
-        studentExam.getExercises().forEach(courseAthenaConfigRepository::attachToCourseOf);
+        // The ordered exercise list can hold a null at a gap in the order column, which the filter below tolerates as well.
+        studentExam.getExercises().stream().filter(Objects::nonNull).forEach(courseAthenaConfigRepository::attachToCourseOf);
         Set<Long> eligibleExerciseIds = studentExam.getExercises().stream()
                 .filter(exercise -> (exercise instanceof TextExercise || exercise instanceof ModelingExercise) && exercise.getAllowFeedbackRequests()).map(Exercise::getId)
                 .collect(Collectors.toSet());
