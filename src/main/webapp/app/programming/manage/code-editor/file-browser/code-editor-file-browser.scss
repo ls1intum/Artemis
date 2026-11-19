@@ -83,6 +83,12 @@ File browser tree
                 background-color: var(--code-editor-file-browser-tree-hover);
             }
 
+            /* A file with changes stays marked while hovered; only the selected file shows the selection colour. */
+            .file-tree-item.file-tree-item--changed:not(.node-selected),
+            .file-tree-item.file-tree-item--changed:not(.node-selected):hover {
+                background-color: var(--warning);
+            }
+
             .file-tree-item:hover .file-icons,
             .file-tree-item:focus-within .file-icons {
                 opacity: 1;

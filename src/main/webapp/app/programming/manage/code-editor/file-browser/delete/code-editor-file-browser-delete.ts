@@ -35,7 +35,8 @@ export class CodeEditorFileBrowserDeleteComponent {
     faTrashAlt = faTrashAlt;
 
     /**
-     * Deletes the file or folder in the repository, closes the dialog and reports the change.
+     * Deletes the file or folder in the repository and reports the change. The dialog closes afterwards, unless it
+     * shows the confirmation for another file by then.
      */
     deleteFile() {
         // Guard against PROBLEM_STATEMENT deletion - it's a pseudo-file, not a real repository file
@@ -52,7 +53,11 @@ export class CodeEditorFileBrowserDeleteComponent {
         this.repositoryFileService.deleteFile(fileName).subscribe({
             next: () => {
                 this.isLoading.set(false);
-                this.closeModal();
+                // The user may have cancelled this confirmation and opened one for another file while the request
+                // was running. Only the confirmation that started the request is closed.
+                if (this.fileNameToDelete() === fileName) {
+                    this.closeModal();
+                }
                 this.fileDeleted.emit(new DeleteFileChange(fileType, fileName));
             },
             error: (err) => {

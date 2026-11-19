@@ -163,7 +163,7 @@
         <ng-template #editorSidebar>
             @if (exercise()) {
                 <jhi-assessment-instructions
-                    class="p-4! markdown-preview instructions-wrapper__content overflow-auto"
+                    class="flex-auto p-4! markdown-preview instructions-wrapper__content overflow-auto"
                     [exercise]="exercise()!"
                     [programmingParticipation]="participation()"
                     [gradingCriteria]="exercise().gradingCriteria"

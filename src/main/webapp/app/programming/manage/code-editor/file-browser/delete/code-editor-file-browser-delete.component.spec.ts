@@ -80,6 +80,27 @@ describe('CodeEditorFileBrowserDeleteComponent', () => {
         expect(comp.visible()).toBe(false);
     });
 
+    it('should not close the confirmation of another file when an earlier deletion finishes', () => {
+        const pending = new Subject<void>();
+        repositoryFileService.deleteFile.mockReturnValue(pending);
+        const fileDeleted = vi.fn();
+        comp.fileDeleted.subscribe(fileDeleted);
+        open('src/A.java', FileType.FILE);
+        comp.deleteFile();
+
+        // The user cancels while the request runs and opens the confirmation for another file.
+        comp.closeModal();
+        fixture.componentRef.setInput('fileNameToDelete', 'src/B.java');
+        // Set on the model itself: the host's two-way binding writes the same value the input last received.
+        comp.visible.set(true);
+        fixture.detectChanges();
+        pending.next();
+
+        expect(comp.visible()).toBe(true);
+        expect(comp.isLoading()).toBe(false);
+        expect(fileDeleted).toHaveBeenCalledOnce();
+    });
+
     it('should keep the dialog open when deleting fails', () => {
         repositoryFileService.deleteFile.mockReturnValue(throwError(() => new Error('failed')));
         open('src/Test.java', FileType.FILE);

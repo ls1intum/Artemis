@@ -3,7 +3,7 @@
     class="file-tree-item file-item"
     [class.node-selected]="item().checked"
     [class.text-state-danger]="!item().checked && hasError()"
-    [class.bg-state-warning]="hasChanges()"
+    [class.file-tree-item--changed]="hasChanges()"
     data-testid="file-browser-file"
 >
     <button
