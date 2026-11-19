@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +25,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.web.MockMultipartFile;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
@@ -34,6 +36,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.security.SecurityFrameworkAction;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkChoiceDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService;
 
@@ -70,6 +74,9 @@ class ProgrammingExerciseImportFromFileServiceTest {
     @Mock
     private TempFileUtilService tempFileUtilService;
 
+    @Mock
+    private SecurityFrameworkService securityFrameworkService;
+
     private ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService;
 
     @TempDir
@@ -79,7 +86,7 @@ class ProgrammingExerciseImportFromFileServiceTest {
     void setUp() {
         programmingExerciseImportFromFileService = new ProgrammingExerciseImportFromFileService(programmingExerciseCreationUpdateService, programmingExerciseValidationService,
                 new ZipFileService(fileService), staticCodeAnalysisService, programmingExerciseProjectNameService, programmingExerciseImportRepositoryService, fileService,
-                profileService, buildPlanRepository, tempFileUtilService, Optional.of(legacyBuildPlanConverterService), mock(SecurityFrameworkService.class));
+                profileService, buildPlanRepository, tempFileUtilService, Optional.of(legacyBuildPlanConverterService), securityFrameworkService);
     }
 
     @Test
@@ -91,6 +98,18 @@ class ProgrammingExerciseImportFromFileServiceTest {
                 eq(true));
         importOrder.verify(programmingExerciseImportRepositoryService).importRepositoriesFromFile(eq(importedExercise), any(Path.class), any(User.class));
         importOrder.verify(programmingExerciseCreationUpdateService).setupBuildPlansAndTriggerInitialBuilds(importedExercise);
+    }
+
+    @Test
+    void importProgrammingExerciseFromFile_setsUpTheBuildsAlsoWhenTheSecurityFrameworkChoiceCannotBePushed() throws Exception {
+        SecurityFrameworkChoiceDTO choice = new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null);
+        doThrow(new InternalServerErrorAlertException("The push failed", "programmingExercise", "securityFrameworkPushFailed")).when(securityFrameworkService)
+                .applyChoiceToImportedExercise(any(ProgrammingExercise.class), eq(choice), any(User.class));
+
+        var importedExercise = importFixture("valid-import.zip", java.util.Map.of(), false, choice);
+
+        // The exercise is saved already, so the import continues; the client compares the repository with the choice and warns the instructor.
+        verify(programmingExerciseCreationUpdateService).setupBuildPlansAndTriggerInitialBuilds(importedExercise);
     }
 
     /**
@@ -116,6 +135,11 @@ class ProgrammingExerciseImportFromFileServiceTest {
     }
 
     private ProgrammingExercise importFixture(String fixtureName, java.util.Map<String, String> additionalEntries, boolean staticAnalysis) throws Exception {
+        return importFixture(fixtureName, additionalEntries, staticAnalysis, null);
+    }
+
+    private ProgrammingExercise importFixture(String fixtureName, java.util.Map<String, String> additionalEntries, boolean staticAnalysis,
+            @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice) throws Exception {
         Path importExerciseDir = tempDir.resolve("imported-exercise-dir");
         Path zipPath = importExerciseDir.resolve("exercise-for-import.zip");
         Files.createDirectories(importExerciseDir);
@@ -159,7 +183,10 @@ class ProgrammingExerciseImportFromFileServiceTest {
         }
         MockMultipartFile zipFile = new MockMultipartFile("file", fixtureName, "application/zip", bytes);
 
-        programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(originalExercise, new ProgrammingExerciseBuildConfig(), zipFile, new Course(), new User());
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        Course course = new Course();
+        User user = new User();
+        programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(originalExercise, buildConfig, zipFile, course, user, false, securityFrameworkChoice);
         return importedExercise;
     }
 
