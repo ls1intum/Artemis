@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.security;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -771,7 +772,8 @@ public class SecurityFrameworkService {
             }
             return readConfig(repository);
         }
-        catch (GitAPIException | IOException e) {
+        catch (GitAPIException | IOException | UncheckedIOException e) {
+            // Writing a file of the checkout throws UncheckedIOException; like a failed push, it leaves nothing pushed.
             log.error("Could not apply the Security Framework change to the tests repository of exercise {}", exercise.getId(), e);
             throw new InternalServerErrorAlertException("Could not push the Security Framework change to the tests repository.", ENTITY_NAME, "securityFrameworkPushFailed");
         }

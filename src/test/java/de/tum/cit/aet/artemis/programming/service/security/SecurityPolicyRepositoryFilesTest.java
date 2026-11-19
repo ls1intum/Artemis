@@ -453,6 +453,16 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void anExtendWithImportedFromElsewhereRegistersNothing() throws IOException {
+        writeBuildFile();
+        String registration = "import example.metadata.ExtendWith;\n\n@ExtendWith(de.tum.cit.ase.ares.api.jupiter.JupiterSecurityExtension.class)\n@Public";
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("@Public", registration));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
+    }
+
+    @Test
     void aHelperWhoseTestAnnotationIsImportedFromElsewhereIsNoTestClass() throws IOException {
         writeBuildFile();
         writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");
