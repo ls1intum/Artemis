@@ -12,7 +12,6 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -140,21 +139,40 @@ class TumLiveUploadServiceTest {
         var target = new GocastUploadTargetDTO(55, "https://tum.live/upload");
         var file = InputStream.nullInputStream();
         var failure = new GocastIntegrationException("transfer interrupted", HttpStatus.BAD_GATEWAY);
-        when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(pending(ZonedDateTime.now(), null)));
+        var upload = pending(ZonedDateTime.now(), null);
+        when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(upload));
         when(api.createUpload(eq(23L), eq(REF), anyString())).thenReturn(target);
         when(uploadRepository.recordPendingStream(UNIT_ID, REF, 55)).thenReturn(true);
-        doThrow(failure).doNothing().when(api).transferUpload(target, file);
+        doThrow(failure).when(api).transferUpload(target, file);
         doAnswer(_ -> {
-            assertThatThrownBy(() -> service.transfer(unit(), REF, InputStream.nullInputStream())).isInstanceOf(ConflictException.class);
-            verify(api).createUpload(eq(23L), eq(REF), anyString());
+            // Model a competing transfer that read the pending row before the first transfer recorded its stream.
+            assertThatThrownBy(() -> service.transfer(unit(), REF, InputStream.nullInputStream())).isInstanceOf(ConflictException.class)
+                    .hasMessageContaining("already being transferred");
+            upload.clearPending();
             return true;
         }).when(uploadRepository).discardPending(eq(UNIT_ID), eq(REF), anyString(), any());
 
         assertThatThrownBy(() -> service.transfer(unit(), REF, file)).isSameAs(failure);
 
         verify(uploadRepository).discardPending(eq(UNIT_ID), eq(REF), eq("The video transfer to TUM.Live failed."), any());
-        service.transfer(unit(), REF, file);
-        verify(api, times(2)).createUpload(eq(23L), eq(REF), anyString());
+        assertThatThrownBy(() -> service.transfer(unit(), REF, file)).isInstanceOf(ConflictException.class).hasMessageContaining("no longer pending");
+        verify(api).createUpload(eq(23L), eq(REF), anyString());
+
+        when(api.findUploadConnection(7L)).thenReturn(Optional.of(new GocastUploadConnectionDTO(17, 23, "algo")));
+        when(uploadRepository.startPending(eq(UNIT_ID), eq(17L), eq(23L), eq("algo"), anyString(), any())).thenAnswer(invocation -> {
+            upload.startPending(invocation.getArgument(4), 23, "algo", null, invocation.getArgument(5));
+            return upload;
+        });
+        String retryRef = service.start(unit());
+        assertThat(retryRef).isNotEqualTo(REF);
+        var retryTarget = new GocastUploadTargetDTO(56, "https://tum.live/retry-upload");
+        var retryFile = InputStream.nullInputStream();
+        when(api.createUpload(eq(23L), eq(retryRef), anyString())).thenReturn(retryTarget);
+        when(uploadRepository.recordPendingStream(UNIT_ID, retryRef, 56)).thenReturn(true);
+
+        service.transfer(unit(), retryRef, retryFile);
+
+        verify(api).transferUpload(retryTarget, retryFile);
     }
 
     @Test
