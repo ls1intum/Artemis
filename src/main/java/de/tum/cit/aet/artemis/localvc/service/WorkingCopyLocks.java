@@ -44,7 +44,7 @@ final class WorkingCopyLocks {
         try {
             lock.lockInterruptibly();
         }
-        catch (InterruptedException exception) {
+        catch (InterruptedException exception) { // NOSONAR java:S2142 - reviewed, the interrupt is consumed on purpose, see the comment below
             // Do not leave a ForkJoin worker interrupted: its next JGit checkout could otherwise fail in interruptible NIO and delete the working copy.
             throw new CanceledException("Waiting for a working copy got interrupted.");
         }
