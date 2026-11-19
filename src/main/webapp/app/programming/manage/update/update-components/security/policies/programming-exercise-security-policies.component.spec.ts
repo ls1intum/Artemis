@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject, forkJoin, of, throwError } from 'rxjs';
+import { Observable, Subject, forkJoin, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 import { SecurityActivationStatus, SecurityFrameworkConfig, SecurityVersionCompatibilityVerdict } from 'app/programming/shared/entities/security-framework-config.model';
@@ -56,7 +56,9 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
             getConfig: vi.fn().mockReturnValue(of(configured())),
         };
         // The server reads both parts of the pushed state from one commit; the tests stub the parts, and the read fails as a whole if one part fails.
-        service.getPoliciesWithConfig = vi.fn((exerciseId: number) => forkJoin({ editor: service.getPolicies(exerciseId), config: service.getConfig(exerciseId) }));
+        const policiesOf = service.getPolicies as unknown as (exerciseId: number) => Observable<SecurityPolicyEditor>;
+        const configOf = service.getConfig as unknown as (exerciseId: number) => Observable<SecurityFrameworkConfig>;
+        service.getPoliciesWithConfig = vi.fn((exerciseId: number) => forkJoin({ editor: policiesOf(exerciseId), config: configOf(exerciseId) }));
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
