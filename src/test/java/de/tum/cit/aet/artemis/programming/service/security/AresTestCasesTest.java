@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -129,11 +130,12 @@ class AresTestCasesTest {
                 }
                 """;
 
-        AresTestCases.TestSignature check = new AresTestCases.TestSignature("check", "check()", false);
-        AresTestCases.TestSignature overload = new AresTestCases.TestSignature("check", "check(java.util.Map,int[],?String[])", true);
-        AresTestCases.TestSignature sorts = new AresTestCases.TestSignature("sorts", "sorts(java.util.List)", true);
+        AresTestCases.TestSignature check = new AresTestCases.TestSignature("check", "check()", false, Set.of());
+        AresTestCases.TestSignature overload = new AresTestCases.TestSignature("check", "check(java.util.Map,int[],?String[])", true, Set.of());
+        // List is resolved only through its import, which a member type inherited by a subclass would shadow.
+        AresTestCases.TestSignature sorts = new AresTestCases.TestSignature("sorts", "sorts(java.util.List)", true, Set.of("List"));
         // The braces in the arguments of an annotation end no member, so the modifier before it still counts.
-        AresTestCases.TestSignature sizes = new AresTestCases.TestSignature("sizes", "sizes(int)", true);
+        AresTestCases.TestSignature sizes = new AresTestCases.TestSignature("sizes", "sizes(int)", true, Set.of());
         assertThat(AresTestCases.testSignatures(AresPolicyAnnotations.mask(source)).values()).containsExactlyInAnyOrder(check, overload, sorts, sizes);
     }
 

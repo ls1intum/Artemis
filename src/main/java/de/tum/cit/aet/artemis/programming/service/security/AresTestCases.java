@@ -48,16 +48,14 @@ final class AresTestCases {
     /** The name of a type variable, group 1, followed by its bound or by the separator, which stays unconsumed. */
     private static final String TYPE_VARIABLE_NAME = "(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\s*(?=extends(?!\\p{javaJavaIdentifierPart})|[,>&])";
 
-    /** The annotations of a type variable, e.g. {@code @Marker} or {@code @Size(max = 3)}, which precede its name. */
-    private static final String TYPE_VARIABLE_ANNOTATIONS = "(?:@\\s*[\\w$]+(?:\\s*\\.\\s*[\\w$]+)*+\\s*(?:\\([^()]*\\))?\\s*)*+";
-
     /**
      * A name in angle brackets that may declare a type variable, e.g. {@code Date} in {@code <X, @Marker Date extends java.sql.Date>}, group 1 being the
-     * name. Its annotations are skipped, and the separator after the name stays unconsumed, so the next name after a comma is found as well. It is only
+     * name. It is matched once the annotations are removed, and the separator after the name stays unconsumed, so the next name after a comma is found as
+     * well. It is only
      * searched in the headers of types and methods, where it also matches a type argument such as {@code String} in a return type {@code List<String>}, which
      * only makes the check more cautious.
      */
-    private static final Pattern TYPE_VARIABLE = Pattern.compile("[<,]\\s*" + TYPE_VARIABLE_ANNOTATIONS + TYPE_VARIABLE_NAME);
+    private static final Pattern TYPE_VARIABLE = Pattern.compile("[<,]\\s*" + TYPE_VARIABLE_NAME);
 
     /** A single-type import, group 1 being the imported type; a static import names a member and is no type import. */
     private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s+(?!static\\s)([\\p{javaJavaIdentifierPart}.\\s]+?)\\s*;");
@@ -170,8 +168,9 @@ final class AresTestCases {
      *                                   source writes or imports them qualified, and marked with {@code ?} where the simple name may refer to a type of
      *                                   the package, of {@code java.lang}, of a wildcard import or of the file itself
      * @param visibleInOtherPackages whether it is public or protected, so that a subclass in another package overrides it, too
+     * @param importedNames          the simple type names that only a single-type import resolves, which a member type a subclass inherits would shadow
      */
-    record TestSignature(String name, String text, boolean visibleInOtherPackages) {
+    record TestSignature(String name, String text, boolean visibleInOtherPackages, Set<String> importedNames) {
 
         /**
          * @return whether a parameter type is a simple name that the file does not resolve itself, so the same text in another file, also of the same
@@ -208,9 +207,16 @@ final class AresTestCases {
                 // The type parameters of the method itself precede its return type.
                 Set<String> typeVariables = new HashSet<>(typeVariablesOfTypes);
                 typeVariables.addAll(typeVariables(masked.substring(memberStart, declaration)));
-                UnaryOperator<String> resolve = simpleName -> importedType(masked, simpleName, declaration, imported, typeVariables);
+                Set<String> importedNames = new HashSet<>();
+                UnaryOperator<String> resolve = simpleName -> {
+                    String resolved = importedType(masked, simpleName, declaration, imported, typeVariables);
+                    if (resolved != null) {
+                        importedNames.add(simpleName);
+                    }
+                    return resolved;
+                };
                 String text = method.group(1) + "(" + parameterTypes(parameters, resolve) + ")";
-                signatures.put(method.start(1), new TestSignature(method.group(1), text, visible));
+                signatures.put(method.start(1), new TestSignature(method.group(1), text, visible, Set.copyOf(importedNames)));
             }
         }
         return signatures;
@@ -268,12 +274,32 @@ final class AresTestCases {
     }
 
     /**
+     * @return the masked text without its annotations and their arguments, also nested ones such as {@code @Wrap(@Flag(true))}, each replaced by a space
+     */
+    private static String withoutAnnotations(String masked) {
+        StringBuilder text = new StringBuilder();
+        int position = 0;
+        while (position < masked.length()) {
+            Matcher name = ANNOTATION_NAME.matcher(masked).region(position, masked.length());
+            if (masked.charAt(position) == '@' && name.lookingAt()) {
+                position = skipArguments(masked, skipWhitespace(masked, name.end()));
+                text.append(' ');
+            }
+            else {
+                text.append(masked.charAt(position));
+                position++;
+            }
+        }
+        return text.toString();
+    }
+
+    /**
      * @param header the masked header of a type or a method, up to its body or its name
      * @return the names it may declare as type variables, see {@link #TYPE_VARIABLE}
      */
     private static Set<String> typeVariables(String header) {
         Set<String> names = new HashSet<>();
-        Matcher typeVariable = TYPE_VARIABLE.matcher(header);
+        Matcher typeVariable = TYPE_VARIABLE.matcher(withoutAnnotations(header));
         while (typeVariable.find()) {
             names.add(typeVariable.group(1));
         }

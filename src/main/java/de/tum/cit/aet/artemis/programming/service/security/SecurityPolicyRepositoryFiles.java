@@ -24,6 +24,7 @@ import java.util.function.Predicate;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
@@ -320,19 +321,24 @@ public final class SecurityPolicyRepositoryFiles {
         if (testClass.policies().size() != 1 || !testClass.policies().getFirst().isEvaluable() || testClass.policies().getFirst().isActivated()) {
             return false;
         }
+        List<AresTestSources.TypeDeclaration> chain = new ArrayList<>();
         Set<String> visited = new HashSet<>();
-        List<AresTestSources.TypeDeclaration> subclasses = new ArrayList<>();
         Optional<AresTestSources.TypeDeclaration> declaring = Optional.of(testClass);
         while (declaring.isPresent() && visited.add(declaring.get().qualifiedName())) {
-            AresTestSources.TypeDeclaration type = declaring.get();
+            chain.add(declaring.get());
+            declaring = superclassOf(declaring.get(), testClassesByName.keySet()).map(testClassesByName::get);
+        }
+        // A member type of a class in the chain is inherited by the classes below it and shadows an import of the same simple name there.
+        Set<String> memberTypes = new HashSet<>();
+        chain.forEach(type -> memberTypes.addAll(type.memberTypes()));
+        for (int index = 0; index < chain.size(); index++) {
+            AresTestSources.TypeDeclaration type = chain.get(index);
             for (Map.Entry<String, AresPolicyAnnotations.Annotation> methodPolicy : type.methodPolicies().entrySet()) {
                 AresPolicyAnnotations.Annotation annotation = methodPolicy.getValue();
-                if (annotation.isEvaluable() && annotation.isActivated() && !isOverridden(type, methodPolicy.getKey(), subclasses)) {
+                if (annotation.isEvaluable() && annotation.isActivated() && !isOverridden(type, methodPolicy.getKey(), chain.subList(0, index), memberTypes)) {
                     return true;
                 }
             }
-            subclasses.add(type);
-            declaring = superclassOf(type, testClassesByName.keySet()).map(testClassesByName::get);
         }
         return false;
     }
@@ -341,11 +347,12 @@ public final class SecurityPolicyRepositoryFiles {
      * Whether a subclass overrides the test method, so that JUnit runs the override with its own annotations instead: it declares a test method with the
      * same signature, and is in the same package unless the method is public or protected. A name that several test methods of the type share is never
      * overridden as a whole, so it counts as inherited, and so does a signature with a simple type name that may name different types in the two files,
-     * e.g. through wildcard imports of {@code java.util.*} and {@code java.sql.*}.
+     * e.g. through wildcard imports of {@code java.util.*} and {@code java.sql.*}, or that a member type of the class hierarchy may shadow.
      *
-     * @param subclasses the classes between the class that runs the tests and the type, including the former
+     * @param subclasses  the classes between the class that runs the tests and the type, including the former
+     * @param memberTypes the simple names of the member types of the classes from the class that runs the tests up to the root of the hierarchy
      */
-    private static boolean isOverridden(AresTestSources.TypeDeclaration type, String method, List<AresTestSources.TypeDeclaration> subclasses) {
+    private static boolean isOverridden(AresTestSources.TypeDeclaration type, String method, List<AresTestSources.TypeDeclaration> subclasses, Set<String> memberTypes) {
         List<AresTestCases.TestSignature> signatures = type.testSignatures().stream().filter(signature -> signature.name().equals(method)).toList();
         if (signatures.size() != 1) {
             return false;
@@ -356,11 +363,20 @@ public final class SecurityPolicyRepositoryFiles {
         }
         for (AresTestSources.TypeDeclaration subclass : subclasses) {
             boolean canOverride = signature.visibleInOtherPackages() || subclass.packageName().equals(type.packageName());
-            if (canOverride && subclass.testSignatures().stream().anyMatch(candidate -> candidate.text().equals(signature.text()))) {
+            if (canOverride && subclass.testSignatures().stream().anyMatch(candidate -> isSameSignature(candidate, signature, memberTypes))) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * @return whether the candidate declares the signature: the same text, with no type name of either resolved through an import that an inherited member
+     *         type may shadow instead
+     */
+    private static boolean isSameSignature(AresTestCases.TestSignature candidate, AresTestCases.TestSignature signature, Set<String> memberTypes) {
+        Stream<String> importedNames = Stream.concat(candidate.importedNames().stream(), signature.importedNames().stream());
+        return candidate.text().equals(signature.text()) && importedNames.noneMatch(memberTypes::contains);
     }
 
     private static SecurityFrameworkState.PolicyFile policyFile(String path, List<String> referencedBy, PolicyFileReader reader, boolean verifiedAresVersion) {

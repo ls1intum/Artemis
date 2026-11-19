@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.security;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,9 +127,11 @@ final class AresTestSources {
      *                             {@code @HiddenTest} on a method
      * @param containsTests    whether one of its methods is a JUnit or Ares test
      * @param testSignatures   the signatures of its test methods, in the order of the source, which decide whether a subclass overrides one of them
+     * @param memberTypes      the simple names of the types declared in its body, which its subclasses inherit as member types
      */
     record TypeDeclaration(String simpleName, String qualifiedName, List<String> superclass, List<AresPolicyAnnotations.Annotation> policies,
-            Map<String, AresPolicyAnnotations.Annotation> methodPolicies, boolean registersSandbox, boolean containsTests, List<AresTestCases.TestSignature> testSignatures) {
+            Map<String, AresPolicyAnnotations.Annotation> methodPolicies, boolean registersSandbox, boolean containsTests, List<AresTestCases.TestSignature> testSignatures,
+            Set<String> memberTypes) {
 
         /**
          * @return the package of the type; empty for the default package
@@ -336,8 +339,16 @@ final class AresTestSources {
                     testSignatures.add(signature);
                 }
             });
+            Set<String> memberTypes = new HashSet<>();
+            Matcher memberType = AresPolicyAnnotations.TYPE_DECLARATION.matcher(masked);
+            while (memberType.find()) {
+                if (declaration.bodyStart() < memberType.start() && memberType.start() < declaration.bodyEnd()) {
+                    memberTypes.add(memberType.group(2));
+                }
+            }
             types.add(new TypeDeclaration(declaration.simpleName(), qualifiedName, superclass, List.copyOf(policiesByType.get(index)),
-                    Collections.unmodifiableMap(new LinkedHashMap<>(methodPoliciesByType.get(index))), registers[index], tests[index], List.copyOf(testSignatures)));
+                    Collections.unmodifiableMap(new LinkedHashMap<>(methodPoliciesByType.get(index))), registers[index], tests[index], List.copyOf(testSignatures),
+                    Set.copyOf(memberTypes)));
         }
         return types;
     }
