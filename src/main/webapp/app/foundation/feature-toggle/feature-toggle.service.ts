@@ -28,6 +28,7 @@ export enum FeatureToggle {
     PresentationAssessments = 'PresentationAssessments',
     GlobalSearchReconcile = 'GlobalSearchReconcile',
     GlobalSearchReconcileOrphan = 'GlobalSearchReconcileOrphan',
+    SmartQuizzes = 'SmartQuizzes',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 
