@@ -512,9 +512,14 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         var selected = (ProgrammingSubmission) teamSubmission(exercise, tutor1, "own");
         selected.setCommitHash("1111111111111111111111111111111111111111");
         submissionRepository.save(selected);
+        submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(selected.getId()).getResults().forEach(result -> resultRepository.deleteResultById(result.getId()));
         var newer = new ProgrammingSubmission();
         newer.setCommitHash("2222222222222222222222222222222222222222");
+        newer.setSubmitted(true);
+        newer.setSubmissionDate(selected.getSubmissionDate().plusHours(1));
         participationUtilService.addSubmission((StudentParticipation) selected.getParticipation(), newer);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(selected.getId()).getResults()).isEmpty();
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(newer.getId()).getResults()).isEmpty();
         var opened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, selected.getId()), HttpStatus.OK,
                 de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
         assertThat(opened.id()).isEqualTo(selected.getId());
