@@ -381,4 +381,79 @@ describe('ConversationGlobalSearchComponent', () => {
         component.focusWithSelectedConversation(undefined);
         expect(component.selectedConversations()).toEqual([]);
     });
+
+    describe('filter tags and suggestions', () => {
+        function removeButtons(): HTMLButtonElement[] {
+            return Array.from(fixture.nativeElement.querySelectorAll('tumaet-ui-tag button[aria-label="Remove"]'));
+        }
+
+        it('should show a removable tag for every selected conversation and author', () => {
+            component.selectedConversations.set([mockConversations[0]]);
+            component.selectedAuthors.set([mockUsers[0]]);
+            fixture.changeDetectorRef.detectChanges();
+
+            const tags: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('tumaet-ui-tag'));
+            expect(tags.map((tag) => tag.textContent?.trim())).toEqual(['in:#General Channel', 'from:@John Doe']);
+            expect(removeButtons()).toHaveLength(2);
+        });
+
+        it('should remove the conversation and the author when their tag is removed', () => {
+            component.selectedConversations.set([mockConversations[0]]);
+            component.selectedAuthors.set([mockUsers[0]]);
+            fixture.changeDetectorRef.detectChanges();
+
+            removeButtons()[0].click();
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.selectedConversations()).toEqual([]);
+            expect(component.selectedAuthors()).toEqual([mockUsers[0]]);
+
+            removeButtons()[0].click();
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.selectedAuthors()).toEqual([]);
+        });
+
+        it('should clear the search with the clear button once there is something to clear', () => {
+            expect(fixture.nativeElement.querySelector('button[aria-label="Clear search"]')).toBeNull();
+
+            component.selectedConversations.set([mockConversations[0]]);
+            fixture.changeDetectorRef.detectChanges();
+            fixture.nativeElement.querySelector('button[aria-label="Clear search"]').click();
+
+            expect(component.selectedConversations()).toEqual([]);
+            expect(component.fullSearchTerm).toBe('');
+        });
+
+        it('should highlight the active suggestion and select it on mousedown', () => {
+            component.isSearchActive.set(true);
+            component.fullSearchTerm = 'in:';
+            component.startFiltering();
+            fixture.changeDetectorRef.detectChanges();
+
+            const options: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('.suggestion-option'));
+            expect(options).toHaveLength(mockConversations.length);
+            expect(options[0].classList).toContain('active');
+            expect(options[1].classList).not.toContain('active');
+
+            options[1].dispatchEvent(new MouseEvent('mousedown'));
+            expect(component.selectedConversations()).toEqual([mockConversations[1]]);
+        });
+
+        it('should scroll the active suggestion into view when it is not fully visible', () => {
+            component.isSearchActive.set(true);
+            component.fullSearchTerm = 'in:';
+            component.startFiltering();
+            fixture.changeDetectorRef.detectChanges();
+            const container = fixture.nativeElement.querySelector('.filter-suggestions') as HTMLElement;
+            const active = container.querySelector('.suggestion-option.active') as HTMLElement;
+            vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({ top: 0, bottom: 100 } as DOMRect);
+            vi.spyOn(active, 'getBoundingClientRect').mockReturnValue({ top: 90, bottom: 130 } as DOMRect);
+            const scrollIntoView = vi.fn();
+            active.scrollIntoView = scrollIntoView;
+
+            component.setActiveDropdownIndex(0);
+            vi.advanceTimersByTime(0);
+
+            expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', behavior: 'smooth' });
+        });
+    });
 });

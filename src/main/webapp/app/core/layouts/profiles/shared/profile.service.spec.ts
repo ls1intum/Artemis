@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
+import { isImageSourceAllowed, setAllowedImageHosts } from 'app/foundation/util/image-host-policy.util';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 
 describe('ProfileService', () => {
@@ -42,6 +43,16 @@ describe('ProfileService', () => {
             const req = httpMock.expectOne({ method: 'GET' });
             const infoUrl = 'management/info';
             expect(req.request.url).toEqual(infoUrl);
+        });
+
+        it('should hand the allowed image hosts to the markdown rendering', async () => {
+            const promise = service.loadProfileInfo();
+            httpMock.expectOne('management/info').flush({ ...expectedProfileInfo, allowedImageHosts: 'images.example.net' });
+            await promise;
+
+            expect(isImageSourceAllowed('https://images.example.net/a.png')).toBe(true);
+            expect(isImageSourceAllowed('https://other.example.org/a.png')).toBe(false);
+            setAllowedImageHosts(undefined);
         });
 
         it('should get the profile info', async () => {

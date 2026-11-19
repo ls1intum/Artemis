@@ -16,7 +16,7 @@ import {
 } from '@tumaet/ui-angular';
 import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleCheck, faCircleInfo, faGear, faPlay, faRotate, faStop, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCircleCheck, faCircleInfo, faGear, faPlay, faRotate, faStop, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Observable, Subject, Subscription, forkJoin, interval, of } from 'rxjs';
 import { catchError, defaultIfEmpty, exhaustMap, finalize, map, switchMap, tap, timeout } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -28,6 +28,7 @@ import { ButtonType } from 'app/shared-ui/components/buttons/button/button.compo
 import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
@@ -37,7 +38,10 @@ import { QuizQuestionPoolService } from 'app/hyperion/manage/quiz-question-pool/
 import { QuizQuestionPoolItemListComponent } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool-item-list/quiz-question-pool-item-list.component';
 import { QuizQuestionPoolSettingsDialogComponent } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool-settings-dialog/quiz-question-pool-settings-dialog.component';
 import {
+    PoolBuildTrigger,
     PoolCompetency,
+    PoolLectureUnit,
+    PoolLectureUnitGroup,
     PoolPlan,
     PoolProgress,
     PoolQuestion,
@@ -131,6 +135,7 @@ function buildFactsOf(settings: PoolSettings, reference?: PoolSettings): PoolSet
         InfiniteScrollDirective,
         TranslateDirective,
         ArtemisTranslatePipe,
+        ArtemisDatePipe,
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
@@ -157,6 +162,8 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     readonly faCircleCheck = faCircleCheck;
     readonly faCircleInfo = faCircleInfo;
     readonly faStop = faStop;
+    readonly faBan = faBan;
+    readonly faTriangleExclamation = faTriangleExclamation;
 
     readonly courseId = signal<number | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
@@ -173,6 +180,10 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     readonly pendingInQueue = signal(0);
     /** Whether the queue is folded away; it folds on its own once every flagged question has a decision. */
     readonly queueCollapsed = signal(false);
+    /** The lecture units the pool generates from; the panel listing them starts folded. */
+    readonly lectureUnits = signal<PoolLectureUnit[]>([]);
+    readonly unitsCollapsed = signal(true);
+    readonly busyLectureUnitIds = signal<ReadonlySet<number>>(new Set());
     readonly competencyOptions = signal<PoolCompetency[]>([]);
     readonly isLoadingMore = signal(false);
     readonly isLoadingMoreNeedsReview = signal(false);
@@ -251,7 +262,8 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         if (!stored) {
             return [];
         }
-        const facts = buildFactsOf(stored, this.runningBuildSettings());
+        const overnight = { key: SETTINGS_KEY_PREFIX + (stored.poolGenerationEnabled ? 'summaryOvernightOn' : 'summaryOvernightOff'), values: {}, changed: false };
+        const facts = [...buildFactsOf(stored, this.runningBuildSettings()), overnight];
         if (this.runningBuildSettings() && this.plan()) {
             const count = this.nextBuildCount();
             const planned = { key: SETTINGS_KEY_PREFIX + 'summaryPlanned', values: { count }, changed: count !== this.progress()?.total };
@@ -260,6 +272,36 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         return facts;
     });
     readonly remainingQuestions = computed(() => Math.max(0, this.totalQuestionCount() - this.questions().length));
+    readonly lastBuild = computed(() => this.progress()?.lastBuild);
+    /** The lecture units grouped by the competency they are listed under, in the server's order. */
+    readonly lectureUnitGroups = computed<PoolLectureUnitGroup[]>(() => {
+        const groups = new Map<number, PoolLectureUnitGroup>();
+        for (const unit of this.lectureUnits()) {
+            let group = groups.get(unit.competencyId);
+            if (!group) {
+                group = { competencyId: unit.competencyId, competencyTitle: unit.competencyTitle, units: [] };
+                groups.set(unit.competencyId, group);
+            }
+            group.units.push(unit);
+        }
+        return [...groups.values()];
+    });
+    readonly excludedUnitCount = computed(
+        () =>
+            new Set(
+                this.lectureUnits()
+                    .filter((unit) => unit.excluded)
+                    .map((unit) => unit.lectureUnitId),
+            ).size,
+    );
+    readonly changedUnitCount = computed(
+        () =>
+            new Set(
+                this.lectureUnits()
+                    .filter((unit) => unit.materialChanged)
+                    .map((unit) => unit.lectureUnitId),
+            ).size,
+    );
     readonly remainingNeedsReview = computed(() => Math.max(0, this.needsReviewTotal() - this.needsReviewQuestions().length));
     readonly showNeedsReviewQueue = computed(() => this.selectedCompetencyId() === undefined && this.needsReviewQuestions().length > 0);
     /** Whether every flagged question of the whole queue, loaded or not, has a decision. */
@@ -304,6 +346,9 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         this.needsReviewTotal.set(0);
         this.pendingInQueue.set(0);
         this.queueCollapsed.set(false);
+        this.lectureUnits.set([]);
+        this.unitsCollapsed.set(true);
+        this.busyLectureUnitIds.set(new Set());
         this.competencyOptions.set([]);
         this.settings.set(undefined);
         this.settingsDialogVisible.set(false);
@@ -532,6 +577,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         this.isLoading.set(true);
         this.loadProgress(courseId);
         this.loadPlan(courseId);
+        this.loadLectureUnits(courseId);
         this.reloadQuestions(courseId, PAGE_SIZE)
             .pipe(
                 finalize(() => this.isLoading.set(false)),
@@ -570,8 +616,87 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             const courseId = this.courseId();
             if (wasRunning && courseId) {
                 this.loadPlan(courseId);
+                this.loadLectureUnits(courseId);
             }
         }
+    }
+
+    private loadLectureUnits(courseId: number): void {
+        this.poolService
+            .getLectureUnits(courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (units) => {
+                    if (this.isCurrent(courseId)) {
+                        this.lectureUnits.set(units);
+                    }
+                },
+                error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.errors.loadFailed'),
+            });
+    }
+
+    /** The label key of a build's trigger. */
+    triggerLabelKey(trigger: PoolBuildTrigger): string {
+        return 'artemisApp.hyperion.quizQuestionPool.progress.trigger.' + trigger;
+    }
+
+    /**
+     * Excludes a lecture unit from generation after a confirmation, since its unreviewed questions are deleted, or includes it again at
+     * once.
+     *
+     * @param unit the lecture unit
+     */
+    toggleLectureUnit(unit: PoolLectureUnit): void {
+        const courseId = this.courseId();
+        if (!courseId) {
+            return;
+        }
+        if (unit.excluded) {
+            this.setLectureUnitExcluded(courseId, unit.lectureUnitId, false);
+            return;
+        }
+        this.confirmationService.confirm({
+            header: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.units.excludeConfirmHeader'),
+            message: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.units.excludeConfirmMessage', { unit: unit.lectureUnitName }),
+            icon: faTriangleExclamation,
+            acceptLabel: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.units.exclude'),
+            acceptSeverity: 'danger',
+            rejectLabel: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.settings.cancel'),
+            rejectSeverity: 'secondary',
+            accept: () => this.setLectureUnitExcluded(courseId, unit.lectureUnitId, true),
+        });
+    }
+
+    private setLectureUnitExcluded(courseId: number, lectureUnitId: number, excluded: boolean): void {
+        if (!this.isCurrent(courseId)) {
+            this.alertService.warning('artemisApp.hyperion.quizQuestionPool.courseChanged');
+            return;
+        }
+        if (this.busyLectureUnitIds().has(lectureUnitId)) {
+            return;
+        }
+        this.busyLectureUnitIds.update((ids) => new Set([...ids, lectureUnitId]));
+        this.poolService
+            .updateLectureUnitRelevance(courseId, lectureUnitId, excluded)
+            .pipe(
+                finalize(() =>
+                    this.busyLectureUnitIds.update((ids) => {
+                        const next = new Set(ids);
+                        next.delete(lectureUnitId);
+                        return next;
+                    }),
+                ),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe({
+                next: () => {
+                    if (this.isCurrent(courseId)) {
+                        this.alertService.success(excluded ? 'artemisApp.hyperion.quizQuestionPool.units.excluded' : 'artemisApp.hyperion.quizQuestionPool.units.included');
+                        this.loadPool(courseId);
+                    }
+                },
+                error: (error: HttpErrorResponse) => this.alertService.error(this.deleteErrorKey(error, 'artemisApp.hyperion.quizQuestionPool.units.relevanceFailed')),
+            });
     }
 
     private loadPlan(courseId: number): void {
@@ -643,10 +768,22 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
      * clicks itself and stays the control for keyboard users.
      */
     toggleQueueFromHeader(event: MouseEvent): void {
-        const target = event.target as Element | null;
-        if (target?.closest('.tumaet-ui-panel-header') && !target.closest('.tumaet-ui-panel-toggler')) {
+        if (this.isHeaderClick(event)) {
             this.queueCollapsed.update((collapsed) => !collapsed);
         }
+    }
+
+    /** Folds or unfolds the lecture units panel when a click lands anywhere in its header row. */
+    toggleUnitsFromHeader(event: MouseEvent): void {
+        if (this.isHeaderClick(event)) {
+            this.unitsCollapsed.update((collapsed) => !collapsed);
+        }
+    }
+
+    /** Whether a click landed in a panel's header row but not on the panel's own toggle button. */
+    private isHeaderClick(event: MouseEvent): boolean {
+        const target = event.target as Element | null;
+        return !!target?.closest('.tumaet-ui-panel-header') && !target.closest('.tumaet-ui-panel-toggler');
     }
 
     /** Asks for confirmation, then stops the running build after its current step. */

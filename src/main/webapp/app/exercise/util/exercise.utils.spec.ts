@@ -23,7 +23,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 
 describe('ExerciseUtils', () => {

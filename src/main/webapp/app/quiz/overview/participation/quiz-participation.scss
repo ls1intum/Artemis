@@ -63,24 +63,6 @@
     .label {
         cursor: pointer;
         margin: 2px 0;
-
-        /* adjust [ngbPopover] window style */
-        & + ngb-popover-window {
-            max-width: 500px;
-        }
-    }
-
-    /* adjust [ngbPopover] window style */
-    ngb-popover-window {
-        max-width: 500px;
-
-        @media (max-width: 991.98px) {
-            max-width: 300px !important;
-        }
-
-        @media (max-width: 575.98px) {
-            max-width: 200px !important;
-        }
     }
 }
 

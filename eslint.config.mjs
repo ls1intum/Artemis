@@ -9,7 +9,6 @@ import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
 import localRulesPlugin from './config/eslint/rules/index.mjs';
 import buttonInlineTemplates from './config/eslint/rules/button-inline-templates.mjs';
-
 // Builds `no-restricted-imports` patterns that block importing a sibling client layer
 // (e.g. `shared-ui` or `editor`) from another layer — covering both the absolute alias path
 // (`app/<layer>/...`) and relative parent-traversal paths (`../<layer>/...`, `../../<layer>/...`, …).
@@ -27,7 +26,6 @@ const blockLayerImportPatterns = (layer) => [
     `../../../../../${layer}/**`,
     `../../../../../../${layer}/**`,
 ];
-
 // The client is zoneless (`provideZonelessChangeDetection()` in app.config.ts). `NgZone` must never be
 // reintroduced: under zoneless it is a `NoopNgZone`, so `run`/`runOutsideAngular`/`runGuarded` are no-ops
 // that do NOT schedule change detection — using them creates silent stale-render bugs. This restriction is
@@ -39,7 +37,6 @@ const noNgZoneImport = {
     message:
         'NgZone is forbidden: the client is zoneless (provideZonelessChangeDetection). Drive change detection with signals (signal/computed/effect), markForCheck, afterNextRender, or output emits — NgZone.run/runOutsideAngular are no-ops under zoneless.',
 };
-
 // Object copying goes through one choke point: `deepClone` / `cloneWith` / `hydrate` in
 // `app/foundation/util/deep-clone.util`. Importing lodash's `cloneDeep` directly bypasses it, which splits the
 // codebase between two spellings of the same operation and leaves nowhere to change the implementation later.
@@ -72,7 +69,11 @@ const migratedModules = [
     'admin',
     'aiworker',
     'assessment',
+    'atlas',
     'calendar',
+    'communication',
+    'core',
+    'editor',
     'exam',
     'exercise',
     'fileupload',
@@ -88,21 +89,22 @@ const migratedModules = [
     'notification',
     'plagiarism',
     'presentation',
+    'quiz',
     'shared',
+    'shared-ui',
     'sharing',
+    'text',
     'tutorialgroup',
     'videosource',
 ];
 // Components that are migrated although the rest of their module is not. They get the same locks as a module.
-const migratedComponentFolders = ['core/alert', 'shared-ui/user-registration-modal', 'core/navbar/global-search/components/modal'];
+const migratedComponentFolders = [];
 const migratedFolders = (extension) => [...migratedModules, ...migratedComponentFolders].map((folder) => `src/main/webapp/app/${folder}/**/*.${extension}`);
-
 const legacyUiLibraryImportPattern = {
     group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
     message:
         'Migrated client components use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
 };
-
 export default tseslint.config(
     {
         ignores: [
@@ -114,6 +116,7 @@ export default tseslint.config(
             '.idea/',
             '.jhipster/',
             '.venv/',
+            'bin/',
             'build/',
             'coverage/',
             'deployment/docker/',
@@ -762,15 +765,10 @@ export default tseslint.config(
         // (### Styling).
         files: [
             'src/main/webapp/app/course/request/**/*.html',
-            'src/main/webapp/app/atlas/shared/standardized-competencies/**/*.html',
-            'src/main/webapp/app/atlas/shared/competency-selection/**/*.html',
             'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.html',
             'src/main/webapp/app/shared-ui/user-import/**/*.html',
             'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.html',
             'src/main/webapp/app/shared-ui/delete-dialog/**/*.html',
-            'src/main/webapp/app/core/about-us/**/*.html',
-            'src/main/webapp/app/core/feature-overview/**/*.html',
-            'src/main/webapp/app/core/layouts/footer/**/*.html',
             'src/main/webapp/app/course/overview/setup-passkey-modal/**/*.html',
             'src/main/webapp/app/shared-ui/profile-picture/**/*.html',
             'src/main/webapp/app/course/overview/course-statistics/**/*.html',
@@ -779,8 +777,6 @@ export default tseslint.config(
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
             'src/main/webapp/app/course/manage/update/**/*.html',
             'src/main/webapp/app/quiz/manage/question-reevaluation-actions/**/*.html',
-            'src/main/webapp/app/communication/saved-posting-banner/**/*.html',
-            'src/main/webapp/app/communication/posting-create-edit-modal/post-create-edit-modal/**/*.html',
             'src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
             'src/main/webapp/app/programming/manage/detail/**/*.html',
@@ -788,7 +784,6 @@ export default tseslint.config(
             'src/main/webapp/app/quiz/manage/detail/**/*.html',
             'src/main/webapp/app/quiz/manage/manage-buttons/**/*.html',
             'src/main/webapp/app/quiz/manage/lifecyle-buttons/**/*.html',
-            'src/main/webapp/app/text/manage/detail/**/*.html',
             'src/main/webapp/app/shared-ui/table-view/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/button/**/*.html',
             'src/main/webapp/app/shared-ui/components/resizable-panels/**/*.html',
@@ -799,9 +794,6 @@ export default tseslint.config(
             'src/main/webapp/app/shared-ui/information-box/**/*.html',
             'src/main/webapp/app/shared-ui/detail-overview-list/detail-overview-list.component.html',
             'src/main/webapp/app/course/shared/course-sidebar-toggle-button/**/*.html',
-            'src/main/webapp/app/atlas/shared/competency-contribution/**/*.html',
-            'src/main/webapp/app/atlas/manage/orchestration-trigger/**/*.html',
-            'src/main/webapp/app/atlas/shared/orchestration-result-dialog/**/*.html',
             ...migratedFolders('html'),
         ],
         languageOptions: {
@@ -823,7 +815,6 @@ export default tseslint.config(
         // See client-development.mdx (### Styling).
         files: [
             'src/main/webapp/app/course/overview/course-statistics/**/*.html',
-            'src/main/webapp/app/text/overview/text-editor/**/*.html',
             'src/main/webapp/app/course/manage/athena-settings-update/**/*.html',
             'src/main/webapp/app/course/manage/control-center/about-athena-modal/**/*.html',
             ...migratedFolders('html'),
@@ -886,38 +877,6 @@ export default tseslint.config(
                         ...noDirectCloneDeepImports,
                     ],
                     patterns: [...tumAetUiConsumerImportPatterns, legacyUiLibraryImportPattern],
-                },
-            ],
-        },
-    },
-    {
-        // The Iris context picker keeps only primeng/select as a contained fallback: tumaet-ui-select has no option
-        // groups, option templates or custom trigger yet. Keep every other migrated-client import ban in force.
-        // Remove this override together with the fallback. Rule options replace the entire rule, so repeat the shared bans.
-        files: ['src/main/webapp/app/iris/overview/context-selection/context-selection.component.ts'],
-        rules: {
-            'no-restricted-imports': [
-                'error',
-                {
-                    paths: [
-                        { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
-                        { name: 'lodash', message: "Please import from 'lodash-es' instead." },
-                        noNgZoneImport,
-                        ...noDirectCloneDeepImports,
-                    ],
-                    patterns: [
-                        ...tumAetUiConsumerImportPatterns,
-                        {
-                            // A negated glob cannot re-include select when its primeng parent is ignored.
-                            // Match every PrimeNG entry point except exactly primeng/select instead.
-                            regex: '^primeng(?:$|/(?!select$))',
-                            message: 'Only primeng/select is permitted for the contained Iris context-picker fallback. Use TUM AET UI for other controls.',
-                        },
-                        {
-                            group: ['@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
-                            message: 'Migrated client components use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import ng-bootstrap or Bootstrap here.',
-                        },
-                    ],
                 },
             ],
         },

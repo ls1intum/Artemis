@@ -5,7 +5,7 @@ import { DebugElement } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { getElement } from 'test/helpers/utils/general-test.utils';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
@@ -35,7 +35,6 @@ import {
     unApprovedAnswerPost1,
 } from 'test/helpers/sample/communication-sample-data';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { User } from 'app/account/user/user.model';
@@ -49,7 +48,7 @@ import { CourseConversationsService } from 'app/communication/service/course-con
 import { Subject, of, throwError } from 'rxjs';
 import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 
 describe('PostingReactionsBarComponent', () => {
@@ -79,7 +78,6 @@ describe('PostingReactionsBarComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                MockDirective(NgbTooltip),
                 PostingReactionsBarComponent,
                 MockPipe(ReactingUsersOnPostingPipe),
                 MockComponent(FaIconComponent),
@@ -99,7 +97,7 @@ describe('PostingReactionsBarComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
-                { provide: DialogService, useValue: { open: vi.fn() } },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn() } },
             ],
         });
         TestBed.overrideComponent(PostingReactionsBarComponent, {
@@ -397,18 +395,14 @@ describe('PostingReactionsBarComponent', () => {
         expect(component.showReactionSelector()).toBeFalsy();
     });
 
-    it('should close the reacting users tooltip when a reaction button is clicked so that no outdated list stays open', () => {
+    it('should list the reacting users in the tooltip of a reaction button', () => {
         fixture.componentRef.setInput('isEmojiCount', true);
         fixture.changeDetectorRef.detectChanges();
-        vi.spyOn(communicationService, 'deleteReaction').mockReturnValue(of(undefined));
 
         const reactionButton = fixture.debugElement.query(By.css('button.reaction-button.clickable[class*="reaction-button--reacted"]'));
-        const tooltip = reactionButton.injector.get(NgbTooltip);
-        const closeSpy = vi.spyOn(tooltip, 'close');
+        const tooltip = reactionButton.injector.get(TumAetUiTooltipDirective);
 
-        reactionButton.nativeElement.click();
-
-        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(tooltip.content()).toBe('artemisApp.communication.you');
     });
 
     it('should invoke communication service method with own reaction to delete it', () => {
@@ -898,7 +892,7 @@ describe('PostingReactionsBarComponent', () => {
         expect(createForwardedMessagesSpy).not.toHaveBeenCalled();
     });
 
-    it('should open the forward dialog without moving focus away from the recipient search input', () => {
+    it('should open the forward dialog as a form dialog that renders its own header', () => {
         const conversationService = TestBed.inject(ConversationService);
         vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [] })));
         const dialogOpenSpy = vi.spyOn(component['dialogService'], 'open').mockReturnValue({ onClose: new Subject().asObservable() } as any);
@@ -908,7 +902,14 @@ describe('PostingReactionsBarComponent', () => {
         component.openForwardMessageView({ id: 5 } as Post, false);
 
         expect(dialogOpenSpy).toHaveBeenCalledOnce();
-        expect(dialogOpenSpy.mock.calls[0][1]).toEqual(expect.objectContaining({ focusOnShow: false }));
+        expect(dialogOpenSpy.mock.calls[0][1]).toEqual(
+            expect.objectContaining({
+                showHeader: false,
+                autoFocus: 'first-tabbable',
+                ariaLabel: 'artemisApp.communication.forward.forwardMessage',
+                data: { users: [], channels: [], postToForward: { id: 5 }, courseId: 1 },
+            }),
+        );
     });
 
     it('should call createForwardedMessages with the correct arguments', () => {

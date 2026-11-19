@@ -1,4 +1,4 @@
-<div class="about mx-auto flex max-w-5xl flex-col gap-10 px-4 py-8" data-testid="about-page">
+<div class="about mx-auto flex max-w-5xl flex-col gap-10 px-6! py-8" data-testid="about-page">
     <header class="flex flex-col items-center gap-2 text-center">
         <h1 jhiTranslate="artemisApp.aboutUsOverview.title"></h1>
         <p class="text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.subtitle"></p>
@@ -6,12 +6,12 @@
 
     @let info = profileInfo();
 
-    <section class="flex flex-col gap-4" data-testid="about-help">
+    <section class="flex flex-col gap-6!" data-testid="about-help">
         <div class="flex flex-col gap-1">
             <h2 jhiTranslate="artemisApp.aboutUsOverview.help.title"></h2>
             <p class="text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.help.courseQuestions"></p>
         </div>
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div class="grid grid-cols-1 gap-4! sm:grid-cols-2">
             <a class="about__tile" [href]="BUG_REPORT_URL" target="_blank" rel="noopener noreferrer" data-testid="about-bug-report">
                 <fa-icon class="text-primary" [icon]="ICONS.bug" [fixedWidth]="true" />
                 <span jhiTranslate="bug"></span>
@@ -34,9 +34,9 @@
     </section>
 
     @if (highlights().length) {
-        <section class="flex flex-col gap-4" data-testid="about-highlights">
+        <section class="flex flex-col gap-6!" data-testid="about-highlights">
             <h2 jhiTranslate="artemisApp.aboutUsOverview.highlights.title"></h2>
-            <ul class="about__list grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ul class="about__list grid grid-cols-1 gap-6! sm:grid-cols-2 lg:grid-cols-3">
                 @for (highlight of highlights(); track highlight.key) {
                     <li class="about__card flex flex-col gap-2" [attr.data-testid]="'about-highlight-' + highlight.key">
                         <h3 class="flex items-center gap-2">
@@ -64,7 +64,7 @@
     }
 
     @if (enabledModules().length) {
-        <section class="flex flex-col gap-4" data-testid="about-modules">
+        <section class="flex flex-col gap-6!" data-testid="about-modules">
             <div class="flex flex-col gap-1">
                 <h2 jhiTranslate="artemisApp.aboutUsOverview.modules.title"></h2>
                 <p class="text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.modules.description"></p>
@@ -80,15 +80,15 @@
     }
 
     @if (hasInstallationDetails() || info?.testServer) {
-        <section class="flex flex-col gap-4" data-testid="about-installation">
-            <div class="flex flex-wrap items-center gap-3">
+        <section class="flex flex-col gap-6!" data-testid="about-installation">
+            <div class="flex flex-wrap items-center gap-4!">
                 <h2 jhiTranslate="artemisApp.aboutUsOverview.installation.title"></h2>
                 @if (info?.testServer) {
                     <tumaet-ui-tag severity="warn" [value]="'artemisApp.aboutUsOverview.installation.testServer' | artemisTranslate" data-testid="about-test-server" />
                 }
             </div>
             @if (hasInstallationDetails()) {
-                <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <dl class="grid grid-cols-1 gap-6! sm:grid-cols-2 lg:grid-cols-4">
                     @if (info?.universityName) {
                         <div class="about__card flex flex-col gap-1">
                             <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.operatorInfo.university"></dt>
@@ -120,7 +120,7 @@
         </section>
     }
 
-    <section class="flex flex-col gap-4" data-testid="about-project">
+    <section class="flex flex-col gap-6!" data-testid="about-project">
         <h2 jhiTranslate="artemisApp.aboutUsOverview.project.title"></h2>
         <p jhiTranslate="artemisApp.aboutUsOverview.project.description"></p>
         @if (info?.operatorName; as operator) {
@@ -137,11 +137,11 @@
     </section>
 
     @if (maintainers().length) {
-        <section class="flex flex-col gap-4" data-testid="about-maintainers">
+        <section class="flex flex-col gap-6!" data-testid="about-maintainers">
             <h2 jhiTranslate="artemisApp.aboutUsOverview.maintainers.title"></h2>
-            <ul class="about__list grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <ul class="about__list grid grid-cols-1 gap-6! sm:grid-cols-2 lg:grid-cols-4">
                 @for (maintainer of maintainers(); track maintainer.fullName) {
-                    <li class="about__card flex items-center gap-3">
+                    <li class="about__card flex items-center gap-4!">
                         <img
                             class="about__avatar"
                             [src]="maintainer.photoDirectory"
@@ -171,12 +171,12 @@
         </section>
     }
 
-    <section class="flex flex-col gap-4" data-testid="about-citation">
+    <section class="flex flex-col gap-6!" data-testid="about-citation">
         <div class="flex flex-col gap-1">
             <h2 jhiTranslate="artemisApp.aboutUsOverview.citation.title"></h2>
             <p class="text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.citation.description"></p>
         </div>
-        <div class="about__card flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="about__card flex flex-col gap-4! sm:flex-row sm:items-start sm:justify-between">
             <span class="text-sm">
                 {{ CITATION.text }}
                 <a [href]="CITATION.doiUrl" target="_blank" rel="noopener noreferrer">{{ CITATION.doiUrl }}</a>
@@ -199,7 +199,7 @@
         </div>
     </section>
 
-    <section class="flex flex-col gap-4" data-testid="about-release">
+    <section class="flex flex-col gap-6!" data-testid="about-release">
         <h2 jhiTranslate="artemisApp.aboutUsOverview.release.title"></h2>
         <dl class="about__release grid grid-cols-[max-content_1fr] gap-x-6 gap-y-1 text-sm">
             <dt class="text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.release.version"></dt>

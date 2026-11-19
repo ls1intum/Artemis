@@ -9,8 +9,8 @@ import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warni
 import type { ExerciseServicable, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 export enum EditType {
     IMPORT,

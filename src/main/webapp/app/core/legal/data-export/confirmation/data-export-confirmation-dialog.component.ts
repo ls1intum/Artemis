@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnInit, inject, input, model, output, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Observable } from 'rxjs';
@@ -10,12 +10,20 @@ import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/co
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TypeAheadUserSearchFieldComponent } from 'app/core/legal/data-export/type-ahead-search-field/type-ahead-user-search-field.component';
 import { User } from 'app/account/user/user.model';
-import { DialogModule } from 'primeng/dialog';
 
 @Component({
     selector: 'jhi-data-export-confirmation-dialog',
     templateUrl: './data-export-confirmation-dialog.component.html',
-    imports: [TumAetUiButtonDirective, FormsModule, TranslateDirective, TypeAheadUserSearchFieldComponent, ConfirmEntityNameComponent, FaIconComponent, DialogModule],
+    imports: [
+        TumAetUiButtonDirective,
+        FormsModule,
+        TranslateDirective,
+        TypeAheadUserSearchFieldComponent,
+        ConfirmEntityNameComponent,
+        FaIconComponent,
+        TumAetUiDialogComponent,
+        TumAetUiCheckboxComponent,
+    ],
 })
 export class DataExportConfirmationDialogComponent implements OnInit {
     private readonly alertService = inject(AlertService);
@@ -23,7 +31,7 @@ export class DataExportConfirmationDialogComponent implements OnInit {
 
     readonly dataExportConfirmationForm = viewChild.required<NgForm>('dataExportConfirmationForm');
 
-    /** Two-way bound visibility for the p-dialog */
+    /** Two-way bound visibility of the dialog */
     readonly visible = model<boolean>(false);
 
     /** Input for the dialog error observable */
@@ -89,12 +97,9 @@ export class DataExportConfirmationDialogComponent implements OnInit {
         }
     }
 
-    onRequestDataExportForOtherUserChanged(event: Event): void {
-        const target = event.target as HTMLInputElement | null;
-        if (!target) {
-            return;
-        }
-        if (target.checked) {
+    onRequestDataExportForOtherUserChanged(checked: boolean): void {
+        this.requestForAnotherUser.set(checked);
+        if (checked) {
             this.ownLogin = this.expectedLogin();
             this.expectedLogin.set(this.expectedLoginOfOtherUser() ?? '');
             this.confirmationTextHint.set('artemisApp.dataExport.typeUserLoginToConfirm');

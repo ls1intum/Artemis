@@ -953,13 +953,101 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     }
 
     /**
-     * The plain import copies an exercise of another course, so it drops the competency links the client posts, the way
-     * it did before the request DTO existed. This pins that asymmetry with the from-file and the sharing import, which
-     * do create the links the author picked.
+     * The import form lets the author pick competencies of the target course. The plain import has to create those links with the exercise, like the from-file and the sharing
+     * import do: the client drops the competencies of the source exercise, so what it posts is the author's selection, and the exercise was imported without it.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testImportProgrammingExercise_withCompetencyLinks_persistsNoLinks() throws Exception {
+    void testImportProgrammingExercise_withCompetencyLinksOfTheTargetCourse_persistsTheLinks() throws Exception {
+        mockDockerForAnImportThatDoesNotRecreateBuildPlans();
+
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Competency targetCourseCompetency = competencyUtilService.createCompetency(targetCourse);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("LinkTitle", "linkimport", programmingExercise, targetCourse);
+        exerciseToBeImported.setChannelName("testchannel-pe-linkimport");
+        exerciseToBeImported.setCompetencyLinks(Set.of(new CompetencyExerciseLink(targetCourseCompetency, exerciseToBeImported, 0.5)));
+        exerciseToBeImported.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+
+        var importedExercise = importWithoutRecreatingBuildPlans(exerciseToBeImported);
+
+        // read the rows back, not the in-memory graph: the links are persisted only after the exercise has an id
+        List<CompetencyExerciseLink> storedLinks = competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importedExercise.id());
+        assertThat(storedLinks).singleElement().satisfies(link -> {
+            assertThat(link.getCompetency().getId()).isEqualTo(targetCourseCompetency.getId());
+            assertThat(link.getWeight()).isEqualTo(0.5);
+            assertThat(link.isGeneratedByAi()).isFalse();
+        });
+    }
+
+    /**
+     * A competency of another course, such as one still carried by a client that did not drop the links of the source exercise, is not linked to the imported exercise. The
+     * import itself goes through.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportProgrammingExercise_withCompetencyLinksOfAnotherCourse_skipsThemAndImports() throws Exception {
+        mockDockerForAnImportThatDoesNotRecreateBuildPlans();
+
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Competency targetCourseCompetency = competencyUtilService.createCompetency(targetCourse);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ForeignLinkTitle", "foreignlinkimport", programmingExercise,
+                targetCourse);
+        exerciseToBeImported.setChannelName("testchannel-pe-foreignimport");
+        // `competency` belongs to the course of the source exercise
+        exerciseToBeImported.setCompetencyLinks(
+                Set.of(new CompetencyExerciseLink(competency, exerciseToBeImported, 1), new CompetencyExerciseLink(targetCourseCompetency, exerciseToBeImported, 1)));
+        exerciseToBeImported.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+
+        var importedExercise = importWithoutRecreatingBuildPlans(exerciseToBeImported);
+
+        assertThat(competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importedExercise.id())).extracting(link -> link.getCompetency().getId())
+                .containsExactly(targetCourseCompetency.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportProgrammingExercise_withoutCompetencyLinks_persistsNoLinks() throws Exception {
+        mockDockerForAnImportThatDoesNotRecreateBuildPlans();
+
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        competencyUtilService.createCompetency(targetCourse);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("NoLinkTitle", "nolinkimport", programmingExercise,
+                targetCourse);
+        exerciseToBeImported.setChannelName("testchannel-pe-nolinkimport");
+
+        var importedExercise = importWithoutRecreatingBuildPlans(exerciseToBeImported);
+
+        assertThat(competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importedExercise.id())).isEmpty();
+    }
+
+    /**
+     * A competency that was deleted while the import form was open must refuse the import before anything is written. Resolving it after the first save would leave an
+     * exercise without participations, repositories and test cases behind.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportProgrammingExercise_withDeletedCompetency_isRefusedAndWritesNothing() throws Exception {
+        mockDockerForAnImportThatDoesNotRecreateBuildPlans();
+
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        // the id of a competency that exists no more
+        Competency deletedCompetency = new Competency();
+        deletedCompetency.setId(Long.MAX_VALUE);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("MissingCompetencyTitle", "missingcompetencyimport",
+                programmingExercise, targetCourse);
+        exerciseToBeImported.setChannelName("testchannel-pe-missingcomp");
+        exerciseToBeImported.setCompetencyLinks(Set.of(new CompetencyExerciseLink(deletedCompetency, exerciseToBeImported, 1)));
+        long exercisesBefore = programmingExerciseRepository.count();
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("recreateBuildPlans", "false");
+        request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), exerciseToBeImported,
+                ProgrammingExerciseResponseDTO.class, params, HttpStatus.NOT_FOUND);
+
+        assertThat(programmingExerciseRepository.count()).isEqualTo(exercisesBefore);
+    }
+
+    private void mockDockerForAnImportThatDoesNotRecreateBuildPlans() throws Exception {
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("assignmentComitHash", DUMMY_COMMIT_HASH), Map.of("assignmentComitHash", DUMMY_COMMIT_HASH));
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
@@ -968,22 +1056,13 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+    }
 
-        // the competency belongs to the target course, so nothing but the deliberate drop can keep it out of the database
-        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
-        Competency targetCourseCompetency = competencyUtilService.createCompetency(targetCourse);
-        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("NoLinkTitle", "nolinkimport", programmingExercise,
-                targetCourse);
-        exerciseToBeImported.setChannelName("testchannel-pe-nolinkimport");
-        exerciseToBeImported.setCompetencyLinks(Set.of(new CompetencyExerciseLink(targetCourseCompetency, exerciseToBeImported, 1)));
-        exerciseToBeImported.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
-
+    private ProgrammingExerciseResponseDTO importWithoutRecreatingBuildPlans(ProgrammingExercise exerciseToBeImported) throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
-        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), exerciseToBeImported,
+        return request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), exerciseToBeImported,
                 ProgrammingExerciseResponseDTO.class, params, HttpStatus.OK);
-
-        assertThat(competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importedExercise.id())).isEmpty();
     }
 
     /**

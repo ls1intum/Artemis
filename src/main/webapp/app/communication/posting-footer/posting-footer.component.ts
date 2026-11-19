@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewContainerRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { CommunicationService } from 'app/communication/service/communication.service';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import dayjs from 'dayjs/esm';
@@ -47,7 +46,6 @@ export class PostingFooterComponent implements OnInit, OnDestroy {
     lastReadDate = input<dayjs.Dayjs | undefined>();
     readOnlyMode = input<boolean>(false);
     previewMode = input<boolean>(false);
-    modalRef = input<DynamicDialogRef | undefined>();
     hasChannelModerationRights = input<boolean>(false);
     showAnswers = input<boolean>(false);
     isCommunicationPage = input<boolean>(false);

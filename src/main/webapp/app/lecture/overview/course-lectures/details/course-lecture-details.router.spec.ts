@@ -4,7 +4,7 @@ import { provideLocationMocks } from '@angular/common/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, Routes, provideRouter, withRouterConfig } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
@@ -48,17 +48,17 @@ describe('CourseLectureDetailsComponent with the real router', () => {
 
     const lectureWith = (id: number, units: AttachmentVideoUnit[]) => {
         const course = Object.assign(new Course(), { id: 1 });
-        return new HttpResponse({ body: Object.assign(new Lecture(), { id, course, lectureUnits: units }), status: 200 });
+        return Object.assign(new Lecture(), { id, course, lectureUnits: units });
     };
 
     let harness: RouterTestingHarness;
     let component: CourseLectureDetailsComponent;
     let router: Router;
     let location: Location;
-    let lectureTwoResponse: Subject<HttpResponse<Lecture>>;
+    let lectureTwoResponse: Subject<Lecture>;
 
     beforeEach(async () => {
-        lectureTwoResponse = new Subject<HttpResponse<Lecture>>();
+        lectureTwoResponse = new Subject<Lecture>();
 
         await TestBed.configureTestingModule({
             providers: [

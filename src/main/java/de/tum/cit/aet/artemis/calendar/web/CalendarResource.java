@@ -26,6 +26,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -116,6 +117,20 @@ public class CalendarResource {
         String userLogin = userRepository.getCurrentUserLogin();
         Optional<String> token = calendarSubscriptionTokenStoreRepository.findTokenByUserLogin(userLogin);
         return token.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(calendarSubscriptionService.createSubscriptionTokenForUser(userLogin)));
+    }
+
+    /**
+     * POST api/calendar/subscription-token/rotate : replaces the subscription token of the logged-in user with a new one.
+     * Subscription links that contain the previous token stop working, so users have to subscribe again with the new link.
+     *
+     * @return {@code 200 (OK)} with the new token.
+     * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user is not at least a student
+     */
+    @PostMapping(value = "subscription-token/rotate", produces = "text/plain")
+    @EnforceAtLeastStudent
+    public ResponseEntity<String> rotateCalendarEventSubscriptionToken() {
+        String userLogin = userRepository.getCurrentUserLogin();
+        return ResponseEntity.ok(calendarSubscriptionService.rotateSubscriptionTokenForUser(userLogin));
     }
 
     /**
