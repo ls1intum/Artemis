@@ -47,7 +47,7 @@ export class CommitsInfoRowComponent {
             return '';
         }
         const isLastOfGroup = this.groupCommitIndex() === this.groupCommitCount() - 1;
-        return isLastOfGroup ? 'bg-(--light) dark:bg-white/5 border-b border-solid border-(--border-color)' : 'bg-(--light) dark:bg-white/5';
+        return isLastOfGroup ? 'bg-(--light) dark:bg-white/5 border-b! border-(--border-color)!' : 'bg-(--light) dark:bg-white/5';
     });
 
     onToggleExpand() {

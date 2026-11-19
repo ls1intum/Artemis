@@ -16,3 +16,8 @@
     pointer-events: none;
     line-height: 1;
 }
+
+/* Close to the maximum length. A class of its own: the colour above would win over a layered utility class. */
+.textarea-char-count--near-limit {
+    color: var(--danger);
+}

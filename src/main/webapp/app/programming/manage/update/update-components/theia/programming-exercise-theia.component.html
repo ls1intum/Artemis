@@ -8,6 +8,7 @@
         optionLabel="label"
         optionValue="value"
         [emptyMessage]="'artemisApp.programmingExercise.theiaImage.noImageAvailable' | artemisTranslate"
+        [placeholder]="theiaImageOptions().length ? undefined : ('artemisApp.programmingExercise.theiaImage.noImageAvailable' | artemisTranslate)"
         [ngModel]="programmingExercise().buildConfig?.theiaImage"
         (ngModelChange)="onTheiaImageChange($event)"
         name="theiaImage"

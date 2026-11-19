@@ -1,3 +1,5 @@
+@use 'sass:string';
+
 // Utility classes whose names Artemis templates use without Tailwind's important modifier, and which must still
 // override the element defaults of `_base.scss` and the rules of component stylesheets.
 // Tailwind emits its utilities into a cascade layer, so a plain `mb-0` loses to every unlayered rule: `<p class="mb-0">`
@@ -15,10 +17,6 @@ $spacing-steps: (
 );
 $spacing-sides: (
     '': ('',),
-    't': ('-top',),
-    'b': ('-bottom',),
-    's': ('-left',),
-    'e': ('-right',),
     'x': (
         '-right',
         '-left',
@@ -27,25 +25,30 @@ $spacing-sides: (
         '-top',
         '-bottom',
     ),
+    't': ('-top',),
+    'e': ('-right',),
+    'b': ('-bottom',),
+    's': ('-left',),
 );
 
-@each $step, $value in $spacing-steps {
+// A class for one side has to come after the class for all sides, so `p-1 pb-0` ends without bottom padding
+// whatever the order in the class attribute. Hence the sides are the outer loop, in the order of `$spacing-sides`.
+@each $property in (margin, padding) {
     @each $side, $suffixes in $spacing-sides {
-        .m#{$side}-#{$step} {
-            @each $suffix in $suffixes {
-                margin#{$suffix}: $value !important;
-            }
-        }
-
-        @if $step != 'auto' {
-            .p#{$side}-#{$step} {
-                @each $suffix in $suffixes {
-                    padding#{$suffix}: $value !important;
+        @each $step, $value in $spacing-steps {
+            // Padding has no `auto`.
+            @if $property == margin or $step != 'auto' {
+                .#{string.slice('#{$property}', 1, 1)}#{$side}-#{$step} {
+                    @each $suffix in $suffixes {
+                        #{$property}#{$suffix}: $value !important;
+                    }
                 }
             }
         }
     }
+}
 
+@each $step, $value in $spacing-steps {
     @if $step != 'auto' {
         .gap-#{$step} {
             gap: $value !important;

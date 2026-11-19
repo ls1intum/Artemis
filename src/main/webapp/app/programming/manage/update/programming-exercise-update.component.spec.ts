@@ -996,6 +996,23 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
         });
 
+        it('should keep the options of the exercise when the selected language is chosen again', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.HASKELL);
+            fixture.changeDetectorRef.detectChanges();
+            // The instructor turns the solution checkout off, which the language switch had turned on.
+            comp.programmingExercise.buildConfig!.checkoutSolutionRepository = false;
+            const loadTemplate = vi.spyOn(comp as unknown as { loadProgrammingLanguageTemplate: (language: ProgrammingLanguage) => void }, 'loadProgrammingLanguageTemplate');
+            const confirm = vi.spyOn(window, 'confirm');
+
+            expect(comp.onProgrammingLanguageChange(ProgrammingLanguage.HASKELL)).toBe(ProgrammingLanguage.HASKELL);
+
+            expect(comp.programmingExercise.buildConfig!.checkoutSolutionRepository).toBe(false);
+            expect(loadTemplate).not.toHaveBeenCalled();
+            expect(confirm).not.toHaveBeenCalled();
+        });
+
         it('should activate SCA for Swift', () => {
             // WHEN
             fixture.detectChanges();

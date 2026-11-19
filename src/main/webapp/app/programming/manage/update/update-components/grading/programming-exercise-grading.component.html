@@ -87,6 +87,7 @@
                     tumAetUiInputId="field_maxPenalty"
                     [(ngModel)]="programmingExercise().maxStaticCodeAnalysisPenalty"
                     #maxPenalty="ngModel"
+                    [tumAetUiInputInvalid]="(maxPenalty.invalid && (maxPenalty.dirty || maxPenalty.touched)) ?? false"
                 />
             </tumaet-ui-input-group>
             @for (error of maxPenalty.errors! | keyvalue; track error) {

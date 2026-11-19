@@ -64,6 +64,24 @@ describe('ProgrammingExerciseTheiaComponent', () => {
         expect(comp.programmingExercise().buildConfig?.theiaImage).toBeUndefined();
     });
 
+    it('should explain in the closed image picker that no image is available', () => {
+        theiaServiceMock.getTheiaImages.mockReturnValue(of({}));
+        fixture.detectChanges();
+        comp.loadTheiaImages();
+        fixture.detectChanges();
+        const trigger: HTMLElement = fixture.nativeElement.querySelector('#field_theiaImage');
+        expect(trigger.textContent).toContain('artemisApp.programmingExercise.theiaImage.noImageAvailable');
+    });
+
+    it('should show the selected image, not the explanation, when images are available', () => {
+        theiaServiceMock.getTheiaImages.mockReturnValue(of({ 'Java-17': 'test-url' }));
+        fixture.detectChanges();
+        comp.loadTheiaImages();
+        fixture.detectChanges();
+        const trigger: HTMLElement = fixture.nativeElement.querySelector('#field_theiaImage');
+        expect(trigger.textContent).not.toContain('noImageAvailable');
+    });
+
     it('should select first image when none was selected', () => {
         theiaServiceMock.getTheiaImages.mockReturnValue(
             of({

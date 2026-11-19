@@ -5,6 +5,9 @@
         <input
             [attr.aria-label]="'artemisApp.programmingExercise.checkoutPath.assignment' | artemisTranslate"
             #field_assignmentRepositoryCheckoutPath="ngModel"
+            [tumAetUiInputInvalid]="
+                (field_assignmentRepositoryCheckoutPath.invalid && (field_assignmentRepositoryCheckoutPath.dirty || field_assignmentRepositoryCheckoutPath.touched)) ?? false
+            "
             required
             type="text"
             tumAetUiInput
@@ -22,6 +25,7 @@
         <input
             [attr.aria-label]="'artemisApp.programmingExercise.checkoutPath.tests' | artemisTranslate"
             #field_testRepositoryCheckoutPath="ngModel"
+            [tumAetUiInputInvalid]="(field_testRepositoryCheckoutPath.invalid && (field_testRepositoryCheckoutPath.dirty || field_testRepositoryCheckoutPath.touched)) ?? false"
             required
             type="text"
             tumAetUiInput
@@ -39,6 +43,9 @@
         <input
             [attr.aria-label]="'artemisApp.programmingExercise.checkoutPath.solution' | artemisTranslate"
             #field_solutionRepositoryCheckoutPath="ngModel"
+            [tumAetUiInputInvalid]="
+                (field_solutionRepositoryCheckoutPath.invalid && (field_solutionRepositoryCheckoutPath.dirty || field_solutionRepositoryCheckoutPath.touched)) ?? false
+            "
             required
             type="text"
             tumAetUiInput
