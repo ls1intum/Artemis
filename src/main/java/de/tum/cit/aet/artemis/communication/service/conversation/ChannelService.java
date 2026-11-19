@@ -238,6 +238,37 @@ public class ChannelService {
     }
 
     /**
+     * Refuses a channel name that has characters which a channel name cannot have.
+     *
+     * @param name the name of a channel, which may be absent
+     * @throws BadRequestAlertException if the name does not match the pattern of channel names
+     */
+    public static void validateChannelNamePattern(@Nullable String name) {
+        if (name != null && !CHANNEL_NAME_PATTERN.matcher(name).matches()) {
+            throw new BadRequestAlertException("Channel names can only contain lowercase letters, numbers, colons and dashes.", CHANNEL_ENTITY_NAME, "namePatternInvalid");
+        }
+    }
+
+    /**
+     * Refuses the name that an exercise would give its channel if the channel does not accept it, which an update of the channel does only when it saves, and so only after the
+     * other
+     * work of the update. Nothing is changed. A name is not checked while the exercise has no channel or the name stays the same, as the update does not check it then either.
+     *
+     * @param exercise the exercise with the new channel name, which has to be the one that is saved
+     * @throws BadRequestAlertException if the channel would not accept the name
+     */
+    public void validateExerciseChannelUpdate(Exercise exercise) {
+        String newChannelName = exercise.getChannelName();
+        if (newChannelName == null) {
+            return;
+        }
+        Channel channel = channelRepository.findChannelByExerciseId(exercise.getId());
+        if (channel != null && !newChannelName.equals(channel.getName())) {
+            validateChannelNamePattern(newChannelName);
+        }
+    }
+
+    /**
      * Checks if the given channel is valid for the given course or throws an
      * exception
      *
@@ -245,9 +276,7 @@ public class ChannelService {
      * @param channel  the channel to check
      */
     public void channelIsValidOrThrow(Long courseId, @Valid Channel channel) {
-        if (channel.getName() != null && !CHANNEL_NAME_PATTERN.matcher(channel.getName()).matches()) {
-            throw new BadRequestAlertException("Channel names can only contain lowercase letters, numbers, colons and dashes.", CHANNEL_ENTITY_NAME, "namePatternInvalid");
-        }
+        validateChannelNamePattern(channel.getName());
 
         if (this.allowDuplicateChannelName(channel)) {
             return;
