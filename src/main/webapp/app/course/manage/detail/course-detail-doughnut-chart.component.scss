@@ -32,7 +32,7 @@
                 text-align: center;
                 overflow-wrap: anywhere;
 
-                .h4 {
+                .chart-value--large {
                     font-size: 1rem;
                     line-height: 1.2;
                     margin: 0;
@@ -43,5 +43,24 @@
 
     .clickable {
         cursor: pointer;
+    }
+
+    // The two value lines inside the ring; sized like the h3, h4 and h6 they replace (body size is 0.9rem).
+    .chart-value {
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        line-height: 1.2;
+
+        &--spinner {
+            font-size: 1.575rem;
+        }
+
+        &--large {
+            font-size: 1.35rem;
+        }
+
+        &--small {
+            font-size: 0.9rem;
+        }
     }
 }

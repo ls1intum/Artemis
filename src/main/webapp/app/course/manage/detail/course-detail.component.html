@@ -1,6 +1,6 @@
-<div class="row justify-content-center">
+<div class="flex flex-wrap justify-center -mx-2">
     @if (course()) {
-        <div class="col-12 p-2">
+        <div class="w-full p-2">
             <div class="section-card section-card--actions">
                 <div class="section-header">
                     <div class="section-header-icon">
@@ -17,12 +17,12 @@
                         </button>
                     }
                 </div>
-                <div class="section-body d-flex flex-column flex-xl-row">
+                <div class="section-body flex flex-col min-[1200px]:flex-row">
                     <jhi-quick-actions
                         #quickActions
                         [course]="course()!"
-                        class="mb-3 mb-xl-0"
-                        [class.me-xl-3]="course()!.isAtLeastInstructor && (irisEnabled() || isAthenaEnabled())"
+                        class="mb-4! min-[1200px]:mb-0!"
+                        [class]="course()!.isAtLeastInstructor && (irisEnabled() || isAthenaEnabled()) ? 'min-[1200px]:me-4!' : ''"
                     />
                     @if (course()!.isAtLeastInstructor && (irisEnabled() || isAthenaEnabled())) {
                         <jhi-control-center [course]="course()!" [irisEnabled]="irisEnabled()" [athenaEnabled]="isAthenaEnabled()" />
@@ -31,19 +31,19 @@
             </div>
         </div>
         @if (course()!.isAtLeastInstructor) {
-            <div #exploreSection class="col-12 p-2" [class.explore-animate]="fromOnboarding()">
+            <div #exploreSection class="w-full p-2" [class.explore-animate]="fromOnboarding()">
                 <div class="section-card section-card--explore">
                     <jhi-onboarding-explore [course]="course()!" [showOnboardingLink]="true" />
                 </div>
             </div>
         }
         @defer (on viewport(chartsViewport)) {
-            <div class="col-12">
-                <div class="row">
-                    <div class="col-xxl-4">
-                        <div class="row">
+            <div class="w-full px-2">
+                <div class="flex flex-wrap -mx-2">
+                    <div class="w-full px-2 min-[1400px]:w-1/3">
+                        <div class="flex flex-wrap -mx-2">
                             <jhi-course-detail-doughnut-chart
-                                class="doughnut-container col-sm-6 my-3"
+                                class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4!"
                                 [course]="course()!"
                                 [contentType]="DoughnutChartType.ASSESSMENT"
                                 [currentPercentage]="courseDTO()?.currentPercentageAssessments"
@@ -52,7 +52,7 @@
                             />
                             @if (course()!.complaintsEnabled) {
                                 <jhi-course-detail-doughnut-chart
-                                    class="doughnut-container col-sm-6 my-3"
+                                    class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4!"
                                     [course]="course()!"
                                     [contentType]="DoughnutChartType.COMPLAINTS"
                                     [currentPercentage]="courseDTO()?.currentPercentageComplaints"
@@ -62,7 +62,7 @@
                             }
                             @if (course()!.requestMoreFeedbackEnabled) {
                                 <jhi-course-detail-doughnut-chart
-                                    class="doughnut-container col-sm-6 my-3"
+                                    class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4!"
                                     [course]="course()!"
                                     [contentType]="DoughnutChartType.FEEDBACK"
                                     [currentPercentage]="courseDTO()?.currentPercentageMoreFeedbacks"
@@ -71,7 +71,7 @@
                                 />
                             }
                             <jhi-course-detail-doughnut-chart
-                                class="doughnut-container col-sm-6 my-3"
+                                class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4!"
                                 [course]="course()!"
                                 [contentType]="DoughnutChartType.AVERAGE_COURSE_SCORE"
                                 [currentPercentage]="courseDTO()?.currentPercentageAverageScore"
@@ -81,7 +81,7 @@
                             @if (irisChatEnabled() || isAthenaEnabled() || isHyperionEnabled() || isAtlasEnabled()) {
                                 @let llmStats = courseDTO();
                                 <jhi-course-detail-doughnut-chart
-                                    class="doughnut-container col-sm-6 my-3"
+                                    class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4!"
                                     data-testid="course-llm-cost"
                                     [course]="course()!"
                                     [contentType]="DoughnutChartType.CURRENT_LLM_COST"
@@ -98,14 +98,14 @@
                             }
                         </div>
                     </div>
-                    <jhi-course-detail-line-chart class="col-xxl-8" [course]="course()!" [numberOfStudentsInCourse]="course()!.numberOfStudents!" />
+                    <jhi-course-detail-line-chart class="w-full px-2 min-[1400px]:w-2/3" [course]="course()!" [numberOfStudentsInCourse]="course()!.numberOfStudents!" />
                 </div>
             </div>
         } @placeholder {
-            <div #chartsViewport class="col-12" style="min-height: 350px"></div>
+            <div #chartsViewport class="w-full px-2" style="min-height: 350px"></div>
         }
     }
     @if (courseDetailSections().length) {
-        <jhi-detail-overview-list [sections]="courseDetailSections()" class="col-12" />
+        <jhi-detail-overview-list [sections]="courseDetailSections()" class="w-full px-2" />
     }
 </div>

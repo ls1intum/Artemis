@@ -9,9 +9,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular';
 
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations-components/other/conversation.util';
@@ -32,7 +31,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     styleUrls: ['./conversation-options.component.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, RouterLink, NgbDropdownButtonItem, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, RouterLink, ArtemisTranslatePipe],
 })
 export class ConversationOptionsComponent implements OnInit, OnDestroy {
     conversationService = inject(ConversationService);
@@ -81,8 +80,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
         this.channelSubTypeReferenceRouterLink.set(this.communicationService.getLinkForChannelSubType(conversationAsChannel));
     }
 
-    onArchiveClicked(event: MouseEvent) {
-        event.stopPropagation();
+    onArchiveClicked() {
         const conversation = this.conversation();
         if (!this.course.id || !conversation.id) {
             return;
@@ -117,13 +115,11 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
         this.favorite$.next(!conversation.isFavorite);
     }
 
-    onMuteClicked($event: MouseEvent) {
-        $event.stopPropagation();
+    onMuteClicked() {
         this.mute$.next(!this.conversation().isMuted);
     }
 
-    openConversationDetailDialog(event: MouseEvent) {
-        event.stopPropagation();
+    openConversationDetailDialog() {
         const conversation = this.conversation();
         const ref = this.dialogService.open(
             ConversationDetailDialogComponent,

@@ -54,25 +54,6 @@ Course Info Bar
     vertical-align: middle;
 }
 
-.course-information {
-    padding-top: 29px;
-
-    .exercise-panel {
-        .row.has-exercises {
-            cursor: pointer;
-            border-radius: 3px;
-
-            &:hover {
-                background-color: var(--overview-light-background-color);
-
-                .icon {
-                    color: var(--primary);
-                }
-            }
-        }
-    }
-}
-
 .exercise-divider {
     height: 0;
     width: 100%;
@@ -82,12 +63,6 @@ Course Info Bar
 
 canvas#complete-chart {
     z-index: 99;
-}
-
-@media (max-width: 768px) {
-    .col-12 {
-        width: 100% !important;
-    }
 }
 
 .fadeInIcon {
