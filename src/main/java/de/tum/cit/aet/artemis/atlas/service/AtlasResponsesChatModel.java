@@ -28,6 +28,7 @@ import org.springframework.util.StringUtils;
 
 import com.openai.client.OpenAIClient;
 import com.openai.core.JsonValue;
+import com.openai.errors.OpenAIInvalidDataException;
 import com.openai.models.Reasoning;
 import com.openai.models.ReasoningEffort;
 import com.openai.models.ResponsesModel;
@@ -123,7 +124,7 @@ public final class AtlasResponsesChatModel implements ChatModel {
             throw new CancellationException("Atlas Responses dispatch interrupted before request");
         }
         Response response = openAIClient.responses().create(request.build());
-        return toChatResponse(response);
+        return toChatResponse(response, model);
     }
 
     private OpenAiChatOptions requireOpenAiOptions(@Nullable ChatOptions options) {
@@ -263,25 +264,26 @@ public final class AtlasResponsesChatModel implements ChatModel {
         throw unsupported("Responses output item kind " + outputItem.getClass().getSimpleName());
     }
 
-    private static ChatResponse toChatResponse(Response response) {
-        ChatResponseMetadata.Builder responseMetadata = ChatResponseMetadata.builder().id(response.id()).model(responseModelName(response));
+    private static ChatResponse toChatResponse(Response response, String requestedModel) {
+        ChatResponseMetadata.Builder responseMetadata = ChatResponseMetadata.builder().model(requestedModel);
         try {
             response.usage().ifPresent(usage -> responseMetadata.usage(toUsage(usage)));
         }
-        catch (ArithmeticException ex) {
+        catch (ArithmeticException | OpenAIInvalidDataException ex) {
             return terminalResponse("invalid_usage", responseMetadata);
         }
-        ResponseStatus status = response.status().orElse(null);
-        if (response.error().isPresent() || !ResponseStatus.COMPLETED.equals(status)) {
-            // Return a terminal, tool-free response so the native advisor retains earlier rounds' usage.
-            // The orchestration layer rejects this finish reason after accounting; incomplete tools never run.
-            String finish = response.error().isPresent() ? "failed" : status == null ? "missing_status" : status.asString();
-            return terminalResponse(finish, responseMetadata);
-        }
         try {
+            responseMetadata.id(response.id()).model(responseModelName(response));
+            ResponseStatus status = response.status().orElse(null);
+            if (response.error().isPresent() || !ResponseStatus.COMPLETED.equals(status)) {
+                // Return a terminal, tool-free response so the native advisor retains earlier rounds' usage.
+                // The orchestration layer rejects this finish reason after accounting; incomplete tools never run.
+                String finish = response.error().isPresent() ? "failed" : status == null ? "missing_status" : status.asString();
+                return terminalResponse(finish, responseMetadata);
+            }
             return completedResponse(response, responseMetadata);
         }
-        catch (IllegalArgumentException ex) {
+        catch (IllegalArgumentException | OpenAIInvalidDataException ex) {
             return terminalResponse("unsupported_output", responseMetadata);
         }
     }

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -34,6 +35,7 @@ import org.springframework.ai.tool.function.FunctionToolCallback;
 
 import com.openai.client.OpenAIClient;
 import com.openai.core.JsonValue;
+import com.openai.errors.OpenAIInvalidDataException;
 import com.openai.models.ChatModel;
 import com.openai.models.ResponsesModel;
 import com.openai.models.responses.Response;
@@ -267,6 +269,62 @@ class AtlasResponsesChatModelTest {
         assertThat(result.getResult().getMetadata().getFinishReason()).isEqualTo("invalid_usage");
         assertThat(result.getResult().getOutput().hasToolCalls()).isFalse();
         assertThat(result.getMetadata().getUsage()).isInstanceOf(org.springframework.ai.chat.metadata.EmptyUsage.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "id", "model", "status", "output" })
+    void malformedProviderFieldsRetainCostWithoutExecutingTools(String field) {
+        var billed = response(List.of(ResponseOutputItem.ofFunctionCall(functionCall())), "malformed-billed");
+        withUsage(billed, 10, 2);
+        when(billed.usage().orElseThrow()._additionalProperties()).thenReturn(Map.of("cost", JsonValue.from(0.01), "cost_currency", JsonValue.from("USD")));
+        var error = new OpenAIInvalidDataException("Missing required " + field);
+        switch (field) {
+            case "id" -> when(billed.id()).thenThrow(error);
+            case "model" -> when(billed.model()).thenThrow(error);
+            case "status" -> when(billed.status()).thenThrow(error);
+            case "output" -> when(billed.output()).thenThrow(error);
+            default -> throw new AssertionError("Unexpected field " + field);
+        }
+        when(responseService.create(any(ResponseCreateParams.class))).thenReturn(billed);
+        List<ChatResponse> calls = new ArrayList<>();
+        var tools = org.springframework.ai.chat.client.advisor.ToolCallingAdvisor.builder().build();
+        var client = ChatClient.builder(new AtlasResponsesChatModel(openAIClient, new JsonMapper(), "requested-model"))
+                .defaultAdvisors(tools, new AtlasTokenUsageAdvisor(calls::add, tools.getOrder())).build();
+        var result = client.prompt().user("work").call().chatResponse();
+        assertThat(result.getResult().getMetadata().getFinishReason()).isEqualTo("unsupported_output");
+        assertThat(result.getResult().getOutput().hasToolCalls()).isFalse();
+        assertThat(result.getMetadata().getModel()).isEqualTo(field.equals("id") || field.equals("model") ? "requested-model" : "gpt-test");
+        assertThat(calls).hasSize(1);
+        var usage = calls.getFirst().getMetadata().getUsage();
+        assertThat(de.tum.cit.aet.artemis.aiworker.api.LLMResponseCost.reportedUsd(usage.getNativeUsage(), usage.getPromptTokens(), usage.getCompletionTokens())).isEqualTo(0.01);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "input", "output", "total" })
+    void missingRequiredUsageCounterReturnsUnknownTerminalResponse(String field) {
+        var invalid = response(List.of(ResponseOutputItem.ofFunctionCall(functionCall())), "missing-counter");
+        var usage = mock(com.openai.models.responses.ResponseUsage.class);
+        lenient().when(usage.inputTokens()).thenReturn(10L);
+        lenient().when(usage.outputTokens()).thenReturn(2L);
+        lenient().when(usage.totalTokens()).thenReturn(12L);
+        var error = new OpenAIInvalidDataException("Missing required " + field);
+        switch (field) {
+            case "input" -> when(usage.inputTokens()).thenThrow(error);
+            case "output" -> when(usage.outputTokens()).thenThrow(error);
+            case "total" -> when(usage.totalTokens()).thenThrow(error);
+            default -> throw new AssertionError("Unexpected counter " + field);
+        }
+        when(invalid.usage()).thenReturn(Optional.of(usage));
+        when(responseService.create(any(ResponseCreateParams.class))).thenReturn(invalid);
+        List<ChatResponse> calls = new ArrayList<>();
+        var tools = org.springframework.ai.chat.client.advisor.ToolCallingAdvisor.builder().build();
+        var client = ChatClient.builder(new AtlasResponsesChatModel(openAIClient, new JsonMapper(), "gpt-test"))
+                .defaultAdvisors(tools, new AtlasTokenUsageAdvisor(calls::add, tools.getOrder())).build();
+        var result = client.prompt().user("work").call().chatResponse();
+        assertThat(result.getResult().getMetadata().getFinishReason()).isEqualTo("invalid_usage");
+        assertThat(result.getResult().getOutput().hasToolCalls()).isFalse();
+        assertThat(result.getMetadata().getUsage()).isInstanceOf(org.springframework.ai.chat.metadata.EmptyUsage.class);
+        assertThat(calls).containsExactly(result);
     }
 
     @Test
