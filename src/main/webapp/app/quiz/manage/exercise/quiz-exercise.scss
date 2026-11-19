@@ -120,7 +120,7 @@
 
         @include transformTranslate3D(-50%, -50%, 0);
 
-        @include quiz-mapping-letter-number(#696969);
+        @include quiz-mapping-letter-number(var(--quiz-mapping-number-background));
 
         .unlink-mapping {
             position: absolute;
@@ -130,7 +130,7 @@
             height: 100%;
             line-height: 30px;
             color: white;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: var(--quiz-mapping-unlink-background);
             cursor: pointer;
             border-radius: 50%;
             text-align: center;
@@ -143,35 +143,35 @@
     }
 
     .mapping-color-1 {
-        background: #2980b9;
+        background: var(--quiz-mapping-color-1);
     }
 
     .mapping-color-2 {
-        background: #c0392b;
+        background: var(--quiz-mapping-color-2);
     }
 
     .mapping-color-3 {
-        background: #27ae60;
+        background: var(--quiz-mapping-color-3);
     }
 
     .mapping-color-4 {
-        background: #f1c40f;
+        background: var(--quiz-mapping-color-4);
     }
 
     .mapping-color-5 {
-        background: #e67e22;
+        background: var(--quiz-mapping-color-5);
     }
 
     .mapping-color-6 {
-        background: #8e44ad;
+        background: var(--quiz-mapping-color-6);
     }
 
     .mapping-color-7 {
-        background: #1abc9c;
+        background: var(--quiz-mapping-color-7);
     }
 
     .mapping-color-0 {
-        background: #2c3e50;
+        background: var(--quiz-mapping-color-0);
     }
 }
 
@@ -190,12 +190,12 @@
 
 /* highlight drop location in light blue when selecting a drag item */
 .cdk-drop-list-receiving {
-    background: rgba(173, 216, 230, 0.8) !important;
+    background: var(--quiz-drop-list-receiving-background) !important;
 }
 
 /* change highlight color to light green when dragging the item above a drop location */
 .cdk-drop-list-dragging {
-    background: rgb(144, 238, 144) !important;
+    background: var(--quiz-drop-list-dragging-background) !important;
     cursor: pointer !important;
 }
 

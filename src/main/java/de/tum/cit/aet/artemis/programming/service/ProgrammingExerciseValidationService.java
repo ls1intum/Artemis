@@ -22,17 +22,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
+import de.tum.cit.aet.artemis.core.config.AllowedDockerRegistries;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.localvc.service.BranchRegexSyntax;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -123,11 +126,14 @@ public class ProgrammingExerciseValidationService {
 
     private final ProfileService profileService;
 
+    private final AllowedDockerRegistries allowedDockerRegistries;
+
     public ProgrammingExerciseValidationService(ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
             AuxiliaryRepositoryService auxiliaryRepositoryService, ProgrammingExerciseRepository programmingExerciseRepository, SubmissionPolicyService submissionPolicyService,
             Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, Optional<VersionControlService> versionControlService1,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProfileService profileService) {
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProfileService profileService, Environment environment) {
+        this.allowedDockerRegistries = AllowedDockerRegistries.from(environment);
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -160,6 +166,7 @@ public class ProgrammingExerciseValidationService {
         validateCustomCheckoutPaths(buildConfig);
         // Check the build config field lengths before the configuration is parsed
         validateBuildConfigSize(buildConfig);
+        validateDockerImageRegistry(buildConfig);
         validateBuildPhaseNames(buildConfig);
         validateDockerFlags(buildConfig);
         validateBuildTimeWindow(programmingExercise, buildConfig);
@@ -483,6 +490,54 @@ public class ProgrammingExerciseValidationService {
         catch (PatternSyntaxException e) {
             throw new BadRequestAlertException("The branch regex is not a valid regular expression", "Exercise", "branchRegexInvalid");
         }
+        if (!BranchRegexSyntax.isSupported(branchRegex)) {
+            throw new BadRequestAlertException("The branch regex uses syntax that is not supported. " + BranchRegexSyntax.DESCRIPTION, "Exercise", "branchRegexNotSupported");
+        }
+    }
+
+    /**
+     * Checks that the Docker image of the build plan configuration comes from one of the registries in
+     * {@code artemis.continuous-integration.allowed-docker-registries}. Nothing is checked while that list is empty, and a configuration without
+     * an image is not checked either, because it uses the default image of Artemis.
+     *
+     * @param buildConfig the build configuration to validate, or {@code null} when the request carries none
+     */
+    public void validateDockerImageRegistry(@Nullable ProgrammingExerciseBuildConfig buildConfig) {
+        if (buildConfig == null || allowedDockerRegistries.isEmpty()) {
+            return;
+        }
+        String buildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
+        if (buildPlanConfiguration == null || buildPlanConfiguration.isBlank()) {
+            return;
+        }
+        try {
+            BuildPlanPhasesDTO buildPlan = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration);
+            // The JSON text null has no content to check, and the validation of the build phases rejects it
+            if (buildPlan != null) {
+                validateDockerImageRegistry(buildPlan.dockerImage());
+            }
+        }
+        catch (JacksonException e) {
+            // an unreadable configuration is rejected by the validation of the build phases
+            log.debug("The Docker image registry was not checked, because the build plan configuration could not be read", e);
+        }
+    }
+
+    /**
+     * Checks that a Docker image comes from one of the registries in {@code artemis.continuous-integration.allowed-docker-registries}.
+     * An image without a registry in its name comes from {@code docker.io}.
+     *
+     * @param dockerImage the Docker image, or {@code null} for the default image of Artemis
+     */
+    public void validateDockerImageRegistry(@Nullable String dockerImage) {
+        if (dockerImage == null || allowedDockerRegistries.isEmpty()) {
+            return;
+        }
+        if (!allowedDockerRegistries.allows(dockerImage)) {
+            throw new BadRequestAlertException(
+                    "The Docker image comes from the registry " + AllowedDockerRegistries.registryOf(dockerImage) + ", which is not allowed on this server", "programmingExercise",
+                    "dockerImageRegistryNotAllowed");
+        }
     }
 
     /**
@@ -507,7 +562,10 @@ public class ProgrammingExerciseValidationService {
         catch (JacksonException e) {
             throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
         }
-
+        // The JSON text null is read as no configuration at all, which is no valid one
+        if (buildPlan == null) {
+            throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
+        }
         if (buildPlan.phases() == null && buildPlan.containers() == null) {
             return; // default will be used when saving
         }

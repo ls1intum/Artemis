@@ -7,7 +7,7 @@ GEM
     minitest-junit (2.1.0)
       minitest (~> 5.11)
       ox (~> 2, >= 2.14.2)
-    ox (2.14.20)
+    ox (2.14.21)
       bigdecimal (>= 3.0)
     rake (13.2.1)
 

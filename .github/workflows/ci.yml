@@ -67,6 +67,7 @@ jobs:
       has_beans: ${{ steps.decide.outputs.has_beans }}
       has_liquibase: ${{ steps.decide.outputs.has_liquibase }}
       has_skills: ${{ steps.decide.outputs.has_skills }}
+      has_exercise_images: ${{ steps.decide.outputs.has_exercise_images }}
       has_helm: ${{ steps.decide.outputs.has_helm }}
       has_tum_aet_ui: ${{ steps.decide.outputs.has_tum_aet_ui }}
       sonar_relevant: ${{ steps.decide.outputs.sonar_relevant }}
@@ -264,6 +265,36 @@ jobs:
               - 'AGENTS.md'
               - 'documentation/docs/developer/work-with-ai.mdx'
               - '.claude-plugin/**'
+            has_exercise_images:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-exercise-images.yml'
+              - 'src/main/resources/config/application.yml'
+              - 'src/main/resources/templates/java/**'
+              - 'src/main/resources/templates/kotlin/**'
+              - 'src/main/resources/templates/rust/**'
+              - 'src/main/resources/templates/javascript/**'
+              - 'src/main/resources/templates/typescript/**'
+              - 'src/main/resources/templates/swift/**'
+              - 'src/main/resources/templates/ruby/**'
+              - 'src/main/resources/templates/dart/**'
+              - 'src/main/resources/templates/c_sharp/**'
+              - 'src/main/resources/templates/go/**'
+              - 'src/main/resources/templates/haskell/**'
+              - 'src/main/resources/templates/phases/java/**'
+              - 'src/main/resources/templates/phases/kotlin/**'
+              - 'src/main/resources/templates/phases/rust/**'
+              - 'src/main/resources/templates/phases/javascript/**'
+              - 'src/main/resources/templates/phases/typescript/**'
+              - 'src/main/resources/templates/phases/swift/**'
+              - 'src/main/resources/templates/phases/ruby/**'
+              - 'src/main/resources/templates/phases/dart/**'
+              - 'src/main/resources/templates/phases/c_sharp/**'
+              - 'src/main/resources/templates/phases/go/**'
+              - 'src/main/resources/templates/phases/haskell/**'
+              - 'supporting_scripts/check_exercise_image_sync.py'
+              - 'supporting_scripts/verify_exercise_images_offline.py'
+              - 'supporting_scripts/exercise_images/**'
+              - 'supporting_scripts/tests/test_exercise_images.py'
             has_helm:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-helm.yml'
@@ -379,6 +410,7 @@ jobs:
           F_BEANS: ${{ steps.area.outputs.has_beans }}
           F_LIQUIBASE: ${{ steps.area.outputs.has_liquibase }}
           F_SKILLS: ${{ steps.area.outputs.has_skills }}
+          F_EXERCISE_IMAGES: ${{ steps.area.outputs.has_exercise_images }}
           F_HELM: ${{ steps.area.outputs.has_helm }}
           F_TUM_AET_UI: ${{ steps.area.outputs.has_tum_aet_ui }}
           F_SONAR: ${{ steps.relevant.outputs.sonar }}
@@ -395,7 +427,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_sandbox_tests has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_helm has_tum_aet_ui codeql_relevant sonar_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
+            for k in build_relevant has_java has_sandbox_tests has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_exercise_images has_helm has_tum_aet_ui codeql_relevant sonar_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -418,6 +450,7 @@ jobs:
                 echo "has_liquibase=false"
               fi
               echo "has_skills=${F_SKILLS:-false}"
+              echo "has_exercise_images=${F_EXERCISE_IMAGES:-false}"
               echo "has_helm=${F_HELM:-false}"
               echo "has_tum_aet_ui=${F_TUM_AET_UI:-false}"
               if [ "${F_CODEQL:-false}" = "true" ] || [ "${F_CODEQL_CONFIG:-false}" = "true" ]; then
@@ -545,10 +578,7 @@ jobs:
       # `!= 'false'`, so that an output that went missing runs the suite instead of silently skipping it.
       run_server_tests: ${{ needs.detect-changes.outputs.run_server_tests != 'false' }}
       run_client_tests: ${{ needs.detect-changes.outputs.run_client_tests != 'false' }}
-      is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
       pr_author: ${{ github.event.pull_request.user.login || '' }}
-    secrets:
-      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
   # In-run coverage table for INTERNAL PRs — posts as soon as `test` finishes (~28 min) instead of
   # waiting for the whole run, which the slow e2e tail delays to ~120 min (and with it the
@@ -914,6 +944,17 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
+  # Not folded into `quality` or `test`: both are gated on `build_relevant`, and a template change touches neither the server nor the client.
+  exercise-images:
+    name: Exercise Images
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_exercise_images == 'true'
+    uses: ./.github/workflows/ci-exercise-images.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
   # Not folded into `quality` or `test`: both are gated on `build_relevant`, and a chart change touches neither the server nor the client.
   helm:
     name: Helm Chart
@@ -987,6 +1028,12 @@ jobs:
   e2e:
     name: E2E
     needs: [detect-changes, build]
+    # Builds finish in any order. Keep pending calls so a late build cannot evict the
+    # actual tip. The reusable checks the tip after acquiring this lock, before using an E2E runner.
+    concurrency:
+      group: artemis-e2e-${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && 'develop-latest' || github.run_id }}
+      cancel-in-progress: false
+      queue: max
     # A pull request that only changes tests (server, client) or documentation cannot change the outcome of
     # E2E, the slowest stage, and neither can a draft be merged, so neither starts it (`run_e2e`, see
     # `detect-changes`). `!= 'false'`, so an output that went missing runs E2E instead of skipping it.
@@ -1063,7 +1110,7 @@ jobs:
   all-required-ci-passed:
     # Drafts never publish the canonical required status for untested commits. Promotion on the
     # same SHA must wait for a fresh ready-for-review run rather than reuse a draft's green check.
-    name: ${{ github.event.action == 'edited' && !github.event.changes.base && 'PR metadata updated (validation unchanged)' || needs.detect-changes.outputs.current == 'false' && 'Superseded revision (tests skipped)' || github.event_name == 'pull_request' && github.event.pull_request.draft == true && 'Draft checks passed (tests deferred)' || 'All required CI Passed' }}
+    name: ${{ github.event.action == 'edited' && !github.event.changes.base && 'PR metadata updated (validation unchanged)' || needs.detect-changes.outputs.current == 'false' && 'Superseded revision (tests skipped)' || needs.e2e.outputs.e2e_result == 'superseded' && 'Superseded develop E2E (tests skipped)' || github.event_name == 'pull_request' && github.event.pull_request.draft == true && 'Draft checks passed (tests deferred)' || 'All required CI Passed' }}
     if: ${{ !cancelled() && (github.event.action != 'edited' || github.event.changes.base != null) }}
     needs:
       - detect-changes
@@ -1077,6 +1124,7 @@ jobs:
       - version-consistency
       - bean-instantiations
       - skills
+      - exercise-images
       - helm
       - terminology
       - docs-checks
@@ -1096,6 +1144,7 @@ jobs:
         env:
           NEEDS: ${{ toJSON(needs) }}
           TESTS_DEFERRED: ${{ needs.detect-changes.outputs.tests_deferred }}
+          E2E_RESULT: ${{ needs.e2e.outputs.e2e_result }}
         run: |
           set -Eeuo pipefail
           # Fail closed: malformed/empty NEEDS must abort red, never pass green. `jq -e` on a
@@ -1117,6 +1166,9 @@ jobs:
             if [ "$TESTS_DEFERRED" = "true" ]; then
               echo "::notice::Draft checks passed. Test suites run when the PR is marked ready for review."
               echo "Draft checks passed; server, client and sandbox test suites are deferred until ready for review. The required full-test status is not published for this draft." >> "$GITHUB_STEP_SUMMARY"
+            elif [ "${E2E_RESULT:-}" = superseded ]; then
+              echo "::notice::CI passed for this build. A newer develop revision superseded its E2E suite."
+              echo "A newer develop revision superseded this commit's E2E suite. The remaining CI checks passed." >> "$GITHUB_STEP_SUMMARY"
             else
               echo "::notice::All required CI checks passed."
             fi
@@ -1156,6 +1208,7 @@ jobs:
       - version-consistency
       - bean-instantiations
       - skills
+      - exercise-images
       - helm
       - terminology
       - docs-checks
@@ -1191,7 +1244,7 @@ jobs:
             case "$1" in
               success)   printf '✅' ;;
               failure)   printf '❌' ;;
-              skipped)   printf '⏭️' ;;
+              skipped|superseded) printf '⏭️' ;;
               cancelled) printf '🚫' ;;
               error)     printf '⚠️' ;;  # e2e_result aggregate (infra error)
               *)         printf '❔' ;;

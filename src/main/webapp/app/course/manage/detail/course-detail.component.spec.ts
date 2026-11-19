@@ -20,8 +20,6 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
@@ -83,7 +81,6 @@ describe('Course Management Detail Component', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(EventManager),
                 MockProvider(Router),
-                { provide: DialogService, useClass: MockDialogService },
             ],
             deferBlockBehavior: DeferBlockBehavior.Manual,
         }).compileComponents();

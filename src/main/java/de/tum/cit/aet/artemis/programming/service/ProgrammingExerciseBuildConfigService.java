@@ -276,6 +276,10 @@ public class ProgrammingExerciseBuildConfigService {
             log.error("Failed to parse DockerRunConfig from JSON string: {}. Using default settings.", buildConfig.getDockerFlags());
             throw new IllegalArgumentException("Failed to parse DockerRunConfig from JSON string: " + buildConfig.getDockerFlags(), e);
         }
+        if (dockerFlagsDTO == null) {
+            // The text "null" is valid JSON that reads as no object at all
+            throw new IllegalArgumentException("The docker flags are not a JSON object: " + buildConfig.getDockerFlags());
+        }
 
         requireAllowedNetwork(dockerFlagsDTO.network());
 

@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -134,10 +135,10 @@ describe('CompetencyCardComponent', () => {
     it.each([
         { competency: { softDueDate: dayjs().add(1, 'days') } as Competency, expectedBadge: 'success' },
         { competency: { softDueDate: dayjs().subtract(1, 'days') } as Competency, expectedBadge: 'danger' },
-    ])('should have [ngClass] resolve to correct date badge', ({ competency, expectedBadge }) => {
+    ])('should resolve the date badge severity to $expectedBadge', ({ competency, expectedBadge }) => {
         competencyCardComponentFixture.componentRef.setInput('competency', competency);
         competencyCardComponentFixture.detectChanges();
-        const badge = competencyCardComponentFixture.debugElement.query(By.css('#date-badge')).nativeElement;
-        expect(badge.classList).toContain('bg-' + expectedBadge);
+        const badge = competencyCardComponentFixture.debugElement.query(By.css('#date-badge')).componentInstance as TumAetUiTagComponent;
+        expect(badge.severity()).toBe(expectedBadge);
     });
 });

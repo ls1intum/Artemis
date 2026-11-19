@@ -54,6 +54,14 @@ class ProgrammingExerciseBuildConfigNetworkTest {
     }
 
     @Test
+    void aJsonNullIsNotAnObjectOfDockerFlags() {
+        var buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setDockerFlags("null");
+
+        assertThatThrownBy(() -> service.parseDockerFlags(buildConfig)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void unlistedNetworkIsRejected() {
         assertThatThrownBy(() -> service.parseDockerFlags(configWithNetwork("other"))).isInstanceOf(ResponseStatusException.class);
     }

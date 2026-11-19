@@ -9,7 +9,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router, RouterState, provideRouter } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
@@ -44,7 +43,7 @@ import { MockCommunicationService } from 'test/helpers/mocks/service/mock-commun
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import {
     communicationChannel,
     communicationCourse,
@@ -87,7 +86,6 @@ describe('PostComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [
-                NgbTooltip,
                 OverlayModule,
                 PostComponent,
                 FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
@@ -115,7 +113,7 @@ describe('PostComponent', () => {
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ConversationService, useClass: MockConversationService },
                 { provide: CourseConversationsService, useClass: MockCourseConversationsService },
-                { provide: DialogService, useValue: { open: vi.fn() } },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn() } },
             ],
         }).overrideComponent(PostComponent, {
             remove: { imports: [PostingContentComponent] },

@@ -219,6 +219,7 @@ export class MessageEditorToolsComponent {
     protected keydown(event: Event): void {
         // Safari may confirm a candidate after compositionend with keyCode 229 and isComposing=false.
         event.stopPropagation();
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- keyCode 229 is the only signal of that confirmation
         if (!(event instanceof KeyboardEvent) || event.isComposing || this.composing || event.keyCode === 229) {
             return;
         }

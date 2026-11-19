@@ -13,7 +13,7 @@
 }
 
 .ai-panel {
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--border-color);
     border-radius: 0.75rem;
     padding: 1.25rem;
     display: flex;
@@ -64,7 +64,7 @@
     font-size: 0.7rem;
     font-weight: 300;
     cursor: pointer;
-    color: var(--bs-primary);
+    color: var(--primary);
     text-decoration: none;
 
     &:hover {

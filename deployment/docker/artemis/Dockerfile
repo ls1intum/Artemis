@@ -24,6 +24,13 @@ ARG WAR_FILE_STAGE="builder"
 #-----------------------------------------------------------------------------------------------------------------------
 FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25.0.5_8-jdk@sha256:b8705e936964c228dfce359e63dbf08f6c69cb380ed1d576b1f6b1064f15567d AS builder
 
+# The downloaded Node 26 ARM64 binary links libatomic.so.1, which the JDK base image
+# does not include. Install it before Gradle bootstraps pnpm.
+# hadolint ignore=DL3008
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends libatomic1 \
+  && rm -rf /var/lib/apt/lists/*
+
 # python3/build-essential were previously installed defensively for npm deps that
 # trigger node-gyp; no current Artemis dep needs that. If a future dep does, the
 # pnpm step below fails loudly and these can be reinstated.
@@ -111,9 +118,43 @@ COPY --from=war_file ${WAR_FILE_PATH}/*.war Artemis.war
 RUN java -Djarmode=tools -jar Artemis.war extract --destination /extract/app
 
 #-----------------------------------------------------------------------------------------------------------------------
+# runtime JDK stage (downloads the JDK that the runtime image runs on)
+#-----------------------------------------------------------------------------------------------------------------------
+# The runtime uses Oracle JDK 25.0.5.1 until a Temurin 25 image of the same update release is published.
+# The archive is pinned by version and verified against Oracle's published SHA-256 checksum.
+FROM docker.io/library/ubuntu:26.04@sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db AS runtime_jdk
+
+ARG TARGETARCH
+ARG JDK_VERSION=25.0.5.1
+ARG JDK_SHA256_AMD64=3d40d69461200594380ac84c17be6224539022028730cffe043ac70c41ffd1d5
+ARG JDK_SHA256_ARM64=2c30d5fe69796452732d32e746c5f4b4031e4991e2be9a3313f76e51fe5196ee
+
+# hadolint ignore=DL3008
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates curl \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN case "${TARGETARCH}" in \
+    amd64) jdk_arch=x64; jdk_sha256="${JDK_SHA256_AMD64}" ;; \
+    arm64) jdk_arch=aarch64; jdk_sha256="${JDK_SHA256_ARM64}" ;; \
+    *) echo "Unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+  esac \
+  && curl -fsSL -o /tmp/jdk.tar.gz "https://download.oracle.com/java/25/archive/jdk-${JDK_VERSION}_linux-${jdk_arch}_bin.tar.gz" \
+  && echo "${jdk_sha256}  /tmp/jdk.tar.gz" | sha256sum -c - \
+  && mkdir -p /opt/java/openjdk \
+  && tar -xzf /tmp/jdk.tar.gz -C /opt/java/openjdk --strip-components=1 \
+  && rm /tmp/jdk.tar.gz
+
+#-----------------------------------------------------------------------------------------------------------------------
 # runtime stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/eclipse-temurin:25.0.5_8-jdk@sha256:b8705e936964c228dfce359e63dbf08f6c69cb380ed1d576b1f6b1064f15567d AS runtime
+FROM docker.io/library/ubuntu:26.04@sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db AS runtime
+
+# Same location as in the Temurin images, so that JAVA_HOME does not change for anything that relies on it.
+ENV JAVA_HOME=/opt/java/openjdk
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+COPY --from=runtime_jdk /opt/java/openjdk /opt/java/openjdk
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"
@@ -123,11 +164,12 @@ ARG GID=1337
 
 # Docker Compose: wget (healthcheck docker compose)
 # Artemis: graphviz, locales
+# JDK: ca-certificates, fontconfig, tzdata (the Temurin base image shipped them)
 # Not pinning apt versions (DL3008): these are base-image system packages whose pinned versions age
 # out of the Debian repos and would break the image build over time.
 # hadolint ignore=DL3008
 RUN echo "Installing needed dependencies" \
-  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
+  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget ca-certificates fontconfig tzdata \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 

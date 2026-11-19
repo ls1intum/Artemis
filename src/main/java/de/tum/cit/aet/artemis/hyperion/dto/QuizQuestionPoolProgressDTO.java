@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.dto;
 
+import jakarta.validation.Valid;
+
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -18,7 +20,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param rejected        judged items the filter rejected
  * @param failed          items whose generation or filtering failed permanently
  * @param buildSettings   the settings the running build planned its cells with; {@code null} while no build is running
- * @param modelConfigured whether the pool has its own model endpoint; builds are refused without one
+ * @param modelConfigured whether the pool has a usable model configuration; builds are refused without one
+ * @param lastBuild       the most recent build, or {@code null} before the first
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Progress of a course's quiz question pool build")
@@ -28,5 +31,6 @@ public record QuizQuestionPoolProgressDTO(@Schema(description = "Whether a build
         @Schema(description = "Judged items the filter accepted") int accepted, @Schema(description = "Judged items the filter rejected") int rejected,
         @Schema(description = "Items whose generation or filtering failed permanently") int failed,
         @Nullable @Schema(description = "The settings the running build planned its cells with; absent while no build is running") HyperionCourseSettingsDTO buildSettings,
-        @Schema(description = "Whether the pool has its own model endpoint; builds are refused without one") boolean modelConfigured) {
+        @Valid @Schema(description = "The most recent build, absent before the first") @Nullable QuizQuestionPoolBuildDTO lastBuild,
+        @Schema(description = "Whether the pool has a usable model configuration; builds are refused without one") boolean modelConfigured) {
 }

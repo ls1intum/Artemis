@@ -1,6 +1,6 @@
 .edit-quiz {
     .section-card {
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--border-color);
         border-radius: 0.75rem;
         overflow: hidden;
         background: var(--overview-card-bg, var(--brighter-body-bg));
@@ -16,8 +16,8 @@
         align-items: center;
         gap: 1rem;
         padding: 1rem 2rem;
-        border-bottom: 1px solid var(--bs-border-color);
-        background: linear-gradient(135deg, var(--section-bg-start, rgba(var(--bs-primary-rgb), 0.04)) 0%, transparent 100%);
+        border-bottom: 1px solid var(--border-color);
+        background: linear-gradient(135deg, var(--section-bg-start, color-mix(in srgb, var(--primary) 4%, transparent)) 0%, transparent 100%);
     }
 
     .section-header-icon {
@@ -29,9 +29,9 @@
         align-items: center;
         justify-content: center;
         font-size: 1.2rem;
-        color: var(--bs-white);
-        background: var(--section-color, var(--bs-primary));
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+        color: var(--white);
+        background: var(--section-color, var(--primary));
+        box-shadow: 0 3px 8px color-mix(in srgb, black 15%, transparent);
     }
 
     .section-header-text {
@@ -45,7 +45,7 @@
 
         p {
             margin: 0;
-            color: var(--bs-secondary-color);
+            color: var(--text-body-secondary);
             font-size: 0.85rem;
             line-height: 1.4;
         }
@@ -56,10 +56,10 @@
         display: inline-flex;
         align-items: center;
         padding: 0.4rem 0.85rem;
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--border-color);
         border-radius: 0.5rem;
-        background: var(--overview-card-nested-bg, var(--bs-body-bg));
-        color: var(--bs-body-color);
+        background: var(--overview-card-nested-bg, var(--body-bg));
+        color: var(--body-color);
         font-weight: 500;
         font-size: 0.8rem;
         white-space: nowrap;
@@ -69,8 +69,8 @@
 
         &:hover,
         &.active {
-            background: color-mix(in srgb, var(--bs-body-color) 8%, transparent);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            background: color-mix(in srgb, var(--body-color) 8%, transparent);
+            box-shadow: 0 2px 8px color-mix(in srgb, black 6%, transparent);
         }
     }
 
@@ -84,10 +84,10 @@
         justify-content: center;
         gap: 0.4rem;
         padding: 0.4rem 0.85rem;
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--border-color);
         border-radius: 0.5rem;
         background: transparent;
-        color: var(--bs-secondary-color);
+        color: var(--text-body-secondary);
         font-size: 0.85rem;
         font-weight: 500;
         cursor: pointer;
@@ -95,9 +95,9 @@
 
         &:hover,
         &.active {
-            border-color: var(--section-color, var(--bs-primary));
-            color: var(--section-color, var(--bs-primary));
-            background: var(--section-bg-start, rgba(var(--bs-primary-rgb), 0.04));
+            border-color: var(--section-color, var(--primary));
+            color: var(--section-color, var(--primary));
+            background: var(--section-bg-start, color-mix(in srgb, var(--primary) 4%, transparent));
         }
     }
 
@@ -116,11 +116,11 @@
         position: relative;
         width: 100%;
         box-sizing: border-box;
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--border-color);
         border-radius: 0.75rem;
         overflow: hidden;
         margin-bottom: 1rem;
-        background: var(--bs-body-bg);
+        background: var(--body-bg);
 
         &:first-of-type {
             margin-top: 1rem;
@@ -132,8 +132,8 @@
             align-items: center;
             gap: 0.75rem;
             padding: 0.6rem 0.85rem;
-            background: var(--overview-card-nested-bg, var(--bs-tertiary-bg));
-            border-bottom: 1px solid var(--bs-border-color);
+            background: var(--overview-card-nested-bg);
+            border-bottom: 1px solid var(--border-color);
             flex-wrap: wrap;
         }
 
@@ -143,14 +143,14 @@
             background: none;
             border: none;
             padding: 0;
-            color: var(--bs-secondary-color);
+            color: var(--text-body-secondary);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
 
             &:hover {
-                color: var(--bs-body-color);
+                color: var(--body-color);
             }
         }
 
@@ -203,32 +203,10 @@
         .preview-dnd-question,
         .preview-sa-question {
             padding: 1.25rem;
-            background: var(--overview-card-bg, var(--bs-tertiary-bg));
+            background: var(--overview-card-bg);
         }
 
         .question-card-body {
-            .question-options-reevaluation {
-                .form-group {
-                    display: flex;
-                    align-items: center;
-                    margin: 0 5px 15px;
-                }
-
-                .form-control:disabled {
-                    background-color: var(--gray-200);
-                }
-
-                .form-group > * {
-                    margin: 0 4px;
-                }
-
-                .form-check {
-                    display: block;
-                    align-items: center;
-                    padding-left: 0;
-                }
-            }
-
             .invalid-button {
                 width: 100%;
                 text-overflow: ellipsis;
@@ -257,17 +235,10 @@
             flex-shrink: 0;
         }
 
-        .question-card-body .question-options:not(.row) {
+        .question-card-body .question-options:not(.question-options--row) {
             justify-content: flex-start;
             flex-wrap: wrap;
             gap: 0.3rem;
-
-            .form-group {
-                display: flex;
-                align-items: center;
-                gap: 0;
-                margin: 0;
-            }
         }
 
         .delete-button,
@@ -279,7 +250,7 @@
         }
 
         .delete-button:hover {
-            color: var(--bs-danger);
+            color: var(--danger);
         }
 
         .duplicate-button:hover {
@@ -335,10 +306,6 @@
             align-items: center;
             justify-content: space-around;
             margin: 0 10px 10px 0;
-
-            .custom-checkbox {
-                margin-left: 10px;
-            }
         }
 
         button {
@@ -349,12 +316,6 @@
             .checkboxes {
                 margin: 10px 0;
                 width: 100%;
-
-                .custom-checkbox {
-                    &:first-of-type {
-                        margin-left: 0;
-                    }
-                }
             }
         }
     }

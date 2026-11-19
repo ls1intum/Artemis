@@ -1,30 +1,29 @@
 <jhi-fireworks [active]="showFireworks()" />
 @if (isLoading()) {
-    <div class="d-flex justify-content-center">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden" jhiTranslate="loading"></span>
-        </div>
+    <div class="flex justify-center">
+        <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
     </div>
 }
 @if (competency(); as competency) {
-    <div class="mt-n3">
+    <div class="-mt-4!">
         <!-- HEADER INFORMATION START -->
         <div class="mt-2 me-1 course-info-bar">
-            <div class="row align-items-center">
-                <div class="general-info col">
-                    <h3 class="mb-0">
+            <div class="-mx-2 flex flex-wrap items-center">
+                <div class="min-w-0 flex-1 px-2">
+                    <h3 class="mb-0!">
                         <fa-icon
                             [icon]="getIcon(competency.taxonomy)"
                             [fixedWidth]="true"
-                            [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
-                            container="body"
+                            [tumAetUiTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
                         />
                         <span>{{ competency!.title }}</span>
                         @if (isMastered) {
-                            <span class="badge text-white text-bg-success" data-testid="competency-mastered-badge" jhiTranslate="artemisApp.competency.mastered"></span>
+                            <tumaet-ui-tag class="align-middle" severity="success" data-testid="competency-mastered-badge">{{
+                                'artemisApp.competency.mastered' | artemisTranslate
+                            }}</tumaet-ui-tag>
                         }
                         @if (competency.optional) {
-                            <span class="badge text-white bg-warning" jhiTranslate="artemisApp.competency.optional"></span>
+                            <tumaet-ui-tag class="align-middle" severity="warn">{{ 'artemisApp.competency.optional' | artemisTranslate }}</tumaet-ui-tag>
                         }
                     </h3>
                     @if (competency.description) {
@@ -32,28 +31,30 @@
                     }
                 </div>
                 @if (competency.softDueDate) {
-                    <div class="col-auto text-right">
-                        <span style="vertical-align: middle" jhiTranslate="artemisApp.competency.competencyCard.softDueDate"></span>
-                        <span class="badge" [ngClass]="softDueDatePassed ? 'bg-danger' : 'bg-success'" id="date-badge"> {{ competency.softDueDate | artemisTimeAgo }} </span>
+                    <div class="w-auto px-2 text-end">
+                        <span class="align-middle" jhiTranslate="artemisApp.competency.competencyCard.softDueDate"></span>
+                        <tumaet-ui-tag id="date-badge" class="align-middle" size="sm" [severity]="softDueDatePassed ? 'danger' : 'success'">
+                            {{ competency.softDueDate | artemisTimeAgo }}
+                        </tumaet-ui-tag>
                     </div>
                 }
-                <div class="col-auto">
+                <div class="w-auto px-2">
                     @if (competency.course?.isAtLeastInstructor) {
-                        <a class="btn btn-sm btn-warning float-end" [routerLink]="['/course-management', courseId(), 'competency-management', competency.id, 'edit']">
+                        <a tumAetUiButton severity="warn" size="small" [routerLink]="['/course-management', courseId(), 'competency-management', competency.id, 'edit']">
                             <fa-icon [icon]="faPencilAlt" />
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                            <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
                         </a>
                     }
                 </div>
             </div>
         </div>
         <!-- HEADER INFORMATION END -->
-        <div class="row mt-2">
-            <div class="col-lg-9 col-md-8">
-                <div class="row">
+        <div class="-mx-2 mt-2 flex flex-wrap">
+            <div class="w-full px-2 md:w-2/3 lg:w-3/4">
+                <div class="-mx-2 flex flex-wrap">
                     @for (lectureUnitLink of competency.lectureUnitLinks; track lectureUnitLink) {
                         @if (lectureUnitLink.lectureUnit; as lectureUnit) {
-                            <div class="col-12 col-lg-11 mt-3">
+                            <div class="mt-4! w-full px-2 lg:w-11/12">
                                 @switch (lectureUnit.type) {
                                     @case (LectureUnitType.EXERCISE) {
                                         <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="competency!.course!" />
@@ -74,23 +75,23 @@
                     }
                 </div>
             </div>
-            <div class="col-lg-3 col-md-4">
-                <div class="w-50 mx-auto my-2">
+            <div class="w-full px-2 md:w-1/3 lg:w-1/4">
+                <div class="mx-auto my-2 w-1/2">
                     <jhi-competency-rings [progress]="progress" [mastery]="mastery" />
                 </div>
-                <jhi-side-panel class="d-block mt-3" [panelHeader]="'artemisApp.competency.table.panelHeader' | artemisTranslate">
-                    <div class="row mb-1 g-0">
-                        <div class="col-7"><span jhiTranslate="artemisApp.competency.mastery"></span><jhi-help-icon text="artemisApp.competency.masteryDescription" /></div>
-                        <div class="col-5">
+                <jhi-side-panel class="mt-4! block" [panelHeader]="'artemisApp.competency.table.panelHeader' | artemisTranslate">
+                    <div class="mb-1 flex">
+                        <div class="w-7/12"><span jhiTranslate="artemisApp.competency.mastery"></span><jhi-help-icon text="artemisApp.competency.masteryDescription" /></div>
+                        <div class="w-5/12">
                             <span> {{ mastery }} %</span>
                             @if (competencyProgress()?.confidenceReason && competencyProgress()!.confidenceReason !== ConfidenceReason.NO_REASON) {
                                 <jhi-help-icon text="{{ 'artemisApp.competency.confidenceReasons.' + competencyProgress()!.confidenceReason }}" />
                             }
                         </div>
                     </div>
-                    <div class="row mb-1 g-0">
-                        <div class="col-7"><span jhiTranslate="artemisApp.competency.progress"></span><jhi-help-icon text="artemisApp.competency.progressDescription" /></div>
-                        <div class="col-5">{{ progress }} %</div>
+                    <div class="mb-1 flex">
+                        <div class="w-7/12"><span jhiTranslate="artemisApp.competency.progress"></span><jhi-help-icon text="artemisApp.competency.progressDescription" /></div>
+                        <div class="w-5/12">{{ progress }} %</div>
                     </div>
                 </jhi-side-panel>
             </div>

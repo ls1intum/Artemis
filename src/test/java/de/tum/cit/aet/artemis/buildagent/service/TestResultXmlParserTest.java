@@ -1,13 +1,20 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
@@ -19,6 +26,48 @@ class TestResultXmlParserTest {
     private final List<LocalCITestJobDTO> failedTests = new ArrayList<>();
 
     private final List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
+
+    private final List<TestCaseResult> hyperionFailures = new ArrayList<>();
+
+    private final List<TestCaseResult> hyperionSuccesses = new ArrayList<>();
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void rejectsExternalEntitiesWithoutExposingLocalFiles(boolean hyperion, @TempDir Path directory) throws IOException {
+        Path secret = directory.resolve("secret.txt");
+        FileUtils.writeStringToFile(secret.toFile(), "private-file-content", StandardCharsets.UTF_8);
+        String report = """
+                <!DOCTYPE testsuite [<!ENTITY secret SYSTEM "%s">]>
+                <testsuite><testcase name="fails"><failure>&secret;</failure></testcase></testsuite>
+                """.formatted(secret.toUri());
+
+        assertThatThrownBy(() -> parseWithSelectedParser(hyperion, report)).isInstanceOf(RuntimeException.class).hasMessageNotContaining("private-file-content");
+        assertThat(failedTests).isEmpty();
+        assertThat(successfulTests).isEmpty();
+        assertThat(hyperionFailures).isEmpty();
+        assertThat(hyperionSuccesses).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void rejectsMalformedXmlWithoutAppendingPartialResults(boolean hyperion) {
+        String report = "<testsuite><testcase name=\"passes\"/><testcase name=\"broken\"></testsuite>";
+
+        assertThatThrownBy(() -> parseWithSelectedParser(hyperion, report)).isInstanceOf(RuntimeException.class);
+        assertThat(failedTests).isEmpty();
+        assertThat(successfulTests).isEmpty();
+        assertThat(hyperionFailures).isEmpty();
+        assertThat(hyperionSuccesses).isEmpty();
+    }
+
+    private void parseWithSelectedParser(boolean hyperion, String report) throws IOException {
+        if (hyperion) {
+            new JUnitReportParser(20_000).processTestResultFile(report, hyperionFailures, hyperionSuccesses);
+        }
+        else {
+            TestResultXmlParser.processTestResultFile(report, failedTests, successfulTests);
+        }
+    }
 
     @Test
     void localCiAndHyperionAgreeOnNestedJUnitReports() throws IOException {

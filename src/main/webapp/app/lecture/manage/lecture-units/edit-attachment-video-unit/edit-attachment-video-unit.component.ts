@@ -3,14 +3,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { onError } from 'app/foundation/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, finalize, switchMap, take } from 'rxjs/operators';
-import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { AttachmentVideoUnitService, withFileName } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { combineLatest } from 'rxjs';
-import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 import { TumLiveUploadComponent } from 'app/lecture/manage/lecture-units/tum-live-upload/tum-live-upload.component';
@@ -61,11 +60,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                 finalize(() => this.isLoading.set(false)),
             )
             .subscribe({
-                next: (attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
-                    const unit = attachmentVideoUnitResponse.body;
-                    if (!unit) {
-                        return;
-                    }
+                next: (unit: AttachmentVideoUnit) => {
                     const attach = unit.attachment || {};
                     // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
                     unit.attachment = undefined;
@@ -104,8 +99,8 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             .findById(unitId, lectureId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (response) => {
-                    const videoSource = response.body?.videoSource;
+                next: (response: AttachmentVideoUnit) => {
+                    const videoSource = response.videoSource;
                     const unit = this.attachmentVideoUnit();
                     if (unit) {
                         this.attachmentVideoUnit.set(cloneWith(unit, { videoSource }));
@@ -154,32 +149,29 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
 
         this.isLoading.set(true);
 
-        const formData = new FormData();
-        if (hasUpload) {
-            formData.append('file', file, fileName);
-        }
         // A video-only unit has no attachment to update until a file is uploaded.
-        if (currentAttachment.id !== undefined || hasUpload) {
-            formData.append('attachment', objectToJsonBlob(updatedAttachment));
-        }
-        formData.append('attachmentVideoUnit', objectToJsonBlob(updatedUnit));
+        const sendsAttachment = currentAttachment.id !== undefined || hasUpload;
 
         this.attachmentVideoUnitService
-            .update(lectureId, currentUnit.id, formData, this.notificationText() || undefined)
+            .update(lectureId, currentUnit.id, updatedUnit, {
+                attachment: sendsAttachment ? updatedAttachment : undefined,
+                file: hasUpload ? withFileName(file, fileName) : undefined,
+                notificationText: this.notificationText() || undefined,
+            })
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
                 finalize(() => this.isLoading.set(false)),
             )
             .subscribe({
-                next: (response) => {
-                    const savedVideoSource = response.body?.videoSource || undefined;
+                next: (response: AttachmentVideoUnit) => {
+                    const savedVideoSource = response.videoSource || undefined;
                     const sentVideoSource = videoSource || undefined;
-                    if (response.body && sentVideoSource !== (currentUnit.videoSource || undefined) && savedVideoSource !== sentVideoSource) {
+                    if (sentVideoSource !== (currentUnit.videoSource || undefined) && savedVideoSource !== sentVideoSource) {
                         // The link was changed meanwhile, so the server kept that one. The page stays, shows it as the saved link and keeps the entered one to
                         // be saved again; the rest of the change is saved.
                         this.attachmentVideoUnit.set(cloneWith(currentUnit, { name, description, releaseDate, competencyLinks, videoSource: savedVideoSource }));
-                        if (response.body.attachment) {
-                            this.attachment.set(cloneWith(response.body.attachment, { attachmentVideoUnit: undefined }));
+                        if (response.attachment) {
+                            this.attachment.set(cloneWith(response.attachment, { attachmentVideoUnit: undefined }));
                         }
                         this.attachmentVideoUnitForm()?.applyServerVideoSource(savedVideoSource);
                         this.alertService.warning('artemisApp.lecture.unitEditor.videoSourceChangedMeanwhile');
