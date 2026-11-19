@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.runtime.agent;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
@@ -8,6 +9,7 @@ import org.springframework.ai.chat.metadata.EmptyUsage;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 
+import de.tum.cit.aet.artemis.aiworker.api.LLMResponseCost;
 import de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate;
 
 /** Converts only reported usage fields, without transmitting or reconstructing provider content. */
@@ -34,8 +36,9 @@ public final class ProviderUsageTransport {
         if (usage.getPromptTokens() == null || usage.getCompletionTokens() == null) {
             throw new IllegalArgumentException("Provider response contains incomplete token counts");
         }
+        Double totalCostUsd = LLMResponseCost.reportedUsd(usage.getNativeUsage(), usage.getPromptTokens(), usage.getCompletionTokens());
         return new ProviderUsageUpdate.Call(Objects.toString(metadata.getModel(), ""), metadata.getId(), usage.getPromptTokens(), usage.getCompletionTokens(),
-                usage.getCacheReadInputTokens());
+                usage.getCacheReadInputTokens(), totalCostUsd);
     }
 
     /**
@@ -69,7 +72,10 @@ public final class ProviderUsageTransport {
 
             @Override
             public Object getNativeUsage() {
-                return null;
+                if (call.totalCostUsd() == null) {
+                    return null;
+                }
+                return Map.of("prompt_tokens", call.inputTokens(), "completion_tokens", call.outputTokens(), "cost", call.totalCostUsd(), "cost_currency", "USD");
             }
         };
         var metadata = ChatResponseMetadata.builder().model(call.model()).id(call.requestId() == null ? "" : call.requestId()).usage(usage).build();
