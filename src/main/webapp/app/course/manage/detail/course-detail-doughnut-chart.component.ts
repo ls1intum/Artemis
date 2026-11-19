@@ -11,6 +11,7 @@ import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
 
@@ -18,7 +19,7 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     selector: 'jhi-course-detail-doughnut-chart',
     templateUrl: './course-detail-doughnut-chart.component.html',
     styleUrls: ['./course-detail-doughnut-chart.component.scss'],
-    imports: [RouterLink, NgClass, FaIconComponent, TumAetUiDoughnutChartComponent, ArtemisTranslatePipe],
+    imports: [RouterLink, NgClass, FaIconComponent, TumAetUiDoughnutChartComponent, ArtemisTranslatePipe, TranslateDirective],
 })
 export class CourseDetailDoughnutChartComponent {
     private router = inject(Router);
@@ -29,6 +30,8 @@ export class CourseDetailDoughnutChartComponent {
     readonly currentMax = input<number>();
     readonly course = input.required<Course>();
     readonly showText = input<string>();
+    /** Requests excluded from the USD total because no USD cost was reported or configured. */
+    readonly unpricedRequests = input(0);
 
     readonly receivedStats = signal(false);
     readonly stats = signal<number[]>([]);

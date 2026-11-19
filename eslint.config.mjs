@@ -631,6 +631,10 @@ export default tseslint.config(
                             message: "Please import from 'lodash-es' instead.",
                         },
                         noNgZoneImport,
+                        {
+                            name: '@tumaet/ui-angular',
+                            message: 'Inside TUM AET UI, import from a relative path, not the package entry point.',
+                        },
                     ],
                     patterns: [
                         {

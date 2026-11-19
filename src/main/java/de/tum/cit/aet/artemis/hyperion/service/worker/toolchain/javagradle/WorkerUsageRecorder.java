@@ -148,7 +148,7 @@ public final class WorkerUsageRecorder implements ProviderUsageSink {
     }
 
     public synchronized GenerationUsage snapshot() {
-        return new GenerationUsage(modelCalls, toolCalls, turns, attempts, inputTokens, outputTokens, cachedTokens, cachedTokensComplete, 0, modelCalls == 0, List.copyOf(models),
+        return new GenerationUsage(modelCalls, toolCalls, turns, attempts, inputTokens, outputTokens, cachedTokens, cachedTokensComplete, List.copyOf(models),
                 List.copyOf(requestIds), requestIdsComplete);
     }
 }

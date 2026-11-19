@@ -141,8 +141,9 @@ jobs:
 
       # And this is required for the same reason again. `tsconfig.json` maps `@tumaet/ui-angular` to
       # `packages/tum-aet-ui/dist`, which is a build output: it is not tracked and `pnpm install` does not
-      # create it. Without it every one of the ~240 application imports of the alias is unresolved,
-      # which is the same silent degradation as the missing `node_modules`. Only the library build is
+      # create it. Without it the ~240 application imports of the alias fall back to the package
+      # sources through its `.` export, so the scan would not analyze the declarations the client
+      # is built against. Only the library build is
       # run, not the full `prebuild`: the rest of that script writes an angular.json file replacement
       # no source imports and runs a vite version check that would fail this job for a reason
       # unrelated to the scan.
