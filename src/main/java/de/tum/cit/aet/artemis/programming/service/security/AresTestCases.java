@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.security;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -101,12 +102,30 @@ final class AresTestCases {
     }
 
     /**
+     * @param source the content of a Java file
+     * @return the offsets of the names of its test method declarations, so that an annotation is matched to the declaration it is on, not only to a name that
+     *         a method that is no test may share with a test
+     */
+    static Set<Integer> testDeclarationOffsets(String source) {
+        return testMethods(source).declarations();
+    }
+
+    /**
+     * @return the offset of the name of the method that the annotation ending at the offset annotates; -1 if none follows before the next body or statement
+     */
+    static int methodNameOffsetAfter(String masked, int offset) {
+        MatchResult method = methodAfter(masked, offset);
+        return method == null ? -1 : method.start(1);
+    }
+
+    /**
      * The test methods of a source.
      *
-     * @param offsets    for each name, the offset of the first test annotation of the first method with it
-     * @param overloaded the names that more than one test method has
+     * @param offsets      for each name, the offset of the first test annotation of the first method with it
+     * @param overloaded   the names that more than one test method has
+     * @param declarations the offsets of the names of all test method declarations
      */
-    private record TestMethods(Map<String, Integer> offsets, Set<String> overloaded) {
+    private record TestMethods(Map<String, Integer> offsets, Set<String> overloaded, Set<Integer> declarations) {
     }
 
     private static TestMethods testMethods(String source) {
@@ -114,10 +133,12 @@ final class AresTestCases {
         Map<String, Integer> offsets = new LinkedHashMap<>();
         Map<String, Integer> declarations = new HashMap<>();
         Set<String> overloaded = new LinkedHashSet<>();
+        Set<Integer> declarationOffsets = new HashSet<>();
         Matcher annotation = TEST_ANNOTATION.matcher(masked);
         while (annotation.find()) {
             MatchResult method = methodAfter(masked, annotation.end());
             if (method != null) {
+                declarationOffsets.add(method.start(1));
                 String name = method.group(1);
                 offsets.putIfAbsent(name, annotation.start());
                 // Two test annotations of one method find the same declaration; another declaration with the name is an overload.
@@ -127,7 +148,7 @@ final class AresTestCases {
                 }
             }
         }
-        return new TestMethods(offsets, overloaded);
+        return new TestMethods(offsets, overloaded, Set.copyOf(declarationOffsets));
     }
 
     /**

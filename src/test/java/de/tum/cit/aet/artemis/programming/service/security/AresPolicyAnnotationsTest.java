@@ -325,6 +325,18 @@ class AresPolicyAnnotationsTest {
     }
 
     @Test
+    void anAnnotationOnAMethodThatIsNoTestButSharesTheNameOfOneIsNotSupported() {
+        String overload = "    @Policy(\"Q.yaml\")\n    void testQuickSort(int size) {\n    }\n\n";
+        String source = TEST_CLASS.replace("    @Test\n    void testQuickSort()", overload + "    @Test\n    void testQuickSort()");
+
+        AresTestSources.Summary summary = AresTestSources.analyze("test/de/example/SortingTest.java", source);
+
+        // Matching by the name alone would give the policy of the helper to the test testQuickSort.
+        assertThat(summary.problems()).containsExactly(SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
+        assertThat(summary.topLevelTypes().getFirst().methodPolicies()).containsOnlyKeys("testMergeSort");
+    }
+
+    @Test
     void assigningTheWholeClassRemovesTheMethodAnnotations() {
         String assigned = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", TEST_CLASS, "Stress.yaml", Map.of(), Set.of());
 

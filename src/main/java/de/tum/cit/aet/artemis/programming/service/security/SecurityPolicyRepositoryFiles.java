@@ -301,8 +301,8 @@ public final class SecurityPolicyRepositoryFiles {
                 reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES));
             }
             if (hasActiveMethodPolicyWhileSwitchedOff(testClass)) {
-                reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(),
-                        SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS));
+                reasons.add(
+                        new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS));
             }
         }
         return reasons;
