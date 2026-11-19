@@ -176,6 +176,23 @@ class TumLiveUploadServiceTest {
     }
 
     @Test
+    void aCleanupFailurePreservesTheOriginalTransferFailure() {
+        var target = new GocastUploadTargetDTO(55, "https://tum.live/upload");
+        var video = InputStream.nullInputStream();
+        var transferFailure = new GocastIntegrationException("transfer interrupted", HttpStatus.BAD_GATEWAY);
+        var cleanupFailure = new IllegalStateException("upload repository unavailable");
+        when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(pending(ZonedDateTime.now(), null)));
+        when(api.createUpload(eq(23L), eq(REF), anyString())).thenReturn(target);
+        when(uploadRepository.recordPendingStream(UNIT_ID, REF, 55)).thenReturn(true);
+        when(uploadRepository.discardPending(eq(UNIT_ID), eq(REF), anyString(), any())).thenThrow(cleanupFailure);
+        doThrow(transferFailure).when(api).transferUpload(target, video);
+
+        assertThatThrownBy(() -> service.transfer(unit(), REF, video)).isSameAs(transferFailure);
+
+        assertThat(transferFailure.getSuppressed()).containsExactly(cleanupFailure);
+    }
+
+    @Test
     void transferRejectsAReferenceFromAnotherUpload() {
         when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(pending(ZonedDateTime.now(), null)));
 
