@@ -34,13 +34,15 @@ final class AresTestCases {
             "org.junit.jupiter.api", "TestTemplate", "org.junit.jupiter.api", "ParameterizedTest", "org.junit.jupiter.params", "PublicTest", "de.tum.cit.ase.ares.api.jupiter",
             "HiddenTest", "de.tum.cit.ase.ares.api.jupiter", "Property", "net.jqwik.api", "Example", "net.jqwik.api");
 
+    /** The simple names of the test annotations as alternatives of a regular expression. */
+    private static final String TEST_ANNOTATION_NAMES = String.join("|", TEST_ANNOTATION_PACKAGES.keySet());
+
     /**
      * A use of an annotation with the simple name of a test annotation, group 1 being its qualifier and group 2 its simple name. The qualifier repeats
      * possessively, so long qualified names do not grow the stack; giving back a qualifier part could only match a nested type such as {@code @Test.Inner},
      * which is no test annotation. The name must end after the test annotation, so {@code @Test$Tag} is no test annotation either.
      */
-    private static final Pattern TEST_ANNOTATION = Pattern.compile("@\\s*((?:[\\w$]+\\s*\\.\\s*)*+)(" + String.join("|", TEST_ANNOTATION_PACKAGES.keySet())
-            + ")(?!\\p{javaJavaIdentifierPart})");
+    private static final Pattern TEST_ANNOTATION = Pattern.compile("@\\s*((?:[\\w$]+\\s*\\.\\s*)*+)(" + TEST_ANNOTATION_NAMES + ")(?!\\p{javaJavaIdentifierPart})");
 
     /** A single-type import, group 1 being the imported type; a static import names a member and is no type import. */
     private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s+(?!static\\s)([\\p{javaJavaIdentifierPart}.\\s]+?)\\s*;");
@@ -204,9 +206,13 @@ final class AresTestCases {
             String name = annotation.group(2);
             String qualifier = WHITESPACE.matcher(annotation.group(1)).replaceAll("");
             String expected = TEST_ANNOTATION_PACKAGES.get(name) + "." + name;
-            boolean resolves = qualifier.isEmpty()
-                    ? !AresPolicyAnnotations.isShadowedAt(masked, name, annotation.start()) && imported.getOrDefault(name, expected).equals(expected)
-                    : (qualifier + name).equals(expected);
+            boolean resolves;
+            if (qualifier.isEmpty()) {
+                resolves = !AresPolicyAnnotations.isShadowedAt(masked, name, annotation.start()) && imported.getOrDefault(name, expected).equals(expected);
+            }
+            else {
+                resolves = (qualifier + name).equals(expected);
+            }
             if (resolves) {
                 annotations.add(annotation.toMatchResult());
             }
