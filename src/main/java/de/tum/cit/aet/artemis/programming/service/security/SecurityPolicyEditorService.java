@@ -46,7 +46,6 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -276,7 +275,7 @@ public class SecurityPolicyEditorService {
                         applyChange(repository, change, baseCommitHash);
                     }
                     else {
-                        requireStillApplied(repository, appliedCommit.get(), change.frameworkVersion() != null);
+                        SecurityPolicyConflicts.requireStillApplied(repository, appliedCommit.get(), change.frameworkVersion() != null);
                     }
                 });
         log.info("User {} changed the security policies {} and removed {} of programming exercise {}", user.getLogin(),
@@ -440,27 +439,13 @@ public class SecurityPolicyEditorService {
     }
 
     /**
-     * A retry only succeeds while the policies are still as the commit of the change left them. A later commit that reverts or changes them supersedes the
-     * change, e.g. another instructor's, so the retry fails as a conflict instead of reporting that commit as the result; a commit that changes something
-     * else, e.g. the body of a test, keeps it.
-     */
-    private static void requireStillApplied(Repository repository, String appliedCommit, boolean stagesVersion) {
-        try {
-            requireUnchangedSince(repository, appliedCommit, stagesVersion);
-        }
-        catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    /**
      * Applies a change to the checkout: checks that the policies did not change since the editor loaded them, pins the requested version, writes, renames and
      * deletes the policy files and rewrites the {@code @Policy} annotations of the test classes whose assignment changes.
      */
     private void applyChange(Repository repository, SecurityPolicyChangeDTO change, String baseCommitHash) {
         Path root = repository.getLocalPath();
         try {
-            requireUnchangedSince(repository, baseCommitHash, change.frameworkVersion() != null);
+            SecurityPolicyConflicts.requireUnchangedSince(repository, baseCommitHash, change.frameworkVersion() != null);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -552,7 +537,7 @@ public class SecurityPolicyEditorService {
         Map<String, SecurityTestAssignments.TestClass> testClasses = SecurityTestAssignments.read(SecurityPolicyRepositoryFiles.javaSources(root));
         Map<String, String> requested = requestedEntries(change, testClasses, touched);
         try {
-            requireKnownTestCasesOfSplitClasses(repository, baseCommitHash, testClasses, requested);
+            SecurityPolicyConflicts.requireKnownTestCasesOfSplitClasses(repository, baseCommitHash, testClasses, requested);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -775,139 +760,6 @@ public class SecurityPolicyEditorService {
     private static BadRequestAlertException versionIncompatible(@Nullable String frameworkVersion, List<String> problems) {
         return refused("The pinned Ares version " + frameworkVersion + " does not accept the policy: " + String.join("; ", problems), "securityPolicyVersionIncompatible",
                 Map.of("version", Objects.requireNonNullElse(frameworkVersion, ""), "details", String.join("; ", problems)));
-    }
-
-    /**
-     * Refuses a change if a policy changed in the repository since the editor loaded the policies: a policy file, which test classes point to which file, an
-     * annotation of a test class or test method, e.g. a new override without a policy file, or the entries of a policy, e.g. a test added to a class assigned
-     * case by case, because the change rewrites the annotations from the state it was loaded with. Commits that change something else, e.g. the body of a
-     * test, do not conflict.
-     */
-    private static void requireUnchangedSince(Repository repository, String baseCommitHash, boolean stagesVersion) throws IOException {
-        ObjectId head = repository.resolve(Constants.HEAD);
-        if (head != null && head.name().equals(baseCommitHash)) {
-            return;
-        }
-        ObjectId base = repository.resolve(baseCommitHash);
-        try (RevWalk revWalk = new RevWalk(repository)) {
-            if (base == null || head == null || !repository.getObjectDatabase().has(base)) {
-                throw policiesChanged();
-            }
-            RevTree baseTree = revWalk.parseCommit(base).getTree();
-            RevTree headTree = revWalk.parseCommit(head).getTree();
-            SecurityFrameworkState baseState = SecurityFrameworkCommitFiles.evaluate(repository, baseTree);
-            SecurityFrameworkState headState = SecurityFrameworkCommitFiles.evaluate(repository, headTree);
-            if (!policyReferences(baseState).equals(policyReferences(headState)) || !assignmentState(repository, baseTree).equals(assignmentState(repository, headTree))) {
-                throw policiesChanged();
-            }
-            // The review showed the build file of the loaded commit, so a version pinned since would be replaced without being shown.
-            if (stagesVersion && !SecurityFrameworkCommitFiles.aresVersion(repository, baseTree).equals(SecurityFrameworkCommitFiles.aresVersion(repository, headTree))) {
-                throw policiesChanged();
-            }
-            for (SecurityFrameworkState.PolicyFile policyFile : headState.policyFiles()) {
-                Optional<String> path = SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath());
-                if (path.isPresent() && !Objects.equals(SecurityFrameworkCommitFiles.readPolicyFile(repository, baseTree, path.get()).content(),
-                        SecurityFrameworkCommitFiles.readPolicyFile(repository, headTree, path.get()).content())) {
-                    throw policiesChanged();
-                }
-            }
-        }
-    }
-
-    /**
-     * Refuses a change that assigns some test cases of a class assigned as a whole if the class got test cases since the editor loaded the policies. They use
-     * the policy of the class, and splitting the class would release them although the editor never showed them. A test added to a class that stays assigned
-     * as a whole, or that is released as a whole, keeps following the class and does not conflict.
-     */
-    private static void requireKnownTestCasesOfSplitClasses(Repository repository, String baseCommitHash, Map<String, SecurityTestAssignments.TestClass> testClasses,
-            Map<String, String> requested) throws IOException {
-        Set<String> assignedCaseByCase = new HashSet<>();
-        for (String entry : requested.keySet()) {
-            if (entry.indexOf(SecurityTestAssignments.METHOD_SEPARATOR) >= 0) {
-                assignedCaseByCase.add(SecurityTestAssignments.testClassOf(entry));
-            }
-        }
-        List<SecurityTestAssignments.TestClass> split = new ArrayList<>();
-        for (SecurityTestAssignments.TestClass testClass : testClasses.values()) {
-            if (testClass.entries().containsKey(testClass.qualifiedName()) && assignedCaseByCase.contains(testClass.qualifiedName())) {
-                split.add(testClass);
-            }
-        }
-        ObjectId head = repository.resolve(Constants.HEAD);
-        if (split.isEmpty() || (head != null && head.name().equals(baseCommitHash))) {
-            return;
-        }
-        ObjectId base = repository.resolve(baseCommitHash);
-        if (base == null) {
-            throw policiesChanged();
-        }
-        try (RevWalk revWalk = new RevWalk(repository)) {
-            RevTree baseTree = revWalk.parseCommit(base).getTree();
-            Map<String, SecurityTestAssignments.TestClass> loaded = SecurityTestAssignments.read(SecurityFrameworkCommitFiles.javaSources(repository, baseTree));
-            for (SecurityTestAssignments.TestClass testClass : split) {
-                SecurityTestAssignments.TestClass loadedClass = loaded.get(testClass.qualifiedName());
-                if (loadedClass == null || !new HashSet<>(loadedClass.testCases()).containsAll(testClass.testCases())) {
-                    throw policiesChanged();
-                }
-            }
-        }
-    }
-
-    /**
-     * The {@code @Policy} annotations of a test class, without its test cases, which a change of the tests may change without changing a policy.
-     *
-     * @param active            whether its annotation enforces a policy
-     * @param classPolicyPath   the policy file of its annotation
-     * @param methodPolicyPaths the policy files of the annotations of its test methods
-     * @param defaultMethods    the test methods whose annotation gives them the strict default policy
-     * @param switchedOff       the test methods whose annotation switches the sandbox off
-     * @param otherArguments    the other arguments of the annotations, e.g. {@code withinPath}, by the test method they are on and the empty string for the class
-     */
-    private record Annotations(boolean active, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths, Set<String> defaultMethods, Set<String> switchedOff,
-            Map<String, Map<String, String>> otherArguments) {
-    }
-
-    /**
-     * The state of the {@code @Policy} annotations of a commit that a change is based on: the annotations of each test class and the entries they give each
-     * policy. A test added to a class assigned case by case changes the entries, because the change would assign the class without it; a test added to a
-     * class assigned as a whole does not, and neither does the body of a test.
-     */
-    private record AssignmentState(Map<String, Annotations> annotations, Map<String, List<String>> entries) {
-    }
-
-    private static AssignmentState assignmentState(Repository repository, RevTree tree) throws IOException {
-        Map<String, String> javaSources = SecurityFrameworkCommitFiles.javaSources(repository, tree);
-        Map<String, SecurityTestAssignments.TestClass> testClasses = SecurityTestAssignments.read(javaSources);
-        Map<String, Annotations> annotations = new HashMap<>();
-        for (SecurityTestAssignments.TestClass testClass : testClasses.values()) {
-            Map<String, Map<String, String>> arguments = otherArguments(testClass.sourcePath(), javaSources.get(testClass.sourcePath()));
-            Annotations classAnnotations = new Annotations(testClass.active(), testClass.classPolicyPath(), testClass.methodPolicyPaths(), testClass.defaultMethods(),
-                    testClass.switchedOff(), arguments);
-            annotations.put(testClass.qualifiedName(), classAnnotations);
-        }
-        return new AssignmentState(annotations, SecurityTestAssignments.entriesByPolicy(testClasses.values()));
-    }
-
-    /**
-     * @return the arguments of the {@code @Policy} annotations of the test class in the file other than its policy file and switch, e.g. {@code withinPath},
-     *         by the test method they are on and the empty string for the class
-     */
-    private static Map<String, Map<String, String>> otherArguments(String path, String source) {
-        Map<String, Map<String, String>> arguments = new HashMap<>();
-        AresTestSources.relevantType(AresTestSources.analyze(path, source)).ifPresent(type -> {
-            type.policies().forEach(annotation -> arguments.put("", AresPolicyAnnotations.otherArguments(annotation)));
-            type.methodPolicies().forEach((method, annotation) -> arguments.put(method, AresPolicyAnnotations.otherArguments(annotation)));
-        });
-        return arguments;
-    }
-
-    private static Map<String, List<String>> policyReferences(SecurityFrameworkState state) {
-        return state.policyFiles().stream().collect(Collectors.toMap(SecurityFrameworkState.PolicyFile::policyPath, SecurityFrameworkState.PolicyFile::referencedBy));
-    }
-
-    private static ConflictException policiesChanged() {
-        return new ConflictException("The security policies changed in the tests repository after the editor loaded them. Reload them and try again.", ENTITY_NAME,
-                "securityPolicyChanged");
     }
 
     /**
