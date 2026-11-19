@@ -129,7 +129,7 @@
 }
 
 <ng-template #nextRelevantDateBadge>
-    @if (nextRelevantDate() && (!exam() || !isTestRun())) {
+    @if (nextRelevantDate() && (!exam() || (!isTestRun() && nextRelevantDateLabel() !== 'endDate'))) {
         <jhi-information-box
             [informationBoxData]="nextDateInformation()"
             [tumAetUiTooltip]="
