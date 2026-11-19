@@ -4,7 +4,13 @@ const { checkPullRequestDuplication } = require('./sonar-duplication.js');
 
 const sha = 'a'.repeat(40);
 function fixture() {
-    const pull = { number: 123, state: 'open', head: { sha, ref: 'chore/development/reduce-duplication' }, base: { ref: 'develop' } };
+    const pull = {
+        number: 123,
+        state: 'open',
+        head: { sha, ref: 'chore/development/reduce-duplication' },
+        base: { ref: 'develop', sha: 'b'.repeat(40) },
+        changed_files: 2,
+    };
     const analysis = {
         key: '123',
         commit: { sha },
@@ -19,8 +25,15 @@ function fixture() {
         { metric: 'new_lines', periods: [{ index: 1, value: '1000' }] },
     ];
     const expectedBranch = pull.head.ref;
-    const state = { pull, analyses: [analysis], measures, calls: [] };
-    const github = { rest: { pulls: { get: async () => ({ data: structuredClone(state.pull) }) } } };
+    const state = { pull, analyses: [analysis], measures, calls: [], files: [{ filename: '.github/workflows/ci-test.yml' }, { filename: 'README.md' }] };
+    const github = {
+        rest: { pulls: { get: async () => ({ data: structuredClone(state.pull) }), listFiles: Symbol('listFiles') } },
+        paginate: async (method, options) => {
+            assert.equal(method, github.rest.pulls.listFiles);
+            assert.deepEqual(options, { owner: 'ls1intum', repo: 'Artemis', pull_number: 123, per_page: 100 });
+            return structuredClone(state.files);
+        },
+    };
     const context = { repo: { owner: 'ls1intum', repo: 'Artemis' } };
     const fetchImpl = async (url, options) => {
         const parsed = new URL(url);
@@ -28,7 +41,10 @@ function fixture() {
         assert.equal(options.cache, 'no-store');
         state.calls.push(parsed);
         if (state.httpError) return { ok: false, status: 503 };
-        if (parsed.pathname === '/api/project_pull_requests/list') return { ok: true, json: async () => ({ pullRequests: structuredClone(state.analyses) }) };
+        if (parsed.pathname === '/api/project_pull_requests/list') {
+            state.onAnalysisRead?.();
+            return { ok: true, json: async () => ({ pullRequests: structuredClone(state.analyses) }) };
+        }
         assert.equal(parsed.pathname, '/api/measures/component');
         assert.equal(parsed.searchParams.get('component'), 'ls1intum_Artemis');
         assert.equal(parsed.searchParams.get('pullRequest'), '123');
@@ -60,6 +76,45 @@ test('accepts an analysis with no new lines', async () => {
     const f = fixture();
     f.state.measures[2].periods[0].value = '0';
     assert.equal((await f.run()).newLines, 0);
+});
+
+test('accepts empty Sonar measures when the complete PR diff is outside the analyzed source roots', async () => {
+    const f = fixture();
+    f.state.measures = [];
+    assert.deepEqual(await f.run(), { duplicatedLines: 0, duplicatedBlocks: 0, newLines: 0 });
+});
+
+test('rejects empty Sonar measures when an analyzed source file changed', async () => {
+    const f = fixture();
+    f.state.measures = [];
+    f.state.files[0].filename = 'packages/tum-aet-ui/src/lib/button.ts';
+    await assert.rejects(f.run(), /unavailable Sonar metric/);
+});
+
+test('rejects empty Sonar measures when the GitHub file list is incomplete', async () => {
+    const f = fixture();
+    f.state.measures = [];
+    f.state.pull.changed_files = 3;
+    await assert.rejects(f.run(), /unavailable Sonar metric/);
+});
+
+test('rejects empty Sonar measures when the PR base advances during verification', async () => {
+    const f = fixture();
+    f.state.measures = [];
+    f.state.afterMetrics = () => {
+        f.state.pull.base.sha = 'c'.repeat(40);
+    };
+    await assert.rejects(f.run(), /PR comparison changed/);
+});
+
+test('rejects empty Sonar measures when the PR base advances during the final Sonar read', async () => {
+    const f = fixture();
+    f.state.measures = [];
+    let analysisReads = 0;
+    f.state.onAnalysisRead = () => {
+        if (++analysisReads === 2) f.state.pull.base.sha = 'c'.repeat(40);
+    };
+    await assert.rejects(f.run(), /PR comparison changed/);
 });
 
 test('reads the single-period API representation', async () => {

@@ -2,6 +2,22 @@
 const { verifyFork } = require('./sonar-pr.js');
 const project = 'ls1intum_Artemis';
 const metrics = ['new_duplicated_lines', 'new_duplicated_blocks', 'new_lines'];
+// Keep these roots aligned with sonar.sources in gradle/sonar.gradle.
+const sourcePath = /^(?:src\/main\/(?:java|resources|webapp)|packages\/tum-aet-ui\/src)(?:\/|$)/;
+
+async function hasNoSonarSourceChanges(github, repo, pull) {
+    // GitHub's pull request files endpoint lists at most 3,000 files.
+    const expected = pull.changed_files;
+    if (!Number.isInteger(expected) || expected < 1 || expected >= 3000 || !/^[a-f0-9]{40}$/.test(pull.base?.sha ?? '')) return false;
+
+    const files = await github.paginate(github.rest.pulls.listFiles, { ...repo, pull_number: pull.number, per_page: 100 });
+    if (files.length !== expected || new Set(files.map((file) => file.filename)).size !== expected) return false;
+
+    return files.every(({ filename, previous_filename: previous }) => {
+        if (typeof filename !== 'string' || filename.length === 0 || sourcePath.test(filename)) return false;
+        return previous === undefined || (typeof previous === 'string' && previous.length > 0 && !sourcePath.test(previous));
+    });
+}
 
 function count(measures, metric) {
     const matches = measures.filter((measure) => measure.metric === metric);
@@ -35,13 +51,24 @@ async function checkPullRequestDuplication({ github, context, sha, pullRequest, 
     const data = await response.json();
     if (data.component?.key !== project || data.component.pullRequest !== String(pullRequest) || !Array.isArray(data.component.measures))
         throw new Error('Invalid Sonar duplication response');
-    const result = {
-        duplicatedLines: count(data.component.measures, 'new_duplicated_lines'),
-        duplicatedBlocks: count(data.component.measures, 'new_duplicated_blocks'),
-        newLines: count(data.component.measures, 'new_lines'),
-    };
+    const measures = data.component.measures;
+    // Sonar omits all three metrics when the PR diff contains no analyzed source.
+    const emptyOutsideSource = measures.length === 0 && (await hasNoSonarSourceChanges(github, context.repo, pull));
+    const result = emptyOutsideSource
+        ? { duplicatedLines: 0, duplicatedBlocks: 0, newLines: 0 }
+        : {
+              duplicatedLines: count(measures, 'new_duplicated_lines'),
+              duplicatedBlocks: count(measures, 'new_duplicated_blocks'),
+              newLines: count(measures, 'new_lines'),
+          };
     const after = await verifyFork({ pull: await currentPull(), fetchImpl });
     if (before.analysisDate !== after.analysisDate) throw new Error('Sonar analysis changed while reading duplication metrics; rerun verification');
+    if (emptyOutsideSource) {
+        const latestPull = await currentPull();
+        if (latestPull.base.sha !== pull.base.sha || latestPull.changed_files !== pull.changed_files) {
+            throw new Error('GitHub PR comparison changed while verifying empty Sonar metrics');
+        }
+    }
     if (summary) {
         await summary
             .addHeading('PR duplication')

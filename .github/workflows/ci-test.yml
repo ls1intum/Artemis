@@ -29,10 +29,6 @@ on:
         required: false
         type: boolean
         default: true
-      is_internal_pr:
-        description: 'True only for PRs from branches inside ls1intum/Artemis (external services like Codacy skip on fork PRs).'
-        required: true
-        type: boolean
       pr_author:
         description: 'PR author login. Used to skip noisy annotations for bots. Empty when not a PR.'
         required: true
@@ -53,10 +49,6 @@ on:
       client_sonar_coverage:
         description: 'True when successful selected client tests emitted LCOV for Sonar PR coverage; independent of complete-suite coverage.'
         value: ${{ jobs.client-tests.outputs.sonar_coverage }}
-    secrets:
-      CODACY_PROJECT_TOKEN:
-        description: 'Coverage upload token. Optional — coverage is uploaded only on internal PRs by non-bot authors.'
-        required: false
 
 permissions: {}  # default-deny; each job grants only what it needs
 
@@ -434,13 +426,6 @@ jobs:
               echo "If this is not related to your PR, adjust the thresholds in gradle/jacoco.gradle (ModuleCoverageThresholds)."
             fi
           fi
-      - name: 'Codacy: Report coverage'
-        # Coverage upload runs only on internal PRs by non-bot authors; fork PRs lack the secret.
-        uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699  # v1.3.0
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: build/reports/jacoco/aggregated/jacocoTestReport.xml
-        if: ${{ success() && needs.server-test-shards.outputs.full_suite == 'true' && needs.server-tests.result == 'success' && inputs.is_internal_pr && inputs.pr_author != 'dependabot[bot]' }}
       - name: Test Report
         # Renders JUnit results as a check-run with diff annotations.
         uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a  # v3.2.0

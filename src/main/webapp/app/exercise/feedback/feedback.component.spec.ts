@@ -1,6 +1,6 @@
 import { By } from '@angular/platform-browser';
 import { TumAetUiBarChartComponent } from '@tumaet/ui-angular';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -17,7 +17,7 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/programming-feedback-item.service';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
-import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subject, of, throwError } from 'rxjs';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
@@ -38,7 +38,7 @@ describe('FeedbackComponent', () => {
 
     let exercise: ProgrammingExercise;
     let buildLogService: BuildLogService;
-    let resultService: ResultService;
+    let resultApi: ResultApi;
     let profileService: ProfileService;
     let feedbackItemService: ProgrammingFeedbackItemService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
@@ -228,12 +228,12 @@ describe('FeedbackComponent', () => {
             },
         } as Result);
         buildLogService = TestBed.inject(BuildLogService);
-        resultService = TestBed.inject(ResultService);
+        resultApi = TestBed.inject(ResultApi);
         profileService = TestBed.inject(ProfileService);
         feedbackItemService = TestBed.inject(ProgrammingFeedbackItemService);
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         buildlogsStub = vi.spyOn(buildLogService, 'getBuildLogs').mockReturnValue(of([]));
-        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
+        getFeedbackDetailsForResultStub = vi.spyOn(resultApi, 'getResultDetails').mockReturnValue(of([]));
         // Set profile info
         const profileInfo = new ProfileInfo();
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
@@ -564,12 +564,12 @@ describe('FeedbackComponent', () => {
 
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
         const { feedbacks } = generateFeedbacksAndExpectedItems();
-        getFeedbackDetailsForResultStub.mockReturnValue(of({ body: feedbacks } as HttpResponse<Feedback[]>));
+        getFeedbackDetailsForResultStub.mockReturnValue(of(feedbacks));
 
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(55, comp.result());
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(55, comp.result().id);
         expect(comp.isLoading()).toBe(false);
     });
 
@@ -628,7 +628,7 @@ describe('FeedbackComponent', () => {
     });
 
     it('shows available build logs even while feedback details are still loading', () => {
-        getFeedbackDetailsForResultStub.mockReturnValue(new Subject<HttpResponse<Feedback[]>>());
+        getFeedbackDetailsForResultStub.mockReturnValue(new Subject<Feedback[]>());
         buildlogsStub.mockReturnValue(of([{ time: '2026-01-01T10:00:00Z', log: 'Available compiler diagnostic' }]));
 
         fixture.detectChanges();
@@ -676,7 +676,7 @@ describe('FeedbackComponent', () => {
         expect(fixture.nativeElement.textContent).not.toContain('artemisApp.result.noResultDetails');
         const retry = fixture.nativeElement.querySelector('[data-testid="retry-feedback-details"]') as HTMLButtonElement;
         expect(retry).not.toBeNull();
-        getFeedbackDetailsForResultStub.mockReturnValue(of(new HttpResponse({ body: [makeFeedback({ detailText: 'Recovered feedback' })] })));
+        getFeedbackDetailsForResultStub.mockReturnValue(of([makeFeedback({ detailText: 'Recovered feedback' })]));
         retry.click();
         fixture.detectChanges();
 
@@ -771,7 +771,7 @@ describe('FeedbackComponent', () => {
             const dialogFixture = TestBed.createComponent(FeedbackComponent);
             const dialogComp = dialogFixture.componentInstance;
             vi.spyOn(TestBed.inject(BuildLogService), 'getBuildLogs').mockReturnValue(of([]));
-            vi.spyOn(TestBed.inject(ResultService), 'getFeedbackDetailsForResult').mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
+            vi.spyOn(TestBed.inject(ResultApi), 'getResultDetails').mockReturnValue(of([]));
             vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(new ProfileInfo());
 
             dialogFixture.componentRef.setInput('exercise', dialogExercise);

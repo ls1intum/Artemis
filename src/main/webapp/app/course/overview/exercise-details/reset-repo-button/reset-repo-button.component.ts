@@ -10,7 +10,7 @@ import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
@@ -22,7 +22,17 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-reset-repo-button',
     templateUrl: './reset-repo-button.component.html',
     styleUrls: ['./reset-repo-button.component.scss'],
-    imports: [ExerciseActionButtonComponent, FeatureToggleDirective, NgbPopover, FormsModule, TranslateDirective, ConfirmEntityNameComponent, ArtemisTranslatePipe],
+    imports: [
+        ExerciseActionButtonComponent,
+        FeatureToggleDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiButtonDirective,
+        FormsModule,
+        TranslateDirective,
+        ConfirmEntityNameComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ResetRepoButtonComponent {
     private participationService = inject(ParticipationService);
@@ -36,7 +46,7 @@ export class ResetRepoButtonComponent {
     readonly participations = input.required<StudentParticipation[]>();
     readonly smallButtons = input.required<boolean>();
 
-    readonly popover = viewChild<NgbPopover>('popover');
+    readonly popover = viewChild<TumAetUiPopoverComponent>('resetPopover');
 
     private readonly _gradedParticipation = signal<StudentParticipation | undefined>(undefined);
     private readonly _practiceParticipation = signal<StudentParticipation | undefined>(undefined);

@@ -1,0 +1,16 @@
+@switch (presentationAssessment().gradingMethod) {
+    @case (PresentationGradingMethod.PASS_FAIL) {
+        <tumaet-ui-tag
+            data-testid="instance-result"
+            size="sm"
+            [severity]="instance().passed ? 'success' : 'danger'"
+            [value]="(instance().passed ? 'artemisApp.presentationAssessment.result.passed' : 'artemisApp.presentationAssessment.result.failed') | artemisTranslate"
+        />
+    }
+    @case (PresentationGradingMethod.RUBRIC) {
+        <tumaet-ui-tag data-testid="instance-result" severity="info" size="sm" [value]="instance().rubricScore + ' %'" />
+    }
+    @default {
+        <tumaet-ui-tag data-testid="instance-result" severity="info" size="sm" [value]="instance().resultPoints + ' / ' + presentationAssessment().maxPoints" />
+    }
+}

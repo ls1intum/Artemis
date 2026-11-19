@@ -226,7 +226,18 @@ public enum RateLimitType {
      * Default: 5 requests per minute per user, overridable with
      * {@code artemis.rate-limiting.course-request-requests-per-minute}.
      */
-    COURSE_REQUEST(5);
+    COURSE_REQUEST(5),
+
+    /**
+     * Rate limit for the re-evaluation of all automatic results of a programming exercise. The request recalculates and saves every latest result of the exercise, so
+     * it is heavy, and instructors need it rarely.
+     * <p>
+     * Counted per user and not per client address, because the request needs a signed-in instructor and many instructors can share one address.
+     * <p>
+     * Default: 6 requests per minute per user, overridable with
+     * {@code artemis.rate-limiting.re-evaluation-requests-per-minute}.
+     */
+    RE_EVALUATION(6);
 
     private final int defaultRpm;
 
