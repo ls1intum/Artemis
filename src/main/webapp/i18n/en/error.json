@@ -433,6 +433,7 @@
         "securityPolicyTestCaseOverloaded": "More than one test method is called {{ test }}, so they can only use a policy together with their whole test class.",
         "securityPolicyOverloadsLosePolicy": "The test methods called {{ test }} in {{ testClass }} can only use the policy {{ path }} through their test class, which would lose it. Assign the whole test class to a policy, or change these annotations in the repository.",
         "securityPolicyInheritedTestsLosePolicy": "The test class {{ testClass }} inherits test methods that use the policy {{ path }} through its class annotation, so its test cases cannot be assigned one by one. Assign the whole test class to a policy, or release it completely.",
+        "securityPolicyTestsOfSubclassesChange": "Other test classes extend {{ testClass }} and run its test methods with the policies of those methods, so its test cases cannot be assigned one by one. Assign the whole test class to a policy instead.",
         "securityPolicyUnknownTest": "The tests repository has no test {{ test }}. Reload the test cases.",
         "securityPolicyAgentMissing": "The build of the tests repository does not attach the Ares agent, which scanning dependencies needs, so {{ path }} cannot use it.",
         "securityPolicyNotFound": "No test uses the policy {{ path }} in the tests repository. Reload the policies.",

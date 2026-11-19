@@ -10,6 +10,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -50,9 +51,10 @@ final class SecurityTestAssignments {
      * @param testCases         the names of its test methods, in their order in the source
      * @param inheritsTests     whether it extends another test class of the repository, whose test methods it inherits; they are not among its test cases
      *                              and use the policy of its class annotation
+     * @param extendedByTests   whether another test class of the repository extends it and therefore runs its test methods with their annotations
      */
     record TestClass(String qualifiedName, String sourcePath, boolean active, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths, Set<String> defaultMethods,
-            Set<String> switchedOff, Set<String> overloaded, List<String> testCases, boolean inheritsTests) {
+            Set<String> switchedOff, Set<String> overloaded, List<String> testCases, boolean inheritsTests, boolean extendedByTests) {
 
         /**
          * @return the test methods whose annotation stays as it is when the assignments of the class are rewritten, unless the method is assigned
@@ -108,7 +110,8 @@ final class SecurityTestAssignments {
             // An assigned test case loses its override without a policy file; assigning the whole class assigns every test case, while a switched-off one stays.
             Set<String> defaults = requestedClassPolicyPath != null ? new LinkedHashSet<>() : new LinkedHashSet<>(defaultMethods);
             defaults.removeAll(methods.keySet());
-            return new TestClass(qualifiedName, sourcePath, active, requestedClassPolicyPath, methods, defaults, switchedOff, overloaded, testCases, inheritsTests);
+            return new TestClass(qualifiedName, sourcePath, active, requestedClassPolicyPath, methods, defaults, switchedOff, overloaded, testCases, inheritsTests,
+                    extendedByTests);
         }
     }
 
@@ -122,30 +125,37 @@ final class SecurityTestAssignments {
     static Map<String, TestClass> read(Map<String, String> javaSources) {
         Map<String, TestClass> testClasses = new TreeMap<>();
         Map<String, String> testClassPaths = testClassPaths(javaSources);
-        testClassPaths.forEach((qualifiedName, sourcePath) -> {
+        Map<String, AresTestSources.TypeDeclaration> types = new TreeMap<>();
+        for (Map.Entry<String, String> testClassPath : testClassPaths.entrySet()) {
+            String sourcePath = testClassPath.getValue();
+            Optional<AresTestSources.TypeDeclaration> type = AresTestSources.relevantType(AresTestSources.analyze(sourcePath, javaSources.get(sourcePath)));
+            type.filter(candidate -> candidate.qualifiedName().equals(testClassPath.getKey())).ifPresent(candidate -> types.put(testClassPath.getKey(), candidate));
+        }
+        Set<String> extended = types.values().stream().flatMap(type -> type.superclass().stream()).filter(testClassPaths::containsKey).collect(Collectors.toSet());
+        types.forEach((qualifiedName, type) -> {
+            if (type.policies().size() != 1 || !type.policies().getFirst().isEvaluable()) {
+                return;
+            }
+            String sourcePath = testClassPaths.get(qualifiedName);
             String source = javaSources.get(sourcePath);
-            AresTestSources.relevantType(AresTestSources.analyze(sourcePath, source))
-                    .filter(type -> type.qualifiedName().equals(qualifiedName) && type.policies().size() == 1 && type.policies().getFirst().isEvaluable()).ifPresent(type -> {
-                        AresPolicyAnnotations.Annotation annotation = type.policies().getFirst();
-                        Map<String, String> methodPolicyPaths = new LinkedHashMap<>();
-                        Set<String> defaultMethods = new LinkedHashSet<>();
-                        Set<String> switchedOff = new LinkedHashSet<>();
-                        type.methodPolicies().forEach((method, methodAnnotation) -> {
-                            if (!methodAnnotation.isEvaluable() || !methodAnnotation.isActivated()) {
-                                switchedOff.add(method);
-                            }
-                            else {
-                                methodAnnotation.policyPath().filter(path -> !path.isBlank()).ifPresentOrElse(path -> methodPolicyPaths.put(method, path),
-                                        () -> defaultMethods.add(method));
-                            }
-                        });
-                        // Like an annotation of a method, an empty path, e.g. @Policy(value = ""), names no policy file: the class uses the strict default policy.
-                        String classPolicyPath = annotation.policyPath().filter(path -> !path.isBlank()).orElse(null);
-                        testClasses.put(qualifiedName,
-                                new TestClass(qualifiedName, sourcePath, annotation.isActivated(), classPolicyPath, Map.copyOf(methodPolicyPaths), Set.copyOf(defaultMethods),
-                                        Set.copyOf(switchedOff), AresTestCases.overloadedTestCases(source), AresTestCases.testCases(source),
-                                        type.superclass().stream().anyMatch(testClassPaths::containsKey)));
-                    });
+            AresPolicyAnnotations.Annotation annotation = type.policies().getFirst();
+            Map<String, String> methodPolicyPaths = new LinkedHashMap<>();
+            Set<String> defaultMethods = new LinkedHashSet<>();
+            Set<String> switchedOff = new LinkedHashSet<>();
+            type.methodPolicies().forEach((method, methodAnnotation) -> {
+                if (!methodAnnotation.isEvaluable() || !methodAnnotation.isActivated()) {
+                    switchedOff.add(method);
+                }
+                else {
+                    methodAnnotation.policyPath().filter(path -> !path.isBlank()).ifPresentOrElse(path -> methodPolicyPaths.put(method, path), () -> defaultMethods.add(method));
+                }
+            });
+            // Like an annotation of a method, an empty path, e.g. @Policy(value = ""), names no policy file: the class uses the strict default policy.
+            String classPolicyPath = annotation.policyPath().filter(path -> !path.isBlank()).orElse(null);
+            TestClass testClass = new TestClass(qualifiedName, sourcePath, annotation.isActivated(), classPolicyPath, Map.copyOf(methodPolicyPaths), Set.copyOf(defaultMethods),
+                    Set.copyOf(switchedOff), AresTestCases.overloadedTestCases(source), AresTestCases.testCases(source),
+                    type.superclass().stream().anyMatch(testClassPaths::containsKey), extended.contains(qualifiedName));
+            testClasses.put(qualifiedName, testClass);
         });
         return testClasses;
     }

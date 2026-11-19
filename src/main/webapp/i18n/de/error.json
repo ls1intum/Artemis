@@ -433,6 +433,7 @@
         "securityPolicyTestCaseOverloaded": "Mehrere Testmethoden heißen {{ test }}, daher können sie eine Richtlinie nur zusammen mit ihrer ganzen Testklasse verwenden.",
         "securityPolicyOverloadsLosePolicy": "Die Testmethoden namens {{ test }} in {{ testClass }} können die Richtlinie {{ path }} nur über ihre Testklasse nutzen, die sie verlieren würde. Ordne die ganze Testklasse einer Richtlinie zu oder ändere diese Annotationen im Repository.",
         "securityPolicyInheritedTestsLosePolicy": "Die Testklasse {{ testClass }} erbt Testmethoden, die die Richtlinie {{ path }} über ihre Klassenannotation nutzen, daher können ihre Testfälle nicht einzeln zugeordnet werden. Ordne die ganze Testklasse einer Richtlinie zu oder gib sie ganz frei.",
+        "securityPolicyTestsOfSubclassesChange": "Andere Testklassen erweitern {{ testClass }} und führen deren Testmethoden mit den Richtlinien dieser Methoden aus, daher können ihre Testfälle nicht einzeln zugeordnet werden. Ordne stattdessen die ganze Testklasse einer Richtlinie zu.",
         "securityPolicyUnknownTest": "Das Test-Repository hat keinen Test {{ test }}. Lade die Testfälle neu.",
         "securityPolicyAgentMissing": "Der Build des Test-Repositorys bindet den Ares-Agenten nicht ein, den die Prüfung der Abhängigkeiten braucht, daher kann {{ path }} sie nicht verwenden.",
         "securityPolicyNotFound": "Kein Test im Test-Repository verwendet die Richtlinie {{ path }}. Lade die Richtlinien neu.",

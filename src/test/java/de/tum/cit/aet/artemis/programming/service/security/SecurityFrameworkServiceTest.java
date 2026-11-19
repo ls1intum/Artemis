@@ -1084,10 +1084,29 @@ class SecurityFrameworkServiceTest {
         pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/SortingTest.java").toFile(), withSwitchedOffMethod, StandardCharsets.UTF_8));
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
 
-        securityFrameworkService.deactivate(exercise, user);
-        securityFrameworkService.activate(exercise, "2.2.1", user);
+        assertThat(securityFrameworkService.deactivate(exercise, user).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+        assertThat(readPushed("test/de/example/SortingTest.java"))
+                .hasValueSatisfying(content -> assertThat(content).contains(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION + "\nclass SortingTest"));
+        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
 
         assertThat(readPushed("test/de/example/SortingTest.java")).contains(withSwitchedOffMethod);
+    }
+
+    @Test
+    void anActionNamedOnlyInTheMessageOfACommitIsNoRestorePoint() throws Exception {
+        String classTestPath = "test/de/example/ClassTest.java";
+        String switchedOff = SECOND_TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve(classTestPath).toFile(), switchedOff, StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        securityFrameworkService.deactivate(exercise, user);
+        // By hand, ClassTest is switched on and off again, in a commit whose message mentions the action without carrying it as a trailer.
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve(classTestPath).toFile(), SECOND_TEST_CLASS, StandardCharsets.UTF_8));
+        pushCheckoutChange("Switch ClassTest off\n\nThis is no\nSecurity-Framework-Action: deactivate\n\nReviewed-by: Instructor\n",
+                checkout -> FileUtils.writeStringToFile(checkout.resolve(classTestPath).toFile(), switchedOff, StandardCharsets.UTF_8));
+
+        // The last real deactivation is the restore point: SortingTest was on and ClassTest off before it.
+        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).disabledTestClasses()).containsExactly("de.example.ClassTest");
+        assertThat(readPushed("test/de/example/SortingTest.java")).contains(TEST_CLASS);
     }
 
     @Test

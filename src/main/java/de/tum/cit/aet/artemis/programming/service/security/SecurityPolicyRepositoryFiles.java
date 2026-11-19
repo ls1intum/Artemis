@@ -300,8 +300,23 @@ public final class SecurityPolicyRepositoryFiles {
             if (!testClass.registersSandbox()) {
                 reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES));
             }
+            if (hasActiveMethodPolicyWhileSwitchedOff(testClass)) {
+                reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(),
+                        SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS));
+            }
         }
         return reasons;
+    }
+
+    /**
+     * Ares applies the annotation of a test method instead of the one of its class, so an active method annotation in a class whose annotation switches the
+     * sandbox off runs that test with the sandbox. Neither the state of the class nor its assignments could show that, so such a class is not supported.
+     */
+    private static boolean hasActiveMethodPolicyWhileSwitchedOff(AresTestSources.TypeDeclaration testClass) {
+        if (testClass.policies().size() != 1 || !testClass.policies().getFirst().isEvaluable() || testClass.policies().getFirst().isActivated()) {
+            return false;
+        }
+        return testClass.methodPolicies().values().stream().anyMatch(annotation -> annotation.isEvaluable() && annotation.isActivated());
     }
 
     private static SecurityFrameworkState.PolicyFile policyFile(String path, List<String> referencedBy, PolicyFileReader reader, boolean verifiedAresVersion) {

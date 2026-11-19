@@ -2,11 +2,11 @@
 id: security-framework
 title: Security Framework (Ares 2 Sandbox)
 sidebar_label: Security Framework
-last_reviewed: 2026-11-16
+last_reviewed: 2026-11-19
 ---
 
-import Callout from "../../../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
+import Callout from '../../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../../src/components/Callout/Callout.types';
 
 The Java test templates run the student code inside the [Ares 2](https://ls1intum.github.io/Ares2/) sandbox. This
 page explains what the sandbox restricts, how to read its state on the **Security** card of the exercise form, what
@@ -28,11 +28,11 @@ Two things in the tests repository control the sandbox:
   describes every key.
 - **The `@Policy` annotation** on each test class, which names the policy file the class enforces:
 
-  ```java
-  @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
-  ```
+    ```java
+    @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
+    ```
 
-  With `activated = false` as an additional argument, the class runs without the sandbox.
+    With `activated = false` as an additional argument, the class runs without the sandbox.
 
 Keep the sandbox on for graded exercises. Switch it off for an exercise whose solution legitimately needs resources
 the sandbox blocks, when you do not want to maintain a policy that permits them. The tests themselves stay
@@ -102,7 +102,8 @@ lists the reasons, which can be:
 - The tests use Ares 1, whose own sandbox Artemis does not control.
 - No test class uses Ares 2.
 - The build file does not pin an Ares version through `aresVersion` (Gradle) or `ares.version` (Maven).
-- A `@Policy` annotation is on a field or a nested class, on an annotation type, or on two methods of the same name.
+- A `@Policy` annotation is on a field or a nested class, on an annotation type, on a method that is not a test, or on two methods of the same name.
+- A test method has an active `@Policy` annotation of its own, although the annotation of its test class switches the sandbox off.
 - Tests or Ares annotations are inside a nested class.
 - A file declares several top-level types that are test classes or carry a `@Policy` annotation.
 - A test class registers Ares but has no `@Policy` annotation of its own.
@@ -229,9 +230,11 @@ switched off are switched on again. Add them back in the tests repository.
 
 ## Manage Security Policies in Advanced Mode
 
-The advanced view shows the state of the sandbox and every security policy of the tests repository. Nothing you change
-in it reaches the repository until you select **Save Policies**; saving creates one commit that carries all your
-changes.
+The advanced view shows the state of the sandbox and every security policy of the tests repository. Changes to the
+policies, their test cases and the framework version stay unsaved until you select **Save Policies**; saving creates one
+commit that carries all of them. Two controls save right away after their own confirmation, without **Save Policies**:
+the sandbox toggle and **Scan dependencies**. Scanning dependencies keeps your unsaved changes, while turning the sandbox
+off discards them.
 
 ### Turn the Sandbox On or Off
 
@@ -301,8 +304,8 @@ also stay when you switch the form to simple mode and back.
 
 <Callout variant={CalloutVariant.warning}>
 
-  Only the next build shows whether Ares accepts the saved policies. The card shows **Configured** after you save,
-  not a confirmation from Ares, so check the template and solution results after each save.
+Only the next build shows whether Ares accepts the saved policies. The card shows **Configured** after you save,
+not a confirmation from Ares, so check the template and solution results after each save.
 
 </Callout>
 
@@ -318,8 +321,8 @@ inside the repository; a path that leaves it, points into `.git` or to a directo
 
 <Callout variant={CalloutVariant.warning}>
 
-  Every change you make to the policy affects the next build of every participation. Check the template and
-  solution results after editing it, before students start working.
+Every change you make to the policy affects the next build of every participation. Check the template and
+solution results after editing it, before students start working.
 
 </Callout>
 

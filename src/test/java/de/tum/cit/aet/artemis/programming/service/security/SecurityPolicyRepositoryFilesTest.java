@@ -479,6 +479,18 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void anActiveTestMethodInASwitchedOffTestClassIsUnsupported() throws IOException {
+        writeBuildFile();
+        String switchedOff = TEST_CLASS.formatted("de.example", "SortingTest").replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION,
+                SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        writeSource("test/de/example/SortingTest.java", switchedOff.replace("    @Test\n", "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n"));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // Ares runs the test method with the sandbox, so reporting the class as switched off would hide it.
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS, "de.example.SortingTest");
+    }
+
+    @Test
     void aMarkerTheFileDeclaresItselfDoesNotRegisterAres() throws IOException {
         writeBuildFile();
         writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");

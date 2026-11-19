@@ -346,7 +346,7 @@
                 },
                 "unsupportedReason": {
                     "UNEVALUABLE_ARGUMENTS": "{{ location }}: Eine @Policy-Annotation verwendet einen Ausdruck statt eines literalen Werts.",
-                    "POLICY_NOT_ON_TOP_LEVEL_TYPE": "{{ location }}: Eine @Policy-Annotation steht an einer Methode, einem Feld oder einem verschachtelten Typ statt an der Testklasse.",
+                    "POLICY_NOT_ON_TOP_LEVEL_TYPE": "{{ location }}: Eine @Policy-Annotation steht an einer Methode, die kein Test ist, an einem Feld oder an einem verschachtelten Typ.",
                     "POLICY_ON_ANNOTATION_TYPE": "{{ location }}: Eine @Policy-Annotation steht an einem Annotationstyp.",
                     "MULTIPLE_TOP_LEVEL_TYPES": "{{ location }}: Die Datei deklariert mehr als einen Top-Level-Typ, der eine Testklasse ist oder eine @Policy-Annotation trägt.",
                     "TESTS_IN_NESTED_TYPE": "{{ location }}: Tests oder Ares-Annotationen befinden sich in einem verschachtelten Typ.",
@@ -354,7 +354,8 @@
                     "TEST_CLASS_WITHOUT_ARES": "{{ location }}: Eine Testklasse registriert die Ares-Sandbox nicht über @Public, @Hidden, @PublicTest oder @HiddenTest.",
                     "ARES_1": "{{ location }}: Die Tests verwenden Ares 1, dessen eigene Sandbox weiterläuft.",
                     "NO_ARES_2": "{{ location }}: Die Tests verwenden nicht Ares 2.",
-                    "NO_ARES_VERSION_PINNED": "{{ location }}: Die Build-Datei legt keine Ares-Version fest."
+                    "NO_ARES_VERSION_PINNED": "{{ location }}: Die Build-Datei legt keine Ares-Version fest.",
+                    "ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS": "{{ location }}: Eine Testmethode nutzt die Ares-Sandbox über ihre eigene @Policy-Annotation, obwohl die Annotation ihrer Testklasse die Sandbox ausschaltet."
                 },
                 "sync": {
                     "inactive": "Beim Aktivieren wird die vorherige Richtlinie wiederhergestellt oder eine Standardrichtlinie erzeugt.",

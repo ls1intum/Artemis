@@ -755,6 +755,98 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void aRetryAfterAFailedProcessingDoesNotApplyTheChangeAgainAfterALaterCommit() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyChangeDTO change = change(editor, edited(withFiles(loadedPolicy(editor), List.of(LOGS)), BOTH_CLASSES));
+        doThrow(new VersionControlException("Build trigger failed")).when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any());
+        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change, user));
+        // Someone pushes on top of the change; the processing of that commit builds the change as well.
+        pushToTests("README.md", "Edited in the online editor");
+        String later = pushedHead();
+        doNothing().when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any());
+
+        SecurityPolicyCommitResultDTO result = editorService.commit(exercise(), change, user);
+
+        assertThat(pushedHead()).isEqualTo(later);
+        assertThat(result.editor().baseCommitHash()).isEqualTo(later);
+        assertThat(loadedPolicy(result.editor()).files()).containsExactly(LOGS);
+    }
+
+    @Test
+    void acceptsAnInPlaceEditWhosePreviousPathIsWrittenDifferently() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
+        SecurityPolicyChangeDTO.PolicyChangeDTO policy = new SecurityPolicyChangeDTO.PolicyChangeDTO("./" + changed.policyPath(), changed, BOTH_CLASSES);
+
+        editorService.commit(exercise(), change(editor, policy), user);
+
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).hasValueSatisfying(content -> assertThat(content).contains("\"logs/\""));
+    }
+
+    @Test
+    void refusesAPolicyThatOnlyAClassAnnotationOverriddenByAllItsTestCasesStillNames() {
+        pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n", "    @de.tum.cit.ase.ares.api.Policy\n    @Test\n"));
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        assertThat(editor.policies().getFirst().assignedTests()).containsExactly("de.example.StressTest");
+        SecurityPolicyChangeDTO releaseAll = change(editor, edited(withFiles(loadedPolicy(editor), List.of(LOGS)), List.of()));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), releaseAll, user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyUnused"));
+    }
+
+    @Test
+    void refusesToKeepOnlyTheUniqueTestCaseOfAClassAssignedAsAWholeThatHasOverloads() {
+        pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n    void testMergeSort() {\n    }",
+                "    @Test\n    void testMergeSort() {\n    }\n\n    @org.junit.jupiter.params.ParameterizedTest\n    void testMergeSort(int size) {\n    }"));
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        assertThat(editor.policies().getFirst().assignedTests()).containsExactlyElementsOf(BOTH_CLASSES);
+        // Both testMergeSort methods would lose the policy of the class, although the review cannot show them.
+        SecurityPolicyChangeDTO split = change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest#testBubbleSort", "de.example.StressTest")));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), split, user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyOverloadsLosePolicy"));
+    }
+
+    @Test
+    void refusesToPinAVersionIfAnotherOneWasPinnedSinceThePoliciesWereLoaded() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        pushToTests("build.gradle", "ext {\n    aresVersion = '2.1.0'\n}\n");
+        SecurityPolicyChangeDTO pin = new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, "2.2.1", List.of(), List.of());
+
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.commit(exercise(), pin, user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
+        assertThat(readPushed("build.gradle")).hasValueSatisfying(content -> assertThat(content).contains("aresVersion = '2.1.0'"));
+    }
+
+    @Test
+    void refusesToAssignTheTestCasesOfAClassThatAnotherTestClassExtendsOneByOne() {
+        pushToTests("test/de/example/ChildTest.java", """
+                package de.example;
+
+                import org.junit.jupiter.api.Test;
+
+                @de.tum.cit.ase.ares.api.jupiter.Public
+                @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
+                class ChildTest extends SortingTest {
+
+                    @Test
+                    void testOwn() {
+                    }
+                }
+                """);
+        List<String> withChild = List.of("de.example.ChildTest", "de.example.SortingTest", "de.example.StressTest");
+        SecurityPolicyEditorDTO initial = editorService.getEditor(exercise());
+        editorService.commit(exercise(), change(initial, edited(withTestClasses(loadedPolicy(initial), "SecurityPolicy.yaml", withChild), withChild)), user);
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        // ChildTest runs testMergeSort as well, with the annotation of the method, so its policy would change without being shown.
+        List<String> splitParent = List.of("de.example.ChildTest", "de.example.SortingTest#testMergeSort", "de.example.StressTest");
+        SecurityPolicyChangeDTO split = change(editor, edited(loadedPolicy(editor), splitParent));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), split, user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyTestsOfSubclassesChange"));
+    }
+
+    @Test
     void refusesToAssignOneOfSeveralTestMethodsWithTheSameName() {
         pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n    void testMergeSort() {\n    }",
                 "    @Test\n    void testMergeSort() {\n    }\n\n    @org.junit.jupiter.params.ParameterizedTest\n    void testMergeSort(int size) {\n    }"));

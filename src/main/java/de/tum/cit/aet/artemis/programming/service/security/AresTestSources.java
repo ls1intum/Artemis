@@ -166,7 +166,8 @@ final class AresTestSources {
 
         List<Map<String, AresPolicyAnnotations.Annotation>> methodPoliciesByType = new ArrayList<>();
         declarations.forEach(_ -> methodPoliciesByType.add(new LinkedHashMap<>()));
-        List<List<AresPolicyAnnotations.Annotation>> policiesByType = policiesByType(annotations, masked, declarations, depth, methodPoliciesByType, problems);
+        Set<String> testCases = Set.copyOf(AresTestCases.testCases(source));
+        List<List<AresPolicyAnnotations.Annotation>> policiesByType = policiesByType(annotations, masked, declarations, depth, testCases, methodPoliciesByType, problems);
         boolean[] registers = new boolean[declarations.size()];
         boolean[] tests = new boolean[declarations.size()];
         markAresClassMarkers(masked, declarations, depth, registers, problems);
@@ -186,13 +187,16 @@ final class AresTestSources {
 
     /**
      * Assigns every {@code @Policy} annotation to the top-level type it annotates, or to the method of such a type, and records the annotations that annotate
-     * neither. A method may carry one annotation; Ares applies it to the test case instead of the annotation of the class.
+     * neither. A test method may carry one annotation; Ares applies it to the test case instead of the annotation of the class. Ares reads it only from the
+     * test method itself, so an annotation on another method, e.g. a helper the test calls, is not supported.
      *
+     * @param testCases            the names of the test methods of the source
      * @param methodPoliciesByType receives the annotations of the methods of each declaration, by its index
      * @return the annotations of each declaration, by its index
      */
     private static List<List<AresPolicyAnnotations.Annotation>> policiesByType(List<AresPolicyAnnotations.Annotation> annotations, String masked, List<Declaration> declarations,
-            int[] depth, List<Map<String, AresPolicyAnnotations.Annotation>> methodPoliciesByType, List<SecurityFrameworkState.UnsupportedReasonType> problems) {
+            int[] depth, Set<String> testCases, List<Map<String, AresPolicyAnnotations.Annotation>> methodPoliciesByType,
+            List<SecurityFrameworkState.UnsupportedReasonType> problems) {
         List<List<AresPolicyAnnotations.Annotation>> policiesByType = new ArrayList<>();
         declarations.forEach(_ -> policiesByType.add(new ArrayList<>()));
         for (AresPolicyAnnotations.Annotation annotation : annotations) {
@@ -203,8 +207,9 @@ final class AresTestSources {
             if (owner < 0) {
                 int enclosing = enclosingDeclaration(declarations, annotation.start(), depth);
                 String method = enclosing >= 0 && !declarations.get(enclosing).annotationType() ? AresTestCases.methodNameAfter(masked, annotation.end()) : null;
-                if (method == null || methodPoliciesByType.get(enclosing).putIfAbsent(method, annotation) != null) {
-                    // A field, a nested type or an overloaded method with two annotations: the editor cannot tell which test case the annotation belongs to.
+                if (method == null || !testCases.contains(method) || methodPoliciesByType.get(enclosing).putIfAbsent(method, annotation) != null) {
+                    // A field, a nested type, a method that is no test or an overloaded method with two annotations: the editor cannot tell which test case
+                    // the annotation belongs to.
                     addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
                 }
             }

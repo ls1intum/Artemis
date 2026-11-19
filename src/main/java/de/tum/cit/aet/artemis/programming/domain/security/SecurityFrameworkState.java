@@ -77,7 +77,7 @@ public record SecurityFrameworkState(SecurityActivationStatus status, List<Strin
     public enum UnsupportedReasonType {
         /** A {@code @Policy} argument is an expression instead of a literal. */
         UNEVALUABLE_ARGUMENTS,
-        /** A {@code @Policy} annotation is on a method, a field or a nested type. */
+        /** A {@code @Policy} annotation is on a method that is no test, a field or a nested type. */
         POLICY_NOT_ON_TOP_LEVEL_TYPE,
         /** A {@code @Policy} annotation is on an annotation type, i.e. a meta-annotation. */
         POLICY_ON_ANNOTATION_TYPE,
@@ -94,6 +94,11 @@ public record SecurityFrameworkState(SecurityActivationStatus status, List<Strin
         /** No test class uses Ares 2. */
         NO_ARES_2,
         /** The build file does not pin an Ares version through {@code aresVersion} or {@code ares.version}. */
-        NO_ARES_VERSION_PINNED
+        NO_ARES_VERSION_PINNED,
+        /**
+         * A test method of a test class whose {@code @Policy} switches the sandbox off has an active annotation of its own. Ares applies it, so the method runs
+         * with the sandbox, while the class counts as switched off.
+         */
+        ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS
     }
 }

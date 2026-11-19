@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import de.tum.cit.aet.artemis.programming.domain.security.SecurityFrameworkState;
+
 /**
  * Tests that {@link AresPolicyAnnotations} rewrites exactly the Ares {@code @Policy} annotations of a source file, and only their activation flag.
  */
@@ -295,6 +297,31 @@ class AresPolicyAnnotationsTest {
         AresTestSources.TypeDeclaration type = AresTestSources.analyze("test/de/example/SortingTest.java", assigned).topLevelTypes().getFirst();
         assertThat(type.methodPolicies()).containsOnlyKeys("testBubbleSort", "testMergeSort");
         assertThat(AresTestSources.analyze("test/de/example/SortingTest.java", assigned).problems()).isEmpty();
+    }
+
+    @Test
+    void keepsTheLinesOfAFileWithCarriageReturnLineEndings() {
+        String source = TEST_CLASS.replace("\n", "\r");
+        Map<String, String> methods = Map.of("testBubbleSort", "Stress.yaml", "testMergeSort", "SecurityPolicy.yaml");
+
+        String assigned = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", source, null, methods, Set.of());
+        String wholeClass = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", source, "Stress.yaml", Map.of(), Set.of());
+
+        assertThat(assigned).contains("    @Policy(value = \"Stress.yaml\", withinPath = \"test\")\r    @Test\r    void testBubbleSort()").doesNotContain("\n");
+        // Removing the annotation of testMergeSort removes its whole line, as in a file with line feeds.
+        String expected = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", TEST_CLASS, "Stress.yaml", Map.of(), Set.of()).replace("\n", "\r");
+        assertThat(wholeClass).isEqualTo(expected);
+    }
+
+    @Test
+    void anAnnotationOnAMethodThatIsNoTestIsNotSupported() {
+        String helper = "    @Policy(\"Missing.yaml\")\n    void helper() {\n    }\n\n";
+        String source = TEST_CLASS.replace("    @Test\n    void testQuickSort()", helper + "    @Test\n    void testQuickSort()");
+
+        AresTestSources.Summary summary = AresTestSources.analyze("test/de/example/SortingTest.java", source);
+
+        assertThat(summary.problems()).containsExactly(SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
+        assertThat(summary.topLevelTypes().getFirst().methodPolicies()).containsOnlyKeys("testMergeSort");
     }
 
     @Test

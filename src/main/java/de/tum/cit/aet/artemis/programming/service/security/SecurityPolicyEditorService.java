@@ -56,7 +56,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.security.SecurityActivationStatus;
 import de.tum.cit.aet.artemis.programming.domain.security.SecurityFrameworkState;
-import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.SecurityPolicyChangeDTO;
 import de.tum.cit.aet.artemis.programming.dto.SecurityPolicyCommitResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.SecurityPolicyDocumentDTO;
@@ -89,7 +88,9 @@ public class SecurityPolicyEditorService {
     private static final String POLICY_ACTION = "policy";
 
     /** The trailer of a policy commit that identifies its change, see {@link #fingerprint(SecurityPolicyChangeDTO)}. */
-    private static final String CHANGE_TRAILER = "Security-Policy-Change: ";
+    private static final String CHANGE_TRAILER_KEY = "Security-Policy-Change";
+
+    private static final String CHANGE_TRAILER = CHANGE_TRAILER_KEY + ": ";
 
     private static final String DEFAULT_COMMIT_MESSAGE = "Update the Ares security policy";
 
@@ -267,15 +268,20 @@ public class SecurityPolicyEditorService {
             throw new BadRequestAlertException("The change does not name the commit the policies were loaded from.", ENTITY_NAME, "securityPolicyNoBaseCommit");
         }
         String fingerprint = fingerprint(change);
-        SecurityFrameworkConfigDTO config = securityFrameworkService.changeTestRepository(exercise, user, commitMessage(change.commitMessage()), POLICY_ACTION,
-                CHANGE_TRAILER + fingerprint + "\n", true, repository -> {
-                    if (!isAlreadyApplied(repository, fingerprint)) {
+        securityFrameworkService.changeTestRepository(exercise, user, commitMessage(change.commitMessage()), POLICY_ACTION, CHANGE_TRAILER + fingerprint + "\n", true,
+                repository -> {
+                    if (!isAlreadyApplied(repository, fingerprint, baseCommitHash)) {
                         applyChange(repository, change, baseCommitHash);
                     }
                 });
         log.info("User {} changed the security policies {} and removed {} of programming exercise {}", user.getLogin(),
                 change.policies().stream().map(policy -> policy.document().policyPath()).toList(), change.removedPolicyPaths(), exercise.getId());
-        return new SecurityPolicyCommitResultDTO(getEditor(exercise), config);
+        // The policies and the state are read from one commit, so a commit pushed right after this one cannot mix two states in the answer.
+        return readTestRepository(exercise, (repository, commit) -> commitResultAt(repository, commit, exercise.getPackageName()));
+    }
+
+    private SecurityPolicyCommitResultDTO commitResultAt(Repository repository, RevCommit commit, @Nullable String packageName) throws IOException {
+        return new SecurityPolicyCommitResultDTO(editorAt(repository, commit, packageName), securityFrameworkService.configAt(repository, commit.getTree()));
     }
 
     /**
@@ -400,18 +406,28 @@ public class SecurityPolicyEditorService {
     }
 
     /**
-     * Whether the head of the checkout is the commit of this very change. That is the case when a retry follows a request whose push succeeded but whose
-     * processing failed: the change must not be applied again, which would fail as a conflict with itself, and the pending processing is resumed instead.
-     * The fingerprint covers the whole request, including the commit the editor loaded, so the head may follow an unrelated commit that was allowed in
-     * between, while a different change, even of the same base commit, has another fingerprint and still fails as a conflict.
+     * Whether a commit since the one the editor loaded is the commit of this very change. That is the case when a retry follows a request whose push
+     * succeeded but whose processing failed: the change must not be applied again, which would fail as a conflict with itself. If it is still the head, the
+     * pending processing is resumed; if other commits followed it, their own processing builds it. The fingerprint covers the whole request, including the
+     * commit the editor loaded, so a different change, even of the same base commit, has another fingerprint and still fails as a conflict.
      */
-    private static boolean isAlreadyApplied(Repository repository, String fingerprint) {
+    private static boolean isAlreadyApplied(Repository repository, String fingerprint, String baseCommitHash) {
         try (RevWalk revWalk = new RevWalk(repository)) {
             ObjectId head = repository.resolve(Constants.HEAD);
             if (head == null) {
                 return false;
             }
-            return revWalk.parseCommit(head).getFullMessage().lines().anyMatch(line -> line.equals(CHANGE_TRAILER + fingerprint));
+            revWalk.markStart(revWalk.parseCommit(head));
+            ObjectId base = repository.resolve(baseCommitHash);
+            if (base != null && repository.getObjectDatabase().has(base)) {
+                revWalk.markUninteresting(revWalk.parseCommit(base));
+            }
+            for (RevCommit commit : revWalk) {
+                if (commit.getFooterLines(CHANGE_TRAILER_KEY).contains(fingerprint)) {
+                    return true;
+                }
+            }
+            return false;
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -425,7 +441,7 @@ public class SecurityPolicyEditorService {
     private void applyChange(Repository repository, SecurityPolicyChangeDTO change, String baseCommitHash) {
         Path root = repository.getLocalPath();
         try {
-            requireUnchangedSince(repository, baseCommitHash);
+            requireUnchangedSince(repository, baseCommitHash, change.frameworkVersion() != null);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -459,7 +475,7 @@ public class SecurityPolicyEditorService {
                 if (!touched.add(previousPath)) {
                     throw refused("The policy " + previousPath + " is listed twice.", "securityPolicyDuplicate", Map.of("path", previousPath));
                 }
-                if (!previousPath.equals(policy.document().policyPath())) {
+                if (!previousPath.equals(requireValidPolicyPath(policy.document().policyPath()))) {
                     vacated.add(previousPath);
                 }
             }
@@ -483,7 +499,7 @@ public class SecurityPolicyEditorService {
                 }
                 previousLanguageConfiguration = previousDocument.languageConfiguration();
             }
-            boolean samePath = path.equals(policy.previousPolicyPath());
+            boolean samePath = policy.previousPolicyPath() != null && path.equals(requireValidPolicyPath(policy.previousPolicyPath()));
             if (!samePath && !vacated.contains(path) && Files.exists(root.resolve(path), LinkOption.NOFOLLOW_LINKS)) {
                 throw refused("The file " + path + " already exists in the tests repository.", "securityPolicyFileExists", Map.of("path", path));
             }
@@ -539,6 +555,7 @@ public class SecurityPolicyEditorService {
             if (testClass.active() && (pointsToVacated || !assigned.entries().equals(testClass.entries()))) {
                 requireKeptOverloadPolicy(testClass, assigned);
                 requireKeptInheritedPolicy(testClass, assigned);
+                requireKeptPolicyOfSubclasses(testClass, assigned);
                 reassigned.add(assigned);
             }
         }
@@ -546,8 +563,10 @@ public class SecurityPolicyEditorService {
 
         SecurityFrameworkState after = SecurityPolicyRepositoryFiles.evaluate(root);
         Set<String> referencedPolicies = after.policyFiles().stream().map(SecurityFrameworkState.PolicyFile::policyPath).collect(Collectors.toSet());
+        // A class annotation can still point to a policy whose test cases all override it, so each policy needs a test case that uses it, too.
+        Map<String, List<String>> assignedAfter = SecurityTestAssignments.entriesByPolicy(SecurityTestAssignments.read(SecurityPolicyRepositoryFiles.javaSources(root)).values());
         for (String path : rendered.keySet()) {
-            if (!referencedPolicies.contains(path)) {
+            if (!referencedPolicies.contains(path) || assignedAfter.getOrDefault(path, List.of()).isEmpty()) {
                 throw refused("No test uses the policy " + path + ". Assign at least one test case to it.", "securityPolicyUnused", Map.of("path", path));
             }
         }
@@ -575,15 +594,29 @@ public class SecurityPolicyEditorService {
     }
 
     /**
+     * Ares applies the annotation of a test method also when a subclass runs the method it inherits, before the annotation of the subclass. Changing which
+     * policy the test methods of a class extended by other test classes use would therefore also change the policy of those subclasses, which the editor
+     * shows as assigned on their own, so such a class can only change its class annotation.
+     */
+    private static void requireKeptPolicyOfSubclasses(SecurityTestAssignments.TestClass testClass, SecurityTestAssignments.TestClass assigned) {
+        if (!testClass.extendedByTests() || (assigned.methodPolicyPaths().equals(testClass.methodPolicyPaths()) && assigned.defaultMethods().equals(testClass.defaultMethods()))) {
+            return;
+        }
+        throw refused("Other test classes extend " + testClass.qualifiedName() + " and run its test methods with their policy. Assign its whole test class to a policy instead.",
+                "securityPolicyTestsOfSubclassesChange", Map.of("testClass", testClass.qualifiedName()));
+    }
+
+    /**
      * Test methods that share a name cannot be assigned one by one; they follow the class annotation, which therefore must not lose its policy file under
      * them unnoticed, e.g. when the file is renamed while the class is assigned case by case.
      */
     private static void requireKeptOverloadPolicy(SecurityTestAssignments.TestClass testClass, SecurityTestAssignments.TestClass assigned) {
         String classPolicyPath = testClass.classPolicyPath();
-        // A class assigned as a whole shows the overloads as part of it, so releasing or deleting that assignment is what the instructor asked for.
-        boolean assignedAsAWhole = testClass.entries().containsKey(testClass.qualifiedName());
+        // A class assigned as a whole shows the overloads as part of it, so releasing it completely is what the instructor asked for; keeping only some of its
+        // test cases would release the overloads as well, which the editor cannot show one by one.
+        boolean releasedAsAWhole = testClass.entries().containsKey(testClass.qualifiedName()) && assigned.methodPolicyPaths().isEmpty();
         // The annotations are read by the name of the method, so whether every overload has one of its own is unknown; any of them may use the class policy.
-        if (classPolicyPath == null || assigned.classPolicyPath() != null || assignedAsAWhole || testClass.overloaded().isEmpty()) {
+        if (classPolicyPath == null || assigned.classPolicyPath() != null || releasedAsAWhole || testClass.overloaded().isEmpty()) {
             return;
         }
         String overload = testClass.overloaded().stream().sorted().findFirst().orElseThrow();
@@ -678,7 +711,7 @@ public class SecurityPolicyEditorService {
      * case by case, because the change rewrites the annotations from the state it was loaded with. Commits that change something else, e.g. the body of a
      * test, do not conflict.
      */
-    private static void requireUnchangedSince(Repository repository, String baseCommitHash) throws IOException {
+    private static void requireUnchangedSince(Repository repository, String baseCommitHash, boolean stagesVersion) throws IOException {
         ObjectId head = repository.resolve(Constants.HEAD);
         if (head != null && head.name().equals(baseCommitHash)) {
             return;
@@ -693,6 +726,10 @@ public class SecurityPolicyEditorService {
             SecurityFrameworkState baseState = SecurityFrameworkCommitFiles.evaluate(repository, baseTree);
             SecurityFrameworkState headState = SecurityFrameworkCommitFiles.evaluate(repository, headTree);
             if (!policyReferences(baseState).equals(policyReferences(headState)) || !assignmentState(repository, baseTree).equals(assignmentState(repository, headTree))) {
+                throw policiesChanged();
+            }
+            // The review showed the build file of the loaded commit, so a version pinned since would be replaced without being shown.
+            if (stagesVersion && !SecurityFrameworkCommitFiles.aresVersion(repository, baseTree).equals(SecurityFrameworkCommitFiles.aresVersion(repository, headTree))) {
                 throw policiesChanged();
             }
             for (SecurityFrameworkState.PolicyFile policyFile : headState.policyFiles()) {

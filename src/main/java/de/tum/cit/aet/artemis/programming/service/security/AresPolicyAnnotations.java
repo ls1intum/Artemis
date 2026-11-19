@@ -324,7 +324,7 @@ final class AresPolicyAnnotations {
             }
         });
         Map<String, Integer> testAnnotations = AresTestCases.testAnnotationOffsets(source);
-        String lineSeparator = source.contains("\r\n") ? "\r\n" : "\n";
+        String lineSeparator = lineSeparatorOf(source);
         methodPolicyPaths.forEach((method, target) -> {
             if (type.methodPolicies().containsKey(method)) {
                 return;
@@ -333,7 +333,7 @@ final class AresPolicyAnnotations {
             if (offset == null) {
                 throw new IllegalArgumentException("The test class in " + path + " has no test case " + method);
             }
-            int lineStart = source.lastIndexOf('\n', offset - 1) + 1;
+            int lineStart = lineStart(source, offset);
             String indentation = source.substring(lineStart, offset);
             boolean ownLine = indentation.isBlank();
             ranges.add(new int[] { ownLine ? lineStart : offset, ownLine ? lineStart : offset });
@@ -352,10 +352,27 @@ final class AresPolicyAnnotations {
     }
 
     /**
+     * @return the offset where the line of the offset starts; a line ends at a carriage return, a line feed or both (JLS 3.4)
+     */
+    private static int lineStart(String source, int offset) {
+        return Math.max(source.lastIndexOf('\n', offset - 1), source.lastIndexOf('\r', offset - 1)) + 1;
+    }
+
+    /**
+     * @return the line terminator the source uses, so that a new line matches the lines around it
+     */
+    private static String lineSeparatorOf(String source) {
+        if (source.contains("\r\n")) {
+            return "\r\n";
+        }
+        return source.indexOf('\r') >= 0 && source.indexOf('\n') < 0 ? "\r" : "\n";
+    }
+
+    /**
      * @return the range to remove for an annotation: its whole line if nothing else is on it, otherwise the annotation and the whitespace after it
      */
     private static int[] lineRange(String source, int start, int end) {
-        int lineStart = source.lastIndexOf('\n', start - 1) + 1;
+        int lineStart = lineStart(source, start);
         int after = end;
         while (after < source.length() && (source.charAt(after) == ' ' || source.charAt(after) == '\t')) {
             after++;

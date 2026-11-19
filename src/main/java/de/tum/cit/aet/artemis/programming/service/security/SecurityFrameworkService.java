@@ -125,14 +125,21 @@ public class SecurityFrameworkService {
     /** Which policy fields each Ares release accepts, see {@link AresCompatibilityManifest}. */
     private static final Path COMPATIBILITY_MANIFEST = Path.of("security-framework", "ares-compatibility.yml");
 
+    private static final String COMMIT_TRAILER_KEY = "Changed-by";
+
+    private static final String COMMIT_TRAILER_VALUE = "Artemis Security Framework";
+
     /** Marks the commits of this service whose push processing it runs itself, so a retry can tell an unprocessed change of its own from any other commit. */
-    private static final String COMMIT_TRAILER = "Changed-by: Artemis Security Framework";
+    private static final String COMMIT_TRAILER = COMMIT_TRAILER_KEY + ": " + COMMIT_TRAILER_VALUE;
+
+    private static final String ACTION_TRAILER_KEY = "Security-Framework-Action";
 
     /**
      * Records what a commit of this service did, also for the commits made while an exercise is imported. Activating looks up the last deactivation by it,
-     * to restore the annotations as they were before.
+     * to restore the annotations as they were before. It is read from the trailers of a commit only, because the message above them may be written by an
+     * instructor and say anything.
      */
-    private static final String ACTION_TRAILER = "Security-Framework-Action: ";
+    private static final String ACTION_TRAILER = ACTION_TRAILER_KEY + ": ";
 
     private static final String DEACTIVATE_ACTION = "deactivate";
 
@@ -296,16 +303,25 @@ public class SecurityFrameworkService {
             if (head == null) {
                 return SecurityFrameworkConfigDTO.of(new SecurityFrameworkState(SecurityActivationStatus.INACTIVE, List.of(), List.of(), List.of(), List.of()), null, List.of());
             }
-            RevTree tree = revWalk.parseCommit(head).getTree();
-            String frameworkVersion = SecurityFrameworkCommitFiles.aresVersion(repository, tree).orElse(null);
-            SecurityFrameworkState state = SecurityFrameworkCommitFiles.evaluate(repository, tree);
-            UnaryOperator<@Nullable String> policyContent = path -> SecurityFrameworkCommitFiles.readPolicyFile(repository, tree, path).content();
-            return SecurityFrameworkConfigDTO.of(state, frameworkVersion, versionCompatibilities(state, policyContent));
+            return configAt(repository, revWalk.parseCommit(head).getTree());
         }
         catch (IOException e) {
             log.error("Could not read the tests repository of exercise {}", exercise.getId(), e);
             throw new InternalServerErrorAlertException("Could not read the tests repository.", ENTITY_NAME, "securityFrameworkReadFailed");
         }
+    }
+
+    /**
+     * @param repository the tests repository
+     * @param tree       the tree of one of its commits
+     * @return the Security Framework state of that commit
+     * @throws IOException if the commit cannot be read
+     */
+    public SecurityFrameworkConfigDTO configAt(Repository repository, RevTree tree) throws IOException {
+        String frameworkVersion = SecurityFrameworkCommitFiles.aresVersion(repository, tree).orElse(null);
+        SecurityFrameworkState state = SecurityFrameworkCommitFiles.evaluate(repository, tree);
+        UnaryOperator<@Nullable String> policyContent = path -> SecurityFrameworkCommitFiles.readPolicyFile(repository, tree, path).content();
+        return SecurityFrameworkConfigDTO.of(state, frameworkVersion, versionCompatibilities(state, policyContent));
     }
 
     /**
@@ -675,7 +691,7 @@ public class SecurityFrameworkService {
     private static SecurityPolicyRepositoryFiles.AnnotationDecision annotationStatesBeforeLastDeactivation(Repository repository) {
         try (Git git = new Git(repository)) {
             for (RevCommit commit : git.log().call()) {
-                if (commit.getParentCount() == 0 || !commit.getFullMessage().contains(ACTION_TRAILER + DEACTIVATE_ACTION)) {
+                if (commit.getParentCount() == 0 || !commit.getFooterLines(ACTION_TRAILER_KEY).contains(DEACTIVATE_ACTION)) {
                     continue;
                 }
                 RevCommit parent;
@@ -817,7 +833,7 @@ public class SecurityFrameworkService {
      */
     private boolean isUnprocessedSecurityFrameworkCommit(ProgrammingExercise exercise, Repository repository, String head) throws IOException {
         try (RevWalk revWalk = new RevWalk(repository)) {
-            if (!revWalk.parseCommit(repository.resolve(head)).getFullMessage().contains(COMMIT_TRAILER)) {
+            if (!revWalk.parseCommit(repository.resolve(head)).getFooterLines(COMMIT_TRAILER_KEY).contains(COMMIT_TRAILER_VALUE)) {
                 return false;
             }
         }
