@@ -1,4 +1,4 @@
-<tumaet-ui-dialog [visible]="true" (visibleChange)="onVisibleChange($event)" size="medium" [header]="TRANSLATION_BASE + '.feedbackModal.header' | artemisTranslate">
+<tumaet-ui-dialog dismissableMask [visible]="true" (visibleChange)="onVisibleChange($event)" size="medium" [header]="TRANSLATION_BASE + '.feedbackModal.header' | artemisTranslate">
     <div class="mb-4! flex justify-between">
         <ng-container *ngTemplateOutlet="detailTemplate; context: { label: TRANSLATION_BASE + '.task', value: feedbackDetail().taskName }" />
         <ng-container

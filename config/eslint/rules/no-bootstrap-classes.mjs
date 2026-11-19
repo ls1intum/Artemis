@@ -156,7 +156,7 @@ function scanClassList(text, node, context) {
 }
 
 // Returns the banned tokens found in the bound source of a `[class]` / `[ngClass]` binding. Pure (no ESLint context)
-// so tools like supporting_scripts/migration/migrate.mjs reuse the exact same binding extraction.
+// so other tools can reuse the exact same binding extraction.
 export function bannedClassesInBindingExpression(source) {
     return classTokensInBindingExpression(source)
         .map(({ token }) => token)

@@ -49,7 +49,7 @@
             @if (isAtLeastInstructor() && !singleParticipantMode && !isRepoExportForMultipleExercises()) {
                 <div class="checkbox">
                     <label class="control-label">
-                        <tumaet-ui-checkbox class="accent-primary" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />
+                        <tumaet-ui-checkbox name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />
                         <strong [jhiTranslate]="'artemisApp.programmingExercise.export.' + (programmingExercises[0].teamMode ? 'downloadAllTeams' : 'downloadAllStudents')">
                             Or download the repositories of all {{ programmingExercises[0].teamMode ? 'teams' : 'students' }}
                         </strong>
@@ -59,7 +59,7 @@
             @if (!singleParticipantMode) {
                 <div class="checkbox">
                     <label class="control-label">
-                        <tumaet-ui-checkbox class="accent-primary" name="filterLateSubmissions" [(ngModel)]="this.repositoryExportOptions.filterLateSubmissions" />
+                        <tumaet-ui-checkbox name="filterLateSubmissions" [(ngModel)]="this.repositoryExportOptions.filterLateSubmissions" />
                         <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissions.title"></strong>
                         <jhi-help-icon text="artemisApp.programmingExercise.export.filterLateSubmissions.tooltip" />
                     </label>
@@ -83,7 +83,7 @@
             @if (!singleParticipantMode) {
                 <div class="checkbox">
                     <label class="control-label">
-                        <tumaet-ui-checkbox class="accent-primary" name="excludePracticeSubmissions" [(ngModel)]="this.repositoryExportOptions.excludePracticeSubmissions" />
+                        <tumaet-ui-checkbox name="excludePracticeSubmissions" [(ngModel)]="this.repositoryExportOptions.excludePracticeSubmissions" />
                         <strong jhiTranslate="artemisApp.programmingExercise.export.excludePracticeSubmissions.title"></strong>
                         <jhi-help-icon text="artemisApp.programmingExercise.export.excludePracticeSubmissions.tooltip" />
                     </label>
@@ -92,7 +92,7 @@
             @if (!singleParticipantMode) {
                 <div class="checkbox">
                     <label class="control-label">
-                        <tumaet-ui-checkbox class="accent-primary" name="addParticipantName" [(ngModel)]="this.repositoryExportOptions.addParticipantName" />
+                        <tumaet-ui-checkbox name="addParticipantName" [(ngModel)]="this.repositoryExportOptions.addParticipantName" />
                         @if (!isRepoExportForMultipleExercises()) {
                             <strong
                                 [jhiTranslate]="
@@ -112,7 +112,7 @@
             }
             <div class="checkbox">
                 <label class="control-label">
-                    <tumaet-ui-checkbox class="accent-primary" name="combineStudentCommits" [(ngModel)]="this.repositoryExportOptions.combineStudentCommits" />
+                    <tumaet-ui-checkbox name="combineStudentCommits" [(ngModel)]="this.repositoryExportOptions.combineStudentCommits" />
                     <strong jhiTranslate="artemisApp.programmingExercise.export.combineStudentCommits.title"></strong>
                     <jhi-help-icon text="artemisApp.programmingExercise.export.combineStudentCommits.tooltip" />
                 </label>
@@ -120,12 +120,7 @@
             @if (isAtLeastInstructor()) {
                 <div class="checkbox">
                     <label class="control-label">
-                        <tumaet-ui-checkbox
-                            class="accent-primary"
-                            name="anonymizeRepository"
-                            [(ngModel)]="this.repositoryExportOptions.anonymizeRepository"
-                            [disabled]="!isAtLeastInstructor()"
-                        />
+                        <tumaet-ui-checkbox name="anonymizeRepository" [(ngModel)]="this.repositoryExportOptions.anonymizeRepository" [disabled]="!isAtLeastInstructor()" />
                         <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeRepository.title"></strong>
                         <jhi-help-icon text="artemisApp.programmingExercise.export.anonymizeRepository.tooltip" />
                     </label>
@@ -133,7 +128,7 @@
             }
             <div class="checkbox">
                 <label class="control-label">
-                    <tumaet-ui-checkbox class="accent-primary" name="normalizeCodeStyle" [(ngModel)]="this.repositoryExportOptions.normalizeCodeStyle" />
+                    <tumaet-ui-checkbox name="normalizeCodeStyle" [(ngModel)]="this.repositoryExportOptions.normalizeCodeStyle" />
                     <strong jhiTranslate="artemisApp.programmingExercise.export.normalizeCodeStyle.title"></strong>
                     <jhi-help-icon text="artemisApp.programmingExercise.export.normalizeCodeStyle.tooltip" />
                 </label>

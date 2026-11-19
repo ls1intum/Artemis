@@ -1,4 +1,4 @@
-<tumaet-ui-dialog [visible]="true" (visibleChange)="onVisibleChange($event)" size="small" [header]="TRANSLATION_BASE + '.header' | artemisTranslate">
+<tumaet-ui-dialog dismissableMask [visible]="true" (visibleChange)="onVisibleChange($event)" size="small" [header]="TRANSLATION_BASE + '.header' | artemisTranslate">
     <p [jhiTranslate]="TRANSLATION_BASE + '.confirmationMessage'" [translateValues]="{ count: affectedStudentsCount() }"></p>
     <ng-template #footer>
         <button type="button" tumAetUiButton severity="secondary" (click)="dismiss()" [jhiTranslate]="TRANSLATION_BASE + '.cancel'"></button>

@@ -61,15 +61,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
                         <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.noUpdatedGradingConfig"></span>
                     </div>
                 }
-                <ng-template #noUpdatedGradingConfig>
-                    <div
-                        id="test-case-status-no-updated"
-                        class="flex items-center rounded-md px-[0.65em] py-[0.35em] text-[0.75em] leading-none font-bold whitespace-nowrap text-white bg-state-success"
-                    >
-                        <fa-icon class="ms-2" [icon]="faCheckCircle" />
-                        <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.noUpdatedGradingConfig"></span>
-                    </div>
-                </ng-template>
             } @else {
                 <div
                     id="test-case-status-not-released"

@@ -1,4 +1,4 @@
-<tumaet-ui-dialog [visible]="true" (visibleChange)="onVisibleChange($event)" size="medium" [header]="TRANSLATION_BASE + '.header' | artemisTranslate">
+<tumaet-ui-dialog dismissableMask [visible]="true" (visibleChange)="onVisibleChange($event)" size="medium" [header]="TRANSLATION_BASE + '.header' | artemisTranslate">
     <div>
         <span [jhiTranslate]="TRANSLATION_BASE + '.description'" [translateValues]="{ count: feedbackDetail().count }"></span>
     </div>

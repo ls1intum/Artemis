@@ -1,6 +1,6 @@
 import { Component, OnInit, Signal, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiCheckboxComponent, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxChangeEvent, TumAetUiCheckboxComponent, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Dayjs } from 'dayjs/esm';
@@ -161,12 +161,19 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
      * Applies a change of the test case visibility checkbox. Unchecking it for an imported exam exercise can leak
      * feedback, so that change only takes effect after the user confirmed it; until then the checkbox stays checked.
      *
-     * @param newValue the state the user switched the checkbox to
+     * @param event the change the checkbox reported
      * @param checkbox the checkbox that reported the change
      */
-    onSetTestCaseVisibilityChange(newValue: boolean, checkbox: TumAetUiCheckboxComponent) {
+    onSetTestCaseVisibilityChange(event: TumAetUiCheckboxChangeEvent, checkbox: TumAetUiCheckboxComponent) {
+        const newValue = event.checked;
         if (!newValue && this.isImport() && this.isExamMode()) {
             checkbox.checked.set(true);
+            // The click already unchecked the native input, and the binding sees no change to write back, so check it
+            // again here. Otherwise the box shows a tick while the input, and with it assistive technology, says unchecked.
+            const input = event.originalEvent.target;
+            if (input instanceof HTMLInputElement) {
+                input.checked = true;
+            }
 
             this.confirmationService.confirm({
                 message: this.translateService.instant('artemisApp.programmingExercise.timeline.warningLeakFeedback'),

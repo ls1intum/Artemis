@@ -796,6 +796,8 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         await fixture.whenStable();
 
         expect(component.setTestCaseVisibilityToAfterDueDate()).toBe(true);
+        // The native input has to agree with the drawn box, or the next click would check it again without a prompt.
+        expect(checkbox.checked).toBe(true);
     });
 
     it('should uncheck when the user confirms the setTestCaseVisibilityToAfterDueDate confirmation dialog', async () => {

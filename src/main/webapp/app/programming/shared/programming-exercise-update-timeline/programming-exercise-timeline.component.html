@@ -102,7 +102,7 @@
                             name="setTestCaseVisibilityToAfterDueDate"
                             #setTestCaseVisibilityCheckbox
                             [checked]="setTestCaseVisibilityToAfterDueDate() ?? false"
-                            (changed)="onSetTestCaseVisibilityChange($event.checked, setTestCaseVisibilityCheckbox)"
+                            (changed)="onSetTestCaseVisibilityChange($event, setTestCaseVisibilityCheckbox)"
                             inputId="setTestCaseVisibilityToAfterDueDate-checkbox"
                         />
                         <label
