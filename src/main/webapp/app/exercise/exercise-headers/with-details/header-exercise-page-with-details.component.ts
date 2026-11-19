@@ -1,18 +1,11 @@
+import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
 import { getSubmissionDueDateInformation } from '../exercise-headers-information/submission-due-date-information';
 import { InformationBox, InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 import { Component, OnInit, computed, input, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import {
-    DifficultyLevel,
-    Exercise,
-    ExerciseType,
-    IncludedInOverallScore,
-    getCourseFromExercise,
-    getIcon,
-    getIconTooltip,
-} from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
@@ -41,6 +34,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
     imports: [
         TumAetUiTooltipDirective,
         InformationBoxComponent,
+        DifficultyLevelComponent,
         NgTemplateOutlet,
         FaIconComponent,
         ExerciseCategoriesComponent,
@@ -52,7 +46,6 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
 })
 export class HeaderExercisePageWithDetailsComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly DifficultyLevel = DifficultyLevel;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
     readonly getIcon = getIcon;
