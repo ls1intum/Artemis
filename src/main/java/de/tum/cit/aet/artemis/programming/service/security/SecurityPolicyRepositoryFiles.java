@@ -717,8 +717,8 @@ public final class SecurityPolicyRepositoryFiles {
      * @return the number of files that changed
      */
     public static int setPolicyAnnotationsActive(Path repositoryRoot, Predicate<String> activeForTestClass) {
-        return setPolicyAnnotationsActive(repositoryRoot, (path, content) -> AresTestSources.relevantType(AresTestSources.analyze(path, content))
-                .map(type -> activeForTestClass.test(type.qualifiedName())).orElse(true));
+        return setPolicyAnnotationsActive(repositoryRoot,
+                (path, content) -> AresTestSources.relevantType(AresTestSources.analyze(path, content)).map(type -> activeForTestClass.test(type.qualifiedName())).orElse(true));
     }
 
     /**
