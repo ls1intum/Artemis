@@ -24,6 +24,20 @@
             justify-content: center;
             align-items: center;
             min-height: 50px;
+
+            &.llm-cost-value {
+                // Keep precise amounts inside the ring instead of letting the chart cover their digits.
+                width: 88px;
+                z-index: 1;
+                text-align: center;
+                overflow-wrap: anywhere;
+
+                .chart-value--large {
+                    font-size: 1rem;
+                    line-height: 1.2;
+                    margin: 0;
+                }
+            }
         }
     }
 

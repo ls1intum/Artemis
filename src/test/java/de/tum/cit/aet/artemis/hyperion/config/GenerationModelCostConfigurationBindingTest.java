@@ -54,8 +54,8 @@ class GenerationModelCostConfigurationBindingTest {
                   llm:
                     model-costs:
                       "[gpt-9.9]":
-                        input-cost-per-million-eur: 1.23
-                        output-cost-per-million-eur: 4.56
+                        input-cost-per-million-usd: 1.23
+                        output-cost-per-million-usd: 4.56
                 """).getModelCosts();
 
         assertThat(modelCosts).containsKey("gpt-9.9");
@@ -63,27 +63,55 @@ class GenerationModelCostConfigurationBindingTest {
     }
 
     @Test
+    void usdRatesBindWithoutReinterpretingLegacyPrices() throws IOException {
+        var configuration = bindYaml("""
+                artemis:
+                  llm:
+                    model-costs:
+                      '[model.example]':
+                        input-cost-per-million-usd: 2.0
+                        cached-input-cost-per-million-usd: 0.5
+                        output-cost-per-million-usd: 4.0
+                        input-cost-per-million-eur: 1.8
+                """);
+        configuration.validateModelCosts();
+        var model = configuration.getModelCosts().get("model.example");
+        assertThat(model.getInputCostPerMillionUsd()).isEqualTo(2f);
+        assertThat(model.getCachedInputCostPerMillionUsd()).isEqualTo(0.5f);
+        assertThat(model.getOutputCostPerMillionUsd()).isEqualTo(4f);
+    }
+
+    @Test
+    void invalidUsdRateFailsConfigurationRatherThanCreatingAFreeEstimate() {
+        var configuration = new GenerationModelCostConfiguration();
+        var model = new GenerationModelCostConfiguration.ModelCostProperties();
+        model.setInputCostPerMillionUsd(Float.NaN);
+        configuration.setModelCosts(Map.of("model", model));
+        assertThatThrownBy(configuration::validateModelCosts).isInstanceOf(IllegalStateException.class).hasMessageContaining("invalid USD input price");
+    }
+
+    @Test
     void dottedModelBindsFromEnvironmentVariablesViaStrippedKey() {
         // This is the Docker path: env-var keys cannot contain '.' or '-', so the collection renders
         // "gpt-5.4" as ARTEMIS_LLM_MODELCOSTS_GPT54_*. Prove Spring binds that into model-costs[gpt54].
-        var config = bindEnvironment(Map.of("ARTEMIS_LLM_MODELCOSTS_GPT54_INPUTCOSTPERMILLIONEUR", "2.30", "ARTEMIS_LLM_MODELCOSTS_GPT54_OUTPUTCOSTPERMILLIONEUR", "13.80",
-                "ARTEMIS_LLM_MODELCOSTS_GPT5MINI_INPUTCOSTPERMILLIONEUR", "0.23", "ARTEMIS_LLM_MODELCOSTS_GPT5MINI_OUTPUTCOSTPERMILLIONEUR", "1.84",
-                "ARTEMIS_LLM_MODELCOSTS_GPT5MINI_CACHEDINPUTCOSTPERMILLIONEUR", "0.023"));
+        var config = bindEnvironment(Map.of("ARTEMIS_LLM_MODELCOSTS_GPT54_INPUTCOSTPERMILLIONUSD", "2.30", "ARTEMIS_LLM_MODELCOSTS_GPT54_OUTPUTCOSTPERMILLIONUSD", "13.80",
+                "ARTEMIS_LLM_MODELCOSTS_GPT5MINI_INPUTCOSTPERMILLIONUSD", "0.23", "ARTEMIS_LLM_MODELCOSTS_GPT5MINI_OUTPUTCOSTPERMILLIONUSD", "1.84",
+                "ARTEMIS_LLM_MODELCOSTS_GPT5MINI_CACHEDINPUTCOSTPERMILLIONUSD", "0.023"));
         var modelCosts = config.getModelCosts();
 
         assertThat(modelCosts).containsKey("gpt54");
-        assertThat(modelCosts.get("gpt54").getInputCostPerMillionEur()).isCloseTo(2.30f, within(1e-4f));
-        assertThat(modelCosts.get("gpt54").getOutputCostPerMillionEur()).isCloseTo(13.80f, within(1e-4f));
-        assertThat(modelCosts.get("gpt5mini").getInputCostPerMillionEur()).isCloseTo(0.23f, within(1e-4f));
-        assertThat(modelCosts.get("gpt5mini").getCachedInputCostPerMillionEur()).isCloseTo(0.023f, within(1e-4f));
+        assertThat(modelCosts.get("gpt54").getInputCostPerMillionUsd()).isCloseTo(2.30f, within(1e-4f));
+        assertThat(modelCosts.get("gpt54").getOutputCostPerMillionUsd()).isCloseTo(13.80f, within(1e-4f));
+        assertThat(modelCosts.get("gpt5mini").getInputCostPerMillionUsd()).isCloseTo(0.23f, within(1e-4f));
+        assertThat(modelCosts.get("gpt5mini").getCachedInputCostPerMillionUsd()).isCloseTo(0.023f, within(1e-4f));
     }
 
     @Test
     void rejectsModelCostKeyThatStripsToEmpty() {
         var config = new GenerationModelCostConfiguration();
         GenerationModelCostConfiguration.ModelCostProperties cost = new GenerationModelCostConfiguration.ModelCostProperties();
-        cost.setInputCostPerMillionEur(1.0f);
-        cost.setOutputCostPerMillionEur(2.0f);
+        cost.setInputCostPerMillionUsd(1.0f);
+        cost.setOutputCostPerMillionUsd(2.0f);
         config.setModelCosts(new HashMap<>(Map.of("...", cost)));
 
         assertThatThrownBy(config::validateModelCosts).isInstanceOf(IllegalStateException.class).hasMessageContaining("alphanumeric");
@@ -93,13 +121,13 @@ class GenerationModelCostConfigurationBindingTest {
     void rejectsNegativeAndNonFinitePrices() {
         var config = new GenerationModelCostConfiguration();
         GenerationModelCostConfiguration.ModelCostProperties cost = new GenerationModelCostConfiguration.ModelCostProperties();
-        cost.setInputCostPerMillionEur(-0.01f);
-        cost.setOutputCostPerMillionEur(Float.NaN);
+        cost.setInputCostPerMillionUsd(-0.01f);
+        cost.setOutputCostPerMillionUsd(Float.NaN);
         config.setModelCosts(Map.of("model", cost));
 
-        assertThatThrownBy(config::validateModelCosts).isInstanceOf(IllegalStateException.class).hasMessageContaining("invalid input price");
-        cost.setInputCostPerMillionEur(1.0f);
-        assertThatThrownBy(config::validateModelCosts).isInstanceOf(IllegalStateException.class).hasMessageContaining("invalid output price");
+        assertThatThrownBy(config::validateModelCosts).isInstanceOf(IllegalStateException.class).hasMessageContaining("invalid USD input price");
+        cost.setInputCostPerMillionUsd(1.0f);
+        assertThatThrownBy(config::validateModelCosts).isInstanceOf(IllegalStateException.class).hasMessageContaining("invalid USD output price");
     }
 
     @Test
@@ -149,7 +177,7 @@ class GenerationModelCostConfigurationBindingTest {
     }
 
     private static void putEnvCost(Map<String, Object> environment, String key, String input, String output) {
-        environment.put("ARTEMIS_LLM_MODELCOSTS_" + key + "_INPUTCOSTPERMILLIONEUR", input);
-        environment.put("ARTEMIS_LLM_MODELCOSTS_" + key + "_OUTPUTCOSTPERMILLIONEUR", output);
+        environment.put("ARTEMIS_LLM_MODELCOSTS_" + key + "_INPUTCOSTPERMILLIONUSD", input);
+        environment.put("ARTEMIS_LLM_MODELCOSTS_" + key + "_OUTPUTCOSTPERMILLIONUSD", output);
     }
 }

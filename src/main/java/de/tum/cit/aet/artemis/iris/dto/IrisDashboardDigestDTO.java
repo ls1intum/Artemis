@@ -9,6 +9,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record IrisDashboardDigestDTO(Instant windowStart, Instant windowEnd, Instant staleBefore, long totalSessions, long activeSessions, double engagementRate,
         long totalMessages, long uniqueUsers, double noResponseRate, long noResponseMessageCount, long noResponseSessionCount, double thumbsUpRatio, double thumbsDownRatio,
         double thumbsUpAbsoluteRate, double thumbsDownAbsoluteRate, long thumbsUpCount, long thumbsDownCount, long sessionsWithThumbsUp, long sessionsWithThumbsDown,
-        double avgResponseTimeSeconds, double p50ResponseTimeSeconds, double p95ResponseTimeSeconds, double totalTokenCostEur,
+        double avgResponseTimeSeconds, double p50ResponseTimeSeconds, double p95ResponseTimeSeconds, double totalTokenCostUsd, long unpricedTokenCostRequests,
         List<IrisDashboardDigestChatModeDTO> chatModeBreakdown, List<IrisDashboardDigestCourseDTO> topCourses, String dashboardPath) {
 }
