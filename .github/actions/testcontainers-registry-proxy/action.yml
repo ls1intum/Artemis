@@ -24,7 +24,9 @@ runs:
         ryuk="testcontainers/ryuk:$(sed -n 's/^ryuk_version=//p' gradle.properties)"
         # Ryuk is the first container of every test JVM. Fetch it here, where a failure is visible.
         bash supporting_scripts/ci/pull-through-registry-proxy.sh --best-effort "$ryuk"
-        if timeout 60 docker manifest inspect "${DOCKER_HUB_PROXY}/${ryuk}" > /dev/null 2>&1; then
+        if ! curl --silent --output /dev/null --max-time 10 "https://${DOCKER_HUB_PROXY%%/*}/v2/"; then
+            echo "::warning title=Registry proxy unreachable::${DOCKER_HUB_PROXY%%/*} did not answer; Testcontainers pulls from Docker Hub."
+        elif timeout 60 docker manifest inspect "${DOCKER_HUB_PROXY}/${ryuk}" > /dev/null 2>&1; then
             echo "TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX=${DOCKER_HUB_PROXY}/" >> "$GITHUB_ENV"
             echo "Testcontainers pulls Docker Hub images through ${DOCKER_HUB_PROXY}."
         else

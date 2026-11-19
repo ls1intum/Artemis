@@ -18,7 +18,7 @@ afterEach(() => {
  * @param images the images to make available
  * @param options `present` lists images that already exist, `failing` lists references whose pull fails
  */
-function run(images, { present = [], failing = [], bestEffort = false, env = {} } = {}) {
+function run(images, { present = [], failing = [], bestEffort = false, proxyReachable = true, env = {} } = {}) {
     const directory = mkdtempSync(join(tmpdir(), 'artemis registry proxy '));
     directories.push(directory);
     const calls = join(directory, 'docker-calls');
@@ -36,6 +36,8 @@ exit 0
 `,
         { mode: 0o700 },
     );
+    // The reachability probe is stubbed as well, so no test depends on the network.
+    writeFileSync(join(directory, 'curl'), `#!/bin/sh\nexit ${proxyReachable ? 0 : 7}\n`, { mode: 0o700 });
     // `timeout` is replaced by a pass-through, so the stub decides the outcome of a pull on every platform.
     writeFileSync(join(directory, 'timeout'), '#!/bin/sh\nshift 2\nexec "$@"\n', { mode: 0o700 });
     const result = spawnSync('bash', [script, ...(bestEffort ? ['--best-effort'] : []), ...images], {
@@ -78,6 +80,13 @@ describe('pull-through-registry-proxy.sh', () => {
         expect(status).toBe(0);
         expect(calls).toEqual(['image inspect alpine:3', `pull --quiet ${proxy}/library/alpine:3`, 'pull --quiet alpine:3']);
         expect(stdout).toContain('::warning title=Registry proxy unavailable::');
+    });
+
+    it('skips an unreachable proxy without trying a pull from it', () => {
+        const { status, calls, stdout } = run(['alpine:3', 'busybox:1'], { proxyReachable: false });
+        expect(status).toBe(0);
+        expect(calls).toEqual(['image inspect alpine:3', 'pull --quiet alpine:3', 'image inspect busybox:1', 'pull --quiet busybox:1']);
+        expect(stdout).toContain('::warning title=Registry proxy unreachable::registry.example did not answer');
     });
 
     it('pulls from Docker Hub only when no proxy is configured', () => {

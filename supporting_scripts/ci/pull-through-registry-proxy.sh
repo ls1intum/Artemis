@@ -27,6 +27,7 @@
 #   DOCKER_HUB_PROXY           registry path that mirrors Docker Hub; set it to an empty string to pull
 #                              from Docker Hub only (default: harbor.aet.cit.tum.de/dockerhub-ghr-proxy)
 #   IMAGE_PULL_TIMEOUT_SECONDS upper bound of a single pull attempt (default: 300)
+#   REGISTRY_PROXY_PROBE_SECONDS how long to wait for the proxy to answer before skipping it (default: 10)
 
 set -uo pipefail
 
@@ -85,6 +86,19 @@ docker_hub_path() {
         *) echo "library/${image}" ;;
     esac
 }
+
+# Asks the proxy once whether it answers at all. A runner that cannot reach it would otherwise wait for a
+# connection timeout on every image before falling back. Any HTTP status counts as reachable: the registry
+# endpoint answers 401 without a token.
+proxy_reachable() {
+    command -v curl > /dev/null 2>&1 || return 0
+    curl --silent --output /dev/null --max-time "${REGISTRY_PROXY_PROBE_SECONDS:-10}" "https://${DOCKER_HUB_PROXY%%/*}/v2/"
+}
+
+if [ -n "$DOCKER_HUB_PROXY" ] && ! proxy_reachable; then
+    echo "::warning title=Registry proxy unreachable::${DOCKER_HUB_PROXY%%/*} did not answer; pulling from Docker Hub."
+    DOCKER_HUB_PROXY=""
+fi
 
 failed=()
 for image in "$@"; do
