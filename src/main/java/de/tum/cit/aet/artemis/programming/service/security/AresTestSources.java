@@ -53,10 +53,10 @@ final class AresTestSources {
 
     /** The uses of each JUnit test annotation, by its simple name, compiled once. */
     private static final Map<String, Pattern> JUNIT_TEST_MARKER_USES = JUNIT_TEST_MARKERS.entrySet().stream()
-            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, marker -> annotationUse(marker.getValue(), marker.getKey())));
+            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, marker -> Pattern.compile(annotationUse(marker.getValue(), marker.getKey()))));
 
     /** The uses of JUnit's {@code @ExtendWith}. */
-    private static final Pattern EXTEND_WITH = annotationUse("org.junit.jupiter.api.extension", "ExtendWith");
+    private static final Pattern EXTEND_WITH = Pattern.compile(annotationUse("org.junit.jupiter.api.extension", "ExtendWith"));
 
     private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\p{javaJavaIdentifierPart}.]+)\\s*;");
 
@@ -433,10 +433,10 @@ final class AresTestSources {
     /**
      * @param packageName the package of the annotation
      * @param simpleName  the simple name of the annotation
-     * @return the uses of the annotation, with or without its package, which is the first group
+     * @return the regular expression of the uses of the annotation, with or without its package, which is the first group
      */
-    private static Pattern annotationUse(String packageName, String simpleName) {
-        return Pattern.compile(AresPolicyAnnotations.ANNOTATION_START + "(" + AresPolicyAnnotations.packagePrefix(packageName) + ")?" + simpleName + END_OF_IDENTIFIER);
+    private static String annotationUse(String packageName, String simpleName) {
+        return AresPolicyAnnotations.ANNOTATION_START + "(" + AresPolicyAnnotations.packagePrefix(packageName) + ")?" + simpleName + END_OF_IDENTIFIER;
     }
 
     /**
