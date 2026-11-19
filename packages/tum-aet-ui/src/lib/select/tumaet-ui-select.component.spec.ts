@@ -220,6 +220,32 @@ describe('TumAetUiSelectComponent', () => {
             expect(emitSpy).toHaveBeenCalledWith('c');
         });
 
+        it('activates the first option that can be chosen when nothing is selected, so Enter selects it', () => {
+            fixture.componentRef.setInput('options', [
+                { label: 'Bravo', value: 'b', unavailable: true },
+                { label: 'Charlie', value: 'c' },
+            ]);
+            component.writeValue(undefined);
+            fixture.detectChanges();
+            const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+            openPanel();
+            expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[1].id);
+
+            triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            fixture.detectChanges();
+
+            expect(emitSpy).toHaveBeenCalledWith('c');
+        });
+
+        it('activates no option when none can be chosen', () => {
+            fixture.componentRef.setInput('options', [{ label: 'Bravo', value: 'b', unavailable: true }]);
+            component.writeValue(undefined);
+            fixture.detectChanges();
+            openPanel();
+
+            expect(triggerButton().getAttribute('aria-activedescendant')).toBeNull();
+        });
+
         it('closes on Tab without selecting when the active option is disabled', () => {
             component.writeValue('b');
             fixture.detectChanges();

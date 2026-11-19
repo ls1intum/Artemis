@@ -255,7 +255,8 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
             return;
         }
         const selectedIndex = this.visibleOptions().findIndex((option) => this.isSelected(option));
-        const initialIndex = selectedIndex >= 0 ? selectedIndex : this.visibleOptions().length > 0 ? 0 : -1;
+        // Without a selection, the first option that can be chosen is active, so Enter selects it; -1 if none can be chosen.
+        const initialIndex = selectedIndex >= 0 ? selectedIndex : this.visibleOptions().findIndex((option) => !this.isOptionDisabled(option));
         this.keyManager.setActiveItem(initialIndex);
         const origin = this.trigger();
         this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', {
