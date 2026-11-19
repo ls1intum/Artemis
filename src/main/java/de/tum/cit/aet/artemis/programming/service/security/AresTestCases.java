@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.UnaryOperator;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -153,7 +154,7 @@ final class AresTestCases {
      * @param name                   the name of the method
      * @param text                   the name with the erased parameter types, e.g. {@code check(int,java.util.List,?String[])}: qualified where the
      *                                   source writes or imports them qualified, and marked with {@code ?} where the simple name may refer to a type of
-     *                                   the package, of {@code java.lang} or of a wildcard import
+     *                                   the package, of {@code java.lang}, of a wildcard import or of the file itself
      * @param visibleInOtherPackages whether it is public or protected, so that a subclass in another package overrides it, too
      */
     record TestSignature(String name, String text, boolean visibleInOtherPackages) {
@@ -183,7 +184,10 @@ final class AresTestCases {
                 int memberStart = Math.max(Math.max(masked.lastIndexOf(';', annotation.start()), masked.lastIndexOf('}', annotation.start())),
                         masked.lastIndexOf('{', annotation.start())) + 1;
                 boolean visible = VISIBLE_IN_OTHER_PACKAGES.matcher(masked.substring(memberStart, method.start(1))).find();
-                String text = method.group(1) + "(" + parameterTypes(parameters, imported) + ")";
+                int declaration = method.start(1);
+                // A type the file declares where the method is, e.g. a member type, shadows a single-type import with its simple name.
+                UnaryOperator<String> resolve = simpleName -> AresPolicyAnnotations.isShadowedAt(masked, simpleName, declaration) ? null : imported.get(simpleName);
+                String text = method.group(1) + "(" + parameterTypes(parameters, resolve) + ")";
                 signatures.put(method.start(1), new TestSignature(method.group(1), text, visible));
             }
         }
@@ -234,10 +238,11 @@ final class AresTestCases {
     }
 
     /**
-     * @param imported the types the single-type imports of the source name, by their simple names
+     * @param resolve the qualified name of a simple type name where the method is declared: the type of a single-type import unless a type of the file
+     *                    shadows it; null if it is unknown
      * @return the erased types of the parameters, separated by commas, see {@link TestSignature#text()}; a variable arity parameter is an array
      */
-    private static String parameterTypes(String parameters, Map<String, String> imported) {
+    private static String parameterTypes(String parameters, UnaryOperator<String> resolve) {
         List<String> types = new ArrayList<>();
         StringBuilder parameter = new StringBuilder();
         int typeArguments = 0;
@@ -257,7 +262,7 @@ final class AresTestCases {
                 typeArguments--;
             }
             else if (character == ',' && typeArguments == 0) {
-                types.add(erasedType(parameter.toString(), imported));
+                types.add(erasedType(parameter.toString(), resolve));
                 parameter.setLength(0);
             }
             else if (typeArguments == 0) {
@@ -266,17 +271,17 @@ final class AresTestCases {
             position++;
         }
         if (!parameter.toString().isBlank()) {
-            types.add(erasedType(parameter.toString(), imported));
+            types.add(erasedType(parameter.toString(), resolve));
         }
         return String.join(",", types);
     }
 
     /**
      * @param parameter the declaration of a parameter without its annotations and type arguments, e.g. {@code final java.util.List values}
-     * @param imported  the types the single-type imports of the source name, by their simple names
+     * @param resolve   the qualified name of a simple type name where the method is declared, see {@link #parameterTypes(String, UnaryOperator)}
      * @return its type, with the brackets of an array, e.g. {@code java.util.List}, {@code int} or {@code ?String[]}, see {@link TestSignature#text()}
      */
-    private static String erasedType(String parameter, Map<String, String> imported) {
+    private static String erasedType(String parameter, UnaryOperator<String> resolve) {
         String declaration = FINAL_MODIFIER.matcher(parameter).replaceAll(" ").strip();
         Matcher name = PARAMETER_NAME.matcher(declaration);
         String dimensions = "";
@@ -291,8 +296,8 @@ final class AresTestCases {
         if (baseType.indexOf('.') >= 0 || PRIMITIVE_TYPES.contains(baseType)) {
             return baseType + arrayDimensions;
         }
-        String importedType = imported.get(baseType);
-        return (importedType != null ? importedType : UNRESOLVED_TYPE + baseType) + arrayDimensions;
+        String resolvedType = resolve.apply(baseType);
+        return (resolvedType != null ? resolvedType : UNRESOLVED_TYPE + baseType) + arrayDimensions;
     }
 
     /**
