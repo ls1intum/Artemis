@@ -90,8 +90,14 @@ describe('SecurityBrowseDialogComponent', () => {
 
     it('shows every match of the search with its folders', () => {
         comp.search.set('setup');
+        fixture.detectChanges();
 
         expect(comp.visibleNodes().map((row) => row.node.path)).toEqual(['scripts/', 'scripts/tools/', 'scripts/tools/setup.py']);
+        // The search opens every folder of a match, so the folders offer no control that could not close them, and the tree after the search stays as before.
+        expect((fixture.nativeElement as HTMLElement).ownerDocument.querySelector('.sp-twisty')).toBeNull();
+        handlers.toggleExpanded(node('scripts/'));
+        comp.search.set('');
+        expect(comp.visibleNodes().map((row) => row.node.path)).toEqual(['data/', 'scripts/', 'src/', 'gradlew']);
         expect(isScript('a/run.sh')).toBe(true);
         expect(isScript('a/Main.java')).toBe(false);
     });

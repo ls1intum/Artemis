@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -159,6 +160,9 @@ class SecurityFrameworkServiceTest {
     /** Whether the checkout writes symbolic links as plain files, as Artemis checks out repositories. */
     private boolean checkoutWithoutSymbolicLinks;
 
+    /** The entries that a checkout without symbolic links wrote as regular files, relative to its root, e.g. {@code test/de/linked}. */
+    private final Set<String> plainLinkEntries = ConcurrentHashMap.newKeySet();
+
     /** Runs once after the next checkout, e.g. another instructor's change that is pushed while this checkout is being prepared. */
     private Runnable afterNextCheckout;
 
@@ -195,6 +199,9 @@ class SecurityFrameworkServiceTest {
                     config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
                     config.save();
                     git.reset().setMode(ResetCommand.ResetType.HARD).setRef(Constants.HEAD).call();
+                }
+                if (Files.isRegularFile(localPath.resolve("test/de/linked"), LinkOption.NOFOLLOW_LINKS)) {
+                    plainLinkEntries.add("test/de/linked");
                 }
             }
             else {
@@ -509,6 +516,8 @@ class SecurityFrameworkServiceTest {
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise(ProgrammingLanguage.JAVA), user))
                 .matches(exception -> "securityFrameworkSymbolicLinks".equals(exception.getErrorKey()));
+        // The checkout wrote the link as a regular file, so only the tree of the commit shows that it is a link.
+        assertThat(plainLinkEntries).containsExactly("test/de/linked");
         assertThat(pushedHead()).isEqualTo(headBefore);
         verifyNoInteractions(localVCPushProcessingService);
     }
@@ -1116,10 +1125,14 @@ class SecurityFrameworkServiceTest {
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
         String buildFile = readPushed("build.gradle").orElseThrow();
 
-        securityFrameworkService.deactivate(exercise, user);
+        SecurityFrameworkConfigDTO deactivated = securityFrameworkService.deactivate(exercise, user);
 
         assertThat(readPushed("build.gradle")).contains(buildFile);
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
+        // ClassTest is switched off as well, so Ares never reads the build file as a policy; its annotation keeps the path for a later activation.
+        assertThat(deactivated.status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+        assertThat(readPushed("test/de/example/ClassTest.java"))
+                .hasValueSatisfying(content -> assertThat(content).contains("@de.tum.cit.ase.ares.api.Policy(value = \"build.gradle\", activated = false)"));
     }
 
     @Test

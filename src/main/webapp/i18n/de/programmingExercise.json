@@ -346,7 +346,7 @@
                 },
                 "unsupportedReason": {
                     "UNEVALUABLE_ARGUMENTS": "{{ location }}: Eine @Policy-Annotation verwendet einen Ausdruck statt eines literalen Werts.",
-                    "POLICY_NOT_ON_TOP_LEVEL_TYPE": "{{ location }}: Eine @Policy-Annotation steht an einer Methode, die kein Test ist, an einem Feld oder an einem verschachtelten Typ.",
+                    "POLICY_NOT_ON_TOP_LEVEL_TYPE": "{{ location }}: Eine @Policy-Annotation steht an einer Methode, die kein Test ist, an einer von mehreren gleichnamigen Testmethoden, an einem Feld oder an einem verschachtelten Typ.",
                     "POLICY_ON_ANNOTATION_TYPE": "{{ location }}: Eine @Policy-Annotation steht an einem Annotationstyp.",
                     "MULTIPLE_TOP_LEVEL_TYPES": "{{ location }}: Die Datei deklariert mehr als einen Top-Level-Typ, der eine Testklasse ist oder eine @Policy-Annotation trägt.",
                     "TESTS_IN_NESTED_TYPE": "{{ location }}: Tests oder Ares-Annotationen befinden sich in einem verschachtelten Typ.",
@@ -1075,6 +1075,7 @@
                             "other": "Jemand hat eine neuere Fassung im Test-Repository gespeichert, nachdem du den Editor geöffnet hast. Lade neu, um sie zu sehen — deine {{ count }} ungespeicherten Änderungen bleiben erhalten."
                         },
                         "reload": "Neu laden",
+                        "reloadFailed": "Die neuere Version konnte nicht geladen werden. Deine ungespeicherten Änderungen bleiben erhalten; lade erneut.",
                         "reloaded": "Die als Commit {{ hash }} gespeicherte Fassung wurde neu geladen. Deine ungespeicherten Änderungen bleiben erhalten — speichere erneut, wenn du so weit bist.",
                         "orphaned": "Eine geänderte Richtlinie fehlt im Repository",
                         "orphanedText": "Seit du den Editor geöffnet hast, hat jemand {{ files }} gelöscht, umbenannt oder beschädigt, daher kann sie hier nicht mehr bearbeitet werden. Deine ungespeicherten Änderungen daran bleiben als neue Richtlinie erhalten: Speichere sie, um sie zu behalten, oder lösche sie, um sie zu verwerfen.",

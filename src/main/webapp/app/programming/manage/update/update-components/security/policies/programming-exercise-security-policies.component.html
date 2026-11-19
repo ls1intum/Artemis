@@ -173,6 +173,9 @@
                                         {{ countKey(prefix + 'banner.conflictTextUnknown', totalChanges()) | artemisTranslate: { count: totalChanges() } }}
                                     }
                                 </span>
+                                @if (current.reloadFailed) {
+                                    <span class="text-sm block" [jhiTranslate]="prefix + 'banner.reloadFailed'" data-testid="security-banner-reload-failed"></span>
+                                }
                             </span>
                             <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="reload(true)" data-testid="security-banner-reload">
                                 {{ prefix + 'banner.reload' | artemisTranslate }}
@@ -187,7 +190,16 @@
                                 <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.failed'"></span>
                                 <span class="text-sm">{{ current.message }} {{ prefix + 'banner.failedKept' | artemisTranslate }}</span>
                             </span>
-                            <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="retryCommit()" data-testid="security-banner-retry">
+                            <button
+                                type="button"
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="outlined"
+                                size="small"
+                                [disabled]="locked()"
+                                (click)="retryCommit()"
+                                data-testid="security-banner-retry"
+                            >
                                 {{ prefix + 'banner.retry' | artemisTranslate }}
                             </button>
                         </span>
@@ -200,7 +212,16 @@
                                 <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.processingFailed'"></span>
                                 <span class="text-sm">{{ prefix + 'banner.processingFailedText' | artemisTranslate: { hash: current.hash ?? '' } }}</span>
                             </span>
-                            <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="retryCommit()" data-testid="security-banner-retry">
+                            <button
+                                type="button"
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="outlined"
+                                size="small"
+                                [disabled]="locked()"
+                                (click)="retryCommit()"
+                                data-testid="security-banner-retry"
+                            >
                                 {{ prefix + 'banner.retry' | artemisTranslate }}
                             </button>
                         </span>

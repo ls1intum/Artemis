@@ -133,6 +133,8 @@ export class SecurityBrowseDialogComponent {
     });
 
     readonly selectedPaths = computed(() => [...this.selection()].sort((first, second) => first.localeCompare(second)));
+    /** Whether a search shows its matches: every folder of a match is open then, so the folders cannot be opened or closed. */
+    readonly searching = computed(() => this.search().trim().length > 0);
 
     constructor() {
         // Every opening starts with the paths of the field and with collapsed folders.
@@ -149,6 +151,10 @@ export class SecurityBrowseDialogComponent {
     }
 
     protected toggleExpanded(node: BrowseNode): void {
+        // The folders the tree shows after the search stay as they were before it.
+        if (this.searching()) {
+            return;
+        }
         const expanded = new Set(this.expanded());
         if (expanded.has(node.path)) {
             expanded.delete(node.path);

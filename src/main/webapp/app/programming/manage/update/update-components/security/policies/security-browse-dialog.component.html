@@ -32,7 +32,7 @@
                         [ariaLabel]="(prefix + 'selectPath' | artemisTranslate) + ' ' + entry.node.path"
                         (changed)="toggleSelected(entry.node, $event.checked)"
                     />
-                    @if (entry.node.folder) {
+                    @if (entry.node.folder && !searching()) {
                         <button
                             type="button"
                             class="sp-twisty"

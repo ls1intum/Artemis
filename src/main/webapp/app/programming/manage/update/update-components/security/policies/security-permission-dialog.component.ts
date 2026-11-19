@@ -31,6 +31,9 @@ function isQualifiedName(text: string): boolean {
     return text.split('.').every((part) => IDENTIFIER.test(part));
 }
 
+/** The largest thread count the server stores, the largest Java {@code int}. */
+const MAX_JAVA_INT = 2_147_483_647;
+
 /** The special thread tokens Ares accepts besides class names. */
 const THREAD_TOKENS = /^(\*|Lambda-Expression|<implicit-thread-op:(parallelStream|parallel|Thread\.sleep|SubmissionPublisher\.(submit|offer))>)$/;
 
@@ -194,7 +197,7 @@ export class SecurityPermissionDialogComponent {
                 if (!isQualifiedName(this.threadClass().trim()) && !THREAD_TOKENS.test(this.threadClass().trim())) {
                     return prefix + 'className';
                 }
-                if (!isWholeNumberWithin(this.maxThreads(), 1, Number.MAX_SAFE_INTEGER)) {
+                if (!isWholeNumberWithin(this.maxThreads(), 1, MAX_JAVA_INT)) {
                     return prefix + 'threadCount';
                 }
                 break;

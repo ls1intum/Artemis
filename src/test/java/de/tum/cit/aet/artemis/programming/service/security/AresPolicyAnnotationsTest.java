@@ -350,6 +350,29 @@ class AresPolicyAnnotationsTest {
     }
 
     @Test
+    void anAnnotationOnOneOfSeveralTestMethodsWithTheSameNameIsNotSupported() {
+        String overload = "    @Policy(\"B.yaml\")\n    @Test\n    void testQuickSort() {\n    }\n\n    @ParameterizedTest\n    void testQuickSort(int size) {\n    }\n";
+        String source = TEST_CLASS.replace("    @Test\n    void testQuickSort() {\n    }\n", overload);
+
+        AresTestSources.Summary summary = AresTestSources.analyze("test/de/example/SortingTest.java", source);
+
+        // The entry SortingTest#testQuickSort names both methods, so the editor could not show which of them uses B.yaml.
+        assertThat(summary.problems()).containsExactly(SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
+        assertThat(summary.topLevelTypes().getFirst().methodPolicies()).containsOnlyKeys("testMergeSort");
+    }
+
+    @Test
+    void onlyTheTestAnnotationsOfJUnitAresAndJqwikMakeATest() {
+        String qualified = "    @example.Test\n    void helper() {\n    }\n\n    @org.junit.jupiter.api.Test\n    void qualified() {\n    }\n";
+        String source = TEST_CLASS.replace("    @Test\n    void testQuickSort() {\n    }\n", qualified);
+        String importedMarker = source.replace("import org.junit.jupiter.api.Test;", "import example.Test;");
+
+        // A marker of another package that is called Test does not make a test, also when the file imports it under its simple name.
+        assertThat(AresTestCases.testCases(source)).containsExactly("testBubbleSort", "testMergeSort", "qualified");
+        assertThat(AresTestCases.testCases(importedMarker)).containsExactly("qualified");
+    }
+
+    @Test
     void assigningTheWholeClassRemovesTheMethodAnnotations() {
         String assigned = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", TEST_CLASS, "Stress.yaml", Map.of(), Set.of());
 

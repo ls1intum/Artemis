@@ -32,6 +32,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.PushResult;
@@ -447,8 +448,10 @@ class SecurityPolicyEditorServiceTest {
         assertThat(loadedPolicy(result.editor()).files()).containsExactly(LOGS);
         assertThat(readPushed(SORTING_TEST_PATH)).contains(SORTING_TEST);
         try (var repository = new FileRepositoryBuilder().setGitDir(testsRemote.toFile()).setBare().build(); RevWalk revWalk = new RevWalk(repository)) {
-            assertThat(revWalk.parseCommit(repository.resolve("refs/heads/main")).getFullMessage()).startsWith("Allow writing logs\n\n")
-                    .contains("Security-Framework-Action: policy");
+            RevCommit commit = revWalk.parseCommit(repository.resolve("refs/heads/main"));
+            assertThat(commit.getFullMessage()).startsWith("Allow writing logs\n\n").contains("Security-Framework-Action: policy");
+            // The save is exactly one commit on top of the one the editor loaded.
+            assertThat(commit.getParents()).extracting(RevCommit::name).containsExactly(editor.baseCommitHash());
         }
         verify(localVCPushProcessingService).processNewPush(eq(pushedHead()), any(), any(), any(), any());
     }
@@ -596,6 +599,9 @@ class SecurityPolicyEditorServiceTest {
         editorService.commit(exercise(), change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest#testMergeSort", "de.example.StressTest"))), user);
 
         assertThat(editorService.getEditor(exercise()).policies().getFirst().assignedTests()).containsExactly("de.example.SortingTest#testMergeSort", "de.example.StressTest");
+        // The split rewrites only the annotations of the pushed source, so the edit of the body stays.
+        String editedBody = "    void testMergeSort() {\n        int[] values = { 3, 1, 2 };\n    }";
+        assertThat(readPushed(SORTING_TEST_PATH)).hasValueSatisfying(content -> assertThat(content).contains(editedBody));
     }
 
     @Test
@@ -921,7 +927,7 @@ class SecurityPolicyEditorServiceTest {
                 "    @Test\n    void testMergeSort() {\n    }\n\n    @org.junit.jupiter.params.ParameterizedTest\n    void testMergeSort(int size) {\n    }"));
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
 
-        SecurityTestStructureDTO.TestClassDTO structure = editorService.getTestStructure(exercise()).testClasses().getFirst();
+        SecurityTestStructureDTO.TestClassDTO structure = editorService.getTestStructure(exercise(), null).testClasses().getFirst();
         assertThat(structure.overloadedCases()).containsExactly("testMergeSort");
         assertThat(structure.fixedCases()).isEmpty();
         assertThatExceptionOfType(BadRequestAlertException.class)
@@ -936,22 +942,6 @@ class SecurityPolicyEditorServiceTest {
                 SORTING_TEST.replace("    @Test\n    void testBubbleSort()", "    @de.tum.cit.ase.ares.api.Policy\n    @Test\n    void testBubbleSort()").replace(
                         "    @Test\n    void testMergeSort() {\n    }",
                         "    @Test\n    void testMergeSort() {\n    }\n\n    @org.junit.jupiter.params.ParameterizedTest\n    void testMergeSort(int size) {\n    }"));
-        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
-        SecurityPolicyDocumentDTO renamed = withTestClasses(loadedPolicy(editor), "SortingPolicy.yaml", BOTH_CLASSES);
-
-        assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> editorService.commit(exercise(),
-                        change(editor, new SecurityPolicyChangeDTO.PolicyChangeDTO("SecurityPolicy.yaml", renamed, List.of("de.example.StressTest"))), user))
-                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyOverloadsLosePolicy"));
-    }
-
-    @Test
-    void refusesARenameWhenOnlyOneOverloadedTestMethodHasAnAnnotationOfItsOwn() {
-        pushToTests(SORTING_TEST_PATH,
-                SORTING_TEST.replace("    @Test\n    void testBubbleSort()", "    @de.tum.cit.ase.ares.api.Policy\n    @Test\n    void testBubbleSort()").replace(
-                        "    @Test\n    void testMergeSort() {\n    }",
-                        "    @de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\n    @Test\n    void testMergeSort() {\n    }\n\n"
-                                + "    @org.junit.jupiter.params.ParameterizedTest\n    void testMergeSort(int size) {\n    }"));
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO renamed = withTestClasses(loadedPolicy(editor), "SortingPolicy.yaml", BOTH_CLASSES);
 
@@ -1081,7 +1071,7 @@ class SecurityPolicyEditorServiceTest {
         pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n    void testBubbleSort()", "    @de.tum.cit.ase.ares.api.Policy\n    @Test\n    void testBubbleSort()")
                 .replace("    @Test\n    void testMergeSort()", "    @de.tum.cit.ase.ares.api.Policy(activated = false)\n    @Test\n    void testMergeSort()"));
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
-        SecurityTestStructureDTO structure = editorService.getTestStructure(exercise());
+        SecurityTestStructureDTO structure = editorService.getTestStructure(exercise(), null);
 
         // Neither test case uses the policy file, so the class is not assigned as a whole and only the switched-off test case cannot be assigned.
         assertThat(editor.policies().getFirst().assignedTests()).containsExactly("de.example.StressTest");
@@ -1198,11 +1188,26 @@ class SecurityPolicyEditorServiceTest {
 
     @Test
     void listsTheTestClassesWithTheirTestCases() {
-        SecurityTestStructureDTO structure = editorService.getTestStructure(exercise());
+        SecurityTestStructureDTO structure = editorService.getTestStructure(exercise(), null);
 
         assertThat(structure.testClasses()).containsExactly(
                 new SecurityTestStructureDTO.TestClassDTO("de.example.SortingTest", List.of("testBubbleSort", "testMergeSort"), true, false, List.of(), List.of()),
                 new SecurityTestStructureDTO.TestClassDTO("de.example.StressTest", List.of("testManyElements"), true, false, List.of(), List.of()));
+    }
+
+    @Test
+    void listsTheTestCasesOfTheCommitThePoliciesWereLoadedFrom() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n    void testMergeSort() {\n    }",
+                "    @Test\n    void testMergeSort() {\n    }\n\n    @Test\n    void testQuickSort() {\n    }"));
+
+        // The review lists the test cases a split releases from the loaded commit, which the commit validates against as well.
+        SecurityTestStructureDTO loaded = editorService.getTestStructure(exercise(), editor.baseCommitHash());
+        SecurityTestStructureDTO head = editorService.getTestStructure(exercise(), null);
+        assertThat(loaded.testClasses().getFirst().testCases()).containsExactly("testBubbleSort", "testMergeSort");
+        assertThat(head.testClasses().getFirst().testCases()).containsExactly("testBubbleSort", "testMergeSort", "testQuickSort");
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.getTestStructure(exercise(), "0".repeat(40)))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
     }
 
     @Test

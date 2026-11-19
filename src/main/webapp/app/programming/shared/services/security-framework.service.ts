@@ -86,9 +86,14 @@ export class SecurityFrameworkService {
         return this.http.post<SecurityPolicyFile>(`${this.resourceUrl(exerciseId)}/policies/import`, { policyPath, content }, { context: this.shownByEditor() });
     }
 
-    /** The test classes of the tests repository with their test cases. */
-    getTestStructure(exerciseId: number): Observable<SecurityTestStructure> {
-        return this.http.get<SecurityTestStructure>(`${this.resourceUrl(exerciseId)}/test-structure`);
+    /**
+     * The test classes of the tests repository with their test cases.
+     *
+     * @param commit the commit to read, e.g. the one the policies were loaded from; the head commit if absent
+     */
+    getTestStructure(exerciseId: number, commit?: string): Observable<SecurityTestStructure> {
+        const params = commit ? new HttpParams().set('commit', commit) : undefined;
+        return this.http.get<SecurityTestStructure>(`${this.resourceUrl(exerciseId)}/test-structure`, { params });
     }
 
     /** The files of the template repository. */

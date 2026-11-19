@@ -158,6 +158,11 @@ describe('SecurityPermissionDialogComponent', () => {
         comp.threadClass.set('java.lang.Thread');
         comp.maxThreadsText.set('0');
         expect(comp.problem()).toBe(PROBLEM + 'threadCount');
+        // The server stores the count as a Java int.
+        comp.maxThreadsText.set('2147483648');
+        expect(comp.problem()).toBe(PROBLEM + 'threadCount');
+        comp.maxThreadsText.set('2147483647');
+        expect(comp.problem()).toBeUndefined();
         comp.maxThreadsText.set('4');
         handlers.save();
         expect(saved[0]).toEqual([{ threadClass: 'java.lang.Thread', maxThreads: 4 }]);

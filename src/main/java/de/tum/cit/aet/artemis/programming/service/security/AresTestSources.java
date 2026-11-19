@@ -179,7 +179,7 @@ final class AresTestSources {
 
         List<Map<String, AresPolicyAnnotations.Annotation>> methodPoliciesByType = new ArrayList<>();
         declarations.forEach(_ -> methodPoliciesByType.add(new LinkedHashMap<>()));
-        Set<Integer> testDeclarations = AresTestCases.testDeclarationOffsets(source);
+        Set<Integer> testDeclarations = AresTestCases.uniqueTestDeclarationOffsets(source);
         List<List<AresPolicyAnnotations.Annotation>> policiesByType = policiesByType(annotations, masked, declarations, depth, testDeclarations, methodPoliciesByType, problems);
         boolean[] registers = new boolean[declarations.size()];
         boolean[] tests = new boolean[declarations.size()];
@@ -203,7 +203,7 @@ final class AresTestSources {
      * neither. A test method may carry one annotation; Ares applies it to the test case instead of the annotation of the class. Ares reads it only from the
      * test method itself, so an annotation on another method, e.g. a helper the test calls, is not supported.
      *
-     * @param testDeclarations     the offsets of the names of the test method declarations of the source
+     * @param testDeclarations     the offsets of the names of the test method declarations of the source whose name no other test method has
      * @param methodPoliciesByType receives the annotations of the methods of each declaration, by its index
      * @return the annotations of each declaration, by its index
      */
@@ -220,11 +220,12 @@ final class AresTestSources {
             if (owner < 0) {
                 int enclosing = enclosingDeclaration(declarations, annotation.start(), depth);
                 String method = enclosing >= 0 && !declarations.get(enclosing).annotationType() ? AresTestCases.methodNameAfter(masked, annotation.end()) : null;
-                // The annotation must be on a test declaration itself: a method that is no test may share the name of one, e.g. an overload.
+                // The annotation must be on a test declaration itself whose name no other test method has: a method that is no test may share the name
+                // of one, e.g. an overload, and an entry could not tell overloaded test methods apart.
                 boolean onTest = method != null && testDeclarations.contains(AresTestCases.methodNameOffsetAfter(masked, annotation.end()));
                 if (!onTest || methodPoliciesByType.get(enclosing).putIfAbsent(method, annotation) != null) {
-                    // A field, a nested type, a method that is no test or an overloaded method with two annotations: the editor cannot tell which test case
-                    // the annotation belongs to.
+                    // A field, a nested type, a method that is no test or one of several test methods with the same name: the editor cannot tell which test
+                    // case the annotation belongs to.
                     addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
                 }
             }

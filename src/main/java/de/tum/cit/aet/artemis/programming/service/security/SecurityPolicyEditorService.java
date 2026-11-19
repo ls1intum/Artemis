@@ -46,6 +46,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -289,14 +290,27 @@ public class SecurityPolicyEditorService {
     }
 
     /**
-     * Lists the test classes of the tests repository with their test cases.
+     * Lists the test classes of a commit of the tests repository with their test cases, so that the editor shows the test cases of the commit it loaded the
+     * policies from, e.g. the ones a split releases, even if the tests changed since.
      *
-     * @param exercise the programming exercise
+     * @param exercise   the programming exercise
+     * @param commitHash the commit to read; null for the head commit
      * @return the test structure
      */
-    public SecurityTestStructureDTO getTestStructure(ProgrammingExercise exercise) {
+    public SecurityTestStructureDTO getTestStructure(ProgrammingExercise exercise, @Nullable String commitHash) {
         securityFrameworkService.validateJavaExercise(exercise);
-        return readTestRepository(exercise, (repository, commit) -> {
+        return readTestRepository(exercise, (repository, head) -> {
+            RevCommit commit = head;
+            if (commitHash != null && !commitHash.equals(head.name())) {
+                ObjectId id = ObjectId.isId(commitHash) ? ObjectId.fromString(commitHash) : null;
+                if (id == null || !repository.getObjectDatabase().has(id)) {
+                    String message = "The tests repository has no commit " + commitHash + ". Reload the policies and try again.";
+                    throw new ConflictException(message, ENTITY_NAME, "securityPolicyChanged");
+                }
+                try (RevWalk revWalk = new RevWalk(repository)) {
+                    commit = revWalk.parseCommit(id);
+                }
+            }
             return AresTestCases.structure(SecurityFrameworkCommitFiles.javaSources(repository, commit.getTree()));
         });
     }

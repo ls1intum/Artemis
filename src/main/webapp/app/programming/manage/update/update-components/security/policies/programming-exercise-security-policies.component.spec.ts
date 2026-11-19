@@ -345,6 +345,11 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         comp['commit']('Update');
 
         expect(comp.banner()).toEqual({ kind: 'conflict', authorName: 'Instructor', hash: 'ccccccc' });
+        // A failed reload leaves the editor on the older version, so the banner says so and keeps offering Reload.
+        service.getPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp['reload'](true);
+        expect(comp.banner()).toEqual({ kind: 'conflict', authorName: 'Instructor', hash: 'ccccccc', reloadFailed: true });
+        expect(comp.editor()?.baseCommitHash).toBe('a'.repeat(40));
         comp['reload'](true);
         expect(comp.policies()[0].tests).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
         expect(comp.editor()?.baseCommitHash).toBe('c'.repeat(40));
@@ -386,7 +391,7 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
     });
 
     it('switches dependency scanning for a policy staged for deletion as well', () => {
-        const second = { ...DOCUMENT, policyPath: 'Second.yaml' };
+        const second = { ...DOCUMENT, policyPath: 'Second.yaml', testClasses: ['de.example.StressTest'] };
         const withSecond = (hash: string, languageConfiguration: string): SecurityPolicyEditor => ({
             ...editor(hash, { ...DOCUMENT, languageConfiguration }),
             policies: [
@@ -404,6 +409,8 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         comp['onDialogConfirmed'](undefined);
 
         expect(lastChange().policies.map((entry) => entry.previousPolicyPath)).toEqual(['SecurityPolicy.yaml', 'Second.yaml']);
+        // Each policy declares the test class it is assigned, as the server requires.
+        expect(lastChange().policies[1].document.testClasses).toEqual(['de.example.StressTest']);
         expect(lastChange().removedPolicyPaths).toEqual([]);
         expect(comp.deletedPolicies().map((policy) => policy.file?.policyPath)).toEqual(['Second.yaml']);
         expect(comp.scanDependencies()).toBe(true);
@@ -559,8 +566,9 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         service.getPolicies.mockReturnValue(of(editor('d'.repeat(40))));
         comp['reload']();
 
-        // The old structure is dropped at once, so the test case dialog waits for the new one.
+        // The old structure is dropped at once, so the test case dialog waits for the new one, which is read from the new base commit.
         expect(service.getTestStructure).toHaveBeenCalledTimes(2);
+        expect(service.getTestStructure).toHaveBeenLastCalledWith(42, 'd'.repeat(40));
         expect(comp.structure()).toBeUndefined();
         refreshed.next({ testClasses: [{ qualifiedName: 'de.example.SortingTest', testCases: ['added'], testClass: true }] });
         expect(comp.structure()?.testClasses?.[0].testCases).toEqual(['added']);
@@ -882,13 +890,15 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
     it('replaces the submitted drafts when the builds of a commit whose pushed policies could not be read are resumed', () => {
         create(configured(), false);
         comp['addPolicy']();
+        // The draft takes a test class no policy uses yet, so the server accepts the commit and pushes it.
         const draft = comp.policies()[1];
-        comp['onPolicyChange'](withAssignment(draft, ['de.example.SortingTest#merge'], []));
+        comp['onPolicyChange'](withAssignment(draft, ['de.example.StressTest'], []));
         const path = comp.paths().get(draft.id)!;
         const committed = editor('b'.repeat(40));
+        const document = { ...DOCUMENT, policyPath: path, testClasses: ['de.example.StressTest'] };
         const pushed: SecurityPolicyEditor = {
             ...committed,
-            policies: [...committed.policies!, { policyPath: path, content: '', document: { ...DOCUMENT, policyPath: path }, assignedTests: ['de.example.SortingTest#merge'] }],
+            policies: [...committed.policies!, { policyPath: path, content: '', document, assignedTests: ['de.example.StressTest'] }],
         };
         service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'error.securityFrameworkProcessingFailed' } })));
         service.getPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
@@ -907,13 +917,15 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
     it('keeps replacing the submitted drafts when a retry of the builds fails again before the pushed policies were read', () => {
         create(configured(), false);
         comp['addPolicy']();
+        // The draft takes a test class no policy uses yet, so the server accepts the commit and pushes it.
         const draft = comp.policies()[1];
-        comp['onPolicyChange'](withAssignment(draft, ['de.example.SortingTest#merge'], []));
+        comp['onPolicyChange'](withAssignment(draft, ['de.example.StressTest'], []));
         const path = comp.paths().get(draft.id)!;
         const committed = editor('b'.repeat(40));
+        const document = { ...DOCUMENT, policyPath: path, testClasses: ['de.example.StressTest'] };
         const pushed: SecurityPolicyEditor = {
             ...committed,
-            policies: [...committed.policies!, { policyPath: path, content: '', document: { ...DOCUMENT, policyPath: path }, assignedTests: ['de.example.SortingTest#merge'] }],
+            policies: [...committed.policies!, { policyPath: path, content: '', document, assignedTests: ['de.example.StressTest'] }],
         };
         const processingFailed = () => throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'error.securityFrameworkProcessingFailed' } }));
         service.commitPolicies.mockReturnValueOnce(processingFailed());
@@ -1119,9 +1131,16 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         comp['onDialogConfirmed'](undefined);
         const failed = lastChange();
 
+        // While the exercise is saved, Retry writes nothing; it is available again once the lock clears.
+        fixture.componentRef.setInput('locked', true);
+        comp['retryCommit']();
+        expect(service.commitPolicies).toHaveBeenCalledOnce();
+        fixture.componentRef.setInput('locked', false);
+
         service.commitPolicies.mockReturnValueOnce(of({ editor: editor('f'.repeat(40)), config: configured() }));
         comp['retryCommit']();
 
+        expect(service.commitPolicies).toHaveBeenCalledTimes(2);
         expect(lastChange()).toEqual(failed);
         expect(lastChange().policies[0].assignedTests).toEqual(['de.example.SortingTest']);
         expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'committed', titleKey: 'artemisApp.programmingExercise.security.advanced.scanOn.committedTitle' }));

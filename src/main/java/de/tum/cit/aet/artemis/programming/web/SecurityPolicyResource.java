@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -133,14 +135,15 @@ public class SecurityPolicyResource {
      * GET programming-exercises/:exerciseId/security-framework/test-structure : the test classes of the tests repository with their test cases.
      *
      * @param exerciseId of the programming exercise
-     * @return 200 (OK) with the test structure in the body
+     * @param commit     the commit to read, e.g. the one the editor loaded the policies from; absent for the head commit
+     * @return 200 (OK) with the test structure in the body, or 409 (Conflict) if the tests repository has no such commit
      */
     @GetMapping("programming-exercises/{exerciseId}/security-framework/test-structure")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<SecurityTestStructureDTO> getTestStructure(@PathVariable Long exerciseId) {
+    public ResponseEntity<SecurityTestStructureDTO> getTestStructure(@PathVariable Long exerciseId, @RequestParam(required = false) @Nullable String commit) {
         log.debug("REST request to get the test structure of programming exercise {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        return ResponseEntity.ok(securityPolicyEditorService.getTestStructure(exercise));
+        return ResponseEntity.ok(securityPolicyEditorService.getTestStructure(exercise, commit));
     }
 
     /**

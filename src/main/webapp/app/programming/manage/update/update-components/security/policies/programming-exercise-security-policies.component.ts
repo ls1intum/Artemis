@@ -90,7 +90,8 @@ const ANALYSIS_AND_WEAVING = /_(ARCHUNIT|WALA)_AND_(ASPECTJ|INSTRUMENTATION)$/;
 type Banner =
     | { kind: 'committing' }
     | { kind: 'committed'; titleKey: string; textKey: string; hash: string }
-    | { kind: 'conflict'; authorName?: string; hash?: string }
+    /** Someone saved a newer version; Reload rebases the unsaved changes onto it and is offered again if reading it failed. */
+    | { kind: 'conflict'; authorName?: string; hash?: string; reloadFailed?: boolean }
     | { kind: 'failed'; message: string; commitMessage: string; retry?: 'review' }
     /** The change is pushed, but the builds it should start did not; Retry resumes them. */
     | { kind: 'processingFailed'; hash?: string }
@@ -662,6 +663,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             error: () => {
                 if (request === this.loadRequests) {
                     this.loading.set(false);
+                    // The editor is still based on the older version, so saving would conflict again: the banner says so and keeps offering Reload.
+                    const banner = this.banner();
+                    if (banner?.kind === 'conflict') {
+                        this.banner.set({ kind: 'conflict', authorName: banner.authorName, hash: banner.hash, reloadFailed: true });
+                    }
                 }
             },
         });
@@ -945,7 +951,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         this.structure.set(undefined);
         this.structureFailed.set(false);
         const request = ++this.structureRequests;
-        this.securityService.getTestStructure(this.exerciseId()).subscribe({
+        // The structure of the commit the policies are based on, which the commit of a split validates against, also if the tests changed since.
+        this.securityService.getTestStructure(this.exerciseId(), commit).subscribe({
             next: (structure) => {
                 if (request === this.structureRequests) {
                     this.structure.set(structure);
@@ -1076,8 +1083,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     /** Commits a change. A commit of the unsaved changes replaces them with the new commit; a commit of dependency scanning keeps them on top of it. */
     private runCommit(change: SecurityPolicyChange, keepUnsaved: boolean, scan: 'scanOn' | 'scanOff' | undefined): void {
-        // While the policies load, the change may be based on a state the reload is about to replace.
-        if (this.isCommitting() || this.loading()) {
+        // While the policies load, the change may be based on a state the reload is about to replace; while the exercise is saved, nothing is written.
+        if (this.isCommitting() || this.loading() || this.locked()) {
             return;
         }
         this.banner.set({ kind: 'committing' });

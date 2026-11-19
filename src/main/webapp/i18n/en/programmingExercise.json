@@ -346,7 +346,7 @@
                 },
                 "unsupportedReason": {
                     "UNEVALUABLE_ARGUMENTS": "{{ location }}: A @Policy annotation uses an expression instead of a literal value.",
-                    "POLICY_NOT_ON_TOP_LEVEL_TYPE": "{{ location }}: A @Policy annotation is placed on a method that is not a test, a field or a nested type.",
+                    "POLICY_NOT_ON_TOP_LEVEL_TYPE": "{{ location }}: A @Policy annotation is placed on a method that is not a test, on one of several test methods with the same name, on a field or on a nested type.",
                     "POLICY_ON_ANNOTATION_TYPE": "{{ location }}: A @Policy annotation is placed on an annotation type.",
                     "MULTIPLE_TOP_LEVEL_TYPES": "{{ location }}: The file declares more than one top-level type that is a test class or carries a @Policy annotation.",
                     "TESTS_IN_NESTED_TYPE": "{{ location }}: Tests or Ares annotations are inside a nested type.",
@@ -1075,6 +1075,7 @@
                             "other": "Someone saved a newer version to the tests repository after you opened the editor. Reload to see it — your {{ count }} unsaved changes are kept."
                         },
                         "reload": "Reload",
+                        "reloadFailed": "The newer version could not be loaded. Your unsaved changes are kept; reload again.",
                         "reloaded": "Reloaded the version saved as commit {{ hash }}. Your unsaved changes are kept — save again when ready.",
                         "orphaned": "A policy you changed is gone from the repository",
                         "orphanedText": "Since you opened the editor, someone deleted, renamed or broke {{ files }}, so it can no longer be edited here. Your unsaved changes to it are kept as a new policy: save it to keep them, or delete it to drop them.",

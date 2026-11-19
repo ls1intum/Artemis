@@ -45,6 +45,10 @@ describe('SecurityFrameworkService', () => {
         expect(http.expectOne({ method: 'GET', url: `${URL}/policies` })).toBeDefined();
         expect(http.expectOne({ method: 'GET', url: `${URL}/test-structure` })).toBeDefined();
         expect(http.expectOne({ method: 'GET', url: `${URL}/template-files` })).toBeDefined();
+
+        // The review reads the test cases of the commit the policies were loaded from.
+        service.getTestStructure(42, 'abc').subscribe();
+        expect(http.expectOne((request) => request.url === `${URL}/test-structure` && request.params.get('commit') === 'abc')).toBeDefined();
     });
 
     it('previews and commits a change and imports a file', () => {

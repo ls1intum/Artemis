@@ -27,12 +27,23 @@ import de.tum.cit.aet.artemis.programming.dto.SecurityTestStructureDTO;
 final class AresTestCases {
 
     /**
-     * The annotations that make a method a test case: JUnit Jupiter, the Ares markers and jqwik. The qualifier repeats possessively, so long qualified names do
-     * not grow the stack; giving back a qualifier part could only match a nested type such as {@code @Test.Inner}, which is no test annotation. The name
-     * must end after the test annotation, so {@code @Test$Tag} is no test annotation either.
+     * The annotations that make a method a test case: JUnit Jupiter, the Ares markers and jqwik, by their simple name, with the package each one is declared
+     * in.
      */
-    private static final Pattern TEST_ANNOTATION = Pattern.compile(
-            "@\\s*(?:[\\w$]+\\s*\\.\\s*)*+(?:Test|PublicTest|HiddenTest|ParameterizedTest|RepeatedTest|TestFactory|TestTemplate|Property|Example)(?!\\p{javaJavaIdentifierPart})");
+    private static final Map<String, String> TEST_ANNOTATION_PACKAGES = Map.of("Test", "org.junit.jupiter.api", "RepeatedTest", "org.junit.jupiter.api", "TestFactory",
+            "org.junit.jupiter.api", "TestTemplate", "org.junit.jupiter.api", "ParameterizedTest", "org.junit.jupiter.params", "PublicTest", "de.tum.cit.ase.ares.api.jupiter",
+            "HiddenTest", "de.tum.cit.ase.ares.api.jupiter", "Property", "net.jqwik.api", "Example", "net.jqwik.api");
+
+    /**
+     * A use of an annotation with the simple name of a test annotation, group 1 being its qualifier and group 2 its simple name. The qualifier repeats
+     * possessively, so long qualified names do not grow the stack; giving back a qualifier part could only match a nested type such as {@code @Test.Inner},
+     * which is no test annotation. The name must end after the test annotation, so {@code @Test$Tag} is no test annotation either.
+     */
+    private static final Pattern TEST_ANNOTATION = Pattern.compile("@\\s*((?:[\\w$]+\\s*\\.\\s*)*+)(" + String.join("|", TEST_ANNOTATION_PACKAGES.keySet())
+            + ")(?!\\p{javaJavaIdentifierPart})");
+
+    /** A single-type import, group 1 being the imported type; a static import names a member and is no type import. */
+    private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s+(?!static\\s)([\\p{javaJavaIdentifierPart}.\\s]+?)\\s*;");
 
     /** The name of any annotation, also a qualified one. Its parts repeat possessively, so long qualified names do not grow the stack. */
     private static final Pattern ANNOTATION_NAME = Pattern.compile("@\\s*[\\w$]+(?:\\s*\\.\\s*[\\w$]+)*+");
@@ -114,11 +125,19 @@ final class AresTestCases {
 
     /**
      * @param source the content of a Java file
-     * @return the offsets of the names of its test method declarations, so that an annotation is matched to the declaration it is on, not only to a name that
-     *         a method that is no test may share with a test
+     * @return the offsets of the names of its test method declarations whose name no other test method has, so that an annotation is matched to the
+     *         declaration it is on: not to a name that a method that is no test may share with a test, and not to a name that several test methods share,
+     *         because an entry {@code Class#method} could not tell them apart
      */
-    static Set<Integer> testDeclarationOffsets(String source) {
-        return testMethods(source).declarations();
+    static Set<Integer> uniqueTestDeclarationOffsets(String source) {
+        Set<String> overloaded = testMethods(source).overloaded();
+        Set<Integer> offsets = new HashSet<>();
+        testSignatures(AresPolicyAnnotations.mask(source)).forEach((offset, signature) -> {
+            if (!overloaded.contains(signature.name())) {
+                offsets.add(offset);
+            }
+        });
+        return offsets;
     }
 
     /**
@@ -137,8 +156,7 @@ final class AresTestCases {
      */
     static Map<Integer, TestSignature> testSignatures(String masked) {
         Map<Integer, TestSignature> signatures = new HashMap<>();
-        Matcher annotation = TEST_ANNOTATION.matcher(masked);
-        while (annotation.find()) {
+        for (MatchResult annotation : testAnnotations(masked)) {
             MatchResult method = methodAfter(masked, annotation.end());
             if (method != null && !signatures.containsKey(method.start(1))) {
                 int close = AresPolicyAnnotations.matchingParenthesis(masked, method.end() - 1);
@@ -151,6 +169,37 @@ final class AresTestCases {
             }
         }
         return signatures;
+    }
+
+    /**
+     * The uses of test annotations in a source. A qualified name must name the package of the annotation, e.g. {@code @org.junit.jupiter.api.Test}, so a
+     * marker such as {@code @example.Test} is no test annotation. A simple name refers to the test annotation unless the file declares a type of that name
+     * where it is used or imports one from another package; which types a wildcard import provides is unknown, so it is assumed to be the test annotation.
+     *
+     * @param masked the masked content of a Java file
+     * @return the matches of {@link #TEST_ANNOTATION} that are test annotations, in the order of the source
+     */
+    private static List<MatchResult> testAnnotations(String masked) {
+        Map<String, String> imported = new HashMap<>();
+        Matcher imports = SINGLE_TYPE_IMPORT.matcher(masked);
+        while (imports.find()) {
+            String type = WHITESPACE.matcher(imports.group(1)).replaceAll("");
+            imported.putIfAbsent(type.substring(type.lastIndexOf('.') + 1), type);
+        }
+        List<MatchResult> annotations = new ArrayList<>();
+        Matcher annotation = TEST_ANNOTATION.matcher(masked);
+        while (annotation.find()) {
+            String name = annotation.group(2);
+            String qualifier = WHITESPACE.matcher(annotation.group(1)).replaceAll("");
+            String expected = TEST_ANNOTATION_PACKAGES.get(name) + "." + name;
+            boolean resolves = qualifier.isEmpty()
+                    ? !AresPolicyAnnotations.isShadowedAt(masked, name, annotation.start()) && imported.getOrDefault(name, expected).equals(expected)
+                    : (qualifier + name).equals(expected);
+            if (resolves) {
+                annotations.add(annotation.toMatchResult());
+            }
+        }
+        return annotations;
     }
 
     /**
@@ -219,11 +268,10 @@ final class AresTestCases {
     /**
      * The test methods of a source.
      *
-     * @param offsets      for each name, the offset of the first test annotation of the first method with it
-     * @param overloaded   the names that more than one test method has
-     * @param declarations the offsets of the names of all test method declarations
+     * @param offsets    for each name, the offset of the first test annotation of the first method with it
+     * @param overloaded the names that more than one test method has
      */
-    private record TestMethods(Map<String, Integer> offsets, Set<String> overloaded, Set<Integer> declarations) {
+    private record TestMethods(Map<String, Integer> offsets, Set<String> overloaded) {
     }
 
     private static TestMethods testMethods(String source) {
@@ -231,12 +279,9 @@ final class AresTestCases {
         Map<String, Integer> offsets = new LinkedHashMap<>();
         Map<String, Integer> declarations = new HashMap<>();
         Set<String> overloaded = new LinkedHashSet<>();
-        Set<Integer> declarationOffsets = new HashSet<>();
-        Matcher annotation = TEST_ANNOTATION.matcher(masked);
-        while (annotation.find()) {
+        for (MatchResult annotation : testAnnotations(masked)) {
             MatchResult method = methodAfter(masked, annotation.end());
             if (method != null) {
-                declarationOffsets.add(method.start(1));
                 String name = method.group(1);
                 offsets.putIfAbsent(name, annotation.start());
                 // Two test annotations of one method find the same declaration; another declaration with the name is an overload.
@@ -246,7 +291,7 @@ final class AresTestCases {
                 }
             }
         }
-        return new TestMethods(offsets, overloaded, Set.copyOf(declarationOffsets));
+        return new TestMethods(offsets, overloaded);
     }
 
     /**
