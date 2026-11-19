@@ -597,6 +597,39 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void anOverrideWhoseParameterTypesComeFromWildcardImportsKeepsTheInheritedPolicy() throws IOException {
+        writeBuildFile();
+        String testImport = "import org.junit.jupiter.api.Test;";
+        String withWildcardImport = TEST_CLASS.formatted("de.example", "SortingTest").replace(testImport, "import java.util.*;\n\n" + testImport);
+        String methodPolicy = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n";
+        String parent = withWildcardImport.replace("    @Test\n    void runs()", methodPolicy + "    @Test\n    void runs(Date date)");
+        writeSource("test/de/example/SortingTest.java", parent);
+        String override = """
+                package de.example;
+
+                import java.sql.*;
+
+                import org.junit.jupiter.api.Test;
+
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+
+                @Public
+                %s
+                class MoreSortingTest extends SortingTest {
+
+                    @Test
+                    void runs(Date date) {
+                    }
+                }
+                """.formatted(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        writeSource("test/de/example/MoreSortingTest.java", override);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // Date may be java.util.Date in one file and java.sql.Date in the other, so the inherited test may still run with the sandbox.
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS, "de.example.MoreSortingTest");
+    }
+
+    @Test
     void aMarkerTheFileDeclaresItselfDoesNotRegisterAres() throws IOException {
         writeBuildFile();
         writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");

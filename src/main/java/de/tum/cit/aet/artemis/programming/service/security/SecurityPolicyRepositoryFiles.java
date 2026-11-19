@@ -340,7 +340,8 @@ public final class SecurityPolicyRepositoryFiles {
     /**
      * Whether a subclass overrides the test method, so that JUnit runs the override with its own annotations instead: it declares a test method with the
      * same signature, and is in the same package unless the method is public or protected. A name that several test methods of the type share is never
-     * overridden as a whole, so it counts as inherited, and so does a signature whose simple type names may name other types in another package.
+     * overridden as a whole, so it counts as inherited, and so does a signature with a simple type name that may name different types in the two files,
+     * e.g. through wildcard imports of {@code java.util.*} and {@code java.sql.*}.
      *
      * @param subclasses the classes between the class that runs the tests and the type, including the former
      */
@@ -350,9 +351,11 @@ public final class SecurityPolicyRepositoryFiles {
             return false;
         }
         AresTestCases.TestSignature signature = signatures.getFirst();
+        if (signature.dependsOnPackage()) {
+            return false;
+        }
         for (AresTestSources.TypeDeclaration subclass : subclasses) {
-            boolean samePackage = subclass.packageName().equals(type.packageName());
-            boolean canOverride = (signature.visibleInOtherPackages() || samePackage) && (samePackage || !signature.dependsOnPackage());
+            boolean canOverride = signature.visibleInOtherPackages() || subclass.packageName().equals(type.packageName());
             if (canOverride && subclass.testSignatures().stream().anyMatch(candidate -> candidate.text().equals(signature.text()))) {
                 return true;
             }

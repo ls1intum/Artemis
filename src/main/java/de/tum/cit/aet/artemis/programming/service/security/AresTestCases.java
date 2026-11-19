@@ -159,8 +159,8 @@ final class AresTestCases {
     record TestSignature(String name, String text, boolean visibleInOtherPackages) {
 
         /**
-         * @return whether a parameter type is a simple name that is resolved only where the method is declared, so the same text in a file of another
-         *         package may name another type
+         * @return whether a parameter type is a simple name that the file does not resolve itself, so the same text in another file, also of the same
+         *         package, may name another type, e.g. through another wildcard import
          */
         boolean dependsOnPackage() {
             return text.indexOf(UNRESOLVED_TYPE) >= 0;
