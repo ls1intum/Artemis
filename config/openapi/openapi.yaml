@@ -3504,8 +3504,8 @@ components:
         ownerLeftCluster: {type: boolean}
     QuizQuestionPoolSelectionRequest:
       type: object
-      description: A request to draw approved questions from the quiz question pool
-        for a new quiz
+      description: A request to draw questions from the quiz question pool for a
+        new quiz
       properties:
         competencyIds:
           type: array

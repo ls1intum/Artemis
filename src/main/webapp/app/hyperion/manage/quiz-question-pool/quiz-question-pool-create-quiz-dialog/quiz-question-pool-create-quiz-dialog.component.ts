@@ -21,7 +21,7 @@ const DIFFICULTY_ORDER: PoolDifficulty[] = ['EASY', 'MEDIUM', 'HARD'];
 const QUESTION_TYPE_ORDER: GeneratedQuestionType[] = ['single-choice', 'multiple-choice', 'true-false'];
 
 /**
- * Lets a reviewer choose which approved questions to draw from the pool for a new quiz: the competencies, optionally the lecture
+ * Lets a reviewer choose which questions to draw from the pool for a new quiz: the competencies, optionally the lecture
  * units, the number of questions and the question types and difficulties. Emits the draw request; the page performs the draw and
  * opens the quiz editor.
  */

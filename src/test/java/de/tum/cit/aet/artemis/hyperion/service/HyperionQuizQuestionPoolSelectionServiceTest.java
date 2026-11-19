@@ -142,7 +142,7 @@ class HyperionQuizQuestionPoolSelectionServiceTest {
     }
 
     private void stubEligible(List<QuizQuestionPoolItem> items) {
-        when(itemRepository.findAllForSelection(anyLong(), any(), eq(QuizQuestionPoolItemState.FILTERED), eq(QuizQuestionReviewState.APPROVED))).thenReturn(items);
+        when(itemRepository.findAllForSelection(anyLong(), any(), eq(QuizQuestionPoolItemState.FILTERED))).thenReturn(items);
     }
 
     private static QuizQuestionPoolSelectionRequestDTO request(List<Long> competencyIds, int count) {

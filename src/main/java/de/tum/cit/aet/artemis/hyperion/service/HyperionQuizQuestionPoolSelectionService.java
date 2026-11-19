@@ -21,20 +21,21 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
-import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionCandidateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
 
 /**
- * Draws approved questions from a course's quiz question pool for a new quiz.
+ * Draws questions from a course's quiz question pool for a new quiz.
  * <p>
  * A draw is deterministic and involves no model call. It takes questions round-robin over the requested competencies, within a
  * competency over the lecture units and within a unit over the question types and difficulties. At every level the round-robin starts
  * with the queue holding the question drawn least often and longest ago, and within each queue it takes those questions first, so
- * consecutive draws move on to other questions even when every cell holds only one. Only approved, judged questions whose material has not changed
- * are eligible. Every drawn question's selection count and time are updated, so repeated draws rotate through the pool.
+ * consecutive draws move on to other questions even when every cell holds only one. Eligible are judged questions whose material has not
+ * changed and that are approved, or await a decision after the filter accepted them without flagging them for review: an excluded question
+ * never takes part, and one flagged for review or rejected by the filter only once approved. Every drawn question's selection count and
+ * time are updated, so repeated draws rotate through the pool.
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
@@ -69,8 +70,8 @@ public class HyperionQuizQuestionPoolSelectionService {
      */
     public Selection select(long courseId, QuizQuestionPoolSelectionRequestDTO request) {
         List<Long> competencyIds = request.competencyIds().stream().distinct().toList();
-        List<QuizQuestionPoolItem> eligible = itemRepository.findAllForSelection(courseId, competencyIds, QuizQuestionPoolItemState.FILTERED, QuizQuestionReviewState.APPROVED)
-                .stream().filter(item -> item.getQuestion() != null).filter(item -> matches(request.lectureUnitIds(), item.getLectureUnitId()))
+        List<QuizQuestionPoolItem> eligible = itemRepository.findAllForSelection(courseId, competencyIds, QuizQuestionPoolItemState.FILTERED).stream()
+                .filter(item -> item.getQuestion() != null).filter(item -> matches(request.lectureUnitIds(), item.getLectureUnitId()))
                 .filter(item -> matches(request.questionTypes(), item.getQuestionType())).filter(item -> matches(request.difficulties(), item.getDifficulty())).sorted(DRAW_ORDER)
                 .toList();
         List<QuizQuestionPoolItem> drawn = draw(eligible, competencyIds, request.count());
@@ -86,14 +87,14 @@ public class HyperionQuizQuestionPoolSelectionService {
     }
 
     /**
-     * Counts the questions a draw may take, per competency, lecture unit, question type and difficulty: approved, judged questions whose
-     * material has not changed.
+     * Counts the questions a draw may take, per competency, lecture unit, question type and difficulty: judged questions whose
+     * material has not changed and that are approved, or await a decision after the filter accepted them without flagging them for review.
      *
      * @param courseId the course
      * @return one count per cell that holds such questions
      */
     public List<QuizQuestionPoolSelectionCandidateDTO> candidates(long courseId) {
-        return itemRepository.countSelectionCandidates(courseId, QuizQuestionPoolItemState.FILTERED, QuizQuestionReviewState.APPROVED);
+        return itemRepository.countSelectionCandidates(courseId, QuizQuestionPoolItemState.FILTERED);
     }
 
     private static <T> boolean matches(@Nullable Collection<T> wanted, T value) {

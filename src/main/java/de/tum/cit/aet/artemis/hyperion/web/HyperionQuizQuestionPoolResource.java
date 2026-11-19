@@ -287,7 +287,7 @@ public class HyperionQuizQuestionPoolResource {
      * unit, question type and difficulty.
      *
      * @param courseId the id of the course
-     * @return one count per cell that holds approved, judged questions with current material
+     * @return one count per cell that holds questions a draw may take
      */
     @EnforceAtLeastEditorInCourse
     @GetMapping("courses/{courseId}/quiz-question-pool/selection-candidates")
@@ -298,7 +298,7 @@ public class HyperionQuizQuestionPoolResource {
     }
 
     /**
-     * POST /courses/{courseId}/quiz-question-pool/select : Draw approved questions from the pool for a new quiz and record the draw.
+     * POST /courses/{courseId}/quiz-question-pool/select : Draw questions from the pool for a new quiz and record the draw.
      *
      * @param courseId the id of the course
      * @param request  the competencies, lecture units, count, question types and difficulties to draw

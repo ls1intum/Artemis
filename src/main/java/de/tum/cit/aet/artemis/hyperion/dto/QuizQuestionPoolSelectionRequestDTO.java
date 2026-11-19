@@ -14,10 +14,10 @@ import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * DTO describing which approved questions to draw from a course's quiz question pool for a new quiz.
+ * DTO describing which questions to draw from a course's quiz question pool for a new quiz.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@Schema(description = "A request to draw approved questions from the quiz question pool for a new quiz")
+@Schema(description = "A request to draw questions from the quiz question pool for a new quiz")
 public record QuizQuestionPoolSelectionRequestDTO(@NotEmpty @Schema(description = "Ids of the competencies the quiz covers") List<Long> competencyIds,
         @Schema(description = "Ids of the lecture units to draw from; every linked unit when absent") @Nullable List<Long> lectureUnitIds,
         @Min(1) @Max(MAX_QUESTIONS) @Schema(description = "Number of questions to draw") int count,

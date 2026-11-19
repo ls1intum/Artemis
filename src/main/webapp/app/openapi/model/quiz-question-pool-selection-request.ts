@@ -10,7 +10,7 @@
 
 
 /**
- * A request to draw approved questions from the quiz question pool for a new quiz
+ * A request to draw questions from the quiz question pool for a new quiz
  */
 export interface QuizQuestionPoolSelectionRequest {
     /** Ids of the competencies the quiz covers */
