@@ -809,6 +809,16 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 expect(alertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.security.notApplied.version', { actual: '2.2.1', expected: '2.3.0' });
             });
 
+            it('names no version when the created exercise pins none', () => {
+                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(of({ status: SecurityActivationStatus.CONFIGURED }));
+                const alertSpy = vi.spyOn(alertService, 'warning');
+                comp.stagedSecurityChoice.set(pinVersion);
+
+                saveNewJavaExercise();
+
+                expect(alertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.security.notApplied.version', { actual: '-', expected: '2.3.0' });
+            });
+
             it('finishes saving and navigates when the verification request fails, without treating the save as failed', () => {
                 vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
                 const warningSpy = vi.spyOn(alertService, 'warning');

@@ -1095,6 +1095,238 @@ describe('ProgrammingExerciseSecurityComponent', () => {
             expect(service.addDiscoveredTestClasses).not.toHaveBeenCalled();
         });
     });
+
+    describe('defaults and fallbacks', () => {
+        it('falls back to the language and the project type of the exercise when the wizard passes neither', () => {
+            fixture.componentRef.setInput('programmingExercise', javaExercise(undefined, ProjectType.PLAIN_MAVEN));
+            fixture.detectChanges();
+
+            expect(comp.isAvailable()).toBe(true);
+            expect(comp.defaultVersion()).toBe('3.3.0');
+        });
+
+        it('falls back to the first template version without a project type, and to the newest version without template versions', () => {
+            const exercise = javaExercise();
+            exercise.projectType = undefined;
+            fixture.componentRef.setInput('programmingExercise', exercise);
+            fixture.detectChanges();
+            expect(comp.defaultVersion()).toBe('3.2.2');
+
+            service.getVersions.mockReturnValue(of({ selectableVersions: ['3.4.1'] }));
+            fixture.destroy();
+            createComponent();
+            fixture.componentRef.setInput('programmingExercise', exercise);
+            fixture.detectChanges();
+            expect(comp.defaultVersion()).toBe('3.4.1');
+        });
+
+        it('stages an activation without a version while no version is known', () => {
+            service.getVersions.mockReturnValue(throwError(() => new Error('VERSIONS_FAILED')));
+            fixture.destroy();
+            createComponent();
+            initImportFromExercise({ status: SecurityActivationStatus.INACTIVE });
+
+            comp.onToggleChanged(true);
+            fixture.detectChanges();
+
+            expect(emitted.at(-1)).toEqual({ action: SecurityFrameworkAction.ACTIVATE });
+        });
+
+        it('activates nothing in edit mode while neither the exercise nor the server names a version', () => {
+            service.getVersions.mockReturnValue(throwError(() => new Error('VERSIONS_FAILED')));
+            fixture.destroy();
+            createComponent();
+            initEdit({ status: SecurityActivationStatus.INACTIVE });
+
+            comp.onToggleChanged(true);
+
+            expect(service.activate).not.toHaveBeenCalled();
+            expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+        });
+
+        it('re-seeds a staged deactivation without a version in create mode', () => {
+            fixture.componentRef.setInput('stagedChoice', { action: SecurityFrameworkAction.DEACTIVATE });
+            initCreate();
+
+            expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+            expect(comp.config().frameworkVersion).toBe('3.2.2');
+        });
+
+        it('treats a policy file without a problem as repairable', () => {
+            initEdit({ status: SecurityActivationStatus.CONFIGURED, frameworkVersion: '3.4.1', policyFiles: [{ policyPath: 'SecurityPolicy.yaml' }] });
+
+            expect(comp.hasUnrepairableProblem()).toBe(false);
+        });
+
+        it('keeps the switch on while an activation is in flight', () => {
+            initEdit(inactiveConfig());
+            service.activate.mockReturnValue(new Subject<SecurityFrameworkConfig>());
+
+            comp.onToggleChanged(true);
+
+            expect(comp.status()).toBe(SecurityActivationStatus.GENERATING);
+            expect(comp.isToggleOn()).toBe(true);
+        });
+
+        it('only stages a version picked in ERROR, without a request', () => {
+            initEdit(inactiveConfig());
+            service.activate.mockReturnValue(throwError(() => new Error('ACTIVATION_FAILED')));
+            comp.onToggleChanged(true);
+            expect(comp.status()).toBe(SecurityActivationStatus.ERROR);
+
+            comp.onFrameworkVersionChanged('3.3.0');
+
+            expect(comp.config().frameworkVersion).toBe('3.3.0');
+            expect(service.updateFrameworkVersion).not.toHaveBeenCalled();
+        });
+
+        it('ignores an unknown import action and names no label for it', () => {
+            initImportWithUnknownState();
+
+            comp.onImportActionChanged('SOMETHING_ELSE');
+
+            expect(comp.importAction()).toBe('KEEP');
+            expect(comp['importActionLabelKey']('SOMETHING_ELSE')).toBe('');
+        });
+    });
+
+    describe('loading', () => {
+        it('loads nothing in edit mode for an exercise without id, also on retry', () => {
+            fixture.componentRef.setInput('programmingExercise', javaExercise());
+            fixture.componentRef.setInput('mode', 'edit');
+            fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
+            fixture.detectChanges();
+
+            comp.retryLoadConfig();
+
+            expect(service.getConfig).not.toHaveBeenCalled();
+        });
+
+        it('ignores a late load error of the previous exercise', () => {
+            const firstLoad$ = new Subject<SecurityFrameworkConfig>();
+            service.getConfig.mockReturnValueOnce(firstLoad$.asObservable());
+            fixture.componentRef.setInput('programmingExercise', javaExercise(42));
+            fixture.componentRef.setInput('mode', 'edit');
+            fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
+            fixture.detectChanges();
+
+            service.getConfig.mockReturnValueOnce(of(configuredConfig()));
+            fixture.componentRef.setInput('programmingExercise', javaExercise(43));
+            fixture.detectChanges();
+            firstLoad$.error(new Error('LATE_FAILURE'));
+
+            expect(comp.loadFailed()).toBe(false);
+            expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+        });
+
+        it('surfaces a failed load of the source of an import and recovers on retry', () => {
+            initImportFromExercise(configuredConfig());
+            service.getConfig.mockReturnValue(throwError(() => new Error('LOAD_FAILED')));
+            comp.retryLoadConfig();
+            expect(comp.loadFailed()).toBe(true);
+
+            service.getConfig.mockReturnValue(of(configuredConfig()));
+            comp.retryLoadConfig();
+
+            expect(comp.loadFailed()).toBe(false);
+            expect(comp.sourceConfig()?.status).toBe(SecurityActivationStatus.CONFIGURED);
+        });
+
+        it('ignores a late load error of a previous source', () => {
+            const firstLoad$ = new Subject<SecurityFrameworkConfig>();
+            service.getConfig.mockReturnValueOnce(firstLoad$.asObservable());
+            fixture.componentRef.setInput('programmingExercise', javaExercise(7));
+            fixture.componentRef.setInput('mode', 'import');
+            fixture.componentRef.setInput('sourceExerciseId', 7);
+            fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
+            fixture.detectChanges();
+
+            service.getConfig.mockReturnValueOnce(of(inactiveConfig()));
+            fixture.componentRef.setInput('sourceExerciseId', 8);
+            fixture.detectChanges();
+            firstLoad$.error(new Error('LATE_FAILURE'));
+
+            expect(comp.loadFailed()).toBe(false);
+            expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+        });
+
+        it('retries nothing for an import without a source exercise', () => {
+            initImportWithUnknownState();
+
+            comp.retryLoadConfig();
+
+            expect(service.getConfig).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('re-seeding an import from an exercise', () => {
+        it('re-applies a staged deactivation once the source has loaded', () => {
+            fixture.componentRef.setInput('stagedChoice', { action: SecurityFrameworkAction.DEACTIVATE });
+            initImportFromExercise(configuredConfig());
+
+            expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+        });
+
+        it('re-applies a staged action as the three-way choice of a MISCONFIGURED source', () => {
+            fixture.componentRef.setInput('stagedChoice', { action: SecurityFrameworkAction.ACTIVATE });
+            initImportFromExercise(misconfiguredConfig());
+
+            expect(comp.usesImportActionChoice()).toBe(true);
+            expect(comp.importAction()).toBe(SecurityFrameworkAction.ACTIVATE);
+        });
+
+        it('drops a staged choice for an UNSUPPORTED source', () => {
+            fixture.componentRef.setInput('stagedChoice', { action: SecurityFrameworkAction.DEACTIVATE });
+            initImportFromExercise(unsupportedConfig());
+
+            expect(comp.status()).toBe(SecurityActivationStatus.UNSUPPORTED);
+            expect(comp.choiceToSend()).toBeUndefined();
+        });
+    });
+
+    describe('the message of a failed operation', () => {
+        it.each([
+            ['the message header', new HttpErrorResponse({ status: 400, headers: new HttpHeaders({ 'X-artemisApp-message': 'From the header' }) }), 'From the header'],
+            ['the title', new HttpErrorResponse({ status: 400, error: { title: 'The title' } }), 'The title'],
+            ['the detail', new HttpErrorResponse({ status: 400, error: { detail: 'The detail' } }), 'The detail'],
+            ['a message that names no translation', new HttpErrorResponse({ status: 400, error: { message: 'Plain text' } }), 'Plain text'],
+            ['an error', new Error('Something broke'), 'Something broke'],
+            ['anything else', 'just text', 'just text'],
+        ])('uses %s', (_description, error, expected) => {
+            initEdit(inactiveConfig());
+            service.activate.mockReturnValue(throwError(() => error));
+
+            comp.onToggleChanged(true);
+
+            expect(comp.status()).toBe(SecurityActivationStatus.ERROR);
+            expect(comp.config().errorDetail).toBe(expected);
+        });
+
+        it('falls back to the message of the HTTP error', () => {
+            initEdit(inactiveConfig());
+            const error = new HttpErrorResponse({ status: 500, url: 'api/x' });
+            service.activate.mockReturnValue(throwError(() => error));
+
+            comp.onToggleChanged(true);
+
+            expect(comp.config().errorDetail).toBe(error.message);
+        });
+
+        it('ignores a late failure of an operation on the previous exercise', () => {
+            initEdit(inactiveConfig());
+            const activation$ = new Subject<SecurityFrameworkConfig>();
+            service.activate.mockReturnValue(activation$.asObservable());
+            comp.onToggleChanged(true);
+
+            service.getConfig.mockReturnValue(of(configuredConfig()));
+            fixture.componentRef.setInput('programmingExercise', javaExercise(43));
+            fixture.detectChanges();
+            activation$.error(new Error('LATE_FAILURE'));
+
+            expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+            expect(comp.config().errorDetail).toBeUndefined();
+        });
+    });
 });
 
 /** Rendering spec: the real template, for the states whose text is derived from the config rather than only the status. */
