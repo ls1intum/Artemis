@@ -10,9 +10,11 @@ import java.io.ByteArrayInputStream;
 import java.io.SequenceInputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
@@ -20,9 +22,13 @@ import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClient;
 
+import com.sun.net.httpserver.HttpServer;
+
+import de.tum.cit.aet.artemis.videosource.api.GocastBindingApi;
 import de.tum.cit.aet.artemis.videosource.config.GocastConfiguration;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
 import de.tum.cit.aet.artemis.videosource.dto.GocastUploadTargetDTO;
@@ -44,6 +50,47 @@ class GocastRecordingServiceTest {
 
     private static BindingSnapshot binding(GocastBindingStatus status) {
         return new BindingSnapshot(7, 17, 456, 23, 0, status, "algo", "Algorithms", "enrolled");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = HttpStatus.class, names = { "NO_CONTENT", "CONFLICT" })
+    @Timeout(10)
+    void forwardsTheMultipartFileAndHandlesTheUpstreamStatus(HttpStatus upstreamStatus) throws Exception {
+        var peer = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        var contentType = new AtomicReference<String>();
+        var authorization = new AtomicReference<String>();
+        var body = new AtomicReference<byte[]>();
+        peer.createContext("/upload", exchange -> {
+            contentType.set(exchange.getRequestHeaders().getFirst(HttpHeaders.CONTENT_TYPE));
+            authorization.set(exchange.getRequestHeaders().getFirst(HttpHeaders.AUTHORIZATION));
+            body.set(exchange.getRequestBody().readAllBytes());
+            exchange.sendResponseHeaders(upstreamStatus.value(), -1);
+            exchange.close();
+        });
+        peer.start();
+        try {
+            var uploadClient = new GocastConfiguration().gocastUploadRestClient(Duration.ofSeconds(5));
+            var recordingService = new GocastRecordingService(connectionRepository, connectorService, new TumLiveService(RestClient.builder(), "https://live.rbg.tum.de/api/v2"),
+                    uploadClient);
+            var api = new GocastBindingApi(mock(GocastBindingService.class), recordingService);
+            var target = new GocastUploadTargetDTO(42, "http://127.0.0.1:" + peer.getAddress().getPort() + "/upload");
+            byte[] video = { 0, 1, -1, 2 };
+            var input = new ByteArrayInputStream(video);
+            if (upstreamStatus.is2xxSuccessful()) {
+                api.transferUpload(target, input);
+            }
+            else {
+                assertThatThrownBy(() -> api.transferUpload(target, input)).isInstanceOfSatisfying(GocastIntegrationException.class,
+                        failure -> assertThat(failure.getUpstreamStatus()).isEqualTo(upstreamStatus));
+            }
+            assertThat(contentType.get()).startsWith("multipart/form-data;boundary=");
+            assertThat(authorization.get()).isNull();
+            assertThat(body.get()).containsSequence(video);
+            assertThat(new String(body.get(), StandardCharsets.ISO_8859_1)).contains("name=\"file\"; filename=\"video\"").contains("Content-Type: application/octet-stream");
+        }
+        finally {
+            peer.stop(0);
+        }
     }
 
     @Test

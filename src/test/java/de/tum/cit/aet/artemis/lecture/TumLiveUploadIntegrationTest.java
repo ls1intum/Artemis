@@ -1,17 +1,30 @@
 package de.tum.cit.aet.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
+import java.io.InputStream;
+import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -22,17 +35,24 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TumLiveRecordingCleanup;
+import de.tum.cit.aet.artemis.lecture.dto.TumLiveUploadStartDTO;
 import de.tum.cit.aet.artemis.lecture.repository.TumLiveRecordingCleanupRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TumLiveUnitUploadRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
+import de.tum.cit.aet.artemis.lecture.service.TumLiveUploadService;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.lecture.web.TumLiveUploadResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.videosource.api.GocastBindingApi;
+import de.tum.cit.aet.artemis.videosource.dto.GocastUploadConnectionDTO;
+import de.tum.cit.aet.artemis.videosource.dto.GocastUploadTargetDTO;
 
 class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -466,6 +486,37 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
         mockMvc.perform(post("/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload/file").param("ref", ref("test")).contentType("video/mp4").content(new byte[] { 1 }))
                 .andExpect(status().isConflict());
         mockMvc.perform(delete("/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload").param("ref", ref("none"))).andExpect(status().isNoContent());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { MediaType.APPLICATION_OCTET_STREAM_VALUE, "video/mp4" })
+    void reservesAnUploadAndForwardsItsRawBody(String contentType) throws Exception {
+        var goCast = mock(GocastBindingApi.class);
+        when(goCast.findUploadConnection(lecture.getCourse().getId())).thenReturn(Optional.of(new GocastUploadConnectionDTO(17, 23, "algo")));
+        var uploadService = new TumLiveUploadService(uploadRepository, cleanupRepository, attachmentVideoUnitRepository, Optional.of(goCast), Optional.empty(),
+                new LocalDataProviderService(), Duration.ofHours(6));
+        var uploadMvc = standaloneSetup(new TumLiveUploadResource(attachmentVideoUnitRepository, uploadService, uploadRepository)).build();
+        String path = "/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload";
+        var response = uploadMvc.perform(post(path)).andExpect(status().isOk()).andReturn().getResponse();
+        var reservation = mapper.readValue(response.getContentAsByteArray(), TumLiveUploadStartDTO.class);
+        assertThat(reservation.ref()).isNotBlank();
+        assertThat(reservation.uploadUrl()).isEqualTo(path + "/file?ref=" + reservation.ref());
+
+        var target = new GocastUploadTargetDTO(55, "https://tum.live/upload");
+        byte[] video = { 0, 1, 2, -1 };
+        when(goCast.createUpload(eq(23L), eq(reservation.ref()), anyString())).thenReturn(target);
+        doAnswer(invocation -> {
+            InputStream body = invocation.getArgument(1);
+            assertThat(body.readAllBytes()).containsExactly(video);
+            return null;
+        }).when(goCast).transferUpload(eq(target), any());
+
+        uploadMvc.perform(post(reservation.uploadUrl()).contentType(contentType).content(video)).andExpect(status().isNoContent());
+
+        verify(goCast).transferUpload(eq(target), any(InputStream.class));
+        var pending = uploadRepository.findByLectureUnitId(unit.getId()).orElseThrow();
+        assertThat(pending.getPendingRef()).isEqualTo(reservation.ref());
+        assertThat(pending.getPendingStreamId()).isEqualTo(target.streamId());
     }
 
     @Test
