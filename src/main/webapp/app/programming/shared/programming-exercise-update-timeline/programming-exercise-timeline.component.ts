@@ -1,7 +1,6 @@
 import { Component, OnInit, Signal, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TumAetUiCheckboxComponent, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Dayjs } from 'dayjs/esm';
@@ -26,14 +25,14 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
 @Component({
     selector: 'jhi-programming-exercise-timeline',
     templateUrl: './programming-exercise-timeline.component.html',
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, TimelineComponent, ConfirmDialogModule, ExerciseGroupDateNoticeComponent],
-    providers: [ConfirmationService],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, TimelineComponent, TumAetUiCheckboxComponent, TumAetUiConfirmDialogComponent, ExerciseGroupDateNoticeComponent],
+    providers: [TumAetUiConfirmationService],
 })
 export class ProgrammingExerciseTimelineComponent implements OnInit {
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
     private programmingExerciseService = inject(ProgrammingExerciseService);
-    private confirmationService = inject(ConfirmationService);
+    private confirmationService = inject(TumAetUiConfirmationService);
     private translateService = inject(TranslateService);
 
     protected readonly AssessmentType = AssessmentType;
@@ -158,24 +157,24 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
         this.assessmentType.update((assessmentType) => (assessmentType === AssessmentType.AUTOMATIC ? AssessmentType.SEMI_AUTOMATIC : AssessmentType.AUTOMATIC));
     }
 
-    onSetTestCaseVisibilityClick(event: Event) {
-        const input = event.target as HTMLInputElement;
-        const newValue = input.checked;
-
+    /**
+     * Applies a change of the test case visibility checkbox. Unchecking it for an imported exam exercise can leak
+     * feedback, so that change only takes effect after the user confirmed it; until then the checkbox stays checked.
+     *
+     * @param newValue the state the user switched the checkbox to
+     * @param checkbox the checkbox that reported the change
+     */
+    onSetTestCaseVisibilityChange(newValue: boolean, checkbox: TumAetUiCheckboxComponent) {
         if (!newValue && this.isImport() && this.isExamMode()) {
-            event.preventDefault(); // immediately revert the visual state of the checkbox
+            checkbox.checked.set(true);
 
             this.confirmationService.confirm({
                 message: this.translateService.instant('artemisApp.programmingExercise.timeline.warningLeakFeedback'),
                 header: this.translateService.instant('artemisApp.programmingExercise.timeline.warningLeakFeedbackHeader'),
-                acceptButtonProps: {
-                    label: this.translateService.instant('entity.action.confirm'),
-                    severity: 'danger',
-                },
-                rejectButtonProps: {
-                    label: this.translateService.instant('entity.action.cancel'),
-                    severity: 'secondary',
-                },
+                acceptLabel: this.translateService.instant('entity.action.confirm'),
+                acceptSeverity: 'danger',
+                rejectLabel: this.translateService.instant('entity.action.cancel'),
+                rejectSeverity: 'secondary',
                 accept: () => {
                     this.setTestCaseVisibilityToAfterDueDate.set(false);
                 },

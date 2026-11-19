@@ -1,4 +1,4 @@
-<div class="form-group">
+<div class="mb-4!">
     @if (isAssigmentRepositoryEditable()) {
         <label for="field_assignmentRepositoryCheckoutPath" jhiTranslate="artemisApp.programmingExercise.checkoutPath.assignment"></label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutPath.customize" />
@@ -7,7 +7,8 @@
             #field_assignmentRepositoryCheckoutPath="ngModel"
             required
             type="text"
-            class="form-control"
+            tumAetUiInput
+            class="w-full"
             name="assignmentRepositoryCheckoutPath"
             id="field_assignmentRepositoryCheckoutPath"
             [pattern]="pattern()"
@@ -23,7 +24,8 @@
             #field_testRepositoryCheckoutPath="ngModel"
             required
             type="text"
-            class="form-control"
+            tumAetUiInput
+            class="w-full"
             name="testRepositoryCheckoutPath"
             id="field_testRepositoryCheckoutPath"
             [ngModel]="testCheckoutPath()"
@@ -39,7 +41,8 @@
             #field_solutionRepositoryCheckoutPath="ngModel"
             required
             type="text"
-            class="form-control"
+            tumAetUiInput
+            class="w-full"
             name="solutionRepositoryCheckoutPath"
             id="field_solutionRepositoryCheckoutPath"
             [ngModel]="solutionCheckoutPath()"
@@ -48,14 +51,14 @@
         />
     }
     @if (!formValid()) {
-        <div class="alert alert-danger mt-2" role="alert">
+        <tumaet-ui-message severity="error" class="mt-2">
             <strong jhiTranslate="artemisApp.programmingExercise.checkoutPath.alert"></strong>
-        </div>
+        </tumaet-ui-message>
     }
-    <div class="warning alert-warning mt-2" role="alert">
+    <tumaet-ui-message severity="warn" class="mt-2">
         <strong jhiTranslate="artemisApp.programmingExercise.checkoutPath.warning"></strong>
-    </div>
-    <div class="warning alert-warning mt-1" role="alert">
+    </tumaet-ui-message>
+    <tumaet-ui-message severity="warn" class="mt-1">
         <strong jhiTranslate="artemisApp.programmingExercise.checkoutPath.warningBuildScript"></strong>
-    </div>
+    </tumaet-ui-message>
 </div>

@@ -458,7 +458,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.modePickerOptions = this.projectTypes?.map((projectType) => ({
             value: projectType,
             labelKey: 'artemisApp.programmingExercise.projectTypes.' + projectType.toString(),
-            btnClass: 'btn-secondary',
         }));
 
         if (languageChanged) {

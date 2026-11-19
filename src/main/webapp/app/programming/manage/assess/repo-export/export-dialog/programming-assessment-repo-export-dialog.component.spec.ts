@@ -13,10 +13,9 @@ import { ProgrammingAssessmentRepoExportService } from 'app/programming/manage/a
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDatePickerComponent, TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const createBlobHttpResponse = () => {
@@ -30,7 +29,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     let fixture: ComponentFixture<ProgrammingAssessmentRepoExportDialogComponent>;
     let exerciseService: ExerciseService;
     let repoExportService: ProgrammingAssessmentRepoExportService;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
 
     vi.spyOn(global.URL, 'createObjectURL').mockImplementation(() => 'http://some.test.com');
     vi.spyOn(global.URL, 'revokeObjectURL').mockImplementation(() => undefined);
@@ -58,8 +57,8 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
                 LocalStorageService,
-                { provide: DynamicDialogRef, useValue: mockDialogRef },
-                { provide: DynamicDialogConfig, useValue: { data: dialogConfigData } },
+                { provide: TumAetUiDialogRef, useValue: mockDialogRef },
+                { provide: TumAetUiDialogConfig, useValue: { data: dialogConfigData } },
                 MockProvider(ExerciseService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -73,7 +72,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 comp = fixture.componentInstance;
                 exerciseService = TestBed.inject(ExerciseService);
                 repoExportService = TestBed.inject(ProgrammingAssessmentRepoExportService);
-                dialogRef = TestBed.inject(DynamicDialogRef);
+                dialogRef = TestBed.inject(TumAetUiDialogRef);
 
                 // stubs
                 vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<Exercise>));

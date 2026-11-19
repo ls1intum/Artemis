@@ -69,7 +69,6 @@ import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 vi.mock('y-monaco', () => ({
@@ -140,7 +139,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                         initialSyncFinalized$: of({ contentChangedDuringFinalize: false, contentDivergedFromFallback: false, finalContent: '' }),
                     },
                 },
-                MockProvider(DialogService),
             ],
         })
             .overrideComponent(ProgrammingExerciseUpdateComponent, {

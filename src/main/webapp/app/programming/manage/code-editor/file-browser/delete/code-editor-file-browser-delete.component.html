@@ -1,27 +1,22 @@
-<form #deleteForm="ngForm" name="deleteForm" (ngSubmit)="deleteFile()">
-    <div class="modal-header">
-        @if (fileType() === 'FILE') {
-            <h4 class="modal-title" jhiTranslate="artemisApp.editor.fileBrowser.deleteFileTitle"></h4>
-        }
-        @if (fileType() === 'FOLDER') {
-            <h4 class="modal-title" jhiTranslate="artemisApp.editor.fileBrowser.deleteFolderTitle"></h4>
-        }
-        <button type="button" class="btn-close" data-dismiss="modal" (click)="closeModal()"></button>
-    </div>
-    <div class="modal-body">
-        @if (fileType() === 'FILE') {
-            <p class="text-danger" [innerHtml]="'artemisApp.editor.fileBrowser.deleteFileConfirm' | artemisTranslate: { filename: fileNameToDelete() }"></p>
-        }
-        @if (fileType() === 'FOLDER') {
-            <p class="text-danger" [innerHtml]="'artemisApp.editor.fileBrowser.deleteFolderConfirm' | artemisTranslate: { filename: fileNameToDelete() }"></p>
-        }
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="closeModal()">
-            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+<tumaet-ui-dialog
+    [(visible)]="visible"
+    size="large"
+    [header]="(fileType() === FileType.FOLDER ? 'artemisApp.editor.fileBrowser.deleteFolderTitle' : 'artemisApp.editor.fileBrowser.deleteFileTitle') | artemisTranslate"
+>
+    @if (fileType() === FileType.FILE) {
+        <p class="text-state-danger" [innerHtml]="'artemisApp.editor.fileBrowser.deleteFileConfirm' | artemisTranslate: { filename: fileNameToDelete() }"></p>
+    }
+    @if (fileType() === FileType.FOLDER) {
+        <p class="text-state-danger" [innerHtml]="'artemisApp.editor.fileBrowser.deleteFolderConfirm' | artemisTranslate: { filename: fileNameToDelete() }"></p>
+    }
+    <ng-template #footer>
+        <button type="button" tumAetUiButton severity="secondary" (click)="closeModal()">
+            <fa-icon [icon]="faBan" />
+            <span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button type="submit" class="btn btn-danger" [disabled]="!deleteForm.valid">
-            <fa-icon data-testid="delete-file" [icon]="faTrashAlt" />&nbsp;<span jhiTranslate="artemisApp.editor.fileBrowser.delete"></span>
+        <button type="button" tumAetUiButton severity="danger" [disabled]="isLoading()" (click)="deleteFile()">
+            <fa-icon data-testid="delete-file" [icon]="faTrashAlt" />
+            <span jhiTranslate="artemisApp.editor.fileBrowser.delete"></span>
         </button>
-    </div>
-</form>
+    </ng-template>
+</tumaet-ui-dialog>

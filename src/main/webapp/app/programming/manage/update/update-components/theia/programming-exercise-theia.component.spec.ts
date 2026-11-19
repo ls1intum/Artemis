@@ -93,8 +93,8 @@ describe('ProgrammingExerciseTheiaComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const options: HTMLOptionElement[] = Array.from(fixture.nativeElement.querySelectorAll('[data-testid="online-ide-experience-level"] option'));
-        expect(options).toHaveLength(4);
+        expect(fixture.nativeElement.querySelector('[data-testid="online-ide-experience-level"]')).not.toBeNull();
+        expect(comp.experienceLevelOptions()).toHaveLength(4);
         expect(comp.experienceLevels).toEqual([OnlineIdeExperienceLevel.BEGINNER, OnlineIdeExperienceLevel.ADVANCED, OnlineIdeExperienceLevel.EXPERT]);
         expect(comp.programmingExercise().buildConfig?.onlineIdeExperienceLevel).toBeUndefined();
     });
