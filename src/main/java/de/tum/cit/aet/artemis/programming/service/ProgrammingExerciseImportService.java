@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.hyperion.api.dtos.ParticipationReservation;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
@@ -362,9 +363,9 @@ public class ProgrammingExerciseImportService {
     }
 
     /**
-     * Applies the Security Framework choice to the copied tests repository. If the copied repository cannot be changed, e.g. because it uses Ares 1, the import
-     * still completes with the repository as copied; the client compares the resulting state with the choice and warns the instructor. A failure while
-     * pushing is not caught, because the repository state is unknown then.
+     * Applies the Security Framework choice to the copied tests repository. If the copied repository cannot be changed, e.g. because it uses Ares 1, or the
+     * change cannot be pushed, the import still completes, so the exercise gets its build plans and scheduled operations instead of being left half
+     * imported. The client reads the resulting state from the repository, compares it with the choice and warns the instructor.
      */
     private void applySecurityFrameworkChoice(ProgrammingExercise newExercise, SecurityFrameworkChoiceDTO securityFrameworkChoice, User user) {
         try {
@@ -372,6 +373,9 @@ public class ProgrammingExerciseImportService {
         }
         catch (BadRequestAlertException e) {
             log.warn("The Security Framework choice was not applied to the imported exercise {}: {}", newExercise.getId(), e.getMessage());
+        }
+        catch (InternalServerErrorAlertException e) {
+            log.error("The Security Framework choice could not be pushed to the tests repository of the imported exercise {}", newExercise.getId(), e);
         }
     }
 

@@ -1487,11 +1487,12 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     void testCreateProgrammingExerciseRejectsASecurityChoiceWithoutAction() throws Exception {
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.setTitle("Security choice without an action");
         ObjectNode body = objectMapper.valueToTree(CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()));
         body.set("securityFramework", objectMapper.createObjectNode().putNull("action"));
         long exercisesBefore = programmingExerciseRepository.count();
 
-        request.postWithResponseBody("/api/programming/programming-exercises/setup", body, ProgrammingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+        request.postAndExpectError("/api/programming/programming-exercises/setup", body, HttpStatus.BAD_REQUEST, "securityFrameworkChoiceIncomplete");
 
         assertThat(programmingExerciseRepository.count()).isEqualTo(exercisesBefore);
     }
@@ -1550,8 +1551,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         long exercisesBefore = programmingExerciseRepository.count();
         ObjectNode body = importBodyWithSecurityChoice(objectMapper.createObjectNode().putNull("action"), "secnoaction");
 
-        request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), body, ProgrammingExercise.class,
-                HttpStatus.BAD_REQUEST);
+        request.postAndExpectError("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), body, HttpStatus.BAD_REQUEST,
+                "securityFrameworkChoiceIncomplete");
 
         assertThat(programmingExerciseRepository.count()).isEqualTo(exercisesBefore);
     }

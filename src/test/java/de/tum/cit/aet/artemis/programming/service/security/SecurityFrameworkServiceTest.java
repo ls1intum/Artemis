@@ -454,12 +454,19 @@ class SecurityFrameworkServiceTest {
      * Pushes a change of the repository content, as an instructor would through git.
      */
     private void pushCheckoutChange(CheckoutChange change) throws Exception {
+        pushCheckoutChange("Change the repository by hand", change);
+    }
+
+    /**
+     * Pushes a change of the repository content with a commit message of its own, e.g. one that names a Security Framework action.
+     */
+    private void pushCheckoutChange(String message, CheckoutChange change) throws Exception {
         Path checkout = newDirectory("instructor-");
         try (Git git = Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(checkout.toFile()).call()) {
             change.apply(checkout);
             git.add().setUpdate(true).addFilepattern(".").call();
             git.add().addFilepattern(".").call();
-            GitService.commit(git).setMessage("Change the repository by hand").setAuthor("Instructor", "instructor@example.org").call();
+            GitService.commit(git).setMessage(message).setAuthor("Instructor", "instructor@example.org").call();
             git.push().call();
         }
     }
@@ -1228,12 +1235,47 @@ class SecurityFrameworkServiceTest {
 
     @Test
     void aDeactivationThatSwitchedNothingOffIsNoRestorePoint() throws Exception {
-        // Everything is switched off by hand, but the policy file stays; deactivating then only deletes the policy file.
+        // Everything is switched off by hand; a deactivation commit after that, e.g. one an earlier version made, switched nothing off.
         pushTestClassChange(source -> source.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION));
+        pushCheckoutChange("Deactivate the Ares security policy\n\nSecurity-Framework-Action: deactivate\n",
+                checkout -> FileUtils.writeStringToFile(checkout.resolve("README.md").toFile(), "Sorting exercise\n", StandardCharsets.UTF_8));
+        try (Git git = Git.open(remote.toFile())) {
+            assertThat(git.log().setMaxCount(1).call().iterator().next().getFullMessage()).contains("Security-Framework-Action: deactivate");
+        }
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        // Restoring that commit's parent would keep the test class switched off; skipping it switches every class on.
+        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
+        assertThat(readPushed("test/de/example/SortingTest.java")).contains(TEST_CLASS);
+    }
+
+    @Test
+    void aTestClassThatReplacedADisabledOneAtTheSamePathIsSwitchedOnByActivation() throws Exception {
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/ClassTest.java").toFile(),
+                SECOND_TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8));
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
         securityFrameworkService.deactivate(exercise, user);
+        // While the framework is off, another class replaces the deliberately disabled one in the same file.
+        String replacement = TEST_CLASS.replace("SortingTest", "ReplacementTest");
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/ClassTest.java").toFile(),
+                replacement.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8));
 
-        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
+        SecurityFrameworkConfigDTO config = securityFrameworkService.activate(exercise, "2.2.1", user);
+
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
+        assertThat(config.disabledTestClasses()).isEmpty();
+        assertThat(readPushed("test/de/example/ClassTest.java")).contains(replacement);
+    }
+
+    @Test
+    void deactivatingAnImportedExercisePinsTheRequestedVersionAlsoIfItIsInactiveAlready() throws Exception {
+        pushTestClassChange(source -> source.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        securityFrameworkService.applyChoiceToImportedExercise(exercise, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, "2.3.0"), user);
+
+        assertThat(readPushed("build.gradle")).hasValueSatisfying(content -> assertThat(content).contains("aresVersion = '2.3.0'"));
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
     }
 
     @Test

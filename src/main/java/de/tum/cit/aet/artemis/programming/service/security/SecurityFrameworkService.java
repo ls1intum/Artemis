@@ -493,8 +493,13 @@ public class SecurityFrameworkService {
     public void applyChoiceToImportedExercise(ProgrammingExercise exercise, SecurityFrameworkChoiceDTO choice, User user) {
         validateJavaExercise(exercise);
         if (choice.action() == SecurityFrameworkAction.DEACTIVATE) {
-            changeTestRepository(exercise, user, "Deactivate the Ares security policy for the imported exercise", DEACTIVATE_ACTION, false,
-                    SecurityFrameworkService::applyDeactivation);
+            changeTestRepository(exercise, user, "Deactivate the Ares security policy for the imported exercise", DEACTIVATE_ACTION, false, repository -> {
+                applyDeactivation(repository);
+                // The requested version applies also to an exercise that is already inactive; without one, the copied version stays.
+                if (choice.frameworkVersion() != null) {
+                    SecurityPolicyRepositoryFiles.writeAresVersion(repository.getLocalPath(), choice.frameworkVersion());
+                }
+            });
         }
         else {
             changeTestRepository(exercise, user, "Activate the Ares security policy for the imported exercise", "activate", false, repository -> {
@@ -661,7 +666,8 @@ public class SecurityFrameworkService {
 
     /**
      * Finds how the annotations were set before the most recent deactivation that actually switched something off, i.e. whose parent commit had at least
-     * one active annotation. A file that did not exist then is switched on.
+     * one active annotation. A test class is matched by its fully qualified name, so a class that replaced another one at the same path is not mistaken for
+     * it; a class that did not exist then is switched on.
      *
      * @return whether each annotation should be switched on, see {@link SecurityPolicyRepositoryFiles#annotationStates(Map)}: the annotation of a test method
      *         that did not exist then follows its class; all of them if the exercise was never deactivated by this service
@@ -682,9 +688,12 @@ public class SecurityFrameworkService {
                 }
                 Map<String, Boolean> states = SecurityPolicyRepositoryFiles.annotationStates(SecurityFrameworkCommitFiles.javaSources(repository, parent.getTree()));
                 if (states.containsValue(true)) {
-                    return (path, method) -> {
-                        boolean classActive = states.getOrDefault(SecurityPolicyRepositoryFiles.annotationKey(path, null), true);
-                        return method == null ? classActive : states.getOrDefault(SecurityPolicyRepositoryFiles.annotationKey(path, method), classActive);
+                    return (testClass, method) -> {
+                        if (testClass == null) {
+                            return true;
+                        }
+                        boolean classActive = states.getOrDefault(SecurityPolicyRepositoryFiles.annotationKey(testClass, null), true);
+                        return method == null ? classActive : states.getOrDefault(SecurityPolicyRepositoryFiles.annotationKey(testClass, method), classActive);
                     };
                 }
             }

@@ -43,12 +43,20 @@ final class AresTestSources {
 
     private static final Pattern SUPERCLASS = Pattern.compile("^\\s*+(?:<[^{]*?>\\s*+)?extends\\s+([\\p{javaJavaIdentifierPart}.]+)");
 
-    private static final String JUNIT_API_TEST = "@(?:org\\.junit\\.jupiter\\.api\\.)?(?:Test|RepeatedTest|TestFactory|TestTemplate)";
+    private static final String JUNIT_API_PACKAGE = "org.junit.jupiter.api";
 
-    private static final String JUNIT_PARAMETERIZED_TEST = "@(?:org\\.junit\\.jupiter\\.params\\.)?ParameterizedTest";
+    private static final String JUNIT_PARAMS_PACKAGE = "org.junit.jupiter.params";
 
-    /** A JUnit annotation that makes a method a test, with or without its package. */
-    private static final Pattern JUNIT_TEST_MARKER = Pattern.compile("(?:" + JUNIT_API_TEST + "|" + JUNIT_PARAMETERIZED_TEST + ")" + AresPolicyAnnotations.END_OF_IDENTIFIER);
+    /** The JUnit annotations that make a method a test, by their simple name, with their package. */
+    private static final Map<String, String> JUNIT_TEST_MARKERS = Map.of("Test", JUNIT_API_PACKAGE, "RepeatedTest", JUNIT_API_PACKAGE, "TestFactory", JUNIT_API_PACKAGE,
+            "TestTemplate", JUNIT_API_PACKAGE, "ParameterizedTest", JUNIT_PARAMS_PACKAGE);
+
+    /** The uses of each JUnit test annotation, by its simple name, compiled once. */
+    private static final Map<String, Pattern> JUNIT_TEST_MARKER_USES = JUNIT_TEST_MARKERS.entrySet().stream()
+            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, marker -> annotationUse(marker.getValue(), marker.getKey())));
+
+    /** The uses of JUnit's {@code @ExtendWith}. */
+    private static final Pattern EXTEND_WITH = annotationUse("org.junit.jupiter.api.extension", "ExtendWith");
 
     private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\p{javaJavaIdentifierPart}.]+)\\s*;");
 
@@ -93,7 +101,7 @@ final class AresTestSources {
             Stream.concat(ARES_CLASS_MARKERS.stream(), ARES_METHOD_MARKERS.stream()).map(marker -> JUPITER + marker)).collect(Collectors.toUnmodifiableSet());
 
     /** The {@code @} of an Ares marker and its optional package. */
-    private static final String MARKER_PREFIX = "@(" + Pattern.quote(ARES_JUPITER_PACKAGE + ".") + ")?";
+    private static final String MARKER_PREFIX = AresPolicyAnnotations.ANNOTATION_START + "(" + AresPolicyAnnotations.packagePrefix(ARES_JUPITER_PACKAGE) + ")?";
 
     /** The uses of each Ares marker, with or without its package, compiled once; a name ends where a Java identifier ends, so {@code @Public$Tag} is no {@code @Public}. */
     private static final Map<String, Pattern> MARKER_USES = Stream.of(ARES_CLASS_MARKERS.stream(), ARES_METHOD_MARKERS.stream(), Stream.of(UNSUPPORTED_ARES_MARKER))
@@ -251,16 +259,40 @@ final class AresTestSources {
      * Marks the declarations whose methods are JUnit tests.
      */
     private static void markJUnitTests(String masked, List<Declaration> declarations, int[] depth, boolean[] tests, List<SecurityFrameworkState.UnsupportedReasonType> problems) {
-        Matcher junitMarkers = JUNIT_TEST_MARKER.matcher(masked);
-        while (junitMarkers.find()) {
-            int owner = enclosingDeclaration(declarations, junitMarkers.start(), depth);
-            if (owner >= 0) {
-                tests[owner] = true;
+        JUNIT_TEST_MARKER_USES.forEach((simpleName, uses) -> {
+            String qualifiedName = JUNIT_TEST_MARKERS.get(simpleName) + "." + simpleName;
+            Matcher junitMarkers = uses.matcher(masked);
+            while (junitMarkers.find()) {
+                // A simple name that an import or a declaration of the file gives to another annotation does not make a test.
+                if (junitMarkers.group(1) == null && !simpleNameMayReferTo(masked, simpleName, qualifiedName, junitMarkers.start())) {
+                    continue;
+                }
+                int owner = enclosingDeclaration(declarations, junitMarkers.start(), depth);
+                if (owner >= 0) {
+                    tests[owner] = true;
+                }
+                else if (depth[junitMarkers.start()] > 0) {
+                    addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.TESTS_IN_NESTED_TYPE);
+                }
             }
-            else if (depth[junitMarkers.start()] > 0) {
-                addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.TESTS_IN_NESTED_TYPE);
+        });
+    }
+
+    /**
+     * Java resolves a simple type name first to a type the file declares, then to a single-type import, and only then to a type of the package or of a
+     * wildcard import (JLS 6.4.1, 7.5). Which types the package and the wildcard imports provide is not known here, so only the first two can rule a name out.
+     *
+     * @return whether the simple name used at the offset may refer to the type with the qualified name
+     */
+    private static boolean simpleNameMayReferTo(String masked, String simpleName, String qualifiedName, int offset) {
+        Matcher imports = SINGLE_TYPE_IMPORT.matcher(masked);
+        while (imports.find()) {
+            String imported = imports.group(1);
+            if (!imported.equals(qualifiedName) && imported.endsWith("." + simpleName)) {
+                return false;
             }
         }
+        return !AresPolicyAnnotations.isShadowedAt(masked, simpleName, offset);
     }
 
     /**
@@ -386,9 +418,42 @@ final class AresTestSources {
         boolean simpleNameIsAres = simpleNameRefersTo(masked, SECURITY_EXTENSION, ARES_JUPITER_PACKAGE + "." + SECURITY_EXTENSION);
         Matcher uses = SECURITY_EXTENSION_USE.matcher(masked);
         while (uses.find()) {
+            // Only an argument of @ExtendWith registers the extension; the class literal elsewhere, e.g. in a field, does not.
+            if (!isInExtendWith(masked, uses.start())) {
+                continue;
+            }
             boolean partOfLongerName = uses.start() > 0 && (Character.isJavaIdentifierPart(masked.charAt(uses.start() - 1)) || masked.charAt(uses.start() - 1) == '.');
             if (uses.group(1) != null || (simpleNameIsAres && !partOfLongerName && !AresPolicyAnnotations.isShadowedAt(masked, SECURITY_EXTENSION, uses.start()))) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param packageName the package of the annotation
+     * @param simpleName  the simple name of the annotation
+     * @return the uses of the annotation, with or without its package, which is the first group
+     */
+    private static Pattern annotationUse(String packageName, String simpleName) {
+        return Pattern.compile(AresPolicyAnnotations.ANNOTATION_START + "(" + AresPolicyAnnotations.packagePrefix(packageName) + ")?" + simpleName + END_OF_IDENTIFIER);
+    }
+
+    /**
+     * @return whether the offset lies in the argument list of an {@code @ExtendWith} annotation
+     */
+    private static boolean isInExtendWith(String masked, int offset) {
+        Matcher extendWith = EXTEND_WITH.matcher(masked);
+        while (extendWith.find() && extendWith.end() <= offset) {
+            int open = extendWith.end();
+            while (open < masked.length() && Character.isWhitespace(masked.charAt(open))) {
+                open++;
+            }
+            if (open < masked.length() && masked.charAt(open) == '(' && open < offset) {
+                int close = AresPolicyAnnotations.matchingParenthesis(masked, open);
+                if (close < 0 || offset < close) {
+                    return true;
+                }
             }
         }
         return false;

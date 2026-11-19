@@ -410,20 +410,20 @@ public final class SecurityPolicyRepositoryFiles {
     public interface AnnotationDecision {
 
         /**
-         * @param path   the path of the Java file, relative to the repository root with forward slashes
-         * @param method the test method the annotation is on; null for the annotation of the class
+         * @param testClass the fully qualified name of the test class of the Java file; null if the file has none
+         * @param method    the test method the annotation is on; null for the annotation of the class
          * @return whether the annotation should enforce its policy
          */
-        boolean isActive(String path, @Nullable String method);
+        boolean isActive(@Nullable String testClass, @Nullable String method);
     }
 
     /**
-     * @param path   the path of a Java file, relative to the repository root with forward slashes
-     * @param method the test method of an annotation; null for the annotation of the class
+     * @param testClass the fully qualified name of a test class
+     * @param method    the test method of an annotation; null for the annotation of the class
      * @return the key of the annotation in {@link #annotationStates(Map)}
      */
-    public static String annotationKey(String path, @Nullable String method) {
-        return method == null ? path : path + SecurityTestAssignments.METHOD_SEPARATOR + method;
+    public static String annotationKey(String testClass, @Nullable String method) {
+        return method == null ? testClass : testClass + SecurityTestAssignments.METHOD_SEPARATOR + method;
     }
 
     /**
@@ -435,10 +435,10 @@ public final class SecurityPolicyRepositoryFiles {
         Map<String, Boolean> states = new TreeMap<>();
         javaSources.forEach((path, source) -> AresTestSources.relevantType(AresTestSources.analyze(path, source))
                 .filter(type -> type.policies().size() == 1 && type.policies().getFirst().isEvaluable()).ifPresent(type -> {
-                    states.put(annotationKey(path, null), type.policies().getFirst().isActivated());
+                    states.put(annotationKey(type.qualifiedName(), null), type.policies().getFirst().isActivated());
                     type.methodPolicies().forEach((method, annotation) -> {
                         if (annotation.isEvaluable()) {
-                            states.put(annotationKey(path, method), annotation.isActivated());
+                            states.put(annotationKey(type.qualifiedName(), method), annotation.isActivated());
                         }
                     });
                 }));
@@ -662,7 +662,8 @@ public final class SecurityPolicyRepositoryFiles {
 
     /**
      * Switches the Ares {@code @Policy} annotations of each Java file on or off, as decided per annotation: for the annotation of the test class and for
-     * the one of each test method, so that a switched-off test method stays so when its class is switched on again. The Security Framework only changes
+     * the one of each test method, so that a switched-off test method stays so when its class is switched on again. A test class is identified by its
+     * fully qualified name, so a class that replaced another one in the same file is not mistaken for it. The Security Framework only changes
      * repositories in which every file has at most one relevant top-level type, see {@link AresTestSources}; any other annotation of a file follows the
      * decision for its class.
      *
@@ -675,10 +676,11 @@ public final class SecurityPolicyRepositoryFiles {
         for (Path javaFile : javaFiles(repositoryRoot)) {
             String content = readFile(javaFile);
             String path = repositoryRoot.relativize(javaFile).toString().replace('\\', '/');
+            Optional<AresTestSources.TypeDeclaration> testClass = AresTestSources.relevantType(AresTestSources.analyze(path, content));
             Map<Integer, String> methodsByOffset = new HashMap<>();
-            AresTestSources.relevantType(AresTestSources.analyze(path, content))
-                    .ifPresent(type -> type.methodPolicies().forEach((method, annotation) -> methodsByOffset.put(annotation.start(), method)));
-            String updated = AresPolicyAnnotations.setActive(content, annotation -> decision.isActive(path, methodsByOffset.get(annotation.start())));
+            testClass.ifPresent(type -> type.methodPolicies().forEach((method, annotation) -> methodsByOffset.put(annotation.start(), method)));
+            String qualifiedName = testClass.map(AresTestSources.TypeDeclaration::qualifiedName).orElse(null);
+            String updated = AresPolicyAnnotations.setActive(content, annotation -> decision.isActive(qualifiedName, methodsByOffset.get(annotation.start())));
             if (writeIfChanged(javaFile, content, updated)) {
                 changedFiles++;
             }
