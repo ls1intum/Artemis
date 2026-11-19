@@ -514,12 +514,31 @@ public class ProgrammingExerciseValidationService {
             BuildPlanPhasesDTO buildPlan = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration);
             // The JSON text null has no content to check, and the validation of the build phases rejects it
             if (buildPlan != null) {
-                validateDockerImageRegistry(buildPlan.dockerImage());
+                validateDockerImageRegistries(buildPlan);
             }
         }
         catch (JacksonException e) {
             // an unreadable configuration is rejected by the validation of the build phases
             log.debug("The Docker image registry was not checked, because the build plan configuration could not be read", e);
+        }
+    }
+
+    /**
+     * Checks that the Docker image of the build plan and the image every build container sets for itself come from one of
+     * the registries in {@code artemis.continuous-integration.allowed-docker-registries}.
+     *
+     * @param buildPlan the build plan whose images are checked
+     */
+    public void validateDockerImageRegistries(BuildPlanPhasesDTO buildPlan) {
+        validateDockerImageRegistry(buildPlan.dockerImage());
+        if (buildPlan.containers() == null) {
+            return;
+        }
+        for (BuildContainerDTO container : buildPlan.containers()) {
+            // a null container is rejected by the validation of the build plan
+            if (container != null) {
+                validateDockerImageRegistry(container.dockerImage());
+            }
         }
     }
 

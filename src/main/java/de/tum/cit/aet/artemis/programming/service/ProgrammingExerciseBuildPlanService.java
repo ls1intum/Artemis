@@ -171,7 +171,7 @@ public class ProgrammingExerciseBuildPlanService {
         BuildPlanConfigurationValidator.validate(buildPlanConfiguration.buildPlan(), buildPlanConfiguration.timeoutSeconds());
         // a blank top-level image would be persisted verbatim and leave a legacy configuration with an unusable image
         validateDockerImage(buildPlanConfiguration.buildPlan().dockerImage());
-        programmingExerciseValidationService.validateDockerImageRegistry(buildPlanConfiguration.buildPlan().dockerImage());
+        programmingExerciseValidationService.validateDockerImageRegistries(buildPlanConfiguration.buildPlan());
 
         final String originalBuildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
         final String serializedBuildPlanConfiguration = buildPlanConfiguration.buildPlan().toBuildPlanConfiguration();

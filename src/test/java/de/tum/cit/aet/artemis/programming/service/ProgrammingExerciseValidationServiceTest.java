@@ -518,6 +518,24 @@ class ProgrammingExerciseValidationServiceTest {
     }
 
     @Test
+    void validateDockerImageRegistry_checksTheImageOfEveryBuildContainer() {
+        validationService = serviceWithAllowedRegistries("ghcr.io");
+        var phase = new BuildPhaseDTO("test", "echo test", null, false, List.of());
+        var allowed = new BuildContainerDTO("instructor_tests", "ghcr.io/ls1intum/image", List.of(phase));
+        var withDefaultImage = new BuildContainerDTO("compile", null, List.of(phase));
+        var notAllowed = new BuildContainerDTO("student_tests", "quay.io/team/image", List.of(phase));
+        var acceptedConfig = new ProgrammingExerciseBuildConfig();
+        acceptedConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, "ghcr.io/ls1intum/image", List.of(allowed, withDefaultImage)).toBuildPlanConfiguration());
+        var rejectedConfig = new ProgrammingExerciseBuildConfig();
+        // the plan's own image is allowed, so only the container's image can be the reason for the rejection
+        rejectedConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, "ghcr.io/ls1intum/image", List.of(allowed, notAllowed)).toBuildPlanConfiguration());
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry(acceptedConfig)).doesNotThrowAnyException();
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerImageRegistry(rejectedConfig))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("dockerImageRegistryNotAllowed"));
+    }
+
+    @Test
     void validateDockerImageRegistry_normalizesTheEntriesOfTheList() {
         validationService = serviceWithAllowedRegistries("HTTPS://Registry.Example.org/", "http://other.example.org//", "registry-1.docker.io");
 
