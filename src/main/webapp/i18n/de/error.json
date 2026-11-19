@@ -404,6 +404,7 @@
         "fileReadError": "Beim Lesen der Dateien des betreffenden Commits ist ein Fehler aufgetreten. Bitte versuche es erneut.",
         "buildConfigMissing": "Die Build-Konfiguration der Programmieraufgabe fehlt.",
         "blankDockerImage": "Das Docker-Image darf nicht leer sein.",
+        "dockerImageRegistryNotAllowed": "Das Docker-Image stammt aus einer Registry, die auf diesem Server nicht erlaubt ist. Verwende ein Image aus einer der Registries, die deine Administration konfiguriert hat.",
         "noBuildPhases": "Der Build-Plan muss mindestens eine Build-Phase enthalten.",
         "invalidBuildPhaseName": "Ein Build-Phasenname ist ungültig oder verwendet einen reservierten Namen. Bitte wähle einen anderen Namen.",
         "duplicateBuildPhaseNames": "Build-Phasennamen müssen eindeutig sein.",

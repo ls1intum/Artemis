@@ -25,7 +25,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
@@ -39,7 +39,6 @@ import { CommonSpreadsheetCellObject } from 'app/shared-ui/export/row-builder/ex
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { PlagiarismCaseDTO } from 'app/plagiarism/shared/entities/PlagiarismCase';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -282,7 +281,6 @@ describe('CourseScoresComponent', () => {
             .overrideComponent(CourseScoresComponent, {
                 set: {
                     imports: [
-                        MockModule(NgbTooltipModule),
                         NgClass,
                         MockComponent(FaIconComponent),
                         MockComponent(ParticipantScoresDistributionComponent),

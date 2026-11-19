@@ -120,6 +120,13 @@ public class BuildJobGitService extends AbstractGitService {
     private Optional<String> sshUrlTemplate;
 
     /**
+     * What to do when the SSH host key of the core node cannot be compared with the fingerprints that the core node publishes: {@code if-available} (the default)
+     * continues with a warning, {@code required} fails the clone. A host key that differs from the published fingerprints is always refused.
+     */
+    @Value("${artemis.version-control.ssh-host-key-verification:if-available}")
+    private String sshHostKeyVerification;
+
+    /**
      * Per-transport-phase JGit timeout (in seconds) for build-agent SSH clones. The previous hardcoded value of 5
      * seconds tripped on multi-repo (auxiliary-repository) builds, where every SSH read pays per-command
      * authorization and can legitimately take longer than that.
@@ -203,6 +210,8 @@ public class BuildJobGitService extends AbstractGitService {
     protected void configureSsh() {
         CredentialsProvider.setDefault(new CustomCredentialsProvider());
         final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, localVCBaseUri);
+        final var hostKeyDatabase = new PublishedHostKeyDatabase(new PublishedFingerprintsFetcher(localVCBaseUri), PublishedHostKeyDatabase.Mode.parse(sshHostKeyVerification));
+        sshSessionFactoryBuilder.setServerKeyDatabase((homeDir, sshDir) -> hostKeyDatabase);
         jgitKeyCache = new JGitKeyCache();
         sshdSessionFactory = sshSessionFactoryBuilder.build(jgitKeyCache);
         sshCallback = transport -> {
@@ -241,11 +250,8 @@ public class BuildJobGitService extends AbstractGitService {
      * Custom credentials provider for SSH authentication.
      * <p>
      * This provider automatically accepts host key verification prompts (YesNoType credentials),
-     * which allows connecting to new hosts without manual confirmation. This is necessary for
-     * automated build agents that may connect to various Git servers.
-     * <p>
-     * <b>Security Note:</b> This trusts all host keys, which is acceptable in controlled
-     * environments but should be used with caution in untrusted networks.
+     * which allows connecting to new hosts without manual confirmation. The host key of the core node
+     * is checked before that by {@link PublishedHostKeyDatabase}, so no prompt reaches this provider for it.
      */
     static class CustomCredentialsProvider extends CredentialsProvider {
 
