@@ -30,6 +30,7 @@ import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
 import com.openai.client.OpenAIClient;
+import com.openai.core.JsonField;
 import com.openai.core.JsonValue;
 import com.openai.models.ResponsesModel;
 import com.openai.models.responses.Response;
@@ -181,6 +182,7 @@ class AtlasWorkerResponsesTest {
         when(response.status()).thenReturn(Optional.of(ResponseStatus.COMPLETED));
         if (knownUsage) {
             var usage = mock(ResponseUsage.class);
+            when(usage._inputTokensDetails()).thenReturn(JsonField.ofNullable(null));
             when(usage.inputTokens()).thenReturn(10L);
             when(usage.outputTokens()).thenReturn(2L);
             when(usage.totalTokens()).thenReturn(12L);

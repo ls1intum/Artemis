@@ -34,6 +34,7 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.function.FunctionToolCallback;
 
 import com.openai.client.OpenAIClient;
+import com.openai.core.JsonField;
 import com.openai.core.JsonValue;
 import com.openai.errors.OpenAIInvalidDataException;
 import com.openai.models.ChatModel;
@@ -304,6 +305,7 @@ class AtlasResponsesChatModelTest {
     void missingRequiredUsageCounterReturnsUnknownTerminalResponse(String field) {
         var invalid = response(List.of(ResponseOutputItem.ofFunctionCall(functionCall())), "missing-counter");
         var usage = mock(com.openai.models.responses.ResponseUsage.class);
+        lenient().when(usage._inputTokensDetails()).thenReturn(JsonField.ofNullable(null));
         lenient().when(usage.inputTokens()).thenReturn(10L);
         lenient().when(usage.outputTokens()).thenReturn(2L);
         lenient().when(usage.totalTokens()).thenReturn(12L);
@@ -445,6 +447,7 @@ class AtlasResponsesChatModelTest {
 
     private static void withUsage(Response response, long input, long output) {
         var usage = mock(com.openai.models.responses.ResponseUsage.class);
+        when(usage._inputTokensDetails()).thenReturn(JsonField.ofNullable(null));
         when(usage.inputTokens()).thenReturn(input);
         when(usage.outputTokens()).thenReturn(output);
         when(usage.totalTokens()).thenReturn(input + output);

@@ -342,7 +342,10 @@ public final class AtlasResponsesChatModel implements ChatModel {
     }
 
     private static DefaultUsage toUsage(ResponseUsage usage) {
-        return new DefaultUsage(Math.toIntExact(usage.inputTokens()), Math.toIntExact(usage.outputTokens()), Math.toIntExact(usage.totalTokens()), usage);
+        var details = usage._inputTokensDetails().asKnown().orElse(null);
+        Long cacheRead = details == null ? null : details._cachedTokens().asKnown().orElse(null);
+        Long cacheWrite = details == null ? null : details._cacheWriteTokens().asKnown().orElse(null);
+        return new DefaultUsage(Math.toIntExact(usage.inputTokens()), Math.toIntExact(usage.outputTokens()), Math.toIntExact(usage.totalTokens()), usage, cacheRead, cacheWrite);
     }
 
     private static IllegalArgumentException unsupported(String kind) {
