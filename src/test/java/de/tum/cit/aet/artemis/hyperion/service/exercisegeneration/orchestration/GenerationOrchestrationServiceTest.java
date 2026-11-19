@@ -264,7 +264,7 @@ class GenerationOrchestrationServiceTest {
         deliveries.add(event(2, WorkerEvent.Type.PROGRESS, null).withProgress(new GenerationProgress(null, repair, null, null)));
         var file = new GenerationProgress.FileChange("solution/src/App.java", "write", 3, Instant.now(), "class App {}");
         deliveries.add(event(3, WorkerEvent.Type.PROGRESS, null).withProgress(new GenerationProgress(null, null, file, null)));
-        var call = new ProviderUsageUpdate.Call("model", "request-1", 30, 10, 5L);
+        var call = new ProviderUsageUpdate.Call("model", "request-1", 30, 10, 5L, null);
         WorkerEvent response = event(4, WorkerEvent.Type.PROGRESS, null)
                 .withProgress(new GenerationProgress(null, null, null, new ProviderUsageUpdate(ProviderUsageUpdate.Kind.RESPONSE, 0, call)));
         deliveries.add(response);
@@ -297,7 +297,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void matchingCompleteAccountDoesNotGetMarkedUncertainButMismatchedTotalsDo() {
-        var reported = new GenerationUsage(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true);
+        var reported = new GenerationUsage(1, 2, 1, 1, 30, 10, 5, true, List.of("model"), List.of("request-1"), true);
         var status = mock(ExerciseGenerationStatusDTO.class);
         when(status.usage()).thenReturn(new ExerciseGenerationUsageDTO(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true));
         when(jobs.getStatus(user, exercise)).thenReturn(Optional.of(status));
@@ -316,7 +316,7 @@ class GenerationOrchestrationServiceTest {
     void earlySpecificationFailurePreservesCompleteAccountingWithoutRepositoryCapture() {
         var binary = new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { 0, 1, 2 }, false);
         when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of(), Set.of())));
-        var reported = new GenerationUsage(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true);
+        var reported = new GenerationUsage(1, 2, 1, 1, 30, 10, 5, true, List.of("model"), List.of("request-1"), true);
         var status = mock(ExerciseGenerationStatusDTO.class);
         when(status.usage()).thenReturn(new ExerciseGenerationUsageDTO(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true));
         when(jobs.getStatus(user, exercise)).thenReturn(Optional.of(status));
@@ -335,7 +335,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void rejectingTerminalArtifactsDoesNotInvalidateReconciledAccounting() {
-        var reported = new GenerationUsage(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true);
+        var reported = new GenerationUsage(1, 2, 1, 1, 30, 10, 5, true, List.of("model"), List.of("request-1"), true);
         var status = mock(ExerciseGenerationStatusDTO.class);
         when(status.usage()).thenReturn(new ExerciseGenerationUsageDTO(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true));
         when(jobs.getStatus(user, exercise)).thenReturn(Optional.of(status));
@@ -357,7 +357,7 @@ class GenerationOrchestrationServiceTest {
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(strings = { "modelCalls", "toolCalls", "turns", "attempts", "input", "output", "cache", "requests", "models" })
     void everyAccountingMismatchKeepsProviderUsagePermanentlyUncertain(String field) {
-        var reported = new GenerationUsage(1, 2, 3, 4, 30, 10, 5, true, 0, false, List.of("model"), List.of("request"), true);
+        var reported = new GenerationUsage(1, 2, 3, 4, 30, 10, 5, true, List.of("model"), List.of("request"), true);
         var recorded = new ExerciseGenerationUsageDTO(field.equals("modelCalls") ? 9 : 1, field.equals("toolCalls") ? 9 : 2, field.equals("turns") ? 9 : 3,
                 field.equals("attempts") ? 9 : 4, field.equals("input") ? 31 : 30, field.equals("output") ? 11 : 10, field.equals("cache") ? 6 : 5, true, 0, false,
                 List.of(field.equals("models") ? "other" : "model"), List.of(field.equals("requests") ? "other" : "request"), true);
