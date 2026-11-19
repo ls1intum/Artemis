@@ -276,7 +276,7 @@ class HyperionCodeGenerationServiceTest {
         Map<String, Object> templateVariables = Map.of("key", "value");
         String modelName = "gpt-5-mini-2025-08-07";
         String pipelineId = "HYPERION_CODE_GENERATION_SOLUTION_TEST_TEMPLATE";
-        LLMRequest llmRequest = new LLMRequest(modelName, 11, 0.23f, 7, 1.84f, pipelineId);
+        LLMRequest llmRequest = new LLMRequest(modelName, 11, 7, pipelineId);
 
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse, modelName, 11, 7));
@@ -327,7 +327,7 @@ class HyperionCodeGenerationServiceTest {
         Map<String, Object> templateVariables = Map.of("key", "value");
         String modelName = "gpt-5-mini-2025-08-07";
         String pipelineId = "HYPERION_CODE_GENERATION_SOLUTION_TEST_TEMPLATE";
-        LLMRequest llmRequest = new LLMRequest(modelName, 11, 0.23f, 7, 1.84f, pipelineId);
+        LLMRequest llmRequest = new LLMRequest(modelName, 11, 7, pipelineId);
 
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse, modelName, 11, 7));
@@ -381,7 +381,7 @@ class HyperionCodeGenerationServiceTest {
         String modelName = "gpt-5-mini-2025-08-07";
         String promptPath = "/prompts/hyperion/solution/1_plan.st";
         String pipelineId = "HYPERION_CODE_GENERATION_SOLUTION_1_PLAN";
-        LLMRequest llmRequest = new LLMRequest(modelName, 11, 0.23f, 7, 1.84f, pipelineId);
+        LLMRequest llmRequest = new LLMRequest(modelName, 11, 7, pipelineId);
 
         when(templates.renderObject(promptPath, templateVariables)).thenReturn("rendered prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse, modelName, 11, 7));

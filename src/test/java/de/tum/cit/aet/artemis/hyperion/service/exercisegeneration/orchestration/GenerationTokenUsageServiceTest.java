@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -37,10 +38,10 @@ class GenerationTokenUsageServiceTest {
     }
 
     @ParameterizedTest
-    @CsvSource({ "0,PROVIDER", "0,CONFIGURATION", "0.000123,PROVIDER", "0.000123,CONFIGURATION" })
-    void reportedUsdCostWinsWithoutConfiguredPricesOrCacheSplit(double cost, String source) {
+    @ValueSource(doubles = { 0, 0.000123 })
+    void reportedUsdCostWinsWithoutConfiguredPricesOrCacheSplit(double cost) {
         var response = de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderUsageTransport
-                .restore(new de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate.Call("unknown", "request", 10, 2, null, cost, source));
+                .restore(new de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate.Call("unknown", "request", 10, 2, null, cost));
         var observed = new java.util.concurrent.atomic.AtomicReference<GenerationUsage>();
 
         assertThat(llmTokenUsageService.trackChatResponseTokenUsage(response, de.tum.cit.aet.artemis.admin.domain.LLMServiceType.HYPERION, "generation", builder -> builder,
@@ -48,33 +49,12 @@ class GenerationTokenUsageServiceTest {
 
         assertThat(observed.get().costUsd()).isEqualTo(cost);
         assertThat(observed.get().costUsdComplete()).isTrue();
-        assertThat(observed.get().costSource()).isEqualTo(source);
         org.mockito.ArgumentCaptor<java.util.List<de.tum.cit.aet.artemis.admin.domain.LLMRequest>> saved = org.mockito.ArgumentCaptor.captor();
         org.mockito.Mockito.verify(persistence).saveLLMTokenUsage(saved.capture(), org.mockito.ArgumentMatchers.eq(de.tum.cit.aet.artemis.admin.domain.LLMServiceType.HYPERION),
                 org.mockito.ArgumentMatchers.any());
         assertThat(saved.getValue()).singleElement().satisfies(request -> {
             assertThat(request.totalCostUsd()).isEqualTo(cost);
-            assertThat(request.costSource()).isEqualTo(source);
         });
-    }
-
-    @Test
-    void legacyEurPricesAreNeverReinterpretedAsUsd() {
-        var properties = new GenerationModelCostConfiguration.ModelCostProperties();
-        properties.setInputCostPerMillionEur(2);
-        properties.setOutputCostPerMillionEur(4);
-        properties.setCachedInputCostPerMillionEur(0.5f);
-        var configuration = new GenerationModelCostConfiguration();
-        configuration.setModelCosts(Map.of("model", properties));
-        var service = new GenerationTokenUsageService(persistence, configuration);
-
-        var request = service.buildLLMRequest("model", 10, 3, "generation", null, 8L);
-
-        assertThat(request.costUsdComplete()).isFalse();
-        assertThat(request.costUsd()).isZero();
-        assertThat(request.costSource()).isNull();
-        assertThat(request.costPerMillionInputToken()).isEqualTo(2);
-        assertThat(request.costPerMillionCachedInputToken()).isEqualTo(0.5f);
     }
 
     @Test
@@ -83,7 +63,6 @@ class GenerationTokenUsageServiceTest {
 
         assertThat(request.costUsdComplete()).isFalse();
         assertThat(request.costUsd()).isEqualTo(14d / 1_000_000);
-        assertThat(request.costSource()).isNull();
     }
 
     @Test
@@ -127,30 +106,27 @@ class GenerationTokenUsageServiceTest {
 
     @Test
     void buildLLMRequest_withDashedDateSuffix_usesConfiguredCost() {
-        GenerationUsage request = llmTokenUsageService.buildLLMRequest("gpt-5-mini-2025-08-07", 11, 7, "PIPE");
+        GenerationUsage request = llmTokenUsageService.buildLLMRequest("gpt-5-mini-2025-08-07", 11, 7, "PIPE", null, 0L);
 
         assertThat(request.model()).isEqualTo("gpt-5-mini-2025-08-07");
         assertThat(request.numInputTokens()).isEqualTo(11);
         assertThat(request.numOutputTokens()).isEqualTo(7);
-        assertThat(request.costPerMillionInputToken()).isEqualTo(0.23f);
-        assertThat(request.costPerMillionOutputToken()).isEqualTo(1.84f);
+        assertThat(request.costUsd()).isEqualTo(0.00001675);
         assertThat(request.pipelineId()).isEqualTo("PIPE");
     }
 
     @Test
     void buildLLMRequest_withDateSuffixWithoutSeparator_usesConfiguredCost() {
-        GenerationUsage request = llmTokenUsageService.buildLLMRequest("gpt-5-mini2025-08-07", 11, 7, "PIPE");
+        GenerationUsage request = llmTokenUsageService.buildLLMRequest("gpt-5-mini2025-08-07", 11, 7, "PIPE", null, 0L);
 
-        assertThat(request.costPerMillionInputToken()).isEqualTo(0.23f);
-        assertThat(request.costPerMillionOutputToken()).isEqualTo(1.84f);
+        assertThat(request.costUsd()).isEqualTo(0.00001675);
     }
 
     @Test
     void buildLLMRequest_withDashlessVariant_usesStrippedFallback() {
-        GenerationUsage request = llmTokenUsageService.buildLLMRequest("gpt5mini-2025-08-07", 11, 7, "PIPE");
+        GenerationUsage request = llmTokenUsageService.buildLLMRequest("gpt5mini-2025-08-07", 11, 7, "PIPE", null, 0L);
 
-        assertThat(request.costPerMillionInputToken()).isEqualTo(0.23f);
-        assertThat(request.costPerMillionOutputToken()).isEqualTo(1.84f);
+        assertThat(request.costUsd()).isEqualTo(0.00001675);
     }
 
     @Test
@@ -159,34 +135,29 @@ class GenerationTokenUsageServiceTest {
         // The runtime model name "gpt-5.4" must still resolve to that cost via the stripped fallback.
         GenerationModelCostConfiguration configuration = new GenerationModelCostConfiguration();
         GenerationModelCostConfiguration.ModelCostProperties dottedModel = new GenerationModelCostConfiguration.ModelCostProperties();
-        dottedModel.setInputCostPerMillionEur(2.30f);
-        dottedModel.setOutputCostPerMillionEur(13.80f);
+        dottedModel.setInputCostPerMillionUsd(2.5f);
+        dottedModel.setOutputCostPerMillionUsd(15f);
         configuration.setModelCosts(Map.of("gpt54", dottedModel));
         GenerationTokenUsageService service = new GenerationTokenUsageService(persistence, configuration);
 
-        GenerationUsage request = service.buildLLMRequest("gpt-5.4", 11, 7, "PIPE");
+        GenerationUsage request = service.buildLLMRequest("gpt-5.4", 11, 7, "PIPE", null, 0L);
 
-        assertThat(request.costPerMillionInputToken()).isEqualTo(2.30f);
-        assertThat(request.costPerMillionOutputToken()).isEqualTo(13.80f);
+        assertThat(request.costUsd()).isEqualTo(0.0001325);
     }
 
     @Test
-    void buildLLMRequest_withUnknownModel_returnsZeroCosts() {
-        GenerationUsage request = llmTokenUsageService.buildLLMRequest("unknown-model-2025-08-07", 11, 7, "PIPE");
+    void buildLLMRequest_withUnknownModel_remainsUnpriced() {
+        GenerationUsage request = llmTokenUsageService.buildLLMRequest("unknown-model-2025-08-07", 11, 7, "PIPE", null, 0L);
 
-        assertThat(request.costPerMillionInputToken()).isEqualTo(0.0f);
-        assertThat(request.costPerMillionOutputToken()).isEqualTo(0.0f);
+        assertThat(request.costUsd()).isZero();
+        assertThat(request.costUsdComplete()).isFalse();
     }
 
     @Test
     void constructor_withStrippedModelCostCollision_throwsIllegalStateException() {
         GenerationModelCostConfiguration configuration = new GenerationModelCostConfiguration();
         GenerationModelCostConfiguration.ModelCostProperties dashedModel = new GenerationModelCostConfiguration.ModelCostProperties();
-        dashedModel.setInputCostPerMillionEur(0.23f);
-        dashedModel.setOutputCostPerMillionEur(1.84f);
         GenerationModelCostConfiguration.ModelCostProperties dashlessModel = new GenerationModelCostConfiguration.ModelCostProperties();
-        dashlessModel.setInputCostPerMillionEur(0.10f);
-        dashlessModel.setOutputCostPerMillionEur(0.20f);
         configuration.setModelCosts(Map.of("gpt-5-mini", dashedModel, "gpt5-mini", dashlessModel));
 
         assertThatThrownBy(() -> new GenerationTokenUsageService(persistence, configuration)).isInstanceOf(IllegalStateException.class).hasMessageContaining("gpt-5-mini")
@@ -196,8 +167,6 @@ class GenerationTokenUsageServiceTest {
     private static GenerationModelCostConfiguration createCostConfiguration() {
         GenerationModelCostConfiguration costConfiguration = new GenerationModelCostConfiguration();
         GenerationModelCostConfiguration.ModelCostProperties modelCostProperties = new GenerationModelCostConfiguration.ModelCostProperties();
-        modelCostProperties.setInputCostPerMillionEur(0.23f);
-        modelCostProperties.setOutputCostPerMillionEur(1.84f);
         modelCostProperties.setInputCostPerMillionUsd(0.25f);
         modelCostProperties.setOutputCostPerMillionUsd(2f);
         costConfiguration.setModelCosts(Map.of("gpt-5-mini", modelCostProperties));
@@ -209,17 +178,12 @@ class GenerationTokenUsageServiceTest {
         var service = new GenerationTokenUsageService(persistence, new GenerationModelCostConfiguration());
         var request = service.buildLLMRequest("gpt-5.4", 10, 3, "generation", null, 0L);
         assertThat(request.costUsdComplete()).isFalse();
-        assertThat(request.costPerMillionInputToken()).isZero();
-        assertThat(request.costPerMillionOutputToken()).isZero();
     }
 
     @Test
-    void persistsCacheUsageAndOriginalRates() {
+    void persistsCacheUsageAndUsdEstimate() {
         var config = new GenerationModelCostConfiguration();
         var rate = new GenerationModelCostConfiguration.ModelCostProperties();
-        rate.setInputCostPerMillionEur(2f);
-        rate.setOutputCostPerMillionEur(4f);
-        rate.setCachedInputCostPerMillionEur(0.5f);
         rate.setInputCostPerMillionUsd(2f);
         rate.setOutputCostPerMillionUsd(4f);
         rate.setCachedInputCostPerMillionUsd(0.5f);
@@ -244,16 +208,11 @@ class GenerationTokenUsageServiceTest {
             assertThat(request.numInputTokens()).isEqualTo(10);
             assertThat(request.numOutputTokens()).isEqualTo(3);
             assertThat(request.numCachedInputTokens()).isEqualTo(8);
-            assertThat(request.costPerMillionInputToken()).isEqualTo(2f);
-            assertThat(request.costPerMillionCachedInputToken()).isEqualTo(0.5f);
-            assertThat(request.costPerMillionOutputToken()).isEqualTo(4f);
             assertThat(request.numCacheWriteInputTokens()).isZero();
-            double persistedCost = ((request.numInputTokens() - request.numCachedInputTokens()) * request.costPerMillionInputToken()
-                    + request.numCachedInputTokens() * request.costPerMillionCachedInputToken() + request.numOutputTokens() * request.costPerMillionOutputToken()) / 1_000_000.0;
+            double persistedCost = request.totalCostUsd();
             assertThat(persistedCost).isCloseTo(0.000020, org.assertj.core.api.Assertions.within(0.000000001));
             assertThat(persistedCost).isEqualTo(observed.get().costUsd());
         });
-        assertThat(observed.get().costPerMillionInputToken()).isEqualTo(2f);
         assertThat(observed.get().numCachedInputTokens()).isEqualTo(8L);
         assertThat(observed.get().costUsdComplete()).isTrue();
     }
@@ -323,9 +282,9 @@ class GenerationTokenUsageServiceTest {
 
     @Test
     void zeroTokenUnknownModelIsCompleteAndOutputOnlyUsageNeedsOnlyOutputPrice() {
-        assertThat(llmTokenUsageService.buildLLMRequest(null, 0, 0, "PIPE").costUsdComplete()).isTrue();
-        assertThat(llmTokenUsageService.buildLLMRequest("gpt-5-mini", 0, 10, "PIPE").costUsdComplete()).isTrue();
-        assertThat(llmTokenUsageService.buildLLMRequest("unknown", 0, 10, "PIPE").costUsdComplete()).isFalse();
+        assertThat(llmTokenUsageService.buildLLMRequest(null, 0, 0, "PIPE", null, null).costUsdComplete()).isTrue();
+        assertThat(llmTokenUsageService.buildLLMRequest("gpt-5-mini", 0, 10, "PIPE", null, 0L).costUsdComplete()).isTrue();
+        assertThat(llmTokenUsageService.buildLLMRequest("unknown", 0, 10, "PIPE", null, 0L).costUsdComplete()).isFalse();
     }
 
 }

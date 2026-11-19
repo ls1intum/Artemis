@@ -65,20 +65,18 @@ class CourseStatsServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @ParameterizedTest
-    @CsvSource({ "0,false", "0.002,false", "0,true" })
+    @CsvSource({ "0,false", "0.002000135,false", "0,true" })
     void consistencyCallsWithoutUsageRemainUnpricedInCourseTotals(double knownCallCost, boolean allUnknown) {
         var course = courseUtilService.createCourse();
-        var missingUsage = new LLMRequest("", 0, 0f, 0, 0f, "HYPERION_CONSISTENCY");
-        var provider = new LLMRequest("cost-test", 100, 999f, 20, 999f, "HYPERION_CONSISTENCY", 0, 0f, 0, 0f, knownCallCost, "PROVIDER");
-        var configured = new LLMRequest("cost-test", 100, 999f, 20, 999f, "HYPERION_CONSISTENCY", 0, 0f, 0, 0f, knownCallCost, "CONFIGURATION");
-        var requests = allUnknown ? List.of(missingUsage, missingUsage, missingUsage) : List.of(provider, configured, missingUsage);
+        var missingUsage = new LLMRequest("", 0, 0, "HYPERION_CONSISTENCY");
+        var priced = new LLMRequest("cost-test", 100, 20, "HYPERION_CONSISTENCY", 0, 0, knownCallCost);
+        var requests = allUnknown ? List.of(missingUsage, missingUsage, missingUsage) : List.of(priced, priced, missingUsage);
 
         var trace = llmTokenUsageService.saveLLMTokenUsage(requests, LLMServiceType.HYPERION, builder -> builder.withCourse(course.getId()));
 
         assertThat(trace.getLLMRequests()).hasSize(3).allSatisfy(request -> assertThat(request.getId()).isNotNull());
         long expectedUnpriced = allUnknown ? 3 : 1;
-        assertThat(trace.getLLMRequests().stream().filter(request -> request.getTotalCostUsd() == null)).hasSize((int) expectedUnpriced)
-                .allSatisfy(request -> assertThat(request.getCostSource()).isNull());
+        assertThat(trace.getLLMRequests().stream().filter(request -> request.getTotalCostUsd() == null)).hasSize((int) expectedUnpriced);
         double expectedCost = allUnknown ? 0 : knownCallCost * 2;
         assertThat(llmTokenUsageTraceRepository.calculateTotalLlmCostInUsdForCourse(course.getId())).isEqualTo(expectedCost);
         assertThat(llmTokenUsageTraceRepository.countUnpricedRequestsForCourse(course.getId())).isEqualTo(expectedUnpriced);

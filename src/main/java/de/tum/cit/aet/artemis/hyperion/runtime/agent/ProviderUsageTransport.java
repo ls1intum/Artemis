@@ -38,7 +38,7 @@ public final class ProviderUsageTransport {
         }
         Double totalCostUsd = LLMResponseCost.reportedUsd(usage.getNativeUsage(), usage.getPromptTokens(), usage.getCompletionTokens());
         return new ProviderUsageUpdate.Call(Objects.toString(metadata.getModel(), ""), metadata.getId(), usage.getPromptTokens(), usage.getCompletionTokens(),
-                usage.getCacheReadInputTokens(), totalCostUsd, totalCostUsd == null ? null : LLMResponseCost.reportedSource(usage.getNativeUsage()));
+                usage.getCacheReadInputTokens(), totalCostUsd);
     }
 
     /**
@@ -75,8 +75,7 @@ public final class ProviderUsageTransport {
                 if (call.totalCostUsd() == null) {
                     return null;
                 }
-                return Map.of("prompt_tokens", call.inputTokens(), "completion_tokens", call.outputTokens(), "cost", call.totalCostUsd(), "cost_currency", "USD", "cost_source",
-                        call.costSource());
+                return Map.of("prompt_tokens", call.inputTokens(), "completion_tokens", call.outputTokens(), "cost", call.totalCostUsd(), "cost_currency", "USD");
             }
         };
         var metadata = ChatResponseMetadata.builder().model(call.model()).id(call.requestId() == null ? "" : call.requestId()).usage(usage).build();

@@ -155,7 +155,6 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
             assertThat(usage.getNumCachedInputTokens()).isEqualTo(Math.toIntExact(expectedCost.numCachedInputTokens()));
             assertThat(usage.getNumCacheWriteInputTokens()).isEqualTo(expectedCost.numCacheWriteInputTokens());
             assertThat(usage.getTotalCostUsd()).isEqualTo(expectedCost.totalCostUsd());
-            assertThat(usage.getCostSource()).isEqualTo(expectedCost.costSource());
             assertThat(usage.getServicePipelineId()).isEqualTo(expectedCost.pipelineId());
         }
     }
@@ -164,7 +163,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCourseLlmCostUsesCompleteProviderUsdAmount() {
         // 2M input tokens: 1M read from the cache, 0.4M written to it, 0.6M uncached
-        var request = new LLMRequest("gpt-6-luna", 2_000_000, 1.0f, 100_000, 4.0f, "IRIS_CHAT_EXERCISE_MESSAGE", 1_000_000, 0.1f, 400_000, 1.25f, 0.9, "PROVIDER");
+        var request = new LLMRequest("gpt-6-luna", 2_000_000, 100_000, "IRIS_CHAT_EXERCISE_MESSAGE", 1_000_000, 400_000, 0.9);
         llmTokenUsageService.saveLLMTokenUsage(List.of(request), LLMServiceType.IRIS, builder -> builder.withCourse(course.getId()));
 
         // The reported USD amount supersedes the historical unit-rate estimate.
@@ -217,7 +216,6 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
             assertThat(usage.getNumInputTokens()).isEqualTo(expectedCost.numInputTokens());
             assertThat(usage.getNumOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
             assertThat(usage.getTotalCostUsd()).isEqualTo(expectedCost.totalCostUsd());
-            assertThat(usage.getCostSource()).isEqualTo(expectedCost.costSource());
             assertThat(usage.getServicePipelineId()).isEqualTo(expectedCost.pipelineId());
         }
     }

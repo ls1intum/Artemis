@@ -477,8 +477,7 @@ public class CourseStudentDataExportService {
             }
 
             List<String> lines = new ArrayList<>();
-            lines.add("TraceId,ServiceType,UserId,ExerciseId,Time,Model,Pipeline,NumInputTokens,NumOutputTokens,"
-                    + "NumCachedInputTokens,NumCacheWriteInputTokens,TotalCostUsd,CostSource");
+            lines.add("TraceId,ServiceType,UserId,ExerciseId,Time,Model,Pipeline,NumInputTokens,NumOutputTokens,NumCachedInputTokens,NumCacheWriteInputTokens,TotalCostUsd");
 
             for (var trace : traces) {
                 String traceId = String.valueOf(trace.getId());
@@ -496,10 +495,9 @@ public class CourseStudentDataExportService {
                     String numCachedInputTokens = String.valueOf(request.getNumCachedInputTokens());
                     String numCacheWriteInputTokens = String.valueOf(request.getNumCacheWriteInputTokens());
                     String totalCostUsd = request.getTotalCostUsd() == null ? "" : String.valueOf(request.getTotalCostUsd());
-                    String costSource = request.getCostSource() == null ? "" : request.getCostSource();
 
                     lines.add(String.join(",", traceId, serviceType, userId, exerciseId, time, model, pipeline, numInputTokens, numOutputTokens, numCachedInputTokens,
-                            numCacheWriteInputTokens, totalCostUsd, costSource));
+                            numCacheWriteInputTokens, totalCostUsd));
                 }
             }
 

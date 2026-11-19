@@ -62,7 +62,6 @@ class AtlasTokenUsageAdvisorTest {
         var requests = traces.getAllValues().stream().map(trace -> trace.getLLMRequests().iterator().next()).toList();
         assertThat(requests).extracting(LLMTokenUsageRequest::getModel).containsExactly("first-model", "last-model");
         assertThat(requests).extracting(LLMTokenUsageRequest::getTotalCostUsd).containsExactly(0.01, lastCost);
-        assertThat(requests).extracting(LLMTokenUsageRequest::getCostSource).containsOnly("PROVIDER");
         assertThat(requests).extracting(LLMTokenUsageRequest::getNumInputTokens).containsExactly(100, 50);
         assertThat(traces.getAllValues()).allSatisfy(trace -> {
             assertThat(trace.getCourseId()).isEqualTo(42L);
@@ -87,9 +86,7 @@ class AtlasTokenUsageAdvisorTest {
         verify(repository, times(2)).save(traces.capture());
         var requests = traces.getAllValues().stream().map(trace -> trace.getLLMRequests().iterator().next()).toList();
         assertThat(requests.getFirst().getTotalCostUsd()).isNull();
-        assertThat(requests.getFirst().getCostSource()).isNull();
         assertThat(requests.getLast().getTotalCostUsd()).isEqualTo(0.003);
-        assertThat(requests.getLast().getCostSource()).isEqualTo("PROVIDER");
     }
 
     @Test

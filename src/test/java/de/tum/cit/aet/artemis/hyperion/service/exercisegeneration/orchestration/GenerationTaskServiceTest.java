@@ -1130,8 +1130,7 @@ class GenerationTaskServiceTest {
                 java.time.Duration.ofSeconds(15));
         when(jobService.tokenUsageSink(any(), any(), any(), any(), any())).thenAnswer(invocation -> {
             Consumer<GenerationUsage> liveUsageSink = invocation.getArgument(4);
-            return (Consumer<ChatResponse>) response -> liveUsageSink
-                    .accept(new GenerationUsage("model", 1000, 1f, 100, 2f, "pipeline", "provider-id", 800L, 0.1f, true, 0.00048, "CONFIGURATION"));
+            return (Consumer<ChatResponse>) response -> liveUsageSink.accept(new GenerationUsage("model", 1000, 100, "pipeline", "provider-id", 800L, true, 0.00048));
         });
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             ProviderUsageSink usageSink = invocation.getArgument(8);

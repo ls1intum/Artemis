@@ -282,7 +282,7 @@ class GenerationJobServiceTest {
         User owner = user("owner");
         doAnswer(invocation -> {
             Consumer<GenerationUsage> observer = invocation.getArgument(4);
-            observer.accept(new GenerationUsage("model", 100, 1f, 50, 2f, "pipeline", "provider-id", 20L, 0.1f, true, 0.000182, "CONFIGURATION"));
+            observer.accept(new GenerationUsage("model", 100, 50, "pipeline", "provider-id", 20L, true, 0.000182));
             return true;
         }).when(tokenUsageService).trackChatResponseTokenUsage(any(), any(), anyString(), any(), any());
 
@@ -315,7 +315,7 @@ class GenerationJobServiceTest {
         User owner = user("owner");
         doAnswer(invocation -> {
             Consumer<GenerationUsage> observer = invocation.getArgument(4);
-            observer.accept(new GenerationUsage("model", 100, 1f, 50, 2f, "pipeline", "provider-id", 20L, 0.1f, true, 0.000182, "CONFIGURATION"));
+            observer.accept(new GenerationUsage("model", 100, 50, "pipeline", "provider-id", 20L, true, 0.000182));
             return true;
         }).when(tokenUsageService).trackChatResponseTokenUsage(any(), any(), anyString(), any(), any());
 

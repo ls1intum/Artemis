@@ -6,8 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -18,7 +16,7 @@ class ProviderUsageTransportTest {
 
     @Test
     void preservesReportedMetadataWithoutFabricatingContent() {
-        var call = new ProviderUsageUpdate.Call("model", "provider-id", 123, 45, 12L);
+        var call = new ProviderUsageUpdate.Call("model", "provider-id", 123, 45, 12L, null);
         var response = ProviderUsageTransport.restore(call);
         assertThat(response.getResults()).isEmpty();
         assertThat(response.getMetadata().getUsage().getTotalTokens()).isEqualTo(168);
@@ -28,25 +26,21 @@ class ProviderUsageTransportTest {
 
     @Test
     void missingCacheCountRemainsUnknown() {
-        var call = new ProviderUsageUpdate.Call("model", "provider-id", 10, 20, null);
+        var call = new ProviderUsageUpdate.Call("model", "provider-id", 10, 20, null, null);
         assertThat(ProviderUsageTransport.capture(ProviderUsageTransport.restore(call)).cachedInputTokens()).isNull();
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = { "PROVIDER", "CONFIGURATION" })
-    void providerUsdCostAndSourceSurviveRoundTrip(String source) {
-        var call = new ProviderUsageUpdate.Call("model", "provider-id", 10, 20, null, 0.00001234, source);
+    @Test
+    void providerUsdCostSurvivesRoundTrip() {
+        var call = new ProviderUsageUpdate.Call("model", "provider-id", 10, 20, null, 0.00001234);
 
         assertThat(ProviderUsageTransport.capture(ProviderUsageTransport.restore(call))).isEqualTo(call);
     }
 
     @Test
-    void invalidOrUnidentifiedCostDoesNotDiscardUsage() {
-        for (var call : List.of(new ProviderUsageUpdate.Call("model", "id", 10, 20, null, -1d, "PROVIDER"),
-                new ProviderUsageUpdate.Call("model", "id", 10, 20, null, Double.NaN, "PROVIDER"), new ProviderUsageUpdate.Call("model", "id", 10, 20, null, 1d, "unknown"),
-                new ProviderUsageUpdate.Call("model", "id", 10, 20, null, 1d, null))) {
+    void invalidCostDoesNotDiscardUsage() {
+        for (var call : List.of(new ProviderUsageUpdate.Call("model", "id", 10, 20, null, -1d), new ProviderUsageUpdate.Call("model", "id", 10, 20, null, Double.NaN))) {
             assertThat(call.totalCostUsd()).isNull();
-            assertThat(call.costSource()).isNull();
             assertThat(ProviderUsageTransport.capture(ProviderUsageTransport.restore(call)).inputTokens()).isEqualTo(10);
         }
     }
@@ -57,7 +51,7 @@ class ProviderUsageTransportTest {
 
         var captured = ProviderUsageTransport.capture(new ChatResponse(List.of(), metadata));
 
-        assertThat(captured).isEqualTo(new ProviderUsageUpdate.Call("", "", 10, 20, null));
+        assertThat(captured).isEqualTo(new ProviderUsageUpdate.Call("", "", 10, 20, null, null));
     }
 
     @Test
@@ -71,6 +65,6 @@ class ProviderUsageTransportTest {
 
         var captured = ProviderUsageTransport.capture(new ChatResponse(List.of(), metadata));
 
-        assertThat(captured).isEqualTo(new ProviderUsageUpdate.Call("", "provider-id", 10, 20, null));
+        assertThat(captured).isEqualTo(new ProviderUsageUpdate.Call("", "provider-id", 10, 20, null, null));
     }
 }

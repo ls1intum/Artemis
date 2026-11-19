@@ -125,7 +125,6 @@ class ProviderUsageWireTest {
             assertThat(reportedUsd(response)).isEqualTo(amount);
             var call = ProviderUsageTransport.capture(response);
             assertThat(call.totalCostUsd()).isEqualTo(amount);
-            assertThat(call.costSource()).isEqualTo("PROVIDER");
             assertThat(reportedUsd(ProviderUsageTransport.restore(call))).isEqualTo(amount);
         }
     }
@@ -149,7 +148,6 @@ class ProviderUsageWireTest {
             assertThat(priced).singleElement().satisfies(response -> {
                 var call = ProviderUsageTransport.capture(response);
                 assertThat(call.totalCostUsd()).isEqualTo(0.00001234);
-                assertThat(call.costSource()).isEqualTo("PROVIDER");
                 assertThat(reportedUsd(ProviderUsageTransport.restore(call))).isEqualTo(0.00001234);
             });
             assertThat(chunks.stream().flatMap(response -> response.getResults().stream()).map(generation -> generation.getOutput().getText()).toList())

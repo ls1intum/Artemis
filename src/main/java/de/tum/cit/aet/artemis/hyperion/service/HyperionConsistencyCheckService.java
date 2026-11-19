@@ -203,8 +203,8 @@ public class HyperionConsistencyCheckService {
         }
 
         // Keep attempted calls without usage unpriced in persisted aggregates as well as in this response.
-        // Their zero counters mean no observed tokens; the legacy constructor leaves USD unknown rather than estimating a free call.
-        List<LLMRequest> requests = usageCollector.stream().map(request -> request != null ? request : new LLMRequest("", 0, 0f, 0, 0f, CONSISTENCY_PIPELINE_ID)).toList();
+        // Their zero counters mean no observed tokens; the request leaves USD unknown rather than estimating a free call.
+        List<LLMRequest> requests = usageCollector.stream().map(request -> request != null ? request : new LLMRequest("", 0, 0, CONSISTENCY_PIPELINE_ID)).toList();
         if (!requests.isEmpty()) {
             Long courseId = exerciseWithParticipations.getCourseViaExerciseGroupOrCourseMember() != null
                     ? exerciseWithParticipations.getCourseViaExerciseGroupOrCourseMember().getId()

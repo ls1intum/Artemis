@@ -19,10 +19,8 @@
                 (CASE WHEN num_cached_input_tokens > 0 THEN num_cached_input_tokens * CAST(cost_per_million_cached_input_tokens AS FLOAT(53)) ELSE 0 END) +
                 (CASE WHEN num_cache_write_input_tokens > 0 THEN num_cache_write_input_tokens * CAST(cost_per_million_cache_write_input_tokens AS FLOAT(53)) ELSE 0 END)
                 ) * 1.0968 / 1000000.0"/>
-            <column name="cost_source" value="CONFIGURATION"/>
             <where><![CDATA[
                 total_cost_usd IS NULL
-                AND cost_source IS NULL
                 AND num_output_tokens >= 0
                 AND num_cached_input_tokens >= 0
                 AND num_cache_write_input_tokens >= 0
@@ -39,7 +37,7 @@
                 )
             ]]></where>
         </update>
-        <!-- The preceding application ignores these amounts. Clearing CONFIGURATION would also erase live estimates. -->
+        <!-- The preceding application ignores USD totals. Preserve them when rolling back the application. -->
         <rollback><empty/></rollback>
     </changeSet>
 

@@ -14,7 +14,7 @@ class LLMRequestJsonTest {
 
     @Test
     void malformedCostDoesNotRejectIrisOrAthenaCallbacks() {
-        String token = "{\"numInputTokens\":12,\"totalCostUsd\":{},\"costSource\":\"future\"}";
+        String token = "{\"numInputTokens\":12,\"totalCostUsd\":{}}";
         var iris = JsonObjectMapper.get().readValue("{\"result\":\"ok\",\"tokens\":[" + token + "]}", PyrisChatStatusUpdateDTO.class);
         var athena = JsonObjectMapper.get().readValue("{\"llmRequests\":[" + token + "]}", ResponseMetaDTO.class);
 
@@ -26,33 +26,20 @@ class LLMRequestJsonTest {
     @ParameterizedTest
     @ValueSource(strings = { "\"bad\"", "{}", "[]", "-1", "true", "1e999" })
     void malformedOptionalCostDoesNotRejectTheTokenRecord(String cost) {
-        LLMRequest request = JsonObjectMapper.get().readValue("{\"model\":\"test\",\"numInputTokens\":12,\"totalCostUsd\":" + cost + ",\"costSource\":\"PROVIDER\"}",
-                LLMRequest.class);
+        LLMRequest request = JsonObjectMapper.get().readValue("{\"model\":\"test\",\"numInputTokens\":12,\"totalCostUsd\":" + cost + "}", LLMRequest.class);
 
         assertThat(request.numInputTokens()).isEqualTo(12);
-        assertThat(request.totalCostUsd()).isNull();
-        assertThat(request.costSource()).isNull();
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "\"provider\"", "\"FUTURE_SOURCE\"", "{}", "[]", "42" })
-    void unknownCostSourceDoesNotRejectTheTokenRecord(String source) {
-        LLMRequest request = JsonObjectMapper.get().readValue("{\"numInputTokens\":12,\"totalCostUsd\":0.25,\"costSource\":" + source + "}", LLMRequest.class);
-
-        assertThat(request.numInputTokens()).isEqualTo(12);
-        assertThat(request.costSource()).isNull();
         assertThat(request.totalCostUsd()).isNull();
     }
 
     @Test
-    void explicitZeroUsdAndSourceSurviveDeserialization() {
-        LLMRequest request = JsonObjectMapper.get().readValue("{\"totalCostUsd\":0,\"costSource\":\"PROVIDER\"}", LLMRequest.class);
+    void explicitZeroUsdSurvivesDeserialization() {
+        LLMRequest request = JsonObjectMapper.get().readValue("{\"totalCostUsd\":0}", LLMRequest.class);
         assertThat(request.totalCostUsd()).isZero();
-        assertThat(request.costSource()).isEqualTo("PROVIDER");
     }
 
     @Test
-    void readsPromptCacheUsageSentByPyris() {
+    void readsPromptCacheUsageAndIgnoresLegacyRatesSentByPyris() {
         String json = """
                 {"model": "gpt-6-luna", "numInputTokens": 1000, "costPerMillionInputToken": 0.1, "numOutputTokens": 20, "costPerMillionOutputToken": 0.5,
                  "pipelineId": "IRIS_CHAT_COURSE_MESSAGE", "numCachedInputTokens": 900, "costPerMillionCachedInputToken": 0.01,
@@ -63,9 +50,8 @@ class LLMRequestJsonTest {
 
         assertThat(request.numInputTokens()).isEqualTo(1000);
         assertThat(request.numCachedInputTokens()).isEqualTo(900);
-        assertThat(request.costPerMillionCachedInputToken()).isEqualTo(0.01f);
         assertThat(request.numCacheWriteInputTokens()).isEqualTo(50);
-        assertThat(request.costPerMillionCacheWriteInputToken()).isEqualTo(0.125f);
+        assertThat(request.totalCostUsd()).isNull();
     }
 
     @Test
@@ -79,8 +65,6 @@ class LLMRequestJsonTest {
 
         assertThat(request.numInputTokens()).isEqualTo(10);
         assertThat(request.numCachedInputTokens()).isZero();
-        assertThat(request.costPerMillionCachedInputToken()).isZero();
         assertThat(request.numCacheWriteInputTokens()).isZero();
-        assertThat(request.costPerMillionCacheWriteInputToken()).isZero();
     }
 }

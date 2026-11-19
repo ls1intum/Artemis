@@ -109,7 +109,7 @@ Whole-exercise generation requires explicitly configured USD rates when the prov
 Course statistics, the Iris dashboard and its email digest show the sum of known USD amounts. They identify requests with no USD price and mark partial totals.
 For historical requests, the migration estimates a USD amount from the stored rates using the former EUR convention and a single [ECB reference rate](https://data.ecb.europa.eu/data/datasets/EXR/EXR.D.USD.EUR.SP00.A) of 1.0968 USD per EUR from 18 November 2026.
 It keeps existing USD amounts and leaves usage without valid token counts and usable prices unpriced. A zero tariff among positive tariffs remains free for its token type, while all-zero tariffs may indicate missing configuration.
-The course data export contains token counts, the USD total and its source. Update scripts that read the old tariff columns of `llm-token-usage.csv` to use `TotalCostUsd` and `CostSource`.
+The course data export contains token counts and the USD total. Update scripts that read the old tariff columns of `llm-token-usage.csv` to use `TotalCostUsd`.
 
 Atlas orchestration records each model response before combining tool rounds, including responses from delegated tasks. Each provider amount is counted once. Responses without usable usage remain unpriced, and costs already recorded survive a later failed round. Other accumulated tool-calling responses may have combined token counts without a matching combined API cost; Artemis uses the configured estimate in that case rather than treating the final call's cost as the cost of the whole exchange.
 

@@ -263,10 +263,8 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(requests).hasSize(3);
         assertThat(requests.stream().filter(request -> request.getTotalCostUsd() != null)).hasSize(afterUsageRecorded ? 3 : 2).allSatisfy(request -> {
             assertThat(request.getTotalCostUsd()).isEqualTo(callCost);
-            assertThat(request.getCostSource()).isEqualTo("PROVIDER");
         });
         assertThat(requests.stream().filter(request -> request.getTotalCostUsd() == null)).hasSize(afterUsageRecorded ? 0 : 1).allSatisfy(request -> {
-            assertThat(request.getCostSource()).isNull();
             assertThat(request.getModel()).isEmpty();
             assertThat(request.getNumInputTokens()).isZero();
             assertThat(request.getNumOutputTokens()).isZero();
@@ -291,7 +289,6 @@ class HyperionConsistencyCheckServiceTest {
         verify(llmTokenUsageTraceRepository).save(persisted.capture());
         assertThat(persisted.getValue().getLLMRequests()).hasSize(3).allSatisfy(request -> {
             assertThat(request.getTotalCostUsd()).isNull();
-            assertThat(request.getCostSource()).isNull();
             assertThat(request.getNumInputTokens()).isZero();
             assertThat(request.getNumOutputTokens()).isZero();
         });
@@ -508,15 +505,13 @@ class HyperionConsistencyCheckServiceTest {
 
     private static LLMModelCostConfiguration createTestConfiguration() {
         var config = new LLMModelCostConfiguration();
-        var modelCosts = Map.of("gpt-5-mini", createModelCostProperties(0.23f, 1.84f));
+        var modelCosts = Map.of("gpt-5-mini", createModelCostProperties());
         config.setModelCosts(new java.util.HashMap<>(modelCosts));
         return config;
     }
 
-    private static LLMModelCostConfiguration.ModelCostProperties createModelCostProperties(float inputEur, float outputEur) {
+    private static LLMModelCostConfiguration.ModelCostProperties createModelCostProperties() {
         var props = new LLMModelCostConfiguration.ModelCostProperties();
-        props.setInputCostPerMillionEur(inputEur);
-        props.setOutputCostPerMillionEur(outputEur);
         props.setInputCostPerMillionUsd(0.25f);
         props.setOutputCostPerMillionUsd(2f);
         props.setCachedInputCostPerMillionUsd(0.025f);

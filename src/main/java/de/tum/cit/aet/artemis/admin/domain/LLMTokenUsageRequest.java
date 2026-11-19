@@ -56,10 +56,6 @@ public class LLMTokenUsageRequest extends DomainObject {
     @Column(name = "total_cost_usd")
     private Double totalCostUsd;
 
-    @Nullable
-    @Column(name = "cost_source")
-    private String costSource;
-
     @ManyToOne
     @JoinColumn(nullable = false)
     @Parent
@@ -124,15 +120,6 @@ public class LLMTokenUsageRequest extends DomainObject {
 
     public void setTotalCostUsd(@Nullable Double totalCostUsd) {
         this.totalCostUsd = totalCostUsd;
-    }
-
-    @Nullable
-    public String getCostSource() {
-        return costSource;
-    }
-
-    public void setCostSource(@Nullable String costSource) {
-        this.costSource = costSource;
     }
 
     public void setTrace(LLMTokenUsageTrace trace) {

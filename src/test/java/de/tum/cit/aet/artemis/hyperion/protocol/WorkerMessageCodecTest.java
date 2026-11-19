@@ -27,8 +27,8 @@ class WorkerMessageCodecTest {
     private final WorkerMessageCodecApi wire = new WorkerMessageCodecApi();
 
     @Test
-    void usdUsageRoundTripPreservesTheProviderAmountAndSource() {
-        var update = new ProviderUsageUpdate(ProviderUsageUpdate.Kind.RESPONSE, 1, new ProviderUsageUpdate.Call("model", "request", 10, 2, null, 0d, "PROVIDER"));
+    void usdUsageRoundTripPreservesTheProviderAmount() {
+        var update = new ProviderUsageUpdate(ProviderUsageUpdate.Kind.RESPONSE, 1, new ProviderUsageUpdate.Call("model", "request", 10, 2, null, 0d));
 
         assertThat(codec.decodePayload(codec.encodePayload(update), ProviderUsageUpdate.class)).isEqualTo(update);
     }
@@ -38,25 +38,11 @@ class WorkerMessageCodecTest {
     void malformedOptionalCostDoesNotRejectAWorkerUsageEvent(String malformed) {
         var update = codec.decodePayload("""
                 {"kind":"RESPONSE","count":1,"call":{"model":"model","inputTokens":10,"outputTokens":2,
-                "totalCostUsd":%s,"costSource":"PROVIDER"}}
+                "totalCostUsd":%s}}
                 """.formatted(malformed), ProviderUsageUpdate.class);
 
         assertThat(update.call().inputTokens()).isEqualTo(10);
         assertThat(update.call().totalCostUsd()).isNull();
-        assertThat(update.call().costSource()).isNull();
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "\"provider\"", "\"future-source\"", "{}", "null" })
-    void unknownOrAbsentCostSourceLeavesTheWorkerCostUnpriced(String source) {
-        var update = codec.decodePayload("""
-                {"kind":"RESPONSE","count":1,"call":{"model":"model","inputTokens":10,"outputTokens":2,
-                "totalCostUsd":1,"costSource":%s}}
-                """.formatted(source), ProviderUsageUpdate.class);
-
-        assertThat(update.call().totalCostUsd()).isNull();
-        assertThat(update.call().costSource()).isNull();
-        assertThat(update.call().outputTokens()).isEqualTo(2);
     }
 
     @ParameterizedTest
@@ -65,14 +51,6 @@ class WorkerMessageCodecTest {
         var json = completeUsageEvent();
         ((ObjectNode) json.at("/payload/usage")).put(field, -1);
         assertThatThrownBy(() -> decodeEvent(packPayload(json))).isInstanceOf(RuntimeException.class).hasMessageContaining("usage");
-    }
-
-    @ParameterizedTest
-    @ValueSource(doubles = { -0.01, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY })
-    void rejectsInvalidUsageCostOnTheWire(double cost) {
-        var json = completeUsageEvent();
-        ((ObjectNode) json.at("/payload/usage")).put("costUsd", cost);
-        assertThatThrownBy(() -> decodeEvent(packPayload(json))).isInstanceOf(RuntimeException.class);
     }
 
     @Test
@@ -93,7 +71,7 @@ class WorkerMessageCodecTest {
 
     private ObjectNode completeUsageEvent() {
         var id = identity();
-        var usage = new GenerationUsage(0, 0, 0, 0, 10, 0, 0, true, 0, true, List.of(), List.of(), true);
+        var usage = new GenerationUsage(0, 0, 0, 0, 10, 0, 0, true, List.of(), List.of(), true);
         var output = new GenerationOutput(new WorkspaceSnapshot(List.of()), new VerificationResult(false, false, false, 0, List.of()), null, new SpecFidelityReport(List.of()),
                 "RUN_FAILED", usage, GenerationOutput.AccountingState.COMPLETE, "standard");
         var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.FINISHED, id, false, IMAGE, null,

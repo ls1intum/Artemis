@@ -52,7 +52,6 @@ class AtlasResponsesUsageAccountingTest {
         assertThat(request.numCachedInputTokens()).isEqualTo((int) cached);
         assertThat(request.numCacheWriteInputTokens()).isEqualTo((int) written);
         assertThat(request.totalCostUsd()).isEqualTo(expected);
-        assertThat(request.costSource()).isEqualTo("CONFIGURATION");
     }
 
     @ParameterizedTest
@@ -66,7 +65,6 @@ class AtlasResponsesUsageAccountingTest {
         assertThat(request.numCachedInputTokens()).isEqualTo(1200);
         assertThat(request.numCacheWriteInputTokens()).isEqualTo(300);
         assertThat(request.totalCostUsd()).isEqualTo(amount);
-        assertThat(request.costSource()).isEqualTo("PROVIDER");
     }
 
     @ParameterizedTest
@@ -80,7 +78,6 @@ class AtlasResponsesUsageAccountingTest {
         assertThat(response.getMetadata().getUsage().getCacheWriteInputTokens()).isEqualTo(written);
         assertThat(request).isNotNull();
         assertThat(request.totalCostUsd()).isEqualTo(expected);
-        assertThat(request.costSource()).isEqualTo("CONFIGURATION");
     }
 
     private static Stream<Arguments> optionalCacheDetails() {
@@ -99,7 +96,6 @@ class AtlasResponsesUsageAccountingTest {
         assertThat(response.getMetadata().getUsage().getPromptTokens()).isEqualTo(2000);
         assertThat(request).isNotNull();
         assertThat(request.totalCostUsd()).isEqualTo(0.007);
-        assertThat(request.costSource()).isEqualTo("PROVIDER");
     }
 
     @Test
@@ -113,7 +109,6 @@ class AtlasResponsesUsageAccountingTest {
         assertThat(request).isNotNull();
         assertThat(request.numCachedInputTokens()).isEqualTo(2000);
         assertThat(request.totalCostUsd()).isEqualTo(0.002);
-        assertThat(request.costSource()).isEqualTo("CONFIGURATION");
     }
 
     private static ChatResponse response(@Nullable String details, @Nullable Double amount) throws Exception {

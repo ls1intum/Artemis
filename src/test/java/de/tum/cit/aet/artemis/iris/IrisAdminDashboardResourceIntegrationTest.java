@@ -118,10 +118,10 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
     void costQueries_useProviderUsdInsteadOfLegacyRates() {
         String model = "gpt-6-luna-dashboard-cost-test";
         // 2M input tokens: 1M read from the cache, 0.4M written to it, 0.6M uncached
-        var request = new LLMRequest(model, 2_000_000, 1.0f, 100_000, 4.0f, "IRIS_CHAT_COURSE_MESSAGE", 1_000_000, 0.1f, 400_000, 1.25f, 0.9, "PROVIDER");
-        var estimate = new LLMRequest(model, 100, 1.0f, 10, 4.0f, "IRIS_CHAT_COURSE_MESSAGE", 0, 0f, 0, 0f, 0.2, "CONFIGURATION");
-        var legacy = new LLMRequest(model, 1_000_000, 100f, 100, 100f, "IRIS_CHAT_COURSE_MESSAGE");
-        var free = new LLMRequest(model, 100, 1f, 10, 4f, "IRIS_CHAT_COURSE_MESSAGE", 0, 0f, 0, 0f, 0d, "PROVIDER");
+        var request = new LLMRequest(model, 2_000_000, 100_000, "IRIS_CHAT_COURSE_MESSAGE", 1_000_000, 400_000, 0.9);
+        var estimate = new LLMRequest(model, 100, 10, "IRIS_CHAT_COURSE_MESSAGE", 0, 0, 0.2);
+        var legacy = new LLMRequest(model, 1_000_000, 100, "IRIS_CHAT_COURSE_MESSAGE");
+        var free = new LLMRequest(model, 100, 10, "IRIS_CHAT_COURSE_MESSAGE", 0, 0, 0d);
         Course course = courseUtilService.createCourse();
         LLMTokenUsageTrace trace = llmTokenUsageService.saveLLMTokenUsage(List.of(request, estimate, legacy, free), LLMServiceType.IRIS,
                 builder -> builder.withCourse(course.getId()));
@@ -336,7 +336,7 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
         IrisMessage savedAnswer = saveMessage(session, IrisMessageSender.LLM, "Answer", answeredAt, helpful);
 
         // The complete USD amount is separate from the legacy unit-rate fields.
-        var llmRequest = new LLMRequest(model, 0, 0f, 1_000_000, costUsd, "IRIS_CHAT_COURSE_MESSAGE", 0, 0f, 0, 0f, (double) costUsd, "PROVIDER");
+        var llmRequest = new LLMRequest(model, 0, 1_000_000, "IRIS_CHAT_COURSE_MESSAGE", 0, 0, (double) costUsd);
         LLMTokenUsageTrace trace = llmTokenUsageService.saveLLMTokenUsage(List.of(llmRequest), LLMServiceType.IRIS,
                 builder -> builder.withIrisMessageID(savedAnswer.getId()).withUser(user.getId()));
         trace.setTime(answeredAt);

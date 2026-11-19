@@ -26,8 +26,8 @@ import org.springframework.context.annotation.Profile;
 @ConfigurationProperties(prefix = "artemis.llm")
 public class LLMModelCostConfiguration {
 
-    private static final Map<String, ModelCostProperties> DEFAULT_MODEL_COSTS = Map.of("gpt-5-mini", modelCost(0.23f, 1.84f, 0.25f, 2f, 0.025f), "gpt-5.4",
-            modelCost(2.30f, 13.80f, 2.50f, 15f, 0.25f), "gpt-5.4-mini", modelCost(0.69f, 4.14f, 0.75f, 4.50f, 0.075f));
+    private static final Map<String, ModelCostProperties> DEFAULT_MODEL_COSTS = Map.of("gpt-5-mini", modelCost(0.25f, 2f, 0.025f), "gpt-5.4", modelCost(2.50f, 15f, 0.25f),
+            "gpt-5.4-mini", modelCost(0.75f, 4.50f, 0.075f));
 
     private static final Pattern NON_ALPHANUMERIC_PATTERN = Pattern.compile("[^a-zA-Z0-9]");
 
@@ -67,11 +67,8 @@ public class LLMModelCostConfiguration {
         return NON_ALPHANUMERIC_PATTERN.matcher(value).replaceAll("");
     }
 
-    private static ModelCostProperties modelCost(float inputCostPerMillionEur, float outputCostPerMillionEur, float inputCostPerMillionUsd, float outputCostPerMillionUsd,
-            float cachedInputCostPerMillionUsd) {
+    private static ModelCostProperties modelCost(float inputCostPerMillionUsd, float outputCostPerMillionUsd, float cachedInputCostPerMillionUsd) {
         ModelCostProperties properties = new ModelCostProperties();
-        properties.setInputCostPerMillionEur(inputCostPerMillionEur);
-        properties.setOutputCostPerMillionEur(outputCostPerMillionEur);
         properties.setInputCostPerMillionUsd(inputCostPerMillionUsd);
         properties.setOutputCostPerMillionUsd(outputCostPerMillionUsd);
         properties.setCachedInputCostPerMillionUsd(cachedInputCostPerMillionUsd);
@@ -87,13 +84,9 @@ public class LLMModelCostConfiguration {
     }
 
     /**
-     * Separate legacy EUR rates and optional USD rates for a single model.
+     * Optional USD rates for a single model.
      */
     public static class ModelCostProperties {
-
-        private float inputCostPerMillionEur = 0f;
-
-        private float outputCostPerMillionEur = 0f;
 
         private Float inputCostPerMillionUsd;
 
@@ -135,20 +128,12 @@ public class LLMModelCostConfiguration {
             this.cacheWriteInputCostPerMillionUsd = cacheWriteInputCostPerMillionUsd;
         }
 
-        public float getInputCostPerMillionEur() {
-            return inputCostPerMillionEur;
+        public void setInputCostPerMillionEur(float ignored) {
+            // Bind the model entry to suppress seeded USD defaults without storing the legacy rate.
         }
 
-        public void setInputCostPerMillionEur(float inputCostPerMillionEur) {
-            this.inputCostPerMillionEur = inputCostPerMillionEur;
-        }
-
-        public float getOutputCostPerMillionEur() {
-            return outputCostPerMillionEur;
-        }
-
-        public void setOutputCostPerMillionEur(float outputCostPerMillionEur) {
-            this.outputCostPerMillionEur = outputCostPerMillionEur;
+        public void setOutputCostPerMillionEur(float ignored) {
+            // Bind the model entry to suppress seeded USD defaults without storing the legacy rate.
         }
     }
 }

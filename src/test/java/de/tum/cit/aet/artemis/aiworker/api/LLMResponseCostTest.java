@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.aiworker.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +29,6 @@ class LLMResponseCostTest {
         for (double cost : new double[] { 0, 0.0000123 }) {
             var nativeUsage = completion(cost, "USD");
             assertThat(reportedUsd(new DefaultUsage(100, 20, 120, nativeUsage))).isEqualTo(cost);
-            assertThat(LLMResponseCost.reportedSource(nativeUsage)).isEqualTo("PROVIDER");
         }
     }
 
@@ -42,7 +40,6 @@ class LLMResponseCostTest {
                 .putAdditionalProperty("cost_currency", JsonValue.from("USD")).build();
 
         assertThat(reportedUsd(new DefaultUsage(100, 20, 120, nativeUsage))).isEqualTo(0.0005);
-        assertThat(LLMResponseCost.reportedSource(nativeUsage)).isEqualTo("PROVIDER");
     }
 
     @ParameterizedTest
@@ -77,31 +74,10 @@ class LLMResponseCostTest {
 
     @Test
     void readsOnlyMatchingTransportedUsage() {
-        var transported = Map.of("prompt_tokens", 100, "completion_tokens", 20, "cost", 0.125, "cost_currency", "USD", "cost_source", "PROVIDER");
+        var transported = Map.of("prompt_tokens", 100, "completion_tokens", 20, "cost", 0.125, "cost_currency", "USD");
         assertThat(reportedUsd(new DefaultUsage(100, 20, 120, transported))).isEqualTo(0.125);
         assertThat(reportedUsd(new DefaultUsage(100, 30, 130, transported))).isNull();
         assertThat(reportedUsd(new DefaultUsage(100, 20))).isNull();
-    }
-
-    @ParameterizedTest
-    @CsvSource({ "PROVIDER", "CONFIGURATION" })
-    void transportedUsdCostRetainsItsExplicitSource(String source) {
-        var transported = Map.of("prompt_tokens", 100, "completion_tokens", 20, "cost", 0.125, "cost_currency", "USD", "cost_source", source);
-
-        assertThat(reportedUsd(new DefaultUsage(100, 20, 120, transported))).isEqualTo(0.125);
-        assertThat(LLMResponseCost.reportedSource(transported)).isEqualTo(source);
-    }
-
-    @Test
-    void transportedCostWithoutARecognizedSourceRemainsUnpriced() {
-        Map<String, Object> transported = new HashMap<>(Map.of("prompt_tokens", 100, "completion_tokens", 20, "cost", 0.125, "cost_currency", "USD"));
-        assertThat(reportedUsd(new DefaultUsage(100, 20, 120, transported))).isNull();
-        assertThat(LLMResponseCost.reportedSource(transported)).isNull();
-        for (Object source : List.of("provider", "unknown", 42, true)) {
-            transported.put("cost_source", source);
-            assertThat(reportedUsd(new DefaultUsage(100, 20, 120, transported))).isNull();
-            assertThat(LLMResponseCost.reportedSource(transported)).isNull();
-        }
     }
 
     private static CompletionUsage completion(double cost, String currency) {

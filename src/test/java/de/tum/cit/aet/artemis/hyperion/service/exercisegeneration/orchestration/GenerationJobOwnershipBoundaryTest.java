@@ -136,7 +136,7 @@ class GenerationJobOwnershipBoundaryTest {
     @Test
     void onlyCurrentJobsReduceBudgetReservationsAfterDurableUsageAndFailuresStayConservative() {
         String jobId = start();
-        GenerationUsage recorded = new GenerationUsage("model", 100, 1, 50, 1, "pipeline", "request", 20L, 0.1f, true, 0.000132, "CONFIGURATION");
+        GenerationUsage recorded = new GenerationUsage("model", 100, 50, "pipeline", "request", 20L, true, 0.000132);
         when(usage.trackChatResponseTokenUsage(any(), any(), anyString(), any(), any())).thenAnswer(invocation -> {
             Consumer<GenerationUsage> sink = invocation.getArgument(4);
             sink.accept(recorded);

@@ -32,10 +32,9 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 @Conditional(HyperionExerciseGenerationEnabled.class)
 public class GenerationTokenUsageService {
 
-    /** Provider correlation and USD completeness supplement the persisted token counts and legacy rates. */
-    public record GenerationUsage(String model, int numInputTokens, float costPerMillionInputToken, int numOutputTokens, float costPerMillionOutputToken, String pipelineId,
-            @Nullable String providerRequestId, @Nullable Long numCachedInputTokens, float costPerMillionCachedInputToken, boolean costUsdComplete, double costUsd,
-            @Nullable String costSource) {
+    /** Token counts, provider request identifier and known USD subtotal for one generation call. */
+    public record GenerationUsage(String model, int numInputTokens, int numOutputTokens, String pipelineId, @Nullable String providerRequestId, @Nullable Long numCachedInputTokens,
+            boolean costUsdComplete, double costUsd) {
     }
 
     private static final Logger log = LoggerFactory.getLogger(GenerationTokenUsageService.class);
@@ -56,19 +55,6 @@ public class GenerationTokenUsageService {
                         entry -> new StrippedModelCost(entry.getKey(), GenerationModelCostConfiguration.stripToAlphanumeric(entry.getKey()), modelCost(entry.getValue())),
                         GenerationTokenUsageService::throwOnStrippedCostCollision))
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().cost()));
-    }
-
-    /**
-     * Builds generation usage with operator-supplied prices.
-     *
-     * @param model        model identifier
-     * @param inputTokens  number of input tokens
-     * @param outputTokens number of output tokens
-     * @param pipelineId   pipeline identifier
-     * @return GenerationUsage with costs from configuration
-     */
-    public GenerationUsage buildLLMRequest(String model, int inputTokens, int outputTokens, String pipelineId) {
-        return buildLLMRequest(model, inputTokens, outputTokens, pipelineId, null, null);
     }
 
     /**
@@ -106,35 +92,20 @@ public class GenerationTokenUsageService {
             inputCost = uncachedTokens * orZero(cost.inputUsd()) + cachedInputTokens * orZero(cost.cachedInputUsd());
         }
         double costUsd = (inputCost + outputTokens * orZero(cost.outputUsd())) / 1_000_000.0;
-        return new GenerationUsage(model, inputTokens, cost.inputOrZero(), outputTokens, cost.outputOrZero(), pipelineId, providerRequestId, cachedInputTokens,
-                cost.cachedInputOrZero(), complete, costUsd, complete ? "CONFIGURATION" : null);
+        return new GenerationUsage(model, inputTokens, outputTokens, pipelineId, providerRequestId, cachedInputTokens, complete, costUsd);
     }
 
     private static ModelCost modelCost(GenerationModelCostConfiguration.ModelCostProperties properties) {
-        return new ModelCost(properties.getInputCostPerMillionEur(), properties.getOutputCostPerMillionEur(), properties.getCachedInputCostPerMillionEur(),
-                properties.getInputCostPerMillionUsd(), properties.getOutputCostPerMillionUsd(), properties.getCachedInputCostPerMillionUsd());
+        return new ModelCost(properties.getInputCostPerMillionUsd(), properties.getOutputCostPerMillionUsd(), properties.getCachedInputCostPerMillionUsd());
     }
 
     private static double orZero(@Nullable Float value) {
         return value == null ? 0d : value.doubleValue();
     }
 
-    private record ModelCost(@Nullable Float input, @Nullable Float output, @Nullable Float cachedInput, @Nullable Float inputUsd, @Nullable Float outputUsd,
-            @Nullable Float cachedInputUsd) {
+    private record ModelCost(@Nullable Float inputUsd, @Nullable Float outputUsd, @Nullable Float cachedInputUsd) {
 
-        static final ModelCost UNKNOWN = new ModelCost(null, null, null, null, null, null);
-
-        float inputOrZero() {
-            return input == null ? 0f : input;
-        }
-
-        float outputOrZero() {
-            return output == null ? 0f : output;
-        }
-
-        float cachedInputOrZero() {
-            return cachedInput == null ? 0f : cachedInput;
-        }
+        static final ModelCost UNKNOWN = new ModelCost(null, null, null);
     }
 
     private record StrippedModelCost(String originalKey, String strippedKey, ModelCost cost) {
@@ -176,18 +147,14 @@ public class GenerationTokenUsageService {
                 return false;
             }
             String model = Objects.toString(metadata.getModel(), "");
-            GenerationUsage llmRequest = buildLLMRequest(model, promptTokens, completionTokens, pipelineId, metadata.getId(), cachedInputTokens);
-            Double reportedCost = LLMResponseCost.reportedUsd(usage.getNativeUsage(), usage.getPromptTokens(), usage.getCompletionTokens());
-            if (reportedCost != null) {
-                llmRequest = new GenerationUsage(model, promptTokens, llmRequest.costPerMillionInputToken(), completionTokens, llmRequest.costPerMillionOutputToken(), pipelineId,
-                        metadata.getId(), cachedInputTokens, llmRequest.costPerMillionCachedInputToken(), true, reportedCost,
-                        LLMResponseCost.reportedSource(usage.getNativeUsage()));
-            }
-            LLMRequest persisted = new LLMRequest(model, promptTokens, llmRequest.costPerMillionInputToken(), completionTokens, llmRequest.costPerMillionOutputToken(), pipelineId,
-                    cachedInputTokens == null ? 0 : cachedInputTokens.intValue(), llmRequest.costPerMillionCachedInputToken(), 0, 0f,
-                    llmRequest.costUsdComplete() ? llmRequest.costUsd() : null, llmRequest.costSource());
+            Double reportedCost = LLMResponseCost.reportedUsd(usage.getNativeUsage(), promptTokens, completionTokens);
+            GenerationUsage request = reportedCost != null
+                    ? new GenerationUsage(model, promptTokens, completionTokens, pipelineId, metadata.getId(), cachedInputTokens, true, reportedCost)
+                    : buildLLMRequest(model, promptTokens, completionTokens, pipelineId, metadata.getId(), cachedInputTokens);
+            LLMRequest persisted = new LLMRequest(model, promptTokens, completionTokens, pipelineId, cachedInputTokens == null ? 0 : cachedInputTokens.intValue(), 0,
+                    request.costUsdComplete() ? request.costUsd() : null);
             tokenUsageService.saveLLMTokenUsage(List.of(persisted), serviceType, builderFunction);
-            recordedUsageSink.accept(llmRequest);
+            recordedUsageSink.accept(request);
             return true;
         }
         catch (Exception e) {

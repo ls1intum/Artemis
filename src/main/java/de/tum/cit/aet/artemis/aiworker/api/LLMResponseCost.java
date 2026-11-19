@@ -36,31 +36,12 @@ public final class LLMResponseCost {
             }
             if (nativeUsage instanceof Map<?, ?> transported && transported.get("prompt_tokens") instanceof Number input
                     && transported.get("completion_tokens") instanceof Number output && countsMatch(inputTokens, outputTokens, input.longValue(), output.longValue())
-                    && Objects.equals(transported.get("cost_currency"), "USD") && transported.get("cost") instanceof Number amount && reportedSource(transported) != null) {
+                    && Objects.equals(transported.get("cost_currency"), "USD") && transported.get("cost") instanceof Number amount) {
                 return validAmount(amount.doubleValue());
             }
         }
         catch (RuntimeException e) {
             log.warn("Ignoring unusable provider USD cost metadata: {}", e.getClass().getSimpleName());
-        }
-        return null;
-    }
-
-    /**
-     * Returns the source of an amount already accepted by {@link #reportedUsd(Object, Integer, Integer)}.
-     * SDK amounts come from the provider; internal transport must retain its explicit, recognized source.
-     *
-     * @param nativeUsage native response usage or transported accounting metadata
-     * @return the recognized source, or null when none can be established
-     */
-    @Nullable
-    public static String reportedSource(@Nullable Object nativeUsage) {
-        if (nativeUsage instanceof CompletionUsage || nativeUsage instanceof ResponseUsage) {
-            return "PROVIDER";
-        }
-        if (nativeUsage instanceof Map<?, ?> transported && transported.get("cost_source") instanceof String source
-                && (source.equals("PROVIDER") || source.equals("CONFIGURATION"))) {
-            return source;
         }
         return null;
     }

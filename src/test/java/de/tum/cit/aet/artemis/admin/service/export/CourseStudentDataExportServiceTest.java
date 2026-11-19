@@ -120,7 +120,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportLlmTokenUsage_containsPromptCacheColumns() throws IOException {
         Course course = courseUtilService.createCourse();
-        var request = new LLMRequest("gpt-6-luna", 1000, 0.0891f, 20, 0.4454f, "IRIS_CHAT_COURSE_MESSAGE", 900, 0.0089f, 50, 0.1114f, 0.000018, "PROVIDER");
+        var request = new LLMRequest("gpt-6-luna", 1000, 20, "IRIS_CHAT_COURSE_MESSAGE", 900, 50, 0.000018);
         llmTokenUsageService.saveLLMTokenUsage(List.of(request), LLMServiceType.IRIS, builder -> builder.withCourse(course.getId()));
 
         List<String> errors = new ArrayList<>();
@@ -137,7 +137,6 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
         assertThat(values.get(header.indexOf("NumCachedInputTokens"))).isEqualTo("900");
         assertThat(values.get(header.indexOf("NumCacheWriteInputTokens"))).isEqualTo("50");
         assertThat(values.get(header.indexOf("TotalCostUsd"))).isEqualTo("1.8E-5");
-        assertThat(values.get(header.indexOf("CostSource"))).isEqualTo("PROVIDER");
     }
 
     @Test

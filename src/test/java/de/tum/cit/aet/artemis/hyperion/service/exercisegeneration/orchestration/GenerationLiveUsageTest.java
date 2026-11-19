@@ -29,12 +29,12 @@ class GenerationLiveUsageTest {
     }
 
     private static GenerationUsage pricedRequest() {
-        return new GenerationUsage("model", 1000, 1f, 100, 2f, "pipeline", "provider-id", 800L, 0.1f, true, 0.00048, "CONFIGURATION");
+        return new GenerationUsage("model", 1000, 100, "pipeline", "provider-id", 800L, true, 0.00048);
     }
 
     /** An unpriced model reaches the accumulator exactly like this: zero prices, and the recorded request saying the estimate is not complete. */
     private static GenerationUsage unpricedRequest() {
-        return new GenerationUsage("mystery-model", 1000, 0f, 100, 0f, "pipeline", "provider-id", 800L, 0f, false, 0, null);
+        return new GenerationUsage("mystery-model", 1000, 100, "pipeline", "provider-id", 800L, false, 0);
     }
 
     @Test
