@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
@@ -396,12 +397,13 @@ public final class SecurityPolicyRepositoryFiles {
 
     /**
      * @param javaSources the Java sources of a repository by their path relative to its root
-     * @return for every source whose test class has an evaluable {@code @Policy} annotation whether it is switched on, by the path of the source
+     * @return for every test class with an evaluable {@code @Policy} annotation whether it is switched on, by the fully qualified name of the class
      */
     public static Map<String, Boolean> annotationStates(Map<String, String> javaSources) {
         Map<String, Boolean> states = new TreeMap<>();
-        javaSources.forEach((path, source) -> AresTestSources.relevantType(AresTestSources.analyze(path, source)).filter(type -> type.policies().size() == 1)
-                .map(type -> type.policies().getFirst()).filter(AresPolicyAnnotations.Annotation::isEvaluable).ifPresent(annotation -> states.put(path, annotation.isActivated())));
+        javaSources.forEach((path, source) -> AresTestSources.relevantType(AresTestSources.analyze(path, source))
+                .filter(type -> type.policies().size() == 1 && type.policies().getFirst().isEvaluable())
+                .ifPresent(type -> states.put(type.qualifiedName(), type.policies().getFirst().isActivated())));
         return states;
     }
 
@@ -702,22 +704,32 @@ public final class SecurityPolicyRepositoryFiles {
      * @return the number of files that changed
      */
     public static int setPolicyAnnotationsActive(Path repositoryRoot, boolean active) {
-        return setPolicyAnnotationsActive(repositoryRoot, _ -> active);
+        return setPolicyAnnotationsActive(repositoryRoot, (_, _) -> active);
     }
 
     /**
-     * Switches the Ares {@code @Policy} annotations of each Java file on or off, as decided per file. The Security Framework only changes repositories in
-     * which every file has at most one relevant top-level type, see {@link AresTestSources}, so one decision per file is one decision per test class.
+     * Switches the Ares {@code @Policy} annotations of each test class on or off, as decided per class. The Security Framework only changes repositories in
+     * which every file has at most one relevant top-level type, see {@link AresTestSources}, so one decision per class is one decision per file. The
+     * annotations of a file without such a type are switched on.
      *
-     * @param repositoryRoot root of the checked-out exercise-tests repository
-     * @param activeForPath  whether the annotations of the file at a path, relative to the root with forward slashes, should enforce their policy
+     * @param repositoryRoot     root of the checked-out exercise-tests repository
+     * @param activeForTestClass whether the annotations of the test class with a fully qualified name should enforce their policy
      * @return the number of files that changed
      */
-    public static int setPolicyAnnotationsActive(Path repositoryRoot, Predicate<String> activeForPath) {
+    public static int setPolicyAnnotationsActive(Path repositoryRoot, Predicate<String> activeForTestClass) {
+        return setPolicyAnnotationsActive(repositoryRoot, (path, content) -> AresTestSources.relevantType(AresTestSources.analyze(path, content))
+                .map(type -> activeForTestClass.test(type.qualifiedName())).orElse(true));
+    }
+
+    /**
+     * @param activeForFile whether the annotations of the file at a path, relative to the root with forward slashes, and with a content should enforce
+     *                          their policy
+     */
+    private static int setPolicyAnnotationsActive(Path repositoryRoot, BiPredicate<String, String> activeForFile) {
         int changedFiles = 0;
         for (Path javaFile : javaFiles(repositoryRoot)) {
             String content = readFile(javaFile);
-            boolean active = activeForPath.test(repositoryRoot.relativize(javaFile).toString().replace('\\', '/'));
+            boolean active = activeForFile.test(repositoryRoot.relativize(javaFile).toString().replace('\\', '/'), content);
             if (writeIfChanged(javaFile, content, AresPolicyAnnotations.setActive(content, active))) {
                 changedFiles++;
             }
