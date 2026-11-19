@@ -28,6 +28,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -51,6 +53,7 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolService;
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
+@FeatureToggle(Feature.SmartQuizzes)
 @FeatureUsage(UserFeature.HYPERION_QUIZ_GENERATION)
 @RestController
 @RequestMapping("api/hyperion/")

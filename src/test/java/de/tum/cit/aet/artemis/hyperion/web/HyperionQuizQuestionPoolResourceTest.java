@@ -44,6 +44,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -113,6 +115,9 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     private HyperionQuizQuestionPoolService poolService;
 
     @Autowired
+    private FeatureToggleService featureToggleService;
+
+    @Autowired
     private LectureUtilService lectureUtilService;
 
     @Autowired
@@ -178,11 +183,13 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         when(quizQuestionPoolModelService.chatClient()).thenReturn(ChatClient.create(azureOpenAiChatModel));
         when(quizQuestionPoolModelService.generatorModel()).thenReturn(GENERATOR_MODEL);
         when(quizQuestionPoolModelService.judgeModel()).thenReturn(JUDGE_MODEL);
+        featureToggleService.enableFeature(Feature.SmartQuizzes);
     }
 
     @AfterEach
-    void resetMocks() {
+    void resetTestState() {
         reset(azureOpenAiChatModel);
+        featureToggleService.disableFeature(Feature.SmartQuizzes);
     }
 
     /**
@@ -227,6 +234,20 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
             }
             return response("{ \"questions\": [" + questions + "] }");
         }).when(azureOpenAiChatModel).call(any(Prompt.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldBlockPoolAccessAndBuildsWhenSmartQuizzesAreDisabled() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        String poolUrl = "/api/hyperion/courses/" + courseId + "/quiz-question-pool";
+
+        featureToggleService.disableFeature(Feature.SmartQuizzes);
+        request.get(poolUrl + "/progress", HttpStatus.FORBIDDEN, QuizQuestionPoolProgressDTO.class);
+        request.performMvcRequest(post(poolUrl + "/build")).andExpect(status().isForbidden());
+
+        featureToggleService.enableFeature(Feature.SmartQuizzes);
+        assertThat(request.get(poolUrl + "/progress", HttpStatus.OK, QuizQuestionPoolProgressDTO.class).total()).isZero();
     }
 
     @Test
