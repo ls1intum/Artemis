@@ -19,8 +19,8 @@
     text-align: center;
     padding: 1.5rem 2rem 1.25rem;
     margin: -1rem -1.5rem 1.5rem;
-    background: rgba(var(--bs-primary-rgb), 0.05);
-    border-bottom: 1px solid rgba(var(--bs-primary-rgb), 0.1);
+    background: color-mix(in srgb, var(--primary) 5%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 10%, transparent);
     border-radius: 0 0 0.5rem 0.5rem;
 
     h2 {
@@ -30,7 +30,7 @@
     }
 
     .onboarding-subtitle {
-        color: var(--bs-secondary-color);
+        color: var(--text-body-secondary);
         font-size: 0.95rem;
         max-width: 700px;
         margin: 0 auto;
@@ -58,13 +58,13 @@
         width: 48px;
         height: 48px;
         border-radius: 50%;
-        border: 2.5px solid var(--bs-border-color);
+        border: 2.5px solid var(--border-color);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.05rem;
-        color: var(--bs-secondary-color);
-        background: var(--onboarding-page-bg, var(--bs-body-bg));
+        color: var(--text-body-secondary);
+        background: var(--onboarding-page-bg, var(--body-bg));
         transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
     }
@@ -73,7 +73,7 @@
         margin-top: 0.6rem;
         font-size: 0.73rem;
         text-align: center;
-        color: var(--bs-secondary-color);
+        color: var(--text-body-secondary);
         max-width: 100px;
         line-height: 1.25;
         letter-spacing: 0.01em;
@@ -81,46 +81,46 @@
     }
 
     &.active .step-circle {
-        border-color: var(--bs-primary);
-        color: var(--bs-white);
-        background: var(--bs-primary);
+        border-color: var(--primary);
+        color: var(--white);
+        background: var(--primary);
         box-shadow:
-            0 0 0 5px rgba(var(--bs-primary-rgb), 0.15),
-            0 4px 12px rgba(var(--bs-primary-rgb), 0.25);
+            0 0 0 5px color-mix(in srgb, var(--primary) 15%, transparent),
+            0 4px 12px color-mix(in srgb, var(--primary) 25%, transparent);
         transform: scale(1.08);
     }
 
     &.active .step-label {
-        color: var(--bs-primary);
+        color: var(--primary);
         font-weight: 600;
     }
 
     &.completed .step-circle {
-        border-color: var(--bs-success);
-        color: var(--bs-white);
-        background: var(--bs-success);
-        box-shadow: 0 2px 6px rgba(var(--bs-success-rgb), 0.2);
+        border-color: var(--success);
+        color: var(--white);
+        background: var(--success);
+        box-shadow: 0 2px 6px color-mix(in srgb, var(--success) 20%, transparent);
     }
 
     &.completed .step-label {
-        color: var(--bs-success);
+        color: var(--success);
         font-weight: 500;
     }
 
     &:hover:not(.active) .step-circle {
-        border-color: var(--bs-primary);
+        border-color: var(--primary);
         transform: scale(1.05);
     }
 
     &:hover:not(.active) .step-label {
-        color: var(--bs-primary);
+        color: var(--primary);
     }
 }
 
 .step-line {
     flex: 1;
     height: 3px;
-    background: var(--bs-border-color);
+    background: var(--border-color);
     margin-top: 23px;
     min-width: 30px;
     max-width: 80px;
@@ -129,19 +129,19 @@
     position: relative;
 
     &.completed {
-        background: var(--bs-success);
+        background: var(--success);
     }
 }
 
 // ── Content area ──────────────────────────────────────
 .onboarding-content {
-    background: var(--onboarding-content-bg, #f5f5f5);
-    border: 1px solid var(--bs-border-color);
+    background: var(--onboarding-content-bg, color-mix(in srgb, var(--white) 96%, var(--black)));
+    border: 1px solid var(--border-color);
     border-radius: 0.5rem;
     padding: 0;
     margin-bottom: 1.5rem;
     min-height: 320px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--black) 6%, transparent);
     overflow: hidden;
     animation: fadeSlideIn 0.3s ease-out;
 }
@@ -172,22 +172,11 @@
         gap: 0.5rem;
     }
 
-    .btn {
+    button {
         padding: 0.5rem 1.25rem;
         font-weight: 500;
         border-radius: 0.5rem;
         transition: all 0.2s ease;
-    }
-
-    .btn-success.btn-lg {
-        padding: 0.65rem 2rem;
-        font-size: 1.05rem;
-        box-shadow: 0 4px 12px rgba(var(--bs-success-rgb), 0.3);
-
-        &:hover:not(:disabled) {
-            box-shadow: 0 6px 20px rgba(var(--bs-success-rgb), 0.4);
-            transform: translateY(-1px);
-        }
     }
 }
 

@@ -2,26 +2,26 @@
     @if (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) {
         <button
             type="button"
-            class="btn btn-primary"
+            tumAetUiButton
             (click)="requestAIFeedback()"
-            [class.btn-sm]="smallButtons()"
+            [size]="smallButtons() ? 'small' : 'default'"
             [disabled]="(exercise().type !== ExerciseType.PROGRAMMING && !isSubmitted()) || isFeedbackGenerationInProgress() || isFeedbackLimitReached()"
             [id]="'request-feedback-' + exercise().id"
         >
             <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
+            <span class="hidden md:inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
         </button>
     } @else {
         <button
             type="button"
-            class="btn btn-primary"
+            tumAetUiButton
             (click)="requestAIFeedback()"
-            [class.btn-sm]="smallButtons()"
+            [size]="smallButtons() ? 'small' : 'default'"
             [disabled]="!isSubmitted() || isFeedbackGenerationInProgress() || isFeedbackLimitReached()"
             [id]="'request-feedback-' + exercise().id"
         >
             <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
+            <span class="hidden md:inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
         </button>
     }
 }
