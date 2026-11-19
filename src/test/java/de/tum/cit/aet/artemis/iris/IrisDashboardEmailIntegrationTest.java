@@ -91,7 +91,7 @@ class IrisDashboardEmailIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     void digestEmail_shouldRenderAndDeliver() throws Exception {
         var digest = new IrisDashboardDigestDTO(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), Instant.parse("2026-05-26T23:55:00Z"), 100, 50, 50.0,
-                200, 20, 12.5, 25, 12, 80.0, 20.0, 60.0, 15.0, 40, 10, 35, 8, 5.5, 4.0, 12.0, 150.75, List.of(), List.of(), "/admin/iris-dashboard");
+                200, 20, 12.5, 25, 12, 80.0, 20.0, 60.0, 15.0, 40, 10, 35, 8, 5.5, 4.0, 12.0, 150.75, 3L, List.of(), List.of(), "/admin/iris-dashboard");
 
         testMailService.sendIrisDashboardDigestEmail(recipient, digest);
 
@@ -100,7 +100,8 @@ class IrisDashboardEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(messages).hasSize(1);
         String body = messages[0].getContent().toString();
         assertThat(body).contains("12.5%");
-        assertThat(body).contains("iris-dashboard");
+        assertThat(body).contains("iris-dashboard", "USD", "3 requests have no USD price");
+        assertThat(body.indexOf("3 requests have no USD price")).isLessThan(body.indexOf("<footer>"));
     }
 
     @Test
