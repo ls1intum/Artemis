@@ -1,4 +1,11 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiButtonGroupComponent,
+    TumAetUiCheckboxComponent,
+    TumAetUiInputDirective,
+    TumAetUiSelectComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { QuestionReevaluationActionsComponent } from '../question-reevaluation-actions/question-reevaluation-actions.component';
 import {
     AfterViewInit,
@@ -18,7 +25,6 @@ import {
 } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
@@ -51,9 +57,6 @@ import { MatchPercentageInfoModalComponent } from '../match-percentage-info-moda
 import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SelectModule } from 'primeng/select';
-import { CheckboxModule } from 'primeng/checkbox';
-import { InputTextModule } from 'primeng/inputtext';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -68,8 +71,8 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         FaIconComponent,
         FormsModule,
         TranslateDirective,
-        NgbTooltip,
-        NgbCollapse,
+        TumAetUiTooltipDirective,
+        TumAetUiButtonGroupComponent,
         QuizScoringInfoModalComponent,
         MatchPercentageInfoModalComponent,
         MarkdownEditorMonacoComponent,
@@ -80,9 +83,9 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         CdkDragPlaceholder,
         CdkDragPreview,
         ArtemisTranslatePipe,
-        SelectModule,
-        CheckboxModule,
-        InputTextModule,
+        TumAetUiSelectComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
         PointsInputComponent,
     ],
 })

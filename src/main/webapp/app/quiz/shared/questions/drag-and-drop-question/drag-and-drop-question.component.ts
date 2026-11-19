@@ -12,7 +12,7 @@ import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { QuizScoringInfoStudentModalComponent } from '../quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { DragItemComponent } from './drag-item/drag-item.component';
 import { addPublicFilePrefix } from 'app/app.constants';
@@ -32,13 +32,13 @@ enum MappingResult {
         NgClass,
         FaIconComponent,
         TranslateDirective,
-        NgbPopover,
+        TumAetUiTooltipDirective,
         QuizScoringInfoStudentModalComponent,
         CdkDropListGroup,
         ImageComponent,
         CdkDropList,
         DragItemComponent,
-        NgbTooltip,
+        TumAetUiButtonComponent,
     ],
 })
 export class DragAndDropQuestionComponent {

@@ -27,7 +27,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
@@ -35,7 +34,7 @@ import { CourseConversationsService } from 'app/communication/service/course-con
 import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -61,7 +60,6 @@ describe('AnswerPostComponent', () => {
                 ArtemisDatePipe,
                 ArtemisTranslatePipe,
                 MockDirective(TranslateDirective),
-                MockDirective(NgbTooltip),
             ],
             providers: [
                 provideHttpClient(),
@@ -73,7 +71,7 @@ describe('AnswerPostComponent', () => {
                 SessionStorageService,
                 { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: DialogService, useValue: { open: vi.fn() } },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn() } },
             ],
         }).overrideComponent(AnswerPostComponent, {
             remove: { imports: [PostingContentComponent] },
@@ -400,14 +398,14 @@ describe('AnswerPostComponent', () => {
         expect(approveSpy).toHaveBeenCalled();
     });
 
-    it('should render the PrimeNG textarea and save/cancel buttons in Iris edit mode', () => {
+    it('should render the textarea and save/cancel buttons in Iris edit mode', () => {
         vi.spyOn(communicationService, 'currentUserIsAtLeastTutorInCourse').mockReturnValue(true);
         const botPost = Object.assign(new AnswerPost(), { ...communicationResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: false });
         component.posting.set(botPost);
         component.isEditingIrisReply.set(true);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(debugElement.query(By.css('textarea[pTextarea]'))).not.toBeNull();
+        expect(debugElement.query(By.css('textarea[tumAetUiInput]'))).not.toBeNull();
         expect(debugElement.query(By.css('[data-testid="iris-save-approve-button"]'))).not.toBeNull();
         expect(debugElement.query(By.css('[data-testid="iris-cancel-button"]'))).not.toBeNull();
     });

@@ -2,7 +2,7 @@ import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
-import { LongFeedbackTextService } from 'app/exercise/feedback/services/long-feedback-text.service';
+import { LongFeedbackTextApi } from 'app/openapi/api/long-feedback-text-api';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
@@ -12,7 +12,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 })
 export class FeedbackModalComponent implements OnInit {
     activeModal = inject(NgbActiveModal);
-    longFeedbackTextService = inject(LongFeedbackTextService);
+    longFeedbackTextApi = inject(LongFeedbackTextApi);
 
     feedbackDetail = input.required<FeedbackDetail>();
     longFeedbackText = signal<string>('');
@@ -21,8 +21,8 @@ export class FeedbackModalComponent implements OnInit {
 
     ngOnInit(): void {
         if (this.feedbackDetail().hasLongFeedbackText) {
-            this.longFeedbackTextService.find(this.feedbackDetail().feedbackIds[0]).subscribe((response) => {
-                this.longFeedbackText.set(response.body || this.feedbackDetail().detailTexts[0]);
+            this.longFeedbackTextApi.getLongFeedback(this.feedbackDetail().feedbackIds[0]).subscribe((longFeedback) => {
+                this.longFeedbackText.set(longFeedback || this.feedbackDetail().detailTexts[0]);
             });
         }
     }

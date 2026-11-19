@@ -169,7 +169,7 @@ import { TRUST_LINKS } from 'app/core/landing/landing-data';
                             <h3 class="trust-card-title">
                                 {{ link.titleKey | artemisTranslate }}
                                 <fa-icon class="trust-card-icon" [icon]="faArrowUpRightFromSquare" />
-                                <span class="visually-hidden">{{ 'landing.opensInNewTab' | artemisTranslate }}</span>
+                                <span class="sr-only">{{ 'landing.opensInNewTab' | artemisTranslate }}</span>
                             </h3>
                             <p class="trust-card-description">{{ link.descriptionKey | artemisTranslate }}</p>
                         </a>

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localci.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResultLimits;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -245,6 +248,34 @@ public class LocalCIResultProcessingService {
         }
     }
 
+    /**
+     * Checks that the ids that a queued build job declares belong together in the database: the exercise of the participation is the exercise of the job, the course of that
+     * exercise is the course of the job, and an existing record of the job id belongs to the same participation, exercise and course.
+     * Existing job ownership is checked even when the participation has been deleted.
+     * <p>
+     * The processing list of the build agents is deliberately not consulted: an agent removes a job from it before it delivers the result.
+     */
+    private boolean isConsistentWithDatabase(BuildJobQueueItem buildJob, Optional<Participation> participation) {
+        if (participation.isPresent()) {
+            if (!(participation.get() instanceof ProgrammingExerciseParticipation programmingParticipation)) {
+                return false;
+            }
+            ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);
+            if (exercise == null || !Objects.equals(exercise.getId(), buildJob.exerciseId())) {
+                return false;
+            }
+            Optional<Long> courseId = programmingExerciseRepository.findCourseIdById(buildJob.exerciseId());
+            if (courseId.isEmpty() || !Objects.equals(courseId.get(), buildJob.courseId())) {
+                return false;
+            }
+        }
+        return buildJobRepository.findByBuildJobId(buildJob.id())
+                .map(existing -> (existing.getParticipationId() == null || Objects.equals(existing.getParticipationId(), buildJob.participationId()))
+                        && (existing.getExerciseId() == null || Objects.equals(existing.getExerciseId(), buildJob.exerciseId()))
+                        && (existing.getCourseId() == null || Objects.equals(existing.getCourseId(), buildJob.courseId())))
+                .orElse(true);
+    }
+
     private void processResultLocked(ResultQueueItem resultQueueItem) {
         BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         BuildResult buildResult = resultQueueItem.buildResult();
@@ -254,11 +285,36 @@ public class LocalCIResultProcessingService {
         if (buildResult == null) {
             return;
         }
+        // The result was created on a build agent, so the number of its elements is bounded before it is processed
+        BuildResult limitedBuildResult = BuildResultLimits.limit(buildResult);
+        List<BuildLogDTO> limitedBuildLogs = BuildResultLimits.limitLogs(buildLogs);
+        if (limitedBuildResult != buildResult || limitedBuildLogs != buildLogs) {
+            log.warn("The result of build job {} exceeds the limits for the number of tests, reports or log entries and is shortened", buildJob.id());
+            buildResult = limitedBuildResult;
+            buildLogs = limitedBuildLogs;
+        }
         BuildJob savedBuildJob;
         Result result = null;
 
         SecurityUtils.setSystemAuthorizationObject();
-        Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseById(buildJob.participationId());
+        Optional<Participation> participationOptional;
+        try {
+            participationOptional = participationRepository.findWithProgrammingExerciseById(buildJob.participationId());
+            if (!isConsistentWithDatabase(buildJob, participationOptional)) {
+                // The ids of the item come from the queue, so a result is processed only for the participation, exercise and course that the database holds together.
+                // A job whose result is dropped here is recorded as missing and is retried by the LocalCIMissingJobService.
+                log.error("Dropping the result of build job {}: its participation {}, exercise {} and course {} do not belong together", buildJob.id(), buildJob.participationId(),
+                        buildJob.exerciseId(), buildJob.courseId());
+                return;
+            }
+        }
+        catch (DataAccessException e) {
+            // The result was already polled from the queue, so it is kept for another attempt instead of being lost. A retry that finds the database still unavailable keeps it
+            // again.
+            log.warn("Could not check the result of build job {} against the database, it is processed later: {}", buildJob.id(), e.getMessage());
+            distributedDataAccessService.getDistributedDeferredBuildResultQueue().add(resultQueueItem);
+            return;
+        }
 
         try {
             if (participationOptional.isPresent()) {

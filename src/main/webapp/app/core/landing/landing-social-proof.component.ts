@@ -145,7 +145,7 @@ import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
             <a class="social-proof-link" href="https://docs.artemis.tum.de/about/adoption" target="_blank" rel="noopener">
                 {{ 'landing.socialProof.cta' | artemisTranslate }}
                 <fa-icon [icon]="faArrowUpRightFromSquare" />
-                <span class="visually-hidden">{{ 'landing.opensInNewTab' | artemisTranslate }}</span>
+                <span class="sr-only">{{ 'landing.opensInNewTab' | artemisTranslate }}</span>
             </a>
         </section>
     `,

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -42,7 +43,7 @@ class ParticipationLockPolicyTest {
         when(exercise.isExamExercise()).thenReturn(true);
         when(exercise.isTestExamExercise()).thenReturn(true);
         assertThat(service.isLocked(participation, exercise)).isFalse();
-        var projection = new GitRepositoryAccessDTO(34L, 56L, ExerciseMode.INDIVIDUAL, true, null, null, null, null, 78L, null, true);
+        var projection = new GitRepositoryAccessDTO(34L, 56L, ExerciseMode.INDIVIDUAL, true, null, null, null, null, 78L, null, ExamMode.TEST);
         assertThat(service.isLocked(participation, projection)).isFalse();
         verify(api, times(2)).isSubmitted(12L);
         verify(exercise, never()).getExam();

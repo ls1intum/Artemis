@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { PresentationAssessmentInstanceDetailsComponent } from 'app/presentation/manage/presentation-assessment-instance-details.component';
-import { PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationAssessmentMode, PresentationGradingMethod } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PresentationAssessmentInstanceDetailsComponent', () => {
@@ -63,5 +63,17 @@ describe('PresentationAssessmentInstanceDetailsComponent', () => {
 
         expect(text()).toContain('Room 1');
         expect(meetingLink()).toBeNull();
+    });
+
+    it('should name the grading method only when a presentation is given', () => {
+        fixture.componentRef.setInput('instance', { mode: PresentationAssessmentMode.IN_PERSON });
+        fixture.detectChanges();
+        expect(text()).not.toContain('artemisApp.presentationAssessment.gradingMethod.label');
+
+        fixture.componentRef.setInput('presentationAssessment', { title: 'Final', gradingMethod: PresentationGradingMethod.RUBRIC });
+        fixture.detectChanges();
+
+        expect(text()).toContain('artemisApp.presentationAssessment.gradingMethod.label');
+        expect(text()).toContain('artemisApp.presentationAssessment.gradingMethod.RUBRIC');
     });
 });

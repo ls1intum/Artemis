@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { QuizQuestionPoolService } from './quiz-question-pool.service';
-import { PoolBuildStart, PoolProgress, PoolQuestion, PoolQuestionPage, PoolSettings } from './quiz-question-pool.types';
+import { PoolBuildStart, PoolLectureUnit, PoolProgress, PoolQuestion, PoolQuestionPage, PoolSettings } from './quiz-question-pool.types';
 
 describe('QuizQuestionPoolService', () => {
     let service: QuizQuestionPoolService;
@@ -85,6 +85,39 @@ describe('QuizQuestionPoolService', () => {
         httpMock.expectOne((r) => r.url === '/api/hyperion/courses/7/quiz-question-pool/plan').flush({ planned: 36, missing: 12 });
 
         expect(result).toEqual({ planned: 36, missing: 12 });
+    });
+
+    it('should load the lecture units and change the relevance of one', () => {
+        let units: PoolLectureUnit[] | undefined;
+        service.getLectureUnits(7).subscribe((result) => (units = result));
+        httpMock
+            .expectOne((r) => r.method === 'GET' && r.url === '/api/hyperion/courses/7/quiz-question-pool/lecture-units')
+            .flush([
+                { competencyId: 9, competencyTitle: 'Arrays', lectureUnitId: 4, lectureUnitName: 'Arrays in Java', excluded: false, materialChanged: true, questionCount: 12 },
+            ]);
+
+        expect(units).toEqual([
+            {
+                competencyId: 9,
+                competencyTitle: 'Arrays',
+                lectureUnitId: 4,
+                lectureUnitName: 'Arrays in Java',
+                lectureTitle: undefined,
+                excluded: false,
+                materialChanged: true,
+                questionCount: 12,
+                approvedCount: 0,
+                lastBuiltAt: undefined,
+            },
+        ]);
+
+        let excluded: boolean | undefined;
+        service.updateLectureUnitRelevance(7, 4, true).subscribe((result) => (excluded = result));
+        const req = httpMock.expectOne((r) => r.method === 'PUT' && r.url === '/api/hyperion/courses/7/quiz-question-pool/lecture-units/4/relevance');
+        expect(req.request.body).toEqual({ excluded: true });
+        req.flush({ excluded: true });
+
+        expect(excluded).toBe(true);
     });
 
     it('should map progress with defaults for omitted counts', () => {
