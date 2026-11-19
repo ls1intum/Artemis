@@ -438,8 +438,7 @@ class CompetencyOrchestrationServiceTest {
             assertThat(result.appliedActions()).isEmpty();
             assertThat(result.summary()).isEqualTo("Run summary");
             @SuppressWarnings("unchecked")
-            ArgumentCaptor<java.util.function.Function<LLMTokenUsageService.LLMTokenUsageBuilder, LLMTokenUsageService.LLMTokenUsageBuilder>> scope = ArgumentCaptor
-                    .forClass(java.util.function.Function.class);
+            ArgumentCaptor<java.util.function.UnaryOperator<LLMTokenUsageService.LLMTokenUsageBuilder>> scope = ArgumentCaptor.forClass(java.util.function.UnaryOperator.class);
             verify(llmTokenUsageService).trackModelCallTokenUsage(eq(chatResponse), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), scope.capture());
             var capturedScope = scope.getValue().apply(new LLMTokenUsageService.LLMTokenUsageBuilder());
             assertThat(capturedScope.getCourseID()).contains(COURSE_ID);

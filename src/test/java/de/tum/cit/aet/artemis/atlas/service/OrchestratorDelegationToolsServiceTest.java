@@ -128,8 +128,7 @@ class OrchestratorDelegationToolsServiceTest {
             assertThat(result.message()).isEqualTo("Created the requested competency");
             assertThat(result.appliedActions()).singleElement().extracting(AppliedActionDTO::type).isEqualTo(AppliedActionDTO.ActionType.CREATE);
             @SuppressWarnings("unchecked")
-            ArgumentCaptor<java.util.function.Function<LLMTokenUsageService.LLMTokenUsageBuilder, LLMTokenUsageService.LLMTokenUsageBuilder>> scope = ArgumentCaptor
-                    .forClass(java.util.function.Function.class);
+            ArgumentCaptor<java.util.function.UnaryOperator<LLMTokenUsageService.LLMTokenUsageBuilder>> scope = ArgumentCaptor.forClass(java.util.function.UnaryOperator.class);
             verify(llmTokenUsageService).trackModelCallTokenUsage(eq(response), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), scope.capture());
             var capturedScope = scope.getValue().apply(new LLMTokenUsageService.LLMTokenUsageBuilder());
             assertThat(capturedScope.getCourseID()).contains(COURSE_ID);

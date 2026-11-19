@@ -8,7 +8,7 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -20,6 +20,9 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.ai.chat.client.ChatClient;
@@ -27,6 +30,7 @@ import org.springframework.ai.chat.client.advisor.ChatModelCallAdvisor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.DefaultUsage;
+import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -39,7 +43,11 @@ import com.openai.errors.OpenAIIoException;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
+import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
+import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
@@ -332,19 +340,37 @@ class HyperionCodeGenerationServiceTest {
         verify(llmTokenUsageService).saveLLMTokenUsage(eq(List.of(llmRequest)), eq(LLMServiceType.HYPERION), any());
     }
 
-    @Test
-    void callChatClient_withUnusableUsageMetadata_doesNotFabricateTokenCounts() throws Exception {
+    @ParameterizedTest
+    @CsvSource(value = { "11,7,true", "0,0,true", "-11,7,false", "11,-7,false", "null,7,false", "11,null,false", "null,null,false" }, nullValues = "null")
+    void callChatClient_onlyPersistsCompleteNonnegativeTokenCounts(Integer input, Integer output, boolean persisted) throws Exception {
         String jsonResponse = "{\"solutionPlan\":\"Generated solution plan\",\"files\":[]}";
         Map<String, Object> templateVariables = Map.of("key", "value");
-        ChatResponse response = createChatResponse(jsonResponse, "gpt-5-mini", -11, 7);
+        Usage usage = mock(Usage.class);
+        when(usage.getPromptTokens()).thenReturn(input);
+        when(usage.getCompletionTokens()).thenReturn(output);
+        ChatResponse response = new ChatResponse(List.of(new Generation(new AssistantMessage(jsonResponse))),
+                ChatResponseMetadata.builder().model("gpt-5-mini").usage(usage).build());
+        var traces = mock(LLMTokenUsageTraceRepository.class);
+        var accounting = new LLMTokenUsageService(traces, mock(LLMTokenUsageRequestRepository.class), new LLMModelCostConfiguration());
+        ChatClient chatClient = ChatClient.builder(chatModel).defaultAdvisors(ChatModelCallAdvisor.builder().chatModel(chatModel).build()).build();
+        var testedStrategy = new TestCodeGenerationStrategy(chatClient, templates, accounting);
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(response);
 
-        CodeGenerationResponseDTO result = strategy.testCallChatClient(user, exercise, "test-template", templateVariables);
+        CodeGenerationResponseDTO result = testedStrategy.testCallChatClient(user, exercise, "test-template", templateVariables);
 
         assertThat(result.getSolutionPlan()).isEqualTo("Generated solution plan");
-        verify(llmTokenUsageService, never()).buildLLMRequest(any(ChatResponse.class), any());
-        verify(llmTokenUsageService, never()).saveLLMTokenUsage(any(), any(), any());
+        if (persisted) {
+            var saved = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+            verify(traces).save(saved.capture());
+            assertThat(saved.getValue().getLLMRequests()).singleElement().satisfies(request -> {
+                assertThat(request.getNumInputTokens()).isEqualTo(input);
+                assertThat(request.getNumOutputTokens()).isEqualTo(output);
+            });
+        }
+        else {
+            verifyNoInteractions(traces);
+        }
     }
 
     @Test

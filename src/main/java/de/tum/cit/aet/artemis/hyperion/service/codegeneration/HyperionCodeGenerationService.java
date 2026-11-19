@@ -607,17 +607,13 @@ public abstract class HyperionCodeGenerationService {
             if (model == null || model.isBlank()) {
                 return;
             }
-            var usage = chatResponse.getMetadata().getUsage();
-            if (usage.getPromptTokens() == null || usage.getCompletionTokens() == null || usage.getPromptTokens() < 0 || usage.getCompletionTokens() < 0) {
-                return;
-            }
             Long exerciseId = exercise != null ? exercise.getId() : null;
             if (courseId == null) {
                 log.warn("Skipping token usage persistence for Hyperion code generation due to missing courseId (exerciseId={}, prompt={})", exerciseId, prompt);
                 return;
             }
             LLMRequest llmRequest = llmTokenUsageService.buildLLMRequest(chatResponse, buildPipelineId(prompt));
-            if (llmRequest == null) {
+            if (llmRequest == null || llmRequest.numInputTokens() < 0 || llmRequest.numOutputTokens() < 0) {
                 return;
             }
             Long userId = user != null ? user.getId() : null;

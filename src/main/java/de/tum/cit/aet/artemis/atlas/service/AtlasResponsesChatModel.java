@@ -269,7 +269,7 @@ public final class AtlasResponsesChatModel implements ChatModel {
         try {
             response.usage().ifPresent(usage -> responseMetadata.usage(toUsage(usage)));
         }
-        catch (ArithmeticException | OpenAIInvalidDataException ex) {
+        catch (ArithmeticException | OpenAIInvalidDataException _) {
             return terminalResponse("invalid_usage", responseMetadata);
         }
         try {
@@ -283,7 +283,7 @@ public final class AtlasResponsesChatModel implements ChatModel {
             }
             return completedResponse(response, responseMetadata);
         }
-        catch (IllegalArgumentException | OpenAIInvalidDataException ex) {
+        catch (IllegalArgumentException | OpenAIInvalidDataException _) {
             return terminalResponse("unsupported_output", responseMetadata);
         }
     }
