@@ -132,11 +132,10 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
         List<String> header = List.of(lines.get(0).split(","));
         List<String> values = List.of(lines.get(1).split(",", -1));
         assertThat(values).hasSameSizeAs(header);
+        assertThat(header).doesNotContain("CostPerMillionInputTokens", "CostPerMillionOutputTokens", "CostPerMillionCachedInputTokens", "CostPerMillionCacheWriteInputTokens");
         assertThat(values.get(header.indexOf("NumInputTokens"))).isEqualTo("1000");
         assertThat(values.get(header.indexOf("NumCachedInputTokens"))).isEqualTo("900");
-        assertThat(values.get(header.indexOf("CostPerMillionCachedInputTokens"))).isEqualTo("0.0089");
         assertThat(values.get(header.indexOf("NumCacheWriteInputTokens"))).isEqualTo("50");
-        assertThat(values.get(header.indexOf("CostPerMillionCacheWriteInputTokens"))).isEqualTo("0.1114");
         assertThat(values.get(header.indexOf("TotalCostUsd"))).isEqualTo("1.8E-5");
         assertThat(values.get(header.indexOf("CostSource"))).isEqualTo("PROVIDER");
     }

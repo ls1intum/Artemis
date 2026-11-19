@@ -36,14 +36,8 @@ public class LLMTokenUsageRequest extends DomainObject {
     @Column(name = "num_input_tokens")
     private int numInputTokens;
 
-    @Column(name = "cost_per_million_input_tokens")
-    private float costPerMillionInputTokens;
-
     @Column(name = "num_output_tokens")
     private int numOutputTokens;
-
-    @Column(name = "cost_per_million_output_tokens")
-    private float costPerMillionOutputTokens;
 
     /**
      * part of the input tokens the provider read from its prompt cache (included in numInputTokens)
@@ -51,19 +45,13 @@ public class LLMTokenUsageRequest extends DomainObject {
     @Column(name = "num_cached_input_tokens")
     private int numCachedInputTokens;
 
-    @Column(name = "cost_per_million_cached_input_tokens")
-    private float costPerMillionCachedInputTokens;
-
     /**
      * part of the input tokens the provider wrote to its prompt cache (included in numInputTokens)
      */
     @Column(name = "num_cache_write_input_tokens")
     private int numCacheWriteInputTokens;
 
-    @Column(name = "cost_per_million_cache_write_input_tokens")
-    private float costPerMillionCacheWriteInputTokens;
-
-    /** Complete USD amount reported by the provider or estimated from explicitly USD rates. Null means unpriced in USD. */
+    /** Complete USD amount reported by the provider or estimated from rates. Null means unpriced in USD. */
     @Nullable
     @Column(name = "total_cost_usd")
     private Double totalCostUsd;
@@ -93,22 +81,6 @@ public class LLMTokenUsageRequest extends DomainObject {
         this.servicePipelineId = servicePipelineId;
     }
 
-    public float getCostPerMillionInputTokens() {
-        return costPerMillionInputTokens;
-    }
-
-    public void setCostPerMillionInputTokens(float costPerMillionInputToken) {
-        this.costPerMillionInputTokens = costPerMillionInputToken;
-    }
-
-    public float getCostPerMillionOutputTokens() {
-        return costPerMillionOutputTokens;
-    }
-
-    public void setCostPerMillionOutputTokens(float costPerMillionOutputToken) {
-        this.costPerMillionOutputTokens = costPerMillionOutputToken;
-    }
-
     public int getNumInputTokens() {
         return numInputTokens;
     }
@@ -133,28 +105,12 @@ public class LLMTokenUsageRequest extends DomainObject {
         this.numCachedInputTokens = numCachedInputTokens;
     }
 
-    public float getCostPerMillionCachedInputTokens() {
-        return costPerMillionCachedInputTokens;
-    }
-
-    public void setCostPerMillionCachedInputTokens(float costPerMillionCachedInputTokens) {
-        this.costPerMillionCachedInputTokens = costPerMillionCachedInputTokens;
-    }
-
     public int getNumCacheWriteInputTokens() {
         return numCacheWriteInputTokens;
     }
 
     public void setNumCacheWriteInputTokens(int numCacheWriteInputTokens) {
         this.numCacheWriteInputTokens = numCacheWriteInputTokens;
-    }
-
-    public float getCostPerMillionCacheWriteInputTokens() {
-        return costPerMillionCacheWriteInputTokens;
-    }
-
-    public void setCostPerMillionCacheWriteInputTokens(float costPerMillionCacheWriteInputTokens) {
-        this.costPerMillionCacheWriteInputTokens = costPerMillionCacheWriteInputTokens;
     }
 
     public LLMTokenUsageTrace getTrace() {

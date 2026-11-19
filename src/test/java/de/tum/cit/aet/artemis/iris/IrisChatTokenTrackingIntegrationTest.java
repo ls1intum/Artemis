@@ -152,12 +152,10 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
             assertThat(usage.getModel()).isEqualTo(expectedCost.model());
             assertThat(usage.getNumInputTokens()).isEqualTo(expectedCost.numInputTokens());
             assertThat(usage.getNumOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
-            assertThat(usage.getCostPerMillionInputTokens()).isEqualTo(expectedCost.costPerMillionInputToken());
-            assertThat(usage.getCostPerMillionOutputTokens()).isCloseTo(expectedCost.costPerMillionOutputToken(), Offset.offset(0.01f));
             assertThat(usage.getNumCachedInputTokens()).isEqualTo(Math.toIntExact(expectedCost.numCachedInputTokens()));
-            assertThat(usage.getCostPerMillionCachedInputTokens()).isCloseTo(expectedCost.costPerMillionCachedInputToken(), Offset.offset(0.001f));
             assertThat(usage.getNumCacheWriteInputTokens()).isEqualTo(expectedCost.numCacheWriteInputTokens());
-            assertThat(usage.getCostPerMillionCacheWriteInputTokens()).isCloseTo(expectedCost.costPerMillionCacheWriteInputToken(), Offset.offset(0.001f));
+            assertThat(usage.getTotalCostUsd()).isEqualTo(expectedCost.totalCostUsd());
+            assertThat(usage.getCostSource()).isEqualTo(expectedCost.costSource());
             assertThat(usage.getServicePipelineId()).isEqualTo(expectedCost.pipelineId());
         }
     }
@@ -218,8 +216,8 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
             assertThat(usage.getModel()).isEqualTo(expectedCost.model());
             assertThat(usage.getNumInputTokens()).isEqualTo(expectedCost.numInputTokens());
             assertThat(usage.getNumOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
-            assertThat(usage.getCostPerMillionInputTokens()).isCloseTo(expectedCost.costPerMillionInputToken(), Offset.offset(0.01f));
-            assertThat(usage.getCostPerMillionOutputTokens()).isCloseTo(expectedCost.costPerMillionOutputToken(), Offset.offset(0.01f));
+            assertThat(usage.getTotalCostUsd()).isEqualTo(expectedCost.totalCostUsd());
+            assertThat(usage.getCostSource()).isEqualTo(expectedCost.costSource());
             assertThat(usage.getServicePipelineId()).isEqualTo(expectedCost.pipelineId());
         }
     }

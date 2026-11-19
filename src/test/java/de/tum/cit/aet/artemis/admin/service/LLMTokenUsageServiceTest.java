@@ -344,8 +344,8 @@ class LLMTokenUsageServiceTest {
             assertThat(request.getModel()).isEmpty();
             assertThat(request.getNumInputTokens()).isEqualTo(11);
             assertThat(request.getNumOutputTokens()).isEqualTo(7);
-            assertThat(request.getCostPerMillionInputTokens()).isZero();
-            assertThat(request.getCostPerMillionOutputTokens()).isZero();
+            assertThat(request.getTotalCostUsd()).isNull();
+            assertThat(request.getCostSource()).isNull();
             assertThat(request.getServicePipelineId()).isEqualTo("NO_MODEL");
         });
     }
@@ -363,8 +363,8 @@ class LLMTokenUsageServiceTest {
             assertThat(request.getModel()).isEqualTo("gpt-5-mini");
             assertThat(request.getNumInputTokens()).isEqualTo(11);
             assertThat(request.getNumOutputTokens()).isEqualTo(7);
-            assertThat(request.getCostPerMillionInputTokens()).isEqualTo(0.23f);
-            assertThat(request.getCostPerMillionOutputTokens()).isEqualTo(1.84f);
+            assertThat(request.getTotalCostUsd()).isNull();
+            assertThat(request.getCostSource()).isNull();
             assertThat(request.getServicePipelineId()).isEqualTo("ATLAS_ORCHESTRATION");
         });
     }
