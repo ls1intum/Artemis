@@ -1,4 +1,4 @@
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -160,17 +160,13 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1' } as Lecture);
 
         const createSpy = vi.spyOn(lectureService, 'create').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: {
-                        id: 3,
-                        title: 'test1',
-                        course: {
-                            id: 1,
-                        },
-                    } as Lecture,
-                }),
-            ),
+            of({
+                id: 3,
+                title: 'test1',
+                course: {
+                    id: 1,
+                },
+            } as Lecture),
         );
         const calendarService = TestBed.inject(CalendarService);
         const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
@@ -191,17 +187,13 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.lecture.set({ id: 6, title: 'test1Updated', channelName: 'test1Updated' } as Lecture);
 
         const updateSpy = vi.spyOn(lectureService, 'update').mockReturnValue(
-            of<HttpResponse<Lecture>>(
-                new HttpResponse({
-                    body: {
-                        id: 6,
-                        title: 'test1Updated',
-                        course: {
-                            id: 1,
-                        },
-                    } as Lecture,
-                }),
-            ),
+            of({
+                id: 6,
+                title: 'test1Updated',
+                course: {
+                    id: 1,
+                },
+            } as Lecture),
         );
         const calendarService = TestBed.inject(CalendarService);
         const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
@@ -226,7 +218,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.isEditMode.set(false);
         lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'lecture-test1' } as Lecture);
         const navigateSpy = vi.spyOn(router, 'navigate');
-        vi.spyOn(lectureService, 'create').mockReturnValue(of(new HttpResponse({ body: { id: 3, title: 'test1', course: { id: 1 } } as Lecture })));
+        vi.spyOn(lectureService, 'create').mockReturnValue(of({ id: 3, title: 'test1', course: { id: 1 } } as Lecture));
 
         lectureUpdateComponent.save();
         await lectureUpdateComponentFixture.whenStable();
@@ -249,7 +241,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.isEditMode.set(false);
         lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'lecture-test1' } as Lecture);
         vi.spyOn(router, 'navigate').mockImplementation(navigation);
-        const created = new HttpResponse({ body: { id: 3, title: 'test1', course: { id: 1 } } as Lecture });
+        const created = { id: 3, title: 'test1', course: { id: 1 } } as Lecture;
         const createSpy = vi.spyOn(lectureService, 'create').mockReturnValue(of(created));
         const updateSpy = vi.spyOn(lectureService, 'update').mockReturnValue(of(created));
 
@@ -267,14 +259,14 @@ describe('LectureUpdateComponent', () => {
         const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as Course;
         await configureActiveRouteMockAndCompileComponents({ course, lecture: { id: 6, title: 'Old title', channelName: 'lecture-old-title', course } });
         lectureUpdateComponentFixture.detectChanges();
-        const response = new Subject<HttpResponse<Lecture>>();
+        const response = new Subject<Lecture>();
         vi.spyOn(lectureService, 'update').mockReturnValue(response);
 
         lectureUpdateComponent.onLectureChange({ id: 6, title: 'New title', channelName: 'lecture-new-title', course } as Lecture);
         lectureUpdateComponent.save();
         lectureUpdateComponent.onLectureChange({ id: 6, title: 'Newer title', channelName: 'lecture-newer-title', course } as Lecture);
         // The response describes the course only in part, without its communication settings.
-        response.next(new HttpResponse({ body: { id: 6, title: 'New title', channelName: 'lecture-new-title', course: { id: 1 } } as Lecture }));
+        response.next({ id: 6, title: 'New title', channelName: 'lecture-new-title', course: { id: 1 } } as Lecture);
 
         expect(lectureUpdateComponent.lecture().course?.courseInformationSharingConfiguration).toBe(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
         expect(lectureUpdateComponent.lecture().title).toBe('Newer title');
@@ -334,7 +326,7 @@ describe('LectureUpdateComponent', () => {
         it('should keep asking while the details of an existing lecture are saved, since the save does not cover content that could not be saved', async () => {
             await configureValidLectureUpdateForm();
             lectureUpdateComponent.unitSection = unitSectionWith({ hasUnsavedContent: () => true });
-            vi.spyOn(lectureService, 'update').mockReturnValue(new Subject<HttpResponse<Lecture>>());
+            vi.spyOn(lectureService, 'update').mockReturnValue(new Subject<Lecture>());
             lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
 
             lectureUpdateComponent.save();

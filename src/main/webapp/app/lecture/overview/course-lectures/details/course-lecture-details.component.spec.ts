@@ -25,7 +25,7 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { NotReleasedTagComponent } from 'app/shared-ui/components/not-released-tag/not-released-tag.component';
@@ -107,9 +107,7 @@ describe('CourseLectureDetailsComponent', () => {
 
         lecture.lectureUnits = [lectureUnit1, lectureUnit2, lectureUnit3];
 
-        let headers = new HttpHeaders();
-        headers = headers.set('Content-Type', 'application/json; charset=utf-8');
-        const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
+        const response = of(lecture);
 
         routerEvents = new Subject<NavigationEnd>();
         currentNavigation = signal({ id: 1 } as Navigation);
@@ -150,7 +148,6 @@ describe('CourseLectureDetailsComponent', () => {
                     },
                 }),
                 MockProvider(LectureUnitService, {
-                    setCompletion: (_lectureUnitId: number, _lectureId: number, _completed: boolean) => EMPTY,
                     completeLectureUnit: vi.fn(),
                 }),
                 MockProvider(AlertService),
@@ -374,7 +371,7 @@ describe('CourseLectureDetailsComponent', () => {
             ...lectureUnit3.lecture,
             course: { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
         };
-        const response = of(new HttpResponse({ body: { ...lecture }, status: 200 }));
+        const response = of({ ...lecture } as Lecture);
         vi.spyOn(TestBed.inject(LectureService), 'findWithDetails').mockReturnValue(response);
 
         fixture.changeDetectorRef.detectChanges();
@@ -524,7 +521,7 @@ describe('CourseLectureDetailsComponent', () => {
     describe('loadData branches', () => {
         it('should build information boxes only for the dates that are present', async () => {
             const lectureStartOnly = cloneWith(lecture, { startDate: dayjs(), endDate: undefined, lectureUnits: [] });
-            const startOnlyResponse = of(new HttpResponse({ body: lectureStartOnly, status: 200 }));
+            const startOnlyResponse = of(lectureStartOnly);
             vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(startOnlyResponse);
 
             courseLecturesDetailsComponent.ngOnInit();
@@ -571,8 +568,8 @@ describe('CourseLectureDetailsComponent', () => {
             const activatedRoute = TestBed.inject(ActivatedRoute);
             activatedRoute.snapshot.queryParams = { unit: '7', page: '2' };
 
-            const firstResponse = new Subject<HttpResponse<Lecture>>();
-            const secondResponse = new Subject<HttpResponse<Lecture>>();
+            const firstResponse = new Subject<Lecture>();
+            const secondResponse = new Subject<Lecture>();
             const staleLecture = cloneWith(lecture, { title: 'Stale lecture', lectureUnits: [getAttachmentVideoUnit(lecture, 7, dayjs())] });
             const currentLecture = cloneWith(lecture, { title: 'Current lecture', lectureUnits: [getAttachmentVideoUnit(lecture, 8, dayjs())] });
             vi.spyOn(lectureService, 'findWithDetails').mockReturnValueOnce(firstResponse).mockReturnValueOnce(secondResponse);
@@ -580,14 +577,14 @@ describe('CourseLectureDetailsComponent', () => {
             courseLecturesDetailsComponent.ngOnInit();
             courseLecturesDetailsComponent.loadData();
 
-            firstResponse.next(new HttpResponse({ body: staleLecture, status: 200 }));
+            firstResponse.next(staleLecture);
             firstResponse.complete();
 
             expect(courseLecturesDetailsComponent.lecture()).toBeUndefined();
             expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
             expect(courseLecturesDetailsComponent.isLoading()).toBe(true);
 
-            secondResponse.next(new HttpResponse({ body: currentLecture, status: 200 }));
+            secondResponse.next(currentLecture);
             secondResponse.complete();
 
             expect(courseLecturesDetailsComponent.lecture()).toBe(currentLecture);
@@ -610,14 +607,14 @@ describe('CourseLectureDetailsComponent', () => {
             return unit;
         };
 
-        const lectureWith = (units: AttachmentVideoUnit[], id = 1) => new HttpResponse({ body: cloneWith(lecture, { id, lectureUnits: units, attachments: [] }), status: 200 });
+        const lectureWith = (units: AttachmentVideoUnit[], id = 1) => cloneWith(lecture, { id, lectureUnits: units, attachments: [] });
 
         const respondWith = (units: AttachmentVideoUnit[], id = 1) => {
             vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(lectureWith(units, id)));
         };
 
         const respondLater = (units: AttachmentVideoUnit[], id = 1) => {
-            const response = new Subject<HttpResponse<Lecture>>();
+            const response = new Subject<Lecture>();
             vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(response);
             return () => response.next(lectureWith(units, id));
         };
