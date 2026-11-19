@@ -234,15 +234,13 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
 
         // Two student submissions, each built and merged, before any policy exists.
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        localVCPushProcessingService.processNewPush(commitHash, studentAssignmentRepository.bareRepository().getRepository(), student1, Optional.empty(), Optional.empty(),
-                Optional.empty());
+        localVCPushProcessingService.processNewPush(commitHash, studentAssignmentRepository.bareRepository().getRepository(), student1, Optional.empty(), Optional.empty());
         ProgrammingSubmission firstSubmission = awaitFinalizedResult(participation.getId(), 120);
 
         String secondCommit = localVCLocalCITestService.commitFile(studentAssignmentRepository.workingCopyPath(), studentAssignmentRepository.workingCopy(), "second-push.txt");
         studentAssignmentRepository.workingCopy().push().call();
         stubLockTestResults();
-        localVCPushProcessingService.processNewPush(secondCommit, studentAssignmentRepository.bareRepository().getRepository(), student1, Optional.empty(), Optional.empty(),
-                Optional.empty());
+        localVCPushProcessingService.processNewPush(secondCommit, studentAssignmentRepository.bareRepository().getRepository(), student1, Optional.empty(), Optional.empty());
         ProgrammingSubmission secondSubmission = awaitFinalizedResultAfter(participation.getId(), firstSubmission.getLatestResult().getId(), 120);
 
         LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
@@ -319,7 +317,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         templateRepository.workingCopy().push().call();
 
         localVCPushProcessingService.processNewPush(testsCommitHash, testsRepository.bareRepository().getRepository(), userTestRepository.getUserWithAuthorities(),
-                Optional.empty(), Optional.empty(), Optional.empty());
+                Optional.empty(), Optional.empty());
 
         awaitFinalizedResult(solutionParticipation.getId(), 120);
         awaitFinishedBuildJobs(templateParticipation.getId(), 2, 120);
@@ -589,7 +587,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
 
     private void processNewPush() {
         localVCPushProcessingService.processNewPush(commitHash, studentAssignmentRepository.bareRepository().getRepository(), userTestRepository.getUserWithAuthorities(),
-                Optional.empty(), Optional.empty(), Optional.empty());
+                Optional.empty(), Optional.empty());
     }
 
     /**
