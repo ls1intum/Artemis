@@ -681,7 +681,22 @@ public class ProgrammingExerciseCreationUpdateService {
         }
     }
 
-    private void validateProblemStatementLength(@Nullable String problemStatement) {
+    /**
+     * Refuses an update of the exercise that changes the name of its channel to one that the channel does not accept. The update itself refuses it only after it has done other
+     * work, so a request that shares the update with other changes asks for this first. Nothing is changed.
+     *
+     * @param updatedProgrammingExercise the exercise with the update applied
+     */
+    public void validateChannelNameOfUpdate(ProgrammingExercise updatedProgrammingExercise) {
+        channelService.validateExerciseChannelUpdate(updatedProgrammingExercise);
+    }
+
+    /**
+     * Refuses a problem statement that is longer than the maximum length.
+     *
+     * @param problemStatement the problem statement, which may be absent
+     */
+    public void validateProblemStatementLength(@Nullable String problemStatement) {
         if (problemStatement != null && problemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
             throw new BadRequestAlertException("The problem statement must not exceed " + MAX_PROBLEM_STATEMENT_LENGTH + " characters", "ProgrammingExercise",
                     "problemStatementTooLong");

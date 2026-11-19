@@ -1,6 +1,6 @@
 <div>
-    <div *titleBarTitle class="row">
-        <div class="d-flex align-items-center">
+    <div *titleBarTitle class="-mx-2 flex flex-wrap">
+        <div class="flex w-full items-center px-2">
             <jhi-course-title-bar-title id="statistics-page-heading" title="statistics.course_statistics_title" />
             <jhi-documentation-button [type]="documentationType" />
         </div>
@@ -12,9 +12,9 @@
             [courseId]="courseId()!"
         />
     }
-    <div class="row mb-5">
-        <div class="col-md-2"></div>
-        <div jhi-statistics-span-selector [currentSpan]="currentSpan()" (spanChange)="onTabChanged($event)" class="col-md-9"></div>
+    <div class="-mx-2 mb-12! flex flex-wrap">
+        <div class="w-full shrink-0 px-2 md:w-1/6"></div>
+        <div jhi-statistics-span-selector [currentSpan]="currentSpan()" (spanChange)="onTabChanged($event)" class="w-full shrink-0 px-2 md:w-3/4"></div>
     </div>
     @for (graph of graphTypes(); track graph; let i = $index) {
         <div id="graph-{{ i }}" class="graph">
