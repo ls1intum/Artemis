@@ -8,23 +8,18 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { PresentationRubricRating } from './presentation-rubric-rating';
+import type { PresentationAssessmentMode } from './presentation-assessment-mode';
 
 export interface PresentationAssessmentInstancesBatchCreate {
     presentationDate: string;
     resultPoints?: number;
+    passed?: boolean;
     studentLogins: Array<string>;
     language: string;
-    mode: PresentationAssessmentInstancesBatchCreateModeEnum;
+    mode: PresentationAssessmentMode;
     location?: string;
     meetingLink?: string;
     remark?: string;
+    ratings?: Array<PresentationRubricRating>;
 }
-
-export type PresentationAssessmentInstancesBatchCreateModeEnum = 'ONLINE' | 'IN_PERSON';
-
-export const PresentationAssessmentInstancesBatchCreateModeEnum = {
-    Online: 'ONLINE' as const,
-    InPerson: 'IN_PERSON' as const,
-} as const;
-
-export const PresentationAssessmentInstancesBatchCreateModeEnumValues = ['ONLINE', 'IN_PERSON'] as const;

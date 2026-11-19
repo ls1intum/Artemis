@@ -8,11 +8,12 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { GradeType } from './grade-type';
 import type { GradeStep } from './grade-step';
 
 export interface GradeSteps {
     title?: string;
-    gradeType?: GradeStepsGradeTypeEnum;
+    gradeType?: GradeType;
     gradeSteps?: Array<GradeStep>;
     maxPoints?: number;
     plagiarismGrade?: string;
@@ -20,13 +21,3 @@ export interface GradeSteps {
     presentationsNumber?: number;
     presentationsWeight?: number;
 }
-
-export type GradeStepsGradeTypeEnum = 'NONE' | 'BONUS' | 'GRADE';
-
-export const GradeStepsGradeTypeEnum = {
-    None: 'NONE' as const,
-    Bonus: 'BONUS' as const,
-    Grade: 'GRADE' as const,
-} as const;
-
-export const GradeStepsGradeTypeEnumValues = ['NONE', 'BONUS', 'GRADE'] as const;

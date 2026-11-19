@@ -10,12 +10,14 @@
 
 import type { CourseForBonus } from './course-for-bonus';
 import type { ExamForBonus } from './exam-for-bonus';
+import type { GradeType } from './grade-type';
+import type { BonusStrategy } from './bonus-strategy';
 import type { GradeStep } from './grade-step';
 
 export interface GradingScaleForBonus {
     id?: number;
-    gradeType?: GradingScaleForBonusGradeTypeEnum;
-    bonusStrategy?: GradingScaleForBonusBonusStrategyEnum;
+    gradeType?: GradeType;
+    bonusStrategy?: BonusStrategy;
     plagiarismGrade?: string;
     noParticipationGrade?: string;
     presentationsNumber?: number;
@@ -24,23 +26,3 @@ export interface GradingScaleForBonus {
     course?: CourseForBonus;
     exam?: ExamForBonus;
 }
-
-export type GradingScaleForBonusGradeTypeEnum = 'NONE' | 'BONUS' | 'GRADE';
-
-export const GradingScaleForBonusGradeTypeEnum = {
-    None: 'NONE' as const,
-    Bonus: 'BONUS' as const,
-    Grade: 'GRADE' as const,
-} as const;
-
-export const GradingScaleForBonusGradeTypeEnumValues = ['NONE', 'BONUS', 'GRADE'] as const;
-
-export type GradingScaleForBonusBonusStrategyEnum = 'GRADES_DISCRETE' | 'GRADES_CONTINUOUS' | 'POINTS';
-
-export const GradingScaleForBonusBonusStrategyEnum = {
-    GradesDiscrete: 'GRADES_DISCRETE' as const,
-    GradesContinuous: 'GRADES_CONTINUOUS' as const,
-    Points: 'POINTS' as const,
-} as const;
-
-export const GradingScaleForBonusBonusStrategyEnumValues = ['GRADES_DISCRETE', 'GRADES_CONTINUOUS', 'POINTS'] as const;

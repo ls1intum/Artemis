@@ -8,12 +8,14 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { PresentationGradingMethod } from './presentation-grading-method';
 
 export interface PresentationAssessment {
     id?: number;
-    title: string;
+    title?: string;
     description?: string;
-    maxPoints: number;
+    gradingMethod?: PresentationGradingMethod;
+    maxPoints?: number;
     courseId?: number;
     exerciseId?: number;
     exerciseTitle?: string;

@@ -8,18 +8,10 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { ComplaintAction } from './complaint-action';
 
 export interface ComplaintResponseUpdate {
     responseText?: string;
     complaintIsAccepted?: boolean;
-    action?: ComplaintResponseUpdateActionEnum;
+    action?: ComplaintAction;
 }
-
-export type ComplaintResponseUpdateActionEnum = 'REFRESH_LOCK' | 'RESOLVE_COMPLAINT';
-
-export const ComplaintResponseUpdateActionEnum = {
-    RefreshLock: 'REFRESH_LOCK' as const,
-    ResolveComplaint: 'RESOLVE_COMPLAINT' as const,
-} as const;
-
-export const ComplaintResponseUpdateActionEnumValues = ['REFRESH_LOCK', 'RESOLVE_COMPLAINT'] as const;

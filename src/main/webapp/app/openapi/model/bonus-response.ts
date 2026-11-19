@@ -8,22 +8,13 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { BonusStrategy } from './bonus-strategy';
 import type { GradingScaleForBonus } from './grading-scale-for-bonus';
 
 export interface BonusResponse {
     id?: number;
     weight?: number;
-    bonusStrategy?: BonusResponseBonusStrategyEnum;
+    bonusStrategy?: BonusStrategy;
     sourceGradingScale?: GradingScaleForBonus;
     bonusToGradingScale?: GradingScaleForBonus;
 }
-
-export type BonusResponseBonusStrategyEnum = 'GRADES_DISCRETE' | 'GRADES_CONTINUOUS' | 'POINTS';
-
-export const BonusResponseBonusStrategyEnum = {
-    GradesDiscrete: 'GRADES_DISCRETE' as const,
-    GradesContinuous: 'GRADES_CONTINUOUS' as const,
-    Points: 'POINTS' as const,
-} as const;
-
-export const BonusResponseBonusStrategyEnumValues = ['GRADES_DISCRETE', 'GRADES_CONTINUOUS', 'POINTS'] as const;

@@ -8,11 +8,13 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { GradeType } from './grade-type';
+import type { BonusStrategy } from './bonus-strategy';
 import type { GradeStep } from './grade-step';
 
 export interface GradingScaleUpdate {
-    gradeType: GradingScaleUpdateGradeTypeEnum;
-    bonusStrategy?: GradingScaleUpdateBonusStrategyEnum;
+    gradeType: GradeType;
+    bonusStrategy?: BonusStrategy;
     plagiarismGrade?: string;
     noParticipationGrade?: string;
     presentationsNumber?: number;
@@ -22,23 +24,3 @@ export interface GradingScaleUpdate {
     coursePresentationScore?: number;
     examMaxPoints?: number;
 }
-
-export type GradingScaleUpdateGradeTypeEnum = 'NONE' | 'BONUS' | 'GRADE';
-
-export const GradingScaleUpdateGradeTypeEnum = {
-    None: 'NONE' as const,
-    Bonus: 'BONUS' as const,
-    Grade: 'GRADE' as const,
-} as const;
-
-export const GradingScaleUpdateGradeTypeEnumValues = ['NONE', 'BONUS', 'GRADE'] as const;
-
-export type GradingScaleUpdateBonusStrategyEnum = 'GRADES_DISCRETE' | 'GRADES_CONTINUOUS' | 'POINTS';
-
-export const GradingScaleUpdateBonusStrategyEnum = {
-    GradesDiscrete: 'GRADES_DISCRETE' as const,
-    GradesContinuous: 'GRADES_CONTINUOUS' as const,
-    Points: 'POINTS' as const,
-} as const;
-
-export const GradingScaleUpdateBonusStrategyEnumValues = ['GRADES_DISCRETE', 'GRADES_CONTINUOUS', 'POINTS'] as const;

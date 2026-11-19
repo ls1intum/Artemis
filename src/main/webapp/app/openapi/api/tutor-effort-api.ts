@@ -27,10 +27,11 @@ export class TutorEffortApi {
      *
      * @param courseId
      * @param exerciseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    calculateTutorEfforts(courseId: number, exerciseId: number): Observable<Array<TutorEffort>> {
+    calculateTutorEfforts(courseId: number, exerciseId: number, options?: import('./request-options').RequestOptions): Observable<Array<TutorEffort>> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/exercises/${exerciseId}/tutor-effort`;
-        return this.http.get<Array<TutorEffort>>(url);
+        return this.http.get<Array<TutorEffort>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

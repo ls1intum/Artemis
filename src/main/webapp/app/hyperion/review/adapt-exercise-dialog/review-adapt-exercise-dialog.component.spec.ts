@@ -3,15 +3,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
+import { ConsistencyIssueCategory } from 'app/openapi/model/consistency-issue-category';
+import { Severity } from 'app/openapi/model/severity';
 import { AdaptFinding, adaptFindingTagSeverity } from 'app/exercise/review/review-comment-utils';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/hyperion/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 
-function finding(severity: ConsistencyIssueSeverityEnum, description: string, extra: Partial<AdaptFinding> = {}): AdaptFinding {
+function finding(severity: Severity, description: string, extra: Partial<AdaptFinding> = {}): AdaptFinding {
     return {
         source: 'finding',
-        category: ConsistencyIssueCategoryEnum.MethodReturnTypeMismatch,
+        category: ConsistencyIssueCategory.MethodReturnTypeMismatch,
         severity,
         tagSeverity: adaptFindingTagSeverity(severity),
         description,
@@ -55,11 +56,7 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
     afterEach(() => TestBed.resetTestingModule());
 
     it('renders the findings as a labelled list, highest severity first, and discloses automatic persistence', async () => {
-        const { fixture } = await setup([
-            finding(ConsistencyIssueSeverityEnum.Low, 'sorted-last'),
-            finding(ConsistencyIssueSeverityEnum.High, 'sorted-first'),
-            finding(ConsistencyIssueSeverityEnum.Medium, 'sorted-second'),
-        ]);
+        const { fixture } = await setup([finding(Severity.Low, 'sorted-last'), finding(Severity.High, 'sorted-first'), finding(Severity.Medium, 'sorted-second')]);
 
         const list = fixture.nativeElement.querySelector('[role="group"][aria-labelledby="adaptExerciseFindingsHeading"]');
         expect(fixture.nativeElement.querySelector('#adaptExerciseFindingsHeading')).not.toBeNull();
@@ -93,7 +90,7 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
     });
 
     it('confirms with findings and no instructions, reporting an undefined prompt', async () => {
-        const { fixture, confirmed } = await setup([finding(ConsistencyIssueSeverityEnum.High, 'fix it')]);
+        const { fixture, confirmed } = await setup([finding(Severity.High, 'fix it')]);
         const [, confirmButton] = actionButtons(fixture);
 
         expect(confirmButton.disabled).toBe(false);
@@ -121,7 +118,7 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
     });
 
     it('reports a cancellation without a result', async () => {
-        const { fixture, confirmed, cancelled } = await setup([finding(ConsistencyIssueSeverityEnum.High, 'fix it')]);
+        const { fixture, confirmed, cancelled } = await setup([finding(Severity.High, 'fix it')]);
 
         actionButtons(fixture)[0].click();
 
@@ -190,7 +187,7 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
     });
 
     it('rejects overlong instructions even if a review comment is selected', async () => {
-        const { fixture, component, confirmed } = await setup([finding(ConsistencyIssueSeverityEnum.High, 'fix it')]);
+        const { fixture, component, confirmed } = await setup([finding(Severity.High, 'fix it')]);
         component.instructions.set('a'.repeat(8001));
         fixture.detectChanges();
         component['confirm']();
@@ -277,8 +274,8 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
             comment(1, 'rename the method'),
             comment(2, 'rename the class'),
             comment(3, 'add a test', CommentThreadLocationType.TEST_REPO),
-            finding(ConsistencyIssueSeverityEnum.High, 'return type mismatch', { threadId: 4 }),
-            finding(ConsistencyIssueSeverityEnum.Low, 'unused import', { threadId: 5 }),
+            finding(Severity.High, 'return type mismatch', { threadId: 4 }),
+            finding(Severity.Low, 'unused import', { threadId: 5 }),
         ]);
         fixture.componentRef.setInput('selectedFeedbackThreadIds', []);
         fixture.detectChanges();

@@ -8,23 +8,15 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { Language } from './language';
 import type { TextBlock } from './text-block';
 
 export interface SubmissionContent {
     id?: number;
     submissionExerciseType?: string;
     text?: string;
-    language?: SubmissionContentLanguageEnum;
+    language?: Language;
     blocks?: Array<TextBlock>;
     model?: string;
     explanationText?: string;
 }
-
-export type SubmissionContentLanguageEnum = 'ENGLISH' | 'GERMAN';
-
-export const SubmissionContentLanguageEnum = {
-    English: 'ENGLISH' as const,
-    German: 'GERMAN' as const,
-} as const;
-
-export const SubmissionContentLanguageEnumValues = ['ENGLISH', 'GERMAN'] as const;

@@ -10,6 +10,7 @@
 
 import type { Feedback } from './feedback';
 import type { SubmissionWithParticipation } from './submission-with-participation';
+import type { AssessmentType } from './assessment-type';
 import type { UserPublicInfo } from './user-public-info';
 
 export interface ResultSimple {
@@ -18,20 +19,9 @@ export interface ResultSimple {
     score?: number;
     rated?: boolean;
     successful?: boolean;
-    assessmentType?: ResultSimpleAssessmentTypeEnum;
+    assessmentType?: AssessmentType;
     submission?: SubmissionWithParticipation;
     assessor?: UserPublicInfo;
     feedbacks?: Array<Feedback>;
     exerciseTitle?: string;
 }
-
-export type ResultSimpleAssessmentTypeEnum = 'AUTOMATIC' | 'SEMI_AUTOMATIC' | 'MANUAL' | 'AUTOMATIC_ATHENA';
-
-export const ResultSimpleAssessmentTypeEnum = {
-    Automatic: 'AUTOMATIC' as const,
-    SemiAutomatic: 'SEMI_AUTOMATIC' as const,
-    Manual: 'MANUAL' as const,
-    AutomaticAthena: 'AUTOMATIC_ATHENA' as const,
-} as const;
-
-export const ResultSimpleAssessmentTypeEnumValues = ['AUTOMATIC', 'SEMI_AUTOMATIC', 'MANUAL', 'AUTOMATIC_ATHENA'] as const;

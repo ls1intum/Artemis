@@ -8,34 +8,16 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { ProgrammingExerciseTestCaseType } from './programming-exercise-test-case-type';
+import type { Visibility } from './visibility';
 
 export interface TestCase {
     id?: number;
     testName?: string;
     weight?: number;
     active?: boolean;
-    visibility?: TestCaseVisibilityEnum;
+    visibility?: Visibility;
     bonusMultiplier?: number;
     bonusPoints?: number;
-    type?: TestCaseTypeEnum;
+    type?: ProgrammingExerciseTestCaseType;
 }
-
-export type TestCaseVisibilityEnum = 'ALWAYS' | 'AFTER_DUE_DATE' | 'NEVER';
-
-export const TestCaseVisibilityEnum = {
-    Always: 'ALWAYS' as const,
-    AfterDueDate: 'AFTER_DUE_DATE' as const,
-    Never: 'NEVER' as const,
-} as const;
-
-export const TestCaseVisibilityEnumValues = ['ALWAYS', 'AFTER_DUE_DATE', 'NEVER'] as const;
-
-export type TestCaseTypeEnum = 'STRUCTURAL' | 'BEHAVIORAL' | 'DEFAULT';
-
-export const TestCaseTypeEnum = {
-    Structural: 'STRUCTURAL' as const,
-    Behavioral: 'BEHAVIORAL' as const,
-    Default: 'DEFAULT' as const,
-} as const;
-
-export const TestCaseTypeEnumValues = ['STRUCTURAL', 'BEHAVIORAL', 'DEFAULT'] as const;

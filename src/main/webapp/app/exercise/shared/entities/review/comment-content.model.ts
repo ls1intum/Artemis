@@ -1,4 +1,5 @@
-import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
+import { ConsistencyIssueCategory } from 'app/openapi/model/consistency-issue-category';
+import { Severity } from 'app/openapi/model/severity';
 
 export enum CommentContentType {
     USER = 'USER',
@@ -23,8 +24,8 @@ export interface InlineCodeChange {
 
 export interface ConsistencyIssueCommentContent {
     contentType: CommentContentType.CONSISTENCY_CHECK;
-    severity: ConsistencyIssueSeverityEnum;
-    category: ConsistencyIssueCategoryEnum;
+    severity: Severity;
+    category: ConsistencyIssueCategory;
     text: string;
     suggestedFix?: InlineCodeChange | null;
 }

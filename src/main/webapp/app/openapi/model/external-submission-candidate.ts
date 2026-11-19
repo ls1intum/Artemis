@@ -8,20 +8,10 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { ExternalSubmissionIneligibility } from './external-submission-ineligibility';
 
 export interface ExternalSubmissionCandidate {
     login?: string;
     name?: string;
-    ineligibility?: ExternalSubmissionCandidateIneligibilityEnum;
+    ineligibility?: ExternalSubmissionIneligibility;
 }
-
-export type ExternalSubmissionCandidateIneligibilityEnum = 'NOT_IN_COURSE' | 'NO_STUDENT_EXAM' | 'EXERCISE_NOT_IN_STUDENT_EXAM' | 'RESULT_ALREADY_EXISTS';
-
-export const ExternalSubmissionCandidateIneligibilityEnum = {
-    NotInCourse: 'NOT_IN_COURSE' as const,
-    NoStudentExam: 'NO_STUDENT_EXAM' as const,
-    ExerciseNotInStudentExam: 'EXERCISE_NOT_IN_STUDENT_EXAM' as const,
-    ResultAlreadyExists: 'RESULT_ALREADY_EXISTS' as const,
-} as const;
-
-export const ExternalSubmissionCandidateIneligibilityEnumValues = ['NOT_IN_COURSE', 'NO_STUDENT_EXAM', 'EXERCISE_NOT_IN_STUDENT_EXAM', 'RESULT_ALREADY_EXISTS'] as const;

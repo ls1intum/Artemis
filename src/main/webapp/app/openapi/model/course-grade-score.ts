@@ -8,6 +8,7 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { ExerciseType } from './exercise-type';
 
 export interface CourseGradeScore {
     participationId?: number;
@@ -16,17 +17,5 @@ export interface CourseGradeScore {
     score?: number;
     rated?: boolean;
     presentationScore?: number;
-    type: CourseGradeScoreTypeEnum;
+    type: ExerciseType;
 }
-
-export type CourseGradeScoreTypeEnum = 'text' | 'programming' | 'modeling' | 'file-upload' | 'quiz';
-
-export const CourseGradeScoreTypeEnum = {
-    Text: 'text' as const,
-    Programming: 'programming' as const,
-    Modeling: 'modeling' as const,
-    FileUpload: 'file-upload' as const,
-    Quiz: 'quiz' as const,
-} as const;
-
-export const CourseGradeScoreTypeEnumValues = ['text', 'programming', 'modeling', 'file-upload', 'quiz'] as const;
