@@ -46,11 +46,12 @@ final class AresTestCases {
     private static final Pattern TEST_ANNOTATION = Pattern.compile("@\\s*((?:[\\w$]+\\s*\\.\\s*)*+)(" + TEST_ANNOTATION_NAMES + ")(?!\\p{javaJavaIdentifierPart})");
 
     /**
-     * A name in angle brackets that may declare a type variable, e.g. {@code Date} in {@code <Date extends java.sql.Date>}, group 1 being the name. It also
-     * matches a type argument such as {@code String} in {@code List<String>}, which only makes the check more cautious.
+     * A name in angle brackets that may declare a type variable, e.g. {@code Date} in {@code <X, Date extends java.sql.Date>}, group 1 being the name. The
+     * separator after the name stays unconsumed, so the next name after a comma is found as well. It also matches a type argument such as {@code String}
+     * in {@code List<String>}, which only makes the check more cautious.
      */
     private static final Pattern TYPE_VARIABLE = Pattern
-            .compile("[<,]\\s*(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\s*(?:extends(?!\\p{javaJavaIdentifierPart})|[,>&])");
+            .compile("[<,]\\s*(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\s*(?=extends(?!\\p{javaJavaIdentifierPart})|[,>&])");
 
     /** A single-type import, group 1 being the imported type; a static import names a member and is no type import. */
     private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s+(?!static\\s)([\\p{javaJavaIdentifierPart}.\\s]+?)\\s*;");

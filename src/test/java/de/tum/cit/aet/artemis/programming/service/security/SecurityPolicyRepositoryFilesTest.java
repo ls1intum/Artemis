@@ -629,8 +629,9 @@ class SecurityPolicyRepositoryFilesTest {
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS, "de.example.MoreSortingTest");
     }
 
-    @Test
-    void anOverrideWhoseParameterTypeIsATypeVariableKeepsTheInheritedPolicy() throws IOException {
+    @ParameterizedTest
+    @ValueSource(strings = { "<Date extends java.sql.Date>", "<X, Date extends java.sql.Date>" })
+    void anOverrideWhoseParameterTypeIsATypeVariableKeepsTheInheritedPolicy(String typeParameters) throws IOException {
         writeBuildFile();
         String methodPolicy = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n";
         String annotated = methodPolicy + "    @Test\n    public void runs(java.util.Date date)";
@@ -649,10 +650,10 @@ class SecurityPolicyRepositoryFilesTest {
                 class MoreSortingTest extends SortingTest {
 
                     @Test
-                    public <Date extends java.sql.Date> void runs(Date date) {
+                    public %s void runs(Date date) {
                     }
                 }
-                """.formatted(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+                """.formatted(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION, typeParameters);
         writeSource("test/de/example/MoreSortingTest.java", override);
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
