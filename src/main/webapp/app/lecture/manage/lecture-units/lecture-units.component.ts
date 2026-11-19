@@ -35,8 +35,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
-import { concatMap, finalize, map } from 'rxjs/operators';
-import { Observable, defer, from } from 'rxjs';
+import { finalize, map } from 'rxjs/operators';
+import { Observable, defer } from 'rxjs';
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
@@ -1091,34 +1091,20 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
 
         this.isUploadingPdfs.set(true);
-        let lastCreatedUnit: AttachmentVideoUnit | undefined;
-
-        from(files)
-            .pipe(concatMap((file) => this.createAttachmentUnitFromFile(file)))
-            .subscribe({
-                next: (unit) => {
-                    lastCreatedUnit = unit;
-                },
-                error: (error: HttpErrorResponse) => {
-                    this.isUploadingPdfs.set(false);
-                    onError(this.alertService, error);
-                },
-                complete: () => {
-                    this.isUploadingPdfs.set(false);
-                    this.alertService.success('artemisApp.lecture.pdfUpload.success');
-                    this.unitManagementComponent()?.loadData();
-                    // Open edit form for the last created unit
-                    if (lastCreatedUnit) {
-                        this.startEditLectureUnit(lastCreatedUnit);
-                    }
-                },
-            });
-    }
-
-    /**
-     * Creates a single attachment unit from a file
-     */
-    private createAttachmentUnitFromFile(file: File) {
-        return this.attachmentVideoUnitService.createAttachmentVideoUnitFromFile(this.lecture().id!, file);
+        this.attachmentVideoUnitService.createAttachmentVideoUnitsFromFiles(this.lecture().id!, files).subscribe({
+            next: (lastCreatedUnit) => {
+                this.isUploadingPdfs.set(false);
+                this.alertService.success('artemisApp.lecture.pdfUpload.success');
+                this.unitManagementComponent()?.loadData();
+                // Open edit form for the last created unit
+                if (lastCreatedUnit) {
+                    this.startEditLectureUnit(lastCreatedUnit);
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                this.isUploadingPdfs.set(false);
+                onError(this.alertService, error);
+            },
+        });
     }
 }

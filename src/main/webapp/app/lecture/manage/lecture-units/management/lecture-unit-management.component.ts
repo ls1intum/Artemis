@@ -4,12 +4,12 @@ import { outputFromObservable, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { concatMap, finalize } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { Subject, Subscription, from } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import {
     LectureUnitProcessingStatus,
     LectureUnitService,
@@ -671,45 +671,31 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
 
         this.isUploadingPdfs.set(true);
-        let lastCreatedUnit: AttachmentVideoUnit | undefined;
-
-        from(files)
-            .pipe(concatMap((file) => this.createAttachmentUnitFromFile(file)))
-            .subscribe({
-                next: (unit) => {
-                    lastCreatedUnit = unit;
-                },
-                error: (error: HttpErrorResponse) => {
-                    this.isUploadingPdfs.set(false);
-                    onError(this.alertService, error);
-                },
-                complete: () => {
-                    this.isUploadingPdfs.set(false);
-                    this.alertService.success('artemisApp.lecture.pdfUpload.success');
-                    // Navigate to edit page for the last created unit
-                    const lectureValue = this.lecture();
-                    if (lastCreatedUnit?.id && lectureValue?.course?.id) {
-                        void this.router.navigate([
-                            '/course-management',
-                            lectureValue.course.id,
-                            'lectures',
-                            this.resolvedLectureId,
-                            'unit-management',
-                            'attachment-video-units',
-                            lastCreatedUnit.id,
-                            'edit',
-                        ]);
-                    } else {
-                        this.loadData();
-                    }
-                },
-            });
-    }
-
-    /**
-     * Creates a single attachment unit from a file
-     */
-    private createAttachmentUnitFromFile(file: File) {
-        return this.attachmentVideoUnitService.createAttachmentVideoUnitFromFile(this.resolvedLectureId!, file);
+        this.attachmentVideoUnitService.createAttachmentVideoUnitsFromFiles(this.resolvedLectureId, files).subscribe({
+            next: (lastCreatedUnit) => {
+                this.isUploadingPdfs.set(false);
+                this.alertService.success('artemisApp.lecture.pdfUpload.success');
+                // Navigate to edit page for the last created unit
+                const lectureValue = this.lecture();
+                if (lastCreatedUnit?.id && lectureValue?.course?.id) {
+                    void this.router.navigate([
+                        '/course-management',
+                        lectureValue.course.id,
+                        'lectures',
+                        this.resolvedLectureId,
+                        'unit-management',
+                        'attachment-video-units',
+                        lastCreatedUnit.id,
+                        'edit',
+                    ]);
+                } else {
+                    this.loadData();
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                this.isUploadingPdfs.set(false);
+                onError(this.alertService, error);
+            },
+        });
     }
 }
