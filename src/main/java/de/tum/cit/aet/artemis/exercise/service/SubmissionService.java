@@ -665,7 +665,7 @@ public class SubmissionService {
     }
 
     /**
-     * Creates or locks an assessment for the requested round once the selected participation's deadline has passed.
+     * Creates or locks an assessment, requiring the selected team participation's deadline to pass for a new result.
      *
      * @param submission      the submission to lock
      * @param correctionRound the correction round to lock the submission for, must not be negative
@@ -676,7 +676,7 @@ public class SubmissionService {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         Result result = submission.getResultForCorrectionRound(correctionRound);
-        if (result == null && !submission.getParticipation().getExercise().isExamExercise()
+        if (result == null && submission.getParticipation().getExercise().isTeamMode() && !submission.getParticipation().getExercise().isExamExercise()
                 && ExerciseDateService.getDueDate(submission.getParticipation()).filter(ZonedDateTime.now(ZoneOffset.UTC)::isBefore).isPresent()) {
             throw new AccessForbiddenException("The submission deadline has not passed yet.");
         }

@@ -69,6 +69,7 @@ import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueTeamDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CourseWithTeamExercisesDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamAssessmentQueueEntryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
 import de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO;
@@ -391,32 +392,32 @@ public class TeamResource {
     @EnforceAtLeastTutorInExercise
     public ResponseEntity<List<AssessmentQueueTeamDTO>> getAssessmentQueueTeams(@PathVariable long exerciseId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
-        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!exercise.isTeamMode() || exercise.isExamExercise()) {
             throw new BadRequestAlertException("The exercise is not a course team exercise", "exercise", "notTeamExercise");
         }
         submissionService.checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
         submissionService.checkThatAssessmentIsPossibleElseThrow(exercise, null);
-        var user = userRepository.getUserWithAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Long teamOwnerId = authCheckService.isAtLeastInstructorForExercise(exercise, user) ? null : user.getId();
-        var participations = studentParticipationRepository.findTeamAssessmentQueueParticipations(exerciseId, teamOwnerId, correctionRound);
+        List<TeamAssessmentQueueEntryDTO> participations = studentParticipationRepository.findTeamAssessmentQueueParticipations(exerciseId, teamOwnerId, correctionRound);
         Map<Long, AssessmentQueueSubmissionDTO> submissions = new HashMap<>();
-        var now = ZonedDateTime.now(ZoneOffset.UTC);
+        ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
         if (!(exercise instanceof ProgrammingExercise programmingExercise)
                 || programmingExercise.areManualResultsAllowed() && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null
                         || !programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now))) {
-            var candidates = studentParticipationRepository.findCourseTeamQueueCandidates(exerciseId, now, teamOwnerId);
+            List<AssessmentQueueSubmissionDTO> candidates = studentParticipationRepository.findCourseTeamQueueCandidates(exerciseId, now, teamOwnerId);
             candidates.forEach(submission -> submissions.put(submission.participationId(), submission));
         }
-        var existingIds = participations.stream().map(entry -> entry.submissionId()).filter(Objects::nonNull).toList();
+        List<Long> existingIds = participations.stream().map(entry -> entry.submissionId()).filter(Objects::nonNull).toList();
         if (!existingIds.isEmpty()) {
             submissionRepository.findTeamQueueMetadata(existingIds).forEach(submission -> submissions.putIfAbsent(submission.participationId(), submission));
         }
-        var selectedIds = submissions.values().stream().map(AssessmentQueueSubmissionDTO::id).toList();
-        var results = selectedIds.isEmpty() ? List.<AssessmentQueueResultDTO>of() : resultRepository.findTeamQueueResults(selectedIds);
-        var resultsBySubmission = results.stream().collect(Collectors.groupingBy(AssessmentQueueResultDTO::submissionId));
+        List<Long> selectedIds = submissions.values().stream().map(AssessmentQueueSubmissionDTO::id).toList();
+        List<AssessmentQueueResultDTO> results = selectedIds.isEmpty() ? List.of() : resultRepository.findTeamQueueResults(selectedIds);
+        Map<Long, List<AssessmentQueueResultDTO>> resultsBySubmission = results.stream().collect(Collectors.groupingBy(AssessmentQueueResultDTO::submissionId));
         return ResponseEntity.ok(participations.stream().filter(entry -> submissions.containsKey(entry.participationId())).map(entry -> {
-            var submission = submissions.get(entry.participationId());
+            AssessmentQueueSubmissionDTO submission = submissions.get(entry.participationId());
             return new AssessmentQueueTeamDTO(entry.participationId(), entry.teamId(), entry.shortName(),
                     submission.toResponse(resultsBySubmission.getOrDefault(submission.id(), List.of())));
         }).toList());
