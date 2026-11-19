@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MAX_NUMBER_OF_LOCKED_
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -676,7 +677,7 @@ public class SubmissionService {
         authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         Result result = submission.getResultForCorrectionRound(correctionRound);
         if (result == null && !submission.getParticipation().getExercise().isExamExercise()
-                && ExerciseDateService.getDueDate(submission.getParticipation()).filter(ZonedDateTime.now()::isBefore).isPresent()) {
+                && ExerciseDateService.getDueDate(submission.getParticipation()).filter(ZonedDateTime.now(ZoneOffset.UTC)::isBefore).isPresent()) {
             throw new AccessForbiddenException("The submission deadline has not passed yet.");
         }
         if (submission.getParticipation().getExercise().isTeamMode() && result != null && result.getCompletionDate() != null) {

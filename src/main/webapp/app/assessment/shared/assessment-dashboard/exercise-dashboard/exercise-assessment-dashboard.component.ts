@@ -484,7 +484,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 const tutorParticipation = exercise.tutorParticipations![0];
                 this.tutorParticipation.set(tutorParticipation);
                 this.tutorParticipationStatus.set(tutorParticipation.status!);
-                if (exercise.exampleSubmissions && exercise.exampleSubmissions.length > 0) {
+                if (exercise.exampleSubmissions?.length) {
                     this.exampleSubmissionsToReview.set(exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial));
                     this.exampleSubmissionsToAssess.set(exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial));
                 }

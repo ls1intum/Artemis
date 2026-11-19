@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -538,7 +539,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 throw new AccessForbiddenException("The team's submission has not been submitted.");
             }
             var buildAndTestDate = ((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate();
-            if (buildAndTestDate != null && buildAndTestDate.isAfter(ZonedDateTime.now())) {
+            if (buildAndTestDate != null && buildAndTestDate.isAfter(ZonedDateTime.now(ZoneOffset.UTC))) {
                 throw new AccessForbiddenException("The build and test date has not passed yet.");
             }
             if (ExerciseDateService.getDueDate(participation).isPresent() && exerciseDateService.isBeforeDueDate(participation)) {
