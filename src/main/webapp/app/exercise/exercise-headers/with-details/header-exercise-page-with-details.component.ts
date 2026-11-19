@@ -114,12 +114,16 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
         content: { type: 'string', value: this.exercise().difficulty ?? '' },
         isContentComponent: true,
     }));
-    readonly nextDateInformation = computed<InformationBox>(() => ({
-        title: (this.exam() ? 'artemisApp.exam.' : 'artemisApp.courseOverview.exerciseDetails.') + this.nextRelevantDateLabel(),
-        content: { type: 'dateTime', value: this.nextRelevantDate() },
-        contentColor: this.nextRelevantDateStatusBadge() === 'bg-state-danger' ? 'danger' : undefined,
-        isContentComponent: true,
-    }));
+    readonly nextDateInformation = computed<InformationBox>(() => {
+        const isAssessmentDueDate = !this.exam() && this.nextRelevantDateLabel() === 'assessmentDue';
+        const deadlineInformation = isAssessmentDueDate ? getSubmissionDueDateInformation(this.nextRelevantDate()) : undefined;
+        return {
+            title: (this.exam() ? 'artemisApp.exam.' : 'artemisApp.courseOverview.exerciseDetails.') + this.nextRelevantDateLabel(),
+            content: deadlineInformation?.content ?? { type: 'dateTime', value: this.nextRelevantDate() },
+            contentColor: isAssessmentDueDate ? deadlineInformation?.contentColor : this.nextRelevantDateStatusBadge() === 'bg-state-danger' ? 'danger' : undefined,
+            isContentComponent: true,
+        };
+    });
     readonly dueDateInformation = computed<InformationBox | undefined>(() => {
         const exam = this.exam();
         if (exam) {

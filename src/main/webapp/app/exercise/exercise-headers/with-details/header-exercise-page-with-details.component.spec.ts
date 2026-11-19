@@ -65,6 +65,23 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="exercise-header-test-run"]')).not.toBeNull();
     });
 
+    it.each([
+        { hours: 12, type: 'timeAgo', color: 'danger' },
+        { hours: 48, type: 'timeAgo', color: 'body-color' },
+        { hours: 240, type: 'dateTime', color: 'body-color' },
+        { hours: -24, type: 'dateTime', color: undefined },
+    ])('formats an assessment deadline $hours hours away like a submission deadline', ({ hours, type, color }) => {
+        const date = dayjs().add(hours, 'hours');
+        component.nextRelevantDateLabel.set('assessmentDue');
+        component.nextRelevantDate.set(date);
+        const information = component.nextDateInformation();
+        expect(information.title).toBe('artemisApp.courseOverview.exerciseDetails.assessmentDue');
+        expect(information.content).toEqual({ type, value: date });
+        expect(information.contentColor).toBe(color);
+        expect(component.nextRelevantDate()).toBe(date);
+        expect(component.nextRelevantDateLabel()).toBe('assessmentDue');
+    });
+
     it.each(['endDate', 'publishResultsDate'])('uses existing exam translations for %s', (label) => {
         fixture.componentRef.setInput('exam', new Exam());
         component.nextRelevantDateLabel.set(label);

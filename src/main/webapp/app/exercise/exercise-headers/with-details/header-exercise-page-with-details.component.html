@@ -142,7 +142,18 @@
                 exam() ? '' : ('artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate })
             "
         >
-            <span contentComponent [class.text-state-danger]="nextDateInformation().contentColor === 'danger'">{{ nextRelevantDate() | artemisDate }}</span>
+            <span contentComponent [class.text-state-danger]="nextDateInformation().contentColor === 'danger'">
+                @let dateContent = nextDateInformation().content;
+                @switch (dateContent.type) {
+                    @case ('timeAgo') {
+                        {{ dateContent.value | artemisTimeAgo }}
+                    }
+                    @case ('dateTime') {
+                        {{ dateContent.value | artemisDate }}
+                    }
+                    @default {}
+                }
+            </span>
         </jhi-information-box>
     }
 </ng-template>
