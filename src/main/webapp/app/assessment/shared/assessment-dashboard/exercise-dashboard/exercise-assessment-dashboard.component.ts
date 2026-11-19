@@ -11,7 +11,7 @@ import {
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -30,7 +30,8 @@ import { ComplaintService } from 'app/assessment/shared/services/complaint.servi
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Submission, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { Observable, of } from 'rxjs';
+import { Observable, interval, of } from 'rxjs';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { filter, finalize, map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -213,7 +214,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly formattedGradingInstructions = signal<SafeHtml | undefined>(undefined);
     readonly formattedProblemStatement = signal<SafeHtml | undefined>(undefined);
     readonly formattedSampleSolution = signal<SafeHtml | undefined>(undefined);
-    getSubmissionResultByCorrectionRound = getSubmissionResultByCorrectionRound;
 
     // helper variables to display information message about why no new assessments are possible anymore.
     // Computed synchronously in calculateAssessmentProgressInformation alongside statsForDashboard.set(), so they render on that signal's CD tick.
@@ -367,6 +367,48 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     /**
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server
      */
+    readonly completedExampleSubmissionIds = computed(() => new Set(this.exampleSubmissionsCompletedByTutor().map((submission) => submission.id)));
+    readonly exampleReviewRows = computed(() => this.exampleSubmissionsToReview().map((submission) => ({ submission, completed: this.hasBeenCompletedByTutor(submission.id!) })));
+    readonly exampleAssessmentRows = computed(() =>
+        this.exampleSubmissionsToAssess().map((submission) => ({ submission, completed: this.hasBeenCompletedByTutor(submission.id!) })),
+    );
+
+    readonly submissionRowsByRound = computed(() =>
+        this.correctionRoundIndices().map((correctionRound) => {
+            const toRow = (submission: Submission, unassessed: boolean) => ({
+                submission,
+                team: this.exercise().teamMode && !this.isTestRun() ? this.assessmentQueueTeams().get(submission.participation?.id ?? -1) : undefined,
+                result: getSubmissionResultByCorrectionRound(submission, correctionRound),
+                canContinue: this.canContinueTeamTextAssessment(submission, correctionRound),
+                isDraft: this.calculateSubmissionStatusIsDraft(submission, correctionRound),
+                link: this.getAssessmentLink(unassessed && !this.exercise().teamMode ? 'new' : submission),
+            });
+            return {
+                unassessed: this.getUnassessedSubmissionsForRound(correctionRound).map((submission) => toRow(submission, true)),
+                assessed: (this.assessedSubmissionsByRound()[correctionRound] ?? []).map((submission) => toRow(submission, false)),
+                showSubmissions: this.showSubmissionsForRound(correctionRound),
+                queryParams: this.getAssessmentQueryParams(correctionRound),
+            };
+        }),
+    );
+
+    // Complaint ages and expiring locks must update even when no new queue data arrives.
+    private readonly complaintClock = toSignal(interval(1000));
+    readonly complaintRows = computed(() => this.buildComplaintRows(this.submissionsWithComplaints()));
+    readonly moreFeedbackRows = computed(() => this.buildComplaintRows(this.submissionsWithMoreFeedbackRequests()));
+
+    private buildComplaintRows(entries: SubmissionWithComplaintDTO[]) {
+        this.complaintClock();
+        return entries.map((entry) => ({
+            entry,
+            locked: this.isComplaintLocked(entry.complaint),
+            link: this.getAssessmentLink(entry.submission),
+            queryParams: this.getComplaintQueryParams(entry.complaint),
+            responseTime: this.complaintService.getResponseTimeInSeconds(entry.complaint),
+            highlight: this.complaintService.shouldHighlightComplaint(entry.complaint),
+        }));
+    }
+
     ngOnInit(): void {
         this.exerciseId.set(Number(this.route.snapshot.paramMap.get('exerciseId')));
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
@@ -934,7 +976,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param exampleSubmissionId Id of the example submission which to check for completion
      */
     hasBeenCompletedByTutor(exampleSubmissionId: number) {
-        return this.exampleSubmissionsCompletedByTutor().filter((exampleSubmission) => exampleSubmission.id === exampleSubmissionId).length > 0;
+        return this.completedExampleSubmissionIds().has(exampleSubmissionId);
     }
 
     private onError(error: string) {
@@ -1044,7 +1086,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param submission
      */
     getSubmissionToViewFromComplaintSubmission(submission: Submission): Submission | undefined {
-        const submissionToView = this.submissionsWithComplaints().find((dto) => dto.submission.id === submission.id)?.submission;
+        const matchingSubmission = this.submissionsWithComplaints().find((dto) => dto.submission.id === submission.id)?.submission;
+        const submissionToView = matchingSubmission ? deepClone(matchingSubmission) : undefined;
         if (submissionToView) {
             if (submissionToView.results) {
                 submissionToView.results = submissionToView.results.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);

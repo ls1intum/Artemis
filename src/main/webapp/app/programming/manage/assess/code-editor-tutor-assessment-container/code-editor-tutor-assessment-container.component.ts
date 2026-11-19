@@ -686,7 +686,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Navigates back to previous view
      */
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise(), this.submission(), this.isTestRun());
+        assessmentNavigateBack(this.location, this.router, this.exercise(), this.isTestRun());
     }
 
     /**

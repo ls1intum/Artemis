@@ -894,6 +894,29 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         }
     });
 
+    it('refreshes complaint ages when time passes without a queue update', () => {
+        vi.useFakeTimers();
+        const clockFixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
+        try {
+            const clockComponent = clockFixture.componentInstance;
+            clockComponent.exercise.set(deepClone(modelingExercise));
+            clockComponent.courseId.set(1);
+            clockComponent.exerciseId.set(modelingExercise.id!);
+            vi.spyOn(TestBed.inject(ComplaintService), 'getResponseTimeInSeconds').mockReturnValueOnce(10).mockReturnValue(11);
+            clockComponent.submissionsWithMoreFeedbackRequests.set([{ submission: { id: 123 }, complaint: { complaintType: ComplaintType.MORE_FEEDBACK } }]);
+            const rows = clockComponent.moreFeedbackRows();
+            expect(rows[0].responseTime).toBe(10);
+            expect(clockComponent.moreFeedbackRows()).toBe(rows);
+
+            vi.advanceTimersByTime(1000);
+
+            expect(clockComponent.moreFeedbackRows()[0].responseTime).toBe(11);
+        } finally {
+            clockFixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
     describe('getComplaintQueryParams', () => {
         it('Expect more feedback request to delegate the correct query', () => {
             const moreFeedbackComplaint = { complaintType: ComplaintType.MORE_FEEDBACK };
@@ -973,6 +996,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             const submissionToView = comp.getSubmissionToViewFromComplaintSubmission(inputSubmission);
 
             expect(submissionToView).toEqual(expectedSubmissionToView);
+            expect(fakeDTOList[0].submission.results).toBe(fakeResults);
+            expect(fakeResults).toHaveLength(4);
         });
     });
 
@@ -996,6 +1021,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         }
 
         lockedSpy.mockReturnValue(false);
+        comp.exercise.set(deepClone(comp.exercise()));
         fixture.changeDetectorRef.markForCheck();
         fixture.detectChanges();
         for (const link of links) {

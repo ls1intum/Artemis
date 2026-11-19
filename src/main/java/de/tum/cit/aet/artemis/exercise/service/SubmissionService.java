@@ -677,6 +677,7 @@ public class SubmissionService {
         authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         Result result = submission.getResultForCorrectionRound(correctionRound);
         if (result == null && submission.getParticipation().getExercise().isTeamMode() && !submission.getParticipation().getExercise().isExamExercise()
+                && !(submission.getParticipation() instanceof StudentParticipation practice && practice.isTestRun() && practice.getTeam().isEmpty())
                 && ExerciseDateService.getDueDate(submission.getParticipation()).filter(ZonedDateTime.now(ZoneOffset.UTC)::isBefore).isPresent()) {
             throw new AccessForbiddenException("The submission deadline has not passed yet.");
         }

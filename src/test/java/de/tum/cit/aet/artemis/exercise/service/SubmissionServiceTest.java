@@ -481,6 +481,24 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         assertThat(request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams", HttpStatus.OK, AssessmentQueueTeamDTO.class)).isEmpty();
     }
 
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamlessPracticeAssessmentCanStartAfterDeadlineExtension(ExerciseType type) throws Exception {
+        var exercise = teamExercise(type);
+        var participation = participationUtilService.createAndSavePracticeParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        Submission answer = type == ExerciseType.TEXT ? new TextSubmission().text("Practice answer") : new ModelingSubmission().model("{}");
+        var submission = participationUtilService.addSubmission(participation, answer);
+        exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+
+        request.get(assessmentStartUrl(type, submission.getId()), HttpStatus.OK, String.class);
+
+        var result = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getResultForCorrectionRound(0);
+        assertThat(result).isNotNull();
+        assertThat(result.getAssessor()).isEqualTo(tutor1);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void teamExercisePracticeDraftCanBeReopenedOnlyByItsAssessor() throws Exception {
