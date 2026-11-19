@@ -188,22 +188,21 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Extract the student's LLM selection for preliminary Athena feedback requests.
+     * Extract the LLM selection of the user who triggered the Athena request, so Athena can honour Cloud AI or Local AI.
+     * <p>
+     * Preliminary feedback requires an accepted selection. Graded requests forward whatever the assessor chose and leave
+     * the consent check to the caller: without a selection Athena falls back to Cloud AI.
      *
      * @param user     the user who triggered the feedback generation
      * @param isGraded whether the Athena request is for graded feedback
-     * @return the student's LLM selection or null if it should not be forwarded
+     * @return the user's LLM selection, or null if none is recorded for a graded request
      */
     @Nullable
     private AiSelectionDecision extractSelectedLLMUsage(@Nullable User user, boolean isGraded) {
-        if (isGraded) {
-            return null;
-        }
-
         // The id is checked as well: the decision is a row keyed on it, so an account that has not been persisted cannot have
         // one, and looking one up by a null id would fail.
         var selection = Optional.ofNullable(user).map(User::getId).map(userAiPreferenceService::findDecision).orElse(null);
-        if (selection == null || selection == AiSelectionDecision.NO_AI) {
+        if (!isGraded && (selection == null || selection == AiSelectionDecision.NO_AI)) {
             throw new BadRequestAlertException("AI feedback requires an accepted LLM selection", "submission", "llmSelectionRequired", true);
         }
         return selection;

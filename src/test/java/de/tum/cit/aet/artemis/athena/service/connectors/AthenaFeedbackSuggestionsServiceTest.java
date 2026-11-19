@@ -240,11 +240,45 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void testFeedbackSuggestionsModelingDoesNotIncludeSelectionForGradedRequest() throws NetworkingException {
+    void testFeedbackSuggestionsModelingDoesNotIncludeSelectionForGradedRequestWithoutUser() throws NetworkingException {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling", jsonPath("$.exercise.id").value(modelingExercise.getId()),
                 jsonPath("$.submission.id").value(modelingSubmission.getId()), jsonPath("$.selection").doesNotExist());
 
         List<ModelingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(modelingExercise, modelingSubmission, true, null);
+
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    void testFeedbackSuggestionsTextForwardsAssessorSelectionForGradedRequest() throws NetworkingException {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", jsonPath("$.submission.id").value(textSubmission.getId()),
+                jsonPath("$.selection").value(AiSelectionDecision.LOCAL_AI.name()));
+
+        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true, localAiUser);
+
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    void testFeedbackSuggestionsProgrammingForwardsAssessorSelectionForGradedRequest() throws NetworkingException {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", jsonPath("$.submission.id").value(programmingSubmission.getId()),
+                jsonPath("$.selection").value(AiSelectionDecision.CLOUD_AI.name()));
+
+        List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true,
+                cloudAiUser);
+
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    void testFeedbackSuggestionsModelingForwardsAssessorSelectionForGradedRequest() throws NetworkingException {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling", jsonPath("$.submission.id").value(modelingSubmission.getId()),
+                jsonPath("$.selection").value(AiSelectionDecision.LOCAL_AI.name()));
+
+        List<ModelingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(modelingExercise, modelingSubmission, true, localAiUser);
 
         assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
         athenaRequestMockProvider.verify();
