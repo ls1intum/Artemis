@@ -215,6 +215,8 @@ management:
 
 Hyperion can pre-generate a pool of multiple-choice questions per course, competency and linked lecture unit, each grounded in that unit's slides, transcript or text and judged by a second model call before an instructor reviews them. Instructors do not choose models; on the pool page they choose the question types, how many questions each lecture unit receives and the mix of difficulties.
 
+Smart Quizzes requires Hyperion and Atlas and is off by default. Enable **Smart Quizzes** under **Administration → Configuration → Features**. The switch takes effect without restarting Artemis. Turning it off removes the course sidebar link, blocks access to the pool, and prevents new manual and scheduled builds. Builds already underway can finish. Stored questions and course settings are available again when the switch is turned back on.
+
 ```yaml
 artemis:
   hyperion:

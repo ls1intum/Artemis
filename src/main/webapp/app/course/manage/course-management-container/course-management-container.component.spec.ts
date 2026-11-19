@@ -269,7 +269,7 @@ describe('CourseManagementContainerComponent', () => {
         await component['initializeCourseManagementContainerComponent']();
 
         expect(getCourseStub).toHaveBeenCalledWith(1);
-        expect(getSidebarItems).toHaveBeenCalledTimes(2);
+        expect(getSidebarItems).toHaveBeenCalledTimes(3);
         expect(subscribeToCourseUpdates).toHaveBeenCalledWith(1);
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
             1,
@@ -312,6 +312,20 @@ describe('CourseManagementContainerComponent', () => {
         const sidebarItems = component.getSidebarItems();
 
         expect(sidebarItems.some((item) => item.title === 'Presentations')).toBe(shown);
+    });
+
+    it('should update the Smart Quizzes sidebar item when the feature is toggled', async () => {
+        const smartQuizzesToggle = new Subject<boolean>();
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockImplementation((feature) => (feature === FeatureToggle.SmartQuizzes ? smartQuizzesToggle : of(true)));
+        vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: { ...course1, isAtLeastEditor: true } })));
+
+        await component['initializeCourseManagementContainerComponent']();
+
+        expect(component.sidebarItems().some((item) => item.testId === 'smart-quizzes')).toBe(false);
+        smartQuizzesToggle.next(true);
+        expect(component.sidebarItems().some((item) => item.testId === 'smart-quizzes')).toBe(true);
+        smartQuizzesToggle.next(false);
+        expect(component.sidebarItems().some((item) => item.testId === 'smart-quizzes')).toBe(false);
     });
 
     it('should keep the transparent presentation layout for a selected exercise-linked presentation', () => {
@@ -376,7 +390,6 @@ describe('CourseManagementContainerComponent', () => {
         expect(sidebarItems.find((item) => item.title === 'Exams')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Competency Management')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
-        expect(sidebarItems.find((item) => item.title === 'Smart Quizzes')).toBeTruthy();
 
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'IRIS Settings')).toBeTruthy();
