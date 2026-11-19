@@ -2,9 +2,6 @@ package de.tum.cit.aet.artemis.localvc.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
-import java.util.List;
-import java.util.Map;
-
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
@@ -18,6 +15,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.localvc.dto.SshHostKeyFingerprintsDTO;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshFingerprintsProviderService;
 
 /**
@@ -41,14 +39,15 @@ public class PublicSshFingerprintsResource {
     }
 
     /**
-     * GET ssh-fingerprints : the SHA-256 fingerprints of the SSH host keys of this node. The key files are read once and the result is kept until the server restarts.
+     * GET ssh-fingerprints : the SHA-256 fingerprints of the SSH host keys of this node. The key files are read again when the fingerprints that were read last are older than
+     * half a minute.
      *
-     * @return the fingerprints by the algorithm of the host key, a list per algorithm because the server may hold more than one key of it
+     * @return the fingerprint of every host key with its algorithm, also several of one algorithm because the server may hold more than one key of it
      */
     @UsageInteraction(FeatureInteraction.SYSTEM)
     @GetMapping(value = "ssh-fingerprints", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceNothing
-    public ResponseEntity<Map<String, List<String>>> getSshFingerprints() {
-        return ResponseEntity.ok(sshFingerprintsProviderService.getAllSshFingerprints());
+    public ResponseEntity<SshHostKeyFingerprintsDTO> getSshFingerprints() {
+        return ResponseEntity.ok(new SshHostKeyFingerprintsDTO(sshFingerprintsProviderService.getHostKeyFingerprints()));
     }
 }

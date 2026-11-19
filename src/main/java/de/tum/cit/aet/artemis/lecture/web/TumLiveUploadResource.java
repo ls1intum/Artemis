@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
+import java.io.InputStream;
 import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
@@ -28,6 +32,11 @@ import de.tum.cit.aet.artemis.lecture.dto.TumLiveUploadedUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TumLiveUnitUploadRepository;
 import de.tum.cit.aet.artemis.lecture.service.TumLiveUploadService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
 /**
  * Uploading the video of an attachment video unit to the course's TUM.Live course.
@@ -53,16 +62,37 @@ public class TumLiveUploadResource {
     }
 
     /**
-     * POST lecture-units/:lectureUnitId/tumlive-upload : Starts an upload, or hands out a new URL for the pending one whose transfer has not started.
+     * POST lecture-units/:lectureUnitId/tumlive-upload : Reserves an upload reference.
      *
      * @param lectureUnitId the attachment video unit
-     * @return the upload's reference and the one-use URL on TUM.Live to send the file to; 409 if the course is not connected or the pending upload is
-     *         already being transferred
+     * @return the pending reference and the Artemis URL that accepts the file, or HTTP 409 if the course is disconnected or already has a pending upload for
+     *         this unit
      */
     @PostMapping("lecture-units/{lectureUnitId}/tumlive-upload")
     @EnforceAtLeastEditorInLectureUnit
     public ResponseEntity<TumLiveUploadStartDTO> startUpload(@PathVariable long lectureUnitId) {
-        return ResponseEntity.ok(tumLiveUploadService.start(findUnit(lectureUnitId)));
+        String ref = tumLiveUploadService.start(findUnit(lectureUnitId));
+        return ResponseEntity.ok(new TumLiveUploadStartDTO(ref, "/api/lecture/lecture-units/" + lectureUnitId + "/tumlive-upload/file?ref=" + ref));
+    }
+
+    /**
+     * POST lecture-units/:lectureUnitId/tumlive-upload/file : Streams a raw video to TUM.Live. The binary body avoids servlet multipart buffering.
+     *
+     * @param lectureUnitId the attachment video unit
+     * @param ref           the pending upload reference
+     * @param file          the request body
+     * @return 204 once TUM.Live accepts the file
+     */
+    @PostMapping(value = "lecture-units/{lectureUnitId}/tumlive-upload/file", consumes = { MediaType.APPLICATION_OCTET_STREAM_VALUE, "video/mp4" })
+    @EnforceAtLeastEditorInLectureUnit
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(requestBody = @RequestBody(required = true, content = {
+            @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE, schema = @Schema(type = "string", format = "binary")),
+            @Content(mediaType = "video/mp4", schema = @Schema(type = "string", format = "binary")) }))
+    public ResponseEntity<Void> transferUpload(@PathVariable long lectureUnitId, @RequestParam String ref, @Parameter(hidden = true) InputStream file) {
+        tumLiveUploadService.transfer(findUnit(lectureUnitId), ref, file);
+        return ResponseEntity.noContent().build();
     }
 
     /**
