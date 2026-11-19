@@ -83,8 +83,8 @@
                 </jhi-information-box>
             }
             @if (exerciseCategories()?.length) {
-                <jhi-information-box [informationBoxData]="categoriesInformation()">
-                    <jhi-exercise-categories contentComponent [exercise]="exercise()" [isSmall]="true" />
+                <jhi-information-box class="min-w-0 max-w-full" [informationBoxData]="categoriesInformation()">
+                    <jhi-exercise-categories contentComponent class="flex min-w-0 flex-wrap gap-1 whitespace-normal wrap-anywhere" [exercise]="exercise()" [isSmall]="true" />
                 </jhi-information-box>
             }
             <ng-container [ngTemplateOutlet]="nextRelevantDateBadge" />
@@ -138,7 +138,9 @@
     @if (nextRelevantDate() && (!exam() || !isTestRun())) {
         <jhi-information-box
             [informationBoxData]="nextDateInformation()"
-            [tumAetUiTooltip]="'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate }"
+            [tumAetUiTooltip]="
+                exam() ? '' : ('artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate })
+            "
         >
             <span contentComponent [class.text-state-danger]="nextDateInformation().contentColor === 'danger'">{{ nextRelevantDate() | artemisDate }}</span>
         </jhi-information-box>

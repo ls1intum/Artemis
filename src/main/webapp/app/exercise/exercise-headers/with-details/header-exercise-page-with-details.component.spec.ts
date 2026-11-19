@@ -65,6 +65,15 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="exercise-header-test-run"]')).not.toBeNull();
     });
 
+    it.each(['endDate', 'publishResultsDate'])('uses existing exam translations for %s', (label) => {
+        fixture.componentRef.setInput('exam', new Exam());
+        component.nextRelevantDateLabel.set(label);
+        expect(component.nextDateInformation().title).toBe(`artemisApp.exam.${label}`);
+        fixture.componentRef.setInput('exam', undefined);
+        component.nextRelevantDateLabel.set('assessmentDue');
+        expect(component.nextDateInformation().title).toBe('artemisApp.courseOverview.exerciseDetails.assessmentDue');
+    });
+
     it('should initialise badges, icons, and categories', () => {
         component.ngOnInit();
 

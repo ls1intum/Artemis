@@ -115,7 +115,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
         isContentComponent: true,
     }));
     readonly nextDateInformation = computed<InformationBox>(() => ({
-        title: 'artemisApp.courseOverview.exerciseDetails.' + this.nextRelevantDateLabel(),
+        title: (this.exam() ? 'artemisApp.exam.' : 'artemisApp.courseOverview.exerciseDetails.') + this.nextRelevantDateLabel(),
         content: { type: 'dateTime', value: this.nextRelevantDate() },
         contentColor: this.nextRelevantDateStatusBadge() === 'bg-state-danger' ? 'danger' : undefined,
         isContentComponent: true,
