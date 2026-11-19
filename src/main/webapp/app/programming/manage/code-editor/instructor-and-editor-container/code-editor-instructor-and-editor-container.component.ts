@@ -17,19 +17,7 @@ import {
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import {
-    faArrowLeft,
-    faArrowRight,
-    faBan,
-    faCheckDouble,
-    faCircleNotch,
-    faPlus,
-    faSave,
-    faSpinner,
-    faTableColumns,
-    faTimes,
-    faTimesCircle,
-} from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faCheckDouble, faCircleNotch, faPlus, faSpinner, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorHeight } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -59,13 +47,11 @@ import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } fr
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { AdaptFinding, getFirstCommentByCreatedDateThenId, mapRepositoryToThreadLocationType, selectedThreadsFindings } from 'app/exercise/review/review-comment-utils';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
+import { DiffReviewBannerComponent } from 'app/programming/shared/diff-review-banner/diff-review-banner.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementService } from 'app/hyperion/problem-statement/problem-statement.service';
 import { InlineRefinementEvent } from 'app/hyperion/problem-statement/problem-statement.utils';
-import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
 import { HyperionGenerationActivityFacade, HyperionGenerationCompletedEvent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { Router } from '@angular/router';
 import { HYPERION_GENERATION_BLOCKER_KEY, hyperionGenerationBlocker, usesCanonicalProblemStatementSync } from 'app/hyperion/exercise-generation/hyperion-generation-support';
@@ -126,10 +112,8 @@ interface ConsistencyIssueNavigationIssue {
         ProgrammingExerciseInstructionComponent,
         FormsModule,
         A11yModule,
-        GitDiffLineStatComponent,
-        TooltipModule,
+        DiffReviewBannerComponent,
         ButtonModule,
-        MessageModule,
         TumAetUiButtonDirective,
         TumAetUiConfirmDialogComponent,
         TumAetUiDialogComponent,
@@ -184,7 +168,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly isPromptNearLimit = this.aiOps.isPromptNearLimit;
     readonly shouldShowGenerateButton = this.aiOps.shouldShowGenerateButton;
 
-    readonly faTableColumns = faTableColumns;
     override readonly ButtonSize = ButtonSize;
 
     private readonly aiActions = viewChild(CodeEditorAiActionsComponent);
@@ -231,8 +214,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly faTimes = faTimes;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faTimesCircle = faTimesCircle;
-    protected readonly faSave = faSave;
-    protected readonly faBan = faBan;
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faArrowRight = faArrowRight;
 

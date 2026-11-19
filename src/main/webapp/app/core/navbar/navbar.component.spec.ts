@@ -39,6 +39,7 @@ class StubCourseNotificationOverviewComponent {
     courseId = input.required<number>();
 }
 import { of } from 'rxjs';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/connection-warning.component';
@@ -128,6 +129,7 @@ describe('NavbarComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: BreakpointObserver, useValue: { observe: () => of({ matches: true, breakpoints: {} }) } },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -188,16 +190,22 @@ describe('NavbarComponent', () => {
         component.isNavbarCollapsed.set(false);
         fixture.detectChanges();
 
-        const enrollmentLink: HTMLAnchorElement = fixture.nativeElement.querySelector('[data-testid="mobile-course-enrollment"]');
+        // The account menu renders its entries in an overlay once it is opened.
+        fixture.nativeElement.querySelector('#account-menu').click();
+        fixture.detectChanges();
+        const enrollmentLink = document.querySelector<HTMLAnchorElement>('[data-testid="mobile-course-enrollment"]');
         expect(enrollmentLink).toBeTruthy();
-        enrollmentLink.click();
+        enrollmentLink!.click();
         expect(router.createUrlTree).toHaveBeenCalledWith(['/courses/enroll'], expect.any(Object));
         expect(router.navigateByUrl).toHaveBeenCalled();
         expect(component.isNavbarCollapsed()).toBe(true);
 
         component.isExamActive.set(true);
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[data-testid="mobile-course-enrollment"]')).toBeNull();
+        fixture.nativeElement.querySelector('#account-menu').click();
+        fixture.detectChanges();
+        expect(document.querySelector('[data-testid="logout"]')).not.toBeNull();
+        expect(document.querySelector('[data-testid="mobile-course-enrollment"]')).toBeNull();
     });
 
     it('should initialize component', () => {
@@ -552,7 +560,7 @@ describe('NavbarComponent', () => {
         fixture.detectChanges();
 
         expect(component.breadcrumbs()).toHaveLength(0);
-        expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.jh-breadcrumb-container')).toBeNull();
     });
 
     it('should not build breadcrumbs when creating a course', () => {
@@ -561,7 +569,7 @@ describe('NavbarComponent', () => {
         fixture.detectChanges();
 
         expect(component.breadcrumbs()).toHaveLength(0);
-        expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.jh-breadcrumb-container')).toBeNull();
     });
 
     it('should not build breadcrumbs for administration routes', () => {
@@ -571,7 +579,7 @@ describe('NavbarComponent', () => {
         fixture.detectChanges();
 
         expect(component.breadcrumbs()).toHaveLength(0);
-        expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.jh-breadcrumb-container')).toBeNull();
     });
 
     it('should have correct git info', () => {

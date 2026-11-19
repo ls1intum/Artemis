@@ -16,6 +16,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'actions-button-directive--docs';
         case 'actions-button-group':
             return 'actions-button-group--docs';
+        case 'data-display-accordion':
+            return 'data-display-accordion--docs';
         case 'data-display-card':
             return 'data-display-card--docs';
         case 'data-display-chip':
@@ -50,6 +52,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'feedback-progress-bar--docs';
         case 'feedback-progress-spinner':
             return 'feedback-progress-spinner--docs';
+        case 'feedback-skeleton':
+            return 'feedback-skeleton--docs';
         case 'forms-autocomplete':
             return 'forms-autocomplete--docs';
         case 'forms-checkbox':

@@ -495,6 +495,33 @@ class CompetencyExpertToolsServiceTest {
         }
 
         @Test
+        void resolvesMissingIdsOnTheCachedOperationInstances() {
+            String sessionId = "mutable_cached_operations";
+            CompetencyExpertToolsService.setCurrentSessionId(sessionId);
+            CompetencyOperation operation = objectMapper.readValue("""
+                    {"title":"object-oriented programming","description":"Draft","taxonomy":"APPLY"}
+                    """, CompetencyOperation.class);
+            List<CompetencyOperation> cachedData = List.of(operation);
+            when(mockSessionCacheService.getCachedPendingCompetencyOperations(sessionId)).thenReturn(cachedData);
+            when(competencyRepository.findAllByCourseId(123L)).thenReturn(Set.of(testCompetency));
+            CompetencyExpertToolsService service = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, mockSessionCacheService);
+
+            try {
+                String response = service.getLastPreviewedCompetency(123L);
+
+                assertThat(operation.getCompetencyId()).isEqualTo(testCompetency.getId());
+                verify(mockSessionCacheService).cachePendingCompetencyOperations(sessionId, cachedData);
+                assertThat(objectMapper.readTree(response).get("competencies").get(0).get("competencyId").asLong()).isEqualTo(testCompetency.getId());
+                assertThat(operation.getTitle()).isEqualTo("object-oriented programming");
+                assertThat(operation.getDescription()).isEqualTo("Draft");
+                assertThat(operation.getTaxonomy()).isEqualTo(CompetencyTaxonomy.APPLY);
+            }
+            finally {
+                CompetencyExpertToolsService.clearCurrentSessionId();
+            }
+        }
+
+        @Test
         void shouldReturnCachedDataWhenAvailable() throws JacksonException {
             CompetencyExpertToolsService service = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, mockSessionCacheService);
 

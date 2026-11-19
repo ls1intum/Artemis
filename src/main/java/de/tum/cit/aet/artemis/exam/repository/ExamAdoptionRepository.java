@@ -20,7 +20,7 @@ public interface ExamAdoptionRepository extends ArtemisJpaRepository<Exam, Long>
     @Query("""
             SELECT COUNT(exam)
             FROM Exam exam
-            WHERE exam.testExam IS TRUE
+            WHERE exam.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
             """)
     long countTestExams();
 

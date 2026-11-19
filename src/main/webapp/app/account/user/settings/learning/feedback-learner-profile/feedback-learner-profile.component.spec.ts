@@ -343,7 +343,7 @@ describe('FeedbackLearnerProfileComponent', () => {
         });
     });
 
-    describe('Segmented control selection', () => {
+    describe('Dropdown selection', () => {
         it('should save when an option is chosen in the rendered control', async () => {
             component.learnerProfile.set(new LearnerProfileDTO({ id: 1, feedbackDetail: 1, feedbackFormality: 3, hasSetupFeedbackPreferences: true }));
             component.disabled.set(false);
@@ -351,11 +351,17 @@ describe('FeedbackLearnerProfileComponent', () => {
             await fixture.whenStable();
             fixture.detectChanges();
 
-            // Covers the template's (changed) binding, which a direct handler call cannot.
-            const options = fixture.nativeElement.querySelectorAll('tumaet-ui-select-button button');
-            expect(options.length).toBeGreaterThan(1);
-            (options[2] as HTMLButtonElement).click();
+            // Drive the dropdown to verify its selectionChange binding saves the chosen value.
+            const trigger = fixture.nativeElement.querySelector('tumaet-ui-select button[role="combobox"]') as HTMLButtonElement;
+            expect(trigger).not.toBeNull();
+            trigger.click();
+            fixture.detectChanges();
+            const options = document.querySelectorAll('[role="option"]');
+            expect(options.length).toBeGreaterThan(2);
+            (options[2] as HTMLElement).click();
+            fixture.detectChanges();
 
+            expect(component.feedbackDetail()).toBe(3);
             expect(learnerProfileApiService.putUpdatedLearnerProfile).toHaveBeenCalled();
         });
 

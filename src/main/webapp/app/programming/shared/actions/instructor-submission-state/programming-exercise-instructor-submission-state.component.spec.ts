@@ -115,14 +115,30 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         vi.restoreAllMocks();
     });
 
-    const getTriggerAllButton = () => {
-        const triggerButton = debugElement.query(By.css('#trigger-all-button button'));
-        return triggerButton ? triggerButton.nativeElement : null;
+    const openTriggerDropdown = () => {
+        const trigger: HTMLButtonElement | null = fixture.nativeElement.querySelector('[data-testid="participation-trigger-dropdown"]');
+        if (trigger && trigger.getAttribute('aria-expanded') !== 'true') {
+            trigger.click();
+            fixture.detectChanges();
+        }
     };
 
-    const getTriggerFailedButton = () => {
-        const triggerButton = debugElement.query(By.css('#trigger-failed-button button'));
-        return triggerButton ? triggerButton.nativeElement : null;
+    const getTriggerAllButton = (): HTMLButtonElement => {
+        openTriggerDropdown();
+        const button = document.querySelector<HTMLButtonElement>('#trigger-all-button');
+        if (!button) {
+            throw new Error('Expected trigger-all button to be present');
+        }
+        return button;
+    };
+
+    const getTriggerFailedButton = (): HTMLButtonElement => {
+        openTriggerDropdown();
+        const button = document.querySelector<HTMLButtonElement>('#trigger-failed-button');
+        if (!button) {
+            throw new Error('Expected trigger-failed button to be present');
+        }
+        return button;
     };
 
     const getBuildState = () => {
@@ -131,8 +147,8 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     };
 
     it('should not show the component before the build summary is retrieved', () => {
-        expect(getTriggerAllButton()).toBeNull();
-        expect(getTriggerFailedButton()).toBeNull();
+        expect(document.querySelector('#trigger-all-button')).toBeNull();
+        expect(document.querySelector('#trigger-failed-button')).toBeNull();
         expect(getBuildState()).toBeNull();
     });
 
@@ -194,6 +210,8 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(comp.hasFailedSubmissions()).toBe(false);
         expect(comp.isBuildingFailedSubmissions()).toBe(false);
         expect(comp.buildingSummary()).toEqual(compressedSummary);
+        expect(debugElement.query(By.css('#build-state-failed')).componentInstance.severity()).toBe('secondary');
+        expect(debugElement.query(By.css('#build-state-failed')).nativeElement.textContent).toContain('0');
 
         expect(getTriggerAllButton()).not.toBeNull();
         expect(getTriggerAllButton().disabled).toBe(false);
@@ -229,6 +247,9 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(comp.hasFailedSubmissions()).toBe(true);
         expect(comp.isBuildingFailedSubmissions()).toBe(false);
         expect(comp.buildingSummary()).toEqual(compressedSummary);
+        expect(debugElement.query(By.css('#build-state-failed')).componentInstance.severity()).toBe('danger');
+        expect(debugElement.query(By.css('#build-state-failed')).nativeElement.textContent).toContain('1');
+        expect(debugElement.query(By.css('#build-state-building')).nativeElement.textContent).toContain('1');
 
         expect(getResultEtaContainer()).not.toBeNull();
         expect(getTriggerAllButton()).not.toBeNull();
@@ -449,6 +470,34 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
             expect(getSelectedBuildRunCompletionsStub).toHaveBeenLastCalledWith(21);
             expect(comp.isBuildingFailedSubmissions()).toBe(false);
         });
+    });
+
+    it('opens the trigger actions together and keeps the all-build confirmation and busy state', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('exercise', exercise as ProgrammingExercise);
+        fixture.detectChanges();
+        getExerciseSubmissionStateSubject.next({});
+        await vi.advanceTimersByTimeAsync(500);
+        fixture.detectChanges();
+        const trigger: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="participation-trigger-dropdown"]');
+        expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        const allButton = getTriggerAllButton();
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+        expect(getTriggerFailedButton()).not.toBeNull();
+        const openDialog = vi.spyOn(TestBed.inject(DialogService), 'open').mockImplementation(() => {
+            fixture.detectChanges();
+            expect(trigger.getAttribute('aria-expanded')).toBe('false');
+            return null;
+        });
+        allButton.click();
+        expect(openDialog).toHaveBeenCalledOnce();
+        expect(submissionService.triggerInstructorBuildForAllParticipationsOfExercise).not.toHaveBeenCalled();
+        getBuildRunStateSubject.next(BuildRunState.RUNNING);
+        fixture.detectChanges();
+        trigger.click();
+        fixture.detectChanges();
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+        expect(getTriggerAllButton().disabled).toBe(true);
     });
 
     it('should disable the trigger all button while a build is running and re-enable it when it is complete', async () => {

@@ -150,18 +150,20 @@
                             <div class="w-7/12" jhiTranslate="artemisApp.exerciseAssessmentDashboard.ratings"></div>
                             <div class="w-5/12">{{ ratingsDashboardInfo().total }} | {{ ratingsDashboardInfo().tutor }}</div>
                         </div>
-                        <div class="mt-1 grid gap-2" [class.grid-cols-2]="complaintsEnabled()">
-                            <a
-                                [attr.aria-label]="'artemisApp.exerciseAssessmentDashboard.exerciseDetails' | artemisTranslate"
-                                tumAetUiButton
-                                severity="secondary"
-                                size="small"
-                                [routerLink]="exerciseDetailsLink()"
-                                id="exercise-details"
-                            >
-                                <fa-icon [icon]="faListAlt" [fixedWidth]="true" />
-                                <span class="hidden md:inline" jhiTranslate="artemisApp.exerciseAssessmentDashboard.exerciseDetails"></span>
-                            </a>
+                        <div class="mt-1 grid gap-2" [class.grid-cols-2]="complaintsEnabled() && canOpenExerciseDetails()">
+                            @if (canOpenExerciseDetails()) {
+                                <a
+                                    [attr.aria-label]="'artemisApp.exerciseAssessmentDashboard.exerciseDetails' | artemisTranslate"
+                                    tumAetUiButton
+                                    severity="secondary"
+                                    size="small"
+                                    [routerLink]="exerciseDetailsLink()"
+                                    id="exercise-details"
+                                >
+                                    <fa-icon [icon]="faListAlt" [fixedWidth]="true" />
+                                    <span class="hidden md:inline" jhiTranslate="artemisApp.exerciseAssessmentDashboard.exerciseDetails"></span>
+                                </a>
+                            }
                             @if (complaintsEnabled()) {
                                 <a
                                     tumAetUiButton

@@ -6,11 +6,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { TextUnitService } from 'app/lecture/manage/lecture-units/services/text-unit.service';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
+import { TextUnitApi } from 'app/openapi/api/text-unit-api';
+import { OnlineUnitApi } from 'app/openapi/api/online-unit-api';
+import type { TextUnit as GeneratedTextUnit } from 'app/openapi/model/text-unit';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
@@ -21,7 +22,6 @@ import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'a
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
-import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { AUTOSAVE_DELAY_MS, LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
@@ -85,11 +85,6 @@ describe('LectureUpdateUnitsComponent', () => {
     let attachmentVideoUnitService: AttachmentVideoUnitService;
     let unitManagementComponentMock: Pick<LectureUnitManagementComponent, 'loadData' | 'replaceLectureUnit' | 'focusEditButton'>;
 
-    const getAttachmentVideoUnitPayload = async (formData: FormData) => {
-        const attachmentVideoUnitPart = formData.get('attachmentVideoUnit') as Blob;
-        return JSON.parse(await attachmentVideoUnitPart.text());
-    };
-
     const mockUnitManagementComponent = () => {
         unitManagementComponentMock = {
             loadData: vi.fn(),
@@ -114,8 +109,8 @@ describe('LectureUpdateUnitsComponent', () => {
             schemas: [NO_ERRORS_SCHEMA],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(TextUnitService),
-                MockProvider(OnlineUnitService),
+                MockProvider(TextUnitApi),
+                MockProvider(OnlineUnitApi),
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(LectureUnitManagementComponent),
                 { provide: Router, useClass: MockRouter },
@@ -236,7 +231,7 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     it('should send POST request upon text form submission and update units', async () => {
-        const textUnitService = TestBed.inject(TextUnitService);
+        const textUnitApi = TestBed.inject(TextUnitApi);
 
         const formData: TextUnitFormData = {
             name: 'Test',
@@ -245,15 +240,7 @@ describe('LectureUpdateUnitsComponent', () => {
             competencyLinks: [new CompetencyLectureUnitLink({ id: 1, masteryThreshold: 0, optional: false, taxonomy: undefined, title: 'Test' }, undefined, 1)],
         };
 
-        const persistedTextUnit: TextUnit = new TextUnit();
-        persistedTextUnit.id = 1;
-        persistedTextUnit.name = formData.name;
-        persistedTextUnit.releaseDate = formData.releaseDate;
-        persistedTextUnit.content = formData.content;
-
-        const response: HttpResponse<TextUnit> = new HttpResponse({ body: persistedTextUnit, status: 200 });
-
-        const createStub = vi.spyOn(textUnitService, 'create').mockReturnValue(of(response));
+        const createStub = vi.spyOn(textUnitApi, 'createTextUnit').mockReturnValue(of({ id: 1, name: formData.name, content: formData.content, type: 'text' }));
 
         wizardUnitComponentFixture.detectChanges();
         await wizardUnitComponentFixture.whenStable();
@@ -264,13 +251,12 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.createTextUnit(formData);
         await wizardUnitComponentFixture.whenStable();
 
-        const textUnitCallArgument: TextUnit = createStub.mock.calls[0][0];
-        const lectureIdCallArgument: number = createStub.mock.calls[0][1];
+        const [lectureIdCallArgument, textUnitCallArgument] = createStub.mock.calls[0];
 
         expect(textUnitCallArgument.name).toEqual(formData.name);
         expect(textUnitCallArgument.content).toEqual(formData.content);
-        expect(textUnitCallArgument.releaseDate).toEqual(formData.releaseDate);
-        expect(textUnitCallArgument.competencyLinks).toEqual(formData.competencyLinks);
+        expect(textUnitCallArgument.releaseDate).toEqual(formData.releaseDate!.toISOString());
+        expect(textUnitCallArgument.competencyLinks).toEqual([{ competency: { id: 1, title: 'Test' }, weight: 1 }]);
         expect(lectureIdCallArgument).toBe(1);
 
         expect(createStub).toHaveBeenCalledTimes(1);
@@ -280,11 +266,11 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     it('should not send POST request upon empty text form submission', async () => {
-        const textUnitService = TestBed.inject(TextUnitService);
+        const textUnitApi = TestBed.inject(TextUnitApi);
 
         const formData: TextUnitFormData = {};
 
-        const createStub = vi.spyOn(textUnitService, 'create');
+        const createStub = vi.spyOn(textUnitApi, 'createTextUnit');
 
         wizardUnitComponentFixture.detectChanges();
         await wizardUnitComponentFixture.whenStable();
@@ -297,7 +283,7 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     it('should show alert upon unsuccessful text form submission', async () => {
-        const textUnitService = TestBed.inject(TextUnitService);
+        const textUnitApi = TestBed.inject(TextUnitApi);
         const alertService = TestBed.inject(AlertService);
 
         const formData: TextUnitFormData = {
@@ -306,7 +292,7 @@ describe('LectureUpdateUnitsComponent', () => {
             content: 'Lorem Ipsum',
         };
 
-        const createStub = vi.spyOn(textUnitService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+        const createStub = vi.spyOn(textUnitApi, 'createTextUnit').mockReturnValue(throwError(() => ({ status: 404 })));
         const alertStub = vi.spyOn(alertService, 'error');
 
         wizardUnitComponentFixture.detectChanges();
@@ -321,7 +307,7 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     it('should show alert upon unsuccessful online form submission', async () => {
-        const onlineUnitService = TestBed.inject(OnlineUnitService);
+        const onlineUnitApi = TestBed.inject(OnlineUnitApi);
         const alertService = TestBed.inject(AlertService);
 
         const formData: OnlineUnitFormData = {
@@ -331,7 +317,7 @@ describe('LectureUpdateUnitsComponent', () => {
             source: 'https://www.example.com',
         };
 
-        const createStub = vi.spyOn(onlineUnitService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+        const createStub = vi.spyOn(onlineUnitApi, 'createOnlineUnit').mockReturnValue(throwError(() => ({ status: 404 })));
         const alertStub = vi.spyOn(alertService, 'error');
 
         wizardUnitComponentFixture.detectChanges();
@@ -346,7 +332,7 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     it('should send POST request upon online form submission and update units', async () => {
-        const onlineUnitService = TestBed.inject(OnlineUnitService);
+        const onlineUnitApi = TestBed.inject(OnlineUnitApi);
 
         const formDate: OnlineUnitFormData = {
             name: 'Test',
@@ -356,9 +342,7 @@ describe('LectureUpdateUnitsComponent', () => {
             competencyLinks: [new CompetencyLectureUnitLink({ id: 1, masteryThreshold: 0, optional: false, taxonomy: undefined, title: 'Test' }, undefined, 1)],
         };
 
-        const response: HttpResponse<OnlineUnit> = new HttpResponse({ body: new OnlineUnit(), status: 201 });
-
-        const createStub = vi.spyOn(onlineUnitService, 'create').mockReturnValue(of(response));
+        const createStub = vi.spyOn(onlineUnitApi, 'createOnlineUnit').mockReturnValue(of({ type: 'online' }));
 
         wizardUnitComponentFixture.detectChanges();
         await wizardUnitComponentFixture.whenStable();
@@ -369,14 +353,13 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.createOnlineUnit(formDate);
         await wizardUnitComponentFixture.whenStable();
 
-        const onlineUnitCallArgument: OnlineUnit = createStub.mock.calls[0][0];
-        const lectureIdCallArgument: number = createStub.mock.calls[0][1];
+        const [lectureIdCallArgument, onlineUnitCallArgument] = createStub.mock.calls[0];
 
         expect(onlineUnitCallArgument.name).toEqual(formDate.name);
         expect(onlineUnitCallArgument.description).toEqual(formDate.description);
-        expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate);
+        expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate!.toISOString());
         expect(onlineUnitCallArgument.source).toEqual(formDate.source);
-        expect(onlineUnitCallArgument.competencyLinks).toEqual(formDate.competencyLinks);
+        expect(onlineUnitCallArgument.competencyLinks).toEqual([{ competency: { id: 1, title: 'Test' }, weight: 1 }]);
         expect(lectureIdCallArgument).toBe(1);
 
         expect(createStub).toHaveBeenCalledTimes(1);
@@ -386,11 +369,11 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     it('should not send POST request upon empty online form submission', async () => {
-        const onlineUnitService = TestBed.inject(OnlineUnitService);
+        const onlineUnitApi = TestBed.inject(OnlineUnitApi);
 
         const formData: OnlineUnitFormData = {};
 
-        const createStub = vi.spyOn(onlineUnitService, 'create');
+        const createStub = vi.spyOn(onlineUnitApi, 'createOnlineUnit');
 
         wizardUnitComponentFixture.detectChanges();
         await wizardUnitComponentFixture.whenStable();
@@ -435,13 +418,7 @@ describe('LectureUpdateUnitsComponent', () => {
         attachmentVideoUnit.description = attachmentVideoUnitFormData.formProperties.description;
         attachmentVideoUnit.attachment = attachment;
 
-        const formData = new FormData();
-        formData.append('file', fakeFile, attachmentVideoUnitFormData.fileProperties.fileName);
-        formData.append('attachment', objectToJsonBlob(attachment));
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
-
-        const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({ body: attachmentVideoUnit, status: 201 });
-        const createAttachmentVideoUnitStub = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
+        const createAttachmentVideoUnitStub = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnit));
 
         wizardUnitComponentFixture.detectChanges();
         await wizardUnitComponentFixture.whenStable();
@@ -452,10 +429,13 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.createAttachmentVideoUnit(attachmentVideoUnitFormData);
         await wizardUnitComponentFixture.whenStable();
 
-        const lectureIdCallArgument: number = createAttachmentVideoUnitStub.mock.calls[0][1];
+        const lectureIdCallArgument: number = createAttachmentVideoUnitStub.mock.calls[0][0];
 
         expect(lectureIdCallArgument).toBe(1);
-        expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(expect.any(FormData), 1);
+        const [, sentUnit, sentAttachment, sentFile] = createAttachmentVideoUnitStub.mock.calls[0];
+        expect(sentUnit.description).toBe('lorem ipsum');
+        expect(sentAttachment!.name).toBe('test');
+        expect(sentFile!.name).toBe('lorem ipsum');
         expect(updateSpy).toHaveBeenCalledTimes(1);
 
         updateSpy.mockRestore();
@@ -493,11 +473,6 @@ describe('LectureUpdateUnitsComponent', () => {
         const attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.description = attachmentVideoUnitFormData.formProperties.description;
         attachmentVideoUnit.attachment = attachment;
-
-        const formData = new FormData();
-        formData.append('file', fakeFile, attachmentVideoUnitFormData.fileProperties.fileName);
-        formData.append('attachment', objectToJsonBlob(attachment));
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
         const createAttachmentVideoUnitStub = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
         const alertStub = vi.spyOn(alertService, 'error');
@@ -546,11 +521,6 @@ describe('LectureUpdateUnitsComponent', () => {
         attachmentVideoUnit.description = attachmentVideoUnitFormData.formProperties.description;
         attachmentVideoUnit.attachment = attachment;
 
-        const formData = new FormData();
-        formData.append('file', fakeFile, attachmentVideoUnitFormData.fileProperties.fileName);
-        formData.append('attachment', objectToJsonBlob(attachment));
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
-
         const createAttachmentVideoUnitStub = vi
             .spyOn(attachmentVideoUnitService, 'create')
             .mockReturnValue(throwError(() => ({ status: 404, error: { params: 'file', title: 'Test Title' } })));
@@ -589,7 +559,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
     it('should create an attachment video unit with only a name, so its video can be uploaded to TUM.Live afterwards', async () => {
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        const createStub = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: new AttachmentVideoUnit(), status: 201 })));
+        const createStub = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new AttachmentVideoUnit()));
 
         wizardUnitComponentFixture.detectChanges();
         await wizardUnitComponentFixture.whenStable();
@@ -599,10 +569,10 @@ describe('LectureUpdateUnitsComponent', () => {
         await wizardUnitComponentFixture.whenStable();
 
         expect(createStub).toHaveBeenCalledTimes(1);
-        const sent = createStub.mock.calls[0][0] as FormData;
-        expect(sent.has('file')).toBe(false);
-        expect(sent.has('attachment')).toBe(false);
-        expect(JSON.parse(await (sent.get('attachmentVideoUnit') as Blob).text())).toMatchObject({ name: 'Recording' });
+        const [, sentUnit, sentAttachment, sentFile] = createStub.mock.calls[0];
+        expect(sentUnit).toMatchObject({ name: 'Recording' });
+        expect(sentAttachment).toBeUndefined();
+        expect(sentFile).toBeUndefined();
     });
 
     it('should close the exercise form once its items are created and reload the list when their requests completed', async () => {
@@ -690,7 +660,7 @@ describe('LectureUpdateUnitsComponent', () => {
         const unit = new AttachmentVideoUnit();
         unit.id = 4;
         wizardUnitComponent.editingUnit.set(unit);
-        const response = new Subject<HttpResponse<AttachmentVideoUnit>>();
+        const response = new Subject<AttachmentVideoUnit>();
         vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(response);
         const form = { applyServerVideoSource: vi.fn() };
         wizardUnitComponent.attachmentVideoUnitForm = signal(form as unknown as AttachmentVideoUnitFormComponent).asReadonly() as Signal<
@@ -698,7 +668,7 @@ describe('LectureUpdateUnitsComponent', () => {
         >;
 
         wizardUnitComponent.onTumLiveVideoAttached(4);
-        response.next(new HttpResponse({ body: { ...unit, videoSource: 'https://tum.live/w/algo/55' } as AttachmentVideoUnit }));
+        response.next({ ...unit, videoSource: 'https://tum.live/w/algo/55' } as AttachmentVideoUnit);
 
         expect((wizardUnitComponent.editingUnit() as AttachmentVideoUnit).videoSource).toBe('https://tum.live/w/algo/55');
         expect(form.applyServerVideoSource).toHaveBeenCalledWith('https://tum.live/w/algo/55');
@@ -708,7 +678,7 @@ describe('LectureUpdateUnitsComponent', () => {
         other.id = 5;
         wizardUnitComponent.onTumLiveVideoAttached(4);
         wizardUnitComponent.editingUnit.set(other);
-        response.next(new HttpResponse({ body: { ...unit, videoSource: 'https://tum.live/w/algo/56' } as AttachmentVideoUnit }));
+        response.next({ ...unit, videoSource: 'https://tum.live/w/algo/56' } as AttachmentVideoUnit);
 
         expect((wizardUnitComponent.editingUnit() as AttachmentVideoUnit).videoSource).toBeUndefined();
         expect(form.applyServerVideoSource).toHaveBeenCalledOnce();
@@ -728,9 +698,7 @@ describe('LectureUpdateUnitsComponent', () => {
         const runningSave = { key: 'k', request: () => save } as never;
         wizardUnitComponent['pendingDetails'].set(runningSave);
         wizardUnitComponent['flushAutosave']();
-        vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(
-            of(new HttpResponse({ body: { ...unit, videoSource: 'https://tum.live/w/algo/55' } as AttachmentVideoUnit })),
-        );
+        vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(of({ ...unit, videoSource: 'https://tum.live/w/algo/55' } as AttachmentVideoUnit));
 
         wizardUnitComponent.onTumLiveVideoAttached(4);
         save.next(sent);
@@ -747,7 +715,7 @@ describe('LectureUpdateUnitsComponent', () => {
             createdUnit.id = 42;
             createdUnit.name = 'Test File';
 
-            const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(createdUnit));
             const successSpy = vi.spyOn(alertService, 'success');
 
             wizardUnitComponentFixture.detectChanges();
@@ -770,7 +738,7 @@ describe('LectureUpdateUnitsComponent', () => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 1;
 
-            const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(createdUnit));
 
             wizardUnitComponentFixture.detectChanges();
             await wizardUnitComponentFixture.whenStable();
@@ -790,7 +758,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 callCount++;
                 const unit = new AttachmentVideoUnit();
                 unit.id = callCount;
-                return of(new HttpResponse({ body: unit, status: 201 }));
+                return of(unit);
             });
             const successSpy = vi.spyOn(alertService, 'success');
 
@@ -815,7 +783,7 @@ describe('LectureUpdateUnitsComponent', () => {
             createdUnit.id = 99;
             createdUnit.name = 'Created Unit';
 
-            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(createdUnit));
 
             wizardUnitComponentFixture.detectChanges();
             await wizardUnitComponentFixture.whenStable();
@@ -878,7 +846,7 @@ describe('LectureUpdateUnitsComponent', () => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 1;
 
-            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(createdUnit));
 
             wizardUnitComponentFixture.detectChanges();
             await wizardUnitComponentFixture.whenStable();
@@ -893,7 +861,7 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(wizardUnitComponent.isUploadingPdfs()).toBe(false);
         });
         it('should count PDFs that are uploaded as content that is still being saved', () => {
-            const upload = new Subject<HttpResponse<AttachmentVideoUnit>>();
+            const upload = new Subject<AttachmentVideoUnit>();
             vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(upload);
             wizardUnitComponentFixture.detectChanges();
 
@@ -907,10 +875,10 @@ describe('LectureUpdateUnitsComponent', () => {
 
     describe('creating an item', () => {
         it('should count new items as content that is still being saved until every request completed or failed', () => {
-            const textUnitService = TestBed.inject(TextUnitService);
-            const first = new Subject<HttpResponse<TextUnit>>();
-            const second = new Subject<HttpResponse<TextUnit>>();
-            vi.spyOn(textUnitService, 'create').mockReturnValueOnce(first).mockReturnValueOnce(second);
+            const textUnitApi = TestBed.inject(TextUnitApi);
+            const first = new Subject<GeneratedTextUnit>();
+            const second = new Subject<GeneratedTextUnit>();
+            vi.spyOn(textUnitApi, 'createTextUnit').mockReturnValueOnce(first).mockReturnValueOnce(second);
             wizardUnitComponentFixture.detectChanges();
 
             wizardUnitComponent.createTextUnit({ name: 'Reading' });
@@ -918,7 +886,7 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(wizardUnitComponent.isCreatingUnit()).toBe(true);
             expect(wizardUnitComponent.isSavingContent()).toBe(true);
 
-            first.next(new HttpResponse({ body: new TextUnit(), status: 201 }));
+            first.next({ type: 'text' });
             first.complete();
             expect(wizardUnitComponent.isCreatingUnit()).toBe(true);
 
@@ -928,7 +896,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should count a new file item as content that is still being saved while it is uploaded', () => {
-            const upload = new Subject<HttpResponse<AttachmentVideoUnit>>();
+            const upload = new Subject<AttachmentVideoUnit>();
             vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(upload);
             wizardUnitComponentFixture.detectChanges();
 
@@ -938,7 +906,7 @@ describe('LectureUpdateUnitsComponent', () => {
             });
             expect(wizardUnitComponent.isSavingContent()).toBe(true);
 
-            upload.next(new HttpResponse({ body: new AttachmentVideoUnit(), status: 201 }));
+            upload.next(new AttachmentVideoUnit());
             upload.complete();
             expect(wizardUnitComponent.isSavingContent()).toBe(false);
         });
@@ -1075,7 +1043,7 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     describe('editing an item in place', () => {
-        let textUnitService: TextUnitService;
+        let textUnitApi: TextUnitApi;
 
         const competencyLink = () => new CompetencyLectureUnitLink({ id: 1, masteryThreshold: 0, optional: false, taxonomy: undefined, title: 'Testing' }, undefined, 1);
 
@@ -1099,11 +1067,11 @@ describe('LectureUpdateUnitsComponent', () => {
             return { data: { name, content: 'Content' }, immediate, valid };
         }
 
-        const savedResponse = () => of(new HttpResponse<TextUnit>({ status: 200 }));
+        const savedResponse = () => of<GeneratedTextUnit>({ type: 'text' });
 
         beforeEach(() => {
             vi.useFakeTimers();
-            textUnitService = TestBed.inject(TextUnitService);
+            textUnitApi = TestBed.inject(TextUnitApi);
             wizardUnitComponentFixture.detectChanges();
         });
 
@@ -1125,7 +1093,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should save typed text after the pause, without an alert, and show when it was saved', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
@@ -1135,11 +1103,11 @@ describe('LectureUpdateUnitsComponent', () => {
 
             vi.advanceTimersByTime(1);
             expect(updateSpy).toHaveBeenCalledOnce();
-            const [sentUnit, lectureId, context] = updateSpy.mock.calls[0];
+            const [lectureId, sentUnit, options] = updateSpy.mock.calls[0];
             expect(sentUnit.id).toBe(3);
             expect(sentUnit.name).toBe('Reading list');
             expect(lectureId).toBe(1);
-            expect(context?.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+            expect(options?.context?.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
             expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
             expect(unitManagementComponentMock.replaceLectureUnit).toHaveBeenCalledWith(expect.objectContaining({ id: 3, name: 'Reading list' }));
             expect(unitManagementComponentMock.loadData).not.toHaveBeenCalled();
@@ -1147,7 +1115,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should save a choice at once and send nothing for a change that restores the saved state', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
             wizardUnitComponent.onTextUnitChanged(textChange('Reading', true));
@@ -1163,8 +1131,8 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should send one save at a time and the newest change once it completes', () => {
-            const firstResponse = new Subject<HttpResponse<TextUnit>>();
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValueOnce(firstResponse).mockReturnValue(savedResponse());
+            const firstResponse = new Subject<GeneratedTextUnit>();
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValueOnce(firstResponse).mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
             wizardUnitComponent.onTextUnitChanged(textChange('Reading l', true));
@@ -1172,18 +1140,18 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(wizardUnitComponent.hasUnsavedContent()).toBe(false);
 
-            firstResponse.next(new HttpResponse({ status: 200 }));
+            firstResponse.next({ type: 'text' });
             firstResponse.complete();
 
             expect(updateSpy).toHaveBeenCalledTimes(2);
-            expect(updateSpy.mock.calls[1][0].name).toBe('Reading list');
+            expect(updateSpy.mock.calls[1][1].name).toBe('Reading list');
             expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
         });
 
         it('should keep a failed change, say so in the item instead of an alert, and send it again on retry', () => {
             const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
             const updateSpy = vi
-                .spyOn(textUnitService, 'update')
+                .spyOn(textUnitApi, 'updateTextUnit')
                 .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400, error: { title: 'The name is too long' } })))
                 .mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
@@ -1195,19 +1163,19 @@ describe('LectureUpdateUnitsComponent', () => {
 
             wizardUnitComponent.retryAutosave();
             expect(updateSpy).toHaveBeenCalledTimes(2);
-            expect(updateSpy.mock.calls[1][0].name).toBe('Reading list');
+            expect(updateSpy.mock.calls[1][1].name).toBe('Reading list');
             expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
             expect(wizardUnitComponent.hasUnsavedContent()).toBe(false);
         });
 
         it('should show a form that became invalid while a save ran', () => {
-            const response = new Subject<HttpResponse<TextUnit>>();
-            vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response);
+            const response = new Subject<GeneratedTextUnit>();
+            vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValueOnce(response);
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
             wizardUnitComponent.onTextUnitChanged(textChange('', false, false));
-            response.next(new HttpResponse({ status: 200 }));
+            response.next({ type: 'text' });
             response.complete();
 
             expect(wizardUnitComponent.autosaveState().kind).toBe('invalid');
@@ -1215,43 +1183,43 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should send the saved state again when the user returns to it while another state is being saved', () => {
-            const response = new Subject<HttpResponse<TextUnit>>();
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response).mockReturnValue(savedResponse());
+            const response = new Subject<GeneratedTextUnit>();
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValueOnce(response).mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading', true));
-            response.next(new HttpResponse({ status: 200 }));
+            response.next({ type: 'text' });
             response.complete();
 
             expect(updateSpy).toHaveBeenCalledTimes(2);
-            expect(updateSpy.mock.calls[1][0].name).toBe('Reading');
+            expect(updateSpy.mock.calls[1][1].name).toBe('Reading');
             expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
         });
 
         it('should send an empty list when the last competency is removed, because missing links mean unchanged', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             const unit = savedTextUnit(3, 'Reading');
             unit.competencyLinks = [competencyLink()];
             wizardUnitComponent.startEditLectureUnit(unit);
 
             wizardUnitComponent.onTextUnitChanged({ data: { name: 'Reading', content: 'Content', competencyLinks: undefined }, immediate: true, valid: true });
 
-            expect(updateSpy.mock.calls[0][0].competencyLinks).toEqual([]);
+            expect(updateSpy.mock.calls[0][1].competencyLinks).toEqual([]);
         });
 
         it('should send no links for an item that has none', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
 
-            expect(updateSpy.mock.calls[0][0].competencyLinks).toBeUndefined();
+            expect(updateSpy.mock.calls[0][1].competencyLinks).toBeUndefined();
         });
 
         it('should report a save that fails after the page was left in an alert', () => {
-            const response = new Subject<HttpResponse<TextUnit>>();
-            vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response);
+            const response = new Subject<GeneratedTextUnit>();
+            vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValueOnce(response);
             const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
@@ -1263,14 +1231,14 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should keep the form open when it becomes invalid while Done waits for a save', () => {
-            const response = new Subject<HttpResponse<TextUnit>>();
-            vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response);
+            const response = new Subject<GeneratedTextUnit>();
+            vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValueOnce(response);
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
 
             wizardUnitComponent.saveAndCloseEditor();
             wizardUnitComponent.onTextUnitChanged(textChange('', false, false));
-            response.next(new HttpResponse({ status: 200 }));
+            response.next({ type: 'text' });
             response.complete();
 
             expect(wizardUnitComponent.editingUnitId()).toBe(3);
@@ -1278,7 +1246,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should let the user discard a change that cannot be saved', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update');
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit');
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('', false, false));
 
@@ -1290,7 +1258,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should let the user discard a change that failed to save, and continue at the Edit button of the item', () => {
-            vi.spyOn(textUnitService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
             expect(wizardUnitComponent.autosaveState().kind).toBe('failed');
@@ -1316,7 +1284,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should save a waiting change at once on Enter in a single-line field of the item, but not on Enter in its markdown editor', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             const editor = document.createElement('div');
             const nameField = document.createElement('input');
             nameField.type = 'text';
@@ -1350,13 +1318,13 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should keep an item open that the user opened while a new item was created', () => {
-            const created = new Subject<HttpResponse<TextUnit>>();
-            vi.spyOn(textUnitService, 'create').mockReturnValue(created);
+            const created = new Subject<GeneratedTextUnit>();
+            vi.spyOn(textUnitApi, 'createTextUnit').mockReturnValue(created);
             wizardUnitComponent.onCreateLectureUnit(LectureUnitType.TEXT);
             wizardUnitComponent.createTextUnit({ name: 'New reading' });
 
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
-            created.next(new HttpResponse({ body: new TextUnit(), status: 201 }));
+            created.next({ type: 'text' });
             created.complete();
 
             expect(wizardUnitComponent.isEditingLectureUnit()).toBe(true);
@@ -1364,8 +1332,8 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should not count the running save of a deleted item for the item opened next', () => {
-            const response = new Subject<HttpResponse<TextUnit>>();
-            vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response);
+            const response = new Subject<GeneratedTextUnit>();
+            vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValueOnce(response);
             wizardUnitComponent.onLectureUnitsChange([savedTextUnit(3, 'Reading'), savedOnlineUnit()]);
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
@@ -1375,7 +1343,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
             expect(wizardUnitComponent.editingUnitId()).toBe(4);
             expect(wizardUnitComponent.autosaveState()).toEqual({ kind: 'idle' });
-            response.next(new HttpResponse({ status: 200 }));
+            response.next({ type: 'text' });
             response.complete();
             expect(wizardUnitComponent.editingUnitId()).toBe(4);
         });
@@ -1390,7 +1358,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should not save a form that cannot be saved and keep it open on Done', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update');
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit');
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
             wizardUnitComponent.onTextUnitChanged(textChange('', false, false));
@@ -1404,7 +1372,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should save at once and close the form on Done', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
 
@@ -1421,14 +1389,14 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should save and close the open item before opening another one', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
 
             wizardUnitComponent.startEditLectureUnit(savedOnlineUnit());
 
             expect(updateSpy).toHaveBeenCalledOnce();
-            expect(updateSpy.mock.calls[0][0].name).toBe('Reading list');
+            expect(updateSpy.mock.calls[0][1].name).toBe('Reading list');
             expect(wizardUnitComponent.editingUnitId()).toBe(4);
             expect(wizardUnitComponent.isOnlineUnitFormOpen()).toBe(true);
             expect(wizardUnitComponent.isTextUnitFormOpen()).toBe(false);
@@ -1436,7 +1404,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should save and close the open item before a new item is added', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
 
@@ -1461,7 +1429,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should save a waiting change as soon as the user leaves a field', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
 
@@ -1471,34 +1439,34 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should send a waiting change when the page is left', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
 
             wizardUnitComponentFixture.destroy();
 
             expect(updateSpy).toHaveBeenCalledOnce();
-            expect(updateSpy.mock.calls[0][0].name).toBe('Reading list');
+            expect(updateSpy.mock.calls[0][1].name).toBe('Reading list');
         });
 
         it('should save an online resource without an alert', () => {
-            const updateSpy = vi.spyOn(TestBed.inject(OnlineUnitService), 'update').mockReturnValue(of(new HttpResponse<OnlineUnit>({ status: 200 })));
+            const updateSpy = vi.spyOn(TestBed.inject(OnlineUnitApi), 'updateOnlineUnit').mockReturnValue(of({ type: 'online' }));
             wizardUnitComponent.startEditLectureUnit(savedOnlineUnit());
 
             wizardUnitComponent.onOnlineUnitChanged({ data: { name: 'Artemis', source: 'https://artemis.tum.de', description: 'Start here' }, immediate: false, valid: true });
             vi.advanceTimersByTime(AUTOSAVE_DELAY_MS);
 
             expect(updateSpy).toHaveBeenCalledOnce();
-            const [sentUnit, , context] = updateSpy.mock.calls[0];
+            const [, sentUnit, options] = updateSpy.mock.calls[0];
             expect(sentUnit.description).toBe('Start here');
             expect(sentUnit.source).toBe('https://artemis.tum.de');
-            expect(context?.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+            expect(options?.context?.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
         });
 
         describe('content that is still being saved', () => {
             it('should count a change while it waits for the pause and while it is sent, but not once it is saved', () => {
-                const response = new Subject<HttpResponse<TextUnit>>();
-                vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response);
+                const response = new Subject<GeneratedTextUnit>();
+                vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValueOnce(response);
                 wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
                 expect(wizardUnitComponent.isSavingContent()).toBe(false);
 
@@ -1509,15 +1477,15 @@ describe('LectureUpdateUnitsComponent', () => {
                 vi.advanceTimersByTime(AUTOSAVE_DELAY_MS);
                 expect(wizardUnitComponent.isSavingContent()).toBe(true);
 
-                response.next(new HttpResponse({ status: 200 }));
+                response.next({ type: 'text' });
                 response.complete();
                 expect(wizardUnitComponent.isSavingContent()).toBe(false);
                 expect(wizardUnitComponent.hasUnsavedContent()).toBe(false);
             });
 
             it('should count a failed change as unsaved, not as being saved, until it is sent again', () => {
-                const retry = new Subject<HttpResponse<TextUnit>>();
-                vi.spyOn(textUnitService, 'update')
+                const retry = new Subject<GeneratedTextUnit>();
+                vi.spyOn(textUnitApi, 'updateTextUnit')
                     .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400, error: { title: 'The name is too long' } })))
                     .mockReturnValueOnce(retry);
                 wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
@@ -1533,7 +1501,7 @@ describe('LectureUpdateUnitsComponent', () => {
             it('should send a change that waits for the pause and report text of the markdown editor before leaving is decided', () => {
                 const flushPendingEdits = vi.fn();
                 wizardUnitComponent.textUnitForm = signal({ flushPendingEdits } as unknown as TextUnitFormComponent).asReadonly() as Signal<TextUnitFormComponent | undefined>;
-                const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+                const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
                 wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
                 wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
@@ -1545,7 +1513,7 @@ describe('LectureUpdateUnitsComponent', () => {
             });
 
             it('should not send a failed change again before leaving is decided', () => {
-                const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+                const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
                 wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
                 wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
 
@@ -1578,7 +1546,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
         it('should not send a failed change again when the user leaves its field, but on Retry', () => {
             const updateSpy = vi
-                .spyOn(textUnitService, 'update')
+                .spyOn(textUnitApi, 'updateTextUnit')
                 .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503, error: { title: 'Service unavailable' } })))
                 .mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
@@ -1596,12 +1564,12 @@ describe('LectureUpdateUnitsComponent', () => {
 
             wizardUnitComponent.retryAutosave();
             expect(updateSpy).toHaveBeenCalledTimes(2);
-            expect(updateSpy.mock.calls[1][0].name).toBe('Reading list');
+            expect(updateSpy.mock.calls[1][1].name).toBe('Reading list');
         });
 
         it('should send a newer change after a failed save when the user leaves its field', () => {
             const updateSpy = vi
-                .spyOn(textUnitService, 'update')
+                .spyOn(textUnitApi, 'updateTextUnit')
                 .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503, error: { title: 'Service unavailable' } })))
                 .mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
@@ -1611,7 +1579,7 @@ describe('LectureUpdateUnitsComponent', () => {
             wizardUnitComponent.onEditorFocusOut();
 
             expect(updateSpy).toHaveBeenCalledTimes(2);
-            expect(updateSpy.mock.calls[1][0].name).toBe('Reading list for week 2');
+            expect(updateSpy.mock.calls[1][1].name).toBe('Reading list for week 2');
         });
 
         describe('file and video items', () => {
@@ -1639,7 +1607,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 const responseUnit = new AttachmentVideoUnit();
                 responseUnit.attachment = { id: 8, link: 'attachments/slides-v2.pdf', version: 2 } as Attachment;
                 responseUnit.videoSource = videoSource;
-                return of(new HttpResponse({ body: responseUnit, status: 200 }));
+                return of(responseUnit);
             }
 
             beforeEach(() => {
@@ -1658,12 +1626,12 @@ describe('LectureUpdateUnitsComponent', () => {
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data, immediate: true, valid: true });
 
                 expect(updateSpy).toHaveBeenCalledOnce();
-                const [lectureId, unitId, formData, notificationText, context] = updateSpy.mock.calls[0];
+                const [lectureId, unitId, sentUnit, sentUpdate, context] = updateSpy.mock.calls[0];
                 expect([lectureId, unitId]).toEqual([1, 5]);
-                expect(formData.has('file')).toBe(false);
-                expect(notificationText).toBeUndefined();
+                expect(sentUpdate!.file).toBeUndefined();
+                expect(sentUpdate!.notificationText).toBeUndefined();
                 expect(context?.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
-                await expect(getAttachmentVideoUnitPayload(formData)).resolves.toMatchObject({
+                expect(sentUnit).toMatchObject({
                     description: 'Week 1',
                     videoSource: 'https://live.rbg.tum.de/w/old',
                     attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
@@ -1680,11 +1648,11 @@ describe('LectureUpdateUnitsComponent', () => {
                 wizardUnitComponent.onAttachmentFileUploadRequested(data);
 
                 expect(updateSpy).toHaveBeenCalledOnce();
-                const [, , formData, notificationText] = updateSpy.mock.calls[0];
-                expect(formData.get('file')).toBeInstanceOf(File);
+                const [, , sentUnit, sentUpdate] = updateSpy.mock.calls[0];
+                expect(sentUpdate!.file).toBeInstanceOf(File);
                 // The server notifies whenever the parameter is present; it does not use the text.
-                expect(notificationText).toBe('');
-                await expect(getAttachmentVideoUnitPayload(formData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD });
+                expect(sentUpdate!.notificationText).toBe('');
+                expect(sentUnit).toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD });
                 expect(formMock.takeOverSavedFile).toHaveBeenCalledExactlyOnceWith('attachments/slides-v2.pdf', 2, newFile);
                 expect(unitManagementComponentMock.replaceLectureUnit).toHaveBeenCalledWith(
                     expect.objectContaining({ id: 5, attachment: expect.objectContaining({ version: 2 }) }),
@@ -1693,11 +1661,11 @@ describe('LectureUpdateUnitsComponent', () => {
             });
 
             it('should keep a confirmed upload that waits behind another save when the details change', async () => {
-                const firstResponse = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                const firstResponse = new Subject<AttachmentVideoUnit>();
                 const responseUnit = new AttachmentVideoUnit();
                 responseUnit.attachment = { id: 8, link: 'attachments/slides-v2.pdf', version: 2 } as Attachment;
                 updateSpy.mockReset();
-                updateSpy.mockReturnValueOnce(firstResponse).mockReturnValue(of(new HttpResponse({ body: responseUnit, status: 200 })));
+                updateSpy.mockReturnValueOnce(firstResponse).mockReturnValue(of(responseUnit));
                 const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
 
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1' }), immediate: true, valid: true });
@@ -1706,32 +1674,31 @@ describe('LectureUpdateUnitsComponent', () => {
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ name: '' }, newFile), immediate: false, valid: false });
                 expect(updateSpy).toHaveBeenCalledOnce();
 
-                firstResponse.next(new HttpResponse({ body: new AttachmentVideoUnit(), status: 200 }));
+                firstResponse.next(new AttachmentVideoUnit());
                 firstResponse.complete();
 
                 expect(updateSpy).toHaveBeenCalledTimes(2);
-                const uploadData = updateSpy.mock.calls[1][2];
-                expect(uploadData.get('file')).toBeInstanceOf(File);
-                await expect(getAttachmentVideoUnitPayload(uploadData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD });
+                expect(updateSpy.mock.calls[1][3]!.file).toBeInstanceOf(File);
+                expect(updateSpy.mock.calls[1][2]).toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD });
                 expect(formMock.takeOverSavedFile).toHaveBeenCalledExactlyOnceWith('attachments/slides-v2.pdf', 2, newFile);
-                expect(updateSpy.mock.calls[1][3]).toBeUndefined();
+                expect(updateSpy.mock.calls[1][3]!.notificationText).toBeUndefined();
                 // The form cannot be saved anymore, so the item says so instead of "saved".
                 expect(wizardUnitComponent.autosaveState().kind).toBe('invalid');
             });
 
             it('should keep a confirmed video URL that waits behind another save when the details change', async () => {
-                const firstResponse = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                const firstResponse = new Subject<AttachmentVideoUnit>();
                 const newSource = 'https://live.rbg.tum.de/w/new';
                 updateSpy.mockReturnValueOnce(firstResponse).mockReturnValueOnce(savedResponse(newSource));
 
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1' }), immediate: true, valid: true });
                 wizardUnitComponent.onVideoSourceSaveRequested(fileFormData({ description: 'Week 1', videoSource: newSource }));
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1', videoSource: newSource }), immediate: true, valid: true });
-                firstResponse.next(new HttpResponse({ body: Object.assign(new AttachmentVideoUnit(), { videoSource: 'https://live.rbg.tum.de/w/old' }), status: 200 }));
+                firstResponse.next(Object.assign(new AttachmentVideoUnit(), { videoSource: 'https://live.rbg.tum.de/w/old' }));
                 firstResponse.complete();
 
                 expect(updateSpy).toHaveBeenCalledTimes(2);
-                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[1][2])).resolves.toMatchObject({ videoSource: newSource });
+                expect(updateSpy.mock.calls[1][2]).toMatchObject({ videoSource: newSource });
                 expect(formMock.takeOverSavedVideoSource).toHaveBeenCalledExactlyOnceWith(newSource);
                 expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
             });
@@ -1740,9 +1707,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 const responseUnit = new AttachmentVideoUnit();
                 responseUnit.attachment = { id: 8, link: 'attachments/slides-v2.pdf', version: 2 } as Attachment;
                 updateSpy.mockReset();
-                updateSpy
-                    .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400, error: { title: 'The file is too big' } })))
-                    .mockReturnValue(of(new HttpResponse({ body: responseUnit, status: 200 })));
+                updateSpy.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400, error: { title: 'The file is too big' } }))).mockReturnValue(of(responseUnit));
                 const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
 
                 wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({}, newFile));
@@ -1752,12 +1717,12 @@ describe('LectureUpdateUnitsComponent', () => {
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1' }, newFile), immediate: true, valid: true });
                 wizardUnitComponent.onEditorFocusOut();
                 expect(updateSpy).toHaveBeenCalledTimes(2);
-                expect(updateSpy.mock.calls[1][2].has('file')).toBe(false);
+                expect(updateSpy.mock.calls[1][3]!.file).toBeUndefined();
                 expect(wizardUnitComponent.autosaveState().kind).toBe('failed');
 
                 wizardUnitComponent.retryAutosave();
                 expect(updateSpy).toHaveBeenCalledTimes(3);
-                expect(updateSpy.mock.calls[2][2].get('file')).toBeInstanceOf(File);
+                expect(updateSpy.mock.calls[2][3]!.file).toBeInstanceOf(File);
                 expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
                 expect(wizardUnitComponent.hasUnsavedContent()).toBe(false);
             });
@@ -1776,20 +1741,20 @@ describe('LectureUpdateUnitsComponent', () => {
             });
 
             it('should send a confirmed upload that waits with the newest details, also when they return to what runs', async () => {
-                const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                const running = new Subject<AttachmentVideoUnit>();
                 updateSpy.mockReturnValueOnce(running);
                 const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
 
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'B' }), immediate: true, valid: true });
                 wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({ description: 'C' }, newFile));
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'B' }, newFile), immediate: true, valid: true });
-                running.next(new HttpResponse({ body: new AttachmentVideoUnit(), status: 200 }));
+                running.next(new AttachmentVideoUnit());
                 running.complete();
 
                 // The upload carries the details, so they need no request of their own.
                 expect(updateSpy).toHaveBeenCalledTimes(2);
-                expect(updateSpy.mock.calls[1][2].get('file')).toBeInstanceOf(File);
-                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[1][2])).resolves.toMatchObject({ description: 'B' });
+                expect(updateSpy.mock.calls[1][3]!.file).toBeInstanceOf(File);
+                expect(updateSpy.mock.calls[1][2]).toMatchObject({ description: 'B' });
                 expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
             });
 
@@ -1797,7 +1762,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 const responseUnit = new AttachmentVideoUnit();
                 responseUnit.attachment = { id: 8, link: 'attachments/slides-v2.pdf', version: 2 } as Attachment;
                 updateSpy.mockReset();
-                updateSpy.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 }))).mockReturnValue(of(new HttpResponse({ body: responseUnit, status: 200 })));
+                updateSpy.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 }))).mockReturnValue(of(responseUnit));
                 const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
 
                 wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({ description: 'Week 1' }, newFile));
@@ -1807,44 +1772,44 @@ describe('LectureUpdateUnitsComponent', () => {
                 wizardUnitComponent.retryAutosave();
 
                 expect(updateSpy).toHaveBeenCalledTimes(3);
-                expect(updateSpy.mock.calls[2][2].get('file')).toBeInstanceOf(File);
-                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[2][2])).resolves.toMatchObject({
+                expect(updateSpy.mock.calls[2][3]!.file).toBeInstanceOf(File);
+                expect(updateSpy.mock.calls[2][2]).toMatchObject({
                     description: 'Week 1 and 2',
                     attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD,
                 });
             });
 
             it('should still save a change of the details that waited behind an upload that failed', async () => {
-                const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                const running = new Subject<AttachmentVideoUnit>();
                 updateSpy.mockReset();
                 updateSpy
                     .mockReturnValueOnce(running)
                     .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400, error: { title: 'The file is too big' } })))
-                    .mockReturnValue(of(new HttpResponse({ body: new AttachmentVideoUnit(), status: 200 })));
+                    .mockReturnValue(of(new AttachmentVideoUnit()));
                 const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
 
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1' }), immediate: true, valid: true });
                 wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({ description: 'Week 1' }, newFile));
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1 and 2' }, newFile), immediate: true, valid: true });
-                running.next(new HttpResponse({ body: new AttachmentVideoUnit(), status: 200 }));
+                running.next(new AttachmentVideoUnit());
                 running.complete();
 
                 expect(updateSpy).toHaveBeenCalledTimes(3);
-                expect(updateSpy.mock.calls[2][2].has('file')).toBe(false);
-                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[2][2])).resolves.toMatchObject({ description: 'Week 1 and 2' });
+                expect(updateSpy.mock.calls[2][3]!.file).toBeUndefined();
+                expect(updateSpy.mock.calls[2][2]).toMatchObject({ description: 'Week 1 and 2' });
                 // Only the file waits for Retry.
                 expect(wizardUnitComponent.autosaveState()).toEqual({ kind: 'failed', reason: 'The file is too big' });
                 expect(wizardUnitComponent.isSaving()).toBe(false);
             });
 
             it('should tell the form which confirmed file is being sent, which cannot be taken back anymore', () => {
-                const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                const running = new Subject<AttachmentVideoUnit>();
                 updateSpy.mockReturnValueOnce(running);
 
                 wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({}, new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' })));
                 expect(wizardUnitComponent.savingConfirmed()).toBe('file');
 
-                running.next(new HttpResponse({ body: new AttachmentVideoUnit(), status: 200 }));
+                running.next(new AttachmentVideoUnit());
                 running.complete();
                 expect(wizardUnitComponent.savingConfirmed()).toBeUndefined();
             });
@@ -1864,9 +1829,9 @@ describe('LectureUpdateUnitsComponent', () => {
             });
 
             it('should hold a file that waits behind a change of the details that failed for Retry, not count it as being saved', () => {
-                const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                const running = new Subject<AttachmentVideoUnit>();
                 updateSpy.mockReset();
-                updateSpy.mockReturnValueOnce(running).mockReturnValue(of(new HttpResponse({ body: savedFileUnit(), status: 200 })));
+                updateSpy.mockReturnValueOnce(running).mockReturnValue(of(savedFileUnit()));
                 const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
 
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1' }), immediate: true, valid: true });
@@ -1879,11 +1844,11 @@ describe('LectureUpdateUnitsComponent', () => {
                 expect(wizardUnitComponent.isSavingContent()).toBe(false);
 
                 wizardUnitComponent.retryAutosave();
-                expect(updateSpy.mock.calls[1][2].get('file')).toBeInstanceOf(File);
+                expect(updateSpy.mock.calls[1][3]!.file).toBeInstanceOf(File);
             });
 
             it('should keep the item open on Done when another video URL was typed while the confirmed one was saved', () => {
-                const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                const running = new Subject<AttachmentVideoUnit>();
                 updateSpy.mockReset();
                 updateSpy.mockReturnValue(running);
                 wizardUnitComponent.onVideoSourceSaveRequested(fileFormData({ videoSource: 'https://live.rbg.tum.de/w/first' }));
@@ -1893,7 +1858,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 formMock.hasUnconfirmedContent.mockReturnValue(true);
                 const savedUnit = savedFileUnit();
                 savedUnit.videoSource = 'https://live.rbg.tum.de/w/first';
-                running.next(new HttpResponse({ body: savedUnit, status: 200 }));
+                running.next(savedUnit);
                 running.complete();
 
                 expect(formMock.takeOverSavedVideoSource).toHaveBeenCalledExactlyOnceWith('https://live.rbg.tum.de/w/first');
@@ -1911,18 +1876,16 @@ describe('LectureUpdateUnitsComponent', () => {
             it('should not upload an empty file', async () => {
                 wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({}, new File([], 'empty.pdf', { type: 'application/pdf' })));
 
-                const formData = updateSpy.mock.calls[0][2];
-                expect(formData.has('file')).toBe(false);
-                await expect(getAttachmentVideoUnitPayload(formData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE });
+                expect(updateSpy.mock.calls[0][3]!.file).toBeUndefined();
+                expect(updateSpy.mock.calls[0][2]).toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE });
             });
 
             it('should save a confirmed video URL and let the form take it over', async () => {
                 updateSpy.mockReturnValueOnce(savedResponse('https://live.rbg.tum.de/w/new'));
                 wizardUnitComponent.onVideoSourceSaveRequested(fileFormData({ videoSource: 'https://live.rbg.tum.de/w/new' }));
 
-                const formData = updateSpy.mock.calls[0][2];
-                expect(formData.has('file')).toBe(false);
-                await expect(getAttachmentVideoUnitPayload(formData)).resolves.toMatchObject({
+                expect(updateSpy.mock.calls[0][3]!.file).toBeUndefined();
+                expect(updateSpy.mock.calls[0][2]).toMatchObject({
                     videoSource: 'https://live.rbg.tum.de/w/new',
                     attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
                 });
@@ -1943,7 +1906,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 updateSpy.mockReturnValueOnce(savedResponse('https://live.rbg.tum.de/w/new'));
                 wizardUnitComponent.onVideoSourceSaveRequested(fileFormData({ videoSource: 'https://live.rbg.tum.de/w/new' }));
 
-                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[1][2])).resolves.toMatchObject({
+                expect(updateSpy.mock.calls[1][2]).toMatchObject({
                     videoSource: 'https://live.rbg.tum.de/w/new',
                     loadedVideoSource: 'https://live.rbg.tum.de/w/other',
                 });
@@ -1960,13 +1923,13 @@ describe('LectureUpdateUnitsComponent', () => {
                 updateSpy.mockReturnValueOnce(savedResponse('https://live.rbg.tum.de/w/new'));
                 wizardUnitComponent.onVideoSourceSaveRequested(fileFormData({ name: 'Slides week 1', videoSource: 'https://live.rbg.tum.de/w/new' }));
 
-                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[1][2])).resolves.toMatchObject({ loadedVideoSource: 'https://live.rbg.tum.de/w/other' });
+                expect(updateSpy.mock.calls[1][2]).toMatchObject({ loadedVideoSource: 'https://live.rbg.tum.de/w/other' });
                 expect(formMock.applyServerVideoSource).toHaveBeenCalledOnce();
             });
 
             it('should count a failed upload and a running change of the details at once', () => {
-                const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
-                const detailsSave = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                const running = new Subject<AttachmentVideoUnit>();
+                const detailsSave = new Subject<AttachmentVideoUnit>();
                 updateSpy.mockReset();
                 updateSpy
                     .mockReturnValueOnce(running)
@@ -1977,14 +1940,14 @@ describe('LectureUpdateUnitsComponent', () => {
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1' }), immediate: true, valid: true });
                 wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({ description: 'Week 1' }, newFile));
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1 and 2' }, newFile), immediate: true, valid: true });
-                running.next(new HttpResponse({ body: new AttachmentVideoUnit(), status: 200 }));
+                running.next(new AttachmentVideoUnit());
                 running.complete();
 
                 expect(updateSpy).toHaveBeenCalledTimes(3);
                 expect(wizardUnitComponent.hasUnsavedContent()).toBe(true);
                 expect(wizardUnitComponent.isSavingContent()).toBe(true);
 
-                detailsSave.next(new HttpResponse({ body: new AttachmentVideoUnit(), status: 200 }));
+                detailsSave.next(new AttachmentVideoUnit());
                 detailsSave.complete();
                 expect(wizardUnitComponent.hasUnsavedContent()).toBe(true);
                 expect(wizardUnitComponent.isSavingContent()).toBe(false);
@@ -1997,8 +1960,8 @@ describe('LectureUpdateUnitsComponent', () => {
                 wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({ name: '' }, newFile));
 
                 expect(updateSpy).toHaveBeenCalledOnce();
-                expect(updateSpy.mock.calls[0][2].get('file')).toBeInstanceOf(File);
-                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[0][2])).resolves.toMatchObject({
+                expect(updateSpy.mock.calls[0][3]!.file).toBeInstanceOf(File);
+                expect(updateSpy.mock.calls[0][2]).toMatchObject({
                     name: 'Slides',
                     attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD,
                 });
