@@ -274,9 +274,9 @@ Add a new module to `migratedModules`, to the Stylelint override and to the `@so
 `tailwind.css`; `pnpm run test:rules` checks that the three agree.
 
 Tailwind utilities are in a cascade layer and lose to unlayered CSS: the element defaults in
-`content/scss/_base.scss` (`p`, `h1` to `h6`, `ul`, `a`) and component SCSS. The spacing steps 0, 1, 2
+`src/main/webapp/content/scss/_base.scss` (`p`, `h1` to `h6`, `ul`, `a`) and component SCSS. The spacing steps 0, 1, 2
 and `auto` and a few helpers (`text-center`, `overflow-hidden`, `border`, `text-primary`) are defined
-unlayered and important in `content/scss/_utilities.scss`, so they are written bare; do not add classes
+unlayered and important in `src/main/webapp/content/scss/_utilities.scss`, so they are written bare; do not add classes
 there. Write every other step with the important modifier where it has to win (`mb-6!`). For the
 steps 3 to 5 this is mandatory: Bootstrap used the same names with another scale (16, 24 and 48px
 against Tailwind's 12, 16 and 20px), so `localRules/no-ambiguous-spacing-utility` rejects a bare

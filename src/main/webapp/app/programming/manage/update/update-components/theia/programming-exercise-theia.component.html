@@ -20,6 +20,7 @@
     <tumaet-ui-select
         class="w-full"
         [options]="experienceLevelOptions()"
+        [placeholder]="experienceLevelOptions()[0].label"
         optionLabel="label"
         optionValue="value"
         [ngModel]="programmingExercise().buildConfig?.onlineIdeExperienceLevel"
