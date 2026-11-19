@@ -6,7 +6,7 @@ import {
     FilterOption,
     RangeFilter,
 } from 'app/foundation/types/exercise-filter';
-import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { ExerciseCategory, haveSameCategoryName } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { DifficultyLevel, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 import { roundToNextMultiple } from 'app/foundation/util/utils';
@@ -49,7 +49,7 @@ function getAvailableCategoriesAsFilterOptions(sidebarData?: SidebarData): Exerc
 
 function getExerciseCategoryFilterOptionsWithoutDuplicates(exerciseCategoryFilterOptions?: ExerciseCategoryFilterOption[]): ExerciseCategoryFilterOption[] | undefined {
     return exerciseCategoryFilterOptions?.reduce((unique: ExerciseCategoryFilterOption[], item: ExerciseCategoryFilterOption) => {
-        if (!unique.some((uniqueItem) => uniqueItem.category.equals(item.category))) {
+        if (!unique.some((uniqueItem) => haveSameCategoryName(uniqueItem.category, item.category))) {
             unique.push(item);
         }
         return unique;

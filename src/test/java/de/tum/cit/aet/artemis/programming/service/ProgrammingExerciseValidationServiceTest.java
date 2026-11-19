@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,10 +18,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.env.MockEnvironment;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -38,6 +42,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
  */
 @ExtendWith(MockitoExtension.class)
 class ProgrammingExerciseValidationServiceTest {
+
+    private static final ZonedDateTime NOW = ZonedDateTime.now();
 
     @Mock
     private AuxiliaryRepositoryService auxiliaryRepositoryService;
@@ -69,7 +75,24 @@ class ProgrammingExerciseValidationServiceTest {
     void setUp() {
         validationService = new ProgrammingExerciseValidationService(programmingExerciseBuildConfigRepository, auxiliaryRepositoryService, programmingExerciseRepository,
                 submissionPolicyService, Optional.of(programmingLanguageFeatureService), Optional.empty(), programmingExerciseBuildConfigService, Optional.empty(),
-                programmingExerciseTestCaseRepository, profileService);
+                programmingExerciseTestCaseRepository, profileService, new MockEnvironment());
+    }
+
+    /**
+     * Builds the service the way Spring does, with the allow-list read from real property sources.
+     */
+    private ProgrammingExerciseValidationService serviceWithAllowedRegistries(MockEnvironment environment) {
+        return new ProgrammingExerciseValidationService(programmingExerciseBuildConfigRepository, auxiliaryRepositoryService, programmingExerciseRepository,
+                submissionPolicyService, Optional.of(programmingLanguageFeatureService), Optional.empty(), programmingExerciseBuildConfigService, Optional.empty(),
+                programmingExerciseTestCaseRepository, profileService, environment);
+    }
+
+    private ProgrammingExerciseValidationService serviceWithAllowedRegistries(String... registries) {
+        MockEnvironment environment = new MockEnvironment();
+        for (int i = 0; i < registries.length; i++) {
+            environment.setProperty("artemis.continuous-integration.allowed-docker-registries[" + i + "]", registries[i]);
+        }
+        return serviceWithAllowedRegistries(environment);
     }
 
     private ProgrammingExercise exerciseWithPackageName(ProgrammingLanguage programmingLanguage, String packageName) {
@@ -208,6 +231,45 @@ class ProgrammingExerciseValidationServiceTest {
     }
 
     @Test
+    void validateBuildConfigSize_rejectsABranchRegexThatIsNotValid() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("feature/[");
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .withMessageContaining("branch regex is not a valid");
+    }
+
+    @Test
+    void validateBuildConfigSize_ignoresABranchRegexWhileBranchingIsNotAllowed() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(false);
+        buildConfig.setBranchRegex("feature/[");
+
+        assertThatCode(() -> validationService.validateBuildConfigSize(buildConfig)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildConfigSize_rejectsABranchRegexTooLargeForTheColumnEvenWithoutBranching() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(false);
+        buildConfig.setBranchRegex("a".repeat(129));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .withMessageContaining("branch regex is too long");
+    }
+
+    @Test
+    void validateBuildConfigSize_rejectsABranchRegexTooLargeForTheColumn() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("a".repeat(129));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .withMessageContaining("branch regex is too long");
+    }
+
+    @Test
     void validateBuildConfigSize_acceptsAConfigurationWithinTheLimits() {
         ProgrammingExercise exercise = new ProgrammingExercise();
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
@@ -235,6 +297,253 @@ class ProgrammingExerciseValidationServiceTest {
 
         assertThatCode(() -> validationService.validateCheckoutDirectoriesUnchanged(original, updated)).doesNotThrowAnyException();
         assertThat(updated.getAssignmentCheckoutPath()).isEqualTo("assignment");
+    }
+
+    private static ProgrammingExercise exerciseWithDates(ZonedDateTime release, ZonedDateTime start, ZonedDateTime due) {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setReleaseDate(release);
+        exercise.setStartDate(start);
+        exercise.setDueDate(due);
+        return exercise;
+    }
+
+    private static ProgrammingExerciseBuildConfig buildConfigWithWindow(ZonedDateTime start, ZonedDateTime end) {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setBuildTimeWindow(new BuildTimeWindow(start, end));
+        return buildConfig;
+    }
+
+    @Test
+    void validateBuildTimeWindow_acceptsAnExerciseWithoutAWindow() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(1), null, NOW.plusDays(10));
+
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, new ProgrammingExerciseBuildConfig())).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildTimeWindow_acceptsAWindowInsideTheStartAndDueDate() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(1), NOW.plusDays(3), NOW.plusDays(10));
+
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), NOW.plusDays(8)))).doesNotThrowAnyException();
+        // the bounds themselves are inside
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(3), NOW.plusDays(10)))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildTimeWindow_acceptsAnOpenEndedWindow() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(1), NOW.plusDays(3), NOW.plusDays(10));
+
+        // builds begin a week after the release, which is the use case of keeping the CI off while students prepare
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), null))).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(null, NOW.plusDays(5)))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildTimeWindow_usesTheReleaseDateWhenThereIsNoStartDate() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(2), null, NOW.plusDays(10));
+
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(2), NOW.plusDays(4)))).doesNotThrowAnyException();
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(1), NOW.plusDays(4))))
+                .withMessageContaining("must lie between");
+    }
+
+    @Test
+    void validateBuildTimeWindow_rejectsAWindowThatEndsBeforeItStartsOrIsEmpty() {
+        ProgrammingExercise exercise = exerciseWithDates(null, null, null);
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), NOW.plusDays(4)))).withMessageContaining("end after");
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), NOW.plusDays(5)))).withMessageContaining("end after");
+    }
+
+    @Test
+    void validateBuildTimeWindow_rejectsAWindowOutsideTheStartAndDueDate() {
+        ProgrammingExercise exercise = exerciseWithDates(NOW.plusDays(1), NOW.plusDays(3), NOW.plusDays(10));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(2), NOW.plusDays(5))))
+                .withMessageContaining("must lie between");
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(5), NOW.plusDays(11))))
+                .withMessageContaining("must lie between");
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW.plusDays(11), null))).withMessageContaining("must lie between");
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(null, NOW.plusDays(2)))).withMessageContaining("must lie between");
+    }
+
+    @Test
+    void validateBuildTimeWindow_isNotAvailableForExamExercises() {
+        ProgrammingExercise exercise = exerciseWithDates(null, null, null);
+        exercise.setExerciseGroup(new ExerciseGroup());
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildTimeWindow(exercise, buildConfigWithWindow(NOW, NOW.plusDays(1))))
+                .withMessageContaining("exam exercises");
+        assertThatCode(() -> validationService.validateBuildTimeWindow(exercise, new ProgrammingExerciseBuildConfig())).doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ghcr.io/ls1intum/image:1", "ghcr.io:443/ls1intum/image", "GHCR.IO/ls1intum/image" })
+    void validateDockerImageRegistry_acceptsAnImageOfAnAllowedRegistry(String dockerImage) {
+        validationService = serviceWithAllowedRegistries("ghcr.io", "ghcr.io:443");
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry(dockerImage)).doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "registry.example.org/team/image:1", "ubuntu:24.04", "library/ubuntu", "docker.io/library/ubuntu", "localhost:5000/image", "Other/team/image",
+            "ghcr.io:443/ls1intum/image" })
+    void validateDockerImageRegistry_rejectsAnImageOfAnotherRegistry(String dockerImage) {
+        validationService = serviceWithAllowedRegistries("ghcr.io");
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerImageRegistry(dockerImage)).withMessageContaining("not allowed")
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("dockerImageRegistryNotAllowed"));
+    }
+
+    @Test
+    void validateDockerImageRegistry_readsAYamlList() {
+        // the property sources of a YAML list hold name[0], name[1], ...
+        validationService = serviceWithAllowedRegistries("ghcr.io", "registry.example.org");
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry("registry.example.org/team/image")).doesNotThrowAnyException();
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerImageRegistry("quay.io/team/image"));
+    }
+
+    @Test
+    void validateDockerImageRegistry_readsACommaSeparatedString() {
+        validationService = serviceWithAllowedRegistries(
+                new MockEnvironment().withProperty("artemis.continuous-integration.allowed-docker-registries", "ghcr.io, registry.example.org"));
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry("registry.example.org/team/image")).doesNotThrowAnyException();
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerImageRegistry("quay.io/team/image"));
+    }
+
+    @Test
+    void validateDockerImageRegistry_treatsAFirstComponentWithUppercaseLettersAsAHost() {
+        // Docker only reads the first component as a repository path if it is lower case, so Myregistry is a host here
+        validationService = serviceWithAllowedRegistries("myregistry");
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry("Myregistry/team/img")).doesNotThrowAnyException();
+        validationService = serviceWithAllowedRegistries("docker.io");
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerImageRegistry("Myregistry/team/img"));
+        assertThatCode(() -> validationService.validateDockerImageRegistry("myregistry/team/img")).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateDockerImageRegistry_normalizesTheEntriesOfTheList() {
+        validationService = serviceWithAllowedRegistries("HTTPS://Registry.Example.org/", "http://other.example.org//", "registry-1.docker.io");
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry("registry.example.org/team/image")).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateDockerImageRegistry("other.example.org/team/image")).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateDockerImageRegistry("ubuntu:24.04")).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateDockerImageRegistry_treatsAnImageWithoutRegistryAsDockerHub() {
+        validationService = serviceWithAllowedRegistries("docker.io");
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry("ubuntu:24.04")).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateDockerImageRegistry("index.docker.io/library/ubuntu")).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateDockerImageRegistry("registry-1.docker.io/library/ubuntu")).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateDockerImageRegistry_allowsEveryRegistryWhileTheListIsEmpty() {
+        assertThatCode(() -> validationService.validateDockerImageRegistry("registry.example.org/team/image:1")).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateDockerImageRegistry_checksTheImageOfTheBuildPlanConfiguration() {
+        validationService = serviceWithAllowedRegistries("ghcr.io");
+        ProgrammingExerciseBuildConfig allowed = new ProgrammingExerciseBuildConfig();
+        allowed.setBuildPlanConfiguration("{\"phases\":[],\"dockerImage\":\"ghcr.io/ls1intum/image:1\"}");
+        ProgrammingExerciseBuildConfig refused = new ProgrammingExerciseBuildConfig();
+        refused.setBuildPlanConfiguration("{\"phases\":[],\"dockerImage\":\"registry.example.org/team/image:1\"}");
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry(allowed)).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateDockerImageRegistry(new ProgrammingExerciseBuildConfig())).doesNotThrowAnyException();
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerImageRegistry(refused));
+    }
+
+    @Test
+    void validateDockerImageRegistry_ignoresABuildPlanConfigurationThatIsTheJsonTextNull() {
+        validationService = serviceWithAllowedRegistries("ghcr.io");
+        ProgrammingExerciseBuildConfig nothingToRead = new ProgrammingExerciseBuildConfig();
+        nothingToRead.setBuildPlanConfiguration("null");
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry(nothingToRead)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildPhaseNames_rejectsABuildPlanConfigurationThatIsTheJsonTextNull() {
+        when(profileService.isLocalCIActive()).thenReturn(true);
+        ProgrammingExerciseBuildConfig nothingToRead = new ProgrammingExerciseBuildConfig();
+        nothingToRead.setBuildPlanConfiguration("null");
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildPhaseNames(nothingToRead))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("invalidBuildPlanConfiguration"));
+    }
+
+    @Test
+    void validateBuildConfigSize_rejectsABranchRegexThatCannotBeCompiled() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("feature/[");
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .satisfies(e -> assertThat(e.getErrorKey()).isEqualTo("branchRegexInvalid"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "(?:^){2147483647}", "(?x)(?:^){2147483647 }", "(a+)+", "(a|aa)+", "(?=a)b", "(a)\\1", "a*?", "\\p{Alpha}", "a{1001}", "[a&&b]", "(^|^)", "(a?|b*)",
+            "(x{0}|y{0})" })
+    void validateBuildConfigSize_rejectsABranchRegexWithSyntaxThatIsNotSupported(String regex) {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex(regex);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .satisfies(e -> assertThat(e.getErrorKey()).isEqualTo("branchRegexNotSupported"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { ".*", "feature/.*", "^(feature|bugfix)/[a-z0-9-]+$", "[a-z]{3,10}-\\d{2}" })
+    void validateBuildConfigSize_acceptsTypicalBranchRegexes(String regex) {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex(regex);
+
+        assertThatCode(() -> validationService.validateBuildConfigSize(buildConfig)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildConfigSize_acceptsAnUnsupportedBranchRegexWhileBranchingIsDisabled() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(false);
+        buildConfig.setBranchRegex("(a+)+");
+
+        assertThatCode(() -> validationService.validateBuildConfigSize(buildConfig)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateBuildConfigSize_rejectsABranchRegexThatIsTooLong() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("a".repeat(129));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateBuildConfigSize(buildConfig))
+                .satisfies(e -> assertThat(e.getErrorKey()).isEqualTo("branchRegexTooLong"));
+    }
+
+    @Test
+    void validateBuildConfigSize_acceptsAUsableBranchRegex() {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("feature/.*");
+
+        assertThatCode(() -> validationService.validateBuildConfigSize(buildConfig)).doesNotThrowAnyException();
     }
 
     private static DockerFlagsDTO flags(int cpuCount, int memory, int memorySwap) {

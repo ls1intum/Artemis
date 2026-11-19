@@ -103,4 +103,30 @@ describe('AiWorkersComponent', () => {
         expect(details.textContent).toContain('exercise-two');
         expect(fixture.nativeElement.textContent).not.toContain('execution-one');
     });
+
+    it('shows the empty state instead of rows when no worker is configured', () => {
+        fixture.componentRef.setInput('workers', []);
+        fixture.detectChanges();
+        const empty = fixture.nativeElement.querySelector('[data-testid="table-empty"]');
+        expect(empty).not.toBeNull();
+        expect(empty.textContent).toContain('artemisApp.aiworker.empty');
+        expect(fixture.nativeElement.querySelectorAll('tbody tr')).toHaveLength(0);
+    });
+
+    it('does not show the empty state while loading, after a failure or when workers exist', () => {
+        fixture.componentRef.setInput('workers', []);
+        fixture.componentRef.setInput('loading', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).toBeNull();
+
+        fixture.componentRef.setInput('loading', false);
+        fixture.componentRef.setInput('failed', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).toBeNull();
+
+        fixture.componentRef.setInput('failed', false);
+        fixture.componentRef.setInput('workers', WORKERS);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).toBeNull();
+    });
 });

@@ -9,7 +9,7 @@ describe('TumAetUiTranslatePipe', () => {
 
         const pipe = TestBed.inject(TumAetUiTranslatePipe);
 
-        expect(pipe.transform('tumAetUi.paginator.currentPageReport', { first: 1, second: 10, total: 42 })).toBe('Showing 1 to 10 of 42');
+        expect(pipe.transform('tumAetUi.paginator.compactReport', { first: 1, second: 10, total: 42 })).toBe('1–10 of 42');
         expect(pipe.transform('consumer.owned.key')).toBe('consumer.owned.key');
         expect(pipe.transform(undefined)).toBe('');
     });

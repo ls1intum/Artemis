@@ -7,17 +7,24 @@ import { SortService } from 'app/foundation/service/sort.service';
 import { Subject, Subscription } from 'rxjs';
 import { ActivatedRoute, Data } from '@angular/router';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faCheck, faSort, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiProgressSpinnerComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTagComponent,
+} from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -28,13 +35,13 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         FormsModule,
         ArtemisTranslatePipe,
         FaIconComponent,
-        SortDirective,
-        SortByDirective,
         CourseTitleBarTitleDirective,
         TumAetUiProgressSpinnerComponent,
         TumAetUiTableDirective,
         TumAetUiButtonDirective,
         TumAetUiTagComponent,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
     ],
 })
 export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
@@ -74,7 +81,6 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     // Icons
     faCheck = faCheck;
     faXmark = faXmark;
-    faSort = faSort;
 
     ngOnInit() {
         this.isLoading.set(true);
@@ -84,7 +90,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
             this.exam = exam;
             this.hasExamStarted.set(exam.startDate?.isBefore(this.serverDateService.now()) || false);
             this.scheduleAttendanceDeadline();
-            this.isTestExam.set(this.exam.testExam ?? false);
+            this.isTestExam.set(!isRealExam(this.exam));
         });
         if (!this.hasExamStarted()) {
             // Nothing can be verified before the start, and the page has to say so instead of loading forever.
@@ -169,6 +175,12 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
                 this.onError(error.message);
             },
         });
+    }
+
+    protected onSortChange(event: TumAetUiTableSortEvent): void {
+        this.predicate.set(event.field);
+        this.ascending.set(event.order === 1);
+        this.sortRows();
     }
 
     sortRows() {

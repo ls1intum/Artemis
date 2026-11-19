@@ -1,7 +1,7 @@
 @if (isInitialized) {
-    <div class="channels-overview" ngbAutofocus>
-        <div class="modal-header">
-            <h4 class="modal-title">
+    <div class="flex flex-col gap-4!">
+        <div class="flex items-start justify-between gap-2 pt-4!">
+            <h4 class="m-0 text-xl! font-medium!">
                 <span
                     >{{ (isPublicChannel() ? 'artemisApp.dialogs.createChannel.titlePublicChannel' : 'artemisApp.dialogs.createChannel.titlePrivateChannel') | artemisTranslate }}
                     {{ isCourseWideChannel() ? ('artemisApp.dialogs.createChannel.titleCourseWideChannel' | artemisTranslate) : '' }}
@@ -11,16 +11,27 @@
                     }}
                 </span>
             </h4>
-            <button type="button" class="btn-close" (click)="dismiss()"></button>
+            <button
+                type="button"
+                tumAetUiButton
+                severity="secondary"
+                variant="text"
+                rounded
+                class="size-8 shrink-0 p-0"
+                data-testid="dialog-close-button"
+                [attr.aria-label]="'entity.action.close' | artemisTranslate"
+                (click)="dismiss()"
+            >
+                <fa-icon [icon]="faXmark" />
+            </button>
         </div>
-        <div class="modal-body">
-            <p jhiTranslate="artemisApp.dialogs.createChannel.description"></p>
-            <jhi-channel-form
-                (channelTypeChanged)="onChannelTypeChanged($event)"
-                (isAnnouncementChannelChanged)="onIsAnnouncementChannelChanged($event)"
-                (isCourseWideChannelChanged)="onIsCourseWideChannelChanged($event)"
-                (formSubmitted)="onFormSubmitted($event)"
-            />
-        </div>
+        <p class="m-0 text-sm" jhiTranslate="artemisApp.dialogs.createChannel.description"></p>
+        <jhi-channel-form
+            [canCreateAnnouncementChannel]="!!course()?.isAtLeastInstructor"
+            (channelTypeChanged)="onChannelTypeChanged($event)"
+            (isAnnouncementChannelChanged)="onIsAnnouncementChannelChanged($event)"
+            (isCourseWideChannelChanged)="onIsCourseWideChannelChanged($event)"
+            (formSubmitted)="onFormSubmitted($event)"
+        />
     </div>
 }

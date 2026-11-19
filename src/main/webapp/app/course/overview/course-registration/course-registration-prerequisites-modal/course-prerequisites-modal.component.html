@@ -1,27 +1,15 @@
-<p-dialog
-    [(visible)]="visible"
-    [modal]="true"
-    [closable]="true"
-    [closeOnEscape]="true"
-    [dismissableMask]="true"
-    [draggable]="false"
-    [appendTo]="'body'"
-    [style]="{ width: '70dvw' }"
-    [header]="'artemisApp.prerequisite.title' | artemisTranslate"
->
-    <div class="container">
+<tumaet-ui-dialog [(visible)]="visible" size="large" dismissableMask [header]="'artemisApp.prerequisite.title' | artemisTranslate">
+    <div class="w-full">
         @if (isLoading()) {
-            <div class="d-flex justify-content-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden" jhiTranslate="loading"></span>
-                </div>
+            <div class="flex justify-center">
+                <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
             </div>
         } @else {
-            <div class="row justify-content-center gx-5 gy-2">
+            <div class="grid grid-cols-1 gap-x-12 gap-y-2 min-[992px]:grid-cols-2">
                 @for (prerequisite of prerequisites(); track prerequisite.id; let i = $index) {
-                    <jhi-competency-card class="col-12 col-lg-6" [competency]="prerequisite" [isPrerequisite]="true" [noProgressRings]="true" />
+                    <jhi-competency-card class="min-w-0" [competency]="prerequisite" [isPrerequisite]="true" [noProgressRings]="true" />
                 }
             </div>
         }
     </div>
-</p-dialog>
+</tumaet-ui-dialog>

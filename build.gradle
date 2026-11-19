@@ -31,6 +31,12 @@ buildscript {
             // only, not shipped. Keep equal to the project-level jsoup version below and to the minimum in
             // gradle/dependency-families.gradle (verifyBuildscriptClasspathPins).
             force "org.jsoup:jsoup:1.24.1"
+            // Force the patched org.json onto the build-script / plugin classpath as well. org.owasp.dependencycheck
+            // (dependency-check-core 13.0.0) resolves 20260522, which is affected by an unbounded numeric string
+            // resource exhaustion in JSONTokener (fixed in 20260719) and reported by the GitHub dependency graph via
+            // settings.gradle. Build-time only, not shipped; the test classpath pins its own version below. Keep equal
+            // to the minimum in gradle/dependency-families.gradle (verifyBuildscriptClasspathPins).
+            force "org.json:json:20260814"
         }
     }
     // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)
@@ -53,7 +59,7 @@ buildscript {
             mavenCentral()
         }
         dependencies {
-            classpath "de.tum.cit.aet:openapi-generator-angular22:3.0.0"
+            classpath "de.tum.cit.aet:openapi-generator-angular22:4.0.0"
         }
     }
     dependencies {
@@ -64,8 +70,8 @@ buildscript {
         // shipped WAR only ever contains the patched versions. enforcedPlatform applies each jackson-bom's
         // authoritative per-module versions, so no version is invented. Build-time only, not shipped. Keep
         // both versions in sync with the project-level jackson-bom imports below.
-        classpath enforcedPlatform("tools.jackson:jackson-bom:3.2.4")
-        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.4")
+        classpath enforcedPlatform("tools.jackson:jackson-bom:3.3.0")
+        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.23.0")
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
         classpath("org.liquibase:liquibase-core:${liquibase_version}") {
@@ -106,7 +112,7 @@ plugins {
     // from .openapi-generator/VERSION.
     id "org.openapi.generator" version "7.27.0"
     id "com.google.osdetector" version "1.7.3"
-    id "org.cyclonedx.bom" version "3.5.1"
+    id "org.cyclonedx.bom" version "3.6.1"
 }
 
 // Load Docker image versions from .env (single source of truth for Docker, tests, and build dependencies)
@@ -117,7 +123,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "10.7"
+version = "10.8"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -127,7 +133,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.9.0"
+    gradleVersion = "9.9.1"
 }
 
 node {
@@ -258,8 +264,10 @@ ext["logback.version"] = logback_version
 // pinning tools.jackson.core:jackson-databind on its own — is what keeps the sibling modules (notably
 // jackson-dataformat-cbor) on the same patch: a sibling left behind on an older patch re-declares that older
 // jackson-databind in its POM, and the GitHub dependency graph then reports it as a vulnerable version even
-// though no configuration resolves it. Keep Jackson 3 on the minor that webauthn4j / spring-ai expect, and
-// bump both families to the latest patched release when new advisories land.
+// though no configuration resolves it. webauthn4j and spring-ai declare older Jackson 3 minors (3.2 and 3.1), which
+// Jackson keeps binary compatible, so both families follow the latest release. After a minor bump, run the passkey,
+// LTI, Spring AI and static code analysis parser tests (Jackson 3.3.0 passes root element attributes to the XML
+// deserializer, see CheckstyleParser); bump both families to the latest patched release when new advisories land.
 // Import order matters and is load-bearing: the Jackson 3 BOM also manages
 // com.fasterxml.jackson.core:jackson-annotations (that artifact never moved to the tools.jackson group) at a
 // version trailing the Jackson 2 line, and io.spring.dependency-management lets a later import override an
@@ -270,8 +278,8 @@ ext["logback.version"] = logback_version
 dependencyManagement {
     imports {
         mavenBom "io.opentelemetry:opentelemetry-bom:${opentelemetry_version}"
-        mavenBom "tools.jackson:jackson-bom:3.2.4"
-        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.4"
+        mavenBom "tools.jackson:jackson-bom:3.3.0"
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.23.0"
     }
 }
 
@@ -494,7 +502,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // Allows generating UML diagrams from text descriptions in problem statement markdown files for programming exercises
-    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.9"
+    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.10"
 
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -693,14 +701,14 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
     // required by sshd-git; pinned to a patched release addressing GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
-    implementation "org.bouncycastle:bcpkix-jdk18on:1.86"
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.87"
     // 1.86 is a joint release of every module, so the provider is back in step with its siblings and no longer
     // needs the out-of-band patch level 1.85.2 carried (AES CBC-256 via the id_aes256_CBC OID silently derived a
     // 192-bit key, bc-java #2390). The org.bouncycastle entry in gradle/dependency-families.gradle keeps accepting
     // such a patch, because BC ships one whenever a single module needs fixing between joint releases.
-    implementation "org.bouncycastle:bcprov-jdk18on:1.86"
+    implementation "org.bouncycastle:bcprov-jdk18on:1.87"
     // pulled transitively by sshd-git; pin to patched version
-    implementation "org.bouncycastle:bcpg-jdk18on:1.86"
+    implementation "org.bouncycastle:bcpg-jdk18on:1.87"
 
     // required for database connections
     // REMOVE_IN_ARTEMIS_11 (MySQL): remove the driver once MySQL support is removed
@@ -709,6 +717,8 @@ dependencies {
 
     // Required by JPlag
     implementation "com.ibm.icu:icu4j-charset:79.1"
+    // Normalizes host names the way a browser does (UTS #46, not the older IDNA2003 of java.net.IDN), for the image host policy. Kept in step with icu4j-charset above.
+    implementation "com.ibm.icu:icu4j:79.1"
     // Required by exam session service
     implementation "com.github.seancfoley:ipaddress:5.6.2"
 
@@ -777,10 +787,10 @@ dependencies {
     }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.200"
+    testImplementation "io.github.classgraph:classgraph:6.0.2"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.9.0"
+    testImplementation "org.gradle:gradle-tooling-api:9.9.1"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.6.1"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:${testcontainers_redis_version}"
@@ -824,7 +834,7 @@ dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}"
         // BOM uses 3-part versions (e.g. 18.1.0); POSTGRES_VERSION from .env may be 2-part (e.g. 18.1)
-        def pgVersion = findProperty('postgres_version') ?: '18.6'
+        def pgVersion = findProperty('postgres_version') ?: '18.7'
         def bomVersion = pgVersion.count('.') < 2 ? "${pgVersion}.0" : pgVersion
         mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:${bomVersion}"
         mavenBom "org.testcontainers:testcontainers-bom:${testcontainers_version}"

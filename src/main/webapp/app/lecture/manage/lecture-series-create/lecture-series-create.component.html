@@ -82,7 +82,7 @@
                             <span class="enumerator primary" [ngClass]="{ edited: draft.state === LectureDraftState.EDITED }">
                                 {{ index + 1 }}
                             </span>
-                            <span class="draft-title">{{ draft.dto.title }}</span>
+                            <span class="draft-title">{{ draft.title }}</span>
                             <button
                                 tumAetUiButton
                                 severity="warn"
@@ -91,7 +91,7 @@
                                 type="button"
                                 class="draft-action"
                                 (click)="draftEditModal.open(draft)"
-                                [attr.aria-label]="'Edit ' + draft.dto.title"
+                                [attr.aria-label]="'Edit ' + draft.title"
                             >
                                 <fa-icon [icon]="faPenToSquare" />
                             </button>
@@ -103,7 +103,7 @@
                                 type="button"
                                 class="draft-action"
                                 (click)="deleteLectureDraft(draft)"
-                                [attr.aria-label]="'Delete ' + draft.dto.title"
+                                [attr.aria-label]="'Delete ' + draft.title"
                             >
                                 <fa-icon [icon]="faXmark" />
                             </button>

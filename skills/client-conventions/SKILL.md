@@ -266,10 +266,15 @@ primitives, never `text-red-500`, never `text-danger`, never the superseded arbi
 
 `localRules/no-raw-tailwind-color-palette` enforces the palette part across
 `src/main/webapp/app/**/*.html` and `packages/tum-aet-ui/src/lib/**/*.html`. **The Bootstrap ban is
-only partly enforced**: `localRules/no-bootstrap-classes` covers the migrated directories listed
-in `eslint.config.mjs`.
-The convention applies throughout the client even where lint does not enforce it. Add newly
-migrated directories to that list.
+only partly enforced**: the modules in `migratedModules` of `eslint.config.mjs` are locked, plus a few
+directories of other modules. In a locked module lint rejects
+Bootstrap classes in external and inline templates (`localRules/no-bootstrap-classes`), Bootstrap class
+names built in TypeScript (`localRules/no-bootstrap-classes-in-code`), bare spacing utilities,
+imports of PrimeNG, ng-bootstrap and Bootstrap (specs included), and, in Stylelint, `--bs-*` and `--p-*`
+values, hex and `rgb()` colours, PrimeNG selectors and Bootstrap component selectors.
+The convention applies throughout the client even where lint does not enforce it. Add a newly
+migrated module to `migratedModules`, to the Stylelint override and to the `@source` list of
+`tailwind.css`; `pnpm run test:rules` checks that the three agree.
 
 Bootstrap and Tailwind share the spacing class names (`m`, `p` and `gap` with their side and axis
 forms) but differ for 3 to 5: Bootstrap renders 16, 24 and 48px, Tailwind 12, 16 and 20px, and
@@ -279,8 +284,8 @@ value Bootstrap renders (`mb-3` to `mb-4!`, `mb-4` to `mb-6!`, `mb-5` to `mb-12!
 value (`mb-3!`, `mb-4!`, `mb-5!`). Never write a bare `mb-6`: it loses to Bootstrap's Reboot margins
 and to component SCSS.
 
-The rule is enabled for the Tailwind-laid-out templates of the student exam mode and the pages it
-shows, in the block of `eslint.config.mjs` that lists the folders. To adopt it elsewhere, add
+The rule is enabled for every module in `migratedModules` (external and inline templates) and for a few
+further folders, in the block of `eslint.config.mjs` that lists them. To adopt it elsewhere, add
 `<folder>/**/*.html` to that block, make sure `tailwind.css` scans the folder with `@source`
 (`migration-source-coverage` checks it), apply the suggestion that keeps the value, and update the
 specs that assert the old class names. See _Ambiguous Spacing Utilities_ in
@@ -297,6 +302,14 @@ If TUM AET UI lacks a reusable capability, add or evolve a package component aro
 Angular Aria (`@angular/aria`, for composite widgets such as menus and tabs), or stable Angular CDK
 primitives, and keep Artemis-specific composition in the application. See
 `documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx`.
+
+## Data tables
+
+A table that is the main content of a page or a large dialog sits in `tumaet-ui-table-layout`: a toolbar of at most
+40px that never wraps, a body that is the only part that scrolls under a sticky 30px column header, and a footer of at
+most 40px with `tumaet-ui-paginator`. Slot nodes (`tumAetUiTableToolbar`, `tumAetUiTableFooter`) must not sit directly
+in an `@if` (NG8011): use `[hidden]`. Use `tumAetUiInputSize="small"`, not `size`, on toolbar inputs. See
+[Data tables](../../documentation/docs/developer/guidelines/client-development.mdx#data-tables).
 
 ## Other rules worth knowing
 

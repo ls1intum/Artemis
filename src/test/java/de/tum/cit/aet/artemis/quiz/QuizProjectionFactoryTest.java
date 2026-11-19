@@ -1,16 +1,26 @@
 package de.tum.cit.aet.artemis.quiz;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import tools.jackson.databind.JsonNode;
+
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 import de.tum.cit.aet.artemis.quiz.dto.QuizQuestionStatisticDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithoutSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.ShortAnswerQuestionWithoutMappingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerBeforeEvaluationDTO;
 
@@ -56,6 +66,55 @@ class QuizProjectionFactoryTest {
     @Test
     void shouldRejectAnUnknownQuestionTypeWithoutSolutions() {
         assertThatIllegalArgumentException().isThrownBy(() -> QuizQuestionWithoutSolutionDTO.of(new UnknownQuestion())).withMessageContaining("UnknownQuestion");
+    }
+
+    private static ShortAnswerQuestion shortAnswerQuestionWithOneSpotAndOneSolution() {
+        ShortAnswerSpot spot = new ShortAnswerSpot();
+        spot.setSpotNr(1);
+        ShortAnswerSolution solution = new ShortAnswerSolution();
+        solution.setText("answer");
+        ShortAnswerQuestion question = new ShortAnswerQuestion();
+        question.setSpots(List.of(spot));
+        question.setSolutions(List.of(solution));
+        return question;
+    }
+
+    /**
+     * The projection for the conduction of a quiz is the one the factory picks for a short answer question: it carries the spots but not the solutions.
+     */
+    @Test
+    void shouldOmitShortAnswerSolutionsWhenProjectingAQuestionForConduction() {
+        ShortAnswerQuestion question = shortAnswerQuestionWithOneSpotAndOneSolution();
+
+        JsonNode json = JsonObjectMapper.get().valueToTree(QuizQuestionWithoutSolutionDTO.of(question));
+
+        assertThat(json.has("spots")).isTrue();
+        assertThat(json.get("spots")).hasSize(1);
+        assertThat(json.has("solutions")).isFalse();
+    }
+
+    @Test
+    void shouldProjectAShortAnswerQuestionWithoutSpotsForConduction() {
+        ShortAnswerQuestion withoutSpotList = shortAnswerQuestionWithOneSpotAndOneSolution();
+        withoutSpotList.setSpots(null);
+        ShortAnswerQuestion withEmptySpotList = shortAnswerQuestionWithOneSpotAndOneSolution();
+        withEmptySpotList.setSpots(List.of());
+
+        assertThat(ShortAnswerQuestionWithoutMappingDTO.ofWithoutSolutions(withoutSpotList).spots()).isNull();
+        assertThat(ShortAnswerQuestionWithoutMappingDTO.ofWithoutSolutions(withEmptySpotList).spots()).isNull();
+        assertThat(ShortAnswerQuestionWithoutMappingDTO.ofWithoutSolutions(withoutSpotList).solutions()).isNull();
+        assertThat(JsonObjectMapper.get().valueToTree(QuizQuestionWithoutSolutionDTO.of(withoutSpotList)).has("solutions")).isFalse();
+    }
+
+    /**
+     * The projection used for result views keeps the solutions.
+     */
+    @Test
+    void shouldKeepShortAnswerSolutionsInTheProjectionWithSolutions() {
+        ShortAnswerQuestion question = shortAnswerQuestionWithOneSpotAndOneSolution();
+
+        assertThat(ShortAnswerQuestionWithoutMappingDTO.of(question).solutions()).hasSize(1);
+        assertThat(ShortAnswerQuestionWithoutMappingDTO.ofWithoutSolutions(question).similarityValue()).isEqualTo(question.getSimilarityValue());
     }
 
     @Test

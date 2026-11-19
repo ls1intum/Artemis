@@ -8,7 +8,7 @@
         <!--
             The page's own title bar. `page-top-bar` holds it to the same height as the shell's title bars, so the
             lecture page reads like the other student pages; the start and end dates sit with the description instead.
-            `px-*` rather than `p-*`, so Bootstrap's !important spacing does not overrule the class's vertical padding.
+            `px-*` rather than `p-*`, so the !important spacing of `p-*` does not overrule the class's vertical padding.
         -->
         <div class="page-top-bar module-bg rounded-lg px-4! shell-divider-b flex items-center gap-4!">
             @if (isSidebarCollapsed()) {
@@ -47,7 +47,7 @@
                 @if (lecture.description) {
                     <div class="flex flex-wrap mb-2 mt-2 items-baseline">
                         <div class="w-auto">
-                            <h3 jhiTranslate="artemisApp.courseOverview.lectureDetails.description"></h3>
+                            <h3 class="text-lg! font-semibold" jhiTranslate="artemisApp.courseOverview.lectureDetails.description"></h3>
                         </div>
                     </div>
                     <div class="flex flex-wrap mb-2 markdown-preview">
@@ -56,9 +56,9 @@
                 }
                 <!-- LECTURE UNITS START-->
                 @if (lecture.lectureUnits) {
-                    <div class="flex flex-wrap mb-2 mt-2 items-center gap-3">
+                    <div class="flex flex-wrap mb-2 mt-2 items-center gap-4!">
                         <div class="w-auto">
-                            <h3 class="mb-0" jhiTranslate="artemisApp.courseOverview.lectureDetails.lectureUnits"></h3>
+                            <h3 class="mb-0 text-lg! font-semibold" jhiTranslate="artemisApp.courseOverview.lectureDetails.lectureUnits"></h3>
                         </div>
                         @if (hasPdfLectureUnit()) {
                             <button

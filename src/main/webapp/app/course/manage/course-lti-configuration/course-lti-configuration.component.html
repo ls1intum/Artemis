@@ -1,181 +1,181 @@
 <form name="editForm" role="form" novalidate>
-    <div class="modal-header lti-edit-button">
-        <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.configurationForCourse" [translateValues]="{ title: course()?.title }">
+    <div class="lti-edit-button flex shrink-0 items-center">
+        <h4 class="mb-0!" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.configurationForCourse" [translateValues]="{ title: course()?.title }">
             LTI Configuration for course {{ course()?.title }}
         </h4>
         @if (course()?.isAtLeastInstructor) {
             <div class="controls">
-                <a id="lti-config" [routerLink]="['/course-management', course()?.id!, 'lti-configuration', 'edit']" class="btn btn-warning btn-md">
-                    <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+                <a id="lti-config" [routerLink]="['/course-management', course()?.id!, 'lti-configuration', 'edit']" tumAetUiButton severity="warn">
+                    <fa-icon [icon]="faWrench" /><span jhiTranslate="entity.action.edit">Edit</span>
                 </a>
             </div>
         }
     </div>
-    <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs mt-4">
-        <ng-container ngbNavItem [ngbNavItem]="1">
-            <a ngbNavLink jhiTranslate="artemisApp.lti.generalConfiguration"></a>
-            <ng-template ngbNavContent>
-                <dt>
-                    <span jhiTranslate="artemisApp.lti.userPrefix"></span>
-                </dt>
-                <dd>
-                    <span>{{ onlineCourseConfiguration()?.userPrefix }}</span>
-                </dd>
-                <dt>
-                    <span jhiTranslate="artemisApp.lti.requireExistingUser"></span>
-                </dt>
-                <dd>
-                    <span jhiTranslate="{{ onlineCourseConfiguration()?.requireExistingUser ? 'global.generic.yes' : 'global.generic.no' }}"></span>
-                </dd>
-                <div class="form-group">
+    <tumaet-ui-tabs [(value)]="activeTab" class="mt-6!">
+        <tumaet-ui-tab-list>
+            <tumaet-ui-tab [value]="1" jhiTranslate="artemisApp.lti.generalConfiguration" />
+            <tumaet-ui-tab [value]="2" jhiTranslate="artemisApp.lti.exercises" />
+            <tumaet-ui-tab [value]="3" jhiTranslate="artemisApp.lti.lectures" />
+        </tumaet-ui-tab-list>
+        <tumaet-ui-tab-panels class="mt-2">
+            <tumaet-ui-tab-panel [value]="1">
+                <dl class="mb-0">
                     <dt>
-                        <span>{{ 'LTI Version' }}</span>
+                        <span jhiTranslate="artemisApp.lti.userPrefix"></span>
                     </dt>
                     <dd>
-                        <span jhiTranslate="artemisApp.lti.version13"></span>
-                    </dd>
-                </div>
-                <div>
-                    <dt>
-                        <span jhiTranslate="artemisApp.lti13.externalToolSettings"></span>
-                        @if (missingLti13ConfigurationField()) {
-                            <fa-icon [icon]="faExclamationTriangle" class="text-warning" ngbTooltip="{{ 'artemisApp.lti13.missingConfigurationWarning' | artemisTranslate }}" />
-                        }
-                        <jhi-help-icon text="artemisApp.lti13.externalToolSettingsTooltip" />
-                    </dt>
-                    <dd></dd>
-                    <dt>
-                        <span jhiTranslate="artemisApp.lti.customName"></span>
-                    </dt>
-                    <dd>
-                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.customName }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.customName ?? ''" />
+                        <span>{{ onlineCourseConfiguration()?.userPrefix }}</span>
                     </dd>
                     <dt>
-                        <span jhiTranslate="artemisApp.lti.registrationId"></span>
+                        <span jhiTranslate="artemisApp.lti.requireExistingUser"></span>
                     </dt>
                     <dd>
-                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.registrationId }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.registrationId ?? ''" />
+                        <span jhiTranslate="{{ onlineCourseConfiguration()?.requireExistingUser ? 'global.generic.yes' : 'global.generic.no' }}"></span>
                     </dd>
-                    <dt>
-                        <span jhiTranslate="artemisApp.lti.clientId"></span>
-                    </dt>
-                    <dd>
-                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.clientId }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.clientId ?? ''" />
-                    </dd>
-                    <dt>
-                        <span jhiTranslate="artemisApp.lti.authorizationUri"></span>
-                    </dt>
-                    <dd>
-                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.authorizationUri }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.authorizationUri ?? ''" />
-                    </dd>
-                    <dt>
-                        <span jhiTranslate="artemisApp.lti.tokenUri"></span>
-                    </dt>
-                    <dd>
-                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.tokenUri }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.tokenUri ?? ''" />
-                    </dd>
-                    <dt>
-                        <span jhiTranslate="artemisApp.lti.jwkSetUri"></span>
-                    </dt>
-                    <dd>
-                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.jwkSetUri }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.jwkSetUri ?? ''" />
-                    </dd>
-                </div>
-                <div>
-                    <dd>
-                        <a
-                            (click)="toggleAdvancedSettings()"
-                            [attr.aria-expanded]="showAdvancedSettings()"
-                            #keyboardAction92
-                            role="button"
-                            tabindex="0"
-                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction92.click() : undefined"
-                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction92.click() : undefined"
-                        >
-                            @if (!showAdvancedSettings()) {
-                                <span jhiTranslate="artemisApp.lti.viewAdvancedSettings"></span>
-                            }
-                            @if (showAdvancedSettings()) {
-                                <span jhiTranslate="artemisApp.lti.closeAdvancedSettings"></span>
-                            }
-                        </a>
-                    </dd>
-                </div>
-                @if (showAdvancedSettings()) {
-                    <div>
+                    <div class="mb-4!">
                         <dt>
-                            <span jhiTranslate="artemisApp.lti.ltiLaunchTarget"></span>
-                            <jhi-help-icon text="artemisApp.lti.launchTargetTooltip" />
+                            <span>{{ 'LTI Version' }}</span>
                         </dt>
                         <dd>
-                            <span>New Window</span>
-                        </dd>
-                        <dt>
-                            <span jhiTranslate="artemisApp.lti.scored"></span>
-                        </dt>
-                        <dd>
-                            <span>True</span>
-                        </dd>
-                        <dt>
-                            <span jhiTranslate="artemisApp.lti.requestUsername"></span>
-                        </dt>
-                        <dd>
-                            <span>True</span>
-                        </dd>
-                        <dt>
-                            <span jhiTranslate="artemisApp.lti.requestEmail"></span>
-                            <jhi-help-icon text="artemisApp.lti.requestUserEmailTooltip" />
-                        </dt>
-                        <dd>
-                            <span>True</span>
+                            <span jhiTranslate="artemisApp.lti.version13"></span>
                         </dd>
                     </div>
-                }
-            </ng-template>
-        </ng-container>
-        <ng-container ngbNavItem [ngbNavItem]="2">
-            <a ngbNavLink jhiTranslate="artemisApp.lti.exercises"></a>
-            <ng-template ngbNavContent>
-                <div class="row">
-                    <div class="col-12 mx-auto">
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead class="thead-dark">
-                                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                                        <th jhiSortBy="id">
-                                            id
-                                            <fa-icon [icon]="faSort" />
+                    <div>
+                        <dt>
+                            <span jhiTranslate="artemisApp.lti13.externalToolSettings"></span>
+                            @if (missingLti13ConfigurationField()) {
+                                <fa-icon
+                                    [icon]="faExclamationTriangle"
+                                    class="text-state-warning"
+                                    [tumAetUiTooltip]="'artemisApp.lti13.missingConfigurationWarning' | artemisTranslate"
+                                />
+                            }
+                            <jhi-help-icon text="artemisApp.lti13.externalToolSettingsTooltip" />
+                        </dt>
+                        <dd></dd>
+                        <dt>
+                            <span jhiTranslate="artemisApp.lti.customName"></span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.customName }}</span>
+                            <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.customName ?? ''" />
+                        </dd>
+                        <dt>
+                            <span jhiTranslate="artemisApp.lti.registrationId"></span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.registrationId }}</span>
+                            <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.registrationId ?? ''" />
+                        </dd>
+                        <dt>
+                            <span jhiTranslate="artemisApp.lti.clientId"></span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.clientId }}</span>
+                            <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.clientId ?? ''" />
+                        </dd>
+                        <dt>
+                            <span jhiTranslate="artemisApp.lti.authorizationUri"></span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.authorizationUri }}</span>
+                            <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.authorizationUri ?? ''" />
+                        </dd>
+                        <dt>
+                            <span jhiTranslate="artemisApp.lti.tokenUri"></span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.tokenUri }}</span>
+                            <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.tokenUri ?? ''" />
+                        </dd>
+                        <dt>
+                            <span jhiTranslate="artemisApp.lti.jwkSetUri"></span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.jwkSetUri }}</span>
+                            <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.jwkSetUri ?? ''" />
+                        </dd>
+                    </div>
+                    <div>
+                        <dd>
+                            <a
+                                (click)="toggleAdvancedSettings()"
+                                [attr.aria-expanded]="showAdvancedSettings()"
+                                #keyboardAction92
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction92.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction92.click() : undefined"
+                            >
+                                @if (!showAdvancedSettings()) {
+                                    <span jhiTranslate="artemisApp.lti.viewAdvancedSettings"></span>
+                                }
+                                @if (showAdvancedSettings()) {
+                                    <span jhiTranslate="artemisApp.lti.closeAdvancedSettings"></span>
+                                }
+                            </a>
+                        </dd>
+                    </div>
+                    @if (showAdvancedSettings()) {
+                        <div>
+                            <dt>
+                                <span jhiTranslate="artemisApp.lti.ltiLaunchTarget"></span>
+                                <jhi-help-icon text="artemisApp.lti.launchTargetTooltip" />
+                            </dt>
+                            <dd>
+                                <span>New Window</span>
+                            </dd>
+                            <dt>
+                                <span jhiTranslate="artemisApp.lti.scored"></span>
+                            </dt>
+                            <dd>
+                                <span>True</span>
+                            </dd>
+                            <dt>
+                                <span jhiTranslate="artemisApp.lti.requestUsername"></span>
+                            </dt>
+                            <dd>
+                                <span>True</span>
+                            </dd>
+                            <dt>
+                                <span jhiTranslate="artemisApp.lti.requestEmail"></span>
+                                <jhi-help-icon text="artemisApp.lti.requestUserEmailTooltip" />
+                            </dt>
+                            <dd>
+                                <span>True</span>
+                            </dd>
+                        </div>
+                    }
+                </dl>
+            </tumaet-ui-tab-panel>
+            <tumaet-ui-tab-panel [value]="2">
+                <div>
+                    <div>
+                        <tumaet-ui-table-layout class="[--table-layout-offset:20rem]" [empty]="exercises().length === 0">
+                            <table tumAetUiTable size="small" striped [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
+                                <thead>
+                                    <tr>
+                                        <th tumAetUiSortableColumn="id">
+                                            <span>id</span>
                                         </th>
-                                        <th jhiSortBy="type">
-                                            {{ 'artemisApp.exercise.type' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="type">
+                                            <span>{{ 'artemisApp.exercise.type' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="title">
-                                            {{ 'artemisApp.exercise.title' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="title">
+                                            <span>{{ 'artemisApp.exercise.title' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="launchUrl">
-                                            {{ 'artemisApp.lti.lti13LaunchUrl' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="launchUrl">
+                                            <span>{{ 'artemisApp.lti.lti13LaunchUrl' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="releaseDate">
-                                            {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="releaseDate">
+                                            <span>{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="dueDate">
-                                            {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="dueDate">
+                                            <span>{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="assessmentDueDate">
-                                            {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="assessmentDueDate">
+                                            <span>{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}</span>
                                         </th>
                                     </tr>
                                 </thead>
@@ -196,39 +196,31 @@
                                     }
                                 </tbody>
                             </table>
-                        </div>
+                        </tumaet-ui-table-layout>
                     </div>
                 </div>
-            </ng-template>
-        </ng-container>
-        <ng-container ngbNavItem [ngbNavItem]="3">
-            <a ngbNavLink jhiTranslate="artemisApp.lti.lectures"></a>
-            <ng-template ngbNavContent>
-                <div class="row">
-                    <div class="col-12 mx-auto">
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead class="thead-dark">
-                                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                                        <th jhiSortBy="id">
-                                            id
-                                            <fa-icon [icon]="faSort" />
+            </tumaet-ui-tab-panel>
+            <tumaet-ui-tab-panel [value]="3">
+                <div>
+                    <div>
+                        <tumaet-ui-table-layout class="[--table-layout-offset:20rem]" [empty]="lectures().length === 0">
+                            <table tumAetUiTable size="small" striped [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
+                                <thead>
+                                    <tr>
+                                        <th tumAetUiSortableColumn="id">
+                                            <span>id</span>
                                         </th>
-                                        <th jhiSortBy="title">
-                                            {{ 'artemisApp.lecture.title' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="title">
+                                            <span>{{ 'artemisApp.lecture.title' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="launchUrl">
-                                            {{ 'artemisApp.lti.lti13LaunchUrl' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="launchUrl">
+                                            <span>{{ 'artemisApp.lti.lti13LaunchUrl' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="startDate">
-                                            {{ 'artemisApp.lecture.startDate' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="startDate">
+                                            <span>{{ 'artemisApp.lecture.startDate' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="endDate">
-                                            {{ 'artemisApp.lecture.endDate' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="endDate">
+                                            <span>{{ 'artemisApp.lecture.endDate' | artemisTranslate }}</span>
                                         </th>
                                     </tr>
                                 </thead>
@@ -247,13 +239,10 @@
                                     }
                                 </tbody>
                             </table>
-                        </div>
+                        </tumaet-ui-table-layout>
                     </div>
                 </div>
-            </ng-template>
-        </ng-container>
-    </nav>
-    <div class="modal-body">
-        <div [ngbNavOutlet]="nav" class="mt-2"></div>
-    </div>
+            </tumaet-ui-tab-panel>
+        </tumaet-ui-tab-panels>
+    </tumaet-ui-tabs>
 </form>

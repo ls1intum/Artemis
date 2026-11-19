@@ -1,5 +1,5 @@
 <div class="relative flex flex-col gap-2">
-    <h2 id="presentation-presenters-heading">
+    <h2 id="presentation-presenters-heading" class="m-0! text-lg! font-semibold!">
         <span jhiTranslate="artemisApp.presentationAssessment.presenters"></span>
         <span aria-hidden="true">*</span>
         ({{ presenters().length }})
@@ -22,7 +22,11 @@
         />
     }
 
-    <div class="overflow-x-auto">
+    <tumaet-ui-table-layout
+        [empty]="presenters().length === 0"
+        emptyTitle="artemisApp.presentationAssessment.noPresenters"
+        [emptyDescription]="editable() ? 'artemisApp.presentationAssessment.noPresentersDescription' : undefined"
+    >
         <table tumAetUiTable size="small" [sortField]="sortField()" [sortOrder]="sortAscending() ? 1 : -1" (sortChange)="onSortChange($event)">
             <thead>
                 <tr>
@@ -74,5 +78,5 @@
                 }
             </tbody>
         </table>
-    </div>
+    </tumaet-ui-table-layout>
 </div>

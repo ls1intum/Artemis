@@ -157,7 +157,10 @@
             "script": "Build Script",
             "buildConfig": {
                 "buildPlanConfigurationTooLong": "Die Build-Plan-Konfiguration ist zu lang. Die maximal zulässige Größe beträgt 1 MB.",
-                "dockerFlagsTooLong": "Die Docker-Flags sind zu lang. Die maximal zulässige Größe beträgt 8 KB."
+                "dockerFlagsTooLong": "Die Docker-Flags sind zu lang. Die maximal zulässige Größe beträgt 8 KB.",
+                "branchRegexTooLong": "Der Branch-Regex ist zu lang. Die maximal zulässige Länge beträgt 128 Zeichen.",
+                "branchRegexInvalid": "Der Branch-Regex ist kein gültiger regulärer Ausdruck.",
+                "branchRegexNotSupported": "Der Branch-Regex verwendet nicht unterstützte Syntax. Erlaubt sind Zeichen, Klassen wie [a-z0-9-], Gruppen mit Alternativen, die Anker ^ und $ sowie die Quantifizierer * + ? und gezählte Wiederholungen mit Werten bis 1000. Eine wiederholte Gruppe darf keine Alternativen, Quantifizierer oder Anker enthalten. Jede Alternative innerhalb einer Gruppe muss mindestens ein Zeichen erfordern."
             },
             "buildPhasesEditor": {
                 "title": "Build-Phasen",
@@ -241,6 +244,25 @@
             "branchRegex": {
                 "title": "Regex für den Branchnamen",
                 "description": "Namens für andere Branches als der default Branch müssen im Namen dem Regex entsprechen."
+            },
+            "buildTimeWindow": {
+                "title": "Build-Zeitfenster",
+                "message": "Begrenze optional, wann Pushes in die Repositories von Studierenden gebaut werden. Pushes außerhalb des Zeitfensters werden gespeichert, aber nicht gebaut und erzeugen keine Abgabe. Lasse beide Felder leer, um jeden Push zu bauen.",
+                "description": "Pushes von Studierenden außerhalb dieses Zeitfensters werden im Repository gespeichert, aber nicht gebaut, getestet oder bewertet. Jede Grenze kann leer bleiben: Mit nur einem Start beginnen die Builds zu diesem Zeitpunkt, mit nur einem Ende enden sie zu diesem Zeitpunkt. Beide Grenzen sind inklusive. Editoren und Instruktoren, der Übungsmodus und von Instruktoren ausgelöste Builds sind nicht betroffen. Das Zeitfenster muss zwischen dem Startdatum (oder Veröffentlichungsdatum) und der Einreichungsfrist der Übung liegen. Bei Studierenden mit individueller Fristverlängerung verschiebt sich das Ende des Zeitfensters um dieselbe Verlängerung.",
+                "collapsedMessage": "Standardmäßig wird jeder Push gebaut. Lege ein Zeitfenster fest, wenn Pushes nur innerhalb eines Zeitraums gebaut werden sollen, zum Beispiel ab einem Startdatum eine Woche nach der Veröffentlichung.",
+                "addButton": "Zeitfenster für Builds festlegen",
+                "removeButton": "Zeitfenster für Builds entfernen",
+                "start": "Beginn des Build-Zeitfensters",
+                "end": "Ende des Build-Zeitfensters",
+                "endNotAfterStart": "Das Ende des Build-Zeitfensters muss nach dessen Beginn liegen.",
+                "outsideExerciseDates": "Das Build-Zeitfenster muss zwischen dem Startdatum (oder Veröffentlichungsdatum) und der Einreichungsfrist der Übung liegen.",
+                "invalidInput": "Das Build-Zeitfenster enthält ein Datum, das nicht gelesen werden kann.",
+                "triggerDisabled": "Außerhalb des Build-Zeitfensters können keine Builds ausgelöst werden.",
+                "notice": {
+                    "before": "Builds starten am {{ start }}. Pushes davor werden gespeichert, aber nicht gebaut oder bewertet.",
+                    "during": "Builds sind bis {{ end }} aktiv.",
+                    "after": "Das Build-Zeitfenster endete am {{ end }}. Pushes werden gespeichert, aber nicht gebaut."
+                }
             },
             "showTestNamesToStudents": "Zeige die Testnamen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
@@ -461,7 +483,6 @@
                     "task": "Aufgabe",
                     "testcase": "Testfall",
                     "errorCategory": "Fehlerkategorie",
-                    "totalItems": "Insgesamt {{count}} Element(e)",
                     "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten.",
                     "search": "Suche ...",
                     "filter": "Filter",

@@ -15,6 +15,18 @@
     }
     <div class="mt-2 flex flex-wrap items-center gap-2">
         <span class="text-xs font-semibold uppercase text-muted-color" [jhiTranslate]="'artemisApp.hyperion.quizQuestionPool.list.difficulty.' + question.difficulty"></span>
+        @if (question.materialChanged) {
+            <span
+                class="inline-flex"
+                [tumAetUiTooltip]="'artemisApp.hyperion.quizQuestionPool.list.materialChangedHint' | artemisTranslate"
+                tumAetUiTooltipPlacement="top"
+                [attr.data-testid]="'pool-material-changed-' + question.id"
+            >
+                <tumaet-ui-tag severity="warn" size="sm">
+                    <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.materialChanged"></span>
+                </tumaet-ui-tag>
+            </span>
+        }
         @for (flagged of view.flaggedVerdicts; track flagged.verdict.mode) {
             <tumaet-ui-tag [severity]="flagged.verdict.triggered ? 'danger' : 'warn'" size="sm" [attr.data-testid]="'pool-verdict-' + question.id + '-' + flagged.verdict.mode">
                 @if (flagged.verdict.triggered) {
@@ -30,7 +42,7 @@
         </button>
     </div>
     @if (view.expanded && question.decision; as decision) {
-        <div class="mt-2 rounded-md border border-border p-3 text-sm" [attr.data-testid]="'pool-rationale-' + question.id">
+        <div class="mt-2 rounded-md border border-border p-4! text-sm" [attr.data-testid]="'pool-rationale-' + question.id">
             <p class="m-0 font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.score" [translateValues]="{ score: view.scorePercent }"></p>
             @if (decision.rationale) {
                 <p class="mt-1 mb-0">{{ decision.rationale }}</p>

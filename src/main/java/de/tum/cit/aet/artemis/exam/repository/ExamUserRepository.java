@@ -42,7 +42,7 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
             SELECT COUNT(eu.id)
             FROM ExamUser eu
             WHERE eu.exam.course.id IN :courseIds
-                AND eu.exam.testExam = FALSE
+                AND eu.exam.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND LOWER(eu.exam.title) NOT LIKE 'test%'
                 AND LOWER(eu.exam.title) NOT LIKE 'mock%'
                 AND eu.user.deleted = FALSE
@@ -161,7 +161,9 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
      * @param search search term, page index, page size, sort column, sort direction, and an optional filter value
      * @return a page of {@link ExamUser} IDs in the requested order
      */
-    default Page<Long> findExamUserIdsForExam(long examId, ExamStudentSearchDTO search) {
+    // Reviewed false positive (Sonar S7186): the page index, page size and sort are part of the search DTO, and the Pageable is built inside because the sort needs a
+    // specification.
+    default Page<Long> findExamUserIdsForExam(long examId, ExamStudentSearchDTO search) { // NOSONAR
         SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
         Specification<ExamUser> spec = Specification.where(ExamUserSpecs.forExam(examId)).and(ExamUserSpecs.searchByUserFields(search.searchTerm()))
                 .and(ExamUserSpecs.filteredBy(search.filterProp())).and(ExamUserSpecs.ordered(search.sortedColumn(), sortOrder));

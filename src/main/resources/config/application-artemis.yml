@@ -90,6 +90,9 @@ artemis:
     # REMOVE_IN_ARTEMIS_11 (Jenkins): option 3 goes away with Jenkins support
     # See documentation/docs/admin/production-setup/security.mdx#build-agent-authentication.
     # build-agent-use-ssh: true
+    # max-repository-size-mb: 20    # A push is rejected if it makes the files of a template, student or auxiliary repository larger than this, in MB. 0 disables the limit.
+    # max-tests-and-solution-repository-size-mb: 50    # The same limit for tests and solution repositories.
+    # See documentation/docs/instructor/exercises/programming-exercise/write-code-and-tests.mdx#keep-repositories-small.
     default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
     repository-authentication-mechanisms: token,ssh,password # the order of authentication mechanisms in the code button pop up. Removing parts removes them from the drop-down
     # password-authentication-end-date: 2027-01-15  # ISO date on which you plan to stop accepting account passwords for Git. Only announced in the email and the push message sent to users who still use a password; Artemis does not reject passwords on that day
@@ -140,6 +143,7 @@ artemis:
     account-management-requests-per-minute: 5
     authentication-requests-per-minute: 30
     login-options-requests-per-minute: 30
+    failed-login-requests-per-minute: 10 # Wrong passwords per minute and login name, whatever the client address
     # Addresses exempt from every rate limit, as literal IPv4/IPv6 addresses or CIDR blocks. The limits
     # are per client address, which protects against one abusive client but throttles a load generator
     # almost immediately, since a benchmark drives thousands of logins from a single address. Leave
@@ -165,25 +169,30 @@ artemis:
       shutdown-drain-timeout: PT11M
       test-case-sync-timeout: PT10M
     quiz-pool:
-      # The pool sends course material only to its own self-hosted, OpenAI-compatible endpoint (for example Logos or vLLM), never to the
-      # chat model configured under spring.ai. Leave base-url, generator-model and judge-model empty to keep the pool off; a partial
-      # configuration, a model missing from allowed-models or a cloud provider host also keeps it off and is logged as a warning at startup.
-      base-url: # including the /v1 prefix, e.g. https://logos.example.org/v1
+      # The pool sends course material only to a self-hosted, OpenAI-compatible endpoint (for example Logos or vLLM): base-url and api-key
+      # below when set, otherwise the endpoint of Hyperion's chat model under spring.ai.openai. A cloud provider endpoint, including
+      # Microsoft Foundry, keeps the pool off. Leave generator-model and judge-model empty to turn the pool off; a model missing from
+      # allowed-models or an invalid base-url also keeps it off and is logged as a warning at startup.
+      base-url: # including the /v1 prefix, e.g. https://logos.example.org/v1; empty to use spring.ai.openai.base-url
       api-key:
       # HTTP timeout of one model call.
       timeout: 5m
       # Self-hosted models the pool may use; generator-model and judge-model must each be one of them.
-      allowed-models: openai/gpt-oss-120b,Qwen/Qwen3.8-27B
+      allowed-models: Qwen/Qwen3.8-27B
       # Model that generates pool questions.
-      generator-model:
+      generator-model: Qwen/Qwen3.8-27B
       # Model that judges generated questions.
-      judge-model:
+      judge-model: Qwen/Qwen3.8-27B
       # Questions requested per generation call; a cell larger than this is filled in several calls.
       generation-batch-size: 8
       # A generation or filter claim older than this is treated as abandoned by a dead node and released at the next build.
       stale-claim-minutes: 30
       # Characters of a lecture unit's text (slide PDF, transcript or text unit) that a generation prompt receives at most.
       max-material-characters: 60000
+      # When the overnight run over the courses that enabled overnight generation starts; a Spring cron expression on the node with the scheduling profile.
+      schedule-cron: "0 0 0 * * *"
+      # How long the overnight run lasts at most (1-23); afterwards it starts no further course and the running build stops after its current unit of work.
+      schedule-window-hours: 7
       # How long a running build holds its course's lease without a heartbeat before another node may build the course.
       build-lease-minutes: 10
   aiworker:

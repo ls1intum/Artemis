@@ -263,6 +263,8 @@
                 "location": "Ort:",
                 "title": "Übungsgruppen-Details",
                 "sessionsListTitle": "Sessions",
+                "sessionsEmptyTitle": "Keine Sessions vorhanden",
+                "sessionsEmptyDescription": "Erstelle die erste Session dieser Tutoriumsgruppe.",
                 "sessionListOptionLabel": {
                     "allSessions": "Alle",
                     "futureSessions": "Zukünftige"

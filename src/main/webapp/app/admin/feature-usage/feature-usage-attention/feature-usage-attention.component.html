@@ -1,5 +1,5 @@
 @for (section of sections(); track section.key) {
-    <section class="mb-5" [attr.data-testid]="'attention-' + section.key">
+    <section class="mb-12!" [attr.data-testid]="'attention-' + section.key">
         <h6 class="mb-1 font-semibold">
             <span [jhiTranslate]="'artemisApp.featureUsage.attention.' + section.key + '.title'"></span>
             <span class="text-muted-color ms-1" data-testid="attention-count">({{ section.features.length }})</span>

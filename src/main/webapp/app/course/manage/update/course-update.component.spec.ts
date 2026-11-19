@@ -3,7 +3,6 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { LoadedImage } from 'app/shared-ui/image-cropper/interfaces/loaded-image.interface';
 import { LoadImageService } from 'app/shared-ui/image-cropper/services/load-image.service';
@@ -14,8 +13,6 @@ import { toCourseCreateDTO, toCourseUpdateDTO } from 'app/course/shared/entities
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
-// DeleteDialogService is still built on PrimeNG's dynamic dialog, so its dependency has to be provided here.
-import { DialogService } from 'primeng/dynamicdialog';
 import { of, throwError } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared-ui/image-cropper/component/image-cropper.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -105,13 +102,12 @@ describe('Course Management Update Component', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
-                MockProvider(DialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: Router, useClass: MockRouter },
@@ -2070,7 +2066,7 @@ describe('Course Management Feature Toggle Update', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -2082,7 +2078,6 @@ describe('Course Management Feature Toggle Update', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(LoadImageService),
-                MockProvider(DialogService),
             ],
         })
             .overrideComponent(CourseUpdateComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
@@ -2113,7 +2108,7 @@ describe('Course Management Feature Toggle Update', () => {
         const formGroup = fixture.debugElement.query(By.css('#learning-paths-setting'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(true);
+        expect(formGroup.nativeElement.style.display).toBe('none');
     });
     it('should show the learning paths form field when the feature is toggled', () => {
         const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
@@ -2132,7 +2127,7 @@ describe('Course Management Feature Toggle Update', () => {
         const formGroup = fixture.debugElement.query(By.css('#learning-paths-setting'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(false);
+        expect(formGroup.nativeElement.style.display).toBe('');
     });
 
     it('should hide the presentation assessments form field when the feature is not toggled', () => {
@@ -2143,7 +2138,7 @@ describe('Course Management Feature Toggle Update', () => {
         const formGroup = fixture.debugElement.query(By.css('#presentation-assessments-setting'));
 
         expect(featureToggleSpy).toHaveBeenCalledWith(FeatureToggle.PresentationAssessments);
-        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(true);
+        expect(formGroup.nativeElement.style.display).toBe('none');
     });
 
     it('should show the presentation assessments form field when the feature is toggled', () => {
@@ -2154,7 +2149,7 @@ describe('Course Management Feature Toggle Update', () => {
         const formGroup = fixture.debugElement.query(By.css('#presentation-assessments-setting'));
 
         expect(featureToggleSpy).toHaveBeenCalledWith(FeatureToggle.PresentationAssessments);
-        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(false);
+        expect(formGroup.nativeElement.style.display).toBe('');
     });
 });
 
@@ -2168,7 +2163,7 @@ describe('Course Management Update Component Create', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -2179,7 +2174,6 @@ describe('Course Management Update Component Create', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(LoadImageService),
-                MockProvider(DialogService),
             ],
         })
             .overrideComponent(CourseUpdateComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
@@ -2412,13 +2406,12 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
-                MockProvider(DialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: Router, useClass: MockRouter },

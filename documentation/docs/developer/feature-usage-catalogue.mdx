@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 152 features, 1172 REST endpoints in 29 modules, and 70 interaction overrides.
+Currently 20 product areas, 153 features, 1194 REST endpoints in 29 modules, and 74 interaction overrides.
 
 ## Courses
 
@@ -68,7 +68,7 @@ Currently 20 product areas, 152 features, 1172 REST endpoints in 29 modules, and
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| calendar | `CalendarResource` | 0 | 3 | 0 | 0 |
+| calendar | `CalendarResource` | 1 | 3 | 0 | 0 |
 
 ### Global search
 
@@ -371,7 +371,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | programming | `ProgrammingExerciseGradingResource` | 1 | 0 | 0 | 0 |
-| programming | `ProgrammingExerciseUpdateResource` | 1 | 0 | 0 | 0 |
+| programming | `ProgrammingExerciseReEvaluationResource` | 1 | 0 | 0 | 0 |
 | programming | `ProgrammingSubmissionResource` | 2 | 0 | 1 | 0 |
 
 ### Submission policies
@@ -536,6 +536,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
+| assessment | `AssessmentUploadResource` | 1 | 1 | 0 | 0 |
 | fileupload | `FileUploadAssessmentResource` | 4 | 0 | 0 | 0 |
 | fileupload | `FileUploadSubmissionResource` | 0 | 4 | 0 | 0 |
 | modeling | `ModelingAssessmentResource` | 4 | 0 | 0 | 0 |
@@ -618,7 +619,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| assessment | `PresentationAssessmentResource` | 6 | 3 | 0 | 0 |
+| assessment | `PresentationAssessmentResource` | 6 | 5 | 0 | 0 |
 
 ## Exams
 
@@ -634,7 +635,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | exam | `StudentExamResource` | 1 | 1 | 0 | 0 |
 | quiz | `QuizSubmissionResource` | 1 | 0 | 0 | 0 |
 
-### Test exams
+### Practice exams
 
 `EXAM_TEST_EXAMS`: Practice exams with several attempts.
 
@@ -715,7 +716,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | assessment | `ParticipantScoreResource` | 0 | 1 | 0 | 0 |
-| exam | `ExamResource` | 0 | 3 | 0 | 0 |
+| exam | `ExamResource` | 0 | 3 | 1 | 0 |
 
 ### Exam archive, reset and deletion
 
@@ -989,8 +990,7 @@ Also recorded outside REST by `CourseNotificationService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| atlas | `ScienceResource` | 1 | 0 | 0 | 0 |
-| atlas | `ScienceSettingsResource` | 1 | 0 | 1 | 0 |
+| atlas | `ScienceResource` | 3 | 1 | 1 | 0 |
 
 ## AI for learners
 
@@ -1127,7 +1127,7 @@ Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | hyperion | `HyperionQuizQuestionGenerationResource` | 3 | 0 | 0 | 0 |
-| hyperion | `HyperionQuizQuestionPoolResource` | 6 | 0 | 4 | 0 |
+| hyperion | `HyperionQuizQuestionPoolResource` | 7 | 0 | 5 | 0 |
 
 ### AI grading criteria
 
@@ -1247,7 +1247,7 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | account | `AccountResource` | 1 | 0 | 0 | 0 |
-| core | `PublicAccountResource` | 3 | 1 | 0 | 0 |
+| core | `PublicAccountResource` | 3 | 1 | 1 | 0 |
 
 ### Account settings
 
@@ -1255,10 +1255,11 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| account | `AccountResource` | 4 | 0 | 0 | 0 |
+| account | `AccountResource` | 6 | 1 | 0 | 0 |
 | account | `UserResource` | 2 | 0 | 0 | 0 |
 | core | `FileResource` | 0 | 0 | 1 | 0 |
 | core | `PublicAccountResource` | 1 | 0 | 1 | 0 |
+| core | `PublicEmailChangeResource` | 1 | 0 | 0 | 0 |
 
 ### Passkeys
 
@@ -1357,6 +1358,7 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | admin | `AdminBuildJobQueueResource` | 9 | 9 | 0 | 0 |
 | localvc | `PublicBuildAgentAddressResource` | 0 | 0 | 0 | 1 |
+| localvc | `PublicSshFingerprintsResource` | 0 | 0 | 0 | 1 |
 
 ### AI workers
 
@@ -1486,6 +1488,14 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 | exam | `AdminExamResource` | 0 | 1 | 0 | 0 |
 | exercise | `AdminExerciseResource` | 0 | 1 | 0 | 0 |
 
+### Research data collection administration
+
+`SCIENCE_ADMINISTRATION`: Choosing the courses that collect research data, and exporting that data.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| atlas | `AdminScienceResource` | 3 | 3 | 0 | 0 |
+
 ## Interaction overrides
 
 The endpoints whose calls do not count the way their HTTP verb suggests, grouped by how they count instead.
@@ -1518,7 +1528,7 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/admin/organizations/{organizationId}/title` (`ORGANIZATIONS`)
 * `GET api/admin/websocket/nodes` (`MONITORING`)
 * `GET api/atlas/course-competencies/{competencyId}/title` (`COMPETENCY_PROGRESS`)
-* `GET api/atlas/science-settings` (`SCIENCE`)
+* `GET api/atlas/science/courses/{courseId}/consent` (`SCIENCE`)
 * `GET api/communication/courses/{courseId}/unread-messages` (`CONVERSATION_ORGANIZATION`)
 * `GET api/core/files/courses/{courseId}/conversations/{conversationId}/{filename}` (`MESSAGING`)
 * `GET api/core/files/courses/{courseId}/icons/*` (`COURSE_DASHBOARD`)
@@ -1529,8 +1539,10 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/core/public/account` (`ACCOUNT_SETTINGS`)
 * `GET api/course/courses/for-notifications` (`COURSE_NOTIFICATIONS`)
 * `GET api/course/courses/{courseId}/title` (`COURSE_OVERVIEW`)
+* `GET api/exam/courses/{courseId}/exams/{examId}/statistics/conduction` (`EXAM_SCORES`)
 * `GET api/exam/exams/{examId}/title` (`EXAM_AUTHORING`)
 * `GET api/exercise/exercises/{exerciseId}/title` (`EXERCISE_DETAILS`)
+* `GET api/hyperion/courses/{courseId}/quiz-question-pool/lecture-units` (`HYPERION_QUIZ_GENERATION`)
 * `GET api/hyperion/courses/{courseId}/quiz-question-pool/plan` (`HYPERION_QUIZ_GENERATION`)
 * `GET api/hyperion/courses/{courseId}/quiz-question-pool/progress` (`HYPERION_QUIZ_GENERATION`)
 * `GET api/hyperion/courses/{courseId}/quiz-question-pool/questions` (`HYPERION_QUIZ_GENERATION`)
@@ -1556,6 +1568,7 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title` (`TUTORIAL_GROUPS`)
 * `PATCH api/communication/courses/{courseId}/conversations/{conversationId}/mark-as-read` (`CONVERSATION_ORGANIZATION`)
 * `POST api/core/public/client-errors` (`MONITORING`)
+* `POST api/core/public/email-allowed` (`REGISTRATION_PASSWORD`)
 * `POST api/iris/chat/sessions/current` (`IRIS_CHAT`)
 * `POST api/iris/tutor-suggestion/posts/{postId}/sessions/current` (`IRIS_TUTOR_SUGGESTIONS`)
 * `PUT api/notification/courses/{courseId}/seen` (`COURSE_NOTIFICATIONS`)
@@ -1569,5 +1582,6 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/core/sharing/config/is-enabled` (`SHARING_PLATFORM`)
 * `GET api/localci/public/programming-exercises/{exerciseId}/build-plan` (`PROGRAMMING_BUILD_CONFIGURATION`)
 * `GET api/localvc/public/observed-client-address` (`BUILD_AGENTS`)
+* `GET api/localvc/public/ssh-fingerprints` (`BUILD_AGENTS`)
 * `GET api/programming/sharing/export/{token}` (`SHARING_PLATFORM`)
 * `POST api/programming/public/programming-exercises/new-result` (`PROGRAMMING_RESULTS`)

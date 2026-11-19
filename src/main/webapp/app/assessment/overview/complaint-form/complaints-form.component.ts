@@ -1,13 +1,13 @@
 import { TumAetUiButtonDirective, TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, input, output } from '@angular/core';
-import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
+import { ComplaintApi } from 'app/openapi/api/complaint-api';
+import type { ComplaintRequest } from 'app/openapi/model/complaint-request';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
-import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -22,7 +22,7 @@ import { TextareaCounterComponent } from 'app/shared-ui/textarea/textarea-counte
     host: { class: 'block' },
 })
 export class ComplaintsFormComponent implements OnInit {
-    private complaintService = inject(ComplaintService);
+    private complaintApi = inject(ComplaintApi);
     private alertService = inject(AlertService);
 
     readonly exercise = input.required<Exercise>();
@@ -55,11 +55,12 @@ export class ComplaintsFormComponent implements OnInit {
      * Creates a new complaint on the provided result with the entered text and notifies the output emitter on success.
      */
     createComplaint(): void {
-        const complaintRequest = new ComplaintRequestDTO();
-        complaintRequest.resultId = this.resultId();
-        complaintRequest.complaintType = this.complaintType();
-        complaintRequest.complaintText = this.complaintText;
-        complaintRequest.examId = this.examId();
+        const complaintRequest: ComplaintRequest = {
+            resultId: this.resultId(),
+            complaintType: this.complaintType(),
+            complaintText: this.complaintText,
+            examId: this.examId(),
+        };
 
         // TODO: Rethink global client error handling and adapt this line accordingly
         if (complaintRequest.complaintText !== undefined && this.maxComplaintTextLimit < complaintRequest.complaintText.length) {
@@ -67,7 +68,7 @@ export class ComplaintsFormComponent implements OnInit {
             return;
         }
 
-        this.complaintService.create(complaintRequest).subscribe({
+        this.complaintApi.createComplaint(complaintRequest).subscribe({
             next: () => {
                 this.onSubmit.emit();
             },

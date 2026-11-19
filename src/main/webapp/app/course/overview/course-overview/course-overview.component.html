@@ -1,15 +1,15 @@
 <!-- @if can't be used for isShownViaLti as it removes the element from the DOM, disrupting dropdown stability for the More-Menu. -->
-<div class="sidebar-wrapper" [ngClass]="{ 'd-none': isShownViaLti() }">
-    <div class="vw-100 bg-body">
+<div class="sidebar-wrapper" [class.hidden]="isShownViaLti()">
+    <div class="shell-background w-screen">
         <div
-            class="layout-container vw-100"
+            class="layout-container w-screen"
             [ngClass]="{
                 'exam-wrapper exam-is-active': isExamStarted(),
                 'exam-height-dev': isExamStarted() && (!isProduction || isTestServer),
                 'container-closed': isNavbarCollapsed(),
             }"
         >
-            <div class="sidebar module-bg rounded-3" [hidden]="isExamStarted() || isolatedView()">
+            <div class="sidebar module-bg rounded-sm" [hidden]="isExamStarted() || isolatedView()">
                 <jhi-course-sidebar
                     [course]="course()"
                     [sidebarItems]="sidebarItems()"
@@ -45,7 +45,7 @@
                     <div
                         class="course-body-container"
                         [ngClass]="{
-                            'module-bg p-3 rounded rounded-3 scrollable-content': !hasSidebar(),
+                            'module-bg scrollable-content rounded-sm p-4!': !hasSidebar(),
                             'shell-divider-x': !isExamStarted(),
                         }"
                         [class.no-header-bar-height]="!hasSidebar() && !showCourseTitleBar()"
@@ -61,9 +61,9 @@
         </div>
     </div>
 </div>
-<div class="course-body-container" [ngClass]="{ 'd-none': !isShownViaLti() }">
+<div class="course-body-container" [class.hidden]="!isShownViaLti()">
     @if (!hasSidebar()) {
-        <ng-container class="d-flex ms-auto" #controlsViewContainer />
+        <ng-container #controlsViewContainer />
     }
     <!-- Check isLTI to render the router outlet only once and avoid side effects on route updates. -->
     @if (isShownViaLti()) {
@@ -78,3 +78,38 @@
 </ng-template>
 
 <jhi-course-unenrollment-modal [(visible)]="showUnenrollModal" [course]="course()" />
+
+<tumaet-ui-dialog
+    size="medium"
+    data-testid="science-consent-dialog"
+    [visible]="showScienceConsentModal()"
+    [header]="'artemisApp.courseOverview.scienceConsent.title' | artemisTranslate"
+    ariaDescribedBy="science-consent-description"
+    (visibleChange)="dismissScienceConsent()"
+>
+    <p id="science-consent-description">
+        {{
+            'artemisApp.courseOverview.scienceConsent.description'
+                | artemisTranslate
+                    : {
+                          courseTitle: course()?.title,
+                      }
+        }}
+    </p>
+    <ng-template #footer>
+        <button
+            type="button"
+            tumAetUiButton
+            severity="secondary"
+            variant="outlined"
+            data-testid="science-consent-decline"
+            [disabled]="scienceConsentSaving()"
+            (click)="declineScienceConsent()"
+        >
+            {{ 'artemisApp.courseOverview.scienceConsent.decline' | artemisTranslate }}
+        </button>
+        <button type="button" tumAetUiButton data-testid="science-consent-accept" [disabled]="scienceConsentSaving()" (click)="acceptScienceConsent()">
+            {{ 'artemisApp.courseOverview.scienceConsent.accept' | artemisTranslate }}
+        </button>
+    </ng-template>
+</tumaet-ui-dialog>

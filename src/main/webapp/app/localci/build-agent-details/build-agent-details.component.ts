@@ -1,15 +1,15 @@
-import { BuildJobSearchComponent } from 'app/localci/shared/build-job-search.component';
+import { FinishedBuildsToolbarComponent } from 'app/localci/shared/finished-builds-toolbar.component';
 import { subscribeToFinishedBuildJobSearch, subscribeToFinishedBuildJobs } from 'app/localci/build-queue/finished-build-job-loading';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { BuildAgentAddressInfo, BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { Subject, Subscription } from 'rxjs';
-import { faCircleCheck, faFilter, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faPause, faPauseCircle, faPlay } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTableLayoutComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
@@ -19,7 +19,6 @@ import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/
 import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
-import { FormsModule } from '@angular/forms';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import dayjs from 'dayjs/esm';
@@ -43,7 +42,8 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
     styleUrl: './build-agent-details.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        BuildJobSearchComponent,
+        TumAetUiTableLayoutComponent,
+        FinishedBuildsToolbarComponent,
         FontAwesomeModule,
         RouterModule,
         TumAetUiButtonComponent,
@@ -52,7 +52,6 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         TranslateDirective,
         ArtemisDatePipe,
         BuildJobStatisticsComponent,
-        FormsModule,
         SliceNavigatorComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
@@ -134,8 +133,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     readonly faPauseCircle = faPauseCircle;
     readonly faPause = faPause;
     readonly faPlay = faPlay;
-    readonly faSync = faSync;
-    readonly faFilter = faFilter;
 
     /** Configuration for the pagination component */
     readonly paginationConfig: PaginationConfig = {
@@ -169,7 +166,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     itemsPerPage = ITEMS_PER_PAGE;
 
     /** Current page number for pagination (1-indexed) */
-    currentPage = 1;
+    currentPage = signal(1);
 
     /** Column to sort finished build jobs by */
     predicate = 'buildSubmissionDate';
@@ -524,7 +521,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     fetchFinishedBuildJobs() {
         return this.buildQueueService.getFinishedBuildJobs(
             {
-                page: this.currentPage,
+                page: this.currentPage(),
                 pageSize: this.itemsPerPage,
                 sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
                 sortedColumn: this.predicate,
@@ -553,7 +550,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     onPageChange(event: PageChangeEvent) {
         const newPageNumber = event?.page;
         if (newPageNumber) {
-            this.currentPage = newPageNumber;
+            this.currentPage.set(newPageNumber);
             this.loadFinishedBuildJobs();
         }
     }

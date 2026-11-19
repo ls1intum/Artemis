@@ -379,6 +379,32 @@ describe('AuditsComponent', () => {
         });
     });
 
+    describe('column sorting (tumaet-ui table)', () => {
+        it('applies the sort of a clicked header and navigates with it', () => {
+            comp.ngOnInit();
+            const router = TestBed.inject(Router);
+            (router.navigate as unknown as ReturnType<typeof vi.fn>).mockClear();
+
+            comp.onSort({ field: 'timestamp', order: 1 });
+
+            expect(comp.predicate()).toBe('timestamp');
+            expect(comp.ascending()).toBe(true);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/audits'], expect.objectContaining({ queryParams: expect.objectContaining({ sort: 'timestamp,asc' }) }));
+        });
+
+        it('sorts descending for an order of -1', () => {
+            comp.ngOnInit();
+            const router = TestBed.inject(Router);
+            (router.navigate as unknown as ReturnType<typeof vi.fn>).mockClear();
+
+            comp.onSort({ field: 'principal', order: -1 });
+
+            expect(comp.predicate()).toBe('principal');
+            expect(comp.ascending()).toBe(false);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/audits'], expect.objectContaining({ queryParams: expect.objectContaining({ sort: 'principal,desc' }) }));
+        });
+    });
+
     describe('Create sort object', () => {
         beforeEach(() => {
             vi.spyOn(service, 'query').mockReturnValue(of(new HttpResponse<Audit[]>()));

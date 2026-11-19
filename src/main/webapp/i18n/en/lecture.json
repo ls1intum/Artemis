@@ -48,8 +48,7 @@
                     "SEMESTER": "Semester",
                     "doImport": "Import"
                 },
-                "search": "Search for lecture:",
-                "loading": "Loading...",
+                "search": "Search for lecture",
                 "label": "Import Lecture"
             },
             "sections": {

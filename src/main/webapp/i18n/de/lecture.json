@@ -48,8 +48,7 @@
                     "SEMESTER": "Semester",
                     "doImport": "Importieren"
                 },
-                "search": "Nach Vorlesung suchen:",
-                "loading": "Lade...",
+                "search": "Nach Vorlesung suchen",
                 "label": "Vorlesung importieren"
             },
             "sections": {

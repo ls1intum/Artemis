@@ -1,7 +1,3 @@
-@import '../../../../../../../node_modules/bootstrap/scss/functions';
-@import '../../../../../../../node_modules/bootstrap/scss/variables';
-@import '../../../../../../../node_modules/bootstrap/scss/mixins';
-
 // Make the results list (#scrollableDiv) the actual scroll container instead of letting it grow to its
 // content height (which would make an outer ancestor scroll, so the in-house infinite-scroll directive —
 // whose root is #scrollableDiv — and the component's own scroll handling never fire). The chain from the
@@ -40,20 +36,17 @@ jhi-course-wide-search {
     min-height: 0;
     flex: 1 1 auto;
 
-    > .justify-content-center {
+    > .coursewide-search-column {
         display: flex;
         flex-direction: column;
         min-height: 0;
         flex: 1 1 auto;
 
-        > .row {
+        > .coursewide-search-rows {
             display: flex;
             flex-direction: column;
             min-height: 0;
             flex: 1 1 auto;
-
-            // Reset Bootstrap's negative row gutters so the column-flex content does not overflow horizontally.
-            margin: 0;
 
             > #scrollableDiv {
                 min-height: 0;
@@ -69,20 +62,6 @@ jhi-course-wide-search {
         }
     }
 
-    .bold-line {
-        height: 1px;
-        background: var(--communication-light-gray);
-    }
-
-    .form-select {
-        border: 0;
-        box-shadow: none !important;
-    }
-
-    .selection-prefix {
-        padding-top: 0.375rem !important;
-    }
-
     .envelope {
         text-align: center;
         opacity: 0.75;
@@ -96,7 +75,7 @@ jhi-course-wide-search {
     display: none;
 }
 
-@include media-breakpoint-down(sm) {
+@media (max-width: 575.98px) {
     .is-not-in-active-search {
         display: none;
     }

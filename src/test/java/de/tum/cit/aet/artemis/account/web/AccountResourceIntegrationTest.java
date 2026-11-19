@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -34,9 +35,12 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.EmailAllowedDTO;
+import de.tum.cit.aet.artemis.account.dto.EmailAllowedRequestDTO;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO.LoginMethod;
 import de.tum.cit.aet.artemis.account.service.AccountService;
+import de.tum.cit.aet.artemis.account.service.EmailChangeService;
 import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
@@ -51,6 +55,8 @@ import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.util.ConfigUtil;
 import de.tum.cit.aet.artemis.core.web.open.PublicAccountResource;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
@@ -82,6 +88,9 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Autowired
     private AccountService accountService;
+
+    @Autowired
+    private EmailChangeService emailChangeService;
 
     @Autowired
     private PasswordService passwordService;
@@ -126,6 +135,194 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
         // make request
         request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+    }
+
+    /**
+     * A form asks the server while the address is typed. The answer must be the same one that registration and the change of the address give, so the
+     * form never contradicts the decision that is made when it is sent. The address is matched in its lowercase form, so capitalization does not decide.
+     */
+    @ParameterizedTest
+    @CsvSource({ "ada@example.com,true", "Ada@EXAMPLE.com,true", "ada@other.org,false", "ada@example.com.evil.org,false", "'   ',false" })
+    @WithAnonymousUser
+    void checkEmailAllowedAppliesTheConfiguredRestrictionToTheLowercaseAddress(String email, boolean expected) throws Throwable {
+        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.of(Pattern.compile("[a-z]+@example\\.com")), () -> {
+            var result = request.postWithResponseBody("/api/core/public/email-allowed", new EmailAllowedRequestDTO(email), EmailAllowedDTO.class, HttpStatus.OK);
+
+            assertThat(result.allowed()).isEqualTo(expected);
+        });
+    }
+
+    @Test
+    @WithAnonymousUser
+    void checkEmailAllowedRejectsMalformedAddressesEvenWhenTheRestrictionMatches() throws Throwable {
+        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.of(Pattern.compile(".*@example\\.com")), () -> {
+            var result = request.postWithResponseBody("/api/core/public/email-allowed", new EmailAllowedRequestDTO("ada@@example.com"), EmailAllowedDTO.class, HttpStatus.OK);
+
+            assertThat(result.allowed()).isFalse();
+        });
+    }
+
+    @Test
+    @WithAnonymousUser
+    void checkEmailAllowedAcceptsEveryAddressWithoutRestriction() throws Throwable {
+        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.empty(), () -> {
+            var result = request.postWithResponseBody("/api/core/public/email-allowed", new EmailAllowedRequestDTO("anyone@anywhere.org"), EmailAllowedDTO.class, HttpStatus.OK);
+
+            assertThat(result.allowed()).isTrue();
+        });
+    }
+
+    @Test
+    @WithAnonymousUser
+    void checkEmailAllowedUnderstandsAPatternThatJavaScriptCannotRead() throws Throwable {
+        // A leading inline flag and a Unicode property class are valid in Java and a SyntaxError in a browser, which is why the server answers.
+        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.of(Pattern.compile("(?i)[\\p{L}.]+@Example\\.com")), () -> {
+            assertThat(request.postWithResponseBody("/api/core/public/email-allowed", new EmailAllowedRequestDTO("Ädä.Löve@example.COM"), EmailAllowedDTO.class, HttpStatus.OK)
+                    .allowed()).isTrue();
+            assertThat(
+                    request.postWithResponseBody("/api/core/public/email-allowed", new EmailAllowedRequestDTO("ada1@example.com"), EmailAllowedDTO.class, HttpStatus.OK).allowed())
+                    .isFalse();
+        });
+    }
+
+    @Test
+    @WithAnonymousUser
+    void checkEmailAllowedAcceptsAnAddressOfExactlyTheLongestStorableLength() throws Throwable {
+        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.of(Pattern.compile(".*@.*")), () -> {
+            String longestAddress = "a".repeat(64) + "@" + "b".repeat(31) + ".com";
+            assertThat(longestAddress).hasSize(100);
+
+            var result = request.postWithResponseBody("/api/core/public/email-allowed", new EmailAllowedRequestDTO(longestAddress), EmailAllowedDTO.class, HttpStatus.OK);
+
+            assertThat(result.allowed()).isTrue();
+        });
+    }
+
+    @Test
+    @WithAnonymousUser
+    void checkEmailAllowedRejectsAnAddressThatIsTooLongAndAMissingAddress() throws Exception {
+        request.postWithoutLocation("/api/core/public/email-allowed", new EmailAllowedRequestDTO("a".repeat(101) + "@example.com"), HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/core/public/email-allowed", new EmailAllowedRequestDTO(null), HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    void checkEmailAllowedHasABucketOfItsOwnSoThatTypingNeverUsesUpTheAllowanceOfRegistration() throws Exception {
+        var method = PublicAccountResource.class.getMethod("checkEmailAllowed", EmailAllowedRequestDTO.class);
+        var registration = PublicAccountResource.class.getMethod("registerAccount", ManagedUserVM.class);
+
+        assertThat(method.getAnnotation(LimitRequestsPerMinute.class).type()).isEqualTo(RateLimitType.EMAIL_ADDRESS_CHECK);
+        assertThat(registration.getAnnotation(LimitRequestsPerMinute.class).type()).isEqualTo(RateLimitType.ACCOUNT_MANAGEMENT);
+        assertThat(RateLimitType.EMAIL_ADDRESS_CHECK.getDefaultRpm()).isGreaterThan(RateLimitType.ACCOUNT_MANAGEMENT.getDefaultRpm());
+    }
+
+    @Test
+    void registerAccountAcceptsACapitalizedAddressThatTheLowercaseAddressMatches() throws Throwable {
+        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.of(Pattern.compile("[a-z]+@example\\.com")), () -> {
+            User user = UserFactory.generateActivatedUser("ab123cdx");
+            user.setEmail("Ada@EXAMPLE.com");
+            ManagedUserVM userVM = new ManagedUserVM(user);
+            userVM.setPassword(getValidPassword());
+
+            request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+            assertThat(userTestRepository.findOneByLogin("ab123cdx")).isPresent();
+
+            user.setLogin("ab123cdy");
+            user.setEmail("ada@other.org");
+            ManagedUserVM otherDomain = new ManagedUserVM(user);
+            otherDomain.setPassword(getValidPassword());
+            request.postWithoutLocation("/api/core/public/register", otherDomain, HttpStatus.BAD_REQUEST, null);
+            assertThat(userTestRepository.findOneByLogin("ab123cdy")).isEmpty();
+        });
+    }
+
+    @Test
+    void registerAccountAgainWhileActivationIsPending() throws Exception {
+        String password = getValidPassword();
+        ManagedUserVM userVM = new ManagedUserVM(UserFactory.generateActivatedUser("pendingreg1"));
+        userVM.setPassword(password);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+        User first = userTestRepository.findOneWithAuthoritiesByLogin(userVM.getLogin()).orElseThrow();
+        // data of the stored account that the registration request does not carry
+        first.setImageUrl("pendingreg1-image.png");
+        first.setRegistrationNumber("01234567");
+        first = userTestRepository.save(first);
+        String storedImageUrl = first.getImageUrl();
+        var authoritiesBefore = new HashSet<>(first.getAuthorities());
+
+        String newPassword = password + "b";
+        userVM.setPassword(newPassword);
+        userVM.setFirstName("Changed");
+        userVM.setLastName("Name");
+        userVM.setLangKey("de");
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+
+        User second = userTestRepository.findOneWithAuthoritiesByLogin(userVM.getLogin()).orElseThrow();
+        assertThat(second.getId()).isEqualTo(first.getId());
+        assertThat(second.getFirstName()).isEqualTo("Changed");
+        assertThat(second.getLastName()).isEqualTo("Name");
+        assertThat(second.getLangKey()).isEqualTo("de");
+        // only the data of the request is applied, everything else of the stored account is kept
+        assertThat(second.getImageUrl()).isEqualTo(storedImageUrl);
+        assertThat(second.getRegistrationNumber()).isEqualTo("01234567");
+        assertThat(second.getAuthorities()).containsExactlyInAnyOrderElementsOf(authoritiesBefore);
+        assertThat(second.isInternal()).isTrue();
+        assertThat(second.getActivated()).isFalse();
+        assertThat(passwordService.checkPasswordMatch(newPassword, second.getPassword())).isTrue();
+        assertThat(userRecoveryKeyService.findActivationKey(second.getId())).isNotNull();
+    }
+
+    @Test
+    void registerAccountWithOtherEmailWhileActivationIsPending_doesNotNameTheStoredEmail() throws Exception {
+        String password = getValidPassword();
+        ManagedUserVM userVM = new ManagedUserVM(UserFactory.generateActivatedUser("pendingreg4"));
+        userVM.setPassword(password);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+        String storedEmail = userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow().getEmail();
+        String requestedEmail = "someone.else@example.org";
+        userVM.setEmail(requestedEmail);
+
+        var response = request.postWithoutResponseBody("/api/core/public/register", userVM, HttpStatus.BAD_REQUEST, null);
+
+        // the client recognizes the answer by its type, and the message only names the address of the request
+        assertThat(response.getContentAsString()).contains("account-registration-blocked").contains(requestedEmail).doesNotContain(storedEmail);
+        assertThat(userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow().getEmail()).isEqualTo(storedEmail);
+    }
+
+    @Test
+    void registerAccountRejectsExistingAccountWithoutPendingActivation() throws Exception {
+        String password = getValidPassword();
+        ManagedUserVM userVM = new ManagedUserVM(UserFactory.generateActivatedUser("pendingreg2"));
+        userVM.setPassword(password);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+        User existing = userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow();
+        // the account no longer has an outstanding activation
+        userRecoveryKeyService.clearActivationKey(existing.getId());
+        String storedPassword = existing.getPassword();
+
+        userVM.setPassword(password + "b");
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.BAD_REQUEST, null);
+
+        User unchanged = userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow();
+        assertThat(unchanged.getPassword()).isEqualTo(storedPassword);
+    }
+
+    @Test
+    void registerAccountRejectsExistingExternalAccount() throws Exception {
+        String password = getValidPassword();
+        ManagedUserVM userVM = new ManagedUserVM(UserFactory.generateActivatedUser("pendingreg3"));
+        userVM.setPassword(password);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+        User existing = userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow();
+        existing.setInternal(false);
+        userTestRepository.save(existing);
+        String storedPassword = existing.getPassword();
+
+        userVM.setPassword(password + "b");
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.BAD_REQUEST, null);
+
+        User unchanged = userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow();
+        assertThat(unchanged.getPassword()).isEqualTo(storedPassword);
+        assertThat(unchanged.isInternal()).isFalse();
     }
 
     @ParameterizedTest
@@ -211,7 +408,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     void registerAccountInvalidEmail() throws Throwable {
         // Inject email-pattern to be independent of the config
-        ConfigUtil.testWithChangedConfig(publicAccountResource, "allowedEmailPattern", Optional.of(Pattern.compile("[a-zA-Z0-9_\\-.+]+@[a-zA-Z0-9_\\-.]+\\.[a-zA-Z]{2,5}")), () -> {
+        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.of(Pattern.compile("[a-zA-Z0-9_\\-.+]+@[a-zA-Z0-9_\\-.]+\\.[a-zA-Z]{2,5}")), () -> {
             // setup user
             User user = UserFactory.generateActivatedUser("ab123cdk");
             user.setEmail("-");
@@ -225,7 +422,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     void registerAccountEmptyEmailPattern() throws Throwable {
-        ConfigUtil.testWithChangedConfig(publicAccountResource, "allowedEmailPattern", Optional.empty(), () -> {
+        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.empty(), () -> {
             // setup user
             User user = UserFactory.generateActivatedUser("ab123cdl");
             user.setEmail("-");
@@ -416,6 +613,27 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(updatedUser.get().getFirstName()).isEqualTo(updatedFirstName);
     }
 
+    /**
+     * The profile picture is owned by the server and changes only through the upload and removal of the picture, not through the account information.
+     */
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountDoesNotTakeOverTheImageUrl() throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        user.setImageUrl("stored-picture.png");
+        userTestRepository.save(user);
+        String storedImageUrl = userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow().getImageUrl();
+
+        user.setFirstName("UpdatedFirstName");
+        UserDTO userDTO = new UserDTO(user);
+        userDTO.setImageUrl("someone-elses-picture.png");
+        request.put("/api/account/basic-information", userDTO, HttpStatus.OK);
+
+        User updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow();
+        assertThat(updatedUser.getFirstName()).isEqualTo("UpdatedFirstName");
+        assertThat(updatedUser.getImageUrl()).isEqualTo(storedImageUrl);
+    }
+
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void saveAccountWithMaximumLengthDisplayName() throws Exception {
@@ -444,6 +662,61 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             user.setFirstName(updatedFirstName);
 
             request.put("/api/account/basic-information", new UserDTO(user), HttpStatus.FORBIDDEN);
+        });
+    }
+
+    /**
+     * An account that is not managed here does not go through the confirmation of an e-mail change, which is where the configured restriction is applied for the others.
+     * The endpoint must still apply it, so the check of the client cannot be bypassed by a direct request.
+     */
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountRefusesAnEmailOutsideTheAllowedPatternForAnExternalUser() throws Throwable {
+        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.of(Pattern.compile("(?i).*@example\\.com")), () -> {
+            User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+            user.setInternal(false);
+            user.setEmail("before@example.com");
+            userTestRepository.save(user);
+            user.setEmail("someone@elsewhere.org");
+
+            request.put("/api/account/basic-information", new UserDTO(user), HttpStatus.BAD_REQUEST);
+
+            assertThat(userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow().getEmail()).isEqualTo("before@example.com");
+        });
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountAcceptsAnEmailInsideTheAllowedPatternForAnExternalUser() throws Throwable {
+        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.of(Pattern.compile("(?i).*@example\\.com")), () -> {
+            User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+            user.setInternal(false);
+            userTestRepository.save(user);
+            user.setEmail("Someone@Example.com");
+
+            request.put("/api/account/basic-information", new UserDTO(user), HttpStatus.OK);
+
+            // The restriction is applied to the canonical (lowercase) address, which is what is stored.
+            assertThat(userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow().getEmail()).isEqualTo("someone@example.com");
+        });
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountKeepsAnExternalUserWithAnAddressOutsideThePatternEditable() throws Throwable {
+        ConfigUtil.testWithChangedConfig(emailChangeService, "allowedEmailPattern", Optional.of(Pattern.compile(".*@example\\.com")), () -> {
+            User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+            user.setInternal(false);
+            user.setEmail("legacy@elsewhere.org");
+            userTestRepository.save(user);
+            // Only the name changes, the address that does not match the pattern anymore stays as it is.
+            user.setFirstName("UpdatedFirstName");
+
+            request.put("/api/account/basic-information", new UserDTO(user), HttpStatus.OK);
+
+            User updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow();
+            assertThat(updatedUser.getFirstName()).isEqualTo("UpdatedFirstName");
+            assertThat(updatedUser.getEmail()).isEqualTo("legacy@elsewhere.org");
         });
     }
 
@@ -497,16 +770,21 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(updated.getEmail()).isEqualTo(email);
     }
 
+    /**
+     * Removing the address would leave an account that needs only the new address to confirm when one is added next, which is the way around the
+     * confirmation of the current one.
+     */
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
-    void saveAccountAllowsRemovingAnEmail() throws Exception {
+    void saveAccountRejectsRemovingTheEmailOfAnInternalUser() throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        String email = user.getEmail();
         UserDTO update = new UserDTO(user);
         update.setEmail(null);
 
-        request.put("/api/account/basic-information", update, HttpStatus.OK);
+        request.put("/api/account/basic-information", update, HttpStatus.BAD_REQUEST);
 
-        assertThat(userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow().getEmail()).isNull();
+        assertThat(userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow().getEmail()).isEqualTo(email);
     }
 
     @Test
@@ -870,6 +1148,33 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             // Only the language key must have been updated
             assertThat(updatedUser.get().getLangKey()).isEqualTo("de");
         });
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountSaml2PreservesConcurrentAccountChanges() {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        UserDTO update = new UserDTO(user);
+        update.setLangKey("de");
+        Mockito.doAnswer(invocation -> {
+            // The settings service already read its detached account before asking whether SAML is active.
+            User concurrentAccount = userTestRepository.findById(user.getId()).orElseThrow();
+            concurrentAccount.setEmail("confirmed-concurrently@example.org");
+            concurrentAccount.setActivated(false);
+            userTestRepository.saveAndFlush(concurrentAccount);
+            return true;
+        }).when(profileService).isSaml2Active();
+        try {
+            accountService.updateBasicInformationOfCurrentUser(update);
+
+            User stored = userTestRepository.findById(user.getId()).orElseThrow();
+            assertThat(stored.getLangKey()).isEqualTo("de");
+            assertThat(stored.getEmail()).isEqualTo("confirmed-concurrently@example.org");
+            assertThat(stored.getActivated()).isFalse();
+        }
+        finally {
+            Mockito.doCallRealMethod().when(profileService).isSaml2Active();
+        }
     }
 
     @Test

@@ -76,7 +76,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
      */
     @BeforeEach
     void init() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         course.setMaxPoints(100);
         courseRepository.saveAndFlush(course);
@@ -159,6 +159,61 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
         assertThat(bonusTo.exam().course()).isNotNull();
         assertThat(bonusTo.exam().course().id()).isEqualTo(courseId);
         assertThat(bonusTo.gradeSteps()).isNullOrEmpty();
+    }
+
+    private void useSourceGradingScaleOfOtherCourse() {
+        bonusRepository.delete(courseBonus);
+        Course otherCourse = courseUtilService.addEmptyCourse();
+        GradingScale otherCourseScale = GradingScaleFactory.generateGradingScaleForCourse(otherCourse, GradeType.BONUS);
+        gradingScaleRepository.save(otherCourseScale);
+        bonusRepository.save(BonusFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, otherCourseScale.getId(), bonusToExamGradingScale.getId()));
+        examUtilService.addStudentExamWithUser(bonusToExamGradingScale.getExam(), TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetBonusOmitsSourceOfOtherCourseForStudent() throws Exception {
+        useSourceGradingScaleOfOtherCourse();
+
+        BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
+
+        assertThat(foundBonus.sourceGradingScale()).isNull();
+        assertThat(foundBonus.bonusToGradingScale()).isNotNull();
+        assertThat(foundBonus.weight()).isEqualTo(1.0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetBonusKeepsSourceOfOtherCourseForTutorOfExamCourse() throws Exception {
+        useSourceGradingScaleOfOtherCourse();
+        examUtilService.addStudentExamWithUser(bonusToExamGradingScale.getExam(), TEST_PREFIX + "tutor1");
+
+        BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
+
+        assertThat(foundBonus.sourceGradingScale()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetBonusKeepsExamSourceOfSameCourseForStudent() throws Exception {
+        bonusRepository.delete(courseBonus);
+        bonusRepository.save(BonusFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, sourceExamGradingScale.getId(), bonusToExamGradingScale.getId()));
+        examUtilService.addStudentExamWithUser(bonusToExamGradingScale.getExam(), TEST_PREFIX + "student1");
+
+        BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
+
+        assertThat(foundBonus.sourceGradingScale()).isNotNull();
+        assertThat(foundBonus.sourceGradingScale().exam()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetBonusKeepsSourceOfSameCourseForStudent() throws Exception {
+        examUtilService.addStudentExamWithUser(bonusToExamGradingScale.getExam(), TEST_PREFIX + "student1");
+
+        BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
+
+        assertThat(foundBonus.sourceGradingScale()).isNotNull();
     }
 
     @Test

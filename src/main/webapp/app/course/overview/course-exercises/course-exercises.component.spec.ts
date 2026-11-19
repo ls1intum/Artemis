@@ -17,8 +17,6 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { UMLDiagramType } from '@tumaet/apollon';
@@ -85,9 +83,7 @@ describe('CourseExercisesComponent', () => {
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(SidePanelComponent),
                 MockDirective(MockHasAnyAuthorityDirective),
-                MockDirective(SortByDirective),
                 TranslatePipeMock,
-                MockDirective(SortDirective),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockTranslateValuesDirective,

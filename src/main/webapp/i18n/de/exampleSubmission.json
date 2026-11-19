@@ -65,7 +65,11 @@
             "textSubmissionSizeHint": "Diese Zahl gibt die Anzahl der Wörter im Text an.",
             "modelingSubmissionSizeHint": "Diese Zahl gibt die Anzahl der im Modell verwendeten Elemente an.",
             "exampleAssessmentCreated": "Beispielbewertung Erstellt",
-            "exampleAssessmentWarning": "Du musst die Bewertung abschließen, um diese Einreichung im Bewertungstraining zu verwenden."
+            "exampleAssessmentWarning": "Du musst die Bewertung abschließen, um diese Einreichung im Bewertungstraining zu verwenden.",
+            "empty": {
+                "title": "Noch keine Beispielabgaben vorhanden",
+                "description": "Erstelle oder importiere eine Beispielabgabe, um Tutor:innen zu zeigen, wie sie bewerten sollen."
+            }
         },
         "tutorParticipation": {
             "deleted": "Die Tutorteilnahme wurde erfolgreich gelöscht"

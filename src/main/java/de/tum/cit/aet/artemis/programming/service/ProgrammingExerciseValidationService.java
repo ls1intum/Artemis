@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIA
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PACKAGE_NAME_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -15,23 +16,28 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
+import de.tum.cit.aet.artemis.core.config.AllowedDockerRegistries;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.localvc.service.BranchRegexSyntax;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -48,6 +54,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 public class ProgrammingExerciseValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseValidationService.class);
+
+    /** The branch regex is stored in a column of this length. */
+    private static final int MAX_BRANCH_REGEX_LENGTH = 128;
 
     /** A run of whitespace, which a project key may not contain. */
     private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
@@ -116,11 +125,14 @@ public class ProgrammingExerciseValidationService {
 
     private final ProfileService profileService;
 
+    private final AllowedDockerRegistries allowedDockerRegistries;
+
     public ProgrammingExerciseValidationService(ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
             AuxiliaryRepositoryService auxiliaryRepositoryService, ProgrammingExerciseRepository programmingExerciseRepository, SubmissionPolicyService submissionPolicyService,
             Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, Optional<VersionControlService> versionControlService1,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProfileService profileService) {
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProfileService profileService, Environment environment) {
+        this.allowedDockerRegistries = AllowedDockerRegistries.from(environment);
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -153,8 +165,10 @@ public class ProgrammingExerciseValidationService {
         validateCustomCheckoutPaths(buildConfig);
         // Check the build config field lengths before the configuration is parsed
         validateBuildConfigSize(buildConfig);
+        validateDockerImageRegistry(buildConfig);
         validateBuildPhaseNames(buildConfig);
         validateDockerFlags(buildConfig);
+        validateBuildTimeWindow(programmingExercise, buildConfig);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
@@ -249,9 +263,11 @@ public class ProgrammingExerciseValidationService {
      * @param buildConfig         its build configuration, which is stored separately and read by the caller
      */
     public void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig) {
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
-                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-        programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature, buildConfig);
+        // The features are known whenever the exercise can be built, which is the only case in which static code analysis can be configured
+        programmingLanguageFeatureService.ifPresent(featureService -> {
+            ProgrammingLanguageFeature programmingLanguageFeature = featureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+            programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature, buildConfig);
+        });
     }
 
     /**
@@ -265,6 +281,32 @@ public class ProgrammingExerciseValidationService {
                 || !Objects.equals(originalBuildConfig.getSolutionCheckoutPath(), updatedBuildConfig.getSolutionCheckoutPath())
                 || !Objects.equals(originalBuildConfig.getTestCheckoutPath(), updatedBuildConfig.getTestCheckoutPath())) {
             throw new BadRequestAlertException("The custom checkout paths cannot be changed!", "programmingExercise", "checkoutDirectoriesChanged");
+        }
+    }
+
+    /**
+     * Validates the optional build time window of a programming exercise. The window must be well-formed, must lie within the period in which students can work on the
+     * exercise (from its start date or, without one, its release date until its due date, as far as these dates are set) and is not available for exam exercises.
+     *
+     * @param exercise    the exercise whose dates the window is checked against
+     * @param buildConfig the build configuration holding the window
+     * @throws BadRequestAlertException if the window is invalid
+     */
+    public void validateBuildTimeWindow(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig) {
+        BuildTimeWindow window = buildConfig.getBuildTimeWindow();
+        if (window == null) {
+            return;
+        }
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("The build time window is not available for exam exercises", "Exercise", "buildTimeWindowNotSupportedForExams");
+        }
+        if (window.start() != null && window.end() != null && !window.start().isBefore(window.end())) {
+            throw new BadRequestAlertException("The build time window must end after it starts", "Exercise", "buildTimeWindowEndBeforeStart");
+        }
+        ZonedDateTime earliest = exercise.getStartDate() != null ? exercise.getStartDate() : exercise.getReleaseDate();
+        if (!window.isWithin(earliest, exercise.getDueDate())) {
+            throw new BadRequestAlertException("The build time window must lie between the start (or release) date and the due date of the exercise", "Exercise",
+                    "buildTimeWindowOutsideExerciseDates");
         }
     }
 
@@ -310,7 +352,7 @@ public class ProgrammingExerciseValidationService {
     }
 
     /**
-     * Validates that the build config text fields do not exceed their maximum allowed length.
+     * Validates that the build config text fields do not exceed their maximum allowed length and that the branch expression is a valid regular expression.
      * The limits are character limits (see {@link String#length()}), not byte limits.
      *
      * @param buildConfig the build configuration to validate, or {@code null} when the request carries none
@@ -330,6 +372,76 @@ public class ProgrammingExerciseValidationService {
         if (dockerFlags != null && dockerFlags.length() > MAX_DOCKER_FLAGS_LENGTH) {
             throw new BadRequestAlertException("The docker flags are too long. Max " + MAX_DOCKER_FLAGS_LENGTH + " characters", "Exercise", "dockerFlagsTooLong");
         }
+
+        // The length is always checked, as the value is stored. The syntax is only checked when branching is allowed, as the regex is only used, and only editable, then:
+        // an exercise that was saved earlier with an unusable value stays editable
+        validateBranchRegex(buildConfig.getBranchRegex(), buildConfig.isAllowBranching());
+    }
+
+    private static void validateBranchRegex(@Nullable String branchRegex, boolean checkSyntax) {
+        if (branchRegex == null) {
+            return;
+        }
+        if (branchRegex.length() > MAX_BRANCH_REGEX_LENGTH) {
+            throw new BadRequestAlertException("The branch regex is too long. Max " + MAX_BRANCH_REGEX_LENGTH + " characters", "Exercise", "branchRegexTooLong");
+        }
+        if (!checkSyntax) {
+            return;
+        }
+        try {
+            Pattern.compile(branchRegex);
+        }
+        catch (PatternSyntaxException e) {
+            throw new BadRequestAlertException("The branch regex is not a valid regular expression", "Exercise", "branchRegexInvalid");
+        }
+        if (!BranchRegexSyntax.isSupported(branchRegex)) {
+            throw new BadRequestAlertException("The branch regex uses syntax that is not supported. " + BranchRegexSyntax.DESCRIPTION, "Exercise", "branchRegexNotSupported");
+        }
+    }
+
+    /**
+     * Checks that the Docker image of the build plan configuration comes from one of the registries in
+     * {@code artemis.continuous-integration.allowed-docker-registries}. Nothing is checked while that list is empty, and a configuration without
+     * an image is not checked either, because it uses the default image of Artemis.
+     *
+     * @param buildConfig the build configuration to validate, or {@code null} when the request carries none
+     */
+    public void validateDockerImageRegistry(@Nullable ProgrammingExerciseBuildConfig buildConfig) {
+        if (buildConfig == null || allowedDockerRegistries.isEmpty()) {
+            return;
+        }
+        String buildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
+        if (buildPlanConfiguration == null || buildPlanConfiguration.isBlank()) {
+            return;
+        }
+        try {
+            BuildPlanPhasesDTO buildPlan = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration);
+            // The JSON text null has no content to check, and the validation of the build phases rejects it
+            if (buildPlan != null) {
+                validateDockerImageRegistry(buildPlan.dockerImage());
+            }
+        }
+        catch (JacksonException e) {
+            // an unreadable configuration is rejected by the validation of the build phases
+            log.debug("The Docker image registry was not checked, because the build plan configuration could not be read", e);
+        }
+    }
+
+    /**
+     * Checks that a Docker image comes from one of the registries in {@code artemis.continuous-integration.allowed-docker-registries}.
+     * An image without a registry in its name comes from {@code docker.io}.
+     *
+     * @param dockerImage the Docker image, or {@code null} for the default image of Artemis
+     */
+    public void validateDockerImageRegistry(@Nullable String dockerImage) {
+        if (dockerImage == null || allowedDockerRegistries.isEmpty()) {
+            return;
+        }
+        if (!allowedDockerRegistries.allows(dockerImage)) {
+            throw new BadRequestAlertException(
+                    "The Docker image comes from the registry " + AllowedDockerRegistries.registryOf(dockerImage) + ", which is not allowed on this server", "programmingExercise",
+                    "dockerImageRegistryNotAllowed");
+        }
     }
 
     /**
@@ -347,13 +459,18 @@ public class ProgrammingExerciseValidationService {
             throw new BadRequestAlertException("The build config is invalid", "programmingExercise", "invalidBuildConfig");
         }
 
-        List<BuildPhaseDTO> phases;
+        BuildPlanPhasesDTO buildPlan;
         try {
-            phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration()).phases();
+            buildPlan = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration());
         }
         catch (JacksonException e) {
             throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
         }
+        // The JSON text null is read as no configuration at all, which is no valid one
+        if (buildPlan == null) {
+            throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
+        }
+        List<BuildPhaseDTO> phases = buildPlan.phases();
 
         if (phases == null) {
             return; // default will be used when saving
@@ -444,6 +561,24 @@ public class ProgrammingExerciseValidationService {
     }
 
     /**
+     * Checks that an exercise with automatic assessment has at least one active test case with a weight above zero.
+     *
+     * @param exercise the programming exercise to be checked
+     * @throws BadRequestAlertException if no test case has a positive weight
+     */
+    public void validateAutomaticAssessmentTestWeights(ProgrammingExercise exercise) {
+        // It has already been checked when setting the test case weights that their sum is at least >= 0.
+        // Only when changing the assessment format to automatic an additional check for > 0 has to be performed.
+        if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
+            final Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
+            if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(testCases)) {
+                throw new BadRequestAlertException("For exercises with only automatic assignment at least one test case weight must be greater than zero.", "Exercise",
+                        ProgrammingExerciseErrorKeys.INVALID_TEST_CASE_WEIGHTS);
+            }
+        }
+    }
+
+    /**
      * Checks whether the exercise to be updated has valid references to its template and solution repositories and build plans.
      *
      * @param exercise    the programming exercise to be checked
@@ -451,8 +586,6 @@ public class ProgrammingExerciseValidationService {
      * @throws BadRequestAlertException if one of the references is invalid
      */
     public void checkProgrammingExerciseForError(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig) {
-        validateBuildPhaseNames(buildConfig);
-
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         VersionControlService versionControl = versionControlService.orElseThrow();
 
@@ -468,16 +601,6 @@ public class ProgrammingExerciseValidationService {
         var solutionRepositoryUri = exercise.getVcsSolutionRepositoryUri();
         if (solutionRepositoryUri != null && !versionControl.repositoryUriIsValid(solutionRepositoryUri)) {
             throw new BadRequestAlertException("The Solution Repository URI seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_SOLUTION_REPOSITORY_URL);
-        }
-
-        // It has already been checked when setting the test case weights that their sum is at least >= 0.
-        // Only when changing the assessment format to automatic an additional check for > 0 has to be performed.
-        if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
-            final Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
-            if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(testCases)) {
-                throw new BadRequestAlertException("For exercises with only automatic assignment at least one test case weight must be greater than zero.", "Exercise",
-                        ProgrammingExerciseErrorKeys.INVALID_TEST_CASE_WEIGHTS);
-            }
         }
     }
 

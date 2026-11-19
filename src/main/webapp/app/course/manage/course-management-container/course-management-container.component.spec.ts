@@ -6,7 +6,6 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 
@@ -25,7 +24,7 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 
 import { AlertService } from 'app/foundation/service/alert.service';
 
-import { MockModule, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { AfterViewInit, Component, EventEmitter, TemplateRef, signal, viewChild } from '@angular/core';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { CourseManagementContainerComponent } from 'app/course/manage/course-management-container/course-management-container.component';
@@ -152,7 +151,7 @@ describe('CourseManagementContainerComponent', () => {
         } as unknown as ActivatedRoute;
 
         await TestBed.configureTestingModule({
-            imports: [CourseManagementContainerComponent, MockModule(NgbTooltipModule)],
+            imports: [CourseManagementContainerComponent],
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(CourseStorageService),

@@ -1,81 +1,90 @@
-<p-dialog [header]="headerTitle()" [modal]="true" [visible]="show()" [closable]="true" (visibleChange)="show.set($event)" [style]="{ width: '50rem' }" appendTo="body">
+<tumaet-ui-dialog [header]="headerTitle()" [(visible)]="show" [closable]="true" size="medium">
     @if (currentStep() === 'selectCourse') {
         <!-- Step 1: Course Selection -->
         <div class="course-selection-step">
-            <div class="search-container mb-3">
-                <span class="p-input-icon-left w-100">
+            <tumaet-ui-table-layout
+                class="[--table-layout-offset:22rem] max-md:[--table-layout-offset:30rem]"
+                [loading]="isLoadingCourses()"
+                [empty]="courses().length === 0 && !isLoadingCourses()"
+                emptyTitle="artemisApp.course.import.noCourses"
+            >
+                <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                     <input
+                        tumAetUiInput
+                        tumAetUiInputSize="small"
+                        type="search"
+                        class="max-w-lg min-w-24 flex-1"
                         [attr.aria-label]="'artemisApp.course.import.searchPlaceholder' | artemisTranslate"
-                        pInputText
-                        type="text"
                         [ngModel]="searchTerm()"
                         (ngModelChange)="searchTerm.set($event)"
                         (input)="onSearchChange()"
                         [placeholder]="'artemisApp.course.import.searchPlaceholder' | artemisTranslate"
-                        class="w-100"
                     />
-                </span>
-            </div>
-
-            <p-table [value]="courses()" [tableStyle]="{ 'min-width': '100%' }" class="p-datatable-sm p-datatable-striped" [loading]="isLoadingCourses()">
-                <ng-template #header>
-                    <tr>
-                        <th scope="col" jhiTranslate="artemisApp.course.title"></th>
-                        <th scope="col" jhiTranslate="artemisApp.course.shortName"></th>
-                        <th scope="col" jhiTranslate="artemisApp.course.semester"></th>
-                        <th scope="col"></th>
-                    </tr>
-                </ng-template>
-                <ng-template #body let-course>
-                    <tr>
-                        <td>{{ course.title }}</td>
-                        <td>{{ course.shortName }}</td>
-                        <td>{{ course.semester }}</td>
-                        <td>
-                            <button type="button" tumAetUiButton severity="primary" size="small" (click)="selectCourse(course)" jhiTranslate="entity.action.select"></button>
-                        </td>
-                    </tr>
-                </ng-template>
-                <ng-template #emptymessage>
-                    <tr>
-                        <td colspan="4" class="text-center" jhiTranslate="artemisApp.course.import.noCourses"></td>
-                    </tr>
-                </ng-template>
-            </p-table>
-
-            @if (totalRecords() > rows()) {
-                <p-paginator [first]="first()" [rows]="rows()" [totalRecords]="totalRecords()" (onPageChange)="onPageChange($event)" />
-            }
+                </div>
+                <table tumAetUiTable size="small" striped>
+                    <thead>
+                        <tr>
+                            <th scope="col" jhiTranslate="artemisApp.course.title"></th>
+                            <th scope="col" jhiTranslate="artemisApp.course.shortName"></th>
+                            <th scope="col" jhiTranslate="artemisApp.course.semester"></th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (course of courses(); track course.id) {
+                            <tr>
+                                <td>{{ course.title }}</td>
+                                <td>{{ course.shortName }}</td>
+                                <td>{{ course.semester }}</td>
+                                <td class="text-end">
+                                    <button
+                                        type="button"
+                                        tumAetUiButton
+                                        severity="primary"
+                                        size="small"
+                                        (click)="selectCourse(course)"
+                                        jhiTranslate="entity.action.select"
+                                    ></button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <!-- The total is estimated from the page count, so it supports navigation but not an item range. -->
+                <tumaet-ui-paginator
+                    tumAetUiTableFooter
+                    [page]="first() / rows()"
+                    [pageSize]="rows()"
+                    [totalRecords]="totalRecords()"
+                    [showCurrentPageReport]="false"
+                    [showRowsPerPage]="false"
+                    (pageChange)="onPageChange($event)"
+                />
+            </tumaet-ui-table-layout>
         </div>
     } @else {
         <!-- Step 2: Import Options -->
         <div class="import-options-step">
             @if (isLoadingSummary()) {
                 <div class="loading-container">
-                    <p-progressspinner [style]="{ width: '50px', height: '50px' }" />
+                    <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" [style.width.px]="50" [style.height.px]="50" />
                 </div>
             } @else {
-                <div class="selected-course-info mb-3">
+                <div class="selected-course-info mb-4!">
                     <span jhiTranslate="artemisApp.course.import.selectedCourse"></span>
                     <strong>{{ selectedCourse()?.title }}</strong>
                     @if (selectedCourse()?.semester) {
-                        <span class="text-muted">({{ selectedCourse()?.semester }})</span>
+                        <span class="text-muted-color">({{ selectedCourse()?.semester }})</span>
                     }
                 </div>
 
-                <p class="mb-3" jhiTranslate="artemisApp.course.import.selectOptionsHint"></p>
+                <p class="mb-4!" jhiTranslate="artemisApp.course.import.selectOptionsHint"></p>
 
                 <div class="options-grid">
                     <!-- Exercises -->
                     <div class="option-row">
-                        <p-checkbox
-                            [inputId]="'import-exercises'"
-                            [ngModel]="importExercises()"
-                            (ngModelChange)="importExercises.set($event)"
-                            [binary]="true"
-                            [disabled]="!hasExercises()"
-                        />
-                        <label for="import-exercises" [class.text-muted]="!hasExercises()">
+                        <tumaet-ui-checkbox inputId="import-exercises" [ngModel]="importExercises()" (ngModelChange)="importExercises.set($event)" [disabled]="!hasExercises()" />
+                        <label for="import-exercises" [class.text-muted-color]="!hasExercises()">
                             <span jhiTranslate="artemisApp.course.import.exercises"></span>
                             <span class="count-badge">({{ sourceSummary()?.numberOfExercises ?? 0 }})</span>
                         </label>
@@ -83,14 +92,8 @@
 
                     <!-- Lectures -->
                     <div class="option-row">
-                        <p-checkbox
-                            [inputId]="'import-lectures'"
-                            [ngModel]="importLectures()"
-                            (ngModelChange)="importLectures.set($event)"
-                            [binary]="true"
-                            [disabled]="!hasLectures()"
-                        />
-                        <label for="import-lectures" [class.text-muted]="!hasLectures()">
+                        <tumaet-ui-checkbox inputId="import-lectures" [ngModel]="importLectures()" (ngModelChange)="importLectures.set($event)" [disabled]="!hasLectures()" />
+                        <label for="import-lectures" [class.text-muted-color]="!hasLectures()">
                             <span jhiTranslate="artemisApp.course.import.lectures"></span>
                             <span class="count-badge">({{ sourceSummary()?.numberOfLectures ?? 0 }})</span>
                         </label>
@@ -98,8 +101,8 @@
 
                     <!-- Exams -->
                     <div class="option-row">
-                        <p-checkbox [inputId]="'import-exams'" [ngModel]="importExams()" (ngModelChange)="importExams.set($event)" [binary]="true" [disabled]="!hasExams()" />
-                        <label for="import-exams" [class.text-muted]="!hasExams()">
+                        <tumaet-ui-checkbox inputId="import-exams" [ngModel]="importExams()" (ngModelChange)="importExams.set($event)" [disabled]="!hasExams()" />
+                        <label for="import-exams" [class.text-muted-color]="!hasExams()">
                             <span jhiTranslate="artemisApp.course.import.exams"></span>
                             <span class="count-badge">({{ sourceSummary()?.numberOfExams ?? 0 }})</span>
                         </label>
@@ -107,14 +110,13 @@
 
                     <!-- Competencies -->
                     <div class="option-row">
-                        <p-checkbox
-                            [inputId]="'import-competencies'"
+                        <tumaet-ui-checkbox
+                            inputId="import-competencies"
                             [ngModel]="importCompetencies()"
                             (ngModelChange)="importCompetencies.set($event)"
-                            [binary]="true"
                             [disabled]="!hasCompetencies()"
                         />
-                        <label for="import-competencies" [class.text-muted]="!hasCompetencies()">
+                        <label for="import-competencies" [class.text-muted-color]="!hasCompetencies()">
                             <span jhiTranslate="artemisApp.course.import.competencies"></span>
                             <span class="count-badge">({{ sourceSummary()?.numberOfCompetencies ?? 0 }})</span>
                         </label>
@@ -122,14 +124,13 @@
 
                     <!-- Tutorial Groups -->
                     <div class="option-row">
-                        <p-checkbox
-                            [inputId]="'import-tutorial-groups'"
+                        <tumaet-ui-checkbox
+                            inputId="import-tutorial-groups"
                             [ngModel]="importTutorialGroups()"
                             (ngModelChange)="importTutorialGroups.set($event)"
-                            [binary]="true"
                             [disabled]="!hasTutorialGroups()"
                         />
-                        <label for="import-tutorial-groups" [class.text-muted]="!hasTutorialGroups()">
+                        <label for="import-tutorial-groups" [class.text-muted-color]="!hasTutorialGroups()">
                             <span jhiTranslate="artemisApp.course.import.tutorialGroups"></span>
                             <span class="count-badge">({{ sourceSummary()?.numberOfTutorialGroups ?? 0 }})</span>
                         </label>
@@ -137,8 +138,8 @@
 
                     <!-- FAQs -->
                     <div class="option-row">
-                        <p-checkbox [inputId]="'import-faqs'" [ngModel]="importFaqs()" (ngModelChange)="importFaqs.set($event)" [binary]="true" [disabled]="!hasFaqs()" />
-                        <label for="import-faqs" [class.text-muted]="!hasFaqs()">
+                        <tumaet-ui-checkbox inputId="import-faqs" [ngModel]="importFaqs()" (ngModelChange)="importFaqs.set($event)" [disabled]="!hasFaqs()" />
+                        <label for="import-faqs" [class.text-muted-color]="!hasFaqs()">
                             <span jhiTranslate="artemisApp.course.import.faqs"></span>
                             <span class="count-badge">({{ sourceSummary()?.numberOfFaqs ?? 0 }})</span>
                         </label>
@@ -149,16 +150,18 @@
     }
 
     <ng-template #footer>
-        @if (currentStep() === 'selectCourse') {
-            <button type="button" tumAetUiButton severity="secondary" (click)="close()" jhiTranslate="entity.action.cancel"></button>
-        } @else {
-            <button type="button" tumAetUiButton severity="secondary" (click)="backToCourseSelection()" jhiTranslate="entity.action.back"></button>
-            <button severity="secondary" type="button" tumAetUiButton [disabled]="!canImport() || isImporting()" [attr.aria-busy]="isImporting()" (click)="executeImport()">
-                @if (isImporting()) {
-                    <fa-icon [icon]="faSpinner" animation="spin" />
-                }
-                <span jhiTranslate="entity.action.import"></span>
-            </button>
-        }
+        <div class="flex justify-end gap-2">
+            @if (currentStep() === 'selectCourse') {
+                <button type="button" tumAetUiButton severity="secondary" (click)="close()" jhiTranslate="entity.action.cancel"></button>
+            } @else {
+                <button type="button" tumAetUiButton severity="secondary" (click)="backToCourseSelection()" jhiTranslate="entity.action.back"></button>
+                <button severity="secondary" type="button" tumAetUiButton [disabled]="!canImport() || isImporting()" [attr.aria-busy]="isImporting()" (click)="executeImport()">
+                    @if (isImporting()) {
+                        <fa-icon [icon]="faSpinner" animation="spin" />
+                    }
+                    <span jhiTranslate="entity.action.import"></span>
+                </button>
+            }
+        </div>
     </ng-template>
-</p-dialog>
+</tumaet-ui-dialog>

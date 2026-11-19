@@ -2,7 +2,7 @@
 id: e2e-testing-playwright
 title: E2E Testing with Playwright
 sidebar_label: E2E Testing with Playwright
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-17
 ---
 
 import Callout from '../../src/components/Callout/Callout';
@@ -17,7 +17,8 @@ import e2eCiPipelineSsd from './assets/playwright_ci_pipeline_ssd.png';
 The Playwright test suite contains system tests verifying the most important features of Artemis.
 System tests test the whole system and therefore require a complete deployment of Artemis first.
 CI selects affected modules, their declared consumer workflows and smoke tests for eligible internal pull
-requests. Integration-branch pushes and other full-run events retain complete E2E coverage.
+requests. Integration-branch pushes and other full-run events use the full suite, with queued
+`develop` pushes eligible to be superseded.
 
 Artemis uses GitHub Actions as its CI platform. E2E tests run on self-hosted runners because they require
 substantial compute resources, access to a PostgreSQL database, and a locally deployed Artemis instance.
@@ -75,7 +76,7 @@ Services stay running between test runs, so re-runs only take seconds.
 The script automatically kills any processes occupying ports 8080 (server), 9000 (client), and 7921 (local VC SSH),
 so you don't need to manually stop conflicting processes before running it.
 
-**Prerequisites:** Docker, Java 25+, Node.js 24+, pnpm (activate via `corepack enable`).
+**Prerequisites:** Docker, Java 25+, Node.js 26.13.1+, pnpm (install Corepack once with `npm install --global corepack`, then activate pnpm via `corepack enable`).
 
 **Architecture:**
 
@@ -692,6 +693,8 @@ capacity; omitting Phase 2 removes its additional stack setup as well as its tes
 
 **Non-PR runs use the full suite:** pushes to `develop`, `main`, and release branches, published releases,
 merge-group events when a merge queue is configured, and manual CI runs. These runs use one full-suite job.
+On busy `develop` days, a running suite finishes and GitHub checks queued revisions against the current
+branch tip before assigning an E2E runner. CI reports older queued revisions as superseded.
 Full-suite execution before every merge depends on which events the repository uses; a selective PR result
 alone makes no such guarantee.
 
@@ -974,15 +977,15 @@ an existing spec starts exercising another module, as well as when a new spec is
                 <strong>Test Exams</strong>
             </td>
             <td>Test Exam Creation & Deletion</td>
-            <td>Creating and deleting test exams</td>
+            <td>Creating and deleting practice exams</td>
         </tr>
         <tr>
             <td>Test Exam Management</td>
-            <td>Managing test exam configuration and settings</td>
+            <td>Managing practice exam configuration and settings</td>
         </tr>
         <tr>
             <td>Test Exam Participation</td>
-            <td>Participating in test exams as a student</td>
+            <td>Participating in practice exams as a student</td>
         </tr>
         <tr>
             <td>Test Exam Student Exams</td>
@@ -990,7 +993,7 @@ an existing spec starts exercising another module, as well as when a new spec is
         </tr>
         <tr>
             <td>Test Exam Test Runs</td>
-            <td>Creating and managing test runs within a test exam</td>
+            <td>Creating and managing test runs within a practice exam</td>
         </tr>
         <tr>
             <td>

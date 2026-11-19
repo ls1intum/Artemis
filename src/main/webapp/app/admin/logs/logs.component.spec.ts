@@ -6,6 +6,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
+import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 
 import { LogsComponent } from 'app/admin/logs/logs.component';
 import { LogsService } from 'app/admin/logs/logs.service';
@@ -228,5 +229,33 @@ describe('LogsComponent', () => {
 
         expect(comp.filteredAndOrderedLoggers()).toHaveLength(1);
         expect(comp.filteredAndOrderedLoggers()[0].name).toBe('TestLogger');
+    });
+    it('should sort ascending when a new column is selected via toggleSort', () => {
+        comp.updateSort('name', false);
+
+        comp.toggleSort('level');
+
+        expect(comp.orderProp()).toBe('level');
+        expect(comp.ascending()).toBe(true);
+    });
+
+    it('should flip the direction when the active column is toggled again', () => {
+        comp.toggleSort('name');
+        expect(comp.orderProp()).toBe('name');
+        expect(comp.ascending()).toBe(false);
+
+        comp.toggleSort('name');
+        expect(comp.ascending()).toBe(true);
+    });
+
+    it('should derive the sort icon and aria-sort value from the active sort', () => {
+        expect(comp['sortIcon']('name')).toBe(faSortUp);
+        expect(comp['ariaSort']('name')).toBe('ascending');
+        expect(comp['sortIcon']('level')).toBe(faSort);
+        expect(comp['ariaSort']('level')).toBe('none');
+
+        comp.toggleSort('name');
+        expect(comp['sortIcon']('name')).toBe(faSortDown);
+        expect(comp['ariaSort']('name')).toBe('descending');
     });
 });

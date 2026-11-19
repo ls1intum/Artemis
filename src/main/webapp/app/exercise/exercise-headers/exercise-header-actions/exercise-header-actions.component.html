@@ -10,7 +10,14 @@
     }
     @if (exercise().isAtLeastTutor) {
         <div class="inline">
-            <button severity="secondary" tumAetUiButton type="button" id="instructor-actions-dropdown" [tumAetUiMenuTrigger]="instructorActions">
+            <button
+                severity="secondary"
+                tumAetUiButton
+                type="button"
+                id="instructor-actions-dropdown"
+                [tumAetUiMenuTrigger]="instructorActions"
+                [attr.aria-label]="'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise().isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate"
+            >
                 <fa-icon [icon]="faWrench" />
                 <span class="hidden md:inline">
                     {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise().isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate }}</span
@@ -21,7 +28,7 @@
                     @for (instructorActionItem of instructorActionItems(); track instructorActionItem) {
                         <a [routerLink]="instructorActionItem.routerLink" tumAetUiMenuItem>
                             @if (instructorActionItem.icon) {
-                                <fa-icon [fixedWidth]="true" [icon]="instructorActionItem.icon" class="ms-2 me-3" />
+                                <fa-icon [fixedWidth]="true" [icon]="instructorActionItem.icon" class="ms-2 me-4!" />
                             }
                             <span [jhiTranslate]="instructorActionItem.translation"></span>
                         </a>
@@ -187,9 +194,9 @@
             <fa-icon [icon]="faRobot" class="me-2" />
             <h5 class="mb-0" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.title"></h5>
         </div>
-        <p class="mb-3" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.description"></p>
+        <p class="mb-4!" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.description"></p>
         <p
-            class="mb-3 text-text-secondary"
+            class="mb-4! text-text-secondary"
             [jhiTranslate]="'artemisApp.exercise.aiFeedbackPopover.selectedAiType'"
             [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | artemisTranslate) }"
         ></p>
