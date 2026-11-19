@@ -108,7 +108,13 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
     });
 
     it('commits the changed policies, the deleted ones and the staged version in one change', () => {
+        const second = { ...DOCUMENT, policyPath: 'Second.yaml' };
+        service.getPolicies.mockReturnValue(
+            of({ ...editor(), policies: [...editor().policies!, { policyPath: 'Second.yaml', document: second, assignedTests: ['de.example.StressTest'] }] }),
+        );
         create(configured(), false);
+        comp['askDeletePolicy'](comp.policies()[1]);
+        comp['deletePolicy']();
         const policy = comp.policies()[0];
         const assigned = withAssignment(policy, ['de.example.SortingTest#testBubbleSort', 'de.example.StressTest'], ['de.example.Helper']);
         comp['onPolicyChange']({ ...assigned, working: withRows(assigned.working!, 'packages', [{ packageName: 'org.apache.commons' }]) });
@@ -132,6 +138,7 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(change.policies[0].document.packages).toEqual([{ packageName: 'org.apache.commons' }]);
         expect(change.policies[1].previousPolicyPath).toBeUndefined();
         expect(change.policies[1].document.policyPath).toMatch(/\.yaml$/);
+        expect(change.removedPolicyPaths).toEqual(['Second.yaml']);
         expect(comp.totalChanges()).toBe(0);
         expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'committed', hash: 'bbbbbbb' }));
     });
@@ -145,6 +152,19 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
 
         expect(trigger.scrollIntoView).toHaveBeenCalledOnce();
         expect(document.activeElement).toBe(trigger);
+    });
+
+    it('does not stage a version before the policies are loaded, because their first load would drop it', () => {
+        const policies = new Subject<SecurityPolicyEditor>();
+        service.getPolicies.mockReturnValue(policies);
+        create(configured(), false);
+
+        comp['onVersionChange']('2.3.0');
+        expect(comp.stagedVersion()).toBeUndefined();
+
+        policies.next(editor());
+        comp['onVersionChange']('2.3.0');
+        expect(comp.stagedVersion()).toBe('2.3.0');
     });
 
     it('names one unsaved change in the singular and several in the plural', () => {
@@ -793,6 +813,24 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.reviewSummary()).toContain('review.basedOn');
         expect(comp.defaultCommitMessage()).toBe('artemisApp.programmingExercise.security.advanced.review.defaultMessage.other');
         expect(comp.otherTestsByPolicy().get(committed.id)).toEqual(new Map([['de.example.SortingTest#merge', expect.any(String)]]));
+    });
+
+    it('lists every test case that splitting a class releases, as the test cases are now', () => {
+        // testQuickSort was added after the split was made, e.g. before a reload kept the unsaved split.
+        service.getTestStructure.mockReturnValue(
+            of({ testClasses: [{ qualifiedName: 'de.example.SortingTest', testClass: true, testCases: ['bubble', 'merge', 'quick', 'off'], fixedCases: ['off'] }] }),
+        );
+        create(configured(), false);
+        comp['onPolicyChange'](withAssignment(comp.policies()[0], ['de.example.SortingTest#merge'], []));
+
+        comp['openReview']();
+
+        expect(service.getTestStructure).toHaveBeenCalledOnce();
+        expect(comp.reviewAssignments()).toEqual([
+            { sign: '+', entry: 'de.example.SortingTest#merge', file: 'SecurityPolicy.yaml' },
+            { sign: '−', entry: 'de.example.SortingTest#bubble', file: 'SecurityPolicy.yaml' },
+            { sign: '−', entry: 'de.example.SortingTest#quick', file: 'SecurityPolicy.yaml' },
+        ]);
     });
 
     it('names the problems of a policy without a name, with an invalid hidden period and of two policies in one file', () => {

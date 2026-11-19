@@ -90,6 +90,7 @@
                                 class="sp-mono"
                                 [ngModel]="argumentsText()"
                                 (ngModelChange)="argumentsText.set($event)"
+                                [attr.aria-invalid]="invalid === 'arguments' ? true : null"
                                 data-testid="security-permission-arguments"
                             />
                         </div>

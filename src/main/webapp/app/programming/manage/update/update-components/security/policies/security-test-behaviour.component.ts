@@ -174,32 +174,42 @@ export class SecurityTestBehaviourComponent {
     }
 
     protected onHiddenDateChange(field: 'hiddenFrom' | 'hiddenUntil', event: Event): void {
-        this.setHiddenDate(field, (event.target as HTMLInputElement).value);
+        const input = event.target as HTMLInputElement;
+        if (!this.setHiddenDate(field, input.value)) {
+            // A refused date, e.g. a cleared end, would otherwise stay on screen while the stored one is saved.
+            input.value = field === 'hiddenFrom' ? this.hiddenFromInput() : this.hiddenUntilInput();
+        }
     }
 
-    private setHiddenDate(field: 'hiddenFrom' | 'hiddenUntil', value: string): void {
+    /** @returns whether the date was applied; an invalid date and a cleared end are refused, because the hidden period needs an end */
+    private setHiddenDate(field: 'hiddenFrom' | 'hiddenUntil', value: string): boolean {
         const hidden = this.hiddenTests();
         const date = dayjs(value, INPUT_DATE_FORMAT);
         if (!hidden || (value && !date.isValid())) {
-            return;
+            return false;
         }
         if (field === 'hiddenFrom') {
             this.update('hiddenTests', cloneWith(hidden, { hiddenFrom: value ? formatAresDate(date) : undefined }));
-        } else if (value) {
-            this.update('hiddenTests', cloneWith(hidden, { hiddenUntil: formatAresDate(date) }));
+            return true;
         }
+        if (!value) {
+            return false;
+        }
+        this.update('hiddenTests', cloneWith(hidden, { hiddenUntil: formatAresDate(date) }));
+        return true;
     }
 
     protected setStrictTimeout(enabled: boolean): void {
         this.update('strictTimeout', enabled ? (this.strictTimeout() ?? deepClone(DEFAULT_TIMEOUT)) : undefined);
     }
 
-    protected setTimeoutField(field: 'timeout' | 'terminationGrace', value: string | number): void {
+    protected setTimeoutField(field: 'timeout' | 'terminationGrace', value: string | number | null): void {
         const current = this.strictTimeout();
         if (!current) {
             return;
         }
-        const parsed = String(value).trim() === '' ? undefined : Number(value);
+        // A cleared number input emits null.
+        const parsed = value === null || String(value).trim() === '' ? undefined : Number(value);
         if (field === 'timeout') {
             if (parsed !== undefined && Number.isInteger(parsed) && parsed > 0) {
                 this.update('strictTimeout', cloneWith(current, { timeout: parsed }));
@@ -221,6 +231,18 @@ export class SecurityTestBehaviourComponent {
             this.update('outputMirroring', { mirrored: true, maximumCharacters: this.outputMirroring()?.maximumCharacters ?? DEFAULT_MAXIMUM_CHARACTERS });
         } else {
             this.update('outputMirroring', this.offValue('outputMirroring'));
+        }
+    }
+
+    /**
+     * Shows the stored value again when a number field is left, so that a refused input, e.g. 0, 1.5 or a cleared required field, does not stay on screen
+     * while the stored value is saved.
+     */
+    protected showStored(event: Event, stored: number | undefined): void {
+        const input = event.target as HTMLInputElement;
+        const shown = stored === undefined ? '' : String(stored);
+        if (input.value !== shown) {
+            input.value = shown;
         }
     }
 

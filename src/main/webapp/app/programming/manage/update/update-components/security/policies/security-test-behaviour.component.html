@@ -213,6 +213,7 @@
                         [ngModel]="shownTimeout().timeout"
                         [ngModelOptions]="{ standalone: true }"
                         (ngModelChange)="setTimeoutField('timeout', $event)"
+                        (blur)="showStored($event, shownTimeout().timeout)"
                         [disabled]="disabled() || !strictTimeout()"
                         data-testid="security-behaviour-time-limit"
                     />
@@ -249,6 +250,7 @@
                         [ngModel]="shownTimeout().terminationGrace ?? ''"
                         [ngModelOptions]="{ standalone: true }"
                         (ngModelChange)="setTimeoutField('terminationGrace', $event)"
+                        (blur)="showStored($event, shownTimeout().terminationGrace)"
                         [disabled]="disabled() || !strictTimeout()"
                         data-testid="security-behaviour-grace"
                     />
@@ -303,6 +305,7 @@
                     [ngModel]="shownMaximumCharacters()"
                     [ngModelOptions]="{ standalone: true }"
                     (ngModelChange)="setMaximumCharacters($event)"
+                    (blur)="showStored($event, shownMaximumCharacters())"
                     [disabled]="disabled() || !outputMirroring()?.mirrored"
                     data-testid="security-behaviour-max-chars"
                 />

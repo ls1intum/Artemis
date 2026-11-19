@@ -120,7 +120,7 @@
                     optionDisabled="incompatible"
                     [ngModel]="version()"
                     [ngModelOptions]="{ standalone: true }"
-                    [disabled]="locked() || state() !== 'configured'"
+                    [disabled]="locked() || versionLocked() || state() !== 'configured'"
                     (selectionChange)="onVersion($event)"
                     data-testid="security-advanced-version"
                 />

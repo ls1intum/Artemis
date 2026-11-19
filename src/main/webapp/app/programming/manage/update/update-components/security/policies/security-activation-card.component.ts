@@ -54,6 +54,8 @@ export class SecurityActivationCardComponent {
     readonly versionOptions = input<SecurityFrameworkVersionOption[]>([]);
     /** The version the select shows: the staged one, or the pinned one. */
     readonly version = input<string | undefined>(undefined);
+    /** Whether only the version select is locked, e.g. while the policies whose version it stages are not loaded yet. */
+    readonly versionLocked = input(false);
     /** Whether the version differs from the pinned one and is committed with the next commit. */
     readonly versionUncommitted = input(false);
 

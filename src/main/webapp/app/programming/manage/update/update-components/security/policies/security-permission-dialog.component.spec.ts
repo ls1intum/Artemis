@@ -201,6 +201,21 @@ describe('SecurityPermissionDialogComponent', () => {
         expect(comp.browsedEntries()).toEqual([]);
     });
 
+    it('marks the arguments, not the command, as invalid when the arguments have an unclosed quote', () => {
+        open('commands');
+        comp.command.set('python3');
+        comp.argumentsText.set('run.py "fast');
+        expect(comp.problem()).toBe(PROBLEM + 'argumentsQuote');
+
+        handlers.save();
+        fixture.detectChanges();
+
+        const document = fixture.nativeElement.ownerDocument as Document;
+        expect(saved).toEqual([]);
+        expect(document.querySelector('[data-testid="security-permission-arguments"]')?.getAttribute('aria-invalid')).toBe('true');
+        expect(document.querySelector('[data-testid="security-permission-command"]')?.getAttribute('aria-invalid')).toBeNull();
+    });
+
     it('splits lists and arguments', () => {
         expect(splitList(' a , ,b ')).toEqual(['a', 'b']);
         expect(splitList(' "a,b.csv" , " c " ,d e, "x""y"')).toEqual(['a,b.csv', ' c ', 'd e', 'x"y']);

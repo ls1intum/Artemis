@@ -13,7 +13,7 @@ type Handlers = {
     setHideTests(hidden: boolean): void;
     onHiddenDateChange(field: 'hiddenFrom' | 'hiddenUntil', event: Event): void;
     setStrictTimeout(enabled: boolean): void;
-    setTimeoutField(field: 'timeout' | 'terminationGrace', value: string | number): void;
+    setTimeoutField(field: 'timeout' | 'terminationGrace', value: string | number | null): void;
     setTimeoutUnit(field: 'timeUnit' | 'terminationGraceUnit', unit: unknown): void;
     setMirrorOutput(mirrored: boolean): void;
     setMaximumCharacters(value: string | number | null): void;
@@ -126,5 +126,51 @@ describe('SecurityTestBehaviourComponent', () => {
         expect(comp.hiddenPeriodInvalid()).toBe(true);
         handlers.setHideTests(false);
         expect(emitted.at(-1)).toBeUndefined();
+    });
+
+    it('shows the stored end of the hidden period again when the field is cleared', () => {
+        handlers.setHideTests(true);
+        handlers.onHiddenDateChange('hiddenUntil', { target: { value: '2026-12-24T09:00' } } as unknown as Event);
+        const count = emitted.length;
+        const input = { value: '' };
+
+        handlers.onHiddenDateChange('hiddenUntil', { target: input } as unknown as Event);
+
+        expect(emitted).toHaveLength(count);
+        expect(input.value).toBe('2026-12-24T09:00');
+        expect(comp.hiddenUntilInput()).toBe('2026-12-24T09:00');
+    });
+
+    it('removes the grace period when its field is cleared instead of storing 0', () => {
+        handlers.setStrictTimeout(true);
+
+        handlers.setTimeoutField('terminationGrace', null);
+
+        expect(emitted.at(-1)?.strictTimeout).toEqual({ timeout: 5, timeUnit: 'SECONDS', terminationGraceUnit: 'SECONDS' });
+        handlers.setTimeoutField('terminationGrace', 2);
+        expect(emitted.at(-1)?.strictTimeout?.terminationGrace).toBe(2);
+    });
+
+    it('shows the stored time limit and maximum again when a refused value leaves the field', () => {
+        handlers.onTabChange('timeout');
+        handlers.setStrictTimeout(true);
+        fixture.detectChanges();
+        const timeLimit: HTMLInputElement = fixture.nativeElement.querySelector('[data-testid="security-behaviour-time-limit"]');
+        timeLimit.value = '0';
+        timeLimit.dispatchEvent(new Event('input'));
+        timeLimit.dispatchEvent(new Event('blur'));
+
+        expect(emitted.at(-1)?.strictTimeout?.timeout).toBe(5);
+        expect(timeLimit.value).toBe('5');
+
+        handlers.onTabChange('output');
+        handlers.setMirrorOutput(true);
+        fixture.detectChanges();
+        const maximum: HTMLInputElement = fixture.nativeElement.querySelector('[data-testid="security-behaviour-max-chars"]');
+        maximum.value = '1.5';
+        maximum.dispatchEvent(new Event('input'));
+        maximum.dispatchEvent(new Event('blur'));
+
+        expect(maximum.value).toBe(String(comp.shownMaximumCharacters()));
     });
 });

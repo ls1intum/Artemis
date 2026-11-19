@@ -230,6 +230,9 @@ export class SecurityPermissionDialogComponent {
         if (problem.endsWith('threadCount')) {
             return 'maxThreads';
         }
+        if (problem.endsWith('argumentsQuote')) {
+            return 'arguments';
+        }
         return 'first';
     });
 

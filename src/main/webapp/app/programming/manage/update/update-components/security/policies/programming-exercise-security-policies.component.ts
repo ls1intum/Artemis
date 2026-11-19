@@ -59,6 +59,7 @@ import {
 import {
     EditorPolicy,
     PolicyChangeSummary,
+    TEST_CASE_SEPARATOR,
     classesOfTests,
     committedName,
     countKey,
@@ -71,6 +72,7 @@ import {
     policyPathFor,
     rebasePolicy,
     summarizeChanges,
+    testClassOf,
     withAssignment,
 } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 
@@ -411,11 +413,12 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     /** The test case assignments the commit changes. */
     readonly reviewAssignments = computed<AssignmentChange[]>(() => {
         const changes: AssignmentChange[] = [];
+        const structure = this.structure();
         for (const policy of this.policies()) {
             const file = fileNameOf(this.paths().get(policy.id) ?? '');
             const { added, removed } = listChanges(policy.baseTests, policy.tests);
             added.forEach((entry) => changes.push({ sign: '+', entry, file }));
-            removed.forEach((entry) => changes.push({ sign: '−', entry, file }));
+            removed.forEach((entry) => releasedEntries(entry, policy.tests, structure).forEach((released) => changes.push({ sign: '−', entry: released, file })));
         }
         this.deletedPolicies().forEach((policy) => policy.baseTests.forEach((entry) => changes.push({ sign: '−', entry, file: fileNameOf(policy.file?.policyPath ?? '') })));
         return changes;
@@ -740,6 +743,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     protected onVersionChange(version: string): void {
+        // The first load of the policies replaces every unsaved change, so a version staged before it would be dropped without notice.
+        if (!this.editor()) {
+            return;
+        }
         this.stagedVersion.set(version === this.pinnedVersion() ? undefined : version);
     }
 
@@ -964,6 +971,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     protected openReview(): void {
         if (!this.totalChanges()) {
             return;
+        }
+        // A class assigned as a whole that is split is listed with each test case it releases, so the review reads them as they are now.
+        if (this.policies().some((policy) => policy.tests.some((entry) => entry.includes(TEST_CASE_SEPARATOR) && policy.baseTests.includes(testClassOf(entry))))) {
+            this.requestStructure();
         }
         this.reviewOpen.set(true);
         this.previewReview();
@@ -1286,6 +1297,26 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         }
         return body?.title ?? body?.detail ?? this.translateService.instant(`${PREFIX}.banner.failedGeneric`);
     }
+}
+
+/**
+ * @returns the entries a policy gives up with a removed entry: for a class assigned as a whole of which the policy keeps only some test cases, every other
+ *          test case of the class as it is now, so the review names each test case the split releases, also one added after the split was made; otherwise,
+ *          or while the test cases are not loaded, the entry itself
+ */
+function releasedEntries(entry: string, tests: readonly string[], structure: SecurityTestStructure | undefined): string[] {
+    if (entry.includes(TEST_CASE_SEPARATOR) || !tests.some((test) => test.includes(TEST_CASE_SEPARATOR) && testClassOf(test) === entry)) {
+        return [entry];
+    }
+    const testClass = structure?.testClasses?.find((candidate) => candidate.qualifiedName === entry);
+    if (!testClass?.testCases?.length) {
+        return [entry];
+    }
+    // A test case whose own annotation switches the sandbox off keeps it, so the split does not release it.
+    return testClass.testCases
+        .filter((testCase) => !testClass.fixedCases?.includes(testCase))
+        .map((testCase) => entry + TEST_CASE_SEPARATOR + testCase)
+        .filter((testCase) => !tests.includes(testCase));
 }
 
 /** Whether the server pushed the change but could not process it, e.g. start the builds; repeating the request resumes the processing. */
