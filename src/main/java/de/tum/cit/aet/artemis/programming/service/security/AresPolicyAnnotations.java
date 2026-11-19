@@ -34,7 +34,10 @@ final class AresPolicyAnnotations {
      */
     static final String END_OF_IDENTIFIER = "(?!\\p{javaJavaIdentifierPart})";
 
-    private static final Pattern POLICY_ANNOTATION_NAME = Pattern.compile("@(de\\.tum\\.cit\\.ase\\.ares\\.api\\.)?Policy" + END_OF_IDENTIFIER);
+    /** The {@code @} of an annotation; Java allows whitespace and comments, which the masked source shows as whitespace, before its name. */
+    static final String ANNOTATION_START = "@\\s*+";
+
+    private static final Pattern POLICY_ANNOTATION_NAME = Pattern.compile(ANNOTATION_START + "(" + packagePrefix("de.tum.cit.ase.ares.api") + ")?Policy" + END_OF_IDENTIFIER);
 
     private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\p{javaJavaIdentifierPart}.]+)\\s*;");
 
@@ -76,12 +79,13 @@ final class AresPolicyAnnotations {
     /**
      * One Ares {@code @Policy} annotation in a source file.
      *
-     * @param start     offset of the {@code @}
-     * @param end       offset after the annotation, including its argument list
-     * @param name      the annotation as written, e.g. {@code @Policy}
-     * @param arguments the arguments by name, in their order
+     * @param start           offset of the {@code @}
+     * @param end             offset after the annotation, including its argument list
+     * @param name            the annotation as written, e.g. {@code @Policy}
+     * @param beforeArguments the text between the name and the argument list as written, e.g. a comment; empty if there is no argument list
+     * @param arguments       the arguments by name, in their order
      */
-    record Annotation(int start, int end, String name, Map<String, Argument> arguments) {
+    record Annotation(int start, int end, String name, String beforeArguments, Map<String, Argument> arguments) {
 
         /**
          * Whether the arguments that decide the enforcement are written in a form this class evaluates. Only then do {@link #isActivated()} and
@@ -145,6 +149,18 @@ final class AresPolicyAnnotations {
      * @return the path in normalized form with forward slashes, e.g. {@code SecurityPolicy.yaml} for {@code ./SecurityPolicy.yaml}; the path as written
      *         if it is not a valid path
      */
+    /**
+     * @param packageName a package name
+     * @return a pattern of the package and the dot after it as Java allows them to be written in the masked source: whitespace may surround each dot
+     */
+    static String packagePrefix(String packageName) {
+        StringJoiner pattern = new StringJoiner("\\s*+\\.\\s*+", "", "\\s*+\\.\\s*+");
+        for (String segment : packageName.split("\\.")) {
+            pattern.add(Pattern.quote(segment));
+        }
+        return pattern.toString();
+    }
+
     private static String normalizePath(String path) {
         try {
             String normalized = Path.of(path).normalize().toString().replace('\\', '/');
@@ -189,9 +205,10 @@ final class AresPolicyAnnotations {
             arguments.put(ACTIVATED_ARGUMENT, new Argument(true, ACTIVATED_ARGUMENT + " = " + FALSE_LITERAL, FALSE_LITERAL));
         }
         if (arguments.isEmpty()) {
-            return annotation.name();
+            // A comment before the argument list stays, and so do its parentheses, because a line comment would otherwise swallow the code after them.
+            return annotation.beforeArguments().isBlank() ? annotation.name() : annotation.name() + annotation.beforeArguments() + "()";
         }
-        StringJoiner rendered = new StringJoiner(", ", annotation.name() + "(", ")");
+        StringJoiner rendered = new StringJoiner(", ", annotation.name() + annotation.beforeArguments() + "(", ")");
         arguments.values().forEach(argument -> rendered.add(argument.render()));
         return rendered.toString();
     }
@@ -226,15 +243,17 @@ final class AresPolicyAnnotations {
         int end = nameEnd;
         int open = skipWhitespace(masked, end);
         Map<String, Argument> arguments = new LinkedHashMap<>();
+        String beforeArguments = "";
         if (open < masked.length() && masked.charAt(open) == '(') {
             int close = matchingParenthesis(masked, open);
             if (close < 0) {
                 return Optional.empty();
             }
             arguments = parseArguments(sources, open + 1, close);
+            beforeArguments = sources.original().substring(nameEnd, open);
             end = close + 1;
         }
-        return Optional.of(new Annotation(nameStart, end, sources.original().substring(nameStart, nameEnd), arguments));
+        return Optional.of(new Annotation(nameStart, end, sources.original().substring(nameStart, nameEnd), beforeArguments, arguments));
     }
 
     /**
@@ -331,7 +350,7 @@ final class AresPolicyAnnotations {
     /**
      * @return the offset of the parenthesis that closes the one at {@code open}, or -1 if there is none
      */
-    private static int matchingParenthesis(String masked, int open) {
+    static int matchingParenthesis(String masked, int open) {
         return matchingBracket(masked, open, '(', ')');
     }
 
@@ -448,7 +467,7 @@ final class AresPolicyAnnotations {
         while (index < source.length()) {
             char character = source.charAt(index);
             if (source.startsWith("//", index)) {
-                index = maskUntil(source, masked, index, source.indexOf('\n', index), 0);
+                index = maskUntil(source, masked, index, lineEnd(source, index), 0);
             }
             else if (source.startsWith("/*", index)) {
                 int close = source.indexOf("*/", index + 2);
@@ -471,12 +490,29 @@ final class AresPolicyAnnotations {
     }
 
     /**
+     * @return the offset of the line terminator that ends the line at the offset, a carriage return or a line feed (JLS 3.4); -1 if it is the last line
+     */
+    private static int lineEnd(String source, int from) {
+        for (int index = from; index < source.length(); index++) {
+            if (isLineTerminator(source.charAt(index))) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    private static boolean isLineTerminator(char character) {
+        return character == '\n' || character == '\r';
+    }
+
+    /**
      * Masks the source from {@code from} up to {@code to} (exclusive, or the end of the source if negative) and appends {@code keep} characters unmasked.
      */
     private static int maskUntil(String source, StringBuilder masked, int from, int to, int keep) {
         int end = to < 0 ? source.length() : to;
         for (int index = from; index < end; index++) {
-            masked.append(source.charAt(index) == '\n' ? '\n' : ' ');
+            char character = source.charAt(index);
+            masked.append(isLineTerminator(character) ? character : ' ');
         }
         return end + keep;
     }
@@ -507,6 +543,6 @@ final class AresPolicyAnnotations {
     }
 
     private static void appendLiteralCharacter(StringBuilder masked, char character, boolean maskContent) {
-        masked.append(!maskContent || character == '\n' ? character : ' ');
+        masked.append(!maskContent || isLineTerminator(character) ? character : ' ');
     }
 }

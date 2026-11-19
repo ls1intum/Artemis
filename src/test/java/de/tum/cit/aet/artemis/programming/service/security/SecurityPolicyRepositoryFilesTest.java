@@ -372,7 +372,8 @@ class SecurityPolicyRepositoryFilesTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "", "@org.junit.jupiter.api.extension.ExtendWith(de.tum.cit.ase.ares.api.jupiter.JupiterSecurityExtension.class)",
-            "@de.tum.cit.ase.ares.api.jupiter.JupiterAresTest", "@Public$Tag", "@PublicÜ", "@de.tum.cit.ase.ares.api.jupiter.Public$Tag" })
+            "@de.tum.cit.ase.ares.api.jupiter.JupiterAresTest", "@Public$Tag", "@PublicÜ", "@de.tum.cit.ase.ares.api.jupiter.Public$Tag",
+            "@ ExtendWith({ Other.class, de.tum.cit.ase.ares.api.jupiter.JupiterSecurityExtension.class })" })
     void aTestClassThatDoesNotRegisterAresThroughItsMarkersIsUnsupported(String registration) throws IOException {
         writeBuildFile();
         writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");
@@ -390,6 +391,42 @@ class SecurityPolicyRepositoryFilesTest {
                 .replace("@Test\n", "@Test\n    " + annotation + "\n"));
 
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES, "de.example.OtherTest");
+    }
+
+    @Test
+    void aClassLiteralOfTheSecurityExtensionOutsideExtendWithRegistersNothing() throws IOException {
+        writeBuildFile();
+        String extensionField = "    private static final Class<?> EXTENSION = de.tum.cit.ase.ares.api.jupiter.JupiterSecurityExtension.class;\n\n";
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n", extensionField + "    @Test\n"));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
+    }
+
+    @Test
+    void aHelperWhoseTestAnnotationIsImportedFromElsewhereIsNoTestClass() throws IOException {
+        writeBuildFile();
+        writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");
+        // @Test is example.metadata.Test here, so the helper has no JUnit test and needs neither Ares nor a policy.
+        writeSource("test/de/example/Helper.java", "package de.example;\n\nimport example.metadata.Test;\n\nclass Helper {\n\n    @Test\n    void describes() {\n    }\n}\n");
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
+    }
+
+    @Test
+    void annotationsWithWhitespaceAfterTheAtSignCount() throws IOException {
+        writeBuildFile();
+        String spaced = TEST_CLASS.formatted("de.example", "SortingTest").replace("@Public", "@ /* Ares */ Public").replace("    @Test", "    @ Test");
+        writeSource("test/de/example/SortingTest.java", spaced.replace("@de.tum.cit.ase.ares.api.Policy", "@ de.tum.cit.ase.ares.api.Policy"));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
+
+        // A qualified test annotation written with whitespace makes a test class too, which then needs a policy.
+        String withoutPolicy = TEST_CLASS.formatted("de.example", "OtherTest").replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n", "");
+        writeSource("test/de/example/OtherTest.java", withoutPolicy.replace("    @Test", "    @ org . junit.jupiter.api.Test"));
+
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY, "de.example.OtherTest");
     }
 
     @Test

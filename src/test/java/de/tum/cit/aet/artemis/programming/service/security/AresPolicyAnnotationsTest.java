@@ -27,7 +27,8 @@ class AresPolicyAnnotationsTest {
             "@de.tum.cit.ase.ares.api.Policy(value = \"a, b)\", withinPath = \"test\")", "@de.tum.cit.ase.ares.api.Policy(value = \"\"\"\n        x)\n        \"\"\")",
             "@de.tum.cit.ase.ares.api.Policy", "@de.tum.cit.ase.ares.api.Policy(/* policy file */ value = \"SecurityPolicy.yaml\")",
             "@de.tum.cit.ase.ares.api.Policy(value /* policy file */ = /* yaml */ \"SecurityPolicy.yaml\", /* scope */ withinPath = \"test\" /* tests */)",
-            "@de.tum.cit.ase.ares.api.Policy(// policy file\n        value = \"SecurityPolicy.yaml\")" })
+            "@de.tum.cit.ase.ares.api.Policy(// policy file\n        value = \"SecurityPolicy.yaml\")", "@ de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")",
+            "@/* Ares */ de . tum.cit.ase.ares.api.Policy", "@de.tum.cit.ase.ares.api.Policy /* course policy */ (value = \"SecurityPolicy.yaml\")" })
     void switchingOffAndOnRestoresTheAnnotationExactly(String annotation) {
         String original = source("", annotation);
 
@@ -36,6 +37,22 @@ class AresPolicyAnnotationsTest {
         assertThat(AresPolicyAnnotations.setActive(deactivated, false)).isEqualTo(deactivated);
 
         assertThat(AresPolicyAnnotations.setActive(deactivated, true)).isEqualTo(original);
+    }
+
+    @Test
+    void keepsACommentBeforeTheArgumentListWhenTheLastArgumentIsRemoved() {
+        String deactivated = source("", "@de.tum.cit.ase.ares.api.Policy // course policy\n(activated = false) @SuppressWarnings(\"unused\")");
+
+        // Without the parentheses, the line comment would swallow the annotation after them.
+        assertThat(AresPolicyAnnotations.setActive(deactivated, true)).contains("@de.tum.cit.ase.ares.api.Policy // course policy\n() @SuppressWarnings(\"unused\")");
+    }
+
+    @Test
+    void findsTheAnnotationBelowALineCommentInAFileWithCarriageReturnLineEndings() {
+        String source = "package de.example;\r\r// The policy of the sorting tests\r@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\rclass SortingTest {\r}\r";
+
+        assertThat(AresPolicyAnnotations.find(source)).singleElement().satisfies(annotation -> assertThat(annotation.policyPath()).contains("SecurityPolicy.yaml"));
+        assertThat(AresPolicyAnnotations.mask(source)).hasSameSizeAs(source).contains("\r@de.tum.cit.ase.ares.api.Policy(value = \"                   \")\r");
     }
 
     @Test
