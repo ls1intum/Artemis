@@ -71,6 +71,9 @@ const migratedModules = [
     'assessment',
     'atlas',
     'calendar',
+    'communication',
+    'core',
+    'course',
     'editor',
     'exam',
     'exercise',
@@ -96,7 +99,7 @@ const migratedModules = [
     'videosource',
 ];
 // Components that are migrated although the rest of their module is not. They get the same locks as a module.
-const migratedComponentFolders = ['core/alert', 'core/navbar/global-search/components/modal'];
+const migratedComponentFolders = [];
 const migratedFolders = (extension) => [...migratedModules, ...migratedComponentFolders].map((folder) => `src/main/webapp/app/${folder}/**/*.${extension}`);
 const legacyUiLibraryImportPattern = {
     group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
@@ -114,6 +117,7 @@ export default tseslint.config(
             '.idea/',
             '.jhipster/',
             '.venv/',
+            'bin/',
             'build/',
             'coverage/',
             'deployment/docker/',
@@ -761,24 +765,14 @@ export default tseslint.config(
         // forbidden in their templates. Add each module here once it is fully Bootstrap-free. See client-development.mdx
         // (### Styling).
         files: [
-            'src/main/webapp/app/course/request/**/*.html',
             'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.html',
             'src/main/webapp/app/shared-ui/user-import/**/*.html',
             'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.html',
             'src/main/webapp/app/shared-ui/delete-dialog/**/*.html',
-            'src/main/webapp/app/core/about-us/**/*.html',
-            'src/main/webapp/app/core/feature-overview/**/*.html',
-            'src/main/webapp/app/core/layouts/footer/**/*.html',
-            'src/main/webapp/app/course/overview/setup-passkey-modal/**/*.html',
             'src/main/webapp/app/shared-ui/profile-picture/**/*.html',
-            'src/main/webapp/app/course/overview/course-statistics/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
             'src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.html',
-            'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
-            'src/main/webapp/app/course/manage/update/**/*.html',
             'src/main/webapp/app/quiz/manage/question-reevaluation-actions/**/*.html',
-            'src/main/webapp/app/communication/saved-posting-banner/**/*.html',
-            'src/main/webapp/app/communication/posting-create-edit-modal/post-create-edit-modal/**/*.html',
             'src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
             'src/main/webapp/app/programming/manage/detail/**/*.html',
@@ -795,7 +789,8 @@ export default tseslint.config(
             'src/main/webapp/app/shared-ui/components/checklist-check/**/*.html',
             'src/main/webapp/app/shared-ui/information-box/**/*.html',
             'src/main/webapp/app/shared-ui/detail-overview-list/detail-overview-list.component.html',
-            'src/main/webapp/app/course/shared/course-sidebar-toggle-button/**/*.html',
+            // The application shell itself; its providers in app.config.ts and app.main.ts follow with the last module.
+            'src/main/webapp/app/app.component.html',
             ...migratedFolders('html'),
         ],
         languageOptions: {
@@ -815,12 +810,7 @@ export default tseslint.config(
         // are laid out with Tailwind and must say which value they mean. Add a folder
         // here once it is scanned by tailwind.css (`migration-source-coverage` checks this) and its findings are fixed.
         // See client-development.mdx (### Styling).
-        files: [
-            'src/main/webapp/app/course/overview/course-statistics/**/*.html',
-            'src/main/webapp/app/course/manage/athena-settings-update/**/*.html',
-            'src/main/webapp/app/course/manage/control-center/about-athena-modal/**/*.html',
-            ...migratedFolders('html'),
-        ],
+        files: ['src/main/webapp/app/app.component.html', ...migratedFolders('html')],
         languageOptions: {
             parser: angularTemplateParser,
         },

@@ -38,11 +38,16 @@
         @if (attachedNow()) {
             <tumaet-ui-message severity="success" [text]="'artemisApp.tumLiveUpload.attached' | artemisTranslate" />
         }
-        @if (transferError() === 'network') {
-            <!-- Also an expired or used upload link: TUM.Live answers it without CORS headers, so the browser reports no more than a network error. -->
+        @let failure = transferError();
+        @let translationKey = failure?.translationKey;
+        @if (failure?.status === 0) {
             <tumaet-ui-message severity="error" [text]="'artemisApp.tumLiveUpload.unreachable' | artemisTranslate" />
-        } @else if (transferError()) {
-            <tumaet-ui-message severity="error" [text]="'artemisApp.tumLiveUpload.transferFailed' | artemisTranslate: { reason: transferError() }" />
+        } @else if (translationKey) {
+            <tumaet-ui-message severity="error" [text]="translationKey | artemisTranslate" />
+        } @else if (failure?.status === 409) {
+            <tumaet-ui-message severity="error" [text]="failure.message" />
+        } @else if (failure) {
+            <tumaet-ui-message severity="error" [text]="'artemisApp.tumLiveUpload.transferFailed' | artemisTranslate: { reason: failure.message }" />
         } @else if (current.lastError && !current.pendingRef) {
             <tumaet-ui-message severity="warn" [text]="'artemisApp.tumLiveUpload.lastError' | artemisTranslate: { reason: current.lastError }" />
         }

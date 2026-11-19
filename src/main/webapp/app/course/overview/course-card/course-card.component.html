@@ -1,4 +1,4 @@
-<div class="card rounded-4 flex-grow-1">
+<div class="course-card relative flex min-w-0 grow flex-col rounded-lg">
     <jhi-course-card-header
         [courseId]="course().id!"
         [courseTitle]="course().title!"
@@ -7,16 +7,16 @@
         [archiveMode]="false"
         [courseNotificationCount]="courseNotificationCount()"
     />
-    <div class="card-body rounded-bottom-4 border-lightgrey pt-3">
-        <a class="stretched-link" [routerLink]="['/courses', course().id!]"></a>
-        <div class="d-flex flex-column justify-content-between gap-1">
+    <div class="course-card-body flex-auto rounded-b-lg p-4!">
+        <a class="cover-link" [routerLink]="['/courses', course().id!]"></a>
+        <div class="flex flex-col justify-between gap-1">
             <div class="information-box-wrapper ms-1">
-                <div class="row mt-1">
-                    <div class="col-7" [ngClass]="{ 'col-12': !(exerciseCount() && (totalReachableScore() || totalAbsoluteScore())) }">
+                <div class="-mx-2 mt-1 flex flex-wrap">
+                    <div class="max-w-full shrink-0 px-2" [ngClass]="exerciseCount() && (totalReachableScore() || totalAbsoluteScore()) ? 'w-7/12' : 'w-full'">
                         @if (exerciseCount() && (totalReachableScore() || totalAbsoluteScore())) {
-                            <div class="align-self-center">
-                                <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
-                                <div class="fw-bold">
+                            <div class="self-center">
+                                <div class="font-bold text-text-secondary" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
+                                <div class="font-bold">
                                     <div
                                         jhiTranslate="artemisApp.studentDashboard.points"
                                         [translateValues]="{
@@ -27,25 +27,25 @@
                                 </div>
                             </div>
                         } @else {
-                            <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
-                            <div class="fw-bold">
+                            <div class="font-bold text-text-secondary" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
+                            <div class="font-bold">
                                 <span jhiTranslate="artemisApp.studentDashboard.noStatistics"></span>
                             </div>
                         }
                         <hr />
-                        <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel"></div>
+                        <div class="font-bold text-text-secondary" jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel"></div>
                         @if (nextRelevantExercise() && nextRelevantExercise()!.id && course().id) {
-                            <a class="fw-bold btn-wrapper exercise-title" [routerLink]="['/courses', course().id, 'exercises', nextRelevantExercise()!.id]">
+                            <a class="raised-link exercise-title font-bold" [routerLink]="['/courses', course().id, 'exercises', nextRelevantExercise()!.id]">
                                 {{ nextRelevantExercise()!.title }}
                             </a>
                         } @else {
-                            <div class="fw-bold mb-3">
+                            <div class="mb-4! font-bold">
                                 <span jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel"></span>
                             </div>
                         }
                     </div>
                     @if (exerciseCount() && (totalReachableScore() || totalAbsoluteScore())) {
-                        <div class="align-self-center chart-container col-5 mb-2">
+                        <div class="chart-container mb-2 w-5/12 max-w-full shrink-0 self-center px-2">
                             <div class="chart-text">
                                 <h4 class="mb-0">{{ totalRelativeScore() }}%</h4>
                             </div>
@@ -66,8 +66,8 @@
                 </div>
             </div>
             @if (course().isAtLeastTutor && course().id) {
-                <div class="d-flex justify-content-start align-items-center ms-1 mt-1">
-                    <a class="fw-bold btn-wrapper" [routerLink]="['/course-management', course().id]">
+                <div class="ms-1 mt-1 flex items-center justify-start">
+                    <a class="raised-link font-bold" [routerLink]="['/course-management', course().id]">
                         <span jhiTranslate="artemisApp.studentDashboard.cardManageCourse"></span>
                         <fa-icon class="ms-1" [icon]="faArrowRight" />
                     </a>

@@ -1,6 +1,3 @@
-@import '../../../../../../../node_modules/bootstrap/scss/functions';
-@import '../../../../../../../node_modules/bootstrap/scss/variables';
-@import '../../../../../../../node_modules/bootstrap/scss/mixins';
 @import '../../../../content/scss/artemis-mixins';
 
 .scrollable-communication-content {
@@ -24,7 +21,7 @@
 
 .message-input {
     border-top: 1px solid;
-    border-color: var(--bs-border-color);
+    border-color: var(--tumaet-ui-border-color);
 }
 
 /*
@@ -90,11 +87,11 @@
 
 @keyframes highlight-post-fade {
     0% {
-        background-color: rgba($primary, 0.25);
+        background-color: color-mix(in srgb, var(--primary) 25%, transparent);
     }
 
     70% {
-        background-color: rgba($primary, 0.15);
+        background-color: color-mix(in srgb, var(--primary) 15%, transparent);
     }
 
     100% {
@@ -102,7 +99,8 @@
     }
 }
 
-@include media-breakpoint-down(sm) {
+// Phones: below the 576px breakpoint the JS mobile checks (MOBILE_SIDEBAR_BREAKPOINT) use as well.
+@media (max-width: 575.98px) {
     .communication-content-sidebar {
         position: absolute;
         width: 100%;

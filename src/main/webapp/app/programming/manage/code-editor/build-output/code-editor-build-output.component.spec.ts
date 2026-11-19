@@ -10,6 +10,7 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { BuildLogEntryArray } from 'app/localci/shared/entities/build-log.model';
 import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { MockCodeEditorBuildLogService } from 'test/helpers/mocks/service/mock-code-editor-build-log.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
@@ -33,7 +34,7 @@ describe('CodeEditorBuildOutputComponent', () => {
     let debugElement: DebugElement;
     let codeEditorBuildLogService: CodeEditorBuildLogService;
     let participationWebsocketService: ParticipationWebsocketService;
-    let resultService: ResultService;
+    let resultApi: ResultApi;
     let subscribeForLatestResultOfParticipationStub: ReturnType<typeof vi.spyOn>;
     let getBuildLogsStub: ReturnType<typeof vi.spyOn>;
     let getFeedbackDetailsForResultStub: ReturnType<typeof vi.spyOn>;
@@ -99,10 +100,10 @@ describe('CodeEditorBuildOutputComponent', () => {
         debugElement = fixture.debugElement;
         codeEditorBuildLogService = TestBed.inject(CodeEditorBuildLogService);
         participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
-        resultService = TestBed.inject(ResultService);
+        resultApi = TestBed.inject(ResultApi);
         subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
         getBuildLogsStub = vi.spyOn(codeEditorBuildLogService, 'getBuildLogs');
-        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult');
+        getFeedbackDetailsForResultStub = vi.spyOn(resultApi, 'getResultDetails');
         vi.spyOn(TestBed.inject(CodeEditorSubmissionService), 'getBuildingState').mockReturnValue(of());
     });
 
@@ -132,14 +133,14 @@ describe('CodeEditorBuildOutputComponent', () => {
         const participation = { id: 1, submissions: [submission] } as Participation;
 
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
-        getFeedbackDetailsForResultStub.mockReturnValue(of({ body: [] }));
+        getFeedbackDetailsForResultStub.mockReturnValue(of([]));
         getBuildLogsStub.mockReturnValue(of(buildLogs));
 
         fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id, result);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id, result.id);
         expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(1);
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true);
@@ -198,7 +199,7 @@ describe('CodeEditorBuildOutputComponent', () => {
     it('does not re-fetch build logs when the participation object is replaced with the same id and latest result (prevents the constructor-effect buildlogs loop, #12976)', () => {
         const makeParticipation = (resultId: number) => ({ id: 1, submissions: [{ id: 1, results: [{ id: resultId }] }] }) as Participation;
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
-        getFeedbackDetailsForResultStub.mockReturnValue(of({ body: [] }));
+        getFeedbackDetailsForResultStub.mockReturnValue(of([]));
         getBuildLogsStub.mockReturnValue(of(buildLogs));
 
         fixture.componentRef.setInput('participation', makeParticipation(5));
@@ -637,11 +638,11 @@ describe('CodeEditorBuildOutputComponent', () => {
         result.submission = submission;
         const participation = { id: 1, submissions: [submission] } as Participation;
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
-        getFeedbackDetailsForResultStub.mockReturnValue(of({ ...result, feedbacks: [] }));
+        getFeedbackDetailsForResultStub.mockReturnValue(of([]));
         fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, result);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, result.id);
         expect(getBuildLogsStub).not.toHaveBeenCalled();
         expect(comp.rawBuildLogs()).toStrictEqual(new BuildLogEntryArray());
 
@@ -739,7 +740,7 @@ describe('CodeEditorBuildOutputComponent', () => {
             detailText: JSON.stringify(staticCodeAnalysisIssue),
         } as Feedback;
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
-        getFeedbackDetailsForResultStub.mockReturnValue(of({ body: [feedback] }));
+        getFeedbackDetailsForResultStub.mockReturnValue(of([feedback]));
         let emittedAnnotations: Annotation[] = [];
         comp.onAnnotations.subscribe((emitted: any) => {
             emittedAnnotations = emitted;

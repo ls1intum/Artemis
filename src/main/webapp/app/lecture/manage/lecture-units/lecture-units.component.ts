@@ -22,20 +22,20 @@ import {
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
-import { TextUnitService } from 'app/lecture/manage/lecture-units/services/text-unit.service';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
+import { TextUnitApi } from 'app/openapi/api/text-unit-api';
+import { OnlineUnitApi } from 'app/openapi/api/online-unit-api';
+import { toLectureUnitRequest } from 'app/lecture/shared/util/generated-lecture.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpContext, HttpErrorResponse } from '@angular/common/http';
-import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { AttachmentVideoUnitService, withFileName } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
-import { concatMap, filter, finalize, map } from 'rxjs/operators';
+import { concatMap, finalize, map } from 'rxjs/operators';
 import { Observable, defer, from } from 'rxjs';
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
@@ -110,8 +110,8 @@ const AUTOSAVE_REQUEST_CONTEXT = () => new HttpContext().set(SKIP_HTTP_ERROR_ALE
 export class LectureUpdateUnitsComponent implements OnInit {
     protected activatedRoute = inject(ActivatedRoute);
     protected alertService = inject(AlertService);
-    protected textUnitService = inject(TextUnitService);
-    protected onlineUnitService = inject(OnlineUnitService);
+    protected textUnitApi = inject(TextUnitApi);
+    protected onlineUnitApi = inject(OnlineUnitApi);
     protected attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly router = inject(Router);
     private readonly destroyRef = inject(DestroyRef);
@@ -335,7 +335,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         textUnit.content = formData.content;
         textUnit.competencyLinks = formData.competencyLinks;
 
-        this.trackCreation(this.textUnitService.create(textUnit, this.lecture().id!)).subscribe({
+        this.trackCreation(this.textUnitApi.createTextUnit(this.lecture().id!, toLectureUnitRequest(textUnit))).subscribe({
             next: () => this.onUnitCreated(),
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -352,7 +352,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         onlineUnit.source = formData.source || undefined;
         onlineUnit.competencyLinks = formData.competencyLinks || undefined;
 
-        this.trackCreation(this.onlineUnitService.create(onlineUnit, this.lecture().id!)).subscribe({
+        this.trackCreation(this.onlineUnitApi.createOnlineUnit(this.lecture().id!, toLectureUnitRequest(onlineUnit))).subscribe({
             next: () => this.onUnitCreated(),
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -373,14 +373,15 @@ export class LectureUpdateUnitsComponent implements OnInit {
         attachmentVideoUnit.videoSource = videoSource || undefined;
         attachmentVideoUnit.competencyLinks = competencyLinks;
 
-        const formData = new FormData();
-        if (file && fileName && file.size > 0) {
-            formData.append('file', file, fileName);
-            formData.append('attachment', objectToJsonBlob(this.attachmentForUpload(new Attachment(), name, releaseDate)));
-        }
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
-
-        this.trackCreation(this.attachmentVideoUnitService.create(formData, this.lecture().id!)).subscribe({
+        const upload = !!file && !!fileName && file.size > 0;
+        this.trackCreation(
+            this.attachmentVideoUnitService.create(
+                this.lecture().id!,
+                attachmentVideoUnit,
+                upload ? this.attachmentForUpload(new Attachment(), name, releaseDate) : undefined,
+                upload ? withFileName(file, fileName) : undefined,
+            ),
+        ).subscribe({
             next: () => this.onUnitCreated(),
             error: (res: HttpErrorResponse | Error) => {
                 if (res instanceof Error) {
@@ -831,13 +832,13 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
     onTumLiveVideoAttached(unitId: number): void {
         this.attachmentVideoUnitService.findById(unitId, this.lecture().id!).subscribe({
-            next: (response) => {
+            next: (response: AttachmentVideoUnit) => {
                 const editingUnit = this.editingUnit();
                 // Another unit may be open by now; its form must not get this unit's video.
                 if (!editingUnit || editingUnit.id !== unitId) {
                     return;
                 }
-                const videoSource = response.body?.videoSource;
+                const videoSource = response.videoSource;
                 this.videoSourceEpoch++;
                 // The saved model too, since the details' autosave sends the video link from it.
                 this.editingUnit.set(cloneWith(editingUnit as AttachmentVideoUnit, { videoSource }));
@@ -904,7 +905,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         textUnit.releaseDate = data.releaseDate;
         textUnit.content = data.content;
         textUnit.competencyLinks = this.competencyLinksToSend(data.competencyLinks);
-        return this.textUnitService.update(textUnit, this.lecture().id!, AUTOSAVE_REQUEST_CONTEXT()).pipe(map(() => textUnit));
+        return this.textUnitApi.updateTextUnit(this.lecture().id!, toLectureUnitRequest(textUnit), { context: AUTOSAVE_REQUEST_CONTEXT() }).pipe(map(() => textUnit));
     }
 
     private saveOnlineUnit(data: OnlineUnitFormData): Observable<LectureUnit> {
@@ -914,7 +915,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         onlineUnit.releaseDate = data.releaseDate || undefined;
         onlineUnit.source = data.source || undefined;
         onlineUnit.competencyLinks = this.competencyLinksToSend(data.competencyLinks);
-        return this.onlineUnitService.update(onlineUnit, this.lecture().id!, AUTOSAVE_REQUEST_CONTEXT()).pipe(map(() => onlineUnit));
+        return this.onlineUnitApi.updateOnlineUnit(this.lecture().id!, toLectureUnitRequest(onlineUnit), { context: AUTOSAVE_REQUEST_CONTEXT() }).pipe(map(() => onlineUnit));
     }
 
     /**
@@ -940,28 +941,34 @@ export class LectureUpdateUnitsComponent implements OnInit {
         attachmentVideoUnit.loadedVideoSource = savedUnit.videoSource ?? '';
         attachmentVideoUnit.attachmentUpdateIntent = withUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE;
 
-        const formData = new FormData();
-        if (withUpload) {
-            const attachmentToUpdate = attachment ? deepClone(attachment) : new Attachment();
+        const attachmentToUpdate = withUpload ? (attachment ? deepClone(attachment) : new Attachment()) : undefined;
+        if (attachmentToUpdate) {
             attachmentToUpdate.attachmentVideoUnit = undefined;
-            formData.append('file', file, fileName);
-            formData.append('attachment', objectToJsonBlob(this.attachmentForUpload(attachmentToUpdate, name, releaseDate)));
         }
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
         // The server notifies students whenever a notification text is sent; an empty one notifies them without a message of the editor.
         const notificationText = withUpload && notifyStudents ? '' : undefined;
 
-        return this.attachmentVideoUnitService.update(this.lecture().id!, attachmentVideoUnit.id!, formData, notificationText, AUTOSAVE_REQUEST_CONTEXT()).pipe(
-            map((response) => {
-                // The response has the new version and link of an uploaded file, and the unit's video link: the server keeps the link if it was changed
-                // meanwhile, by another editor or a TUM.Live upload, so the link the request sent may not be the saved one.
-                attachmentVideoUnit.attachment = response.body?.attachment ?? attachment;
-                if (response.body) {
-                    attachmentVideoUnit.videoSource = response.body.videoSource || undefined;
-                }
-                return attachmentVideoUnit;
-            }),
-        );
+        return this.attachmentVideoUnitService
+            .update(
+                this.lecture().id!,
+                attachmentVideoUnit.id!,
+                attachmentVideoUnit,
+                {
+                    attachment: attachmentToUpdate && this.attachmentForUpload(attachmentToUpdate, name, releaseDate),
+                    file: withUpload ? withFileName(file, fileName) : undefined,
+                    notificationText,
+                },
+                AUTOSAVE_REQUEST_CONTEXT(),
+            )
+            .pipe(
+                map((updated) => {
+                    // The response has the new version and link of an uploaded file, and the unit's video link: the server keeps the link if it was changed
+                    // meanwhile, by another editor or a TUM.Live upload, so the link the request sent may not be the saved one.
+                    attachmentVideoUnit.attachment = updated.attachment ?? attachment;
+                    attachmentVideoUnit.videoSource = updated.videoSource || undefined;
+                    return attachmentVideoUnit;
+                }),
+            );
     }
 
     /**
@@ -1087,11 +1094,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         let lastCreatedUnit: AttachmentVideoUnit | undefined;
 
         from(files)
-            .pipe(
-                concatMap((file) => this.createAttachmentUnitFromFile(file)),
-                filter((response) => response.body != null),
-                map((response) => response.body as AttachmentVideoUnit),
-            )
+            .pipe(concatMap((file) => this.createAttachmentUnitFromFile(file)))
             .subscribe({
                 next: (unit) => {
                     lastCreatedUnit = unit;

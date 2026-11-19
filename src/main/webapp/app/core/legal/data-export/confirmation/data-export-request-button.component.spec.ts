@@ -48,7 +48,7 @@ describe('DataExportRequestButtonComponent', () => {
         expect(confirmButton).not.toBeNull();
 
         // Check that button text span was added to the DOM.
-        const buttonText = debugElement.query(By.css('.d-xl-inline'));
+        const buttonText = debugElement.query(By.css('span'));
         expect(buttonText).not.toBeNull();
         expect(buttonText.nativeElement.textContent).toBe('artemisApp.dataExport.request');
 

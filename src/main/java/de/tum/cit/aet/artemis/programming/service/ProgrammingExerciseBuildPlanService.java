@@ -174,6 +174,7 @@ public class ProgrammingExerciseBuildPlanService {
         if (buildPlanConfiguration.buildPlan().containers() != null) {
             buildPlanConfiguration.buildPlan().containers().forEach(container -> validateDockerImage(container.dockerImage()));
         }
+        programmingExerciseValidationService.validateDockerImageRegistries(buildPlanConfiguration.buildPlan());
 
         final String originalBuildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
         final String serializedBuildPlanConfiguration = buildPlanConfiguration.buildPlan().toBuildPlanConfiguration();
