@@ -250,6 +250,8 @@ allowBuilds:
   msgpackr-extract: true
   unrs-resolver: true
 
+# Temporary exceptions: Angular 22.3.0 was published on 2026-11-18 and 2026-11-19, less than the 24 hours pnpm requires
+# before it installs a new release. Remove this block on or after 2026-11-20.
 minimumReleaseAgeExclude:
   - '@angular-devkit/architect@0.2203.0'
   - '@angular-devkit/core@22.3.0'

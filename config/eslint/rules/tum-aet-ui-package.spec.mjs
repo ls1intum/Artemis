@@ -330,6 +330,9 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(libraryBuild.builder).toBe('@angular/build:library');
         expect(libraryBuild.defaultConfiguration).toBe('production');
         expect(libraryBuild.options.tsConfig).toBe('packages/tum-aet-ui/tsconfig.lib.prod.json');
+        // The Artemis tsconfig, the Vitest aliases and the style check all read the package from this directory.
+        expect(libraryBuild.options.outputPath).toBe('packages/tum-aet-ui/dist');
+        expect(packageJson.scripts['pack:check']).toContain('--configuration pack');
         expect(production).toEqual({});
         // The development build only differs in what a watching consumer needs: full compilation and an output
         // directory that is not wiped between rebuilds.

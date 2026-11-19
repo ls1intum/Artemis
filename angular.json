@@ -222,7 +222,7 @@
                     "options": {
                         "tsConfig": "packages/tum-aet-ui/tsconfig.lib.prod.json",
                         "outputPath": "packages/tum-aet-ui/dist",
-                        "assets": ["packages/tum-aet-ui/README.md", "packages/tum-aet-ui/LICENSE", "packages/tum-aet-ui/styles.css"],
+                        "assets": ["packages/tum-aet-ui/styles.css"],
                         "allowedNonPeerDependencies": ["@fortawesome/free-solid-svg-icons", "dayjs", "lodash-es"]
                     },
                     "configurations": {
