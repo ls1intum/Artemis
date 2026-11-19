@@ -728,6 +728,54 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.policies()[0].working?.supervisedPackage).toBe('de.second');
     });
 
+    it('applies an import to the policy that started it, but shows its notice only while the dialog shows that policy', () => {
+        create(configured(), false);
+        comp['addPolicy']();
+        const [committed, added] = comp.policies();
+        const succeeding = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
+        const failing = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
+        service.importPolicy.mockReturnValueOnce(succeeding).mockReturnValueOnce(failing);
+        comp['openYaml'](committed);
+        comp['importYaml']({ content: 'content', policyPath: 'SecurityPolicy.yaml' });
+        comp['openYaml'](added);
+        comp['importYaml']({ content: 'broken', policyPath: comp.paths().get(added.id)! });
+        comp['openYaml'](committed);
+
+        failing.error(new HttpErrorResponse({ status: 500 }));
+        expect(comp.importNotice()).toBeUndefined();
+        comp['openYaml'](added);
+        succeeding.next({ policyPath: 'SecurityPolicy.yaml', document: { ...DOCUMENT, supervisedPackage: 'de.imported' } });
+
+        expect(comp.policies()[0].working?.supervisedPackage).toBe('de.imported');
+        expect(comp.importNotice()).toBeUndefined();
+        expect(comp.importPending()).toBe(false);
+    });
+
+    it('stops waiting for an import into a new policy once that policy is deleted', () => {
+        create(configured(), false);
+        comp['addPolicy']();
+        const added = comp.policies()[1];
+        const importing = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
+        const other = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
+        service.importPolicy.mockReturnValueOnce(importing).mockReturnValueOnce(other);
+        comp['openYaml'](added);
+        comp['importYaml']({ content: 'content', policyPath: comp.paths().get(added.id)! });
+        comp['openYaml'](comp.policies()[0]);
+        comp['importYaml']({ content: 'other', policyPath: 'SecurityPolicy.yaml' });
+        expect(comp.pendingImports()).toBe(2);
+
+        comp['askDeletePolicy'](added);
+        comp['deletePolicy']();
+
+        // The import into the remaining policy can still apply, so it keeps holding back a commit.
+        expect(comp.pendingImports()).toBe(1);
+        other.next({ policyPath: 'SecurityPolicy.yaml', document: { ...DOCUMENT, supervisedPackage: 'de.other' } });
+        expect(comp.importPending()).toBe(false);
+        importing.next({ policyPath: 'Policy.yaml', document: { ...DOCUMENT, supervisedPackage: 'de.deleted' } });
+        expect(comp.policies()).toHaveLength(1);
+        expect(comp.policies()[0].working?.supervisedPackage).toBe('de.other');
+    });
+
     it('describes the files and the assignments the review shows', () => {
         create(configured(), false);
         const committed = comp.policies()[0];
@@ -1010,6 +1058,20 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
 
             expect(recovered()?.working?.languageConfiguration).toBe(scanning);
         });
+
+        it('keeps a chosen configuration that the commit deleting the policy also gave the remaining one', () => {
+            const changed = withRows(comp.policies()[0].working!, 'packages', [{ packageName: 'org.apache.commons' }]);
+            comp['onPolicyChange']({ ...comp.policies()[0], working: { ...changed, languageConfiguration: scanning } });
+            // The same commit deletes the edited policy and switches the remaining one to the configuration the instructor chose.
+            service.getPolicies.mockReturnValue(of(withSecondOnly('d'.repeat(40), scanning)));
+            comp['reload'](true);
+            expect(recovered()?.ownLanguageConfiguration).toBe(true);
+
+            service.getPolicies.mockReturnValue(of(withSecondOnly('e'.repeat(40))));
+            comp['reload']();
+
+            expect(recovered()?.working?.languageConfiguration).toBe(scanning);
+        });
     });
 
     it('does not switch dependency scanning while a policy is read-only', () => {
@@ -1039,6 +1101,59 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
 
         expect(service.commitPolicies).not.toHaveBeenCalled();
         expect(comp.reviewOpen()).toBe(true);
+    });
+
+    it('repeats a failed commit on Retry only while its changes are unchanged, and otherwise shows the review again', () => {
+        create(configured(), false);
+        const policy = comp.policies()[0];
+        comp['onPolicyChange']({ ...policy, working: withRows(policy.working!, 'packages', [{ packageName: 'org.apache.commons' }]) });
+        service.commitPolicies.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp['commit']('Grant commons');
+        expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'failed', commitMessage: 'Grant commons' }));
+
+        comp['retryCommit']();
+        expect(service.commitPolicies).toHaveBeenCalledTimes(2);
+        expect(service.commitPolicies.mock.calls[1][1]).toEqual(service.commitPolicies.mock.calls[0][1]);
+
+        // Another version changes the build file, whose diff the failed review never showed.
+        comp['onVersionChange']('2.3.0');
+        comp['retryCommit']();
+
+        expect(service.commitPolicies).toHaveBeenCalledTimes(2);
+        expect(comp.reviewOpen()).toBe(true);
+        expect(service.previewPolicies).toHaveBeenLastCalledWith(42, expect.objectContaining({ frameworkVersion: '2.3.0' }));
+    });
+
+    it('keeps resuming the builds of a pushed change after a later commit fails before it is pushed', () => {
+        create(configured(), false);
+        const policy = comp.policies()[0];
+        const granted = withRows(policy.working!, 'packages', [{ packageName: 'org.apache.commons' }]);
+        comp['onPolicyChange']({ ...policy, working: granted });
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'error.securityFrameworkProcessingFailed' } })));
+        service.getPolicies.mockReturnValue(of(editor('b'.repeat(40), granted)));
+        comp['commit']('Grant commons');
+        expect(comp.banner()).toEqual({ kind: 'processingFailed', hash: 'bbbbbbb' });
+
+        comp['onPolicyChange']({ ...comp.policies()[0], working: withRows(granted, 'packages', [{ packageName: 'org.apache.commons' }, { packageName: 'org.junit' }]) });
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp['commit']('Grant junit');
+        expect(comp.banner()?.kind).toBe('failed');
+
+        comp['discard']();
+        expect(comp.banner()).toEqual({ kind: 'processingFailed', hash: 'bbbbbbb' });
+
+        service.commitPolicies.mockReturnValueOnce(of({ editor: editor('b'.repeat(40), granted), config: configured() }));
+        comp['retryCommit']();
+        expect(service.commitPolicies).toHaveBeenCalledTimes(3);
+        expect(service.commitPolicies.mock.calls[2][1]).toEqual(service.commitPolicies.mock.calls[0][1]);
+        expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'committed', hash: 'bbbbbbb' }));
+
+        // The builds ran, so a later failure no longer offers to resume them.
+        comp['onPolicyChange']({ ...comp.policies()[0], working: withRows(granted, 'packages', []) });
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp['commit']('Revoke commons');
+        comp['discard']();
+        expect(comp.banner()?.kind).toBe('info');
     });
 
     it('shows the requested scanning state until the dialog is cancelled or the commit is done', () => {

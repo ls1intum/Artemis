@@ -219,8 +219,13 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     readonly importNotice = signal<SecurityImportNotice | undefined>(undefined);
 
     private newPolicyCounter = 0;
-    /** The last commit request that failed, for Retry. */
+    /** The last commit request that failed before its change was pushed, for Retry. */
     private failedRequest: CommitRequest | undefined;
+    /**
+     * The latest change that was pushed although the builds it should start did not, with its short hash once known, for the Retry that resumes them. A
+     * later commit that fails before it is pushed does not affect it; one that succeeds, or is pushed itself, supersedes it.
+     */
+    private unprocessed: { request: CommitRequest; hash?: string } | undefined;
     /** Set while the policies of a pushed but unprocessed commit are not read yet, so loading them again reads them, see loadPushed. */
     private pendingRecovery: { keepUnsaved: boolean } | undefined;
     /** The number of the latest YAML import started for each policy, from {@link importSequence}. */
@@ -586,8 +591,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             } else {
                 this.applyEditor(editor);
             }
+            if (this.unprocessed) {
+                this.unprocessed.hash = editor.lastCommit?.hash.substring(0, 7);
+            }
             if (this.banner()?.kind === 'processingFailed') {
-                this.banner.set({ kind: 'processingFailed', hash: editor.lastCommit?.hash.substring(0, 7) });
+                this.banner.set(this.processingFailedBanner());
             }
         });
     }
@@ -770,16 +778,20 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         for (let number = 2; takenNames.includes(name); number++) {
             name = `${policy.name} ${number}`;
         }
+        // Whether the configuration was chosen is decided against the policy's own committed state, not against the reloaded policies: a commit that deleted
+        // the policy may have switched the others to the same value. A chosen configuration, e.g. an imported one, is kept through later reloads; one the
+        // policy only inherited follows the committed policies, like the configuration of any new policy.
+        const chosen = !!policy.ownLanguageConfiguration || (!!policy.working && !!policy.base && policy.working.languageConfiguration !== policy.base.languageConfiguration);
+        const working = policy.working ? deepClone(policy.working) : undefined;
         return {
             id: `new-${this.newPolicyCounter}`,
             name,
-            working: policy.working ? deepClone(policy.working) : undefined,
+            working: working && !chosen && committedLanguageConfiguration ? cloneWith(working, { languageConfiguration: committedLanguageConfiguration }) : working,
             baseTests: [],
             tests: [...policy.tests],
             baseExtraClasses: [],
             extraClasses: [...policy.extraClasses],
-            // A configuration other than the committed one, e.g. imported before the file was deleted, is kept through later reloads instead of followed.
-            ownLanguageConfiguration: !!policy.ownLanguageConfiguration || (!!policy.working && policy.working.languageConfiguration !== committedLanguageConfiguration),
+            ownLanguageConfiguration: chosen,
         };
     }
 
@@ -821,6 +833,12 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         this.policies.update((policies) => policies.filter((candidate) => candidate.id !== policy.id));
         if (!isNewPolicy(policy)) {
             this.deletedPolicies.update((deleted) => [...deleted, policy]);
+        }
+        // An import into the deleted policy can no longer apply, so it no longer holds back a commit; imports into other policies stay pending.
+        const importing = this.importGenerations.get(policy.id);
+        if (importing !== undefined) {
+            this.importGenerations.delete(policy.id);
+            this.pendingImportGenerations.update((pending) => new Set([...pending].filter((candidate) => candidate !== importing)));
         }
         this.deletingPolicyId.set(undefined);
     }
@@ -1021,8 +1039,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 // A load that is still pending started before this commit, so its answer is older than the editor of the commit.
                 this.loadRequests++;
                 this.loading.set(false);
-                // The editor of the commit is current, also after the pushed policies of an unprocessed commit could not be read.
+                // The editor of the commit is current, also after the pushed policies of an unprocessed commit could not be read, and its builds include
+                // the changes of that commit.
                 this.pendingRecovery = undefined;
+                this.unprocessed = undefined;
                 this.loadFailed.set(false);
                 this.reviewOpen.set(false);
                 const hash = (result.editor.lastCommit?.hash ?? result.editor.baseCommitHash ?? '').substring(0, 7);
@@ -1065,8 +1085,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 } else if (processingFailed) {
                     // The push succeeded, so the committed policies are the pushed ones, and Discard must return to them. Retry sends the same request again,
                     // whose processing the server resumes instead of applying the change twice; it keeps what was edited meanwhile.
-                    this.failedRequest = { change, keepUnsaved: true, scan };
-                    this.banner.set({ kind: 'processingFailed' });
+                    this.unprocessed = { request: { change, keepUnsaved: true, scan } };
+                    this.banner.set(this.processingFailedBanner());
                     this.loadPushed(keepUnsaved);
                 } else {
                     this.failedRequest = { change, keepUnsaved, scan };
@@ -1077,20 +1097,27 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     /**
-     * Repeats a failed commit. Dependency scanning repeats its own request, which leaves the unsaved changes as they are; a commit of the unsaved changes
-     * is built again, so it includes what was edited since, and is the same request if nothing was.
+     * Repeats a failed commit. Resuming the builds of a pushed change and dependency scanning repeat their own request, which leaves the unsaved changes as
+     * they are. A commit of the unsaved changes is repeated only if they are still what the review showed; otherwise the review opens again, so that nothing
+     * is committed without its diff.
      */
     protected retryCommit(): void {
         const banner = this.banner();
-        const request = this.failedRequest;
-        if (banner?.kind === 'processingFailed' && request) {
+        const unprocessed = this.unprocessed;
+        if (banner?.kind === 'processingFailed' && unprocessed) {
+            this.runCommit(unprocessed.request.change, true, unprocessed.request.scan);
+            return;
+        }
+        if (banner?.kind !== 'failed') {
+            return;
+        }
+        const request = banner.retry === 'review' ? undefined : this.failedRequest;
+        if (request && (request.scan || request.change === unprocessed?.request.change)) {
             this.runCommit(request.change, request.keepUnsaved, request.scan);
-        } else if (banner?.kind === 'failed' && banner.retry === 'review') {
-            this.openReview();
-        } else if (request?.scan) {
-            this.runCommit(request.change, request.keepUnsaved, request.scan);
-        } else if (banner?.kind === 'failed') {
+        } else if (request && JSON.stringify(this.buildChange(request.change.commitMessage)) === JSON.stringify(request.change)) {
             this.commit(banner.commitMessage);
+        } else {
+            this.openReview();
         }
     }
 
@@ -1104,7 +1131,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         this.deletedPolicies.set([]);
         this.stagedVersion.set(undefined);
         // The builds of a pushed change that did not start still wait for Retry, which discarding does not affect.
-        if (this.banner()?.kind !== 'processingFailed') {
+        if (this.unprocessed) {
+            this.banner.set(this.processingFailedBanner());
+        } else {
             this.banner.set(announce ? { kind: 'info', text: this.translateService.instant(`${PREFIX}.banner.discarded`) } : undefined);
         }
     }
@@ -1174,6 +1203,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         this.importGenerations.set(policy.id, generation);
         this.pendingImportGenerations.update((pending) => new Set([...pending].filter((candidate) => candidate !== superseded)).add(generation));
         const isLatest = () => this.importGenerations.get(policy.id) === generation;
+        // The dialog may show another policy by the time the import answers; its notice and rendering belong to the policy that started the import.
+        const shown = () => this.yamlOpen() && this.yamlPolicyId() === policy.id;
         const settle = () => this.pendingImportGenerations.update((pending) => new Set([...pending].filter((candidate) => candidate !== generation)));
         this.securityService.importPolicy(this.exerciseId(), path, selected.content).subscribe({
             next: (imported) => {
@@ -1191,6 +1222,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                     const ownLanguageConfiguration =
                         !!current.ownLanguageConfiguration || (isNewPolicy(current) && document.languageConfiguration !== current.working.languageConfiguration);
                     this.onPolicyChange(withAssignment(cloneWith(current, { working: document, ownLanguageConfiguration }), current.tests, extraClasses));
+                    if (!shown()) {
+                        return;
+                    }
                     this.yamlUnsaved.set(undefined);
                     this.renderYamlUnsaved();
                     const changes = this.summaries().get(policy.id)?.total ?? 0;
@@ -1198,7 +1232,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                         severity: 'success',
                         text: this.translateService.instant(countKey(`${PREFIX}.yaml.imported`, changes), { count: changes, policy: current.name }),
                     });
-                } else {
+                } else if (shown()) {
                     this.importNotice.set({
                         severity: 'error',
                         text: this.translateService.instant(`${PREFIX}.policy.readOnlyReason.${imported.readOnlyReason ?? SecurityPolicyReadOnlyReason.UNSUPPORTED_CONTENT}`, {
@@ -1210,7 +1244,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             },
             error: (error: HttpErrorResponse) => {
                 settle();
-                if (isLatest()) {
+                if (isLatest() && shown()) {
                     this.importNotice.set({ severity: 'error', text: this.errorMessage(error) });
                 }
             },
@@ -1225,14 +1259,19 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     protected dismissBanner(): void {
-        this.banner.set(undefined);
+        this.banner.set(this.unprocessed ? this.processingFailedBanner() : undefined);
     }
 
     private clearSettledBanner(): void {
         const kind = this.banner()?.kind;
         if (kind === 'committed' || kind === 'failed' || kind === 'info') {
-            this.banner.set(undefined);
+            // The builds of a pushed change that did not start still wait for Retry, also after a later commit failed.
+            this.banner.set(this.unprocessed ? this.processingFailedBanner() : undefined);
         }
+    }
+
+    private processingFailedBanner(): Banner {
+        return { kind: 'processingFailed', hash: this.unprocessed?.hash };
     }
 
     /** The message of a refused request: the server's translated explanation, or a generic one. */
