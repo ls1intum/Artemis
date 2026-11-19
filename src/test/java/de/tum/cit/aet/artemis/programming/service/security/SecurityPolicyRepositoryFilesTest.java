@@ -630,6 +630,37 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void anOverrideWhoseParameterTypeIsATypeVariableKeepsTheInheritedPolicy() throws IOException {
+        writeBuildFile();
+        String methodPolicy = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n";
+        String annotated = methodPolicy + "    @Test\n    public void runs(java.util.Date date)";
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
+        String override = """
+                package de.example;
+
+                import java.util.Date;
+
+                import org.junit.jupiter.api.Test;
+
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+
+                @Public
+                %s
+                class MoreSortingTest extends SortingTest {
+
+                    @Test
+                    public <Date extends java.sql.Date> void runs(Date date) {
+                    }
+                }
+                """.formatted(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        writeSource("test/de/example/MoreSortingTest.java", override);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // The type variable Date erases to java.sql.Date, so runs(Date) is an overload and the inherited test still runs with the sandbox.
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS, "de.example.MoreSortingTest");
+    }
+
+    @Test
     void anOverrideWhoseParameterTypeIsShadowedByAMemberTypeKeepsTheInheritedPolicy() throws IOException {
         writeBuildFile();
         String methodPolicy = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n";

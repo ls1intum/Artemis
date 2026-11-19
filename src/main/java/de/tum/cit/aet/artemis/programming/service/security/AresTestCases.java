@@ -45,6 +45,13 @@ final class AresTestCases {
      */
     private static final Pattern TEST_ANNOTATION = Pattern.compile("@\\s*((?:[\\w$]+\\s*\\.\\s*)*+)(" + TEST_ANNOTATION_NAMES + ")(?!\\p{javaJavaIdentifierPart})");
 
+    /**
+     * A name in angle brackets that may declare a type variable, e.g. {@code Date} in {@code <Date extends java.sql.Date>}, group 1 being the name. It also
+     * matches a type argument such as {@code String} in {@code List<String>}, which only makes the check more cautious.
+     */
+    private static final Pattern TYPE_VARIABLE = Pattern
+            .compile("[<,]\\s*(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)\\s*(?:extends(?!\\p{javaJavaIdentifierPart})|[,>&])");
+
     /** A single-type import, group 1 being the imported type; a static import names a member and is no type import. */
     private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s+(?!static\\s)([\\p{javaJavaIdentifierPart}.\\s]+?)\\s*;");
 
@@ -175,6 +182,11 @@ final class AresTestCases {
     static Map<Integer, TestSignature> testSignatures(String masked) {
         Map<Integer, TestSignature> signatures = new HashMap<>();
         Map<String, String> imported = importedTypes(masked);
+        Set<String> typeVariables = new HashSet<>();
+        Matcher typeVariable = TYPE_VARIABLE.matcher(masked);
+        while (typeVariable.find()) {
+            typeVariables.add(typeVariable.group(1));
+        }
         for (MatchResult annotation : testAnnotations(masked)) {
             MatchResult method = methodAfter(masked, annotation.end());
             if (method != null && !signatures.containsKey(method.start(1))) {
@@ -184,8 +196,7 @@ final class AresTestCases {
                 int memberStart = memberStart(masked, annotation.start());
                 boolean visible = VISIBLE_IN_OTHER_PACKAGES.matcher(masked.substring(memberStart, method.start(1))).find();
                 int declaration = method.start(1);
-                // A type the file declares where the method is, e.g. a member type, shadows a single-type import with its simple name.
-                UnaryOperator<String> resolve = simpleName -> AresPolicyAnnotations.isShadowedAt(masked, simpleName, declaration) ? null : imported.get(simpleName);
+                UnaryOperator<String> resolve = simpleName -> importedType(masked, simpleName, declaration, imported, typeVariables);
                 String text = method.group(1) + "(" + parameterTypes(parameters, resolve) + ")";
                 signatures.put(method.start(1), new TestSignature(method.group(1), text, visible));
             }
@@ -242,6 +253,17 @@ final class AresTestCases {
             }
         }
         return annotations;
+    }
+
+    /**
+     * @return the type a single-type import gives the simple name where the method at the offset is declared; null if a type the file declares there, e.g. a
+     *         member type, or a type variable shadows the import, or if there is no import
+     */
+    private static @Nullable String importedType(String masked, String simpleName, int offset, Map<String, String> imported, Set<String> typeVariables) {
+        if (typeVariables.contains(simpleName) || AresPolicyAnnotations.isShadowedAt(masked, simpleName, offset)) {
+            return null;
+        }
+        return imported.get(simpleName);
     }
 
     /**

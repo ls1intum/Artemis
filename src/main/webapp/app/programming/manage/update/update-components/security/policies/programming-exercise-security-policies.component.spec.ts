@@ -909,6 +909,29 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         ]);
     });
 
+    it('lists the test cases a split releases when a kept policy gives a class up and another one takes some of its test cases', () => {
+        const structure = new Subject<SecurityTestStructure>();
+        service.getTestStructure.mockReturnValue(structure);
+        create(configured(), false);
+        const kept = comp.policies()[0];
+        comp['onPolicyChange'](withAssignment(kept, ['de.example.StressTest'], ['de.example.StressTest']));
+        comp['addPolicy']();
+        const added = comp.policies()[1];
+        comp['onPolicyChange'](withAssignment(added, ['de.example.SortingTest#merge'], []));
+
+        // Neither policy alone both had the whole class and keeps one of its test cases, so only the change as a whole shows the split.
+        expect(comp.splitsClass()).toBe(true);
+        comp['openReview']();
+        expect(comp.reviewAssignmentsState()).toBe('loading');
+        // After a reload, the commit the change is based on has a test case quick that the change also releases.
+        structure.next({ testClasses: [{ qualifiedName: 'de.example.SortingTest', testClass: true, testCases: ['bubble', 'merge', 'quick'] }] });
+
+        expect(comp.reviewAssignmentsState()).toBe('ready');
+        expect(comp.reviewAssignments()).toContainEqual({ sign: '−', entry: 'de.example.SortingTest#bubble', file: 'SecurityPolicy.yaml' });
+        expect(comp.reviewAssignments()).toContainEqual({ sign: '−', entry: 'de.example.SortingTest#quick', file: 'SecurityPolicy.yaml' });
+        expect(comp.reviewAssignments()).not.toContainEqual(expect.objectContaining({ sign: '−', entry: 'de.example.SortingTest#merge' }));
+    });
+
     it('commits a split only once the review lists the test cases it releases, and offers Retry when they cannot be loaded', () => {
         service.getTestStructure.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
         service.commitPolicies.mockReturnValue(of({ editor: editor('b'.repeat(40)), config: configured() }));
