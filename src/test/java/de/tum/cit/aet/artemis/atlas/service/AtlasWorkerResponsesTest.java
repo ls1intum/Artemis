@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
 import com.openai.client.OpenAIClient;
+import com.openai.core.JsonField;
 import com.openai.core.JsonValue;
 import com.openai.models.ResponsesModel;
 import com.openai.models.responses.Response;
@@ -107,8 +109,8 @@ class AtlasWorkerResponsesTest {
                 mock(UserRepository.class));
         var index = FunctionToolCallback.<Map<String, Object>, String>builder("listCompetencyIndex", input -> "{\"competencies\":[]}").inputType(Map.class).build();
         ChatResponse mainResponse = harness.delegateOrchestratorRound("Main instructions", "Process exercise 7",
-                OpenAiChatOptions.builder().deploymentName("gpt-5.6-luna").reasoningEffort("xhigh"), context, ToolCallbackProvider.from(index),
-                MethodToolCallbackProvider.builder().toolObjects(workers, new AtlasOrchestratorTerminalToolService()).build());
+                OpenAiChatOptions.builder().deploymentName("gpt-5.6-luna").reasoningEffort("xhigh"), context, ignored -> {
+                }, ToolCallbackProvider.from(index), MethodToolCallbackProvider.builder().toolObjects(workers, new AtlasOrchestratorTerminalToolService()).build());
 
         AtlasToolCallBudget.checkResponse(mainResponse, context);
         assertThat(budget.completion().verified()).isTrue();
@@ -118,9 +120,20 @@ class AtlasWorkerResponsesTest {
         assertThat(actions.actions()).hasSize(1);
         assertThat(mainResponse.getMetadata().getUsage().getTotalTokens()).isEqualTo(36);
         var tracked = ArgumentCaptor.forClass(ChatResponse.class);
-        verify(usage).trackChatResponseTokenUsage(tracked.capture(), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
-        assertThat(tracked.getValue().getMetadata().getUsage().getTotalTokens()).isEqualTo(completeUsage ? 48 : 36);
-        assertThat(tracked.getValue().getMetadata().<Boolean>get(AtlasResponsesChatModel.USAGE_COMPLETE_METADATA_KEY)).isEqualTo(completeUsage);
+        verify(usage, times(4)).trackModelCallTokenUsage(tracked.capture(), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
+        assertThat(tracked.getAllValues()).hasSize(4);
+        if (completeUsage) {
+            assertThat(tracked.getAllValues().getFirst().getMetadata().getUsage().getPromptTokens()).isEqualTo(10);
+            assertThat(tracked.getAllValues().getFirst().getMetadata().getUsage().getCompletionTokens()).isEqualTo(2);
+        }
+        else {
+            assertThat(tracked.getAllValues().getFirst().getMetadata().getUsage()).isInstanceOf(org.springframework.ai.chat.metadata.EmptyUsage.class);
+        }
+        for (ChatResponse response : tracked.getAllValues().subList(1, tracked.getAllValues().size())) {
+            assertThat(response.getMetadata().getUsage().getPromptTokens()).isEqualTo(10);
+            assertThat(response.getMetadata().getUsage().getCompletionTokens()).isEqualTo(2);
+        }
+        verifyNoMoreInteractions(usage);
         var requests = ArgumentCaptor.forClass(ResponseCreateParams.class);
         verify(provider, times(7)).create(requests.capture());
         for (int i = 0; i < requests.getAllValues().size(); i++) {
@@ -169,6 +182,7 @@ class AtlasWorkerResponsesTest {
         when(response.status()).thenReturn(Optional.of(ResponseStatus.COMPLETED));
         if (knownUsage) {
             var usage = mock(ResponseUsage.class);
+            when(usage._inputTokensDetails()).thenReturn(JsonField.ofNullable(null));
             when(usage.inputTokens()).thenReturn(10L);
             when(usage.outputTokens()).thenReturn(2L);
             when(usage.totalTokens()).thenReturn(12L);
