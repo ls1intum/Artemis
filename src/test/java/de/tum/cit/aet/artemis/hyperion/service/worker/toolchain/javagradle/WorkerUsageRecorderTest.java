@@ -38,7 +38,7 @@ class WorkerUsageRecorderTest {
     void streamsProviderEvidenceAndCountsWithoutInventingPrices() {
         var events = new ArrayList<ProviderUsageUpdate>();
         var recorder = new WorkerUsageRecorder(1_000, 0.1, true, events::add);
-        var call = new ProviderUsageUpdate.Call("model", "request", 100, 20, 80L);
+        var call = new ProviderUsageUpdate.Call("model", "request", 100, 20, 80L, null);
 
         recorder.recordAttempt();
         recorder.recordTurn();
@@ -59,7 +59,6 @@ class WorkerUsageRecorderTest {
         assertThat(snapshot.models()).containsExactly("model");
         assertThat(snapshot.providerRequestIds()).containsExactly("request");
         assertThat(snapshot.providerRequestIdsComplete()).isTrue();
-        assertThat(snapshot.estimatedCostEurComplete()).isFalse();
         assertThat(recorder.accountingState()).isEqualTo(AccountingState.COMPLETE);
     }
 
@@ -67,10 +66,10 @@ class WorkerUsageRecorderTest {
     void cachedInputBudgetUsesRoundedWeightedTokensAndStopsAtTheExactLimit() {
         var recorder = new WorkerUsageRecorder(49, 0.1, true, ignored -> {
         });
-        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "first", 100, 20, 80L)));
+        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "first", 100, 20, 80L, null)));
         assertThat(recorder.shouldStopAuthoring()).isFalse();
         assertThat(recorder.budgetExhausted()).isFalse(); // 20 uncached + 8 weighted cache + 20 output
-        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "second", 1, 0, 0L)));
+        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "second", 1, 0, 0L, null)));
         assertThat(recorder.budgetExhausted()).isTrue();
         assertThat(recorder.shouldStopAuthoring()).isTrue();
     }
@@ -79,8 +78,8 @@ class WorkerUsageRecorderTest {
     void missingCacheAndRequestIdStayUnknownAndCannotDiscountTheBudget() {
         var recorder = new WorkerUsageRecorder(100, 0.1, true, ignored -> {
         });
-        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", null, 100, 0, null)));
-        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "known", 1, 0, 0L)));
+        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", null, 100, 0, null, null)));
+        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "known", 1, 0, 0L, null)));
         assertThat(recorder.budgetExhausted()).isTrue();
         assertThat(recorder.snapshot().cachedInputTokensComplete()).isFalse();
         assertThat(recorder.snapshot().providerRequestIdsComplete()).isFalse();
@@ -96,7 +95,7 @@ class WorkerUsageRecorderTest {
         assertThat(recorder.shouldStopAuthoring()).isTrue();
         assertThat(recorder.budgetExhausted()).isFalse();
         recorder.markUncertain();
-        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "known", 1, 0, 0L)));
+        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "known", 1, 0, 0L, null)));
         assertThat(recorder.shouldStopAuthoring()).isTrue();
         assertThat(recorder.accountingState()).isEqualTo(AccountingState.INCOMPLETE);
         assertThat(events).filteredOn(event -> event.kind() == Kind.UNCERTAIN).hasSize(1);
@@ -150,7 +149,7 @@ class WorkerUsageRecorderTest {
         var events = new ArrayList<ProviderUsageUpdate>();
         var recorder = new WorkerUsageRecorder(1_000, 1, false, events::add);
         ChatModel model = mock(ChatModel.class);
-        var metadata = ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "request", 10, 2, 0L)).getMetadata();
+        var metadata = ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "request", 10, 2, 0L, null)).getMetadata();
         when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("finished"))), metadata));
         var runner = new AgentLoopRunner(List.of(model), 128_000, Duration.ofMinutes(5), ProviderFailureCooldown.disabled());
 

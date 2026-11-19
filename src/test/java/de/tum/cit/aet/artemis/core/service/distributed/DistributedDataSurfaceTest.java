@@ -110,7 +110,10 @@ class DistributedDataSurfaceTest {
      * distributed topics and map/queue notification topics.
      */
     // Activity entries are new expiring wire types; no released cache value changes.
-    // Whole-exercise replay (including variant source identity) is new in this release; no previously released wire type changes.
+    // Generation usage and transcript maps have used JDK-serialized values since they were introduced. Renamed EUR/USD
+    // cost components deserialize as absent and incomplete in both directions; known token counts remain readable.
+    // GenerationUsageSerializationCompatibilityTest pins this behavior. These maps have no notification listeners,
+    // so their positional Kryo notifications are not consumed. This is not a general Kryo compatibility claim.
     private static final List<Class<?>> DECLARED_ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class,
             BuildAgentAddressInfo.class, ClusterNodeInfo.class, HyperionCodeGenerationJobService.JobInfo.class, GenerationJobService.JobInfo.class,
             de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.LiveSaveSlot.class, GenerationJobService.JobTranscript.class,
