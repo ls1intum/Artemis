@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
@@ -52,7 +52,7 @@ describe('TextUnitFullscreenComponent', () => {
 
         lectureService = TestBed.inject(LectureService);
         scienceService = TestBed.inject(ScienceService);
-        vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(new HttpResponse({ body: lecture })));
+        vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(lecture));
         vi.spyOn(scienceService, 'logEvent');
 
         fixture = TestBed.createComponent(TextUnitFullscreenComponent);
@@ -80,7 +80,7 @@ describe('TextUnitFullscreenComponent', () => {
     });
 
     it('should link back to the tutorial lecture when the lecture is a tutorial lecture', () => {
-        vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(new HttpResponse({ body: { ...lecture, isTutorialLecture: true } as Lecture })));
+        vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(of({ ...lecture, isTutorialLecture: true } as Lecture));
 
         fixture.detectChanges();
 
@@ -104,8 +104,8 @@ describe('TextUnitFullscreenComponent', () => {
     });
 
     it('should keep loading while the request for the newly requested unit is running', () => {
-        const first = new Subject<HttpResponse<Lecture>>();
-        const second = new Subject<HttpResponse<Lecture>>();
+        const first = new Subject<Lecture>();
+        const second = new Subject<Lecture>();
         vi.spyOn(lectureService, 'findWithDetails').mockReturnValueOnce(first).mockReturnValueOnce(second);
         fixture.detectChanges();
         expect(fixture.componentInstance.isLoading()).toBe(true);
@@ -117,7 +117,7 @@ describe('TextUnitFullscreenComponent', () => {
         expect(fixture.componentInstance.isLoading()).toBe(true);
         expect(byTestId('text-unit-fullscreen-not-found')).toBeNull();
 
-        second.next(new HttpResponse({ body: { ...lecture, lectureUnits: [{ id: 3, type: LectureUnitType.TEXT, name: 'Other', content: 'Other' } as TextUnit] } }));
+        second.next({ ...lecture, lectureUnits: [{ id: 3, type: LectureUnitType.TEXT, name: 'Other', content: 'Other' } as TextUnit] } as Lecture);
         second.complete();
         fixture.detectChanges();
 

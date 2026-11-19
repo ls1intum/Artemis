@@ -1,22 +1,33 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faGhost } from '@fortawesome/free-solid-svg-icons';
+import { AiModeSelectorComponent } from 'app/logos/ai-mode-selector.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Subject } from 'rxjs';
-import dayjs from 'dayjs/esm';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
-import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiCardComponent } from '@tumaet/ui-angular';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { TumAetUiButtonDirective, TumAetUiCardComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-ai-experience-settings',
-    imports: [TranslateDirective, ArtemisDatePipe, DeleteButtonDirective, RouterLink, TumAetUiButtonComponent, TumAetUiCardComponent, TumAetUiButtonDirective],
+    imports: [
+        ArtemisTranslatePipe,
+        FaIconComponent,
+        TranslateDirective,
+        DeleteButtonDirective,
+        RouterLink,
+        AiModeSelectorComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCardComponent,
+    ],
     templateUrl: './ai-experience-settings.component.html',
 })
 export class AiExperienceSettingsComponent implements OnInit {
@@ -24,13 +35,14 @@ export class AiExperienceSettingsComponent implements OnInit {
     private readonly irisChatHttpService = inject(IrisChatHttpService);
     private readonly irisChatService = inject(IrisChatService);
     private readonly alertService = inject(AlertService);
-    private readonly llmModalService = inject(LLMSelectionModalService);
+    private readonly profileService = inject(ProfileService);
 
     protected readonly ActionType = ActionType;
-    protected readonly LLMSelectionDecision = LLMSelectionDecision;
+    protected readonly faGhost = faGhost;
 
-    currentSelection = signal<LLMSelectionDecision | undefined>(undefined);
-    selectionDate = signal<dayjs.Dayjs | undefined>(undefined);
+    readonly isSavingConsent = this.irisChatService.isSavingLLMUsageConsent;
+    readonly currentSelection = computed(() => this.accountService.userIdentity()?.selectedLLMUsage);
+    readonly isOnPremiseEnabled = this.profileService.isLLMDeploymentEnabled();
     sessionCount = signal(0);
     messageCount = signal(0);
 
@@ -38,17 +50,12 @@ export class AiExperienceSettingsComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     ngOnInit() {
-        this.updateSelectionFromUser();
         this.loadCounts();
     }
 
-    async openSelectionModal(): Promise<void> {
-        const choice = await this.llmModalService.open(this.currentSelection());
-
-        if (choice && choice !== LLM_MODAL_DISMISSED) {
+    selectMode(choice: LLMSelectionDecision): void {
+        if (choice !== this.currentSelection()) {
             this.irisChatService.updateLLMUsageConsent(choice);
-            this.accountService.setUserLLMSelectionDecision(choice);
-            this.updateSelectionFromUser();
         }
     }
 
@@ -66,12 +73,6 @@ export class AiExperienceSettingsComponent implements OnInit {
 
     get hasData(): boolean {
         return this.sessionCount() > 0;
-    }
-
-    private updateSelectionFromUser() {
-        const user = this.accountService.userIdentity();
-        this.currentSelection.set(user?.selectedLLMUsage);
-        this.selectionDate.set(user?.selectedLLMUsageTimestamp);
     }
 
     private loadCounts() {

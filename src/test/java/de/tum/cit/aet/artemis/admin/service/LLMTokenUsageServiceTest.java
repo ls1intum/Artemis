@@ -17,11 +17,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 
@@ -35,6 +37,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 // Several tests assert log output through an appender on the service logger. A Spring context starting in parallel resets
 // Logback and detaches that appender mid-test, so the class runs alone.
@@ -55,6 +58,144 @@ class LLMTokenUsageServiceTest {
         llmTokenUsageService = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, createCostConfiguration());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "empty", "missingInput", "missingOutput" })
+    void individualResponseWithoutCompleteCountersIsSavedAsUnpriced(String kind) {
+        var metadata = ChatResponseMetadata.builder().model("gpt-5-mini");
+        if (!kind.equals("empty")) {
+            Usage usage = mock(Usage.class);
+            when(usage.getPromptTokens()).thenReturn(kind.equals("missingInput") ? null : 10);
+            when(usage.getCompletionTokens()).thenReturn(kind.equals("missingOutput") ? null : 2);
+            metadata.usage(usage);
+        }
+        llmTokenUsageService.trackModelCallTokenUsage(new ChatResponse(List.of(), metadata.build()), LLMServiceType.ATLAS, "PIPE", scope -> scope.withCourse(42L));
+        var trace = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+        verify(llmTokenUsageTraceRepository).save(trace.capture());
+        assertThat(trace.getValue().getLLMRequests()).singleElement().satisfies(request -> {
+            assertThat(request.getTotalCostUsd()).isNull();
+            assertThat(request.getNumInputTokens()).isEqualTo(kind.equals("missingOutput") ? 10 : 0);
+            assertThat(request.getNumOutputTokens()).isEqualTo(kind.equals("missingInput") ? 2 : 0);
+        });
+    }
+
+    @Test
+    void individualResponseAccountingFailureDoesNotRejectResponse() {
+        when(llmTokenUsageTraceRepository.save(any(LLMTokenUsageTrace.class))).thenThrow(new IllegalStateException("storage unavailable"));
+        llmTokenUsageService.trackModelCallTokenUsage(new ChatResponse(List.of()), LLMServiceType.ATLAS, "PIPE", scope -> scope.withCourse(42L));
+        verify(llmTokenUsageTraceRepository).save(any(LLMTokenUsageTrace.class));
+    }
+
+    @Test
+    void transportedCostTakesPrecedence() {
+        var config = createCostConfiguration();
+        config.getModelCosts().get("gpt-5-mini").setInputCostPerMillionUsd(100f);
+        config.getModelCosts().get("gpt-5-mini").setOutputCostPerMillionUsd(200f);
+        var service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, config);
+        var usage = new DefaultUsage(100, 20, 120, Map.of("prompt_tokens", 100, "completion_tokens", 20, "cost", 0.0001, "cost_currency", "USD"));
+        var response = new ChatResponse(List.of(), ChatResponseMetadata.builder().model("gpt-5-mini").usage(usage).build());
+
+        LLMRequest request = service.buildLLMRequest(response, "PIPE");
+        assertThat(request).isNotNull();
+        assertThat(request.totalCostUsd()).isEqualTo(0.0001);
+    }
+
+    @Test
+    void missingProviderCostUsesExplicitUsdEstimateWithoutRelabellingOldRates() {
+        var config = createCostConfiguration();
+        config.getModelCosts().get("gpt-5-mini").setInputCostPerMillionUsd(1f);
+        config.getModelCosts().get("gpt-5-mini").setOutputCostPerMillionUsd(2f);
+        var service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, config);
+        LLMRequest estimated = service.buildLLMRequest(response("gpt-5-mini", 1_000_000, 500_000), "PIPE");
+        assertThat(estimated.totalCostUsd()).isEqualTo(2);
+        assertThat(new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, new LLMModelCostConfiguration())
+                .buildLLMRequest(response("gpt-5-mini", 100, 20), "PIPE").totalCostUsd()).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "1000,0,0.001", "0,1000,0.003", "400,600,0.0022" })
+    void fullyCachedInputNeedsOnlyTheUsedCacheRates(long cached, long written, double expectedCost) {
+        var config = createCostConfiguration();
+        var rates = config.getModelCosts().get("gpt-5-mini");
+        rates.setInputCostPerMillionUsd(null);
+        rates.setOutputCostPerMillionUsd(null);
+        rates.setCachedInputCostPerMillionUsd(1f);
+        rates.setCacheWriteInputCostPerMillionUsd(3f);
+        var service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, config);
+        var response = new ChatResponse(List.of(), ChatResponseMetadata.builder().model("gpt-5-mini").usage(new DefaultUsage(1000, 0, 1000, null, cached, written)).build());
+
+        var request = service.buildLLMRequest(response, "CACHED");
+
+        assertThat(request).isNotNull();
+        assertThat(request.totalCostUsd()).isEqualTo(expectedCost);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "1000,0,0.001", "0,1000,0.003" })
+    void unusedNonfiniteRatesDoNotInvalidateTheUsedCachePrice(long cached, long written, double expectedCost) {
+        var config = createCostConfiguration();
+        var rates = config.getModelCosts().get("gpt-5-mini");
+        rates.setInputCostPerMillionUsd(Float.NaN);
+        rates.setOutputCostPerMillionUsd(Float.NaN);
+        rates.setCachedInputCostPerMillionUsd(cached > 0 ? 1f : Float.NaN);
+        rates.setCacheWriteInputCostPerMillionUsd(written > 0 ? 3f : Float.NaN);
+        var service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, config);
+        var response = new ChatResponse(List.of(), ChatResponseMetadata.builder().model("gpt-5-mini").usage(new DefaultUsage(1000, 0, 1000, null, cached, written)).build());
+
+        var request = service.buildLLMRequest(response, "CACHED");
+
+        assertThat(request).isNotNull();
+        assertThat(request.totalCostUsd()).isEqualTo(expectedCost);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "999,0", "0,999", "400,599" })
+    void uncachedInputStillNeedsTheRegularInputRate(long cached, long written) {
+        var config = createCostConfiguration();
+        var rates = config.getModelCosts().get("gpt-5-mini");
+        rates.setInputCostPerMillionUsd(null);
+        rates.setOutputCostPerMillionUsd(null);
+        rates.setCachedInputCostPerMillionUsd(1f);
+        rates.setCacheWriteInputCostPerMillionUsd(3f);
+        var service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, config);
+        var response = new ChatResponse(List.of(), ChatResponseMetadata.builder().model("gpt-5-mini").usage(new DefaultUsage(1000, 0, 1000, null, cached, written)).build());
+
+        var request = service.buildLLMRequest(response, "CACHED");
+
+        assertThat(request).isNotNull();
+        assertThat(request.totalCostUsd()).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = { Double.NaN, Double.POSITIVE_INFINITY, -1 })
+    void persistenceDiscardsInvalidUsdAmounts(double amount) {
+        var incoming = new LLMRequest("test", 12, 3, "PIPE", 0, 0, amount);
+        llmTokenUsageService.saveLLMTokenUsage(List.of(incoming), LLMServiceType.IRIS, builder -> builder);
+        var saved = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+        verify(llmTokenUsageTraceRepository).save(saved.capture());
+        assertThat(saved.getValue().getLLMRequests()).singleElement().satisfies(request -> {
+            assertThat(request.getNumInputTokens()).isEqualTo(12);
+            assertThat(request.getTotalCostUsd()).isNull();
+        });
+    }
+
+    @Test
+    void malformedExternalCostMetadataDoesNotRejectTokenPersistence() {
+        var incoming = JsonObjectMapper.get().readValue("{\"numInputTokens\":12,\"totalCostUsd\":{}}", LLMRequest.class);
+        llmTokenUsageService.saveLLMTokenUsage(List.of(incoming), LLMServiceType.IRIS, builder -> builder);
+        verify(llmTokenUsageTraceRepository).save(any());
+    }
+
+    @Test
+    void persistenceKeepsReportedZero() {
+        var incoming = new LLMRequest("test", 12, 3, "PIPE", 0, 0, 0d);
+        llmTokenUsageService.saveLLMTokenUsage(List.of(incoming), LLMServiceType.IRIS, builder -> builder);
+        var saved = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+        verify(llmTokenUsageTraceRepository).save(saved.capture());
+        assertThat(saved.getValue().getLLMRequests()).singleElement().satisfies(request -> {
+            assertThat(request.getTotalCostUsd()).isZero();
+        });
+    }
+
     @Test
     void absentProviderUsageDoesNotCreateZeroCostRecord() {
         // a response without provider usage carries the empty usage, which is neither stored nor reported as a failure
@@ -67,30 +208,27 @@ class LLMTokenUsageServiceTest {
 
     @Test
     void buildLLMRequest_withDashedDateSuffix_usesConfiguredCost() {
-        LLMRequest request = llmTokenUsageService.buildLLMRequest("gpt-5-mini-2025-08-07", 11, 7, "PIPE");
+        LLMRequest request = llmTokenUsageService.buildLLMRequest(response("gpt-5-mini-2025-08-07", 11, 7), "PIPE");
 
         assertThat(request.model()).isEqualTo("gpt-5-mini-2025-08-07");
         assertThat(request.numInputTokens()).isEqualTo(11);
         assertThat(request.numOutputTokens()).isEqualTo(7);
-        assertThat(request.costPerMillionInputToken()).isEqualTo(0.23f);
-        assertThat(request.costPerMillionOutputToken()).isEqualTo(1.84f);
+        assertThat(request.totalCostUsd()).isEqualTo(0.00001675);
         assertThat(request.pipelineId()).isEqualTo("PIPE");
     }
 
     @Test
     void buildLLMRequest_withDateSuffixWithoutSeparator_usesConfiguredCost() {
-        LLMRequest request = llmTokenUsageService.buildLLMRequest("gpt-5-mini2025-08-07", 11, 7, "PIPE");
+        LLMRequest request = llmTokenUsageService.buildLLMRequest(response("gpt-5-mini2025-08-07", 11, 7), "PIPE");
 
-        assertThat(request.costPerMillionInputToken()).isEqualTo(0.23f);
-        assertThat(request.costPerMillionOutputToken()).isEqualTo(1.84f);
+        assertThat(request.totalCostUsd()).isEqualTo(0.00001675);
     }
 
     @Test
     void buildLLMRequest_withDashlessVariant_usesStrippedFallback() {
-        LLMRequest request = llmTokenUsageService.buildLLMRequest("gpt5mini-2025-08-07", 11, 7, "PIPE");
+        LLMRequest request = llmTokenUsageService.buildLLMRequest(response("gpt5mini-2025-08-07", 11, 7), "PIPE");
 
-        assertThat(request.costPerMillionInputToken()).isEqualTo(0.23f);
-        assertThat(request.costPerMillionOutputToken()).isEqualTo(1.84f);
+        assertThat(request.totalCostUsd()).isEqualTo(0.00001675);
     }
 
     @Test
@@ -99,34 +237,28 @@ class LLMTokenUsageServiceTest {
         // The runtime model name "gpt-5.4" must still resolve to that cost via the stripped fallback.
         LLMModelCostConfiguration configuration = new LLMModelCostConfiguration();
         LLMModelCostConfiguration.ModelCostProperties dottedModel = new LLMModelCostConfiguration.ModelCostProperties();
-        dottedModel.setInputCostPerMillionEur(2.30f);
-        dottedModel.setOutputCostPerMillionEur(13.80f);
+        dottedModel.setInputCostPerMillionUsd(2.5f);
+        dottedModel.setOutputCostPerMillionUsd(15f);
         configuration.setModelCosts(Map.of("gpt54", dottedModel));
         LLMTokenUsageService service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, configuration);
 
-        LLMRequest request = service.buildLLMRequest("gpt-5.4", 11, 7, "PIPE");
+        LLMRequest request = service.buildLLMRequest(response("gpt-5.4", 11, 7), "PIPE");
 
-        assertThat(request.costPerMillionInputToken()).isEqualTo(2.30f);
-        assertThat(request.costPerMillionOutputToken()).isEqualTo(13.80f);
+        assertThat(request.totalCostUsd()).isEqualTo(0.0001325);
     }
 
     @Test
-    void buildLLMRequest_withUnknownModel_returnsZeroCosts() {
-        LLMRequest request = llmTokenUsageService.buildLLMRequest("unknown-model-2025-08-07", 11, 7, "PIPE");
+    void buildLLMRequest_withUnknownModel_remainsUnpriced() {
+        LLMRequest request = llmTokenUsageService.buildLLMRequest(response("unknown-model-2025-08-07", 11, 7), "PIPE");
 
-        assertThat(request.costPerMillionInputToken()).isEqualTo(0.0f);
-        assertThat(request.costPerMillionOutputToken()).isEqualTo(0.0f);
+        assertThat(request.totalCostUsd()).isNull();
     }
 
     @Test
     void constructor_withStrippedModelCostCollision_throwsIllegalStateException() {
         LLMModelCostConfiguration configuration = new LLMModelCostConfiguration();
         LLMModelCostConfiguration.ModelCostProperties dashedModel = new LLMModelCostConfiguration.ModelCostProperties();
-        dashedModel.setInputCostPerMillionEur(0.23f);
-        dashedModel.setOutputCostPerMillionEur(1.84f);
         LLMModelCostConfiguration.ModelCostProperties dashlessModel = new LLMModelCostConfiguration.ModelCostProperties();
-        dashlessModel.setInputCostPerMillionEur(0.10f);
-        dashlessModel.setOutputCostPerMillionEur(0.20f);
         configuration.setModelCosts(Map.of("gpt-5-mini", dashedModel, "gpt5-mini", dashlessModel));
 
         assertThatThrownBy(() -> new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, configuration)).isInstanceOf(IllegalStateException.class)
@@ -184,7 +316,7 @@ class LLMTokenUsageServiceTest {
     }
 
     @Test
-    void trackChatResponseTokenUsage_withoutModelName_persistsWithEmptyModelAndZeroCost() {
+    void trackChatResponseTokenUsage_withoutModelName_persistsWithEmptyModelAndUnknownCost() {
         ChatResponse response = responseWithTokens(11, 7);
         when(response.getMetadata().getModel()).thenReturn(null);
 
@@ -198,8 +330,7 @@ class LLMTokenUsageServiceTest {
             assertThat(request.getModel()).isEmpty();
             assertThat(request.getNumInputTokens()).isEqualTo(11);
             assertThat(request.getNumOutputTokens()).isEqualTo(7);
-            assertThat(request.getCostPerMillionInputTokens()).isZero();
-            assertThat(request.getCostPerMillionOutputTokens()).isZero();
+            assertThat(request.getTotalCostUsd()).isNull();
             assertThat(request.getServicePipelineId()).isEqualTo("NO_MODEL");
         });
     }
@@ -217,8 +348,7 @@ class LLMTokenUsageServiceTest {
             assertThat(request.getModel()).isEqualTo("gpt-5-mini");
             assertThat(request.getNumInputTokens()).isEqualTo(11);
             assertThat(request.getNumOutputTokens()).isEqualTo(7);
-            assertThat(request.getCostPerMillionInputTokens()).isEqualTo(0.23f);
-            assertThat(request.getCostPerMillionOutputTokens()).isEqualTo(1.84f);
+            assertThat(request.getTotalCostUsd()).isEqualTo(0.00001675);
             assertThat(request.getServicePipelineId()).isEqualTo("ATLAS_ORCHESTRATION");
         });
     }
@@ -296,11 +426,15 @@ class LLMTokenUsageServiceTest {
         return response;
     }
 
+    private static ChatResponse response(String model, int input, int output) {
+        return new ChatResponse(List.of(), ChatResponseMetadata.builder().model(model).usage(new DefaultUsage(input, output)).build());
+    }
+
     private static LLMModelCostConfiguration createCostConfiguration() {
         LLMModelCostConfiguration costConfiguration = new LLMModelCostConfiguration();
         LLMModelCostConfiguration.ModelCostProperties modelCostProperties = new LLMModelCostConfiguration.ModelCostProperties();
-        modelCostProperties.setInputCostPerMillionEur(0.23f);
-        modelCostProperties.setOutputCostPerMillionEur(1.84f);
+        modelCostProperties.setInputCostPerMillionUsd(0.25f);
+        modelCostProperties.setOutputCostPerMillionUsd(2f);
         costConfiguration.setModelCosts(Map.of("gpt-5-mini", modelCostProperties));
         return costConfiguration;
     }

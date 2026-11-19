@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject, of, throwError } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AssessmentUploadDialogComponent } from 'app/assessment/manage/assessment-upload/assessment-upload-dialog.component';
-import { AssessmentUploadResult, AssessmentUploadService } from 'app/assessment/manage/services/assessment-upload.service';
+import { AssessmentUploadResult } from 'app/openapi/model/assessment-upload-result';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 
@@ -29,27 +29,30 @@ function dropEvent(file: File): DragEvent {
 describe('AssessmentUploadDialogComponent', () => {
     let component: AssessmentUploadDialogComponent;
     let fixture: ComponentFixture<AssessmentUploadDialogComponent>;
-    let uploadSpy: ReturnType<typeof vi.fn>;
-    let downloadSpy: ReturnType<typeof vi.fn>;
+    let http: HttpTestingController;
     let alertError: ReturnType<typeof vi.spyOn>;
     let alertSuccess: ReturnType<typeof vi.spyOn>;
 
     const zipFile = new File(['dummy'], 'assessments.zip', { type: 'application/zip' });
+    const uploadUrl = '/api/assessment/exercises/7/manual-assessments';
+    const templateUrl = '/api/assessment/exercises/7/manual-assessments/template';
+
+    const expectUpload = () => {
+        const request = http.expectOne(uploadUrl);
+        expect(request.request.method).toBe('POST');
+        expect((request.request.body as FormData).get('file')).toBe(zipFile);
+        return request;
+    };
 
     beforeEach(async () => {
-        uploadSpy = vi.fn();
-        downloadSpy = vi.fn();
         vi.mocked(downloadZipFileFromResponse).mockClear();
 
         await TestBed.configureTestingModule({
             imports: [AssessmentUploadDialogComponent],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AssessmentUploadService, useValue: { uploadManualAssessments: uploadSpy, downloadTemplate: downloadSpy } },
-                MockProvider(AlertService),
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting(), MockProvider(AlertService)],
         }).compileComponents();
 
+        http = TestBed.inject(HttpTestingController);
         const alertService = TestBed.inject(AlertService);
         alertError = vi.spyOn(alertService, 'error');
         alertSuccess = vi.spyOn(alertService, 'success');
@@ -107,14 +110,13 @@ describe('AssessmentUploadDialogComponent', () => {
 
     it('should upload for the bound exercise id, show a success alert, emit the completion event, and close the dialog', () => {
         const result: AssessmentUploadResult = { numberOfCreatedAssessments: 2, createdStudentIdentifiers: ['1-a', '2-b'] };
-        uploadSpy.mockReturnValue(of(new HttpResponse({ body: result })));
         const uploadedSpy = vi.fn();
         component.uploaded.subscribe(uploadedSpy);
 
         selectFileAndConfirmOverwrite(component, zipFile);
         component.upload();
+        expectUpload().flush(result);
 
-        expect(uploadSpy).toHaveBeenCalledWith(7, zipFile);
         expect(component['errors']()).toHaveLength(0);
         expect(alertSuccess).toHaveBeenCalledWith('artemisApp.assessmentUpload.success', { count: 2 });
         expect(uploadedSpy).toHaveBeenCalledWith(2);
@@ -123,12 +125,12 @@ describe('AssessmentUploadDialogComponent', () => {
 
     it('should show the validation errors, emit no completion event, and stay open when the upload is rejected', () => {
         const result: AssessmentUploadResult = { numberOfCreatedAssessments: 0, errors: [{ identifier: '1-a', type: 'MISSING_TEXT_FILE' }] };
-        uploadSpy.mockReturnValue(of(new HttpResponse({ body: result })));
         const uploadedSpy = vi.fn();
         component.uploaded.subscribe(uploadedSpy);
 
         selectFileAndConfirmOverwrite(component, zipFile);
         component.upload();
+        expectUpload().flush(result);
 
         expect(component['errors']()).toEqual(result.errors);
         expect(alertSuccess).not.toHaveBeenCalled();
@@ -137,14 +139,12 @@ describe('AssessmentUploadDialogComponent', () => {
     });
 
     it('should leave the dialog ready for another attempt after an HTTP error', () => {
-        const upload = new Subject<HttpResponse<AssessmentUploadResult>>();
-        uploadSpy.mockReturnValue(upload);
         selectFileAndConfirmOverwrite(component, zipFile);
 
         component.upload();
         expect(component['isUploading']()).toBe(true);
 
-        upload.error(new HttpErrorResponse({ status: 400 }));
+        expectUpload().flush(null, { status: 400, statusText: 'Bad Request' });
 
         expect(component['isUploading']()).toBe(false);
         expect(component['selectedFile']()).toBe(zipFile);
@@ -159,10 +159,10 @@ describe('AssessmentUploadDialogComponent', () => {
         // The exam guard sends the date as an ISO string and suppresses the global alert so it can be localized here. Without its own handling the dialog would just stop
         // the spinner and leave the instructor without a reason or the date assessment becomes possible.
         const date = '2026-10-20T10:00:00Z';
-        uploadSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403, error: { errorKey, params: { date }, skipAlert: true } })));
         selectFileAndConfirmOverwrite(component, zipFile);
 
         component.upload();
+        expectUpload().flush({ errorKey, params: { date }, skipAlert: true }, { status: 403, statusText: 'Forbidden' });
 
         expect(component['isUploading']()).toBe(false);
         expect(alertError).toHaveBeenCalledOnce();
@@ -173,8 +173,6 @@ describe('AssessmentUploadDialogComponent', () => {
     });
 
     it('should prevent closing and starting another request while uploading', () => {
-        const upload = new Subject<HttpResponse<AssessmentUploadResult>>();
-        uploadSpy.mockReturnValue(upload);
         selectFileAndConfirmOverwrite(component, zipFile);
 
         component.upload();
@@ -182,55 +180,55 @@ describe('AssessmentUploadDialogComponent', () => {
         component.upload();
 
         expect(component.visible()).toBe(true);
-        expect(uploadSpy).toHaveBeenCalledOnce();
+        expectUpload();
     });
 
     it('should not upload before the instructor confirms that existing assessments are overwritten', () => {
-        uploadSpy.mockReturnValue(of(new HttpResponse({ body: { numberOfCreatedAssessments: 1 } as AssessmentUploadResult })));
         component.onFileInputChange(fileInputEvent(zipFile));
 
         component.upload();
 
-        expect(uploadSpy).not.toHaveBeenCalled();
+        http.expectNone(uploadUrl);
         expect(component.visible()).toBe(true);
 
         component['overwriteConfirmed'].set(true);
         component.upload();
 
-        expect(uploadSpy).toHaveBeenCalledWith(7, zipFile);
+        expectUpload();
     });
 
     it('should download the template for the bound exercise and trigger the file download', () => {
-        const response = new HttpResponse<Blob>({ body: new Blob(['template']) });
-        downloadSpy.mockReturnValue(of(response));
-
         component.downloadTemplate();
+        const request = http.expectOne(templateUrl);
+        expect(request.request.method).toBe('GET');
+        expect(request.request.responseType).toBe('blob');
+        expect(component['isDownloadingTemplate']()).toBe(true);
 
-        expect(downloadSpy).toHaveBeenCalledWith(7);
-        expect(downloadZipFileFromResponse).toHaveBeenCalledWith(response);
+        const template = new Blob(['template']);
+        request.flush(template, { headers: { filename: 'assessment-template-7.zip' } });
+
+        expect(downloadZipFileFromResponse).toHaveBeenCalledOnce();
+        const response = vi.mocked(downloadZipFileFromResponse).mock.calls[0][0];
+        expect(response.body).toEqual(template);
+        expect(response.headers.get('filename')).toBe('assessment-template-7.zip');
         expect(component['isDownloadingTemplate']()).toBe(false);
     });
 
     it('should reset the template download state and not download on an HTTP error', () => {
-        const download = new Subject<HttpResponse<Blob>>();
-        downloadSpy.mockReturnValue(download);
-
         component.downloadTemplate();
         expect(component['isDownloadingTemplate']()).toBe(true);
 
-        download.error(new HttpErrorResponse({ status: 500 }));
+        http.expectOne(templateUrl).flush(null, { status: 500, statusText: 'Server Error' });
 
         expect(component['isDownloadingTemplate']()).toBe(false);
         expect(downloadZipFileFromResponse).not.toHaveBeenCalled();
     });
 
     it('should not start a second template download while one is in flight', () => {
-        downloadSpy.mockReturnValue(new Subject<HttpResponse<Blob>>());
-
         component.downloadTemplate();
         component.downloadTemplate();
 
-        expect(downloadSpy).toHaveBeenCalledOnce();
+        http.expectOne(templateUrl);
     });
 
     it('should clear the selected file, previous errors and the overwrite confirmation when reset', () => {

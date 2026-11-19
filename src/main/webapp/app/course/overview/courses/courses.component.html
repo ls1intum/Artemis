@@ -1,9 +1,9 @@
 @if (nextRelevantExam() && nextRelevantCourseForExam()) {
     <div>
-        <h3 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.examTitle" [translateValues]="{ course: nextRelevantCourseForExam()?.title }"></h3>
-        <div class="mb-3">
+        <h3 class="mb-4! font-medium" jhiTranslate="artemisApp.studentDashboard.examTitle" [translateValues]="{ course: nextRelevantCourseForExam()?.title }"></h3>
+        <div class="mb-4!">
             <div
-                class="d-flex justify-content-between align-items-center exam-container px-3"
+                class="exam-container flex items-center justify-between px-4!"
                 (click)="openExam()"
                 #keyboardAction5
                 role="button"
@@ -12,11 +12,11 @@
                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction5.click() : undefined"
             >
-                <div class="mb-4 mt-4 d-flex" style="width: unset">
+                <div class="mt-6! mb-6! flex" style="width: unset">
                     <fa-icon [icon]="faPenAlt" size="2x" />
-                    <h4 class="ms-2 fw-medium">{{ nextRelevantExam()?.title }}</h4>
+                    <h4 class="ms-2 font-medium">{{ nextRelevantExam()?.title }}</h4>
                 </div>
-                <div class="text-end mb-4 mt-4" style="width: unset">
+                <div class="mt-6! mb-6! text-end" style="width: unset">
                     @if (nextRelevantExam()?.startDate) {
                         <div jhiTranslate="artemisApp.exam.overview.start" [translateValues]="{ start: nextRelevantExam()?.startDate | artemisDate }"></div>
                     }
@@ -103,13 +103,13 @@
     }
 </div>
 @if (testCourses().length) {
-    <div class="mt-4">
+    <div class="mt-6!">
         <h3 class="course-section-title mb-6! font-medium">{{ 'artemisApp.studentDashboard.testCourses' | artemisTranslate }} ({{ testCourses().length }})</h3>
         <ng-container *ngTemplateOutlet="courseCardTemplate; context: { $implicit: testCourses() }" />
     </div>
 }
 @if (coursesLoaded()) {
-    <div class="d-flex justify-content-center mt-5 mb-3">
+    <div class="mt-12! mb-4! flex justify-center">
         <div jhiTranslate="artemisApp.studentDashboard.archive.oldCourses"></div>
         <div>&nbsp;</div>
         <a [routerLink]="['/courses/archive']" jhiTranslate="artemisApp.studentDashboard.archive.here"></a>
@@ -128,8 +128,8 @@
         </div>
     } @else {
         @if (coursesLoaded()) {
-            <div class="d-flex justify-content-center">
-                <span class="text-secondary" jhiTranslate="artemisApp.studentDashboard.noCoursesFound"></span>
+            <div class="flex justify-center">
+                <span class="text-text-secondary" jhiTranslate="artemisApp.studentDashboard.noCoursesFound"></span>
             </div>
         }
     }

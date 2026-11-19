@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -27,6 +28,7 @@ public record ExerciseUnitDTO(Long id, String name, ZonedDateTime releaseDate, b
                 exerciseUnit.getType());
     }
 
+    @Schema(name = "ExerciseUnitExerciseReferenceDTO")
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExerciseReferenceDTO(Long id, String title, ZonedDateTime releaseDate, ExerciseType type) {

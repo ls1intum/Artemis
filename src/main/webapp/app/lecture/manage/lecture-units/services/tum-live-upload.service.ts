@@ -15,7 +15,7 @@ export interface TumLiveUploadState {
     lastError?: string;
 }
 
-/** Where to send the recording of a unit: a one-use URL on TUM.Live. */
+/** Where to send the recording of a unit in Artemis. */
 export interface TumLiveUploadStart {
     ref: string;
     uploadUrl: string;
@@ -30,10 +30,17 @@ export interface TumLiveUploadedUnit {
 /** Progress of a transfer to TUM.Live: the share sent so far, then done. */
 export type TumLiveTransferEvent = { type: 'progress'; percent: number } | { type: 'done' };
 
-/**
- * Uploads the video of an attachment video unit to the course's TUM.Live course. The browser sends the file straight to TUM.Live under a one-use URL,
- * so Artemis never receives it; Artemis attaches the converted recording in the background.
- */
+export class TumLiveTransferError extends Error {
+    constructor(
+        message: string,
+        readonly status: number,
+        readonly translationKey?: string,
+    ) {
+        super(message);
+    }
+}
+
+/** Sends videos through Artemis to TUM.Live and reads their conversion status. */
 @Service()
 export class TumLiveUploadService {
     private readonly httpClient = inject(HttpClient);
@@ -55,10 +62,10 @@ export class TumLiveUploadService {
     }
 
     /**
-     * Sends a file to TUM.Live. A plain XMLHttpRequest rather than Artemis' HTTP client: the request goes to another origin, must not carry Artemis' headers or
-     * cookies, and reports its upload progress. Unsubscribing cancels the transfer.
+     * Sends the raw file to Artemis so it can stream it to TUM.Live. XMLHttpRequest provides upload progress and sends the Artemis session cookie on this
+     * same-origin request. Unsubscribing cancels the transfer.
      *
-     * @param uploadUrl the one-use upload URL from {@link start}
+     * @param uploadUrl the Artemis upload URL from {@link start}
      * @param file      the video
      * @returns the transfer's progress, completing when TUM.Live took the file
      */
@@ -66,7 +73,7 @@ export class TumLiveUploadService {
         return new Observable<TumLiveTransferEvent>((subscriber) => {
             const request = new XMLHttpRequest();
             request.open('POST', uploadUrl);
-            request.withCredentials = false;
+            request.setRequestHeader('Content-Type', 'application/octet-stream');
             request.upload.onprogress = (event) => {
                 if (event.lengthComputable) {
                     subscriber.next({ type: 'progress', percent: Math.round((event.loaded / event.total) * 100) });
@@ -77,13 +84,11 @@ export class TumLiveUploadService {
                     subscriber.next({ type: 'done' });
                     subscriber.complete();
                 } else {
-                    subscriber.error(new Error(transferError(request)));
+                    subscriber.error(transferError(request));
                 }
             };
-            request.onerror = () => subscriber.error(new Error('network'));
-            const body = new FormData();
-            body.append('file', file, file.name);
-            request.send(body);
+            request.onerror = () => subscriber.error(new TumLiveTransferError('network', 0));
+            request.send(file);
             return () => {
                 if (request.readyState !== XMLHttpRequest.DONE) {
                     request.abort();
@@ -93,15 +98,17 @@ export class TumLiveUploadService {
     }
 }
 
-/** TUM.Live answers errors in the gateway's shape, { code, message }. */
-function transferError(request: XMLHttpRequest): string {
+/** Artemis reports errors as problem details. */
+function transferError(request: XMLHttpRequest): TumLiveTransferError {
+    const fallback = `HTTP ${request.status}`;
     try {
-        const message = parseJson<{ message?: unknown } | null>(request.responseText)?.message;
+        const problem = parseJson<{ detail?: unknown; message?: unknown } | null>(request.responseText);
+        const message = problem?.detail ?? problem?.message;
         if (typeof message === 'string' && message) {
-            return message;
+            return message.startsWith('error.') ? new TumLiveTransferError(fallback, request.status, message) : new TumLiveTransferError(message, request.status);
         }
     } catch {
         // not JSON, for example a proxy's error page
     }
-    return `HTTP ${request.status}`;
+    return new TumLiveTransferError(fallback, request.status);
 }

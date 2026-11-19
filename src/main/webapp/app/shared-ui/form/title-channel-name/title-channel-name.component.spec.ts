@@ -110,6 +110,29 @@ describe('TitleChannelNameComponent', () => {
         expect(input.hasAttribute('aria-invalid')).toBe(false);
     });
 
+    it.each([
+        ['titleValidationMessage', 'field_title', 'title-validation-message'],
+        ['channelNameValidationMessage', 'field_channel_name', 'channel-name-validation-message'],
+    ])('should render and associate the containing form message for %s until it is cleared', async (messageInput, fieldId, testId) => {
+        fixture.componentRef.setInput(messageInput, 'review.validationMessage');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const input = fixture.nativeElement.querySelector(`#${fieldId}`) as HTMLInputElement;
+        const error = fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLElement;
+        expect(error.textContent).toBe('review.validationMessage');
+        expect(error.getAttribute('role')).toBe('alert');
+        expect(input.parentElement!.contains(error)).toBe(true);
+        expect(error.id).toBeTruthy();
+        expect(input.getAttribute('aria-describedby')).toBe(error.id);
+
+        fixture.componentRef.setInput(messageInput, undefined);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`)).toBeNull();
+        expect(input.hasAttribute('aria-describedby')).toBe(false);
+    });
+
     it('should only display title input field if channel name is hidden', () => {
         fixture.componentRef.setInput('hideChannelName', true);
         fixture.changeDetectorRef.detectChanges();

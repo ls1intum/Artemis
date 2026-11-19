@@ -26,11 +26,13 @@ import org.springframework.ai.tool.annotation.Tool;
 import com.openai.client.OpenAIClient;
 import com.openai.client.OpenAIClientAsync;
 
+import de.tum.cit.aet.artemis.aiworker.api.LLMResponseCost;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput.AccountingState;
 import de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate;
 import de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate.Kind;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopRunner;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.HarmonyScrubbingChatModel;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderUsageTransport;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.SubmitVetoAware;
@@ -41,6 +43,11 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 class ProviderUsageWireTest {
+
+    private static Double reportedUsd(org.springframework.ai.chat.model.ChatResponse response) {
+        var usage = response.getMetadata().getUsage();
+        return LLMResponseCost.reportedUsd(usage.getNativeUsage(), usage.getPromptTokens(), usage.getCompletionTokens());
+    }
 
     @Test
     void omittedWireUsageStopsBeforeToolsOrAnotherRequest() {
@@ -110,6 +117,45 @@ class ProviderUsageWireTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(doubles = { 0, 0.00001234 })
+    void reportedUsdCostSurvivesSdkAndWorkerTransport(double amount) {
+        try (var wire = fixture(textCompletion("{\"prompt_tokens\":10,\"completion_tokens\":2,\"total_tokens\":12,\"cost\":" + amount + ",\"cost_currency\":\"USD\"}"))) {
+            var response = wire.model().call(new Prompt("test"));
+            assertThat(reportedUsd(response)).isEqualTo(amount);
+            var call = ProviderUsageTransport.capture(response);
+            assertThat(call.totalCostUsd()).isEqualTo(amount);
+            assertThat(reportedUsd(ProviderUsageTransport.restore(call))).isEqualTo(amount);
+        }
+    }
+
+    @Test
+    void streamingUsdCostSurvivesHarmonyScrubbingAndWorkerTransport() {
+        String events = """
+                data: {"id":"chatcmpl-test","object":"chat.completion.chunk","created":1,"model":"test-model","choices":[{"index":0,"delta":{"role":"assistant","content":"finished<|end|>"},"finish_reason":null}]}
+
+                data: {"id":"chatcmpl-test","object":"chat.completion.chunk","created":1,"model":"test-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+                data: {"id":"chatcmpl-test","object":"chat.completion.chunk","created":1,"model":"test-model","choices":[],"usage":{"prompt_tokens":10,"completion_tokens":2,"total_tokens":12,"cost":0.00001234,"cost_currency":"USD"}}
+
+                data: [DONE]
+
+                """;
+        try (var wire = fixture(events, "text/event-stream")) {
+            var chunks = new HarmonyScrubbingChatModel(wire.model()).stream(new Prompt("test")).collectList().block(Duration.ofSeconds(5));
+            assertThat(chunks).isNotNull();
+            var priced = chunks.stream().filter(response -> reportedUsd(response) != null).toList();
+            assertThat(priced).singleElement().satisfies(response -> {
+                var call = ProviderUsageTransport.capture(response);
+                assertThat(call.totalCostUsd()).isEqualTo(0.00001234);
+                assertThat(reportedUsd(ProviderUsageTransport.restore(call))).isEqualTo(0.00001234);
+            });
+            assertThat(chunks.stream().flatMap(response -> response.getResults().stream()).map(generation -> generation.getOutput().getText()).toList())
+                    .noneMatch(text -> text != null && text.contains("<|end|>"));
+            assertThat(wire.requests()).hasValue(1);
+        }
+    }
+
     private static String textCompletion(String usage) {
         return """
                 {"id":"chatcmpl-test","object":"chat.completion","created":1,"model":"test-model",
@@ -119,13 +165,17 @@ class ProviderUsageWireTest {
     }
 
     private static WireFixture fixture(String completion) {
+        return fixture(completion, "application/json");
+    }
+
+    private static WireFixture fixture(String completion, String contentType) {
         var requests = new AtomicInteger();
         // The application interceptor returns before proceed: no DNS, socket, server or provider is used.
         OpenAiHttpClientBuilderCustomizer interceptor = builder -> builder.interceptor(chain -> {
             requests.incrementAndGet();
             assertThat(chain.request().url().encodedPath()).isEqualTo("/v1/chat/completions");
-            return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("OK")
-                    .body(ResponseBody.create(completion, MediaType.get("application/json"))).build();
+            return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("OK").header("Content-Type", contentType)
+                    .body(ResponseBody.create(completion, MediaType.get(contentType))).build();
         });
         var client = OpenAiSetup.setupSyncClient("https://example.invalid/v1", "test-key", null, null, null, null, false, false, null, Duration.ofSeconds(2), 0, null, Map.of(),
                 ObservationRegistry.NOOP, null, List.of(interceptor));

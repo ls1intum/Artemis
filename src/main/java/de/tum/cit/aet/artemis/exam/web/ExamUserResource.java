@@ -211,7 +211,7 @@ public class ExamUserResource {
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).filter(registration -> registration.getExam().getId().equals(examId))
                 .orElseThrow(() -> new EntityNotFoundException("Exam user not found in the requested exam"));
         var exam = examUser.getExam();
-        if (exam.isTestExam() || ZonedDateTime.now(ZoneOffset.UTC).isBefore(exam.getEndDate())) {
+        if (!exam.getExamMode().isReal() || ZonedDateTime.now(ZoneOffset.UTC).isBefore(exam.getEndDate())) {
             throw new BadRequestAlertException("Attendance can only be corrected after a real exam has ended", "exam", "attendanceCorrectionNotAllowed");
         }
         Map<String, Object> auditData = attendanceAuditData(examUser, courseId);

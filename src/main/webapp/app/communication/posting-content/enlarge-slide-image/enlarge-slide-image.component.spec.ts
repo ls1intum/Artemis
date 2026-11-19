@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DynamicDialogConfig } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig } from '@tumaet/ui-angular';
 import { EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -13,7 +13,7 @@ describe('EnlargeSlideImageComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [EnlargeSlideImageComponent],
-            providers: [{ provide: DynamicDialogConfig, useValue: { data: { slideToReference, imageAlt } } }],
+            providers: [{ provide: TumAetUiDialogConfig, useValue: new TumAetUiDialogConfig({ data: { slideToReference, imageAlt } }) }],
         });
         fixture = TestBed.createComponent(EnlargeSlideImageComponent);
         component = fixture.componentInstance;

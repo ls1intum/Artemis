@@ -114,6 +114,8 @@ export function selectTests(root, changedFiles, mapping) {
     const affected = new Set();
     for (const file of changedFiles) {
         if (!safePath(file)) return full(`Unsupported changed path '${JSON.stringify(file)}'.`);
+        // The UI library's production TypeScript and Tailwind inputs both exclude Storybook stories.
+        if (file.startsWith('packages/tum-aet-ui/src/') && file.endsWith('.stories.ts')) continue;
         if (mapping.runAllTestsPatterns.some((prefix) => prefixMatches(file, prefix)) || /^src\/main\/java\/de\/tum\/cit\/aet\/artemis\/[^/]+\/(?:config|security)\//.test(file))
             return full(`Global or runtime input '${file}'.`);
         if (file.startsWith('src/test/playwright/')) {

@@ -6,7 +6,8 @@ import { InitializationState, ParticipationType } from 'app/exercise/shared/enti
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { hydrate } from 'app/foundation/util/deep-clone.util';

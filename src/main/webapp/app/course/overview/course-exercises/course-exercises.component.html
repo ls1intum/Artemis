@@ -1,4 +1,4 @@
-<div class="d-flex horizontal-scroll">
+<div class="horizontal-scroll flex">
     @if (course()) {
         @if (!isShownViaLti()) {
             <div [class]="{ 'sidebar-collapsed': isCollapsed() }">
@@ -39,7 +39,7 @@
                 <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
-            <div class="vw-100 module-bg rounded-3 p-3 d-flex flex-column">
+            <div class="module-bg flex w-screen flex-col rounded-sm p-4!">
                 @if (isCollapsed()) {
                     <div>
                         <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
@@ -48,7 +48,7 @@
                 @if (course()?.exercises?.length === 0) {
                     <tumaet-ui-empty-state class="my-auto" [icon]="faCode" [title]="'artemisApp.courseOverview.exerciseList.noExercises' | artemisTranslate" />
                 } @else {
-                    <div class="col-12 text-center my-auto" jhiTranslate="artemisApp.courseOverview.exerciseDetails.selectExercise"></div>
+                    <div class="my-auto w-full flex-none text-center" jhiTranslate="artemisApp.courseOverview.exerciseDetails.selectExercise"></div>
                 }
             </div>
         }

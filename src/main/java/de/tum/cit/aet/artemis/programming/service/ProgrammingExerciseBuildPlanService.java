@@ -172,6 +172,7 @@ public class ProgrammingExerciseBuildPlanService {
         // full exercise update path
         programmingExerciseValidationService.validateBuildPhases(buildPlanConfiguration.buildPlan().phases());
         validateDockerImage(buildPlanConfiguration.buildPlan().dockerImage());
+        programmingExerciseValidationService.validateDockerImageRegistry(buildPlanConfiguration.buildPlan().dockerImage());
 
         final String originalBuildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
         final String serializedBuildPlanConfiguration = buildPlanConfiguration.buildPlan().toBuildPlanConfiguration();
