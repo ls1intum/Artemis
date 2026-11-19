@@ -1,0 +1,32 @@
+name: Route Testcontainers pulls through the registry proxy
+description: >
+  Makes Testcontainers pull Docker Hub images through the AET Harbor proxy cache. Docker Hub limits anonymous
+  pulls per IP address and the self-hosted runners share few addresses, so a pull can stall until Testcontainers
+  gives up ("Docker image pull has not made progress"). Run it after the checkout and before the server tests.
+
+inputs:
+  docker-hub-proxy:
+    description: Registry path that mirrors Docker Hub
+    required: false
+    default: harbor.aet.cit.tum.de/dockerhub-ghr-proxy
+
+runs:
+  using: composite
+  steps:
+    # Testcontainers prepends TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX to every Docker Hub image it starts, so those
+    # pulls go to the cache. The prefix is only set when the cache serves the Ryuk image; otherwise the tests keep
+    # pulling from Docker Hub as before.
+    - name: Route Testcontainers pulls through the registry proxy
+      shell: bash
+      env:
+        DOCKER_HUB_PROXY: ${{ inputs.docker-hub-proxy }}
+      run: |
+        ryuk="testcontainers/ryuk:$(sed -n 's/^ryuk_version=//p' gradle.properties)"
+        # Ryuk is the first container of every test JVM. Fetch it here, where a failure is visible.
+        bash supporting_scripts/ci/pull-through-registry-proxy.sh --best-effort "$ryuk"
+        if timeout 60 docker manifest inspect "${DOCKER_HUB_PROXY}/${ryuk}" > /dev/null 2>&1; then
+            echo "TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX=${DOCKER_HUB_PROXY}/" >> "$GITHUB_ENV"
+            echo "Testcontainers pulls Docker Hub images through ${DOCKER_HUB_PROXY}."
+        else
+            echo "::warning title=Registry proxy unavailable::${DOCKER_HUB_PROXY} does not serve ${ryuk}; Testcontainers pulls from Docker Hub."
+        fi

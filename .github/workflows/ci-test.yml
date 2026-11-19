@@ -225,7 +225,10 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
+              # The registry proxy first: Docker Hub limits anonymous pulls per IP address.
+              for image in harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 docker.io/library/alpine:3.24.4; do
+                  docker run --rm --user 0:0 --volume "$PWD/$dir:/output" "$image" chown -R "$(id -u):$(id -g)" /output && break
+              done
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -241,6 +244,9 @@ jobs:
           # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+      # Docker Hub limits anonymous pulls per IP address and the runner fleet shares few addresses.
+      - name: Route Testcontainers pulls through the registry proxy
+        uses: ./.github/actions/testcontainers-registry-proxy
       - name: Java Tests
         # Wrapped in run_with_hang_dump.sh so a hung test is thread-dumped before the Gradle task
         # timeout (gradle/test.gradle) fires - the only forensic data a silent hang leaves.
@@ -353,7 +359,10 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
+              # The registry proxy first: Docker Hub limits anonymous pulls per IP address.
+              for image in harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 docker.io/library/alpine:3.24.4; do
+                  docker run --rm --user 0:0 --volume "$PWD/$dir:/output" "$image" chown -R "$(id -u):$(id -g)" /output && break
+              done
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -492,7 +501,10 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
+              # The registry proxy first: Docker Hub limits anonymous pulls per IP address.
+              for image in harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 docker.io/library/alpine:3.24.4; do
+                  docker run --rm --user 0:0 --volume "$PWD/$dir:/output" "$image" chown -R "$(id -u):$(id -g)" /output && break
+              done
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

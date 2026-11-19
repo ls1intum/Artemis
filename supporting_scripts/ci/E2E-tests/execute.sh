@@ -72,6 +72,19 @@ cd deployment/docker || { echo "ERROR: Failed to change to docker directory" >&2
 # Clean up stale reporter-failed marker from previous runs (self-hosted runners have persistent workspaces)
 rm -f ../../src/test/playwright/test-reports/.reporter-failed
 
+# Docker Hub limits anonymous pulls per IP address, and the runners share few addresses. Fetch the stack's
+# Docker Hub images through the registry proxy first, so the pull below finds them and only has to check
+# that they are current. Best effort: the pull below still decides whether the stack can start.
+PULL_HELPER="../../supporting_scripts/ci/pull-through-registry-proxy.sh"
+if [ -f "$PULL_HELPER" ]; then
+    # shellcheck disable=SC2086
+    STACK_IMAGES=$(docker compose --env-file ../../.env -f $COMPOSE_FILE config --images 2>/dev/null | grep -v '^ghcr\.io/ls1intum/artemis' | sort -u)
+    if [ -n "$STACK_IMAGES" ]; then
+        # shellcheck disable=SC2086
+        bash "$PULL_HELPER" --best-effort $STACK_IMAGES
+    fi
+fi
+
 # Pull the images to avoid using outdated images
 # --env-file ../../.env is needed because .env lives in the project root but we cd'd into deployment/docker/
 # COMPOSE_FILE intentionally contains both -f arguments for the Redis overlay.

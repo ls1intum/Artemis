@@ -440,6 +440,24 @@ permission to the jobs that create report check runs.
 Regression tests for delayed readiness, unavailable nodes and image revision mismatches run
 with `pnpm run test:rules` (or select `supporting_scripts/ci/E2E-tests/setup.spec.mjs`).
 
+## Docker Hub images on the self-hosted runners
+
+Docker Hub limits anonymous pulls per IP address, and the self-hosted runners share few addresses. When the
+allowance is used up a pull stalls without an error: Testcontainers reports `Docker image pull has not made
+progress` and the E2E setup cannot provision the exercise images. The AET Harbor instance runs a proxy cache for
+Docker Hub, `harbor.aet.cit.tum.de/dockerhub-ghr-proxy`, and the jobs on the self-hosted runners pull through it:
+
+- `supporting_scripts/ci/pull-through-registry-proxy.sh` pulls a Docker Hub image from the cache and tags it with
+  its original name, so compose files and the Artemis build agent find it under the name they ask for. It falls
+  back to Docker Hub when the cache cannot serve the image, and pulls images of other registries directly. The E2E
+  jobs use it for the exercise images and for the Docker Hub images of the compose stack.
+- `.github/actions/testcontainers-registry-proxy` sets `TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX` for the server test
+  jobs, so Testcontainers sends its pulls to the cache. It sets the prefix only when the cache answers.
+
+Images that Docker pulls by itself during a job are not covered: add them to one of the two when a new job needs
+one. A Docker Hub image in a workflow of a GitHub-hosted runner needs no change, because those runners have their
+own allowance.
+
 ## Concurrency model
 
 | Event | Group key | Cancel in progress? |
