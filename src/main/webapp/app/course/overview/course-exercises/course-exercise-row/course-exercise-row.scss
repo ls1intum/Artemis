@@ -1,26 +1,18 @@
-@import '../../../../../../../../node_modules/bootstrap/scss/functions';
-@import '../../../../../../../../node_modules/bootstrap/scss/variables';
-@import '../../../../../../../../node_modules/bootstrap/scss/mixins';
-
 :host {
     cursor: pointer;
 
     > div {
         padding: 5px 0;
         background-color: var(--overview-light-background-color);
-        border-radius: var(--bs-border-radius-lg);
+        border-radius: 0.25rem;
 
-        .row {
+        .exercise-row-line {
             min-height: 35px;
             align-items: center;
         }
 
         &:hover {
             background-color: var(--hover-slightly-darker-body-bg);
-        }
-
-        .exercise-link {
-            color: #212529;
         }
     }
 
@@ -30,8 +22,16 @@
         padding: 0.5rem 1rem;
     }
 
+    // the link that makes the whole row clickable
+    .cover-link::after {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        content: '';
+    }
+
     .exercise-row-icon {
-        color: var(--bs-body-color);
+        color: var(--body-color);
         display: flex;
         align-items: center;
         justify-content: center;

@@ -8,10 +8,10 @@ describe('CourseStatisticsService', () => {
     afterEach(() => TestBed.inject(HttpTestingController).verify());
 
     it('requests current aggregate material counts for the selected course', () => {
-        const response = [{ lectureId: 1, type: 'text' as const, total: 8, completed: 3 }];
+        const response = [{ lectureId: 1, type: 'text', total: 8, completed: 3 }];
         const next = vi.fn();
         TestBed.inject(CourseStatisticsService).getLearningStatistics(589).subscribe(next);
-        const request = TestBed.inject(HttpTestingController).expectOne('api/lecture/courses/589/learning-statistics');
+        const request = TestBed.inject(HttpTestingController).expectOne('/api/lecture/courses/589/learning-statistics');
         expect(request.request.method).toBe('GET');
         request.flush(response);
         expect(next).toHaveBeenCalledWith(response);
@@ -32,7 +32,7 @@ describe('CourseStatisticsService', () => {
     it('propagates an unavailable source so the page can show an independent retry state', () => {
         const error = vi.fn();
         TestBed.inject(CourseStatisticsService).getLearningStatistics(589).subscribe({ error });
-        TestBed.inject(HttpTestingController).expectOne('api/lecture/courses/589/learning-statistics').flush({}, { status: 503, statusText: 'Unavailable' });
+        TestBed.inject(HttpTestingController).expectOne('/api/lecture/courses/589/learning-statistics').flush({}, { status: 503, statusText: 'Unavailable' });
         expect(error).toHaveBeenCalledWith(expect.objectContaining({ status: 503 }));
     });
 });
