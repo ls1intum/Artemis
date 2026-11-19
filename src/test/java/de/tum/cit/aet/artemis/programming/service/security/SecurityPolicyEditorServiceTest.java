@@ -535,13 +535,42 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void refusesSplittingAClassAssignedAsAWholeIfATestWasAddedToItSinceThePoliciesWereLoaded() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        assertThat(editor.policies().getFirst().assignedTests()).containsExactlyElementsOf(BOTH_CLASSES);
+        pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n    void testMergeSort() {\n    }",
+                "    @Test\n    void testMergeSort() {\n    }\n\n    @Test\n    void testQuickSort() {\n    }"));
+        String concurrentHead = pushedHead();
+
+        // Releasing testBubbleSort would release testQuickSort as well, which the editor never showed.
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> editorService.commit(exercise(),
+                        change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest#testMergeSort", "de.example.StressTest"))), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
+        assertThat(pushedHead()).isEqualTo(concurrentHead);
+    }
+
+    @Test
+    void acceptsSplittingAClassAssignedAsAWholeIfOnlyTheBodyOfOneOfItsTestsChanged() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        pushToTests(SORTING_TEST_PATH,
+                SORTING_TEST.replace("    @Test\n    void testMergeSort() {\n    }", "    @Test\n    void testMergeSort() {\n        int[] values = { 3, 1, 2 };\n    }"));
+
+        editorService.commit(exercise(), change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest#testMergeSort", "de.example.StressTest"))), user);
+
+        assertThat(editorService.getEditor(exercise()).policies().getFirst().assignedTests()).containsExactly("de.example.SortingTest#testMergeSort", "de.example.StressTest");
+    }
+
+    @Test
     void refusesTheCommitIfSomeonePushesWhileItIsPrepared() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO changed = withFiles(loadedPolicy(editor), List.of(LOGS));
         afterNextCheckout = () -> pushToTests(STRESS_TEST_PATH,
                 STRESS_TEST.replace("Policy(value = \"SecurityPolicy.yaml\")", "Policy(value = \"SecurityPolicy.yaml\", activated = false)"));
 
-        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(changed, BOTH_CLASSES)), user));
+        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(changed, BOTH_CLASSES)), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityFrameworkPushFailed"));
+        assertThat(readPushed(STRESS_TEST_PATH)).hasValueSatisfying(content -> assertThat(content).contains("Policy(value = \"SecurityPolicy.yaml\", activated = false)"));
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(POLICY);
     }
 

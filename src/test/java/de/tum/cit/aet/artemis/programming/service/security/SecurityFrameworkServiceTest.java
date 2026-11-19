@@ -1102,8 +1102,9 @@ class SecurityFrameworkServiceTest {
         pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).toFile(), broken, StandardCharsets.UTF_8));
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
 
-        securityFrameworkService.deactivate(exercise, user);
+        assertThat(securityFrameworkService.deactivate(exercise, user).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
 
+        assertThat(readPushed("test/de/example/SortingTest.java")).hasValueSatisfying(content -> assertThat(content).contains(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION));
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(broken);
     }
 

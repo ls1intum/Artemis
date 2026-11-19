@@ -516,6 +516,12 @@ public class SecurityPolicyEditorService {
 
         Map<String, SecurityTestAssignments.TestClass> testClasses = SecurityTestAssignments.read(SecurityPolicyRepositoryFiles.javaSources(root));
         Map<String, String> requested = requestedEntries(change, testClasses, touched);
+        try {
+            requireKnownTestCasesOfSplitClasses(repository, baseCommitHash, testClasses, requested);
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
 
         vacated.forEach(path -> SecurityPolicyRepositoryFiles.deletePolicyFile(root, path));
         rendered.forEach((path, content) -> SecurityPolicyRepositoryFiles.writePolicy(root, path, content));
@@ -693,6 +699,45 @@ public class SecurityPolicyEditorService {
                 Optional<String> path = SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath());
                 if (path.isPresent() && !Objects.equals(SecurityFrameworkCommitFiles.readPolicyFile(repository, baseTree, path.get()).content(),
                         SecurityFrameworkCommitFiles.readPolicyFile(repository, headTree, path.get()).content())) {
+                    throw policiesChanged();
+                }
+            }
+        }
+    }
+
+    /**
+     * Refuses a change that assigns some test cases of a class assigned as a whole if the class got test cases since the editor loaded the policies. They use
+     * the policy of the class, and splitting the class would release them although the editor never showed them. A test added to a class that stays assigned
+     * as a whole, or that is released as a whole, keeps following the class and does not conflict.
+     */
+    private static void requireKnownTestCasesOfSplitClasses(Repository repository, String baseCommitHash, Map<String, SecurityTestAssignments.TestClass> testClasses,
+            Map<String, String> requested) throws IOException {
+        Set<String> assignedCaseByCase = new HashSet<>();
+        for (String entry : requested.keySet()) {
+            if (entry.indexOf(SecurityTestAssignments.METHOD_SEPARATOR) >= 0) {
+                assignedCaseByCase.add(SecurityTestAssignments.testClassOf(entry));
+            }
+        }
+        List<SecurityTestAssignments.TestClass> split = new ArrayList<>();
+        for (SecurityTestAssignments.TestClass testClass : testClasses.values()) {
+            if (testClass.entries().containsKey(testClass.qualifiedName()) && assignedCaseByCase.contains(testClass.qualifiedName())) {
+                split.add(testClass);
+            }
+        }
+        ObjectId head = repository.resolve(Constants.HEAD);
+        if (split.isEmpty() || (head != null && head.name().equals(baseCommitHash))) {
+            return;
+        }
+        ObjectId base = repository.resolve(baseCommitHash);
+        if (base == null) {
+            throw policiesChanged();
+        }
+        try (RevWalk revWalk = new RevWalk(repository)) {
+            RevTree baseTree = revWalk.parseCommit(base).getTree();
+            Map<String, SecurityTestAssignments.TestClass> loaded = SecurityTestAssignments.read(SecurityFrameworkCommitFiles.javaSources(repository, baseTree));
+            for (SecurityTestAssignments.TestClass testClass : split) {
+                SecurityTestAssignments.TestClass loadedClass = loaded.get(testClass.qualifiedName());
+                if (loadedClass == null || !new HashSet<>(loadedClass.testCases()).containsAll(testClass.testCases())) {
                     throw policiesChanged();
                 }
             }
