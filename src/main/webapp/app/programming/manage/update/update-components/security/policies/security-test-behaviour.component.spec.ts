@@ -124,6 +124,17 @@ describe('SecurityTestBehaviourComponent', () => {
 
         expect(comp.hiddenFromInput()).toBe('2026-12-24T10:00');
         expect(comp.hiddenPeriodInvalid()).toBe(true);
+        // Both dates are marked invalid and name the message, so a screen reader reads it when one of them gets the focus again.
+        handlers.onTabChange('visibility');
+        fixture.detectChanges();
+        const element = fixture.nativeElement as HTMLElement;
+        const problemId = element.querySelector('[data-testid="security-behaviour-hidden-period-problem"]')?.id;
+        expect(problemId).toBeTruthy();
+        for (const testId of ['security-behaviour-hidden-from', 'security-behaviour-hidden-until']) {
+            const input = element.querySelector(`[data-testid="${testId}"]`);
+            expect(input?.getAttribute('aria-invalid')).toBe('true');
+            expect(input?.getAttribute('aria-describedby')).toBe(problemId);
+        }
         handlers.setHideTests(false);
         expect(emitted.at(-1)).toBeUndefined();
     });

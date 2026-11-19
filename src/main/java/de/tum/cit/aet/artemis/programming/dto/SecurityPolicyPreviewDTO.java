@@ -7,9 +7,10 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * The policy files a change would write, and whether the Ares version the tests repository pins accepts them.
+ * The files a change would write, and whether the Ares version the tests repository pins accepts its policies.
  *
- * @param files            one entry per changed file: the policies, and the build file if the change pins another Ares version
+ * @param files            one entry per changed file: the policies, the build file if the change pins another Ares version, and the test classes whose
+ *                             {@code @Policy} annotations it rewrites
  * @param frameworkVersion the Ares version the tests repository pins after the change
  * @param verdict          {@code COMPATIBLE}, {@code INCOMPATIBLE} or {@code UNVERIFIED}, see
  *                             {@link de.tum.cit.aet.artemis.programming.service.security.AresCompatibilityManifest.Verdict}

@@ -15,7 +15,8 @@
                                 class="sp-mono sp-grow"
                                 [ngModel]="path()"
                                 (ngModelChange)="path.set($event)"
-                                [attr.aria-invalid]="invalid === 'first' ? true : null"
+                                [tumAetUiInputInvalid]="invalid === 'first'"
+                                [tumAetUiInputDescribedBy]="invalid === 'first' ? 'securityPermissionProblem' : undefined"
                                 data-testid="security-permission-path"
                             />
                             @if (canBrowse()) {
@@ -38,7 +39,8 @@
                                 class="sp-mono"
                                 [ngModel]="host()"
                                 (ngModelChange)="host.set($event)"
-                                [attr.aria-invalid]="invalid === 'first' ? true : null"
+                                [tumAetUiInputInvalid]="invalid === 'first'"
+                                [tumAetUiInputDescribedBy]="invalid === 'first' ? 'securityPermissionProblem' : undefined"
                                 data-testid="security-permission-host"
                             />
                         </div>
@@ -52,7 +54,8 @@
                                 inputmode="numeric"
                                 [ngModel]="portText()"
                                 (ngModelChange)="portText.set($event)"
-                                [attr.aria-invalid]="invalid === 'port' ? true : null"
+                                [tumAetUiInputInvalid]="invalid === 'port'"
+                                [tumAetUiInputDescribedBy]="invalid === 'port' ? 'securityPermissionProblem' : undefined"
                                 data-testid="security-permission-port"
                             />
                         </div>
@@ -71,7 +74,8 @@
                                     class="sp-mono sp-grow"
                                     [ngModel]="command()"
                                     (ngModelChange)="command.set($event)"
-                                    [attr.aria-invalid]="invalid === 'first' ? true : null"
+                                    [tumAetUiInputInvalid]="invalid === 'first'"
+                                    [tumAetUiInputDescribedBy]="invalid === 'first' ? 'securityPermissionProblem' : undefined"
                                     data-testid="security-permission-command"
                                 />
                                 @if (canBrowse()) {
@@ -90,7 +94,8 @@
                                 class="sp-mono"
                                 [ngModel]="argumentsText()"
                                 (ngModelChange)="argumentsText.set($event)"
-                                [attr.aria-invalid]="invalid === 'arguments' ? true : null"
+                                [tumAetUiInputInvalid]="invalid === 'arguments'"
+                                [tumAetUiInputDescribedBy]="invalid === 'arguments' ? 'securityPermissionProblem' : undefined"
                                 data-testid="security-permission-arguments"
                             />
                         </div>
@@ -108,7 +113,8 @@
                                 class="sp-mono"
                                 [ngModel]="threadClass()"
                                 (ngModelChange)="threadClass.set($event)"
-                                [attr.aria-invalid]="invalid === 'first' ? true : null"
+                                [tumAetUiInputInvalid]="invalid === 'first'"
+                                [tumAetUiInputDescribedBy]="invalid === 'first' ? 'securityPermissionProblem' : undefined"
                                 data-testid="security-permission-thread-class"
                             />
                         </div>
@@ -122,7 +128,8 @@
                                 inputmode="numeric"
                                 [ngModel]="maxThreadsText()"
                                 (ngModelChange)="maxThreadsText.set($event)"
-                                [attr.aria-invalid]="invalid === 'maxThreads' ? true : null"
+                                [tumAetUiInputInvalid]="invalid === 'maxThreads'"
+                                [tumAetUiInputDescribedBy]="invalid === 'maxThreads' ? 'securityPermissionProblem' : undefined"
                                 data-testid="security-permission-max-threads"
                             />
                         </div>
@@ -139,7 +146,8 @@
                             class="sp-mono"
                             [ngModel]="packageName()"
                             (ngModelChange)="packageName.set($event)"
-                            [attr.aria-invalid]="invalid === 'first' ? true : null"
+                            [tumAetUiInputInvalid]="invalid === 'first'"
+                            [tumAetUiInputDescribedBy]="invalid === 'first' ? 'securityPermissionProblem' : undefined"
                             data-testid="security-permission-package"
                         />
                         <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'packages.hint'"></p>
@@ -148,7 +156,7 @@
                 @default {}
             }
             @if (submitted() && problem(); as problemKey) {
-                <p class="m-0 text-sm text-state-danger" role="alert" data-testid="security-permission-problem">
+                <p id="securityPermissionProblem" class="m-0 text-sm text-state-danger" role="alert" data-testid="security-permission-problem">
                     {{ problemKey | artemisTranslate: { entry: target() } }}
                 </p>
             }
@@ -215,7 +223,9 @@
     [mode]="browseMode()"
     [files]="templateFiles()"
     [truncated]="templateFilesTruncated()"
+    [failed]="templateFilesFailed()"
     [badges]="browseBadges()"
     [initialSelection]="browsedEntries()"
     (selected)="onBrowsed($event)"
+    (retryRequested)="templateFilesRequested.emit()"
 />

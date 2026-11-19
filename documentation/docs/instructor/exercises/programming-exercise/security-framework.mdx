@@ -104,6 +104,7 @@ lists the reasons, which can be:
 - The build file does not pin an Ares version through `aresVersion` (Gradle) or `ares.version` (Maven).
 - A `@Policy` annotation is on a field or a nested class, on an annotation type, on a method that is not a test, or on two methods of the same name.
 - A test method has an active `@Policy` annotation of its own, although the annotation of its test class switches the sandbox off.
+  This includes a test method the class inherits from another test class.
 - Tests or Ares annotations are inside a nested class.
 - A file declares several top-level types that are test classes or carry a `@Policy` annotation.
 - A test class registers Ares but has no `@Policy` annotation of its own.
@@ -291,6 +292,9 @@ it lists the same path or package twice, is shown read-only; fix it in the tests
 
 The bar below the policies counts your unsaved changes. **Discard** drops all of them. **Save Policies** opens the
 review, which shows a side-by-side comparison of every changed policy file and the test case assignments that change.
+When the assignments change, it also compares the `@Policy` annotations of the test classes that saving rewrites. If
+you assign single test cases of a class that used one policy as a whole, the review lists every other test case of the
+class that loses the policy; you can save once these test cases are loaded.
 Ares reads your settings from these files, so you do not edit them yourself; the comparison shows exactly what saving
 changes. The review also checks the files against the pinned Ares version: if the version does not accept a field, for
 example a test behaviour that Ares 2.2.1 does not support yet, the review lists it and you cannot save until you remove

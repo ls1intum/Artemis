@@ -156,6 +156,8 @@
                         [value]="hiddenFromInput()"
                         (change)="onHiddenDateChange('hiddenFrom', $event)"
                         [disabled]="disabled() || !hiddenTests()"
+                        [tumAetUiInputInvalid]="hiddenTests() && hiddenPeriodInvalid()"
+                        [tumAetUiInputDescribedBy]="hiddenTests() && hiddenPeriodInvalid() ? id + 'HiddenPeriodProblem' : undefined"
                         data-testid="security-behaviour-hidden-from"
                     />
                 </div>
@@ -173,12 +175,20 @@
                         [value]="hiddenUntilInput()"
                         (change)="onHiddenDateChange('hiddenUntil', $event)"
                         [disabled]="disabled() || !hiddenTests()"
+                        [tumAetUiInputInvalid]="hiddenTests() && hiddenPeriodInvalid()"
+                        [tumAetUiInputDescribedBy]="hiddenTests() && hiddenPeriodInvalid() ? id + 'HiddenPeriodProblem' : undefined"
                         data-testid="security-behaviour-hidden-until"
                     />
                 </div>
             </div>
             @if (hiddenTests() && hiddenPeriodInvalid()) {
-                <p class="m-0 text-sm text-state-danger" role="alert" [jhiTranslate]="prefix + 'hiddenPeriodInvalid'"></p>
+                <p
+                    [id]="id + 'HiddenPeriodProblem'"
+                    class="m-0 text-sm text-state-danger"
+                    role="alert"
+                    [jhiTranslate]="prefix + 'hiddenPeriodInvalid'"
+                    data-testid="security-behaviour-hidden-period-problem"
+                ></p>
             }
             <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'timeZone'"></p>
         }

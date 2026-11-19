@@ -355,7 +355,7 @@
                     "ARES_1": "{{ location }}: Die Tests verwenden Ares 1, dessen eigene Sandbox weiterläuft.",
                     "NO_ARES_2": "{{ location }}: Die Tests verwenden nicht Ares 2.",
                     "NO_ARES_VERSION_PINNED": "{{ location }}: Die Build-Datei legt keine Ares-Version fest.",
-                    "ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS": "{{ location }}: Eine Testmethode nutzt die Ares-Sandbox über ihre eigene @Policy-Annotation, obwohl die Annotation ihrer Testklasse die Sandbox ausschaltet."
+                    "ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS": "{{ location }}: Eine Testmethode, auch eine von einer anderen Testklasse geerbte, nutzt die Ares-Sandbox über ihre eigene @Policy-Annotation, obwohl die Annotation der Testklasse die Sandbox ausschaltet."
                 },
                 "sync": {
                     "inactive": "Beim Aktivieren wird die vorherige Richtlinie wiederhergestellt oder eine Standardrichtlinie erzeugt.",
@@ -805,6 +805,8 @@
                         "inTemplate": "Dateien im Vorlagen-Repository",
                         "scriptsInTemplate": "Skripte im Vorlagen-Repository",
                         "empty": "Nichts passt zu „{{ query }}“.",
+                        "loadFailed": "Die Dateien des Vorlagen-Repositorys konnten nicht geladen werden.",
+                        "retry": "Erneut versuchen",
                         "selectPath": "Auswählen",
                         "expand": "Aufklappen",
                         "collapse": "Zuklappen",
@@ -1020,6 +1022,10 @@
                         "renamedFrom": "umbenannt von {{ file }}",
                         "deleted": "gelöscht",
                         "buildSettings": "Build-Einstellungen",
+                        "testAnnotations": "Testklasse · @Policy-Annotationen",
+                        "loadingTestCases": "Die Testfälle, die die Änderung freigibt, werden geladen…",
+                        "testCasesFailed": "Die Testfälle der aufgeteilten Testklassen konnten nicht geladen werden, daher kann die Überprüfung nicht zeigen, welche ihre Richtlinie verlieren.",
+                        "retry": "Erneut versuchen",
                         "diffOf": "Diff von {{ file }} nebeneinander",
                         "before": "Vorher · {{ commit }}",
                         "after": "Nachher · deine Änderungen",

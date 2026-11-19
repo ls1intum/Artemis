@@ -132,6 +132,7 @@
                     [disabled]="disabled()"
                     [templateFiles]="templateFiles()"
                     [templateFilesTruncated]="templateFilesTruncated()"
+                    [templateFilesFailed]="templateFilesFailed()"
                     (documentChange)="onDocumentChange($event)"
                     (templateFilesRequested)="templateFilesRequested.emit()"
                 />

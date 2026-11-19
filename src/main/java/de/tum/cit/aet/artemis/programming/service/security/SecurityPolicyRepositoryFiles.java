@@ -291,6 +291,8 @@ public final class SecurityPolicyRepositoryFiles {
             return List.of(new SecurityFrameworkState.UnsupportedReason(testClasses.getFirst().qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.NO_ARES_2));
         }
         List<SecurityFrameworkState.UnsupportedReason> reasons = new ArrayList<>();
+        Map<String, AresTestSources.TypeDeclaration> testClassesByName = new HashMap<>();
+        testClasses.forEach(testClass -> testClassesByName.put(testClass.qualifiedName(), testClass));
         for (AresTestSources.TypeDeclaration testClass : testClasses) {
             if (testClass.policies().size() != 1) {
                 reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(),
@@ -300,7 +302,7 @@ public final class SecurityPolicyRepositoryFiles {
             if (!testClass.registersSandbox()) {
                 reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES));
             }
-            if (hasActiveMethodPolicyWhileSwitchedOff(testClass)) {
+            if (hasActiveMethodPolicyWhileSwitchedOff(testClass, testClassesByName)) {
                 reasons.add(
                         new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS));
             }
@@ -310,13 +312,23 @@ public final class SecurityPolicyRepositoryFiles {
 
     /**
      * Ares applies the annotation of a test method instead of the one of its class, so an active method annotation in a class whose annotation switches the
-     * sandbox off runs that test with the sandbox. Neither the state of the class nor its assignments could show that, so such a class is not supported.
+     * sandbox off runs that test with the sandbox. That holds for the test methods the class inherits from other test classes as well, because Ares reads the
+     * annotation of the method where it is declared before the one of the class that runs it. Neither the state of the class nor its assignments could show
+     * that, so such a class is not supported.
      */
-    private static boolean hasActiveMethodPolicyWhileSwitchedOff(AresTestSources.TypeDeclaration testClass) {
+    private static boolean hasActiveMethodPolicyWhileSwitchedOff(AresTestSources.TypeDeclaration testClass, Map<String, AresTestSources.TypeDeclaration> testClassesByName) {
         if (testClass.policies().size() != 1 || !testClass.policies().getFirst().isEvaluable() || testClass.policies().getFirst().isActivated()) {
             return false;
         }
-        return testClass.methodPolicies().values().stream().anyMatch(annotation -> annotation.isEvaluable() && annotation.isActivated());
+        Set<String> visited = new HashSet<>();
+        Optional<AresTestSources.TypeDeclaration> declaring = Optional.of(testClass);
+        while (declaring.isPresent() && visited.add(declaring.get().qualifiedName())) {
+            if (declaring.get().methodPolicies().values().stream().anyMatch(annotation -> annotation.isEvaluable() && annotation.isActivated())) {
+                return true;
+            }
+            declaring = superclassOf(declaring.get(), testClassesByName.keySet()).map(testClassesByName::get);
+        }
+        return false;
     }
 
     private static SecurityFrameworkState.PolicyFile policyFile(String path, List<String> referencedBy, PolicyFileReader reader, boolean verifiedAresVersion) {

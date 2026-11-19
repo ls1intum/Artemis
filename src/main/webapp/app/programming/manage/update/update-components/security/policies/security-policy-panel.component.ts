@@ -77,6 +77,7 @@ export class SecurityPolicyPanelComponent {
     readonly otherTests = input<Map<string, string>>(new Map());
     readonly templateFiles = input<string[] | undefined>(undefined);
     readonly templateFilesTruncated = input(false);
+    readonly templateFilesFailed = input(false);
     readonly disabled = input(false);
 
     readonly policyChange = output<EditorPolicy>();

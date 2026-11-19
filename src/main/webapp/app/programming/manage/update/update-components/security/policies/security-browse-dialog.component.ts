@@ -75,12 +75,15 @@ export class SecurityBrowseDialogComponent {
     readonly files = input<string[] | undefined>(undefined);
     /** Whether the repository has more files than were listed. */
     readonly truncated = input(false);
+    /** Whether the files could not be loaded; Retry asks for them again. */
+    readonly failed = input(false);
     /** The tag of each path that already has an entry, e.g. the actions it grants. */
     readonly badges = input<Map<string, string>>(new Map());
     /** The paths selected when the dialog opens, e.g. those already typed into the field. */
     readonly initialSelection = input<string[]>([]);
 
     readonly selected = output<string[]>();
+    readonly retryRequested = output<void>();
 
     readonly search = signal('');
     readonly expanded = signal<ReadonlySet<string>>(new Set());

@@ -501,6 +501,23 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void aSwitchedOffSubclassThatInheritsAnActiveTestMethodIsUnsupported() throws IOException {
+        writeBuildFile();
+        writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");
+        writeSource("test/de/example/MoreSortingTest.java", "package de.example;\n\nimport de.tum.cit.ase.ares.api.jupiter.Public;\n\n@Public\n"
+                + SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION + "\nclass MoreSortingTest extends SortingTest {\n}\n");
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).isEmpty();
+
+        // Ares reads the annotation of the inherited test method first, so the subclass runs it with the sandbox.
+        String withMethodPolicy = TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n",
+                "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n");
+        writeSource("test/de/example/SortingTest.java", withMethodPolicy);
+
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS, "de.example.MoreSortingTest");
+    }
+
+    @Test
     void aMarkerTheFileDeclaresItselfDoesNotRegisterAres() throws IOException {
         writeBuildFile();
         writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");

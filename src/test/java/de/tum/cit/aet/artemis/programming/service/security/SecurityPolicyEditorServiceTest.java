@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -394,6 +395,27 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void previewShowsTheTestClassesWhoseAnnotationsTheChangeRewrites() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+
+        SecurityPolicyPreviewDTO preview = editorService.preview(exercise(),
+                change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest#testMergeSort", "de.example.StressTest"))));
+
+        // Only the annotations change, so the policy itself is not rewritten; the review shows the test class instead.
+        assertThat(preview.files()).filteredOn(file -> file.path().endsWith(".java")).singleElement().satisfies(file -> {
+            assertThat(file.path()).isEqualTo(SORTING_TEST_PATH);
+            assertThat(file.before()).isEqualTo(SORTING_TEST);
+            assertThat(file.after()).contains("@de.tum.cit.ase.ares.api.Policy\nclass SortingTest {")
+                    .contains("    @de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\n    @Test\n    void testMergeSort()");
+        });
+        // A preview of a single policy whose test is still assigned to another one shows the policy without the test classes.
+        SecurityPolicyDocumentDTO other = withTestClasses(loadedPolicy(editor), "OtherPolicy.yaml", List.of("de.example.StressTest"));
+        assertThat(editorService.preview(exercise(), change(editor, added(other, List.of("de.example.StressTest")))).files()).extracting(SecurityPolicyPreviewDTO.FileDTO::path)
+                .containsExactly("OtherPolicy.yaml");
+        assertThat(pushedHead()).isEqualTo(editor.baseCommitHash());
+    }
+
+    @Test
     void previewReportsWhatThePinnedVersionDoesNotAccept() {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO withTimeout = withBehavior(loadedPolicy(editor),
@@ -551,6 +573,21 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void refusesSplittingAClassWhoseAnnotationGotAnotherWithinPathSinceThePoliciesWereLoaded() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        String withinTest = SORTING_TEST.replace("Policy(value = \"SecurityPolicy.yaml\")\nclass", "Policy(value = \"SecurityPolicy.yaml\", withinPath = \"test\")\nclass");
+        pushToTests(SORTING_TEST_PATH, withinTest);
+        String concurrentHead = pushedHead();
+
+        // The split would copy a withinPath to the annotation of testMergeSort that the editor never showed.
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> editorService.commit(exercise(),
+                        change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest#testMergeSort", "de.example.StressTest"))), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
+        assertThat(pushedHead()).isEqualTo(concurrentHead);
+    }
+
+    @Test
     void acceptsSplittingAClassAssignedAsAWholeIfOnlyTheBodyOfOneOfItsTestsChanged() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         pushToTests(SORTING_TEST_PATH,
@@ -635,6 +672,21 @@ class SecurityPolicyEditorServiceTest {
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> editorService.commit(exercise(), change(editor, added(document, List.of("de.example.StressTest"))), user))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyInvalidPath"));
+    }
+
+    @Test
+    void refusesAChangeWithAnEmptyEntryAsInvalidInput() {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        List<SecurityPolicyChangeDTO.PolicyChangeDTO> noPolicy = new ArrayList<>();
+        noPolicy.add(null);
+        List<String> noTest = new ArrayList<>(BOTH_CLASSES);
+        noTest.add(null);
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.preview(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, null, noPolicy, List.of())))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyNoChange"));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(loadedPolicy(editor), noTest)), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyNoChange"));
     }
 
     @Test
@@ -770,6 +822,23 @@ class SecurityPolicyEditorServiceTest {
         assertThat(pushedHead()).isEqualTo(later);
         assertThat(result.editor().baseCommitHash()).isEqualTo(later);
         assertThat(loadedPolicy(result.editor()).files()).containsExactly(LOGS);
+    }
+
+    @Test
+    void aRetryConflictsIfALaterCommitRevertedTheChange() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyChangeDTO change = change(editor, edited(withFiles(loadedPolicy(editor), List.of(LOGS)), BOTH_CLASSES));
+        doThrow(new VersionControlException("Build trigger failed")).when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any());
+        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change, user));
+        // Another instructor reverts the policy before the retry.
+        pushToTests(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, POLICY);
+        String revert = pushedHead();
+        doNothing().when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any());
+
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.commit(exercise(), change, user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
+        assertThat(pushedHead()).isEqualTo(revert);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(POLICY);
     }
 
     @Test

@@ -198,8 +198,12 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     /** The version the next commit pins; undefined to keep the pinned one. */
     readonly stagedVersion = signal<string | undefined>(undefined);
     readonly structure = signal<SecurityTestStructure | undefined>(undefined);
+    /** Whether the last request for the test structure failed; the structure is then empty, so the dialogs do not wait for it. */
+    readonly structureFailed = signal(false);
     readonly templateFiles = signal<string[] | undefined>(undefined);
     readonly templateFilesTruncated = signal(false);
+    /** Whether the files of the template repository could not be loaded; Browse… shows the error and requests them again. */
+    readonly templateFilesFailed = signal(false);
     readonly banner = signal<Banner | undefined>(undefined);
     /** The verdict of the version the changes are committed with, checked a moment after each change. */
     readonly versionCheck = signal<SecurityPolicyPreview | undefined>(undefined);
@@ -303,7 +307,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     readonly scanAvailable = computed(
         () => !!this.editor()?.scanDependenciesAvailable && this.policiesWithDeleted().some((policy) => !!policy.base) && !this.scanBlockedByReadOnly(),
     );
-    readonly strictTimeouts = computed(() => this.policies().some((policy) => !!policy.working?.testBehavior?.strictTimeout));
+    /** Whether a committed policy enforces strict timeouts: switching scanning commits the committed policies, so their timeouts are the ones that apply. */
+    readonly strictTimeouts = computed(() => this.policiesWithDeleted().some((policy) => !!policy.base?.testBehavior?.strictTimeout));
 
     /** The path each policy is saved to, by its id. */
     readonly paths = computed(() => {
@@ -355,8 +360,15 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     readonly yamlPolicy = computed(() => this.policies().find((policy) => policy.id === this.yamlPolicyId()));
     readonly deletingPolicy = computed(() => this.policies().find((policy) => policy.id === this.deletingPolicyId()));
     readonly readOnlyPolicies = computed(() => this.policies().filter((policy) => !policy.working));
-    /** The files the policies are saved to, for the dialog that deletes them. */
-    readonly policyPaths = computed(() => [...this.paths().values()].filter((path) => path.length > 0));
+    /**
+     * The committed policy files, for the dialog that deletes them: deactivating discards the unsaved changes and deletes the files in the repository, so a
+     * policy renamed or deleted only in the editor is listed with its committed path, and a new one is not listed.
+     */
+    readonly policyPaths = computed(() =>
+        this.policiesWithDeleted()
+            .map((policy) => policy.file?.policyPath ?? '')
+            .filter((path) => path.length > 0),
+    );
 
     /** What keeps the changes from being committed, translated; empty if they can be committed. */
     readonly problems = computed(() => {
@@ -407,7 +419,28 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         const buildSettings = this.translateService.instant(`${PREFIX}.review.buildSettings`);
         descriptions.set('build.gradle', buildSettings);
         descriptions.set('pom.xml', buildSettings);
+        const testAnnotations = this.translateService.instant(`${PREFIX}.review.testAnnotations`);
+        (this.reviewPreview()?.files ?? []).filter((file) => file.path.endsWith('.java')).forEach((file) => descriptions.set(file.path, testAnnotations));
         return descriptions;
+    });
+
+    /** Whether the change assigns some test cases of a class that is assigned as a whole, which releases the others. */
+    readonly splitsClass = computed(() =>
+        this.policies().some((policy) => policy.tests.some((entry) => entry.includes(TEST_CASE_SEPARATOR) && policy.baseTests.includes(testClassOf(entry)))),
+    );
+
+    /**
+     * Whether the review lists every test case the change releases: a split lists them from the test structure of the commit the change is based on, so the
+     * review waits for it, and a failed load is no complete review.
+     */
+    readonly reviewAssignmentsState = computed<'ready' | 'loading' | 'failed'>(() => {
+        if (!this.splitsClass()) {
+            return 'ready';
+        }
+        if (this.structureFailed()) {
+            return 'failed';
+        }
+        return this.structure() === undefined ? 'loading' : 'ready';
     });
 
     /** The test case assignments the commit changes. */
@@ -908,6 +941,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         }
         this.structureRequested = true;
         this.structureCommit = commit;
+        // The empty structure of a failed request is no answer: the dialogs and the review wait for this one.
+        this.structure.set(undefined);
+        this.structureFailed.set(false);
         const request = ++this.structureRequests;
         this.securityService.getTestStructure(this.exerciseId()).subscribe({
             next: (structure) => {
@@ -918,6 +954,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             error: () => {
                 if (request === this.structureRequests) {
                     this.structureRequested = false;
+                    this.structureFailed.set(true);
                     this.structure.set({ testClasses: [] });
                 }
             },
@@ -940,14 +977,16 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             return;
         }
         this.templateFilesRequested = true;
+        this.templateFilesFailed.set(false);
         this.securityService.getTemplateFiles(this.exerciseId()).subscribe({
             next: (files) => {
                 this.templateFiles.set(files.paths ?? []);
                 this.templateFilesTruncated.set(!!files.truncated);
             },
             error: () => {
+                // A failure is no empty list: the files stay unknown, so the next Browse… or Retry requests them again.
                 this.templateFilesRequested = false;
-                this.templateFiles.set([]);
+                this.templateFilesFailed.set(true);
             },
         });
     }
@@ -973,7 +1012,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             return;
         }
         // A class assigned as a whole that is split is listed with each test case it releases, so the review reads them as they are now.
-        if (this.policies().some((policy) => policy.tests.some((entry) => entry.includes(TEST_CASE_SEPARATOR) && policy.baseTests.includes(testClassOf(entry))))) {
+        if (this.splitsClass()) {
             this.requestStructure();
         }
         this.reviewOpen.set(true);
@@ -1014,7 +1053,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     protected commit(commitMessage: string): void {
-        if (this.importPending()) {
+        // The review of a split commits only once it lists the test cases the split releases.
+        if (this.importPending() || (this.reviewOpen() && this.reviewAssignmentsState() !== 'ready')) {
             return;
         }
         // The review commits what its diff shows; a change made since, e.g. by an import that answered late, is shown first.
@@ -1051,7 +1091,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 this.loadRequests++;
                 this.loading.set(false);
                 // The editor of the commit is current, also after the pushed policies of an unprocessed commit could not be read, and its builds include
-                // the changes of that commit.
+                // the changes of that commit. Until they were read, the unsaved changes are still the ones that commit submitted, so the answer replaces
+                // them as that commit would have, instead of keeping them as drafts on top of their own commit; once read, they are edits made since.
+                const keep = this.pendingRecovery ? this.pendingRecovery.keepUnsaved : keepUnsaved;
                 this.pendingRecovery = undefined;
                 this.unprocessed = undefined;
                 this.loadFailed.set(false);
@@ -1059,7 +1101,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 const hash = (result.editor.lastCommit?.hash ?? result.editor.baseCommitHash ?? '').substring(0, 7);
                 this.configChange.emit(result.config);
                 this.versionCheck.set(undefined);
-                if (keepUnsaved) {
+                if (keep) {
                     // The unsaved changes are rebased onto the new commit, so the scanning switch shows the committed state at once.
                     this.rebaseOnto(result.editor, false);
                 } else {

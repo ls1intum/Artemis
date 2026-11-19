@@ -106,6 +106,7 @@ export class SecurityResourceAccessComponent {
     readonly disabled = input(false);
     readonly templateFiles = input<string[] | undefined>(undefined);
     readonly templateFilesTruncated = input(false);
+    readonly templateFilesFailed = input(false);
 
     readonly documentChange = output<SecurityPolicyDocument>();
     readonly templateFilesRequested = output<void>();

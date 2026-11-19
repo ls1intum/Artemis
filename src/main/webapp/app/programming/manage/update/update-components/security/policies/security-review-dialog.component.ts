@@ -83,8 +83,14 @@ export class SecurityReviewDialogComponent {
     readonly defaultMessage = input('');
     /** Whether no commit can start now, because one is running or the policies are loading. */
     readonly busy = input(false);
+    /**
+     * Whether the assignments are complete: a split test class lists the test cases it releases, which need the test structure of the commit the change is
+     * based on, so the commit waits for it and a failed load offers Retry.
+     */
+    readonly assignmentsState = input<'ready' | 'loading' | 'failed'>('ready');
 
     readonly commitRequested = output<string>();
+    readonly assignmentsRetry = output<void>();
 
     readonly message = signal('');
 
@@ -104,7 +110,13 @@ export class SecurityReviewDialogComponent {
     readonly verdict = computed(() => this.preview()?.verdict);
     readonly blocked = computed(() => this.verdict() === SecurityVersionCompatibilityVerdict.INCOMPATIBLE || this.problems().length > 0);
     readonly canCommit = computed(
-        () => !!this.preview() && !this.blocked() && !this.busy() && (this.diffs().length > 0 || this.assignments().length > 0) && this.message().trim().length > 0,
+        () =>
+            !!this.preview() &&
+            !this.blocked() &&
+            !this.busy() &&
+            this.assignmentsState() === 'ready' &&
+            (this.diffs().length > 0 || this.assignments().length > 0) &&
+            this.message().trim().length > 0,
     );
 
     constructor() {

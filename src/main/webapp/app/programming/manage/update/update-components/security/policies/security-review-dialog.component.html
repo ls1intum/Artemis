@@ -107,6 +107,33 @@
                     </ul>
                 </details>
             }
+            @switch (assignmentsState()) {
+                @case ('loading') {
+                    <div class="sp-row" data-testid="security-review-assignments-loading">
+                        <tumaet-ui-progress-spinner />
+                        <span [jhiTranslate]="prefix + 'loadingTestCases'"></span>
+                    </div>
+                }
+                @case ('failed') {
+                    <tumaet-ui-message severity="error" [icon]="faCircleXmark" data-testid="security-review-assignments-failed">
+                        <span class="sp-row text-sm">
+                            <span [jhiTranslate]="prefix + 'testCasesFailed'"></span>
+                            <button
+                                type="button"
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="outlined"
+                                size="small"
+                                (click)="assignmentsRetry.emit()"
+                                data-testid="security-review-assignments-retry"
+                            >
+                                {{ prefix + 'retry' | artemisTranslate }}
+                            </button>
+                        </span>
+                    </tumaet-ui-message>
+                }
+                @default {}
+            }
             @if (problems().length || verdict() === SecurityVersionCompatibilityVerdict.INCOMPATIBLE) {
                 <tumaet-ui-message severity="error" [icon]="faCircleXmark" data-testid="security-review-problems">
                     <span class="text-sm">

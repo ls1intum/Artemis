@@ -168,6 +168,17 @@ describe('SecurityPermissionDialogComponent', () => {
         comp.packageName.set('org.apache.commons.lang3');
         handlers.save();
         expect(saved[0]).toEqual([{ packageName: 'org.apache.commons.lang3' }]);
+
+        // Java identifiers are not limited to ASCII, and the server accepts such names as well.
+        open('packages');
+        comp.packageName.set('de.example.über');
+        expect(comp.problem()).toBeUndefined();
+        comp.packageName.set('de.1example');
+        expect(comp.problem()).toBe(PROBLEM + 'packageName');
+        open('threads');
+        comp.threadClass.set('de.example.ArbeiterÄ');
+        comp.maxThreadsText.set('2');
+        expect(comp.problem()).toBeUndefined();
     });
 
     it('puts the browsed paths into the field and asks for the template files once', () => {
@@ -214,6 +225,11 @@ describe('SecurityPermissionDialogComponent', () => {
         expect(saved).toEqual([]);
         expect(document.querySelector('[data-testid="security-permission-arguments"]')?.getAttribute('aria-invalid')).toBe('true');
         expect(document.querySelector('[data-testid="security-permission-command"]')?.getAttribute('aria-invalid')).toBeNull();
+        // The invalid field names the message that explains it, so a screen reader reads it when the field gets the focus again.
+        const describedBy = document.querySelector('[data-testid="security-permission-arguments"]')?.getAttribute('aria-describedby');
+        expect(describedBy).toBeTruthy();
+        expect(document.getElementById(describedBy!)?.getAttribute('data-testid')).toBe('security-permission-problem');
+        expect(document.querySelector('[data-testid="security-permission-command"]')?.getAttribute('aria-describedby')).toBeNull();
     });
 
     it('splits lists and arguments', () => {

@@ -23,8 +23,8 @@ export type FileAction = (typeof FILE_ACTIONS)[number];
 export const NETWORK_ACTIONS = ['open', 'send', 'receive'] as const;
 export type NetworkAction = (typeof NETWORK_ACTIONS)[number];
 
-/** One part of a fully qualified Java name. */
-const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
+/** One part of a fully qualified Java name, with the characters Java allows in identifiers, e.g. {@code ArbeiterÄ}; the server checks reserved words. */
+const IDENTIFIER = /^[\p{L}\p{Nl}\p{Sc}\p{Pc}][\p{L}\p{Nl}\p{Sc}\p{Pc}\p{Nd}\p{Mn}\p{Mc}]*$/u;
 
 /** Whether the text is a fully qualified Java name, a package or a class: identifiers separated by dots. */
 function isQualifiedName(text: string): boolean {
@@ -73,6 +73,8 @@ export class SecurityPermissionDialogComponent {
     /** The files of the template repository for Browse…; undefined until loaded. */
     readonly templateFiles = input<string[] | undefined>(undefined);
     readonly templateFilesTruncated = input(false);
+    /** Whether the files of the template repository could not be loaded. */
+    readonly templateFilesFailed = input(false);
     /** The tag of each path or script that already has an entry, for Browse…. */
     readonly browseBadges = input<Map<string, string>>(new Map());
 

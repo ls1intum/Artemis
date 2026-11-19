@@ -168,7 +168,7 @@ public class SecurityPolicyEditorService {
      *
      * @param exercise the programming exercise
      * @param change   the changes
-     * @return the files before and after the change and whether the pinned version accepts the policies
+     * @return the files before and after the change, including the test classes whose annotations it rewrites, and whether the pinned version accepts the policies
      */
     public SecurityPolicyPreviewDTO preview(ProgrammingExercise exercise, SecurityPolicyChangeDTO change) {
         securityFrameworkService.validateJavaExercise(exercise);
@@ -227,6 +227,7 @@ public class SecurityPolicyEditorService {
                 SecurityPolicyRepositoryFiles.pinAresVersion(gradleBuild, mavenPom, frameworkVersion)
                         .ifPresent(build -> files.add(new SecurityPolicyPreviewDTO.FileDTO(build.path(), build.path(), build.before(), build.after())));
             }
+            files.addAll(rewrittenTestClasses(repository, tree, change));
             return new SecurityPolicyPreviewDTO(files, frameworkVersion, verdict.name(), problems);
         });
     }
@@ -270,8 +271,12 @@ public class SecurityPolicyEditorService {
         String fingerprint = fingerprint(change);
         securityFrameworkService.changeTestRepository(exercise, user, commitMessage(change.commitMessage()), POLICY_ACTION, CHANGE_TRAILER + fingerprint + "\n", true,
                 repository -> {
-                    if (!isAlreadyApplied(repository, fingerprint, baseCommitHash)) {
+                    Optional<String> appliedCommit = appliedCommit(repository, fingerprint, baseCommitHash);
+                    if (appliedCommit.isEmpty()) {
                         applyChange(repository, change, baseCommitHash);
+                    }
+                    else {
+                        requireStillApplied(repository, appliedCommit.get(), change.frameworkVersion() != null);
                     }
                 });
         log.info("User {} changed the security policies {} and removed {} of programming exercise {}", user.getLogin(),
@@ -406,16 +411,16 @@ public class SecurityPolicyEditorService {
     }
 
     /**
-     * Whether a commit since the one the editor loaded is the commit of this very change. That is the case when a retry follows a request whose push
-     * succeeded but whose processing failed: the change must not be applied again, which would fail as a conflict with itself. If it is still the head, the
-     * pending processing is resumed; if other commits followed it, their own processing builds it. The fingerprint covers the whole request, including the
-     * commit the editor loaded, so a different change, even of the same base commit, has another fingerprint and still fails as a conflict.
+     * The commit since the one the editor loaded that is the commit of this very change, if there is one. That is the case when a retry follows a request
+     * whose push succeeded but whose processing failed: the change must not be applied again, which would fail as a conflict with itself. If it is still the
+     * head, the pending processing is resumed; if other commits followed it, their own processing builds it. The fingerprint covers the whole request,
+     * including the commit the editor loaded, so a different change, even of the same base commit, has another fingerprint and still fails as a conflict.
      */
-    private static boolean isAlreadyApplied(Repository repository, String fingerprint, String baseCommitHash) {
+    private static Optional<String> appliedCommit(Repository repository, String fingerprint, String baseCommitHash) {
         try (RevWalk revWalk = new RevWalk(repository)) {
             ObjectId head = repository.resolve(Constants.HEAD);
             if (head == null) {
-                return false;
+                return Optional.empty();
             }
             revWalk.markStart(revWalk.parseCommit(head));
             ObjectId base = repository.resolve(baseCommitHash);
@@ -424,10 +429,24 @@ public class SecurityPolicyEditorService {
             }
             for (RevCommit commit : revWalk) {
                 if (commit.getFooterLines(CHANGE_TRAILER_KEY).contains(fingerprint)) {
-                    return true;
+                    return Optional.of(commit.name());
                 }
             }
-            return false;
+            return Optional.empty();
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * A retry only succeeds while the policies are still as the commit of the change left them. A later commit that reverts or changes them supersedes the
+     * change, e.g. another instructor's, so the retry fails as a conflict instead of reporting that commit as the result; a commit that changes something
+     * else, e.g. the body of a test, keeps it.
+     */
+    private static void requireStillApplied(Repository repository, String appliedCommit, boolean stagesVersion) {
+        try {
+            requireUnchangedSince(repository, appliedCommit, stagesVersion);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -541,25 +560,7 @@ public class SecurityPolicyEditorService {
 
         vacated.forEach(path -> SecurityPolicyRepositoryFiles.deletePolicyFile(root, path));
         rendered.forEach((path, content) -> SecurityPolicyRepositoryFiles.writePolicy(root, path, content));
-        List<SecurityTestAssignments.TestClass> reassigned = new ArrayList<>();
-        for (SecurityTestAssignments.TestClass testClass : testClasses.values()) {
-            Map<String, String> entries = new LinkedHashMap<>();
-            requested.forEach((entry, path) -> {
-                if (SecurityTestAssignments.testClassOf(entry).equals(testClass.qualifiedName())) {
-                    entries.put(entry, path);
-                }
-            });
-            SecurityTestAssignments.TestClass assigned = testClass.with(entries);
-            // A class annotation that points to a renamed or deleted file changes too, even if none of the test cases used it.
-            boolean pointsToVacated = testClass.classPolicyPath() != null && vacated.contains(testClass.classPolicyPath());
-            if (testClass.active() && (pointsToVacated || !assigned.entries().equals(testClass.entries()))) {
-                requireKeptOverloadPolicy(testClass, assigned);
-                requireKeptInheritedPolicy(testClass, assigned);
-                requireKeptPolicyOfSubclasses(testClass, assigned);
-                reassigned.add(assigned);
-            }
-        }
-        SecurityTestAssignments.assignTestCases(root, reassigned);
+        SecurityTestAssignments.assignTestCases(root, reassignedTestClasses(testClasses, requested, vacated));
 
         SecurityFrameworkState after = SecurityPolicyRepositoryFiles.evaluate(root);
         Set<String> referencedPolicies = after.policyFiles().stream().map(SecurityFrameworkState.PolicyFile::policyPath).collect(Collectors.toSet());
@@ -574,6 +575,77 @@ public class SecurityPolicyEditorService {
             throw refused("The change would leave the Security Framework " + after.status() + ", so it was not committed.", "securityPolicyBreaksConfiguration",
                     Map.of("status", after.status().name()));
         }
+    }
+
+    /**
+     * The test classes whose assignments change, with their new assignments. A class annotation that points to a renamed or deleted file changes too, even if
+     * none of the test cases used it. Refuses a change that would drop a policy of test methods the editor cannot assign one by one.
+     *
+     * @param requested the policy path of every assigned test after the change, by entry, see {@link #requestedEntries}
+     * @param vacated   the paths the change frees: deleted policies and the old paths of renamed ones
+     */
+    private static List<SecurityTestAssignments.TestClass> reassignedTestClasses(Map<String, SecurityTestAssignments.TestClass> testClasses, Map<String, String> requested,
+            Set<String> vacated) {
+        List<SecurityTestAssignments.TestClass> reassigned = new ArrayList<>();
+        for (SecurityTestAssignments.TestClass testClass : testClasses.values()) {
+            Map<String, String> entries = new LinkedHashMap<>();
+            requested.forEach((entry, path) -> {
+                if (SecurityTestAssignments.testClassOf(entry).equals(testClass.qualifiedName())) {
+                    entries.put(entry, path);
+                }
+            });
+            SecurityTestAssignments.TestClass assigned = testClass.with(entries);
+            boolean pointsToVacated = testClass.classPolicyPath() != null && vacated.contains(testClass.classPolicyPath());
+            if (testClass.active() && (pointsToVacated || !assigned.entries().equals(testClass.entries()))) {
+                requireKeptOverloadPolicy(testClass, assigned);
+                requireKeptInheritedPolicy(testClass, assigned);
+                requireKeptPolicyOfSubclasses(testClass, assigned);
+                reassigned.add(assigned);
+            }
+        }
+        return reassigned;
+    }
+
+    /**
+     * The test classes whose {@code @Policy} annotations a commit of the change rewrites, before and after, computed like the commit does, so the review shows
+     * them. None while the assignments are invalid: the commit refuses them and reports why, and a preview of a single policy may list only some of them.
+     */
+    private static List<SecurityPolicyPreviewDTO.FileDTO> rewrittenTestClasses(Repository repository, RevTree tree, SecurityPolicyChangeDTO change) throws IOException {
+        Map<String, String> javaSources = SecurityFrameworkCommitFiles.javaSources(repository, tree);
+        Map<String, SecurityTestAssignments.TestClass> testClasses = SecurityTestAssignments.read(javaSources);
+        Set<String> touched = new HashSet<>();
+        Set<String> vacated = new HashSet<>();
+        for (String removedPath : change.removedPolicyPaths()) {
+            String path = requireValidPolicyPath(removedPath);
+            touched.add(path);
+            vacated.add(path);
+        }
+        for (SecurityPolicyChangeDTO.PolicyChangeDTO policy : change.policies()) {
+            if (policy.previousPolicyPath() != null) {
+                String previousPath = requireValidPolicyPath(policy.previousPolicyPath());
+                touched.add(previousPath);
+                if (!previousPath.equals(requireValidPolicyPath(policy.document().policyPath()))) {
+                    vacated.add(previousPath);
+                }
+            }
+        }
+        List<SecurityTestAssignments.TestClass> reassigned;
+        try {
+            reassigned = reassignedTestClasses(testClasses, requestedEntries(change, testClasses, touched), vacated);
+        }
+        catch (BadRequestAlertException e) {
+            return List.of();
+        }
+        List<SecurityPolicyPreviewDTO.FileDTO> files = new ArrayList<>();
+        for (SecurityTestAssignments.TestClass testClass : reassigned) {
+            String path = testClass.sourcePath();
+            String before = javaSources.get(path);
+            String after = AresPolicyAnnotations.assign(path, before, testClass.classPolicyPath(), testClass.methodPolicyPaths(), testClass.keptMethods());
+            if (!after.equals(before)) {
+                files.add(new SecurityPolicyPreviewDTO.FileDTO(path, path, before, after));
+            }
+        }
+        return files;
     }
 
     /**
@@ -789,8 +861,10 @@ public class SecurityPolicyEditorService {
      * @param methodPolicyPaths the policy files of the annotations of its test methods
      * @param defaultMethods    the test methods whose annotation gives them the strict default policy
      * @param switchedOff       the test methods whose annotation switches the sandbox off
+     * @param otherArguments    the other arguments of the annotations, e.g. {@code withinPath}, by the test method they are on and the empty string for the class
      */
-    private record Annotations(boolean active, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths, Set<String> defaultMethods, Set<String> switchedOff) {
+    private record Annotations(boolean active, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths, Set<String> defaultMethods, Set<String> switchedOff,
+            Map<String, Map<String, String>> otherArguments) {
     }
 
     /**
@@ -802,10 +876,29 @@ public class SecurityPolicyEditorService {
     }
 
     private static AssignmentState assignmentState(Repository repository, RevTree tree) throws IOException {
-        Map<String, SecurityTestAssignments.TestClass> testClasses = SecurityTestAssignments.read(SecurityFrameworkCommitFiles.javaSources(repository, tree));
-        Map<String, Annotations> annotations = testClasses.values().stream().collect(Collectors.toMap(SecurityTestAssignments.TestClass::qualifiedName,
-                testClass -> new Annotations(testClass.active(), testClass.classPolicyPath(), testClass.methodPolicyPaths(), testClass.defaultMethods(), testClass.switchedOff())));
+        Map<String, String> javaSources = SecurityFrameworkCommitFiles.javaSources(repository, tree);
+        Map<String, SecurityTestAssignments.TestClass> testClasses = SecurityTestAssignments.read(javaSources);
+        Map<String, Annotations> annotations = new HashMap<>();
+        for (SecurityTestAssignments.TestClass testClass : testClasses.values()) {
+            Map<String, Map<String, String>> arguments = otherArguments(testClass.sourcePath(), javaSources.get(testClass.sourcePath()));
+            Annotations classAnnotations = new Annotations(testClass.active(), testClass.classPolicyPath(), testClass.methodPolicyPaths(), testClass.defaultMethods(),
+                    testClass.switchedOff(), arguments);
+            annotations.put(testClass.qualifiedName(), classAnnotations);
+        }
         return new AssignmentState(annotations, SecurityTestAssignments.entriesByPolicy(testClasses.values()));
+    }
+
+    /**
+     * @return the arguments of the {@code @Policy} annotations of the test class in the file other than its policy file and switch, e.g. {@code withinPath},
+     *         by the test method they are on and the empty string for the class
+     */
+    private static Map<String, Map<String, String>> otherArguments(String path, String source) {
+        Map<String, Map<String, String>> arguments = new HashMap<>();
+        AresTestSources.relevantType(AresTestSources.analyze(path, source)).ifPresent(type -> {
+            type.policies().forEach(annotation -> arguments.put("", AresPolicyAnnotations.otherArguments(annotation)));
+            type.methodPolicies().forEach((method, annotation) -> arguments.put(method, AresPolicyAnnotations.otherArguments(annotation)));
+        });
+        return arguments;
     }
 
     private static Map<String, List<String>> policyReferences(SecurityFrameworkState state) {
@@ -877,8 +970,11 @@ public class SecurityPolicyEditorService {
     private static void requireValidChange(SecurityPolicyChangeDTO change) {
         Set<String> paths = new HashSet<>();
         for (SecurityPolicyChangeDTO.PolicyChangeDTO policy : change.policies()) {
-            if (policy.document() == null) {
+            if (policy == null || policy.document() == null) {
                 throw new BadRequestAlertException("A changed policy has no content.", ENTITY_NAME, "securityPolicyNoChange");
+            }
+            if (policy.assignedTests().stream().anyMatch(Objects::isNull)) {
+                throw new BadRequestAlertException("A changed policy lists a test without a name.", ENTITY_NAME, "securityPolicyNoChange");
             }
             String path = requireValidPolicyPath(policy.document().policyPath());
             if (!paths.add(path)) {

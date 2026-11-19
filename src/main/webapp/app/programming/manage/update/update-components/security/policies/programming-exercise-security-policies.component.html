@@ -52,6 +52,7 @@
                             [otherTests]="otherTestsByPolicy().get(policy.id) ?? noOtherTests"
                             [templateFiles]="templateFiles()"
                             [templateFilesTruncated]="templateFilesTruncated()"
+                            [templateFilesFailed]="templateFilesFailed()"
                             [disabled]="editingDisabled()"
                             (policyChange)="onPolicyChange($event)"
                             (viewYaml)="openYaml(policy)"
@@ -289,7 +290,9 @@
     [baseCommit]="shortBaseCommit()"
     [defaultMessage]="defaultCommitMessage()"
     [busy]="isCommitting() || loading() || importPending()"
+    [assignmentsState]="reviewAssignmentsState()"
     (commitRequested)="commit($event)"
+    (assignmentsRetry)="requestStructure()"
 />
 
 @if (yamlPolicy(); as policy) {

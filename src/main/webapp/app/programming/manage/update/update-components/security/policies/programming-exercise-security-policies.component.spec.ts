@@ -833,6 +833,77 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         ]);
     });
 
+    it('commits a split only once the review lists the test cases it releases, and offers Retry when they cannot be loaded', () => {
+        service.getTestStructure.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        service.commitPolicies.mockReturnValue(of({ editor: editor('b'.repeat(40)), config: configured() }));
+        create(configured(), false);
+        comp['onPolicyChange'](withAssignment(comp.policies()[0], ['de.example.SortingTest#merge'], []));
+        const javaFile = { path: 'test/de/example/SortingTest.java', before: '@Policy("SecurityPolicy.yaml")', after: '@Policy' };
+        service.previewPolicies.mockReturnValue(of({ verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE, frameworkVersion: '2.2.1', files: [javaFile] }));
+
+        comp['openReview']();
+        // The review shows the rewritten annotations of the test class as well.
+        expect(comp.reviewDescriptions().get(javaFile.path)).toBe('artemisApp.programmingExercise.security.advanced.review.testAnnotations');
+        expect(comp.reviewAssignmentsState()).toBe('failed');
+        comp['commit']('Split');
+        expect(service.commitPolicies).not.toHaveBeenCalled();
+
+        const structure = new Subject<SecurityTestStructure>();
+        service.getTestStructure.mockReturnValueOnce(structure);
+        comp['requestStructure']();
+        expect(comp.reviewAssignmentsState()).toBe('loading');
+        comp['commit']('Split');
+        expect(service.commitPolicies).not.toHaveBeenCalled();
+
+        structure.next({ testClasses: [{ qualifiedName: 'de.example.SortingTest', testClass: true, testCases: ['merge', 'quick'] }] });
+        expect(comp.reviewAssignmentsState()).toBe('ready');
+        expect(comp.reviewAssignments()).toContainEqual({ sign: '−', entry: 'de.example.SortingTest#quick', file: 'SecurityPolicy.yaml' });
+        comp['commit']('Split');
+        expect(service.commitPolicies).toHaveBeenCalledOnce();
+    });
+
+    it('confirms a switch with the committed policies: their strict timeouts and the files deactivating deletes', () => {
+        const strict: SecurityPolicyDocument = { ...DOCUMENT, testBehavior: { strictTimeout: { timeout: 5, timeUnit: 'SECONDS' } } };
+        service.getPolicies.mockReturnValue(of(editor('a'.repeat(40), strict)));
+        create(configured(), false);
+        const policy = comp.policies()[0];
+
+        // Neither removing the timeout nor renaming the policy is committed yet, so the switch keeps the timeout and deletes the committed file.
+        comp['onPolicyChange']({ ...policy, name: 'Renamed', working: { ...policy.working!, testBehavior: {} } });
+        comp['addPolicy']();
+
+        expect(comp.strictTimeouts()).toBe(true);
+        expect(comp.policyPaths()).toEqual(['SecurityPolicy.yaml']);
+        comp['askDeletePolicy'](comp.policies()[0]);
+        comp['deletePolicy']();
+        expect(comp.policyPaths()).toEqual(['SecurityPolicy.yaml']);
+    });
+
+    it('replaces the submitted drafts when the builds of a commit whose pushed policies could not be read are resumed', () => {
+        create(configured(), false);
+        comp['addPolicy']();
+        const draft = comp.policies()[1];
+        comp['onPolicyChange'](withAssignment(draft, ['de.example.SortingTest#merge'], []));
+        const path = comp.paths().get(draft.id)!;
+        const committed = editor('b'.repeat(40));
+        const pushed: SecurityPolicyEditor = {
+            ...committed,
+            policies: [...committed.policies!, { policyPath: path, content: '', document: { ...DOCUMENT, policyPath: path }, assignedTests: ['de.example.SortingTest#merge'] }],
+        };
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'error.securityFrameworkProcessingFailed' } })));
+        service.getPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp['commit']('Add a policy');
+        expect(comp.loadFailed()).toBe(true);
+
+        service.commitPolicies.mockReturnValueOnce(of({ editor: pushed, config: configured() }));
+        comp['retryCommit']();
+
+        // The draft became the committed policy, so it is not kept as a new policy on top of it.
+        expect(comp.policies().map((policy) => policy.file?.policyPath)).toEqual(['SecurityPolicy.yaml', path]);
+        expect(comp.totalChanges()).toBe(0);
+        expect(comp.banner()?.kind).toBe('committed');
+    });
+
     it('names the problems of a policy without a name, with an invalid hidden period and of two policies in one file', () => {
         create(configured(), false);
         const policy = comp.policies()[0];
@@ -938,10 +1009,17 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         comp['requestStructure']();
         expect(service.getTestStructure).toHaveBeenCalledTimes(2);
 
+        // A failed listing is no empty one: the files stay unknown, so Browse… reports the error and asks for them again.
+        service.getTemplateFiles.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp['requestTemplateFiles']();
+        expect(comp.templateFiles()).toBeUndefined();
+        expect(comp.templateFilesFailed()).toBe(true);
+
         service.getTemplateFiles.mockReturnValueOnce(of({ paths: ['a.txt'], truncated: true }));
         comp['requestTemplateFiles']();
         comp['requestTemplateFiles']();
-        expect(service.getTemplateFiles).toHaveBeenCalledOnce();
+        expect(service.getTemplateFiles).toHaveBeenCalledTimes(2);
+        expect(comp.templateFilesFailed()).toBe(false);
         expect(comp.templateFiles()).toEqual(['a.txt']);
         expect(comp.templateFilesTruncated()).toBe(true);
     });

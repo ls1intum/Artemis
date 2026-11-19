@@ -67,6 +67,27 @@ describe('SecurityReviewDialogComponent', () => {
         expect(comp.blocked()).toBe(true);
     });
 
+    it('commits a split only once its released test cases are listed, and asks for them again on Retry', () => {
+        let retries = 0;
+        comp.assignmentsRetry.subscribe(() => retries++);
+        fixture.componentRef.setInput('assignmentsState', 'loading');
+        fixture.detectChanges();
+        const root = (fixture.nativeElement as HTMLElement).ownerDocument;
+        expect(root.querySelector('[data-testid="security-review-assignments-loading"]')).not.toBeNull();
+        commit();
+
+        fixture.componentRef.setInput('assignmentsState', 'failed');
+        fixture.detectChanges();
+        root.querySelector<HTMLButtonElement>('[data-testid="security-review-assignments-retry"]')!.click();
+        commit();
+        expect(retries).toBe(1);
+        expect(commits).toEqual([]);
+
+        fixture.componentRef.setInput('assignmentsState', 'ready');
+        commit();
+        expect(commits).toEqual(['Update the security policies']);
+    });
+
     it('waits for the preview', () => {
         fixture.componentRef.setInput('preview', undefined);
 

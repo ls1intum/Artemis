@@ -9,7 +9,14 @@
         <tumaet-ui-search-field [(value)]="search" [placeholder]="mode() === 'paths' ? prefix + 'searchPaths' : prefix + 'searchScripts'" data-testid="security-browse-search" />
         <div class="sp-tree" role="group" [attr.aria-label]="(mode() === 'paths' ? prefix + 'inTemplate' : prefix + 'scriptsInTemplate') | artemisTranslate">
             <div class="sp-tree-group" aria-hidden="true" [jhiTranslate]="mode() === 'paths' ? prefix + 'inTemplate' : prefix + 'scriptsInTemplate'"></div>
-            @if (files() === undefined) {
+            @if (failed() && files() === undefined) {
+                <div class="sp-row p-2" role="alert" data-testid="security-browse-failed">
+                    <span class="sp-mut text-sm" [jhiTranslate]="prefix + 'loadFailed'"></span>
+                    <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="retryRequested.emit()" data-testid="security-browse-retry">
+                        {{ prefix + 'retry' | artemisTranslate }}
+                    </button>
+                </div>
+            } @else if (files() === undefined) {
                 <div class="sp-row p-2" data-testid="security-browse-loading">
                     <tumaet-ui-progress-spinner />
                     <span jhiTranslate="artemisApp.programmingExercise.security.advanced.loading"></span>

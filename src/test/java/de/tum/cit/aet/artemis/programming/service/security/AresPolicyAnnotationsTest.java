@@ -300,6 +300,19 @@ class AresPolicyAnnotationsTest {
     }
 
     @Test
+    void releasingATestCaseKeepsTheArgumentsOfItsOwn() {
+        String source = TEST_CLASS.replace("@Policy(value = \"SecurityPolicy.yaml\", withinPath = \"test\")\nclass", "@Policy(\"SecurityPolicy.yaml\")\nclass");
+
+        String assigned = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", source, null, Map.of("testBubbleSort", "Stress.yaml"), Set.of());
+
+        // testMergeSort goes back to the strict default policy, but keeps the withinPath the class does not set.
+        assertThat(assigned).contains("@Public\n@Policy\nclass SortingTest {").contains("    @Policy(withinPath = \"test\")\n    @Test\n    void testMergeSort()");
+        AresTestSources.TypeDeclaration type = AresTestSources.analyze("test/de/example/SortingTest.java", assigned).topLevelTypes().getFirst();
+        assertThat(type.methodPolicies().get("testMergeSort").policyPath()).isEmpty();
+        assertThat(type.methodPolicies().get("testBubbleSort").policyPath()).contains("Stress.yaml");
+    }
+
+    @Test
     void keepsTheLinesOfAFileWithCarriageReturnLineEndings() {
         String source = TEST_CLASS.replace("\n", "\r");
         Map<String, String> methods = Map.of("testBubbleSort", "Stress.yaml", "testMergeSort", "SecurityPolicy.yaml");

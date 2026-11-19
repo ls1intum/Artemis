@@ -252,7 +252,11 @@ final class AresPolicyAnnotations {
         return !otherArguments(methodAnnotation).equals(otherArguments(classAnnotation));
     }
 
-    private static Map<String, String> otherArguments(Annotation annotation) {
+    /**
+     * @param annotation an annotation
+     * @return the expressions of its arguments other than {@code value} and {@code activated}, e.g. {@code withinPath}, by their name
+     */
+    static Map<String, String> otherArguments(Annotation annotation) {
         Map<String, String> arguments = new LinkedHashMap<>();
         annotation.arguments().forEach((name, argument) -> {
             if (!VALUE_ARGUMENT.equals(name) && !ACTIVATED_ARGUMENT.equals(name)) {
@@ -284,9 +288,9 @@ final class AresPolicyAnnotations {
      * Rewrites the {@code @Policy} annotations of a test class so that its test cases use the given policy files: the annotation of the class points to
      * {@code classPolicyPath}, every test method in {@code methodPolicyPaths} gets an annotation that points to its file, the annotations of the methods in
      * {@code keptMethods} stay as they are, and the annotations of the other methods are removed, except one whose other arguments differ from those of the
-     * class annotation, e.g. another or no {@code withinPath}, which points to {@code classPolicyPath} if the class has one. Annotations that already point to the right file are
-     * not
-     * touched, and new method annotations go on their own line above the method's first test annotation, indented like it.
+     * class annotation, e.g. another or no {@code withinPath}, which keeps them and points to {@code classPolicyPath}, or to no policy file if the class has none.
+     * Annotations that already point to the right file are not touched, and new method annotations go on their own line above the method's first test annotation,
+     * indented like it.
      *
      * @param path              the path of the file relative to the repository root
      * @param source            the content of a Java file with exactly one test class, whose annotation is evaluable
@@ -312,6 +316,14 @@ final class AresPolicyAnnotations {
             String target = methodPolicyPaths.getOrDefault(method,
                     classPolicyPath != null && !keptMethods.contains(method) && hasOwnArguments(annotation, classAnnotation) ? classPolicyPath : null);
             if (target == null && keptMethods.contains(method)) {
+                return;
+            }
+            if (target == null && hasOwnArguments(annotation, classAnnotation)) {
+                // Released to the strict default policy, the annotation keeps its own arguments, e.g. another withinPath, but no longer names a policy file.
+                if (annotation.policyPath().isPresent()) {
+                    ranges.add(new int[] { annotation.start(), annotation.end() });
+                    replacements.add(withPolicyPath(annotation, null));
+                }
                 return;
             }
             if (target == null) {

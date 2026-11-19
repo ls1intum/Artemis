@@ -70,6 +70,24 @@ describe('SecurityBrowseDialogComponent', () => {
         expect(comp.selectedPaths()).toEqual(['data/input.txt', 'scripts/run.sh', 'scripts/tools/setup.py']);
     });
 
+    it('reports a failed listing with Retry instead of showing it as empty', () => {
+        let retried = 0;
+        comp.retryRequested.subscribe(() => retried++);
+        fixture.componentRef.setInput('files', undefined);
+        fixture.componentRef.setInput('failed', true);
+        fixture.detectChanges();
+        const root = (fixture.nativeElement as HTMLElement).ownerDocument;
+
+        expect(root.querySelector('[data-testid="security-browse-loading"]')).toBeNull();
+        root.querySelector<HTMLButtonElement>('[data-testid="security-browse-retry"]')!.click();
+        expect(retried).toBe(1);
+
+        fixture.componentRef.setInput('failed', false);
+        fixture.detectChanges();
+        expect(root.querySelector('[data-testid="security-browse-retry"]')).toBeNull();
+        expect(root.querySelector('[data-testid="security-browse-loading"]')).not.toBeNull();
+    });
+
     it('shows every match of the search with its folders', () => {
         comp.search.set('setup');
 
