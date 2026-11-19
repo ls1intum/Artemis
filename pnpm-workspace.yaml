@@ -23,7 +23,6 @@ catalog:
   '@angular/compiler-cli': 22.2.6
   '@angular/core': 22.2.6
   '@angular/forms': 22.2.6
-  '@angular/localize': 22.2.6
   '@angular/platform-browser': 22.2.6
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
@@ -130,10 +129,6 @@ overrides:
   'ng-mocks>@angular/platform-browser-dynamic': '^22.0.0'
   'ng-mocks>@angular/router': '^22.0.0'
   'ng-mocks>rxjs': '^7.8.2'
-  # @angular/localize is a development dependency of the application and of packages/tum-aet-ui, and an optional
-  # peer of @angular/build, which asks for the current Angular major. This pin keeps every resolution on one
-  # version; keep it equal to @angular/core.
-  '@angular/localize': 22.2.6
   # @angular/animations is never declared: it arrives as an optional auto-installed peer of
   # @angular/platform-browser. Both sides of that edge pin an exact patch - platform-browser asks for
   # animations of its own version and animations asks for core of its own version - so without this pin

@@ -71,7 +71,6 @@
         "@angular/cli": "catalog:",
         "@angular/compiler-cli": "catalog:",
         "@angular/language-service": "22.2.6",
-        "@angular/localize": "catalog:",
         "@arethetypeswrong/cli": "catalog:",
         "@eslint/js": "10.0.1",
         "@playwright/test": "catalog:",
