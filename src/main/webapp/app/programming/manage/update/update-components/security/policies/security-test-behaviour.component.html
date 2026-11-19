@@ -27,26 +27,22 @@
         @case ('securityFeedback') {
             <div class="sp-stack sp-mid">
                 <span class="sp-label-row">
-                    <label class="sp-label" [for]="id + 'Level'">{{ prefix + 'feedbackLevel' | artemisTranslate }}</label>
+                    <span [id]="id + 'LevelLabel'" class="sp-label">{{ prefix + 'feedbackLevel' | artemisTranslate }}</span>
                     <jhi-security-help [text]="(prefix + 'feedbackLevelHelp' | artemisTranslate) + ' ' + (prefix + 'feedbackLevelUnavailable' | artemisTranslate)" />
                 </span>
-                <input
-                    [id]="id + 'Level'"
-                    class="sp-range"
-                    type="range"
-                    min="0"
-                    max="3"
-                    step="1"
-                    [value]="feedbackLevel"
-                    disabled
-                    [attr.aria-valuetext]="prefix + 'level.' + FEEDBACK_LEVELS[feedbackLevel] | artemisTranslate"
+                <!-- Locked: no Ares2 release lets a policy choose the level yet. The options run from the least to the most information. -->
+                <tumaet-ui-select-button
+                    [attr.aria-labelledby]="id + 'LevelLabel'"
+                    [options]="FEEDBACK_LEVELS"
+                    [ngModel]="feedbackLevel"
+                    [ngModelOptions]="{ standalone: true }"
+                    [allowEmpty]="false"
+                    [itemTemplate]="levelOption"
+                    size="small"
+                    [disabled]="true"
                     data-testid="security-behaviour-level"
                 />
-                <div class="sp-range-labels">
-                    @for (level of FEEDBACK_LEVELS; track level; let index = $index) {
-                        <span [class.sp-level-on]="index === feedbackLevel" [jhiTranslate]="prefix + 'level.' + level"></span>
-                    }
-                </div>
+                <ng-template #levelOption let-level>{{ prefix + 'level.' + level | artemisTranslate }}</ng-template>
                 <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'feedbackLevelUnavailable'"></p>
             </div>
             <div class="sp-preview" aria-live="polite">
@@ -129,6 +125,7 @@
                     <jhi-security-help [text]="prefix + 'hideTestsHelp' | artemisTranslate" />
                 </span>
             </div>
+            <span class="sp-label sp-mut" [jhiTranslate]="prefix + 'timelineCaption'"></span>
             @if (hiddenTests()) {
                 <div class="sp-timeline-wrap" role="img" [attr.aria-label]="prefix + 'timelineLabel' | artemisTranslate: { from: hiddenFromInput(), until: hiddenUntilInput() }">
                     <div class="sp-timeline">

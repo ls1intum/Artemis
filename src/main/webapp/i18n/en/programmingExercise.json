@@ -384,8 +384,8 @@
                 "unsavedPoliciesOnSave": {
                     "header": "Discard the unsaved security policy changes?",
                     "message": {
-                        "one": "The security policies have 1 unsaved change. Saving the exercise does not commit it and leaves this page, so it is discarded. To keep it, cancel and commit it in Manage Security Policies first.",
-                        "other": "The security policies have {{ count }} unsaved changes. Saving the exercise does not commit them and leaves this page, so they are discarded. To keep them, cancel and commit them in Manage Security Policies first."
+                        "one": "The security policies have 1 unsaved change. Saving the exercise does not save it and leaves this page, so it is discarded. To keep it, cancel and save it with Save Policies in Manage Security Policies first.",
+                        "other": "The security policies have {{ count }} unsaved changes. Saving the exercise does not save them and leaves this page, so they are discarded. To keep them, cancel and save them with Save Policies in Manage Security Policies first."
                     },
                     "confirm": "Discard and save"
                 },
@@ -407,8 +407,8 @@
                     "loading": "Loading…",
                     "loadError": "The security policies could not be loaded.",
                     "retry": "Retry",
-                    "uncommitted": "Uncommitted",
-                    "uncommittedCount": "{{ count }} uncommitted",
+                    "uncommitted": "Unsaved",
+                    "uncommittedCount": "{{ count }} unsaved",
                     "unsavedCount": {
                         "one": "1 unsaved change",
                         "other": "{{ count }} unsaved changes"
@@ -419,34 +419,34 @@
                         "inactive": "Inactive",
                         "inactiveHelp": "Student code runs without restrictions. No security policy is enforced.",
                         "active": "Active",
-                        "activeHelp": "The automated tests run student code in the Ares2 sandbox and enforce the committed security policies.",
+                        "activeHelp": "The automated tests run student code in the Ares2 sandbox and enforce the saved security policies.",
                         "configured": "Configured",
-                        "configuredHelp": "Artemis checked the files of the tests repository. Whether Ares2 accepts the policies shows in the next build of the template and solution.",
+                        "configuredHelp": "Your security policies are saved in the tests repository. The next build of the template and solution shows whether Ares2 accepts them.",
                         "turningOn": "Turning on…",
                         "turningOff": "Turning off…",
-                        "committing": "Committing…",
+                        "committing": "Saving…",
                         "scan": "Scan dependencies",
                         "scanHelp": "Ares2 also checks the libraries that student code uses and detects forbidden accesses made through them. Test cases run considerably slower.",
                         "scanInactive": "Available once Ares2 is active.",
                         "scanUnavailable": "The build of this exercise does not attach the Ares2 agent, which scanning needs.",
                         "scanReadOnly": "A policy is shown read-only, and switching affects every policy: fix it in the tests repository first.",
-                        "synced": "Synced",
+                        "synced": "Saved",
                         "notActive": "Not active",
                         "commit": "commit",
-                        "syncedHelp": "The settings shown here come from this commit in the tests repository. If someone else commits before you do, you are asked to reload first.",
+                        "syncedHelp": "The settings shown here were last saved in this commit of the tests repository. If someone else saves before you do, you are asked to reload first.",
                         "notActiveHelp": "Builds since this commit run the tests without the sandbox.",
                         "by": "by {{ author }}",
                         "version": "Framework version",
                         "versionHelp": "The Ares2 release determines which settings security policies can use.",
-                        "versionHelpActive": "A new release takes effect with your next commit.",
-                        "uncommitted": "Uncommitted",
-                        "versionUncommittedHelp": "The selected release takes effect once you commit.",
+                        "versionHelpActive": "A new release takes effect when you save.",
+                        "uncommitted": "Unsaved",
+                        "versionUncommittedHelp": "The selected release takes effect once you save.",
                         "chooseOnActivation": "Choose on activation",
                         "chooseOnActivationHelp": "When you turn on Ares2, you choose the release. The latest compatible release is preselected."
                     },
                     "activate": {
                         "title": "Turn On Ares2",
-                        "description": "Student code runs inside the Ares2 sandbox. One commit makes all of the following changes.",
+                        "description": "Student code runs inside the Ares2 sandbox. Confirming saves all of the following changes at once.",
                         "annotations": "Turns the @Policy annotations of the test classes on and restores their policy files from the Git history, or generates a policy from the permissions of the template.",
                         "control": "Enables Resource Access control and Test Behaviour control.",
                         "version": "Framework version",
@@ -458,7 +458,7 @@
                     },
                     "deactivate": {
                         "title": "Turn Off Ares2",
-                        "description": "Student code runs without a sandbox. One commit makes all of the following changes.",
+                        "description": "Student code runs without a sandbox. Confirming saves all of the following changes at once.",
                         "deleteOne": "Deletes {{ file }} and turns the @Policy annotations of the test classes off.",
                         "deleteMany": "Deletes {{ count }} policy files and turns the @Policy annotations of the test classes off.",
                         "control": "Disables Resource Access control and Test Behaviour control.",
@@ -476,7 +476,7 @@
                     },
                     "scanOn": {
                         "title": "Turn On Dependency Scanning",
-                        "description": "Ares2 also checks the libraries that student code uses. One commit makes all of the following changes.",
+                        "description": "Ares2 also checks the libraries that student code uses. Confirming saves all of the following changes at once.",
                         "beforeTitle": "Before the tests run,",
                         "before": "Ares2 also analyses the libraries of the student code.",
                         "whileTitle": "While the tests run,",
@@ -487,11 +487,11 @@
                         "confirm": "Turn On Scanning",
                         "commitMessage": "Scan the dependencies of the student code",
                         "committedTitle": "Dependency scanning turned on",
-                        "committedText": "Commit {{ hash }} made Ares2 check the libraries of the student code as well. The build it started shows whether Ares2 accepts the policies."
+                        "committedText": "Saved as commit {{ hash }}: Ares2 now checks the libraries of the student code as well. The build it started shows whether Ares2 accepts the policies."
                     },
                     "scanOff": {
                         "title": "Turn Off Dependency Scanning",
-                        "description": "Ares2 checks only the student code itself. One commit makes all of the following changes.",
+                        "description": "Ares2 checks only the student code itself. Confirming saves all of the following changes at once.",
                         "beforeTitle": "Before the tests run,",
                         "before": "Ares2 analyses only the student code itself.",
                         "whileTitle": "While the tests run,",
@@ -501,7 +501,7 @@
                         "confirm": "Turn Off Scanning",
                         "commitMessage": "Stop scanning the dependencies of the student code",
                         "committedTitle": "Dependency scanning turned off",
-                        "committedText": "Commit {{ hash }} made Ares2 check only the student code itself. The build it started shows whether Ares2 accepts the policies."
+                        "committedText": "Saved as commit {{ hash }}: Ares2 now checks only the student code itself. The build it started shows whether Ares2 accepts the policies."
                     },
                     "section": {
                         "title": "Manage Security Policies",
@@ -535,20 +535,20 @@
                             "one": "1 build setting",
                             "other": "{{ count }} build settings"
                         },
-                        "notEnforced": "Nothing is enforced until you commit.",
-                        "nothing": "Everything is committed. There is nothing to commit or discard.",
+                        "notEnforced": "Nothing is enforced until you save.",
+                        "nothing": "Everything is saved. There is nothing to save or discard.",
                         "instructorsOnly": "Only instructors of the course can change the security policies.",
-                        "discard": "Discard…",
-                        "commit": "Commit"
+                        "discard": "Discard",
+                        "commit": "Save Policies"
                     },
                     "policy": {
                         "defaultName": "Security Policy {{ number }}",
                         "unnamed": "Unnamed policy",
-                        "new": "New · uncommitted",
-                        "newHelp": "This policy has not been committed yet. It takes effect once you commit.",
+                        "new": "New · unsaved",
+                        "newHelp": "This policy has not been saved yet. It takes effect once you save.",
                         "changesHelp": {
-                            "one": "This policy has 1 change since the last commit. It takes effect once you commit.",
-                            "other": "This policy has {{ count }} changes since the last commit. They take effect once you commit."
+                            "one": "This policy has 1 unsaved change. It takes effect once you save.",
+                            "other": "This policy has {{ count }} unsaved changes. They take effect once you save."
                         },
                         "readOnly": "Read-only",
                         "viewYaml": "View YAML",
@@ -557,7 +557,7 @@
                         "expand": "Expand {{ policy }}",
                         "collapse": "Collapse {{ policy }}",
                         "name": "Name",
-                        "nameHelp": "Determines the file name in the tests repository. Renaming the policy renames the file with your next commit.",
+                        "nameHelp": "Determines the file name in the tests repository. Renaming the policy renames the file when you save.",
                         "namePlaceholder": "e.g. Stress Tests",
                         "presets": "Presets",
                         "presetsHelp": "A preset adds the locked rows that a library or framework needs. Deselecting the preset removes its rows; rows you added yourself stay.",
@@ -575,8 +575,8 @@
                             "tests": "Assign Test Cases"
                         },
                         "boxChangesHelp": {
-                            "one": "1 change in this section since the last commit. It takes effect once you commit.",
-                            "other": "{{ count }} changes in this section since the last commit. They take effect once you commit."
+                            "one": "1 unsaved change in this section. It takes effect once you save.",
+                            "other": "{{ count }} unsaved changes in this section. They take effect once you save."
                         },
                         "readOnlyReason": {
                             "MISSING": "{{ path }} does not exist, so it cannot be edited here.",
@@ -657,22 +657,22 @@
                         },
                         "source": {
                             "PRESET": "Preset · {{ preset }}",
-                            "COMMITTED": "Committed",
-                            "NEW": "Uncommitted",
+                            "COMMITTED": "Saved",
+                            "NEW": "Unsaved",
                             "CHANGED": "Changed",
-                            "REMOVED": "Removed · uncommitted"
+                            "REMOVED": "Removed · unsaved"
                         },
                         "sourceHelp": {
                             "PRESET": "Added and locked by the {{ preset }} preset. Deselect the preset to remove it.",
-                            "COMMITTED": "Part of the last commit and enforced.",
-                            "NEW": "Added since the last commit. Enforced once you commit.",
-                            "CHANGED": "Edited since the last commit. The committed version is enforced until you commit.",
-                            "REMOVED": "Deleted since the last commit. Still enforced until you commit."
+                            "COMMITTED": "Saved and enforced.",
+                            "NEW": "Added since the last save. Enforced once you save.",
+                            "CHANGED": "Edited since the last save. The saved version is enforced until you save.",
+                            "REMOVED": "Deleted since the last save. Still enforced until you save."
                         },
                         "locked": "Locked by preset",
                         "lockedHelp": "This row belongs to the {{ preset }} preset. To remove it, deselect the preset in the Presets field.",
                         "actionsFor": "Actions for",
-                        "deleteEllipsis": "Delete…",
+                        "deleteRow": "Delete",
                         "undo": "Undo",
                         "undoLabel": "Undo the removal of",
                         "delete": {
@@ -685,7 +685,7 @@
                                 "threads": "Ares2 will no longer allow student code to create threads of {{ target }}. Tests that rely on it will fail with a security violation.",
                                 "packages": "Ares2 will no longer allow student code to import {{ target }}. Tests that rely on it will fail with a security violation."
                             },
-                            "note": "The deletion is added as an unsaved change. Nothing reaches the repository until you commit.",
+                            "note": "The deletion is added as an unsaved change. Nothing reaches the repository until you save.",
                             "confirm": "Delete"
                         }
                     },
@@ -776,12 +776,12 @@
                             "verb": "import {{ target }}"
                         },
                         "or": "or",
-                        "warning": "Ares2 will now allow student code to {{ action }}. Grant only what the exercise needs.",
-                        "browse": "Browse…",
+                        "warning": "With this row, student code may {{ action }}.",
+                        "browse": "Browse",
                         "studentCodeMay": "Student code may",
-                        "grantsNothing": "Select at least one permission. Without one, the {{ noun }} grants nothing.",
-                        "addNote": "Adds the row as an unsaved change. Nothing reaches the repository until you commit.",
-                        "editNote": "Saves the change as unsaved. Nothing reaches the repository until you commit.",
+                        "grantsNothing": "Select at least one action to add the {{ noun }}.",
+                        "addNote": "Adds the row as an unsaved change. Nothing reaches the repository until you save.",
+                        "editNote": "Keeps the change as unsaved. Nothing reaches the repository until you save.",
                         "saveChanges": "Save Changes",
                         "problem": {
                             "pathRequired": "Enter a path.",
@@ -823,8 +823,8 @@
                             "timeout": "Timeout",
                             "output": "Output"
                         },
-                        "uncommittedMark": "(uncommitted)",
-                        "uncommittedHelp": "Settings in this tab differ from the last commit. They take effect once you commit.",
+                        "uncommittedMark": "(unsaved)",
+                        "uncommittedHelp": "Settings in this tab differ from the saved ones. They take effect once you save.",
                         "feedbackLevel": "Error feedback level",
                         "feedbackLevelHelp": "Determines how much students learn about a security violation, from I0 (only that the policy was violated) to I3 (the full Ares2 message plus the rule that allows the access). Feedback of hidden test cases is always redacted.",
                         "feedbackLevelUnavailable": "No Ares2 release lets a policy choose the level yet: students see the full Ares2 message, as shown below.",
@@ -846,10 +846,11 @@
                         "originalException": "java.lang.AssertionError: expected [1, 2, 3] but was [3, 2, 1]\n    at MergeSortTest.testMergeSort(MergeSortTest.java:27)",
                         "hideTests": "Hide test case feedback from students between these dates",
                         "hideTestsHelp": "Between the two dates, students only see that a test case is hidden. Its results appear once the hidden period has ended.",
-                        "feedback": "Feedback",
-                        "hidden": "Hidden — results are shown after the deadline",
-                        "timelineLabel": "Timeline: feedback, then hidden from {{ from }} until {{ until }}, then feedback again",
-                        "timelineAlways": "Timeline: feedback the whole time",
+                        "feedback": "Students see the test results",
+                        "hidden": "Test results are hidden from students",
+                        "timelineCaption": "What students see",
+                        "timelineLabel": "What students see: the test results, then nothing from {{ from }} until {{ until }}, then the test results again",
+                        "timelineAlways": "What students see: the test results the whole time",
                         "hiddenFrom": "Hidden from",
                         "hiddenFromHelp": "From this moment on, students no longer see the results of the test cases of this policy.",
                         "hiddenUntil": "Hidden until",
@@ -898,11 +899,11 @@
                         "noClasses": "No test classes are declared yet.",
                         "fromTests": "From test cases",
                         "fromTestsHelp": "Declared automatically because test cases of this class are assigned. It stays declared as long as one of them is.",
-                        "removed": "Removed · uncommitted",
-                        "testRemovedHelp": "Removed since the last commit. Still applies until you commit.",
-                        "classRemovedHelp": "Removed since the last commit. Still declared until you commit.",
-                        "testNewHelp": "Assigned since the last commit. Takes effect once you commit.",
-                        "classNewHelp": "Declared since the last commit. Takes effect once you commit.",
+                        "removed": "Removed · unsaved",
+                        "testRemovedHelp": "Removed since the last save. Still applies until you save.",
+                        "classRemovedHelp": "Removed since the last save. Still declared until you save.",
+                        "testNewHelp": "Assigned since the last save. Takes effect once you save.",
+                        "classNewHelp": "Declared since the last save. Takes effect once you save.",
                         "undo": "Undo",
                         "undoLabel": "Undo the removal of",
                         "removeLabel": "Remove",
@@ -964,12 +965,12 @@
                         "keyBehaviour": "Configure Test Behaviour",
                         "keyClasses": "Assign Test Cases (declared test classes)",
                         "viewLabel": "Version",
-                        "committed": "Committed",
+                        "committed": "Saved",
                         "unsaved": "With unsaved changes",
-                        "uncommittedLines": "Uncommitted ({{ count }} lines)",
+                        "uncommittedLines": "Unsaved ({{ count }} lines)",
                         "copy": "Copy YAML",
                         "copied": "Copied",
-                        "notCommitted": "This policy has not been committed yet.",
+                        "notCommitted": "This policy has not been saved yet.",
                         "rendering": "Rendering the policy…",
                         "source": "YAML source",
                         "importHint": "Import replaces this policy with the selected YAML file as unsaved changes.",
@@ -979,12 +980,12 @@
                         "importTooLarge": "The file is larger than 256 KB.",
                         "importUnreadable": "The file could not be read. Select it again.",
                         "imported": {
-                            "one": "Imported. 1 unsaved change in {{ policy }} — review it before you commit.",
-                            "other": "Imported. {{ count }} unsaved changes in {{ policy }} — review them before you commit."
+                            "one": "Imported. 1 unsaved change in {{ policy }} — review it before you save.",
+                            "other": "Imported. {{ count }} unsaved changes in {{ policy }} — review them before you save."
                         }
                     },
                     "review": {
-                        "title": "Review and Commit Changes",
+                        "title": "Review and Save Changes",
                         "changed": {
                             "restrictions": {
                                 "one": "1 allowed resource access changed",
@@ -1012,7 +1013,7 @@
                             }
                         },
                         "basedOn": "based on commit {{ commit }}",
-                        "explanation": "The diff shows the changed files and test case assignments. View YAML explains the field names.",
+                        "explanation": "Ares2 reads your settings from policy files (YAML) in the tests repository, so you do not edit these files yourself. The comparison below shows exactly what saving changes in them; View YAML explains the field names.",
                         "rendering": "Rendering the changed files…",
                         "newFile": "new file",
                         "renamedFrom": "renamed from {{ file }}",
@@ -1031,15 +1032,15 @@
                         "released": "Released:",
                         "to": "to {{ file }}",
                         "from": "from {{ file }}",
-                        "fixFirst": "Fix these before committing",
+                        "fixFirst": "Fix these before saving",
                         "incompatible": "Ares2 {{ version }} does not accept these parts of the policies, so every test would fail. Remove them or choose a newer version:",
-                        "commitMessage": "Commit message",
-                        "createsCommit": "Creates one commit in the tests repository and starts a new build of the template and solution.",
+                        "commitMessage": "Description of the change",
+                        "createsCommit": "Saving creates one commit with this description in the tests repository and starts a new build of the template and solution.",
                         "compatible": "Checked against the pinned release Ares2 {{ version }}: every field in these files is supported.",
                         "incompatibleShort": "The pinned release Ares2 {{ version }} does not support every field in these files.",
                         "unverified": "Ares2 {{ version }} is not listed in the compatibility manifest, so Artemis cannot check whether it accepts every field.",
                         "back": "Back to Editing",
-                        "commitAndPush": "Commit & Push",
+                        "commitAndPush": "Save Changes",
                         "securitySettings": "security settings",
                         "defaultMessage": {
                             "one": "Update {{ subject }} (1 change)",
@@ -1053,28 +1054,28 @@
                         "sameFile": "Two policies would be saved to the same file. Rename one of them."
                     },
                     "banner": {
-                        "committing": "Committing…",
+                        "committing": "Saving…",
                         "committingText": "Editing is paused until the push to the tests repository is processed.",
-                        "committed": "Committed",
-                        "committedText": "Commit {{ hash }} was pushed. The build it started shows whether Ares2 accepts the new policy.",
+                        "committed": "Saved",
+                        "committedText": "Saved as commit {{ hash }}. The build it started shows whether Ares2 accepts the new policy.",
                         "conflict": "The policy changed in the repository",
                         "conflictText": {
-                            "one": "{{ author }} committed {{ hash }} after you opened the editor. Reload to see it — your unsaved change is kept.",
-                            "other": "{{ author }} committed {{ hash }} after you opened the editor. Reload to see it — your {{ count }} unsaved changes are kept."
+                            "one": "{{ author }} saved a newer version ({{ hash }}) after you opened the editor. Reload to see it — your unsaved change is kept.",
+                            "other": "{{ author }} saved a newer version ({{ hash }}) after you opened the editor. Reload to see it — your {{ count }} unsaved changes are kept."
                         },
                         "conflictTextUnknown": {
-                            "one": "Someone committed to the tests repository after you opened the editor. Reload to see it — your unsaved change is kept.",
-                            "other": "Someone committed to the tests repository after you opened the editor. Reload to see it — your {{ count }} unsaved changes are kept."
+                            "one": "Someone saved a newer version to the tests repository after you opened the editor. Reload to see it — your unsaved change is kept.",
+                            "other": "Someone saved a newer version to the tests repository after you opened the editor. Reload to see it — your {{ count }} unsaved changes are kept."
                         },
                         "reload": "Reload",
-                        "reloaded": "Reloaded commit {{ hash }}. Your unsaved changes are kept — commit again when ready.",
+                        "reloaded": "Reloaded the version saved as commit {{ hash }}. Your unsaved changes are kept — save again when ready.",
                         "orphaned": "A policy you changed is gone from the repository",
-                        "orphanedText": "Since you opened the editor, someone deleted, renamed or broke {{ files }}, so it can no longer be edited here. Your unsaved changes to it are kept as a new policy: commit it to keep them, or delete it to drop them.",
-                        "failed": "Commit failed — nothing was saved",
+                        "orphanedText": "Since you opened the editor, someone deleted, renamed or broke {{ files }}, so it can no longer be edited here. Your unsaved changes to it are kept as a new policy: save it to keep them, or delete it to drop them.",
+                        "failed": "Saving failed — nothing was changed",
                         "failedKept": "Your changes stay unsaved.",
                         "failedGeneric": "The tests repository could not be changed.",
-                        "processingFailed": "Committed, but the builds did not start",
-                        "processingFailedText": "Commit {{ hash }} was pushed, so the policies show it, but Artemis could not start the builds of the template and solution. Retry to start them.",
+                        "processingFailed": "Saved, but the builds did not start",
+                        "processingFailedText": "Saved as commit {{ hash }}, so the policies show it, but Artemis could not start the builds of the template and solution. Retry to start them.",
                         "retry": "Retry",
                         "tooOld": "Pinned version too old for this policy",
                         "tooOldText": "Ares2 {{ version }} does not support these settings of the policies, so every test would fail. Choose a newer release.",
@@ -1089,14 +1090,14 @@
                             "one": "Are you sure you want to discard your unsaved change?",
                             "other": "Are you sure you want to discard all {{ count }} unsaved changes?"
                         },
-                        "warning": "The editor returns to the committed state of commit {{ commit }}. Discarded changes cannot be restored.",
+                        "warning": "The editor returns to the version saved as commit {{ commit }}. Discarded changes cannot be restored.",
                         "confirm": "Discard Changes"
                     },
                     "deletePolicy": {
                         "title": "Delete Security Policy",
                         "question": "Are you sure you want to delete {{ policy }}?",
-                        "committed": "Committing removes {{ file }} from the tests repository. Its {{ count }} assigned test entries then run under the restrictive default policy of Ares2.",
-                        "neverCommitted": "This policy was never committed. Its settings are lost.",
+                        "committed": "Saving removes {{ file }} from the tests repository. Its {{ count }} assigned test entries then run under the restrictive default policy of Ares2.",
+                        "neverCommitted": "This policy was never saved. Its settings are lost.",
                         "confirm": "Delete Policy"
                     }
                 }

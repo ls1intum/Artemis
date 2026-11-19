@@ -5,6 +5,7 @@ import { faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import {
     TumAetUiInputDirective,
+    TumAetUiSelectButtonComponent,
     TumAetUiSelectComponent,
     TumAetUiTabComponent,
     TumAetUiTabListComponent,
@@ -32,11 +33,11 @@ import {
     setBehaviour,
 } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 
-/** The error feedback levels, from the most to the least information, as the slider lists them. */
-const FEEDBACK_LEVELS = ['I3', 'I2', 'I1', 'I0'] as const;
+/** The error feedback levels, from the least to the most information, as the options list them from left to right. */
+const FEEDBACK_LEVELS = ['I0', 'I1', 'I2', 'I3'] as const;
 
 /** The level the released Ares versions use: they report the full message of a violation, without the rule that would allow it. */
-const RELEASED_FEEDBACK_LEVEL = 1;
+const RELEASED_FEEDBACK_LEVEL: (typeof FEEDBACK_LEVELS)[number] = 'I2';
 
 const DEFAULT_TIMEOUT: SecurityStrictTimeout = { timeout: 5, timeUnit: 'SECONDS', terminationGrace: 1, terminationGraceUnit: 'SECONDS' };
 
@@ -61,6 +62,7 @@ const INPUT_DATE_FORMAT = 'YYYY-MM-DDTHH:mm';
         TumAetUiTabComponent,
         TumAetUiTagComponent,
         TumAetUiToggleSwitchComponent,
+        TumAetUiSelectButtonComponent,
         TumAetUiSelectComponent,
         TumAetUiInputDirective,
         TumAetUiTooltipDirective,

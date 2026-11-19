@@ -151,9 +151,9 @@
                     {{ problemKey | artemisTranslate: { entry: target() } }}
                 </p>
             }
-            <tumaet-ui-message severity="warn" [icon]="faTriangleExclamation" data-testid="security-permission-warning">
-                <span class="text-sm">{{ warningText() }}</span>
-            </tumaet-ui-message>
+            @if (!grantsNothing()) {
+                <p class="m-0 text-sm" data-testid="security-permission-summary">{{ summaryText() }}</p>
+            }
         </div>
         @if (kind() === 'files' || kind() === 'network') {
             <div class="sp-stack-3">
@@ -192,7 +192,7 @@
                     }
                 </fieldset>
                 @if (grantsNothing()) {
-                    <p class="m-0 text-sm text-state-danger" data-testid="security-permission-grants-nothing">
+                    <p class="sp-mut m-0 text-sm" data-testid="security-permission-grants-nothing">
                         {{ prefix + 'grantsNothing' | artemisTranslate: { noun: (prefix + kind() + '.nounInSentence' | artemisTranslate) } }}
                     </p>
                 }
@@ -203,7 +203,7 @@
     <ng-template #footer>
         <span class="sp-mut me-auto self-center text-sm" [jhiTranslate]="isEditing() ? prefix + 'editNote' : prefix + 'addNote'"></span>
         <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="visible.set(false)" jhiTranslate="entity.action.cancel"></button>
-        <button type="button" tumAetUiButton (click)="save()" [disabled]="submitted() && !canSave()" data-testid="security-permission-save">
+        <button type="button" tumAetUiButton (click)="save()" [disabled]="grantsNothing() || (submitted() && !canSave())" data-testid="security-permission-save">
             {{ confirmKey() | artemisTranslate }}
         </button>
     </ng-template>

@@ -384,8 +384,8 @@
                 "unsavedPoliciesOnSave": {
                     "header": "Ungespeicherte Änderungen der Sicherheitsrichtlinien verwerfen?",
                     "message": {
-                        "one": "Die Sicherheitsrichtlinien haben 1 ungespeicherte Änderung. Das Speichern der Aufgabe committet sie nicht und verlässt diese Seite, daher wird sie verworfen. Um sie zu behalten, brich ab und committe sie zuerst unter Sicherheitsrichtlinien verwalten.",
-                        "other": "Die Sicherheitsrichtlinien haben {{ count }} ungespeicherte Änderungen. Das Speichern der Aufgabe committet sie nicht und verlässt diese Seite, daher werden sie verworfen. Um sie zu behalten, brich ab und committe sie zuerst unter Sicherheitsrichtlinien verwalten."
+                        "one": "Die Sicherheitsrichtlinien haben 1 ungespeicherte Änderung. Das Speichern der Aufgabe speichert sie nicht und verlässt diese Seite, daher wird sie verworfen. Um sie zu behalten, brich ab und speichere sie zuerst mit Richtlinien speichern unter Sicherheitsrichtlinien verwalten.",
+                        "other": "Die Sicherheitsrichtlinien haben {{ count }} ungespeicherte Änderungen. Das Speichern der Aufgabe speichert sie nicht und verlässt diese Seite, daher werden sie verworfen. Um sie zu behalten, brich ab und speichere sie zuerst mit Richtlinien speichern unter Sicherheitsrichtlinien verwalten."
                     },
                     "confirm": "Verwerfen und speichern"
                 },
@@ -407,8 +407,8 @@
                     "loading": "Wird geladen…",
                     "loadError": "Die Sicherheitsrichtlinien konnten nicht geladen werden.",
                     "retry": "Erneut versuchen",
-                    "uncommitted": "Nicht committet",
-                    "uncommittedCount": "{{ count }} nicht committet",
+                    "uncommitted": "Nicht gespeichert",
+                    "uncommittedCount": "{{ count }} nicht gespeichert",
                     "unsavedCount": {
                         "one": "1 ungespeicherte Änderung",
                         "other": "{{ count }} ungespeicherte Änderungen"
@@ -419,34 +419,34 @@
                         "inactive": "Inaktiv",
                         "inactiveHelp": "Der Code der Studierenden läuft ohne Einschränkungen. Keine Sicherheitsrichtlinie wird durchgesetzt.",
                         "active": "Aktiv",
-                        "activeHelp": "Die automatischen Tests führen den Code der Studierenden in der Ares2-Sandbox aus und setzen die committeten Sicherheitsrichtlinien durch.",
+                        "activeHelp": "Die automatischen Tests führen den Code der Studierenden in der Ares2-Sandbox aus und setzen die gespeicherten Sicherheitsrichtlinien durch.",
                         "configured": "Konfiguriert",
-                        "configuredHelp": "Artemis hat die Dateien des Test-Repositorys geprüft. Ob Ares2 die Richtlinien akzeptiert, zeigt der nächste Build von Vorlage und Lösung.",
+                        "configuredHelp": "Deine Sicherheitsrichtlinien sind im Test-Repository gespeichert. Der nächste Build von Vorlage und Lösung zeigt, ob Ares2 sie akzeptiert.",
                         "turningOn": "Wird eingeschaltet…",
                         "turningOff": "Wird ausgeschaltet…",
-                        "committing": "Wird committet…",
+                        "committing": "Wird gespeichert…",
                         "scan": "Abhängigkeiten prüfen",
                         "scanHelp": "Ares2 prüft auch die Bibliotheken, die der Code der Studierenden verwendet, und erkennt verbotene Zugriffe über sie. Testfälle laufen deutlich langsamer.",
                         "scanInactive": "Verfügbar, sobald Ares2 aktiv ist.",
                         "scanUnavailable": "Der Build dieser Aufgabe bindet den Ares2-Agenten nicht ein, den die Prüfung braucht.",
                         "scanReadOnly": "Eine Richtlinie wird schreibgeschützt angezeigt, und das Umschalten betrifft jede Richtlinie: Behebe sie zuerst im Test-Repository.",
-                        "synced": "Synchronisiert",
+                        "synced": "Gespeichert",
                         "notActive": "Nicht aktiv",
                         "commit": "Commit",
-                        "syncedHelp": "Die hier gezeigten Einstellungen stammen aus diesem Commit im Test-Repository. Wenn jemand vor dir committet, wirst du zuerst um ein Neuladen gebeten.",
+                        "syncedHelp": "Die hier gezeigten Einstellungen wurden zuletzt in diesem Commit des Test-Repositorys gespeichert. Wenn jemand vor dir speichert, wirst du zuerst um ein Neuladen gebeten.",
                         "notActiveHelp": "Builds seit diesem Commit führen die Tests ohne Sandbox aus.",
                         "by": "von {{ author }}",
                         "version": "Framework-Version",
                         "versionHelp": "Das Ares2-Release bestimmt, welche Einstellungen Sicherheitsrichtlinien verwenden können.",
-                        "versionHelpActive": "Ein neues Release wirkt mit deinem nächsten Commit.",
-                        "uncommitted": "Nicht committet",
-                        "versionUncommittedHelp": "Das gewählte Release wirkt, sobald du committest.",
+                        "versionHelpActive": "Ein neues Release wirkt, sobald du speicherst.",
+                        "uncommitted": "Nicht gespeichert",
+                        "versionUncommittedHelp": "Das gewählte Release wirkt, sobald du speicherst.",
                         "chooseOnActivation": "Beim Aktivieren wählen",
                         "chooseOnActivationHelp": "Wenn du Ares2 einschaltest, wählst du das Release. Das neueste kompatible Release ist vorausgewählt."
                     },
                     "activate": {
                         "title": "Ares2 einschalten",
-                        "description": "Der Code der Studierenden läuft in der Ares2-Sandbox. Ein Commit nimmt alle folgenden Änderungen vor.",
+                        "description": "Der Code der Studierenden läuft in der Ares2-Sandbox. Mit der Bestätigung werden alle folgenden Änderungen auf einmal gespeichert.",
                         "annotations": "Schaltet die @Policy-Annotationen der Testklassen ein und stellt ihre Richtliniendateien aus der Git-Historie wieder her oder erzeugt eine Richtlinie aus den Berechtigungen der Vorlage.",
                         "control": "Aktiviert die Kontrolle des Ressourcenzugriffs und des Testverhaltens.",
                         "version": "Framework-Version",
@@ -458,7 +458,7 @@
                     },
                     "deactivate": {
                         "title": "Ares2 ausschalten",
-                        "description": "Der Code der Studierenden läuft ohne Sandbox. Ein Commit nimmt alle folgenden Änderungen vor.",
+                        "description": "Der Code der Studierenden läuft ohne Sandbox. Mit der Bestätigung werden alle folgenden Änderungen auf einmal gespeichert.",
                         "deleteOne": "Löscht {{ file }} und schaltet die @Policy-Annotationen der Testklassen aus.",
                         "deleteMany": "Löscht {{ count }} Richtliniendateien und schaltet die @Policy-Annotationen der Testklassen aus.",
                         "control": "Deaktiviert die Kontrolle des Ressourcenzugriffs und des Testverhaltens.",
@@ -476,7 +476,7 @@
                     },
                     "scanOn": {
                         "title": "Prüfung der Abhängigkeiten einschalten",
-                        "description": "Ares2 prüft auch die Bibliotheken, die der Code der Studierenden verwendet. Ein Commit nimmt alle folgenden Änderungen vor.",
+                        "description": "Ares2 prüft auch die Bibliotheken, die der Code der Studierenden verwendet. Mit der Bestätigung werden alle folgenden Änderungen auf einmal gespeichert.",
                         "beforeTitle": "Bevor die Tests laufen,",
                         "before": "analysiert Ares2 auch die Bibliotheken des Codes der Studierenden.",
                         "whileTitle": "Während die Tests laufen,",
@@ -487,11 +487,11 @@
                         "confirm": "Prüfung einschalten",
                         "commitMessage": "Scan the dependencies of the student code",
                         "committedTitle": "Prüfung der Abhängigkeiten eingeschaltet",
-                        "committedText": "Commit {{ hash }} lässt Ares2 auch die Bibliotheken des Codes der Studierenden prüfen. Der gestartete Build zeigt, ob Ares2 die Richtlinien akzeptiert."
+                        "committedText": "Als Commit {{ hash }} gespeichert: Ares2 prüft jetzt auch die Bibliotheken des Codes der Studierenden. Der gestartete Build zeigt, ob Ares2 die Richtlinien akzeptiert."
                     },
                     "scanOff": {
                         "title": "Prüfung der Abhängigkeiten ausschalten",
-                        "description": "Ares2 prüft nur noch den Code der Studierenden selbst. Ein Commit nimmt alle folgenden Änderungen vor.",
+                        "description": "Ares2 prüft nur noch den Code der Studierenden selbst. Mit der Bestätigung werden alle folgenden Änderungen auf einmal gespeichert.",
                         "beforeTitle": "Bevor die Tests laufen,",
                         "before": "analysiert Ares2 nur den Code der Studierenden selbst.",
                         "whileTitle": "Während die Tests laufen,",
@@ -501,7 +501,7 @@
                         "confirm": "Prüfung ausschalten",
                         "commitMessage": "Stop scanning the dependencies of the student code",
                         "committedTitle": "Prüfung der Abhängigkeiten ausgeschaltet",
-                        "committedText": "Commit {{ hash }} lässt Ares2 nur noch den Code der Studierenden selbst prüfen. Der gestartete Build zeigt, ob Ares2 die Richtlinien akzeptiert."
+                        "committedText": "Als Commit {{ hash }} gespeichert: Ares2 prüft jetzt nur noch den Code der Studierenden selbst. Der gestartete Build zeigt, ob Ares2 die Richtlinien akzeptiert."
                     },
                     "section": {
                         "title": "Sicherheitsrichtlinien verwalten",
@@ -535,20 +535,20 @@
                             "one": "1 Build-Einstellung",
                             "other": "{{ count }} Build-Einstellungen"
                         },
-                        "notEnforced": "Nichts wird durchgesetzt, bevor du committest.",
-                        "nothing": "Alles ist committet. Es gibt nichts zu committen oder zu verwerfen.",
+                        "notEnforced": "Nichts wird durchgesetzt, bevor du speicherst.",
+                        "nothing": "Alles ist gespeichert. Es gibt nichts zu speichern oder zu verwerfen.",
                         "instructorsOnly": "Nur Lehrende des Kurses können die Sicherheitsrichtlinien ändern.",
-                        "discard": "Verwerfen…",
-                        "commit": "Commit"
+                        "discard": "Verwerfen",
+                        "commit": "Richtlinien speichern"
                     },
                     "policy": {
                         "defaultName": "Sicherheitsrichtlinie {{ number }}",
                         "unnamed": "Unbenannte Richtlinie",
-                        "new": "Neu · nicht committet",
-                        "newHelp": "Diese Richtlinie wurde noch nicht committet. Sie wirkt, sobald du committest.",
+                        "new": "Neu · nicht gespeichert",
+                        "newHelp": "Diese Richtlinie wurde noch nicht gespeichert. Sie wirkt, sobald du speicherst.",
                         "changesHelp": {
-                            "one": "Diese Richtlinie hat 1 Änderung seit dem letzten Commit. Sie wirkt, sobald du committest.",
-                            "other": "Diese Richtlinie hat {{ count }} Änderungen seit dem letzten Commit. Sie wirken, sobald du committest."
+                            "one": "Diese Richtlinie hat 1 ungespeicherte Änderung. Sie wirkt, sobald du speicherst.",
+                            "other": "Diese Richtlinie hat {{ count }} ungespeicherte Änderungen. Sie wirken, sobald du speicherst."
                         },
                         "readOnly": "Schreibgeschützt",
                         "viewYaml": "YAML anzeigen",
@@ -557,7 +557,7 @@
                         "expand": "{{ policy }} aufklappen",
                         "collapse": "{{ policy }} zuklappen",
                         "name": "Name",
-                        "nameHelp": "Bestimmt den Dateinamen im Test-Repository. Eine Umbenennung benennt die Datei mit deinem nächsten Commit um.",
+                        "nameHelp": "Bestimmt den Dateinamen im Test-Repository. Eine Umbenennung benennt die Datei beim Speichern um.",
                         "namePlaceholder": "z. B. Stresstests",
                         "presets": "Vorlagen",
                         "presetsHelp": "Eine Vorlage fügt die gesperrten Zeilen hinzu, die eine Bibliothek oder ein Framework braucht. Wird die Vorlage abgewählt, verschwinden ihre Zeilen; selbst hinzugefügte Zeilen bleiben.",
@@ -575,8 +575,8 @@
                             "tests": "Testfälle zuordnen"
                         },
                         "boxChangesHelp": {
-                            "one": "1 Änderung in diesem Bereich seit dem letzten Commit. Sie wirkt, sobald du committest.",
-                            "other": "{{ count }} Änderungen in diesem Bereich seit dem letzten Commit. Sie wirken, sobald du committest."
+                            "one": "1 ungespeicherte Änderung in diesem Bereich. Sie wirkt, sobald du speicherst.",
+                            "other": "{{ count }} ungespeicherte Änderungen in diesem Bereich. Sie wirken, sobald du speicherst."
                         },
                         "readOnlyReason": {
                             "MISSING": "{{ path }} existiert nicht und kann daher hier nicht bearbeitet werden.",
@@ -657,22 +657,22 @@
                         },
                         "source": {
                             "PRESET": "Vorlage · {{ preset }}",
-                            "COMMITTED": "Committet",
-                            "NEW": "Nicht committet",
+                            "COMMITTED": "Gespeichert",
+                            "NEW": "Nicht gespeichert",
                             "CHANGED": "Geändert",
-                            "REMOVED": "Entfernt · nicht committet"
+                            "REMOVED": "Entfernt · nicht gespeichert"
                         },
                         "sourceHelp": {
                             "PRESET": "Von der Vorlage {{ preset }} hinzugefügt und gesperrt. Wähle die Vorlage ab, um die Zeile zu entfernen.",
-                            "COMMITTED": "Teil des letzten Commits und durchgesetzt.",
-                            "NEW": "Seit dem letzten Commit hinzugefügt. Wird durchgesetzt, sobald du committest.",
-                            "CHANGED": "Seit dem letzten Commit bearbeitet. Bis zum Commit wird die committete Fassung durchgesetzt.",
-                            "REMOVED": "Seit dem letzten Commit gelöscht. Wird bis zum Commit weiter durchgesetzt."
+                            "COMMITTED": "Gespeichert und durchgesetzt.",
+                            "NEW": "Seit dem letzten Speichern hinzugefügt. Wird durchgesetzt, sobald du speicherst.",
+                            "CHANGED": "Seit dem letzten Speichern bearbeitet. Bis zum Speichern wird die gespeicherte Fassung durchgesetzt.",
+                            "REMOVED": "Seit dem letzten Speichern gelöscht. Wird bis zum Speichern weiter durchgesetzt."
                         },
                         "locked": "Durch Vorlage gesperrt",
                         "lockedHelp": "Diese Zeile gehört zur Vorlage {{ preset }}. Wähle die Vorlage im Feld Vorlagen ab, um sie zu entfernen.",
                         "actionsFor": "Aktionen für",
-                        "deleteEllipsis": "Löschen…",
+                        "deleteRow": "Löschen",
                         "undo": "Rückgängig",
                         "undoLabel": "Entfernen rückgängig machen für",
                         "delete": {
@@ -685,7 +685,7 @@
                                 "threads": "Ares2 erlaubt dem Code der Studierenden nicht mehr, Threads von {{ target }} zu erzeugen. Tests, die darauf angewiesen sind, schlagen mit einer Sicherheitsverletzung fehl.",
                                 "packages": "Ares2 erlaubt dem Code der Studierenden nicht mehr, {{ target }} zu importieren. Tests, die darauf angewiesen sind, schlagen mit einer Sicherheitsverletzung fehl."
                             },
-                            "note": "Das Löschen wird als ungespeicherte Änderung hinzugefügt. Nichts erreicht das Repository, bevor du committest.",
+                            "note": "Das Löschen wird als ungespeicherte Änderung hinzugefügt. Nichts erreicht das Repository, bevor du speicherst.",
                             "confirm": "Löschen"
                         }
                     },
@@ -776,12 +776,12 @@
                             "verb": "{{ target }} importieren"
                         },
                         "or": "oder",
-                        "warning": "Ares2 erlaubt dem Code der Studierenden nun: {{ action }}. Erlaube nur, was die Aufgabe braucht.",
-                        "browse": "Durchsuchen…",
+                        "warning": "Mit dieser Zeile darf der Code der Studierenden: {{ action }}.",
+                        "browse": "Durchsuchen",
                         "studentCodeMay": "Der Code der Studierenden darf",
-                        "grantsNothing": "Wähle mindestens eine Berechtigung. Ohne eine erlaubt dieser Eintrag ({{ noun }}) nichts.",
-                        "addNote": "Fügt die Zeile als ungespeicherte Änderung hinzu. Nichts erreicht das Repository, bevor du committest.",
-                        "editNote": "Speichert die Änderung als ungespeichert. Nichts erreicht das Repository, bevor du committest.",
+                        "grantsNothing": "Wähle mindestens eine Aktion, um den Eintrag ({{ noun }}) hinzuzufügen.",
+                        "addNote": "Fügt die Zeile als ungespeicherte Änderung hinzu. Nichts erreicht das Repository, bevor du speicherst.",
+                        "editNote": "Behält die Änderung als ungespeichert. Nichts erreicht das Repository, bevor du speicherst.",
                         "saveChanges": "Änderungen speichern",
                         "problem": {
                             "pathRequired": "Gib einen Pfad ein.",
@@ -823,8 +823,8 @@
                             "timeout": "Timeout",
                             "output": "Ausgabe"
                         },
-                        "uncommittedMark": "(nicht committet)",
-                        "uncommittedHelp": "Die Einstellungen in diesem Tab weichen vom letzten Commit ab. Sie wirken, sobald du committest.",
+                        "uncommittedMark": "(nicht gespeichert)",
+                        "uncommittedHelp": "Die Einstellungen in diesem Tab weichen von den gespeicherten ab. Sie wirken, sobald du speicherst.",
                         "feedbackLevel": "Detailgrad der Fehlerrückmeldung",
                         "feedbackLevelHelp": "Bestimmt, wie viel Studierende über eine Sicherheitsverletzung erfahren, von I0 (nur dass die Richtlinie verletzt wurde) bis I3 (die vollständige Ares2-Meldung und die Regel, die den Zugriff erlauben würde). Rückmeldungen versteckter Testfälle werden immer geschwärzt.",
                         "feedbackLevelUnavailable": "Noch kein Ares2-Release lässt eine Richtlinie den Detailgrad wählen: Studierende sehen die vollständige Ares2-Meldung, wie unten gezeigt.",
@@ -846,10 +846,11 @@
                         "originalException": "java.lang.AssertionError: expected [1, 2, 3] but was [3, 2, 1]\n    at MergeSortTest.testMergeSort(MergeSortTest.java:27)",
                         "hideTests": "Rückmeldung zu Testfällen zwischen diesen Zeitpunkten vor Studierenden verbergen",
                         "hideTestsHelp": "Zwischen den beiden Zeitpunkten sehen Studierende nur, dass ein Testfall versteckt ist. Seine Ergebnisse erscheinen, sobald der Zeitraum vorbei ist.",
-                        "feedback": "Rückmeldung",
-                        "hidden": "Versteckt — Ergebnisse werden nach der Abgabefrist angezeigt",
-                        "timelineLabel": "Zeitstrahl: Rückmeldung, dann versteckt von {{ from }} bis {{ until }}, dann wieder Rückmeldung",
-                        "timelineAlways": "Zeitstrahl: durchgehend Rückmeldung",
+                        "feedback": "Studierende sehen die Testergebnisse",
+                        "hidden": "Testergebnisse sind für Studierende versteckt",
+                        "timelineCaption": "Was Studierende sehen",
+                        "timelineLabel": "Was Studierende sehen: die Testergebnisse, dann nichts von {{ from }} bis {{ until }}, dann wieder die Testergebnisse",
+                        "timelineAlways": "Was Studierende sehen: durchgehend die Testergebnisse",
                         "hiddenFrom": "Versteckt ab",
                         "hiddenFromHelp": "Ab diesem Zeitpunkt sehen Studierende die Ergebnisse der Testfälle dieser Richtlinie nicht mehr.",
                         "hiddenUntil": "Versteckt bis",
@@ -898,11 +899,11 @@
                         "noClasses": "Noch keine Testklassen deklariert.",
                         "fromTests": "Aus Testfällen",
                         "fromTestsHelp": "Automatisch deklariert, weil Testfälle dieser Klasse zugeordnet sind. Sie bleibt deklariert, solange einer davon zugeordnet ist.",
-                        "removed": "Entfernt · nicht committet",
-                        "testRemovedHelp": "Seit dem letzten Commit entfernt. Gilt bis zum Commit weiter.",
-                        "classRemovedHelp": "Seit dem letzten Commit entfernt. Bleibt bis zum Commit deklariert.",
-                        "testNewHelp": "Seit dem letzten Commit zugeordnet. Wirkt, sobald du committest.",
-                        "classNewHelp": "Seit dem letzten Commit deklariert. Wirkt, sobald du committest.",
+                        "removed": "Entfernt · nicht gespeichert",
+                        "testRemovedHelp": "Seit dem letzten Speichern entfernt. Gilt bis zum Speichern weiter.",
+                        "classRemovedHelp": "Seit dem letzten Speichern entfernt. Bleibt bis zum Speichern deklariert.",
+                        "testNewHelp": "Seit dem letzten Speichern zugeordnet. Wirkt, sobald du speicherst.",
+                        "classNewHelp": "Seit dem letzten Speichern deklariert. Wirkt, sobald du speicherst.",
                         "undo": "Rückgängig",
                         "undoLabel": "Entfernen rückgängig machen für",
                         "removeLabel": "Entfernen",
@@ -964,12 +965,12 @@
                         "keyBehaviour": "Testverhalten konfigurieren",
                         "keyClasses": "Testfälle zuordnen (deklarierte Testklassen)",
                         "viewLabel": "Version",
-                        "committed": "Committet",
+                        "committed": "Gespeichert",
                         "unsaved": "Mit ungespeicherten Änderungen",
-                        "uncommittedLines": "Nicht committet ({{ count }} Zeilen)",
+                        "uncommittedLines": "Nicht gespeichert ({{ count }} Zeilen)",
                         "copy": "YAML kopieren",
                         "copied": "Kopiert",
-                        "notCommitted": "Diese Richtlinie wurde noch nicht committet.",
+                        "notCommitted": "Diese Richtlinie wurde noch nicht gespeichert.",
                         "rendering": "Die Richtlinie wird erzeugt…",
                         "source": "YAML-Quelltext",
                         "importHint": "Ein Import ersetzt diese Richtlinie durch die gewählte YAML-Datei als ungespeicherte Änderungen.",
@@ -979,12 +980,12 @@
                         "importTooLarge": "Die Datei ist größer als 256 KB.",
                         "importUnreadable": "Die Datei konnte nicht gelesen werden. Wähle sie erneut aus.",
                         "imported": {
-                            "one": "Importiert. 1 ungespeicherte Änderung in {{ policy }} — prüfe sie vor dem Commit.",
-                            "other": "Importiert. {{ count }} ungespeicherte Änderungen in {{ policy }} — prüfe sie vor dem Commit."
+                            "one": "Importiert. 1 ungespeicherte Änderung in {{ policy }} — prüfe sie vor dem Speichern.",
+                            "other": "Importiert. {{ count }} ungespeicherte Änderungen in {{ policy }} — prüfe sie vor dem Speichern."
                         }
                     },
                     "review": {
-                        "title": "Änderungen prüfen und committen",
+                        "title": "Änderungen prüfen und speichern",
                         "changed": {
                             "restrictions": {
                                 "one": "1 erlaubter Ressourcenzugriff geändert",
@@ -1012,7 +1013,7 @@
                             }
                         },
                         "basedOn": "basierend auf Commit {{ commit }}",
-                        "explanation": "Der Diff zeigt die geänderten Dateien und Testfallzuordnungen. YAML anzeigen erklärt die Feldnamen.",
+                        "explanation": "Ares2 liest deine Einstellungen aus Richtliniendateien (YAML) im Test-Repository, daher bearbeitest du diese Dateien nicht selbst. Der Vergleich unten zeigt genau, was das Speichern darin ändert; YAML anzeigen erklärt die Feldnamen.",
                         "rendering": "Die geänderten Dateien werden erzeugt…",
                         "newFile": "neue Datei",
                         "renamedFrom": "umbenannt von {{ file }}",
@@ -1031,15 +1032,15 @@
                         "released": "Freigegeben:",
                         "to": "zu {{ file }}",
                         "from": "aus {{ file }}",
-                        "fixFirst": "Behebe diese Punkte vor dem Commit",
+                        "fixFirst": "Behebe diese Punkte vor dem Speichern",
                         "incompatible": "Ares2 {{ version }} akzeptiert diese Teile der Richtlinien nicht, daher würde jeder Test fehlschlagen. Entferne sie oder wähle eine neuere Version:",
-                        "commitMessage": "Commit-Nachricht",
-                        "createsCommit": "Erstellt einen Commit im Test-Repository und startet einen neuen Build von Vorlage und Lösung.",
+                        "commitMessage": "Beschreibung der Änderung",
+                        "createsCommit": "Das Speichern erstellt einen Commit mit dieser Beschreibung im Test-Repository und startet einen neuen Build von Vorlage und Lösung.",
                         "compatible": "Gegen das festgelegte Release Ares2 {{ version }} geprüft: Jedes Feld in diesen Dateien wird unterstützt.",
                         "incompatibleShort": "Das festgelegte Release Ares2 {{ version }} unterstützt nicht jedes Feld in diesen Dateien.",
                         "unverified": "Ares2 {{ version }} steht nicht im Kompatibilitätsverzeichnis, daher kann Artemis nicht prüfen, ob es jedes Feld akzeptiert.",
                         "back": "Zurück zum Bearbeiten",
-                        "commitAndPush": "Commit & Push",
+                        "commitAndPush": "Änderungen speichern",
                         "securitySettings": "security settings",
                         "defaultMessage": {
                             "one": "Update {{ subject }} (1 change)",
@@ -1053,28 +1054,28 @@
                         "sameFile": "Zwei Richtlinien würden in derselben Datei gespeichert. Benenne eine davon um."
                     },
                     "banner": {
-                        "committing": "Wird committet…",
+                        "committing": "Wird gespeichert…",
                         "committingText": "Das Bearbeiten ist pausiert, bis der Push in das Test-Repository verarbeitet ist.",
-                        "committed": "Committet",
-                        "committedText": "Commit {{ hash }} wurde gepusht. Der gestartete Build zeigt, ob Ares2 die neue Richtlinie akzeptiert.",
+                        "committed": "Gespeichert",
+                        "committedText": "Als Commit {{ hash }} gespeichert. Der gestartete Build zeigt, ob Ares2 die neue Richtlinie akzeptiert.",
                         "conflict": "Die Richtlinie hat sich im Repository geändert",
                         "conflictText": {
-                            "one": "{{ author }} hat {{ hash }} committet, nachdem du den Editor geöffnet hast. Lade neu, um es zu sehen — deine ungespeicherte Änderung bleibt erhalten.",
-                            "other": "{{ author }} hat {{ hash }} committet, nachdem du den Editor geöffnet hast. Lade neu, um es zu sehen — deine {{ count }} ungespeicherten Änderungen bleiben erhalten."
+                            "one": "{{ author }} hat eine neuere Fassung ({{ hash }}) gespeichert, nachdem du den Editor geöffnet hast. Lade neu, um sie zu sehen — deine ungespeicherte Änderung bleibt erhalten.",
+                            "other": "{{ author }} hat eine neuere Fassung ({{ hash }}) gespeichert, nachdem du den Editor geöffnet hast. Lade neu, um sie zu sehen — deine {{ count }} ungespeicherten Änderungen bleiben erhalten."
                         },
                         "conflictTextUnknown": {
-                            "one": "Jemand hat in das Test-Repository committet, nachdem du den Editor geöffnet hast. Lade neu, um es zu sehen — deine ungespeicherte Änderung bleibt erhalten.",
-                            "other": "Jemand hat in das Test-Repository committet, nachdem du den Editor geöffnet hast. Lade neu, um es zu sehen — deine {{ count }} ungespeicherten Änderungen bleiben erhalten."
+                            "one": "Jemand hat eine neuere Fassung im Test-Repository gespeichert, nachdem du den Editor geöffnet hast. Lade neu, um sie zu sehen — deine ungespeicherte Änderung bleibt erhalten.",
+                            "other": "Jemand hat eine neuere Fassung im Test-Repository gespeichert, nachdem du den Editor geöffnet hast. Lade neu, um sie zu sehen — deine {{ count }} ungespeicherten Änderungen bleiben erhalten."
                         },
                         "reload": "Neu laden",
-                        "reloaded": "Commit {{ hash }} neu geladen. Deine ungespeicherten Änderungen bleiben erhalten — committe erneut, wenn du so weit bist.",
+                        "reloaded": "Die als Commit {{ hash }} gespeicherte Fassung wurde neu geladen. Deine ungespeicherten Änderungen bleiben erhalten — speichere erneut, wenn du so weit bist.",
                         "orphaned": "Eine geänderte Richtlinie fehlt im Repository",
-                        "orphanedText": "Seit du den Editor geöffnet hast, hat jemand {{ files }} gelöscht, umbenannt oder beschädigt, daher kann sie hier nicht mehr bearbeitet werden. Deine ungespeicherten Änderungen daran bleiben als neue Richtlinie erhalten: Committe sie, um sie zu behalten, oder lösche sie, um sie zu verwerfen.",
-                        "failed": "Commit fehlgeschlagen — nichts wurde gespeichert",
+                        "orphanedText": "Seit du den Editor geöffnet hast, hat jemand {{ files }} gelöscht, umbenannt oder beschädigt, daher kann sie hier nicht mehr bearbeitet werden. Deine ungespeicherten Änderungen daran bleiben als neue Richtlinie erhalten: Speichere sie, um sie zu behalten, oder lösche sie, um sie zu verwerfen.",
+                        "failed": "Speichern fehlgeschlagen — nichts wurde geändert",
                         "failedKept": "Deine Änderungen bleiben ungespeichert.",
                         "failedGeneric": "Das Test-Repository konnte nicht geändert werden.",
-                        "processingFailed": "Committet, aber die Builds wurden nicht gestartet",
-                        "processingFailedText": "Commit {{ hash }} wurde gepusht und die Richtlinien zeigen ihn, aber Artemis konnte die Builds der Vorlage und der Lösung nicht starten. Versuche es erneut, um sie zu starten.",
+                        "processingFailed": "Gespeichert, aber die Builds wurden nicht gestartet",
+                        "processingFailedText": "Als Commit {{ hash }} gespeichert und die Richtlinien zeigen ihn, aber Artemis konnte die Builds der Vorlage und der Lösung nicht starten. Versuche es erneut, um sie zu starten.",
                         "retry": "Erneut versuchen",
                         "tooOld": "Festgelegte Version zu alt für diese Richtlinie",
                         "tooOldText": "Ares2 {{ version }} unterstützt diese Einstellungen der Richtlinien nicht, daher würde jeder Test fehlschlagen. Wähle ein neueres Release.",
@@ -1089,14 +1090,14 @@
                             "one": "Möchtest du deine ungespeicherte Änderung wirklich verwerfen?",
                             "other": "Möchtest du wirklich alle {{ count }} ungespeicherten Änderungen verwerfen?"
                         },
-                        "warning": "Der Editor kehrt zum committeten Stand von Commit {{ commit }} zurück. Verworfene Änderungen können nicht wiederhergestellt werden.",
+                        "warning": "Der Editor kehrt zur als Commit {{ commit }} gespeicherten Fassung zurück. Verworfene Änderungen können nicht wiederhergestellt werden.",
                         "confirm": "Änderungen verwerfen"
                     },
                     "deletePolicy": {
                         "title": "Sicherheitsrichtlinie löschen",
                         "question": "Möchtest du {{ policy }} wirklich löschen?",
-                        "committed": "Der Commit entfernt {{ file }} aus dem Test-Repository. Ihre {{ count }} zugeordneten Testeinträge laufen danach unter der restriktiven Standardrichtlinie von Ares2.",
-                        "neverCommitted": "Diese Richtlinie wurde nie committet. Ihre Einstellungen gehen verloren.",
+                        "committed": "Das Speichern entfernt {{ file }} aus dem Test-Repository. Ihre {{ count }} zugeordneten Testeinträge laufen danach unter der restriktiven Standardrichtlinie von Ares2.",
+                        "neverCommitted": "Diese Richtlinie wurde nie gespeichert. Ihre Einstellungen gehen verloren.",
                         "confirm": "Richtlinie löschen"
                     }
                 }

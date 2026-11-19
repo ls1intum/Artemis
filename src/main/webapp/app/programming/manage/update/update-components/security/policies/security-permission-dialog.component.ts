@@ -1,8 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -54,7 +53,6 @@ const ROW_PREFIX = 'artemisApp.programmingExercise.security.advanced.row.';
         TumAetUiButtonDirective,
         TumAetUiCheckboxComponent,
         TumAetUiInputDirective,
-        TumAetUiMessageComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
         SecurityBrowseDialogComponent,
@@ -63,7 +61,6 @@ const ROW_PREFIX = 'artemisApp.programmingExercise.security.advanced.row.';
 export class SecurityPermissionDialogComponent {
     private readonly translateService = inject(TranslateService);
 
-    protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly FILE_ACTIONS = FILE_ACTIONS;
     protected readonly NETWORK_ACTIONS = NETWORK_ACTIONS;
 
@@ -244,8 +241,8 @@ export class SecurityPermissionDialogComponent {
             .join(', '),
     );
 
-    /** What the warning says student code may do with the first row, e.g. "read or create data/input.txt". */
-    readonly warningText = computed(() => {
+    /** What student code may do with the first row, e.g. "read or create data/input.txt", summarised under the fields. */
+    readonly summaryText = computed(() => {
         const row = this.rows()[0];
         const target = row ? rowKey(this.kind(), row) || '…' : '…';
         const kind = this.kind();

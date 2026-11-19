@@ -230,40 +230,43 @@ switched off are switched on again. Add them back in the tests repository.
 ## Manage Security Policies in Advanced Mode
 
 The advanced view shows the state of the sandbox and every security policy of the tests repository. Nothing you change
-in it reaches the repository until you commit, and one commit carries all your changes.
+in it reaches the repository until you select **Save Policies**; saving creates one commit that carries all your
+changes.
 
 ### Turn the Sandbox On or Off
 
 The **Ares 2** card at the top has the same toggle as the **Security** card. Before anything changes, a dialog lists
-what the commit will do, as described in [Activate the Sandbox](#activate-the-sandbox) and
+what confirming will save, as described in [Activate the Sandbox](#activate-the-sandbox) and
 [Deactivate the Sandbox](#deactivate-the-sandbox). When you turn the sandbox on, you choose the framework version in
 the dialog. Turning the sandbox off discards your unsaved changes.
 
-The card also shows the commit of the tests repository that the view was read from, with its author and date, and the
-**Framework version**. A version you choose here is pinned with your next commit, and the review shows the change of
-the build file.
+The card also shows the commit of the tests repository in which the settings were last saved, with its author and
+date, and the **Framework version**. A version you choose here is pinned when you save, and the review shows the change
+of the build file.
 
 ### Scan the Dependencies
 
 **Scan dependencies** makes Ares also check the libraries that the student code uses, so that a forbidden access
 through a library is caught too. Artemis switches the programming language configuration of every policy, for example
-from `JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ` to `JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION`, in one commit. Every
+from `JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ` to `JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION`, and saves this in one
+commit. Every
 test runs considerably slower, so check your strict timeouts afterwards. The option is available only when the build
 file of the tests repository attaches the Ares agent, as the Java templates do, and no policy is shown read-only.
 
 ### Edit a Policy
 
 Each policy is one YAML file in the tests repository. **Add security policy** creates a new one; its **Name** determines
-the file name, and renaming a committed policy renames its file with the next commit. Each policy has three parts:
+the file name, and renaming a saved policy renames its file when you save. Each policy has three parts:
 
 - **Allow resource access** lists, in one tab per category, the paths, network endpoints, commands, thread classes and
-  packages the student code may use. **Browse…** picks paths or scripts from the template repository. Command
-  arguments are separated by spaces; put an argument that contains spaces in double quotes. Each row shows whether it
-  is committed, new, changed or removed.
+  packages the student code may use. **Browse** picks paths or scripts from the template repository. Command
+  arguments are separated by spaces; put an argument that contains spaces in double quotes. **Add** stays disabled
+  until you select at least one action for a path or an endpoint. Each row shows whether it is saved, unsaved,
+  changed or removed.
 - **Configure test behaviour** replaces the exception of a failed test with your own message, hides the feedback of
   tests between two dates, enforces a strict timeout per test and mirrors the output of the student code into the
-  results. The security feedback tab shows what students see for a violation; its level cannot be chosen yet, so
-  students see the full Ares message.
+  results. The fields of a setting stay disabled while its toggle is off. The security feedback tab shows what students
+  see for a violation; its level cannot be chosen yet, so students see the full Ares message.
 - **Assign test cases** chooses the tests that run under the policy: a whole test class, which also covers test cases
   added later, or single test cases. Artemis writes the assignment as the `@Policy` annotation of the class or of the
   test method. A test can use only one policy, so tests that another policy covers are locked, and so are the tests of
@@ -276,29 +279,30 @@ the file name, and renaming a committed policy renames its file with the next co
 Every policy needs at least one test case: Artemis finds a policy through the tests that use it. When you add a
 policy after deleting the last one, it starts with the language configuration of the build file and the package of
 the exercise. A test that no policy
-covers runs under the most restrictive default policy of Ares. **View YAML** shows the committed file and the file with
+covers runs under the most restrictive default policy of Ares. **View YAML** shows the saved file and the file with
 your unsaved changes, and lets you copy, export or import a policy file. An import replaces the policy with the file as
 unsaved changes. A policy that Artemis cannot read without changing it, for example because of a YAML error or because
 it lists the same path or package twice, is shown read-only; fix it in the tests repository.
 
-### Review and Commit
+### Review and Save
 
-The bar below the policies counts your unsaved changes. **Discard…** drops all of them. **Commit** opens the review,
-which shows a side-by-side diff of every changed file and the test case assignments that change. The review also checks
-the files against the pinned Ares version: if the version does not accept a field, for example a test behaviour that
-Ares 2.2.1 does not support yet, the review lists it and you cannot commit until you remove it or choose a newer
-version.
+The bar below the policies counts your unsaved changes. **Discard** drops all of them. **Save Policies** opens the
+review, which shows a side-by-side comparison of every changed policy file and the test case assignments that change.
+Ares reads your settings from these files, so you do not edit them yourself; the comparison shows exactly what saving
+changes. The review also checks the files against the pinned Ares version: if the version does not accept a field, for
+example a test behaviour that Ares 2.2.1 does not support yet, the review lists it and you cannot save until you remove
+it or choose a newer version.
 
-Committing creates one commit in the tests repository and runs the template and solution builds again. If someone
-committed to the tests repository after you opened the view, the commit is refused and you can reload: your unsaved
-changes stay and are applied to the newer commit. If that commit deleted or renamed a policy you changed, your changes
-to it are kept as a new policy, which you can commit or delete. Your unsaved changes also stay when you switch the form
-to simple mode and back.
+Saving creates one commit with your description in the tests repository and runs the template and solution builds
+again. If someone saved a newer version to the tests repository after you opened the view, saving is refused and you
+can reload: your unsaved changes stay and are applied to the newer version. If that version deleted or renamed a
+policy you changed, your changes to it are kept as a new policy, which you can save or delete. Your unsaved changes
+also stay when you switch the form to simple mode and back.
 
 <Callout variant={CalloutVariant.warning}>
 
-  Only the next build shows whether Ares accepts the committed policies. The card shows **Configured** after a commit,
-  not a confirmation from Ares, so check the template and solution results after each commit.
+  Only the next build shows whether Ares accepts the saved policies. The card shows **Configured** after you save,
+  not a confirmation from Ares, so check the template and solution results after each save.
 
 </Callout>
 

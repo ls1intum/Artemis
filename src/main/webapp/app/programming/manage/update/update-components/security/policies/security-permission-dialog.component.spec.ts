@@ -52,7 +52,26 @@ describe('SecurityPermissionDialogComponent', () => {
             ],
         ]);
         expect(comp.visible()).toBe(false);
-        expect(comp.warningText()).toBe('artemisApp.programmingExercise.security.advanced.row.warning');
+        expect(comp.summaryText()).toBe('artemisApp.programmingExercise.security.advanced.row.warning');
+    });
+
+    it('disables adding a path until an action is chosen and shows a hint instead of the summary', () => {
+        open('files');
+        comp.path.set('data/input.txt');
+        fixture.detectChanges();
+        const document = fixture.nativeElement.ownerDocument as Document;
+        const save = document.querySelector<HTMLButtonElement>('[data-testid="security-permission-save"]')!;
+
+        expect(save.disabled).toBe(true);
+        expect(document.querySelector('[data-testid="security-permission-grants-nothing"]')).not.toBeNull();
+        expect(document.querySelector('[data-testid="security-permission-summary"]')).toBeNull();
+
+        handlers.setFileAction('read', true);
+        fixture.detectChanges();
+
+        expect(save.disabled).toBe(false);
+        expect(document.querySelector('[data-testid="security-permission-grants-nothing"]')).toBeNull();
+        expect(document.querySelector('[data-testid="security-permission-summary"]')).not.toBeNull();
     });
 
     it('does not save a path that already has a row, but keeps the edited row itself', () => {

@@ -485,27 +485,6 @@
     overflow-wrap: anywhere;
 }
 
-.sp-range {
-    width: 100%;
-    min-block-size: calc(var(--tumaet-ui-spacing) * 6);
-    margin: 0;
-    accent-color: var(--tumaet-ui-primary-color);
-}
-
-.sp-range-labels {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: calc(var(--tumaet-ui-spacing) * 2);
-    color: var(--tumaet-ui-muted-color);
-    font-size: var(--tumaet-ui-font-size-xs);
-}
-
-.sp-level-on {
-    color: var(--tumaet-ui-text-color);
-    font-weight: 600;
-}
-
 .sp-switch-row {
     display: flex;
     align-items: center;
