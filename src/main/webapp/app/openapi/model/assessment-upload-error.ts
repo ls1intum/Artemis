@@ -8,32 +8,10 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { AssessmentUploadErrorType } from './assessment-upload-error-type';
 
 export interface AssessmentUploadError {
     identifier?: string;
-    type?: AssessmentUploadErrorTypeEnum;
+    type?: AssessmentUploadErrorType;
     detail?: string;
 }
-
-export type AssessmentUploadErrorTypeEnum = 'MISSING_CSV' | 'MULTIPLE_CSV' | 'EMPTY_CSV' | 'MALFORMED_CSV' | 'MISSING_MANUAL_POINTS_COLUMN' | 'MISSING_IDENTIFIER' | 'INVALID_IDENTIFIER_FORMAT' | 'DUPLICATE_IDENTIFIER' | 'PARTICIPATION_NOT_FOUND' | 'IDENTIFIER_MISMATCH' | 'EXISTING_COMPLAINT' | 'INVALID_POINTS' | 'DUPLICATE_TEXT_FILE' | 'AMBIGUOUS_TEXT_FILE' | 'MISSING_TEXT_FILE' | 'UNMATCHED_TEXT_FILE';
-
-export const AssessmentUploadErrorTypeEnum = {
-    MissingCsv: 'MISSING_CSV' as const,
-    MultipleCsv: 'MULTIPLE_CSV' as const,
-    EmptyCsv: 'EMPTY_CSV' as const,
-    MalformedCsv: 'MALFORMED_CSV' as const,
-    MissingManualPointsColumn: 'MISSING_MANUAL_POINTS_COLUMN' as const,
-    MissingIdentifier: 'MISSING_IDENTIFIER' as const,
-    InvalidIdentifierFormat: 'INVALID_IDENTIFIER_FORMAT' as const,
-    DuplicateIdentifier: 'DUPLICATE_IDENTIFIER' as const,
-    ParticipationNotFound: 'PARTICIPATION_NOT_FOUND' as const,
-    IdentifierMismatch: 'IDENTIFIER_MISMATCH' as const,
-    ExistingComplaint: 'EXISTING_COMPLAINT' as const,
-    InvalidPoints: 'INVALID_POINTS' as const,
-    DuplicateTextFile: 'DUPLICATE_TEXT_FILE' as const,
-    AmbiguousTextFile: 'AMBIGUOUS_TEXT_FILE' as const,
-    MissingTextFile: 'MISSING_TEXT_FILE' as const,
-    UnmatchedTextFile: 'UNMATCHED_TEXT_FILE' as const,
-} as const;
-
-export const AssessmentUploadErrorTypeEnumValues = ['MISSING_CSV', 'MULTIPLE_CSV', 'EMPTY_CSV', 'MALFORMED_CSV', 'MISSING_MANUAL_POINTS_COLUMN', 'MISSING_IDENTIFIER', 'INVALID_IDENTIFIER_FORMAT', 'DUPLICATE_IDENTIFIER', 'PARTICIPATION_NOT_FOUND', 'IDENTIFIER_MISMATCH', 'EXISTING_COMPLAINT', 'INVALID_POINTS', 'DUPLICATE_TEXT_FILE', 'AMBIGUOUS_TEXT_FILE', 'MISSING_TEXT_FILE', 'UNMATCHED_TEXT_FILE'] as const;

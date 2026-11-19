@@ -9,24 +9,18 @@
  */
 
 import type { PresentationAssessmentStudent } from './presentation-assessment-student';
+import type { PresentationAssessmentMode } from './presentation-assessment-mode';
 
 export interface PresentationAssessmentInstance {
     id?: number;
     presentationDate: string;
     resultPoints?: number;
+    passed?: boolean;
+    rubricScore?: number;
     language: string;
-    mode: PresentationAssessmentInstanceModeEnum;
+    mode: PresentationAssessmentMode;
     location?: string;
     meetingLink?: string;
     remark?: string;
     student?: PresentationAssessmentStudent;
 }
-
-export type PresentationAssessmentInstanceModeEnum = 'ONLINE' | 'IN_PERSON';
-
-export const PresentationAssessmentInstanceModeEnum = {
-    Online: 'ONLINE' as const,
-    InPerson: 'IN_PERSON' as const,
-} as const;
-
-export const PresentationAssessmentInstanceModeEnumValues = ['ONLINE', 'IN_PERSON'] as const;

@@ -14,7 +14,8 @@ import {
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
-import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
+import { ConsistencyIssueCategory } from 'app/openapi/model/consistency-issue-category';
+import { Severity } from 'app/openapi/model/severity';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -22,15 +23,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // Echoes the translation key back so label assertions are deterministic and readable.
 const translate = { instant: (key: string) => key } as unknown as TranslateService;
 
-function consistencyComment(overrides: Partial<{ severity: ConsistencyIssueSeverityEnum; category: ConsistencyIssueCategoryEnum; text: string; suggestedFix: any }> = {}) {
+function consistencyComment(overrides: Partial<{ severity: Severity; category: ConsistencyIssueCategory; text: string; suggestedFix: any }> = {}) {
     return {
         id: 1,
         createdDate: '2024-01-01T00:00:00Z',
         type: CommentType.CONSISTENCY_CHECK,
         content: {
             contentType: CommentContentType.CONSISTENCY_CHECK,
-            severity: overrides.severity ?? ConsistencyIssueSeverityEnum.High,
-            category: overrides.category ?? ConsistencyIssueCategoryEnum.MethodParameterMismatch,
+            severity: overrides.severity ?? Severity.High,
+            category: overrides.category ?? ConsistencyIssueCategory.MethodParameterMismatch,
             text: overrides.text ?? 'mismatch',
             suggestedFix: overrides.suggestedFix,
         },
@@ -239,16 +240,16 @@ describe('adaptFinding', () => {
     it('should project the consistency content into a structured finding', () => {
         const issue = {
             contentType: CommentContentType.CONSISTENCY_CHECK,
-            severity: ConsistencyIssueSeverityEnum.Medium,
-            category: ConsistencyIssueCategoryEnum.AttributeTypeMismatch,
+            severity: Severity.Medium,
+            category: ConsistencyIssueCategory.AttributeTypeMismatch,
             text: 'wrong type',
             suggestedFix: { startLine: 1, endLine: 2, applied: false },
         } as any;
 
         expect(adaptFinding(issue, 'loc:3')).toEqual({
             source: 'finding',
-            category: ConsistencyIssueCategoryEnum.AttributeTypeMismatch,
-            severity: ConsistencyIssueSeverityEnum.Medium,
+            category: ConsistencyIssueCategory.AttributeTypeMismatch,
+            severity: Severity.Medium,
             tagSeverity: 'warn',
             locationLabel: 'loc:3',
             description: 'wrong type',
@@ -257,16 +258,16 @@ describe('adaptFinding', () => {
     });
 
     it('should coerce a null suggestedFix to undefined', () => {
-        const issue = { severity: ConsistencyIssueSeverityEnum.Low, category: ConsistencyIssueCategoryEnum.VisibilityMismatch, text: 't', suggestedFix: null } as any;
+        const issue = { severity: Severity.Low, category: ConsistencyIssueCategory.VisibilityMismatch, text: 't', suggestedFix: null } as any;
         expect(adaptFinding(issue, undefined).suggestedFix).toBeUndefined();
     });
 });
 
 describe('adaptFindingTagSeverity', () => {
     it('should map each severity to its PrimeNG tag severity', () => {
-        expect(adaptFindingTagSeverity(ConsistencyIssueSeverityEnum.High)).toBe('danger');
-        expect(adaptFindingTagSeverity(ConsistencyIssueSeverityEnum.Medium)).toBe('warn');
-        expect(adaptFindingTagSeverity(ConsistencyIssueSeverityEnum.Low)).toBe('info');
+        expect(adaptFindingTagSeverity(Severity.High)).toBe('danger');
+        expect(adaptFindingTagSeverity(Severity.Medium)).toBe('warn');
+        expect(adaptFindingTagSeverity(Severity.Low)).toBe('info');
     });
 });
 

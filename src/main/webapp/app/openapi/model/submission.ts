@@ -9,11 +9,12 @@
  */
 
 import type { Participation } from './participation';
+import type { SubmissionType } from './submission-type';
 
 export interface Submission {
     id?: number;
     submitted?: boolean;
-    type?: SubmissionTypeEnum;
+    type?: SubmissionType;
     exampleSubmission?: boolean;
     submissionDate?: string;
     commitHash?: string;
@@ -24,16 +25,3 @@ export interface Submission {
     buildStartDate?: string;
     estimatedCompletionDate?: string;
 }
-
-export type SubmissionTypeEnum = 'MANUAL' | 'TIMEOUT' | 'TEST' | 'OTHER' | 'INSTRUCTOR' | 'EXTERNAL';
-
-export const SubmissionTypeEnum = {
-    Manual: 'MANUAL' as const,
-    Timeout: 'TIMEOUT' as const,
-    Test: 'TEST' as const,
-    Other: 'OTHER' as const,
-    Instructor: 'INSTRUCTOR' as const,
-    External: 'EXTERNAL' as const,
-} as const;
-
-export const SubmissionTypeEnumValues = ['MANUAL', 'TIMEOUT', 'TEST', 'OTHER', 'INSTRUCTOR', 'EXTERNAL'] as const;

@@ -25,10 +25,11 @@ export class LongFeedbackTextApi {
      *
      *
      * @param feedbackId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getLongFeedback(feedbackId: number): Observable<string> {
+    getLongFeedback(feedbackId: number, options?: import('./request-options').RequestOptions): Observable<string> {
         const url = `${this.basePath}/api/assessment/feedbacks/${feedbackId}/long-feedback`;
-        return this.http.get(url, { responseType: 'text' });
+        return this.http.get(url, { ...(options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) }), responseType: 'text' });
     }
 
 }

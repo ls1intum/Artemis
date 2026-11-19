@@ -8,19 +8,11 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { ComplaintType } from './complaint-type';
 
 export interface ComplaintRequest {
     resultId?: number;
     complaintText?: string;
-    complaintType?: ComplaintRequestComplaintTypeEnum;
+    complaintType?: ComplaintType;
     examId?: number;
 }
-
-export type ComplaintRequestComplaintTypeEnum = 'COMPLAINT' | 'MORE_FEEDBACK';
-
-export const ComplaintRequestComplaintTypeEnum = {
-    Complaint: 'COMPLAINT' as const,
-    MoreFeedback: 'MORE_FEEDBACK' as const,
-} as const;
-
-export const ComplaintRequestComplaintTypeEnumValues = ['COMPLAINT', 'MORE_FEEDBACK'] as const;

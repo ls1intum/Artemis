@@ -13,6 +13,7 @@ import type { UserName } from './user-name';
 import type { Submission } from './submission';
 import type { AssessmentNote } from './assessment-note';
 import type { Feedback } from './feedback';
+import type { AssessmentType } from './assessment-type';
 
 export interface Result {
     id?: number;
@@ -23,7 +24,7 @@ export interface Result {
     submission?: Submission;
     participation?: Participation;
     feedbacks?: Array<Feedback>;
-    assessmentType?: ResultAssessmentTypeEnum;
+    assessmentType?: AssessmentType;
     correctionRound?: number;
     hasComplaint?: boolean;
     exampleResult?: boolean;
@@ -31,14 +32,3 @@ export interface Result {
     assessmentNote?: AssessmentNote;
     exerciseId?: number;
 }
-
-export type ResultAssessmentTypeEnum = 'AUTOMATIC' | 'SEMI_AUTOMATIC' | 'MANUAL' | 'AUTOMATIC_ATHENA';
-
-export const ResultAssessmentTypeEnum = {
-    Automatic: 'AUTOMATIC' as const,
-    SemiAutomatic: 'SEMI_AUTOMATIC' as const,
-    Manual: 'MANUAL' as const,
-    AutomaticAthena: 'AUTOMATIC_ATHENA' as const,
-} as const;
-
-export const ResultAssessmentTypeEnumValues = ['AUTOMATIC', 'SEMI_AUTOMATIC', 'MANUAL', 'AUTOMATIC_ATHENA'] as const;

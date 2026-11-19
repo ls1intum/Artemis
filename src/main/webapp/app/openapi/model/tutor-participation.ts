@@ -9,22 +9,12 @@
  */
 
 import type { ExampleSubmission } from './example-submission';
+import type { TutorParticipationStatus } from './tutor-participation-status';
 
 export interface TutorParticipation {
     id?: number;
     exerciseId?: number;
     tutorId?: number;
-    status: TutorParticipationStatusEnum;
+    status: TutorParticipationStatus;
     trainedExampleSubmissions?: Array<ExampleSubmission>;
 }
-
-export type TutorParticipationStatusEnum = 'NOT_PARTICIPATED' | 'REVIEWED_INSTRUCTIONS' | 'TRAINED' | 'COMPLETED';
-
-export const TutorParticipationStatusEnum = {
-    NotParticipated: 'NOT_PARTICIPATED' as const,
-    ReviewedInstructions: 'REVIEWED_INSTRUCTIONS' as const,
-    Trained: 'TRAINED' as const,
-    Completed: 'COMPLETED' as const,
-} as const;
-
-export const TutorParticipationStatusEnumValues = ['NOT_PARTICIPATED', 'REVIEWED_INSTRUCTIONS', 'TRAINED', 'COMPLETED'] as const;

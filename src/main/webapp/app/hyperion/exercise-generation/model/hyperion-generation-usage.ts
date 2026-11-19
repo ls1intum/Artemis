@@ -1,10 +1,10 @@
 import { HyperionGenerationEvent } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 import { ExerciseGenerationLiveUsage } from 'app/openapi/model/exercise-generation-live-usage';
-import { ExerciseGenerationStatusAccountingStateEnum } from 'app/openapi/model/exercise-generation-status';
+import { ExerciseGenerationAccountingState } from 'app/openapi/model/exercise-generation-accounting-state';
 import { ExerciseGenerationUsage } from 'app/openapi/model/exercise-generation-usage';
 
 /** How complete the reported spend is: still accumulating, sealed, or a permanent lower bound. */
-export type HyperionAccountingState = ExerciseGenerationStatusAccountingStateEnum;
+export type HyperionAccountingState = ExerciseGenerationAccountingState;
 
 /**
  * What the run cost, in the only three shapes that can be said honestly.

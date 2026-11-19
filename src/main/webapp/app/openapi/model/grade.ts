@@ -8,19 +8,10 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { GradeType } from './grade-type';
 
 export interface Grade {
     gradeName?: string;
     isPassingGrade?: boolean;
-    gradeType?: GradeGradeTypeEnum;
+    gradeType?: GradeType;
 }
-
-export type GradeGradeTypeEnum = 'NONE' | 'BONUS' | 'GRADE';
-
-export const GradeGradeTypeEnum = {
-    None: 'NONE' as const,
-    Bonus: 'BONUS' as const,
-    Grade: 'GRADE' as const,
-} as const;
-
-export const GradeGradeTypeEnumValues = ['NONE', 'BONUS', 'GRADE'] as const;
