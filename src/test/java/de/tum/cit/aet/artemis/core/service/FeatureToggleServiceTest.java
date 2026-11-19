@@ -16,8 +16,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     // science, TutorSuggestions, AtlasAgent, RateLimit, GlobalSearch, AutonomousTutor, Deimos,
-    // GlobalSearchReconcileOrphan disabled by default
-    private static final int FEATURES_DISABLED_DEFAULT = 8;
+    // GlobalSearchReconcileOrphan, SmartQuizzes disabled by default
+    private static final int FEATURES_DISABLED_DEFAULT = 9;
 
     // Retired features are never reported as enabled or disabled
     private static final int FEATURES_RETIRED = 2;
@@ -37,7 +37,6 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.StandardizedCompetencies)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.IrisProactiveStruggle)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.PresentationAssessments)).isTrue();
-        assertThat(featureToggleService.isFeatureEnabled(Feature.SmartQuizzes)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.Science)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.TutorSuggestions)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).isFalse();
@@ -47,6 +46,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.Deimos)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.GlobalSearchReconcile)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.GlobalSearchReconcileOrphan)).isFalse();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.SmartQuizzes)).isFalse();
     }
 
     private void resetToDefaultState() {
@@ -58,7 +58,6 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         featureToggleService.enableFeature(Feature.StandardizedCompetencies);
         featureToggleService.enableFeature(Feature.IrisProactiveStruggle);
         featureToggleService.enableFeature(Feature.PresentationAssessments);
-        featureToggleService.enableFeature(Feature.SmartQuizzes);
         featureToggleService.enableFeature(Feature.GlobalSearchReconcile);
         // Disable features that should be disabled by default
         featureToggleService.disableFeature(Feature.Science);
@@ -69,6 +68,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         featureToggleService.disableFeature(Feature.GlobalSearch);
         featureToggleService.disableFeature(Feature.Deimos);
         featureToggleService.disableFeature(Feature.GlobalSearchReconcileOrphan);
+        featureToggleService.disableFeature(Feature.SmartQuizzes);
     }
 
     @Test

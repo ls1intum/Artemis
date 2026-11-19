@@ -183,11 +183,13 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         when(quizQuestionPoolModelService.chatClient()).thenReturn(ChatClient.create(azureOpenAiChatModel));
         when(quizQuestionPoolModelService.generatorModel()).thenReturn(GENERATOR_MODEL);
         when(quizQuestionPoolModelService.judgeModel()).thenReturn(JUDGE_MODEL);
+        featureToggleService.enableFeature(Feature.SmartQuizzes);
     }
 
     @AfterEach
-    void resetMocks() {
+    void resetTestState() {
         reset(azureOpenAiChatModel);
+        featureToggleService.disableFeature(Feature.SmartQuizzes);
     }
 
     /**
@@ -241,14 +243,10 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         String poolUrl = "/api/hyperion/courses/" + courseId + "/quiz-question-pool";
 
         featureToggleService.disableFeature(Feature.SmartQuizzes);
-        try {
-            request.get(poolUrl + "/progress", HttpStatus.FORBIDDEN, QuizQuestionPoolProgressDTO.class);
-            request.performMvcRequest(post(poolUrl + "/build")).andExpect(status().isForbidden());
-        }
-        finally {
-            featureToggleService.enableFeature(Feature.SmartQuizzes);
-        }
+        request.get(poolUrl + "/progress", HttpStatus.FORBIDDEN, QuizQuestionPoolProgressDTO.class);
+        request.performMvcRequest(post(poolUrl + "/build")).andExpect(status().isForbidden());
 
+        featureToggleService.enableFeature(Feature.SmartQuizzes);
         assertThat(request.get(poolUrl + "/progress", HttpStatus.OK, QuizQuestionPoolProgressDTO.class).total()).isZero();
     }
 
