@@ -740,16 +740,17 @@ class SecurityPolicyRepositoryFilesTest {
         }
     }
 
-    @Test
-    void anOverrideWhoseParameterTypeIsAnInheritedMemberTypeKeepsTheInheritedPolicy() throws IOException {
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = { "Date|java.util.Date|java.util.Date|Date", "Outer|a.Outer.Inner|a.Outer|Outer.Inner" })
+    void anOverrideWhoseParameterTypeIsAnInheritedMemberTypeKeepsTheInheritedPolicy(String member, String parentType, String childImport, String childType) throws IOException {
         writeBuildFile();
-        String memberType = "    public static class Date {\n    }\n\n";
-        String annotated = memberType + "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
+        String memberType = "    public static class " + member + " {\n    }\n\n";
+        String annotated = memberType + "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(" + parentType + " value)";
         writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
         String override = """
                 package de.example;
 
-                import java.util.Date;
+                import %s;
 
                 import org.junit.jupiter.api.Test;
 
@@ -760,14 +761,14 @@ class SecurityPolicyRepositoryFilesTest {
                 class MoreSortingTest extends SortingTest {
 
                     @Test
-                    public void runs(Date date) {
+                    public void runs(%s value) {
                     }
                 }
-                """.formatted(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+                """.formatted(childImport, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION, childType);
         writeSource("test/de/example/MoreSortingTest.java", override);
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
-        // The inherited member type SortingTest.Date shadows the import, so runs(Date) is an overload and the inherited test still runs with the sandbox.
+        // The inherited member type of SortingTest shadows the import, so the method is an overload and the inherited test still runs with the sandbox.
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS, "de.example.MoreSortingTest");
     }
 
