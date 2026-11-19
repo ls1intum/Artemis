@@ -169,4 +169,6 @@ export class ProfileInfo {
     /** Whether the server can send emails, which confirming an email change requires */
     public mailConfigured!: boolean;
     public allowedCustomDockerNetworks!: string[];
+    /** Comma separated hosts that images of rendered markdown may come from. Empty or absent allows every host. */
+    public allowedImageHosts?: string;
 }
