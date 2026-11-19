@@ -1,13 +1,14 @@
 <ng-container [formGroup]="form()">
-    <div class="flex flex-col gap-2 mb-3">
+    <div class="flex flex-col gap-2 mb-4!">
         <label class="font-semibold" [for]="idPrefix() + 'title'" jhiTranslate="artemisApp.courseRequest.form.title"></label>
         <input
             [id]="idPrefix() + 'title'"
+            [tumAetUiInputId]="idPrefix() + 'title'"
             type="text"
-            pInputText
+            tumAetUiInput
             class="w-full"
             formControlName="title"
-            [invalid]="(form().get('title')?.invalid && form().get('title')?.touched) ?? false"
+            [tumAetUiInputInvalid]="(form().get('title')?.invalid && form().get('title')?.touched) ?? false"
             maxlength="255"
         />
         @if (form().get('title')?.invalid && form().get('title')?.touched) {
@@ -15,25 +16,26 @@
         }
     </div>
 
-    <div class="flex flex-col gap-2 mb-3">
+    <div class="flex flex-col gap-2 mb-4!">
         <label class="font-semibold" [for]="idPrefix() + 'shortName'" jhiTranslate="artemisApp.courseRequest.form.shortName"></label>
         <input
             [id]="idPrefix() + 'shortName'"
+            [tumAetUiInputId]="idPrefix() + 'shortName'"
             type="text"
-            pInputText
+            tumAetUiInput
             class="w-full"
             formControlName="shortName"
             [pattern]="SHORT_NAME_PATTERN.source"
-            [invalid]="(form().get('shortName')?.invalid && form().get('shortName')?.touched) ?? false"
+            [tumAetUiInputInvalid]="(form().get('shortName')?.invalid && form().get('shortName')?.touched) ?? false"
             maxlength="10"
         />
         <div class="flex justify-between items-start mt-1">
             <small class="text-muted-color" jhiTranslate="artemisApp.courseRequest.form.shortNameHint"></small>
             <button
                 type="button"
-                pButton
+                tumAetUiButton
                 size="small"
-                [outlined]="true"
+                variant="outlined"
                 severity="secondary"
                 (click)="generateShortName()"
                 jhiTranslate="artemisApp.courseRequest.form.generate"
@@ -50,20 +52,12 @@
         }
     </div>
 
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-3 mb-3">
-        <div class="flex flex-col gap-1">
-            <label class="font-semibold" [for]="idPrefix() + 'semester'" jhiTranslate="artemisApp.courseRequest.form.semester"></label>
-            <p-select
-                [inputId]="idPrefix() + 'semester'"
-                class="w-full"
-                [options]="semesters()"
-                formControlName="semester"
-                [invalid]="(form().get('semester')?.invalid && form().get('semester')?.touched) ?? false"
-            />
-            @if (form().get('semester')?.invalid && form().get('semester')?.touched) {
-                <small class="text-state-danger mt-1" jhiTranslate="entity.validation.required"></small>
-            }
-        </div>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-4! mb-4!">
+        <tumaet-ui-form-field [controlId]="idPrefix() + 'semester'" [invalid]="(form().get('semester')?.invalid && form().get('semester')?.touched) ?? false">
+            <span tumAetUiFormFieldLabel class="text-[0.9rem] font-semibold" jhiTranslate="artemisApp.courseRequest.form.semester"></span>
+            <tumaet-ui-select class="w-full" [options]="semesters()" formControlName="semester" />
+            <small tumAetUiFormFieldError jhiTranslate="entity.validation.required"></small>
+        </tumaet-ui-form-field>
         <div class="flex flex-col gap-2">
             <tumaet-ui-date-picker
                 [id]="idPrefix() + 'startDate'"
@@ -104,15 +98,15 @@
         </div>
     </div>
     @if (dateRangeInvalid()) {
-        <div class="text-state-danger mb-3" jhiTranslate="artemisApp.courseRequest.form.dateError"></div>
+        <div class="text-state-danger mb-4!" jhiTranslate="artemisApp.courseRequest.form.dateError"></div>
     }
 
-    <div class="flex items-center gap-2 mb-3">
+    <div class="flex items-center gap-2 mb-4!">
         <tumaet-ui-checkbox [inputId]="idPrefix() + 'testCourse'" name="testCourse" formControlName="testCourse" />
         <label [for]="idPrefix() + 'testCourse'" jhiTranslate="artemisApp.courseRequest.form.testCourse"></label>
     </div>
 
-    <div class="flex flex-col gap-1 mb-3">
+    <div class="flex flex-col gap-1 mb-4!">
         <div class="flex items-center gap-2">
             <tumaet-ui-checkbox
                 [inputId]="idPrefix() + 'gradeRelevant'"
@@ -131,15 +125,16 @@
         ></small>
     </div>
 
-    <div class="flex flex-col gap-2 mb-3">
+    <div class="flex flex-col gap-2 mb-4!">
         <label class="font-semibold" [for]="idPrefix() + 'reason'" jhiTranslate="artemisApp.courseRequest.form.reason"></label>
         <textarea
             [id]="idPrefix() + 'reason'"
-            pTextarea
+            [tumAetUiInputId]="idPrefix() + 'reason'"
+            tumAetUiTextarea
             class="w-full"
             formControlName="reason"
             rows="4"
-            [invalid]="(form().get('reason')?.invalid && form().get('reason')?.touched) ?? false"
+            [tumAetUiInputInvalid]="(form().get('reason')?.invalid && form().get('reason')?.touched) ?? false"
             [placeholder]="showReasonPlaceholder() ? ('artemisApp.courseRequest.form.reasonPlaceholder' | artemisTranslate) : ''"
         ></textarea>
         @if (form().get('reason')?.invalid && form().get('reason')?.touched) {

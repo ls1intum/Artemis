@@ -5,12 +5,15 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -66,6 +69,33 @@ class SshFingerprintsProviderServiceIntegrationTest extends AbstractSpringIntegr
             var actualFingerprints = fingerprintsProviderService.getSshFingerPrints();
 
             assertThat(actualFingerprints).isEqualTo(expectedFingerprints);
+        }
+
+        @Test
+        void returnEveryKeyOfOneAlgorithm() throws GeneralSecurityException, IOException {
+            KeyPair secondKeyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+            doReturn(List.of(testKeyPair, secondKeyPair)).when(keyPairProvider).loadKeys(null);
+            doReturn(keyPairProvider).when(sshServer).getKeyPairProvider();
+            fingerprintsProviderService = new SshFingerprintsProviderService(sshServer);
+
+            var allFingerprints = fingerprintsProviderService.getAllSshFingerprints();
+
+            assertThat(allFingerprints).containsOnlyKeys("RSA");
+            assertThat(allFingerprints.get("RSA")).containsExactly(expectedFingerprint, HashUtils.getSha256Fingerprint(secondKeyPair.getPublic()));
+            assertThat(fingerprintsProviderService.getSshFingerPrints()).containsEntry("RSA", expectedFingerprint);
+        }
+
+        @Test
+        void readTheKeyFilesOnlyOnce() throws GeneralSecurityException, IOException {
+            doReturn(Set.of(testKeyPair)).when(keyPairProvider).loadKeys(null);
+            doReturn(keyPairProvider).when(sshServer).getKeyPairProvider();
+            fingerprintsProviderService = new SshFingerprintsProviderService(sshServer);
+
+            fingerprintsProviderService.getAllSshFingerprints();
+            fingerprintsProviderService.getAllSshFingerprints();
+            fingerprintsProviderService.getSshFingerPrints();
+
+            verify(keyPairProvider, times(1)).loadKeys(null);
         }
 
         @Test

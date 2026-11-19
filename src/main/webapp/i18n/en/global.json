@@ -477,6 +477,7 @@
         "quickActions": "Quick Actions",
         "controlCenter": "Control Center",
         "action": {
+            "deleteAll": "Delete All",
             "add": "Add",
             "create": "Create",
             "addblob": "Add blob",

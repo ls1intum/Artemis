@@ -414,6 +414,9 @@ info:
     textAssessmentAnalyticsEnabled: false
     studentExamStoreSessionData: true
     localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
+    # Comma separated hosts that images in markdown (posts, problem statements, ...) may be loaded from, for example "images.example.org, *.cdn.example.org".
+    # The host of Artemis itself is always allowed. Empty (the default) allows every host.
+    allowedImageHosts: ''
 
 # ===================================================================
 # JHipster specific properties

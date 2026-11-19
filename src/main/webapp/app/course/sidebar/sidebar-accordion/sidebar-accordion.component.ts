@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit, computed, effect, inject, input, output, 
 import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
 import { Params } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, TitleCasePipe } from '@angular/common';
 import { SidebarCardComponent } from '../sidebar-card/sidebar-card.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -37,7 +36,7 @@ function isVariantGroupCard(item: SidebarCardElement): boolean {
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
     styleUrls: ['./sidebar-accordion.component.scss'],
-    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardComponent, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
+    imports: [FaIconComponent, NgClass, SidebarCardComponent, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
 })
 export class SidebarAccordionComponent implements OnInit, OnDestroy {
     private courseConversationsService = inject(CourseConversationsService);

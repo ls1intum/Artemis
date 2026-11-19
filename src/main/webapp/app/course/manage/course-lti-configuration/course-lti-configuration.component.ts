@@ -9,12 +9,23 @@ import { SortService } from 'app/foundation/service/sort.service';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTabPanelComponent,
+    TumAetUiTabPanelsComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTabsComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 
 @Component({
@@ -25,13 +36,13 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
         TranslateDirective,
         RouterLink,
         FaIconComponent,
-        NgbNav,
-        NgbNavItem,
-        NgbNavLink,
-        NgbNavLinkBase,
-        NgbNavContent,
-        NgbTooltip,
-        NgbNavOutlet,
+        TumAetUiButtonDirective,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TumAetUiTabPanelsComponent,
+        TumAetUiTabPanelComponent,
+        TumAetUiTooltipDirective,
         ArtemisTranslatePipe,
         CopyToClipboardButtonComponent,
         HelpIconComponent,
@@ -52,7 +63,7 @@ export class CourseLtiConfigurationComponent implements OnInit {
     exercises = signal<Exercise[]>([]);
     lectures = signal<Lecture[]>([]);
 
-    activeTab = signal(1);
+    activeTab = signal<number | string>(1);
 
     predicate = signal('type');
     reverse = signal(false);
