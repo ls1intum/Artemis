@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Tests how {@link SecurityPolicyYaml} reads the test classes of a policy and adds test classes without touching the rest of the file.
@@ -89,6 +91,62 @@ class SecurityPolicyYamlTest {
         assertThat(SecurityPolicyYaml.addTestClasses(withoutList, List.of("de.example.NewTest"))).isEmpty();
         assertThat(SecurityPolicyYaml.read(withoutList).testClasses()).isEmpty();
         assertThat(SecurityPolicyYaml.addTestClasses(twoSupervisedCodes, List.of("de.example.NewTest"))).isEmpty();
+    }
+
+    @Test
+    void readsNoTestClassesFromAListWithOtherEntries() {
+        SecurityPolicyYaml.ReadPolicy policy = SecurityPolicyYaml.read("regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ \"de.example.SortingTest\", 1 ]\n");
+
+        assertThat(policy.valid()).isTrue();
+        assertThat(policy.testClasses()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            // The section header is no line of its own.
+            "regardingTheSupervisedCode: { theFollowingClassesAreTestClasses: [ ] }\n",
+            // A second line looks like the section header, because a quoted value continues on it.
+            "notes: \"first\nregardingTheSupervisedCode:\n  last\"\nregardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ ]\n",
+            // The key is quoted, so no line starts with it.
+            "regardingTheSupervisedCode:\n  \"theFollowingClassesAreTestClasses\": [ ]\n",
+            // A second line looks like the key, because a block scalar contains it.
+            "regardingTheSupervisedCode:\n  notes: |\n    theFollowingClassesAreTestClasses:\n  theFollowingClassesAreTestClasses: [ ]\n",
+            // The only line that looks like the key comes before the section header.
+            "notes: |\n  theFollowingClassesAreTestClasses:\nregardingTheSupervisedCode:\n  \"theFollowingClassesAreTestClasses\": [ ]\n",
+            // A tagged inline list, a quoted bracket and a quoted comment marker: the list cannot be extended safely.
+            "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: !!seq [ ]\n", "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ \"a]b\" ]\n",
+            "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ \"a #b\" ]\n", "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ \"a\t#b\" ]\n",
+            // Lines end in a carriage return only, so the block list cannot be located line by line.
+            "regardingTheSupervisedCode:\r  theFollowingClassesAreTestClasses:\r    - \"de.example.SortingTest\"\r",
+            // The item starts on the line after its dash.
+            "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses:\n    -\n      \"de.example.SortingTest\"\n",
+            // The last item continues on the next line, so an appended item would change it.
+            "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses:\n    - de.example.SortingTest\n      continued\n",
+            "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses:\n    - de.example.SortingTest\n      - continued\n" })
+    void leavesAValidPolicyAloneIfTheListCannotBeExtendedSafely(String policy) {
+        assertThat(SecurityPolicyYaml.read(policy).testClasses()).isPresent();
+        assertThat(SecurityPolicyYaml.addTestClasses(policy, List.of("de.example.NewTest"))).isEmpty();
+    }
+
+    @Test
+    void keepsTheLineEndingsAndTheEndOfTheFile() {
+        String crlf = "regardingTheSupervisedCode:\r\n  theFollowingClassesAreTestClasses:\r\n    - \"de.example.SortingTest\"\r\n";
+        String withoutFinalLineBreak = "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses:\n    - \"de.example.SortingTest\"";
+
+        assertThat(SecurityPolicyYaml.addTestClasses(crlf, List.of("de.example.NewTest")))
+                .contains("regardingTheSupervisedCode:\r\n  theFollowingClassesAreTestClasses:\r\n    - \"de.example.SortingTest\"\r\n    - \"de.example.NewTest\"\r\n");
+        assertThat(SecurityPolicyYaml.addTestClasses(withoutFinalLineBreak, List.of("de.example.NewTest"))).contains(withoutFinalLineBreak + "\n    - \"de.example.NewTest\"");
+    }
+
+    @Test
+    void readsTheCommentBehindAnInlineListOnlyFromWhitespaceBeforeTheHash() {
+        String trailingWhitespace = "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ ]   \n";
+        String hashInAName = "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ \"a#b\" ]  # tests\n";
+
+        assertThat(SecurityPolicyYaml.addTestClasses(trailingWhitespace, List.of("de.example.NewTest")))
+                .contains("regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses:\n    - \"de.example.NewTest\"\n");
+        assertThat(SecurityPolicyYaml.addTestClasses(hashInAName, List.of("de.example.NewTest")))
+                .contains("regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ \"a#b\", \"de.example.NewTest\"]  # tests\n");
     }
 
     @Test

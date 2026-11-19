@@ -315,6 +315,28 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(dto.exerciseGroup().exam().course().title()).isEqualTo("Exam course");
     }
 
+    @Test
+    void importRequestOfExamExerciseNamesItsExerciseGroupInsteadOfACourse() {
+        Course course = new Course();
+        course.setId(9L);
+        Exam exam = new Exam();
+        exam.setId(3L);
+        exam.setCourse(course);
+        ExerciseGroup exerciseGroup = new ExerciseGroup();
+        exerciseGroup.setId(4L);
+        exerciseGroup.setExam(exam);
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setId(10L);
+        exercise.setExerciseGroup(exerciseGroup);
+
+        ImportProgrammingExerciseRequestDTO dto = ImportProgrammingExerciseRequestDTO.of(exercise, null);
+
+        assertThat(dto.exerciseGroup()).isNotNull();
+        assertThat(dto.exerciseGroup().id()).isEqualTo(4L);
+        assertThat(dto.course()).isNull();
+        assertThat(dto.securityFramework()).isNull();
+    }
+
     /**
      * Not every read path fetch-joins the whole exam chain, so each level has to degrade on its own. A detached
      * exercise whose group is still a proxy must map to no group at all rather than to a blank one.

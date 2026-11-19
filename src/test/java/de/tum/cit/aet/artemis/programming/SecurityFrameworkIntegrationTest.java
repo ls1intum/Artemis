@@ -244,6 +244,18 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorsCanAddTheDiscoveredTestClassesToThePolicy() throws Exception {
+        pushTestFiles(Map.of("test/de/example/NewTest.java", TEST_CLASS.replace("SortingTest", "NewTest")));
+        assertThat(getConfig().policyFiles()).singleElement().satisfies(policyFile -> assertThat(policyFile.missingTestClasses()).containsExactly("de.example.NewTest"));
+
+        SecurityFrameworkConfigDTO config = put("test-classes", null, HttpStatus.OK);
+
+        assertThat(config.policyFiles()).singleElement().satisfies(policyFile -> assertThat(policyFile.missingTestClasses()).isNullOrEmpty());
+        assertThat(Files.readString(pulledTestsRepository().resolve("SecurityPolicy.yaml"))).contains("- \"de.example.NewTest\"").contains("- \"de.example.SortingTest\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void aMissingPolicyFileIsMisconfiguredAndActivatingRepairsIt() throws Exception {
         testsRepository.workingCopy().pull().call();
         Files.delete(testsRepository.workingCopyPath().resolve("SecurityPolicy.yaml"));

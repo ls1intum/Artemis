@@ -111,7 +111,13 @@ class SecurityPolicySchemaTest {
                 Arguments.of("explicit document end", VALID_POLICY + "...\n"), replacing(PACKAGE, "theSupervisedCodeUsesTheFollowingPackage: \"dé.ünïcode\""),
                 replacing(PACKAGE, "theSupervisedCodeUsesTheFollowingPackage: \"de.record\""), replacing("\"de.example.SortingTest\"", "\"record.SortingTest\""),
                 replacing("\"de.example.SortingTest\"", "\"de.class\\u0085.SortingTest\""), replacing("\"${PROJECT_ROOT}/data\"", "\"a\\\\..b\""),
-                replacing("\"${PROJECT_ROOT}/data\"", "\"..a/b..\""), replacing("\"${PROJECT_ROOT}/data\"", "\"${PROJECT_ROOT}${java.io.tmpdir}\""));
+                replacing("\"${PROJECT_ROOT}/data\"", "\"..a/b..\""), replacing("\"${PROJECT_ROOT}/data\"", "\"${PROJECT_ROOT}${java.io.tmpdir}\""),
+                replacing(TIMEOUT, "timeout: 0_1"), replacing(VERSION, "thisPolicyFileCompliesToThePolicyVersion: ! 1"), replacing("\"example.org\"", "\"localhost\""),
+                replacing("\"example.org\"", "\"192.0.2.1\""), replacing("\"example.org\"", "\"1:2:3:4:5:6:7:8\""), replacing("\"example.org\"", "\"1:2:3:4:5:6:7::\""),
+                replacing("\"example.org\"", "\"1::8\""), replacing("\"example.org\"", "\"1:2:3:4:5::7:8\""), replacing("\"example.org\"", "\"1::4:5:6:7:8\""),
+                replacing("\"example.org\"", "\"1::3:4:5:6:7:8\""), replacing("\"example.org\"", "\"::2:3:4:5:6:7:8\""), replacing("\"example.org\"", "\"::\""),
+                replacing("\"example.org\"", "\"::1\""), replacing("\"example.org\"", "\"1:2:3:4:5:6:192.0.2.1\""), replacing("\"example.org\"", "\"::ffff:192.0.2.1\""),
+                replacing("\"example.org\"", "\"::ffff:0:192.0.2.1\""), replacing("\"example.org\"", "\"::192.0.2.1\""), replacing("\"example.org\"", "\"1:2:3:4::192.0.2.1\""));
     }
 
     @ParameterizedTest(name = "{0}")
@@ -160,7 +166,28 @@ class SecurityPolicySchemaTest {
                 replacing(MAIN_CLASS, "theMainClassInsideThisPackageIs: \"record\\u0085\""), replacing("\"de.example.SortingTest\"", "\"de.example.record\""),
                 replacing("\"${PROJECT_ROOT}/data\"", "\"a\\\\..\\\\b\""), replacing("\"${PROJECT_ROOT}/data\"", "\"..\""), replacing("\"${PROJECT_ROOT}/data\"", "\"a/..\\n\""),
                 replacing("\"${PROJECT_ROOT}/data\"", "\"${PROJECT_ROOT\""), replacing("\"${PROJECT_ROOT}/data\"", "\"a/${java.home\""),
-                replacing("\"${PROJECT_ROOT}/data\"", "\"a\\0b\""));
+                replacing("\"${PROJECT_ROOT}/data\"", "\"a\\0b\""), replacing(VERSION, "thisPolicyFileCompliesToThePolicyVersion: !version 1"),
+                replacing(THREAD_COUNT, "createTheFollowingNumberOfThreads: -0x1"), replacing(TIMEOUT, "timeout: !!int 1a"), replacing(TIMEOUT, "timeout: !!int 0z"),
+                replacing(PACKAGE, "theSupervisedCodeUsesTheFollowingPackage: \"class.example\""), replacing("\"org.apache.commons.lang3\"", "1"),
+                Arguments.of("supervised code that is no mapping", VERSION + "\nregardingTheSupervisedCode: [ ]\n"),
+                replacing("  - onThisPathAndAllPathsBelow", "  - 1\n      - onThisPathAndAllPathsBelow"), replacing("  - onTheHost", "  - 1\n      - onTheHost"),
+                replacing("        receiveData: false\n", ""),
+                replacing("\"git\"\n        withTheseArguments: [ \"status\" ]", "\"git\"\n        withTheseArguments: [ \"status\" ]\n        extra: 1"),
+                replacing("  - " + THREAD_COUNT, "  - 1\n      - " + THREAD_COUNT), replacing("\"java.util.concurrent.ThreadLocalRandom\"", "\"java.lang.class\""),
+                replacing("  - importTheFollowingPackage", "  - 1\n      - importTheFollowingPackage"), replacing("  - " + TIMEOUT, "  - 1\n      - " + TIMEOUT),
+                replacing("\"example.org\"", "\"1:2:3:4:5:6:7:8:9\""), replacing("\"example.org\"", "\"1:::2\""), replacing("\"example.org\"", "\"12345::1\""),
+                replacing("\"example.org\"", "\"1:2:3:4:5:6:7:192.0.2.1\""), replacing("\"example.org\"", "\"::fffe:192.0.2.1\""), replacing(TIMEOUT, "timeout: !!int 1-2"),
+                replacing(TIMEOUT, "timeout: !!int 0-1"), replacing("        receiveData: false", "        receiveData: 1"), replacing("\"git\"\n", "\" \"\n"),
+                replacing(THREAD_COUNT, THREAD_COUNT + "\n        extra: 1"),
+                replacing("importTheFollowingPackage: \"org.apache.commons.lang3\"", "importTheFollowingPackage: \"org.apache.commons.lang3\"\n        extra: 1"),
+                replacing(TIMEOUT, TIMEOUT + "\n        extra: 1"),
+                replacing("theFollowingClassesAreTestClasses:\n    - \"de.example.SortingTest\"", "theFollowingClassesAreTestClasses: \"de.example.SortingTest\""));
+    }
+
+    @Test
+    void readsNoTreeFromATooLargeFile() {
+        assertThat(SecurityPolicySchema.readTree(VALID_POLICY + "#".repeat(SecurityPolicyYaml.MAX_POLICY_SIZE))).isEmpty();
+        assertThat(SecurityPolicySchema.readTree(VALID_POLICY)).isPresent();
     }
 
     @ParameterizedTest(name = "{0}")
