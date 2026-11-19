@@ -351,7 +351,8 @@ class AresPolicyAnnotationsTest {
 
     @Test
     void anAnnotationOnOneOfSeveralTestMethodsWithTheSameNameIsNotSupported() {
-        String overload = "    @Policy(\"B.yaml\")\n    @Test\n    void testQuickSort() {\n    }\n\n    @ParameterizedTest\n    void testQuickSort(int size) {\n    }\n";
+        String parameterized = "    @org.junit.jupiter.params.ParameterizedTest\n    @org.junit.jupiter.params.provider.ValueSource(ints = { 1, 2 })\n";
+        String overload = "    @Policy(\"B.yaml\")\n    @Test\n    void testQuickSort() {\n    }\n\n" + parameterized + "    void testQuickSort(int size) {\n    }\n";
         String source = TEST_CLASS.replace("    @Test\n    void testQuickSort() {\n    }\n", overload);
 
         AresTestSources.Summary summary = AresTestSources.analyze("test/de/example/SortingTest.java", source);

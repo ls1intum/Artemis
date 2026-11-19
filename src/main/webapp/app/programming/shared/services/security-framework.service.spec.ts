@@ -48,7 +48,11 @@ describe('SecurityFrameworkService', () => {
 
         // The review reads the test cases of the commit the policies were loaded from.
         service.getTestStructure(42, 'abc').subscribe();
-        expect(http.expectOne((request) => request.url === `${URL}/test-structure` && request.params.get('commit') === 'abc')).toBeDefined();
+        expect(http.expectOne((request) => request.method === 'GET' && request.url === `${URL}/test-structure` && request.params.get('commit') === 'abc')).toBeDefined();
+
+        // The recovery after a pushed but unprocessed commit reads the policies and the state of one commit.
+        service.getPoliciesWithConfig(42).subscribe();
+        expect(http.expectOne({ method: 'GET', url: `${URL}/policies-with-config` })).toBeDefined();
     });
 
     it('previews and commits a change and imports a file', () => {

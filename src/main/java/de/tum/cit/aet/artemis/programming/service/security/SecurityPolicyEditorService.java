@@ -285,6 +285,18 @@ public class SecurityPolicyEditorService {
         return readTestRepository(exercise, (repository, commit) -> commitResultAt(repository, commit, exercise.getPackageName()));
     }
 
+    /**
+     * Reads the policies and the Security Framework state from the head commit of the tests repository, e.g. after a change was pushed whose processing
+     * failed, so the editor and the sandbox switch show the same commit.
+     *
+     * @param exercise the programming exercise
+     * @return the policies and the state of one commit
+     */
+    public SecurityPolicyCommitResultDTO getEditorWithConfig(ProgrammingExercise exercise) {
+        securityFrameworkService.validateJavaExercise(exercise);
+        return readTestRepository(exercise, (repository, commit) -> commitResultAt(repository, commit, exercise.getPackageName()));
+    }
+
     private SecurityPolicyCommitResultDTO commitResultAt(Repository repository, RevCommit commit, @Nullable String packageName) throws IOException {
         return new SecurityPolicyCommitResultDTO(editorAt(repository, commit, packageName), securityFrameworkService.configAt(repository, commit.getTree()));
     }

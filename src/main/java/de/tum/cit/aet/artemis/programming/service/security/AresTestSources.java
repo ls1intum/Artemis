@@ -324,13 +324,15 @@ final class AresTestSources {
             boolean[] tests) {
         List<TypeDeclaration> types = new ArrayList<>();
         Map<Integer, AresTestCases.TestSignature> signatures = new TreeMap<>(AresTestCases.testSignatures(masked));
+        // Only the methods the type declares itself can override an inherited test, not those of a nested type, e.g. a jqwik group.
+        int[] depth = braceDepths(masked);
         for (int index = 0; index < declarations.size(); index++) {
             Declaration declaration = declarations.get(index);
             String qualifiedName = qualify(packageName, declaration.simpleName());
             List<String> superclass = declaration.superclass() == null ? List.of() : resolveTypeName(masked, packageName, declaration.superclass());
             List<AresTestCases.TestSignature> testSignatures = new ArrayList<>();
             signatures.forEach((offset, signature) -> {
-                if (declaration.bodyStart() < offset && offset < declaration.bodyEnd()) {
+                if (declaration.bodyStart() < offset && offset < declaration.bodyEnd() && depth[offset] == 1) {
                     testSignatures.add(signature);
                 }
             });

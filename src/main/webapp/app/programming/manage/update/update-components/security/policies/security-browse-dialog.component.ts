@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output, signal, untracked } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronRight, faXmark } from '@fortawesome/free-solid-svg-icons';
 import {
     TumAetUiButtonDirective,
     TumAetUiCheckboxComponent,
@@ -68,6 +68,7 @@ export function isScript(path: string): boolean {
 export class SecurityBrowseDialogComponent {
     protected readonly faChevronDown = faChevronDown;
     protected readonly faChevronRight = faChevronRight;
+    protected readonly faXmark = faXmark;
 
     readonly visible = model(false);
     readonly mode = input<SecurityBrowseMode>('paths');
@@ -133,6 +134,19 @@ export class SecurityBrowseDialogComponent {
     });
 
     readonly selectedPaths = computed(() => [...this.selection()].sort((first, second) => first.localeCompare(second)));
+    /** The selected entries the tree has no row for, e.g. a command typed into the field, which only the summary can remove. */
+    readonly unlistedSelection = computed(() => {
+        const listed = new Set<string>();
+        const collect = (nodes: BrowseNode[]) =>
+            nodes.forEach((node) => {
+                listed.add(node.path);
+                collect(node.children);
+            });
+        collect(this.tree());
+        return this.selectedPaths().filter((path) => !listed.has(path));
+    });
+    /** Whether confirming changes the field: also when everything that was in it is deselected, which clears it. */
+    readonly canConfirm = computed(() => this.selectedPaths().length > 0 || this.initialSelection().length > 0);
     /** Whether a search shows its matches: every folder of a match is open then, so the folders cannot be opened or closed. */
     readonly searching = computed(() => this.search().trim().length > 0);
 
@@ -197,7 +211,16 @@ export class SecurityBrowseDialogComponent {
         return selectedCount > 0 && selectedCount < paths.length;
     }
 
+    protected deselect(path: string): void {
+        const selection = new Set(this.selection());
+        selection.delete(path);
+        this.selection.set(selection);
+    }
+
     protected confirm(): void {
+        if (!this.canConfirm()) {
+            return;
+        }
         this.selected.emit(this.selectedPaths());
         this.visible.set(false);
     }

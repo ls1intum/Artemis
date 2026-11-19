@@ -152,9 +152,12 @@ export function joinArguments(argumentList: readonly string[]): string {
     return argumentList.map((argument) => (PLAIN_ARGUMENT.test(argument) ? argument : `"${argument.replace(/(["\\])/g, '\\$1')}"`)).join(' ');
 }
 
+/** A character that a backslash in the arguments field escapes: a quote, a backslash or a space. */
+const ESCAPED_IN_ARGUMENTS = /["\\\s]/;
+
 /**
  * Splits the field into the arguments, which Ares compares exactly and in this order: spaces separate them unless they are in double quotes, and a
- * backslash takes the next character literally.
+ * backslash takes a following quote, backslash or space literally. Before any other character it is a backslash of the argument, e.g. in {@code \d+}.
  *
  * @returns the arguments; undefined if a quote is not closed
  */
@@ -165,7 +168,7 @@ export function splitArguments(text: string): string[] | undefined {
     let quoted = false;
     for (let index = 0; index < text.length; index++) {
         const character = text[index];
-        if (character === '\\' && index + 1 < text.length) {
+        if (character === '\\' && index + 1 < text.length && ESCAPED_IN_ARGUMENTS.test(text[index + 1])) {
             current += text[++index];
             started = true;
         } else if (character === '"') {

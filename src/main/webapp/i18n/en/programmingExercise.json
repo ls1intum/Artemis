@@ -786,9 +786,11 @@
                         "saveChanges": "Save Changes",
                         "problem": {
                             "pathRequired": "Enter a path.",
+                            "pathCharacters": "A path cannot contain a line break or a NUL character.",
                             "hostRequired": "Enter a host name or IP address without spaces.",
                             "portRange": "Enter a port between 0 and 65535.",
                             "commandRequired": "Enter a command.",
+                            "commandCharacters": "A command and its arguments cannot contain a line break or a NUL character.",
                             "argumentsQuote": "Close the double quote of the arguments.",
                             "listQuote": "Close the double quote of the entry.",
                             "className": "Enter a fully qualified class name, e.g. java.lang.Thread.",
@@ -808,10 +810,13 @@
                         "loadFailed": "The files of the template repository could not be loaded.",
                         "retry": "Retry",
                         "selectPath": "Select",
+                        "selectFolderScripts": "Select all scripts in {{ folder }}, also those the search hides",
+                        "remove": "Remove {{ entry }}",
+                        "clear": "Clear the field",
                         "expand": "Expand",
                         "collapse": "Collapse",
                         "pathsHint": "Select several paths at once — each becomes its own row with the same permissions. Tags show paths that already have an entry.",
-                        "scriptsHint": "Select several scripts at once — each becomes its own row. Enter arguments in the dialog afterwards.",
+                        "scriptsHint": "Select several scripts at once — each becomes its own row. A folder selects all of its scripts, also those the search hides. Enter arguments in the dialog afterwards.",
                         "truncated": "The template repository has more files than are listed here; type other paths directly.",
                         "selected": "{{ count }} selected:",
                         "nothingSelected": "Nothing selected",
@@ -1058,7 +1063,7 @@
                         "nameRequired": "A security policy has no name.",
                         "hiddenPeriod": "{{ policy }}: “Hidden until” must be after “Hidden from”.",
                         "noTests": "{{ policy }} has no assigned test case. Artemis finds a policy through the test cases that use it, so assign at least one.",
-                        "sameFile": "Two policies would be saved to the same file. Rename one of them."
+                        "sameFile": "Two policies would be saved to the same file, or a policy to the file of a deleted one. Rename one of them."
                     },
                     "banner": {
                         "committing": "Saving…",

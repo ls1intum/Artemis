@@ -180,9 +180,8 @@ final class AresTestCases {
             if (method != null && !signatures.containsKey(method.start(1))) {
                 int close = AresPolicyAnnotations.matchingParenthesis(masked, method.end() - 1);
                 String parameters = masked.substring(method.end(), close < 0 ? masked.length() : close);
-                // The modifiers precede the name, also before the annotations; the previous member ends with a semicolon or a brace.
-                int memberStart = Math.max(Math.max(masked.lastIndexOf(';', annotation.start()), masked.lastIndexOf('}', annotation.start())),
-                        masked.lastIndexOf('{', annotation.start())) + 1;
+                // The modifiers precede the name, also before the annotations; the previous member ends with a semicolon or a brace outside them.
+                int memberStart = memberStart(masked, annotation.start());
                 boolean visible = VISIBLE_IN_OTHER_PACKAGES.matcher(masked.substring(memberStart, method.start(1))).find();
                 int declaration = method.start(1);
                 // A type the file declares where the method is, e.g. a member type, shadows a single-type import with its simple name.
@@ -192,6 +191,27 @@ final class AresTestCases {
             }
         }
         return signatures;
+    }
+
+    /**
+     * @return the offset after the semicolon or brace that ends the member before the offset; a brace within the arguments of an annotation, e.g.
+     *         {@code @ValueSource(ints = { 1 })}, ends no member
+     */
+    private static int memberStart(String masked, int offset) {
+        int parentheses = 0;
+        for (int position = offset - 1; position >= 0; position--) {
+            char character = masked.charAt(position);
+            if (character == ')') {
+                parentheses++;
+            }
+            else if (character == '(') {
+                parentheses--;
+            }
+            else if (parentheses <= 0 && (character == ';' || character == '{' || character == '}')) {
+                return position + 1;
+            }
+        }
+        return 0;
     }
 
     /**

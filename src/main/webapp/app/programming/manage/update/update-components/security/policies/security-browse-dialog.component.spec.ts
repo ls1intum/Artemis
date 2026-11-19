@@ -70,6 +70,31 @@ describe('SecurityBrowseDialogComponent', () => {
         expect(comp.selectedPaths()).toEqual(['data/input.txt', 'scripts/run.sh', 'scripts/tools/setup.py']);
     });
 
+    it('clears the field when everything it named is deselected', () => {
+        handlers.toggleSelected(node('data/input.txt'), false);
+
+        expect(comp.canConfirm()).toBe(true);
+        handlers.confirm();
+        expect(selected).toEqual([[]]);
+    });
+
+    it('lets the summary remove a selected entry that the tree has no row for', () => {
+        fixture.componentRef.setInput('mode', 'scripts');
+        fixture.componentRef.setInput('initialSelection', ['python3']);
+        comp.visible.set(false);
+        comp.visible.set(true);
+        fixture.detectChanges();
+        handlers.toggleSelected(node('scripts/run.sh'), true);
+        fixture.detectChanges();
+        const root = (fixture.nativeElement as HTMLElement).ownerDocument;
+
+        // A command typed into the field has no checkbox, so only the summary can drop it.
+        expect(comp.unlistedSelection()).toEqual(['python3']);
+        root.querySelector<HTMLButtonElement>('[data-testid="security-browse-remove"]')!.click();
+        handlers.confirm();
+        expect(selected).toEqual([['scripts/run.sh']]);
+    });
+
     it('reports a failed listing with Retry instead of showing it as empty', () => {
         let retried = 0;
         comp.retryRequested.subscribe(() => retried++);

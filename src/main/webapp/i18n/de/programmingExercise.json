@@ -786,9 +786,11 @@
                         "saveChanges": "Änderungen speichern",
                         "problem": {
                             "pathRequired": "Gib einen Pfad ein.",
+                            "pathCharacters": "Ein Pfad darf keinen Zeilenumbruch und kein NUL-Zeichen enthalten.",
                             "hostRequired": "Gib einen Hostnamen oder eine IP-Adresse ohne Leerzeichen ein.",
                             "portRange": "Gib einen Port zwischen 0 und 65535 ein.",
                             "commandRequired": "Gib einen Befehl ein.",
+                            "commandCharacters": "Ein Befehl und seine Argumente dürfen keinen Zeilenumbruch und kein NUL-Zeichen enthalten.",
                             "argumentsQuote": "Schließe das doppelte Anführungszeichen der Argumente.",
                             "listQuote": "Schließe das doppelte Anführungszeichen des Eintrags.",
                             "className": "Gib einen vollqualifizierten Klassennamen ein, z. B. java.lang.Thread.",
@@ -808,10 +810,13 @@
                         "loadFailed": "Die Dateien des Vorlagen-Repositorys konnten nicht geladen werden.",
                         "retry": "Erneut versuchen",
                         "selectPath": "Auswählen",
+                        "selectFolderScripts": "Alle Skripte in {{ folder }} auswählen, auch die von der Suche ausgeblendeten",
+                        "remove": "{{ entry }} entfernen",
+                        "clear": "Feld leeren",
                         "expand": "Aufklappen",
                         "collapse": "Zuklappen",
                         "pathsHint": "Wähle mehrere Pfade auf einmal — jeder wird eine eigene Zeile mit denselben Berechtigungen. Markierungen zeigen Pfade, die bereits einen Eintrag haben.",
-                        "scriptsHint": "Wähle mehrere Skripte auf einmal — jedes wird eine eigene Zeile. Die Argumente gibst du danach im Dialog ein.",
+                        "scriptsHint": "Wähle mehrere Skripte auf einmal — jedes wird eine eigene Zeile. Ein Ordner wählt alle seine Skripte aus, auch die von der Suche ausgeblendeten. Die Argumente gibst du danach im Dialog ein.",
                         "truncated": "Das Vorlagen-Repository hat mehr Dateien, als hier aufgeführt sind; gib andere Pfade direkt ein.",
                         "selected": "{{ count }} ausgewählt:",
                         "nothingSelected": "Nichts ausgewählt",
@@ -1058,7 +1063,7 @@
                         "nameRequired": "Eine Sicherheitsrichtlinie hat keinen Namen.",
                         "hiddenPeriod": "{{ policy }}: „Versteckt bis“ muss nach „Versteckt ab“ liegen.",
                         "noTests": "{{ policy }} ist kein Testfall zugeordnet. Artemis findet eine Richtlinie über die Testfälle, die sie verwenden, daher ordne mindestens einen zu.",
-                        "sameFile": "Zwei Richtlinien würden in derselben Datei gespeichert. Benenne eine davon um."
+                        "sameFile": "Zwei Richtlinien würden in derselben Datei gespeichert, oder eine Richtlinie in der Datei einer gelöschten. Benenne eine davon um."
                     },
                     "banner": {
                         "committing": "Wird gespeichert…",

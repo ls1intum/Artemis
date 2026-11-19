@@ -24,7 +24,7 @@ import {
     TumAetUiProgressSpinnerComponent,
     TumAetUiTagComponent,
 } from '@tumaet/ui-angular';
-import { Subscription, catchError, forkJoin, of } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -365,11 +365,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
      * The committed policy files, for the dialog that deletes them: deactivating discards the unsaved changes and deletes the files in the repository, so a
      * policy renamed or deleted only in the editor is listed with its committed path, and a new one is not listed.
      */
-    readonly policyPaths = computed(() =>
-        this.policiesWithDeleted()
-            .map((policy) => policy.file?.policyPath ?? '')
-            .filter((path) => path.length > 0),
-    );
+    readonly policyPaths = computed(() => {
+        // Until the policies are loaded, the state of the sandbox names the committed files, so the dialog never confirms deleting none.
+        const paths = this.editor() ? this.policiesWithDeleted().map((policy) => policy.file?.policyPath) : (this.config().policyFiles ?? []).map((file) => file.policyPath);
+        return paths.filter((path): path is string => !!path);
+    });
 
     /** What keeps the changes from being committed, translated; empty if they can be committed. */
     readonly problems = computed(() => {
@@ -394,6 +394,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             if (!policy.tests.length) {
                 problems.push(this.translateService.instant(`${PREFIX}.problem.noTests`, { policy: policy.name }));
             }
+        }
+        // A policy staged for deletion still occupies its file in the commit, which would both write and delete it.
+        for (const policy of this.deletedPolicies()) {
+            const path = policy.file?.policyPath ?? '';
+            paths.set(path, (paths.get(path) ?? 0) + 1);
         }
         if ([...paths.entries()].some(([path, count]) => path && count > 1)) {
             problems.push(this.translateService.instant(`${PREFIX}.problem.sameFile`));
@@ -425,10 +430,17 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         return descriptions;
     });
 
-    /** Whether the change assigns some test cases of a class that is assigned as a whole, which releases the others. */
-    readonly splitsClass = computed(() =>
-        this.policies().some((policy) => policy.tests.some((entry) => entry.includes(TEST_CASE_SEPARATOR) && policy.baseTests.includes(testClassOf(entry)))),
-    );
+    /** The entries of every policy after the change. */
+    private readonly assignedAfterChange = computed(() => this.policies().flatMap((policy) => policy.tests));
+
+    /**
+     * Whether the change assigns some test cases of a class that a committed policy, also one staged for deletion, assigns as a whole, which releases the
+     * others, whichever policies the test cases move to.
+     */
+    readonly splitsClass = computed(() => {
+        const committedClasses = new Set(this.policiesWithDeleted().flatMap((policy) => policy.baseTests.filter((entry) => !entry.includes(TEST_CASE_SEPARATOR))));
+        return this.assignedAfterChange().some((entry) => entry.includes(TEST_CASE_SEPARATOR) && committedClasses.has(testClassOf(entry)));
+    });
 
     /**
      * Whether the review lists every test case the change releases: a split lists them from the test structure of the commit the change is based on, so the
@@ -448,13 +460,18 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     readonly reviewAssignments = computed<AssignmentChange[]>(() => {
         const changes: AssignmentChange[] = [];
         const structure = this.structure();
+        // A test case that any policy keeps after the change is not released, also when it moves from one policy to another.
+        const assigned = this.assignedAfterChange();
         for (const policy of this.policies()) {
             const file = fileNameOf(this.paths().get(policy.id) ?? '');
             const { added, removed } = listChanges(policy.baseTests, policy.tests);
             added.forEach((entry) => changes.push({ sign: '+', entry, file }));
-            removed.forEach((entry) => releasedEntries(entry, policy.tests, structure).forEach((released) => changes.push({ sign: '−', entry: released, file })));
+            removed.forEach((entry) => releasedEntries(entry, assigned, structure).forEach((released) => changes.push({ sign: '−', entry: released, file })));
         }
-        this.deletedPolicies().forEach((policy) => policy.baseTests.forEach((entry) => changes.push({ sign: '−', entry, file: fileNameOf(policy.file?.policyPath ?? '') })));
+        for (const policy of this.deletedPolicies()) {
+            const file = fileNameOf(policy.file?.policyPath ?? '');
+            policy.baseTests.forEach((entry) => releasedEntries(entry, assigned, structure).forEach((released) => changes.push({ sign: '−', entry: released, file })));
+        }
         return changes;
     });
 
@@ -593,8 +610,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     /**
      * Loads the policies and the config of a change that was pushed although its processing failed. A commit of the unsaved changes made exactly them, since
-     * editing is paused while it runs, so they are replaced; a commit of dependency scanning kept them, so they are rebased. The reads still belong to the
-     * commit: until both answer, editing and switching the sandbox stay paused, so their answers overwrite neither an edit nor a later operation.
+     * editing is paused while it runs, so they are replaced; a commit of dependency scanning kept them, so they are rebased. Both are read from the same
+     * commit, so another change pushed in between cannot mix two states, and the read either succeeds as a whole or offers its own Retry. The read still
+     * belongs to the commit: until it answers, editing and switching the sandbox stay paused, so its answer overwrites neither an edit nor a later operation.
      */
     private loadPushed(keepUnsaved: boolean): void {
         const request = ++this.loadRequests;
@@ -602,38 +620,39 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         // A repeated read, after the first one failed, is part of the commit as well.
         this.setCommitPending(true);
         this.loading.set(true);
-        forkJoin({
-            editor: this.securityService.getPolicies(this.exerciseId()).pipe(catchError(() => of(undefined))),
-            config: this.securityService.getConfig(this.exerciseId()).pipe(catchError(() => of(undefined))),
-        }).subscribe(({ editor, config }) => {
-            // A newer read or a newer commit owns the pending state, so an obsolete answer changes nothing, not even that state.
-            if (request !== this.loadRequests) {
-                return;
-            }
-            this.setCommitPending(false);
-            this.loading.set(false);
-            if (config) {
+        this.securityService.getPoliciesWithConfig(this.exerciseId()).subscribe({
+            next: ({ editor, config }) => {
+                // A newer read or a newer commit owns the pending state, so an obsolete answer changes nothing, not even that state.
+                if (request !== this.loadRequests) {
+                    return;
+                }
+                this.setCommitPending(false);
+                this.loading.set(false);
                 this.configChange.emit(config);
-            }
-            if (!editor) {
-                // The shown policies are older than the pushed ones, so Discard and Commit must not act on them: the editor shows the load error instead,
-                // whose Retry reads the pushed policies, while the banner's Retry still resumes the builds.
+                this.pendingRecovery = undefined;
+                this.loadFailed.set(false);
+                if (keepUnsaved) {
+                    this.rebaseOnto(editor, false);
+                } else {
+                    this.applyEditor(editor);
+                }
+                if (this.unprocessed) {
+                    this.unprocessed.hash = editor.lastCommit?.hash.substring(0, 7);
+                }
+                if (this.banner()?.kind === 'processingFailed') {
+                    this.banner.set(this.processingFailedBanner());
+                }
+            },
+            error: () => {
+                if (request !== this.loadRequests) {
+                    return;
+                }
+                this.setCommitPending(false);
+                this.loading.set(false);
+                // The shown policies and config are older than the pushed ones, so Discard and Commit must not act on them: the editor shows the load error
+                // instead, whose Retry reads the pushed state again, while the banner's Retry still resumes the builds.
                 this.loadFailed.set(true);
-                return;
-            }
-            this.pendingRecovery = undefined;
-            this.loadFailed.set(false);
-            if (keepUnsaved) {
-                this.rebaseOnto(editor, false);
-            } else {
-                this.applyEditor(editor);
-            }
-            if (this.unprocessed) {
-                this.unprocessed.hash = editor.lastCommit?.hash.substring(0, 7);
-            }
-            if (this.banner()?.kind === 'processingFailed') {
-                this.banner.set(this.processingFailedBanner());
-            }
+            },
         });
     }
 
@@ -1350,9 +1369,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 }
 
 /**
- * @returns the entries a policy gives up with a removed entry: for a class assigned as a whole of which the policy keeps only some test cases, every other
- *          test case of the class as it is now, so the review names each test case the split releases, also one added after the split was made; otherwise,
- *          or while the test cases are not loaded, the entry itself
+ * @param tests the entries of every policy after the change
+ * @returns the entries a policy gives up with a removed entry: for a class assigned as a whole of which some test cases stay assigned, to this or another
+ *          policy, every other test case of the class at the commit the change is based on, so the review names each test case the split releases;
+ *          otherwise, or while the test cases are not loaded, the entry itself
  */
 function releasedEntries(entry: string, tests: readonly string[], structure: SecurityTestStructure | undefined): string[] {
     if (entry.includes(TEST_CASE_SEPARATOR) || !tests.some((test) => test.includes(TEST_CASE_SEPARATOR) && testClassOf(test) === entry)) {

@@ -237,6 +237,24 @@ describe('SecurityPermissionDialogComponent', () => {
         expect(document.querySelector('[data-testid="security-permission-command"]')?.getAttribute('aria-describedby')).toBeNull();
     });
 
+    it('refuses a line break or a NUL character in a browsed path, a command or an argument', () => {
+        open('files');
+        handlers.onBrowsed(['data/a\nb.txt']);
+        handlers.setFileAction('read', true);
+        expect(comp.problem()).toBe(PROBLEM + 'pathCharacters');
+        // A comma or spaces around a name stay valid.
+        handlers.onBrowsed([' data/a,b.txt ']);
+        expect(comp.problem()).toBeUndefined();
+
+        open('commands');
+        comp.command.set('python3');
+        comp.argumentsText.set('"a\0b"');
+        expect(comp.problem()).toBe(PROBLEM + 'commandCharacters');
+        handlers.save();
+        expect(comp.problemField()).toBe('arguments');
+        expect(saved).toEqual([]);
+    });
+
     it('splits lists and arguments', () => {
         expect(splitList(' a , ,b ')).toEqual(['a', 'b']);
         expect(splitList(' "a,b.csv" , " c " ,d e, "x""y"')).toEqual(['a,b.csv', ' c ', 'd e', 'x"y']);
@@ -248,7 +266,9 @@ describe('SecurityPermissionDialogComponent', () => {
         expect(splitArguments('')).toEqual([]);
         expect(splitArguments(' -c  "x y" "" a\\ b ')).toEqual(['-c', 'x y', '', 'a b']);
         expect(splitArguments('"open')).toBeUndefined();
-        for (const argumentList of [['data/input file.txt'], ['', 'a"b', 'c\\d'], ['--fast']]) {
+        // A backslash escapes only a quote, a backslash or a space, so a pattern such as \d+ keeps its backslash.
+        expect(splitArguments('\\d+ "a\\"b" a\\\\b')).toEqual(['\\d+', 'a"b', 'a\\b']);
+        for (const argumentList of [['data/input file.txt'], ['', 'a"b', 'c\\d'], ['--fast'], ['\\d+', '\\']]) {
             expect(splitArguments(joinArguments(argumentList))).toEqual(argumentList);
         }
     });

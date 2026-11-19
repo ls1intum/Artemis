@@ -68,6 +68,21 @@ public class SecurityPolicyResource {
     }
 
     /**
+     * GET programming-exercises/:exerciseId/security-framework/policies-with-config : the security policies and the Security Framework state of an
+     * exercise, read from the same commit of the tests repository.
+     *
+     * @param exerciseId of the programming exercise
+     * @return 200 (OK) with the policies and the state in the body
+     */
+    @GetMapping("programming-exercises/{exerciseId}/security-framework/policies-with-config")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<SecurityPolicyCommitResultDTO> getSecurityPoliciesWithConfig(@PathVariable Long exerciseId) {
+        log.debug("REST request to get the security policies and the Security Framework state of programming exercise {}", exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        return ResponseEntity.ok(securityPolicyEditorService.getEditorWithConfig(exercise));
+    }
+
+    /**
      * GET programming-exercises/:exerciseId/security-framework/policies : the security policies of an exercise, as the editor shows them.
      *
      * @param exerciseId of the programming exercise

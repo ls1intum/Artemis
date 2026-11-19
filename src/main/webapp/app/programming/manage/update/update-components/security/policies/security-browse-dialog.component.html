@@ -29,7 +29,11 @@
                     <tumaet-ui-checkbox
                         [checked]="entry.selected"
                         [indeterminate]="entry.partlySelected"
-                        [ariaLabel]="(prefix + 'selectPath' | artemisTranslate) + ' ' + entry.node.path"
+                        [ariaLabel]="
+                            mode() === 'scripts' && entry.node.folder
+                                ? (prefix + 'selectFolderScripts' | artemisTranslate: { folder: entry.node.path })
+                                : (prefix + 'selectPath' | artemisTranslate) + ' ' + entry.node.path
+                        "
                         (changed)="toggleSelected(entry.node, $event.checked)"
                     />
                     @if (entry.node.folder && !searching()) {
@@ -62,13 +66,32 @@
             @if (selectedPaths().length) {
                 {{ prefix + 'selected' | artemisTranslate: { count: selectedPaths().length } }}
                 <span class="sp-mono">{{ selectedPaths().join(', ') }}</span>
+                @for (path of unlistedSelection(); track path) {
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="text"
+                        size="small"
+                        [attr.aria-label]="prefix + 'remove' | artemisTranslate: { entry: path }"
+                        (click)="deselect(path)"
+                        data-testid="security-browse-remove"
+                    >
+                        <fa-icon [icon]="faXmark" />
+                        <span class="sp-mono">{{ path }}</span>
+                    </button>
+                }
             } @else {
                 <span [jhiTranslate]="prefix + 'nothingSelected'"></span>
             }
         </span>
         <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="visible.set(false)" jhiTranslate="entity.action.cancel"></button>
-        <button type="button" tumAetUiButton [disabled]="!selectedPaths().length" (click)="confirm()" data-testid="security-browse-confirm">
-            {{ prefix + 'select' | artemisTranslate: { count: selectedPaths().length } }}
+        <button type="button" tumAetUiButton [disabled]="!canConfirm()" (click)="confirm()" data-testid="security-browse-confirm">
+            @if (selectedPaths().length) {
+                {{ prefix + 'select' | artemisTranslate: { count: selectedPaths().length } }}
+            } @else {
+                {{ prefix + 'clear' | artemisTranslate }}
+            }
         </button>
     </ng-template>
 </tumaet-ui-dialog>

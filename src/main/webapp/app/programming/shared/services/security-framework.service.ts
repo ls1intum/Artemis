@@ -68,6 +68,11 @@ export class SecurityFrameworkService {
         return this.http.get<SecurityPolicyEditor>(`${this.resourceUrl(exerciseId)}/policies`);
     }
 
+    /** The security policies and the Security Framework state of an exercise, read from the same commit of the tests repository. */
+    getPoliciesWithConfig(exerciseId: number): Observable<SecurityPolicyCommitResult> {
+        return this.http.get<SecurityPolicyCommitResult>(`${this.resourceUrl(exerciseId)}/policies-with-config`);
+    }
+
     /**
      * Renders changed policies without committing them and checks them against the pinned Ares version. The editor shows a failure itself, like the
      * failures of committing and importing, so no error alert repeats it.

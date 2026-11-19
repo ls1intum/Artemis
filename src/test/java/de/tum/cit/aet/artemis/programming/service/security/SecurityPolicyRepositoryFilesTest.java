@@ -663,6 +663,74 @@ class SecurityPolicyRepositoryFilesTest {
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS, "de.example.MoreSortingTest");
     }
 
+    @ParameterizedTest
+    @CsvSource({ "protected, false", "'', true" })
+    void theModifiersOfAnInheritedTestMethodMayPrecedeItsAnnotations(String modifier, boolean unsupported) throws IOException {
+        writeBuildFile();
+        String annotated = "    " + modifier + " @SuppressWarnings({ \"unused\" })\n    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    void runs()";
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
+        String override = """
+                package de.other;
+
+                import org.junit.jupiter.api.Test;
+
+                import de.example.SortingTest;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+
+                @Public
+                %s
+                class MoreSortingTest extends SortingTest {
+
+                    @Test
+                    protected void runs() {
+                    }
+                }
+                """.formatted(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        writeSource("test/de/other/MoreSortingTest.java", override);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // A protected method is overridden in another package as well; a package-private one is not.
+        SecurityFrameworkState.UnsupportedReason reason = new SecurityFrameworkState.UnsupportedReason("de.other.MoreSortingTest",
+                SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS);
+        if (unsupported) {
+            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).contains(reason);
+        }
+        else {
+            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).doesNotContain(reason);
+        }
+    }
+
+    @Test
+    void aTestMethodOfANestedTypeDoesNotOverrideAnInheritedTest() throws IOException {
+        writeBuildFile();
+        String methodPolicy = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n";
+        String parent = TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", methodPolicy + "    @Test\n    void runs()");
+        writeSource("test/de/example/SortingTest.java", parent);
+        String group = """
+                package de.example;
+
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+
+                @Public
+                %s
+                class MoreSortingTest extends SortingTest {
+
+                    @net.jqwik.api.Group
+                    class Inner {
+
+                        @net.jqwik.api.Example
+                        void runs() {
+                        }
+                    }
+                }
+                """.formatted(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        writeSource("test/de/example/MoreSortingTest.java", group);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // Inner.runs() is a test of the group, so MoreSortingTest still runs the inherited runs() with the sandbox.
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS, "de.example.MoreSortingTest");
+    }
+
     @Test
     void aMarkerTheFileDeclaresItselfDoesNotRegisterAres() throws IOException {
         writeBuildFile();

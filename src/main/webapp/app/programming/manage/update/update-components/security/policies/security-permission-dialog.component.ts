@@ -31,6 +31,9 @@ function isQualifiedName(text: string): boolean {
     return text.split('.').every((part) => IDENTIFIER.test(part));
 }
 
+/** The characters the server refuses in a path, a command or an argument, e.g. in the name of a browsed file. */
+const UNSUPPORTED_CHARACTERS = /[\r\n\0]/;
+
 /** The largest thread count the server stores, the largest Java {@code int}. */
 const MAX_JAVA_INT = 2_147_483_647;
 
@@ -173,6 +176,9 @@ export class SecurityPermissionDialogComponent {
                 if (!this.rows().length || this.rows().some((row) => !(row as SecurityFilePermission).path.trim())) {
                     return prefix + 'pathRequired';
                 }
+                if (this.rows().some((row) => UNSUPPORTED_CHARACTERS.test((row as SecurityFilePermission).path))) {
+                    return prefix + 'pathCharacters';
+                }
                 break;
             case 'network':
                 if (!this.host() || /\s/.test(this.host())) {
@@ -191,6 +197,13 @@ export class SecurityPermissionDialogComponent {
                 }
                 if (!splitArguments(this.argumentsText())) {
                     return prefix + 'argumentsQuote';
+                }
+                if (
+                    this.rows().some((row) =>
+                        [(row as SecurityCommandPermission).command, ...((row as SecurityCommandPermission).arguments ?? [])].some((part) => UNSUPPORTED_CHARACTERS.test(part)),
+                    )
+                ) {
+                    return prefix + 'commandCharacters';
                 }
                 break;
             case 'threads':
@@ -235,7 +248,7 @@ export class SecurityPermissionDialogComponent {
         if (problem.endsWith('threadCount')) {
             return 'maxThreads';
         }
-        if (problem.endsWith('argumentsQuote')) {
+        if (problem.endsWith('argumentsQuote') || (problem.endsWith('commandCharacters') && !UNSUPPORTED_CHARACTERS.test(this.command()))) {
             return 'arguments';
         }
         return 'first';

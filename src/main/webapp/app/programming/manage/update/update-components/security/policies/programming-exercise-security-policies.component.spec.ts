@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject, of, throwError } from 'rxjs';
+import { Subject, forkJoin, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 import { SecurityActivationStatus, SecurityFrameworkConfig, SecurityVersionCompatibilityVerdict } from 'app/programming/shared/entities/security-framework-config.model';
@@ -19,7 +19,7 @@ import { SecurityFrameworkService } from 'app/programming/shared/services/securi
 import { By } from '@angular/platform-browser';
 import { SecurityActivationDialogComponent } from 'app/programming/manage/update/update-components/security/policies/security-activation-dialog.component';
 import { ProgrammingExerciseSecurityPoliciesComponent } from 'app/programming/manage/update/update-components/security/policies/programming-exercise-security-policies.component';
-import { withAssignment, withRows } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
+import { fileNameOf, withAssignment, withRows } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 
 const DOCUMENT: SecurityPolicyDocument = {
     policyPath: 'SecurityPolicy.yaml',
@@ -55,6 +55,8 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
             getTemplateFiles: vi.fn().mockReturnValue(of({ paths: [] })),
             getConfig: vi.fn().mockReturnValue(of(configured())),
         };
+        // The server reads both parts of the pushed state from one commit; the tests stub the parts, and the read fails as a whole if one part fails.
+        service.getPoliciesWithConfig = vi.fn((exerciseId: number) => forkJoin({ editor: service.getPolicies(exerciseId), config: service.getConfig(exerciseId) }));
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
@@ -122,7 +124,19 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         const added = comp.policies()[1];
         comp['onPolicyChange'](withAssignment(added, ['de.example.SortingTest#testMergeSort'], []));
         comp['onVersionChange']('2.3.0');
-        service.commitPolicies.mockReturnValue(of({ editor: editor('b'.repeat(40)), config: configured() }));
+        // The server answers with the policies and the version as the commit saved them.
+        service.commitPolicies.mockImplementation((_exerciseId: number, sent: SecurityPolicyChange) =>
+            of({
+                editor: {
+                    ...editor('b'.repeat(40)),
+                    frameworkVersion: sent.frameworkVersion,
+                    policies: sent.policies.map((entry) => ({ policyPath: entry.document.policyPath, document: entry.document, assignedTests: entry.assignedTests })),
+                },
+                config: { ...configured(), frameworkVersion: sent.frameworkVersion },
+            }),
+        );
+        const configs: SecurityFrameworkConfig[] = [];
+        comp.configChange.subscribe((config) => configs.push(config));
 
         expect(comp.problems()).toEqual([]);
         expect(comp.changeParts().build).toBe(1);
@@ -141,6 +155,14 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(change.removedPolicyPaths).toEqual(['Second.yaml']);
         expect(comp.totalChanges()).toBe(0);
         expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'committed', hash: 'bbbbbbb' }));
+        // The editor shows what the commit saved: both policies, without the deleted one, and the new version.
+        expect(comp.policies().map((shown) => shown.file?.policyPath)).toEqual(['SecurityPolicy.yaml', change.policies[1].document.policyPath]);
+        expect(comp.policies()[0].working?.packages).toEqual([{ packageName: 'org.apache.commons' }]);
+        expect(comp.policies()[1].tests).toEqual(['de.example.SortingTest#testMergeSort']);
+        expect(comp.deletedPolicies()).toEqual([]);
+        expect(comp.editor()?.frameworkVersion).toBe('2.3.0');
+        expect(comp.stagedVersion()).toBeUndefined();
+        expect(configs).toEqual([{ ...configured(), frameworkVersion: '2.3.0' }]);
     });
 
     it('moves the focus to the version select when the banner asks to change the version', () => {
@@ -244,6 +266,30 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.isCommitting()).toBe(false);
         expect(pending).toEqual([true, false]);
         expect(configs).toEqual([configured()]);
+        expect(comp.editor()?.baseCommitHash).toBe('b'.repeat(40));
+    });
+
+    it('reads the pushed policies and config again when only the config read fails, instead of keeping an older config', () => {
+        create(configured(), false);
+        const configs: SecurityFrameworkConfig[] = [];
+        comp.configChange.subscribe((config) => configs.push(config));
+        const policy = comp.policies()[0];
+        const granted = withRows(policy.working!, 'packages', [{ packageName: 'org.apache.commons' }]);
+        comp['onPolicyChange']({ ...policy, working: granted });
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'error.securityFrameworkProcessingFailed' } })));
+        service.getPolicies.mockReturnValue(of(editor('b'.repeat(40), granted)));
+        service.getConfig.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503 })));
+
+        comp['commit']('Grant commons');
+
+        // The state is read as a whole, so the editor offers to read it again rather than showing the policies with an older config.
+        expect(comp.loadFailed()).toBe(true);
+        expect(configs).toEqual([]);
+        comp['retryLoad']();
+        expect(service.getPoliciesWithConfig).toHaveBeenCalledTimes(2);
+        expect(service.commitPolicies).toHaveBeenCalledOnce();
+        expect(configs).toEqual([configured()]);
+        expect(comp.loadFailed()).toBe(false);
         expect(comp.editor()?.baseCommitHash).toBe('b'.repeat(40));
     });
 
@@ -841,6 +887,28 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         ]);
     });
 
+    it('lists the test cases a split releases also when the class moves from a deleted policy to another one', () => {
+        service.getTestStructure.mockReturnValue(of({ testClasses: [{ qualifiedName: 'de.example.SortingTest', testClass: true, testCases: ['bubble', 'merge', 'quick'] }] }));
+        create(configured(), false);
+        comp['askDeletePolicy'](comp.policies()[0]);
+        comp['deletePolicy']();
+        comp['addPolicy']();
+        const added = comp.policies()[0];
+        comp['onPolicyChange'](withAssignment(added, ['de.example.SortingTest#merge'], []));
+        const file = fileNameOf(comp.paths().get(added.id)!);
+
+        expect(comp.splitsClass()).toBe(true);
+        comp['openReview']();
+
+        expect(service.getTestStructure).toHaveBeenCalledOnce();
+        expect(comp.reviewAssignmentsState()).toBe('ready');
+        expect(comp.reviewAssignments()).toEqual([
+            { sign: '+', entry: 'de.example.SortingTest#merge', file },
+            { sign: '−', entry: 'de.example.SortingTest#bubble', file: 'SecurityPolicy.yaml' },
+            { sign: '−', entry: 'de.example.SortingTest#quick', file: 'SecurityPolicy.yaml' },
+        ]);
+    });
+
     it('commits a split only once the review lists the test cases it releases, and offers Retry when they cannot be loaded', () => {
         service.getTestStructure.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
         service.commitPolicies.mockReturnValue(of({ editor: editor('b'.repeat(40)), config: configured() }));
@@ -885,6 +953,17 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         comp['askDeletePolicy'](comp.policies()[0]);
         comp['deletePolicy']();
         expect(comp.policyPaths()).toEqual(['SecurityPolicy.yaml']);
+    });
+
+    it('names the committed policy files in the deactivation dialog also before the policies are loaded', () => {
+        service.getPolicies.mockReturnValue(new Subject<SecurityPolicyEditor>());
+        create({ ...configured(), policyFiles: [{ policyPath: 'SecurityPolicy.yaml' }, { policyPath: 'Stress.yaml' }] }, false);
+
+        comp['onToggleRequested'](false);
+
+        expect(comp.editor()).toBeUndefined();
+        expect(comp.dialogMode()).toBe('deactivate');
+        expect(comp.policyPaths()).toEqual(['SecurityPolicy.yaml', 'Stress.yaml']);
     });
 
     it('replaces the submitted drafts when the builds of a commit whose pushed policies could not be read are resumed', () => {
@@ -944,6 +1023,19 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
 
         expect(comp.policies().map((policy) => policy.file?.policyPath)).toEqual(['SecurityPolicy.yaml', path]);
         expect(comp.totalChanges()).toBe(0);
+    });
+
+    it('names a new policy saved to the file of a policy staged for deletion as a problem before the review', () => {
+        create(configured(), false);
+        comp['askDeletePolicy'](comp.policies()[0]);
+        comp['deletePolicy']();
+        comp['addPolicy']();
+        const added = comp.policies()[0];
+        comp['onPolicyChange']({ ...withAssignment(added, ['de.example.SortingTest'], []), name: 'Security Policy' });
+
+        // The commit would write and delete SecurityPolicy.yaml, which the server refuses.
+        expect(comp.paths().get(added.id)).toBe('SecurityPolicy.yaml');
+        expect(comp.problems()).toContain('artemisApp.programmingExercise.security.advanced.problem.sameFile');
     });
 
     it('names the problems of a policy without a name, with an invalid hidden period and of two policies in one file', () => {

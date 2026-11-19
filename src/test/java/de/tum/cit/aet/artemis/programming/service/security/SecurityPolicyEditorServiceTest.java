@@ -1211,6 +1211,17 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void readsThePoliciesAndTheStateFromTheSameCommit() throws Exception {
+        pushToTests("README.md", "Another commit\n");
+
+        SecurityPolicyCommitResultDTO snapshot = editorService.getEditorWithConfig(exercise());
+
+        assertThat(snapshot.editor().baseCommitHash()).isEqualTo(pushedHead());
+        assertThat(snapshot.config().status()).isEqualTo("CONFIGURED");
+        assertThat(loadedPolicy(snapshot.editor()).testClasses()).containsExactlyElementsOf(BOTH_CLASSES);
+    }
+
+    @Test
     void listsTheFilesOfTheTemplateRepository() {
         SecurityTemplateFilesDTO files = editorService.getTemplateFiles(exercise());
 

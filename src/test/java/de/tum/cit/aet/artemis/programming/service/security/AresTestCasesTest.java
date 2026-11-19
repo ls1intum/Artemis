@@ -123,13 +123,18 @@ class AresTestCasesTest {
 
                     public @Test void sorts(List<String> values) {
                     }
+
+                    protected @ValueSource(ints = { 1 }) @ParameterizedTest void sizes(int size) {
+                    }
                 }
                 """;
 
         AresTestCases.TestSignature check = new AresTestCases.TestSignature("check", "check()", false);
         AresTestCases.TestSignature overload = new AresTestCases.TestSignature("check", "check(java.util.Map,int[],?String[])", true);
         AresTestCases.TestSignature sorts = new AresTestCases.TestSignature("sorts", "sorts(java.util.List)", true);
-        assertThat(AresTestCases.testSignatures(AresPolicyAnnotations.mask(source)).values()).containsExactlyInAnyOrder(check, overload, sorts);
+        // The braces in the arguments of an annotation end no member, so the modifier before it still counts.
+        AresTestCases.TestSignature sizes = new AresTestCases.TestSignature("sizes", "sizes(int)", true);
+        assertThat(AresTestCases.testSignatures(AresPolicyAnnotations.mask(source)).values()).containsExactlyInAnyOrder(check, overload, sorts, sizes);
     }
 
     @Test
