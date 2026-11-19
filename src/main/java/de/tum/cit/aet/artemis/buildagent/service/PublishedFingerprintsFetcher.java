@@ -5,8 +5,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -19,9 +18,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import tools.jackson.core.type.TypeReference;
-
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.localvc.dto.SshHostKeyFingerprintDTO;
+import de.tum.cit.aet.artemis.localvc.dto.SshHostKeyFingerprintsDTO;
 
 /**
  * Reads the fingerprints of the SSH host keys that a core node publishes at {@code api/localvc/public/ssh-fingerprints}, below the path of the configured URL.
@@ -77,12 +76,12 @@ class PublishedFingerprintsFetcher implements Supplier<Set<String>> {
                 log.warn("Asking {} for the SSH fingerprints of the core node returned {}", uri, response.statusCode());
                 return Set.of();
             }
-            Map<String, List<String>> fingerprints = JsonObjectMapper.get().readValue(response.body(), new TypeReference<Map<String, List<String>>>() {
-            });
-            if (fingerprints == null) {
+            SshHostKeyFingerprintsDTO published = JsonObjectMapper.get().readValue(response.body(), SshHostKeyFingerprintsDTO.class);
+            if (published == null || published.hostKeys() == null) {
                 return Set.of();
             }
-            return fingerprints.values().stream().flatMap(List::stream).collect(Collectors.toUnmodifiableSet());
+            return published.hostKeys().stream().filter(Objects::nonNull).map(SshHostKeyFingerprintDTO::fingerprint).filter(Objects::nonNull)
+                    .collect(Collectors.toUnmodifiableSet());
         }
         catch (InterruptedException _) {
             Thread.currentThread().interrupt();

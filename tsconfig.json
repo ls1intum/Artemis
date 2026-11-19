@@ -43,6 +43,12 @@
         // Only the Angular compiler checks this (`ng build`, `ng serve`, the language service): Vitest compiles
         // templates JIT and `tsc` ignores them.
         "strictUnclaimedEventNames": true,
+        // Fails the build (NG8001) on an unknown element even when an attribute directive matches it, for example
+        // `<my-picker formControlName="x" />` in a component that does not import `my-picker`.
+        "strictUnknownElements": true,
+        // Fails the build (NG8002) on a binding to a property that `<ng-template>` does not have, which catches a
+        // misspelled structural directive input instead of ignoring it.
+        "strictNgTemplateTypes": true,
         "preserveWhitespaces": true,
         "extendedDiagnostics": {
             "checks": {
@@ -54,7 +60,12 @@
                 // Enforced: every `??` whose left side is non-nullable has been removed (genuine dead code) or,
                 // where the guard is needed at runtime (index access / a lazily-initialized signal), moved into a
                 // typed component method so the fallback is expressed in TS rather than the template.
-                "nullishCoalescingNotNullable": "error"
+                "nullishCoalescingNotNullable": "error",
+                // Enforced: a node that silently misses its content projection slot because of the surrounding
+                // control flow block is a rendering bug, not a style issue.
+                "controlFlowPreventingContentProjection": "error",
+                // Enforced: a unitless number bound to a length property (`[style.height]="200"`) has no effect.
+                "numericCssPropertyRequiresUnit": "error"
             }
         }
     },
