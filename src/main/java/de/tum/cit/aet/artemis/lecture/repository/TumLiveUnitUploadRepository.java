@@ -171,14 +171,19 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
      * @param lectureUnitId the attachment video unit
      * @param ref           the pending reference
      * @param streamId      its TUM.Live lecture
+     * @return whether the upload was still pending
      */
     @Transactional
-    default void recordPendingStream(long lectureUnitId, String ref, long streamId) {
-        findAttachmentVideoUnitForUpdateById(lectureUnitId).flatMap(ignored -> findForUpdateByLectureUnitId(lectureUnitId)).filter(upload -> ref.equals(upload.getPendingRef()))
-                .ifPresent(upload -> {
-                    upload.setPendingStreamId(streamId);
-                    saveAndFlush(upload);
-                });
+    default boolean recordPendingStream(long lectureUnitId, String ref, long streamId) {
+        var pending = findAttachmentVideoUnitForUpdateById(lectureUnitId).flatMap(ignored -> findForUpdateByLectureUnitId(lectureUnitId))
+                .filter(upload -> ref.equals(upload.getPendingRef()));
+        if (pending.isEmpty()) {
+            return false;
+        }
+        TumLiveUnitUpload upload = pending.get();
+        upload.setPendingStreamId(streamId);
+        saveAndFlush(upload);
+        return true;
     }
 
     /**

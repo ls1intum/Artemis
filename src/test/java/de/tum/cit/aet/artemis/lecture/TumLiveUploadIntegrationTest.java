@@ -451,6 +451,8 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
     void editorsSeeTheStateAndCannotUploadWithoutConnection() throws Exception {
         mockMvc.perform(get("/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload")).andExpect(status().isOk()).andExpect(jsonPath("$.connected").value(false));
         mockMvc.perform(post("/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload")).andExpect(status().isConflict());
+        mockMvc.perform(post("/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload/file").param("ref", ref("test")).contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .content(new byte[] { 1 })).andExpect(status().isConflict());
         mockMvc.perform(delete("/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload").param("ref", ref("none"))).andExpect(status().isNoContent());
     }
 
@@ -476,6 +478,8 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
     void studentsCannotUpload() throws Exception {
         mockMvc.perform(get("/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload")).andExpect(status().isForbidden());
         mockMvc.perform(post("/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload")).andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload/file").param("ref", ref("test")).contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .content(new byte[] { 1 })).andExpect(status().isForbidden());
         mockMvc.perform(delete("/api/lecture/lecture-units/" + unit.getId() + "/tumlive-upload").param("ref", ref("none"))).andExpect(status().isForbidden());
         mockMvc.perform(get("/api/lecture/courses/" + lecture.getCourse().getId() + "/tumlive-uploads")).andExpect(status().isForbidden());
     }

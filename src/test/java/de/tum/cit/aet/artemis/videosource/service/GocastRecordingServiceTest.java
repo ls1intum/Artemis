@@ -29,7 +29,7 @@ class GocastRecordingServiceTest {
     private final GocastConnectorService connectorService = mock(GocastConnectorService.class);
 
     private final GocastRecordingService service = new GocastRecordingService(connectionRepository, connectorService,
-            new TumLiveService(RestClient.builder(), "https://live.rbg.tum.de/api/v2"));
+            new TumLiveService(RestClient.builder(), "https://live.rbg.tum.de/api/v2"), RestClient.create());
 
     private static BindingSnapshot binding(GocastBindingStatus status) {
         return new BindingSnapshot(7, 17, 456, 23, 0, status, "algo", "Algorithms", "enrolled");

@@ -48,7 +48,7 @@
             "discard": "Discard upload",
             "attached": "The video is ready and attached to this unit.",
             "transferFailed": "The upload failed: {{ reason }}. Try again.",
-            "unreachable": "TUM.Live could not be reached, or the upload link has expired. Try again.",
+            "unreachable": "The upload connection was interrupted. Try again.",
             "lastError": "The last upload was not attached: {{ reason }}",
             "deleteRecording": "Also delete the video in TUM.Live",
             "deleteRecordings": "Also delete the videos uploaded to TUM.Live for this lecture"

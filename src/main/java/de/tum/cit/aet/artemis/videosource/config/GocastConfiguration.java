@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 @Configuration
@@ -38,6 +39,20 @@ public class GocastConfiguration {
         var requestFactory = new JdkClientHttpRequestFactory(httpClient);
         requestFactory.setReadTimeout(READ_TIMEOUT);
         return builder.clone().baseUrl(settings.apiBaseUri().toString()).defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey).requestFactory(requestFactory).build();
+    }
+
+    /**
+     * Creates a client for upload tickets, separate from the API-key client and without URI observations.
+     *
+     * @return the streaming upload client
+     */
+    @Bean
+    public RestClient gocastUploadRestClient() {
+        var requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(CONNECT_TIMEOUT);
+        requestFactory.setReadTimeout(Duration.ofMinutes(2));
+        requestFactory.setChunkSize(64 * 1024);
+        return RestClient.builder().requestFactory(requestFactory).build();
     }
 
     static URI validateBaseUrl(String value, String label) {
