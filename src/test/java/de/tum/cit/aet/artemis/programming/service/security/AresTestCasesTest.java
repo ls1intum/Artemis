@@ -108,6 +108,8 @@ class AresTestCasesTest {
     @Test
     void readsTheSignaturesThatDecideWhetherASubclassOverridesATestMethod() {
         String source = """
+                import java.util.List;
+
                 class SortingTest {
 
                     @Test
@@ -125,8 +127,8 @@ class AresTestCasesTest {
                 """;
 
         AresTestCases.TestSignature check = new AresTestCases.TestSignature("check", "check()", false);
-        AresTestCases.TestSignature overload = new AresTestCases.TestSignature("check", "check(Map,int[],String[])", true);
-        AresTestCases.TestSignature sorts = new AresTestCases.TestSignature("sorts", "sorts(List)", true);
+        AresTestCases.TestSignature overload = new AresTestCases.TestSignature("check", "check(java.util.Map,int[],?String[])", true);
+        AresTestCases.TestSignature sorts = new AresTestCases.TestSignature("sorts", "sorts(java.util.List)", true);
         assertThat(AresTestCases.testSignatures(AresPolicyAnnotations.mask(source)).values()).containsExactlyInAnyOrder(check, overload, sorts);
     }
 

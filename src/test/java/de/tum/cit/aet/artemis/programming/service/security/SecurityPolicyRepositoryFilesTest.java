@@ -556,6 +556,46 @@ class SecurityPolicyRepositoryFilesTest {
         }
     }
 
+    @ParameterizedTest
+    @CsvSource({ "java.util.Date, false", "java.sql.Date, true" })
+    void anOverrideMustTakeTheSameParameterTypesAsTheInheritedTestMethod(String importedDate, boolean unsupported) throws IOException {
+        writeBuildFile();
+        String withMethodPolicy = TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()",
+                "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)");
+        writeSource("test/de/example/SortingTest.java", withMethodPolicy);
+        String override = """
+                package de.other;
+
+                import %s;
+
+                import org.junit.jupiter.api.Test;
+
+                import de.example.SortingTest;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+
+                @Public
+                %s
+                class MoreSortingTest extends SortingTest {
+
+                    @Test
+                    public void runs(Date date) {
+                    }
+                }
+                """.formatted(importedDate, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        writeSource("test/de/other/MoreSortingTest.java", override);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // A method with a parameter of another type with the same simple name is an overload, so the inherited test still runs with the sandbox.
+        SecurityFrameworkState.UnsupportedReason reason = new SecurityFrameworkState.UnsupportedReason("de.other.MoreSortingTest",
+                SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS);
+        if (unsupported) {
+            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).contains(reason);
+        }
+        else {
+            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).doesNotContain(reason);
+        }
+    }
+
     @Test
     void aMarkerTheFileDeclaresItselfDoesNotRegisterAres() throws IOException {
         writeBuildFile();

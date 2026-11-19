@@ -62,6 +62,11 @@ final class AresTestCases {
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
+    private static final Set<String> PRIMITIVE_TYPES = Set.of("boolean", "byte", "char", "short", "int", "long", "float", "double");
+
+    /** Marks a simple type name in a {@link TestSignature} that may refer to a type of the package, of {@code java.lang} or of a wildcard import. */
+    private static final char UNRESOLVED_TYPE = '?';
+
     /** The modifier {@code final} of a parameter. */
     private static final Pattern FINAL_MODIFIER = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})final(?!\\p{javaJavaIdentifierPart})");
 
@@ -144,10 +149,20 @@ final class AresTestCases {
      * What decides whether a method of a subclass overrides a test method: the name and the erased types of its parameters, and its visibility.
      *
      * @param name                   the name of the method
-     * @param text                   the name with the simple names of the erased parameter types, e.g. {@code check(int,List,String[])}
+     * @param text                   the name with the erased parameter types, e.g. {@code check(int,java.util.List,?String[])}: qualified where the
+     *                                   source writes or imports them qualified, and marked with {@code ?} where the simple name may refer to a type of
+     *                                   the package, of {@code java.lang} or of a wildcard import
      * @param visibleInOtherPackages whether it is public or protected, so that a subclass in another package overrides it, too
      */
     record TestSignature(String name, String text, boolean visibleInOtherPackages) {
+
+        /**
+         * @return whether a parameter type is a simple name that is resolved only where the method is declared, so the same text in a file of another
+         *         package may name another type
+         */
+        boolean dependsOnPackage() {
+            return text.indexOf(UNRESOLVED_TYPE) >= 0;
+        }
     }
 
     /**
@@ -156,6 +171,7 @@ final class AresTestCases {
      */
     static Map<Integer, TestSignature> testSignatures(String masked) {
         Map<Integer, TestSignature> signatures = new HashMap<>();
+        Map<String, String> imported = importedTypes(masked);
         for (MatchResult annotation : testAnnotations(masked)) {
             MatchResult method = methodAfter(masked, annotation.end());
             if (method != null && !signatures.containsKey(method.start(1))) {
@@ -165,7 +181,8 @@ final class AresTestCases {
                 int memberStart = Math.max(Math.max(masked.lastIndexOf(';', annotation.start()), masked.lastIndexOf('}', annotation.start())),
                         masked.lastIndexOf('{', annotation.start())) + 1;
                 boolean visible = VISIBLE_IN_OTHER_PACKAGES.matcher(masked.substring(memberStart, method.start(1))).find();
-                signatures.put(method.start(1), new TestSignature(method.group(1), method.group(1) + "(" + parameterTypes(parameters) + ")", visible));
+                String text = method.group(1) + "(" + parameterTypes(parameters, imported) + ")";
+                signatures.put(method.start(1), new TestSignature(method.group(1), text, visible));
             }
         }
         return signatures;
@@ -180,12 +197,7 @@ final class AresTestCases {
      * @return the matches of {@link #TEST_ANNOTATION} that are test annotations, in the order of the source
      */
     private static List<MatchResult> testAnnotations(String masked) {
-        Map<String, String> imported = new HashMap<>();
-        Matcher imports = SINGLE_TYPE_IMPORT.matcher(masked);
-        while (imports.find()) {
-            String type = WHITESPACE.matcher(imports.group(1)).replaceAll("");
-            imported.putIfAbsent(type.substring(type.lastIndexOf('.') + 1), type);
-        }
+        Map<String, String> imported = importedTypes(masked);
         List<MatchResult> annotations = new ArrayList<>();
         Matcher annotation = TEST_ANNOTATION.matcher(masked);
         while (annotation.find()) {
@@ -203,9 +215,23 @@ final class AresTestCases {
     }
 
     /**
-     * @return the simple names of the erased types of the parameters, separated by commas; a variable arity parameter is an array
+     * @return the types the single-type imports of the masked source name, by their simple names
      */
-    private static String parameterTypes(String parameters) {
+    private static Map<String, String> importedTypes(String masked) {
+        Map<String, String> imported = new HashMap<>();
+        Matcher imports = SINGLE_TYPE_IMPORT.matcher(masked);
+        while (imports.find()) {
+            String type = WHITESPACE.matcher(imports.group(1)).replaceAll("");
+            imported.putIfAbsent(type.substring(type.lastIndexOf('.') + 1), type);
+        }
+        return imported;
+    }
+
+    /**
+     * @param imported the types the single-type imports of the source name, by their simple names
+     * @return the erased types of the parameters, separated by commas, see {@link TestSignature#text()}; a variable arity parameter is an array
+     */
+    private static String parameterTypes(String parameters, Map<String, String> imported) {
         List<String> types = new ArrayList<>();
         StringBuilder parameter = new StringBuilder();
         int typeArguments = 0;
@@ -225,7 +251,7 @@ final class AresTestCases {
                 typeArguments--;
             }
             else if (character == ',' && typeArguments == 0) {
-                types.add(erasedType(parameter.toString()));
+                types.add(erasedType(parameter.toString(), imported));
                 parameter.setLength(0);
             }
             else if (typeArguments == 0) {
@@ -234,16 +260,17 @@ final class AresTestCases {
             position++;
         }
         if (!parameter.toString().isBlank()) {
-            types.add(erasedType(parameter.toString()));
+            types.add(erasedType(parameter.toString(), imported));
         }
         return String.join(",", types);
     }
 
     /**
      * @param parameter the declaration of a parameter without its annotations and type arguments, e.g. {@code final java.util.List values}
-     * @return the simple name of its type, with the brackets of an array, e.g. {@code List} or {@code String[]}
+     * @param imported  the types the single-type imports of the source name, by their simple names
+     * @return its type, with the brackets of an array, e.g. {@code java.util.List}, {@code int} or {@code ?String[]}, see {@link TestSignature#text()}
      */
-    private static String erasedType(String parameter) {
+    private static String erasedType(String parameter, Map<String, String> imported) {
         String declaration = FINAL_MODIFIER.matcher(parameter).replaceAll(" ").strip();
         Matcher name = PARAMETER_NAME.matcher(declaration);
         String dimensions = "";
@@ -254,7 +281,12 @@ final class AresTestCases {
         String type = WHITESPACE.matcher(declaration).replaceAll("").replace("...", "[]") + dimensions;
         int arrayStart = type.indexOf('[');
         String baseType = arrayStart < 0 ? type : type.substring(0, arrayStart);
-        return baseType.substring(baseType.lastIndexOf('.') + 1) + (arrayStart < 0 ? "" : type.substring(arrayStart));
+        String arrayDimensions = arrayStart < 0 ? "" : type.substring(arrayStart);
+        if (baseType.indexOf('.') >= 0 || PRIMITIVE_TYPES.contains(baseType)) {
+            return baseType + arrayDimensions;
+        }
+        String importedType = imported.get(baseType);
+        return (importedType != null ? importedType : UNRESOLVED_TYPE + baseType) + arrayDimensions;
     }
 
     /**
