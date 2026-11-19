@@ -354,14 +354,16 @@ describe('TextblockAssessmentCardComponent', () => {
         expect(component.didDelete.emit).not.toHaveBeenCalled();
     });
 
-    it('should delete feedback when the dismiss icon is clicked via a real DOM click (regression: click must not bubble into select())', () => {
+    it('should confirm feedback deletion from a real DOM click without bubbling into select()', () => {
         const textBlockRef = component.textBlockRef();
         textBlockRef.initFeedback();
         reapplyTextBlockRef(textBlockRef);
 
-        const dismissIcon = fixture.debugElement.nativeElement.querySelector('#dismiss-icon') as HTMLButtonElement;
-        expect(dismissIcon).toBeTruthy();
-        dismissIcon.click();
+        const deleteButton = fixture.debugElement.nativeElement.querySelector('[data-testid="delete-feedback"] button') as HTMLButtonElement;
+        expect(deleteButton).toBeTruthy();
+        deleteButton.click();
+        expect(component.textBlockRef().feedback).toBeDefined();
+        deleteButton.click();
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.textBlockRef().feedback).toBeUndefined();
@@ -388,7 +390,7 @@ describe('TextblockAssessmentCardComponent', () => {
      * The click has to go through the DOM: calling `dismiss()` on the editor directly never bubbles, which is why the
      * existing tests above did not catch this.
      */
-    it('should delete the feedback of an automatic text block when the close control is clicked', () => {
+    it('should delete the feedback of an automatic text block after confirming the close control', () => {
         const block = new TextBlock();
         block.type = TextBlockType.AUTOMATIC;
         block.text = 'a line of the submission';
@@ -396,13 +398,13 @@ describe('TextblockAssessmentCardComponent', () => {
         fixture.componentRef.setInput('textBlockRef', textBlockRef);
         fixture.changeDetectorRef.detectChanges();
 
-        const dismissIcon = fixture.debugElement.query(By.css('#dismiss-icon'));
-        expect(dismissIcon).toBeTruthy();
+        const deleteButton = fixture.debugElement.query(By.css('[data-testid="delete-feedback"] button'));
+        expect(deleteButton).toBeTruthy();
 
-        // No change detection afterwards on purpose: the click handlers run synchronously, and in the real page the parent
-        // destroys this editor in response to didSelect(undefined). Re-rendering it here instead would only exercise the
-        // test's own missing parent wiring.
-        dismissIcon.nativeElement.click();
+        // No change detection afterwards on purpose: confirming deletion emits didSelect(undefined) synchronously, and the real parent destroys this editor.
+        deleteButton.nativeElement.click();
+        expect(textBlockRef.feedback).toBeDefined();
+        deleteButton.nativeElement.click();
 
         expect(textBlockRef.feedback).toBeUndefined();
     });

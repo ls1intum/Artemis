@@ -1,6 +1,9 @@
 <div class="unreferenced-feedback-detail" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
     <jhi-unified-feedback
+        [assessmentLayout]="true"
+        (applyInstruction)="applyArmedInstruction()"
         [editable]="true"
+        (instructionUnlinked)="emitChanges()"
         [readOnly]="readOnly()"
         [feedback]="feedback()"
         [highlightDifferences]="highlightDifferences()"

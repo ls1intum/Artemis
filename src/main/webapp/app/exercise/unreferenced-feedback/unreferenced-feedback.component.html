@@ -1,8 +1,9 @@
-<div class="unreferenced-feedback" (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
-    <button type="button" tumAetUiButton severity="success" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
+<ng-template #addButton>
+    <button type="button" tumAetUiButton severity="primary" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
         <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
     </button>
-
+</ng-template>
+<div class="unreferenced-feedback" (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
     <!-- Section header: the title on the leading edge, the point balance of this list on the trailing edge. -->
     <div class="unreferenced-feedback__header">
         <h4 class="unreferenced-feedback__title" jhiTranslate="artemisApp.assessment.detail.feedback"></h4>
@@ -33,13 +34,16 @@
                 </div>
             </dl>
         }
+        @if (!placeAddButtonWithOtherGroup()) {
+            <ng-container [ngTemplateOutlet]="addButton" />
+        }
     </div>
 
     @if (unreferencedFeedback.length === 0) {
         <tumaet-ui-message severity="secondary" styleClass="mt-2" [text]="'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate" />
     }
 
-    @for (group of feedbackGroups(); track $index) {
+    @for (group of feedbackGroups(); track group.key) {
         <section class="unreferenced-feedback__group">
             @if (showGroupHeaders()) {
                 <header class="unreferenced-feedback__group-header">
@@ -48,7 +52,12 @@
                     } @else {
                         <h5 class="unreferenced-feedback__group-title">{{ group.title }}</h5>
                     }
-                    <tumaet-ui-tag [severity]="group.pointsSeverity" [value]="'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: group.points }" />
+                    <div class="unreferenced-feedback__group-actions">
+                        <tumaet-ui-tag [severity]="group.pointsSeverity" [value]="'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: group.points }" />
+                        @if (placeAddButtonWithOtherGroup() && group.translateTitle) {
+                            <ng-container [ngTemplateOutlet]="addButton" />
+                        }
+                    </div>
                 </header>
             }
             <div class="unreferenced-feedback__cards">

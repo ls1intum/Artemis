@@ -30,6 +30,8 @@ export const TUM_AET_UI_DEFAULT_TRANSLATIONS = {
     'tumAetUi.datePicker.timeDialog': 'Choose time',
     'tumAetUi.datePicker.timePlaceholder': 'HH:mm',
     'tumAetUi.dialog.close': 'Close',
+    'tumAetUi.inputNumber.increment': 'Increase value',
+    'tumAetUi.inputNumber.decrement': 'Decrease value',
     'tumAetUi.splitter.resize': 'Resize panels',
     'tumAetUi.message.dismiss': 'Dismiss',
     'tumAetUi.multiSelect.selected': '{count} selected',

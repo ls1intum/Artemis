@@ -23,6 +23,7 @@ import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-edit
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
@@ -117,6 +118,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     isProblemStatementVisible = input<boolean>(true);
     showNavbar = input<boolean>(true);
     course = input<Course | undefined>();
+    gradingCriteria = input<GradingCriterion[]>([]);
     selectedRepository = input<RepositoryType>();
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
     enableExerciseReviewComments = input<boolean>(false);
@@ -159,8 +161,27 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     set selectedFile(file: string | undefined) {
+        if (file !== this.selectedFileValue() && !this.canSwitchFile()) {
+            return;
+        }
         this.selectedFileValue.set(file);
     }
+
+    hasUnsavedInlineFeedback(): boolean {
+        return this.isTutorAssessment() && (this.monacoEditor()?.hasUnsavedInlineFeedback() ?? false);
+    }
+
+    discardUnsavedInlineFeedback(): void {
+        this.monacoEditor()?.discardUnsavedInlineFeedback();
+    }
+
+    readonly canSwitchFile = (): boolean => {
+        if (!this.hasUnsavedInlineFeedback()) {
+            return true;
+        }
+        this.alertService.error('artemisApp.programmingAssessment.saveInlineFeedbackFirst');
+        return false;
+    };
 
     get problemStatementIdentifier(): string {
         return PROBLEM_STATEMENT_IDENTIFIER;
@@ -464,7 +485,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * The user will be warned if there are unsaved changes when trying to leave the code-editor.
      */
     canDeactivate() {
-        return _isEmpty(this.unsavedFiles);
+        return _isEmpty(this.unsavedFiles) && !this.hasUnsavedInlineFeedback();
     }
 
     allowNextUnloadWithoutConfirmation(): void {

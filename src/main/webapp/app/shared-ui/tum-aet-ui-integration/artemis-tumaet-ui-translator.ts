@@ -32,6 +32,8 @@ const ARTEMIS_TRANSLATION_KEYS = {
     'tumAetUi.datePicker.timePlaceholder': 'global.datePicker.timePlaceholder',
     'tumAetUi.datePicker.timeZoneWarning': 'entity.timeZoneWarning',
     'tumAetUi.dialog.close': 'entity.action.close',
+    'tumAetUi.inputNumber.increment': 'global.inputNumber.increment',
+    'tumAetUi.inputNumber.decrement': 'global.inputNumber.decrement',
     'tumAetUi.splitter.resize': 'global.generic.resizePanels',
     'tumAetUi.message.dismiss': 'entity.action.dismiss',
     'tumAetUi.multiSelect.selected': 'global.generic.selectedCount',
