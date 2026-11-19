@@ -467,7 +467,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
 
-        var page = participationService.findParticipationsForExercise(programmingExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
+        var page = participationService.findParticipationsForExercise(programmingExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null),
+                Set.of());
 
         assertThat(page.getContent()).as("the participation is listed").hasSize(1);
         var dto = page.getContent().getFirst();
@@ -492,7 +493,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         Result latestResult = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, FIXED_EXERCISE_DUE_DATE.minusMinutes(1), submission, true, true, 85.0);
         User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
 
-        var page = participationService.findParticipationsForExercise(programmingExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
+        var page = participationService.findParticipationsForExercise(programmingExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null),
+                Set.of());
 
         assertThat(page.getContent()).as("the participation is listed").hasSize(1);
         var dto = page.getContent().getFirst();
@@ -522,7 +524,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
         var managementPage = participationService.findParticipationsForExercise(teamExercise,
-                new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
+                new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null), Set.of());
 
         assertThat(managementPage.getContent()).as("the team participation is listed").hasSize(1);
         var managementDto = managementPage.getContent().getFirst();

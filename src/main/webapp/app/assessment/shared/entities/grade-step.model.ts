@@ -15,12 +15,6 @@ export interface GradeStep extends BaseEntity {
     isPassingGrade: boolean;
 }
 
-export interface GradeDTO {
-    gradeName: string;
-    isPassingGrade: boolean;
-    gradeType: GradeType;
-}
-
 export interface GradeStepsDTO {
     title: string;
     gradeType: GradeType;

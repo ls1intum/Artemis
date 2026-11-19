@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.metadata.EmptyUsage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
@@ -715,9 +714,9 @@ public class CompetencyOrchestrationService {
      * The orchestrator owns its model config: the orchestrator deployment / temperature / reasoning
      * effort from {@link AtlasOrchestratorProperties} are applied via {@link #buildChatOptions()} and
      * handed to the harness, which performs the call with chat memory OFF (each run is a fresh call).
-     * The {@link ChatResponse} (rather than just its content) is returned so the round's token usage
-     * is persisted via {@link LLMTokenUsageService}, feeding the existing per-course LLM cost views.
-     * Tracking is best-effort: it never throws, and {@code userId} resolves to {@code null} when there
+     * Each provider response is persisted via {@link LLMTokenUsageService} before tool execution
+     * and usage accumulation, feeding the per-course LLM cost views. The final response is returned
+     * for completion checks only. Tracking is best-effort, and {@code userId} resolves to {@code null} when there
      * is no {@code SecurityContext} (e.g. a scheduler-driven run).
      * <p>
      * {@code preparedContent} seeds the invocation content cache, so orchestrator and worker detail reads
@@ -735,10 +734,13 @@ public class CompetencyOrchestrationService {
         toolContext.put(OrchestratorToolContextKeys.DELEGATION_COUNT_KEY, new AtomicInteger());
         AtlasToolCallBudget budget = AtlasToolCallBudget.budgetForContext(toolContext);
         budget.seedContent(preparedContent);
+        Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
         ChatResponse chatResponse;
         try {
             chatResponse = delegationService.delegateOrchestratorRound(systemPrompt,
                     "Plan the competency-management work, delegate semantic batches in dependency order, verify the final index, and terminate explicitly.", options, toolContext,
+                    response -> llmTokenUsageService.trackModelCallTokenUsage(response, LLMServiceType.ATLAS, ORCHESTRATION_PIPELINE_ID,
+                            builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId)),
                     orchestratorReadToolCallbackProvider, orchestratorPlanningToolCallbackProvider, orchestratorDelegationToolCallbackProvider, terminalToolCallbackProvider);
         }
         catch (RuntimeException ex) {
@@ -747,26 +749,11 @@ public class CompetencyOrchestrationService {
             }
             throw ex;
         }
-        Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
-        if (chatResponse != null) {
-            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.ATLAS, ORCHESTRATION_PIPELINE_ID,
-                    builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
-            if (Boolean.FALSE.equals(chatResponse.getMetadata().get(AtlasResponsesChatModel.USAGE_COMPLETE_METADATA_KEY))) {
-                if (chatResponse.getMetadata().getUsage() instanceof EmptyUsage) {
-                    log.warn("Atlas orchestration usage is unavailable for course {}; no zero-cost record is stored", courseId);
-                }
-                else {
-                    log.warn("Atlas orchestration usage is incomplete for course {}; storing the reported partial usage", courseId);
-                }
-            }
-        }
-        else {
-            log.warn("Atlas orchestration usage is unavailable for course {}; no zero-cost record is stored", courseId);
-        }
         AtlasToolCallBudget.checkResponse(chatResponse, toolContext);
         if (chatResponse != null && chatResponse.getResult() != null) {
             String finish = chatResponse.getResult().getMetadata().getFinishReason();
-            if (java.util.Set.of("failed", "incomplete", "cancelled", "queued", "in_progress", "missing_status").contains(finish == null ? "" : finish)) {
+            if (java.util.Set.of("failed", "incomplete", "cancelled", "queued", "in_progress", "missing_status", "unsupported_output", "invalid_usage")
+                    .contains(finish == null ? "" : finish)) {
                 throw new IllegalStateException("Atlas Responses request did not complete: " + finish);
             }
         }

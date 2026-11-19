@@ -6,7 +6,7 @@ import { BehaviorSubject, EMPTY, Observable, Subject, of, throwError } from 'rxj
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -20,7 +20,6 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -71,7 +70,7 @@ import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/s
 import { ScienceService } from 'app/foundation/science/science.service';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
-import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -199,7 +198,6 @@ describe('CourseOverviewComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([]),
-                MockModule(NgbTooltipModule),
                 FaIconComponent,
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -231,12 +229,14 @@ describe('CourseOverviewComponent', () => {
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseConversationsService, useClass: MockCourseConversationsService },
-                { provide: NgbDropdown, useClass: MockDirective(NgbDropdown) },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ScienceSettingsService, useValue: scienceSettingsServiceMock },
-                { provide: FeatureToggleService, useValue: { getFeatureToggleActive: () => scienceFeatureActive.asObservable() } },
+                {
+                    provide: FeatureToggleService,
+                    useValue: { getFeatureToggleActive: () => scienceFeatureActive.asObservable(), getFeatureToggles: () => of(Object.values(FeatureToggle)) },
+                },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

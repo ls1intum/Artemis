@@ -5,13 +5,13 @@
 }
 
 .sufficient-performance {
-    background: rgba(127, 127, 127, 255);
+    background: var(--graph-grey);
 }
 
 .insufficient-performance {
-    background: rgba(204, 0, 0, 1);
+    background: var(--graph-red);
 }
 
 .critical-performance {
-    background: rgba(230, 174, 6, 1);
+    background: var(--graph-yellow);
 }

@@ -5,13 +5,12 @@ import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lect
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { TextUnitService } from 'app/lecture/manage/lecture-units/services/text-unit.service';
+import { TextUnitApi } from 'app/openapi/api/text-unit-api';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
-import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,7 +32,7 @@ describe('CreateTextUnitComponent', () => {
         await TestBed.configureTestingModule({
             imports: [],
             providers: [
-                MockProvider(TextUnitService),
+                MockProvider(TextUnitApi),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -93,25 +92,16 @@ describe('CreateTextUnitComponent', () => {
 
     it('should send POST request upon form submission and navigate', async () => {
         const router: Router = TestBed.inject(Router);
-        const textUnitService = TestBed.inject(TextUnitService);
+        const textUnitApi = TestBed.inject(TextUnitApi);
         const formDate: TextUnitFormData = {
             name: 'Test',
             releaseDate: dayjs().year(2010).month(3).date(5),
             content: 'Lorem Ipsum',
         };
 
-        const persistedTextUnit: TextUnit = new TextUnit();
-        persistedTextUnit.id = 1;
-        persistedTextUnit.name = formDate.name;
-        persistedTextUnit.releaseDate = formDate.releaseDate;
-        persistedTextUnit.content = formDate.content;
-
-        const response: HttpResponse<TextUnit> = new HttpResponse({
-            body: persistedTextUnit,
-            status: 200,
-        });
-
-        const createStub = vi.spyOn(textUnitService, 'create').mockReturnValue(of(response));
+        const createStub = vi
+            .spyOn(textUnitApi, 'createTextUnit')
+            .mockReturnValue(of({ id: 1, name: formDate.name, releaseDate: formDate.releaseDate!.toISOString(), content: formDate.content, type: 'text' }));
         const navigateSpy = vi.spyOn(router, 'navigate');
 
         createTextUnitComponentFixture.detectChanges();
@@ -121,7 +111,11 @@ describe('CreateTextUnitComponent', () => {
         textUnitForm.formSubmitted.emit(formDate);
 
         await createTextUnitComponentFixture.whenStable();
-        expect(createStub).toHaveBeenCalledTimes(1);
+        expect(createStub).toHaveBeenCalledOnce();
+        expect(createStub).toHaveBeenCalledWith(
+            1,
+            expect.objectContaining({ name: 'Test', content: 'Lorem Ipsum', releaseDate: formDate.releaseDate!.toISOString(), competencyLinks: [] }),
+        );
         expect(navigateSpy).toHaveBeenCalledTimes(1);
         navigateSpy.mockRestore();
     });

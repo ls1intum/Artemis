@@ -11,7 +11,9 @@ import { alertIfAssessmentNotPossibleYet } from 'app/assessment/shared/util/asse
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
-import { AssessmentUploadError, AssessmentUploadResult, AssessmentUploadService } from 'app/assessment/manage/services/assessment-upload.service';
+import { AssessmentUploadApi } from 'app/openapi/api/assessment-upload-api';
+import { AssessmentUploadError } from 'app/openapi/model/assessment-upload-error';
+import { AssessmentUploadResult } from 'app/openapi/model/assessment-upload-result';
 
 /**
  * Dialog that lets an instructor upload a zip file with manual assessments for the participants of a programming exercise. The file can be selected via the file system or dropped
@@ -42,7 +44,7 @@ import { AssessmentUploadError, AssessmentUploadResult, AssessmentUploadService 
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AssessmentUploadDialogComponent {
-    private readonly assessmentUploadService = inject(AssessmentUploadService);
+    private readonly assessmentUploadApi = inject(AssessmentUploadApi);
     private readonly alertService = inject(AlertService);
 
     private readonly datePipe = inject(ArtemisDatePipe);
@@ -138,8 +140,8 @@ export class AssessmentUploadDialogComponent {
         }
         this.isUploading.set(true);
         this.errors.set([]);
-        this.assessmentUploadService.uploadManualAssessments(this.exerciseId(), file).subscribe({
-            next: (response) => this.handleUploadResult(response.body ?? { numberOfCreatedAssessments: 0 }),
+        this.assessmentUploadApi.uploadManualAssessments(this.exerciseId(), file).subscribe({
+            next: (result) => this.handleUploadResult(result),
             error: (error: HttpErrorResponse) => {
                 this.isUploading.set(false);
                 // The exam guard marks its response skipAlert so the date it names can be localized here, which means the global interceptor stays silent and the dialog
@@ -155,9 +157,9 @@ export class AssessmentUploadDialogComponent {
         if (result.errors?.length) {
             this.errors.set(result.errors);
         } else {
-            this.alertService.success('artemisApp.assessmentUpload.success', { count: result.numberOfCreatedAssessments });
+            this.alertService.success('artemisApp.assessmentUpload.success', { count: result.numberOfCreatedAssessments ?? 0 });
             // Notify the parent so it can refresh the assessment counts, chart and assessable-submission state that this import just changed.
-            this.uploaded.emit(result.numberOfCreatedAssessments);
+            this.uploaded.emit(result.numberOfCreatedAssessments ?? 0);
             this.close();
         }
     }
@@ -171,7 +173,7 @@ export class AssessmentUploadDialogComponent {
             return;
         }
         this.isDownloadingTemplate.set(true);
-        this.assessmentUploadService.downloadTemplate(this.exerciseId()).subscribe({
+        this.assessmentUploadApi.downloadManualAssessmentTemplate(this.exerciseId()).subscribe({
             next: (response) => {
                 downloadZipFileFromResponse(response);
                 this.isDownloadingTemplate.set(false);

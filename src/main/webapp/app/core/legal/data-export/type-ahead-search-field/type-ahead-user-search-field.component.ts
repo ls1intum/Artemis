@@ -5,7 +5,7 @@ import { UserService } from 'app/account/user/shared/user.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/account/user/user.model';
 import { FormsModule } from '@angular/forms';
-import { AutoCompleteCompleteEvent, AutoCompleteModule, AutoCompleteSelectEvent } from 'primeng/autocomplete';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -13,7 +13,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-type-ahead-user-search-field',
     templateUrl: './type-ahead-user-search-field.component.html',
-    imports: [TranslateDirective, FormsModule, AutoCompleteModule, FaIconComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, TumAetUiAutoCompleteComponent, FaIconComponent, ArtemisTranslatePipe],
 })
 export class TypeAheadUserSearchFieldComponent {
     private readonly userService = inject(UserService);
@@ -30,7 +30,7 @@ export class TypeAheadUserSearchFieldComponent {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly MIN_SEARCH_QUERY_LENGTH = 3;
 
-    /** Drives the search pipeline from the PrimeNG (completeMethod) event. */
+    /** Drives the search pipeline from the autocomplete (searchRequested) event. */
     private readonly query$ = new Subject<string>();
 
     constructor() {
@@ -71,11 +71,17 @@ export class TypeAheadUserSearchFieldComponent {
         );
     };
 
-    onComplete(event: AutoCompleteCompleteEvent): void {
+    onComplete(event: TumAetUiAutoCompleteSearchEvent): void {
         this.query$.next(event.query);
     }
 
-    onSelectUser(event: AutoCompleteSelectEvent): void {
+    /** The autocomplete reports the typed text, a selected user, or undefined once the input is empty. */
+    onValueChange(value: string | User | undefined): void {
+        this.loginOrName.set(value ?? '');
+        this.onChange();
+    }
+
+    onSelectUser(event: TumAetUiAutoCompleteOptionEvent): void {
         this.loginOrName.set(event.value as User);
         this.onChange();
     }
@@ -94,7 +100,7 @@ export class TypeAheadUserSearchFieldComponent {
         const tooShort = normalizedValue.length < this.MIN_SEARCH_QUERY_LENGTH;
         this.searchQueryTooShort.set(tooShort);
         if (tooShort) {
-            // Below minLength PrimeNG stops firing (completeMethod), so route the short value through the pipeline
+            // Below minLength the autocomplete stops firing (searchRequested), so route the short value through the pipeline
             // ourselves: switchMap then cancels any in-flight search and clears the now-stale suggestions.
             this.query$.next(normalizedValue);
         }

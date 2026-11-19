@@ -3,10 +3,18 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -58,6 +66,7 @@ import de.tum.cit.aet.artemis.core.service.ElevatedAccessService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
+import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.PlatformOrigins;
 
 /**
  * Configuration class defining authentication and authorization mechanism for all application endpoints
@@ -136,6 +145,9 @@ public class SecurityConfiguration {
      */
     @Value("${artemis.security.frame-ancestors:}")
     private String frameAncestors = "";
+
+    @Nullable
+    private final AtomicReference<CachedContentSecurityPolicy> cachedContentSecurityPolicy = new AtomicReference<>();
 
     /** One origin of {@code artemis.security.frame-ancestors}, optionally with a leading wildcard host label and a port. */
     private static final Pattern FRAME_ANCESTOR_ORIGIN = Pattern.compile("https?://(\\*\\.)?[A-Za-z0-9.-]+(:[0-9]{1,5})?");
@@ -300,19 +312,64 @@ public class SecurityConfiguration {
     /**
      * Builds the Content Security Policy of the application: {@link #CSP_POLICY_DIRECTIVES} and the framing restriction.
      * <p>
-     * The LTI module lets learning management systems embed the client, so the {@code X-Frame-Options} header is dropped by the LTI configuration when that module is enabled,
-     * and no {@code frame-ancestors} directive is added then unless origins are configured. Without the LTI module, the client may not be embedded at all.
+     * The LTI module lets learning management systems embed the client, so the {@code X-Frame-Options} header is dropped by the LTI configuration when that module is enabled.
+     * The origins of the configured LTI platforms may embed the client, and together with the origins of {@code artemis.security.frame-ancestors} they form the
+     * {@code frame-ancestors} directive. When the LTI module is enabled and there are no such origins, no {@code frame-ancestors} directive is added. Without the LTI module,
+     * the client may not be embedded at all.
      *
-     * @param ltiEnabled whether the LTI module is enabled
+     * @param ltiEnabled         whether the LTI module is enabled and its platforms are known. While they are not known yet, because the first read failed, the client may not
+     *                               be embedded, as without the module.
+     * @param ltiPlatformOrigins the origins of the configured LTI platforms, which are skipped if they are not of the form {@code scheme://host[:port]}
      * @return the policy directives
      * @throws IllegalStateException if a configured origin is not of the form {@code scheme://host[:port]}
      */
-    String contentSecurityPolicy(boolean ltiEnabled) {
-        List<String> origins = configuredFrameAncestors();
+    String contentSecurityPolicy(boolean ltiEnabled, Collection<String> ltiPlatformOrigins) {
+        Set<String> origins = new LinkedHashSet<>();
+        for (String platformOrigin : ltiPlatformOrigins) {
+            if (FRAME_ANCESTOR_ORIGIN.matcher(platformOrigin).matches()) {
+                origins.add(platformOrigin);
+            }
+            else {
+                log.warn("The origin {} of an LTI platform cannot be used as a frame ancestor and is skipped", platformOrigin);
+            }
+        }
+        origins.addAll(configuredFrameAncestors());
         if (!origins.isEmpty()) {
             return CSP_POLICY_DIRECTIVES + "; frame-ancestors 'self' " + String.join(" ", origins);
         }
         return ltiEnabled ? CSP_POLICY_DIRECTIVES : CSP_POLICY_DIRECTIVES + "; frame-ancestors 'none'";
+    }
+
+    /**
+     * Writes the Content Security Policy of the response. The LTI platforms that may embed the client can change while the server is running, so the policy follows the
+     * origins that the LTI configuration caches for a short time. The policy is built again only when those origins or the LTI module state change, so that a response
+     * neither queries the database nor builds a string, and an origin that cannot be used is reported once per change instead of once per response.
+     */
+    private void writeContentSecurityPolicy(HttpServletRequest request, HttpServletResponse response) {
+        response.setHeader("Content-Security-Policy", currentContentSecurityPolicy());
+    }
+
+    /**
+     * The Content Security Policy for the current LTI state, built again only when its input changed.
+     *
+     * @return the policy directives
+     */
+    String currentContentSecurityPolicy() {
+        PlatformOrigins platforms = customLti13Configurer.map(CustomLti13Configurer::getPlatformOrigins).orElse(PlatformOrigins.NONE);
+        Set<String> platformOrigins = platforms.origins();
+        // While no read of the platforms has succeeded, no origin can be told apart from "no platform is configured", so the client may not be embedded until the read succeeds
+        boolean ltiEnabled = moduleFeatureService.isLtiEnabled() && platforms.read();
+        CachedContentSecurityPolicy cached = cachedContentSecurityPolicy.get();
+        if (cached != null && cached.ltiEnabled() == ltiEnabled && cached.platformOrigins().equals(platformOrigins)) {
+            return cached.policy();
+        }
+        String policy = contentSecurityPolicy(ltiEnabled, platformOrigins);
+        cachedContentSecurityPolicy.set(new CachedContentSecurityPolicy(ltiEnabled, platformOrigins, policy));
+        return policy;
+    }
+
+    /** The policy that was built for the given input, where {@code ltiEnabled} means that the LTI module is enabled and its platforms are known. */
+    private record CachedContentSecurityPolicy(boolean ltiEnabled, Set<String> platformOrigins, String policy) {
     }
 
     /**
@@ -400,10 +457,8 @@ public class SecurityConfiguration {
             .addFilterAfter(new SpaWebFilter(), BasicAuthenticationFilter.class)
             // Configures security headers.
             .headers(headers -> headers
-                // Sets Content Security Policy (CSP) directives to prevent XSS attacks.
-                .contentSecurityPolicy(csp -> csp
-                    .policyDirectives(contentSecurityPolicy(moduleFeatureService.isLtiEnabled()))
-                )
+                // Sets the Content Security Policy (CSP) directives and the framing restriction.
+                .addHeaderWriter(this::writeContentSecurityPolicy)
                 // Prevents the website from being framed. The LTI configuration below removes this header again, as learning management systems embed the client.
                 .frameOptions(this::configureFrameOptions)
                 // Sets Referrer Policy to limit the amount of referrer information sent with requests.

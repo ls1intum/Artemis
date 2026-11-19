@@ -1,13 +1,13 @@
 <!-- @if can't be used for isShownViaLti as it removes the element from the DOM, disrupting dropdown stability for the More-Menu. -->
-<div class="sidebar-wrapper" [ngClass]="{ 'd-none': isShownViaLti() }">
-    <div class="vw-100 bg-body">
+<div class="sidebar-wrapper" [ngClass]="{ 'hidden!': isShownViaLti() }">
+    <div class="w-screen bg-(--body-bg)">
         <div
-            class="layout-container vw-100"
+            class="layout-container w-screen"
             [ngClass]="{
                 'container-closed': isNavbarCollapsed(),
             }"
         >
-            <div class="sidebar module-bg rounded-3">
+            <div class="sidebar module-bg rounded-sm">
                 <jhi-course-sidebar
                     [course]="course()"
                     [sidebarItems]="sidebarItems()"
@@ -81,14 +81,14 @@
                         class="course-body-container shell-divider-x"
                         id="course-body-container"
                         [ngClass]="{
-                            'module-bg rounded rounded-3 scrollable-content': !hasSidebar() && !hasTransparentCourseBody(),
-                            'p-3': !hasSidebar() && !removePadding() && !hasTransparentCourseBody(),
+                            'module-bg rounded-sm scrollable-content': !hasSidebar() && !hasTransparentCourseBody(),
+                            'p-4!': !hasSidebar() && !removePadding() && !hasTransparentCourseBody(),
                             'sidebar-body': hasSidebar(),
                         }"
                         cdkScrollable
                     >
                         @if (!hasSidebar()) {
-                            <ng-container class="d-flex ms-auto" #controlsViewContainer />
+                            <ng-container #controlsViewContainer />
                         }
                         <!-- Check for !isLTI to render the router outlet only once and avoid side effects on route updates. -->
                         @if (!isShownViaLti()) {

@@ -115,7 +115,7 @@ artemis:
                 matlab:
                     default: "mathworks/matlab:r2024b"
                 ruby:
-                    default: "ghcr.io/ls1intum/artemis-ruby-docker:v1.0.1"
+                    default: "ghcr.io/ls1intum/artemis-ruby-docker:v1.0.2"
                 dart:
                     default: "ghcr.io/ls1intum/artemis-dart-docker:v1.1.0"
 
@@ -431,6 +431,9 @@ info:
     textAssessmentAnalyticsEnabled: false
     studentExamStoreSessionData: true
     localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
+    # Comma separated hosts that images in markdown (posts, problem statements, ...) may be loaded from, for example "images.example.org, *.cdn.example.org".
+    # The host of Artemis itself is always allowed. Empty (the default) allows every host.
+    allowedImageHosts: ''
 
 # ===================================================================
 # JHipster specific properties

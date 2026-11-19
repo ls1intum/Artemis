@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, input, output, signal, viewChild }
 import { FormsModule } from '@angular/forms';
 import { Course, Language } from 'app/course/shared/entities/course.model';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { TumAetUiDatePickerComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { applySemesterToDates, getSemesters } from 'app/foundation/util/semester-utils';
@@ -11,7 +11,6 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
-import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCog } from '@fortawesome/free-solid-svg-icons';
@@ -34,7 +33,6 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
         ColorSelectorComponent,
         TumAetUiDatePickerComponent,
         TranslateDirective,
-        KeyValuePipe,
         ArtemisTranslatePipe,
         FaIconComponent,
         DocumentationButtonComponent,
@@ -42,6 +40,9 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
         EnabledToggleComponent,
         AthenaLogoComponent,
         TumAetUiMessageComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
         AboutIrisModalComponent,
     ],
 })
@@ -81,7 +82,7 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
         { key: 'gradingFeedbackEnabled' as const, testId: 'onboarding-athena-grading-feedback', enabled: this.isAthenaGradingEnabled },
     ];
 
-    protected readonly ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly programmingLanguageOptions = Object.values(ProgrammingLanguage).sort((a, b) => a.localeCompare(b));
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     readonly semesters = computed(() => getSemesters(this.course().semester));
     readonly semesterMissing = computed(() => !this.course().semester?.trim());

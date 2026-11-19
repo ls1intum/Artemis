@@ -16,21 +16,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param outputTokens               total completion tokens billed across the run
  * @param cachedInputTokens          the share of {@code inputTokens} the provider reported as cache hits
  * @param cachedInputTokensComplete  whether every recorded response reported its cached-token split
- * @param estimatedCostEur           the estimated cost in EUR from the configured per-model prices
- * @param estimatedCostEurComplete   whether a price was configured for every recorded response
  * @param models                     the distinct model identifiers used, in first-use order
  * @param providerRequestIds         the distinct provider request identifiers, for reconciliation against a provider invoice
  * @param providerRequestIdsComplete whether every recorded response carried a provider request identifier
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GenerationUsage(long modelCalls, long toolCalls, long agentTurns, long attempts, long inputTokens, long outputTokens, long cachedInputTokens,
-        boolean cachedInputTokensComplete, double estimatedCostEur, boolean estimatedCostEurComplete, @JsonInclude List<String> models,
-        @JsonInclude List<String> providerRequestIds, boolean providerRequestIdsComplete) {
+        boolean cachedInputTokensComplete, @JsonInclude List<String> models, @JsonInclude List<String> providerRequestIds, boolean providerRequestIdsComplete) {
 
     public GenerationUsage {
-        if (modelCalls < 0 || toolCalls < 0 || agentTurns < 0 || attempts < 0 || inputTokens < 0 || outputTokens < 0 || cachedInputTokens < 0 || cachedInputTokens > inputTokens
-                || !Double.isFinite(estimatedCostEur) || estimatedCostEur < 0) {
-            throw new IllegalArgumentException("Invalid generation usage: counters and costs must be non-negative and finite; cached tokens cannot exceed input tokens");
+        if (modelCalls < 0 || toolCalls < 0 || agentTurns < 0 || attempts < 0 || inputTokens < 0 || outputTokens < 0 || cachedInputTokens < 0 || cachedInputTokens > inputTokens) {
+            throw new IllegalArgumentException("Invalid generation usage: counters must be non-negative; cached tokens cannot exceed input tokens");
         }
         models = List.copyOf(models);
         providerRequestIds = List.copyOf(providerRequestIds);

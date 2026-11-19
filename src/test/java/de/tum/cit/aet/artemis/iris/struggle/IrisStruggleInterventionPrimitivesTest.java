@@ -257,7 +257,7 @@ class IrisStruggleInterventionPrimitivesTest {
     @Test
     void recordTokenUsage_attributesTheSpendToCourseExerciseAndUser() {
         var job = new StruggleInterventionJob("t", 7L, EXERCISE_ID, USER_ID, "decide", "ep-1", null, null, null);
-        var request = new LLMRequest("gpt-4", 100, 0.5f, 40, 1.5f, "struggle-intervention");
+        var request = new LLMRequest("gpt-4", 100, 40, "struggle-intervention");
         var update = statusUpdateWithTokens(List.of(request));
 
         service.recordTokenUsage(job, update);
@@ -286,7 +286,7 @@ class IrisStruggleInterventionPrimitivesTest {
         // The caller has already claimed and removed the job, so an exception escaping here would hang the client's
         // in-flight request. Losing one accounting row is the lesser cost.
         var job = new StruggleInterventionJob("t", 7L, EXERCISE_ID, USER_ID, "decide", "ep-1", null, null, null);
-        var update = statusUpdateWithTokens(List.of(new LLMRequest("gpt-4", 100, 0.5f, 40, 1.5f, "struggle-intervention")));
+        var update = statusUpdateWithTokens(List.of(new LLMRequest("gpt-4", 100, 40, "struggle-intervention")));
         when(llmTokenUsageService.saveLLMTokenUsage(any(), any(), any())).thenThrow(new DataIntegrityViolationException("accounting is down"));
 
         assertThatCode(() -> service.recordTokenUsage(job, update)).doesNotThrowAnyException();

@@ -75,6 +75,7 @@ import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -86,6 +87,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamConductionCountsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForConductionDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForQuestionPoolDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
@@ -371,8 +373,35 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGenerateStudentExamsForSupervisedSessionExam() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
+        exam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+
+        generateStudentExams(exam);
+
+        verifyStudentsExamAndExercises(exam);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGenerateMissingStudentExams() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
+
+        generateStudentExams(exam);
+
+        registerNewStudentsToExam(exam, 1);
+        generateMissingStudentExams(exam, 1);
+        verifyStudentsExamAndExercises(exam);
+
+        generateMissingStudentExams(exam, 0);
+        verifyStudentsExamAndExercises(exam);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGenerateMissingStudentExamsForSupervisedSessionExam() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
+        exam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
 
         generateStudentExams(exam);
 
@@ -686,7 +715,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamWorkingTime_rejectsInvalidWorkingTime(boolean testExam, int delta) throws Exception {
         Exam exam = examUtilService.addExam(course1);
-        exam.setTestExam(testExam);
+        exam.setExamMode(testExam ? ExamMode.TEST : ExamMode.REAL);
         exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
         exam.setWorkingTime(3000);
         exam.setEndDate(exam.getStartDate().plusSeconds(testExam ? 6600 : 3000));
@@ -714,7 +743,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamWorkingTime_acceptsWorkingTimeBounds(boolean testExam, int workingTime, int extendedWorkingTime) throws Exception {
         Exam exam = examUtilService.addExam(course1);
-        exam.setTestExam(testExam);
+        exam.setExamMode(testExam ? ExamMode.TEST : ExamMode.REAL);
         exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
         exam.setWorkingTime(3000);
         exam.setEndDate(exam.getStartDate().plusSeconds(testExam ? 6600 : 3000));
@@ -743,7 +772,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExamWorkingTime_validatesProjectedStudentWorkingTime(boolean testExam, int studentWorkingTime, boolean representable) throws Exception {
         Exam exam = examUtilService.addExam(course1);
-        exam.setTestExam(testExam);
+        exam.setExamMode(testExam ? ExamMode.TEST : ExamMode.REAL);
         exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
         exam.setWorkingTime(3000);
         exam.setEndDate(exam.getStartDate().plusSeconds(testExam ? 6600 : 3000));
@@ -838,6 +867,24 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreateExam_failsWithMissingExamMode() throws Exception {
+        ObjectNode examJson = request.getObjectMapper().valueToTree(ExamUpdateDTO.of(ExamFactory.generateExam(course1, "examModeValidationTest")));
+        examJson.remove("examMode");
+
+        request.postAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, "validation");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExam_failsWithMissingExamMode() throws Exception {
+        ObjectNode examJson = request.getObjectMapper().valueToTree(ExamUpdateDTO.of(exam1));
+        examJson.remove("examMode");
+
+        request.putAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, "validation");
+    }
+
     @ParameterizedTest(name = "title=\"{0}\"")
     @NullSource
     @ValueSource(strings = { "", "   " })
@@ -846,7 +893,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // A missing (null), empty or whitespace-only title has to be rejected with a clean 400, not persisted and not failing while mapping the null title to the entity
         ObjectNode examJson = examBodyWithTitle(ExamUpdateDTO.of(ExamFactory.generateExam(course1, "examTitleValidationTest")), title);
 
-        request.postAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, "examTitleEmpty");
+        request.postAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, title == null ? "validation" : "examTitleEmpty");
     }
 
     @ParameterizedTest(name = "title=\"{0}\"")
@@ -856,7 +903,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testUpdateExam_failsWithMissingOrBlankTitle(String title) throws Exception {
         ObjectNode examJson = examBodyWithTitle(ExamUpdateDTO.of(exam1), title);
 
-        request.putAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, "examTitleEmpty");
+        request.putAndExpectError("/api/exam/courses/" + course1.getId() + "/exams", examJson, HttpStatus.BAD_REQUEST, title == null ? "validation" : "examTitleEmpty");
     }
 
     @ParameterizedTest(name = "title=\"{0}\"")
@@ -918,7 +965,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testCreateExam_failsWithWorkingTimeTooHigh() throws Exception {
         // Test with a test exam where workingTime is directly validated
         Exam exam = ExamFactory.generateExam(course1, "examWorkingTimeTest");
-        exam.setTestExam(true);
+        exam.setExamMode(ExamMode.TEST);
         exam.setNumberOfCorrectionRoundsInExam(0);
         exam.setWorkingTime(2592001); // Max allowed is 2592000 seconds (30 days)
 
@@ -1108,7 +1155,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateExam_failsForInvalidDates(Exam exam) throws Exception {
         // Dates in the updated exam are not valid -> bad request
-        Exam persistedExamWithSameMode = exam.isTestExam() ? examRepository.save(ExamFactory.generateTestExam(course1)) : exam1;
+        Exam persistedExamWithSameMode = !exam.getExamMode().isReal() ? examRepository.save(ExamFactory.generateTestExam(course1)) : exam1;
         exam.setId(persistedExamWithSameMode.getId());
         request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
     }
@@ -1153,6 +1200,188 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam1), HttpStatus.OK);
 
         assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExam_changeWorkingTimeOfTestExam() throws Exception {
+        Exam testExam = ExamFactory.generateTestExam(course1);
+        testExam = examRepository.save(testExam);
+        StudentExam studentExam = examUtilService.addStudentExam(testExam);
+        studentExam.setWorkingTime(testExam.getWorkingTime());
+        studentExamRepository.save(studentExam);
+
+        int originalWorkingTime = testExam.getWorkingTime();
+        int newWorkingTime = originalWorkingTime + 600;
+        ZonedDateTime originalEndDate = testExam.getEndDate();
+
+        testExam.setWorkingTime(newWorkingTime);
+        var returnedExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(testExam), Exam.class, HttpStatus.OK);
+
+        assertThat(returnedExam.getWorkingTime()).isEqualTo(newWorkingTime);
+        assertThat(returnedExam.getEndDate()).isCloseTo(originalEndDate, within(1, ChronoUnit.SECONDS));
+
+        StudentExam updatedStudentExam = studentExamRepository.findByIdElseThrow(studentExam.getId());
+        assertThat(updatedStudentExam.getWorkingTime()).isEqualTo(newWorkingTime);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExamWorkingTime_testExam() throws Exception {
+        Exam testExam = ExamFactory.generateTestExam(course1);
+        testExam = examRepository.save(testExam);
+        StudentExam studentExam = examUtilService.addStudentExam(testExam);
+        studentExam.setWorkingTime(testExam.getWorkingTime());
+        studentExamRepository.save(studentExam);
+
+        int workingTimeChange = 600;
+        ZonedDateTime originalEndDate = testExam.getEndDate();
+        int expectedWorkingTime = testExam.getWorkingTime() + workingTimeChange;
+
+        var returnedExam = request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/working-time", workingTimeChange, Exam.class,
+                HttpStatus.OK);
+
+        assertThat(returnedExam.getWorkingTime()).isEqualTo(expectedWorkingTime);
+        assertThat(returnedExam.getEndDate()).isCloseTo(originalEndDate.plusSeconds(workingTimeChange), within(1, ChronoUnit.SECONDS));
+
+        StudentExam updatedStudentExam = studentExamRepository.findByIdElseThrow(studentExam.getId());
+        assertThat(updatedStudentExam.getWorkingTime()).isEqualTo(expectedWorkingTime);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExamWorkingTime_testExam_failsWithWorkingTimeTooLow() throws Exception {
+        Exam testExam = ExamFactory.generateTestExam(course1);
+        testExam = examRepository.save(testExam);
+
+        // Default working time is 3000, setting change to -3000 pushes it to 0 (must be >= 1)
+        int workingTimeChange = -3000;
+
+        request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/working-time", workingTimeChange, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExamWorkingTime_testWithSupervisedSession_failsWithWorkingTimeTooLow() throws Exception {
+        Exam testExam = ExamFactory.generateTestExam(course1);
+        testExam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+        testExam = examRepository.save(testExam);
+
+        int workingTimeChange = -3000;
+
+        request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/working-time", workingTimeChange, HttpStatus.BAD_REQUEST);
+    }
+
+    private Exam saveSupervisedSessionExam(ZonedDateTime start, ZonedDateTime end) {
+        Exam exam = ExamFactory.generateTestExam(course1);
+        exam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+        exam.setVisibleDate(start.minusMinutes(5));
+        exam.setStartDate(start);
+        exam.setEndDate(end);
+        return examRepository.save(exam);
+    }
+
+    private StudentExam addStartedAttempt(Exam exam, ZonedDateTime startedDate) {
+        StudentExam attempt = examUtilService.addStudentExamForTestExam(exam, TEST_PREFIX + "student1");
+        attempt.setStartedAndStartDate(startedDate);
+        return studentExamRepository.save(attempt);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExamWorkingTime_supervisedSessionEnded_rejectsReclassifyingAPracticeAttempt() throws Exception {
+        // The session ended 15 minutes ago (50 minutes working time), so an attempt started 2 minutes ago is a practice attempt
+        Exam exam = saveSupervisedSessionExam(now().minusMinutes(65), now().plusMinutes(60));
+        StudentExam attempt = addStartedAttempt(exam, now().minusMinutes(2));
+
+        // Extending the working time by 20 minutes would move the end of the session behind that attempt
+        request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/working-time", 1200, HttpStatus.BAD_REQUEST);
+
+        Exam unchanged = examRepository.findByIdElseThrow(exam.getId());
+        assertThat(unchanged.getWorkingTime()).isEqualTo(exam.getWorkingTime());
+        assertThat(studentExamRepository.findByIdElseThrow(attempt.getId()).getWorkingTime()).isEqualTo(exam.getWorkingTime());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExam_supervisedSessionEnded_rejectsChangingTheWorkingTimeButAllowsChangingTheEndDate() throws Exception {
+        Exam exam = saveSupervisedSessionExam(now().minusMinutes(65), now().plusMinutes(60));
+        addStartedAttempt(exam, now().minusMinutes(2));
+
+        exam.setWorkingTime(exam.getWorkingTime() + 1200);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
+        assertThat(examRepository.findByIdElseThrow(exam.getId()).getWorkingTime()).isEqualTo(exam.getWorkingTime() - 1200);
+
+        // Moving the end of the practice window does not touch the end of the supervised session
+        exam.setWorkingTime(exam.getWorkingTime() - 1200);
+        ZonedDateTime newEndDate = exam.getEndDate().plusDays(1);
+        exam.setEndDate(newEndDate);
+        var returnedExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), Exam.class, HttpStatus.OK);
+        assertThat(returnedExam.getEndDate()).isCloseTo(newEndDate, within(1, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExamWorkingTime_supervisedSessionRunning_extendsButCannotShortenBehindAStartedAttempt() throws Exception {
+        // The session started 10 minutes ago and one student started 3 minutes ago
+        Exam exam = saveSupervisedSessionExam(now().minusMinutes(10), now().plusMinutes(70));
+        addStartedAttempt(exam, now().minusMinutes(3));
+
+        // Shortening the working time to 5 minutes would end the session before that attempt started
+        request.patch("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/working-time", -2700, HttpStatus.BAD_REQUEST);
+        assertThat(examRepository.findByIdElseThrow(exam.getId()).getWorkingTime()).isEqualTo(exam.getWorkingTime());
+
+        // Extending the running session is still possible
+        var returnedExam = request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/working-time", 600, Exam.class, HttpStatus.OK);
+        assertThat(returnedExam.getWorkingTime()).isEqualTo(exam.getWorkingTime() + 600);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExam_supervisedSession_startDateIsLockedOnceStudentsCanEnter() throws Exception {
+        // The session is running: moving the start date would change the deadline of the supervised attempts without telling the clients
+        Exam runningExam = saveSupervisedSessionExam(now().minusMinutes(10), now().plusMinutes(70));
+        ZonedDateTime originalStart = runningExam.getStartDate();
+        runningExam.setStartDate(originalStart.plusMinutes(5));
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(runningExam), HttpStatus.BAD_REQUEST);
+        assertThat(examRepository.findByIdElseThrow(runningExam.getId()).getStartDate()).isCloseTo(originalStart, within(1, ChronoUnit.SECONDS));
+
+        // The conduction window opens shortly before the start
+        Exam openingExam = saveSupervisedSessionExam(now().plusMinutes(5), now().plusMinutes(100));
+        openingExam.setStartDate(openingExam.getStartDate().plusMinutes(5));
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(openingExam), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExam_supervisedSession_startDateCanBeChangedLongBeforeTheStart() throws Exception {
+        Exam futureExam = saveSupervisedSessionExam(now().plusDays(3), now().plusDays(3).plusHours(2));
+        ZonedDateTime newStart = futureExam.getStartDate().plusMinutes(30);
+        futureExam.setVisibleDate(newStart.minusMinutes(5));
+        futureExam.setStartDate(newStart);
+        var returnedExam = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(futureExam), Exam.class, HttpStatus.OK);
+        assertThat(returnedExam.getStartDate()).isCloseTo(newStart, within(1, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExamWorkingTime_realExam() throws Exception {
+        Exam realExam = examRepository.findByIdElseThrow(exam1.getId());
+        StudentExam studentExam = examUtilService.addStudentExam(realExam);
+
+        int workingTimeChange = 600;
+        ZonedDateTime originalEndDate = realExam.getEndDate();
+        int expectedWorkingTime = realExam.getWorkingTime() + workingTimeChange;
+        ZonedDateTime expectedEndDate = originalEndDate.plusSeconds(workingTimeChange);
+
+        var returnedExam = request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + realExam.getId() + "/working-time", workingTimeChange, Exam.class,
+                HttpStatus.OK);
+
+        assertThat(returnedExam.getWorkingTime()).isEqualTo(expectedWorkingTime);
+        assertThat(returnedExam.getEndDate()).isCloseTo(expectedEndDate, within(1, ChronoUnit.SECONDS));
+
+        StudentExam updatedStudentExam = studentExamRepository.findByIdElseThrow(studentExam.getId());
+        assertThat(updatedStudentExam.getWorkingTime()).isEqualTo(studentExam.getWorkingTime() + workingTimeChange);
     }
 
     @Test
@@ -1308,7 +1537,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(loaded.examSummaryPublicationDate()).isNotNull();
 
         // Build the request the way the client's toExamUpdateDTO does: from the loaded response fields only.
-        ExamUpdateDTO clientRequest = new ExamUpdateDTO(loaded.id(), loaded.title(), loaded.testExam(), loaded.examWithAttendanceCheck(), loaded.visibleDate(), loaded.startDate(),
+        ExamUpdateDTO clientRequest = new ExamUpdateDTO(loaded.id(), loaded.title(), loaded.examMode(), loaded.examWithAttendanceCheck(), loaded.visibleDate(), loaded.startDate(),
                 loaded.endDate(), loaded.publishResultsDate(), loaded.examStudentReviewStart(), loaded.examStudentReviewEnd(), loaded.gracePeriod(), loaded.workingTime(),
                 loaded.startText(), loaded.endText(), loaded.confirmationStartText(), loaded.confirmationEndText(), loaded.examMaxPoints(), loaded.randomizeExerciseOrder(),
                 loaded.numberOfExercisesInExam(), loaded.numberOfCorrectionRoundsInExam(), loaded.examiner(), loaded.moduleNumber(), loaded.courseName(),
@@ -1318,7 +1547,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // Re-load through the plain path and assert the round-tripped fields survived, channel name in particular.
         ExamDTO reloaded = request.get(String.valueOf(createdExamUri), HttpStatus.OK, ExamDTO.class);
         assertThat(reloaded.channelName()).isEqualTo("scientific-channel-name");
-        assertThat(reloaded.testExam()).isFalse();
+        assertThat(reloaded.examMode()).isEqualTo(ExamMode.REAL);
         assertThat(reloaded.title()).isEqualTo(loaded.title());
         assertThat(reloaded.examiner()).isEqualTo(loaded.examiner());
         assertThat(reloaded.courseName()).isEqualTo(loaded.courseName());
@@ -1532,8 +1761,50 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExamsForOverview() throws Exception {
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Exam exam = examUtilService.addExam(course);
+
+        // Exam is REAL, but student1 is not registered, so it is not visible unless they are registered.
+        // We'll register student1 for exam.
+        examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 1, 1);
+
+        // Add a TEST exam. Test exams are visible to all students in the course.
+        Exam testExam = examUtilService.addExam(course);
+        testExam.setExamMode(ExamMode.TEST);
+        examRepository.save(testExam);
+
+        // Add a TEST_WITH_SUPERVISED_SESSION exam. Test exams are visible to all students in the course.
+        Exam supervisedSessionExam = examUtilService.addExam(course);
+        supervisedSessionExam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+        examRepository.save(supervisedSessionExam);
+
+        var exams = request.getSet("/api/exam/courses/" + course.getId() + "/exams-for-overview", HttpStatus.OK, ExamForOverviewDTO.class);
+
+        assertThat(exams).hasSize(3);
+
+        ExamForOverviewDTO returnedExam = exams.stream().filter(e -> e.id() == exam.getId()).findFirst().orElseThrow();
+        assertThat(returnedExam.examMode()).isEqualTo(ExamMode.REAL);
+
+        ExamForOverviewDTO returnedTestExam = exams.stream().filter(e -> e.id() == testExam.getId()).findFirst().orElseThrow();
+        assertThat(returnedTestExam.examMode()).isEqualTo(ExamMode.TEST);
+
+        ExamForOverviewDTO returnedSupervisedSessionExam = exams.stream().filter(e -> e.id() == supervisedSessionExam.getId()).findFirst().orElseThrow();
+        assertThat(returnedSupervisedSessionExam.examMode()).isEqualTo(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetCurrentAndUpcomingExams() throws Exception {
+        // Create TEST and TEST_WITH_SUPERVISED_SESSION exams to verify all three modes render properly in the admin overview.
+        Exam testExam = examUtilService.addExam(course1);
+        testExam.setExamMode(ExamMode.TEST);
+        examRepository.save(testExam);
+        Exam supervisedSessionExam = examUtilService.addExam(course1);
+        supervisedSessionExam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+        examRepository.save(supervisedSessionExam);
+
         // Two queries: one resolving the authenticated admin against the database, which @EnforceAdmin does on every
         // admin request, and one for the exams (the course is fetch-joined). Without the join, each exam row would
         // trigger a secondary select for its course, so this still guards the data-economy fix rather than just the
@@ -1554,11 +1825,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // The response content reflects a concrete created exam (title / course / dates), not just a 200 status.
         UpcomingExamDTO createdExam = exams.stream().filter(exam -> exam.id().equals(exam1.getId())).findFirst().orElseThrow();
         assertThat(createdExam.title()).isEqualTo(exam1.getTitle());
-        assertThat(createdExam.testExam()).isEqualTo(exam1.isTestExam());
+        assertThat(createdExam.examMode()).isEqualTo(ExamMode.REAL);
         assertThat(createdExam.course().id()).isEqualTo(course1.getId());
         assertThat(createdExam.course().title()).isEqualTo(course1.getTitle());
         assertThat(createdExam.visibleDate()).isNotNull();
         assertThat(createdExam.startDate()).isNotNull();
+
+        UpcomingExamDTO createdTestExam = exams.stream().filter(exam -> exam.id().equals(testExam.getId())).findFirst().orElseThrow();
+        assertThat(createdTestExam.examMode()).isEqualTo(ExamMode.TEST);
+        UpcomingExamDTO createdSupervisedSessionExam = exams.stream().filter(exam -> exam.id().equals(supervisedSessionExam.getId())).findFirst().orElseThrow();
+        assertThat(createdSupervisedSessionExam.examMode()).isEqualTo(ExamMode.TEST_WITH_SUPERVISED_SESSION);
     }
 
     @Test
@@ -1834,7 +2110,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         ExamForConductionDTO examDTO = response.exam();
         assertThat(examDTO).isNotNull();
         assertThat(examDTO.id()).isEqualTo(exam.getId());
-        assertThat(examDTO.testExam()).isFalse();
+        assertThat(examDTO.examMode()).isEqualTo(ExamMode.REAL);
         assertThat(examDTO.startDate()).isNotNull();
         assertThat(examDTO.startText()).isEqualTo("please-start-carefully");
         assertThat(examDTO.endText()).isEqualTo("please-review-before-submitting");
@@ -2486,7 +2762,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     private Exam validExamWithCustomFieldValues() {
         Exam exam = ExamFactory.generateExam(course1);
         exam.setTitle("Exam Title");
-        exam.setTestExam(false);
+        exam.setExamMode(ExamMode.REAL);
         /// Artemis truncates to 6 sub-second digits
         final var baseTime = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
         exam.setVisibleDate(baseTime.minusHours(1));
@@ -2526,7 +2802,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(actualExam.getChannelName()).isEqualTo(expectedExam.getChannelName());
         assertThat(actualExam.getCourseName()).isEqualTo(expectedExam.getCourseName());
 
-        assertThat(actualExam.isTestExam()).isFalse();
+        assertThat(!actualExam.getExamMode().isReal()).isFalse();
         assertThat(actualExam.getRandomizeExerciseOrder()).isTrue();
 
         /// For the times we need to give a slight tolerance because Artemis truncates the times to 6 sub-second digits
@@ -2837,7 +3113,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         ExamWithExerciseGroupsDTO received = request.get("/api/exam/exams/" + exam2.getId(), HttpStatus.OK, ExamWithExerciseGroupsDTO.class);
         assertThat(received.id()).isEqualTo(exam2.getId());
         assertThat(received.title()).isEqualTo(exam2.getTitle());
-        assertThat(received.testExam()).isEqualTo(exam2.isTestExam());
+        assertThat(received.examMode()).isEqualTo(exam2.getExamMode());
         // exam-import.component reads exam.course to decide isImportInSameCourse
         assertThat(received.course()).isNotNull();
         assertThat(received.course().id()).isEqualTo(course1.getId());
@@ -2976,7 +3252,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         for (List<ExerciseGroupImportDTO> malformedGroups : List.of(Arrays.asList((ExerciseGroupImportDTO) null),
                 List.of(new ExerciseGroupImportDTO("g", true, Arrays.asList((ExerciseImportDTO) null))))) {
-            ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.testExam(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
+            ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.examMode(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
                     importDTO.endDate(), importDTO.publishResultsDate(), importDTO.examStudentReviewStart(), importDTO.examStudentReviewEnd(), importDTO.gracePeriod(),
                     importDTO.workingTime(), importDTO.startText(), importDTO.endText(), importDTO.confirmationStartText(), importDTO.confirmationEndText(),
                     importDTO.examMaxPoints(), importDTO.randomizeExerciseOrder(), importDTO.numberOfExercisesInExam(), importDTO.numberOfCorrectionRoundsInExam(),
@@ -2994,7 +3270,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
         ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
         ExerciseGroupImportDTO malformedGroup = new ExerciseGroupImportDTO("g", true, List.of(new ExerciseImportDTO(null, ExerciseType.TEXT, "x", null, null, null)));
-        ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.testExam(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
+        ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.examMode(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
                 importDTO.endDate(), importDTO.publishResultsDate(), importDTO.examStudentReviewStart(), importDTO.examStudentReviewEnd(), importDTO.gracePeriod(),
                 importDTO.workingTime(), importDTO.startText(), importDTO.endText(), importDTO.confirmationStartText(), importDTO.confirmationEndText(), importDTO.examMaxPoints(),
                 importDTO.randomizeExerciseOrder(), importDTO.numberOfExercisesInExam(), importDTO.numberOfCorrectionRoundsInExam(), importDTO.examiner(), importDTO.moduleNumber(),
@@ -3039,7 +3315,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // Pin the exact fields the exam-import table renders off each paged row: id, title, course.title and testExam.
         Exam foundExam = result.getResultsOnPage().getFirst();
         assertThat(foundExam.getTitle()).isEqualTo(title);
-        assertThat(foundExam.isTestExam()).isEqualTo(exam.isTestExam());
+        assertThat(foundExam.getExamMode()).isEqualTo(exam.getExamMode());
         assertThat(foundExam.getCourse()).isNotNull();
         assertThat(foundExam.getCourse().getTitle()).isEqualTo(course1.getTitle());
     }
@@ -3266,7 +3542,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         final Exam received = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(importedExamId);
         assertThat(received.getId()).isNotNull();
         assertThat(received.getTitle()).isEqualTo(exam.getTitle());
-        assertThat(received.isTestExam()).isFalse();
+        assertThat(!received.getExamMode().isReal()).isFalse();
         assertThat(received.getWorkingTime()).isEqualTo(3000);
         assertThat(received.getStartText()).isEqualTo("Start Text");
         assertThat(received.getEndText()).isEqualTo("End Text");

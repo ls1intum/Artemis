@@ -2,13 +2,13 @@
 id: after-the-exam
 title: After the Exam
 sidebar_label: After the Exam
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-18
 ---
 
-import Callout from "../../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
-import Image, {ImageSize} from "../../../src/components/Image/Image";
-import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
+import Image, { ImageSize } from '../../../src/components/Image/Image';
+import TumLiveVideo from '../../../src/components/TumLiveVideo/TumLiveVideo';
 import examSummary from '../assets/exams/exam_summary.png';
 import complaint from '../assets/exams/complaint.png';
 import examExampleSolutions from '../assets/exams/exam_example_solutions.png';
@@ -22,19 +22,20 @@ import testExamPartialResult from '../assets/exams/test_exam_partial_result.png'
 
 ## Your Summary
 
-Handing in takes you to your summary, and it stays available afterwards — reach it the way you reached the exam, or
-pick the exam from the course sidebar once it is over.
+After handing in an exam, Artemis confirms that it received your submission. When the summary is available, select
+**Show exam summary** or reopen the exam from **Exams** in the course sidebar. For a practice exam, select the
+submitted attempt to see its summary.
 
-The summary collects everything you submitted. For a programming exercise it also records the commit hash and the
-repository address, so you can go back and read your own code. **Export PDF** saves the whole thing, which is worth
-doing for your own records.
+The summary shows your submitted answers. For a programming exercise it also records the commit hash and repository
+address, so you can review the code you submitted. **Export PDF** saves a copy for your records. To submit your
+exam, select **Finish** on the [hand-in screen](/student/exams/take-an-exam#hand-in).
 
 <Image src={examSummary} alt="Exam summary before results are published" size={ImageSize.large} caption="Your summary before results are published" />
 
 <Callout variant={CalloutVariant.info}>
 
-  Your instructor may set a date before which the summary is not available. This is normal for exams written in
-  several shifts, so that the content does not reach a later shift.
+Your instructor may set a date before which the summary is not available. This is normal for exams written in
+several shifts, so that the content does not reach a later shift.
 
 </Callout>
 
@@ -55,22 +56,29 @@ A later **Export PDF** includes your score, your complaints and the responses to
 
 <TumLiveVideo src="53405" title="Participating in Exams in Artemis" />
 
-## Results in Test Exams
+## Results in Practice Exams
 
-After submitting a test exam, the summary shows the points earned on its automatically assessed exercises. If a grading key is configured, it also shows a theoretical grade. Each attempt uses its own submissions.
+After submitting a practice exam, the summary shows the points earned on its automatically assessed exercises. If a grading key is configured, it also shows a theoretical grade. Each attempt uses its own submissions.
+
+Some practice exams start with a supervised session, for example in a lecture hall. During the session you have one attempt and the same end time as everyone else. Afterwards you can practice as often as you like until the end of the working window. Results of all attempts are shown as described here.
 
 If a programming submission is still being assessed, the summary marks it as pending and waits to show the total points and theoretical grade. The summary updates automatically when the assessment finishes.
 
-When a test exam includes manually assessed exercises, the overview identifies the result as partial: those exercises contribute neither earned points nor maximum points to this calculation. Their answers remain visible for review. A test exam containing only manually assessed exercises has no automatic score or theoretical grade.
+When a practice exam includes manually assessed exercises, the overview identifies the result as partial: those exercises contribute neither earned points nor maximum points to this calculation. Their answers remain visible for review. A practice exam containing only manually assessed exercises has no automatic score or theoretical grade.
 
-When a test exam supplies a bonus, the newest of your submitted attempts determines that bonus. A newer unfinished attempt and instructor test runs do not replace it. While the source assessment is pending, the target exam shows your points and grade before bonus and refreshes the final bonus grade automatically when the source results are ready.
+When a practice exam supplies a bonus, the newest of your submitted attempts determines that bonus. A newer unfinished attempt and instructor test runs do not replace it. While the source assessment is pending, the target exam shows your points and grade before bonus and refreshes the final bonus grade automatically when the source results are ready.
 
-<Image src={testExamPartialResult} alt="Test exam result with 8.4 of 10.5 automatic points, a theoretical grade, and ungraded manual exercises" size={ImageSize.large} caption="A partial test exam result with an applied bonus" />
+<Image
+    src={testExamPartialResult}
+    alt="Practice exam result with 8.4 of 10.5 automatic points, a theoretical grade, and ungraded manual exercises"
+    size={ImageSize.large}
+    caption="A partial practice exam result with an applied bonus"
+/>
 
-## AI Feedback in Test Exams
+## AI Feedback in Practice Exams
 
-A **test exam** is a practice run, so it is the one place in exam mode where you can ask for AI feedback on your
-answers. Once you have submitted a test exam, its summary offers **Request AI Feedback**. One request covers all
+A **practice exam** is meant for preparation, so it is the one place in exam mode where you can ask for AI feedback on your
+answers. Once you have submitted a practice exam, its summary offers **Request AI Feedback**. One request covers all
 text and modeling exercises of that exam at once, and the results appear in the summary itself a short while later
 — you do not have to navigate anywhere.
 
@@ -79,16 +87,16 @@ a spinner — as soon as Artemis accepts the request, until the feedback is read
 
 <Callout variant={CalloutVariant.info}>
 
-  The action appears only for submitted test exams, only while your Artemis instance runs the Athena service, and
-  only if AI feedback is enabled for the course and the exam contains at least one text or modeling exercise. Real
-  exams never offer it.
+The action appears only for submitted practice exams, only while your Artemis instance runs the Athena service, and
+only if AI feedback is enabled for the course and the exam contains at least one text or modeling exercise. Real
+exams never offer it.
 
 </Callout>
 
 <Callout variant={CalloutVariant.warning}>
 
-  AI feedback in a test exam is preliminary and never a grade. It exists to help you prepare, not to predict your
-  result in the real exam.
+AI feedback in a practice exam is preliminary and never a grade. It exists to help you prepare, not to predict your
+result in the real exam.
 
 </Callout>
 
@@ -99,7 +107,7 @@ file upload and programming exercises.
 
 <Callout variant={CalloutVariant.warning}>
 
-  Example solutions are only available if you submitted your exam.
+Example solutions are only available if you submitted your exam.
 
 </Callout>
 
@@ -107,7 +115,12 @@ file upload and programming exercises.
 
 For a programming exercise, **Download Example Solution** downloads the solution repository.
 
-<Image src={examExampleSolutionProgramming} alt="Downloading the example solution of a programming exercise" size={ImageSize.large} caption="The example solution of a programming exercise" />
+<Image
+    src={examExampleSolutionProgramming}
+    alt="Downloading the example solution of a programming exercise"
+    size={ImageSize.large}
+    caption="The example solution of a programming exercise"
+/>
 
 For the other types, **Show Example Solution** displays it below the exercise.
 
@@ -128,4 +141,9 @@ Where a bonus is configured, your final grade with the bonus applied appears bel
 the step: a square bracket includes it, a parenthesis excludes it. So a step written `[80 - 85)` means 80% earns
 that grade and 85% earns the next one up.
 
-<Image src={studentGradeKey} alt="Grading key showing every grade step and its boundaries" size={ImageSize.medium} caption="The grading key for a student who scored 135 of 150 points" />
+<Image
+    src={studentGradeKey}
+    alt="Grading key showing every grade step and its boundaries"
+    size={ImageSize.medium}
+    caption="The grading key for a student who scored 135 of 150 points"
+/>

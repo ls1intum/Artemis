@@ -42,7 +42,7 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
             SELECT COUNT(eu.id)
             FROM ExamUser eu
             WHERE eu.exam.course.id IN :courseIds
-                AND eu.exam.testExam = FALSE
+                AND eu.exam.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND LOWER(eu.exam.title) NOT LIKE 'test%'
                 AND LOWER(eu.exam.title) NOT LIKE 'mock%'
                 AND eu.user.deleted = FALSE
