@@ -63,11 +63,20 @@ final class SecurityPolicySchema {
 
     private static final String IPV6_COMPONENT = "[0-9A-Fa-f]{1,4}";
 
-    private static final String IPV6_ADDRESS = "(?:" + "(?:" + IPV6_COMPONENT + ":){7}" + IPV6_COMPONENT + "|(?:" + IPV6_COMPONENT + ":){1,7}:" + "|(?:" + IPV6_COMPONENT
-            + ":){1,6}:" + IPV6_COMPONENT + "|(?:" + IPV6_COMPONENT + ":){1,5}(?::" + IPV6_COMPONENT + "){1,2}" + "|(?:" + IPV6_COMPONENT + ":){1,4}(?::" + IPV6_COMPONENT
-            + "){1,3}" + "|(?:" + IPV6_COMPONENT + ":){1,3}(?::" + IPV6_COMPONENT + "){1,4}" + "|(?:" + IPV6_COMPONENT + ":){1,2}(?::" + IPV6_COMPONENT + "){1,5}" + "|"
-            + IPV6_COMPONENT + ":(?::" + IPV6_COMPONENT + "){1,6}" + "|:(?:(?::" + IPV6_COMPONENT + "){1,7}|:)" + "|(?:" + IPV6_COMPONENT + ":){6}" + IPV4_ADDRESS
-            + "|::(?:ffff(?::0{1,4})?:)?" + IPV4_ADDRESS + "|(?:" + IPV6_COMPONENT + ":){1,4}:" + IPV4_ADDRESS + ")";
+    /** The full form and the compressed forms with at least five groups before the {@code ::}. */
+    private static final String IPV6_LONG_ADDRESS = "(?:" + IPV6_COMPONENT + ":){7}" + IPV6_COMPONENT + "|(?:" + IPV6_COMPONENT + ":){1,7}:" + "|(?:" + IPV6_COMPONENT + ":){1,6}:"
+            + IPV6_COMPONENT + "|(?:" + IPV6_COMPONENT + ":){1,5}(?::" + IPV6_COMPONENT + "){1,2}" + "|(?:" + IPV6_COMPONENT + ":){1,4}(?::" + IPV6_COMPONENT + "){1,3}";
+
+    /** The compressed forms with at most three groups before the {@code ::}, including {@code ::} itself. */
+    private static final String IPV6_SHORT_ADDRESS = "(?:" + IPV6_COMPONENT + ":){1,3}(?::" + IPV6_COMPONENT + "){1,4}" + "|(?:" + IPV6_COMPONENT + ":){1,2}(?::" + IPV6_COMPONENT
+            + "){1,5}" + "|" + IPV6_COMPONENT + ":(?::" + IPV6_COMPONENT + "){1,6}" + "|:(?:(?::" + IPV6_COMPONENT + "){1,7}|:)";
+
+    /** The forms that end in an IPv4 address. */
+    private static final String IPV6_WITH_IPV4_ADDRESS = "(?:" + IPV6_COMPONENT + ":){6}" + IPV4_ADDRESS + "|::(?:ffff(?::0{1,4})?:)?" + IPV4_ADDRESS + "|(?:" + IPV6_COMPONENT
+            + ":){1,4}:" + IPV4_ADDRESS;
+
+    /** Split into named parts, which keeps each pattern simple enough to read. */
+    private static final String IPV6_ADDRESS = "(?:" + IPV6_LONG_ADDRESS + "|" + IPV6_SHORT_ADDRESS + "|" + IPV6_WITH_IPV4_ADDRESS + ")";
 
     private static final String DNS_LABEL = "[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?";
 
@@ -81,8 +90,6 @@ final class SecurityPolicySchema {
 
     /** A name of one or more identifiers separated by dots, which {@link #isJavaName(String, boolean)} checks for reserved words. */
     private static final Pattern JAVA_QUALIFIED_IDENTIFIER = Pattern.compile("^" + JAVA_IDENTIFIER + "(?:\\." + JAVA_IDENTIFIER + ")*+$");
-
-    private static final Pattern NON_WHITESPACE = Pattern.compile("\\S");
 
     /** A {@code ..} part of a path: at its start or after a separator, and followed by a separator or the end. */
     private static final Pattern PARENT_DIRECTORY = Pattern.compile("(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)");
@@ -494,11 +501,12 @@ final class SecurityPolicySchema {
         return !reserved && !restricted;
     }
 
+    /**
+     * @param text the last part of a name that matched {@link #JAVA_QUALIFIED_IDENTIFIER}, so it is not empty; of the {@link #LINE_TERMINATORS} only
+     *                 U+0085 (next line), which Java ignores within identifiers, can end it
+     */
     private static String withoutFinalLineTerminator(String text) {
-        if (text.endsWith("\r\n")) {
-            return text.substring(0, text.length() - 2);
-        }
-        if (!text.isEmpty() && LINE_TERMINATORS.indexOf(text.charAt(text.length() - 1)) >= 0) {
+        if (LINE_TERMINATORS.indexOf(text.charAt(text.length() - 1)) >= 0) {
             return text.substring(0, text.length() - 1);
         }
         return text;
@@ -506,13 +514,14 @@ final class SecurityPolicySchema {
 
     /**
      * Applies the path rule of Ares: either {@code *}, or a path with a character that is no whitespace, without a {@code ..} part, without {@code *} and
-     * {@code NUL}, in which every <code>${</code> starts a recognised placeholder.
+     * {@code NUL}, in which every <code>${</code> starts a recognised placeholder. {@link #isText(Object, Predicate)} only passes values that are not blank,
+     * which covers the character that is no whitespace.
      */
     private static boolean isFilePath(String value) {
         if ("*".equals(value)) {
             return true;
         }
-        if (value.isEmpty() || !NON_WHITESPACE.matcher(value).find() || PARENT_DIRECTORY.matcher(value).find()) {
+        if (PARENT_DIRECTORY.matcher(value).find()) {
             return false;
         }
         int index = 0;

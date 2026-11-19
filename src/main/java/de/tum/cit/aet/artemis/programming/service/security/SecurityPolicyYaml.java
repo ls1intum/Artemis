@@ -41,12 +41,6 @@ final class SecurityPolicyYaml {
     /** A line without content: blank or only a comment. Such lines may appear between the items of a block list. */
     private static final Pattern BLANK_OR_COMMENT_LINE = Pattern.compile("^[ \\t]*(#.*)?$");
 
-    /**
-     * The start of a comment at the end of a line, which in YAML starts with a {@code #} after whitespace and runs to the end of the line. The match starts
-     * where the whitespace starts, so a long run of whitespace is scanned only once.
-     */
-    private static final Pattern TRAILING_COMMENT = Pattern.compile("(?<![ \\t])[ \\t]++#");
-
     private static final Pattern EMPTY_FLOW_LIST = Pattern.compile("^\\s*\\[\\s*]\\s*$");
 
     /**
@@ -141,14 +135,44 @@ final class SecurityPolicyYaml {
             return Optional.empty();
         }
         // A comment behind the key or the inline list stays where it is.
-        Matcher comment = TRAILING_COMMENT.matcher(value);
-        String trailingComment = comment.find() ? value.substring(comment.start()) : "";
+        int commentStart = trailingCommentStart(value);
+        String trailingComment = commentStart < 0 ? "" : value.substring(commentStart);
         String listValue = value.substring(0, value.length() - trailingComment.length());
         String newline = yaml.contains("\r\n") ? "\r\n" : "\n";
         if (!listValue.isBlank()) {
             return rewriteFlowList(indent, listValue, trailingComment, missing, newline).map(replacement -> yaml.substring(0, keyStart) + replacement + yaml.substring(keyEnd));
         }
         return appendToBlockList(yaml, keyEnd, indent, missing, newline);
+    }
+
+    /**
+     * Finds the start of a comment at the end of a line, which in YAML starts with a {@code #} after spaces or tabs and runs to the end of the line. Quotes are
+     * not taken into account, so a {@code #} after whitespace inside a quoted entry also counts, which leaves such a list unchanged.
+     *
+     * @param value the text after the colon of a key
+     * @return the offset of the whitespace before the {@code #}, or -1 if there is no such comment
+     */
+    private static int trailingCommentStart(String value) {
+        int index = 0;
+        while (index < value.length()) {
+            if (isSpaceOrTab(value.charAt(index))) {
+                int runStart = index;
+                while (index < value.length() && isSpaceOrTab(value.charAt(index))) {
+                    index++;
+                }
+                if (index < value.length() && value.charAt(index) == '#') {
+                    return runStart;
+                }
+            }
+            else {
+                index++;
+            }
+        }
+        return -1;
+    }
+
+    private static boolean isSpaceOrTab(char character) {
+        return character == ' ' || character == '\t';
     }
 
     /**
