@@ -140,6 +140,38 @@ class AresTestCasesTest {
     }
 
     @Test
+    void findsTestMethodsBehindAnnotationsWithNamesOutsideAscii() {
+        String source = """
+                class SortingTest {
+
+                    @Test
+                    @Größe @dé.Ä(1)
+                    void sorts() {
+                    }
+                }
+                """;
+
+        assertThat(AresTestCases.testCases(source)).containsExactly("sorts");
+    }
+
+    @Test
+    void anExplicitReceiverParameterIsNoPartOfTheSignature() {
+        String source = """
+                import java.util.Date;
+
+                class SortingTest {
+
+                    @Test
+                    public void runs(@Deprecated SortingTest this, Date date) {
+                    }
+                }
+                """;
+
+        AresTestCases.TestSignature runs = new AresTestCases.TestSignature("runs", "runs(java.util.Date)", true, Set.of("Date"));
+        assertThat(AresTestCases.testSignatures(AresPolicyAnnotations.mask(source)).values()).containsExactly(runs);
+    }
+
+    @Test
     void ignoresAnnotationsWhoseNameOnlyStartsWithTheNameOfATestAnnotation() {
         String source = """
                 class SortingTest {

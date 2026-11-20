@@ -71,6 +71,13 @@ class SecurityPolicyRepositoryFilesTest {
         FileUtils.writeStringToFile(root.resolve(relativePath).toFile(), source, StandardCharsets.UTF_8);
     }
 
+    /**
+     * @return a test class like {@link #TEST_CLASS} that a subclass in another package can extend
+     */
+    private static String publicTestClass(String packageName, String className) {
+        return TEST_CLASS.formatted(packageName, className).replace("\nclass ", "\npublic class ");
+    }
+
     private void writeTestClass(String relativePath, String packageName, String className) throws IOException {
         FileUtils.writeStringToFile(root.resolve(relativePath).toFile(), TEST_CLASS.formatted(packageName, className), StandardCharsets.UTF_8);
     }
@@ -522,7 +529,7 @@ class SecurityPolicyRepositoryFilesTest {
     @CsvSource({ "de.example, void, false", "de.other, void, true", "de.other, public void, false" })
     void aSwitchedOffSubclassThatOverridesTheActiveTestMethodRunsItWithoutTheSandbox(String subclassPackage, String declaration, boolean unsupported) throws IOException {
         writeBuildFile();
-        String withMethodPolicy = TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()",
+        String withMethodPolicy = publicTestClass("de.example", "SortingTest").replace("    @Test\n    void runs()",
                 "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    " + declaration + " runs()");
         writeSource("test/de/example/SortingTest.java", withMethodPolicy);
         String override = """
@@ -560,7 +567,7 @@ class SecurityPolicyRepositoryFilesTest {
     @CsvSource({ "java.util.Date, false", "java.sql.Date, true" })
     void anOverrideMustTakeTheSameParameterTypesAsTheInheritedTestMethod(String importedDate, boolean unsupported) throws IOException {
         writeBuildFile();
-        String withMethodPolicy = TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()",
+        String withMethodPolicy = publicTestClass("de.example", "SortingTest").replace("    @Test\n    void runs()",
                 "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)");
         writeSource("test/de/example/SortingTest.java", withMethodPolicy);
         String override = """
@@ -741,10 +748,12 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @ParameterizedTest
-    @CsvSource(delimiter = '|', value = { "Date|java.util.Date|java.util.Date|Date", "Outer|a.Outer.Inner|a.Outer|Outer.Inner" })
-    void anOverrideWhoseParameterTypeIsAnInheritedMemberTypeKeepsTheInheritedPolicy(String member, String parentType, String childImport, String childType) throws IOException {
+    @CsvSource(delimiter = '|', value = { "Date||java.util.Date|java.util.Date|Date", "Outer|public static class Inner { }|a.Outer.Inner|a.Outer|Outer.Inner" })
+    void anOverrideWhoseParameterTypeIsAnInheritedMemberTypeKeepsTheInheritedPolicy(String member, String memberBody, String parentType, String childImport, String childType)
+            throws IOException {
         writeBuildFile();
-        String memberType = "    public static class " + member + " {\n    }\n\n";
+        writeSource("test/a/Outer.java", "package a;\n\npublic class Outer {\n\n    public static class Inner {\n    }\n}\n");
+        String memberType = "    public static class " + member + " {\n" + (memberBody == null ? "" : "        " + memberBody + "\n") + "    }\n\n";
         String annotated = memberType + "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(" + parentType + " value)";
         writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
         String override = """
@@ -806,6 +815,38 @@ class SecurityPolicyRepositoryFilesTest {
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS, "de.example.MoreSortingTest");
     }
 
+    @ParameterizedTest
+    @CsvSource({ "de.example, true", "de.other, false" })
+    void aPackagePrivateMemberTypeIsInheritedOnlyInItsPackage(String subclassPackage, boolean unsupported) throws IOException {
+        writeBuildFile();
+        String annotated = "    static class Date {\n    }\n\n    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
+        writeSource("test/de/example/SortingTest.java", publicTestClass("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
+        String override = """
+                package %s;
+
+                import java.util.Date;
+
+                import org.junit.jupiter.api.Test;
+
+                import de.example.SortingTest;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+
+                @Public
+                %s
+                class MoreSortingTest extends SortingTest {
+
+                    @Test
+                    public void runs(Date date) {
+                    }
+                }
+                """.formatted(subclassPackage, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        writeSource("test/" + subclassPackage.replace('.', '/') + "/MoreSortingTest.java", override);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // SortingTest.Date shadows the import only in a subclass of its own package, where runs(Date) is an overload rather than an override.
+        assertKeepsAnInheritedActivePolicy(subclassPackage + ".MoreSortingTest", unsupported);
+    }
+
     @Test
     void aTypeVariableOfAMemberTypeDoesNotShadowAnImportedParameterType() throws IOException {
         writeBuildFile();
@@ -840,7 +881,8 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @ParameterizedTest
-    @CsvSource(delimiter = '|', value = { "void helper() { class Date { } }|false", "static class Outer { static class Date { } }|false", "public static class Date { }|true" })
+    @CsvSource(delimiter = '|', value = { "void helper() { class Date { } }|false", "static class Outer { static class Date { } }|false", "private static class Date { }|false",
+            "public static class Date { }|true" })
     void onlyADirectMemberTypeOfASuperclassShadowsAnImportedParameterType(String parentMember, boolean unsupported) throws IOException {
         writeBuildFile();
         String annotated = "    " + parentMember + "\n\n    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
@@ -848,7 +890,7 @@ class SecurityPolicyRepositoryFilesTest {
         writeSource("test/de/example/MoreSortingTest.java", importingOverride("MoreSortingTest extends SortingTest", "public void runs(Date date)"));
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
-        // A local type of a method and a type nested in a member type are no member types, so runs(Date) names java.util.Date and overrides the test.
+        // A local type of a method, a type nested in a member type and a private member type are not inherited, so runs(Date) overrides the test.
         assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", unsupported);
     }
 
@@ -985,7 +1027,7 @@ class SecurityPolicyRepositoryFilesTest {
     void theModifiersOfAnInheritedTestMethodMayPrecedeItsAnnotations(String modifier, boolean unsupported) throws IOException {
         writeBuildFile();
         String annotated = "    " + modifier + " @SuppressWarnings({ \"unused\" })\n    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    void runs()";
-        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
+        writeSource("test/de/example/SortingTest.java", publicTestClass("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
         String override = """
                 package de.other;
 
@@ -1095,7 +1137,7 @@ class SecurityPolicyRepositoryFilesTest {
     @Test
     void aSubclassInAnotherPackageFoundThroughAWildcardImportIsATestClass() throws IOException {
         writeBuildFile();
-        writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");
+        writeSource("test/de/example/SortingTest.java", publicTestClass("de.example", "SortingTest"));
         writeSource("test/de/other/MoreSortingTest.java", "package de.other;\n\nimport de.example.*;\n\nclass MoreSortingTest extends SortingTest {\n}\n");
 
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY, "de.other.MoreSortingTest");

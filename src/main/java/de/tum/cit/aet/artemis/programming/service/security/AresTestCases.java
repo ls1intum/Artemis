@@ -61,7 +61,8 @@ final class AresTestCases {
     private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s+(?!static\\s)([\\p{javaJavaIdentifierPart}.\\s]+?)\\s*;");
 
     /** The name of any annotation, also a qualified one. Its parts repeat possessively, so long qualified names do not grow the stack. */
-    private static final Pattern ANNOTATION_NAME = Pattern.compile("@\\s*[\\w$]+(?:\\s*\\.\\s*[\\w$]+)*+");
+    private static final Pattern ANNOTATION_NAME = Pattern
+            .compile("@\\s*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+(?:\\s*\\.\\s*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+)*+");
 
     /** A complete Java identifier, also with letters outside ASCII, that is followed by an opening parenthesis. */
     private static final Pattern IDENTIFIER_BEFORE_PARENTHESIS = Pattern
@@ -73,7 +74,7 @@ final class AresTestCases {
     private static final Set<String> NOT_METHOD_NAMES = Set.of("if", "for", "while", "switch", "catch", "synchronized", "return", "new");
 
     /** A modifier that lets a subclass in another package override a method. Masked comments and literals cannot contain it. */
-    private static final Pattern VISIBLE_IN_OTHER_PACKAGES = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})(?:public|protected)(?!\\p{javaJavaIdentifierPart})");
+    static final Pattern VISIBLE_IN_OTHER_PACKAGES = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})(?:public|protected)(?!\\p{javaJavaIdentifierPart})");
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
@@ -81,6 +82,9 @@ final class AresTestCases {
 
     /** Marks a simple type name in a {@link TestSignature} that may refer to a type of the package, of {@code java.lang} or of a wildcard import. */
     private static final char UNRESOLVED_TYPE = '?';
+
+    /** The name of an explicit receiver parameter, e.g. {@code runs(SortingTest this)}, which is no formal parameter and so no part of the signature. */
+    private static final Pattern RECEIVER_PARAMETER = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})this\\s*$");
 
     /** The modifier {@code final} of a parameter. */
     private static final Pattern FINAL_MODIFIER = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})final(?!\\p{javaJavaIdentifierPart})");
@@ -237,7 +241,7 @@ final class AresTestCases {
      * @return the offset after the semicolon or brace that ends the member before the offset; a brace within the arguments of an annotation, e.g.
      *         {@code @ValueSource(ints = { 1 })}, ends no member
      */
-    private static int memberStart(String masked, int offset) {
+    static int memberStart(String masked, int offset) {
         int parentheses = 0;
         for (int position = offset - 1; position >= 0; position--) {
             char character = masked.charAt(position);
@@ -366,7 +370,7 @@ final class AresTestCases {
                 typeArguments--;
             }
             else if (character == ',' && typeArguments == 0) {
-                types.add(erasedType(parameter.toString(), resolve));
+                addFormalParameter(types, parameter.toString(), resolve);
                 parameter.setLength(0);
             }
             else if (typeArguments == 0) {
@@ -375,9 +379,18 @@ final class AresTestCases {
             position++;
         }
         if (!parameter.toString().isBlank()) {
-            types.add(erasedType(parameter.toString(), resolve));
+            addFormalParameter(types, parameter.toString(), resolve);
         }
         return String.join(",", types);
+    }
+
+    /**
+     * Adds the erased type of a parameter, unless it is an explicit receiver parameter.
+     */
+    private static void addFormalParameter(List<String> types, String parameter, UnaryOperator<String> resolve) {
+        if (!RECEIVER_PARAMETER.matcher(parameter).find()) {
+            types.add(erasedType(parameter, resolve));
+        }
     }
 
     /**

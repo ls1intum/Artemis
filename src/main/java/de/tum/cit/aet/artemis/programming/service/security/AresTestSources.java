@@ -47,6 +47,9 @@ final class AresTestSources {
 
     private static final Pattern SUPERCLASS = Pattern.compile("^\\s*+(?:<[^{]*?>\\s*+)?extends\\s+([\\p{javaJavaIdentifierPart}.]+)");
 
+    /** The modifier {@code private}, which keeps a member type from being inherited. Masked comments and literals cannot contain it. */
+    private static final Pattern PRIVATE_MODIFIER = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})private(?!\\p{javaJavaIdentifierPart})");
+
     /** Separates the names in the clauses {@code extends} and {@code implements} of a type declaration. */
     private static final Pattern SUPERTYPE_SEPARATOR = Pattern.compile("[\\s,]+");
 
@@ -133,11 +136,11 @@ final class AresTestSources {
      *                             {@code @HiddenTest} on a method
      * @param containsTests    whether one of its methods is a JUnit or Ares test
      * @param testSignatures   the signatures of its test methods, in the order of the source, which decide whether a subclass overrides one of them
-     * @param memberTypes      the simple names of the types declared in its body, which its subclasses inherit as member types
+     * @param memberTypes      the types declared directly in its body that its subclasses may inherit as member types, i.e. that are not private
      */
     record TypeDeclaration(String simpleName, String qualifiedName, List<String> superclass, List<List<String>> supertypes, List<AresPolicyAnnotations.Annotation> policies,
             Map<String, AresPolicyAnnotations.Annotation> methodPolicies, boolean registersSandbox, boolean containsTests, List<AresTestCases.TestSignature> testSignatures,
-            Set<String> memberTypes) {
+            Set<MemberType> memberTypes) {
 
         /**
          * @return the package of the type; empty for the default package
@@ -164,6 +167,15 @@ final class AresTestSources {
      * @param aresApis      the other parts of Ares 2 the file uses, see {@link #aresApis(String)}
      */
     record Summary(String path, List<TypeDeclaration> topLevelTypes, List<SecurityFrameworkState.UnsupportedReasonType> problems, boolean usesAres1, List<String> aresApis) {
+    }
+
+    /**
+     * A member type that a subclass may inherit.
+     *
+     * @param simpleName             the name of the member type
+     * @param visibleInOtherPackages whether it is public or protected, or declared in an interface, so a subclass in another package inherits it, too
+     */
+    record MemberType(String simpleName, boolean visibleInOtherPackages) {
     }
 
     private record Declaration(int start, int bodyStart, int bodyEnd, boolean annotationType, boolean interfaceType, String simpleName, @Nullable String superclass,
@@ -352,11 +364,15 @@ final class AresTestSources {
                 }
             });
             // A type declared directly in the body is a member type; a local type of a method or a type nested in a member type is none.
-            Set<String> memberTypes = new HashSet<>();
+            Set<MemberType> memberTypes = new HashSet<>();
             Matcher memberType = AresPolicyAnnotations.TYPE_DECLARATION.matcher(masked);
             while (memberType.find()) {
                 if (declaration.bodyStart() < memberType.start() && memberType.start() < declaration.bodyEnd() && depth[memberType.start()] == 1) {
-                    memberTypes.add(memberType.group(2));
+                    String modifiers = masked.substring(AresTestCases.memberStart(masked, memberType.start()), memberType.start());
+                    if (!PRIVATE_MODIFIER.matcher(modifiers).find()) {
+                        boolean visible = declaration.interfaceType() || declaration.annotationType() || AresTestCases.VISIBLE_IN_OTHER_PACKAGES.matcher(modifiers).find();
+                        memberTypes.add(new MemberType(memberType.group(2), visible));
+                    }
                 }
             }
             List<List<String>> supertypes = declaration.supertypes().stream().map(name -> resolveTypeName(masked, packageName, name)).toList();
@@ -369,7 +385,8 @@ final class AresTestSources {
 
     /**
      * The member types that are in scope in the body of a type and shadow a single-type import of the same simple name there: its own and those it inherits
-     * from its superclasses and superinterfaces. Like Java, the first candidate name of a supertype that exists wins.
+     * from its superclasses and superinterfaces, i.e. the ones that are not private and, from another package, are public or protected. Like Java, the first
+     * candidate name of a supertype that exists wins.
      *
      * @param type  a top-level type of the repository
      * @param types the top-level types of the repository, by their qualified names
@@ -383,7 +400,12 @@ final class AresTestSources {
         while (!pending.isEmpty()) {
             TypeDeclaration current = pending.pop();
             if (visited.add(current.qualifiedName())) {
-                memberTypes.addAll(current.memberTypes());
+                boolean samePackage = current.packageName().equals(type.packageName());
+                for (MemberType memberType : current.memberTypes()) {
+                    if (samePackage || memberType.visibleInOtherPackages()) {
+                        memberTypes.add(memberType.simpleName());
+                    }
+                }
                 for (List<String> candidates : current.supertypes()) {
                     Optional<String> supertype = candidates.stream().filter(types::containsKey).findFirst();
                     if (supertype.isEmpty()) {
