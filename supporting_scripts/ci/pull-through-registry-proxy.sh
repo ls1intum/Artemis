@@ -47,7 +47,7 @@ if [ "$#" -eq 0 ]; then
 fi
 
 # coreutils ships `timeout` on the CI runners; macOS names it `gtimeout` when coreutils is installed
-# via Homebrew. Without either a pull is not bounded, which only matters for local use.
+# via Homebrew, which keeps the bound working for anyone running this locally.
 timeout_bin=""
 if command -v timeout > /dev/null 2>&1; then
     timeout_bin="timeout"
@@ -55,13 +55,16 @@ elif command -v gtimeout > /dev/null 2>&1; then
     timeout_bin="gtimeout"
 fi
 
-# Pulls one reference with an upper bound, so a stalled pull fails instead of holding the job open.
+# Pulls one reference with an upper bound, so a stalled pull fails instead of holding the job open. A pull
+# that cannot be bounded is refused: an unbounded `docker pull` that stalls would hold the step open until
+# the job timeout, which is the failure this script exists to remove. Only reached when an image is actually
+# missing, so a machine with every image cached still succeeds.
 bounded_pull() {
-    if [ -n "$timeout_bin" ]; then
-        "$timeout_bin" --kill-after=30s "${IMAGE_PULL_TIMEOUT_SECONDS}s" docker pull --quiet "$1" > /dev/null
-    else
-        docker pull --quiet "$1" > /dev/null
+    if [ -z "$timeout_bin" ]; then
+        echo "::error title=Cannot bound the image pull::$1 is missing and neither 'timeout' nor 'gtimeout' is available, so a stalled pull could hang this step indefinitely. Install coreutils (on macOS: brew install coreutils) or pull the image manually."
+        return 1
     fi
+    "$timeout_bin" --kill-after=30s "${IMAGE_PULL_TIMEOUT_SECONDS}s" docker pull --quiet "$1" > /dev/null
 }
 
 # Prints the repository path of a Docker Hub image ("library/alpine:3", "ls1tum/image:1") and returns

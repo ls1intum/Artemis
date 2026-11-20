@@ -26,3 +26,21 @@ runs:
         bash supporting_scripts/ci/pull-through-registry-proxy.sh "$ryuk"
         echo "TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX=${DOCKER_HUB_PROXY}/" >> "$GITHUB_ENV"
         echo "Testcontainers pulls Docker Hub images through ${DOCKER_HUB_PROXY}."
+
+    # With the prefix set, the image that LocalCIDockerImageIntegrationTest preloads with RemoteDockerImage is cached
+    # under its proxy name, while the build agent looks for the original name and would pull it from Docker Hub on a
+    # cold runner. Provision the exercise images of the test under their original names, so no build pulls them. The
+    # tags are read from the test, so they cannot drift.
+    - name: Provision the exercise images of the LocalCI tests
+      shell: bash
+      env:
+        DOCKER_HUB_PROXY: ${{ inputs.docker-hub-proxy }}
+      run: |
+        test_file=src/test/java/de/tum/cit/aet/artemis/localci/service/LocalCIDockerImageIntegrationTest.java
+        images=$(sed -nE 's/^ *private static final String (GCC|FACT)_DOCKER_IMAGE = "(.*)";.*/\2/p' "$test_file")
+        if [ "$(printf '%s\n' "$images" | grep -c .)" -ne 2 ]; then
+            echo "::error title=Cannot read the LocalCI test images::Expected the GCC_DOCKER_IMAGE and FACT_DOCKER_IMAGE constants in ${test_file}. Update the sed expression of this step to match."
+            exit 1
+        fi
+        # shellcheck disable=SC2086
+        bash supporting_scripts/ci/pull-through-registry-proxy.sh $images

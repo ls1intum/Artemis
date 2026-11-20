@@ -454,7 +454,10 @@ image comes through it:
   images of the compose stack (with `--refresh`, in place of `docker compose pull`); the Android job uses it for the
   MySQL image.
 - `.github/actions/testcontainers-registry-proxy` pulls the Ryuk image and sets `TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX`
-  for the server test jobs, so Testcontainers sends all its Docker Hub pulls to the cache.
+  for the server test jobs, so Testcontainers sends all its Docker Hub pulls to the cache. It also provisions the two
+  exercise images that `LocalCIDockerImageIntegrationTest` preloads, under their original names: with the prefix set,
+  Testcontainers would cache them under the proxy name, and the build agent, which asks for the original name, would
+  pull them from Docker Hub on a cold runner.
 - The small Alpine container that returns the ownership of leftover files before a checkout is pulled through the
   cache as well.
 

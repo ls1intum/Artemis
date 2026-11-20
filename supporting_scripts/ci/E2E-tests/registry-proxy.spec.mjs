@@ -18,7 +18,7 @@ afterEach(() => {
  * @param images the images to make available
  * @param options `present` lists images that already exist, `failing` lists references whose pull fails
  */
-function run(images, { present = [], failing = [], refresh = false, proxyReachable = true, env = {} } = {}) {
+function run(images, { present = [], failing = [], refresh = false, proxyReachable = true, timeoutAvailable = true, env = {} } = {}) {
     const directory = mkdtempSync(join(tmpdir(), 'artemis registry proxy '));
     directories.push(directory);
     const calls = join(directory, 'docker-calls');
@@ -39,10 +39,11 @@ exit 0
     // The reachability probe is stubbed as well, so no test depends on the network.
     writeFileSync(join(directory, 'curl'), `#!/bin/sh\nexit ${proxyReachable ? 0 : 7}\n`, { mode: 0o700 });
     // `timeout` is replaced by a pass-through, so the stub decides the outcome of a pull on every platform.
-    writeFileSync(join(directory, 'timeout'), '#!/bin/sh\nshift 2\nexec "$@"\n', { mode: 0o700 });
-    const result = spawnSync('bash', [script, ...(refresh ? ['--refresh'] : []), ...images], {
+    if (timeoutAvailable) writeFileSync(join(directory, 'timeout'), '#!/bin/sh\nshift 2\nexec "$@"\n', { mode: 0o700 });
+    // Without a timeout utility the PATH holds only the stubs, so neither `timeout` nor `gtimeout` can be found.
+    const result = spawnSync(timeoutAvailable ? 'bash' : '/bin/bash', [script, ...(refresh ? ['--refresh'] : []), ...images], {
         encoding: 'utf8',
-        env: { ...process.env, PATH: `${directory}:${process.env.PATH}`, TEST_DOCKER_CALLS: calls, DOCKER_HUB_PROXY: proxy, ...env },
+        env: { ...process.env, PATH: timeoutAvailable ? `${directory}:${process.env.PATH}` : directory, TEST_DOCKER_CALLS: calls, DOCKER_HUB_PROXY: proxy, ...env },
     });
     return { ...result, calls: readFileSync(calls, 'utf8').trim().split('\n').filter(Boolean) };
 }
@@ -117,6 +118,20 @@ describe('pull-through-registry-proxy.sh', () => {
         expect(status).toBe(1);
         expect(stdout).toContain('::error title=Could not pull images::alpine:3');
         expect(calls).toContain(`tag ${proxy}/library/busybox:1 busybox:1`);
+    });
+
+    it('refuses a pull it cannot bound when neither timeout nor gtimeout exists', () => {
+        const { status, calls, stdout } = run(['alpine:3', 'ghcr.io/ls1intum/artemis:latest'], { timeoutAvailable: false });
+        expect(status).toBe(1);
+        expect(calls.some((call) => call.startsWith('pull'))).toBe(false);
+        expect(stdout).toContain("::error title=Cannot bound the image pull::");
+        expect(stdout).toContain("neither 'timeout' nor 'gtimeout' is available");
+    });
+
+    it('does not need a timeout utility when every image is present', () => {
+        const { status, calls } = run(['alpine:3'], { present: ['alpine:3'], timeoutAvailable: false });
+        expect(status).toBe(0);
+        expect(calls).toEqual(['image inspect alpine:3']);
     });
 
     it('explains its usage when called without an image', () => {
