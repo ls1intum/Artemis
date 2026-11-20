@@ -2,7 +2,7 @@
     <h5 *adminTitleBarTitle id="import-standardized-competencies-heading" class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.import.title"></h5>
     <div class="mt-4 rounded-lg border border-(--border-color)">
         <div
-            class="clickable flex max-w-full items-center p-4"
+            class="cursor-pointer flex max-w-full items-center p-4"
             (click)="toggleCollapse()"
             data-testid="format-toggle"
             [attr.aria-expanded]="!isCollapsed()"
@@ -14,7 +14,7 @@
             (keyup.space)="$event.target === $event.currentTarget ? keyboardAction1.click() : undefined"
         >
             <div class="me-2">
-                <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed()" />
+                <fa-icon [icon]="faChevronRight" class="rotate-icon inline-block align-middle" [class.rotated]="!isCollapsed()" />
             </div>
             <h5 class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.title"></h5>
         </div>
@@ -47,7 +47,7 @@
                 <jhi-knowledge-area-tree class="flex h-full w-1/2 grow" [dataSource]="dataSource()">
                     <ng-template let-competency="competency" let-knowledgeArea="knowledgeArea" #competencyTemplate>
                         <div
-                            class="clickable flex items-center"
+                            class="cursor-pointer flex items-center"
                             (click)="openCompetencyDetails(competency, knowledgeArea.title)"
                             #keyboardAction31
                             role="button"

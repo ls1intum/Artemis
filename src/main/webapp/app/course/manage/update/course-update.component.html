@@ -5,10 +5,10 @@
     <!-- Creating has no course shell yet, so the page brings the same frame: a title bar that stays in view above a
          scrolling content card. -->
     <div class="course-create-layout" data-testid="course-create-layout">
-        <div id="course-create-title-bar" class="module-bg rounded-lg px-4!">
+        <div id="course-create-title-bar" class="bg-(--module-bg) rounded-lg px-4!">
             <h1 id="jhi-course-heading-create" class="course-create-title" jhiTranslate="artemisApp.course.home.createLabel"></h1>
         </div>
-        <div id="course-create-body" class="module-bg rounded-lg">
+        <div id="course-create-body" class="bg-(--module-bg) rounded-lg">
             <ng-container *ngTemplateOutlet="courseFormTemplate" />
         </div>
     </div>

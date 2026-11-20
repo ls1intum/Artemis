@@ -3,10 +3,10 @@
     [ngClass]="{ 'mx-0': !isThreadSidebar(), 'pinned-message': isPinned(), 'is-saved': !isConsecutive() && posting()?.isSaved, 'non-consecutive': !isConsecutive() }"
 >
     @if (posting()?.isSaved) {
-        <div jhi-saved-posting-banner class="post-is-saved-message post-content-padding fs-xx-small py-1" [consecutive]="isConsecutive()"></div>
+        <div jhi-saved-posting-banner class="post-is-saved-message post-content-padding text-[0.625rem] py-1" [consecutive]="isConsecutive()"></div>
     }
     @if (isConsecutive()) {
-        <span class="post-time fs-small" [tumAetUiTooltip]="posting()?.creationDate | artemisDate: 'time'" tumAetUiTooltipDescribesHost="false">
+        <span class="post-time text-[0.875rem]" [tumAetUiTooltip]="posting()?.creationDate | artemisDate: 'time'" tumAetUiTooltipDescribesHost="false">
             {{ posting()?.creationDate | artemisDate: 'time' }}
         </span>
     }

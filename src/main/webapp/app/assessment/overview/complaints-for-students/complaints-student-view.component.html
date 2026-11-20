@@ -26,7 +26,7 @@
                         data-testid="complain"
                         tumAetUiButton
                         size="small"
-                        [class.not-allowed]="(!isExamMode() && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid()"
+                        [class.cursor-not-allowed]="(!isExamMode() && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid()"
                         (click)="openComplaintForm(ComplaintType.COMPLAINT)"
                         [disabled]="(!isExamMode() && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid()"
                         title="{{
@@ -43,7 +43,7 @@
                         id="more-feedback"
                         tumAetUiButton
                         size="small"
-                        [class.not-allowed]="!timeOfFeedbackRequestValid()"
+                        [class.cursor-not-allowed]="!timeOfFeedbackRequestValid()"
                         (click)="openComplaintForm(ComplaintType.MORE_FEEDBACK)"
                         [disabled]="!timeOfFeedbackRequestValid()"
                         title="{{ !timeOfFeedbackRequestValid() ? ('artemisApp.moreFeedback.notAllowedTooltip' | artemisTranslate) : '' }}"

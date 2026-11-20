@@ -5,7 +5,7 @@
             at the shell's title-bar height, with the sidebar's expand button in it while the sidebar is collapsed.
             `px-*` rather than `p-*`, so Bootstrap's !important spacing does not overrule the class's vertical padding.
         -->
-        <div class="page-top-bar module-bg shell-divider-b flex items-center gap-2 rounded-sm px-4">
+        <div class="page-top-bar bg-(--module-bg) shell-divider-b flex items-center gap-2 rounded-sm px-4">
             @if (showSidebarToggle() && isSidebarCollapsed()) {
                 <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
             }
@@ -64,7 +64,7 @@
             </div>
         </div>
 
-        <div class="module-bg flex h-full flex-col overflow-hidden rounded-sm p-2">
+        <div class="bg-(--module-bg) flex h-full flex-col overflow-hidden rounded-sm p-2">
             <div class="group-panel-scroll">
                 <div class="mb-4">
                     <div class="mb-1 font-semibold" jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.heading"></div>

@@ -9,7 +9,7 @@
                 data-testid="posting-summary-open"
                 (click)="$event.stopPropagation(); onTriggerNavigateToPost()"
                 [attr.aria-label]="'artemisApp.communication.post.openPost' | artemisTranslate: { title: post()!.conversation!.title! }"
-                class="posting-summary-conversation fs-x-small text-muted-color mb-1! flex items-center border-0 bg-transparent p-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2"
+                class="posting-summary-conversation text-[0.75rem] text-muted-color mb-1! flex items-center border-0 bg-transparent p-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2"
             >
                 <span class="inline-block">
                     <fa-icon [icon]="post()!.conversation!.type! === ConversationType.CHANNEL ? faHashtag : faLock" />
@@ -39,7 +39,7 @@
                         [authorName]="post()!.author!.name!"
                         [imageUrl]="addPublicFilePrefix(post()!.author!.imageUrl!)"
                     />
-                    <div class="posting-summary-author-content fs-small">
+                    <div class="posting-summary-author-content text-[0.875rem]">
                         <div>
                             @if (isShowSummary()) {
                                 <span class="me-1 inline-block font-semibold">{{ post()!.author!.name! }}</span>
@@ -55,7 +55,7 @@
                                 </button>
                             }
                             @if (post()!.creationDate !== undefined) {
-                                <span class="fs-small text-muted-color" [tumAetUiTooltip]="postingIsOfToday() ? '' : (post()!.creationDate! | artemisDate: 'time')">
+                                <span class="text-[0.875rem] text-muted-color" [tumAetUiTooltip]="postingIsOfToday() ? '' : (post()!.creationDate! | artemisDate: 'time')">
                                     {{ postingIsOfToday() ? (post()!.creationDate! | artemisDate: 'time') : (post()!.creationDate! | artemisDate: 'short-date') }}
                                 </span>
                             }

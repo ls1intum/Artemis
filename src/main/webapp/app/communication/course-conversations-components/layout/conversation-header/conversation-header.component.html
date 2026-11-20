@@ -7,7 +7,7 @@
                         <fa-icon [icon]="faChevronLeft" />
                     </button>
                     <h4
-                        class="pointer mb-0 inline-block rounded py-2 info"
+                        class="cursor-pointer mb-0 inline-block rounded py-2 info"
                         data-testid="conversation-name"
                         (click)="openConversationDetailDialog($event, INFO)"
                         #keyboardAction9
@@ -62,7 +62,7 @@
                                 <div class="pinned-messages-button">
                                     <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="togglePinnedMessages()">
                                         @if (showPinnedMessages()) {
-                                            <jhi-emoji class="fs-x-small" emoji="x" />
+                                            <jhi-emoji class="text-[0.75rem]" emoji="x" />
                                         } @else {
                                             <jhi-emoji emoji="pushpin" />
                                         }

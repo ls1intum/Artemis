@@ -101,14 +101,6 @@ a {
     text-decoration: none !important;
 }
 
-.pointer {
-    cursor: pointer;
-}
-
-.cursor-default {
-    cursor: default !important;
-}
-
 /*
  * Restores the hover underline that the rule above removes. Keep every exclusion inside the one `:not()` argument
  * list: a `:not()` counts as its most specific argument, so the whole selector stays at one class no matter how many
@@ -126,34 +118,14 @@ a.disabled {
     cursor: default;
 }
 
-.clickable {
-    cursor: pointer;
-}
-
 /* Important and outside the cascade layers: it also sets the text colour of TUM AET UI text areas, whose own colour would win otherwise. */
 textarea {
     color: $form-control-color !important;
 }
 
-.form-inline {
-    display: flex;
-    flex-flow: row wrap;
-    align-items: center;
-    text-align: left;
-}
-
 /* ==========================================================================
 Narrow styles
 ========================================================================== */
-
-.form-group-narrow {
-    margin-bottom: 0.2rem;
-}
-
-.label-narrow {
-    display: inline-block;
-    margin-bottom: 0.1rem;
-}
 
 /* ==========================================================================
 Generic styles
@@ -210,19 +182,6 @@ a[tumAetUiButton].disabled {
     opacity: 0.6;
 }
 
-.pad {
-    padding: 10px;
-}
-
-.w-40 {
-    width: 40% !important;
-}
-
-.break {
-    white-space: normal;
-    word-break: break-all;
-}
-
 .readonly {
     background-color: $readonly-background;
     opacity: 1;
@@ -237,11 +196,6 @@ a[tumAetUiButton].disabled {
     background-color: var(--body-bg);
 }
 
-.no-flex-shrink {
-    flex-shrink: 0;
-}
-
-.hand,
 [jhisortby] {
     cursor: pointer;
 }
@@ -256,24 +210,9 @@ a[tumAetUiButton].disabled {
     transform: rotate(90deg);
 }
 
-.chevron-position {
-    display: inline-block;
-    vertical-align: middle;
-}
-
 /* ==========================================================================
 entity tables helpers
 ========================================================================== */
-
-/* Remove the padding from an element */
-.no-padding {
-    padding: 0 !important;
-}
-
-.editor-outline-background {
-    background: $editor-outline-background;
-    max-width: max-content;
-}
 
 .resizable-dragging {
     user-select: none;
@@ -346,88 +285,6 @@ code.password:hover {
     margin-bottom: 0;
 }
 
-.assessments {
-    width: calc(100% - 30px);
-    height: 100vh;
-    position: absolute;
-    top: 0;
-    left: 15px;
-    overflow: hidden;
-    pointer-events: none;
-
-    &__container {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: calc(100% + 15px);
-        height: calc(100% + 15px);
-        overflow: scroll;
-    }
-
-    &__canvas {
-        min-width: 3000px;
-        min-height: 3000px;
-
-        > div {
-            position: absolute;
-            z-index: 1;
-            text-align: right;
-            transform: translateX(-100%);
-            min-width: 65px;
-            padding: 5px;
-
-            i {
-                vertical-align: middle;
-
-                &.half {
-                    position: relative;
-
-                    &::before {
-                        display: block;
-                        width: 60%;
-                        overflow: hidden;
-                    }
-
-                    &::after {
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        opacity: 0.3;
-                    }
-                }
-            }
-
-            .fa-check {
-                color: $success;
-
-                &.half {
-                    &::after {
-                        content: '\F00C';
-                    }
-                }
-
-                ~ i {
-                    margin-left: -0.5em;
-                }
-            }
-
-            .fa-times {
-                color: $danger;
-
-                &.half {
-                    &::after {
-                        content: '\f00d';
-                    }
-                }
-
-                ~ i {
-                    margin-left: -0.2em;
-                }
-            }
-        }
-    }
-}
-
 .unreferencedFeedback {
     background-color: $unreferenced-feedback-background;
 }
@@ -441,14 +298,6 @@ code.password:hover {
 // (delete button in the presentation edit dialog) stacks above it.
 .cdk-overlay-container {
     z-index: 1200;
-}
-
-.not-allowed {
-    cursor: not-allowed;
-}
-
-.colon-suffix::after {
-    content: ':';
 }
 
 /* ==========================================================================
@@ -744,13 +593,6 @@ body.transparent-background {
 }
 
 /* Course Overview Content Pages with Sidebar */
-.module-bg {
-    background-color: var(--module-bg);
-}
-
-.body-bg {
-    background-color: var(--body-bg);
-}
 
 /*
  * Horizontal grey dividers around a shell's content region — to the sidebar on one side and to the viewport
@@ -1023,22 +865,6 @@ $transition-in-between-delay: 0.05s;
 
 .sidebar-width {
     width: $sidebar-width;
-}
-
-.fs-xx-small {
-    font-size: 0.625rem;
-}
-
-.fs-x-small {
-    font-size: 0.75rem;
-}
-
-.fs-small {
-    font-size: 0.875rem;
-}
-
-.min-h-100 {
-    min-height: 100%;
 }
 
 /*

@@ -1,8 +1,8 @@
-<div class="fs-xx-small flex flex-wrap items-center gap-2" [style.width]="getPostingType() === 'post' ? 'max-content' : ''">
+<div class="text-[0.625rem] flex flex-wrap items-center gap-2" [style.width]="getPostingType() === 'post' ? 'max-content' : ''">
     @if (getPostingType() === 'post') {
         @if (hoverBar() && sortedAnswerPosts()?.length === 0) {
             <div>
-                <button type="button" class="reaction-button clickable reply-btn" (click)="isCommunicationPage() ? openThread.emit() : openAnswerView()">
+                <button type="button" class="reaction-button clickable cursor-pointer reply-btn" (click)="isCommunicationPage() ? openThread.emit() : openAnswerView()">
                     <fa-icon class="fa-xs self-center" [icon]="faArrowRight" />
                     <span jhiTranslate="artemisApp.conversationsLayout.threadSideBar.reply" class="emoji-count px-2!"></span>
                 </button>
@@ -11,14 +11,19 @@
         @if (!isCommunicationPage() && sortedAnswerPosts()?.length) {
             @if (showAnswers()) {
                 <div>
-                    <button type="button" class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers()" (click)="closeAnswerView()">
+                    <button
+                        type="button"
+                        class="reaction-button clickable cursor-pointer collapse-answers-btn"
+                        [class.reaction-button--reacted]="showAnswers()"
+                        (click)="closeAnswerView()"
+                    >
                         <jhi-emoji [emoji]="closeCrossId" />
                         <span jhiTranslate="artemisApp.communication.collapseAnswers" class="emoji-count"></span>
                     </button>
                 </div>
             } @else {
                 <div>
-                    <button type="button" class="reaction-button clickable expand-answers-btn" (click)="openAnswerView()">
+                    <button type="button" class="reaction-button clickable cursor-pointer expand-answers-btn" (click)="openAnswerView()">
                         <fa-icon class="fa-xs self-center" [icon]="faArrowRight" />
                         <span class="emoji-count">{{
                             sortedAnswerPosts()?.length === 1
@@ -30,7 +35,7 @@
             }
         } @else if (!isThreadSidebar() && !showAnswers() && sortedAnswerPosts()?.length) {
             <div>
-                <button type="button" class="reaction-button clickable expand-answers-btn" (click)="openThread.emit()">
+                <button type="button" class="reaction-button clickable cursor-pointer expand-answers-btn" (click)="openThread.emit()">
                     <fa-icon [icon]="faArrowRight" />
                     <span class="emoji-count px-2!">{{
                         sortedAnswerPosts()?.length === 1
@@ -55,7 +60,7 @@
                 <button
                     type="button"
                     [disabled]="isReadOnlyMode()"
-                    class="reaction-button clickable"
+                    class="reaction-button clickable cursor-pointer"
                     [class.reaction-button--reacted]="reactionMetaData.value.hasReacted"
                     (click)="updateReaction(reactionMetaData.key)"
                     [tumAetUiTooltip]="(reactionMetaData.value.reactingUsers | reactingUsersOnPosting | async) ?? undefined"
@@ -77,7 +82,7 @@
             <ng-container>
                 <button
                     type="button"
-                    class="reaction-button clickable px-2 fs-small"
+                    class="reaction-button clickable cursor-pointer px-2 text-[0.875rem]"
                     (click)="showReactionSelector.set(!showReactionSelector())"
                     cdkOverlayOrigin
                     #trigger="cdkOverlayOrigin"
@@ -125,7 +130,7 @@
         <jhi-post-create-edit-modal #createEditModal [posting]="posting()!" [isCommunicationPage]="isCommunicationPage()!" (isModalOpen)="isModalOpen.emit()" />
         <!-- Delete button -->
         @if (!isEmojiCount() && mayDelete()) {
-            <div class="reaction-button clickable fs-small" data-testid="posting-reaction-delete">
+            <div class="reaction-button clickable cursor-pointer text-[0.875rem]" data-testid="posting-reaction-delete">
                 <jhi-confirm-icon
                     iconSize="1x"
                     [fillParent]="true"
@@ -141,9 +146,9 @@
             @if (!isAnswerOfAnnouncement() && (isAtLeastTutorInCourse() || isAuthorOfOriginalPost())) {
                 <button
                     type="button"
-                    class="reaction-button clickable px-2 fs-small resolve"
+                    class="reaction-button clickable cursor-pointer px-2 text-[0.875rem] resolve"
                     id="toggleElement"
-                    [ngClass]="isAtLeastTutorInCourse() || isAuthorOfOriginalPost() ? 'clickable' : ''"
+                    [ngClass]="isAtLeastTutorInCourse() || isAuthorOfOriginalPost() ? 'clickable cursor-pointer' : ''"
                     (click)="toggleResolvesPost()"
                 >
                     @if (getResolvesPost()) {
@@ -169,13 +174,13 @@
         @if (getPostingType() === 'post' && !isEmojiCount() && (displayPriority() === DisplayPriority.PINNED || canPin())) {
             <button
                 type="button"
-                class="reaction-button pin clickable fs-small"
+                class="reaction-button pin clickable cursor-pointer text-[0.875rem]"
                 [class.reaction-button--not-hoverable]="!canPin()"
                 [class.reaction-button--reacted]="displayPriority() === DisplayPriority.PINNED && canPin()"
                 [disabled]="!canPin() || isReadOnlyMode()"
                 (click)="canPin() && togglePin()"
             >
-                <jhi-emoji class="fs-x-small" [emoji]="pinEmojiId" [tumAetUiTooltip]="pinTooltip() | artemisTranslate" />
+                <jhi-emoji class="text-[0.75rem]" [emoji]="pinEmojiId" [tumAetUiTooltip]="pinTooltip() | artemisTranslate" />
             </button>
         }
 
@@ -183,7 +188,7 @@
             <!-- Save button -->
             <button
                 type="button"
-                class="reaction-button clickable px-2! fs-small bookmark"
+                class="reaction-button clickable cursor-pointer px-2! text-[0.875rem] bookmark"
                 (click)="bookmarkPosting()"
                 [tumAetUiTooltip]="(getSaved() ? 'artemisApp.communication.post.removeBookmarkPost' : 'artemisApp.communication.post.bookmarkPost') | artemisTranslate"
             >
@@ -192,7 +197,7 @@
             <!-- Forward button -->
             <button
                 type="button"
-                class="reaction-button clickable px-2! fs-small forward"
+                class="reaction-button clickable cursor-pointer px-2! text-[0.875rem] forward"
                 data-testid="posting-reaction-forward"
                 [disabled]="isReadOnlyMode()"
                 (click)="forwardMessage()"
@@ -205,7 +210,7 @@
         @if (canMarkAsUnread() && !isEmojiCount()) {
             <button
                 type="button"
-                class="reaction-button clickable px-2! fs-small"
+                class="reaction-button clickable cursor-pointer px-2! text-[0.875rem]"
                 [disabled]="isReadOnlyMode()"
                 (click)="markMessageAsUnread()"
                 [tumAetUiTooltip]="'artemisApp.communication.post.markAsUnread' | artemisTranslate"

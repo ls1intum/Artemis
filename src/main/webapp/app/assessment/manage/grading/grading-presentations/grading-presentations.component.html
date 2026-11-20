@@ -3,7 +3,7 @@
         <div class="flex flex-wrap gap-y-2">
             <div class="w-auto">
                 <div>
-                    <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.presentationType.title"></label>
+                    <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.gradingSystem.presentationType.title"></label>
                     <jhi-help-icon text="artemisApp.gradingSystem.presentationType.description" />
                 </div>
                 <div>
@@ -13,7 +13,7 @@
             @if (presentationsConfig().presentationType === BASIC && gradingScale().course !== undefined) {
                 <div class="w-auto">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.basicPresentation.label"></label>
+                        <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.gradingSystem.basicPresentation.label"></label>
                     </div>
                     <div>
                         <div class="flex items-stretch">
@@ -46,7 +46,7 @@
             @if (presentationsConfig().presentationType === GRADED) {
                 <div class="w-auto">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.label"></label>
+                        <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.label"></label>
                     </div>
                     <div>
                         <div class="grid grid-cols-[minmax(0,1fr)_auto] items-stretch gap-y-2 sm:flex">

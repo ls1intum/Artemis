@@ -14,7 +14,7 @@ import { KeyValuePipe } from '@angular/common';
     selector: 'jhi-submission-policy-update',
     template: `
         <div class="mb-4! flex flex-col gap-1">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title" for="field_submissionPolicy">Submission Policy</label>
+            <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.title" for="field_submissionPolicy">Submission Policy</label>
             <tumaet-ui-select
                 required
                 [options]="[
@@ -36,7 +36,7 @@ import { KeyValuePipe } from '@angular/common';
                 <div class="grid grid-cols-12 gap-6! mb-4!">
                     <div class="col-span-12 md:col-span-6">
                         <ng-container>
-                            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle" for="field_submissionLimit"
+                            <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle" for="field_submissionLimit"
                                 >Submission limit</label
                             >
                             <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription" />
@@ -65,7 +65,7 @@ import { KeyValuePipe } from '@angular/common';
                     <div class="col-span-12 md:col-span-6">
                         @if (this.isSubmissionPenaltyPolicy) {
                             <label
-                                class="label-narrow"
+                                class="inline-block mb-[0.1rem]"
                                 jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldTitle"
                                 for="field_submissionLimitExceededPenalty"
                                 >Penalty after Exceeding Submission limit</label

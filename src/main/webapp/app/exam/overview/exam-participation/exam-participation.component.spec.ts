@@ -2629,10 +2629,10 @@ describe('ExamParticipationComponent', () => {
             showSubmissionHint({ realExam: true, examLayoutActive: true });
 
             // the wrapper is the full-height frame of the running exam (6px dividers on all sides), without the fill-the-card modifier
-            expect(wrapper().classList).toContain('body-bg');
+            expect(wrapper().classList).toContain('bg-(--body-bg)');
             expect(wrapper().classList).not.toContain('exam-background-wrapper--test-run');
             expect(hint().parentElement).toBe(wrapper());
-            expect(hint().classList).toContain('module-bg');
+            expect(hint().classList).toContain('bg-(--module-bg)');
         });
 
         it('insets the hint like the scroller of an exercise', () => {

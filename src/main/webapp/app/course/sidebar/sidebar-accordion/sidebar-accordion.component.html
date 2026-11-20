@@ -1,6 +1,6 @@
 @for (groupKey of Object.keys(groupedData()); track groupKey; let i = $index) {
     @if ((groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length || sidebarItemAlwaysShow()[groupKey]) {
-        <div id="test-accordion-item-container-{{ i }}" class="pointer">
+        <div id="test-accordion-item-container-{{ i }}" class="cursor-pointer">
             <div
                 [id]="'test-accordion-item-header-' + groupKey"
                 class="control-label flex items-center justify-between bg-module px-1"
@@ -30,7 +30,7 @@
                     @if (totalUnreadMessagesPerGroup()[groupKey] > 0 && collapseStateInternal()[groupKey]) {
                         <span class="unread-count me-2">{{ totalUnreadMessagesPerGroup()[groupKey] }}</span>
                     }
-                    <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseStateInternal()[groupKey]" />
+                    <fa-icon [icon]="faChevronRight" class="rotate-icon inline-block align-middle" [class.rotated]="!collapseStateInternal()[groupKey]" />
                 </div>
             </div>
             @if ((groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length) {
