@@ -55,7 +55,12 @@ import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/upd
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
-import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
+import {
+    IS_DISPLAYED_IN_SIMPLE_MODE,
+    ProgrammingExerciseInputField,
+    deriveDefaultPackageName,
+    isReservedAresPackageName,
+} from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
@@ -1156,7 +1161,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         // Select the correct pattern
         this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
+        this.updateDefaultPackageName();
         return language;
+    }
+
+    /** In simple mode the package name field is hidden, so a new exercise gets a package name that fits the selected language. */
+    private updateDefaultPackageName() {
+        if (this.isSimpleMode() && this.isCreate) {
+            this.programmingExercise.packageName = deriveDefaultPackageName(this.programmingExercise) ?? this.programmingExercise.packageName;
+        }
     }
 
     /**
@@ -1201,6 +1214,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.selectedProjectType = projectType;
         const useBlackboxPattern = projectType === ProjectType.MAVEN_BLACKBOX;
         this.setPackageNamePattern(this.programmingExercise.programmingLanguage!, useBlackboxPattern);
+        this.updateDefaultPackageName();
         return projectType;
     }
 
@@ -1587,6 +1601,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     : `artemisApp.exercise.form.packageName.pattern.${this.programmingExercise.programmingLanguage}`;
             validationErrorReasons.push({
                 translateKey,
+                translateValues: {},
+            });
+            return;
+        }
+
+        // Only new exercises: an imported exercise keeps its package name, which cannot be changed here
+        if (this.isCreate && isReservedAresPackageName(this.programmingExercise.programmingLanguage, this.programmingExercise.packageName)) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.exercise.form.packageName.reserved',
                 translateValues: {},
             });
         }

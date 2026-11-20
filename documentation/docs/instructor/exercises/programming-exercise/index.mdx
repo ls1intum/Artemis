@@ -151,6 +151,10 @@ Cannot be combined with static code analysis, and cannot be changed after the ex
 
 For some languages — Java, Kotlin, Swift, Go and Dart — you can specify the package that the exercise template uses, which defines the package structure students must follow. This keeps submissions consistent, which matters when tests locate classes by their fully qualified name.
 
+Artemis proposes a package name from the course and exercise short names, which you can change in advanced mode.
+Java and Kotlin exercises cannot use a package that the Ares test framework reserves for itself: a package inside `java`, `javax`, `sun`, `jdk`, `com.sun`, `net.bytebuddy`, `org.aspectj`, `com.ibm.wala`, `com.tngtech.archunit` or `de.tum.cit.ase.ares.api`, or a package above one of them, such as `de`, `de.tum`, `com` or `org`.
+Ares fails every test of an exercise whose code lies in such a package, so Artemis rejects these names when you create an exercise.
+
 #### Solution Repository Checkout
 
 Checks out the solution repository alongside the student's submission during the build, so tests can compare the two directly.

@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys;
@@ -104,6 +105,14 @@ public class ProgrammingExerciseValidationService {
     private static final Pattern PACKAGE_NAME_PATTERN_FOR_GO = Pattern.compile(PACKAGE_NAME_REGEX_FOR_GO);
 
     private static final Pattern PACKAGE_NAME_PATTERN_FOR_DART = Pattern.compile(PACKAGE_NAME_REGEX_FOR_DART);
+
+    /**
+     * Namespaces Ares 2 trusts for its own classes (copied from {@code WalaPathClassification.RESERVED_PACKAGE_PREFIXES} in Ares 2.2.1). Ares fails every test when compiled
+     * exercise code lies inside one of them or in a package above one of them (e.g. {@code de} or {@code org}), so new Java and Kotlin exercises must not use such a package.
+     * Keep in sync with {@code RESERVED_ARES_PACKAGE_PREFIXES} on the client.
+     */
+    private static final List<String> RESERVED_ARES_PACKAGE_PREFIXES = List.of("java.", "javax.", "sun.", "jdk.", "com.sun.", "de.tum.cit.ase.ares.api.", "net.bytebuddy.",
+            "org.aspectj.", "com.ibm.wala.", "com.tngtech.archunit.");
 
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
 
@@ -235,6 +244,28 @@ public class ProgrammingExerciseValidationService {
         if (!packageNameMatcher.matches()) {
             throw new BadRequestAlertException("The package name is invalid", "Exercise", "packagenameInvalid");
         }
+    }
+
+    /**
+     * Rejects Java and Kotlin package names that Ares 2 refuses, see {@link #RESERVED_ARES_PACKAGE_PREFIXES}.
+     * Only new exercises are checked: an imported exercise keeps its package name, which the instructor cannot change.
+     *
+     * @param programmingExercise the exercise to be created
+     */
+    public void validatePackageNameIsNotReserved(ProgrammingExercise programmingExercise) {
+        ProgrammingLanguage language = programmingExercise.getProgrammingLanguage();
+        if ((language == ProgrammingLanguage.JAVA || language == ProgrammingLanguage.KOTLIN) && isReservedAresPackageName(programmingExercise.getPackageName())) {
+            throw new BadRequestAlertException("The package name lies inside or above a namespace reserved by the Ares test framework", "Exercise", "packagenameReserved");
+        }
+    }
+
+    static boolean isReservedAresPackageName(@Nullable String packageName) {
+        if (packageName == null || packageName.isBlank()) {
+            return false;
+        }
+        String normalized = packageName + ".";
+        // Inside a reserved namespace, or a parent of one
+        return RESERVED_ARES_PACKAGE_PREFIXES.stream().anyMatch(reserved -> normalized.startsWith(reserved) || reserved.startsWith(normalized));
     }
 
     private void validateCustomCheckoutPaths(ProgrammingExerciseBuildConfig buildConfig) {

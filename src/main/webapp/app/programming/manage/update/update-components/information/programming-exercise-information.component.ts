@@ -11,7 +11,7 @@ import { Subject, Subscription } from 'rxjs';
 import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/table-editable-field.component';
 import { every } from 'lodash-es';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
-import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
+import { ProgrammingExerciseInputField, deriveDefaultPackageName } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { removeSpecialCharacters } from 'app/foundation/util/utils';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -345,6 +345,10 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
             const uniqueShortName = this.ensureShortNameIsUnique(sanitizedShortName);
             this.programmingExercise().shortName = uniqueShortName;
+        }
+        if (!this.isImport()) {
+            // The package name field is hidden in simple mode, so it follows the short name
+            this.programmingExercise().packageName = deriveDefaultPackageName(this.programmingExercise()) ?? this.programmingExercise().packageName;
         }
 
         this.updateIsShortNameValid();

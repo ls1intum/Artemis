@@ -116,6 +116,33 @@ class ProgrammingExerciseValidationServiceTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = { "de", "de.tum", "de.tum.cit", "de.tum.cit.ase", "de.tum.cit.ase.ares", "de.tum.cit.ase.ares.api.student", "com", "org", "net", "java", "java.util",
+            "org.aspectj.weaver", "com.sun.tools" })
+    void validatePackageNameIsNotReserved_rejectsAPackageAresClaimsForItself(String packageName) {
+        // Ares 2 fails every test when compiled exercise code lies inside or above one of its reserved namespaces.
+        assertThatExceptionOfType(BadRequestAlertException.class).as("the package name '%s' must be rejected", packageName)
+                .isThrownBy(() -> validationService.validatePackageNameIsNotReserved(newExercise(ProgrammingLanguage.KOTLIN, packageName))).withMessageContaining("reserved");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "de.test", "de.tum.in", "de.tum.cit.aet.course.exercise", "de.tum.cit.asedemo", "com.example", "org.example.sorting", "javaexercise" })
+    void validatePackageNameIsNotReserved_acceptsAPackageBesideTheReservedNamespaces(String packageName) {
+        assertThatCode(() -> validationService.validatePackageNameIsNotReserved(newExercise(ProgrammingLanguage.JAVA, packageName))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validatePackageNameIsNotReserved_ignoresLanguagesWithoutAres() {
+        assertThatCode(() -> validationService.validatePackageNameIsNotReserved(newExercise(ProgrammingLanguage.GO, "java"))).doesNotThrowAnyException();
+    }
+
+    private static ProgrammingExercise newExercise(ProgrammingLanguage programmingLanguage, String packageName) {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(programmingLanguage);
+        exercise.setPackageName(packageName);
+        return exercise;
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = { "de.class", "package", "de..test", "de.test.", "1de.test", "de test", "de.test$" })
     void validatePackageName_rejectsAJavaPackageThatWouldNotCompile(String packageName) {
         // A reserved word or an illegal character produces a template repository that does not compile, which the student cannot fix.

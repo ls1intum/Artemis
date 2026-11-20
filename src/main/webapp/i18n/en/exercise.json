@@ -393,7 +393,8 @@
                         "GO": "The package name must be a valid Go identifier, e.g. \"exercise\".",
                         "DART": "The package name must be a lowercase Dart identifier, e.g. \"exercise01\"."
                     },
-                    "maxlength": "The package name must not exceed {{ max }} characters."
+                    "maxlength": "The package name must not exceed {{ max }} characters.",
+                    "reserved": "This package is reserved by the Ares test framework, which would fail every test. Use a more specific package, e.g. \"de.tum.cit.aet.sorting\" instead of \"de\", \"org\" or \"java.util\"."
                 },
                 "points": {
                     "undefined": "You need to specify the points.",

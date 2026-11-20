@@ -123,6 +123,27 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         expect(comp.isPackageNameValid()).toBe(true);
     });
 
+    it('should reject a package name that Ares reserves and explain why', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        exercise.packageName = 'de';
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', Object.assign({}, programmingExerciseCreationConfigMock, { packageNameRequired: true }));
+        vi.spyOn(internals(comp), 'packageNameField').mockReturnValue({ valid: true } as NgModel);
+        expect(comp.isPackageNameValid()).toBe(false);
+    });
+
+    it('should not block the language section when the package name field is hidden in simple mode', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', Object.assign({}, programmingExerciseCreationConfigMock, { packageNameRequired: true }));
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', { programmingLanguage: true, packageName: false });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#field_packageName')).toBeNull();
+        expect(comp.isPackageNameValid()).toBe(true);
+    });
+
     describe('sequential test runs checkbox', () => {
         const getSequentialTestRunsCheckbox = (): HTMLInputElement => fixture.nativeElement.querySelector('#field_sequentialTestRuns');
 

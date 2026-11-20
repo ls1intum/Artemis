@@ -156,7 +156,7 @@ const MAX_PROPOSED_PACKAGE_NAME_LENGTH = 32;
  * Institutional package prefix for dotted-package languages (Java/Kotlin), so AI-derived packages read like real course exercises (de.tum.cit.aet.bubblesort) instead of a bare
  * slug. Deliberately a constant for now; if deployments need their own prefix this belongs in a server-provided configuration value, not per-user input.
  */
-const PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES = 'de.tum.cit.aet';
+export const PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES = 'de.tum.cit.aet';
 
 /** Extracts a title from the first level-one Markdown heading. */
 export function extractProblemStatementTitle(problemStatement: string | undefined): string | undefined {

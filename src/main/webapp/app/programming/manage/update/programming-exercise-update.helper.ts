@@ -1,3 +1,8 @@
+import { MAX_PACKAGE_NAME_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/foundation/constants/input.constants';
+import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES, deriveProposedPackageName } from 'app/hyperion/problem-statement/problem-statement.utils';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+
 export enum ProgrammingExerciseInputField {
     // General section
     TITLE = 'title',
@@ -70,7 +75,7 @@ export const IS_DISPLAYED_IN_SIMPLE_MODE: Record<ProgrammingExerciseInputField, 
     programmingLanguage: true,
     projectType: false,
     withExemplaryDependency: false,
-    packageName: true,
+    packageName: false,
     enableStaticCodeAnalysis: false,
     sequentialTestRuns: false,
     // Version Control section
@@ -99,3 +104,49 @@ export const IS_DISPLAYED_IN_SIMPLE_MODE: Record<ProgrammingExerciseInputField, 
     presentationScore: false,
     plagiarismControl: false,
 };
+
+/**
+ * Namespaces Ares 2 trusts for its own classes. Ares fails every test when compiled exercise code lies inside one of them or in a package
+ * above one of them (e.g. "de" or "org"). Keep in sync with RESERVED_ARES_PACKAGE_PREFIXES in ProgrammingExerciseValidationService.
+ */
+const RESERVED_ARES_PACKAGE_PREFIXES = [
+    'java.',
+    'javax.',
+    'sun.',
+    'jdk.',
+    'com.sun.',
+    'de.tum.cit.ase.ares.api.',
+    'net.bytebuddy.',
+    'org.aspectj.',
+    'com.ibm.wala.',
+    'com.tngtech.archunit.',
+];
+
+/** Whether Ares 2 refuses the package of a Java or Kotlin exercise, see {@link RESERVED_ARES_PACKAGE_PREFIXES}. */
+export function isReservedAresPackageName(language: ProgrammingLanguage | undefined, packageName: string | undefined): boolean {
+    if ((language !== ProgrammingLanguage.JAVA && language !== ProgrammingLanguage.KOTLIN) || !packageName) {
+        return false;
+    }
+    const normalized = `${packageName}.`;
+    // Inside a reserved namespace, or a parent of one
+    return RESERVED_ARES_PACKAGE_PREFIXES.some((reserved) => normalized.startsWith(reserved) || reserved.startsWith(normalized));
+}
+
+/**
+ * Derives the package name of a new exercise, so instructors do not have to pick one. Java and Kotlin get
+ * "de.tum.cit.aet.<course short name>.<exercise short name>"; other languages, and short names that are Java keywords, fall back to a name derived from the title.
+ */
+export function deriveDefaultPackageName(exercise: ProgrammingExercise): string | undefined {
+    const language = exercise.programmingLanguage;
+    if (!language || !exercise.shortName) {
+        return undefined;
+    }
+    if ((language === ProgrammingLanguage.JAVA || language === ProgrammingLanguage.KOTLIN) && exercise.projectType !== ProjectType.MAVEN_BLACKBOX) {
+        const courseShortName = getCourseFromExercise(exercise)?.shortName;
+        const packageName = [PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES, courseShortName, exercise.shortName].filter(Boolean).join('.').toLowerCase();
+        if (packageName.length <= MAX_PACKAGE_NAME_LENGTH && new RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN).test(packageName)) {
+            return packageName;
+        }
+    }
+    return deriveProposedPackageName(exercise.title || exercise.shortName, language, exercise.projectType);
+}

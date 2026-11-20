@@ -133,6 +133,11 @@
                         <div jhiTranslate="artemisApp.exercise.form.packageName.maxlength" [translateValues]="{ max: MAX_PACKAGE_NAME_LENGTH }"></div>
                     </tumaet-ui-message>
                 }
+                @if (packageName.valid && isPackageNameReserved()) {
+                    <tumaet-ui-message severity="error" class="mt-1 block" data-testid="package-name-reserved">
+                        <div jhiTranslate="artemisApp.exercise.form.packageName.reserved"></div>
+                    </tumaet-ui-message>
+                }
             </div>
         }
         @if (programmingExercise().programmingLanguage === ProgrammingLanguage.SWIFT && programmingExercise().projectType === ProjectType.XCODE) {
