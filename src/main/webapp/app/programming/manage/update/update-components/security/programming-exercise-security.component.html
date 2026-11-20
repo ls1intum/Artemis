@@ -42,7 +42,9 @@
                                 </span>
                             </div>
                             <div class="sf-desc text-sm" data-testid="security-status-text">
-                                @if (isStateUnknown()) {
+                                @if (loading()) {
+                                    <span jhiTranslate="artemisApp.programmingExercise.security.desc.loading" data-testid="security-loading"></span>
+                                } @else if (isStateUnknown()) {
                                     <span jhiTranslate="artemisApp.programmingExercise.security.desc.unknown"></span>
                                 } @else {
                                     @switch (status()) {
@@ -224,6 +226,9 @@
                         <span jhiTranslate="artemisApp.programmingExercise.security.sync.unsupported"></span>
                     } @else if (!isEditMode()) {
                         <span jhiTranslate="artemisApp.programmingExercise.security.sync.staged"></span>
+                    } @else if (loading()) {
+                        <fa-icon [icon]="faCircleNotch" class="sf-spin" />
+                        <span jhiTranslate="artemisApp.programmingExercise.security.sync.loading"></span>
                     } @else {
                         @switch (status()) {
                             @case (SecurityActivationStatus.GENERATING) {
@@ -242,6 +247,12 @@
                                 <span jhiTranslate="artemisApp.programmingExercise.security.sync.misconfigured"></span>
                                 @if (config().errorDetail) {
                                     <span class="sf-error-detail" data-testid="security-error-detail">{{ config().errorDetail }}</span>
+                                }
+                                @if (hasFailedOperation()) {
+                                    <button type="button" class="sf-retry" [disabled]="isBusy() || isSaving()" (click)="onRetry()" data-testid="security-retry">
+                                        <fa-icon [icon]="faRotateRight" />
+                                        <span jhiTranslate="artemisApp.programmingExercise.security.retry"></span>
+                                    </button>
                                 }
                             }
                             @case (SecurityActivationStatus.ERROR) {

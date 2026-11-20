@@ -316,6 +316,7 @@
                 "frameworkVersion": "Framework version",
                 "frameworkVersionHelp": "The Ares version pinned in the build file of the tests repository. Pin an older version only if the exercise must reproduce an older sandbox behavior.",
                 "status": {
+                    "loading": "Loading",
                     "inactive": "Inactive",
                     "generating": "Generating",
                     "configured": "Configured",
@@ -326,6 +327,7 @@
                     "unknown": "Known after import"
                 },
                 "desc": {
+                    "loading": "Reading the Security Framework state of the tests repository.",
                     "inactive": "All test classes run without the sandbox.",
                     "generating": "Committing the security policy to the tests repository.",
                     "configuredEdit": "The tests repository is set up for the sandbox. Artemis checked its files, but no Ares build has confirmed yet that Ares accepted the policy.",
@@ -358,6 +360,7 @@
                     "ARES_VERSION_IN_MAVEN_PROFILE": "{{ location }}: A Maven profile pins the Ares version, so the version the build uses depends on the active profiles."
                 },
                 "sync": {
+                    "loading": "Loading the state of the tests repository…",
                     "inactive": "Activating restores the previous policy or generates a default one.",
                     "generating": "Committing policy to the exercise-tests repository…",
                     "configured": "Policy committed to the tests repository · not yet confirmed by an Ares build.",
