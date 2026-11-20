@@ -83,18 +83,19 @@ public class LlmClientService {
     }
 
     /**
-     * A separate chat model of a preset whose calls use their own time limit and SDK retries instead of the preset's, for a task that must answer within a fixed
-     * time and must not retry. It shares the endpoint's connections and is not cached.
+     * An isolated chat model of a preset, for a task with its own limits and data rules: its calls use the given time limit and SDK retries instead of the
+     * preset's, and the model records no observations, so prompts and completions never reach tracing. It shares the endpoint's connections and is not
+     * cached.
      *
      * @param presetName a configured preset with {@code api: responses} or {@code api: chat-completions}
      * @param timeout    the time limit of one call
      * @param maxRetries the SDK retries of one call
      * @return the chat model; every response carries the preset name under {@link #PRESET_METADATA_KEY}
      */
-    public ChatModel chatModel(String presetName, Duration timeout, int maxRetries) {
+    public ChatModel isolatedChatModel(String presetName, Duration timeout, int maxRetries) {
         Preset preset = preset(presetName);
         OpenAIClient client = endpointClient(preset).withOptions(options -> options.timeout(timeout).maxRetries(maxRetries));
-        return chatModel(presetName, preset, client);
+        return chatModel(presetName, preset, client, ObservationRegistry.NOOP);
     }
 
     /**
@@ -142,16 +143,15 @@ public class LlmClientService {
 
     private ChatModel createChatModel(String presetName) {
         Preset preset = preset(presetName);
-        return chatModel(presetName, preset, client(preset));
+        return chatModel(presetName, preset, client(preset), observationRegistry);
     }
 
-    private ChatModel chatModel(String presetName, Preset preset, OpenAIClient client) {
+    private ChatModel chatModel(String presetName, Preset preset, OpenAIClient client, ObservationRegistry observations) {
         OpenAiChatOptions options = options(preset);
         // the startup validation ensures that every preset has an api
         ChatModel model = switch (preset.api()) {
             case RESPONSES -> new OpenAiResponsesChatModel(client, jsonMapper, options);
-            case CHAT_COMPLETIONS ->
-                OpenAiChatModel.builder().openAiClient(client).openAiClientAsync(client.async()).options(options).observationRegistry(observationRegistry).build();
+            case CHAT_COMPLETIONS -> OpenAiChatModel.builder().openAiClient(client).openAiClientAsync(client.async()).options(options).observationRegistry(observations).build();
             case EMBEDDINGS -> throw new IllegalArgumentException("The LLM preset " + presetName + " is an embeddings preset and has no chat model");
         };
         return new PresetTaggingChatModel(model, presetName);

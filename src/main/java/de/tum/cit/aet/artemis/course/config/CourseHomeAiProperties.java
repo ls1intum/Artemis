@@ -21,6 +21,11 @@ public record CourseHomeAiProperties(boolean enabled, @Nullable String location,
     /** The key that assigns Home's preset. */
     public static final String PRESET_KEY = "artemis.course-home.ai.llm-preset";
 
+    public CourseHomeAiProperties {
+        // the same name the startup validation checks: without surrounding blanks, and no name when blank
+        llmPreset = llmPreset == null || llmPreset.isBlank() ? null : llmPreset.strip();
+    }
+
     public String providerLocation() {
         return location == null ? "" : location.strip().toUpperCase(Locale.ROOT);
     }
@@ -31,7 +36,7 @@ public record CourseHomeAiProperties(boolean enabled, @Nullable String location,
      * @return true when Home can call its provider
      */
     public boolean isConfigured() {
-        return enabled && (providerLocation().equals("LOCAL") || providerLocation().equals("CLOUD")) && llmPreset != null && !llmPreset.isBlank();
+        return enabled && (providerLocation().equals("LOCAL") || providerLocation().equals("CLOUD")) && llmPreset != null;
     }
 
     @Override

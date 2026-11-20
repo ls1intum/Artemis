@@ -23,6 +23,8 @@ import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Endpoint;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.EndpointType;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Preset;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
 import okhttp3.MediaType;
 import okhttp3.Protocol;
@@ -140,6 +142,34 @@ class LlmClientServiceTest {
     }
 
     @Test
+    void anIsolatedModelUsesItsOwnLimitsAndKeepsPromptsOutOfTracing() {
+        var observed = new ArrayList<String>();
+        var registry = ObservationRegistry.create();
+        registry.observationConfig().observationHandler(new ObservationHandler<Observation.Context>() {
+
+            @Override
+            public boolean supportsContext(Observation.Context context) {
+                return true;
+            }
+
+            @Override
+            public void onStop(Observation.Context context) {
+                observed.add(context.getName() + " " + context.getLowCardinalityKeyValues() + " " + context.getHighCardinalityKeyValues());
+            }
+        });
+        var preset = new Preset("main", "m", Api.CHAT_COMPLETIONS, null, null, null, null, null, null, null, null);
+        var service = service(Map.of("main", endpoint(EndpointType.OPENAI, "https://llm.example.org/v1", "secret")), Map.of("welcome", preset), registry);
+
+        service.isolatedChatModel("welcome", Duration.ofSeconds(3), 0).call(new Prompt("private student situation"));
+        // the shared connection still records its HTTP request (method, URL, status), but no chat model observation carries the prompt or the answer
+        assertThat(observed).noneMatch(entry -> entry.startsWith("gen_ai")).noneMatch(entry -> entry.contains("private student situation"));
+        assertThat(requests).singleElement().satisfies(request -> assertThat(request.callTimeout()).isEqualTo(Duration.ofSeconds(3)));
+
+        service.chatModel("welcome").call(new Prompt("normal"));
+        assertThat(observed).as("the shared model is observed as before").anyMatch(entry -> entry.startsWith("gen_ai"));
+    }
+
+    @Test
     void chatModelsAreCachedPerPresetAndOnlyChatPresetsHaveOne() {
         var endpoint = endpoint(EndpointType.OPENAI, "https://llm.example.org/v1", "secret");
         var service = service(Map.of("main", endpoint), Map.of("chat", new Preset("main", "m", Api.RESPONSES, null, null, null, null, null, null, null, null), "embed",
@@ -155,6 +185,10 @@ class LlmClientServiceTest {
     }
 
     private LlmClientService service(Map<String, Endpoint> endpoints, Map<String, Preset> presets) {
+        return service(endpoints, presets, ObservationRegistry.NOOP);
+    }
+
+    private LlmClientService service(Map<String, Endpoint> endpoints, Map<String, Preset> presets, ObservationRegistry observations) {
         OpenAiHttpClientBuilderCustomizer capture = builder -> builder.interceptor(chain -> {
             var request = chain.request();
             var buffer = new Buffer();
@@ -167,7 +201,7 @@ class LlmClientServiceTest {
             String json = request.url().encodedPath().endsWith("/responses") ? RESPONSE : CHAT_COMPLETION;
             return respond(request, json);
         });
-        return new LlmClientService(new LlmProperties(endpoints, presets, null), new JsonMapper(), ObservationRegistry.NOOP, new SimpleMeterRegistry(), List.of(capture));
+        return new LlmClientService(new LlmProperties(endpoints, presets, null), new JsonMapper(), observations, new SimpleMeterRegistry(), List.of(capture));
     }
 
     private static Response respond(okhttp3.Request request, String json) {

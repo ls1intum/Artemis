@@ -52,7 +52,8 @@ public final class SpringAiCourseHomeClient implements CourseHomeAiClient {
         if (!properties.isConfigured()) {
             throw new IllegalArgumentException("Home AI provider configuration is incomplete");
         }
-        return llmClientService.chatModel(properties.llmPreset(), TIMEOUT, 0);
+        // isolated: no observations, so a LOCAL preset's prompts and completions cannot leave through tracing
+        return llmClientService.isolatedChatModel(properties.llmPreset(), TIMEOUT, 0);
     }
 
     @Override

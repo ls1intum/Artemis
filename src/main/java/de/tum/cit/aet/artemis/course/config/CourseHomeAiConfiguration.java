@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.Bean;
@@ -44,10 +43,19 @@ public class CourseHomeAiConfiguration {
      * @return Home's preset assignment
      */
     @Bean
-    @ConditionalOnProperty(name = "artemis.course-home.ai.enabled", havingValue = "true")
+    @Conditional(HomeAiEnabled.class)
     static LlmPresetAssignments courseHomeLlmPresetAssignments(Environment environment) {
         String preset = Binder.get(environment).bind(CourseHomeAiProperties.PRESET_KEY, String.class).orElse(null);
         return () -> List.of(LlmPresetAssignment.ofSingle(CourseHomeAiProperties.PRESET_KEY, preset, LlmPresetAssignment.Usage.CHAT));
+    }
+
+    /** Binds the flag as Spring binds the properties (true, on, yes, ...), so the assignment exists exactly when Home counts as enabled. */
+    static class HomeAiEnabled implements Condition {
+
+        @Override
+        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+            return Binder.get(context.getEnvironment()).bind("artemis.course-home.ai.enabled", Boolean.class).orElse(false);
+        }
     }
 
     static class ProviderConfigured implements Condition {

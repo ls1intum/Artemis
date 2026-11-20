@@ -44,7 +44,7 @@ class CourseHomeAiConfigurationTest {
     private static LlmClientService llmClientService() {
         LlmClientService llmClientService = mock(LlmClientService.class);
         when(llmClientService.preset("welcome")).thenReturn(LlmTestCatalog.preset("local", "test", LlmProperties.Api.CHAT_COMPLETIONS));
-        when(llmClientService.chatModel(eq("welcome"), any(Duration.class), anyInt())).thenReturn(mock(ChatModel.class));
+        when(llmClientService.isolatedChatModel(eq("welcome"), any(Duration.class), anyInt())).thenReturn(mock(ChatModel.class));
         return llmClientService;
     }
 
@@ -109,6 +109,13 @@ class CourseHomeAiConfigurationTest {
         runner.withPropertyValues("artemis.course-home.ai.enabled=true").run(
                 c -> assertThat(c.getBean(LlmPresetAssignments.class).llmPresetAssignments()).singleElement().satisfies(assignment -> assertThat(assignment.preset()).isNull()));
         runner.run(c -> assertThat(c).doesNotHaveBean(LlmPresetAssignments.class));
+        // every spelling that Spring binds as true also requires the preset, and the client uses the name the validation checked
+        runner.withPropertyValues("artemis.course-home.ai.enabled=on", "artemis.course-home.ai.location=LOCAL", "artemis.course-home.ai.llm-preset= welcome ").run(c -> {
+            assertThat(c.getBean(LlmPresetAssignments.class).llmPresetAssignments()).singleElement().satisfies(assignment -> assertThat(assignment.preset()).isEqualTo("welcome"));
+            assertThat(c).hasSingleBean(CourseHomeAiClient.class);
+        });
+        assertThat(new CourseHomeAiProperties(true, "LOCAL", " welcome ").llmPreset()).isEqualTo("welcome");
+        assertThat(new CourseHomeAiProperties(true, "LOCAL", "  ").isConfigured()).isFalse();
     }
 
     @Test
