@@ -20,10 +20,6 @@ html {
 /* Bare specifier (not 'node_modules/…') so Tailwind's PostCSS @import resolver can resolve this .css file. */
 @import 'highlight.js/styles/monokai.css';
 
-.text-lightgrey {
-    color: $gray-400;
-}
-
 .text-primary {
     color: lighten($primary, 30) !important;
 }

@@ -161,7 +161,7 @@ describe('MarkdownEditorMonacoComponent with the programming exercise instructio
         // The latest result passes the test of the first task, the test of the second task is not part of it.
         expect(firstTask[0].querySelector('.test-icon.text-state-success')).not.toBeNull();
         expect(firstTask[0].querySelector('.success')).not.toBeNull();
-        expect(secondTask[0].querySelector('.test-icon.text-text-secondary')).not.toBeNull();
+        expect(secondTask[0].querySelector('.test-icon.text-muted-color')).not.toBeNull();
         expect(secondTask[0].querySelector('.test-icon.text-state-success')).toBeNull();
 
         // The step wizard on top of the instructions summarizes both tasks.

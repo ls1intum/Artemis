@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseHomeVisitRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamDeletionApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionInfoDTO;
@@ -155,6 +156,8 @@ public class CourseResetService {
 
     private final UserCourseRoleRepository userCourseRoleRepository;
 
+    private final CourseHomeVisitRepository homeVisitRepository;
+
     public CourseResetService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, Optional<ExamDeletionApi> examDeletionApi,
             Optional<ExamRepositoryApi> examRepositoryApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<LearnerProfileApi> learnerProfileApi,
             Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupApi> tutorialGroupApi, ConversationDataCleanupService conversationDataCleanupService,
@@ -163,7 +166,8 @@ public class CourseResetService {
             LLMTokenUsageRequestRepository llmTokenUsageRequestRepository, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository,
             PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository, CourseOperationProgressService progressService,
             CourseAdminService courseAdminService, ParticipationRepository participationRepository, SubmissionRepository submissionRepository,
-            UserCourseRoleRepository userCourseRoleRepository) {
+            UserCourseRoleRepository userCourseRoleRepository, CourseHomeVisitRepository homeVisitRepository) {
+        this.homeVisitRepository = homeVisitRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.examDeletionApi = examDeletionApi;
@@ -297,6 +301,7 @@ public class CourseResetService {
             long usersToUnenroll = summary.numberOfStudents() + summary.numberOfTutors() + summary.numberOfEditors();
             double unenrollWeight = usersToUnenroll * CourseOperationWeights.getWeightPerUserUnenroll();
             progressService.updateProgress(operationClaim, "Unenrolling users", stepsCompleted, TOTAL_RESET_STEPS, calculateProgressPercent(completedWeight, totalWeight));
+            homeVisitRepository.deleteByCourseId(courseId);
             unenrollStudentsTutorsAndEditors(courseId);
             completedWeight += unenrollWeight;
             stepsCompleted++;

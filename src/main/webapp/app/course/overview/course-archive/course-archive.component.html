@@ -3,12 +3,7 @@
         <div class="flex items-center justify-between">
             <div class="flex justify-start gap-1">
                 <h3 class="mb-0 font-medium" jhiTranslate="artemisApp.course.archive.title"></h3>
-                <fa-icon
-                    [icon]="faQuestionCircle"
-                    [size]="iconSize"
-                    class="self-center text-text-secondary"
-                    [tumAetUiTooltip]="'artemisApp.course.archive.tip' | artemisTranslate"
-                />
+                <fa-icon [icon]="faQuestionCircle" [size]="iconSize" class="self-center text-muted-color" [tumAetUiTooltip]="'artemisApp.course.archive.tip' | artemisTranslate" />
             </div>
             @if (courses().length || testCourses().length) {
                 <div class="ms-1 flex items-center justify-between gap-4!">
@@ -41,7 +36,7 @@
                         [disabled]="!isCourseFoundInSemester(semester)"
                         [attr.aria-expanded]="!semesterCollapsed()[semester]"
                         id="semester-group-{{ i }}"
-                        [ngClass]="{ 'text-text-secondary': !(coursesBySemester()[semester] | searchFilter: ['title'] : searchCourseText()).length }"
+                        [ngClass]="{ 'text-muted-color': !(coursesBySemester()[semester] | searchFilter: ['title'] : searchCourseText()).length }"
                     >
                         <span class="font-bold" jhiTranslate="{{ fullFormOfSemesterStrings()[semester] }}" [translateValues]="{ param: semester.slice(2) }"></span>
                         <fa-icon [icon]="semesterCollapsed()[semester] ? faAngleDown : faAngleUp" />
@@ -71,7 +66,7 @@
             </div>
         } @else {
             <div class="flex justify-center">
-                <h4 class="mb-0 text-center text-text-secondary!" jhiTranslate="artemisApp.course.archive.noCoursesPreviousSemester"></h4>
+                <h4 class="mb-0 text-center text-muted-color!" jhiTranslate="artemisApp.course.archive.noCoursesPreviousSemester"></h4>
             </div>
         }
     </div>
