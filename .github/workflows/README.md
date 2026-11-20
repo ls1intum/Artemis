@@ -460,10 +460,17 @@ image comes through it:
 
 There is deliberately no fallback to Docker Hub: it would hide a broken cache until Docker Hub throttles the runners
 again. When the cache cannot be reached, the helper fails after a ten second probe with `Registry proxy unreachable`.
-The runners must therefore be able to connect to `harbor.aet.cit.tum.de:443`, and no `registry-mirrors` entry in
-`/etc/docker/daemon.json` may point at a host they cannot reach. Check both from a runner with
+The runners must therefore be able to connect to `harbor.aet.cit.tum.de:443`. Check it from a runner with
 `curl -sS -o /dev/null -w '%{http_code}\n' https://harbor.aet.cit.tum.de/v2/`, which prints `401` when the cache
 answers.
+
+The runners also have a Docker registry mirror in `/etc/docker/daemon.json`, `docker-mirror.aet.cit.tum.de:8765`, which
+serves Docker Hub images at the registry root. It is a transparent path for every project that shares the runners,
+but it only applies to images with a Docker Hub name, and the Docker daemon falls back to Docker Hub when the
+mirror does not answer, after a connect timeout on every pull. That is why the Artemis jobs name Harbor explicitly
+instead of relying on it: the helper pulls from `harbor.aet.cit.tum.de/dockerhub-ghr-proxy`, which the mirror does not
+touch, and fails visibly. A mirror entry that points at a host the runners cannot reach makes every pull slow, so
+check `docker info` on a runner when pulls stall.
 
 Images that Docker pulls by itself during a job are not covered: add them to one of the two when a new job needs
 one. A Docker Hub image in a workflow of a GitHub-hosted runner needs no change, because those runners have their
