@@ -526,9 +526,9 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         return this.tasks().reduce(
             (acc: string, { completeString: task, id }): string =>
                 // Insert anchor divs into the text so that injectable elements can be inserted into them.
-                // Without class="d-flex" the injected components height would be 0.
+                // Without class="flex" the injected components height would be 0.
                 // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
-                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise()?.id}-task-${id.toString()} d-flex">&#8203;</div>`),
+                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise()?.id}-task-${id.toString()} flex">&#8203;</div>`),
             problemStatementHtml,
         );
     }

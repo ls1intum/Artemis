@@ -5,11 +5,6 @@
     flex: 1 1 auto;
     height: 100%;
 
-    /* Wider Bootstrap tooltip */
-    .tooltip-inner {
-        width: 500px;
-    }
-
     /* Custom preview styling for programming exercise instructions */
     .instructions-preview-wrapper {
         display: block;
@@ -44,21 +39,14 @@
     .markdown-editor-wrapper {
         /* override scoped styling */
         background-color: var(--markdown-preview-editor-background) !important;
-
-        .nav {
-            position: sticky;
-            top: 0;
-            z-index: 1;
-            background-color: var(--markdown-preview-editor-background);
-        }
     }
 
     .instructions__content__markdown,
-    .card-second-header {
+    .editor-panel-second-header {
         background-color: var(--markdown-preview-editor-background);
     }
 
-    .card-second-header {
+    .editor-panel-second-header {
         padding: 10px 15px;
     }
 
@@ -75,6 +63,9 @@
         display: grid;
         grid-template-columns: 1fr 2fr; /* left | right */
         align-items: center;
+        padding: 0.5rem 1rem;
+        background-color: color-mix(in srgb, var(--body-color) 3%, transparent);
+        border-top: 1px solid var(--border-color);
 
         .instructions-status {
             grid-column: 1;
@@ -92,7 +83,7 @@
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 align-items: center;
-                border-left: 1px solid rgba(0, 0, 0, 0.125);
+                border-left: 1px solid var(--border-color);
                 padding-left: 0.75rem;
 
                 > * {

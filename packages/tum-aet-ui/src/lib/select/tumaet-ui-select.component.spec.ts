@@ -156,6 +156,38 @@ describe('TumAetUiSelectComponent', () => {
         expect(document.activeElement).toBe(triggerButton());
     });
 
+    it('does not report a change when the selected option is chosen again', () => {
+        const onChangeCallback = vi.fn();
+        component.registerOnChange(onChangeCallback);
+        component.writeValue('b');
+        fixture.detectChanges();
+        const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+        openPanel();
+        optionElements()[1].click();
+        fixture.detectChanges();
+        expect(onChangeCallback).not.toHaveBeenCalled();
+        expect(emitSpy).not.toHaveBeenCalled();
+        expect(labelText()).toBe('Bravo');
+        expect(listbox()).toBeNull();
+    });
+
+    it('does not report a change when Tab leaves the panel on the selected option', () => {
+        const onChangeCallback = vi.fn();
+        component.registerOnChange(onChangeCallback);
+        component.writeValue('b');
+        fixture.detectChanges();
+        openPanel();
+        triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+        fixture.detectChanges();
+        expect(onChangeCallback).not.toHaveBeenCalled();
+        expect(listbox()).toBeNull();
+    });
+
+    it('exposes the value of each option as data-value', () => {
+        openPanel();
+        expect(optionElements().map((option) => option.getAttribute('data-value'))).toEqual(['a', 'b', 'c']);
+    });
+
     it('emits the whole option object when optionValue is not set', () => {
         fixture.componentRef.setInput('optionValue', undefined);
         fixture.detectChanges();

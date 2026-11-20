@@ -1483,6 +1483,36 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testCreateProgrammingExerciseWithTheTemplatesSecurityFrameworkNeedsNoInstructor() throws Exception {
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.setTitle("Template security choice by an editor");
+        newExercise.setChannelName("testchannel-pe-security-tpl");
+        mockDockerForTheBuildsCreatingAnExerciseTriggers();
+        ObjectNode body = objectMapper.valueToTree(CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()));
+        body.set("securityFramework", objectMapper.valueToTree(new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, null)));
+
+        // Activating without another version keeps the template's sandbox, so the choice changes nothing and an editor may make it.
+        var response = request.postWithResponseBody("/api/programming/programming-exercises/setup", body, ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+        createdExercisesToCleanUp.add(programmingExerciseRepository.findWithAllParticipationsById(response.id()).orElseThrow());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreateProgrammingExerciseRejectsAChangedSecurityFrameworkForEmptiedRepositories() throws Exception {
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        ObjectNode body = objectMapper.valueToTree(CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()));
+        body.set("securityFramework", objectMapper.valueToTree(new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null)));
+        long exercisesBefore = programmingExerciseRepository.count();
+
+        request.postWithResponseBody("/api/programming/programming-exercises/setup?emptyRepositories=true", body, ProgrammingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(programmingExerciseRepository.count()).isEqualTo(exercisesBefore);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateProgrammingExerciseRejectsASecurityChoiceWithoutAction() throws Exception {
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);

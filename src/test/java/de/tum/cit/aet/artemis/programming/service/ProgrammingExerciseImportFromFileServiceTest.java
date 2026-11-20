@@ -25,6 +25,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.web.MockMultipartFile;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -106,7 +107,7 @@ class ProgrammingExerciseImportFromFileServiceTest {
         doThrow(new InternalServerErrorAlertException("The push failed", "programmingExercise", "securityFrameworkPushFailed")).when(securityFrameworkService)
                 .applyChoiceToImportedExercise(any(ProgrammingExercise.class), eq(choice), any(User.class));
 
-        var importedExercise = importFixture("valid-import.zip", java.util.Map.of(), false, choice);
+        var importedExercise = importFixture("valid-import.zip", java.util.Map.of(), false, choice, new User());
 
         // The exercise is saved already, so the import continues; the client compares the repository with the choice and warns the instructor.
         verify(programmingExerciseCreationUpdateService).setupBuildPlansAndTriggerInitialBuilds(importedExercise);
@@ -135,11 +136,11 @@ class ProgrammingExerciseImportFromFileServiceTest {
     }
 
     private ProgrammingExercise importFixture(String fixtureName, java.util.Map<String, String> additionalEntries, boolean staticAnalysis) throws Exception {
-        return importFixture(fixtureName, additionalEntries, staticAnalysis, null);
+        return importFixture(fixtureName, additionalEntries, staticAnalysis, null, new User());
     }
 
     private ProgrammingExercise importFixture(String fixtureName, java.util.Map<String, String> additionalEntries, boolean staticAnalysis,
-            @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice) throws Exception {
+            @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice, User user) throws Exception {
         Path importExerciseDir = tempDir.resolve("imported-exercise-dir");
         Path zipPath = importExerciseDir.resolve("exercise-for-import.zip");
         Files.createDirectories(importExerciseDir);
@@ -185,7 +186,6 @@ class ProgrammingExerciseImportFromFileServiceTest {
 
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
         Course course = new Course();
-        User user = new User();
         programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(originalExercise, buildConfig, zipFile, course, user, false, securityFrameworkChoice);
         return importedExercise;
     }
@@ -212,6 +212,29 @@ class ProgrammingExerciseImportFromFileServiceTest {
         when(profileService.isJenkinsActive()).thenReturn(true);
         var imported = importFixture("valid-import.zip");
         org.mockito.Mockito.verifyNoInteractions(buildPlanRepository);
+        verify(programmingExerciseCreationUpdateService).setupBuildPlansAndTriggerInitialBuilds(imported);
+    }
+
+    @Test
+    void importAppliesTheSecurityFrameworkChoiceBeforeTheInitialBuilds() throws Exception {
+        var choice = new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null);
+        var user = new User();
+
+        var imported = importFixture("valid-import.zip", java.util.Map.of(), false, choice, user);
+
+        InOrder importOrder = inOrder(securityFrameworkService, programmingExerciseCreationUpdateService);
+        importOrder.verify(securityFrameworkService).applyChoiceToImportedExercise(imported, choice, user);
+        importOrder.verify(programmingExerciseCreationUpdateService).setupBuildPlansAndTriggerInitialBuilds(imported);
+    }
+
+    @Test
+    void importCompletesIfTheSecurityFrameworkChoiceCannotBeApplied() throws Exception {
+        var choice = new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.2.1");
+        doThrow(new BadRequestAlertException("unsupported", "programmingExercise", "securityFrameworkUnsupportedRepository")).when(securityFrameworkService)
+                .applyChoiceToImportedExercise(any(ProgrammingExercise.class), eq(choice), any(User.class));
+
+        var imported = importFixture("valid-import.zip", java.util.Map.of(), false, choice, new User());
+
         verify(programmingExerciseCreationUpdateService).setupBuildPlansAndTriggerInitialBuilds(imported);
     }
 }

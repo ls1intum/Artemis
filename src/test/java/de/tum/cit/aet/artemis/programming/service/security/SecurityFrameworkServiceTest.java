@@ -264,14 +264,24 @@ class SecurityFrameworkServiceTest {
     }
 
     private SecurityFrameworkService createService(String... configuredVersions) {
+        return createService(Optional.of(localVCPushProcessingService), null, configuredVersions);
+    }
+
+    /**
+     * @param pushProcessing the push processing of LocalVC, which an instance without LocalVC lacks
+     * @param branch         the branch the build configuration names; null if it names none
+     */
+    private SecurityFrameworkService createService(Optional<LocalVCPushProcessingService> pushProcessing, String branch, String... configuredVersions) {
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setBranch(branch);
         ProgrammingExerciseBuildConfigRepository buildConfigRepository = mock(ProgrammingExerciseBuildConfigRepository.class);
-        when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(anyLong())).thenReturn(new ProgrammingExerciseBuildConfig());
+        when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(anyLong())).thenReturn(buildConfig);
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         solutionParticipation.setId(SOLUTION_PARTICIPATION_ID);
         SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
         when(solutionParticipationRepository.findByProgrammingExerciseId(anyLong())).thenReturn(Optional.of(solutionParticipation));
-        return new SecurityFrameworkService(gitService, bareGitRepositoryService, tempFileUtilService, buildConfigRepository, resourceLoaderService,
-                Optional.of(localVCPushProcessingService), solutionParticipationRepository, programmingSubmissionRepository, distributedDataProvider, "main", configuredVersions);
+        return new SecurityFrameworkService(gitService, bareGitRepositoryService, tempFileUtilService, buildConfigRepository, resourceLoaderService, pushProcessing,
+                solutionParticipationRepository, programmingSubmissionRepository, distributedDataProvider, "main", configuredVersions);
     }
 
     /**
@@ -1437,5 +1447,189 @@ class SecurityFrameworkServiceTest {
         assertThat(config.status()).isEqualTo(SecurityActivationStatus.MISCONFIGURED.name());
         assertThat(config.policyFiles()).singleElement()
                 .satisfies(policyFile -> assertThat(policyFile.problem()).isEqualTo(SecurityFrameworkState.PolicyFileProblem.INVALID_PATH.name()));
+    }
+
+    @Test
+    void anEmptyTestsRepositoryIsInactive() throws Exception {
+        FileUtils.deleteDirectory(remote.toFile());
+        Git.init().setBare(true).setDirectory(remote.toFile()).setInitialBranch("main").call().close();
+
+        SecurityFrameworkConfigDTO config = securityFrameworkService.getConfig(exercise(ProgrammingLanguage.JAVA));
+
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+        assertThat(config.frameworkVersion()).isNull();
+    }
+
+    @Test
+    void anExerciseWithoutTestsRepositoryIsRejected() {
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        when(exercise.getVcsTestRepositoryUri()).thenReturn(null);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.getConfig(exercise))
+                .matches(exception -> "securityFrameworkNoTestRepository".equals(exception.getErrorKey()));
+    }
+
+    @Test
+    void unreadableTemplatesAndManifestNeitherBlockAChoiceNorOfferAVersion() {
+        when(resourceLoaderService.getResource(any(Path.class))).thenReturn(new FileSystemResource(root.resolve("missing.yml")));
+        SecurityFrameworkService service = createService();
+
+        assertThat(service.getFrameworkVersions().templateVersions()).isEmpty();
+        assertThat(service.getFrameworkVersions().selectableVersions()).isEmpty();
+        // A template whose policy cannot be read is left to the checks that run when the repository is set up.
+        service.validateChoiceAgainstTemplate(ProjectType.PLAIN_MAVEN, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.2.1"));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(
+                () -> service.applyChoiceToImportedExercise(exercise(ProgrammingLanguage.JAVA), new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, null), user))
+                .matches(exception -> "unsupportedFrameworkVersion".equals(exception.getErrorKey()));
+    }
+
+    @Test
+    void aChoiceIsValidatedAgainstTheLanguageAndTheSelectableVersions() {
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.validateChoice(ProgrammingLanguage.KOTLIN, ProjectType.PLAIN_GRADLE,
+                new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, null))).matches(exception -> "onlyJavaSupported".equals(exception.getErrorKey()));
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> securityFrameworkService.validateChoice(ProgrammingLanguage.JAVA, ProjectType.PLAIN_GRADLE,
+                        new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "9.9.9")))
+                .matches(exception -> "unsupportedFrameworkVersion".equals(exception.getErrorKey()));
+        securityFrameworkService.validateChoice(ProgrammingLanguage.JAVA, ProjectType.PLAIN_GRADLE, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.2.1"));
+        securityFrameworkService.validateChoice(ProgrammingLanguage.JAVA, ProjectType.PLAIN_GRADLE, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, null));
+    }
+
+    @Test
+    void onlyAChoiceThatPinsAVersionForAKnownTemplateIsCheckedAgainstIt() throws IOException {
+        useTemplatePolicy(new ByteArrayResource(BEHAVIOR_POLICY.getBytes(StandardCharsets.UTF_8)));
+
+        securityFrameworkService.validateChoiceAgainstTemplate(null, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.2.1"));
+        securityFrameworkService.validateChoiceAgainstTemplate(ProjectType.PLAIN_GRADLE, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, null));
+        assertVersionIncompatible(
+                () -> securityFrameworkService.validateChoiceAgainstTemplate(ProjectType.PLAIN_MAVEN, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.2.1")));
+        assertThat(securityFrameworkService.deviatesFromTemplate(null, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.2.1"))).isTrue();
+    }
+
+    @Test
+    void activatingANewTestRepositoryWithoutAVersionChangesNothing() throws Exception {
+        Path checkout = newDirectory("template-");
+        Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(checkout.toFile()).call().close();
+
+        SecurityFrameworkService.applyChoiceToNewTestRepository(checkout, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, null));
+
+        assertThat(Files.readString(checkout.resolve("test/de/example/SortingTest.java"))).isEqualTo(TEST_CLASS);
+        assertThat(Files.readString(checkout.resolve("build.gradle"))).contains("aresVersion = '2.2.1'");
+    }
+
+    @Test
+    void anImportedExerciseIsActivatedWithTheChosenVersion() throws Exception {
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        securityFrameworkService.applyChoiceToImportedExercise(exercise, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.3.0"), user);
+
+        assertThat(readPushed("build.gradle")).hasValueSatisfying(content -> assertThat(content).contains("aresVersion = '2.3.0'"));
+        verifyNoInteractions(localVCPushProcessingService);
+    }
+
+    @Test
+    void aPolicyWithAnotherFormatVersionNamesItAsIncompatible() throws Exception {
+        pushPolicyAndVersion(CUSTOM_POLICY.replace("thisPolicyFileCompliesToThePolicyVersion: 1", "thisPolicyFileCompliesToThePolicyVersion: 2"), "2.2.1");
+
+        assertThat(securityFrameworkService.getConfig(exercise(ProgrammingLanguage.JAVA)).versionCompatibilities()).contains(new SecurityFrameworkConfigDTO.VersionCompatibilityDTO(
+                "2.2.1", "INCOMPATIBLE", List.of(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME + ": thisPolicyFileCompliesToThePolicyVersion 2")));
+    }
+
+    @Test
+    void aPolicyPathOutsideTheRepositoryIsNeitherCheckedNorRepaired() throws Exception {
+        pushTestClassChange(source -> source.replace("value = \"SecurityPolicy.yaml\"", "value = \"../SecurityPolicy.yaml\""));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        SecurityFrameworkConfigDTO config = securityFrameworkService.getConfig(exercise);
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.MISCONFIGURED.name());
+        assertThat(config.versionCompatibilities()).isEmpty();
+        assertPolicyNotRepairable(() -> securityFrameworkService.activate(exercise, "2.2.1", user));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "notes.txt/SecurityPolicy.yaml", "policies" })
+    void aPolicyPathThatIsNoFileInTheCommitIsAnInvalidPath(String policyPath) throws Exception {
+        pushCheckoutChange(checkout -> {
+            FileUtils.writeStringToFile(checkout.resolve("test/de/example/SortingTest.java").toFile(),
+                    TEST_CLASS.replace("value = \"SecurityPolicy.yaml\"", "value = \"" + policyPath + "\""), StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(checkout.resolve("notes.txt").toFile(), "notes", StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(checkout.resolve("policies/README.md").toFile(), "policies", StandardCharsets.UTF_8);
+        });
+
+        assertThat(securityFrameworkService.getConfig(exercise(ProgrammingLanguage.JAVA)).policyFiles()).singleElement()
+                .satisfies(policyFile -> assertThat(policyFile.problem()).isEqualTo(SecurityFrameworkState.PolicyFileProblem.INVALID_PATH.name()));
+    }
+
+    @Test
+    void aPolicyBelowAMissingDirectoryOrTooLargeInTheCommitIsReported() throws Exception {
+        pushTestClassChange(source -> source.replace("value = \"SecurityPolicy.yaml\"", "value = \"policies/SecurityPolicy.yaml\""));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        assertThat(securityFrameworkService.getConfig(exercise).policyFiles()).singleElement()
+                .satisfies(policyFile -> assertThat(policyFile.problem()).isEqualTo(SecurityFrameworkState.PolicyFileProblem.MISSING.name()));
+
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("policies/SecurityPolicy.yaml").toFile(),
+                CUSTOM_POLICY + "#".repeat(SecurityPolicyYaml.MAX_POLICY_SIZE), StandardCharsets.UTF_8));
+        assertThat(securityFrameworkService.getConfig(exercise).policyFiles()).singleElement()
+                .satisfies(policyFile -> assertThat(policyFile.problem()).isEqualTo(SecurityFrameworkState.PolicyFileProblem.TOO_LARGE.name()));
+    }
+
+    @Test
+    void theHistoryOfARepositoryWithoutCommitsHasNoPreviousPolicy() throws Exception {
+        Path checkout = newDirectory("unborn-");
+        Git.init().setDirectory(checkout.toFile()).setInitialBranch("main").call().close();
+        try (Repository repository = new Repository(new FileRepositoryBuilder().setGitDir(checkout.resolve(".git").toFile()).setWorkTree(checkout.toFile()).setup(), checkout,
+                mock(LocalVCRepositoryUri.class))) {
+            assertThat(SecurityFrameworkCommitFiles.findPreviousPolicy(repository, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
+        }
+    }
+
+    @Test
+    void aRestorePointWhoseTestsWereUnsupportedIsNotRestored() throws Exception {
+        pushTestClassChange(source -> source.replace("import org.junit.jupiter.api.Test;", "import org.junit.jupiter.api.Test;\nimport de.tum.in.test.api.jupiter.Public;"));
+        Path checkout = newDirectory("instructor-");
+        try (Git git = Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(checkout.toFile()).call()) {
+            FileUtils.writeStringToFile(checkout.resolve("test/de/example/SortingTest.java").toFile(),
+                    TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8);
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("Deactivate by hand\n\nSecurity-Framework-Action: deactivate").setAuthor("Instructor", "instructor@example.org").call();
+            git.push().call();
+        }
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+        int commitsBefore = pushedCommitCount();
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.activate(exercise, "2.2.1", user))
+                .matches(exception -> "securityFrameworkRestorePointUnsupported".equals(exception.getErrorKey()));
+        assertThat(pushedCommitCount()).isEqualTo(commitsBefore);
+    }
+
+    @Test
+    void withoutPushProcessingAChangeIsOnlyPushed() throws Exception {
+        SecurityFrameworkService service = createService(Optional.empty(), " ", " ", "2.2.1");
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        assertThat(service.getFrameworkVersions().selectableVersions()).doesNotContain(" ", "");
+        assertThat(service.deactivate(exercise, user).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+
+        assertThat(readPushed("test/de/example/SortingTest.java")).hasValueSatisfying(content -> assertThat(content).contains(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION));
+        verifyNoInteractions(localVCPushProcessingService);
+    }
+
+    @Test
+    void theBranchOfTheBuildConfigurationIsRead() throws Exception {
+        // The configured branch switches the policy off, while the default branch keeps it on, so the status tells which branch was read.
+        Path checkout = newDirectory("branch-");
+        try (Git git = Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(checkout.toFile()).call()) {
+            git.checkout().setCreateBranch(true).setName("exercise-branch").call();
+            FileUtils.writeStringToFile(checkout.resolve("test/de/example/SortingTest.java").toFile(),
+                    TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8);
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("Switch the policy off on another branch").setAuthor("Instructor", "instructor@example.org").call();
+            git.push().setRefSpecs(new RefSpec("exercise-branch:exercise-branch")).call();
+        }
+        SecurityFrameworkService service = createService(Optional.of(localVCPushProcessingService), "exercise-branch", "2.2.1");
+
+        assertThat(service.getConfig(exercise(ProgrammingLanguage.JAVA)).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+        assertThat(securityFrameworkService.getConfig(exercise(ProgrammingLanguage.JAVA)).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
     }
 }

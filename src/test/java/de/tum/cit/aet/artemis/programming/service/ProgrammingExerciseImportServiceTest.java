@@ -15,9 +15,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.security.SecurityFrameworkAction;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkChoiceDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /** Preparation must be separable from remote work so authoring can reserve the destination before exposing it. */
@@ -110,5 +113,18 @@ class ProgrammingExerciseImportServiceTest {
         order.verify(scheduling).scheduleOperations(2L);
         order.verify(tasks).replaceTestIdsWithNames(destination);
         order.verifyNoMoreInteractions();
+    }
+
+    @Test
+    void aSecurityFrameworkChoiceIsOnlyAppliedTogetherWithTheActingUser() {
+        destination.setId(2L);
+        var choice = new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null);
+
+        // Without a user there is no author for the commit, so the copied setting is kept; the service that would apply the choice is absent here.
+        assertThat(service.completeImport(source, destination, true, false, choice, null)).isSameAs(destination);
+
+        assertThat(ProgrammingExerciseImportService.SecurityFrameworkChoiceByUser.of(choice, null)).isNull();
+        assertThat(ProgrammingExerciseImportService.SecurityFrameworkChoiceByUser.of(null, new User())).isNull();
+        assertThat(ProgrammingExerciseImportService.SecurityFrameworkChoiceByUser.of(choice, new User())).isNotNull();
     }
 }

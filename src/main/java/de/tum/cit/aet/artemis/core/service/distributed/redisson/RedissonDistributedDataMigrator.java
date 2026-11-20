@@ -97,7 +97,21 @@ class RedissonDistributedDataMigrator {
         try {
             // The watchdog renews the lock while this node is alive. A fixed lease could expire halfway through a
             // large queue and let another node publish the target version before the first migration is complete.
-            if (!lock.tryLock(LOCK_WAIT_MINUTES, TimeUnit.MINUTES)) {
+            if (lock.tryLock(LOCK_WAIT_MINUTES, TimeUnit.MINUTES)) {
+                try {
+                    migrateUnderLock();
+                }
+                finally {
+                    try {
+                        lock.unlock();
+                    }
+                    catch (IllegalMonitorStateException e) {
+                        // The lock is no longer held by this thread, for example because the lease was lost. The migration outcome is already decided.
+                        log.warn("The distributed data migration lock was not held any more when releasing it", e);
+                    }
+                }
+            }
+            else {
                 throw new IllegalStateException("Another node has held the distributed data migration lock for more than " + LOCK_WAIT_MINUTES
                         + " minutes. Not starting, because the namespace this release reads may still be incomplete. Check whether that node is stuck, then restart this one.");
             }
@@ -105,18 +119,6 @@ class RedissonDistributedDataMigrator {
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted while waiting for the distributed data migration lock", e);
-        }
-        try {
-            migrateUnderLock();
-        }
-        finally {
-            try {
-                lock.unlock();
-            }
-            catch (IllegalMonitorStateException e) {
-                // The lock is no longer held by this thread, for example because the lease was lost. The migration outcome is already decided.
-                log.warn("The distributed data migration lock was not held any more when releasing it", e);
-            }
         }
     }
 

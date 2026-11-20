@@ -391,4 +391,119 @@ class AresPolicyAnnotationsTest {
         assertThat(assigned).contains("@Policy(value = \"Stress.yaml\", withinPath = \"test\")\nclass SortingTest {")
                 .contains("    @Policy(activated = false)\n    @Test\n    void testMergeSort()");
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "class A { /* ( never closed", "class A { } // ( at the end", "class A { String s = \"( never closed", "class A { String s = \"(\\",
+            "class A { /* (\n( */ }" })
+    void masksCommentsAndLiteralsThatRunToTheEndOfTheFile(String original) {
+        String masked = AresPolicyAnnotations.mask(original);
+
+        assertThat(masked).hasSameSizeAs(original).startsWith("class A {").doesNotContain("(");
+    }
+
+    @Test
+    void readsTheActivationFlagAndThePolicyPath() {
+        AresPolicyAnnotations.Annotation withoutArguments = AresPolicyAnnotations.find(source("", "@de.tum.cit.ase.ares.api.Policy")).getFirst();
+        AresPolicyAnnotations.Annotation activated = AresPolicyAnnotations.find(source("", "@de.tum.cit.ase.ares.api.Policy(activated = true)")).getFirst();
+
+        assertThat(withoutArguments.isActivated()).isTrue();
+        assertThat(withoutArguments.policyPath()).isEmpty();
+        assertThat(activated.isActivated()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "./", "a\u0000b.yaml" })
+    void keepsAPolicyPathAsWrittenIfItHasNoNormalizedForm(String path) {
+        AresPolicyAnnotations.Annotation annotation = AresPolicyAnnotations.find(source("", "@de.tum.cit.ase.ares.api.Policy(\"" + path + "\")")).getFirst();
+
+        assertThat(annotation.isEvaluable()).isTrue();
+        assertThat(annotation.policyPath()).contains(path);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "(value = \"SecurityPolicy.yaml\", withinPath = { \"src\", \"test\" })", "(value = \"SecurityPolicy.yaml\", /* nothing else */)" })
+    void evaluatesTheArgumentsBesideArraysAndEmptyArguments(String arguments) {
+        AresPolicyAnnotations.Annotation annotation = AresPolicyAnnotations.find(source("", "@de.tum.cit.ase.ares.api.Policy" + arguments)).getFirst();
+
+        assertThat(annotation.isEvaluable()).isTrue();
+        assertThat(annotation.policyPath()).contains("SecurityPolicy.yaml");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "(value = 1)", "(value = \"SecurityPolicy\" + YAML)", "(value = PolicyFiles.NAMES[0])", "(activated = (true) == (false))" })
+    void doesNotEvaluateNonLiteralExpressions(String arguments) {
+        AresPolicyAnnotations.Annotation annotation = AresPolicyAnnotations.find(source("", "@de.tum.cit.ase.ares.api.Policy" + arguments)).getFirst();
+
+        assertThat(annotation.isEvaluable()).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "class SortingTest {\n}\n@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\"",
+            "class SortingTest {\n    java.lang.@Policy String name;\n}\n" })
+    void findsNoAnnotationThatIsIncompleteOrPartOfATypeName(String body) {
+        String original = "package de.example;\n\nimport de.tum.cit.ase.ares.api.*;\n\n" + body;
+
+        assertThat(AresPolicyAnnotations.find(original)).isEmpty();
+    }
+
+    @Test
+    void findsTheSimpleNameAtTheStartOfTheFile() {
+        String original = "@Policy(\"SecurityPolicy.yaml\")\nclass SortingTest {\n}\nimport de.tum.cit.ase.ares.api.Policy;\n";
+
+        assertThat(AresPolicyAnnotations.find(original)).singleElement().satisfies(annotation -> assertThat(annotation.start()).isZero());
+    }
+
+    @Test
+    void findsAnAnnotationWithoutArgumentsAtTheEndOfTheFile() {
+        String original = "package de.example;\n\nclass SortingTest {\n}\n@de.tum.cit.ase.ares.api.Policy  ";
+
+        assertThat(AresPolicyAnnotations.find(original)).singleElement().satisfies(annotation -> assertThat(annotation.arguments()).isEmpty());
+    }
+
+    @Test
+    void aNestedPolicyTypeDoesNotShadowTheAresAnnotationBeforeOrAfterItsBody() {
+        String original = """
+                package de.example;
+
+                import de.tum.cit.ase.ares.api.*;
+
+                @Policy("first")
+                class SortingTest {
+
+                    static class Helper {
+
+                        void helps() {
+                        }
+
+                        @interface Policy {
+                            String value();
+                        }
+                    }
+                }
+
+                @Policy("second")
+                class OtherTest {
+                """;
+
+        assertThat(AresPolicyAnnotations.find(original)).extracting(annotation -> annotation.policyPath().orElseThrow()).containsExactly("first", "second");
+    }
+
+    @Test
+    void aPolicyTypeInABodyThatIsNeverClosedShadowsTheRestOfTheFile() {
+        String original = """
+                package de.example;
+
+                import de.tum.cit.ase.ares.api.*;
+
+                class Helper {
+
+                    @interface Policy {
+                    }
+
+                    @Policy("helper")
+                    void helps() {
+                """;
+
+        assertThat(AresPolicyAnnotations.find(original)).isEmpty();
+    }
 }

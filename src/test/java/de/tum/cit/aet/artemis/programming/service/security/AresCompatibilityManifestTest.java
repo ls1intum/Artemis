@@ -27,6 +27,9 @@ class AresCompatibilityManifestTest {
             Path.of("src", "main", "resources", "templates", "java", "test", "gradle", "projectTemplate", "SecurityPolicy.yaml"),
             Path.of("src", "main", "resources", "templates", "java", "test", "maven", "projectTemplate", "SecurityPolicy.yaml"));
 
+    /** The start of a manifest with one release, whose fields follow. */
+    private static final String RELEASE = "manifestVersion: 1\nreleases:\n  - ";
+
     /** Uses every field Ares 2.2.1 accepts, including every key of every resource permission. */
     private static final String FULL_POLICY = """
             thisPolicyFileCompliesToThePolicyVersion: 1
@@ -140,15 +143,16 @@ class AresCompatibilityManifestTest {
                 .containsExactly("regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingPackageImports[].transitively");
     }
 
-    @Test
-    void aFormatVersionOutsideTheRangeOfTheReleaseIsIncompatible() {
-        String policy = FULL_POLICY.replace("thisPolicyFileCompliesToThePolicyVersion: 1", "thisPolicyFileCompliesToThePolicyVersion: 2");
+    @ParameterizedTest
+    @ValueSource(ints = { 0, 2 })
+    void aFormatVersionOutsideTheRangeOfTheReleaseIsIncompatible(int formatVersion) {
+        String policy = FULL_POLICY.replace("thisPolicyFileCompliesToThePolicyVersion: 1", "thisPolicyFileCompliesToThePolicyVersion: " + formatVersion);
 
         AresCompatibilityManifest.Check check = manifest.check(SecurityPolicySchema.VERIFIED_ARES_VERSION, policy);
 
         assertThat(check.verdict()).isEqualTo(AresCompatibilityManifest.Verdict.INCOMPATIBLE);
         assertThat(check.unsupportedFields()).isEmpty();
-        assertThat(check.unsupportedFormatVersion()).isEqualTo(BigInteger.TWO);
+        assertThat(check.unsupportedFormatVersion()).isEqualTo(BigInteger.valueOf(formatVersion));
     }
 
     @Test
@@ -179,7 +183,16 @@ class AresCompatibilityManifestTest {
             "manifestVersion: 1\nreleases:\n  - policyFormatVersions: { minimum: 1, maximum: 1 }\n    fields: [ a ]",
             "manifestVersion: 1\nreleases:\n  - aresVersion: \"2.2.1\"\n    policyFormatVersions: { minimum: 2, maximum: 1 }\n    fields: [ a ]",
             "manifestVersion: 1\nreleases:\n  - aresVersion: \"2.2.1\"\n    policyFormatVersions: { minimum: 1, maximum: 1 }\n    fields: [ ]",
-            "manifestVersion: 1\nreleases:\n  - aresVersion: \"2.2.1\"\n    policyFormatVersions: { minimum: 1, maximum: 1 }\n    fields: [ \".a\" ]", "a: [unclosed" })
+            "manifestVersion: 1\nreleases:\n  - aresVersion: \"2.2.1\"\n    policyFormatVersions: { minimum: 1, maximum: 1 }\n    fields: [ \".a\" ]", "a: [unclosed",
+            "- manifestVersion: 1", "manifestVersion: 1\nreleases:\n  - \"2.2.1\"",
+            RELEASE + "aresVersion: \" \"\n    policyFormatVersions: { minimum: 1, maximum: 1 }\n    fields: [ a ]", RELEASE + "aresVersion: \"2.2.1\"\n    fields: [ a ]",
+            RELEASE + "aresVersion: \"2.2.1\"\n    policyFormatVersions: { minimum: one, maximum: 1 }\n    fields: [ a ]",
+            RELEASE + "aresVersion: \"2.2.1\"\n    policyFormatVersions: { minimum: 1, maximum: one }\n    fields: [ a ]",
+            RELEASE + "aresVersion: \"2.2.1\"\n    policyFormatVersions: { minimum: 0, maximum: 1 }\n    fields: [ a ]",
+            RELEASE + "aresVersion: \"2.2.1\"\n    policyFormatVersions: { minimum: 1, maximum: 1 }",
+            RELEASE + "aresVersion: \"2.2.1\"\n    policyFormatVersions: { minimum: 1, maximum: 1 }\n    fields: [ 1 ]",
+            RELEASE + "aresVersion: \"2.2.1\"\n    policyFormatVersions: { minimum: 1, maximum: 1 }\n    fields: [ \" \" ]",
+            RELEASE + "aresVersion: \"2.2.1\"\n    policyFormatVersions: { minimum: 1, maximum: 1 }\n    fields: [ \"a.\" ]" })
     void anInvalidManifestIsRefused(String content) {
         assertThatIllegalArgumentException().isThrownBy(() -> AresCompatibilityManifest.parse(content));
     }

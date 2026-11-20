@@ -2,13 +2,16 @@ package de.tum.cit.aet.artemis.programming.service.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -1246,7 +1249,8 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "../outside.yaml", "/etc/policy.yaml", ".git/config", "C:\\policy.yaml", "", "  " })
+    @ValueSource(strings = { "../outside.yaml", "/etc/policy.yaml", ".git/config", "C:\\policy.yaml", "", "  ", "a\0b.yaml", "\\policy.yaml", ".", ".git", "..",
+            "a/../../policy.yaml" })
     void rejectsPolicyPathsOutsideTheRepository(String path) {
         assertThat(SecurityPolicyRepositoryFiles.validatePolicyPath(path)).isEmpty();
         assertThat(SecurityPolicyRepositoryFiles.validatePolicyPath("./policies/../SecurityPolicy.yaml")).contains("SecurityPolicy.yaml");
@@ -1381,7 +1385,8 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "def half = total / 2\n", "def half = n++ / 2\n", "def half = n-- / 2\n", "def half = this / 2\n" })
+    @ValueSource(strings = { "def half = total / 2\n", "def half = n++ / 2\n", "def half = n-- / 2\n", "def half = this / 2\n", "def half = (total) / 2\n",
+            "def half = values[0] / 2\n", "def half = { total } / 2\n", "def half = \"total\" / 2\n" })
     void readsAndWritesAnAresVersionAfterADivision(String division) throws IOException {
         String gradleBuild = division + "ext { aresVersion = '2.2.1' }\ndef third = total / 3\n";
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
@@ -1401,6 +1406,136 @@ class SecurityPolicyRepositoryFilesTest {
         String policy = SecurityPolicyRepositoryFiles.generateDefaultPolicy(root, SecurityPolicyRepositoryFiles.BuildTool.GRADLE, Optional.of("de.bücher"), "");
 
         assertThat(policy).contains("    - \"de.bücher.SortingÜTest\"\n");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "def notes = \"\"\"\naresVersion = '9.9.9'\n\"\"\"\n", "def notes = '''aresVersion = \"9.9.9\"'''\n", "def quote = 'it\\'s aresVersion = \"9.9.9\"'\n",
+            "def path = $/ $$ $/ aresVersion = '9.9.9' /$\n", "def pattern = / \\/ aresVersion = '9.9.9' /\n" })
+    void ignoresAresVersionsInGradleStringsWithEscapesAndTripleQuotes(String example) throws IOException {
+        String gradleBuild = example + "ext { aresVersion = '2.2.1' }\n";
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
+        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), gradleBuild, StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
+
+        assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo(gradleBuild.replace("2.2.1", "2.4.0"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ext { aresVersion = '2.2.1' }\n/* aresVersion = '9.9.9'", "ext { aresVersion = '2.2.1' }\n// aresVersion = '9.9.9'",
+            "ext { aresVersion = '2.2.1' }\ndef notes = 'aresVersion = \"9.9.9\"", "def notes = 'unclosed\next { aresVersion = '2.2.1' }\n",
+            "def broken = + /\next { aresVersion = '2.2.1' }\n", "ext { aresVersion = '2.2.1' }\napply" })
+    void readsTheAresVersionNextToCommentsAndStringsThatAreNotClosed(String gradleBuild) throws IOException {
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
+        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), gradleBuild, StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
+
+        assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo(gradleBuild.replace("2.2.1", "2.4.0"));
+    }
+
+    @Test
+    void pinsTheVersionInAMavenBuildOutsideAnUnclosedComment() throws IOException {
+        String pom = "<ares.version>2.2.1</ares.version>\n<!-- <ares.version>9.9.9</ares.version>";
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, pom)).contains("2.2.1");
+        FileUtils.writeStringToFile(root.resolve("pom.xml").toFile(), pom, StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
+
+        assertThat(Files.readString(root.resolve("pom.xml"))).isEqualTo(pom.replace("2.2.1", "2.4.0"));
+    }
+
+    @Test
+    void pinsNoVersionWithoutABuildFileThatPinsOne() {
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isFalse();
+    }
+
+    @Test
+    void namesTheBuildFileThatRefersToAres1OrPinsNoVersion() {
+        Map<String, String> sources = Map.of("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest"));
+        String ares1Pom = "<dependency><artifactId>artemis-java-test-sandbox</artifactId></dependency>";
+        String ares1Gradle = "dependencies { testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.13.0' }\n";
+
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, ares1Pom)).unsupportedReasons()).containsExactly(
+                new SecurityFrameworkState.UnsupportedReason("pom.xml", SecurityFrameworkState.UnsupportedReasonType.ARES_1),
+                new SecurityFrameworkState.UnsupportedReason("pom.xml", SecurityFrameworkState.UnsupportedReasonType.NO_ARES_VERSION_PINNED));
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(ares1Gradle, null)).unsupportedReasons()).containsExactly(
+                new SecurityFrameworkState.UnsupportedReason("build.gradle", SecurityFrameworkState.UnsupportedReasonType.ARES_1),
+                new SecurityFrameworkState.UnsupportedReason("build.gradle", SecurityFrameworkState.UnsupportedReasonType.NO_ARES_VERSION_PINNED));
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, "<project/>")).unsupportedReasons())
+                .containsExactly(new SecurityFrameworkState.UnsupportedReason("pom.xml", SecurityFrameworkState.UnsupportedReasonType.NO_ARES_VERSION_PINNED));
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, null)).unsupportedReasons())
+                .containsExactly(new SecurityFrameworkState.UnsupportedReason("build.gradle", SecurityFrameworkState.UnsupportedReasonType.NO_ARES_VERSION_PINNED));
+    }
+
+    @Test
+    void aBlankPolicyPathNamesNoPolicyFile() {
+        Map<String, String> sources = Map.of("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("SecurityPolicy.yaml", " "));
+
+        SecurityFrameworkState state = evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles("ext {\n    aresVersion = '2.2.1'\n}\n", null));
+
+        assertThat(state.status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
+        assertThat(state.policyFiles()).isEmpty();
+    }
+
+    @Test
+    void aTestClassWithTwoPoliciesIsUnsupportedAndHasNoAnnotationState() {
+        String source = TEST_CLASS.formatted("de.example", "SortingTest").replace("class SortingTest",
+                "@de.tum.cit.ase.ares.api.Policy(value = \"Other.yaml\")\nclass SortingTest");
+        Map<String, String> sources = Map.of("test/de/example/SortingTest.java", source);
+
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles("ext {\n    aresVersion = '2.2.1'\n}\n", null)).unsupportedReasons())
+                .containsExactly(new SecurityFrameworkState.UnsupportedReason("de.example.SortingTest", SecurityFrameworkState.UnsupportedReasonType.UNEVALUABLE_ARGUMENTS));
+        assertThat(SecurityPolicyRepositoryFiles.annotationStates(sources)).isEmpty();
+    }
+
+    private static SecurityFrameworkState evaluate(Map<String, String> sources, SecurityPolicyRepositoryFiles.BuildFiles buildFiles) {
+        return SecurityPolicyRepositoryFiles.evaluate(sources, _ -> SecurityPolicyRepositoryFiles.PolicyFileContent.of(POLICY), buildFiles);
+    }
+
+    @Test
+    void readsNoPolicyOutsideTheRootAndNoPolicyThatIsNoUtf8() throws IOException {
+        Path absoluteRoot = root.toAbsolutePath().normalize();
+        FileUtils.writeByteArrayToFile(root.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).toFile(), new byte[] { (byte) 0xC3, (byte) 0x28 });
+
+        assertThat(SecurityPolicyRepositoryFiles.readPolicyFile(absoluteRoot, "../outside.yaml").problem()).isEqualTo(SecurityFrameworkState.PolicyFileProblem.INVALID_PATH);
+        assertThat(SecurityPolicyRepositoryFiles.readPolicyFile(absoluteRoot, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).problem())
+                .isEqualTo(SecurityFrameworkState.PolicyFileProblem.UNPARSEABLE);
+        assertThat(SecurityPolicyRepositoryFiles.addTestClassesToPolicy(root, "missing.yaml", List.of("de.example.SortingTest"))).isFalse();
+    }
+
+    @Test
+    void aJavaSourceThatIsNoUtf8FailsTheEvaluation() throws IOException {
+        writeBuildFile();
+        FileUtils.writeByteArrayToFile(root.resolve("test/SortingTest.java").toFile(), new byte[] { (byte) 0xC3, (byte) 0x28 });
+
+        assertThatThrownBy(() -> SecurityPolicyRepositoryFiles.evaluate(root)).isInstanceOf(UncheckedIOException.class);
+    }
+
+    @Test
+    void findsNoSourcesInARepositoryThatDoesNotExist() {
+        assertThat(SecurityPolicyRepositoryFiles.javaSources(root.resolve("missing"))).isEmpty();
+        assertThat(SecurityPolicyRepositoryFiles.isJavaSourcePath("test//de/example/SortingTest.java", _ -> false)).isTrue();
+    }
+
+    @Test
+    void refusesToWriteOrDeleteAPolicyWhereThereIsNoFile() throws IOException {
+        Files.createDirectories(root.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).resolve("nested"));
+        FileUtils.writeStringToFile(root.resolve("notes.txt").toFile(), "notes", StandardCharsets.UTF_8);
+
+        assertThatIllegalArgumentException().isThrownBy(() -> SecurityPolicyRepositoryFiles.writePolicy(root, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, POLICY));
+        assertThatIllegalArgumentException().isThrownBy(() -> SecurityPolicyRepositoryFiles.writePolicy(root, "../SecurityPolicy.yaml", POLICY));
+        assertThatThrownBy(() -> SecurityPolicyRepositoryFiles.writePolicy(root, "notes.txt/SecurityPolicy.yaml", POLICY)).isInstanceOf(UncheckedIOException.class);
+        // A directory at the path of a policy is no policy file, so deleting the policy leaves it alone.
+        SecurityPolicyRepositoryFiles.deletePolicyFile(root, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME);
+        assertThat(root.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).resolve("nested")).isDirectory();
+    }
+
+    @Test
+    void aGeneratedPolicyWithoutPackageAndTestClassesHasAnEmptyList() {
+        String policy = SecurityPolicyRepositoryFiles.generateDefaultPolicy(root, SecurityPolicyRepositoryFiles.BuildTool.MAVEN, Optional.of(" "), "");
+
+        assertThat(policy).contains("JAVA_USING_MAVEN_ARCHUNIT_AND_ASPECTJ\n  theFollowingClassesAreTestClasses: [ ]\n").doesNotContain("theSupervisedCodeUsesTheFollowingPackage");
     }
 
     @Test

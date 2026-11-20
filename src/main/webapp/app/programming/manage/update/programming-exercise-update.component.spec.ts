@@ -79,7 +79,6 @@ import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 vi.mock('y-monaco', () => ({
@@ -150,7 +149,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                         initialSyncFinalized$: of({ contentChangedDuringFinalize: false, contentDivergedFromFallback: false, finalContent: '' }),
                     },
                 },
-                MockProvider(DialogService),
             ],
         })
             .overrideComponent(ProgrammingExerciseUpdateComponent, {
@@ -842,6 +840,16 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 expect(alertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.security.notApplied.version', { actual: '2.2.1', expected: '2.3.0' });
             });
 
+            it('names no version when the created exercise pins none', () => {
+                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(of({ status: SecurityActivationStatus.CONFIGURED }));
+                const alertSpy = vi.spyOn(alertService, 'warning');
+                comp.stagedSecurityChoice.set(pinVersion);
+
+                saveNewJavaExercise();
+
+                expect(alertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.security.notApplied.version', { actual: '-', expected: '2.3.0' });
+            });
+
             it('finishes saving and navigates when the verification request fails, without treating the save as failed', () => {
                 vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
                 const warningSpy = vi.spyOn(alertService, 'warning');
@@ -1266,6 +1274,23 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(false);
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
             expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
+        });
+
+        it('should keep the options of the exercise when the selected language is chosen again', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.HASKELL);
+            fixture.changeDetectorRef.detectChanges();
+            // The instructor turns the solution checkout off, which the language switch had turned on.
+            comp.programmingExercise.buildConfig!.checkoutSolutionRepository = false;
+            const loadTemplate = vi.spyOn(comp as unknown as { loadProgrammingLanguageTemplate: (language: ProgrammingLanguage) => void }, 'loadProgrammingLanguageTemplate');
+            const confirm = vi.spyOn(window, 'confirm');
+
+            expect(comp.onProgrammingLanguageChange(ProgrammingLanguage.HASKELL)).toBe(ProgrammingLanguage.HASKELL);
+
+            expect(comp.programmingExercise.buildConfig!.checkoutSolutionRepository).toBe(false);
+            expect(loadTemplate).not.toHaveBeenCalled();
+            expect(confirm).not.toHaveBeenCalled();
         });
 
         it('should activate SCA for Swift', () => {

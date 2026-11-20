@@ -8,7 +8,6 @@ import type { CommitInfo } from 'app/programming/shared/entities/programming-sub
 import { CommitsInfoRowComponent } from 'app/programming/shared/commits-info/commits-info-group/commits-info-row/commits-info-row.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { TruncatePipe } from 'app/foundation/pipes/truncate.pipe';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -31,7 +30,7 @@ describe('CommitsInfoGroupComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipModule, CommitsInfoGroupComponent, CommitsInfoRowComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(TruncatePipe)],
+            imports: [CommitsInfoGroupComponent, CommitsInfoRowComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(TruncatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         });
         fixture = TestBed.createComponent(CommitsInfoGroupComponent);
