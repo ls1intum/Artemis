@@ -35,11 +35,7 @@ jobs:
       # Measured with the command below: 158 edges before the split and 163 after it.
       # 166 rather than 165 since the credential change check: the passkey WebAuthn configurer reaches
       # the session freshness service at startup, because it hands it to the passkey registration filters.
-      # 167 rather than 166 since the Hermes RestClient migration: the tracer records a configuration class only for the first bean
-      # that creates it. The push notification services used to create RestTemplateConfiguration, now they create RestClientConfiguration
-      # and the LTI token retriever becomes the first to create RestTemplateConfiguration. The extra edge disappears when the LTI classes
-      # move to RestClient, because then nothing creates RestTemplateConfiguration at startup.
-      MAX_INSTANTIATED_BEANS: 167
+      MAX_INSTANTIATED_BEANS: 166
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
