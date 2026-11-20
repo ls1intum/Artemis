@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -21,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
@@ -29,10 +26,7 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.dircache.DirCache;
-import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
@@ -752,10 +746,10 @@ public class SecurityFrameworkService {
             temporaryCheckout = tempFileUtilService.createTempDirectory("security-framework-");
             repository = gitService.getOrCheckoutRepositoryOnBranch(testRepositoryUri, temporaryCheckout.resolve("repository"), branch);
             String checkedOutHead = gitService.getLocalHeadHash(repository);
-            rejectSymbolicLinks(exercise, repository);
+            SecurityFrameworkCheckout.rejectSymbolicLinks(exercise, repository);
             change.accept(repository);
             boolean changed = gitService.stageAllChanges(repository);
-            requireStagedPolicyFiles(repository);
+            SecurityFrameworkCheckout.requireStagedPolicyFiles(repository);
             if (changed) {
                 String allTrailers = "\n\n" + trailers + ACTION_TRAILER + action + (process ? "\n" + COMMIT_TRAILER : "");
                 String commitHash = gitService.commitStagedChanges(repository, commitMessage + allTrailers, user);
@@ -812,24 +806,6 @@ public class SecurityFrameworkService {
     }
 
     /**
-     * Rejects a change whose policy files would not be part of the commit. Staging skips a file that Git ignores, for example through a {@code .gitignore}
-     * entry for {@code SecurityPolicy.yaml}: the checkout would then contain the policy and look configured, while the pushed tests reference a missing one.
-     *
-     * @throws BadRequestAlertException if a policy file the tests reference exists in the checkout but is not staged
-     */
-    private static void requireStagedPolicyFiles(Repository repository) throws IOException {
-        Path root = repository.getLocalPath();
-        DirCache index = repository.readDirCache();
-        for (SecurityFrameworkState.PolicyFile policyFile : SecurityPolicyRepositoryFiles.evaluate(root).policyFiles()) {
-            Optional<String> path = SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath());
-            if (path.isPresent() && Files.exists(root.resolve(path.get()), LinkOption.NOFOLLOW_LINKS) && index.findEntry(path.get()) < 0) {
-                throw new BadRequestAlertException("The policy file " + path.get() + " is ignored by Git, for example by an entry in .gitignore, so it would not be"
-                        + " committed. Remove the entry and try again.", ENTITY_NAME, "securityFrameworkPolicyFileIgnored");
-            }
-        }
-    }
-
-    /**
      * Runs the processing that follows every push to a tests repository, like a push through git or the online editor: it creates an exercise version,
      * marks the existing results as outdated and triggers the template and solution builds, which now run with the changed sandbox. It needs the server-side
      * repository, because it derives the exercise and the repository type from its location.
@@ -876,29 +852,6 @@ public class SecurityFrameworkService {
      */
     private static String pendingProcessingKey(ProgrammingExercise exercise, String commitHash) {
         return exercise.getId() + ":" + commitHash;
-    }
-
-    /**
-     * The Security Framework reads and rewrites files of the checkout, and both follow symbolic links. A link committed to the tests repository could
-     * therefore make a change read or modify a file outside the checkout with the server's permissions, so a repository with links is not changed at all.
-     * A checkout without symbolic links writes a committed link as a plain file that holds its target, and rewriting that file would change where the link
-     * points, so the links are also read from the index.
-     */
-    private static void rejectSymbolicLinks(ProgrammingExercise exercise, Repository repository) throws IOException {
-        Set<String> linkSet = new TreeSet<>(SecurityPolicyRepositoryFiles.findSymbolicLinks(repository.getLocalPath()));
-        DirCache index = repository.readDirCache();
-        for (int i = 0; i < index.getEntryCount(); i++) {
-            DirCacheEntry entry = index.getEntry(i);
-            if (FileMode.SYMLINK.equals(entry.getRawMode())) {
-                linkSet.add(entry.getPathString());
-            }
-        }
-        List<String> links = List.copyOf(linkSet);
-        if (!links.isEmpty()) {
-            log.warn("Refusing to change the tests repository of exercise {}, because it contains symbolic links: {}", exercise.getId(), links);
-            throw new BadRequestAlertException("The tests repository contains symbolic links, which the Security Framework does not follow: " + String.join(", ", links),
-                    ENTITY_NAME, "securityFrameworkSymbolicLinks");
-        }
     }
 
     /**
