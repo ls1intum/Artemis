@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
@@ -57,6 +58,16 @@ class SecurityPolicyYamlTest {
 
         assertThat(SecurityPolicyYaml.addTestClasses(policy, List.of("de.example.NewTest"), false))
                 .contains("regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [\"de.example.SortingTest\", \"de.example.NewTest\"]\n");
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiterString = " -> ", value = { "[\"de.example.SortingTest\",] -> [\"de.example.SortingTest\", \"de.example.NewTest\", \"de.example.OtherTest\"]",
+            "'[ \"de.example.SortingTest\" , ]' -> '[ \"de.example.SortingTest\" , \"de.example.NewTest\", \"de.example.OtherTest\"]'" })
+    void reusesTheCommaAfterTheLastEntryOfAnInlineList(String list, String extended) {
+        String policy = "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: " + list + "\n";
+
+        assertThat(SecurityPolicyYaml.addTestClasses(policy, List.of("de.example.NewTest", "de.example.OtherTest"), false))
+                .contains("regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: " + extended + "\n");
     }
 
     @Test
