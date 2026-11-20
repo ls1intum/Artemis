@@ -6,12 +6,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.boot.SpringApplication;
@@ -62,7 +64,7 @@ class MainConfigurationPropertiesMigrationTest {
     @Test
     void shouldRejectAKeyThatSpringBootCannotBindAnyMore(@TempDir Path directory) throws IOException {
         Path configFile = directory.resolve("application.yml");
-        Files.writeString(configFile, "server:\n  forward-headers-strategy: native\n");
+        FileUtils.writeStringToFile(configFile.toFile(), "server:\n  forward-headers-strategy: native\n", StandardCharsets.UTF_8);
 
         assertThatThrownBy(() -> checkWithMigrator(List.of(configFile))).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("configuration keys that need to be migrated");

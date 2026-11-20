@@ -60,6 +60,45 @@ class BeanNamesByTypeCacheWorkaroundTest {
         }
     }
 
+    /**
+     * A raw {@link FactoryBean} whose construction looks up its own product type, which a lookup that starts while the bean is created
+     * does too. The bean is in creation then, so the nested lookup cannot tell the type of the bean and finds no name.
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    static class ReentrantFactoryBean implements FactoryBean {
+
+        ReentrantFactoryBean(DefaultListableBeanFactory beanFactory) {
+            beanFactory.getBeanNamesForType(String.class);
+        }
+
+        @Override
+        public Object getObject() {
+            return "product";
+        }
+
+        @Override
+        public Class<?> getObjectType() {
+            return String.class;
+        }
+    }
+
+    /**
+     * The nested lookup finishes first and caches an empty result. The outer lookup has scanned everything, so its result is the one
+     * that has to be returned and kept, as when the last of two concurrent computations wins.
+     */
+    @Test
+    void shouldReturnAndCacheTheResultOfTheOuterLookupWhenANestedLookupFinishedFirst() {
+        var beanFactory = new DefaultListableBeanFactory();
+        assertThat(BeanNamesByTypeCacheWorkaround.apply(beanFactory)).isTrue();
+        var definition = new RootBeanDefinition(ReentrantFactoryBean.class, () -> new ReentrantFactoryBean(beanFactory));
+        definition.setLazyInit(true);
+        beanFactory.registerBeanDefinition("reentrantFactory", definition);
+        beanFactory.freezeConfiguration();
+
+        assertThat(beanFactory.getBeanNamesForType(String.class)).containsExactly("reentrantFactory");
+        assertThat(beanFactory.getBeanNamesForType(String.class)).as("the second lookup reads the cache").containsExactly("reentrantFactory");
+    }
+
     @Test
     void shouldNotDeadlockBetweenTypeLookupAndBeanCreationWithTheWorkaround() {
         var beanFactory = new DefaultListableBeanFactory();

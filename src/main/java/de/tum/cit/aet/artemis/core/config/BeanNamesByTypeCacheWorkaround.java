@@ -85,6 +85,10 @@ public class BeanNamesByTypeCacheWorkaround implements ApplicationContextInitial
 
     /**
      * A type cache that computes a missing entry without holding a lock of the map.
+     * <p>
+     * The computation that finishes last wins, as in Spring Framework 7.0.x. A lookup that another lookup interrupts, because it creates
+     * a {@code FactoryBean} that looks up beans by type itself, finishes after the nested one, which could not see the bean in
+     * creation and found fewer names. Keeping the first result would return and cache that incomplete answer.
      */
     static final class ComputeOutsideLockCache extends ConcurrentReferenceHashMap<Object, String[]> {
 
@@ -99,8 +103,8 @@ public class BeanNamesByTypeCacheWorkaround implements ApplicationContextInitial
                 return cached;
             }
             String[] computed = mappingFunction.apply(key);
-            String[] concurrentlyComputed = putIfAbsent(key, computed);
-            return concurrentlyComputed != null ? concurrentlyComputed : computed;
+            put(key, computed);
+            return computed;
         }
     }
 }
