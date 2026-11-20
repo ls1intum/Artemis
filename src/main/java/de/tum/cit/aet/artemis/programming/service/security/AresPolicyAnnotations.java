@@ -39,15 +39,22 @@ final class AresPolicyAnnotations {
 
     private static final Pattern POLICY_ANNOTATION_NAME = Pattern.compile(ANNOTATION_START + "(" + packagePrefix("de.tum.cit.ase.ares.api") + ")?Policy" + END_OF_IDENTIFIER);
 
-    private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\p{javaJavaIdentifierPart}.]+)\\s*;");
-
     /** A Java identifier; it may contain any Unicode letter, e.g. {@code SortingÜTest}, so it uses the identifier classes of {@link Character}. */
     private static final String JAVA_IDENTIFIER = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+";
 
+    /** A qualified name; Java allows whitespace and comments, which the masked source shows as whitespace, around each dot, e.g. {@code java.util . List}. */
+    private static final String QUALIFIED_NAME = JAVA_IDENTIFIER + "(?:\\s*+\\.\\s*+" + JAVA_IDENTIFIER + ")*+";
+
+    /** A single-type import, whose first group is the imported type, see {@link #singleTypeImports(String)}; a static import is none. */
+    private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s++(" + QUALIFIED_NAME + ")\\s*+;");
+
+    /** A type-import-on-demand such as {@code import java.util.*;}, whose first group is the package, see {@link #wildcardImports(String)}. */
+    private static final Pattern WILDCARD_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s++(" + QUALIFIED_NAME + ")\\s*+\\.\\s*+\\*\\s*+;");
+
+    private static final Pattern WHITESPACE = Pattern.compile("\\s++");
+
     /** A declaration of a type, of any kind and at any depth; the second group is its simple name. */
     static final Pattern TYPE_DECLARATION = Pattern.compile("(@\\s*interface|(?<![\\p{javaJavaIdentifierPart}.])(?:class|interface|enum|record))\\s+(" + JAVA_IDENTIFIER + ")");
-
-    private static final Pattern ARES_WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+de\\.tum\\.cit\\.ase\\.ares\\.api\\.\\*\\s*;");
 
     /** A named annotation argument such as {@code activated = false}, matched on the masked source. */
     private static final Pattern NAMED_ARGUMENT = Pattern.compile("^\\s*([A-Za-z_]\\w*)\\s*=(?!=)\\s*(.*?)\\s*$", Pattern.DOTALL);
@@ -177,7 +184,9 @@ final class AresPolicyAnnotations {
 
     /**
      * Switches every Ares {@code @Policy} annotation of the source on or off. Only the {@code activated} argument changes; the policy path and every other
-     * argument are kept, so switching an annotation off and on again restores it exactly. An annotation that already has the requested state is not touched.
+     * argument are kept, so switching an annotation off and on again restores its policy and its activation. Its spelling may change: an implicit
+     * {@code value} becomes a named one, e.g. {@code @Policy(value = "custom.yaml")} for {@code @Policy("custom.yaml")}, and an explicit
+     * {@code activated = true} is left out. An annotation that already has the requested state is not touched.
      *
      * @param source the content of a Java file
      * @param active whether the annotations should enforce their policy
@@ -326,9 +335,7 @@ final class AresPolicyAnnotations {
     private static boolean simpleNameRefersToAres(String masked) {
         boolean importsAresPolicy = false;
         boolean importsOtherPolicy = false;
-        Matcher imports = SINGLE_TYPE_IMPORT.matcher(masked);
-        while (imports.find()) {
-            String imported = imports.group(1);
+        for (String imported : singleTypeImports(masked)) {
             if (ARES_POLICY.equals(imported)) {
                 importsAresPolicy = true;
             }
@@ -336,7 +343,23 @@ final class AresPolicyAnnotations {
                 importsOtherPolicy = true;
             }
         }
-        return importsAresPolicy || (!importsOtherPolicy && ARES_WILDCARD_IMPORT.matcher(masked).find());
+        return importsAresPolicy || (!importsOtherPolicy && wildcardImports(masked).contains(ARES_POLICY.substring(0, ARES_POLICY.lastIndexOf('.'))));
+    }
+
+    /**
+     * @param masked the masked content of a Java file
+     * @return the types its single-type imports import, without the whitespace Java allows around their dots
+     */
+    static List<String> singleTypeImports(String masked) {
+        return SINGLE_TYPE_IMPORT.matcher(masked).results().map(imported -> WHITESPACE.matcher(imported.group(1)).replaceAll("")).toList();
+    }
+
+    /**
+     * @param masked the masked content of a Java file
+     * @return the packages and types whose members its type-imports-on-demand import, without the whitespace Java allows around their dots
+     */
+    static List<String> wildcardImports(String masked) {
+        return WILDCARD_IMPORT.matcher(masked).results().map(imported -> WHITESPACE.matcher(imported.group(1)).replaceAll("")).toList();
     }
 
     private static int skipWhitespace(String text, int from) {
@@ -407,7 +430,7 @@ final class AresPolicyAnnotations {
 
     /**
      * Adds the argument between {@code from} and {@code to}. Its name is read from the masked source, so a comment before it does not hide it. Its text
-     * keeps every comment, except a line comment at its end, which would comment out an argument that is appended behind it.
+     * keeps every comment, except a line comment at its end and what follows it, which would comment out an argument that is appended behind it.
      */
     private static void addArgument(Map<String, Argument> arguments, Sources sources, int from, int to) {
         String original = sources.original();
@@ -418,8 +441,9 @@ final class AresPolicyAnnotations {
             return;
         }
         int textEnd = lastNonWhitespace(original, from, to);
-        if (original.substring(codeEnd, textEnd).contains("//")) {
-            textEnd = codeEnd;
+        int lineComment = lineCommentStart(original.substring(codeEnd, textEnd));
+        if (lineComment >= 0) {
+            textEnd = lastNonWhitespace(original, from, codeEnd + lineComment);
         }
         String text = original.substring(skipWhitespace(original, from), textEnd);
         Matcher named = NAMED_ARGUMENT.matcher(sources.masked().substring(from, to));
@@ -430,6 +454,30 @@ final class AresPolicyAnnotations {
         else {
             arguments.put(VALUE_ARGUMENT, new Argument(false, text, withoutComments.substring(from, to).strip()));
         }
+    }
+
+    /**
+     * @param commentsOnly text that consists of whitespace and comments only, e.g. the end of an argument after its code
+     * @return the offset of its first line comment, or -1 if it has none; a {@code //} inside a block comment, e.g. in a URL, starts no line comment
+     */
+    private static int lineCommentStart(String commentsOnly) {
+        int index = 0;
+        while (index < commentsOnly.length() - 1) {
+            if (commentsOnly.startsWith("//", index)) {
+                return index;
+            }
+            if (commentsOnly.startsWith("/*", index)) {
+                int end = commentsOnly.indexOf("*/", index + 2);
+                if (end < 0) {
+                    return -1;
+                }
+                index = end + 2;
+            }
+            else {
+                index++;
+            }
+        }
+        return -1;
     }
 
     /**

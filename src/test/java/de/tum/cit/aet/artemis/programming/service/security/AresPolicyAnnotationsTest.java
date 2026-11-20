@@ -118,8 +118,20 @@ class AresPolicyAnnotationsTest {
         assertThat(deactivated).contains("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\", activated = false)");
     }
 
+    @Test
+    void keepsABlockCommentWithASlashSlashAtTheEndOfAnArgument() {
+        String annotation = "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\" /* https://example.org/course */)";
+
+        // The // of the URL lies in the block comment, so it starts no line comment that would comment out the appended flag.
+        assertThat(AresPolicyAnnotations.setActive(source("", annotation), false))
+                .contains("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\" /* https://example.org/course */, activated = false)");
+        assertThat(AresPolicyAnnotations.setActive(source("", annotation.replace("*/)", "*/ // policy file\n)")), false))
+                .contains("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\" /* https://example.org/course */, activated = false)");
+    }
+
     @ParameterizedTest
-    @ValueSource(strings = { "import de.tum.cit.ase.ares.api.Policy;", "import de.tum.cit.ase.ares.api.*;" })
+    @ValueSource(strings = { "import de.tum.cit.ase.ares.api.Policy;", "import de.tum.cit.ase.ares.api.*;", "import de.tum.cit.ase.ares.api . Policy;",
+            "import de . tum.cit.ase.ares.api /* Ares */ . *;" })
     void rewritesTheSimpleNameIfItRefersToAres(String imports) {
         String deactivated = AresPolicyAnnotations.setActive(source(imports, "@Policy(\"SecurityPolicy.yaml\")"), false);
 

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.security;
 
 import java.util.Arrays;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -27,9 +28,10 @@ final class BuildFileSyntax {
     /** A keyword or type right before a Gradle variable that declares it, e.g. {@code def}, matched at the end of the code before the variable. */
     private static final Pattern GRADLE_DECLARATION_BEFORE = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})(?:def|var|final|String|Object)\\s++$");
 
-    private static final String MAVEN_PROFILES_START = "<profiles>";
+    /** The start tag of the profiles of a POM; XML allows whitespace before its {@code >}. */
+    private static final Pattern MAVEN_PROFILES_START = Pattern.compile("<profiles\\s*+>");
 
-    private static final String MAVEN_PROFILES_END = "</profiles>";
+    private static final Pattern MAVEN_PROFILES_END = Pattern.compile("</profiles\\s*+>");
 
     private BuildFileSyntax() {
         throw new UnsupportedOperationException("Utility class");
@@ -55,12 +57,12 @@ final class BuildFileSyntax {
         // Both tags are searched outside comments, e.g. not in <!-- Example: <profiles> -->; the masked text keeps the offsets of the content.
         String code = withoutMarked(content, comments);
         boolean[] profiles = new boolean[content.length()];
-        int start = code.indexOf(MAVEN_PROFILES_START);
-        while (start >= 0) {
-            int close = code.indexOf(MAVEN_PROFILES_END, start);
-            int end = close < 0 ? content.length() : close + MAVEN_PROFILES_END.length();
-            Arrays.fill(profiles, start, end, true);
-            start = code.indexOf(MAVEN_PROFILES_START, end);
+        Matcher start = MAVEN_PROFILES_START.matcher(code);
+        Matcher end = MAVEN_PROFILES_END.matcher(code);
+        int from = 0;
+        while (start.find(from)) {
+            from = end.find(start.end()) ? end.end() : content.length();
+            Arrays.fill(profiles, start.start(), from, true);
         }
         return profiles;
     }

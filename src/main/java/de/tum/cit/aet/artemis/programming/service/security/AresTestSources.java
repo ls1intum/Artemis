@@ -60,8 +60,6 @@ final class AresTestSources {
     /** The uses of JUnit's {@code @ExtendWith}. */
     private static final Pattern EXTEND_WITH = Pattern.compile(annotationUse(JUNIT_EXTENSION_PACKAGE, EXTEND_WITH_NAME));
 
-    private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("\\bimport\\s+([\\p{javaJavaIdentifierPart}.]+)\\s*;");
-
     private static final List<String> ARES_CLASS_MARKERS = List.of("Public", "Hidden");
 
     private static final List<String> ARES_METHOD_MARKERS = List.of("PublicTest", "HiddenTest");
@@ -78,10 +76,6 @@ final class AresTestSources {
     private static final Pattern SECURITY_EXTENSION_USE = Pattern.compile("(" + Pattern.quote(ARES_JUPITER_PACKAGE + ".") + ")?" + SECURITY_EXTENSION + CLASS_LITERAL);
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s");
-
-    private static final Pattern WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+([\\p{javaJavaIdentifierPart}.]+)\\.\\*\\s*;");
-
-    private static final Pattern ARES_JUPITER_WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+" + Pattern.quote(ARES_JUPITER_PACKAGE) + "\\.\\*\\s*;");
 
     /** The lower-case subpackages and then the type or the {@code *} after {@link #ARES_2_PACKAGE} in an {@link #ARES_2_REFERENCE}. */
     private static final String ARES_2_NAMES_AFTER_PACKAGE = "((?:\\s*\\.\\s*[a-z_]\\p{javaJavaIdentifierPart}*)*\\s*\\.\\s*(?:[A-Z]\\p{javaJavaIdentifierPart}*|\\*))";
@@ -276,9 +270,7 @@ final class AresTestSources {
      * @return whether the simple name used at the offset may refer to the type with the qualified name
      */
     private static boolean simpleNameMayReferTo(String masked, String simpleName, String qualifiedName, int offset) {
-        Matcher imports = SINGLE_TYPE_IMPORT.matcher(masked);
-        while (imports.find()) {
-            String imported = imports.group(1);
+        for (String imported : AresPolicyAnnotations.singleTypeImports(masked)) {
             if (!imported.equals(qualifiedName) && imported.endsWith("." + simpleName)) {
                 return false;
             }
@@ -384,18 +376,14 @@ final class AresTestSources {
         if (name.contains(".")) {
             return List.of(name);
         }
-        Matcher imports = SINGLE_TYPE_IMPORT.matcher(masked);
-        while (imports.find()) {
-            if (imports.group(1).endsWith("." + name)) {
-                return List.of(imports.group(1));
+        for (String imported : AresPolicyAnnotations.singleTypeImports(masked)) {
+            if (imported.endsWith("." + name)) {
+                return List.of(imported);
             }
         }
         List<String> candidates = new ArrayList<>();
         candidates.add(qualify(packageName, name));
-        Matcher wildcards = WILDCARD_IMPORT.matcher(masked);
-        while (wildcards.find()) {
-            candidates.add(wildcards.group(1) + "." + name);
-        }
+        AresPolicyAnnotations.wildcardImports(masked).forEach(imported -> candidates.add(imported + "." + name));
         return List.copyOf(candidates);
     }
 
@@ -511,9 +499,7 @@ final class AresTestSources {
     private static boolean simpleNameRefersTo(String masked, String simpleName, String qualifiedName) {
         boolean importsIt = false;
         boolean importsOther = false;
-        Matcher imports = SINGLE_TYPE_IMPORT.matcher(masked);
-        while (imports.find()) {
-            String imported = imports.group(1);
+        for (String imported : AresPolicyAnnotations.singleTypeImports(masked)) {
             if (qualifiedName.equals(imported)) {
                 importsIt = true;
             }
@@ -521,7 +507,7 @@ final class AresTestSources {
                 importsOther = true;
             }
         }
-        return importsIt || (!importsOther && ARES_JUPITER_WILDCARD_IMPORT.matcher(masked).find());
+        return importsIt || (!importsOther && AresPolicyAnnotations.wildcardImports(masked).contains(ARES_JUPITER_PACKAGE));
     }
 
     private static void addOnce(List<SecurityFrameworkState.UnsupportedReasonType> problems, SecurityFrameworkState.UnsupportedReasonType problem) {
