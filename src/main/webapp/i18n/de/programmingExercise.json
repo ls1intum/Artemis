@@ -355,6 +355,7 @@
                     "ARES_1": "{{ location }}: Die Tests verwenden Ares 1, dessen eigene Sandbox weiterläuft.",
                     "NO_ARES_2": "{{ location }}: Die Tests verwenden nicht Ares 2.",
                     "NO_ARES_VERSION_PINNED": "{{ location }}: Die Build-Datei legt keine Ares-Version fest.",
+                    "ARES_VERSION_IN_MAVEN_PROFILE": "{{ location }}: Ein Maven-Profil legt die Ares-Version fest, daher hängt die verwendete Version von den aktiven Profilen ab.",
                     "ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS": "{{ location }}: Eine Testmethode, auch eine von einer anderen Testklasse geerbte, nutzt die Ares-Sandbox über ihre eigene @Policy-Annotation, obwohl die Annotation der Testklasse die Sandbox ausschaltet.",
                     "TEST_INTERFACE": "{{ location }}: Ein Interface deklariert Tests oder Ares-Annotationen, die jede Klasse erbt, die es implementiert.",
                     "INHERITED_METHOD_POLICY": "{{ location }}: Die Testklasse erbt von einer anderen Testklasse eine Testmethode mit eigener @Policy-Annotation, sodass dieser Test diese Policy behält, egal welcher Policy die Klasse zugeordnet ist."

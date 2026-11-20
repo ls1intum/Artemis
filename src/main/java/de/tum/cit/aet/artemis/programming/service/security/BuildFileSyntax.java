@@ -409,6 +409,17 @@ final class BuildFileSyntax {
     }
 
     /**
+     * @param versionPin the pattern of a pin of the Ares version in a POM
+     * @return whether a profile of the POM pins the Ares version; while such a profile is active, e.g. through {@code activeByDefault}, Maven uses its pin
+     *         instead of the one of the POM itself
+     */
+    static boolean pinsInMavenProfile(String pom, Pattern versionPin) {
+        boolean[] comments = mavenComments(pom);
+        boolean[] profiles = mavenProfiles(pom, comments);
+        return versionPin.matcher(pom).results().anyMatch(pin -> !comments[pin.start()] && profiles[pin.start()]);
+    }
+
+    /**
      * @param noCode for each character of the build file whether it belongs to a comment or a string
      * @return whether the Gradle code at the offset declares a local variable of a method or closure, e.g. {@code def aresVersion = '2.3.0'} in a helper
      *         method, which sets no project property; a declaration at the top level of the script declares a script variable the build may use
