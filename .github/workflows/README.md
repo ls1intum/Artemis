@@ -476,8 +476,11 @@ touch, and fails visibly. A mirror entry that points at a host the runners canno
 check `docker info` on a runner when pulls stall.
 
 Images that Docker pulls by itself during a job are not covered: add them to one of the two when a new job needs
-one. A Docker Hub image in a workflow of a GitHub-hosted runner needs no change, because those runners have their
-own allowance.
+one. The images of a job `container:` or of `services:` are the exception: the runner pulls them before the first
+step runs, so neither the helper nor the action can route them. Name the Harbor image directly in the declaration
+(`harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/postgres:18` instead of `postgres:18`). No workflow declares
+either today. A Docker Hub image in a workflow of a GitHub-hosted runner needs no change, because those runners have
+their own allowance.
 
 ## Concurrency model
 
