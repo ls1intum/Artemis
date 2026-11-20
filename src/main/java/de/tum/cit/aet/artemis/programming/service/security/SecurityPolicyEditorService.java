@@ -280,7 +280,7 @@ public class SecurityPolicyEditorService {
                         applyChange(repository, change, baseCommitHash);
                     }
                     else {
-                        SecurityPolicyConflicts.requireStillApplied(repository, appliedCommit.get(), change.frameworkVersion() != null);
+                        SecurityPolicyConflicts.requireStillApplied(repository, appliedCommit.get());
                     }
                 });
         log.info("User {} changed the security policies {} and removed the references to {} of programming exercise {}", user.getLogin(),
@@ -459,7 +459,7 @@ public class SecurityPolicyEditorService {
             revWalk.markStart(revWalk.parseCommit(head));
             ObjectId base = repository.resolve(baseCommitHash);
             if (base != null && repository.getObjectDatabase().has(base)) {
-                revWalk.markUninteresting(revWalk.parseCommit(base));
+                revWalk.markUninteresting(SecurityPolicyConflicts.parseCommit(revWalk, base));
             }
             for (RevCommit commit : revWalk) {
                 if (commit.getFooterLines(CHANGE_TRAILER_KEY).contains(fingerprint)) {
@@ -480,7 +480,7 @@ public class SecurityPolicyEditorService {
     private void applyChange(Repository repository, SecurityPolicyChangeDTO change, String baseCommitHash) {
         Path root = repository.getLocalPath();
         try {
-            SecurityPolicyConflicts.requireUnchangedSince(repository, baseCommitHash, change.frameworkVersion() != null);
+            SecurityPolicyConflicts.requireUnchangedSince(repository, baseCommitHash);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);

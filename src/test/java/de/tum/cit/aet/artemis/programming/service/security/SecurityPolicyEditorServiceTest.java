@@ -315,6 +315,12 @@ class SecurityPolicyEditorServiceTest {
         }
     }
 
+    private String pushedObjectId(String path) throws IOException {
+        try (var repository = new FileRepositoryBuilder().setGitDir(testsRemote.toFile()).setBare().build()) {
+            return repository.resolve("refs/heads/main:" + path).name();
+        }
+    }
+
     private String pushedHead() throws IOException {
         try (var repository = new FileRepositoryBuilder().setGitDir(testsRemote.toFile()).setBare().build()) {
             return repository.resolve("refs/heads/main").name();
@@ -578,6 +584,7 @@ class SecurityPolicyEditorServiceTest {
         SecurityPolicyDocumentDTO existing = withTestClasses(loadedPolicy(editor), "SecurityPolicy.yaml", List.of("de.example.SortingTest"));
         SecurityPolicyDocumentDTO stress = withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of("de.example.StressTest"));
         editorService.commit(exercise(), change(editor, edited(existing, List.of("de.example.SortingTest")), added(stress, List.of("de.example.StressTest"))), user);
+        String defaultPolicy = readPushed("SecurityPolicy.yaml").orElseThrow();
         String stressPolicy = readPushed("StressTests.yaml").orElseThrow();
 
         securityFrameworkService.deactivate(exercise(), user);
@@ -587,6 +594,8 @@ class SecurityPolicyEditorServiceTest {
 
         securityFrameworkService.activate(exercise(), "2.2.1", user);
 
+        // Both policies come back as the instructor left them, not as newly generated ones.
+        assertThat(readPushed("SecurityPolicy.yaml")).contains(defaultPolicy);
         assertThat(readPushed("StressTests.yaml")).contains(stressPolicy);
         assertThat(editorService.getEditor(exercise()).policies()).extracting(SecurityPolicyEditorDTO.PolicyDTO::policyPath).containsExactly("SecurityPolicy.yaml",
                 "StressTests.yaml");
@@ -987,6 +996,33 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void refusesAPolicyChangeIfAnotherVersionWasPinnedSinceThePoliciesWereLoaded() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyChangeDTO change = change(editor, edited(withFiles(loadedPolicy(editor), List.of(LOGS)), BOTH_CLASSES));
+        pushToTests("build.gradle", "ext {\n    aresVersion = '2.1.0'\n}\n");
+        String headBefore = pushedHead();
+
+        // The review checked the policies against the version of the loaded commit, so the change has to be reviewed again.
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.commit(exercise(), change, user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
+        assertThat(pushedHead()).isEqualTo(headBefore);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(POLICY);
+    }
+
+    @Test
+    void refusesAChangeWhoseLoadedCommitIsNoCommit() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        String fileId = pushedObjectId(SORTING_TEST_PATH);
+        SecurityPolicyChangeDTO change = new SecurityPolicyChangeDTO(fileId, null, null, List.of(edited(withFiles(loadedPolicy(editor), List.of(LOGS)), BOTH_CLASSES)), List.of());
+        String headBefore = pushedHead();
+
+        // Nothing was pushed, so the id of a file conflicts like a commit that no longer exists, instead of failing like a push.
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.commit(exercise(), change, user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
+        assertThat(pushedHead()).isEqualTo(headBefore);
+    }
+
+    @Test
     void refusesToPinAVersionIfAnotherOneWasPinnedSinceThePoliciesWereLoaded() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         pushToTests("build.gradle", "ext {\n    aresVersion = '2.1.0'\n}\n");
@@ -1313,10 +1349,7 @@ class SecurityPolicyEditorServiceTest {
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.getTestStructure(exercise(), "0".repeat(40)))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
         // The id of a file of the repository names no commit either.
-        String fileId;
-        try (var repository = new FileRepositoryBuilder().setGitDir(testsRemote.toFile()).setBare().build()) {
-            fileId = repository.resolve("refs/heads/main:" + SORTING_TEST_PATH).name();
-        }
+        String fileId = pushedObjectId(SORTING_TEST_PATH);
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.getTestStructure(exercise(), fileId))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
     }

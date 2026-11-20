@@ -14,8 +14,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.jspecify.annotations.Nullable;
@@ -36,11 +38,12 @@ final class SecurityPolicyConflicts {
     /**
      * A retry only succeeds while the policies are still as the commit of the change left them. A later commit that reverts or changes them supersedes the
      * change, e.g. another instructor's, so the retry fails as a conflict instead of reporting that commit as the result; a commit that changes something
-     * else, e.g. the body of a test, keeps it.
+     * else, e.g. the body of a test, keeps it. Like a first attempt, see {@link #requireUnchangedSince(Repository, String)}, it fails if another Ares version
+     * was pinned since.
      */
-    static void requireStillApplied(Repository repository, String appliedCommit, boolean stagesVersion) {
+    static void requireStillApplied(Repository repository, String appliedCommit) {
         try {
-            requireUnchangedSince(repository, appliedCommit, stagesVersion);
+            requireUnchangedSince(repository, appliedCommit);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -50,10 +53,11 @@ final class SecurityPolicyConflicts {
     /**
      * Refuses a change if a policy changed in the repository since the editor loaded the policies: a policy file, which test classes point to which file, an
      * annotation of a test class or test method, e.g. a new override without a policy file, or the entries of a policy, e.g. a test added to a class assigned
-     * case by case, because the change rewrites the annotations from the state it was loaded with. Commits that change something else, e.g. the body of a
-     * test, do not conflict.
+     * case by case, because the change rewrites the annotations from the state it was loaded with, or the pinned Ares version, because the review checked the
+     * policies against the version of the loaded commit. Commits that change something else, e.g. the body of a test, do not conflict. An id that names no
+     * commit, e.g. a file of the repository, conflicts like a commit that no longer exists.
      */
-    static void requireUnchangedSince(Repository repository, String baseCommitHash, boolean stagesVersion) throws IOException {
+    static void requireUnchangedSince(Repository repository, String baseCommitHash) throws IOException {
         ObjectId head = repository.resolve(Constants.HEAD);
         if (head != null && head.name().equals(baseCommitHash)) {
             return;
@@ -63,15 +67,15 @@ final class SecurityPolicyConflicts {
             if (base == null || head == null || !repository.getObjectDatabase().has(base)) {
                 throw policiesChanged();
             }
-            RevTree baseTree = revWalk.parseCommit(base).getTree();
+            RevTree baseTree = parseCommit(revWalk, base).getTree();
             RevTree headTree = revWalk.parseCommit(head).getTree();
             SecurityFrameworkState baseState = SecurityFrameworkCommitFiles.evaluate(repository, baseTree);
             SecurityFrameworkState headState = SecurityFrameworkCommitFiles.evaluate(repository, headTree);
             if (!policyReferences(baseState).equals(policyReferences(headState)) || !assignmentState(repository, baseTree).equals(assignmentState(repository, headTree))) {
                 throw policiesChanged();
             }
-            // The review showed the build file of the loaded commit, so a version pinned since would be replaced without being shown.
-            if (stagesVersion && !SecurityFrameworkCommitFiles.aresVersion(repository, baseTree).equals(SecurityFrameworkCommitFiles.aresVersion(repository, headTree))) {
+            // The review checked the policies against the version of the loaded commit and showed its build file, so neither may have changed since.
+            if (!SecurityFrameworkCommitFiles.aresVersion(repository, baseTree).equals(SecurityFrameworkCommitFiles.aresVersion(repository, headTree))) {
                 throw policiesChanged();
             }
             for (SecurityFrameworkState.PolicyFile policyFile : headState.policyFiles()) {
@@ -112,7 +116,7 @@ final class SecurityPolicyConflicts {
             throw policiesChanged();
         }
         try (RevWalk revWalk = new RevWalk(repository)) {
-            RevTree baseTree = revWalk.parseCommit(base).getTree();
+            RevTree baseTree = parseCommit(revWalk, base).getTree();
             Map<String, SecurityTestAssignments.TestClass> loaded = SecurityTestAssignments.read(SecurityFrameworkCommitFiles.javaSources(repository, baseTree));
             for (SecurityTestAssignments.TestClass testClass : split) {
                 SecurityTestAssignments.TestClass loadedClass = loaded.get(testClass.qualifiedName());
@@ -173,6 +177,19 @@ final class SecurityPolicyConflicts {
 
     private static Map<String, List<String>> policyReferences(SecurityFrameworkState state) {
         return state.policyFiles().stream().collect(Collectors.toMap(SecurityFrameworkState.PolicyFile::policyPath, SecurityFrameworkState.PolicyFile::referencedBy));
+    }
+
+    /**
+     * @return the commit the editor loaded the policies from
+     * @throws ConflictException if the id names another object of the repository, e.g. a file, so the editor cannot have loaded it
+     */
+    static RevCommit parseCommit(RevWalk revWalk, ObjectId id) throws IOException {
+        try {
+            return revWalk.parseCommit(id);
+        }
+        catch (IncorrectObjectTypeException e) {
+            throw policiesChanged();
+        }
     }
 
     private static ConflictException policiesChanged() {
