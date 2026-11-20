@@ -97,7 +97,9 @@ class RedissonDistributedDataMigrator {
         try {
             // The watchdog renews the lock while this node is alive. A fixed lease could expire halfway through a
             // large queue and let another node publish the target version before the first migration is complete.
-            if (lock.tryLock(LOCK_WAIT_MINUTES, TimeUnit.MINUTES)) {
+            // SonarCloud reports java:S2222 on the next line although the lock is released in the finally block below on every path
+            // that acquired it: a timed tryLock that is interrupted or times out holds nothing, so there is nothing to release.
+            if (lock.tryLock(LOCK_WAIT_MINUTES, TimeUnit.MINUTES)) { // NOSONAR java:S2222 - reviewed, released in the finally block below
                 try {
                     migrateUnderLock();
                 }
