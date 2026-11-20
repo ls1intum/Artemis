@@ -4,12 +4,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.EmptyUsage;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 
 import de.tum.cit.aet.artemis.aiworker.api.LLMResponseCost;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate;
 
 /** Converts only reported usage fields, without transmitting or reconstructing provider content. */
@@ -44,10 +46,11 @@ public final class ProviderUsageTransport {
     /**
      * Adapts the reported fields to the existing core accounting consumer. The response intentionally has no generated content.
      *
-     * @param call the fields actually returned by the provider
+     * @param call      the fields actually returned by the provider
+     * @param llmPreset the preset that made the call, whose endpoint price list prices it when the provider reported no USD amount; null leaves it unpriced
      * @return metadata-only response for core accounting
      */
-    public static ChatResponse restore(ProviderUsageUpdate.Call call) {
+    public static ChatResponse restore(ProviderUsageUpdate.Call call, @Nullable String llmPreset) {
         Usage usage = new Usage() {
 
             @Override
@@ -78,7 +81,10 @@ public final class ProviderUsageTransport {
                 return Map.of("prompt_tokens", call.inputTokens(), "completion_tokens", call.outputTokens(), "cost", call.totalCostUsd(), "cost_currency", "USD");
             }
         };
-        var metadata = ChatResponseMetadata.builder().model(call.model()).id(call.requestId() == null ? "" : call.requestId()).usage(usage).build();
-        return new ChatResponse(List.of(), metadata);
+        var metadata = ChatResponseMetadata.builder().model(call.model()).id(call.requestId() == null ? "" : call.requestId()).usage(usage);
+        if (llmPreset != null) {
+            metadata.keyValue(LlmClientService.PRESET_METADATA_KEY, llmPreset);
+        }
+        return new ChatResponse(List.of(), metadata.build());
     }
 }

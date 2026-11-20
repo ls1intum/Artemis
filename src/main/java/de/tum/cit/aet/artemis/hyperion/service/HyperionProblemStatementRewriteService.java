@@ -7,7 +7,6 @@ import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripWrapper
 
 import java.util.Map;
 
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -23,6 +22,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import io.micrometer.observation.annotation.Observed;
 
@@ -38,7 +38,6 @@ public class HyperionProblemStatementRewriteService {
 
     private static final String REWRITE_PIPELINE_ID = "HYPERION_PROBLEM_REWRITE";
 
-    @Nullable
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templateService;
@@ -50,14 +49,14 @@ public class HyperionProblemStatementRewriteService {
     /**
      * Creates a new ProblemStatementRewriteService.
      *
-     * @param chatClient           the AI chat client, may be null if AI is not configured
+     * @param chatClients          the chat clients of the Hyperion LLM presets
      * @param templateService      prompt template service
      * @param llmTokenUsageService service for tracking LLM token usage
      * @param userRepository       repository for resolving current user
      */
-    public HyperionProblemStatementRewriteService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService,
+    public HyperionProblemStatementRewriteService(HyperionChatClientService chatClients, HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService,
             UserRepository userRepository) {
-        this.chatClient = chatClient;
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.PROBLEM_STATEMENT_REWRITE);
         this.templateService = templateService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
@@ -73,10 +72,6 @@ public class HyperionProblemStatementRewriteService {
     @Observed(name = "hyperion.rewrite", contextualName = "problem statement rewrite", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementRewriteResponseDTO rewriteProblemStatement(Course course, String problemStatementText) {
         log.debug("Rewriting problem statement for course [{}]", course.getId());
-
-        if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "ProblemStatement", "ProblemStatementRewrite.chatClientNotConfigured");
-        }
 
         String sanitizedProblemStatement = sanitizeInput(problemStatementText);
         if (sanitizedProblemStatement.isBlank()) {

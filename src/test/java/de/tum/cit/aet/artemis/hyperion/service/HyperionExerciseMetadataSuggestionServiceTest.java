@@ -83,8 +83,8 @@ class HyperionExerciseMetadataSuggestionServiceTest {
     }
 
     private HyperionExerciseMetadataSuggestionService service(ChatClient chatClient, List<ChatModel> chatModels) {
-        return new HyperionExerciseMetadataSuggestionService(chatClient, chatModels, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository, courseRepository,
-                programmingExerciseRepository);
+        return new HyperionExerciseMetadataSuggestionService(HyperionTestChatClients.returning(chatClient), new HyperionPromptTemplateService(), llmTokenUsageService,
+                userRepository, courseRepository, programmingExerciseRepository);
     }
 
     private ExerciseGenerationMetadataSuggestionResponseDTO suggest(HyperionExerciseMetadataSuggestionService service, String brief) {

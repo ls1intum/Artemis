@@ -64,7 +64,8 @@ class HyperionQuizQuestionGenerationServiceTest {
         // ChatClient merges request options into the model's options, which must be non-null
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
-        service = new HyperionQuizQuestionGenerationService(chatClient, new HyperionPromptTemplateService(), competencyContextService, llmTokenUsageService, userRepository);
+        service = new HyperionQuizQuestionGenerationService(HyperionTestChatClients.returning(chatClient), new HyperionPromptTemplateService(), competencyContextService,
+                llmTokenUsageService, userRepository);
     }
 
     @AfterEach
@@ -108,22 +109,6 @@ class HyperionQuizQuestionGenerationServiceTest {
     }
 
     @Test
-    void generateQuizQuestions_throwsExceptionWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionQuizQuestionGenerationService(null, new HyperionPromptTemplateService(), competencyContextService, llmTokenUsageService,
-                userRepository);
-
-        Course course = new Course();
-        course.setTitle("Software Engineering");
-        course.setDescription("SE basics");
-
-        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", null, "", QuizQuestionGenerationLanguage.EN,
-                Set.of(QuizQuestionGenerationType.SINGLE_CHOICE), 1, 50);
-
-        assertThatThrownBy(() -> serviceWithNullClient.generateQuizQuestions(course, request)).isInstanceOf(InternalServerErrorAlertException.class)
-                .hasMessageContaining("AI chat client is not configured");
-    }
-
-    @Test
     void refineQuizQuestion_returnsRefinedQuestion() {
         String json = """
                 {
@@ -155,22 +140,6 @@ class HyperionQuizQuestionGenerationServiceTest {
         assertThat(response.question().questionText()).isEqualTo("Which HTTP method is idempotent?");
         assertThat(response.question().options()).hasSize(2);
         assertThat(response.reasoning()).isEqualTo("Changed the wording to be more precise.");
-    }
-
-    @Test
-    void refineQuizQuestion_throwsExceptionWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionQuizQuestionGenerationService(null, new HyperionPromptTemplateService(), competencyContextService, llmTokenUsageService,
-                userRepository);
-
-        Course course = new Course();
-        course.setTitle("Software Engineering");
-
-        GeneratedQuizQuestionDTO originalQuestion = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "HTTP Methods", "Which method?",
-                List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, null), new GeneratedQuizAnswerOptionDTO("POST", false, null, null)), null, null);
-        QuizQuestionRefinementRequestDTO request = new QuizQuestionRefinementRequestDTO(originalQuestion, "Make it harder");
-
-        assertThatThrownBy(() -> serviceWithNullClient.refineQuizQuestion(course, request)).isInstanceOf(InternalServerErrorAlertException.class)
-                .hasMessageContaining("AI chat client is not configured");
     }
 
     @Test

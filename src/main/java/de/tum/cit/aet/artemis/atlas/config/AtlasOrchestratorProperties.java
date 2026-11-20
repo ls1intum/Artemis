@@ -2,31 +2,29 @@ package de.tum.cit.aet.artemis.atlas.config;
 
 import jakarta.validation.constraints.Positive;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.validation.annotation.Validated;
 
 /**
- * Orchestrator properties consumed by {@link de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService}
- * and the auto-orchestration pipeline ({@link de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService},
- * {@link de.tum.cit.aet.artemis.atlas.service.ContentChangeScheduler}). Strict binding catches typos under
- * {@code artemis.atlas.orchestrator}; {@link #temperature()} is ignored when {@link #reasoningEffort()} is
- * non-blank because GPT-5 reasoning models reject explicit temperature.
+ * Settings of autonomous competency orchestration. The models it uses are assigned under {@code artemis.atlas.atlasllm.llm-presets}.
  *
- * @param model                  Model identifier for the orchestrator chat model.
- * @param temperature            Sampling temperature; ignored when {@link #reasoningEffort()} is non-blank.
- * @param reasoningEffort        Reasoning effort for GPT-5 family models; blank disables reasoning options.
- * @param workerModel            Model/deployment identifier for stateless workers.
- * @param workerReasoningEffort  Reasoning effort for stateless workers; blank disables reasoning options and applies {@link #temperature()} instead.
- * @param responsesApiEnabled    Whether autonomous Atlas rounds use the Responses API adapter.
- * @param debounceWindowSeconds  Seconds without a new content change before a course's accumulator is eligible to fire.
- * @param maxDailyOrchestrations Per-course daily cap on auto-orchestration runs.
- * @param schedulerRateMs        Scheduler tick interval in milliseconds. Also used as the initial delay.
+ * @param model                  no longer read; accepted for one release so an old configuration only produces a warning
+ * @param temperature            no longer read; see {@code model}
+ * @param reasoningEffort        no longer read; see {@code model}
+ * @param workerModel            no longer read; see {@code model}
+ * @param workerReasoningEffort  no longer read; see {@code model}
+ * @param responsesApiEnabled    no longer read; see {@code model}
+ * @param debounceWindowSeconds  quiet period after the last content edit before a course is orchestrated
+ * @param maxDailyOrchestrations maximum automatic orchestrations per course and day
+ * @param schedulerRateMs        interval of the orchestration scheduler
  */
 @Validated
 @ConfigurationProperties(prefix = "artemis.atlas.orchestrator", ignoreUnknownFields = false)
-public record AtlasOrchestratorProperties(@DefaultValue("gpt-5.6-luna") String model, @DefaultValue("1.0") double temperature, @DefaultValue("xhigh") String reasoningEffort,
-        @DefaultValue("gpt-5.6-luna") String workerModel, @DefaultValue("high") String workerReasoningEffort, @DefaultValue("true") boolean responsesApiEnabled,
+public record AtlasOrchestratorProperties(@Deprecated(forRemoval = true) @Nullable String model, @Deprecated(forRemoval = true) @Nullable Double temperature,
+        @Deprecated(forRemoval = true) @Nullable String reasoningEffort, @Deprecated(forRemoval = true) @Nullable String workerModel,
+        @Deprecated(forRemoval = true) @Nullable String workerReasoningEffort, @Deprecated(forRemoval = true) @Nullable Boolean responsesApiEnabled,
         @DefaultValue("1800") @Positive int debounceWindowSeconds, @DefaultValue("10") @Positive int maxDailyOrchestrations,
         @DefaultValue("30000") @Positive long schedulerRateMs) {
 }

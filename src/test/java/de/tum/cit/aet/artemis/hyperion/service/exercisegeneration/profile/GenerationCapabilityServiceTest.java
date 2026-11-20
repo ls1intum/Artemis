@@ -210,7 +210,7 @@ class GenerationCapabilityServiceTest {
         var exercises = mock(ProgrammingExerciseTestRepository.class);
         when(exercises.findWithAllParticipationsById(1L)).thenReturn(Optional.of(exercise));
         var budget = mock(HyperionGenerationBudgetService.class);
-        var profiles = new HyperionEffortProfileService(new HyperionAgentProperties(), List.of());
+        var profiles = new HyperionEffortProfileService(new HyperionAgentProperties());
         var admission = new GenerationAdmissionService(exercises, service, jobs, requests, mock(), workers, budget, mock(), profiles);
         var request = new VariantGenerationRequestDTO(DifficultyLevel.EASY, null, null, null, null);
         assertThatThrownBy(() -> admission.reserveVariant(new User(), 1L, request)).isInstanceOf(BadRequestAlertException.class)

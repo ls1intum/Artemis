@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.Map;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
@@ -30,7 +29,8 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
+import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
 import de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesChatModel;
 
 /** Verifies the SDK decoder, Responses adapter and configured USD accounting together. */
@@ -101,9 +101,7 @@ class AtlasResponsesUsageAccountingTest {
 
     @Test
     void fullyCachedInputNeedsNoUnusedRegularInputOrOutputRate() throws Exception {
-        var configured = rates();
-        configured.setInputCostPerMillionUsd(null);
-        configured.setOutputCostPerMillionUsd(null);
+        var configured = new LlmProperties.Price("cache-model", null, 1.0, 2.0, null);
 
         var request = accounting(configured).buildLLMRequest(response("{\"cached_tokens\":2000}", null), "CACHE_TEST");
 
@@ -124,21 +122,14 @@ class AtlasResponsesUsageAccountingTest {
         var provider = mock(ResponseService.class);
         when(client.responses()).thenReturn(provider);
         when(provider.create(any(ResponseCreateParams.class))).thenReturn(nativeResponse);
-        return new OpenAiResponsesChatModel(client, new JsonMapper(), "cache-model").call(new Prompt("accounting"));
+        return LlmTestCatalog.tagged(new OpenAiResponsesChatModel(client, new JsonMapper(), "cache-model").call(new Prompt("accounting")), LlmTestCatalog.PRESET);
     }
 
-    private static LLMModelCostConfiguration.ModelCostProperties rates() {
-        var configured = new LLMModelCostConfiguration.ModelCostProperties();
-        configured.setInputCostPerMillionUsd(10f);
-        configured.setOutputCostPerMillionUsd(20f);
-        configured.setCachedInputCostPerMillionUsd(1f);
-        configured.setCacheWriteInputCostPerMillionUsd(2f);
-        return configured;
+    private static LlmProperties.Price rates() {
+        return new LlmProperties.Price("cache-model", 10.0, 1.0, 2.0, 20.0);
     }
 
-    private static LLMTokenUsageService accounting(LLMModelCostConfiguration.ModelCostProperties rates) {
-        var config = new LLMModelCostConfiguration();
-        config.setModelCosts(Map.of("cache-model", rates));
-        return new LLMTokenUsageService(mock(LLMTokenUsageTraceRepository.class), mock(LLMTokenUsageRequestRepository.class), config);
+    private static LLMTokenUsageService accounting(LlmProperties.Price rates) {
+        return new LLMTokenUsageService(mock(LLMTokenUsageTraceRepository.class), mock(LLMTokenUsageRequestRepository.class), LlmTestCatalog.priced("cache-model", rates));
     }
 }

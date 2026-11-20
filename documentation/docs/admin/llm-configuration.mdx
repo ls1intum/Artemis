@@ -1,0 +1,234 @@
+---
+id: llm-configuration
+title: LLM Configuration
+sidebar_label: LLM Configuration
+description: Configure the language model endpoints and presets that Hyperion, Atlas, Deimos and global search use.
+last_reviewed: 2026-11-20
+---
+
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
+import Callout from '../../src/components/Callout/Callout';
+
+Artemis calls language models directly for [Hyperion](./hyperion), the [Atlas agent](./artemis-intelligence#atlas-agent),
+[Deimos](./deimos) and the embeddings of [global search](./global-search-weaviate). All of them read one
+configuration block, `artemis.llm`. Iris and Athena are separate services; configure their models in Pyris and Athena.
+
+The configuration has three parts:
+
+1. **Endpoints** say where a provider is and how Artemis signs in to it.
+2. **Presets** name one model on one endpoint, with its options.
+3. **Assignments** in each module say which preset each task uses.
+
+Artemis has no built-in models, endpoints or prices. A module that is enabled and has no assignment stops the server at
+startup, and the error lists every missing key at once, ready to copy.
+
+## A complete example
+
+```yaml
+artemis:
+  llm:
+    endpoints:
+      logos:                              # reports the USD cost of each call, so it needs no price list
+        base-url: https://logos.example.org/v1
+        api-key: ${LOGOS_API_KEY}
+      openai:                             # reports no cost: Artemis estimates it from the price list
+        base-url: https://api.openai.com/v1
+        api-key: ${OPENAI_API_KEY}
+        prices-usd-per-million:
+          - { model: gpt-6.1-terra, input: 1.00, cached-input: 0.05, cache-write: 1.25,  output: 5.00 }
+          - { model: gpt-6-luna,    input: 0.10, cached-input: 0.01, cache-write: 0.125, output: 0.50 }
+    presets:
+      large:              { endpoint: logos, model: gpt-6.1-terra,           api: responses,        reasoning-effort: medium }
+      small:              { endpoint: logos, model: gpt-6-luna,              api: responses,        reasoning-effort: low }
+      atlaschat:          { endpoint: logos, model: gpt-5.6-terra,           api: chat-completions, reasoning-effort: none }
+      selfhosted:         { endpoint: logos, model: Qwen/Qwen3.8-27B,        api: chat-completions, max-tokens: 8000 }
+      embed:              { endpoint: logos, model: Qwen/Qwen3-Embedding-8B, api: embeddings }
+      generation:         { endpoint: logos, model: gpt-6.1-terra,           api: responses,        reasoning-effort: medium, max-retries: 0 }
+      generationthorough: { endpoint: logos, model: gpt-6.1-terra,           api: responses,        reasoning-effort: xhigh,  max-retries: 0 }
+
+  atlas:
+    atlasllm:
+      enabled: true
+      llm-presets: { default: small, orchestrator: large, chat: atlaschat }
+
+  hyperion:
+    enabled: true
+    llm-presets:
+      default: large
+      problem-statement-rewrite: small
+      faq-rewrite: small
+      metadata-suggestion: small
+      competency-context: small
+    quiz-pool:
+      generator-llm-preset: selfhosted
+      judge-llm-preset: selfhosted
+    exercise-generation:
+      enabled: true
+    agent:
+      llm-preset: generation
+      default-profile: standard
+      profiles:
+        standard: { llm-preset: generation,         max-turns: 60,  max-tokens-per-job: 3000000 }
+        thorough: { llm-preset: generationthorough, max-turns: 100, max-tokens-per-job: 6000000 }
+
+  deimos:
+    enabled: true
+    llm-preset: selfhosted
+
+  weaviate:
+    enabled: true
+    vectorizer-module: text2vec-openai
+    embedding-llm-preset: embed
+```
+
+## Endpoints
+
+An endpoint is one provider address with its credentials. Several presets can share one endpoint; Artemis keeps one
+HTTP client per endpoint.
+
+| Key                                 | Default  | Meaning                                                                                                                                       |
+| ----------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`                              | `openai` | `openai` for OpenAI and every OpenAI-compatible server or gateway, `microsoft-foundry` for Azure OpenAI / Microsoft Foundry.                  |
+| `base-url`                          | required | The API base URL. For OpenAI-compatible servers it ends with `/v1`, for example `https://api.openai.com/v1` or `http://localhost:11434/v1`. |
+| `api-key`                           | none     | Sent as a bearer token (`openai`) or as the Azure key header (`microsoft-foundry`). Without a key, Artemis sends no `Authorization` header.  |
+| `timeout`                           | `300s`   | Time limit of one request.                                                                                                                    |
+| `max-retries`                       | `3`      | Retries of the provider SDK after a failed request.                                                                                           |
+| `organization-id`                   | none     | OpenAI organization, if your account needs one.                                                                                               |
+| `microsoft-foundry-service-version` | none     | Azure API version, only for `microsoft-foundry`.                                                                                              |
+| `custom-headers`                    | none     | Extra HTTP headers as a map, for example for a gateway.                                                                                       |
+| `prices-usd-per-million`            | none     | Prices for cost estimates, see [Costs](#costs).                                                                                               |
+
+For `microsoft-foundry`, the `api-key` is required. The `model` of a preset on this endpoint is the name of the
+deployment. A `base-url` that ends with `/openai/v1` uses the unified Foundry API; a resource URL such as
+`https://<resource>.openai.azure.com` uses the deployment paths.
+
+## Presets
+
+A preset is one model on one endpoint, plus the options that Artemis sends with every call.
+
+| Key                     | Meaning                                                                                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `endpoint`              | Required. The name of an endpoint.                                                                                                         |
+| `model`                 | Required. The model name the provider expects, for Microsoft Foundry the deployment name.                                                  |
+| `api`                   | Required. `responses`, `chat-completions` or `embeddings`. Use `responses` when the provider supports it; reasoning models need it for tool calls. |
+| `reasoning-effort`      | For example `none`, `low`, `medium`, `high`, `xhigh`, as the model supports.                                                               |
+| `temperature`           | Only without `reasoning-effort` or with `reasoning-effort: none`.                                                                         |
+| `top-p`                 | Nucleus sampling, as the model supports.                                                                                                   |
+| `verbosity`             | Text verbosity, as the model supports.                                                                                                     |
+| `max-tokens`            | Output token limit. Set at most one of `max-tokens` and `max-completion-tokens`.                                                          |
+| `max-completion-tokens` | Output token limit for models that need this field name.                                                                                  |
+| `timeout`               | Overrides the endpoint's `timeout` for this preset.                                                                                        |
+| `max-retries`           | Overrides the endpoint's `max-retries` for this preset.                                                                                    |
+
+An `embeddings` preset needs an endpoint of type `openai` and takes none of the model options, `timeout` or
+`max-retries`. The timeouts of embedding calls are set under `artemis.weaviate.embedding`.
+
+Names of endpoints and presets use only lowercase letters and digits, and start with a letter, for example `large` or
+`gpt6terra`. Environment variables cannot carry dashes or dots inside a name.
+
+## Assignments
+
+Each module assigns presets in its own configuration block. A single task uses an `llm-preset` key. A module with
+several tasks has an `llm-presets` map: each task can have its own key, and a task without one uses `default`. The
+`default` key works the same in every map.
+
+| Module and condition                                                    | Keys                                                                                                                                                                                                                                                                       |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hyperion, `artemis.hyperion.enabled`                                    | `artemis.hyperion.llm-presets` with `default`, `problem-statement`, `problem-statement-rewrite`, `consistency-check`, `checklist`, `assessment-criteria`, `quiz-generation`, `code-generation`, `variants`, `faq-rewrite`, `metadata-suggestion`, `competency-context` |
+| Hyperion quiz question pool, optional                                   | `artemis.hyperion.quiz-pool.generator-llm-preset` and `artemis.hyperion.quiz-pool.judge-llm-preset`: both or neither. Without them the pool is off.                                                                                                                    |
+| Hyperion exercise generation, `artemis.hyperion.exercise-generation.enabled` | `artemis.hyperion.agent.llm-preset`, and optionally `artemis.hyperion.agent.profiles.<name>.llm-preset`. These presets need `max-retries: 0`.                                                                                                                      |
+| Atlas agent, `artemis.atlas.atlasllm.enabled`                           | `artemis.atlas.atlasllm.llm-presets` with `default`, `chat`, `orchestrator`, `worker`, `flavor-strip`                                                                                                                                                                  |
+| Deimos, `artemis.deimos.enabled`                                        | `artemis.deimos.llm-preset`                                                                                                                                                                                                                                            |
+| Global search, `artemis.weaviate.vectorizer-module: text2vec-openai`    | `artemis.weaviate.embedding-llm-preset`, a preset with `api: embeddings`                                                                                                                                                                                               |
+
+The quiz question pool and Deimos send lecture material or student code to their model. Choose a preset on an endpoint
+that your institution allows for that data, for example a self-hosted model.
+
+Exercise generation retries failed model calls itself and counts the cost of every call. SDK retries would send
+requests that Artemis cannot count, so the server refuses an exercise generation preset whose effective
+`max-retries` is not `0`.
+
+### AI Worker nodes
+
+AI Worker nodes run exercise generation. Core sends the name of the preset to the worker, and the worker looks it up in
+its own `artemis.llm` block. Give core and every worker the same `artemis.llm` block. A worker without the preset, or
+with retries for it, fails the run at its start. Upgrade core and workers together: worker protocol version 6 carries
+the preset name.
+
+## Costs
+
+Artemis shows LLM costs in USD in [token usage tracking](./hyperion#token-usage-tracking). For each call it uses, in
+this order:
+
+1. The USD amount that the provider reports with the response, for example from Logos. A reported zero is a valid cost.
+2. Otherwise, the entry of `prices-usd-per-million` on the preset's endpoint whose `model` is exactly the preset's
+   `model`.
+3. Otherwise, the call stays unpriced.
+
+The price list is matched by the model name in the preset, not by the name in the provider's answer, so dated snapshot
+names such as `gpt-6.1-terra-2026-10-01` need no own entry. Each entry needs `model`, `input` and `output`;
+`cached-input` and `cache-write` are optional. All prices are USD per million tokens. At startup Artemis warns about a
+preset whose endpoint has a price list without an entry for the preset's model.
+
+## Environment variables
+
+Every key can also be set as an environment variable. Write the key in upper case, replace dots with underscores and
+remove the dashes:
+
+```bash
+ARTEMIS_LLM_ENDPOINTS_LOGOS_BASEURL=https://logos.example.org/v1
+ARTEMIS_LLM_ENDPOINTS_LOGOS_APIKEY=...
+ARTEMIS_LLM_PRESETS_LARGE_ENDPOINT=logos
+ARTEMIS_LLM_PRESETS_LARGE_MODEL=gpt-6.1-terra
+ARTEMIS_LLM_PRESETS_LARGE_API=responses
+ARTEMIS_LLM_PRESETS_LARGE_REASONINGEFFORT=medium
+ARTEMIS_HYPERION_LLMPRESETS_DEFAULT=large
+ARTEMIS_HYPERION_LLMPRESETS_FAQREWRITE=small
+ARTEMIS_ATLAS_ATLASLLM_LLMPRESETS_DEFAULT=large
+ARTEMIS_DEIMOS_LLMPRESET=large
+```
+
+Spring binds environment variables less strictly than YAML. To catch typing errors, Artemis refuses an
+`llm-presets` variable that names no task of its map. Set a whole `prices-usd-per-million` list in one place, either in
+YAML or in environment variables, because a list from one source replaces a list from another.
+
+## Check the configuration
+
+At startup Artemis checks the endpoints, the presets and the assignments of the modules that run on the node. The
+server stops when it finds a problem and lists all problems in one message. When the configuration is valid, Artemis
+logs one line per assignment with the preset, model, API, host, timeout, retries and authentication. It adds `no fallback price` when the price list has no entry for the model:
+
+```text
+LLM artemis.hyperion.llm-presets.faq-rewrite -> small | gpt-6-luna | responses | logos.example.org | timeout PT5M, retries 3, auth key, no fallback price
+```
+
+## Upgrade from the previous configuration
+
+Earlier releases configured models under `spring.ai.openai`, in module keys and with built-in defaults. Artemis now
+reads none of these keys. It logs a warning that lists the old keys it finds, and stops at startup if an enabled
+module has no new assignment.
+
+| Previous key                                                                                                             | Now                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `spring.ai.openai.base-url`, `api-key`, `microsoft-foundry`, `timeout`, `max-retries`                                    | An endpoint under `artemis.llm.endpoints`                                                                 |
+| `spring.ai.openai.chat.model` and its options                                                                            | A preset under `artemis.llm.presets`, assigned with `artemis.hyperion.llm-presets.default`                 |
+| `artemis.llm.model-costs`                                                                                                | `prices-usd-per-million` on the endpoint                                                                  |
+| `artemis.atlas.chat-model`, `temperature`, `flavor-strip-*`, `artemis.atlas.orchestrator.model`, `worker-model`, `reasoning-effort`, `worker-reasoning-effort`, `responses-api-enabled` | `artemis.atlas.atlasllm.llm-presets`; the preset's `api` replaces `responses-api-enabled` |
+| `artemis.hyperion.quiz-pool.base-url`, `api-key`, `allowed-models`, `generator-model`, `judge-model`, `timeout`          | `artemis.hyperion.quiz-pool.generator-llm-preset` and `judge-llm-preset`                                  |
+| Model options of `artemis.hyperion.agent.profiles.<name>`                                                                | `artemis.hyperion.agent.profiles.<name>.llm-preset`                                                       |
+| `artemis.deimos.llm.*`                                                                                                   | `artemis.deimos.llm-preset`                                                                               |
+| `artemis.weaviate.open-ai-base-url`, `gpu-api-key`, `open-ai-embedding-model`                                            | An embeddings preset, assigned with `artemis.weaviate.embedding-llm-preset`. The endpoint's `base-url` now ends with `/v1` |
+
+<Callout variant={CalloutVariant.warning}>
+    The quiz question pool no longer refuses cloud endpoints by itself. Choose its presets with care: the pool sends
+    lecture material to them.
+</Callout>
+
+## Related documentation
+
+- [Hyperion setup](./hyperion)
+- [Artemis Intelligence and the Atlas agent](./artemis-intelligence)
+- [Deimos](./deimos)
+- [Global search with Weaviate](./global-search-weaviate)
+- [AI Worker](./aiworker)
+- [Spring AI development](/developer/spring-ai)
