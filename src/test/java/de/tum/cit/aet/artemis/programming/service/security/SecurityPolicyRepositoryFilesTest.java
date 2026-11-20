@@ -651,10 +651,11 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "<Date extends java.sql.Date>", "<X, Date extends java.sql.Date>", "<@Deprecated Date extends java.sql.Date>",
-            "<@Wrap(@Flag(true)) Date extends java.sql.Date>" })
+    @ValueSource(strings = { "<Date extends java.sql.Date>", "<X, Date extends java.sql.Date>", "<@Flag Date extends java.sql.Date>",
+            "<@Wrap(@Flag(true)) Date extends java.sql.Date>", "<@Flag(1 > 0) Date extends java.sql.Date>" })
     void anOverrideWhoseParameterTypeIsATypeVariableKeepsTheInheritedPolicy(String typeParameters) throws IOException {
         writeBuildFile();
+        writeTypeAnnotations();
         String methodPolicy = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n";
         String annotated = methodPolicy + "    @Test\n    public void runs(java.util.Date date)";
         writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
@@ -726,6 +727,7 @@ class SecurityPolicyRepositoryFilesTest {
             "MoreSortingTest<@Flag(1 > 0) Date>||true" })
     void onlyATypeVariableInScopeShadowsAnImportedParameterType(String declaration, String field, boolean unsupported) throws IOException {
         writeBuildFile();
+        writeTypeAnnotations();
         String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
         writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
         String override = """
@@ -948,6 +950,7 @@ class SecurityPolicyRepositoryFilesTest {
     @ValueSource(strings = { "Marker<Date>", "Marker<@Flag(1 > 0) Date>" })
     void aTypeArgumentOfASupertypeDeclaresNoTypeVariable(String marker) throws IOException {
         writeBuildFile();
+        writeTypeAnnotations();
         String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
         writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
         writeSource("test/de/example/Marker.java", "package de.example;\n\ninterface Marker<T> {\n}\n");
@@ -1109,6 +1112,32 @@ class SecurityPolicyRepositoryFilesTest {
 
         // A member type Date of a library interface would shadow the import, so runs(Date) may be an overload and the inherited test may still run with the sandbox.
         assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", true);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "MoreSortingTest extends SortingTest", "MoreSortingTest extends @Flag SortingTest",
+            "MoreSortingTest extends @Flag(1 > 0) de . example . SortingTest" })
+    void anAnnotatedOrSpacedSuperclassIsTheSuperclass(String declaration) throws IOException {
+        writeBuildFile();
+        writeTypeAnnotations();
+        String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
+        writeSource("test/de/example/MoreSortingTest.java", importingOverride(declaration, "public void check()"));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // The switched-off MoreSortingTest inherits runs(Date) with its own active policy, however its superclass is written.
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", true);
+    }
+
+    /**
+     * Writes the type annotations {@code @Flag} and {@code @Wrap} that the fixtures put on type parameters, type arguments and supertypes, so the fixtures
+     * are valid Java.
+     */
+    private void writeTypeAnnotations() throws IOException {
+        String target = "package de.example;\n\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Target;\n\n"
+                + "@Target({ ElementType.TYPE_USE, ElementType.TYPE_PARAMETER })\n";
+        writeSource("test/de/example/Flag.java", target + "@interface Flag {\n\n    boolean value() default true;\n}\n");
+        writeSource("test/de/example/Wrap.java", target + "@interface Wrap {\n\n    Flag value();\n}\n");
     }
 
     /**

@@ -44,13 +44,14 @@ final class AresTestSources {
 
     private static final String END_OF_IDENTIFIER = AresPolicyAnnotations.END_OF_IDENTIFIER;
 
-    private static final Pattern SUPERCLASS = Pattern.compile("^\\s*+(?:<[^{]*?>\\s*+)?extends\\s+([\\p{javaJavaIdentifierPart}.]+)");
-
     /** The modifier {@code private}, which keeps a member type from being inherited. Masked comments and literals cannot contain it. */
     private static final Pattern PRIVATE_MODIFIER = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})private(?!\\p{javaJavaIdentifierPart})");
 
     /** Separates the names in the clauses {@code extends} and {@code implements} of a type declaration. */
     private static final Pattern SUPERTYPE_SEPARATOR = Pattern.compile("[\\s,]+");
+
+    /** A dot of a qualified name with the whitespace Java allows around it, e.g. in {@code extends de.example . ParentTest}. */
+    private static final Pattern DOT_WITH_WHITESPACE = Pattern.compile("\\s*+\\.\\s*+");
 
     private static final String JUNIT_API_PACKAGE = "org.junit.jupiter.api";
 
@@ -492,19 +493,26 @@ final class AresTestSources {
      */
     private static Declaration declaration(String masked, Matcher matcher, int bodyStart) {
         int bodyEnd = AresPolicyAnnotations.matchingBrace(masked, bodyStart);
-        String header = masked.substring(matcher.end(), bodyStart);
-        Matcher superclass = SUPERCLASS.matcher(header);
-        String superclassName = superclass.find() ? superclass.group(1) : null;
+        Supertypes supertypes = supertypes(masked.substring(matcher.end(), bodyStart));
         return new Declaration(matcher.start(), bodyStart, bodyEnd < 0 ? masked.length() : bodyEnd, matcher.group(1).startsWith("@"), "interface".equals(matcher.group(1)),
-                matcher.group(2), superclassName, supertypeNames(header));
+                matcher.group(2), supertypes.superclass(), supertypes.all());
     }
 
     /**
-     * @param header the part of a type declaration between its name and its body
-     * @return the names of the types it extends or implements as written, without their type arguments; the record components, the annotations and the
-     *         permitted subclasses are none
+     * The types a declaration extends or implements, as written, without their annotations and type arguments.
+     *
+     * @param superclass the first type after {@code extends}, which is the superclass of a class; null if there is none
+     * @param all        every type it extends or implements; the record components and the permitted subclasses are none
      */
-    private static List<String> supertypeNames(String header) {
+    private record Supertypes(@Nullable String superclass, List<String> all) {
+    }
+
+    /**
+     * Reads both the superclass and the other supertypes from the header, so an annotation, e.g. in {@code extends @Marker ParentTest}, hides neither.
+     *
+     * @param header the part of a type declaration between its name and its body
+     */
+    private static Supertypes supertypes(String header) {
         StringBuilder outsideBrackets = new StringBuilder();
         int nesting = 0;
         // Without annotations, whose arguments may contain a < or >, e.g. Marker<@Flag(1 > 0) Date>, the parentheses enclose the record components only.
@@ -520,19 +528,21 @@ final class AresTestSources {
             }
         }
         List<String> names = new ArrayList<>();
-        boolean supertype = false;
-        for (String token : SUPERTYPE_SEPARATOR.split(outsideBrackets)) {
+        String superclass = null;
+        String keyword = null;
+        for (String token : SUPERTYPE_SEPARATOR.split(DOT_WITH_WHITESPACE.matcher(outsideBrackets).replaceAll("."))) {
             if ("permits".equals(token)) {
                 break;
             }
             if ("extends".equals(token) || "implements".equals(token)) {
-                supertype = true;
+                keyword = token;
             }
-            else if (supertype && !token.isEmpty() && !token.startsWith("@")) {
+            else if (keyword != null && !token.isEmpty()) {
+                superclass = superclass == null && "extends".equals(keyword) ? token : superclass;
                 names.add(token);
             }
         }
-        return names;
+        return new Supertypes(superclass, List.copyOf(names));
     }
 
     private static String qualify(@Nullable String packageName, String simpleName) {
