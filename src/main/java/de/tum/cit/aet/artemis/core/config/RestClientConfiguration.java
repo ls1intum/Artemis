@@ -89,4 +89,37 @@ public class RestClientConfiguration {
         requestFactory.setConnectTimeout(HERMES_HEALTH_CONNECTION_TIMEOUT);
         return restClientBuilder.requestFactory(requestFactory).build();
     }
+
+    /**
+     * The client for the version check against the GitHub releases API, without a timeout like the template it replaces.
+     *
+     * @param restClientBuilder the builder of Spring Boot, which is a new instance for every injection
+     * @return the client for the GitHub releases API
+     */
+    @Bean
+    public RestClient githubRestClient(RestClient.Builder restClientBuilder) {
+        return restClientBuilder.requestFactory(new SimpleClientHttpRequestFactory()).build();
+    }
+
+    /**
+     * The client for the vulnerability lookups at the OSV API, without a timeout like the template it replaces.
+     *
+     * @param restClientBuilder the builder of Spring Boot, which is a new instance for every injection
+     * @return the client for the OSV API
+     */
+    @Bean
+    public RestClient osvRestClient(RestClient.Builder restClientBuilder) {
+        return restClientBuilder.requestFactory(new SimpleClientHttpRequestFactory()).build();
+    }
+
+    /**
+     * The client for the startup telemetry report, without a timeout like the template it replaces.
+     *
+     * @param restClientBuilder the builder of Spring Boot, which is a new instance for every injection
+     * @return the client for the telemetry collector
+     */
+    @Bean
+    public RestClient telemetryRestClient(RestClient.Builder restClientBuilder) {
+        return restClientBuilder.requestFactory(new SimpleClientHttpRequestFactory()).build();
+    }
 }
