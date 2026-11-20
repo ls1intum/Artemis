@@ -28,7 +28,16 @@
             [jhiTranslate]="isEditMode() ? 'artemisApp.lecture.editFooter.contentHint' : 'artemisApp.lecture.editFooter.createHint'"
         ></span>
     </div>
-    <button tumAetUiButton type="button" id="cancel-save" data-testid="lecture-edit-leave" severity="secondary" size="small" [disabled]="isSaving()" (click)="leave.emit()">
+    <button
+        tumAetUiButton
+        type="button"
+        id="cancel-save"
+        data-testid="lecture-edit-leave"
+        severity="secondary"
+        size="small"
+        [disabled]="isSaving() && !allowLeaveWhileSaving()"
+        (click)="leave.emit()"
+    >
         <span [jhiTranslate]="leaveLabel()"></span>
     </button>
     @let blockedReason = saveBlockedReason();
@@ -50,7 +59,7 @@
         } @else {
             <!-- On a phone the status needs the room more than the button needs its icon. -->
             <fa-icon [icon]="faSave" class="hidden sm:inline" />
-            <span jhiTranslate="entity.action.save"></span>
+            <span [jhiTranslate]="saveLabel()"></span>
         }
     </button>
 </div>

@@ -167,7 +167,7 @@ artemis:
 
 <Callout variant={CalloutVariant.warning}>
     `trusted-proxies` is the narrower of **two** filters, not the only one. Artemis runs with
-    `server.forward-headers-strategy: native`, so Tomcat's `RemoteIpValve` already resolves `X-Forwarded-For` for any
+    `server.request.header.forwarded.strategy: web-server`, so Tomcat's `RemoteIpValve` already resolves `X-Forwarded-For` for any
     peer matching `server.tomcat.remoteip.internal-proxies`, which defaults to the private ranges
     (`10/8`, `172.16/12`, `192.168/16`, `127/8`, link-local). The addresses whose forwarding headers are believed are
     therefore the **union** of that regex and `trusted-proxies`.
