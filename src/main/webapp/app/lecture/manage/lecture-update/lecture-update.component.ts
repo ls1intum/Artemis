@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
-import { Observable, Subscription, finalize, of, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, Subscription, catchError, finalize, of, switchMap, tap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TumLiveFilePickerComponent } from '../lecture-units/tum-live-upload/tum-live-file-picker.component';
 import { RecordingRecoveryScope, TumLiveSaveRecoveryComponent } from '../lecture-units/tum-live-upload/tum-live-save-recovery.component';
@@ -193,7 +193,6 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     protected readonly recordingInvalid = signal(false);
     protected readonly recordingSaving = signal(false);
     protected readonly recordingRecovery = signal<RecordingRecoveryScope | undefined>(undefined);
-    protected readonly recordingStatusChecked = signal(false);
     protected readonly savedRecording = signal<RecordingTarget | undefined>(undefined);
     protected readonly recordingAvailable = injectRecordingAvailability(computed(() => (this.isEditMode() || this.isLectureSeriesCreationMode() ? undefined : this.courseId())));
     protected readonly recordingNeedsReselection = signal(false);
@@ -515,12 +514,12 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
      * This function is called by pressing save after creating or editing a lecture
      */
     save() {
-        if (this.isSaving()) {
+        if (this.isSaving() || this.recordingRecovery()) {
             return;
         }
         const recording = this.recording();
         if (!this.isEditMode() && (recording || this.savedRecording())) {
-            if (recording && !this.isLectureSeriesCreationMode() && !this.recordingInvalid() && (!this.recordingRecovery() || this.recordingStatusChecked())) {
+            if (recording && !this.isLectureSeriesCreationMode() && !this.recordingInvalid()) {
                 this.saveLectureWithRecording(recording);
             }
             return;
@@ -550,19 +549,28 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         this.shouldDisplayDismissWarning = true;
         this.isSaving.set(true);
         this.recordingSaving.set(true);
-        this.recordingRecovery.set(undefined);
-        this.recordingStatusChecked.set(false);
         const courseId = this.courseId()!;
-        const lectureId = checkpoint?.lectureId;
-        const createLecture = lectureId === undefined ? this.lectureService.create(this.lecture()) : of(this.lecture());
-        this.recordingRequest = createLecture
+        const lecture = this.lecture();
+        const lectureId = checkpoint?.lectureId ?? lecture.id;
+        let saveLecture = of(lecture);
+        if (lectureId === undefined) {
+            saveLecture = this.lectureService.create(lecture);
+        } else if (!checkpoint && this.isChangeMadeToTitleOrPeriodSection()) {
+            saveLecture = this.lectureService.update(lecture).pipe(
+                catchError((error: HttpErrorResponse) => {
+                    this.onSaveError(error);
+                    return EMPTY;
+                }),
+            );
+        }
+        this.recordingRequest = saveLecture
             .pipe(
                 switchMap((saved) => {
                     const id = lectureId ?? saved.id;
                     if (id === undefined) {
                         throw new Error('Lecture creation returned no ID');
                     }
-                    if (lectureId === undefined) {
+                    if (!checkpoint) {
                         this.keepCreatedLecture(id);
                         this.lastSavedAt.set(dayjs());
                         const target = { courseId, lectureId: id };
@@ -603,7 +611,6 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     }
 
     private markRecordingSaveUnknown(error?: unknown): void {
-        this.recordingStatusChecked.set(false);
         this.recordingRecovery.set({ courseId: this.courseId()!, lectureId: this.savedRecording()?.lectureId, detail: unknownCreateDetail(error) });
     }
 
@@ -703,7 +710,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         if (this.recordingInvalid()) {
             return 'artemisApp.tumLiveUpload.invalidMp4';
         }
-        if (this.recordingRecovery() && !this.recordingStatusChecked()) {
+        if (this.recordingRecovery()) {
             return 'artemisApp.tumLiveUpload.unknownSave';
         }
         if (!(this.titleSection()?.isValid() ?? false)) {

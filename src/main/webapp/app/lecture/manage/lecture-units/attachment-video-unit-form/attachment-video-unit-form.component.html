@@ -377,7 +377,7 @@
                 ></span>
             </button>
             @if (hasCancelButton()) {
-                <button tumAetUiButton type="button" severity="secondary" [disabled]="recordingSaveLocked()" (click)="cancelForm()">
+                <button tumAetUiButton type="button" severity="secondary" [disabled]="recordingSaving()" (click)="cancelForm()">
                     <fa-icon [icon]="faTimes" />
                     <span jhiTranslate="entity.action.cancel"></span>
                 </button>

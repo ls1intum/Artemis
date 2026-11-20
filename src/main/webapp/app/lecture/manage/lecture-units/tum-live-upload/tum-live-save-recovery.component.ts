@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, input, linkedSignal, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, input, linkedSignal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
@@ -29,23 +29,24 @@ export interface RecordingRecoveryScope {
             }
             @if (entries(); as saved) {
                 <p>{{ (saved.length ? 'artemisApp.tumLiveUpload.checkedSave' : 'artemisApp.tumLiveUpload.noSavedEntries') | artemisTranslate }}</p>
-                <ul class="divide-y divide-border">
-                    @for (entry of saved; track entry.id) {
-                        <li class="flex items-center justify-between gap-2 py-2">
-                            <span>{{ entry.name }}</span>
-                            <a tumAetUiButton variant="outlined" size="small" [routerLink]="entry.commands" [info]="entry.navigation">
-                                {{ 'artemisApp.tumLiveUpload.open' | artemisTranslate }}
-                            </a>
-                        </li>
-                    }
-                </ul>
-            } @else {
-                <div>
-                    <button tumAetUiButton variant="outlined" size="small" type="button" [disabled]="loading()" (click)="check()">
-                        {{ 'artemisApp.tumLiveUpload.checkSave' | artemisTranslate }}
-                    </button>
-                </div>
+                @if (saved.length) {
+                    <ul class="divide-y divide-border">
+                        @for (entry of saved; track entry.id) {
+                            <li class="flex items-center justify-between gap-2 py-2">
+                                <span>{{ entry.name }}</span>
+                                <a tumAetUiButton variant="outlined" size="small" [routerLink]="entry.commands" [info]="entry.navigation">
+                                    {{ 'artemisApp.tumLiveUpload.open' | artemisTranslate }}
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
             }
+            <div>
+                <button tumAetUiButton variant="outlined" size="small" type="button" [disabled]="loading()" (click)="check()">
+                    {{ 'artemisApp.tumLiveUpload.checkSave' | artemisTranslate }}
+                </button>
+            </div>
         </section>
     `,
 })
@@ -54,7 +55,6 @@ export class TumLiveSaveRecoveryComponent {
     private readonly destroyRef = inject(DestroyRef);
 
     readonly scope = input.required<RecordingRecoveryScope>();
-    readonly checked = output<void>();
 
     readonly entries = linkedSignal<RecordingRecoveryScope, { id: number; name?: string; commands: (string | number)[]; navigation: RecordingNavigation }[] | undefined>({
         source: this.scope,
@@ -105,7 +105,6 @@ export class TumLiveSaveRecoveryComponent {
                             };
                         }),
                 );
-                this.checked.emit();
             },
             error: () => {
                 if (this.scope() === scope) {

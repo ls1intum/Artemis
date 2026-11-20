@@ -158,6 +158,7 @@ export class AttachmentVideoUnitFormComponent {
 
     readonly recordingAvailable = input(false);
     readonly recordingSaveLocked = input(false);
+    readonly recordingSaving = input(false);
     readonly recordingTransferActive = input(false);
     readonly recordingPending = input(false);
     protected readonly recording = signal<File | undefined>(undefined);
@@ -559,6 +560,7 @@ export class AttachmentVideoUnitFormComponent {
     }
 
     private setFormValues(formData: AttachmentVideoUnitFormData) {
+        this.resetRecordingSelection();
         this.applyingFormData = true;
         if (formData?.formProperties) {
             this.form.patchValue(formData.formProperties);
@@ -580,6 +582,7 @@ export class AttachmentVideoUnitFormComponent {
 
     private clearForm() {
         this.form.reset();
+        this.resetRecordingSelection();
         this.file = undefined;
         this.fileName.set(undefined);
         this.currentFileLink.set(undefined);
@@ -588,6 +591,12 @@ export class AttachmentVideoUnitFormComponent {
         this.isFileTypeUnsupported.set(false);
         this.fileInputTouched.set(false);
         this.fileInput().nativeElement.value = '';
+    }
+
+    private resetRecordingSelection(): void {
+        this.recording.set(undefined);
+        this.recordingInvalid.set(false);
+        this.uploadSelected.set(false);
     }
 
     get isTransformable() {

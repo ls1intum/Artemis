@@ -157,6 +157,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit, RecordingLeaveC
 
     updateAttachmentVideoUnit(data: AttachmentVideoUnitFormData): void {
         const upload = this.upload();
+        const loadedVideoSource = this.attachmentVideoUnit()?.videoSource || undefined;
         let decision: Observable<boolean> | undefined;
         if (upload?.transferring()) {
             // Saving leaves this editor, which would abort a transfer. Ask before sending any changes.
@@ -164,22 +165,22 @@ export class EditAttachmentVideoUnitComponent implements OnInit, RecordingLeaveC
             if (typeof leave !== 'boolean') {
                 decision = leave;
             }
-        } else if (upload?.pendingRef() && (data.formProperties.videoSource || undefined) !== (this.attachmentVideoUnit()?.videoSource || undefined)) {
+        } else if (upload?.pendingRef() && (data.formProperties.videoSource || undefined) !== loadedVideoSource) {
             decision = confirmReplacingRecording(this.confirmation, this.translate);
         }
 
         if (decision) {
             decision.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((accepted) => {
                 if (accepted) {
-                    this.saveAttachmentVideoUnit(data);
+                    this.saveAttachmentVideoUnit(data, loadedVideoSource);
                 }
             });
         } else {
-            this.saveAttachmentVideoUnit(data);
+            this.saveAttachmentVideoUnit(data, loadedVideoSource);
         }
     }
 
-    private saveAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
+    private saveAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData, loadedVideoSource: string | undefined): void {
         if (this.isLoading()) {
             return;
         }
@@ -214,7 +215,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit, RecordingLeaveC
             competencyLinks,
             videoSource,
             // An empty loaded link is sent as '': without the field the server compares with the link the unit has now.
-            loadedVideoSource: currentUnit.videoSource ?? '',
+            loadedVideoSource: loadedVideoSource ?? '',
             attachmentUpdateIntent: hasUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE,
         });
 
@@ -237,7 +238,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit, RecordingLeaveC
                 next: (response: AttachmentVideoUnit) => {
                     const savedVideoSource = response.videoSource || undefined;
                     const sentVideoSource = videoSource || undefined;
-                    if (sentVideoSource !== (currentUnit.videoSource || undefined) && savedVideoSource !== sentVideoSource) {
+                    if (sentVideoSource !== loadedVideoSource && savedVideoSource !== sentVideoSource) {
                         // The link was changed meanwhile, so the server kept that one. The page stays, shows it as the saved link and keeps the entered one to
                         // be saved again; the rest of the change is saved.
                         this.attachmentVideoUnit.set(cloneWith(currentUnit, { name, description, releaseDate, competencyLinks, videoSource: savedVideoSource }));

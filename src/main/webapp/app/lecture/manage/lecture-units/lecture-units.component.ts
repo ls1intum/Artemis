@@ -157,7 +157,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
     protected readonly upload = viewChild(TumLiveUploadComponent);
     protected readonly recordingSaving = signal(false);
     protected readonly recordingRecovery = signal<RecordingRecoveryScope | undefined>(undefined);
-    protected readonly recordingStatusChecked = signal(false);
     protected readonly initialRecording = signal<File | undefined>(undefined);
     protected readonly recordingAvailable = injectRecordingAvailability(
         computed(() => (this.isAttachmentVideoUnitFormOpen() && !this.isEditingLectureUnit() ? this.lecture().course?.id : undefined)),
@@ -202,7 +201,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
     private markRecordingSaveUnknown(error?: unknown): void {
         const lecture = this.lecture();
-        this.recordingStatusChecked.set(false);
         this.recordingRecovery.set({ courseId: lecture.course!.id!, lectureId: lecture.id!, detail: unknownCreateDetail(error) });
     }
     /** How many items the creation form sends right now; the form can be submitted again while a request runs. */
@@ -357,6 +355,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
             this.saveAndCloseEditor(() => this.openCreationForm(type));
             return;
         }
+        if (type === LectureUnitType.ATTACHMENT_VIDEO && this.isAttachmentVideoUnitFormOpen()) {
+            return;
+        }
         this.openCreationForm(type);
     }
 
@@ -387,8 +388,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
             return;
         }
         this.initialRecording.set(undefined);
-        this.recordingRecovery.set(undefined);
-        this.recordingStatusChecked.set(false);
         this.isTextUnitFormOpen.set(false);
         this.isOnlineUnitFormOpen.set(false);
         this.isAttachmentVideoUnitFormOpen.set(false);
@@ -434,7 +433,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
         const recording = attachmentVideoUnitFormData.recording;
         // A unit may start without a file and a video, so its video can be uploaded to TUM.Live once it exists.
-        if (!name || this.recordingSaving() || (this.recordingRecovery() && !this.recordingStatusChecked())) {
+        if (!name || this.recordingSaving() || this.recordingRecovery()) {
             return;
         }
 
@@ -453,8 +452,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
             upload ? withFileName(file, fileName) : undefined,
         );
         if (recording) {
-            this.recordingRecovery.set(undefined);
-            this.recordingStatusChecked.set(false);
             this.recordingSaving.set(true);
         }
         const creation = this.trackCreation(request);

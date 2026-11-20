@@ -119,7 +119,11 @@
                     <section class="lecture-update-section flex flex-col gap-2 rounded-lg p-3.5 sm:p-6" aria-labelledby="lecture-recording-title">
                         <h3 id="lecture-recording-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.tumLiveUpload.optionalRecording"></h3>
                         <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.tumLiveUpload.recordingHint"></p>
-                        <jhi-tum-live-file-picker [(file)]="recording" [(invalid)]="recordingInvalid" [disabled]="recordingSaving() || !!savedRecording()?.unitId" />
+                        <jhi-tum-live-file-picker
+                            [(file)]="recording"
+                            [(invalid)]="recordingInvalid"
+                            [disabled]="recordingSaving() || !!savedRecording()?.unitId || !!recordingRecovery()"
+                        />
                         @if (savedRecording()?.unitId || (savedRecording() && !recording())) {
                             <div>
                                 <button tumAetUiButton type="button" [disabled]="recordingSaving()" (click)="continueRecording()">
@@ -130,7 +134,7 @@
                     </section>
                 }
                 @if (recordingRecovery(); as recovery) {
-                    <jhi-tum-live-save-recovery [scope]="recovery" (checked)="recordingStatusChecked.set(true)" />
+                    <jhi-tum-live-save-recovery [scope]="recovery" />
                 }
                 @if (isEditMode() && recordingNeedsReselection()) {
                     <tumaet-ui-message severity="info" [text]="'artemisApp.tumLiveUpload.reselect' | artemisTranslate" />

@@ -165,15 +165,18 @@
         />
     }
     @if (isAttachmentVideoUnitFormOpen()) {
-        @if (recordingRecovery(); as recovery) {
-            <jhi-tum-live-save-recovery [scope]="recovery" (checked)="recordingStatusChecked.set(true)" />
+        @if (!isEditingLectureUnit()) {
+            @if (recordingRecovery(); as recovery) {
+                <jhi-tum-live-save-recovery [scope]="recovery" />
+            }
         }
         <jhi-attachment-video-unit-form
             [isEditMode]="isEditingLectureUnit()"
             [autosave]="isEditingLectureUnit()"
             [hasCancelButton]="true"
             [recordingAvailable]="recordingAvailable()"
-            [recordingSaveLocked]="recordingSaving() || (!!recordingRecovery() && !recordingStatusChecked())"
+            [recordingSaveLocked]="recordingSaving() || (!isEditingLectureUnit() && !!recordingRecovery())"
+            [recordingSaving]="recordingSaving()"
             [recordingTransferActive]="!!upload()?.transferring()"
             [recordingPending]="!!upload()?.pendingRef()"
             (onCancel)="onCloseLectureUnitForms()"

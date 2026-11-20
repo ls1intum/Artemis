@@ -244,6 +244,33 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
+    it.each([false, true])('keeps the original link baseline if a recording attaches during confirmation (link edited: %s)', (editedLink) => {
+        const uploads = TestBed.inject(TumLiveUploadService);
+        vi.spyOn(uploads, 'start').mockReturnValue(of({ ref: 'own-reference', uploadUrl: '/upload' }));
+        vi.spyOn(uploads, 'transfer').mockReturnValue(new Subject<TumLiveTransferEvent>());
+        vi.spyOn(uploads, 'discard').mockReturnValue(of(undefined));
+        fixture.detectChanges();
+        const uploader: TumLiveUploadComponent = fixture.debugElement.query(By.directive(TumLiveUploadComponent)).componentInstance;
+        uploader.file.set(new File(['mp4'], 'recording.mp4', { type: 'video/mp4' }));
+        uploader.upload();
+
+        const loaded = attachmentVideoUnit.videoSource;
+        const sent = editedLink ? 'https://example.com/edited' : loaded;
+        const attached = 'https://tum.live/w/algo/55';
+        const response = { ...attachmentVideoUnit, videoSource: attached } as AttachmentVideoUnit;
+        updateAttachmentVideoUnitSpy.mockReturnValue(of(response));
+        fixture.componentInstance.updateAttachmentVideoUnit({ formProperties: { name: 'Renamed', videoSource: sent }, fileProperties: {} });
+        const dialogs = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        expect(updateAttachmentVideoUnitSpy).not.toHaveBeenCalled();
+
+        vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(of(response));
+        fixture.componentInstance.onTumLiveVideoAttached(1);
+        dialogs.request(undefined)!.accept();
+
+        expect(updateAttachmentVideoUnitSpy.mock.calls[0][2]).toMatchObject({ videoSource: sent, loadedVideoSource: loaded });
+        expect(navigateSpy).toHaveBeenCalledTimes(editedLink ? 0 : 1);
+    });
+
     it('should update attachment video unit with file change without notification', () => {
         fixture.detectChanges();
 

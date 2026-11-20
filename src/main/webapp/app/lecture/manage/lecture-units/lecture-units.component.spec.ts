@@ -83,6 +83,7 @@ class AttachmentVideoUnitFormStubComponent {
     autosave = input<boolean>(false);
     recordingAvailable = input(false);
     recordingSaveLocked = input(false);
+    recordingSaving = input(false);
     recordingTransferActive = input(false);
     recordingPending = input(false);
     savingConfirmed = input<ConfirmedContent>();
@@ -638,7 +639,17 @@ describe('LectureUpdateUnitsComponent', () => {
         expect(wizardUnitComponent.isSavingContent()).toBe(false);
     });
 
-    it('requires a status check before a retry after losing the inline unit create response', () => {
+    it('keeps the open attachment draft when the creation card is clicked again', () => {
+        wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ATTACHMENT_VIDEO);
+        const close = vi.spyOn(wizardUnitComponent, 'onCloseLectureUnitForms');
+
+        wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ATTACHMENT_VIDEO);
+
+        expect(close).not.toHaveBeenCalled();
+        expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBe(true);
+    });
+
+    it('keeps an unknown inline save locked when the creation form is closed and reopened', () => {
         wizardUnitComponentFixture.componentRef.setInput('lecture', { id: 1, course: { id: 7 } });
         wizardUnitComponentFixture.detectChanges();
         wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ATTACHMENT_VIDEO);
@@ -647,6 +658,8 @@ describe('LectureUpdateUnitsComponent', () => {
         const data = { formProperties: { name: 'Recording' }, fileProperties: {}, recording };
 
         wizardUnitComponent.createAttachmentVideoUnit(data);
+        wizardUnitComponent.onCloseLectureUnitForms();
+        wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ATTACHMENT_VIDEO);
         wizardUnitComponent.createAttachmentVideoUnit(data);
 
         expect(create).toHaveBeenCalledOnce();

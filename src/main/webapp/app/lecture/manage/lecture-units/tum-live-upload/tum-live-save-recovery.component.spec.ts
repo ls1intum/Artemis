@@ -31,23 +31,24 @@ describe('TumLiveSaveRecoveryComponent', () => {
         fixture.detectChanges();
     }
 
-    it('requires a successful read before offering recovery links after an unknown save', () => {
+    it('can check again when the first successful read runs before the save commits', () => {
         const created = new AttachmentVideoUnit();
         created.name = 'Recording';
         created.id = 90;
         vi.spyOn(lectures, 'findWithDetails')
             .mockReturnValueOnce(throwError(() => new Error('offline')))
+            .mockReturnValueOnce(of({ id: 55, lectureUnits: [] }))
             .mockReturnValue(of({ id: 55, lectureUnits: [created] }));
-        const checked = vi.fn();
-        fixture.componentInstance.checked.subscribe(checked);
         fixture.componentRef.setInput('scope', { courseId: 1, lectureId: 55 });
 
         check();
         expect(fixture.componentInstance.failed()).toBe(true);
-        expect(checked).not.toHaveBeenCalled();
 
         check();
-        expect(checked).toHaveBeenCalledOnce();
+        expect(fixture.componentInstance.entries()).toEqual([]);
+        expect(fixture.nativeElement.querySelector('a')).toBeNull();
+
+        check();
         const navigation = fixture.componentInstance.entries()?.[0].navigation;
         expect(navigation).toBeInstanceOf(RecordingNavigation);
         expect(navigation?.target).toEqual({ courseId: 1, lectureId: 55, unitId: 90 });

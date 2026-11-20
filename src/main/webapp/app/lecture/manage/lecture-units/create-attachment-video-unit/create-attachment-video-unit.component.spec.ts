@@ -20,6 +20,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -35,6 +36,7 @@ describe('CreateAttachmentVideoUnitComponent', () => {
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(AlertService),
                 MockProvider(LectureTranscriptionService),
+                MockProvider(LectureService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
@@ -211,19 +213,26 @@ describe('CreateAttachmentVideoUnitComponent', () => {
         expect(info.takeFile()).toBeUndefined();
     });
 
-    it('requires a status check after losing the standalone unit response', () => {
+    it('keeps the standalone create locked after an empty status check', () => {
         const fixture = createAttachmentVideoUnitComponentFixture;
         const component = fixture.componentInstance;
         const create = vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+        const read = vi.spyOn(TestBed.inject(LectureService), 'findWithDetails').mockReturnValue(of({ id: 1, lectureUnits: [] }));
         const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl');
         fixture.detectChanges();
         const recording = new File(['mp4'], 'recording.mp4', { type: 'video/mp4' });
         const data = { formProperties: { name: 'Recording' }, fileProperties: {}, recording };
 
         component.createAttachmentVideoUnit(data);
+        fixture.detectChanges();
+        fixture.nativeElement.querySelector('[data-testid="tum-live-save-recovery"] button').click();
+        fixture.detectChanges();
         component.createAttachmentVideoUnit(data);
 
+        expect(read).toHaveBeenCalledExactlyOnceWith(1);
         expect(create).toHaveBeenCalledOnce();
+        const form: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+        expect(form.recordingSaveLocked()).toBe(true);
         expect(component['recovery']()).toEqual({ courseId: 1, lectureId: 1 });
         expect(navigate).not.toHaveBeenCalled();
     });

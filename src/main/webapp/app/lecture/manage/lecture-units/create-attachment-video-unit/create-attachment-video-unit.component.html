@@ -1,12 +1,12 @@
 <jhi-lecture-unit-layout [isLoading]="isLoading()">
     @if (recovery(); as scope) {
-        <jhi-tum-live-save-recovery [scope]="scope" (checked)="statusChecked.set(true)" />
+        <jhi-tum-live-save-recovery [scope]="scope" />
     }
     <jhi-attachment-video-unit-form
         #attachmentVideoUnitForm
         [isEditMode]="false"
         [recordingAvailable]="recordingAvailable()"
-        [recordingSaveLocked]="savingRecording() || !!savedRecording() || (!!recovery() && !statusChecked())"
+        [recordingSaveLocked]="savingRecording() || !!savedRecording() || !!recovery()"
         (formSubmitted)="createAttachmentVideoUnit($event)"
     />
     @if (savedRecording()) {

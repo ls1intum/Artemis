@@ -62,7 +62,6 @@ export class CreateAttachmentVideoUnitComponent implements OnInit, RecordingLeav
     protected readonly savingRecording = signal(false);
     protected readonly savedRecording = signal<RecordingTarget | undefined>(undefined);
     protected readonly recovery = signal<RecordingRecoveryScope | undefined>(undefined);
-    protected readonly statusChecked = signal(false);
     private recordingRequest?: Subscription;
     private recording?: File;
     private createdUnit?: AttachmentVideoUnit;
@@ -99,7 +98,7 @@ export class CreateAttachmentVideoUnitComponent implements OnInit, RecordingLeav
         const lectureId = this.lectureId();
         // A unit may start without a file and a video, so its video can be uploaded to TUM.Live once it exists.
         const recording = attachmentVideoUnitFormData.recording;
-        if (!name || lectureId === undefined || this.isLoading() || this.savedRecording() || (this.recovery() && !this.statusChecked())) {
+        if (!name || lectureId === undefined || this.isLoading() || this.savedRecording() || this.recovery()) {
             return;
         }
 
@@ -120,8 +119,6 @@ export class CreateAttachmentVideoUnitComponent implements OnInit, RecordingLeav
         this.isLoading.set(true);
         if (recording) {
             this.savingRecording.set(true);
-            this.recovery.set(undefined);
-            this.statusChecked.set(false);
         }
 
         const upload = !!file && !!fileName;
@@ -206,7 +203,6 @@ export class CreateAttachmentVideoUnitComponent implements OnInit, RecordingLeav
     }
 
     private markSaveUnknown(error?: unknown): void {
-        this.statusChecked.set(false);
         this.recovery.set({ courseId: this.courseId()!, lectureId: this.lectureId(), detail: unknownCreateDetail(error) });
     }
 }
