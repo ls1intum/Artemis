@@ -4,11 +4,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
+import { Location } from '@angular/common';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { RecordingNavigation } from '../tum-live-upload/tum-live-creation';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { CreateAttachmentVideoUnitComponent } from 'app/lecture/manage/lecture-units/create-attachment-video-unit/create-attachment-video-unit.component';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { By } from '@angular/platform-browser';
@@ -152,5 +155,102 @@ describe('CreateAttachmentVideoUnitComponent', () => {
         expect(sentAttachment).toBeUndefined();
         expect(sentFile).toBeUndefined();
         expect(navigateSpy).toHaveBeenCalledTimes(1);
+    });
+    it('keeps a normal attachment POST alive and suppresses its late redirect after leaving', () => {
+        const fixture = createAttachmentVideoUnitComponentFixture;
+        const request = new Subject<AttachmentVideoUnit>();
+        vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'create').mockReturnValue(request);
+        const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+        fixture.detectChanges();
+        const pdf = new File(['%PDF'], 'slides.pdf', { type: 'application/pdf' });
+
+        fixture.componentInstance.createAttachmentVideoUnit({ formProperties: { name: 'Slides' }, fileProperties: { file: pdf, fileName: pdf.name } });
+        fixture.destroy();
+
+        expect(request.observed).toBe(true);
+        request.next(new AttachmentVideoUnit());
+        request.complete();
+        expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('retries a failed redirect with the saved unit and the original file without creating another unit', async () => {
+        const fixture = createAttachmentVideoUnitComponentFixture;
+        const component = fixture.componentInstance;
+        const router = TestBed.inject(Router);
+        const navigate = vi.spyOn(router, 'navigateByUrl').mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+        const create = vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'create').mockReturnValue(of({ id: 42 }));
+        fixture.detectChanges();
+        const recording = new File(['mp4'], 'recording.mp4', { type: 'video/mp4' });
+        const data = { formProperties: { name: 'Recording' }, fileProperties: {}, recording };
+
+        component.createAttachmentVideoUnit(data);
+        await fixture.whenStable();
+        component.createAttachmentVideoUnit(data);
+        component['continueRecording']();
+
+        expect(create).toHaveBeenCalledOnce();
+        expect(router.createUrlTree).toHaveBeenCalledWith(['/course-management', 1, 'lectures', 1, 'unit-management', 'attachment-video-units', 42, 'edit']);
+        expect(navigate).toHaveBeenCalledTimes(2);
+        const info = navigate.mock.calls[1][1]?.info as RecordingNavigation;
+        expect(info.target).toEqual({ courseId: 1, lectureId: 1, unitId: 42 });
+        expect(info.takeFile()).toBe(recording);
+        expect(TestBed.inject(Location).getState()).toMatchObject({ tumLiveRecordingCheckpoint: { courseId: 1, lectureId: 1, unitId: 42 } });
+    });
+
+    it('continues to the saved standalone unit after a reload without sending the MP4 again', () => {
+        TestBed.inject(Location).replaceState('/create', '', { tumLiveRecordingCheckpoint: { courseId: 1, lectureId: 1, unitId: 42 } });
+        const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl');
+        const create = vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'create');
+
+        createAttachmentVideoUnitComponentFixture.detectChanges();
+
+        expect(create).not.toHaveBeenCalled();
+        expect(navigate).toHaveBeenCalledOnce();
+        const info = navigate.mock.calls[0][1]?.info as RecordingNavigation;
+        expect(info.target.unitId).toBe(42);
+        expect(info.takeFile()).toBeUndefined();
+    });
+
+    it('requires a status check after losing the standalone unit response', () => {
+        const fixture = createAttachmentVideoUnitComponentFixture;
+        const component = fixture.componentInstance;
+        const create = vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+        const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl');
+        fixture.detectChanges();
+        const recording = new File(['mp4'], 'recording.mp4', { type: 'video/mp4' });
+        const data = { formProperties: { name: 'Recording' }, fileProperties: {}, recording };
+
+        component.createAttachmentVideoUnit(data);
+        component.createAttachmentVideoUnit(data);
+
+        expect(create).toHaveBeenCalledOnce();
+        expect(component['recovery']()).toEqual({ courseId: 1, lectureId: 1 });
+        expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('asks before leaving a recording create and ignores the late result if confirmed', () => {
+        const fixture = createAttachmentVideoUnitComponentFixture;
+        const component = fixture.componentInstance;
+        const request = new Subject<AttachmentVideoUnit>();
+        vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'create').mockReturnValue(request);
+        const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl');
+        const dialogs = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        fixture.detectChanges();
+        const recording = new File(['mp4'], 'recording.mp4', { type: 'video/mp4' });
+        component.createAttachmentVideoUnit({ formProperties: { name: 'Recording' }, fileProperties: {}, recording });
+
+        const decision = component.confirmRecordingLeave();
+        if (typeof decision === 'boolean') {
+            throw new Error('Expected a confirmation while saving');
+        }
+        const result = vi.fn();
+        decision.subscribe(result);
+        expect(dialogs.request(undefined)?.header).toBe('artemisApp.tumLiveUpload.savingTitle');
+        dialogs.request(undefined)!.accept();
+
+        expect(result).toHaveBeenCalledExactlyOnceWith(true);
+        expect(request.observed).toBe(false);
+        request.next({ id: 42 });
+        expect(navigate).not.toHaveBeenCalled();
     });
 });

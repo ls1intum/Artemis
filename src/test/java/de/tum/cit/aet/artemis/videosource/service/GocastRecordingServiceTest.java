@@ -146,6 +146,15 @@ class GocastRecordingServiceTest {
     }
 
     @ParameterizedTest
+    @EnumSource(value = GocastBindingStatus.class, names = { "PENDING", "REVOKED" })
+    void anInactiveCourseBindingDoesNotOfferUploads(GocastBindingStatus status) {
+        when(connectionRepository.getBindingSnapshot(7)).thenReturn(Optional.of(binding(status)));
+
+        assertThat(service.findUploadConnection(7)).isEmpty();
+        verifyNoInteractions(connectorService);
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = { "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "https://example.com/w/algo/42", "https://live.rbg.tum.de/w/algo/4294967296",
             "https://live.rbg.tum.de/w/algo/0" })
     void aUrlThatIsNotAGrantableWatchPageUsesThePublicLookup(String videoSource) {

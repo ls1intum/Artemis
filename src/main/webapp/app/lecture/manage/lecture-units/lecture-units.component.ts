@@ -1,11 +1,14 @@
 import { Component, DestroyRef, ElementRef, Injector, OnInit, afterNextRender, computed, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { RecordingRecoveryScope, TumLiveSaveRecoveryComponent } from './tum-live-upload/tum-live-save-recovery.component';
+import { confirmRecordingLeave, createOutcomeIsUnknown, injectRecordingAvailability, unknownCreateDetail } from './tum-live-upload/tum-live-creation';
 import { TumLiveUploadComponent } from 'app/lecture/manage/lecture-units/tum-live-upload/tum-live-upload.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faFileArrowUp, faScissors, faSpinner, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiFormFieldComponent, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiConfirmationService, TumAetUiFormFieldComponent, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -36,7 +39,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { concatMap, finalize, map } from 'rxjs/operators';
-import { Observable, defer, from } from 'rxjs';
+import { Observable, Subscription, defer, from, of, tap } from 'rxjs';
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
@@ -94,6 +97,7 @@ const AUTOSAVE_REQUEST_CONTEXT = () => new HttpContext().set(SKIP_HTTP_ERROR_ALE
         OnlineUnitFormComponent,
         AttachmentVideoUnitFormComponent,
         TumLiveUploadComponent,
+        TumLiveSaveRecoveryComponent,
         CreateExerciseUnitComponent,
         PdfDropZoneComponent,
         NgTemplateOutlet,
@@ -116,6 +120,8 @@ export class LectureUpdateUnitsComponent implements OnInit {
     private readonly router = inject(Router);
     private readonly destroyRef = inject(DestroyRef);
     private readonly injector = inject(Injector);
+    private readonly confirmation = inject(TumAetUiConfirmationService);
+    private readonly translate = inject(TranslateService);
 
     protected readonly faScissors = faScissors;
     protected readonly faSpinner = faSpinner;
@@ -148,6 +154,57 @@ export class LectureUpdateUnitsComponent implements OnInit {
     isOnlineUnitFormOpen = signal<boolean>(false);
     isAttachmentVideoUnitFormOpen = signal<boolean>(false);
     isUploadingPdfs = signal<boolean>(false);
+    protected readonly upload = viewChild(TumLiveUploadComponent);
+    protected readonly recordingSaving = signal(false);
+    protected readonly recordingRecovery = signal<RecordingRecoveryScope | undefined>(undefined);
+    protected readonly recordingStatusChecked = signal(false);
+    protected readonly initialRecording = signal<File | undefined>(undefined);
+    protected readonly recordingAvailable = injectRecordingAvailability(
+        computed(() => (this.isAttachmentVideoUnitFormOpen() && !this.isEditingLectureUnit() ? this.lecture().course?.id : undefined)),
+    );
+    private recordingRequest?: Subscription;
+
+    readonly recordingWorkActive = computed(() => this.recordingSaving() || !!this.upload()?.transferring());
+
+    confirmLeavingRecording(): Observable<boolean> {
+        const current = this.upload();
+        if (!this.recordingWorkActive()) {
+            return of(true);
+        }
+        const phase = this.recordingSaving() ? 'saving' : current?.transferProgress() === 100 ? 'sent' : 'sending';
+        return confirmRecordingLeave(this.confirmation, this.translate, phase).pipe(
+            tap((leave) => {
+                if (leave) {
+                    if (this.recordingSaving()) {
+                        this.markRecordingSaveUnknown();
+                        this.recordingRequest?.unsubscribe();
+                    }
+                    if (current?.transferring()) {
+                        current.cancel();
+                    }
+                }
+            }),
+        );
+    }
+
+    /** Opens the exact unit created by the new lecture form, or the picker after a recovery without a unit yet. */
+    openRecordingUnit(unitId?: number, file?: File, savedUnit?: AttachmentVideoUnit): void {
+        if (unitId === undefined) {
+            this.openCreationForm(LectureUnitType.ATTACHMENT_VIDEO);
+            return;
+        }
+        const unit = savedUnit?.id === unitId ? of(savedUnit) : this.attachmentVideoUnitService.findById(unitId, this.lecture().id!);
+        unit.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: (unit) => this.openEditor(unit, file),
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
+    }
+
+    private markRecordingSaveUnknown(error?: unknown): void {
+        const lecture = this.lecture();
+        this.recordingStatusChecked.set(false);
+        this.recordingRecovery.set({ courseId: lecture.course!.id!, lectureId: lecture.id!, detail: unknownCreateDetail(error) });
+    }
     /** How many items the creation form sends right now; the form can be submitted again while a request runs. */
     private readonly creatingUnits = signal(0);
     readonly isCreatingUnit = computed(() => this.creatingUnits() > 0);
@@ -233,7 +290,12 @@ export class LectureUpdateUnitsComponent implements OnInit {
      * a failed file upload while a change of the details is sent.
      */
     readonly isSavingContent = computed(
-        () => this.isSaveInFlight() || ((this.pendingConfirmed().length > 0 || !!this.pendingDetails()) && !this.saveFailure()) || this.isUploadingPdfs() || this.isCreatingUnit(),
+        () =>
+            this.isSaveInFlight() ||
+            ((this.pendingConfirmed().length > 0 || !!this.pendingDetails()) && !this.saveFailure()) ||
+            this.isUploadingPdfs() ||
+            this.isCreatingUnit() ||
+            this.recordingWorkActive(),
     );
     /** Set once the page is left; a save that fails afterwards is reported in an alert, because the item is gone. */
     private isDestroyed = false;
@@ -288,6 +350,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
      * @param type the kind of item to create
      */
     onCreateLectureUnit(type: LectureUnitType) {
+        if (this.recordingSaving()) {
+            return;
+        }
         if (this.editingUnit()) {
             this.saveAndCloseEditor(() => this.openCreationForm(type));
             return;
@@ -318,6 +383,12 @@ export class LectureUpdateUnitsComponent implements OnInit {
     });
 
     onCloseLectureUnitForms() {
+        if (this.recordingSaving()) {
+            return;
+        }
+        this.initialRecording.set(undefined);
+        this.recordingRecovery.set(undefined);
+        this.recordingStatusChecked.set(false);
         this.isTextUnitFormOpen.set(false);
         this.isOnlineUnitFormOpen.set(false);
         this.isAttachmentVideoUnitFormOpen.set(false);
@@ -361,8 +432,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
     createAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
         const { description, name, releaseDate, videoSource, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
+        const recording = attachmentVideoUnitFormData.recording;
         // A unit may start without a file and a video, so its video can be uploaded to TUM.Live once it exists.
-        if (!name) {
+        if (!name || this.recordingSaving() || (this.recordingRecovery() && !this.recordingStatusChecked())) {
             return;
         }
 
@@ -370,31 +442,60 @@ export class LectureUpdateUnitsComponent implements OnInit {
         attachmentVideoUnit.name = name;
         attachmentVideoUnit.releaseDate = releaseDate || undefined;
         attachmentVideoUnit.description = description || undefined;
-        attachmentVideoUnit.videoSource = videoSource || undefined;
+        attachmentVideoUnit.videoSource = recording ? undefined : videoSource || undefined;
         attachmentVideoUnit.competencyLinks = competencyLinks;
 
         const upload = !!file && !!fileName && file.size > 0;
-        this.trackCreation(
-            this.attachmentVideoUnitService.create(
-                this.lecture().id!,
-                attachmentVideoUnit,
-                upload ? this.attachmentForUpload(new Attachment(), name, releaseDate) : undefined,
-                upload ? withFileName(file, fileName) : undefined,
-            ),
-        ).subscribe({
-            next: () => this.onUnitCreated(),
-            error: (res: HttpErrorResponse | Error) => {
-                if (res instanceof Error) {
-                    this.alertService.error(res.message);
-                    return;
-                }
-                if (res.error?.params === 'file' && res?.error?.title) {
-                    this.alertService.error(res.error.title);
-                } else {
-                    onError(this.alertService, res);
-                }
-            },
-        });
+        const request = this.attachmentVideoUnitService.create(
+            this.lecture().id!,
+            attachmentVideoUnit,
+            upload ? this.attachmentForUpload(new Attachment(), name, releaseDate) : undefined,
+            upload ? withFileName(file, fileName) : undefined,
+        );
+        if (recording) {
+            this.recordingRecovery.set(undefined);
+            this.recordingStatusChecked.set(false);
+            this.recordingSaving.set(true);
+        }
+        const creation = this.trackCreation(request);
+        // A regular PDF or link save continues after the editor closes. A recording create owns a browser file and ends with its editor.
+        const subscription = (recording ? creation.pipe(takeUntilDestroyed(this.destroyRef)) : creation)
+            .pipe(
+                finalize(() => {
+                    if (recording) {
+                        this.recordingSaving.set(false);
+                    }
+                }),
+            )
+            .subscribe({
+                next: (created) => {
+                    if (!recording) {
+                        this.onUnitCreated();
+                        return;
+                    }
+                    this.recordingSaving.set(false);
+                    if (created.id === undefined) {
+                        this.markRecordingSaveUnknown();
+                        return;
+                    }
+                    this.openEditor(created, recording);
+                    this.unitManagementComponent()?.loadData();
+                },
+                error: (res: HttpErrorResponse | Error) => {
+                    if (recording && createOutcomeIsUnknown(res)) {
+                        this.markRecordingSaveUnknown(res);
+                    } else if (res instanceof Error) {
+                        this.alertService.error(res.message);
+                    } else if (res.error?.params === 'file' && res.error?.title) {
+                        this.alertService.error(res.error.title);
+                    } else {
+                        onError(this.alertService, res);
+                    }
+                },
+            });
+        if (recording) {
+            this.recordingRequest = subscription;
+        }
     }
 
     /** Counts the request of a new item as content that is still being saved until it completes or fails, also after its form closed. */
@@ -439,6 +540,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
      * @param lectureUnit the item to edit
      */
     startEditLectureUnit(lectureUnit: LectureUnit) {
+        if (this.recordingSaving()) {
+            return;
+        }
         const editingUnit = this.editingUnit();
         if (editingUnit?.id !== undefined && editingUnit.id === lectureUnit.id) {
             return;
@@ -450,7 +554,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.openEditor(lectureUnit);
     }
 
-    private openEditor(lectureUnit: LectureUnit) {
+    private openEditor(lectureUnit: LectureUnit, recording?: File) {
         // Work on a copy, so the list shows the item as it was saved until a save succeeds.
         const unit = deepClone(lectureUnit);
         unit.lecture = new Lecture();
@@ -460,6 +564,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.onCloseLectureUnitForms();
         this.resetAutosave();
         this.editingUnit.set(unit);
+        this.initialRecording.set(recording);
         this.isEditingLectureUnit.set(true);
         this.isTextUnitFormOpen.set(unit.type === LectureUnitType.TEXT);
         this.isExerciseUnitFormOpen.set(unit.type === LectureUnitType.EXERCISE);
@@ -496,11 +601,15 @@ export class LectureUpdateUnitsComponent implements OnInit {
             }
         }
 
-        // Scroll to the edit form after a brief delay to allow the form to render, and continue typing in its first field.
-        setTimeout(() => {
-            this.scrollToEditForm();
-            this.editFormContainer()?.nativeElement.querySelector<HTMLElement>('input:not([type="file"]), textarea')?.focus({ preventScroll: true });
-        }, 100);
+        // A recording handed to the uploader puts focus on its own progress. Otherwise continue typing in the editor's first field.
+        if (!recording) {
+            setTimeout(() => {
+                if (this.editingUnitId() === unit.id) {
+                    this.scrollToEditForm();
+                    this.editFormContainer()?.nativeElement.querySelector<HTMLElement>('input:not([type="file"]), textarea')?.focus({ preventScroll: true });
+                }
+            }, 100);
+        }
     }
 
     private toAttachmentVideoUnitFormData(unit: AttachmentVideoUnit): AttachmentVideoUnitFormData {
@@ -525,6 +634,16 @@ export class LectureUpdateUnitsComponent implements OnInit {
      * @param then runs after the form closed, such as opening the next item
      */
     saveAndCloseEditor(then?: () => void): void {
+        if (this.upload()?.transferring()) {
+            this.confirmLeavingRecording()
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe((leave) => {
+                    if (leave) {
+                        this.saveAndCloseEditor(then);
+                    }
+                });
+            return;
+        }
         const unitId = this.editingUnitId();
         const close = () => {
             this.closeEditor();
@@ -564,6 +683,16 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
     /** Closes the item without the change that cannot be saved or failed to save; everything saved before stays. */
     discardUnsavedChange(): void {
+        if (this.upload()?.transferring()) {
+            this.confirmLeavingRecording()
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe((leave) => {
+                    if (leave) {
+                        this.discardUnsavedChange();
+                    }
+                });
+            return;
+        }
         const unitId = this.editingUnitId();
         this.closeEditor();
         this.focusEditButtonOf(unitId);

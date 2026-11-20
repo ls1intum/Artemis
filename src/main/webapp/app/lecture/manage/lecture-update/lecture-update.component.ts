@@ -1,6 +1,21 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
-import { Observable, Subscription, of } from 'rxjs';
+import { Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { Observable, Subscription, finalize, of, switchMap, tap } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TumLiveFilePickerComponent } from '../lecture-units/tum-live-upload/tum-live-file-picker.component';
+import { RecordingRecoveryScope, TumLiveSaveRecoveryComponent } from '../lecture-units/tum-live-upload/tum-live-save-recovery.component';
+import {
+    RecordingNavigation,
+    RecordingRedirect,
+    RecordingTarget,
+    confirmRecordingLeave,
+    createOutcomeIsUnknown,
+    injectRecordingAvailability,
+    recordingNavigation,
+    unknownCreateDetail,
+} from '../lecture-units/tum-live-upload/tum-live-creation';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnitService } from '../lecture-units/services/attachment-video-unit.service';
 import { FormsModule } from '@angular/forms';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -97,6 +112,8 @@ interface PdfUploadConfirmationText {
         TumAetUiTooltipDirective,
         ArtemisDatePipe,
         LectureEditFooterComponent,
+        TumLiveFilePickerComponent,
+        TumLiveSaveRecoveryComponent,
     ],
     providers: [TumAetUiConfirmationService],
 })
@@ -111,12 +128,15 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly location = inject(Location);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly attachmentVideoUnits = inject(AttachmentVideoUnitService);
+    private readonly recordingRedirect = new RecordingRedirect();
 
     /**
      * Read while the router creates the page: without zone.js, ngOnInit runs at the first change detection, after the navigation has ended.
      * It keeps the objects the previous page handed over, whereas the browser history only holds structured clones of them.
      */
     private readonly navigationState = this.router.currentNavigation()?.extras.state;
+    private readonly navigationInfo = this.router.currentNavigation()?.extras.info;
 
     protected readonly documentationType: DocumentationType = 'Lecture';
     protected readonly faCircleInfo = faCircleInfo;
@@ -143,10 +163,12 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     readonly changedSections = signal<string[]>([]);
     /** Translation keys of the sections whose changes leaving the page would discard: the details, and content that could not be saved. */
     protected readonly unsavedSections = computed(() =>
-        this.unitSection()?.hasUnsavedContent() ? [...this.changedSections(), 'artemisApp.lecture.sections.units'] : this.changedSections(),
+        this.unitSection()?.hasUnsavedContent() || this.recording() ? [...this.changedSections(), 'artemisApp.lecture.sections.units'] : this.changedSections(),
     );
     /** What leaving the page would discard: the single-lecture form is not shown while a series is created. */
-    readonly hasUnsavedChanges = computed(() => !this.isLectureSeriesCreationMode() && (this.isChangeMadeToTitleOrPeriodSection() || !!this.unitSection()?.hasUnsavedContent()));
+    readonly hasUnsavedChanges = computed(
+        () => !this.isLectureSeriesCreationMode() && (this.isChangeMadeToTitleOrPeriodSection() || !!this.unitSection()?.hasUnsavedContent() || !!this.recording()),
+    );
     /** When the lecture details were last saved on this page, for the footer's confirmation. */
     readonly lastSavedAt = signal<dayjs.Dayjs | undefined>(undefined);
     /** Set when the lecture list opened this page after PDFs were dropped on it; cleared when the user dismisses it. */
@@ -167,8 +189,32 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     isLectureSeriesCreationMode = computed(() => !this.isEditMode() && this.selectedCreateLectureOption() === LectureCreationMode.SERIES);
     isTutorialLecture = signal(false);
 
+    protected readonly recording = signal<File | undefined>(undefined);
+    protected readonly recordingInvalid = signal(false);
+    protected readonly recordingSaving = signal(false);
+    protected readonly recordingRecovery = signal<RecordingRecoveryScope | undefined>(undefined);
+    protected readonly recordingStatusChecked = signal(false);
+    protected readonly savedRecording = signal<RecordingTarget | undefined>(undefined);
+    protected readonly recordingAvailable = injectRecordingAvailability(computed(() => (this.isEditMode() || this.isLectureSeriesCreationMode() ? undefined : this.courseId())));
+    protected readonly recordingNeedsReselection = signal(false);
+    private readonly openRecording = signal<RecordingNavigation | undefined>(undefined);
+    private recordingRequest?: Subscription;
+    private createdRecordingUnit?: AttachmentVideoUnit;
+
     constructor() {
         this.destroyRef.onDestroy(() => this.leaveAttempt?.unsubscribe());
+        effect(() => {
+            const unitSection = this.unitSection();
+            const info = this.openRecording();
+            if (unitSection && info) {
+                untracked(() => {
+                    this.openRecording.set(undefined);
+                    const file = info.takeFile();
+                    this.recordingNeedsReselection.set(!file);
+                    unitSection.openRecordingUnit(info.target.unitId, file, info.unit);
+                });
+            }
+        });
         effect(() => {
             this.updateFormStatusBar();
         });
@@ -216,6 +262,19 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         }
         // Read from the history entry rather than the navigation, so the confirmation stays after a reload until it is dismissed.
         this.pdfUploadConfirmation.set(this.historyState()[PDF_UPLOAD_CONFIRMATION_STATE_KEY] as PdfUploadConfirmation | undefined);
+        if (this.isEditMode()) {
+            const recording = recordingNavigation(this.navigationInfo, this.courseId(), this.lecture().id);
+            this.openedAfterCreation ||= recording?.fromCreate ?? false;
+            this.openRecording.set(recording);
+        } else {
+            const checkpoint = this.recordingRedirect.recover(this.courseId()!);
+            if (checkpoint) {
+                this.keepCreatedLecture(checkpoint.lectureId);
+                this.savedRecording.set(checkpoint);
+                this.recordingNeedsReselection.set(true);
+                this.continueRecording();
+            }
+        }
     }
 
     /**
@@ -310,7 +369,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         }
         // Text typed just before, which the markdown editor still holds back, counts as content that is being saved.
         this.unitSection()?.flushBufferedEdits();
-        if (this.hasUnsavedChanges() || !!this.unitSection()?.isSavingContent()) {
+        if (this.recordingSaving() || this.hasUnsavedChanges() || !!this.unitSection()?.isSavingContent()) {
             event.preventDefault();
         }
     }
@@ -320,8 +379,25 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
      * discard changes, or while content is still being saved, which would be lost if its save fails after leaving.
      * Emits once: true when the page may be left, false when the user keeps editing.
      */
-    confirmLeave(): Observable<boolean> {
-        this.unitSection()?.flushBufferedEdits();
+    confirmLeave(nextUrl?: string): Observable<boolean> {
+        if (this.recordingRedirect.allows(nextUrl)) {
+            return of(true);
+        }
+        if (this.recordingSaving()) {
+            return confirmRecordingLeave(this.confirmationService, this.translateService, 'saving').pipe(
+                tap((leave) => {
+                    if (leave && this.recordingSaving()) {
+                        this.markRecordingSaveUnknown();
+                        this.recordingRequest?.unsubscribe();
+                    }
+                }),
+            );
+        }
+        const units = this.unitSection();
+        units?.flushBufferedEdits();
+        if (units?.recordingWorkActive()) {
+            return units.confirmLeavingRecording().pipe(switchMap((leave) => (leave ? this.confirmLeave(nextUrl) : of(false))));
+        }
         if (this.hasUnsavedChanges()) {
             return this.confirmDiscardChanges();
         }
@@ -439,6 +515,16 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
      * This function is called by pressing save after creating or editing a lecture
      */
     save() {
+        if (this.isSaving()) {
+            return;
+        }
+        const recording = this.recording();
+        if (!this.isEditMode() && (recording || this.savedRecording())) {
+            if (recording && !this.isLectureSeriesCreationMode() && !this.recordingInvalid() && (!this.recordingRecovery() || this.recordingStatusChecked())) {
+                this.saveLectureWithRecording(recording);
+            }
+            return;
+        }
         // A new lecture leaves this page for its editor once it is saved, which must not ask. An existing lecture stays on this page, so leaving it while
         // its details are saved still asks about what the save does not cover, such as content that could not be saved.
         if (!this.isEditMode()) {
@@ -451,6 +537,81 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         } else {
             // Newly created lectures must have a channel name, which cannot be undefined
             this.subscribeToSaveResponse(this.lectureService.create(this.lecture()));
+        }
+    }
+
+    private saveLectureWithRecording(file: File): void {
+        const checkpoint = this.savedRecording();
+        if (checkpoint?.unitId !== undefined) {
+            this.continueRecording();
+            return;
+        }
+
+        this.shouldDisplayDismissWarning = true;
+        this.isSaving.set(true);
+        this.recordingSaving.set(true);
+        this.recordingRecovery.set(undefined);
+        this.recordingStatusChecked.set(false);
+        const courseId = this.courseId()!;
+        const lectureId = checkpoint?.lectureId;
+        const createLecture = lectureId === undefined ? this.lectureService.create(this.lecture()) : of(this.lecture());
+        this.recordingRequest = createLecture
+            .pipe(
+                switchMap((saved) => {
+                    const id = lectureId ?? saved.id;
+                    if (id === undefined) {
+                        throw new Error('Lecture creation returned no ID');
+                    }
+                    if (lectureId === undefined) {
+                        this.keepCreatedLecture(id);
+                        this.lastSavedAt.set(dayjs());
+                        const target = { courseId, lectureId: id };
+                        this.savedRecording.set(target);
+                        this.recordingRedirect.checkpoint(target);
+                        this.calendarService.reloadEvents();
+                    }
+                    const unit = new AttachmentVideoUnit();
+                    unit.name = this.translateService.instant('artemisApp.tumLiveUpload.recordingName');
+                    return this.attachmentVideoUnits.create(id, unit);
+                }),
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => {
+                    this.recordingSaving.set(false);
+                    this.isSaving.set(false);
+                }),
+            )
+            .subscribe({
+                next: (unit) => {
+                    if (unit.id === undefined) {
+                        this.markRecordingSaveUnknown();
+                        return;
+                    }
+                    const target = { courseId, lectureId: this.savedRecording()!.lectureId, unitId: unit.id };
+                    this.savedRecording.set(target);
+                    this.createdRecordingUnit = unit;
+                    this.recordingRedirect.checkpoint(target);
+                    this.continueRecording(file);
+                },
+                error: (error: unknown) => {
+                    if (createOutcomeIsUnknown(error)) {
+                        this.markRecordingSaveUnknown(error);
+                    } else if (error instanceof HttpErrorResponse) {
+                        this.onSaveError(error);
+                    }
+                },
+            });
+    }
+
+    private markRecordingSaveUnknown(error?: unknown): void {
+        this.recordingStatusChecked.set(false);
+        this.recordingRecovery.set({ courseId: this.courseId()!, lectureId: this.savedRecording()?.lectureId, detail: unknownCreateDetail(error) });
+    }
+
+    protected continueRecording(file = this.recording()): void {
+        const target = this.savedRecording();
+        if (target) {
+            const savedAt = this.lastSavedAt();
+            void this.recordingRedirect.open(target, false, file, this.createdRecordingUnit, savedAt ? { [DETAILS_SAVED_AT_STATE_KEY]: savedAt.toISOString() } : undefined);
         }
     }
 
@@ -539,6 +700,12 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     }
 
     private computeSaveBlockedReason(): string | undefined {
+        if (this.recordingInvalid()) {
+            return 'artemisApp.tumLiveUpload.invalidMp4';
+        }
+        if (this.recordingRecovery() && !this.recordingStatusChecked()) {
+            return 'artemisApp.tumLiveUpload.unknownSave';
+        }
         if (!(this.titleSection()?.isValid() ?? false)) {
             return 'artemisApp.lecture.editFooter.detailsIncomplete';
         }

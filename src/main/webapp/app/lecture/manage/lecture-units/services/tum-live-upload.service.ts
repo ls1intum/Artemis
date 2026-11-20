@@ -1,6 +1,8 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
+import { TumLiveUploadApi } from 'app/openapi/api/tum-live-upload-api';
 import { parseJson } from 'app/foundation/util/json.util';
 
 /** The TUM.Live upload state of an attachment video unit. */
@@ -45,12 +47,20 @@ export class TumLiveTransferError extends Error {
 export class TumLiveUploadService {
     private readonly httpClient = inject(HttpClient);
 
+    private readonly api = inject(TumLiveUploadApi);
+
+    isAvailable(courseId: number): Observable<boolean> {
+        return this.api.getTumLiveUploadAvailability(courseId, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) }).pipe(map((result) => result.available === true));
+    }
+
     getState(lectureUnitId: number): Observable<TumLiveUploadState> {
         return this.httpClient.get<TumLiveUploadState>(`api/lecture/lecture-units/${lectureUnitId}/tumlive-upload`);
     }
 
     start(lectureUnitId: number): Observable<TumLiveUploadStart> {
-        return this.httpClient.post<TumLiveUploadStart>(`api/lecture/lecture-units/${lectureUnitId}/tumlive-upload`, undefined);
+        return this.httpClient.post<TumLiveUploadStart>(`api/lecture/lecture-units/${lectureUnitId}/tumlive-upload`, undefined, {
+            context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true),
+        });
     }
 
     discard(lectureUnitId: number, ref: string): Observable<void> {
@@ -76,7 +86,7 @@ export class TumLiveUploadService {
             request.setRequestHeader('Content-Type', 'application/octet-stream');
             request.upload.onprogress = (event) => {
                 if (event.lengthComputable) {
-                    subscriber.next({ type: 'progress', percent: Math.round((event.loaded / event.total) * 100) });
+                    subscriber.next({ type: 'progress', percent: Math.floor((event.loaded / event.total) * 100) });
                 }
             };
             request.onload = () => {
@@ -103,6 +113,9 @@ function transferError(request: XMLHttpRequest): TumLiveTransferError {
     const fallback = `HTTP ${request.status}`;
     try {
         const problem = parseJson<{ detail?: unknown; message?: unknown } | null>(request.responseText);
+        if (typeof problem?.message === 'string' && problem.message.startsWith('error.')) {
+            return new TumLiveTransferError(fallback, request.status, problem.message);
+        }
         const message = problem?.detail ?? problem?.message;
         if (typeof message === 'string' && message) {
             return message.startsWith('error.') ? new TumLiveTransferError(fallback, request.status, message) : new TumLiveTransferError(message, request.status);

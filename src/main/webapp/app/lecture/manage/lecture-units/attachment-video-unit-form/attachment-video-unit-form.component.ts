@@ -26,11 +26,13 @@ import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/featur
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { FileService } from 'app/foundation/service/file.service';
+import { TumLiveFilePickerComponent } from '../tum-live-upload/tum-live-file-picker.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
     fileProperties: FileProperties;
+    recording?: File;
 }
 
 // matches structure of the reactive form
@@ -129,6 +131,7 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
         TumAetUiMessageComponent,
         TumAetUiTooltipDirective,
         CompetencySelectionComponent,
+        TumLiveFilePickerComponent,
         ArtemisTranslatePipe,
         FeatureToggleHideDirective,
     ],
@@ -152,6 +155,14 @@ export class AttachmentVideoUnitFormComponent {
 
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
+
+    readonly recordingAvailable = input(false);
+    readonly recordingSaveLocked = input(false);
+    readonly recordingTransferActive = input(false);
+    readonly recordingPending = input(false);
+    protected readonly recording = signal<File | undefined>(undefined);
+    protected readonly recordingInvalid = signal(false);
+    protected readonly uploadSelected = signal(false);
 
     formSubmitted = output<AttachmentVideoUnitFormData>();
 
@@ -276,7 +287,13 @@ export class AttachmentVideoUnitFormComponent {
 
     /** A unit may be saved without a file and a video, so its video can be uploaded to TUM.Live afterwards; a file of a type the server rejects is not taken. */
     isFormValid = computed(() => {
-        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && !this.isFileTypeUnsupported() && this.isReleaseDateTextValid();
+        return (
+            this.statusChanges() === 'VALID' &&
+            !this.isFileTooBig() &&
+            !this.isFileTypeUnsupported() &&
+            this.isReleaseDateTextValid() &&
+            (!this.uploadSelected() || !this.recordingAvailable() || (!!this.recording() && !this.recordingInvalid()))
+        );
     });
 
     /** Whether the details that an item edited in place saves automatically can be saved; a new video link or its helper do not count. */
@@ -310,10 +327,14 @@ export class AttachmentVideoUnitFormComponent {
 
     private currentFormData(): AttachmentVideoUnitFormData {
         const formProperties: FormProperties = deepClone(this.form.getRawValue());
+        const recording = !this.isEditMode() && this.recordingAvailable() && this.uploadSelected() ? this.recording() : undefined;
+        if (recording) {
+            formProperties.videoSource = undefined;
+        }
         const fileProperties: FileProperties = this.autosave()
             ? { file: this.file, fileName: this.fileName(), notifyStudents: this.notifyStudents() }
             : { file: this.file, fileName: this.fileName() };
-        return { formProperties, fileProperties };
+        return recording ? { formProperties, fileProperties, recording } : { formProperties, fileProperties };
     }
 
     onReleaseDateTextValidityChange(valid: boolean): void {
@@ -336,7 +357,7 @@ export class AttachmentVideoUnitFormComponent {
 
     /** Confirms the new video link once; saving it has the video transcribed and processed for Iris. It is sent with the details, so they have to be valid. */
     saveVideoSource(): void {
-        if (this.canSaveVideoSource()) {
+        if (this.canSaveVideoSource() && !this.recordingTransferActive()) {
             this.isVideoSourceSaveRequested.set(true);
             this.requestedVideoSource.set(this.videoSourceSignal());
             this.videoSourceSaveRequested.emit(this.currentFormData());
@@ -523,8 +544,18 @@ export class AttachmentVideoUnitFormComponent {
         return this.form.get('urlHelper');
     }
 
+    protected selectRecording(upload: boolean): void {
+        this.uploadSelected.set(upload);
+        if (upload) {
+            this.videoSourceControl?.reset(undefined);
+            this.urlHelperControl?.reset(undefined);
+        }
+    }
+
     submitForm() {
-        this.formSubmitted.emit(this.currentFormData());
+        if (!this.recordingSaveLocked() && (!this.uploadSelected() || this.isFormValid())) {
+            this.formSubmitted.emit(this.currentFormData());
+        }
     }
 
     private setFormValues(formData: AttachmentVideoUnitFormData) {

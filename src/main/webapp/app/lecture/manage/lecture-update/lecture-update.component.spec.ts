@@ -1,3 +1,5 @@
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnitService } from '../lecture-units/services/attachment-video-unit.service';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -141,6 +143,7 @@ describe('LectureUpdateComponent', () => {
             hasUnsavedContent: state.hasUnsavedContent ?? (() => false),
             isSavingContent: state.isSavingContent ?? (() => false),
             flushBufferedEdits: state.flushBufferedEdits ?? vi.fn(),
+            recordingWorkActive: () => false,
         } as any);
     }
 
@@ -177,6 +180,87 @@ describe('LectureUpdateComponent', () => {
         expect(createSpy).toHaveBeenCalledTimes(1);
         expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1' });
         expect(refreshSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('leaves the create route only after both saves and hands over the file outside browser history', async () => {
+        await configureActiveRouteMockAndCompileComponents();
+        const file = new File(['video'], 'lecture.mp4', { type: 'video/mp4' });
+        lectureUpdateComponent['recording'].set(file);
+        lectureUpdateComponent.courseId.set(1);
+        const lecture = new Subject<Lecture>();
+        const unit = new Subject<AttachmentVideoUnit>();
+        const createLecture = vi.spyOn(lectureService, 'create').mockReturnValue(lecture);
+        const createUnit = vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'create').mockReturnValue(unit);
+        const navigate = vi.spyOn(router, 'navigateByUrl');
+
+        lectureUpdateComponent.save();
+        lectureUpdateComponent.save();
+        expect(createLecture).toHaveBeenCalledOnce();
+        expect(createUnit).not.toHaveBeenCalled();
+        expect(navigate).not.toHaveBeenCalled();
+
+        lecture.next({ id: 55, course: { id: 1 } } as Lecture);
+        expect(createUnit).toHaveBeenCalledExactlyOnceWith(55, expect.objectContaining({ videoSource: undefined }));
+        expect(navigate).not.toHaveBeenCalled();
+        unit.next({ id: 90 });
+        unit.complete();
+        lecture.complete();
+
+        expect(navigate).toHaveBeenCalledWith(expect.anything(), {
+            replaceUrl: true,
+            info: expect.objectContaining({ target: { courseId: 1, lectureId: 55, unitId: 90 }, file, fromCreate: true }),
+            state: { lectureDetailsSavedAt: expect.any(String) },
+        });
+        expect(TestBed.inject(Location).getState()).toMatchObject({ tumLiveRecordingCheckpoint: { courseId: 1, lectureId: 55, unitId: 90 } });
+    });
+
+    it.each(['lecture', 'unit'])('ignores the late %s save after confirming leave', async (phase) => {
+        await configureActiveRouteMockAndCompileComponents();
+        lectureUpdateComponent['recording'].set(new File(['video'], 'lecture.mp4', { type: 'video/mp4' }));
+        lectureUpdateComponent.courseId.set(1);
+        const lecture = new Subject<Lecture>();
+        const unit = new Subject<AttachmentVideoUnit>();
+        vi.spyOn(lectureService, 'create').mockReturnValue(lecture);
+        const createUnit = vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'create').mockReturnValue(unit);
+        const navigate = vi.spyOn(router, 'navigateByUrl');
+
+        lectureUpdateComponent.save();
+        if (phase === 'unit') {
+            lecture.next({ id: 55, course: { id: 1 } } as Lecture);
+        }
+        const confirmation = lectureUpdateComponentFixture.debugElement.injector.get(TumAetUiConfirmationService);
+        lectureUpdateComponent.confirmLeave().subscribe();
+        confirmation.request(undefined)!.accept();
+
+        expect(lecture.observed).toBe(false);
+        expect(unit.observed).toBe(false);
+        lecture.next({ id: 55, course: { id: 1 } } as Lecture);
+        unit.next({ id: 90 });
+        expect(createUnit).toHaveBeenCalledTimes(phase === 'unit' ? 1 : 0);
+        expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('checks the acknowledged lecture when its unit response is lost before allowing another create', async () => {
+        await configureActiveRouteMockAndCompileComponents();
+        lectureUpdateComponent['recording'].set(new File(['video'], 'lecture.mp4', { type: 'video/mp4' }));
+        lectureUpdateComponent.courseId.set(1);
+        const lectureCreate = vi.spyOn(lectureService, 'create').mockReturnValue(of({ id: 55 } as Lecture));
+        const unitCreate = vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+        const navigate = vi.spyOn(router, 'navigateByUrl');
+
+        lectureUpdateComponent.save();
+        lectureUpdateComponent.save();
+        expect(lectureCreate).toHaveBeenCalledOnce();
+        expect(unitCreate).toHaveBeenCalledOnce();
+        expect(lectureUpdateComponent['recordingRecovery']()).toEqual({ courseId: 1, lectureId: 55 });
+        expect(navigate).not.toHaveBeenCalled();
+
+        lectureUpdateComponent['recordingStatusChecked'].set(true);
+        unitCreate.mockReturnValueOnce(of({ id: 42 }));
+        lectureUpdateComponent.save();
+        expect(lectureCreate).toHaveBeenCalledOnce();
+        expect(unitCreate).toHaveBeenCalledTimes(2);
+        expect(navigate).toHaveBeenCalledOnce();
     });
 
     it('should edit a lecture', async () => {
