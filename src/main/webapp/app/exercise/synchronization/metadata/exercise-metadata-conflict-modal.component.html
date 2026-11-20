@@ -39,7 +39,7 @@
                                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
                             >
-                                <div class="text-sm text-text-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                <div class="text-sm text-muted-color mb-2" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 @for (entry of getBuildConfigValues(conflict.currentValue); track entry.labelKey) {
                                     <div class="flex justify-between gap-2 text-sm mb-1">
                                         <span class="font-semibold" [jhiTranslate]="entry.labelKey"></span>
@@ -61,7 +61,7 @@
                                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction45.click() : undefined"
                             >
-                                <div class="text-sm text-text-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                <div class="text-sm text-muted-color mb-2" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 @for (entry of getBuildConfigValues(conflict.incomingValue); track entry.labelKey) {
                                     <div class="flex justify-between gap-2 text-sm mb-1">
                                         <span class="font-semibold" [jhiTranslate]="entry.labelKey"></span>
@@ -86,7 +86,7 @@
                                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction63.click() : undefined"
                             >
-                                <div class="text-sm text-text-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                <div class="text-sm text-muted-color mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 <div class="flex flex-wrap gap-2">
                                     @for (category of toCategoryEntries(conflict.currentValue); track category.category) {
                                         <jhi-custom-exercise-category-badge [category]="category" [fontSize]="'small'" />
@@ -107,7 +107,7 @@
                                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction77.click() : undefined"
                             >
-                                <div class="text-sm text-text-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                <div class="text-sm text-muted-color mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 <div class="flex flex-wrap gap-2">
                                     @for (category of toCategoryEntries(conflict.incomingValue); track category.category) {
                                         <jhi-custom-exercise-category-badge [category]="category" [fontSize]="'small'" />
@@ -131,7 +131,7 @@
                                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction94.click() : undefined"
                             >
-                                <div class="text-sm text-text-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                <div class="text-sm text-muted-color mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 <div class="flex flex-col gap-2">
                                     @for (entry of toCompetencyDisplay(conflict.currentValue); track entry.title) {
                                         <div class="flex justify-between gap-2 px-2 py-1 rounded-lg bg-surface-raised text-sm">
@@ -155,7 +155,7 @@
                                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction111.click() : undefined"
                             >
-                                <div class="text-sm text-text-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                <div class="text-sm text-muted-color mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 <div class="flex flex-col gap-2">
                                     @for (entry of toCompetencyDisplay(conflict.incomingValue); track entry.title) {
                                         <div class="flex justify-between gap-2 px-2 py-1 rounded-lg bg-surface-raised text-sm">
@@ -182,7 +182,7 @@
                                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction131.click() : undefined"
                             >
-                                <div class="text-sm text-text-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                <div class="text-sm text-muted-color mb-2" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 <ng-container [ngTemplateOutlet]="gradingCriteria" [ngTemplateOutletContext]="{ $implicit: conflict.currentValue }" />
                             </div>
                         </div>
@@ -199,7 +199,7 @@
                                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction165.click() : undefined"
                             >
-                                <div class="text-sm text-text-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                <div class="text-sm text-muted-color mb-2" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 <ng-container [ngTemplateOutlet]="gradingCriteria" [ngTemplateOutletContext]="{ $implicit: conflict.incomingValue }" />
                             </div>
                         </div>
@@ -219,7 +219,7 @@
                                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction202.click() : undefined"
                             >
-                                <div class="text-sm text-text-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                <div class="text-sm text-muted-color mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 <div class="break-words">{{ formatValue(conflict.currentValue) }}</div>
                             </div>
                         </div>
@@ -236,7 +236,7 @@
                                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction212.click() : undefined"
                             >
-                                <div class="text-sm text-text-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                <div class="text-sm text-muted-color mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 <div class="break-words">{{ formatValue(conflict.incomingValue) }}</div>
                             </div>
                         </div>

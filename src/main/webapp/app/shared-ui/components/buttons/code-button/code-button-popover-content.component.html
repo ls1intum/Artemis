@@ -56,7 +56,7 @@
             </div>
 
             <a
-                class="flex items-center justify-center rounded-sm text-(--tumaet-ui-text-color)!"
+                class="flex items-center justify-center rounded-sm text-color!"
                 [routerLink]="repositoryViewLink()"
                 data-testid="open-repository-button"
                 target="_blank"
@@ -91,7 +91,7 @@
         @if (showAlternatives()) {
             @if (currentIdeLinkData) {
                 <a
-                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 text-(--tumaet-ui-text-color)! no-underline! hover:bg-(--tumaet-ui-hover-background)! hover:text-(--tumaet-ui-accent-color)!"
+                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 text-color! no-underline! hover:bg-(--tumaet-ui-hover-background)! hover:text-(--tumaet-ui-accent-color)!"
                     target="hidden-iframe"
                     [href]="currentIdeLinkData.url"
                 >
@@ -107,7 +107,7 @@
             }
             @if (currentTheiaLinkData) {
                 <a
-                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 text-(--tumaet-ui-text-color)! no-underline! hover:bg-(--tumaet-ui-hover-background)! hover:text-(--tumaet-ui-accent-color)!"
+                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 text-color! no-underline! hover:bg-(--tumaet-ui-hover-background)! hover:text-(--tumaet-ui-accent-color)!"
                     (click)="startOnlineIDE(currentTheiaLinkData)"
                     #onlineIdeLink
                     role="button"
@@ -122,7 +122,7 @@
             }
             @if (currentSourceTreeUrl) {
                 <a
-                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 text-(--tumaet-ui-text-color)! no-underline! hover:bg-(--tumaet-ui-hover-background)! hover:text-(--tumaet-ui-accent-color)!"
+                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 text-color! no-underline! hover:bg-(--tumaet-ui-hover-background)! hover:text-(--tumaet-ui-accent-color)!"
                     target="hidden-iframe"
                     [href]="currentSourceTreeUrl"
                 >

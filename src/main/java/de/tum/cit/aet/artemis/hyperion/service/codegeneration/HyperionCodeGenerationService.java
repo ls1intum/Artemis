@@ -15,7 +15,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
@@ -604,22 +603,17 @@ public abstract class HyperionCodeGenerationService {
             return;
         }
         try {
-            Usage usage = chatResponse.getMetadata().getUsage();
             String model = chatResponse.getMetadata().getModel();
             if (model == null || model.isBlank()) {
                 return;
             }
-            int promptTokenCount = usage.getPromptTokens();
-            int completionTokenCount = usage.getCompletionTokens();
             Long exerciseId = exercise != null ? exercise.getId() : null;
             if (courseId == null) {
                 log.warn("Skipping token usage persistence for Hyperion code generation due to missing courseId (exerciseId={}, prompt={})", exerciseId, prompt);
                 return;
             }
-            int promptTokens = sanitizeTokenCount(promptTokenCount);
-            int completionTokens = sanitizeTokenCount(completionTokenCount);
-            LLMRequest llmRequest = llmTokenUsageService.buildLLMRequest(model, promptTokens, completionTokens, buildPipelineId(prompt));
-            if (llmRequest == null) {
+            LLMRequest llmRequest = llmTokenUsageService.buildLLMRequest(chatResponse, buildPipelineId(prompt));
+            if (llmRequest == null || llmRequest.numInputTokens() < 0 || llmRequest.numOutputTokens() < 0) {
                 return;
             }
             Long userId = user != null ? user.getId() : null;
@@ -629,16 +623,6 @@ public abstract class HyperionCodeGenerationService {
             Long exerciseId = exercise != null ? exercise.getId() : null;
             log.warn("Failed to store token usage for Hyperion code generation (exerciseId={}, prompt={})", exerciseId, prompt, e);
         }
-    }
-
-    /**
-     * Normalizes negative token counts before persistence.
-     *
-     * @param tokenCount token count reported by the model metadata
-     * @return non-negative token count
-     */
-    private static int sanitizeTokenCount(int tokenCount) {
-        return Math.max(tokenCount, 0);
     }
 
     /**

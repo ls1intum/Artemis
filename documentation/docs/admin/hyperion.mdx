@@ -88,40 +88,34 @@ spring:
 
 ### Token Usage Tracking
 
-Artemis tracks LLM token usage and costs per request. Configure model pricing under `artemis.llm.model-costs` to enable operator-configured EUR cost estimates in admin dashboards.
+Artemis displays LLM costs in **USD**. When a compatible API such as Logos returns a complete per-request amount in `usage.cost` with `cost_currency: "USD"`, Artemis uses that amount. This includes the gateway's cache pricing. A reported zero is a valid cost.
+
+When the response has no usable USD amount, Artemis can estimate it from **explicitly USD** model prices:
 
 ```yaml
 artemis:
     llm:
         model-costs:
-            gpt-5-mini:
-                input-cost-per-million-eur: 0.23
-                output-cost-per-million-eur: 1.84
+            '[my-model]':
+                input-cost-per-million-usd: 1.00
+                cached-input-cost-per-million-usd: 0.10
+                output-cost-per-million-usd: 4.00
 ```
 
-Add entries for each model you use. The key must match the model name returned by your provider (without date suffixes like `-2024-07-18`). For whole-exercise generation, missing rates make the estimate incomplete; they do not establish zero cost. Token counts remain available.
+The key must match the provider's model name, without date suffixes. Configured model entries override the shared default prices, including entries that still use the previous `*-eur` keys. Such EUR entries are preserved for compatibility; they do not establish a USD price. Provider-reported USD costs always take precedence. Shared default estimates for selected OpenAI models are only a fallback, and operators can override them. They are not applied to whole-exercise generation.
 
-Cache pricing and cache usage are separate inputs. When the provider explicitly reports **zero cache-read tokens**, configured input and output rates suffice for a complete estimate. When cache reads are positive, also configure `cached-input-cost-per-million-eur`. An omitted cache count means **unknown**, not zero: without a reported split, a complete estimate is possible only when the configured cached and uncached input rates are equal. Artemis does not silently substitute the uncached rate for a missing cache price.
+Whole-exercise generation requires explicitly configured USD rates when the provider does not report a USD amount. Configure the cache-read rate as well when cache reads occur. A missing cache count is unknown, not zero; a complete estimate without a reported split is possible only if cached and uncached rates are equal. Missing prices keep the run's cost incomplete. The shared fallback for other LLM services is a simple estimate and uses the regular input rate when no separate cache rate is configured.
 
-For whole-exercise generation, the shared usage ledger stores the configured uncached input and cache-read rates separately, together with the reported cache-read token count. `cost_per_million_input_tokens` is the uncached input rate, not a blended rate. To reproduce the estimate, subtract cache-read tokens from total input tokens, multiply the uncached and cached counts by their own stored rates, add the output cost, and divide by 1,000,000. A missing cache-read count contributes zero to this numeric calculation, but does not prove that cache usage was zero.
+Course statistics, the Iris dashboard and its email digest show the sum of known USD amounts. They identify requests with no USD price and mark partial totals.
+For historical requests, the migration estimates a USD amount from the stored rates using the former EUR convention and a single [ECB reference rate](https://data.ecb.europa.eu/data/datasets/EXR/EXR.D.USD.EUR.SP00.A) of 1.0968 USD per EUR from 18 November 2026.
+It keeps existing USD amounts and leaves usage without valid token counts and usable prices unpriced. A zero tariff among positive tariffs remains free for its token type, while all-zero tariffs may indicate missing configuration.
+The course data export contains token counts and the USD total. Update scripts that read the old tariff columns of `llm-token-usage.csv` to use `TotalCostUsd`.
 
-Other LLM services keep their existing accounting rules and default prices. Hyperion reads explicitly configured prices from the same `artemis.llm.model-costs` keys, without inheriting those defaults. Generation activity reports estimate completeness; the existing ledger does not persist that flag. A numeric ledger entry alone does not prove that all prices or the cache split were known.
+Atlas orchestration records each model response before combining tool rounds, including responses from delegated tasks. Each provider amount is counted once. Responses without usable usage remain unpriced, and costs already recorded survive a later failed round. Other accumulated tool-calling responses may have combined token counts without a matching combined API cost; Artemis uses the configured estimate in that case rather than treating the final call's cost as the cost of the whole exchange.
 
-When using catalogue prices as a reference for another provider, retain the catalogue retrieval date and currency conversion with the deployment configuration. A reference estimate is not an invoice or evidence of provider billing.
+Upgrade Pyris and Athena before or alongside Artemis so their new requests can carry USD amounts. Requests received from older versions after the Artemis upgrade stay unpriced because Artemis no longer stores the old rates for new calls. API responses with malformed cost metadata still deliver their content and token counts; unusable amounts are ignored. For whole-exercise generation, upgrade Artemis core and its workers together: worker protocol version 5 carries the USD amount, and version 4 workers are rejected rather than silently losing accounting data.
 
-For example, the [OpenRouter model catalogue](https://openrouter.ai/api/v1/models) retrieved on 11 September 2026 lists `qwen/qwen3.8-27b` at USD 0.42 per million input tokens, USD 0.085 per million cached input tokens, and USD 3.00 per million output tokens. At the [ECB reference rate](https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml) dated 10 September 2026 (EUR 1 = USD 1.1616), a deployment whose provider returns `Qwen/Qwen3.8-27B` can configure:
-
-```yaml
-artemis:
-    llm:
-        model-costs:
-            '[Qwen/Qwen3.8-27B]':
-                input-cost-per-million-eur: 0.361570248
-                cached-input-cost-per-million-eur: 0.073174931
-                output-cost-per-million-eur: 2.582644628
-```
-
-Refresh the rates deliberately rather than treating this dated example as a permanent default. Re-register evaluation campaigns when their effective pricing configuration changes.
+Drain active generation runs and stop all writers before upgrading. Retained generation transcripts and usage records remain readable: their JDK-serialized map values match fields by name, so previous EUR amounts are not reused as USD amounts. Their token counts remain available, while the renamed USD fields are unpriced until new USD evidence is recorded. The reverse direction also leaves the previous EUR fields unpriced rather than relabelling USD amounts. These two maps have used JDK map-value serialization since their introduction and have no map-notification consumers; their field rename does not require resetting the global distributed-data namespace. This does not make changed Kryo payloads generally compatible or permit mixed-version generation writers.
 
 ### Observability (Optional)
 
@@ -452,7 +446,7 @@ JVM: a single-host installation can run a separate isolated worker, while a
 multi-host installation uses the same selected provider. The worker requires
 neither database access nor Hazelcast cluster membership; it connects as a client.
 Deploy matching core and worker protocol versions together after draining runs.
-Protocol version 4 uses the shared AI Worker envelope and explicit workload schema/profile;
+Protocol version 5 uses the shared AI Worker envelope and explicit workload schema/profile;
 core and worker must be upgraded together after draining.
 
 ### Toolchains and deployment placement

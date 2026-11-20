@@ -32,6 +32,9 @@ logging:
             total-size-cap: "10GB"
 
 artemis:
+    course-home:
+        ai:
+            enabled: false
     version: #project.version#
     file-upload-path: uploads
     feedback:

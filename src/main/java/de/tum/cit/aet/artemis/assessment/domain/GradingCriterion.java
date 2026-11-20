@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.domain;
 
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -87,6 +88,32 @@ public class GradingCriterion extends DomainObject {
 
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
+    }
+
+    /**
+     * Copies this rubric and its instructions, preserving order and tracking new instruction instances for imported feedback.
+     *
+     * @param targetExercise    the exercise that owns the copy
+     * @param instructionCopies mapping from original instruction ids to copied instructions
+     * @return a detached copy without persisted ids or assessment feedback
+     */
+    public GradingCriterion copyForExercise(Exercise targetExercise, Map<Long, GradingInstruction> instructionCopies) {
+        var copy = new GradingCriterion();
+        copy.setExercise(targetExercise);
+        copy.setTitle(getTitle());
+        copy.setSortOrder(getSortOrder());
+        for (GradingInstruction instruction : getStructuredGradingInstructions()) {
+            var copiedInstruction = new GradingInstruction();
+            copiedInstruction.setCredits(instruction.getCredits());
+            copiedInstruction.setFeedback(instruction.getFeedback());
+            copiedInstruction.setGradingScale(instruction.getGradingScale());
+            copiedInstruction.setInstructionDescription(instruction.getInstructionDescription());
+            copiedInstruction.setUsageCount(instruction.getUsageCount());
+            copiedInstruction.setSortOrder(instruction.getSortOrder());
+            copy.addStructuredGradingInstruction(copiedInstruction);
+            instructionCopies.put(instruction.getId(), copiedInstruction);
+        }
+        return copy;
     }
 
     @Override

@@ -105,7 +105,7 @@ class IrisChatWebsocketDTOTest {
     }
 
     private IrisChatWebsocketDTO frameWithChange(int field) {
-        var tokens = List.of(new de.tum.cit.aet.artemis.admin.domain.LLMRequest("model", 10, 1f, 5, 1f, "pipeline"));
+        var tokens = List.of(new de.tum.cit.aet.artemis.admin.domain.LLMRequest("model", 10, 5, "pipeline"));
         var citations = List.of(new de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO(1L, "Lecture", "Unit", 2L, 3L));
         return new IrisChatWebsocketDTO(field == 0 ? IrisWebsocketMessageType.MESSAGE : IrisWebsocketMessageType.STATUS, field == 1 ? null : message(),
                 field == 2 ? null : new de.tum.cit.aet.artemis.iris.service.IrisRateLimitService.IrisRateLimitInformation(1, 10, 1),
