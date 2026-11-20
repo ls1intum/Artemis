@@ -1,5 +1,5 @@
 <tumaet-ui-dialog dismissableMask [visible]="true" (visibleChange)="onVisibleChange($event)" size="medium" [header]="TRANSLATION_BASE + '.title' | artemisTranslate">
-    <div class="mb-4! text-text-secondary">
+    <div class="mb-4! text-muted-color">
         <p [jhiTranslate]="TRANSLATION_BASE + '.description'"></p>
     </div>
     @if (!exerciseDueDate() || currentDateTime().isBefore(exerciseDueDate())) {
@@ -81,7 +81,7 @@
         <p class="mt-4! text-state-info">
             <strong [jhiTranslate]="TRANSLATION_BASE + '.studentNumber'" [translateValues]="{ count: feedbackDetail().count }"></strong>
         </p>
-        <div class="mt-4! text-text-secondary">
+        <div class="mt-4! text-muted-color">
             <p>
                 <strong [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateLabel'"></strong>
                 <span [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateDescription'"></span>
