@@ -93,11 +93,11 @@ final class AresTestCases {
     private static final Pattern FINAL_MODIFIER = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})final(?!\\p{javaJavaIdentifierPart})");
 
     /**
-     * The name of a parameter at the end of its declaration, with the brackets of an array declared after the name, e.g. {@code values[]}. It starts only at
-     * the start of a name and repeats possessively, so its search stays linear.
+     * The name of a parameter at the end of its declaration, with the brackets of an array declared after the name, e.g. {@code values[]} or
+     * {@code values[] []}. It starts only at the start of a name and repeats possessively, so its search stays linear.
      */
     private static final Pattern PARAMETER_NAME = Pattern
-            .compile("(?<!\\p{javaJavaIdentifierPart})\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+\\s*+((?:\\[\\s*+])*+)\\s*+$");
+            .compile("(?<!\\p{javaJavaIdentifierPart})\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+\\s*+((?:\\[\\s*+]\\s*+)*+)$");
 
     private AresTestCases() {
         throw new UnsupportedOperationException("Utility class");

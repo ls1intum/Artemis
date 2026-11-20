@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.programming.dto.SecurityTestStructureDTO;
 
@@ -152,6 +154,14 @@ class AresTestCasesTest {
                 """;
 
         assertThat(AresTestCases.testCases(source)).containsExactly("sorts");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "int[][] values", "int values[][]", "int values[] []", "int[] values []" })
+    void readsArrayDimensionsAfterTheNameAlsoWithWhitespaceBetweenThem(String parameter) {
+        String source = "class SortingTest {\n\n    @Test\n    void runs(" + parameter + ") {\n    }\n}\n";
+
+        assertThat(AresTestCases.testSignatures(AresPolicyAnnotations.mask(source)).values()).extracting(AresTestCases.TestSignature::text).containsExactly("runs(int[][])");
     }
 
     @Test
