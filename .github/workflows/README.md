@@ -399,23 +399,6 @@ The documentation maintenance link check resolves root-relative site URLs agains
 root before filtering to external HTTP(S) links. Maintenance issue bodies stay below GitHub's limit; oversized
 reports link to the full workflow logs, which retain every finding. Transient external outages remain report findings.
 
-## Docker images
-
-`ci-build.yml` builds the server and client once, in `build-war`, and every Docker image packages that `.war`
-through the Dockerfile's `external_builder` stage instead of building the application inside the image:
-
-- `docker-pr` pushes an amd64 image for internal pull requests (`pr-<number>`, `sha-<commit>`), which E2E and test
-  server deployments pull.
-- On every other event, `docker-release-platform` builds one image per architecture on a native GitHub-hosted runner
-  (`ubuntu-24.04`, `ubuntu-24.04-arm`) and pushes it by digest. `docker-release` then publishes both as one
-  multi-arch manifest with the tags `latest` (default branch), the branch or release tag name and `sha-<commit>`,
-  and `sign-mainline-image` signs it.
-
-The image therefore holds exactly the `.war` that E2E tests and that a release uploads, and a release or mainline
-image carries the SBOM because `build-war` builds those with `-Psbom`. The Dockerfile's own `builder` stage remains
-for local builds and for `testserver-deployment.yml`, which builds an image itself when CI has not published one for
-the commit.
-
 ## E2E image identity and readiness
 
 PR images are deliberately retained after a PR closes. Immediate deletion is housekeeping,
