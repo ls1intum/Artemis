@@ -146,7 +146,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly destroyRef = inject(DestroyRef);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
-    private readonly packageNameRegexForKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_KOTLIN);
+    private readonly packageNameRegexForKotlin = new RegExp(PACKAGE_NAME_PATTERN_FOR_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
     private readonly appNameRegexForSwift = RegExp(APP_NAME_PATTERN_FOR_SWIFT);
     private readonly packageNameRegexForGo = RegExp(PACKAGE_NAME_PATTERN_FOR_GO);
