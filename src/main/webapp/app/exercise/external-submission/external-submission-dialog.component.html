@@ -46,7 +46,7 @@
             </div>
         </div>
         <div class="mb-4! mb-2">
-            <button tumAetUiButton type="button" class="" [hidden]="feedbacks.length > 0" (click)="pushFeedback()">
+            <button tumAetUiButton type="button" [hidden]="feedbacks.length > 0" (click)="pushFeedback()">
                 <span jhiTranslate="artemisApp.result.addFeedback"></span>
             </button>
         </div>
@@ -105,11 +105,11 @@
         }
         @if (feedbacks.length > 0) {
             <div class="mb-4! mb-2">
-                <button tumAetUiButton type="button" class="" (click)="pushFeedback()">
+                <button tumAetUiButton type="button" (click)="pushFeedback()">
                     <span jhiTranslate="artemisApp.result.addFeedback"></span>
                 </button>
                 &nbsp;
-                <button tumAetUiButton severity="danger" type="button" class="" (click)="popFeedback()">
+                <button tumAetUiButton severity="danger" type="button" (click)="popFeedback()">
                     <span jhiTranslate="artemisApp.result.deleteFeedback"></span>
                 </button>
             </div>
@@ -120,10 +120,10 @@
         </div>
     </div>
     <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4">
-        <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="" (click)="clear()">
+        <button variant="outlined" severity="secondary" tumAetUiButton type="button" (click)="clear()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button tumAetUiButton type="submit" [disabled]="editForm.invalid || !selectedStudent() || isSaving()" class="">
+        <button tumAetUiButton type="submit" [disabled]="editForm.invalid || !selectedStudent() || isSaving()">
             <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
         </button>
     </div>

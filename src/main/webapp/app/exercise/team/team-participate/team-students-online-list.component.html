@@ -1,5 +1,5 @@
 <div>
-    <h5 class="">Team</h5>
+    <h5>Team</h5>
     <ul class="team-students-online-list">
         @for (student of studentList; track student) {
             <li class="student-item" [ngClass]="{ online: isOnline(student) }">

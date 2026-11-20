@@ -10,7 +10,12 @@
                         [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.breadcrumb' | artemisTranslate"
                     >
                         @for (crumb of breadcrumbs(); track $index; let last = $last) {
-                            <button type="button" class="bg-transparent border-0 p-0 underline text-inherit" (click)="select(crumb.selection)" data-testid="detail-breadcrumb">
+                            <button
+                                type="button"
+                                class="bg-transparent border-0 p-0 underline cursor-pointer text-inherit"
+                                (click)="select(crumb.selection)"
+                                data-testid="detail-breadcrumb"
+                            >
                                 @if (crumb.label) {
                                     {{ crumb.label }}
                                 } @else {
@@ -114,7 +119,7 @@
                                 <div class="mb-2 border border-(--border-color) border-solid rounded">
                                     <button
                                         type="button"
-                                        class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-left"
+                                        class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-left cursor-pointer"
                                         [attr.aria-expanded]="expanded"
                                         (click)="toggleRow(rowKey)"
                                         [attr.data-testid]="'detail-record-' + record.entityId"
@@ -196,7 +201,7 @@
                                 <div class="mb-2 border border-(--border-color) border-solid rounded">
                                     <button
                                         type="button"
-                                        class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-left"
+                                        class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-left cursor-pointer"
                                         [attr.aria-expanded]="expanded"
                                         (click)="toggleRow(rowKey)"
                                         [attr.data-testid]="'detail-content-row'"

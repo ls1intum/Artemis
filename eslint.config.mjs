@@ -62,7 +62,7 @@ const tumAetUiConsumerImportPatterns = [
 ];
 // The client modules, all of which use TUM AET UI and Tailwind. Bootstrap, ng-bootstrap and PrimeNG are removed from the
 // client; every lock below is generated from this list and keeps them out:
-// the Bootstrap class and spacing rules for external and inline templates, the Bootstrap classes built in code, and the
+// the Bootstrap class rules for external and inline templates, the Bootstrap classes built in code, and the
 // ban on importing PrimeNG or ng-bootstrap. config/stylelint/stylelint.config.json names the same modules for SCSS, and
 // the `migration-source-coverage` test keeps both lists and the `@source` entries of tailwind.css consistent.
 const migratedModules = [

@@ -192,7 +192,7 @@
         <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="cancel" (click)="clear()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button tumAetUiButton type="submit" [disabled]="editForm.invalid || isSaving() || teamSizeViolationUnconfirmed" class="">
+        <button tumAetUiButton type="submit" [disabled]="editForm.invalid || isSaving() || teamSizeViolationUnconfirmed">
             <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
         </button>
     </div>

@@ -54,7 +54,7 @@
             </ng-container>
         </div>
         <div class="flex flex-wrap! items-center justify-end gap-2! border-t border-border p-4!">
-            <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="" (click)="clear()">
+            <button variant="outlined" severity="secondary" tumAetUiButton type="button" (click)="clear()">
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
             <button
@@ -62,7 +62,6 @@
                 tumAetUiButton
                 type="submit"
                 [disabled]="(!participantIdentifierList() && !exportAllParticipants()) || exportInProgress() || hasInvalidFilterDate()"
-                class=""
             >
                 @if (exportInProgress()) {
                     <span class="me-1!"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>

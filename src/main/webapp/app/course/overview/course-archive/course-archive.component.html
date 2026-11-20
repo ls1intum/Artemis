@@ -9,7 +9,12 @@
                 <div class="ms-1 flex items-center justify-between gap-4">
                     @if (courses().length) {
                         <div class="inline-flex text-primary">
-                            <button id="sort-test" type="button" (click)="onSort()" class="inline-flex items-center border-0 bg-transparent p-0 text-primary no-underline">
+                            <button
+                                id="sort-test"
+                                type="button"
+                                (click)="onSort()"
+                                class="inline-flex cursor-pointer items-center border-0 bg-transparent p-0 text-primary no-underline"
+                            >
                                 <fa-icon id="icon-test-down" [icon]="isSortAscending() ? faArrowDown19 : faArrowUp19" />
                                 <span class="ms-1" jhiTranslate="artemisApp.course.archive.sort"></span>
                             </button>

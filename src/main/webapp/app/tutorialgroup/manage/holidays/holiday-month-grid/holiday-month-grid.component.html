@@ -57,7 +57,7 @@
                     -->
                     <button
                         type="button"
-                        class="flex h-full w-full appearance-none flex-col items-stretch justify-start border-0 bg-transparent px-2 py-1.5 text-left text-inherit focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-(--tumaet-ui-primary-color)"
+                        class="flex h-full w-full cursor-pointer appearance-none flex-col items-stretch justify-start border-0 bg-transparent px-2 py-1.5 text-left text-inherit focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-(--tumaet-ui-primary-color)"
                         [class.cursor-default]="!day.inDisplayedMonth"
                         [class.opacity-45]="!day.inDisplayedMonth"
                         [disabled]="!day.inDisplayedMonth"
@@ -133,7 +133,7 @@
                         <!-- The bar gives the pointer up mid-drag, so a range being dragged over a holiday keeps following it. -->
                         <button
                             type="button"
-                            class="holiday-bar flex h-full w-full flex-col justify-center overflow-hidden rounded px-2 text-left text-(--tumaet-ui-state-danger-foreground)"
+                            class="holiday-bar flex h-full w-full cursor-pointer flex-col justify-center overflow-hidden rounded px-2 text-left text-(--tumaet-ui-state-danger-foreground)"
                             [class.pointer-events-auto]="!isDragging()"
                             data-testid="holiday-calendar-event"
                             [class.holiday-bar-continues-before]="!bar.startsRun"

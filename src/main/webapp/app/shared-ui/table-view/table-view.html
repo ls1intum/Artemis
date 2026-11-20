@@ -49,7 +49,11 @@
                     >
                         <div class="flex items-center gap-1">
                             @if (col.sort && col.field) {
-                                <button type="button" class="inline-flex items-center gap-1 border-0 bg-transparent p-0 text-inherit" (click)="sortColumn(col.field)">
+                                <button
+                                    type="button"
+                                    class="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-inherit"
+                                    (click)="sortColumn(col.field)"
+                                >
                                     <span>{{ col.headerKey ? (col.headerKey | artemisTranslate) : col.header }}</span>
                                     <fa-icon [icon]="sortField() === col.field ? (sortOrder() === 1 ? faSortUp : faSortDown) : faSort" />
                                 </button>

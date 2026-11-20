@@ -1,6 +1,6 @@
 <form name="exerciseFilterForm" (ngSubmit)="applyFilter()">
     <div class="flex items-center justify-between gap-3 border-b border-border p-4">
-        <h4 class="">
+        <h4>
             <fa-icon [icon]="faFilter" />
             <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.modalTitle"></span>
         </h4>
@@ -146,16 +146,15 @@
         }
     </div>
     <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4">
-        <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="" (click)="clearFilter()">
+        <button variant="outlined" severity="secondary" tumAetUiButton type="button" (click)="clearFilter()">
             <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.clearFilter"></span>
         </button>
 
         <div class="ms-auto">
-            <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="" (click)="closeModal()" jhiTranslate="entity.action.cancel"></button>
+            <button variant="outlined" severity="secondary" tumAetUiButton type="button" (click)="closeModal()" jhiTranslate="entity.action.cancel"></button>
             <button
                 tumAetUiButton
                 type="button"
-                class=""
                 (click)="applyFilter()"
                 jhiTranslate="artemisApp.courseOverview.exerciseFilter.applyFilter"
                 [disabled]="noFiltersAvailable()"

@@ -97,7 +97,7 @@
                         }
                         <dl class="mb-0 grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-3 gap-y-2 text-sm">
                             @for (checkout of panel.checkouts; track $index) {
-                                <dt class="">{{ checkout.auxiliaryName ?? (checkout.label | artemisTranslate) }}</dt>
+                                <dt>{{ checkout.auxiliaryName ?? (checkout.label | artemisTranslate) }}</dt>
                                 <dd class="mb-0 break-all">
                                     <code>{{ checkout.path }}</code>
                                 </dd>

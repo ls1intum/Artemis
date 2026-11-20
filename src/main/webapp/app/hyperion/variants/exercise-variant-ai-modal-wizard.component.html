@@ -430,7 +430,7 @@
                     <fa-icon [icon]="faRobot" class="generating-icon" />
                     <div class="generating-ring"></div>
                 </div>
-                <h6 class="">{{ 'artemisApp.exerciseVariantGeneration.wizard.generatingTitle' | artemisTranslate }}</h6>
+                <h6>{{ 'artemisApp.exerciseVariantGeneration.wizard.generatingTitle' | artemisTranslate }}</h6>
                 <ol class="generation-steps">
                     @for (phase of generationPhases; track phase; let i = $index) {
                         <li
@@ -463,7 +463,7 @@
                                     @if (hasAnyDetail(outputs)) {
                                         <button
                                             type="button"
-                                            class="block w-full border-0 bg-transparent p-0 text-left no-underline"
+                                            class="block w-full cursor-pointer border-0 bg-transparent p-0 text-left no-underline"
                                             [attr.aria-expanded]="!!expandedPhases()[phase]"
                                             (click)="toggleStepOutput(phase)"
                                             data-testid="variant-wizard-step-output-toggle"
@@ -588,7 +588,7 @@
                             @if (warnings().length > 0) {
                                 <button
                                     type="button"
-                                    class="block w-full border-0 bg-transparent p-0 text-left no-underline"
+                                    class="block w-full cursor-pointer border-0 bg-transparent p-0 text-left no-underline"
                                     [attr.aria-expanded]="warningsExpanded()"
                                     (click)="toggleWarnings()"
                                     data-testid="variant-wizard-warnings-toggle"
@@ -666,7 +666,7 @@
                             @if (hasAnyDetail(entry.outputs)) {
                                 <button
                                     type="button"
-                                    class="block w-full border-0 bg-transparent p-0 text-left no-underline"
+                                    class="block w-full cursor-pointer border-0 bg-transparent p-0 text-left no-underline"
                                     [attr.aria-expanded]="!!expandedPhases()[entry.phase]"
                                     (click)="toggleStepOutput(entry.phase)"
                                     data-testid="variant-wizard-summary-toggle"

@@ -303,7 +303,7 @@
     </ng-template>
 </tumaet-ui-dialog>
 <div>
-    <button type="button" class="border-0 bg-transparent px-2 py-1" (click)="open()">
+    <button type="button" class="cursor-pointer border-0 bg-transparent px-2 py-1" (click)="open()">
         <fa-icon [ngClass]="{ questionCorrect: this.score() === this.question().points, questionWrong: this.score() !== this.question().points }" [icon]="farQuestionCircle" />
     </button>
 </div>

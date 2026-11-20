@@ -38,12 +38,12 @@
         >
             <div class="flex flex-1 items-center">
                 <div role="columnheader" class="min-w-0 flex-1 truncate" [attr.aria-sort]="ariaSort('name')">
-                    <button type="button" class="border-0 bg-transparent p-0 font-semibold text-inherit" (click)="toggleSort('name')">
+                    <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-inherit" (click)="toggleSort('name')">
                         <span jhiTranslate="logs.table.name"></span> <fa-icon [icon]="sortIcon('name')" />
                     </button>
                 </div>
                 <div role="columnheader" class="shrink-0 text-right whitespace-nowrap" [attr.aria-sort]="ariaSort('level')">
-                    <button type="button" class="border-0 bg-transparent p-0 font-semibold text-inherit" (click)="toggleSort('level')">
+                    <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-inherit" (click)="toggleSort('level')">
                         <span jhiTranslate="logs.table.level"></span> <fa-icon [icon]="sortIcon('level')" />
                     </button>
                 </div>

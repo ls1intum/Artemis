@@ -302,7 +302,7 @@
                                 </tumaet-ui-tag>
                                 <div class="mt-1 flex flex-wrap gap-1">
                                     @for (vuln of component.componentVulnerabilities!.slice(0, 3); track vuln.id) {
-                                        <a [href]="'https://osv.dev/vulnerability/' + vuln.id" target="_blank" rel="noopener noreferrer" class="">
+                                        <a [href]="'https://osv.dev/vulnerability/' + vuln.id" target="_blank" rel="noopener noreferrer">
                                             <tumaet-ui-tag severity="secondary" [value]="vuln.id" />
                                         </a>
                                     }

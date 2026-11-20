@@ -73,7 +73,7 @@
 
     <button
         type="button"
-        class="flex w-full items-center gap-2 border-0 bg-transparent px-3 py-2 enabled:hover:bg-(--tumaet-ui-hover-background) enabled:hover:text-(--tumaet-ui-accent-color) disabled:text-state-success"
+        class="flex w-full cursor-pointer items-center gap-2 border-0 bg-transparent px-3 py-2 enabled:hover:bg-(--tumaet-ui-hover-background) enabled:hover:text-(--tumaet-ui-accent-color) disabled:text-state-success"
         [cdkCopyToClipboard]="repositoryCopyUrl()"
         (cdkCopyToClipboardCopied)="onRepositoryUrlCopied($event)"
         [disabled]="copiedRepositoryUrl()"

@@ -17,7 +17,7 @@
         <fa-icon aria-hidden="true" [icon]="faFile" [fixedWidth]="true" />
         @if (!isBeingRenamed()) {
             <span class="file-label-group">
-                <span class="ms-1 file-tree-item__fileName" [ngClass]="item().checked ? 'text-white' : 'primary'">{{ item().text }}</span>
+                <span class="ms-1 file-tree-item__fileName" [ngClass]="item().checked ? 'text-white!' : 'primary'">{{ item().text }}</span>
                 @for (badge of badges(); track badges().indexOf(badge)) {
                     <jhi-file-browser-badge [badge]="badge" [onColoredBackground]="item().checked || hasError() || hasChanges()" />
                 }

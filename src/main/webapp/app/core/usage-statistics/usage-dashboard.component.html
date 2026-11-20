@@ -214,7 +214,7 @@
     @let text = 'artemisApp.usageDashboard.hints.' + key | artemisTranslate;
     <button
         type="button"
-        class="inline-flex items-center border-0! bg-transparent! p-0! text-muted-color"
+        class="inline-flex cursor-help items-center border-0! bg-transparent! p-0! text-muted-color"
         [attr.aria-label]="'artemisApp.usageDashboard.hintsLabel' | artemisTranslate: { name: name }"
         [tumAetUiTooltip]="text"
         [attr.data-testid]="'usage-hint-' + key"

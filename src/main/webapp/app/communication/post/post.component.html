@@ -187,7 +187,7 @@
     >
         <button
             type="button"
-            class="flex items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
             (click)="addReaction($event)"
             data-testid="posting-menu-react"
         >
@@ -197,7 +197,7 @@
         @if (canPin()) {
             <button
                 type="button"
-                class="flex items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
                 (click)="togglePin()"
                 data-testid="posting-menu-pin"
             >
@@ -210,7 +210,7 @@
         @if (mayEdit()) {
             <button
                 type="button"
-                class="flex items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
                 (click)="editPosting()"
                 data-testid="posting-menu-edit"
             >
@@ -221,7 +221,7 @@
         @if (mayDelete()) {
             <button
                 type="button"
-                class="flex items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
                 (click)="deletePost()"
                 data-testid="posting-menu-delete"
             >
@@ -231,7 +231,7 @@
         }
         <button
             type="button"
-            class="flex items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
             (click)="isCommunicationPage() ? openThread.emit() : reactionsBarComponent()?.openAnswerView()"
             data-testid="posting-menu-reply"
         >
@@ -240,7 +240,7 @@
         </button>
         <button
             type="button"
-            class="flex items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
             (click)="toggleSavePost()"
             data-testid="posting-menu-bookmark"
         >
@@ -249,7 +249,7 @@
         </button>
         <button
             type="button"
-            class="flex items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
             (click)="forwardMessage()"
             data-testid="posting-menu-forward"
         >
@@ -259,7 +259,7 @@
         @if (canMarkAsUnread()) {
             <button
                 type="button"
-                class="flex items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color hover:bg-surface-hover"
                 (click)="markMessageAsUnread()"
                 data-testid="posting-menu-mark-unread"
             >

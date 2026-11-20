@@ -267,7 +267,7 @@ primitives, never `text-red-500`, never `text-danger`, never the superseded arbi
 `migratedModules` of `eslint.config.mjs`, and lint keeps the removed libraries out of them: it rejects
 Bootstrap classes in external and inline templates (`localRules/no-bootstrap-classes`), Bootstrap class
 names built in TypeScript (`localRules/no-bootstrap-classes-in-code`), PrimeNG root classes such as
-`class="p-button"` (`localRules/no-primeng-component-classes`), bare spacing utilities,
+`class="p-button"` (`localRules/no-primeng-component-classes`),
 imports of PrimeNG, ng-bootstrap and Bootstrap (specs included), and, in Stylelint, `--bs-*` and `--p-*`
 values, hex and `rgb()` colours, PrimeNG selectors and Bootstrap component selectors.
 Add a new module to `migratedModules`, to the Stylelint override and to the `@source` list of

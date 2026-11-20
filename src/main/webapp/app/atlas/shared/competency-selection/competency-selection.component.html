@@ -1,6 +1,6 @@
 <!-- Avoid reserving height for courses whose competency list resolves to empty. -->
 @if (competencyLinks()?.length) {
-    <fieldset class="">
+    <fieldset>
         <legend class="mb-1 flex w-auto float-none items-center gap-2 p-0 text-base">
             @if (labelName()) {
                 <span>{{ labelName() }}</span>

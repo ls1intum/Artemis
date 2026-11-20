@@ -48,7 +48,7 @@
                             <button
                                 type="button"
                                 [id]="'open-competency-graph-button-' + learningPath.id"
-                                class="border-0 bg-transparent p-0 text-primary underline"
+                                class="cursor-pointer border-0 bg-transparent p-0 text-primary underline"
                                 (click)="openCompetencyGraph(learningPath.id, learningPath.user.name)"
                             >
                                 {{ learningPath.progress }} %

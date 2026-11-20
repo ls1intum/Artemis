@@ -234,7 +234,7 @@
                         @for (authority of sortedAuthorities(); track authority) {
                             <label
                                 class="cursor-pointer select-none items-center gap-2 rounded-md border px-4 py-2"
-                                [class]="hasAuthority(authority) ? 'border-primary bg-primary/12' : ''"
+                                [class]="hasAuthority(authority) ? 'border-(--primary) bg-primary/12' : ''"
                                 data-testid="global-role-item"
                             >
                                 <tumaet-ui-checkbox [ngModel]="hasAuthority(authority)" [ngModelOptions]="{ standalone: true }" (changed)="toggleAuthority(authority)" />

@@ -55,7 +55,7 @@
                             'artemisApp.courseOverview.exerciseList.filter'
                                 | artemisTranslate: { num: exerciseTypeFilter.numberOfActiveFilters + chartCategoryFilter.numberOfActiveFilters }
                         "
-                        ><ul class="m-0 list-none p-0! whitespace-nowrap" data-testid="average-score-filter-options">
+                        ><ul class="m-0 list-none p-0! whitespace-nowrap space-y-2" data-testid="average-score-filter-options">
                             @if (exerciseTypeFilter.typeSet.size) {
                                 <li>
                                     <b class="ms-2" jhiTranslate="artemisApp.exercise-scores-chart.includeType"></b>

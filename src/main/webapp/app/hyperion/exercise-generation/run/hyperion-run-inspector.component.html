@@ -65,7 +65,7 @@
     @if (notStarted() || historyExpired()) {
         <tumaet-ui-card data-testid="hyperion-run-not-started">
             <div class="flex items-center justify-between gap-4">
-                <h2 class="">{{ idleTitleKey() | artemisTranslate }}</h2>
+                <h2>{{ idleTitleKey() | artemisTranslate }}</h2>
             </div>
             <p class="m-0 text-sm" [jhiTranslate]="idleHintKey()"></p>
         </tumaet-ui-card>
@@ -93,7 +93,7 @@
             <!-- Keep projected headers outside control-flow blocks within the card. -->
             <tumaet-ui-card>
                 <div class="flex items-center justify-between gap-4">
-                    <h2 class="" id="hyperion-run-progress-title">{{ 'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate }}</h2>
+                    <h2 id="hyperion-run-progress-title">{{ 'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate }}</h2>
                     <div class="flex items-center gap-2">
                         @if (showStepCounter() && stepPosition(); as position) {
                             <span class="text-sm tabular-nums text-muted-color" data-testid="hyperion-run-step-counter">{{

@@ -31,7 +31,7 @@
     <div class="edit-modal-footer-content">
         <div class="warning"><span jhiTranslate="artemisApp.exercise.update.warning.confirmText"></span></div>
         <div class="mb-4">
-            <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="" id="cancel-button" (click)="clear()">
+            <button variant="outlined" severity="secondary" tumAetUiButton type="button" id="cancel-button" (click)="clear()">
                 <fa-icon [icon]="faBan" />
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
@@ -46,20 +46,19 @@
                         severity="warn"
                         (click)="saveExerciseWithoutReevaluation()"
                         [disabled]="instructionDeleted() && deleteFeedback()"
-                        class=""
                     >
                         <fa-icon [icon]="faExclamationTriangle" />
                         <span jhiTranslate="artemisApp.exercise.update.warning.saveExerciseWithoutReevaluation"></span>
                     </button>
                 }
                 @if (creditChanged() || usageCountChanged() || instructionDeleted()) {
-                    <button tumAetUiButton type="submit" id="reevaluate-button" (click)="reEvaluateExercise()" class="">
+                    <button tumAetUiButton type="submit" id="reevaluate-button" (click)="reEvaluateExercise()">
                         <fa-icon [icon]="faCheck" />
                         <span jhiTranslate="artemisApp.exercise.update.warning.reevaluateExercise"></span>
                     </button>
                 }
             } @else {
-                <button tumAetUiButton type="submit" id="save-button" (click)="saveExerciseWithoutReevaluation()" class="">
+                <button tumAetUiButton type="submit" id="save-button" (click)="saveExerciseWithoutReevaluation()">
                     <fa-icon [icon]="faCheck" />
                     <span jhiTranslate="entity.action.save"></span>
                 </button>
