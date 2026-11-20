@@ -169,6 +169,7 @@ public interface LearningDataCleanupRepository extends ArtemisJpaRepository<Quiz
      * @param userId the account being deleted
      * @param login  its current login, which identifies its science events
      */
+    @SuppressWarnings("java:S6809") // The injected repository proxy opens this outer transaction for both deletes.
     @Transactional // ok: both deletions make up one account science data erasure
     default void deleteScienceData(long userId, String login) {
         deleteScienceCourseConsents(userId);
