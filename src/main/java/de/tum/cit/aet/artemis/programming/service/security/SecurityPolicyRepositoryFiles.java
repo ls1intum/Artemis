@@ -209,8 +209,8 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * @return why the Security Framework cannot manage the repository, in this order: Ares 1, no pinned Ares version, the problems of each source file, and the
-     *         problems of the test classes; empty if it can manage it
+     * @return why the Security Framework cannot manage the repository, in this order: Ares 1, no pinned Ares version or one in a Maven profile, the problems of
+     *         each source file, and the problems of the test classes; empty if it can manage it
      */
     private static List<SecurityFrameworkState.UnsupportedReason> unsupportedReasons(List<AresTestSources.Summary> summaries, List<AresTestSources.TypeDeclaration> testClasses,
             BuildFiles buildFiles) {
@@ -220,7 +220,12 @@ public final class SecurityPolicyRepositoryFiles {
             reasons.add(new SecurityFrameworkState.UnsupportedReason(buildFiles.gradleBuild() != null ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE,
                     SecurityFrameworkState.UnsupportedReasonType.ARES_1));
         }
-        if (detectBuildTool(buildFiles.gradleBuild(), buildFiles.mavenPom()).isEmpty()) {
+        Optional<BuildTool> buildTool = detectBuildTool(buildFiles.gradleBuild(), buildFiles.mavenPom());
+        boolean pinsInProfile = buildFiles.mavenPom() != null && BuildFileSyntax.pinsInMavenProfile(buildFiles.mavenPom(), MAVEN_ARES_VERSION);
+        if (pinsInProfile && buildTool.filter(BuildTool.GRADLE::equals).isEmpty()) {
+            reasons.add(new SecurityFrameworkState.UnsupportedReason(MAVEN_BUILD_FILE, SecurityFrameworkState.UnsupportedReasonType.ARES_VERSION_IN_MAVEN_PROFILE));
+        }
+        else if (buildTool.isEmpty()) {
             reasons.add(new SecurityFrameworkState.UnsupportedReason(buildFiles.mavenPom() != null ? MAVEN_BUILD_FILE : GRADLE_BUILD_FILE,
                     SecurityFrameworkState.UnsupportedReasonType.NO_ARES_VERSION_PINNED));
         }

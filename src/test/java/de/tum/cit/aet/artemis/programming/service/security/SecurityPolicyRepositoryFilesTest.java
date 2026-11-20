@@ -833,6 +833,22 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void aMavenProfileThatPinsTheAresVersionMakesTheBuildUnsupported() {
+        Map<String, String> sources = Map.of("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest"));
+        String rootPin = "<properties><ares.version>2.2.1</ares.version></properties>";
+        String profile = "<profiles><profile><activation><activeByDefault>true</activeByDefault></activation>"
+                + "<properties><ares.version>2.3.0</ares.version></properties></profile></profiles>";
+        var reason = new SecurityFrameworkState.UnsupportedReason("pom.xml", SecurityFrameworkState.UnsupportedReasonType.ARES_VERSION_IN_MAVEN_PROFILE);
+
+        // While the profile is active, Maven uses its version instead of the one of the POM, which Artemis would read and change.
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + profile)).unsupportedReasons()).containsExactly(reason);
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, profile)).unsupportedReasons()).containsExactly(reason);
+        // A Gradle build that pins the version is the one the exercise uses, and a profile in a comment pins nothing.
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles("ext { aresVersion = '2.2.1' }\n", profile)).unsupportedReasons()).isEmpty();
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + "<!-- " + profile + " -->")).unsupportedReasons()).isEmpty();
+    }
+
+    @Test
     void namesTheBuildFileThatRefersToAres1OrPinsNoVersion() {
         Map<String, String> sources = Map.of("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest"));
         String ares1Pom = "<dependency><artifactId>artemis-java-test-sandbox</artifactId></dependency>";

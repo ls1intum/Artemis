@@ -96,6 +96,7 @@ lists the reasons, which can be:
 - The tests use Ares 1, whose own sandbox Artemis does not control.
 - No test class uses Ares 2.
 - The build file does not pin an Ares version through `aresVersion` (Gradle) or `ares.version` (Maven).
+- A Maven profile sets `ares.version`, so the version the build uses depends on which profiles are active.
 - A `@Policy` annotation is on a method, a field or a nested class, or on an annotation type.
 - Tests or Ares annotations are inside a nested class.
 - A file declares several top-level types that are test classes or carry a `@Policy` annotation.

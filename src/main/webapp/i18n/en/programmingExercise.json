@@ -354,7 +354,8 @@
                     "TEST_CLASS_WITHOUT_ARES": "{{ location }}: A test class does not register the Ares sandbox through @Public, @Hidden, @PublicTest or @HiddenTest.",
                     "ARES_1": "{{ location }}: The tests use Ares 1, whose own sandbox keeps running.",
                     "NO_ARES_2": "{{ location }}: The tests do not use Ares 2.",
-                    "NO_ARES_VERSION_PINNED": "{{ location }}: The build file does not pin an Ares version."
+                    "NO_ARES_VERSION_PINNED": "{{ location }}: The build file does not pin an Ares version.",
+                    "ARES_VERSION_IN_MAVEN_PROFILE": "{{ location }}: A Maven profile pins the Ares version, so the version the build uses depends on the active profiles."
                 },
                 "sync": {
                     "inactive": "Activating restores the previous policy or generates a default one.",

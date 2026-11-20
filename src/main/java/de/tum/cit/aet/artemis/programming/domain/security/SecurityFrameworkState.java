@@ -94,6 +94,8 @@ public record SecurityFrameworkState(SecurityActivationStatus status, List<Strin
         /** No test class uses Ares 2. */
         NO_ARES_2,
         /** The build file does not pin an Ares version through {@code aresVersion} or {@code ares.version}. */
-        NO_ARES_VERSION_PINNED
+        NO_ARES_VERSION_PINNED,
+        /** A Maven profile pins the Ares version, so the version the build uses depends on which profiles are active. */
+        ARES_VERSION_IN_MAVEN_PROFILE
     }
 }

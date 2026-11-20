@@ -67,6 +67,7 @@ export enum SecurityUnsupportedReasonType {
     ARES_1 = 'ARES_1',
     NO_ARES_2 = 'NO_ARES_2',
     NO_ARES_VERSION_PINNED = 'NO_ARES_VERSION_PINNED',
+    ARES_VERSION_IN_MAVEN_PROFILE = 'ARES_VERSION_IN_MAVEN_PROFILE',
 }
 
 /** A policy file that an active policy points to. */
