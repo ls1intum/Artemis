@@ -1356,7 +1356,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     /** The message of a refused request: the server's translated explanation, or a generic one. */
     private errorMessage(error: HttpErrorResponse): string {
-        const body = error.error as { title?: string; detail?: string; message?: string; params?: Record<string, unknown> } | undefined;
+        const body = error.error as { title?: string; detail?: string; message?: string; params?: Record<string, unknown> | null } | undefined;
         if (typeof body?.message === 'string' && body.message.startsWith('error.')) {
             const params = typeof body.params === 'object' && body.params !== null ? body.params : undefined;
             const translated: string = this.translateService.instant(body.message, params);
