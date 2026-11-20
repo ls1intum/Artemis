@@ -442,17 +442,28 @@ with `pnpm run test:rules` (or select `supporting_scripts/ci/E2E-tests/setup.spe
 
 ## Docker Hub images on the self-hosted runners
 
-Docker Hub limits anonymous pulls per IP address, and the self-hosted runners share few addresses. When the
-allowance is used up a pull stalls without an error: Testcontainers reports `Docker image pull has not made
-progress` and the E2E setup cannot provision the exercise images. The AET Harbor instance runs a proxy cache for
-Docker Hub, `harbor.aet.cit.tum.de/dockerhub-ghr-proxy`, and the jobs on the self-hosted runners pull through it:
+The jobs on the self-hosted runners never pull from Docker Hub. Docker Hub limits anonymous pulls per IP address,
+and the runners share few addresses, so when the allowance is used up a pull stalls without an error: Testcontainers
+reports `Docker image pull has not made progress` and the E2E setup cannot provision the exercise images. The AET
+Harbor instance runs a proxy cache for Docker Hub, `harbor.aet.cit.tum.de/dockerhub-ghr-proxy`, and every Docker Hub
+image comes through it:
 
 - `supporting_scripts/ci/pull-through-registry-proxy.sh` pulls a Docker Hub image from the cache and tags it with
-  its original name, so compose files and the Artemis build agent find it under the name they ask for. It falls
-  back to Docker Hub when the cache cannot serve the image, and pulls images of other registries directly. The E2E
-  jobs use it for the exercise images and for the Docker Hub images of the compose stack.
-- `.github/actions/testcontainers-registry-proxy` sets `TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX` for the server test
-  jobs, so Testcontainers sends its pulls to the cache. It sets the prefix only when the cache answers.
+  its original name, so compose files and the Artemis build agent find it under the name they ask for. Images of other
+  registries (`ghcr.io`, `quay.io`, ...) are pulled directly. The E2E jobs use it for the exercise images and for all
+  images of the compose stack (with `--refresh`, in place of `docker compose pull`); the Android job uses it for the
+  MySQL image.
+- `.github/actions/testcontainers-registry-proxy` pulls the Ryuk image and sets `TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX`
+  for the server test jobs, so Testcontainers sends all its Docker Hub pulls to the cache.
+- The small Alpine container that returns the ownership of leftover files before a checkout is pulled through the
+  cache as well.
+
+There is deliberately no fallback to Docker Hub: it would hide a broken cache until Docker Hub throttles the runners
+again. When the cache cannot be reached, the helper fails after a ten second probe with `Registry proxy unreachable`.
+The runners must therefore be able to connect to `harbor.aet.cit.tum.de:443`, and no `registry-mirrors` entry in
+`/etc/docker/daemon.json` may point at a host they cannot reach. Check both from a runner with
+`curl -sS -o /dev/null -w '%{http_code}\n' https://harbor.aet.cit.tum.de/v2/`, which prints `401` when the cache
+answers.
 
 Images that Docker pulls by itself during a job are not covered: add them to one of the two when a new job needs
 one. A Docker Hub image in a workflow of a GitHub-hosted runner needs no change, because those runners have their

@@ -39,8 +39,8 @@ CONFIG_FILE="${REPO_ROOT}/src/main/resources/config/application.yml"
 MAX_ATTEMPTS=2
 # Cold pulls of all four images together took 30 seconds on the CI runner, the Maven image 11 of them,
 # so this cap carries a large multiple of the real cost while keeping the worst case bounded: two
-# attempts per image against the registry proxy and Docker Hub each, so totally unreachable registries
-# cost about 16 minutes before the step reports why rather than hanging until the job timeout.
+# attempts per image, so a stalled registry costs about 8 minutes before the step reports why rather
+# than hanging until the job timeout. An unreachable proxy fails the pull after a ten second probe.
 PULL_TIMEOUT_SECONDS=120
 
 # Prints every image configured for the build agent, one per line.
@@ -122,8 +122,9 @@ for image in "${IMAGES[@]}"; do
     fi
 done
 
-# Pulls go through the registry proxy with a fall back to Docker Hub, and each attempt is bounded, so a
-# stalled pull turns into a non-zero exit that the retries can act on. See the helper for the details.
+# Docker Hub images are pulled through the registry proxy only, never from Docker Hub itself, and each
+# attempt is bounded, so a stalled pull turns into a non-zero exit that the retries can act on. See the
+# helper for the details.
 PULL_HELPER="${REPO_ROOT}/supporting_scripts/ci/pull-through-registry-proxy.sh"
 
 for image in "${IMAGES[@]}"; do
@@ -134,7 +135,7 @@ for image in "${IMAGES[@]}"; do
 
     pulled=false
     for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-        echo "Pulling ${image} (attempt ${attempt}/${MAX_ATTEMPTS}, up to ${PULL_TIMEOUT_SECONDS}s per registry)..."
+        echo "Pulling ${image} (attempt ${attempt}/${MAX_ATTEMPTS}, up to ${PULL_TIMEOUT_SECONDS}s)..."
         if IMAGE_PULL_TIMEOUT_SECONDS="$PULL_TIMEOUT_SECONDS" bash "$PULL_HELPER" "$image"; then
             pulled=true
             break
@@ -147,7 +148,7 @@ for image in "${IMAGES[@]}"; do
     done
 
     if [ "$pulled" != true ]; then
-        echo "::error title=Could not provision E2E exercise image::Failed to pull ${image} after ${MAX_ATTEMPTS} attempts of up to ${PULL_TIMEOUT_SECONDS}s per registry. Programming-exercise builds cannot run without it, so every test asserting on a build result would fail with an unexplained 0% score. Check the runner's disk space and registry connectivity."
+        echo "::error title=Could not provision E2E exercise image::Failed to pull ${image} after ${MAX_ATTEMPTS} attempts of up to ${PULL_TIMEOUT_SECONDS}s. Programming-exercise builds cannot run without it, so every test asserting on a build result would fail with an unexplained 0% score. Check the runner's disk space and its connection to the registry proxy."
         exit 1
     fi
 done

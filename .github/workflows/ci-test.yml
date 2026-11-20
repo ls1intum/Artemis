@@ -225,10 +225,8 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              # The registry proxy first: Docker Hub limits anonymous pulls per IP address.
-              for image in harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 docker.io/library/alpine:3.24.4; do
-                  docker run --rm --user 0:0 --volume "$PWD/$dir:/output" "$image" chown -R "$(id -u):$(id -g)" /output && break
-              done
+              # Through the registry proxy, never Docker Hub: it limits anonymous pulls per IP address.
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -359,10 +357,8 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              # The registry proxy first: Docker Hub limits anonymous pulls per IP address.
-              for image in harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 docker.io/library/alpine:3.24.4; do
-                  docker run --rm --user 0:0 --volume "$PWD/$dir:/output" "$image" chown -R "$(id -u):$(id -g)" /output && break
-              done
+              # Through the registry proxy, never Docker Hub: it limits anonymous pulls per IP address.
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -501,10 +497,8 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              # The registry proxy first: Docker Hub limits anonymous pulls per IP address.
-              for image in harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 docker.io/library/alpine:3.24.4; do
-                  docker run --rm --user 0:0 --volume "$PWD/$dir:/output" "$image" chown -R "$(id -u):$(id -g)" /output && break
-              done
+              # Through the registry proxy, never Docker Hub: it limits anonymous pulls per IP address.
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -18,7 +18,7 @@ afterEach(() => {
  * @param images the images to make available
  * @param options `present` lists images that already exist, `failing` lists references whose pull fails
  */
-function run(images, { present = [], failing = [], bestEffort = false, proxyReachable = true, env = {} } = {}) {
+function run(images, { present = [], failing = [], refresh = false, proxyReachable = true, env = {} } = {}) {
     const directory = mkdtempSync(join(tmpdir(), 'artemis registry proxy '));
     directories.push(directory);
     const calls = join(directory, 'docker-calls');
@@ -40,7 +40,7 @@ exit 0
     writeFileSync(join(directory, 'curl'), `#!/bin/sh\nexit ${proxyReachable ? 0 : 7}\n`, { mode: 0o700 });
     // `timeout` is replaced by a pass-through, so the stub decides the outcome of a pull on every platform.
     writeFileSync(join(directory, 'timeout'), '#!/bin/sh\nshift 2\nexec "$@"\n', { mode: 0o700 });
-    const result = spawnSync('bash', [script, ...(bestEffort ? ['--best-effort'] : []), ...images], {
+    const result = spawnSync('bash', [script, ...(refresh ? ['--refresh'] : []), ...images], {
         encoding: 'utf8',
         env: { ...process.env, PATH: `${directory}:${process.env.PATH}`, TEST_DOCKER_CALLS: calls, DOCKER_HUB_PROXY: proxy, ...env },
     });
@@ -75,37 +75,48 @@ describe('pull-through-registry-proxy.sh', () => {
         },
     );
 
-    it('falls back to Docker Hub when the proxy cannot serve the image', () => {
+    it('never falls back to Docker Hub when the proxy cannot serve the image', () => {
         const { status, calls, stdout } = run(['alpine:3'], { failing: [`${proxy}/library/alpine:3`] });
-        expect(status).toBe(0);
-        expect(calls).toEqual(['image inspect alpine:3', `pull --quiet ${proxy}/library/alpine:3`, 'pull --quiet alpine:3']);
-        expect(stdout).toContain('::warning title=Registry proxy unavailable::');
+        expect(status).toBe(1);
+        expect(calls).toEqual(['image inspect alpine:3', `pull --quiet ${proxy}/library/alpine:3`]);
+        expect(stdout).toContain('::error title=Could not pull images::alpine:3');
     });
 
-    it('skips an unreachable proxy without trying a pull from it', () => {
+    it('fails after one probe when the proxy does not answer, without trying a pull', () => {
         const { status, calls, stdout } = run(['alpine:3', 'busybox:1'], { proxyReachable: false });
-        expect(status).toBe(0);
-        expect(calls).toEqual(['image inspect alpine:3', 'pull --quiet alpine:3', 'image inspect busybox:1', 'pull --quiet busybox:1']);
-        expect(stdout).toContain('::warning title=Registry proxy unreachable::registry.example did not answer');
+        expect(status).toBe(1);
+        expect(calls).toEqual(['image inspect alpine:3']);
+        expect(stdout).toContain('::error title=Registry proxy unreachable::registry.example did not answer');
     });
 
-    it('pulls from Docker Hub only when no proxy is configured', () => {
+    it('does not need the proxy for an image that is present or comes from another registry', () => {
+        const { status, calls } = run(['alpine:3', 'ghcr.io/ls1intum/artemis:latest'], { present: ['alpine:3'], proxyReachable: false });
+        expect(status).toBe(0);
+        expect(calls).toEqual(['image inspect alpine:3', 'image inspect ghcr.io/ls1intum/artemis:latest', 'pull --quiet ghcr.io/ls1intum/artemis:latest']);
+    });
+
+    it('pulls a present image again with --refresh', () => {
+        const { status, calls } = run(['alpine:3', 'ghcr.io/ls1intum/artemis:latest'], { present: ['alpine:3', 'ghcr.io/ls1intum/artemis:latest'], refresh: true });
+        expect(status).toBe(0);
+        expect(calls).toEqual([
+            `pull --quiet ${proxy}/library/alpine:3`,
+            `tag ${proxy}/library/alpine:3 alpine:3`,
+            `rmi ${proxy}/library/alpine:3`,
+            'pull --quiet ghcr.io/ls1intum/artemis:latest',
+        ]);
+    });
+
+    it('uses the default Harbor cache when no proxy is configured', () => {
         const { status, calls } = run(['alpine:3'], { env: { DOCKER_HUB_PROXY: '' } });
         expect(status).toBe(0);
-        expect(calls).toEqual(['image inspect alpine:3', 'pull --quiet alpine:3']);
+        expect(calls[1]).toBe('pull --quiet harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3');
     });
 
-    it('fails when an image is available nowhere, after trying the remaining images', () => {
-        const { status, stdout, calls } = run(['alpine:3', 'busybox:1'], { failing: [`${proxy}/library/alpine:3`, 'alpine:3'] });
+    it('fails when an image cannot be pulled, after trying the remaining images', () => {
+        const { status, stdout, calls } = run(['alpine:3', 'busybox:1'], { failing: [`${proxy}/library/alpine:3`] });
         expect(status).toBe(1);
         expect(stdout).toContain('::error title=Could not pull images::alpine:3');
         expect(calls).toContain(`tag ${proxy}/library/busybox:1 busybox:1`);
-    });
-
-    it('only warns about an unavailable image in best-effort mode', () => {
-        const { status, stdout } = run(['alpine:3'], { failing: [`${proxy}/library/alpine:3`, 'alpine:3'], bestEffort: true });
-        expect(status).toBe(0);
-        expect(stdout).toContain('::warning title=Could not pull images::alpine:3');
     });
 
     it('explains its usage when called without an image', () => {

@@ -24,16 +24,13 @@ for (const job of ['server-tests', 'server-tests-report', 'client-tests']) {
         }
 
         const proxyImage = 'harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4';
-        const dockerHubImage = 'docker.io/library/alpine:3.24.4';
 
-        function execute(script, outputs, { proxyAvailable = true } = {}) {
+        function execute(script, outputs) {
             const directory = mkdtempSync(join(tmpdir(), 'artemis checkout recovery '));
             directories.push(directory);
             const calls = join(directory, 'docker-calls');
             writeFileSync(calls, '');
-            // The stub records every call. With the proxy unavailable, a call that names the proxy image fails.
-            const failOnProxy = proxyAvailable ? '' : 'case " $* " in *harbor.aet.cit.tum.de*) exit 1 ;; esac\n';
-            writeFileSync(join(directory, 'docker'), `#!/bin/sh\nprintf '%s\\n' "$@" >> "$TEST_DOCKER_CALLS"\n${failOnProxy}`, { mode: 0o700 });
+            writeFileSync(join(directory, 'docker'), `#!/bin/sh\nprintf '%s\\n' "$@" >> "$TEST_DOCKER_CALLS"\n`, { mode: 0o700 });
             for (const output of outputs) mkdirSync(join(directory, 'src/test/playwright', output), { recursive: true });
             const result = spawnSync('bash', ['-e', '-c', script], {
                 cwd: directory,
@@ -64,10 +61,8 @@ for (const job of ['server-tests', 'server-tests-report', 'client-tests']) {
             );
         });
 
-        it('falls back to Docker Hub when the registry proxy cannot serve the image', () => {
-            const { calls } = execute(recovery(), ['test-results'], { proxyAvailable: false });
-            const images = calls.filter((argument) => argument === proxyImage || argument === dockerHubImage);
-            expect(images).toEqual([proxyImage, dockerHubImage]);
+        it('never pulls from Docker Hub itself', () => {
+            expect(recovery()).not.toContain('docker.io');
         });
 
         it('does not need Docker when the output directories do not exist', () => {

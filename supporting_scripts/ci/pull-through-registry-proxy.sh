@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Makes container images available on this host, pulling Docker Hub images through a pull-through
-# cache instead of from Docker Hub itself.
+# Makes container images available on this host, pulling Docker Hub images through the AET Harbor
+# pull-through cache. A Docker Hub image is never pulled from Docker Hub itself.
 #
 # Why this exists
 # ---------------
@@ -14,34 +14,35 @@
 # What it does
 # ------------
 # For every image given as an argument:
-#   1. An image that is already present is left alone.
+#   1. An image that is already present is left alone (unless --refresh is given).
 #   2. A Docker Hub image is pulled from the proxy and tagged with its original name, so compose files,
 #      Testcontainers and the Artemis build agent find it under the name they ask for.
-#   3. If the proxy cannot serve it, the image is pulled from Docker Hub directly.
+#   3. If the proxy cannot serve it, the image counts as failed. There is no fallback to Docker Hub: it
+#      would hide a broken proxy until Docker Hub throttles the runner again.
 # Images of other registries (ghcr.io, quay.io, ...) are pulled directly.
 #
-# Usage: pull-through-registry-proxy.sh [--best-effort] IMAGE...
-#   --best-effort  report an image that could not be pulled as a warning and exit 0
+# Usage: pull-through-registry-proxy.sh [--refresh] IMAGE...
+#   --refresh  pull an image again even if it is present, like `docker compose pull --policy always`
 #
 # Environment:
-#   DOCKER_HUB_PROXY           registry path that mirrors Docker Hub; set it to an empty string to pull
-#                              from Docker Hub only (default: harbor.aet.cit.tum.de/dockerhub-ghr-proxy)
-#   IMAGE_PULL_TIMEOUT_SECONDS upper bound of a single pull attempt (default: 300)
-#   REGISTRY_PROXY_PROBE_SECONDS how long to wait for the proxy to answer before skipping it (default: 10)
+#   DOCKER_HUB_PROXY             registry path that mirrors Docker Hub (default:
+#                                harbor.aet.cit.tum.de/dockerhub-ghr-proxy)
+#   IMAGE_PULL_TIMEOUT_SECONDS   upper bound of a single pull (default: 300)
+#   REGISTRY_PROXY_PROBE_SECONDS how long to wait for the proxy to answer before giving up (default: 10)
 
 set -uo pipefail
 
-DOCKER_HUB_PROXY="${DOCKER_HUB_PROXY-harbor.aet.cit.tum.de/dockerhub-ghr-proxy}"
+DOCKER_HUB_PROXY="${DOCKER_HUB_PROXY:-harbor.aet.cit.tum.de/dockerhub-ghr-proxy}"
 IMAGE_PULL_TIMEOUT_SECONDS="${IMAGE_PULL_TIMEOUT_SECONDS:-300}"
 
-best_effort=false
-if [ "${1:-}" = "--best-effort" ]; then
-    best_effort=true
+refresh=false
+if [ "${1:-}" = "--refresh" ]; then
+    refresh=true
     shift
 fi
 
 if [ "$#" -eq 0 ]; then
-    echo "Usage: $0 [--best-effort] IMAGE..." >&2
+    echo "Usage: $0 [--refresh] IMAGE..." >&2
     exit 2
 fi
 
@@ -87,38 +88,40 @@ docker_hub_path() {
     esac
 }
 
-# Asks the proxy once whether it answers at all. A runner that cannot reach it would otherwise wait for a
-# connection timeout on every image before falling back. Any HTTP status counts as reachable: the registry
-# endpoint answers 401 without a token.
-proxy_reachable() {
+# Asks the proxy once whether it answers at all, so a runner that cannot reach it fails after one short
+# wait instead of after the connect timeout of every image. Any HTTP status counts as reachable: the
+# registry endpoint answers 401 without a token.
+proxy_probed=false
+require_reachable_proxy() {
+    [ "$proxy_probed" = true ] && return 0
+    proxy_probed=true
     command -v curl > /dev/null 2>&1 || return 0
-    curl --silent --output /dev/null --max-time "${REGISTRY_PROXY_PROBE_SECONDS:-10}" "https://${DOCKER_HUB_PROXY%%/*}/v2/"
+    if ! curl --silent --output /dev/null --max-time "${REGISTRY_PROXY_PROBE_SECONDS:-10}" "https://${DOCKER_HUB_PROXY%%/*}/v2/"; then
+        echo "::error title=Registry proxy unreachable::${DOCKER_HUB_PROXY%%/*} did not answer within ${REGISTRY_PROXY_PROBE_SECONDS:-10}s. Docker Hub images are only pulled through it."
+        return 1
+    fi
 }
-
-if [ -n "$DOCKER_HUB_PROXY" ] && ! proxy_reachable; then
-    echo "::warning title=Registry proxy unreachable::${DOCKER_HUB_PROXY%%/*} did not answer; pulling from Docker Hub."
-    DOCKER_HUB_PROXY=""
-fi
 
 failed=()
 for image in "$@"; do
-    if docker image inspect "$image" > /dev/null 2>&1; then
+    if [ "$refresh" = false ] && docker image inspect "$image" > /dev/null 2>&1; then
         echo "Already present: ${image}"
         continue
     fi
 
-    if [ -n "$DOCKER_HUB_PROXY" ] && hub_path="$(docker_hub_path "$image")"; then
+    if hub_path="$(docker_hub_path "$image")"; then
+        if ! require_reachable_proxy; then
+            exit 1
+        fi
         proxied="${DOCKER_HUB_PROXY}/${hub_path}"
         if bounded_pull "$proxied" && docker tag "$proxied" "$image"; then
             # Drop the proxy name again: the image stays, under the name its users ask for.
             docker rmi "$proxied" > /dev/null 2>&1 || true
             echo "Pulled through ${DOCKER_HUB_PROXY}: ${image}"
-            continue
+        else
+            failed+=("$image")
         fi
-        echo "::warning title=Registry proxy unavailable::Could not pull ${image} through ${DOCKER_HUB_PROXY}; pulling it from its own registry."
-    fi
-
-    if bounded_pull "$image"; then
+    elif bounded_pull "$image"; then
         echo "Pulled: ${image}"
     else
         failed+=("$image")
@@ -126,10 +129,6 @@ for image in "$@"; do
 done
 
 if [ "${#failed[@]}" -gt 0 ]; then
-    if [ "$best_effort" = true ]; then
-        echo "::warning title=Could not pull images::${failed[*]}"
-        exit 0
-    fi
     echo "::error title=Could not pull images::${failed[*]}"
     exit 1
 fi
