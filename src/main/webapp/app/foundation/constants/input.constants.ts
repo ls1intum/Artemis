@@ -71,12 +71,64 @@ export const INVALID_DIRECTORY_NAME_PATTERN = RegExp('^[\\w-]+(/[\\w-]+)*$');
 // length of < 3 is also accepted in order to provide more accurate validation error messages
 export const PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
 
+// Packages that no Java or Kotlin exercise may use, and everything below them. Student classes in these packages would shadow the JDK, Ares 2 or one of the libraries that
+// Ares and the tests bring along, so the build guards of the test templates reject them. The Kotlin template additionally reserves "kotlin" and "org.jetbrains", which is
+// applied to Java as well to keep one rule. Keep this list in sync with RESERVED_PACKAGE_SUBTREES_FOR_JAVA_KOTLIN in ProgrammingExerciseValidationService.
+const RESERVED_PACKAGE_SUBTREES_FOR_JAVA_KOTLIN = [
+    'anonymous.toolclasses',
+    'ch.qos.logback',
+    'com.fasterxml',
+    'com.github.javaparser',
+    'com.google',
+    'com.ibm.wala',
+    'com.intellij',
+    'com.opencsv',
+    'com.sun',
+    'com.tngtech.archunit',
+    'de.tum.cit.ase.ares',
+    'java',
+    'javassist',
+    'javax',
+    'jdk',
+    'junit',
+    'kotlin',
+    'metatest',
+    'net.bytebuddy',
+    'net.jqwik',
+    'org.apache',
+    'org.apfloat',
+    'org.apiguardian',
+    'org.aspectj',
+    'org.assertj',
+    'org.checkerframework',
+    'org.eclipse',
+    'org.gradle',
+    'org.hamcrest',
+    'org.jacoco',
+    'org.jetbrains',
+    'org.jgrapht',
+    'org.jheaps',
+    'org.json',
+    'org.jspecify',
+    'org.junit',
+    'org.mockito',
+    'org.objenesis',
+    'org.opentest4j',
+    'org.slf4j',
+    'org.yaml',
+    'sun',
+    'worker.org.gradle',
+];
+// Packages that contain a package Ares 2 reserves. Ares refuses to run any test when a compiled class lies in one of them, because it cannot tell the allowed code from the
+// reserved package below it. Derived from WalaPathClassification.RESERVED_PACKAGE_PREFIXES in Ares. Keep it in sync with RESERVED_PACKAGE_ANCESTORS_FOR_JAVA_KOTLIN in
+// ProgrammingExerciseValidationService.
+const RESERVED_PACKAGE_ANCESTORS_FOR_JAVA_KOTLIN = ['de', 'de.tum', 'de.tum.cit', 'de.tum.cit.ase', 'com', 'org', 'net', 'com.ibm', 'com.tngtech'];
+const escapeDots = (packages: string[]) => packages.map((name) => name.replaceAll('.', String.raw`\.`)).join('|');
+
 // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
 // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations.
-// The first two lookaheads refuse the names that Ares 2 cannot supervise (a package that contains or lies inside a namespace it reserves, e.g. "de", "de.tum", "org",
-// "java.util"). Keep them in sync with PACKAGE_NAME_REGEX_FOR_JAVA_KOTLIN in ProgrammingExerciseValidationService.
-export const PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN =
-    '^(?!(?:de|de\\.tum|de\\.tum\\.cit|de\\.tum\\.cit\\.ase|de\\.tum\\.cit\\.ase\\.ares|com|org|net|com\\.ibm|com\\.tngtech)$)(?!(?:java|javax|sun|jdk|com\\.sun|net\\.bytebuddy|org\\.aspectj|com\\.ibm\\.wala|com\\.tngtech\\.archunit|de\\.tum\\.cit\\.ase\\.ares\\.api)(?:\\.|$))(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$';
+// The first two lookaheads refuse the reserved packages above and everything below the ones in the first list.
+export const PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN = String.raw`^(?!(?:${escapeDots(RESERVED_PACKAGE_ANCESTORS_FOR_JAVA_KOTLIN)})$)(?!(?:${escapeDots(RESERVED_PACKAGE_SUBTREES_FOR_JAVA_KOTLIN)})(?:\.|$))(?!.*(?:\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\.[A-Z_a-z][0-9A-Z_a-z]*)*$`;
 // Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
 // with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
 export const APP_NAME_PATTERN_FOR_SWIFT =

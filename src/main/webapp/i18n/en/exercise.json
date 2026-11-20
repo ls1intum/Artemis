@@ -386,8 +386,8 @@
                 "packageName": {
                     "undefined": "You need to specify a package name.",
                     "pattern": {
-                        "JAVA": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\". Names that contain or lie inside a package reserved for the test security (for example \"de\", \"de.tum\", \"org\", \"net\" or \"java.util\") are not allowed.",
-                        "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\". Names that contain or lie inside a package reserved for the test security (for example \"de\", \"de.tum\", \"org\", \"net\" or \"java.util\") are not allowed.",
+                        "JAVA": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\". The names \"de\", \"de.tum\", \"de.tum.cit\", \"de.tum.cit.ase\", \"com\", \"org\", \"net\", \"com.ibm\" and \"com.tngtech\" are not allowed, nor are names inside a package that is reserved for the tests and their libraries, such as \"java\", \"org.apache\", \"org.junit\" or \"de.tum.cit.ase.ares\" (e.g. \"java.util\").",
+                        "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\". The names \"de\", \"de.tum\", \"de.tum.cit\", \"de.tum.cit.ase\", \"com\", \"org\", \"net\", \"com.ibm\" and \"com.tngtech\" are not allowed, nor are names inside a package that is reserved for the tests and their libraries, such as \"java\", \"org.apache\", \"org.junit\" or \"de.tum.cit.ase.ares\" (e.g. \"java.util\").",
                         "SWIFT": "The package name must consist of one or more valid Swift identifiers without any separator, e.g. \"SwiftEx\".",
                         "JAVA_BLACKBOX": "The package name must be a valid Java identifier. In addition, no dots are allowed in the package name of DejaGnu projects.",
                         "GO": "The package name must be a valid Go identifier, e.g. \"exercise\".",
