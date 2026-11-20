@@ -492,7 +492,7 @@ public class ExamAccessService {
      * @param examId        The id of the exam
      */
     public void checkStudentExamExistsAndBelongsToExamElseThrow(Long studentExamId, Long examId) {
-        Long examIdOfStudentExam = studentExamRepository.findExamIdById(studentExamId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, examId));
+        Long examIdOfStudentExam = studentExamRepository.findExamIdById(studentExamId).orElseThrow(() -> new EntityNotFoundException("StudentExam", studentExamId));
         if (!examIdOfStudentExam.equals(examId)) {
             throw new ConflictException("Invalid exam id", ENTITY_NAME, "noIdMatch");
         }
