@@ -26,8 +26,8 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
             }
 
             .explore-card {
-                border: 1px solid var(--bs-border-color);
-                border-radius: var(--bs-border-radius-lg, 0.5rem);
+                border: 1px solid var(--border-color);
+                border-radius: 0.25rem;
                 text-align: center;
                 padding: 1.75rem 1.25rem;
                 transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -39,7 +39,7 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
                 text-decoration: none;
                 color: inherit;
                 cursor: pointer;
-                background: var(--overview-card-nested-bg, var(--bs-body-bg));
+                background: var(--overview-card-nested-bg);
 
                 &::before {
                     content: '';
@@ -48,7 +48,7 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
                     left: 0;
                     right: 0;
                     height: 3px;
-                    background: var(--card-accent, var(--bs-primary));
+                    background: var(--card-accent, var(--primary));
                     opacity: 0;
                     transition: opacity 0.25s ease;
                 }
@@ -69,7 +69,7 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
                 }
 
                 p {
-                    color: var(--bs-secondary-color);
+                    color: var(--body-secondary-color);
                     font-size: 0.88rem;
                     margin-bottom: 1rem;
                     line-height: 1.45;
@@ -99,13 +99,13 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
             .explore-icon-wrapper {
                 width: 56px;
                 height: 56px;
-                border-radius: var(--bs-border-radius-lg, 0.5rem);
+                border-radius: 0.25rem;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
                 margin-bottom: 1rem;
-                color: var(--bs-white);
-                background: var(--card-accent, var(--bs-primary));
+                color: var(--white);
+                background: var(--card-accent, var(--primary));
                 box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
                 font-size: 1.25rem;
             }
@@ -117,7 +117,7 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
                 display: inline-flex;
                 align-items: center;
                 gap: 0.35rem;
-                color: var(--card-accent, var(--bs-primary));
+                color: var(--card-accent, var(--primary));
                 transition: gap 0.2s ease;
 
                 &:hover {

@@ -313,7 +313,7 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.onNetworkChange('none');
         fixture.detectChanges();
 
-        const warning = fixture.nativeElement.querySelector('.alert-warning');
+        const warning = fixture.nativeElement.querySelector('[data-testid="network-none-warning"]');
         expect(warning).not.toBeNull();
     });
 
@@ -323,7 +323,7 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.onNetworkChange('default');
         fixture.detectChanges();
 
-        const warning = fixture.nativeElement.querySelector('.alert-warning');
+        const warning = fixture.nativeElement.querySelector('[data-testid="network-none-warning"]');
         expect(warning).toBeNull();
     });
 

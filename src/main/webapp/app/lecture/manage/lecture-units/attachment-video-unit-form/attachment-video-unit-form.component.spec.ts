@@ -63,6 +63,23 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(attachmentVideoUnitFormComponent).not.toBeNull();
     });
 
+    it('allows cancelling during save recovery and disables cancellation while the recording save runs', () => {
+        const fixture = attachmentVideoUnitFormComponentFixture;
+        fixture.componentRef.setInput('hasCancelButton', true);
+        fixture.componentRef.setInput('recordingSaveLocked', true);
+        const cancelled = vi.spyOn(fixture.componentInstance.onCancel, 'emit');
+        fixture.detectChanges();
+
+        const cancel: HTMLButtonElement = fixture.debugElement.query(By.css('[jhiTranslate="entity.action.cancel"]')).nativeElement.closest('button');
+        expect(cancel.disabled).toBe(false);
+        cancel.click();
+        expect(cancelled).toHaveBeenCalledOnce();
+
+        fixture.componentRef.setInput('recordingSaving', true);
+        fixture.detectChanges();
+        expect(cancel.disabled).toBe(true);
+    });
+
     it('should correctly set form values in edit mode', () => {
         const fakeFile = new File([''], 'Test-File.pdf', {
             type: 'application/pdf',
@@ -678,6 +695,24 @@ describe('AttachmentVideoUnitFormComponent', () => {
             expect(query('file-required-error')).toBeNull();
             attachmentVideoUnitFormComponent.submitForm();
             expect(submitSpy).toHaveBeenLastCalledWith(expect.objectContaining({ fileProperties: { file: undefined, fileName: undefined } }));
+        });
+
+        it.each([false, true])('drops a previous recording selection when reusing the form (invalid: %s)', (invalid) => {
+            const fixture = attachmentVideoUnitFormComponentFixture;
+            const component = attachmentVideoUnitFormComponent;
+            fixture.componentRef.setInput('recordingAvailable', true);
+            fixture.detectChanges();
+            component['selectRecording'](true);
+            component['recording'].set(invalid ? undefined : new File(['video'], 'previous.mp4', { type: 'video/mp4' }));
+            component['recordingInvalid'].set(invalid);
+
+            openInEditMode();
+            fixture.componentRef.setInput('isEditMode', false);
+            fixture.detectChanges();
+
+            expect(component['uploadSelected']()).toBe(false);
+            expect(component['recording']()).toBeUndefined();
+            expect(component['recordingInvalid']()).toBe(false);
         });
 
         it('should not keep the file of a previously edited unit', () => {

@@ -179,6 +179,29 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamUserSignatureForbiddenForStudentOfTheExamCourse() throws Exception {
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        var exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course, 1);
+        var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null, null, null, null, null, null, null, null);
+        var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+        ExamUser examUser = request.postWithMultipartFile("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
+                ExamUser.class, HttpStatus.OK);
+
+        // the registered student only is a student of the course of the exam, so neither the signature nor the image of any exam user is theirs to read
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        request.get("%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, examUser.getSigningImagePath()), HttpStatus.FORBIDDEN, byte[].class);
+        request.get("/api/core/files/exam-users/" + examUser.getId() + "/image.png", HttpStatus.FORBIDDEN, byte[].class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetExamUserFilesNotFoundForUnknownExamUser() throws Exception {
+        request.get("/api/core/files/exam-users/999999/signatures/signature.png", HttpStatus.NOT_FOUND, byte[].class);
+        request.get("/api/core/files/exam-users/999999/image.png", HttpStatus.NOT_FOUND, byte[].class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetTemplateFile() throws Exception {
         String javaReadme = request.get("/api/core/files/templates/JAVA/PLAIN_MAVEN", HttpStatus.OK, String.class);
         assertThat(javaReadme).isNotEmpty();

@@ -69,12 +69,11 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - In production client TypeScript, do not copy objects with spread, `Object.assign` or
   `structuredClone`; use the repository's deep-clone helpers. Array spread and object rest are
   allowed. [client development](documentation/docs/developer/guidelines/client-development.mdx)
-- Use TUM AET UI and Tailwind. Do not add Bootstrap or ng-bootstrap. If TUM AET UI lacks a reusable
-  feature, extend it on native HTML, Angular Aria or stable Angular CDK primitives; use PrimeNG
-  only if that cannot reasonably be done in the same change, and explain the fallback in the PR.
-  [TUM AET UI](documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx)
-- Use semantic colour tokens, not primitive colours, Bootstrap classes or hand-written PrimeNG
-  root classes. [client theming](documentation/docs/developer/guidelines/client-theming.mdx)
+- Use TUM AET UI and Tailwind. Bootstrap, ng-bootstrap and PrimeNG are removed from the client; do
+  not add them again. If TUM AET UI lacks a reusable feature, extend it on native HTML, Angular
+  Aria or stable Angular CDK primitives. [TUM AET UI](documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx)
+- Use semantic colour tokens, not primitive colours or the class names of the removed libraries.
+  [client theming](documentation/docs/developer/guidelines/client-theming.mdx)
 
 ### Everywhere
 

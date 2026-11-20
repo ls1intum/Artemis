@@ -57,7 +57,7 @@ import { MockParticipationService } from 'test/helpers/mocks/service/mock-partic
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-exercise-status.component';
@@ -78,8 +78,7 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -115,7 +114,6 @@ describe('CodeEditorInstructorIntegration', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
-                MockModule(NgbTooltipModule),
                 FaIconComponent,
                 CodeEditorInstructorAndEditorContainerComponent,
                 CodeEditorContainerComponent,
@@ -161,8 +159,8 @@ describe('CodeEditorInstructorIntegration', () => {
                 },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
-                // CodeEditorActionsComponent and ResultComponent inject PrimeNG's DialogService, which is not provided in root.
-                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
+                // Keeps CodeEditorActionsComponent and ResultComponent from opening real dialogs.
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
                 MockProvider(ProfileService, {
                     getProfileInfo: () => mockProfileInfo,
                 }),
