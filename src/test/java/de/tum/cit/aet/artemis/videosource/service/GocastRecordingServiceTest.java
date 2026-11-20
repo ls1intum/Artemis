@@ -107,10 +107,10 @@ class GocastRecordingServiceTest {
             // 64 MiB is larger than the socket buffers, but the input itself only allocates one block for its contents.
             var block = new byte[64 * 1024];
             var blocks = IntStream.range(0, 1024).mapToObj(_ -> new ByteArrayInputStream(block)).toList();
-            try (var video = new SequenceInputStream(Collections.enumeration(blocks))) {
-                assertThatThrownBy(() -> recordingService.transferUpload(target, video)).isInstanceOfSatisfying(GocastIntegrationException.class,
-                        failure -> assertThat(failure.getUpstreamStatus()).isEqualTo(HttpStatus.BAD_GATEWAY));
-            }
+            // The multipart writer owns this in-memory stream and can still be closing it when the timeout returns.
+            var video = new SequenceInputStream(Collections.enumeration(blocks));
+            assertThatThrownBy(() -> recordingService.transferUpload(target, video)).isInstanceOfSatisfying(GocastIntegrationException.class,
+                    failure -> assertThat(failure.getUpstreamStatus()).isEqualTo(HttpStatus.BAD_GATEWAY));
             // The peer did receive the start of the request. It never drained the body or returned a response.
             try (var peer = listener.accept()) {
                 peer.setSoTimeout(1000);
