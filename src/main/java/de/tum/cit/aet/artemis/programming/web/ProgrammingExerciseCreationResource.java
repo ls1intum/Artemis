@@ -153,7 +153,6 @@ public class ProgrammingExerciseCreationResource {
         // After the role check, so that a caller who may not create exercises is not told what the dates should be.
         AgentDraftRules.requireDraftDatesForCreate(createDTO.releaseDate(), createDTO.startDate());
         programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, buildConfig, course);
-        programmingExerciseValidationService.validatePackageNameIsNotReserved(programmingExercise);
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
 

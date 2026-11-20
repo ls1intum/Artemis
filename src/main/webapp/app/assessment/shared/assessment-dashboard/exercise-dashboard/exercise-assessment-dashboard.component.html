@@ -645,11 +645,7 @@
                     <!-- Complaints -->
                     @if (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED || isTestRun()) {
                         <h4 class="inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.complaints"></h4>
-                        <fa-icon
-                            class="text-(--tumaet-ui-muted-color)"
-                            [icon]="faQuestionCircle"
-                            [tumAetUiTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"
-                        />
+                        <fa-icon class="text-muted-color" [icon]="faQuestionCircle" [tumAetUiTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate" />
                         <div class="overflow-x-auto">
                             <tumaet-ui-table-layout
                                 [empty]="!submissionsWithComplaints()?.length"
@@ -762,7 +758,7 @@
                     @if ((tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED) && !isExamMode()) {
                         <h4 class="inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.moreFeedback"></h4>
                         <fa-icon
-                            class="text-(--tumaet-ui-muted-color)"
+                            class="text-muted-color"
                             [icon]="faQuestionCircle"
                             [tumAetUiTooltip]="'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestHint' | artemisTranslate"
                         />

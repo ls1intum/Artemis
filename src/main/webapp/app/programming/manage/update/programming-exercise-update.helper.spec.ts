@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/foundation/constants/input.constants';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { deriveDefaultPackageName, isReservedAresPackageName } from 'app/programming/manage/update/programming-exercise-update.helper';
+import { deriveDefaultPackageName } from 'app/programming/manage/update/programming-exercise-update.helper';
 
 function exercise(language: ProgrammingLanguage, shortName: string, title = 'Bubble Sort', courseShortName = 'ITP2026'): ProgrammingExercise {
     const course = new Course();
@@ -51,25 +52,9 @@ describe('deriveDefaultPackageName', () => {
         expect(deriveDefaultPackageName(exercise(ProgrammingLanguage.JAVA, ''))).toBeUndefined();
     });
 
-    it('should never derive a name that Ares reserves', () => {
+    it('should never derive a name that the package rule rejects', () => {
         const derived = deriveDefaultPackageName(exercise(ProgrammingLanguage.JAVA, 'java'));
-        expect(isReservedAresPackageName(ProgrammingLanguage.JAVA, derived)).toBe(false);
-    });
-});
-
-describe('isReservedAresPackageName', () => {
-    it.each(['de', 'de.tum', 'de.tum.cit.ase', 'de.tum.cit.ase.ares.api.student', 'com', 'org', 'net', 'java', 'java.util', 'org.aspectj.weaver'])(
-        'should reserve %s',
-        (packageName) => {
-            expect(isReservedAresPackageName(ProgrammingLanguage.JAVA, packageName)).toBe(true);
-        },
-    );
-
-    it.each(['de.test', 'de.tum.in', 'de.tum.cit.aet.course.exercise', 'com.example', 'javaexercise'])('should allow %s', (packageName) => {
-        expect(isReservedAresPackageName(ProgrammingLanguage.KOTLIN, packageName)).toBe(false);
-    });
-
-    it('should only apply to languages tested with Ares', () => {
-        expect(isReservedAresPackageName(ProgrammingLanguage.GO, 'java')).toBe(false);
+        expect(derived).toBeDefined();
+        expect(new RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN).test(derived!)).toBe(true);
     });
 });

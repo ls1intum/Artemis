@@ -386,15 +386,14 @@
                 "packageName": {
                     "undefined": "Du musst einen Package-Namen angeben.",
                     "pattern": {
-                        "JAVA": "Der Package-Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\".",
-                        "KOTLIN": "Der Package-Name muss aus einem oder mehreren gültigen Kotlin-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.kotlin\".",
+                        "JAVA": "Der Package-Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\". Die Namen \"de\", \"de.tum\", \"de.tum.cit\", \"de.tum.cit.ase\", \"com\", \"org\", \"net\", \"com.ibm\" und \"com.tngtech\" sind nicht erlaubt, ebenso wenig Namen innerhalb eines Packages, das für die Tests und ihre Bibliotheken reserviert ist, etwa \"java\", \"org.apache\", \"org.junit\" oder \"de.tum.cit.ase.ares\" (z.B. \"java.util\").",
+                        "KOTLIN": "Der Package-Name muss aus einem oder mehreren gültigen Kotlin-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.kotlin\". Die Namen \"de\", \"de.tum\", \"de.tum.cit\", \"de.tum.cit.ase\", \"com\", \"org\", \"net\", \"com.ibm\" und \"com.tngtech\" sind nicht erlaubt, ebenso wenig Namen innerhalb eines Packages, das für die Tests und ihre Bibliotheken reserviert ist, etwa \"java\", \"org.apache\", \"org.junit\" oder \"de.tum.cit.ase.ares\" (z.B. \"java.util\").",
                         "SWIFT": "Der Package-Name muss aus einem oder mehreren gültigen Swift-Bezeichnern bestehen, die nicht voneinander separiert sind, z.B. \"SwiftEx\".",
                         "JAVA_BLACKBOX": "Der Paketname muss ein gültiger Java-Bezeicher sein. Zusätzlich sind Trennpunkte im Paketnamen für den DejaGnu Aufgabentyp nicht erlaubt.",
                         "GO": "Der Package-Name muss ein gültiger Go-Identifier sein, z.B. \"exercise\".",
                         "DART": "Der Package-Name muss ein kleingeschriebener Dart-Identifier sein, z.B. \"exercise01\"."
                     },
-                    "maxlength": "Der Package-Name darf nicht mehr als {{ max }} Zeichen enthalten.",
-                    "reserved": "Dieses Package ist vom Testframework Ares reserviert, dadurch würden alle Tests fehlschlagen. Verwende ein spezifischeres Package, z.B. \"de.tum.cit.aet.sorting\" statt \"de\", \"org\" oder \"java.util\"."
+                    "maxlength": "Der Package-Name darf nicht mehr als {{ max }} Zeichen enthalten."
                 },
                 "points": {
                     "undefined": "Du musst die Punkte angeben.",

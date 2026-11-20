@@ -26,7 +26,7 @@
                             @if (capReducesMaxPoints()) {
                                 <fa-icon
                                     [icon]="faCircleInfo"
-                                    class="text-text-secondary"
+                                    class="text-muted-color"
                                     [tumAetUiTooltip]="
                                         'artemisApp.exerciseVariantGroup.detail.pointsTooltip' | artemisTranslate: { total: exerciseSumMaxPoints(), cap: group.maxPoints }
                                     "
@@ -68,7 +68,7 @@
             <div class="group-panel-scroll">
                 <div class="mb-4!">
                     <div class="mb-1 font-semibold" jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.heading"></div>
-                    <p class="mb-0 text-text-secondary">
+                    <p class="mb-0 text-muted-color">
                         <span jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.body" [translateValues]="{ count: exercises().length }"></span>
                         @if (capReducesMaxPoints()) {
                             <span jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.cappedScore" [translateValues]="{ maxPoints: group.maxPoints }"></span>
@@ -86,8 +86,8 @@
                             <!-- `gap-2`, the same gap the title bar keeps between its own title and information boxes. -->
                             <a class="variant-card__link flex flex-1 flex-col gap-2" [routerLink]="exerciseLink(exercise)">
                                 <div class="flex items-center gap-2">
-                                    <fa-icon [icon]="getIcon(exercise.type)" class="text-text-secondary" />
-                                    <span class="font-semibold text-text">{{ exercise.title }}</span>
+                                    <fa-icon [icon]="getIcon(exercise.type)" class="text-muted-color" />
+                                    <span class="font-semibold text-color">{{ exercise.title }}</span>
                                 </div>
 
                                 <jhi-exercise-headers-information

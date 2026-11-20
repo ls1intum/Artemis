@@ -9,7 +9,7 @@ import { FormsModule, NgModel } from '@angular/forms';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseTheiaComponent } from 'app/programming/manage/update/update-components/theia/programming-exercise-theia.component';
-import { ProgrammingExerciseInputField, isReservedAresPackageName } from 'app/programming/manage/update/programming-exercise-update.helper';
+import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PACKAGE_NAME_LENGTH } from 'app/foundation/constants/input.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -112,14 +112,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
         const languageOrPackageExempt = !this.programmingExercise().programmingLanguage || !this.programmingExerciseCreationConfig().packageNameRequired;
         // Simple mode hides the field and derives the package name; the overall form validation still reports a missing or invalid one
         const fieldHidden = !this.isEditFieldDisplayedRecord().packageName;
-        const fieldValidOrExempt =
-            this.programmingExercise().projectType === ProjectType.XCODE || packageNameField?.isDisabled || (packageNameField?.valid && !this.isPackageNameReserved());
+        const fieldValidOrExempt = this.programmingExercise().projectType === ProjectType.XCODE || packageNameField?.isDisabled || packageNameField?.valid;
         return Boolean(languageOrPackageExempt || fieldHidden || fieldValidOrExempt);
-    }
-
-    /** Whether Ares 2 would refuse the package name of this new exercise. */
-    isPackageNameReserved(): boolean {
-        const exercise = this.programmingExercise();
-        return !exercise.id && isReservedAresPackageName(exercise.programmingLanguage, exercise.packageName);
     }
 }

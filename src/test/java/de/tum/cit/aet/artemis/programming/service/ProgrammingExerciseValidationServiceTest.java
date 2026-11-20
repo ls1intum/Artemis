@@ -6,10 +6,13 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +21,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.env.MockEnvironment;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
@@ -28,6 +32,7 @@ import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -110,36 +115,10 @@ class ProgrammingExerciseValidationServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "de.test", "de.tum.cit.aet", "a", "de.test.sorting" })
+    @ValueSource(strings = { "de.test", "de.tum.cit.aet", "a", "de.test.sorting", "de.tum.in", "net.java", "org.example", "javax2.test", "de.tum.cit.ase.aresx", "dee",
+            "org.jetbrainsx", "kotlinx.test" })
     void validatePackageName_acceptsAWellFormedJavaPackage(String packageName) {
         assertThatCode(() -> validationService.validatePackageName(exerciseWithPackageName(ProgrammingLanguage.JAVA, packageName))).doesNotThrowAnyException();
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "de", "de.tum", "de.tum.cit", "de.tum.cit.ase", "de.tum.cit.ase.ares", "de.tum.cit.ase.ares.api.student", "com", "org", "net", "java", "java.util",
-            "org.aspectj.weaver", "com.sun.tools" })
-    void validatePackageNameIsNotReserved_rejectsAPackageAresClaimsForItself(String packageName) {
-        // Ares 2 fails every test when compiled exercise code lies inside or above one of its reserved namespaces.
-        assertThatExceptionOfType(BadRequestAlertException.class).as("the package name '%s' must be rejected", packageName)
-                .isThrownBy(() -> validationService.validatePackageNameIsNotReserved(newExercise(ProgrammingLanguage.KOTLIN, packageName))).withMessageContaining("reserved");
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "de.test", "de.tum.in", "de.tum.cit.aet.course.exercise", "de.tum.cit.asedemo", "com.example", "org.example.sorting", "javaexercise" })
-    void validatePackageNameIsNotReserved_acceptsAPackageBesideTheReservedNamespaces(String packageName) {
-        assertThatCode(() -> validationService.validatePackageNameIsNotReserved(newExercise(ProgrammingLanguage.JAVA, packageName))).doesNotThrowAnyException();
-    }
-
-    @Test
-    void validatePackageNameIsNotReserved_ignoresLanguagesWithoutAres() {
-        assertThatCode(() -> validationService.validatePackageNameIsNotReserved(newExercise(ProgrammingLanguage.GO, "java"))).doesNotThrowAnyException();
-    }
-
-    private static ProgrammingExercise newExercise(ProgrammingLanguage programmingLanguage, String packageName) {
-        ProgrammingExercise exercise = new ProgrammingExercise();
-        exercise.setProgrammingLanguage(programmingLanguage);
-        exercise.setPackageName(packageName);
-        return exercise;
     }
 
     @ParameterizedTest
@@ -148,6 +127,47 @@ class ProgrammingExerciseValidationServiceTest {
         // A reserved word or an illegal character produces a template repository that does not compile, which the student cannot fix.
         assertThatExceptionOfType(BadRequestAlertException.class).as("the package name '%s' must be rejected", packageName)
                 .isThrownBy(() -> validationService.validatePackageName(exerciseWithPackageName(ProgrammingLanguage.JAVA, packageName))).withMessageContaining("invalid");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "de", "de.tum", "de.tum.cit", "de.tum.cit.ase", "de.tum.cit.ase.ares", "com", "org", "net", "com.ibm", "com.tngtech", "java", "java.util",
+            "javax.swing", "sun.misc", "jdk.internal", "com.sun", "com.sun.test", "net.bytebuddy", "org.aspectj.lang", "com.ibm.wala.test", "com.tngtech.archunit",
+            "de.tum.cit.ase.ares.api", "de.tum.cit.ase.ares.api.test", "de.tum.cit.ase.ares.other", "org.apache.commons", "com.google.common", "org.junit.jupiter",
+            "kotlin.collections", "org.jetbrains.annotations" })
+    void validatePackageName_rejectsAPackageThatAresCannotSupervise(String packageName) {
+        // Ares 2 refuses to run any test when a compiled class lies in a package that contains or lies inside one of its reserved namespaces,
+        // and the build guards of the test templates reject student classes in the packages of Ares and of the libraries that come with it.
+        for (ProgrammingLanguage language : List.of(ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN)) {
+            assertThatExceptionOfType(BadRequestAlertException.class).as("the package name '%s' must be rejected for %s", packageName, language)
+                    .isThrownBy(() -> validationService.validatePackageName(exerciseWithPackageName(language, packageName))).withMessageContaining("invalid");
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "templates/java/test/maven/projectTemplate/pom.xml", "templates/java/maven_maven/test/projectTemplate/pom.xml",
+            "templates/java/test/gradle/projectTemplate/gradle/AresReservedPackages.gradle", "templates/kotlin/test/maven/projectTemplate/pom.xml" })
+    void validatePackageName_rejectsEveryPackageThatTheBuildGuardsOfTheTemplatesReject(String template) throws IOException {
+        String content = new ClassPathResource(template).getContentAsString(StandardCharsets.UTF_8);
+        // Both the Maven guard (<include name="org/apache/**"/>) and the Gradle guard ('org/apache/**') list a reserved package as a path with a trailing /**
+        List<String> reservedPackages = Pattern.compile("[\"']([A-Za-z0-9_/]+)/\\*\\*[\"']").matcher(content).results().map(match -> match.group(1).replace('/', '.')).toList();
+        assertThat(reservedPackages).as("the reserved packages that are listed in %s", template).hasSizeGreaterThan(30);
+
+        for (String reservedPackage : reservedPackages) {
+            for (String packageName : List.of(reservedPackage, reservedPackage + ".sorting")) {
+                assertThatExceptionOfType(BadRequestAlertException.class).as("the package name '%s' must be rejected, as %s rejects it", packageName, template)
+                        .isThrownBy(() -> validationService.validatePackageName(exerciseWithPackageName(ProgrammingLanguage.JAVA, packageName))).withMessageContaining("invalid");
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "org", "java", "de" })
+    void validatePackageName_acceptsAReservedNameForTheBlackBoxProjectType(String packageName) {
+        // The tests of a black-box exercise are not run with Ares, and the package of its template is a folder name.
+        ProgrammingExercise exercise = exerciseWithPackageName(ProgrammingLanguage.JAVA, packageName);
+        exercise.setProjectType(ProjectType.MAVEN_BLACKBOX);
+
+        assertThatCode(() -> validationService.validatePackageName(exercise)).doesNotThrowAnyException();
     }
 
     @Test

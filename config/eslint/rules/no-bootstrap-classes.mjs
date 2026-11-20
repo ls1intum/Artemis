@@ -55,7 +55,7 @@ const BANNED = [
     // Bootstrap semantic text colors with no brand-bound Tailwind equivalent -> text-muted-color / tokens
     /^text-muted$/,
     /^text-body(-secondary|-tertiary|-emphasis)?$/,
-    // Bootstrap greyscale text colors -> text-text-secondary / semantic token. `text-primary`/`text-white`/
+    // Bootstrap greyscale text colors -> text-muted-color / semantic token. `text-primary`/`text-white`/
     // `text-black` are NOT listed: they are also Tailwind utilities (`text-primary` is defined in tailwind.css).
     /^text-(secondary|light|dark)$/,
     // Bootstrap semantic state colors (text/border/bg) -> named state tokens, e.g. text-state-danger,

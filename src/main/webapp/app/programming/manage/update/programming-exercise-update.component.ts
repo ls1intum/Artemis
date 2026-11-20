@@ -55,12 +55,7 @@ import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/upd
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
-import {
-    IS_DISPLAYED_IN_SIMPLE_MODE,
-    ProgrammingExerciseInputField,
-    deriveDefaultPackageName,
-    isReservedAresPackageName,
-} from 'app/programming/manage/update/programming-exercise-update.helper';
+import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField, deriveDefaultPackageName } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
@@ -1552,6 +1547,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateExercisePackageName(validationErrorReasons: ValidationReason[]): void {
+        // The package name of a saved exercise is read-only. Do not let a name that was valid when the exercise was created, but is not any more, block saving other changes.
+        if (this.isEdit && !this.isImportFromExistingExercise && !this.isImportFromFile && !this.isImportFromSharing && this.programmingExercise.id !== undefined) {
+            return;
+        }
         let regex;
         switch (this.programmingExercise.programmingLanguage) {
             case ProgrammingLanguage.JAVA:
@@ -1601,15 +1600,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     : `artemisApp.exercise.form.packageName.pattern.${this.programmingExercise.programmingLanguage}`;
             validationErrorReasons.push({
                 translateKey,
-                translateValues: {},
-            });
-            return;
-        }
-
-        // Only new exercises: an imported exercise keeps its package name, which cannot be changed here
-        if (this.isCreate && isReservedAresPackageName(this.programmingExercise.programmingLanguage, this.programmingExercise.packageName)) {
-            validationErrorReasons.push({
-                translateKey: 'artemisApp.exercise.form.packageName.reserved',
                 translateValues: {},
             });
         }
