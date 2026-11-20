@@ -191,8 +191,10 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
             } else if (this.activeIndex() >= optionCount) {
                 // The last option that can be chosen; -1 if none can be chosen.
                 this.keyManager.setActiveItem(this.visibleOptions().findLastIndex((option) => !this.isOptionDisabled(option)));
-            } else if (this.isOpen() && this.activeIndex() < 0) {
-                this.keyManager.setFirstItemActive();
+            } else if (this.isOpen() && (this.activeIndex() < 0 || this.isDisabledUnselectedOption(this.visibleOptions()[this.activeIndex()]))) {
+                // The first option that can be chosen, also when the active one became disabled while the panel is open; -1 if none can be chosen. The
+                // selected option stays active although it is disabled, so the panel shows the current value.
+                this.keyManager.setActiveItem(this.visibleOptions().findIndex((option) => !this.isOptionDisabled(option)));
             }
         });
     }
@@ -470,6 +472,10 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
     protected isOptionDisabled(option: unknown): boolean {
         const key = this.optionDisabled();
         return !!(key && option !== null && typeof option === 'object' && (option as Record<string, unknown>)[key]);
+    }
+
+    private isDisabledUnselectedOption(option: unknown): boolean {
+        return this.isOptionDisabled(option) && !this.isSelected(option);
     }
 
     protected optionClasses(option: unknown, index: number): string {

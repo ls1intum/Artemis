@@ -745,18 +745,22 @@ public class SecurityFrameworkService {
      *
      * @throws ConflictException if someone pushed to the branch meanwhile, which rejected the lease; the caller can reload and try again
      */
-    private void pushWithLease(ProgrammingExercise exercise, Repository repository, String commitHash, String branch, String checkedOutHead)
-            throws GitAPIException, IOException {
+    private void pushWithLease(ProgrammingExercise exercise, Repository repository, String commitHash, String branch, String checkedOutHead) throws GitAPIException, IOException {
         try {
             gitService.pushCommitWithLease(repository, commitHash, branch, checkedOutHead);
         }
         catch (GitAPIException e) {
             try (Repository serverRepository = bareGitRepositoryService.getBareRepository(testRepositoryUri(exercise), branch, false)) {
                 ObjectId head = serverRepository.resolve(Constants.R_HEADS + branch);
+                if (head != null && head.name().equals(commitHash)) {
+                    // The push reached the server and failed only afterwards, e.g. while reading its answer, so the change is saved.
+                    log.warn("The push of {} to the tests repository of exercise {} failed after the server took it", commitHash, exercise.getId(), e);
+                    return;
+                }
                 if (head != null && !head.name().equals(checkedOutHead)) {
                     log.info("The tests repository of exercise {} changed while a Security Framework change was prepared, so it was not pushed", exercise.getId(), e);
-                    throw new ConflictException("Someone changed the tests repository while this change was prepared, so it was not saved. Reload and try again.",
-                            ENTITY_NAME, "securityFrameworkConcurrentChange");
+                    throw new ConflictException("Someone changed the tests repository while this change was prepared, so it was not saved. Reload and try again.", ENTITY_NAME,
+                            "securityFrameworkConcurrentChange");
                 }
             }
             throw e;

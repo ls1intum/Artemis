@@ -326,6 +326,27 @@ describe('TumAetUiSelectComponent', () => {
             expect(activeId).toBe(activeIndex === undefined ? null : optionElements()[activeIndex].id);
         });
 
+        it('moves the highlight to an option that can be chosen when the active one becomes disabled while the panel is open', () => {
+            component.writeValue(undefined);
+            fixture.detectChanges();
+            openPanel();
+            expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[0].id);
+            const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+
+            fixture.componentRef.setInput('options', [{ label: 'Alpha', value: 'a', unavailable: true }, ...WITH_DISABLED.slice(1)]);
+            fixture.detectChanges();
+            expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[2].id);
+            triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            fixture.detectChanges();
+            expect(emitSpy).toHaveBeenLastCalledWith('c');
+
+            // Without an option that can be chosen, no option is highlighted.
+            openPanel();
+            fixture.componentRef.setInput('options', [{ label: 'Alpha', value: 'a', unavailable: true }]);
+            fixture.detectChanges();
+            expect(triggerButton().getAttribute('aria-activedescendant')).toBeNull();
+        });
+
         it('closes on Tab without selecting when the active option is disabled', () => {
             component.writeValue('b');
             fixture.detectChanges();
