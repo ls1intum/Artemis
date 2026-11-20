@@ -52,6 +52,17 @@ public class RateLimitService {
     }
 
     /**
+     * Whether a rate limit is currently enforced, taking both the global configuration and the runtime feature toggle into account.
+     * Limits that are always enforced remain enabled regardless of those switches.
+     *
+     * @param type the rate limit type
+     * @return true when the limit is active
+     */
+    public boolean isRateLimitingEnabled(RateLimitType type) {
+        return !isSwitchedOff(type);
+    }
+
+    /**
      * Enforces rate limiting by consuming 1 token from a per-minute bucket.
      * Throws {@link RateLimitExceededException} if the rate limit is exceeded.
      *

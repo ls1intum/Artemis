@@ -118,6 +118,7 @@ public class RateLimitConfigurationService {
             case FAILED_LOGIN -> properties.getFailedLoginRequestsPerMinute() != null ? properties.getFailedLoginRequestsPerMinute() : type.getDefaultRpm();
             case GIT_AUTHENTICATION -> properties.getGitAuthenticationRequestsPerMinute() != null ? properties.getGitAuthenticationRequestsPerMinute() : type.getDefaultRpm();
             case LOGIN_OPTIONS -> properties.getLoginOptionsRequestsPerMinute() != null ? properties.getLoginOptionsRequestsPerMinute() : type.getDefaultRpm();
+            case OIDC_AUTHORIZATION -> properties.getOidcAuthorizationRequestsPerMinute() != null ? properties.getOidcAuthorizationRequestsPerMinute() : type.getDefaultRpm();
             case PROBLEM_STATEMENT_RENDERING ->
                 properties.getProblemStatementRenderingRequestsPerMinute() != null ? properties.getProblemStatementRenderingRequestsPerMinute() : type.getDefaultRpm();
             case AI_SEARCH_PIPELINE -> properties.getAiSearchPipelineRequestsPerMinute() != null ? properties.getAiSearchPipelineRequestsPerMinute() : type.getDefaultRpm();
