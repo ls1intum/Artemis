@@ -656,6 +656,8 @@ class SecurityPolicyEditorServiceTest {
         editorService.commit(exercise(), change(editor, edited(changed, BOTH_CLASSES)), user);
 
         assertThat(loadedPolicy(editorService.getEditor(exercise())).files()).containsExactly(LOGS);
+        // The commit keeps the test case added meanwhile.
+        assertThat(readPushed(SORTING_TEST_PATH)).hasValueSatisfying(content -> assertThat(content).contains("    @Test\n    void testQuickSort() {\n    }"));
     }
 
     @Test
@@ -918,7 +920,7 @@ class SecurityPolicyEditorServiceTest {
         SecurityPolicyChangeDTO change = change(editor, edited(withFiles(loadedPolicy(editor), List.of(LOGS)), BOTH_CLASSES));
         doThrow(new VersionControlException("Build trigger failed")).when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any());
         assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change, user));
-        // Someone pushes on top of the change; the processing of that commit builds the change as well.
+        // Someone pushes on top of the change, and the processing of that commit fails, too.
         pushToTests("README.md", "Edited in the online editor");
         String later = pushedHead();
         doNothing().when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any());
@@ -928,6 +930,8 @@ class SecurityPolicyEditorServiceTest {
         assertThat(pushedHead()).isEqualTo(later);
         assertThat(result.editor().baseCommitHash()).isEqualTo(later);
         assertThat(loadedPolicy(result.editor()).files()).containsExactly(LOGS);
+        // The retry resumes the processing at the head, which builds the change as well.
+        verify(localVCPushProcessingService).processNewPush(eq(later), any(), any(), any(), any());
     }
 
     @Test
@@ -1307,6 +1311,13 @@ class SecurityPolicyEditorServiceTest {
         assertThat(loaded.testClasses().getFirst().testCases()).containsExactly("testBubbleSort", "testMergeSort");
         assertThat(head.testClasses().getFirst().testCases()).containsExactly("testBubbleSort", "testMergeSort", "testQuickSort");
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.getTestStructure(exercise(), "0".repeat(40)))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
+        // The id of a file of the repository names no commit either.
+        String fileId;
+        try (var repository = new FileRepositoryBuilder().setGitDir(testsRemote.toFile()).setBare().build()) {
+            fileId = repository.resolve("refs/heads/main:" + SORTING_TEST_PATH).name();
+        }
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.getTestStructure(exercise(), fileId))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
     }
 

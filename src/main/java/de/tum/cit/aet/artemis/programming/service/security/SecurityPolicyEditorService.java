@@ -27,6 +27,7 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
@@ -318,12 +319,16 @@ public class SecurityPolicyEditorService {
             RevCommit commit = head;
             if (commitHash != null && !commitHash.equals(head.name())) {
                 ObjectId id = ObjectId.isId(commitHash) ? ObjectId.fromString(commitHash) : null;
+                String message = "The tests repository has no commit " + commitHash + ". Reload the policies and try again.";
                 if (id == null || !repository.getObjectDatabase().has(id)) {
-                    String message = "The tests repository has no commit " + commitHash + ". Reload the policies and try again.";
                     throw new ConflictException(message, ENTITY_NAME, "securityPolicyChanged");
                 }
                 try (RevWalk revWalk = new RevWalk(repository)) {
                     commit = revWalk.parseCommit(id);
+                }
+                catch (IncorrectObjectTypeException e) {
+                    // The id names another object of the repository, e.g. a file, so it is no commit the editor could have loaded.
+                    throw new ConflictException(message, ENTITY_NAME, "securityPolicyChanged");
                 }
             }
             return AresTestCases.structure(SecurityFrameworkCommitFiles.javaSources(repository, commit.getTree()));
@@ -440,9 +445,10 @@ public class SecurityPolicyEditorService {
 
     /**
      * The commit since the one the editor loaded that is the commit of this very change, if there is one. That is the case when a retry follows a request
-     * whose push succeeded but whose processing failed: the change must not be applied again, which would fail as a conflict with itself. If it is still the
-     * head, the pending processing is resumed; if other commits followed it, their own processing builds it. The fingerprint covers the whole request,
-     * including the commit the editor loaded, so a different change, even of the same base commit, has another fingerprint and still fails as a conflict.
+     * whose push succeeded but whose processing failed: the change must not be applied again, which would fail as a conflict with itself. The pending
+     * processing is resumed at the head, which contains the change, unless the processing of a later commit has completed and built it as well. The
+     * fingerprint covers the whole request, including the commit the editor loaded, so a different change, even of the same base commit, has another
+     * fingerprint and still fails as a conflict.
      */
     private static Optional<String> appliedCommit(Repository repository, String fingerprint, String baseCommitHash) {
         try (RevWalk revWalk = new RevWalk(repository)) {
