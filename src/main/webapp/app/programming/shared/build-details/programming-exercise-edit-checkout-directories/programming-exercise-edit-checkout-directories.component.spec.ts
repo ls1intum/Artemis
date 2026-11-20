@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
@@ -26,6 +28,7 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [ProgrammingExerciseEditCheckoutDirectoriesComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideComponent(ProgrammingExerciseEditCheckoutDirectoriesComponent, {
                 remove: { imports: [HelpIconComponent, TranslateDirective] },
@@ -49,6 +52,25 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it.each([
+        ['an empty path', ''],
+        ['a path with an invalid character', 'tests?'],
+    ])('should mark the field itself as invalid for %s', async (_description, value) => {
+        fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', submissionBuildPlanCheckoutRepositories);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const input: HTMLInputElement = fixture.nativeElement.querySelector('#field_testRepositoryCheckoutPath');
+        expect(input.getAttribute('aria-invalid')).toBeNull();
+
+        input.value = value;
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(input.getAttribute('aria-invalid')).toBe('true');
     });
 
     it('should re-seed editable and input fields when inputs change', () => {

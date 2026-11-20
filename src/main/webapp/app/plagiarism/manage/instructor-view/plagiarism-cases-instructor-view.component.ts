@@ -25,7 +25,6 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-plagiarism-cases-instructor-view',
     templateUrl: './plagiarism-cases-instructor-view.component.html',
-    styleUrls: ['./plagiarism-cases-instructor-view.component.scss'],
     imports: [
         TranslateDirective,
         DocumentationButtonComponent,

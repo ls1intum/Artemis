@@ -65,6 +65,7 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         expect(httpStub).toHaveBeenCalledWith(
             `/api/lti/admin/lti13/dynamic-registration?openid_configuration=${encodeURIComponent(PLATFORM_CONFIGURATION_URL)}&registration_token=token`,
             null,
+            undefined,
         );
 
         expect(comp.isRegistering()).toBe(false);
@@ -85,6 +86,7 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         expect(httpStub).toHaveBeenCalledWith(
             `/api/lti/admin/lti13/dynamic-registration?openid_configuration=${encodeURIComponent(PLATFORM_CONFIGURATION_URL)}&registration_token=token`,
             null,
+            undefined,
         );
 
         expect(comp.isRegistering()).toBe(false);

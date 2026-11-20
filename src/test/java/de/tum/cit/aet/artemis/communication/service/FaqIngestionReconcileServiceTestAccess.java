@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.communication.service;
 
 import java.util.Optional;
 
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 
@@ -17,7 +17,7 @@ public final class FaqIngestionReconcileServiceTestAccess {
         this.service = service;
     }
 
-    public static FaqIngestionReconcileServiceTestAccess create(FaqRepository faqRepository, Optional<PyrisFaqApi> pyrisFaqApi, Optional<IrisSettingsApi> irisSettingsApi,
+    public static FaqIngestionReconcileServiceTestAccess create(FaqTestRepository faqRepository, Optional<PyrisFaqApi> pyrisFaqApi, Optional<IrisSettingsApi> irisSettingsApi,
             int maxActionsPerRun) {
         return new FaqIngestionReconcileServiceTestAccess(new FaqIngestionReconcileService(faqRepository, pyrisFaqApi, irisSettingsApi, maxActionsPerRun));
     }

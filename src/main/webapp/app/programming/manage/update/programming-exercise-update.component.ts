@@ -458,7 +458,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.modePickerOptions = this.projectTypes?.map((projectType) => ({
             value: projectType,
             labelKey: 'artemisApp.programmingExercise.projectTypes.' + projectType.toString(),
-            btnClass: 'btn-secondary',
         }));
 
         if (languageChanged) {
@@ -1142,6 +1141,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param language to switch to.
      */
     onProgrammingLanguageChange(language: ProgrammingLanguage) {
+        // Choosing the language that is already selected changes nothing. Running the setter again would reset the
+        // options that depend on the language and reload the problem statement template.
+        if (language === this.selectedProgrammingLanguage) {
+            return language;
+        }
         // If there are unsaved changes and the user does not confirm, the language doesn't get changed
         if (this.hasUnsavedChanges) {
             const confirmLanguageChangeText = this.translateService.instant(this.translationBasePath + 'unsavedChangesLanguageChange');
@@ -1534,6 +1538,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateExercisePackageName(validationErrorReasons: ValidationReason[]): void {
+        // The package name of a saved exercise is read-only. Do not let a name that was valid when the exercise was created, but is not any more, block saving other changes.
+        if (this.isEdit && !this.isImportFromExistingExercise && !this.isImportFromFile && !this.isImportFromSharing && this.programmingExercise.id !== undefined) {
+            return;
+        }
         let regex;
         switch (this.programmingExercise.programmingLanguage) {
             case ProgrammingLanguage.JAVA:

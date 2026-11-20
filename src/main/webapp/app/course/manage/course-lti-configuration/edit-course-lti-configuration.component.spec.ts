@@ -3,7 +3,6 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { of } from 'rxjs';
-import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -69,7 +68,6 @@ describe('Edit Course LTI Configuration Component', () => {
             .overrideComponent(EditCourseLtiConfigurationComponent, {
                 set: {
                     imports: [
-                        NgbNavModule,
                         MockModule(ReactiveFormsModule),
                         MockDirective(TranslateDirective),
                         MockPipe(ArtemisTranslatePipe),

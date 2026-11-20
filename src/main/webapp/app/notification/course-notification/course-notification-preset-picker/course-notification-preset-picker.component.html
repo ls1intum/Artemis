@@ -35,7 +35,7 @@
                 <span class="flex flex-col gap-1">
                     <span class="flex items-center gap-2">
                         <fa-icon
-                            class="w-4 shrink-0 text-center text-(--tumaet-ui-muted-color)"
+                            class="w-4 shrink-0 text-center text-muted-color"
                             [class.text-primary!]="selectedCourseSettingPreset()?.identifier === preset.identifier"
                             [icon]="getPresetIcon(preset.identifier)"
                         />
@@ -45,10 +45,7 @@
                             <span [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.title'"></span>
                         }
                     </span>
-                    <span
-                        class="ms-6 text-sm text-(--tumaet-ui-muted-color) italic"
-                        [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.description'"
-                    ></span>
+                    <span class="ms-6 text-sm text-muted-color italic" [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.description'"></span>
                 </span>
             </button>
         }
@@ -64,7 +61,7 @@
             <span class="flex flex-col gap-1">
                 <span class="flex items-center gap-2">
                     <fa-icon
-                        class="w-4 shrink-0 text-center text-(--tumaet-ui-muted-color)"
+                        class="w-4 shrink-0 text-center text-muted-color"
                         [class.text-primary!]="selectedCourseSettingPreset() === undefined"
                         [icon]="getPresetIcon('customUserCourseNotificationSettingPreset')"
                     />
@@ -75,7 +72,7 @@
                     }
                 </span>
                 <span
-                    class="ms-6 text-sm text-(--tumaet-ui-muted-color) italic"
+                    class="ms-6 text-sm text-muted-color italic"
                     [jhiTranslate]="'artemisApp.courseNotification.preset.customUserCourseNotificationSettingPreset.description'"
                 ></span>
             </span>
