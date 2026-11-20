@@ -130,7 +130,7 @@
                     <ul class="m-0 flex list-none flex-col gap-1.5 ps-0">
                         @for (row of group.rows; track row.key) {
                             @let finding = row.finding;
-                            <li class="flex min-w-0 items-start gap-4 rounded-md border border-surface px-4 py-2" [class.bg-highlight-background]="row.selected">
+                            <li class="flex min-w-0 items-start gap-4 rounded-md border border-(--border-color) px-4 py-2" [class.bg-highlight-background]="row.selected">
                                 @if (finding.threadId !== undefined) {
                                     <tumaet-ui-checkbox
                                         [inputId]="'adapt-feedback-' + finding.threadId"
@@ -171,6 +171,7 @@
                                             severity="secondary"
                                             variant="text"
                                             size="small"
+                                            class="-ms-2.5"
                                             (click)="toggleExpanded(row.key)"
                                             [attr.aria-expanded]="row.expanded"
                                             data-testid="adapt-finding-expand"
@@ -211,7 +212,7 @@
         </div>
     } @else {
         <p
-            class="m-0 rounded-md border border-dashed border-surface px-4 py-2 text-sm text-muted-color"
+            class="m-0 rounded-md border border-(--border-color) px-4 py-2 text-sm text-muted-color"
             id="adaptExerciseFreeHelp"
             data-testid="adapt-no-comments"
             jhiTranslate="artemisApp.review.adaptExercise.freeHelp"
@@ -222,7 +223,7 @@
     <textarea
         tumAetUiTextarea
         id="adaptExerciseInstructions"
-        class="w-full"
+        class="w-full resize-y"
         rows="3"
         [attr.maxlength]="maxInstructionsLength"
         [tumAetUiInputDescribedBy]="!totalCount() ? 'adaptExerciseFreeHelp adaptExerciseCharacterCount' : 'adaptExerciseCharacterCount'"

@@ -1,5 +1,5 @@
 @if (binding()?.available !== false) {
-    <section class="mx-auto flex max-w-3xl flex-col gap-6 p-6 sm:p-6" aria-labelledby="gocast-heading">
+    <section class="mx-auto flex max-w-3xl flex-col gap-6 p-6" aria-labelledby="gocast-heading">
         <header class="flex flex-col gap-2">
             <h2 id="gocast-heading" class="m-0" jhiTranslate="artemisApp.gocast.title"></h2>
             <p class="m-0 text-(--text-body-secondary)" jhiTranslate="artemisApp.gocast.description"></p>
@@ -27,7 +27,7 @@
                 <span jhiTranslate="artemisApp.gocast.loading"></span>
             </p>
         } @else if (binding(); as current) {
-            <div class="rounded-xl border border-(--border-color) border-default bg-surface p-6 sm:p-5">
+            <div class="rounded-xl border border-(--border-color) border-default bg-surface p-6">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <span class="text-sm font-medium text-(--text-body-secondary)" jhiTranslate="artemisApp.gocast.status.label"></span>
                     <tumaet-ui-tag [severity]="statusSeverity()" [value]="'artemisApp.gocast.status.' + current.status.toLowerCase() | artemisTranslate" />

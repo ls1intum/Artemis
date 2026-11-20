@@ -60,12 +60,7 @@
                 [attr.aria-label]="'artemisApp.hyperion.activity.title' | artemisTranslate"
             >
                 @for (row of visibleRows(); track row.key) {
-                    <li
-                        class="activity-card rounded-xl border border-border p-6"
-                        [class.border-state-warning]="row.attention"
-                        data-testid="ai-activity-entry"
-                        [attr.data-job-key]="row.key"
-                    >
+                    <li class="activity-card rounded-xl border p-6" [class.border-state-warning]="row.attention" data-testid="ai-activity-entry" [attr.data-job-key]="row.key">
                         <div class="flex items-center justify-between gap-2">
                             <span class="text-xs font-semibold tracking-wide text-muted-color">{{ row.kindKey | artemisTranslate }}</span>
                             @if (!row.active) {

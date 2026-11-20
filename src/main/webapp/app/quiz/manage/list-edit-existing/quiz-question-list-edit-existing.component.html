@@ -17,7 +17,7 @@
             </div>
         </div>
         <hr />
-        <div class="question-options existing-question-container [&>*]:mx-1">
+        <div class="question-options existing-question-container [&>*:not(input):not(button):not(select):not(textarea)]:mx-1">
             @if (currentState() === State.COURSE) {
                 <div class="existing-question-select-course w-full">
                     <span jhiTranslate="artemisApp.quizExercise.selectCourse" class="align-middle font-bold"></span>

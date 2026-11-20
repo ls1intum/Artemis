@@ -19,7 +19,7 @@
             ></a>
         </header>
         @if (showFilters()) {
-            <fieldset data-testid="statistics-filters" class="mb-6 rounded-xl border bg-(--tumaet-ui-content-background) p-5">
+            <fieldset data-testid="statistics-filters" class="mb-6 rounded-xl border border-(--border-color) bg-(--tumaet-ui-content-background) p-5">
                 <legend class="float-none w-auto px-2 text-base font-semibold" jhiTranslate="artemisApp.courseOverview.statistics.includeIndividualCategories"></legend>
                 <p class="mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.filterScope"></p>
                 <div class="flex flex-wrap gap-x-6 gap-y-3">
@@ -51,7 +51,7 @@
             </fieldset>
         }
         <div class="mb-6 grid gap-5 xl:grid-cols-[minmax(28rem,1.2fr)_minmax(0,1fr)]">
-            <section class="rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background) p-5" aria-labelledby="statistics-score-title">
+            <section class="rounded-xl border border-(--border-color) bg-(--tumaet-ui-content-background) p-5" aria-labelledby="statistics-score-title">
                 <h2 id="statistics-score-title" class="m-0 text-lg font-semibold!" jhiTranslate="artemisApp.courseOverview.statistics.totalScore"></h2>
                 <div class="mt-4 flex flex-wrap items-center justify-center gap-6 sm:justify-start">
                     <div class="statistics-score-ring" data-testid="total-score-doughnut">
@@ -102,7 +102,7 @@
                 }
             </section>
             <section
-                class="flex flex-col divide-y divide-(--tumaet-ui-border-color) rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background)"
+                class="flex flex-col divide-y divide-(--tumaet-ui-border-color) rounded-xl border bg-(--tumaet-ui-content-background)"
                 [attr.aria-label]="'artemisApp.courseOverview.statistics.redesign.participation' | artemisTranslate"
             >
                 <div class="flex flex-1 items-center justify-between gap-4 p-6">
@@ -146,7 +146,7 @@
         <div class="statistics-content-grid" [attr.data-materials]="showMaterials()">
             <jhi-course-statistics-performance class="min-w-0" [courseId]="activeCourseId()" [refresh]="refresh()" [excludedExerciseIds]="filteredExerciseIDs()" />
             @if (showMaterials()) {
-                <section class="rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background) p-5" aria-labelledby="statistics-material-title">
+                <section class="rounded-xl border border-(--border-color) bg-(--tumaet-ui-content-background) p-5" aria-labelledby="statistics-material-title">
                     <h2 id="statistics-material-title" class="m-0 text-lg font-semibold!" jhiTranslate="artemisApp.courseOverview.statistics.redesign.materialCompletion"></h2>
                     <p class="mt-1 text-sm text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.materialScope"></p>
                     @if (materialsLoading()) {
@@ -183,7 +183,7 @@
             }
         </div>
         @if (showCompetencies()) {
-            <section class="mb-6 overflow-hidden rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background)">
+            <section class="mb-6 overflow-hidden rounded-xl border border-(--border-color) bg-(--tumaet-ui-content-background)">
                 <h2 class="m-0 p-5 text-lg font-semibold!" jhiTranslate="artemisApp.courseOverview.statistics.redesign.competencyProgress"></h2>
                 @if (competenciesLoading()) {
                     <p role="status" class="p-5" jhiTranslate="artemisApp.courseOverview.statistics.redesign.loading"></p>

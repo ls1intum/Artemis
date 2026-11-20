@@ -12,7 +12,7 @@
     } @else {
         @for (feature of features; track feature.key) {
             @let featureKey = 'artemisApp.course.athenaConfig.' + feature.key;
-            <div class="flex items-start gap-3 rounded-lg border border-solid border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-6 py-5">
+            <div class="flex items-start gap-3 rounded-lg border border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-6 py-5">
                 <tumaet-ui-toggle-switch
                     class="shrink-0"
                     [inputId]="feature.testId + '-toggle'"

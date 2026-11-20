@@ -110,7 +110,7 @@
     <div class="question-card-body" [hidden]="isQuestionCollapsed()" id="collapseQuestion{{ questionIndex() }}">
         <div class="question-options" [class]="reEvaluationInProgress() ? 'question-options--row flex-wrap! items-center justify-start! m-0' : ''" [hidden]="showPreview()">
             <div [class]="reEvaluationInProgress() ? 'w-full px-3! md:w-1/3' : ''">
-                <div class="flex items-center [&>*]:mx-1" [class]="reEvaluationInProgress() ? 'mx-[5px] mb-[15px]' : ''">
+                <div class="flex items-center [&>*:not(input):not(button):not(select):not(textarea)]:mx-1" [class]="reEvaluationInProgress() ? 'mx-[5px] mb-[15px]' : ''">
                     <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
                     <tumaet-ui-select
                         [options]="scoringTypeOptions()"
@@ -128,7 +128,7 @@
             </div>
             @if (reEvaluationInProgress()) {
                 <div class="w-full px-3 md:w-1/6">
-                    <div class="flex items-center [&>*]:mx-1" [class]="reEvaluationInProgress() ? 'mx-[5px] mb-[15px]' : ''">
+                    <div class="flex items-center [&>*:not(input):not(button):not(select):not(textarea)]:mx-1" [class]="reEvaluationInProgress() ? 'mx-[5px] mb-[15px]' : ''">
                         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
                         <jhi-points-input
                             [ariaLabel]="'artemisApp.quizQuestion.score' | artemisTranslate"
@@ -141,7 +141,7 @@
                 </div>
             }
             <div [class]="reEvaluationInProgress() ? 'w-full px-3! md:w-1/4' : ''">
-                <div class="flex items-center [&>*]:mx-1" [class]="reEvaluationInProgress() ? 'mx-[5px] mb-[15px]' : ''">
+                <div class="flex items-center [&>*:not(input):not(button):not(select):not(textarea)]:mx-1" [class]="reEvaluationInProgress() ? 'mx-[5px] mb-[15px]' : ''">
                     <div class="flex items-center gap-2">
                         <tumaet-ui-checkbox inputId="{{ 'cbRandomizeOrderMC' + questionIndex() }}" [(ngModel)]="question().randomizeOrder" (changed)="questionUpdated.emit()" />
                         <label for="{{ 'cbRandomizeOrderMC' + questionIndex() }}" jhiTranslate="artemisApp.multipleChoiceQuestion.randomizeOrder"></label>
@@ -149,7 +149,7 @@
                 </div>
             </div>
             @if (!reEvaluationInProgress()) {
-                <div class="flex items-center [&>*]:mx-1">
+                <div class="flex items-center [&>*:not(input):not(button):not(select):not(textarea)]:mx-1">
                     <div class="flex items-center gap-2">
                         <tumaet-ui-checkbox
                             inputId="{{ 'cbSingleChoiceMC' + questionIndex() }}"

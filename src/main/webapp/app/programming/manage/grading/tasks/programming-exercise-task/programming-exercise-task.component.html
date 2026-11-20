@@ -53,7 +53,7 @@
                         [attr.aria-label]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.visibility' | artemisTranslate"
                         [disabled]="task().taskName === NOT_ASSIGNED_TO_TASK_NAME"
                         [(ngModel)]="task().visibility"
-                        class="w-full rounded-sm border border-solid border-(--border-color) bg-(--module-bg) px-3 py-1.5 text-(--body-color)"
+                        class="w-full rounded-sm border border-(--border-color) bg-(--module-bg) px-3 py-1.5 text-(--body-color)"
                         name="{{ task().taskName }}-visibility"
                         (change)="taskUpdateHandler()"
                     >
@@ -129,7 +129,7 @@
                         <select
                             [attr.aria-label]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.visibility' | artemisTranslate"
                             [(ngModel)]="test.visibility"
-                            class="w-full rounded-sm border border-solid border-(--border-color) bg-(--module-bg) px-3 py-1.5 text-(--body-color)"
+                            class="w-full rounded-sm border border-(--border-color) bg-(--module-bg) px-3 py-1.5 text-(--body-color)"
                             name="{{ test.testName }}-visibility"
                             (change)="testUpdateHandler(test)"
                         >

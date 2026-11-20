@@ -23,7 +23,7 @@
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             @for (profileInfo of profileFeatures(); track profileInfo.profile) {
                 <div
-                    class="rounded-lg border p-6 transition-all duration-200 hover:border-primary"
+                    class="rounded-lg border border-(--border-color) p-6 transition-all duration-200"
                     [class]="featureCardClasses(profileInfo.isActive)"
                     data-testid="profile-feature-card"
                 >
@@ -65,7 +65,7 @@
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             @for (moduleInfo of moduleFeatures(); track moduleInfo.feature) {
                 <div
-                    class="rounded-lg border p-6 transition-all duration-200 hover:border-primary"
+                    class="rounded-lg border border-(--border-color) p-6 transition-all duration-200"
                     [class]="featureCardClasses(moduleInfo.isActive)"
                     data-testid="module-feature-card"
                 >
@@ -107,7 +107,7 @@
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             @for (featureInfo of featureToggles(); track featureInfo.feature) {
                 <div
-                    class="rounded-lg border p-6 transition-all duration-200 hover:border-primary"
+                    class="rounded-lg border border-(--border-color) p-6 transition-all duration-200"
                     [class]="featureCardClasses(featureInfo.isActive)"
                     data-testid="runtime-toggle-card"
                 >

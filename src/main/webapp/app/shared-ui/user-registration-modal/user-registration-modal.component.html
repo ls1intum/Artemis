@@ -58,13 +58,13 @@
                     />
                 </div>
             } @else if (noResults()) {
-                <div class="flex flex-1 flex-col items-center justify-center rounded-lg border border-border p-8 text-center text-muted-color">
+                <div class="flex flex-1 flex-col items-center justify-center rounded-lg border border-(--border-color) p-8 text-center text-muted-color">
                     <fa-icon class="mb-4 text-[2.5rem] opacity-40" [icon]="faUsers" />
                     <p class="mb-1 font-semibold">{{ 'userRegistrationModal.noResultsTitle' | artemisTranslate: { term: searchTerm() } }}</p>
                     <p class="text-sm text-muted-color" jhiTranslate="userRegistrationModal.noResultsHint"></p>
                 </div>
             } @else {
-                <div class="flex flex-1 flex-col items-center justify-center rounded-lg border border-border p-8 text-center text-muted-color">
+                <div class="flex flex-1 flex-col items-center justify-center rounded-lg border border-(--border-color) p-8 text-center text-muted-color">
                     <fa-icon class="mb-4 text-[2.5rem] opacity-40" [icon]="faSearch" />
                     <p class="mb-1 font-semibold" jhiTranslate="userRegistrationModal.initialTitle"></p>
                     <p class="text-sm text-muted-color" jhiTranslate="userRegistrationModal.initialHint"></p>

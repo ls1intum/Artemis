@@ -1,5 +1,5 @@
 @if (form()) {
-    <div class="mb-2 rounded-md border border-border bg-(--overview-light-background-color)" [formGroup]="form()!">
+    <div class="mb-2 rounded-md border border-(--border-color) bg-(--overview-light-background-color)" [formGroup]="form()!">
         <div class="flex flex-wrap justify-between gap-y-2 overflow-hidden border-b border-border bg-[color-mix(in_srgb,var(--tumaet-ui-text-color)_3%,transparent)] px-4 py-2">
             <div
                 class="clickable flex max-w-full items-center"
@@ -95,7 +95,7 @@
                     <div
                         id="description-{{ index() }}"
                         disabled="true"
-                        class="markdown-preview rounded-md border border-border p-1"
+                        class="markdown-preview rounded-md border border-(--border-color) p-1"
                         [jhiMarkdown]="descriptionControl()?.value || '&nbsp;'"
                     ></div>
                 }

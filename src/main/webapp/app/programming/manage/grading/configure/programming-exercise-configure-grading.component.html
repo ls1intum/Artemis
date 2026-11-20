@@ -177,7 +177,7 @@
     <select
         [id]="cell.data.id + '-state'"
         [ngModel]="cell.data.state"
-        class="w-full rounded-sm border border-solid border-(--border-color) bg-(--module-bg) p-1 text-(--body-color)"
+        class="w-full rounded-sm border border-(--border-color) bg-(--module-bg) p-1 text-(--body-color)"
         aria-label="State"
         (change)="updateEditedCategoryField(cell.data, EditableField.STATE)(getEventValue($event))"
     >

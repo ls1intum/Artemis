@@ -50,12 +50,12 @@
         }
     </div>
     @if (showEditMode()) {
-        <div class="h-auto rounded-[0.625rem] border border-[var(--border-color)] p-6">
+        <div class="h-auto rounded-[0.625rem] border border-(--border-color) p-6">
             <!--- Edit Mode --->
             <div class="flex flex-col gap-6">
                 @for (criterion of currentExercise.gradingCriteria; track criterion; let criterionIndex = $index) {
                     <div
-                        class="@container relative overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--surface-ground)] before:absolute before:inset-y-0 before:start-0 before:w-1 before:bg-[var(--primary)] before:content-['']"
+                        class="@container relative overflow-hidden rounded-xl border border-(--border-color) bg-[var(--surface-ground)] before:absolute before:inset-y-0 before:start-0 before:w-1 before:bg-[var(--primary)] before:content-['']"
                     >
                         <div class="flex items-end justify-between gap-4 border-b border-[var(--border-color)] px-6 py-4 ps-[1.625rem]">
                             <div class="flex min-w-0 flex-1 flex-col">
@@ -96,7 +96,7 @@
                             <div class="grid grid-cols-1 gap-6 @[58rem]:grid-cols-2">
                                 @for (instruction of criterion.structuredGradingInstructions; track instruction; let instructionIndex = $index) {
                                     <div
-                                        class="@container [overflow-wrap:anywhere] rounded-lg border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--primary)_4%,var(--module-bg))] px-[1.125rem] py-6"
+                                        class="@container [overflow-wrap:anywhere] rounded-lg border border-(--border-color) bg-[color-mix(in_srgb,var(--primary)_4%,var(--module-bg))] px-[1.125rem] py-6"
                                     >
                                         <div class="grid grid-cols-1 items-end gap-4 @[22rem]:grid-cols-[6.25rem_minmax(0,1fr)_6.25rem_2.5rem]">
                                             <div class="flex min-w-0 flex-col [&_input]:w-full">
@@ -188,7 +188,7 @@
                                                 <textarea
                                                     tumAetUiInput
                                                     tumAetUiTextarea
-                                                    class="box-border max-w-full w-full"
+                                                    class="box-border max-w-full w-full resize-y"
                                                     [id]="'instruction-description-' + criterionIndex + '-' + instructionIndex"
                                                     [tumAetUiInputId]="'instruction-description-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.instructionDescription"
@@ -210,7 +210,7 @@
                                                 <textarea
                                                     tumAetUiInput
                                                     tumAetUiTextarea
-                                                    class="box-border max-w-full w-full"
+                                                    class="box-border max-w-full w-full resize-y"
                                                     [id]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex"
                                                     [tumAetUiInputId]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.feedback"

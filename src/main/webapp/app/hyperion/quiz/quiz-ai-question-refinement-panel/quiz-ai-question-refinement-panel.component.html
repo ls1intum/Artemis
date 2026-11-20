@@ -1,7 +1,7 @@
 @if (hyperionEnabled && (isOpen() || externalReasoning() !== undefined) && !isRefinementPanelCollapsed()) {
     <div class="bg-(--overview-card-bg) px-6 pb-6" data-testid="quiz-ai-refinement-panel">
         @if (refinementExplanation() !== undefined || externalReasoning() !== undefined) {
-            <div class="mb-3 rounded-md border border-border bg-surface-raised px-4 py-3.5" data-testid="refinement-explanation-card">
+            <div class="mb-3 rounded-md border border-(--border-color) bg-surface-raised px-4 py-3.5" data-testid="refinement-explanation-card">
                 <div class="mb-2 flex items-center gap-2">
                     <fa-icon [icon]="faWandMagicSparkles" class="text-sm text-primary" />
                     <span class="text-xs font-bold tracking-wide text-primary uppercase" jhiTranslate="artemisApp.quizExercise.aiGeneration.refinement.changesLabel"></span>

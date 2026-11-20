@@ -73,7 +73,7 @@
                         [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | artemisTranslate"
                         [panelDescriptionHeader]="'artemisApp.exerciseAssessmentDashboard.totalYours' | artemisTranslate"
                     >
-                        <div class="flex flex-wrap gap-y-2 gap-0 mb-1">
+                        <div class="flex flex-wrap gap-0 mb-1">
                             <div class="w-7/12" jhiTranslate="artemisApp.assessmentDashboard.submissions"></div>
                             <div class="w-5/12">
                                 <span class="text-state-success">{{ numberOfSubmissions().inTime }}</span>
@@ -89,7 +89,7 @@
                         </div>
 
                         @if (complaintsEnabled()) {
-                            <div class="flex flex-wrap gap-y-2 gap-0 mb-1">
+                            <div class="flex flex-wrap gap-0 mb-1">
                                 <div class="w-7/12" jhiTranslate="artemisApp.assessmentDashboard.complaints"></div>
                                 <div class="w-5/12">
                                     @if (exercise().isAtLeastInstructor) {
@@ -116,7 +116,7 @@
                         }
 
                         @if (feedbackRequestEnabled()) {
-                            <div class="flex flex-wrap gap-y-2 gap-0 mb-1">
+                            <div class="flex flex-wrap gap-0 mb-1">
                                 <div class="w-7/12" jhiTranslate="artemisApp.assessmentDashboard.moreFeedbackRequests"></div>
                                 <div class="w-5/12">
                                     @if (exercise().isAtLeastInstructor) {
@@ -146,7 +146,7 @@
                             </div>
                         }
 
-                        <div class="flex flex-wrap gap-y-2 gap-0 mb-1">
+                        <div class="flex flex-wrap gap-0 mb-1">
                             <div class="w-7/12" jhiTranslate="artemisApp.exerciseAssessmentDashboard.ratings"></div>
                             <div class="w-5/12">{{ ratingsDashboardInfo().total }} | {{ ratingsDashboardInfo().tutor }}</div>
                         </div>

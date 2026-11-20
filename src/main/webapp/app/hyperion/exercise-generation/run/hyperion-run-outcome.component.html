@@ -1,7 +1,8 @@
 <!--
-    The verdict is a `tumaet-ui-card-title [level]`, not an `<h2>`: `global.scss`'s
-    `body, h1, h2, h3, h4 { font-weight: 400 }` is outside a cascade layer and beats Tailwind's `@layer utilities`, so a
-    plain `font-semibold` on a heading is silently ignored. The card title owns the typography of its own heading and publishes `role="heading"` with `aria-level`, which is why the section still labels itself by id.
+    The verdict is a `tumaet-ui-card-title [level]`, not an `<h2>`: Bootstrap's unlayered `h1`-`h6` and `global.scss`'s
+    `body, h1, h2, h3, h4 { font-weight: 400 }` beat Tailwind's `@layer utilities`, so a plain `text-lg font-semibold`
+    on a heading is silently ignored. The card title owns the typography of its own heading at a specificity Bootstrap
+    cannot reach, and publishes `role="heading"` with `aria-level`, which is why the section still labels itself by id.
 
     The sub-heading below cannot be a card title - that component is fixed at the L2 size, which is right for the answer
     and wrong for a heading inside it - so it takes the same treatment from this component's own stylesheet instead.

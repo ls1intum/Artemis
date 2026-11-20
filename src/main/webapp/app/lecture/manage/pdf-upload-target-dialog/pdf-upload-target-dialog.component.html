@@ -5,7 +5,7 @@
                 <fa-icon [icon]="faFilePdf" class="text-state-danger" />
                 {{ 'artemisApp.lecture.pdfUpload.filesSelected' | artemisTranslate: { count: uploadedFiles().length } }}
             </span>
-            <ul class="pdf-upload-file-list m-0 flex max-h-30 list-none flex-col gap-0.5 overflow-y-auto text-sm">
+            <ul class="pdf-upload-file-list m-0 flex max-h-30 list-none flex-col gap-0.5 overflow-y-auto ps-6 text-sm">
                 @for (file of uploadedFiles(); track file.name) {
                     <li>{{ file.name }}</li>
                 }

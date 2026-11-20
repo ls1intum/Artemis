@@ -1,7 +1,7 @@
 <tumaet-ui-dialog [(visible)]="visible" [showHeader]="false" [closeOnEscape]="false" [ariaLabel]="'artemisApp.quizExercise.aiGeneration.modalTitle' | artemisTranslate">
     <div class="w-[min(84rem,calc(90dvw-2.5rem))] pt-4" data-testid="quiz-ai-generation-modal">
         <div class="grid grid-cols-1 gap-4 min-[993px]:grid-cols-[minmax(18rem,23rem)_1fr]">
-            <section class="flex max-h-[72vh] min-h-[38rem] flex-col gap-4 overflow-y-auto rounded-xl border border-border bg-surface-raised p-4">
+            <section class="flex max-h-[72vh] min-h-[38rem] flex-col gap-4 overflow-y-auto rounded-xl border border-(--border-color) bg-surface-raised p-4">
                 <h6 class="m-0 text-xl font-bold" data-testid="quiz-ai-configuration-title" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.title"></h6>
 
                 <!-- Mode toggle — competency mode only shown when the course has competencies -->
@@ -207,7 +207,7 @@
                 </button>
             </section>
 
-            <section class="relative max-h-[72vh] min-h-[38rem] overflow-y-auto rounded-xl border border-border bg-surface-raised p-4">
+            <section class="relative max-h-[72vh] min-h-[38rem] overflow-y-auto rounded-xl border border-(--border-color) bg-surface-raised p-4">
                 <div class="mb-4 flex items-center justify-between border-b border-border pb-3" data-testid="quiz-ai-preview-header">
                     <h6 class="m-0 text-xl font-bold" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.title"></h6>
                     <button
@@ -226,7 +226,7 @@
                 </div>
 
                 @if (!hasGeneratedQuestions()) {
-                    <div class="preview-empty rounded-xl border border-dashed border-border p-5 text-muted-color">
+                    <div class="preview-empty rounded-xl border border-(--border-color) p-5 text-muted-color">
                         <h6 class="mb-2 text-base font-medium" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyTitle"></h6>
                         <p class="m-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyDescription"></p>
                     </div>

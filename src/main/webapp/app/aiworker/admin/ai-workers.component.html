@@ -9,7 +9,7 @@
         </tumaet-ui-message>
     }
     @if (!failed() && updatedAt()) {
-        <dl class="m-0 grid grid-cols-2 gap-6 rounded-md border border-surface p-6 sm:grid-cols-4" data-testid="ai-workers-summary">
+        <dl class="m-0 grid grid-cols-2 gap-6 rounded-md border border-(--border-color) p-6 sm:grid-cols-4" data-testid="ai-workers-summary">
             <div>
                 <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.aiworker.configured"></dt>
                 <dd class="m-0 text-xl font-semibold tabular-nums">{{ workers().length }}</dd>

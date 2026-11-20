@@ -7,7 +7,7 @@
         @if (competencyLinks()?.length) {
             <div>
                 <small jhiTranslate="artemisApp.competency.competencyPopover.explanation"></small>
-                <ul class="m-0 mt-2 flex list-none flex-col divide-y divide-solid divide-(--border-color) rounded-md border border-solid border-(--border-color) p-0">
+                <ul class="m-0 mt-2 flex list-none flex-col divide-y divide-solid divide-(--border-color) rounded-md border border-(--border-color) p-0">
                     @for (competencyLink of competencyLinks(); track competencyLink) {
                         @if (competencyLink.competency?.title) {
                             <li>

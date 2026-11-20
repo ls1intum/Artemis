@@ -45,7 +45,7 @@
         </div>
         @if (destinationListVisible()) {
             <ul
-                class="autocomplete-dropdown m-0 list-none rounded-md border border-border bg-surface-raised p-0 shadow-md"
+                class="autocomplete-dropdown m-0 list-none rounded-md border border-(--border-color) bg-surface-raised p-0 shadow-md"
                 role="listbox"
                 [id]="destinationListboxId"
                 [attr.aria-label]="'artemisApp.communication.forward.searchBar' | artemisTranslate"

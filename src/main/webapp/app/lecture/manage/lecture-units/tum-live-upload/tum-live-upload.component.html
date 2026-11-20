@@ -1,6 +1,6 @@
 @let current = state();
 @if (current && (current.connected || current.pendingRef || current.attachedRef)) {
-    <section class="mt-6 flex flex-col gap-2 rounded border border-surface-300 p-4" data-testid="tum-live-upload">
+    <section class="mt-6 flex flex-col gap-2 rounded border border-(--border-color) p-4" data-testid="tum-live-upload">
         <h3>{{ 'artemisApp.tumLiveUpload.title' | artemisTranslate }}</h3>
         @if (transferProgress() !== undefined) {
             <span jhiTranslate="artemisApp.tumLiveUpload.uploading"></span>

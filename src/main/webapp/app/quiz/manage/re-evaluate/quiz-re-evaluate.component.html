@@ -106,7 +106,7 @@
                 </h4>
             </div>
             @for (question of quizExercise().quizQuestions; track question.id; let i = $index) {
-                <div class="mb-4 w-full overflow-hidden rounded-md border border-solid border-border bg-surface-raised">
+                <div class="mb-4 w-full overflow-hidden rounded-md border border-(--border-color) bg-surface-raised">
                     @if (question.type === MULTIPLE_CHOICE) {
                         <div>
                             <jhi-multiple-choice

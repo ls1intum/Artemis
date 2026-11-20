@@ -55,7 +55,7 @@
                         </div>
                     }
                     @if (message.competencyPreviews && message.competencyPreviews.length > 0) {
-                        <div class="mt-2 rounded-md border border-border p-2">
+                        <div class="mt-2 rounded-md border border-(--border-color) p-2">
                             @if (message.competencyPreviews.length > 1) {
                                 <div class="mb-2">
                                     <small class="text-muted-color">{{ 'artemisApp.agent.chat.preview' | artemisTranslate: { count: message.competencyPreviews.length } }}</small>
@@ -106,7 +106,7 @@
                         </div>
                     }
                     @if (message.relationGraphPreview) {
-                        <div class="mt-2 rounded-md border border-border">
+                        <div class="mt-2 rounded-md border border-(--border-color)">
                             <div class="h-[25rem]">
                                 @if (message.graphCompetencies && message.graphRelations) {
                                     <jhi-course-competencies-relation-graph
@@ -145,7 +145,7 @@
                         </div>
                     }
                     @if (message.exerciseMappingPreview) {
-                        <div class="mt-2 flex flex-col gap-4 rounded-md border border-border p-4">
+                        <div class="mt-2 flex flex-col gap-4 rounded-md border border-(--border-color) p-4">
                             <div>
                                 <strong>{{ message.exerciseMappingPreview.exerciseTitle }}</strong>
                                 @if (!message.exerciseMappingPreview.viewOnly) {
@@ -157,7 +157,7 @@
 
                             <div>
                                 @for (competency of message.exerciseMappingPreview.competencies; track competency.competencyId) {
-                                    <div class="mb-2 flex grow items-center gap-2 rounded-md border border-border p-2">
+                                    <div class="mb-2 flex grow items-center gap-2 rounded-md border border-(--border-color) p-2">
                                         @if (!message.exerciseMappingPreview.viewOnly) {
                                             <tumaet-ui-checkbox
                                                 [inputId]="'competency-' + message.id + '-' + competency.competencyId"
