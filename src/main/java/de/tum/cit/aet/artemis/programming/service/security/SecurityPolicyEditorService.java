@@ -425,7 +425,7 @@ public class SecurityPolicyEditorService {
     }
 
     /**
-     * Identifies a change, so that a retry of the same request is recognized, see {@link #isAlreadyApplied(Repository, String)}.
+     * Identifies a change, so that a retry of the same request is recognized, see {@link #appliedCommit(Repository, String, String)}.
      *
      * @return the SHA-256 hash of the change in JSON, as hexadecimal digits
      */
@@ -514,6 +514,9 @@ public class SecurityPolicyEditorService {
             }
         }
 
+        // Only a vacated file that holds a policy is deleted, so only such a file makes room for a new policy at or below its path.
+        Set<String> deleted = vacated.stream().filter(path -> holdsPolicy(SecurityPolicyRepositoryFiles.readPolicyFile(root, path))).collect(Collectors.toSet());
+
         Map<String, String> rendered = new LinkedHashMap<>();
         for (SecurityPolicyChangeDTO.PolicyChangeDTO policy : change.policies()) {
             SecurityPolicyDocumentDTO document = policy.document();
@@ -533,10 +536,10 @@ public class SecurityPolicyEditorService {
                 previousLanguageConfiguration = previousDocument.languageConfiguration();
             }
             boolean samePath = policy.previousPolicyPath() != null && path.equals(requireValidPolicyPath(policy.previousPolicyPath()));
-            if (!samePath && !vacated.contains(path) && Files.exists(root.resolve(path), LinkOption.NOFOLLOW_LINKS)) {
+            if (!samePath && !deleted.contains(path) && Files.exists(root.resolve(path), LinkOption.NOFOLLOW_LINKS)) {
                 throw refused("The file " + path + " already exists in the tests repository.", "securityPolicyFileExists", Map.of("path", path));
             }
-            if (liesBelowAFile(root, path, vacated)) {
+            if (liesBelowAFile(root, path, deleted)) {
                 throw refused("The policy path " + path + " lies below a file of the tests repository.", "securityPolicyInvalidPath", Map.of("path", path));
             }
             // A policy that already scans dependencies may keep doing so, so that the editor can still change it; only switching scanning on needs the agent.
@@ -576,7 +579,7 @@ public class SecurityPolicyEditorService {
         }
 
         // A vacated path that holds no policy, e.g. a directory or an unrelated YAML file that an annotation named by mistake, keeps what it holds.
-        vacated.forEach(path -> SecurityPolicyRepositoryFiles.deletePolicyFileIfPolicy(root, path));
+        deleted.forEach(path -> SecurityPolicyRepositoryFiles.deletePolicyFileIfPolicy(root, path));
         rendered.forEach((path, content) -> SecurityPolicyRepositoryFiles.writePolicy(root, path, content));
         SecurityTestAssignments.assignTestCases(root, reassignedTestClasses(testClasses, requested, vacated));
 
@@ -877,6 +880,12 @@ public class SecurityPolicyEditorService {
                 throw refused("The policy " + path + " is listed twice.", "securityPolicyDuplicate", Map.of("path", path));
             }
         }
+        // A policy file cannot be the directory of another one, e.g. policies.yaml and policies.yaml/Stress.yaml.
+        for (String path : paths) {
+            if (paths.stream().anyMatch(other -> other.startsWith(path + "/"))) {
+                throw refused("The policy path " + path + " is also the directory of another policy.", "securityPolicyInvalidPath", Map.of("path", path));
+            }
+        }
     }
 
     /**
@@ -891,17 +900,21 @@ public class SecurityPolicyEditorService {
     }
 
     /**
-     * @param vacated the paths the change frees, whose files no longer block a path below them
+     * @param deleted the policy files the change deletes, which no longer block a path below them
      * @return whether a directory of the path is a file of the checkout instead, e.g. {@code notes.txt} in {@code notes.txt/SecurityPolicy.yaml}
      */
-    private static boolean liesBelowAFile(Path root, String path, Set<String> vacated) {
+    private static boolean liesBelowAFile(Path root, String path, Set<String> deleted) {
         for (Path parent = root.resolve(path).getParent(); parent != null && parent.startsWith(root) && !parent.equals(root); parent = parent.getParent()) {
             String relative = root.relativize(parent).toString().replace('\\', '/');
-            if (Files.exists(parent, LinkOption.NOFOLLOW_LINKS) && !Files.isDirectory(parent, LinkOption.NOFOLLOW_LINKS) && !vacated.contains(relative)) {
+            if (Files.exists(parent, LinkOption.NOFOLLOW_LINKS) && !Files.isDirectory(parent, LinkOption.NOFOLLOW_LINKS) && !deleted.contains(relative)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean holdsPolicy(SecurityPolicyRepositoryFiles.PolicyFileContent content) {
+        return content.problem() == null && content.content() != null && SecurityPolicyYaml.isPolicyShaped(content.content());
     }
 
     /**

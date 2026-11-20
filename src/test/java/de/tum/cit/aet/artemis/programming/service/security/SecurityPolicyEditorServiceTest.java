@@ -422,6 +422,60 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void refusesTwoPoliciesOfWhichOneIsTheDirectoryOfTheOther() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO file = withTestClasses(loadedPolicy(editor), "Nested.yaml", List.of("de.example.SortingTest"));
+        SecurityPolicyDocumentDTO below = withTestClasses(loadedPolicy(editor), "Nested.yaml/Stress.yaml", List.of("de.example.StressTest"));
+        SecurityPolicyChangeDTO overlapping = change(editor, new SecurityPolicyChangeDTO.PolicyChangeDTO("SecurityPolicy.yaml", file, List.of("de.example.SortingTest")),
+                added(below, List.of("de.example.StressTest")));
+        String headBefore = pushedHead();
+
+        // Nested.yaml cannot be a file and a directory at once, so the change is refused before anything is written.
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), overlapping, user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyInvalidPath"));
+        assertThat(pushedHead()).isEqualTo(headBefore);
+
+        // Policies next to each other in a directory are fine.
+        SecurityPolicyDocumentDTO sorting = withTestClasses(loadedPolicy(editor), "policies/Sorting.yaml", List.of("de.example.SortingTest"));
+        SecurityPolicyDocumentDTO stress = withTestClasses(loadedPolicy(editor), "policies/Stress.yaml", List.of("de.example.StressTest"));
+        editorService.commit(exercise(), change(editor, new SecurityPolicyChangeDTO.PolicyChangeDTO("SecurityPolicy.yaml", sorting, List.of("de.example.SortingTest")),
+                added(stress, List.of("de.example.StressTest"))), user);
+        assertThat(readPushed("policies/Sorting.yaml")).isPresent();
+        assertThat(readPushed("policies/Stress.yaml")).isPresent();
+    }
+
+    @Test
+    void aRenamedPolicyCanBecomeTheDirectoryOfItsNewPath() throws Exception {
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO renamed = withTestClasses(loadedPolicy(editor), "SecurityPolicy.yaml/Stress.yaml", BOTH_CLASSES);
+
+        // The old policy file is deleted before the new one is written, so its path is free to become a directory.
+        editorService.commit(exercise(), change(editor, new SecurityPolicyChangeDTO.PolicyChangeDTO("SecurityPolicy.yaml", renamed, BOTH_CLASSES)), user);
+
+        assertThat(readPushed("SecurityPolicy.yaml/Stress.yaml")).isPresent();
+    }
+
+    @Test
+    void aFileThatIsNoPolicyStaysInTheWayWhenTheReferenceToItIsRemoved() throws Exception {
+        pushToTests("build.gradle", "ext {\n    aresVersion = '2.3.0'\n}\n");
+        pushToTests("notes.yaml", "notes:\n  - keep me\n");
+        pushToTests(STRESS_TEST_PATH, STRESS_TEST.replace("value = \"SecurityPolicy.yaml\"", "value = \"notes.yaml\""));
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO policy = editor.policies().stream().filter(candidate -> candidate.policyPath().equals("SecurityPolicy.yaml")).findFirst().orElseThrow()
+                .document();
+        SecurityPolicyDocumentDTO added = withTestClasses(policy, "notes.yaml/Stress.yaml", List.of("de.example.StressTest"));
+        SecurityPolicyChangeDTO change = new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, null,
+                List.of(edited(policy, List.of("de.example.SortingTest")), added(added, List.of("de.example.StressTest"))), List.of("notes.yaml"));
+        String headBefore = pushedHead();
+
+        // Removing the reference keeps notes.yaml, since it holds no policy, so no policy can be written below it.
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change, user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyInvalidPath"));
+        assertThat(pushedHead()).isEqualTo(headBefore);
+        assertThat(readPushed("notes.yaml")).contains("notes:\n  - keep me\n");
+    }
+
+    @Test
     void removingAReferenceToAFileThatIsNoPolicyKeepsTheFile() throws Exception {
         // With a version whose schema Artemis does not verify, an unrelated YAML mapping that an annotation names by mistake leaves the tests configured.
         pushToTests("build.gradle", "ext {\n    aresVersion = '2.3.0'\n}\n");

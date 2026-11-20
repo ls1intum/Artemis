@@ -29,8 +29,7 @@ class BuildFileSyntaxTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "add('aresAgent', \"de.tum.cit.ase:ares:${aresVersion}:agent\")",
-            "dependencies.add(\"aresAgent\", \"de.tum.cit.ase:ares:${aresVersion}:agent\")" })
+    @ValueSource(strings = { "add('aresAgent', \"de.tum.cit.ase:ares:${aresVersion}:agent\")", "dependencies.add(\"aresAgent\", \"de.tum.cit.ase:ares:${aresVersion}:agent\")" })
     void recognizesTheAgentOfTheTemplatesDeclaredWithAdd(String declaration) throws IOException {
         String gradle = Files.readString(TEMPLATES.resolve("test/gradle/projectTemplate/build.gradle"), StandardCharsets.UTF_8);
         String added = gradle.replace("aresAgent \"de.tum.cit.ase:ares:${aresVersion}:agent\"", declaration);
