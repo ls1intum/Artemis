@@ -579,12 +579,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
             optionalExistingResult = Optional.ofNullable(submission.getResultForCorrectionRound(correctionRound - 1));
         }
 
-        // Team assessment links identify the selected commit; individual assessments retain latest-commit resolution.
         if (submission.getParticipation().getExercise().isTeamMode()) {
             checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
         }
-        ProgrammingSubmission existingSubmission = submission.getParticipation().getExercise().isTeamMode() ? (ProgrammingSubmission) submission
-                : getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(), SubmissionType.MANUAL);
+        ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
+                SubmissionType.MANUAL);
         Result newResult = saveNewEmptyResult(existingSubmission);
         newResult.setAssessor(userRepository.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);

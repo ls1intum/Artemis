@@ -57,7 +57,9 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -525,24 +527,26 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void programmingTeamAssessmentKeepsSelectedCommit() throws Exception {
+    void programmingTeamAssessmentStartsOnLatestRepositoryCommit() throws Exception {
         var exercise = teamExercise(ExerciseType.PROGRAMMING);
-        var selected = (ProgrammingSubmission) teamSubmission(exercise, tutor1, "own");
-        selected.setCommitHash("1111111111111111111111111111111111111111");
-        submissionRepository.save(selected);
-        submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(selected.getId()).getResults().forEach(result -> resultRepository.deleteResultById(result.getId()));
-        var newer = new ProgrammingSubmission();
-        newer.setCommitHash("2222222222222222222222222222222222222222");
-        newer.setSubmitted(true);
-        newer.setSubmissionDate(selected.getSubmissionDate().plusHours(1));
-        participationUtilService.addSubmission((StudentParticipation) selected.getParticipation(), newer);
-        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(selected.getId()).getResults()).isEmpty();
-        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(newer.getId()).getResults()).isEmpty();
-        var opened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, selected.getId()), HttpStatus.OK,
-                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
-        assertThat(opened.id()).isEqualTo(selected.getId());
-        assertThat(opened.commitHash()).isEqualTo(selected.getCommitHash());
-        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(newer.getId()).getManualResults()).isEmpty();
+        var latest = (ProgrammingSubmission) teamSubmission(exercise, tutor1, "own");
+        var older = new ProgrammingSubmission();
+        older.setCommitHash("1111111111111111111111111111111111111111");
+        older.setSubmitted(true);
+        older.setSubmissionDate(latest.getSubmissionDate().minusHours(1));
+        participationUtilService.addSubmission((StudentParticipation) latest.getParticipation(), older);
+
+        var opened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, older.getId()), HttpStatus.OK, ProgrammingSubmissionForTutorAssessmentDTO.class);
+        assertThat(opened.id()).isEqualTo(latest.getId());
+        assertThat(opened.commitHash()).isEqualTo(latest.getCommitHash());
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(older.getId()).getManualResults()).isEmpty();
+        var queue = request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams", HttpStatus.OK, AssessmentQueueTeamDTO.class);
+        assertThat(queue).extracting(entry -> entry.submission().id()).containsExactly(latest.getId());
+        assertThat(queue.getFirst().submission().results()).anySatisfy(result -> {
+            assertThat(result.assessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+            assertThat(result.assessor().id()).isEqualTo(tutor1.getId());
+            assertThat(result.completionDate()).isNull();
+        });
     }
 
     @ParameterizedTest
@@ -688,14 +692,6 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         var selectedId = sameDate || allUndated ? second.getId() : first.getId();
         var queueUrl = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams";
         assertThat(request.getList(queueUrl, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactly(selectedId);
-        request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, selectedId), HttpStatus.OK, String.class);
-        var queue = request.getList(queueUrl, HttpStatus.OK, AssessmentQueueTeamDTO.class);
-        assertThat(queue).extracting(entry -> entry.submission().id()).containsExactly(selectedId);
-        assertThat(queue.getFirst().submission().results()).anySatisfy(result -> {
-            assertThat(result.assessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-            assertThat(result.assessor().id()).isEqualTo(tutor1.getId());
-            assertThat(result.completionDate()).isNull();
-        });
     }
 
     /** Starting from a stale queue cannot bypass an extended team or exercise deadline. */
@@ -840,7 +836,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
             case TextExercise ignored -> new TextSubmission().text("Team answer");
             case ModelingExercise ignored -> new ModelingSubmission().model("{}");
             case FileUploadExercise ignored -> new FileUploadSubmission();
-            case ProgrammingExercise ignored -> new ProgrammingSubmission();
+            case ProgrammingExercise ignored -> {
+                var programmingSubmission = new ProgrammingSubmission();
+                programmingSubmission.setCommitHash(gitService.getLastCommitHash(((ProgrammingExerciseStudentParticipation) participation).getVcsRepositoryUri()));
+                yield programmingSubmission;
+            }
             default -> throw new IllegalArgumentException("Unsupported assessment exercise");
         };
         submission.setSubmitted(true);
