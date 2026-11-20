@@ -27,30 +27,33 @@ export class GocastIntegrationApi {
      *
      *
      * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getBinding(courseId: number): Observable<GocastBinding> {
+    getBinding(courseId: number, options?: import('./request-options').RequestOptions): Observable<GocastBinding> {
         const url = `${this.basePath}/api/videosource/courses/${courseId}/binding`;
-        return this.http.get<GocastBinding>(url);
+        return this.http.get<GocastBinding>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    startApproval(courseId: number): Observable<GocastApprovalStart> {
+    startApproval(courseId: number, options?: import('./request-options').RequestOptions): Observable<GocastApprovalStart> {
         const url = `${this.basePath}/api/videosource/courses/${courseId}/binding/approval`;
-        return this.http.post<GocastApprovalStart>(url, null);
+        return this.http.post<GocastApprovalStart>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    unlink(courseId: number): Observable<void> {
+    unlink(courseId: number, options?: import('./request-options').RequestOptions): Observable<void> {
         const url = `${this.basePath}/api/videosource/courses/${courseId}/binding`;
-        return this.http.delete<void>(url);
+        return this.http.delete<void>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

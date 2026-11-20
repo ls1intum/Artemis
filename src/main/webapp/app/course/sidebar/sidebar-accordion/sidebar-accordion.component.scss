@@ -5,13 +5,13 @@
 hr {
     all: unset;
     display: block;
-    border-top: 1px solid var(--bs-border-color);
+    border-top: 1px solid var(--border-color);
     transition: border-color 0.2s ease;
 }
 
 .unread-count {
-    background-color: var(--bs-primary);
-    color: var(--bs-white);
+    background-color: var(--primary);
+    color: var(--white);
     border-radius: 50%;
     font-size: 0.6rem;
     width: 1.1rem;
@@ -26,4 +26,38 @@ hr {
 .icon-container {
     display: flex;
     align-items: center;
+}
+
+/*
+ * A group opens and closes by animating the height of its single grid row. Collapsed it is also inert and not
+ * visible, so its cards are out of the Tab order and are not found as visible; the visibility switches once the row has closed.
+ */
+.group-content {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition:
+        grid-template-rows 0.35s ease,
+        visibility 0s;
+
+    &.group-collapsed {
+        grid-template-rows: 0fr;
+        visibility: hidden;
+        transition:
+            grid-template-rows 0.35s ease,
+            visibility 0s 0.35s;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+
+        &.group-collapsed {
+            transition: none;
+        }
+    }
+}
+
+// The padding is on the element inside: padding is not part of the row that closes, so here a closed group would keep it as a gap.
+.group-content-inner {
+    min-height: 0;
+    overflow: hidden;
 }

@@ -59,7 +59,7 @@ export enum CourseManagementSection {
 
             .stat-label {
                 font-size: 0.8rem;
-                color: var(--bs-secondary-color);
+                color: var(--body-secondary-color);
             }
 
             .stat-value {
@@ -73,7 +73,7 @@ export enum CourseManagementSection {
             // underline returns on :hover and :focus-visible so keyboard / touch users
             // still get a clear interactive cue.
             a.stat-value {
-                color: var(--bs-link-color);
+                color: var(--link-color);
                 text-decoration: none;
 
                 &:hover,
@@ -94,10 +94,10 @@ export enum CourseManagementSection {
                 align-items: center;
                 gap: 0.5rem;
                 padding: 0.5rem 0.875rem;
-                border: 1px solid var(--bs-border-color);
+                border: 1px solid var(--border-color);
                 border-radius: 0.5rem;
-                background: var(--overview-card-nested-bg, var(--bs-body-bg));
-                color: var(--bs-body-color);
+                background: var(--overview-card-nested-bg);
+                color: var(--body-color);
                 font-weight: 500;
                 font-size: 0.85rem;
                 cursor: pointer;
@@ -106,13 +106,13 @@ export enum CourseManagementSection {
                 white-space: nowrap;
 
                 &:hover {
-                    background: var(--overview-card-hover-bg, var(--bs-tertiary-bg));
-                    border-color: var(--bs-secondary-border-subtle);
+                    background: var(--overview-card-hover-bg);
+                    border-color: color-mix(in srgb, var(--secondary) 40%, white);
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
                 }
 
                 fa-icon {
-                    color: var(--bs-secondary-color);
+                    color: var(--body-secondary-color);
                     font-size: 0.9rem;
                 }
             }
@@ -128,9 +128,9 @@ export enum CourseManagementSection {
                 align-items: center;
                 gap: 0.5rem;
                 padding: 0.4rem 0.75rem;
-                border: 1px solid var(--bs-border-color);
+                border: 1px solid var(--border-color);
                 border-radius: 0.5rem;
-                background: var(--overview-card-nested-bg, var(--bs-body-bg));
+                background: var(--overview-card-nested-bg);
                 cursor: pointer;
                 transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                 position: relative;
@@ -146,7 +146,7 @@ export enum CourseManagementSection {
                     left: 0;
                     bottom: 0;
                     width: 3px;
-                    background: var(--card-accent, var(--bs-primary));
+                    background: var(--card-accent, var(--primary));
                     opacity: 0;
                     transition: opacity 0.2s ease;
                 }
@@ -189,8 +189,8 @@ export enum CourseManagementSection {
                 align-items: center;
                 justify-content: center;
                 flex-shrink: 0;
-                color: var(--bs-white);
-                background: var(--card-accent, var(--bs-primary));
+                color: var(--white);
+                background: var(--card-accent, var(--primary));
                 box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
                 font-size: 0.75rem;
             }
