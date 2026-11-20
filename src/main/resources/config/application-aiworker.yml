@@ -29,6 +29,7 @@ spring:
             embedding: none
             image: none
             moderation: none
+            decision: none
             audio:
                 speech: none
                 transcription: none

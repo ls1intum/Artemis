@@ -57,9 +57,18 @@ class TomcatConfigurationTest {
         assertThat(statusForAcceptLanguageWithEntries(TomcatConfiguration.MAX_ACCEPT_LANGUAGE_LOCALES)).isEqualTo(200);
     }
 
+    /**
+     * Tomcat 11.0.27 threw for a header above the limit, which made every request of such a client fail with a 500. Tomcat 11.0.28 ignores
+     * the extra locales, so the request is served.
+     */
     @Test
-    void requestAboveTheConfiguredLimitIsRejected() throws Exception {
-        assertThat(statusForAcceptLanguageWithEntries(TomcatConfiguration.MAX_ACCEPT_LANGUAGE_LOCALES + 1)).isEqualTo(500);
+    void requestAboveTheConfiguredLimitIsServedAndTheExtraLocalesAreIgnored() throws Exception {
+        assertThat(statusForAcceptLanguageWithEntries(TomcatConfiguration.MAX_ACCEPT_LANGUAGE_LOCALES + 1)).isEqualTo(200);
+    }
+
+    @Test
+    void requestFarAboveTheConfiguredLimitIsServed() throws Exception {
+        assertThat(statusForAcceptLanguageWithEntries(TomcatConfiguration.MAX_ACCEPT_LANGUAGE_LOCALES * 10)).isEqualTo(200);
     }
 
     private int statusForAcceptLanguageWithEntries(int entries) throws IOException, InterruptedException {

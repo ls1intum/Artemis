@@ -283,6 +283,8 @@ spring: #disabled by default, you must enable it
             embedding: none
             image: none
             moderation:  none
+            # Spring AI 2.1 added the decision model. Artemis does not use it, and without this key Spring AI creates it and fails for want of credentials.
+            decision: none
     application:
         name: Artemis
     jmx:
