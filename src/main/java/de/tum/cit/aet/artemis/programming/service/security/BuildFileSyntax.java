@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.security;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntPredicate;
 import java.util.regex.MatchResult;
@@ -115,17 +116,21 @@ final class BuildFileSyntax {
      * Whether the build attaches the Ares agent with {@code -javaagent}. Only then does Ares enforce a policy whose language configuration uses
      * {@code INSTRUMENTATION}; the build files of the Artemis templates attach it. A {@code -javaagent} option counts if it names the Ares agent, e.g.
      * {@code ares-agent.jar}, or, in Gradle, takes its file from the configuration that declares the Ares agent, like the templates do with
-     * {@code configurations.aresAgent}. Another agent, such as JaCoCo, and text in comments do not count.
+     * {@code configurations.aresAgent}. Another agent, such as JaCoCo, and text in comments do not count. Only the build file of the build tool that pins
+     * the Ares version counts, see {@link SecurityPolicyRepositoryFiles#detectBuildTool(String, String)}, since another build file the repository keeps,
+     * e.g. a {@code pom.xml} next to the {@code build.gradle}, does not run; without a pin, the Gradle build counts if there is one.
      *
      * @param buildFiles the build files at the root of a repository
-     * @return whether a build file attaches the Ares agent
+     * @return whether the build file of the repository's build tool attaches the Ares agent
      */
     static boolean attachesAresAgent(SecurityPolicyRepositoryFiles.BuildFiles buildFiles) {
-        boolean gradle = Stream.ofNullable(buildFiles.gradleBuild()).map(content -> withoutMarked(content, gradleComments(content)))
-                .anyMatch(BuildFileSyntax::gradleAttachesAresAgent);
-        boolean maven = Stream.ofNullable(buildFiles.mavenPom()).map(content -> withoutMarked(content, mavenComments(content)))
-                .anyMatch(code -> MAVEN_ARES_AGENT.matcher(code).find() && javaAgents(code).anyMatch(BuildFileSyntax::namesAres));
-        return gradle || maven;
+        Optional<SecurityPolicyRepositoryFiles.BuildTool> buildTool = SecurityPolicyRepositoryFiles.detectBuildTool(buildFiles.gradleBuild(), buildFiles.mavenPom());
+        boolean maven = buildTool.map(SecurityPolicyRepositoryFiles.BuildTool.MAVEN::equals).orElse(buildFiles.gradleBuild() == null);
+        if (maven) {
+            return Stream.ofNullable(buildFiles.mavenPom()).map(content -> withoutMarked(content, mavenComments(content)))
+                    .anyMatch(code -> MAVEN_ARES_AGENT.matcher(code).find() && javaAgents(code).anyMatch(BuildFileSyntax::namesAres));
+        }
+        return gradleAttachesAresAgent(withoutMarked(buildFiles.gradleBuild(), gradleComments(buildFiles.gradleBuild())));
     }
 
     /**

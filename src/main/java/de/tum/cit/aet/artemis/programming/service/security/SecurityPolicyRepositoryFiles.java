@@ -715,7 +715,7 @@ public final class SecurityPolicyRepositoryFiles {
      * @param repositoryRoot root of the checked-out exercise-tests repository
      * @param policyPath     the validated path of the policy file relative to the root
      */
-    public static void deletePolicyFile(Path repositoryRoot, String policyPath) {
+    private static void deletePolicyFile(Path repositoryRoot, String policyPath) {
         Path root = repositoryRoot.toAbsolutePath().normalize();
         Path file = root.resolve(policyPath).normalize();
         if (!file.startsWith(root) || blocksPolicyFile(root, file) || !Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) {

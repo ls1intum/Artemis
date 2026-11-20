@@ -201,7 +201,10 @@ public class SecurityPolicyEditorService {
                 String path = requireValidPolicyPath(removedPath);
                 @Nullable
                 String before = existingPaths.contains(path) ? SecurityFrameworkCommitFiles.readPolicyFile(repository, tree, path).content() : null;
-                files.add(new SecurityPolicyPreviewDTO.FileDTO(path, path, before, null));
+                // Only a policy file is deleted; for another path, e.g. a directory or an unrelated YAML file, the change removes the reference only.
+                if (before != null && SecurityPolicyYaml.isPolicyShaped(before)) {
+                    files.add(new SecurityPolicyPreviewDTO.FileDTO(path, path, before, null));
+                }
                 changedPaths.add(path);
             }
             List<String> problems = new ArrayList<>();
@@ -279,7 +282,7 @@ public class SecurityPolicyEditorService {
                         SecurityPolicyConflicts.requireStillApplied(repository, appliedCommit.get(), change.frameworkVersion() != null);
                     }
                 });
-        log.info("User {} changed the security policies {} and removed {} of programming exercise {}", user.getLogin(),
+        log.info("User {} changed the security policies {} and removed the references to {} of programming exercise {}", user.getLogin(),
                 change.policies().stream().map(policy -> policy.document().policyPath()).toList(), change.removedPolicyPaths(), exercise.getId());
         // The policies and the state are read from one commit, so a commit pushed right after this one cannot mix two states in the answer.
         return readTestRepository(exercise, (repository, commit) -> commitResultAt(repository, commit, exercise.getPackageName()));
@@ -569,7 +572,8 @@ public class SecurityPolicyEditorService {
             throw new UncheckedIOException(e);
         }
 
-        vacated.forEach(path -> SecurityPolicyRepositoryFiles.deletePolicyFile(root, path));
+        // A vacated path that holds no policy, e.g. a directory or an unrelated YAML file that an annotation named by mistake, keeps what it holds.
+        vacated.forEach(path -> SecurityPolicyRepositoryFiles.deletePolicyFileIfPolicy(root, path));
         rendered.forEach((path, content) -> SecurityPolicyRepositoryFiles.writePolicy(root, path, content));
         SecurityTestAssignments.assignTestCases(root, reassignedTestClasses(testClasses, requested, vacated));
 

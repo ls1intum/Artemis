@@ -717,6 +717,9 @@ class SecurityPolicyRepositoryFilesTest {
     @CsvSource({ "a.Outer, false", "b.Outer, true" })
     void anOverrideMustNameTheSameOuterTypeForANestedParameterType(String childImport, boolean unsupported) throws IOException {
         writeBuildFile();
+        for (String outerPackage : List.of("a", "b")) {
+            writeSource("test/" + outerPackage + "/Outer.java", "package " + outerPackage + ";\n\npublic class Outer {\n\n    public static class Inner {\n    }\n}\n");
+        }
         String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(Outer.Inner value)";
         String parent = TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated);
         writeSource("test/de/example/SortingTest.java", parent.replace("import org.junit.jupiter.api.Test;", "import a.Outer;\nimport org.junit.jupiter.api.Test;"));
@@ -741,14 +744,7 @@ class SecurityPolicyRepositoryFilesTest {
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
         // Outer.Inner names a.Outer.Inner in one file and b.Outer.Inner in the other, so only the same import makes it an override.
-        SecurityFrameworkState.UnsupportedReason reason = new SecurityFrameworkState.UnsupportedReason("de.example.MoreSortingTest",
-                SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS);
-        if (unsupported) {
-            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).contains(reason);
-        }
-        else {
-            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).doesNotContain(reason);
-        }
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", unsupported);
     }
 
     @ParameterizedTest
@@ -926,15 +922,16 @@ class SecurityPolicyRepositoryFilesTest {
                 .containsExactlyInAnyOrderElementsOf(unsupported ? List.of(middleInherits, leafKeeps) : List.of(middleInherits));
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
-    void aSupertypeThatSeveralBranchesOfTheHierarchyShareIsVisitedOnce() throws IOException {
+    void aSupertypeThatSeveralBranchesOfTheHierarchyShareIsVisitedOnce(boolean baseDeclaresDate) throws IOException {
         writeBuildFile();
         // 30 layers of two interfaces that each extend both interfaces of the layer below: visiting every path would take about 2^30 steps per interface.
         for (int layer = 0; layer < 30; layer++) {
             String supertypes = layer == 0 ? "" : " extends Layer" + (layer - 1) + "A, Layer" + (layer - 1) + "B";
             // Only the shared base at the bottom declares a member type, so finding it takes the traversal of the whole graph.
-            String body = layer == 0 ? " {\n\n    class Date {\n    }\n}\n" : " {\n}\n";
+            String body = layer == 0 && baseDeclaresDate ? " {\n\n    class Date {\n    }\n}\n" : " {\n}\n";
             for (String side : List.of("A", "B")) {
                 writeSource("test/de/example/Layer" + layer + side + ".java", "package de.example;\n\ninterface Layer" + layer + side + supertypes + body);
             }
@@ -944,8 +941,9 @@ class SecurityPolicyRepositoryFilesTest {
         writeSource("test/de/example/MoreSortingTest.java", importingOverride("MoreSortingTest extends SortingTest implements Layer29A, Layer29B", "public void runs(Date date)"));
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
-        // The member type Layer0A.Date shadows the import, so runs(Date) is an overload and the inherited test still runs with the sandbox.
-        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", true);
+        // The member type Layer0A.Date shadows the import, so runs(Date) is an overload and the inherited test still runs with the sandbox. Without it,
+        // runs(Date) overrides the inherited test.
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", baseDeclaresDate);
     }
 
     @ParameterizedTest
@@ -1135,7 +1133,7 @@ class SecurityPolicyRepositoryFilesTest {
         writeSource("test/de/example/SortingTest.java", implementing);
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
-        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isNotEqualTo(SecurityActivationStatus.UNSUPPORTED);
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
     }
 
     @ParameterizedTest
@@ -1164,6 +1162,19 @@ class SecurityPolicyRepositoryFilesTest {
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
         // The switched-off MoreSortingTest inherits runs(Date) with its own active policy, however its superclass is written.
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", true);
+    }
+
+    @Test
+    void typeArgumentsSeparateTheSuperclassFromTheNextKeyword() throws IOException {
+        writeBuildFile();
+        String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs()";
+        String parent = TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated);
+        writeSource("test/de/example/SortingTest.java", parent.replace("class SortingTest", "class SortingTest<T>"));
+        writeSource("test/de/example/MoreSortingTest.java", importingOverride("MoreSortingTest extends SortingTest<String>implements java.io.Serializable", "public void check()"));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // Java needs no whitespace after the >, so SortingTest is the superclass and MoreSortingTest inherits runs() with its own active policy.
         assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", true);
     }
 
@@ -1832,7 +1843,7 @@ class SecurityPolicyRepositoryFilesTest {
         assertThatIllegalArgumentException().isThrownBy(() -> SecurityPolicyRepositoryFiles.writePolicy(root, "../SecurityPolicy.yaml", POLICY));
         assertThatIllegalArgumentException().isThrownBy(() -> SecurityPolicyRepositoryFiles.writePolicy(root, "notes.txt/SecurityPolicy.yaml", POLICY));
         // A directory at the path of a policy is no policy file, so deleting the policy leaves it alone.
-        SecurityPolicyRepositoryFiles.deletePolicyFile(root, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME);
+        SecurityPolicyRepositoryFiles.deletePolicyFileIfPolicy(root, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME);
         assertThat(root.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).resolve("nested")).isDirectory();
     }
 

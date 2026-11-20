@@ -411,12 +411,16 @@ final class AresTestCases {
         String arrayDimensions = arrayStart < 0 ? "" : type.substring(arrayStart);
         int dot = baseType.indexOf('.');
         String firstName = dot < 0 ? baseType : baseType.substring(0, dot);
-        // A name that starts with a package, by the Java naming conventions in lower case, is fully qualified; one that starts with a type, e.g.
-        // Outer.Inner, depends on what that type resolves to in the file.
-        if (PRIMITIVE_TYPES.contains(baseType) || (dot >= 0 && Character.isLowerCase(firstName.charAt(0)))) {
+        if (PRIMITIVE_TYPES.contains(baseType)) {
             return baseType + arrayDimensions;
         }
+        // A name that starts with a type, e.g. Outer.Inner, depends on what that type resolves to in the file, also a type in lower case that an import names,
+        // e.g. outer.Inner with import models.outer. Otherwise a name that starts with a package, by the Java naming conventions in lower case, is fully
+        // qualified.
         String resolvedType = resolve.apply(firstName);
+        if (resolvedType == null && dot >= 0 && Character.isLowerCase(firstName.charAt(0))) {
+            return baseType + arrayDimensions;
+        }
         return (resolvedType != null ? resolvedType + baseType.substring(firstName.length()) : UNRESOLVED_TYPE + baseType) + arrayDimensions;
     }
 

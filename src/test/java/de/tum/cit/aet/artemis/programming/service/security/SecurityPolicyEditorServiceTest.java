@@ -396,6 +396,25 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void removingAReferenceToAFileThatIsNoPolicyKeepsTheFile() throws Exception {
+        // With a version whose schema Artemis does not verify, an unrelated YAML mapping that an annotation names by mistake leaves the tests configured.
+        pushToTests("build.gradle", "ext {\n    aresVersion = '2.3.0'\n}\n");
+        pushToTests("notes.yaml", "notes:\n  - keep me\n");
+        pushToTests(STRESS_TEST_PATH, STRESS_TEST.replace("value = \"SecurityPolicy.yaml\"", "value = \"notes.yaml\""));
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO policy = editor.policies().stream().filter(candidate -> candidate.policyPath().equals("SecurityPolicy.yaml")).findFirst().orElseThrow()
+                .document();
+        SecurityPolicyChangeDTO change = new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, null, List.of(edited(policy, BOTH_CLASSES)), List.of("notes.yaml"));
+
+        assertThat(editorService.preview(exercise(), change).files()).extracting(SecurityPolicyPreviewDTO.FileDTO::path).doesNotContain("notes.yaml");
+        editorService.commit(exercise(), change, user);
+
+        // The change removes the reference only; the file stays, since it holds no policy.
+        assertThat(readPushed("notes.yaml")).contains("notes:\n  - keep me\n");
+        assertThat(readPushed(STRESS_TEST_PATH)).hasValueSatisfying(source -> assertThat(source).contains("value = \"SecurityPolicy.yaml\"").doesNotContain("notes.yaml"));
+    }
+
+    @Test
     void previewShowsTheTestClassesWhoseAnnotationsTheChangeRewrites() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
 

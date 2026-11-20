@@ -142,6 +142,29 @@ class AresTestCasesTest {
     }
 
     @Test
+    void aDottedNameWhoseFirstNameAnImportGivesATypeIsResolved() {
+        String source = """
+                import models.outer;
+
+                class SortingTest {
+
+                    @Test
+                    public void runs(outer.Inner value) {
+                    }
+
+                    @Test
+                    public void sorts(java.util.List<String> values) {
+                    }
+                }
+                """;
+
+        // outer is the imported type models.outer, although its name is in lower case like a package, so outer.Inner is models.outer.Inner.
+        AresTestCases.TestSignature runs = new AresTestCases.TestSignature("runs", "runs(models.outer.Inner)", true, Set.of("outer"));
+        AresTestCases.TestSignature sorts = new AresTestCases.TestSignature("sorts", "sorts(java.util.List)", true, Set.of());
+        assertThat(AresTestCases.testSignatures(AresPolicyAnnotations.mask(source)).values()).containsExactlyInAnyOrder(runs, sorts);
+    }
+
+    @Test
     void findsTestMethodsBehindAnnotationsWithNamesOutsideAscii() {
         String source = """
                 class SortingTest {

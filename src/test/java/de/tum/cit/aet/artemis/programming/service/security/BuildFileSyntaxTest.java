@@ -47,6 +47,18 @@ class BuildFileSyntaxTest {
     }
 
     @Test
+    void onlyTheBuildFileOfTheBuildToolThatPinsAresCounts() {
+        String gradleWithoutAgent = "ext { aresVersion = '2.2.1' }\n";
+        String mavenWithAgent = "<properties><ares.version>2.2.1</ares.version></properties><artifactId>ares</artifactId><classifier>agent</classifier>"
+                + "<argLine>-javaagent:${settings.localRepository}/de/tum/cit/ase/ares/${ares.version}/ares-${ares.version}-agent.jar</argLine>";
+        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, mavenWithAgent))).isTrue();
+
+        // The Gradle build pins the Ares version, so it is the build that runs; the pom.xml next to it does not attach the agent to the tests.
+        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(gradleWithoutAgent, mavenWithAgent))).isFalse();
+        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles("repositories { mavenCentral() }\n", mavenWithAgent))).isTrue();
+    }
+
+    @Test
     void checksEveryConfigurationThatDeclaresTheAresAgent() {
         String twoConfigurations = "dependencies {\n    smokeAgent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n    testAgent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\n"
                 + "test {\n    jvmArgs \"-javaagent:${configurations.testAgent.singleFile}\"\n}\n";

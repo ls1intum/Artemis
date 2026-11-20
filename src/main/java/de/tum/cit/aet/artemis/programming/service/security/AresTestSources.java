@@ -522,6 +522,8 @@ final class AresTestSources {
             }
             else if (character == '>' || character == ')') {
                 nesting = Math.max(0, nesting - 1);
+                // The brackets separate tokens, e.g. Parent and implements in extends Parent<String>implements Marker.
+                outsideBrackets.append(nesting == 0 ? " " : "");
             }
             else if (nesting == 0) {
                 outsideBrackets.append(character);

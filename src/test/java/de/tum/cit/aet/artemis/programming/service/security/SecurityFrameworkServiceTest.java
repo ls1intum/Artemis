@@ -1144,6 +1144,10 @@ class SecurityFrameworkServiceTest {
         pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve(classTestPath).toFile(), SECOND_TEST_CLASS, StandardCharsets.UTF_8));
         pushCheckoutChange("Switch ClassTest off\n\nThis is no\nSecurity-Framework-Action: deactivate\n\nReviewed-by: Instructor\n",
                 checkout -> FileUtils.writeStringToFile(checkout.resolve(classTestPath).toFile(), switchedOff, StandardCharsets.UTF_8));
+        // The deactivation committed the inactive state, so the activation has to restore SortingTest and the policy file.
+        assertThat(readPushed("test/de/example/SortingTest.java")).hasValueSatisfying(source -> assertThat(source)
+                .contains(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION + "\nclass SortingTest").doesNotContain(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION));
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
 
         // The last real deactivation is the restore point: SortingTest was on and ClassTest off before it.
         assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).disabledTestClasses()).containsExactly("de.example.ClassTest");
