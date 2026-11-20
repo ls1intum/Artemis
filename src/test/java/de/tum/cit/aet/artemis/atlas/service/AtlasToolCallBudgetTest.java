@@ -51,8 +51,8 @@ class AtlasToolCallBudgetTest {
     void sameToolMayRun48TimesThroughNativeAdvisor() {
         AtomicInteger calls = new AtomicInteger();
         ChatModel model = modelReturning(new AtomicInteger(), round -> round <= 48 ? toolCallResponse("getExerciseContent") : textResponse("done"));
-        ChatResponse response = newService(model).delegateOrchestratorRound("system", "run", OpenAiChatOptions.builder(), new HashMap<>(),
-                ToolCallbackProvider.from(callback("getExerciseContent", calls, false)));
+        ChatResponse response = newService(model).delegateOrchestratorRound("system", "run", OpenAiChatOptions.builder(), new HashMap<>(), ignored -> {
+        }, ToolCallbackProvider.from(callback("getExerciseContent", calls, false)));
         assertThat(calls).hasValue(48);
         assertThat(response.getResult().getOutput().getText()).isEqualTo("done");
     }
@@ -111,8 +111,8 @@ class AtlasToolCallBudgetTest {
     void uncooperativeModelStopsAtHardLimitAndRetainsUsage() {
         Map<String, Object> context = new HashMap<>();
         ChatModel model = modelReturning(new AtomicInteger(), round -> toolCallResponseWithUsage("getExerciseContent"));
-        ChatResponse response = newService(model).delegateOrchestratorRound("system", "run", OpenAiChatOptions.builder(), context,
-                ToolCallbackProvider.from(callback("getExerciseContent", new AtomicInteger(), false)));
+        ChatResponse response = newService(model).delegateOrchestratorRound("system", "run", OpenAiChatOptions.builder(), context, ignored -> {
+        }, ToolCallbackProvider.from(callback("getExerciseContent", new AtomicInteger(), false)));
         assertThat(AtlasToolCallBudget.budgetForContext(context).calls()).isEqualTo(255);
         assertThat(response.getMetadata().getUsage().getPromptTokens()).isEqualTo(256);
         assertThatThrownBy(() -> AtlasToolCallBudget.checkResponse(response, context)).isInstanceOf(AtlasToolCallBudget.LimitReachedException.class);
@@ -243,7 +243,8 @@ class AtlasToolCallBudgetTest {
             }
         };
         ChatResponse response = newService(modelReturning(modelCalls, round -> toolCallResponse("delegateWorker"))).delegateOrchestratorRound("system", "run",
-                OpenAiChatOptions.builder(), context, ToolCallbackProvider.from(worker));
+                OpenAiChatOptions.builder(), context, ignored -> {
+                }, ToolCallbackProvider.from(worker));
         assertThat(modelCalls).hasValue(1);
         assertThat(budget.calls()).isEqualTo(255);
         assertThatThrownBy(() -> AtlasToolCallBudget.checkResponse(response, context)).isInstanceOf(AtlasToolCallBudget.LimitReachedException.class);

@@ -59,10 +59,13 @@ class LLMModelCostConfigurationBindingTest {
         config.applyDefaultModelCosts();
         var modelCosts = config.getModelCosts();
 
-        assertThat(modelCosts.get("gpt-5.4").getInputCostPerMillionEur()).isCloseTo(2.30f, within(1e-4f));
-        assertThat(modelCosts.get("gpt-5.4").getOutputCostPerMillionEur()).isCloseTo(13.80f, within(1e-4f));
-        assertThat(modelCosts.get("gpt-5.4-mini").getInputCostPerMillionEur()).isCloseTo(0.69f, within(1e-4f));
-        assertThat(modelCosts.get("gpt-5.4-mini").getOutputCostPerMillionEur()).isCloseTo(4.14f, within(1e-4f));
+        assertThat(modelCosts.get("gpt-5.4-mini").getInputCostPerMillionUsd()).isCloseTo(0.75f, within(1e-4f));
+        assertThat(modelCosts.get("gpt-5.4-mini").getOutputCostPerMillionUsd()).isCloseTo(4.50f, within(1e-4f));
+        assertThat(modelCosts.get("gpt-5.4").getInputCostPerMillionUsd()).isEqualTo(2.50f);
+        assertThat(modelCosts.get("gpt-5.4").getOutputCostPerMillionUsd()).isEqualTo(15f);
+        assertThat(modelCosts.get("gpt-5-mini").getCachedInputCostPerMillionUsd()).isEqualTo(0.025f);
+        assertThat(modelCosts.get("gpt-5.4").getCachedInputCostPerMillionUsd()).isEqualTo(0.25f);
+        assertThat(modelCosts.get("gpt-5.4-mini").getCachedInputCostPerMillionUsd()).isEqualTo(0.075f);
     }
 
     @Test
@@ -77,10 +80,9 @@ class LLMModelCostConfigurationBindingTest {
                 """);
         config.applyDefaultModelCosts();
         var modelCosts = config.getModelCosts();
+        assertThat(modelCosts.get("gpt-5.4").getInputCostPerMillionUsd()).as("an explicit legacy entry must not acquire seeded USD prices").isNull();
 
-        assertThat(modelCosts.get("gpt-5.4").getInputCostPerMillionEur()).isCloseTo(9.99f, within(1e-4f));
-        assertThat(modelCosts.get("gpt-5.4").getOutputCostPerMillionEur()).isCloseTo(11.11f, within(1e-4f));
-        assertThat(modelCosts.get("gpt-5.4-mini").getInputCostPerMillionEur()).isCloseTo(0.69f, within(1e-4f));
+        assertThat(modelCosts.get("gpt-5.4-mini").getInputCostPerMillionUsd()).isCloseTo(0.75f, within(1e-4f));
     }
 
     @Test
@@ -115,7 +117,7 @@ class LLMModelCostConfigurationBindingTest {
 
         assertThat(modelCosts).containsKey("gpt54");
         assertThat(modelCosts).doesNotContainKey("gpt-5.4");
-        assertThat(modelCosts.get("gpt54").getInputCostPerMillionEur()).isCloseTo(9.99f, within(1e-4f));
+        assertThat(modelCosts.get("gpt54").getInputCostPerMillionUsd()).isNull();
         // an unrelated default is still seeded
         assertThat(modelCosts).containsKey("gpt-5.4-mini");
     }
@@ -128,10 +130,8 @@ class LLMModelCostConfigurationBindingTest {
                 "ARTEMIS_LLM_MODELCOSTS_GPT5MINI_INPUTCOSTPERMILLIONEUR", "0.23", "ARTEMIS_LLM_MODELCOSTS_GPT5MINI_OUTPUTCOSTPERMILLIONEUR", "1.84"));
         var modelCosts = config.getModelCosts();
 
-        assertThat(modelCosts).containsKey("gpt54");
-        assertThat(modelCosts.get("gpt54").getInputCostPerMillionEur()).isCloseTo(2.30f, within(1e-4f));
-        assertThat(modelCosts.get("gpt54").getOutputCostPerMillionEur()).isCloseTo(13.80f, within(1e-4f));
-        assertThat(modelCosts.get("gpt5mini").getInputCostPerMillionEur()).isCloseTo(0.23f, within(1e-4f));
+        assertThat(modelCosts).containsKeys("gpt54", "gpt5mini");
+        assertThat(modelCosts.get("gpt54").getInputCostPerMillionUsd()).isNull();
     }
 
     @Test
@@ -144,7 +144,7 @@ class LLMModelCostConfigurationBindingTest {
 
         assertThat(modelCosts).containsKey("gpt54");
         assertThat(modelCosts).doesNotContainKey("gpt-5.4");
-        assertThat(modelCosts.get("gpt54").getInputCostPerMillionEur()).isCloseTo(2.30f, within(1e-4f));
+        assertThat(modelCosts.get("gpt54").getInputCostPerMillionUsd()).isNull();
         // unrelated default still present
         assertThat(modelCosts).containsKey("gpt-5.4-mini");
     }
@@ -155,8 +155,6 @@ class LLMModelCostConfigurationBindingTest {
         // rejected before it can become the silent fallback price for model-less requests.
         var config = new LLMModelCostConfiguration();
         LLMModelCostConfiguration.ModelCostProperties cost = new LLMModelCostConfiguration.ModelCostProperties();
-        cost.setInputCostPerMillionEur(1.0f);
-        cost.setOutputCostPerMillionEur(2.0f);
         config.setModelCosts(new HashMap<>(Map.of("...", cost)));
 
         assertThatThrownBy(config::applyDefaultModelCosts).isInstanceOf(IllegalStateException.class).hasMessageContaining("alphanumeric");
