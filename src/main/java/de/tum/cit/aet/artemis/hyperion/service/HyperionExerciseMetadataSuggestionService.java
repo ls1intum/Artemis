@@ -109,6 +109,8 @@ public class HyperionExerciseMetadataSuggestionService {
      */
     private final boolean usesLegacyMaxTokens;
 
+    private final int outputTokens;
+
     /**
      * @param chatClients                   the chat clients of the Hyperion LLM presets
      * @param templateService               loads the prompt template
@@ -129,6 +131,8 @@ public class HyperionExerciseMetadataSuggestionService {
         // Servers such as Ollama read only max_tokens; a preset that sets that field gets the cap in the same field.
         LlmProperties.Preset preset = chatClients.presetFor(HyperionLlmPresets.Task.METADATA_SUGGESTION);
         this.usesLegacyMaxTokens = preset.maxTokens() != null;
+        // The task needs at most MAX_OUTPUT_TOKENS; a lower limit of the preset stays in force.
+        this.outputTokens = preset.outputTokenLimit() == null ? MAX_OUTPUT_TOKENS : Math.min(MAX_OUTPUT_TOKENS, preset.outputTokenLimit());
     }
 
     /**
@@ -204,10 +208,10 @@ public class HyperionExerciseMetadataSuggestionService {
     private OpenAiChatOptions.Builder metadataOptions() {
         OpenAiChatOptions.Builder options = OpenAiChatOptions.builder();
         if (usesLegacyMaxTokens) {
-            options.maxTokens(MAX_OUTPUT_TOKENS);
+            options.maxTokens(outputTokens);
         }
         else {
-            options.maxCompletionTokens(MAX_OUTPUT_TOKENS);
+            options.maxCompletionTokens(outputTokens);
         }
         return options;
     }

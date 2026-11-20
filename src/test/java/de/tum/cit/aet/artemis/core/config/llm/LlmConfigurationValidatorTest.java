@@ -144,6 +144,17 @@ class LlmConfigurationValidatorTest {
     }
 
     @Test
+    void aMisspeltMapNameIsRejectedInsteadOfLeavingTheTaskOnTheDefault() {
+        runner(List.of(), "artemis.hyperion.llm-presets.default=large", "artemis.hyperion.llm-preset.faq-rewrite=small")
+                .withInitializer(context -> context.getEnvironment().getPropertySources().replace(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME,
+                        new SystemEnvironmentPropertySource(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME,
+                                Map.of("ARTEMIS_HYPERION_LLM_PRESETS_CHECKLIST", "small"))))
+                .run(context -> assertThat(rootMessage(context.getStartupFailure()))
+                        .contains("artemis.hyperion.llm-preset.faq-rewrite is no key; the presets of this module go under artemis.hyperion.llm-presets")
+                        .contains("artemis.hyperion.llm.presets.checklist is no key; the presets of this module go under artemis.hyperion.llm-presets"));
+    }
+
+    @Test
     void removedKeysOnlyWarnAndAreListed() {
         captureLogs(() -> runner(List.of(), "artemis.hyperion.llm-presets.default=large", "spring.ai.openai.api-key=old", "artemis.llm.model-costs.gpt5.input=1",
                 "artemis.weaviate.gpu-api-key=old", "artemis.hyperion.agent.profiles.fast.reasoning-effort=low", "artemis.hyperion.agent.profiles.fast.max-turns=10")

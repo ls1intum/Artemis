@@ -247,11 +247,17 @@ public class LlmConfigurationValidator {
                 // Every key below the map must be one known direct child; an extra underscore in an environment variable nests the key one level deeper.
                 if (map.isAncestorOf(name)
                         && (name.getNumberOfElements() != map.getNumberOfElements() + 1 || !known.contains(uniform(name.getLastElement(ConfigurationPropertyName.Form.UNIFORM))))) {
-                    unknown.add(name.toString());
+                    unknown.add(name + " names no task of this llm-presets map (check the spelling, also of environment variables)");
+                }
+                // A misspelt map name (llm-preset, LLM_PRESETS) would leave every task on the configured map silently; no other key of the parent starts with llm.
+                ConfigurationPropertyName parent = map.getParent();
+                if (parent.isAncestorOf(name) && !map.equals(name) && !map.isAncestorOf(name)
+                        && name.getElement(parent.getNumberOfElements(), ConfigurationPropertyName.Form.UNIFORM).startsWith("llm")) {
+                    unknown.add(name + " is no key; the presets of this module go under " + map);
                 }
             }));
         }
-        unknown.forEach(name -> errors.add(name + " names no task of this llm-presets map (check the spelling, also of environment variables)"));
+        errors.addAll(unknown);
     }
 
     private static String uniform(String key) {

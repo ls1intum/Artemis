@@ -121,7 +121,8 @@ A preset is one model on one endpoint, plus the options that Artemis sends with 
 | `max-retries`           | Overrides the endpoint's `max-retries` for this preset.                                                                                    |
 
 An `embeddings` preset needs an endpoint of type `openai` and takes none of the model options, `timeout` or
-`max-retries`. The timeouts of embedding calls are set under `artemis.weaviate.embedding`.
+`max-retries`. Embedding calls also ignore the endpoint's `timeout` and `max-retries`: their time limits are set under
+`artemis.weaviate.embedding`, and failed index writes are retried by the index itself.
 
 Names of endpoints and presets use only lowercase letters and digits, and start with a letter, for example `large` or
 `gpt6terra`. Environment variables cannot carry dashes or dots inside a name.
