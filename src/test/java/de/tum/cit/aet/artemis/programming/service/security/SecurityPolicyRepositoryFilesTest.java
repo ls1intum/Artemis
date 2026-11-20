@@ -19,6 +19,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.programming.domain.security.SecurityActivationStatus;
@@ -649,6 +650,56 @@ class SecurityPolicyRepositoryFilesTest {
     @Test
     void ignoresAresVersionsInGradleStrings() {
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("def example = \"aresVersion = '2.3.0'\"\next { aresVersion = '2.2.1' }\n", null)).contains("2.2.1");
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = { "ext { aresVersion = '2.2.1' } // Replaced artemis-java-test-sandbox with Ares 2\\n||false",
+            "/* artemis-java-test-sandbox */ ext { aresVersion = '2.2.1' }\\n||false",
+            "ext { aresVersion = '2.2.1' }\\ndependencies { testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.13.0' }\\n||true",
+            "ext { aresVersion = '2.2.1' }\\ndependencies { testImplementation group: 'de.tum.in.ase', name: 'artemis-java-test-sandbox' }\\n||true",
+            "|<!-- replaced artemis-java-test-sandbox --><properties><ares.version>2.2.1</ares.version></properties>|false",
+            "|<properties><ares.version>2.2.1</ares.version></properties><dependency><artifactId> artemis-java-test-sandbox </artifactId></dependency>|true" })
+    void onlyADependencyOnAres1MakesTheBuildUnsupported(String gradleBuild, String mavenPom, boolean ares1) {
+        Map<String, String> sources = Map.of("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest"));
+        String gradle = gradleBuild == null ? null : gradleBuild.replace("\\n", "\n");
+        SecurityFrameworkState.UnsupportedReason reason = new SecurityFrameworkState.UnsupportedReason(gradle != null ? "build.gradle" : "pom.xml",
+                SecurityFrameworkState.UnsupportedReasonType.ARES_1);
+
+        // A comment that mentions the library, e.g. after the migration to Ares 2, declares no dependency on it.
+        if (ares1) {
+            assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(gradle, mavenPom)).unsupportedReasons()).contains(reason);
+        }
+        else {
+            assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(gradle, mavenPom)).unsupportedReasons()).doesNotContain(reason);
+        }
+    }
+
+    @Test
+    void readsAndWritesTheAresVersionOfThePomAndNotOneOfAProfile() throws IOException {
+        String pom = """
+                <project>
+                  <profiles>
+                    <profile>
+                      <id>next</id>
+                      <properties>
+                        <ares.version>2.3.0</ares.version>
+                      </properties>
+                    </profile>
+                  </profiles>
+                  <properties>
+                    <ares.version>2.2.1</ares.version>
+                  </properties>
+                </project>
+                """;
+        // A profile applies its properties only while it is active, so the pin of the POM itself is the version the build uses.
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, pom)).contains("2.2.1");
+        FileUtils.writeStringToFile(root.resolve("pom.xml").toFile(), pom, StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
+
+        assertThat(Files.readString(root.resolve("pom.xml"))).isEqualTo(pom.replace("<ares.version>2.2.1</ares.version>", "<ares.version>2.4.0</ares.version>"));
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, "<profiles><profile><properties><ares.version>2.3.0</ares.version></properties></profile></profiles>"))
+                .isEmpty();
     }
 
     @Test

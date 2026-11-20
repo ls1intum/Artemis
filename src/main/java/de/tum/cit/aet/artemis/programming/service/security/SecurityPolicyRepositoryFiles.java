@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -73,8 +72,6 @@ public final class SecurityPolicyRepositoryFiles {
 
     private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version>)([^<]+)(</ares\\.version>)");
 
-    private static final String ARES_1_ARTIFACT = "artemis-java-test-sandbox";
-
     private static final Pattern WINDOWS_DRIVE = Pattern.compile("[A-Za-z]:");
 
     private static final Pattern BLANK_OR_COMMENT_LINE = Pattern.compile("^[ \\t]*(#.*)?$");
@@ -87,12 +84,6 @@ public final class SecurityPolicyRepositoryFiles {
      * called {@code build} or {@code target} is still scanned.
      */
     private static final Set<String> BUILD_OUTPUT_DIRECTORIES = Set.of("build", "target");
-
-    /**
-     * The Groovy keywords after which an expression, and therefore a slashy string, may follow; any other word is an operand, such as a variable,
-     * {@code this} or {@code null}.
-     */
-    private static final Set<String> GROOVY_KEYWORDS_BEFORE_EXPRESSIONS = Set.of("return", "throw", "assert", "case", "in", "yield", "else", "do");
 
     private static final Set<String> BUILD_FILES = Set.of(GRADLE_BUILD_FILE, "build.gradle.kts", MAVEN_BUILD_FILE);
 
@@ -121,10 +112,11 @@ public final class SecurityPolicyRepositoryFiles {
     public record BuildFiles(@Nullable String gradleBuild, @Nullable String mavenPom) {
 
         /**
-         * @return whether a build file refers to the Ares 1 library {@code artemis-java-test-sandbox}
+         * @return whether a build file declares a dependency on the Ares 1 library {@code artemis-java-test-sandbox}; a mention in a comment, e.g. one that
+         *         records the migration to Ares 2, does not count
          */
         boolean usesAres1() {
-            return (gradleBuild != null && gradleBuild.contains(ARES_1_ARTIFACT)) || (mavenPom != null && mavenPom.contains(ARES_1_ARTIFACT));
+            return BuildFileSyntax.declaresAres1Dependency(this);
         }
     }
 
@@ -468,187 +460,17 @@ public final class SecurityPolicyRepositoryFiles {
 
     /**
      * The places that pin the Ares version in a build file. A pin inside a comment, e.g. {@code // aresVersion = '2.3.0'}, or inside a Gradle string, e.g.
-     * {@code "aresVersion = '2.3.0'"}, has no effect on the build, so it is neither read nor replaced.
+     * {@code "aresVersion = '2.3.0'"}, has no effect on the build, so it is neither read nor replaced. Neither is a pin in a Maven profile, which applies
+     * only while its profile is active; the pin of the POM itself is the one the build uses.
      *
      * @param content   the content of the build file
      * @param buildTool the build tool the file belongs to
      * @return the pins outside comments and strings, in the order of the file
      */
     private static List<MatchResult> aresVersionPins(String content, BuildTool buildTool) {
-        boolean[] noCode = buildTool == BuildTool.GRADLE ? gradleCommentsAndStrings(content) : mavenComments(content);
-        return versionPattern(buildTool).matcher(content).results().filter(pin -> !noCode[pin.start()]).toList();
-    }
-
-    /**
-     * @return for each character of a Gradle build file whether it belongs to a {@code //} or {@code /* *}{@code /} comment, to a quoted string or to a
-     *         slashy string ({@code /.../} or {@code $/.../$}); a URL such as {@code 'https://example.org'} therefore starts no comment
-     */
-    private static boolean[] gradleCommentsAndStrings(String content) {
-        boolean[] comment = new boolean[content.length()];
-        int index = 0;
-        // The last token of code before the current one, without whitespace and comments: a word, ++, -- or a single character; a string counts as an operand.
-        String previous = ";";
-        while (index < content.length()) {
-            int end = endOfComment(content, index);
-            if (end < 0) {
-                end = endOfStringLiteral(content, index, previous);
-                if (end >= 0) {
-                    previous = "\"";
-                }
-            }
-            if (end >= 0) {
-                Arrays.fill(comment, index, end, true);
-            }
-            else {
-                end = endOfCodeToken(content, index);
-                previous = tokenAfter(previous, content.substring(index, end));
-            }
-            index = end;
-        }
-        return comment;
-    }
-
-    /**
-     * @return the offset after a {@code //} or {@code /* *}{@code /} comment that starts at {@code index}, or -1 if none starts there
-     */
-    private static int endOfComment(String content, int index) {
-        if (content.startsWith("//", index)) {
-            return endOfLine(content, index);
-        }
-        if (content.startsWith("/*", index)) {
-            int close = content.indexOf("*/", index + 2);
-            return close < 0 ? content.length() : close + 2;
-        }
-        return -1;
-    }
-
-    /**
-     * @param previous the last token of code before {@code index}, which decides whether a {@code /} opens a slashy string
-     * @return the offset after a quoted or slashy string that starts at {@code index}, or -1 if none starts there
-     */
-    private static int endOfStringLiteral(String content, int index, String previous) {
-        char character = content.charAt(index);
-        if (character == '\'' || character == '"') {
-            String quote = String.valueOf(character);
-            String delimiter = content.startsWith(quote.repeat(3), index) ? quote.repeat(3) : quote;
-            return endOfString(content, index + delimiter.length(), delimiter);
-        }
-        if ((character == '/' || content.startsWith("$/", index)) && slashyStringMayStartAfter(previous)) {
-            return endOfSlashyString(content, index);
-        }
-        return -1;
-    }
-
-    /**
-     * @return the offset after the word that starts at {@code index}, or after its single character if no word starts there
-     */
-    private static int endOfCodeToken(String content, int index) {
-        int end = index + 1;
-        if (Character.isJavaIdentifierStart(content.charAt(index))) {
-            while (end < content.length() && Character.isJavaIdentifierPart(content.charAt(end))) {
-                end++;
-            }
-        }
-        return end;
-    }
-
-    /**
-     * @param previous the last token of code so far
-     * @param token    the next token of code: a word or a single character
-     * @return the last token of code after it; whitespace keeps the previous one, and a second {@code +} or {@code -} joins the first
-     */
-    private static String tokenAfter(String previous, String token) {
-        char first = token.charAt(0);
-        if (Character.isJavaIdentifierStart(first)) {
-            return token;
-        }
-        if ((first == '+' || first == '-') && previous.equals(token)) {
-            return token.repeat(2);
-        }
-        return Character.isWhitespace(first) ? previous : token;
-    }
-
-    /**
-     * A {@code /} after an operand divides, as in {@code a / b}, {@code (a) / b} or {@code a++ / b}; elsewhere, as after {@code =}, {@code (}, {@code ,} or
-     * a keyword such as {@code return}, it opens a slashy string.
-     */
-    private static boolean slashyStringMayStartAfter(String previous) {
-        if (Character.isJavaIdentifierStart(previous.charAt(0))) {
-            return GROOVY_KEYWORDS_BEFORE_EXPRESSIONS.contains(previous);
-        }
-        char last = previous.charAt(previous.length() - 1);
-        return previous.length() == 1 && !Character.isJavaIdentifierPart(last) && last != ')' && last != ']' && last != '}' && last != '"';
-    }
-
-    /**
-     * @param from the offset of the opening {@code /} or {@code $/}
-     * @return the offset after the closing delimiter, or {@code -1} if the string is not closed, in which case the {@code /} is read as code
-     */
-    private static int endOfSlashyString(String content, int from) {
-        boolean dollar = content.charAt(from) == '$';
-        int index = from + (dollar ? 2 : 1);
-        while (index < content.length()) {
-            if (dollar && (content.startsWith("$$", index) || content.startsWith("$/", index))) {
-                index += 2;
-            }
-            else if (dollar && content.startsWith("/$", index)) {
-                return index + 2;
-            }
-            else if (!dollar && content.startsWith("\\/", index)) {
-                index += 2;
-            }
-            else if (!dollar && content.charAt(index) == '/') {
-                return index + 1;
-            }
-            else {
-                index++;
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * @param from      the offset after the opening delimiter
-     * @param delimiter the quote that closes the string
-     * @return the offset after the closing delimiter; a string with a single quote also ends at the end of its line
-     */
-    private static int endOfString(String content, int from, String delimiter) {
-        int index = from;
-        while (index < content.length()) {
-            if (content.charAt(index) == '\\') {
-                index += 2;
-            }
-            else if (content.startsWith(delimiter, index)) {
-                return index + delimiter.length();
-            }
-            else if (delimiter.length() == 1 && content.charAt(index) == '\n') {
-                return index + 1;
-            }
-            else {
-                index++;
-            }
-        }
-        return content.length();
-    }
-
-    private static int endOfLine(String content, int from) {
-        int lineEnd = content.indexOf('\n', from);
-        return lineEnd < 0 ? content.length() : lineEnd;
-    }
-
-    /**
-     * @return for each character of a Maven POM whether it belongs to an XML comment
-     */
-    private static boolean[] mavenComments(String content) {
-        boolean[] comment = new boolean[content.length()];
-        int start = content.indexOf("<!--");
-        while (start >= 0) {
-            int close = content.indexOf("-->", start + 4);
-            int end = close < 0 ? content.length() : close + 3;
-            Arrays.fill(comment, start, end, true);
-            start = content.indexOf("<!--", end);
-        }
-        return comment;
+        boolean[] noCode = buildTool == BuildTool.GRADLE ? BuildFileSyntax.gradleCommentsAndStrings(content) : BuildFileSyntax.mavenComments(content);
+        boolean[] profiles = buildTool == BuildTool.MAVEN ? BuildFileSyntax.mavenProfiles(content, noCode) : new boolean[content.length()];
+        return versionPattern(buildTool).matcher(content).results().filter(pin -> !noCode[pin.start()] && !profiles[pin.start()]).toList();
     }
 
     /**
@@ -774,7 +596,7 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * Adds test classes to the list of test classes of a policy file, see {@link SecurityPolicyYaml#addTestClasses(String, List)}.
+     * Adds test classes to the list of test classes of a policy file, see {@link SecurityPolicyYaml#addTestClasses(String, List, boolean)}.
      *
      * @param repositoryRoot root of the checked-out exercise-tests repository
      * @param policyPath     the validated path of the policy file relative to the root
@@ -787,7 +609,8 @@ public final class SecurityPolicyRepositoryFiles {
         if (content.content() == null) {
             return false;
         }
-        Optional<String> updated = SecurityPolicyYaml.addTestClasses(content.content(), testClasses);
+        boolean verifiedAresVersion = readAresVersion(root).filter(SecurityPolicySchema.VERIFIED_ARES_VERSION::equals).isPresent();
+        Optional<String> updated = SecurityPolicyYaml.addTestClasses(content.content(), testClasses, verifiedAresVersion);
         updated.ifPresent(policy -> writePolicy(root, policyPath, policy));
         return updated.isPresent();
     }

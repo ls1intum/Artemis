@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -89,15 +90,20 @@ final class SecurityPolicyYaml {
     }
 
     /**
-     * Adds test classes to the end of {@code theFollowingClassesAreTestClasses}, in the given order, and keeps the rest of the file byte for byte.
+     * Adds test classes to the end of {@code theFollowingClassesAreTestClasses}, in the given order, and keeps the rest of the file byte for byte. The file is
+     * read with the rules the state is evaluated with, so a scalar such as {@code yes} is a class name for Ares {@value SecurityPolicySchema#VERIFIED_ARES_VERSION}
+     * both when the state reports a missing class and when it is added.
      *
-     * @param yaml         the content of a valid policy file
-     * @param classesToAdd the fully qualified names to add; names that are already listed are skipped
+     * @param yaml                the content of a valid policy file
+     * @param classesToAdd        the fully qualified names to add; names that are already listed are skipped
+     * @param verifiedAresVersion whether the pinned Ares version is the one whose parser {@link SecurityPolicySchema} reproduces
      * @return the rewritten content, or empty if the list cannot be located unambiguously or the result would not read back as the same policy with the
      *         added classes; the content unchanged if there is nothing to add
      */
-    static Optional<String> addTestClasses(String yaml, List<String> classesToAdd) {
-        ReadPolicy before = read(yaml);
+    static Optional<String> addTestClasses(String yaml, List<String> classesToAdd, boolean verifiedAresVersion) {
+        Function<String, ReadPolicy> reader = verifiedAresVersion ? SecurityPolicySchema::read : SecurityPolicyYaml::read;
+        Function<String, Optional<Object>> treeReader = verifiedAresVersion ? SecurityPolicySchema::readTree : SecurityPolicyYaml::readTree;
+        ReadPolicy before = reader.apply(yaml);
         if (!before.valid() || before.testClasses().isEmpty()) {
             return Optional.empty();
         }
@@ -111,7 +117,7 @@ final class SecurityPolicyYaml {
         }
         List<String> expected = new ArrayList<>(before.testClasses().get());
         expected.addAll(missing);
-        return readsBackAs(yaml, rewritten.get(), expected) ? rewritten : Optional.empty();
+        return readsBackAs(yaml, rewritten.get(), expected, reader, treeReader) ? rewritten : Optional.empty();
     }
 
     private static Optional<String> rewrite(String yaml, List<String> missing) {
@@ -275,17 +281,26 @@ final class SecurityPolicyYaml {
     }
 
     /**
+     * @param reader     reads a policy file with the rules of its Ares version
+     * @param treeReader reads the document of a policy file with the same rules
      * @return whether the rewritten content reads as the original policy with only the list of test classes replaced by the expected one
      */
-    private static boolean readsBackAs(String original, String rewritten, List<String> expectedTestClasses) {
+    private static boolean readsBackAs(String original, String rewritten, List<String> expectedTestClasses, Function<String, ReadPolicy> reader,
+            Function<String, Optional<Object>> treeReader) {
+        Optional<Map<String, Object>> before = treeReader.apply(original).flatMap(document -> copyWithTestClasses(document, expectedTestClasses));
+        Optional<Map<String, Object>> after = treeReader.apply(rewritten).flatMap(document -> copyWithTestClasses(document, expectedTestClasses));
+        return before.isPresent() && before.equals(after) && reader.apply(rewritten).testClasses().filter(expectedTestClasses::equals).isPresent();
+    }
+
+    /**
+     * @return the only document of a policy file as SnakeYAML reads it; empty if it is no YAML document
+     */
+    private static Optional<Object> readTree(String yaml) {
         try {
-            Optional<Map<String, Object>> before = copyWithTestClasses(newYaml().load(original), expectedTestClasses);
-            Optional<Map<String, Object>> after = copyWithTestClasses(newYaml().load(rewritten), expectedTestClasses);
-            ReadPolicy reread = read(rewritten);
-            return before.isPresent() && before.equals(after) && reread.testClasses().filter(expectedTestClasses::equals).isPresent();
+            return Optional.ofNullable(newYaml().load(yaml));
         }
-        catch (YAMLException | ClassCastException _) {
-            return false;
+        catch (YAMLException _) {
+            return Optional.empty();
         }
     }
 
@@ -312,6 +327,8 @@ final class SecurityPolicyYaml {
         options.setAllowDuplicateKeys(false);
         options.setAllowRecursiveKeys(false);
         options.setNestingDepthLimit(20);
+        // A malformed scalar, e.g. !!int 0xZZ or a broken !!binary, then fails as a YAMLException like any other unreadable file.
+        options.setWrappedToRootException(true);
         return new Yaml(new SafeConstructor(options));
     }
 }
