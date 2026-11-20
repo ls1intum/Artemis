@@ -47,6 +47,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -719,7 +720,7 @@ public class SecurityFrameworkService {
                 if (process && localVCPushProcessingService.isPresent()) {
                     pendingProcessing().put(pendingProcessingKey(exercise, commitHash), commitHash);
                 }
-                gitService.pushCommitWithLease(repository, commitHash, branch, checkedOutHead);
+                pushWithLease(exercise, repository, commitHash, branch, checkedOutHead);
                 if (process) {
                     processPushToTestRepository(exercise, testRepositoryUri, branch, commitHash, user);
                 }
@@ -742,6 +743,29 @@ public class SecurityFrameworkService {
             if (temporaryCheckout != null && !FileUtils.deleteQuietly(temporaryCheckout.toFile())) {
                 log.warn("Could not delete the temporary Security Framework checkout {}", temporaryCheckout);
             }
+        }
+    }
+
+    /**
+     * Pushes the commit if the branch still points to the commit the checkout started from.
+     *
+     * @throws ConflictException if someone pushed to the branch meanwhile, which rejected the lease; the caller can reload and try again
+     */
+    private void pushWithLease(ProgrammingExercise exercise, Repository repository, String commitHash, String branch, String checkedOutHead)
+            throws GitAPIException, IOException {
+        try {
+            gitService.pushCommitWithLease(repository, commitHash, branch, checkedOutHead);
+        }
+        catch (GitAPIException e) {
+            try (Repository serverRepository = bareGitRepositoryService.getBareRepository(testRepositoryUri(exercise), branch, false)) {
+                ObjectId head = serverRepository.resolve(Constants.R_HEADS + branch);
+                if (head != null && !head.name().equals(checkedOutHead)) {
+                    log.info("The tests repository of exercise {} changed while a Security Framework change was prepared, so it was not pushed", exercise.getId(), e);
+                    throw new ConflictException("Someone changed the tests repository while this change was prepared, so it was not saved. Reload and try again.",
+                            ENTITY_NAME, "securityFrameworkConcurrentChange");
+                }
+            }
+            throw e;
         }
     }
 
