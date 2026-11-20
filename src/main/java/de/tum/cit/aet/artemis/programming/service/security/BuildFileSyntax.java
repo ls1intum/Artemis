@@ -198,47 +198,85 @@ final class BuildFileSyntax {
         // The last token of code before the current one, without whitespace and comments: a word, ++, -- or a single character; a string counts as an operand.
         String previous = ";";
         while (index < content.length()) {
-            char character = content.charAt(index);
-            int end;
-            if (content.startsWith("//", index)) {
-                end = endOfLine(content, index);
-                Arrays.fill(comment, index, end, true);
-            }
-            else if (content.startsWith("/*", index)) {
-                int close = content.indexOf("*/", index + 2);
-                end = close < 0 ? content.length() : close + 2;
-                Arrays.fill(comment, index, end, true);
-            }
-            else if (character == '\'' || character == '"') {
-                String delimiter = content.startsWith(String.valueOf(character).repeat(3), index) ? String.valueOf(character).repeat(3) : String.valueOf(character);
-                end = endOfString(content, index + delimiter.length(), delimiter);
-                Arrays.fill(comment, index, end, strings);
-                previous = "\"";
-            }
-            else if ((character == '/' || content.startsWith("$/", index)) && slashyStringMayStartAfter(previous) && endOfSlashyString(content, index) > 0) {
-                end = endOfSlashyString(content, index);
-                Arrays.fill(comment, index, end, strings);
-                previous = "\"";
-            }
-            else if (Character.isJavaIdentifierStart(character)) {
-                end = index + 1;
-                while (end < content.length() && Character.isJavaIdentifierPart(content.charAt(end))) {
-                    end++;
+            int end = endOfComment(content, index);
+            boolean marked = true;
+            if (end < 0) {
+                end = endOfStringLiteral(content, index, previous);
+                if (end >= 0) {
+                    previous = "\"";
+                    marked = strings;
                 }
-                previous = content.substring(index, end);
+            }
+            if (end >= 0) {
+                Arrays.fill(comment, index, end, marked);
             }
             else {
-                end = index + 1;
-                if ((character == '+' || character == '-') && previous.equals(String.valueOf(character))) {
-                    previous = previous + character;
-                }
-                else if (!Character.isWhitespace(character)) {
-                    previous = String.valueOf(character);
-                }
+                end = endOfCodeToken(content, index);
+                previous = tokenAfter(previous, content.substring(index, end));
             }
             index = end;
         }
         return comment;
+    }
+
+    /**
+     * @return the offset after a {@code //} or {@code /* *}{@code /} comment that starts at {@code index}, or -1 if none starts there
+     */
+    private static int endOfComment(String content, int index) {
+        if (content.startsWith("//", index)) {
+            return endOfLine(content, index);
+        }
+        if (content.startsWith("/*", index)) {
+            int close = content.indexOf("*/", index + 2);
+            return close < 0 ? content.length() : close + 2;
+        }
+        return -1;
+    }
+
+    /**
+     * @param previous the last token of code before {@code index}, which decides whether a {@code /} opens a slashy string
+     * @return the offset after a quoted or slashy string that starts at {@code index}, or -1 if none starts there
+     */
+    private static int endOfStringLiteral(String content, int index, String previous) {
+        char character = content.charAt(index);
+        if (character == '\'' || character == '"') {
+            String quote = String.valueOf(character);
+            String delimiter = content.startsWith(quote.repeat(3), index) ? quote.repeat(3) : quote;
+            return endOfString(content, index + delimiter.length(), delimiter);
+        }
+        if ((character == '/' || content.startsWith("$/", index)) && slashyStringMayStartAfter(previous)) {
+            return endOfSlashyString(content, index);
+        }
+        return -1;
+    }
+
+    /**
+     * @return the offset after the word that starts at {@code index}, or after its single character if no word starts there
+     */
+    private static int endOfCodeToken(String content, int index) {
+        int end = index + 1;
+        if (Character.isJavaIdentifierStart(content.charAt(index))) {
+            while (end < content.length() && Character.isJavaIdentifierPart(content.charAt(end))) {
+                end++;
+            }
+        }
+        return end;
+    }
+
+    /**
+     * @param previous the last token of code so far
+     * @param token    the next token of code: a word or a single character
+     * @return the last token of code after it; whitespace keeps the previous one, and a second {@code +} or {@code -} joins the first
+     */
+    private static String tokenAfter(String previous, String token) {
+        char first = token.charAt(0);
+        if (Character.isJavaIdentifierStart(first)) {
+            return token;
+        }
+        if ((first == '+' || first == '-') && previous.equals(token)) {
+            return token.repeat(2);
+        }
+        return Character.isWhitespace(first) ? previous : token;
     }
 
     /**
