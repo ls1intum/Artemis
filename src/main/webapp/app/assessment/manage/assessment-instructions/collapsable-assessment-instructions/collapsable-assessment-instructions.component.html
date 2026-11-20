@@ -1,60 +1,28 @@
-@if (!collapsed()) {
-    <div
-        class="expanded-instructions instructions-container"
-        jhiResizable
-        [resizableEdges]="{ left: '.draggable-left' }"
-        [resizableConstraints]="{ minWidth: 215, maxWidth: 1000 }"
-    >
-        <div
-            class="draggable-left panel-divider-x"
-            [attr.aria-label]="'artemisApp.assessmentInstructions.instructions.resize' | artemisTranslate"
-            [title]="'artemisApp.assessmentInstructions.instructions.resize' | artemisTranslate"
-        ></div>
-        <div class="panel-surface rounded-lg border border-border bg-surface-raised">
-            <div
-                data-testid="assessment-instructions-toggle"
-                class="feedback-panel-header border-b border-border bg-surface-hover px-6! py-4! text-(--tumaet-ui-primary-contrast-color) bg-(--tumaet-ui-primary-color)"
-                (click)="collapsed.set(!collapsed())"
-                [attr.aria-expanded]="!collapsed()"
-                #keyboardAction16
-                role="button"
-                tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction16.click() : undefined"
-                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction16.click() : undefined"
-            >
-                <h3 class="panel-title text-lg font-medium">
-                    <fa-icon [icon]="farListAlt" />&nbsp;
-                    <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
-                </h3>
-                <fa-icon [icon]="faChevronRight" />
-            </div>
-            <div class="wrapper-scroll-y scrollbar h-screen">
-                <jhi-assessment-instructions
-                    [readOnly]="readOnly()"
-                    class="feedback-panel-body p-6! markdown-preview"
-                    [exercise]="exercise()"
-                    [isAssessmentTraining]="isAssessmentTraining()"
-                    [showAssessmentInstructions]="showAssessmentInstructions()"
-                />
-            </div>
-        </div>
+<tumaet-ui-panel
+    class="instructions-panel [&[data-collapsed=false]_.tumaet-ui-panel-content-container]:!grid-rows-[max-content]"
+    [toggleable]="true"
+    [(collapsed)]="collapsed"
+    [toggleAriaLabel]="'artemisApp.assessmentInstructions.instructions.instructions' | artemisTranslate"
+>
+    <div tumAetUiPanelHeader class="flex w-full items-center justify-between gap-3!">
+        <span class="flex items-center gap-3!">
+            <fa-icon [icon]="farListAlt" />
+            <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
+        </span>
+        @if (showReadCheckmark()) {
+            <fa-icon
+                class="text-state-success"
+                [icon]="faCheckCircle"
+                role="img"
+                [attr.aria-label]="'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.title.REVIEWED_INSTRUCTIONS' | artemisTranslate"
+            />
+        }
     </div>
-} @else {
-    <div
-        data-testid="assessment-instructions-toggle"
-        class="collapsed-instructions instructions-container text-(--tumaet-ui-primary-contrast-color) bg-(--tumaet-ui-primary-color)"
-        (click)="collapsed.set(!collapsed())"
-        [attr.aria-expanded]="!collapsed()"
-        #keyboardAction35
-        role="button"
-        tabindex="0"
-        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction35.click() : undefined"
-        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction35.click() : undefined"
-    >
-        <fa-icon [icon]="faChevronLeft" />
-        <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
-        <fa-icon [icon]="faChevronLeft" />
-    </div>
-}
+    <jhi-assessment-instructions
+        [readOnly]="readOnly()"
+        class="markdown-preview"
+        [exercise]="exercise()"
+        [isAssessmentTraining]="isAssessmentTraining()"
+        [showAssessmentInstructions]="showAssessmentInstructions()"
+    />
+</tumaet-ui-panel>

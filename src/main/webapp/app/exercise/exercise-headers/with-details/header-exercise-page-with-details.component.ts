@@ -1,7 +1,9 @@
+import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
+import { getSubmissionDueDateInformation } from '../exercise-headers-information/submission-due-date-information';
+import { InformationBox, InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
-import { SortService } from 'app/foundation/service/sort.service';
+import { Component, OnInit, computed, input, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -16,11 +18,9 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
-import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
-import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { IncludedInScoreBadgeComponent } from '../included-in-score-badge/included-in-score-badge.component';
+import { NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -33,11 +33,11 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
     styleUrls: ['./header-exercise-page-with-details.component.scss'],
     imports: [
         TumAetUiTooltipDirective,
+        InformationBoxComponent,
+        DifficultyLevelComponent,
         NgTemplateOutlet,
         FaIconComponent,
         ExerciseCategoriesComponent,
-        NgClass,
-        IncludedInScoreBadgeComponent,
         TranslateDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -45,8 +45,6 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
     ],
 })
 export class HeaderExercisePageWithDetailsComponent implements OnInit {
-    private sortService = inject(SortService);
-
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
@@ -72,26 +70,68 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
     public readonly nextRelevantDate = signal<dayjs.Dayjs | undefined>(undefined);
     public readonly nextRelevantDateLabel = signal<string | undefined>(undefined);
     public readonly nextRelevantDateStatusBadge = signal<string | undefined>(undefined);
-    public readonly dueDateStatusBadge = signal<string | undefined>(undefined);
-    public readonly canComplainLaterOn = signal<boolean>(undefined!);
-
-    readonly achievedPoints = computed<number | undefined>(() => {
-        const studentParticipation = this.studentParticipation();
-        const exercise = this.exercise();
-        const course = this.effectiveCourse();
-
-        const results = getAllResultsOfAllSubmissions(studentParticipation?.submissions);
-        if (results?.length) {
-            // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
-            this.sortService.sortByProperty(results, 'id', false);
-
-            const latestRatedResult = results.filter((result) => result.rated).first();
-            if (latestRatedResult) {
-                return roundValueSpecifiedByCourseSettings((latestRatedResult.score! * exercise.maxPoints!) / 100, course);
-            }
-        }
-        return undefined;
+    readonly pointsInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.courseOverview.exerciseDetails.points',
+        content: { type: 'string', value: this.exercise().maxPoints ?? 0 },
+    }));
+    readonly assessmentTypeInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.courseOverview.exerciseDetails.assessmentType',
+        content: { type: 'string', value: this.exercise().assessmentType ?? '' },
+        isContentComponent: true,
+    }));
+    readonly bonusPointsInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.courseOverview.exerciseDetails.bonus',
+        content: { type: 'string', value: this.exercise().bonusPoints ?? 0 },
+    }));
+    readonly scoreInclusionInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.exercise.includedInOverallScore',
+        content: { type: 'string', value: this.exercise().includedInOverallScore ?? '' },
+        tooltip:
+            this.exercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS
+                ? 'artemisApp.exercise.includedAsBonusTooltip'
+                : 'artemisApp.exercise.notIncludedTooltip',
+        isContentComponent: true,
+    }));
+    readonly categoriesInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.exercise.categories',
+        content: { type: 'categories', value: this.exercise() },
+        isContentComponent: true,
+    }));
+    readonly releaseInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.courseOverview.exerciseList.notReleased',
+        content: { type: 'dateTime', value: this.exercise().releaseDate },
+        isContentComponent: true,
+    }));
+    readonly difficultyInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.exercise.difficulty',
+        content: { type: 'string', value: this.exercise().difficulty ?? '' },
+        isContentComponent: true,
+    }));
+    readonly nextDateInformation = computed<InformationBox>(() => {
+        const isAssessmentDueDate = !this.exam() && this.nextRelevantDateLabel() === 'assessmentDue';
+        const deadlineInformation = isAssessmentDueDate ? getSubmissionDueDateInformation(this.nextRelevantDate()) : undefined;
+        return {
+            title: (this.exam() ? 'artemisApp.exam.' : 'artemisApp.courseOverview.exerciseDetails.') + this.nextRelevantDateLabel(),
+            content: deadlineInformation?.content ?? { type: 'dateTime', value: this.nextRelevantDate() },
+            contentColor: isAssessmentDueDate ? deadlineInformation?.contentColor : this.nextRelevantDateStatusBadge() === 'bg-state-danger' ? 'danger' : undefined,
+            isContentComponent: true,
+        };
     });
+    readonly dueDateInformation = computed<InformationBox | undefined>(() => {
+        const exam = this.exam();
+        if (exam) {
+            if (this.isTestRun() || !exam.endDate) {
+                return undefined;
+            }
+            return {
+                title: 'artemisApp.exam.endDate',
+                content: { type: 'dateTime', value: exam.endDate },
+                isContentComponent: true,
+            };
+        }
+        return getSubmissionDueDateInformation(this.dueDate());
+    });
+    public readonly canComplainLaterOn = signal<boolean>(undefined!);
 
     readonly numberOfSubmissions = computed<number | undefined>(() => {
         const submissionPolicy = this.submissionPolicy();
@@ -141,11 +181,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
             );
 
             this.determineNextRelevantDateCourseMode();
-        }
-
-        const dueDate = this.dueDate();
-        if (dueDate) {
-            this.dueDateStatusBadge.set(dayjs().isBefore(dueDate) ? 'bg-state-success' : 'bg-state-danger');
         }
     }
 

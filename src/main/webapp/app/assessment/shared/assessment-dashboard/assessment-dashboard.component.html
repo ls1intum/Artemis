@@ -161,6 +161,7 @@
                     }
                 </div>
                 <tumaet-ui-table-layout
+                    data-testid="assessment-exercise-table-viewport"
                     class="mt-2 w-full"
                     [empty]="currentlyShownExercises().length === 0"
                     [emptyTitle]="allExercises().length === 0 ? 'artemisApp.assessmentDashboard.noExercises' : 'artemisApp.assessmentDashboard.noExercisesMatchFilters'"

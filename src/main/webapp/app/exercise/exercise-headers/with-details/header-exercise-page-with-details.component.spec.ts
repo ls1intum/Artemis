@@ -57,6 +57,40 @@ describe('HeaderExercisePageWithDetails', () => {
         participation = new StudentParticipation(ParticipationType.PROGRAMMING);
     });
 
+    it('shows a test-run label only in test-run mode', () => {
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-header-test-run"]')).toBeNull();
+        fixture.componentRef.setInput('isTestRun', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-header-test-run"]')).not.toBeNull();
+    });
+
+    it.each([
+        { hours: 12, type: 'timeAgo', color: 'danger' },
+        { hours: 48, type: 'timeAgo', color: 'body-color' },
+        { hours: 240, type: 'dateTime', color: 'body-color' },
+        { hours: -24, type: 'dateTime', color: undefined },
+    ])('formats an assessment deadline $hours hours away like a submission deadline', ({ hours, type, color }) => {
+        const date = dayjs().add(hours, 'hours');
+        component.nextRelevantDateLabel.set('assessmentDue');
+        component.nextRelevantDate.set(date);
+        const information = component.nextDateInformation();
+        expect(information.title).toBe('artemisApp.courseOverview.exerciseDetails.assessmentDue');
+        expect(information.content).toEqual({ type, value: date });
+        expect(information.contentColor).toBe(color);
+        expect(component.nextRelevantDate()).toBe(date);
+        expect(component.nextRelevantDateLabel()).toBe('assessmentDue');
+    });
+
+    it.each(['endDate', 'publishResultsDate'])('uses existing exam translations for %s', (label) => {
+        fixture.componentRef.setInput('exam', new Exam());
+        component.nextRelevantDateLabel.set(label);
+        expect(component.nextDateInformation().title).toBe(`artemisApp.exam.${label}`);
+        fixture.componentRef.setInput('exam', undefined);
+        component.nextRelevantDateLabel.set('assessmentDue');
+        expect(component.nextDateInformation().title).toBe('artemisApp.courseOverview.exerciseDetails.assessmentDue');
+    });
+
     it('should initialise badges, icons, and categories', () => {
         component.ngOnInit();
 
@@ -148,11 +182,12 @@ describe('HeaderExercisePageWithDetails', () => {
     it('should determine correct badge for due date', () => {
         exercise.dueDate = dayjs().add(2, 'days');
         component.ngOnInit();
-        expect(component.dueDateStatusBadge()).toBe('bg-state-success');
+        expect(component.dueDateInformation()?.title).toBe('artemisApp.courseOverview.exerciseDetails.submissionDue');
 
         exercise.dueDate = dayjs().subtract(2, 'days');
         component.ngOnInit();
-        expect(component.dueDateStatusBadge()).toBe('bg-state-danger');
+        expect(component.dueDateInformation()?.title).toBe('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+        expect(component.dueDateInformation()?.content.type).toBe('dateTime');
     });
 
     it('should set the icon according to the exam end date', () => {
@@ -174,6 +209,32 @@ describe('HeaderExercisePageWithDetails', () => {
         component.ngOnInit();
         expect(component.nextRelevantDate()).toEqual(exam.endDate);
         expect(component.nextRelevantDateStatusBadge()).toBe('bg-state-success');
+    });
+
+    it.each([-1, 1])('shows the exam end date when it is %s days from now', (days) => {
+        exam.endDate = dayjs().add(days, 'day');
+        exercise.dueDate = dayjs().add(3, 'days');
+        fixture.componentRef.setInput('exam', exam);
+        fixture.detectChanges();
+
+        expect(component.dueDateInformation()).toEqual({
+            title: 'artemisApp.exam.endDate',
+            content: { type: 'dateTime', value: exam.endDate },
+            isContentComponent: true,
+        });
+    });
+
+    it('omits the exam deadline for test runs and exams without an end date', () => {
+        fixture.componentRef.setInput('exam', exam);
+        fixture.detectChanges();
+        expect(component.dueDateInformation()).toBeUndefined();
+
+        const scheduledExam = new Exam();
+        scheduledExam.endDate = dayjs().add(1, 'day');
+        fixture.componentRef.setInput('exam', scheduledExam);
+        fixture.componentRef.setInput('isTestRun', true);
+        fixture.detectChanges();
+        expect(component.dueDateInformation()).toBeUndefined();
     });
 
     it('should not set a due date in exam mode as no individual due dates exist', () => {
@@ -234,7 +295,7 @@ describe('HeaderExercisePageWithDetails', () => {
                 component.canComplainLaterOn.set(false);
                 fixture.detectChanges();
 
-                const summary: HTMLElement = fixture.nativeElement.querySelector('.right-col');
+                const summary: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exercise-header-statuses"]');
                 expect(summary.querySelectorAll('[data-testid="presentation-score-summary"]')).toHaveLength(1);
                 if (expectedBadge) {
                     expect(summary.querySelector(`[jhiTranslate="${expectedBadge}"]`)).not.toBeNull();
@@ -251,7 +312,7 @@ describe('HeaderExercisePageWithDetails', () => {
             component.nextRelevantDate.set(undefined);
             component.canComplainLaterOn.set(false);
             fixture.detectChanges();
-            expect(fixture.nativeElement.querySelector('.right-col').querySelectorAll('.badge')).toHaveLength(0);
+            expect(fixture.nativeElement.querySelector('[data-testid="exercise-header-statuses"]').querySelectorAll('[data-testid="presentation-score-summary"]')).toHaveLength(0);
         });
     });
 });
