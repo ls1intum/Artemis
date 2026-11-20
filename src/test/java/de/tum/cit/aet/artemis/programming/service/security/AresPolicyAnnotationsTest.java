@@ -142,7 +142,7 @@ class AresPolicyAnnotationsTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "", "import org.example.Policy;", "import de.tum.cit.ase.ares.api.*;\nimport org.example.Policy;",
-            "import de.tum.cit.ase.ares.api.*;\nimport com.bücher.Policy;" })
+            "import de.tum.cit.ase.ares.api.*;\nimport com.bücher.Policy;", "import de.tum.cit.ase.ares.api.*;\nimport static org.example.Annotations.Policy;" })
     void keepsOtherPolicyAnnotationsUntouched(String imports) {
         String original = source(imports, "@Policy(activated = false)");
 

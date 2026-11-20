@@ -45,8 +45,11 @@ final class AresPolicyAnnotations {
     /** A qualified name; Java allows whitespace and comments, which the masked source shows as whitespace, around each dot, e.g. {@code java.util . List}. */
     private static final String QUALIFIED_NAME = JAVA_IDENTIFIER + "(?:\\s*+\\.\\s*+" + JAVA_IDENTIFIER + ")*+";
 
-    /** A single-type import, whose first group is the imported type, see {@link #singleTypeImports(String)}; a static import is none. */
-    private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s++(" + QUALIFIED_NAME + ")\\s*+;");
+    /**
+     * A single-type import or a single-static import, whose first group is the imported name, see {@link #singleTypeImports(String)}. A single-static import
+     * may import a member type, e.g. {@code import static example.Markers.Test;}, which binds the simple name like a single-type import.
+     */
+    private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s++(?:static\\s++)?(" + QUALIFIED_NAME + ")\\s*+;");
 
     /** A type-import-on-demand such as {@code import java.util.*;}, whose first group is the package, see {@link #wildcardImports(String)}. */
     private static final Pattern WILDCARD_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s++(" + QUALIFIED_NAME + ")\\s*+\\.\\s*+\\*\\s*+;");
@@ -348,7 +351,8 @@ final class AresPolicyAnnotations {
 
     /**
      * @param masked the masked content of a Java file
-     * @return the types its single-type imports import, without the whitespace Java allows around their dots
+     * @return the types its single-type imports import and the members its single-static imports import, which may be member types, without the
+     *         whitespace Java allows around their dots
      */
     static List<String> singleTypeImports(String masked) {
         return SINGLE_TYPE_IMPORT.matcher(masked).results().map(imported -> WHITESPACE.matcher(imported.group(1)).replaceAll("")).toList();
