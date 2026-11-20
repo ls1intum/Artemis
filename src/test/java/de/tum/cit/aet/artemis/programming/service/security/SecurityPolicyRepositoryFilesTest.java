@@ -847,6 +847,33 @@ class SecurityPolicyRepositoryFilesTest {
         assertKeepsAnInheritedActivePolicy(subclassPackage + ".MoreSortingTest", unsupported);
     }
 
+    @ParameterizedTest
+    @CsvSource({ "de.example, true", "de.other, false" })
+    void aPackagePrivateMemberTypeIsInheritedOnlyThroughClassesOfItsPackage(String middlePackage, boolean unsupported) throws IOException {
+        writeBuildFile();
+        String annotated = "    static class Date {\n    }\n\n    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
+        writeSource("test/de/example/SortingTest.java", publicTestClass("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
+        String middle = """
+                package %s;
+
+                import de.example.SortingTest;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+
+                @Public
+                %s
+                public class MiddleSortingTest extends SortingTest {
+                }
+                """.formatted(middlePackage, SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION);
+        writeSource("test/" + middlePackage.replace('.', '/') + "/MiddleSortingTest.java", middle);
+        String leaf = importingOverride("MoreSortingTest extends MiddleSortingTest", "public void runs(Date date)");
+        String imports = "import java.util.Date;\n\nimport " + middlePackage + ".MiddleSortingTest;\n";
+        writeSource("test/de/example/MoreSortingTest.java", leaf.replace("import java.util.Date;\n", imports));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // A class of another package does not inherit SortingTest.Date, so neither do its subclasses, even in the package of SortingTest.
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", unsupported);
+    }
+
     @Test
     void aTypeVariableOfAMemberTypeDoesNotShadowAnImportedParameterType() throws IOException {
         writeBuildFile();
@@ -959,6 +986,19 @@ class SecurityPolicyRepositoryFilesTest {
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
         // JUnit runs sharedTest() in SortingTest as well, under an annotation that neither the assignments nor the state of SortingTest show.
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_INTERFACE, "test/de/example/SharedTests.java");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "@net.jqwik.api.Example", "@net.jqwik.api.Example\n    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION })
+    void anInterfaceWithAJqwikExampleIsNotSupported(String annotations) throws IOException {
+        writeBuildFile();
+        writeSource("test/de/example/SharedTests.java", "package de.example;\n\ninterface SharedTests {\n\n    " + annotations + "\n    default void sharedTest() {\n    }\n}\n");
+        String implementing = TEST_CLASS.formatted("de.example", "SortingTest").replace("class SortingTest", "class SortingTest implements SharedTests");
+        writeSource("test/de/example/SortingTest.java", implementing);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // jqwik runs sharedTest() in SortingTest as well, also when only the method carries a @Policy annotation.
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_INTERFACE, "test/de/example/SharedTests.java");
     }
 

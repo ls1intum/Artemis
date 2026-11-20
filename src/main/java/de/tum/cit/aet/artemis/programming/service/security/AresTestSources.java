@@ -1,9 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -218,7 +216,9 @@ final class AresTestSources {
             addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.MULTIPLE_TOP_LEVEL_TYPES);
         }
         for (int index = 0; index < declarations.size(); index++) {
-            if (declarations.get(index).interfaceType() && types.get(index).isRelevant()) {
+            TypeDeclaration type = types.get(index);
+            // Every test method counts, also a jqwik property or example, and every Ares annotation, also one on a method only.
+            if (declarations.get(index).interfaceType() && (type.isRelevant() || !type.testSignatures().isEmpty() || !type.methodPolicies().isEmpty())) {
                 addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.TEST_INTERFACE);
             }
         }
@@ -384,9 +384,9 @@ final class AresTestSources {
     }
 
     /**
-     * The member types that are in scope in the body of a type and shadow a single-type import of the same simple name there: its own and those it inherits
-     * from its superclasses and superinterfaces, i.e. the ones that are not private and, from another package, are public or protected. Like Java, the first
-     * candidate name of a supertype that exists wins.
+     * The member types that are in scope in the body of a type and shadow a single-type import of the same simple name there: its own and those it inherits.
+     * Like Java, a type inherits the member types of its direct superclass and superinterfaces that are not private and, if they are package-private, belong
+     * to its own package; the first candidate name of a supertype that exists wins.
      *
      * @param type  a top-level type of the repository
      * @param types the top-level types of the repository, by their qualified names
@@ -394,27 +394,34 @@ final class AresTestSources {
      *         types are unknown
      */
     static Optional<Set<String>> memberTypesInScope(TypeDeclaration type, Map<String, TypeDeclaration> types) {
-        Set<String> memberTypes = new HashSet<>();
-        Set<String> visited = new HashSet<>();
-        Deque<TypeDeclaration> pending = new ArrayDeque<>(List.of(type));
-        while (!pending.isEmpty()) {
-            TypeDeclaration current = pending.pop();
-            if (visited.add(current.qualifiedName())) {
-                boolean samePackage = current.packageName().equals(type.packageName());
-                for (MemberType memberType : current.memberTypes()) {
-                    if (samePackage || memberType.visibleInOtherPackages()) {
-                        memberTypes.add(memberType.simpleName());
-                    }
-                }
-                for (List<String> candidates : current.supertypes()) {
-                    Optional<String> supertype = candidates.stream().filter(types::containsKey).findFirst();
-                    if (supertype.isEmpty()) {
-                        return Optional.empty();
-                    }
-                    pending.push(types.get(supertype.get()));
-                }
-            }
+        return memberTypesOf(type, types, new HashSet<>()).map(memberTypes -> memberTypes.stream().map(InheritedMemberType::simpleName).collect(Collectors.toSet()));
+    }
+
+    /**
+     * A member type of a type, with the package of the type that declares it.
+     */
+    private record InheritedMemberType(String simpleName, String declaringPackage, boolean visibleInOtherPackages) {
+    }
+
+    /**
+     * @param path the types whose member types are being collected, which ends a cycle of supertypes
+     * @return the member types of the type, see {@link #memberTypesInScope}; empty if they are unknown
+     */
+    private static Optional<Set<InheritedMemberType>> memberTypesOf(TypeDeclaration type, Map<String, TypeDeclaration> types, Set<String> path) {
+        if (!path.add(type.qualifiedName())) {
+            return Optional.empty();
         }
+        Set<InheritedMemberType> memberTypes = new HashSet<>();
+        type.memberTypes().forEach(memberType -> memberTypes.add(new InheritedMemberType(memberType.simpleName(), type.packageName(), memberType.visibleInOtherPackages())));
+        for (List<String> candidates : type.supertypes()) {
+            Optional<Set<InheritedMemberType>> inherited = candidates.stream().filter(types::containsKey).findFirst().flatMap(name -> memberTypesOf(types.get(name), types, path));
+            if (inherited.isEmpty()) {
+                return Optional.empty();
+            }
+            inherited.get().stream().filter(memberType -> memberType.visibleInOtherPackages() || memberType.declaringPackage().equals(type.packageName()))
+                    .forEach(memberTypes::add);
+        }
+        path.remove(type.qualifiedName());
         return Optional.of(memberTypes);
     }
 
