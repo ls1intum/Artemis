@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasResponsesChatClient;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
+import de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesChatModel;
 
 /** Exercises real nested delegation and the native tool advisor against a scripted Responses provider. */
 class AtlasWorkerResponsesTest {
@@ -80,7 +81,7 @@ class AtlasWorkerResponsesTest {
         var usage = mock(LLMTokenUsageService.class);
         var properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L);
         var harness = new AtlasAgentDelegationService(null, templates, null, new AtlasAgentProperties("interactive", 1.0), properties,
-                new AtlasResponsesChatClient(ChatClient.create(new AtlasResponsesChatModel(client, new JsonMapper(), "gpt-5.6-luna"))));
+                new AtlasResponsesChatClient(ChatClient.create(new OpenAiResponsesChatModel(client, new JsonMapper(), "gpt-5.6-luna"))));
         Map<String, Object> context = new HashMap<>();
         context.put(OrchestratorToolContextKeys.COURSE_ID_KEY, 42L);
         context.put(OrchestratorToolContextKeys.LEARNING_OBJECT_ID_KEY, 7L);
