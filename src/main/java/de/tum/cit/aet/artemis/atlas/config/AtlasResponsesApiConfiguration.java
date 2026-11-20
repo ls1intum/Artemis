@@ -19,7 +19,7 @@ import com.openai.client.OpenAIClient;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.atlas.service.AtlasResponsesChatModel;
+import de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesChatModel;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 
@@ -64,7 +64,7 @@ public class AtlasResponsesApiConfiguration {
     @Lazy
     AtlasResponsesChatClient atlasResponsesChatClient(@Qualifier(ATLAS_RESPONSES_OPENAI_CLIENT) OpenAIClient openAIClient, OpenAiCommonProperties properties,
             JsonMapper objectMapper) {
-        AtlasResponsesChatModel chatModel = new AtlasResponsesChatModel(openAIClient, objectMapper, properties.getModel());
+        OpenAiResponsesChatModel chatModel = new OpenAiResponsesChatModel(openAIClient, objectMapper, properties.getModel());
         ChatClient chatClient = ChatClient.builder(chatModel).build();
         return new AtlasResponsesChatClient(chatClient);
     }
