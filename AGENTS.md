@@ -86,7 +86,7 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 
 ## Repository boundaries
 
-- The server uses Spring Boot 4.1 and Java 25; the client uses Angular 22. Use the Gradle wrapper,
+- The server uses Spring Boot 4.2 and Java 25; the client uses Angular 22. Use the Gradle wrapper,
   Node 26, and the pnpm version pinned in `package.json` (`npm install --global corepack`, then `corepack enable`). Exact versions live
   in `gradle.properties`, `pnpm-workspace.yaml`, and `package.json`.
 - Server features live under `src/main/java/de/tum/cit/aet/artemis/`; the Angular application is
