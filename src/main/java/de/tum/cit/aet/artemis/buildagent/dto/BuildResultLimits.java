@@ -67,12 +67,14 @@ public final class BuildResultLimits {
     private static List<LocalCIJobDTO> limitJobs(List<LocalCIJobDTO> jobs) {
         int total = 0;
         for (LocalCIJobDTO job : jobs) {
-            total += job.failedTests().size() + job.successfulTests().size();
+            total += job.failedTests().size() + job.successfulTests().size() + job.skippedTests().size();
         }
         if (total <= MAX_TESTS) {
             return jobs;
         }
-        // failed tests are kept first over all jobs, as they matter most for the feedback, and successful tests only use what is left
+        // Graded results are kept first - failed, then successful - because dropping a successful result would make it
+        // count as not passed and lower the score. Skipped tests carry a reason but no points, so they only use the
+        // capacity that is left after the graded results.
         int remaining = MAX_TESTS;
         List<List<LocalCITestJobDTO>> keptFailed = new ArrayList<>();
         for (LocalCIJobDTO job : jobs) {
@@ -80,11 +82,17 @@ public final class BuildResultLimits {
             remaining -= failed.size();
             keptFailed.add(failed);
         }
+        List<List<LocalCITestJobDTO>> keptSuccessful = new ArrayList<>();
+        for (LocalCIJobDTO job : jobs) {
+            List<LocalCITestJobDTO> successful = job.successfulTests().subList(0, Math.min(remaining, job.successfulTests().size()));
+            remaining -= successful.size();
+            keptSuccessful.add(successful);
+        }
         List<LocalCIJobDTO> limited = new ArrayList<>();
         for (int i = 0; i < jobs.size(); i++) {
-            List<LocalCITestJobDTO> successful = jobs.get(i).successfulTests().subList(0, Math.min(remaining, jobs.get(i).successfulTests().size()));
-            remaining -= successful.size();
-            limited.add(new LocalCIJobDTO(new ArrayList<>(keptFailed.get(i)), new ArrayList<>(successful)));
+            List<LocalCITestJobDTO> skipped = jobs.get(i).skippedTests().subList(0, Math.min(remaining, jobs.get(i).skippedTests().size()));
+            remaining -= skipped.size();
+            limited.add(new LocalCIJobDTO(new ArrayList<>(keptFailed.get(i)), new ArrayList<>(keptSuccessful.get(i)), new ArrayList<>(skipped)));
         }
         return limited;
     }

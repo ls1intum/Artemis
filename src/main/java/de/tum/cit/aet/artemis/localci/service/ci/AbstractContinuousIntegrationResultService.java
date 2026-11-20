@@ -104,6 +104,13 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
             result.setTestCaseCount(result.getTestCaseCount() + job.successfulTests().size());
             result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.successfulTests().size());
+
+            // A skipped test did not run, but the build reported why. Keep that reason instead of the generic "no result" message,
+            // and give it the not-executed grading semantics (positive = null): it counts towards the total, but not as passed.
+            for (final var skippedTest : job.skippedTests()) {
+                feedbackCreationService.createSkippedTestFeedback(skippedTest.name(), skippedTest.testMessages(), activeTestCases).ifPresent(result::addTestCaseFeedback);
+            }
+            result.setTestCaseCount(result.getTestCaseCount() + job.skippedTests().size());
         });
 
         // A failed test that matches no test case may be an error of a whole test class (e.g. in @BeforeAll): show it on the tests of that class that did not run.

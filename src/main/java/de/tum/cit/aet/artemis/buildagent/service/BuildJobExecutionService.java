@@ -319,6 +319,7 @@ public class BuildJobExecutionService {
 
         List<LocalCITestJobDTO> failedTests = new ArrayList<>();
         List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
+        List<LocalCITestJobDTO> skippedTests = new ArrayList<>();
         List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
         long totalResultBytes = 0;
@@ -359,9 +360,9 @@ public class BuildJobExecutionService {
                     if (!testResultFileString.isBlank()) {
                         if (fileName.endsWith(".xml")) {
                             log.debug("Parsing test result XML file '{}' for build job {} ({} bytes)", fileName, buildJobId, testResultFileString.length());
-                            TestResultXmlParser.processTestResultFile(testResultFileString, failedTests, successfulTests);
-                            log.debug("After parsing '{}' for build job {}: {} failed tests, {} successful tests", fileName, buildJobId, failedTests.size(),
-                                    successfulTests.size());
+                            TestResultXmlParser.processTestResultFile(testResultFileString, failedTests, successfulTests, skippedTests);
+                            log.debug("After parsing '{}' for build job {}: {} failed tests, {} successful tests, {} skipped tests", fileName, buildJobId, failedTests.size(),
+                                    successfulTests.size(), skippedTests.size());
                         }
                         else if (fileName.endsWith(".json")) {
                             CustomFeedbackParser.processTestResultFile(fileName, testResultFileString, failedTests, successfulTests);
@@ -382,7 +383,7 @@ public class BuildJobExecutionService {
             }
         }
 
-        return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, !failedTests.isEmpty(),
+        return constructBuildResult(failedTests, successfulTests, skippedTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, !failedTests.isEmpty(),
                 buildCompletedDate, staticCodeAnalysisReports, buildLogs, buildScriptExitCode);
     }
 
@@ -449,7 +450,7 @@ public class BuildJobExecutionService {
      */
     private BuildResult constructFailedBuildResult(String assignmentRepoBranchName, @Nullable String assignmentRepoCommitHash, @Nullable String testsRepoCommitHash,
             ZonedDateTime buildRunDate, int buildScriptExitCode) {
-        return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate, List.of(), null,
+        return constructBuildResult(List.of(), List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate, List.of(), null,
                 buildScriptExitCode);
     }
 
@@ -458,6 +459,7 @@ public class BuildJobExecutionService {
      *
      * @param failedTests               The list of failed tests.
      * @param successfulTests           The list of successful tests.
+     * @param skippedTests              The list of skipped tests.
      * @param assignmentRepoBranchName  The name of the branch of the assignment repository that was checked out for the build.
      * @param assignmentRepoCommitHash  The commit hash of the assignment repository that was checked out for the build.
      * @param testsRepoCommitHash       The commit hash of the tests repository that was checked out for the build.
@@ -468,10 +470,10 @@ public class BuildJobExecutionService {
      * @param buildScriptExitCode       The exit code of the build script (0 = success, non-zero = failure).
      * @return a {@link BuildResult}
      */
-    private BuildResult constructBuildResult(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests, String assignmentRepoBranchName,
-            String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
+    private BuildResult constructBuildResult(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests, List<LocalCITestJobDTO> skippedTests,
+            String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
             List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, List<BuildLogDTO> buildLogs, int buildScriptExitCode) {
-        LocalCIJobDTO job = new LocalCIJobDTO(failedTests, successfulTests);
+        LocalCIJobDTO job = new LocalCIJobDTO(failedTests, successfulTests, skippedTests);
         return new BuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job), buildLogs,
                 staticCodeAnalysisReports, true, buildScriptExitCode);
     }
