@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 
 import jakarta.persistence.LockModeType;
 
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.atlas.domain.science.ScienceCourseConsent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEnabledCourse;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
@@ -42,6 +45,34 @@ public interface ScienceCourseConsentRepository extends ArtemisJpaRepository<Sci
                 AND consent.course.id IN :courseIds
             """)
     List<ScienceCourseConsent> findAllByUserIdAndCourseIdIn(@Param("userId") long userId, @Param("courseIds") Set<Long> courseIds);
+
+    @Modifying
+    @Query("DELETE FROM ScienceCourseConsent consent WHERE consent.course.id = :courseId")
+    void deleteByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Starts collection, resetting current decisions only when a disabled course is reactivated.
+     *
+     * @param course             the course to enable
+     * @param storeEnabledCourse persists the activation inside this transaction
+     * @return the enabled course
+     */
+    @Transactional // the reset and activation must succeed together, serialized with consent decisions
+    default ScienceEnabledCourse enableCourse(Course course, UnaryOperator<ScienceEnabledCourse> storeEnabledCourse) {
+        ScienceEnabledCourse enabled = findEnabledCourseByCourseIdForUpdate(course.getId()).orElse(null);
+        if (enabled == null) {
+            enabled = new ScienceEnabledCourse();
+            enabled.setCourse(course);
+        }
+        else if (enabled.isActive()) {
+            return enabled;
+        }
+        else {
+            deleteByCourseId(course.getId());
+        }
+        enabled.setActive(true);
+        return storeEnabledCourse.apply(enabled);
+    }
 
     /**
      * Whether the user has active consent for a course that currently collects science data.
@@ -120,8 +151,12 @@ public interface ScienceCourseConsentRepository extends ArtemisJpaRepository<Sci
      */
     @Transactional // ok: the lock, the read of the latest decision and both writes are only consistent as one unit
     default ScienceCourseConsent saveDecision(User user, Course course, boolean active, Consumer<ScienceEvent> recordMarker) {
-        findEnabledCourseByCourseIdForUpdate(course.getId());
+        var enabled = findEnabledCourseByCourseIdForUpdate(course.getId());
+        if (active && enabled.filter(ScienceEnabledCourse::isActive).isEmpty()) {
+            throw new BadRequestAlertException("Course is not enabled for science collection", "science", "scienceCourseNotEnabled");
+        }
         ScienceCourseConsent consent = findByUserIdAndCourseId(user.getId(), course.getId()).orElseGet(ScienceCourseConsent::new);
+        boolean firstDecision = consent.getId() == null;
         consent.setUser(user);
         consent.setCourse(course);
         consent.setActive(active);
@@ -130,7 +165,7 @@ public interface ScienceCourseConsentRepository extends ArtemisJpaRepository<Sci
         ScienceEventType decision = active ? ScienceEventType.SCIENCE__OPT_IN : ScienceEventType.SCIENCE__OPT_OUT;
         boolean alreadyRecorded = findLatestDecisionTypes(user.getLogin(), course.getId(), ScienceEventType.CONSENT_DECISION_EVENT_TYPES, PageRequest.ofSize(1)).stream()
                 .findFirst().filter(decision::equals).isPresent();
-        if (!alreadyRecorded) {
+        if (firstDecision || !alreadyRecorded) {
             recordMarker.accept(ScienceEvent.of(user.getLogin(), decision, null, course.getId(), ZonedDateTime.now()));
         }
         return savedConsent;

@@ -32,10 +32,16 @@ import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.repository.SecurityAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.service.AuditEventService;
+import de.tum.cit.aet.artemis.atlas.domain.science.ScienceCourseConsent;
+import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
+import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
+import de.tum.cit.aet.artemis.atlas.repository.ScienceCourseConsentRepository;
+import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.audit.AuditLogType;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
@@ -119,6 +125,15 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository;
+
+    @Autowired
+    private ScienceEventRepository scienceEventRepository;
+
+    @Autowired
+    private ScienceCourseConsentRepository scienceCourseConsentRepository;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
 
     private User user;
 
@@ -594,11 +609,22 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         // The pre-existing cleanup here deleted the SSH keys but left the personal VCS access token behind, so a
         // soft-deleted account kept working over git.
         giveUserCredentials();
+        String originalLogin = user.getLogin();
+        var course = courseUtilService.addEmptyCourse();
+        var consent = new ScienceCourseConsent();
+        consent.setUser(user);
+        consent.setCourse(course);
+        consent.setActive(true);
+        scienceCourseConsentRepository.save(consent);
+        scienceEventRepository.save(ScienceEvent.of(originalLogin, ScienceEventType.SCIENCE__OPT_IN, null, course.getId(), ZonedDateTime.now()));
 
-        userService.softDeleteUser(user.getLogin());
+        userService.softDeleteUser(originalLogin);
 
         User deleted = userRepository.findById(user.getId()).orElseThrow();
         assertThat(deleted.isDeleted()).isTrue();
+        assertThat(scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), course.getId())).isEmpty();
+        assertThat(scienceEventRepository.findAllByIdentity(originalLogin)).isEmpty();
+        assertThat(scienceEventRepository.findAllByIdentity(deleted.getLogin())).isEmpty();
         assertAllCredentialsRevoked(deleted);
     }
 

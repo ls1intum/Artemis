@@ -114,16 +114,7 @@ public interface LearningDataCleanupRepository extends ArtemisJpaRepository<Quiz
             """)
     List<UserReferenceCount> countScienceCourseConsents(@Param("userIds") Collection<Long> userIds);
 
-    /**
-     * Deletes the account's per-course science consent decisions.
-     *
-     * The collected events are not deleted here: they are keyed by login rather than by a foreign key to the account,
-     * and the anonymization that precedes this rewrites that login. What goes is the record of which courses the
-     * account had agreed to, which has no meaning once the account does not exist.
-     *
-     * @param userId the account being deleted
-     * @return the number of consent rows removed
-     */
+    /** Deletes the account's per-course science consent decisions. */
     @Modifying
     @Transactional // ok because of delete
     @Query("""
@@ -172,21 +163,26 @@ public interface LearningDataCleanupRepository extends ArtemisJpaRepository<Quiz
     int deleteLearnerProfileRow(@Param("userId") long userId);
 
     /**
-     * Renames the account behind the research events it produced. Those events record a login rather than a foreign
-     * key, so removing the account row leaves them pointing at a name that could later be handed to somebody else.
+     * Deletes all science data for an account before its login is removed or changed. Both parts must be erased
+     * together so that a failure does not leave research data behind after its consent rows have gone.
      *
-     * @param oldIdentity the login the account had
-     * @param newIdentity the placeholder to record instead
-     * @return how many events were renamed
+     * @param userId the account being deleted
+     * @param login  its current login, which identifies its science events
      */
+    @SuppressWarnings("java:S6809") // The injected repository proxy opens this outer transaction for both deletes.
+    @Transactional // ok: both deletions make up one account science data erasure
+    default void deleteScienceData(long userId, String login) {
+        deleteScienceCourseConsents(userId);
+        deleteScienceEvents(login);
+    }
+
     @Modifying
-    @Transactional // ok because of update
+    @Transactional // ok because of delete
     @Query("""
-            UPDATE ScienceEvent event
-            SET event.identity = :newIdentity
-            WHERE event.identity = :oldIdentity
+            DELETE FROM ScienceEvent event
+            WHERE event.identity = :identity
             """)
-    int renameScienceEventIdentity(@Param("oldIdentity") String oldIdentity, @Param("newIdentity") String newIdentity);
+    int deleteScienceEvents(@Param("identity") String identity);
 
     @Query("SELECT v.userId AS userId, COUNT(v) AS count FROM CourseHomeVisit v WHERE v.userId IN :userIds GROUP BY v.userId")
     List<UserReferenceCount> countHomeVisits(@Param("userIds") Collection<Long> userIds);

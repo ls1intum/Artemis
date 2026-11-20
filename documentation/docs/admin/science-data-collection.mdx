@@ -2,7 +2,7 @@
 id: science-data-collection
 title: Science Data Collection
 sidebar_label: Science Data Collection
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-20
 ---
 
 Science data collection records how students move through a course, such as which lectures, exercises, competencies
@@ -68,7 +68,9 @@ their data for a disabled course, but nobody can agree to it until it is enabled
 
 The table below the form is the activation history. It lists every course that was ever enabled, with its **Status**
 (**Active** or **Inactive**) and the time it **Last changed**, most recent first. A course appears in it once, however
-often it was switched on and off.
+often it was switched on and off. Re-enabling a disabled course clears its current decisions: students are asked
+again on their next course visit, and collection starts only after a fresh agreement. Earlier events and decision
+markers remain available. Repeatedly enabling an already active course keeps its decisions.
 
 ## Creating a research export
 
@@ -136,23 +138,13 @@ contributing continues to be recorded.
 
 Deleting a course deletes its science events, its enablement and the consent decisions made in it. The retention
 operations described in [Cleanup Service](/admin/cleanup-service) do not remove science events, and resetting the
-student data of an old course keeps them. Only the not-enrolled-user deletion touches science data, as a permanent
-account deletion described below.
+student data of an old course keeps them. Account anonymization and deletion erase science data as described below.
 
-Permanently deleting an account removes the person's consent decisions, but not their science events. The events are
-renamed to the placeholder identity `deleted-user-<id>`, so nothing points at the person any more. Their decision
-markers are renamed with them, so the events remain part of later research exports under the placeholder. See
-[Deleting User Accounts](/admin/user-deletion).
+Anonymizing or permanently deleting an account erases its science consent and all science events, including decision
+and deletion markers. Future exports contain none of that data. Files already handed to researchers cannot be recalled.
+See [Deleting User Accounts](/admin/user-deletion).
 
 ## Known limitations
-
-**Re-enabling a course resumes the earlier consent.** Students who agreed before the course was disabled are recorded
-again as soon as it is enabled, without being asked a second time. If the purpose of the collection changed in
-between, tell the students in the course, so that they can withdraw under **User Settings → Profile**.
-
-**Anonymizing an account keeps its consent decisions.** Where an account is anonymized instead of deleted, its login
-is replaced by a random one and its science events are renamed with it, while its consent rows stay attached to the
-account. Its earlier events therefore remain exportable under the new login.
 
 **Events that predate per-course consent are never exported.** The migration to 10.4 assigns a course to every existing
 event whose resource still exists, so that students can delete those events per course. Since no decision marker
