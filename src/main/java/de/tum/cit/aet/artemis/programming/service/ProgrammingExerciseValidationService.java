@@ -41,6 +41,8 @@ import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys;
@@ -98,6 +100,30 @@ public class ProgrammingExerciseValidationService {
      * drift. Hyperion derives package names for generated exercises this way.
      */
     public static final Pattern PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN = Pattern.compile(PACKAGE_NAME_REGEX_FOR_JAVA_KOTLIN);
+
+    /**
+     * Packages that no Java or Kotlin exercise may use, and everything below them. Student classes in these packages would shadow the JDK, Ares 2 or one of the libraries
+     * that Ares and the tests bring along, so the build guards of the test templates reject them (<code>verify-ares-reserved-packages-v2</code> in the
+     * <code>pom.xml</code> files, <code>AresReservedPackages.gradle</code>). The Kotlin template additionally reserves <code>kotlin</code> and <code>org.jetbrains</code>,
+     * which is applied to Java as well to keep one rule. <code>TestTemplateReservedPackagesTest</code> and the validation tests compare this list with the templates.
+     * <p>
+     * Has to be kept in sync with the client constant <code>PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN</code>.
+     */
+    private static final List<String> RESERVED_PACKAGE_SUBTREES_FOR_JAVA_KOTLIN = List.of("anonymous.toolclasses", "ch.qos.logback", "com.fasterxml", "com.github.javaparser",
+            "com.google", "com.ibm.wala", "com.intellij", "com.opencsv", "com.sun", "com.tngtech.archunit", "de.tum.cit.ase.ares", "java", "javassist", "javax", "jdk", "junit",
+            "kotlin", "metatest", "net.bytebuddy", "net.jqwik", "org.apache", "org.apfloat", "org.apiguardian", "org.aspectj", "org.assertj", "org.checkerframework", "org.eclipse",
+            "org.gradle", "org.hamcrest", "org.jacoco", "org.jetbrains", "org.jgrapht", "org.jheaps", "org.json", "org.jspecify", "org.junit", "org.mockito", "org.objenesis",
+            "org.opentest4j", "org.slf4j", "org.yaml", "sun", "worker.org.gradle");
+
+    /**
+     * Packages that contain a package Ares 2 reserves. Ares refuses to run any test when a compiled class lies in one of them, because it cannot tell the allowed code
+     * from the reserved package below it
+     * (<code>The package de was derived from the project and would be permitted for import, but the reserved namespace ... lies below it</code>).
+     * The list is derived from <code>WalaPathClassification.RESERVED_PACKAGE_PREFIXES</code> in Ares. Has to be kept in sync with the client constant
+     * <code>PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN</code>.
+     */
+    private static final Set<String> RESERVED_PACKAGE_ANCESTORS_FOR_JAVA_KOTLIN = Set.of("de", "de.tum", "de.tum.cit", "de.tum.cit.ase", "com", "org", "net", "com.ibm",
+            "com.tngtech");
 
     private static final Pattern PACKAGE_NAME_PATTERN_FOR_SWIFT = Pattern.compile(PACKAGE_NAME_REGEX_FOR_SWIFT);
 
@@ -232,9 +258,26 @@ public class ProgrammingExerciseValidationService {
             case DART -> PACKAGE_NAME_PATTERN_FOR_DART.matcher(programmingExercise.getPackageName());
             default -> throw new IllegalArgumentException("Programming language not supported");
         };
-        if (!packageNameMatcher.matches()) {
+        if (!packageNameMatcher.matches() || isReservedPackageName(programmingExercise)) {
             throw new BadRequestAlertException("The package name is invalid", "Exercise", "packagenameInvalid");
         }
+    }
+
+    /**
+     * Checks whether the package name of a Java or Kotlin exercise lies in, or contains, a package that the build guards and Ares 2 reserve. The black-box project type is
+     * exempt, because its tests are not run with Ares.
+     *
+     * @param programmingExercise the exercise whose package name is checked
+     * @return true if the exercise cannot be built and supervised with this package name
+     */
+    private static boolean isReservedPackageName(ProgrammingExercise programmingExercise) {
+        ProgrammingLanguage language = programmingExercise.getProgrammingLanguage();
+        if ((language != ProgrammingLanguage.JAVA && language != ProgrammingLanguage.KOTLIN) || programmingExercise.getProjectType() == ProjectType.MAVEN_BLACKBOX) {
+            return false;
+        }
+        String packageName = programmingExercise.getPackageName();
+        return RESERVED_PACKAGE_ANCESTORS_FOR_JAVA_KOTLIN.contains(packageName)
+                || RESERVED_PACKAGE_SUBTREES_FOR_JAVA_KOTLIN.stream().anyMatch(reserved -> packageName.equals(reserved) || packageName.startsWith(reserved + "."));
     }
 
     private void validateCustomCheckoutPaths(ProgrammingExerciseBuildConfig buildConfig) {

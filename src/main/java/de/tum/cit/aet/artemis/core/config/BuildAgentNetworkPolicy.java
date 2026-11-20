@@ -84,7 +84,7 @@ public class BuildAgentNetworkPolicy {
     /**
      * Says so when the allowlist is configured but the header that can defeat it is still trusted from anywhere private.
      * <p>
-     * Artemis runs with {@code server.forward-headers-strategy: native}, so Tomcat rewrites {@code getRemoteAddr()}
+     * Artemis runs with {@code server.request.header.forwarded.strategy: web-server}, so Tomcat rewrites {@code getRemoteAddr()}
      * from {@code X-Forwarded-For} for any peer matching {@code server.tomcat.remoteip.internal-proxies}, whose default
      * is the private ranges plus loopback. A caller connecting from any of them can therefore name an arbitrary private
      * address, and both this allowlist and the build agent origin binding read that address.

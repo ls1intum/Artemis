@@ -26,7 +26,7 @@
                 [attr.data-testid]="panel.repositoryType === RepositoryType.TEMPLATE ? 'template-build-panel' : 'solution-build-panel'"
             >
                 <h5>{{ panel.title | artemisTranslate }}</h5>
-                <p class="text-(--tumaet-ui-muted-color)">{{ panel.description | artemisTranslate }}</p>
+                <p class="text-muted-color">{{ panel.description | artemisTranslate }}</p>
                 @if (status.participation?.repositoryUri && exercise.id) {
                     <p class="text-sm break-all">{{ status.participation!.repositoryUri }}</p>
                     <div class="mb-5! flex flex-wrap items-center gap-2">
@@ -63,7 +63,7 @@
                         }
                         <jhi-programming-exercise-instructor-status [participationType]="status.type" [participation]="participation" [exercise]="exercise" />
                     </div>
-                    <p class="mt-2 text-sm text-(--tumaet-ui-muted-color)">{{ panel.expectedScore | artemisTranslate }}</p>
+                    <p class="mt-2 text-sm text-muted-color">{{ panel.expectedScore | artemisTranslate }}</p>
                     @if (exercise.isAtLeastEditor && participation.id) {
                         <div class="mt-3! flex flex-wrap items-center gap-3!">
                             @if (!status.loading()) {
@@ -81,7 +81,7 @@
                     }
                 } @else {
                     <jhi-no-data />
-                    <p class="mt-2 text-sm text-(--tumaet-ui-muted-color)">{{ panel.expectedScore | artemisTranslate }}</p>
+                    <p class="mt-2 text-sm text-muted-color">{{ panel.expectedScore | artemisTranslate }}</p>
                 }
                 @if (data.localCIEnabled && exercise.isAtLeastEditor) {
                     <div class="mt-5! border-t border-(--tumaet-ui-border-color) pt-4!">
@@ -90,7 +90,7 @@
                             <p>{{ 'artemisApp.programmingExercise.repositoryBuildOverview.checkoutLoading' | artemisTranslate }}</p>
                         }
                         @if (checkoutError()) {
-                            <p class="text-(--tumaet-ui-muted-color)">{{ 'artemisApp.programmingExercise.repositoryBuildOverview.checkoutUnavailable' | artemisTranslate }}</p>
+                            <p class="text-muted-color">{{ 'artemisApp.programmingExercise.repositoryBuildOverview.checkoutUnavailable' | artemisTranslate }}</p>
                         }
                         @if (!checkoutLoading() && !checkoutError() && !panel.checkouts.length) {
                             <jhi-no-data />

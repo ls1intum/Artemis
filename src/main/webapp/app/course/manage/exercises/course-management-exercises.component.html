@@ -165,7 +165,7 @@
         </tumaet-ui-empty-state>
     }
     @if (loadingBuildResults()) {
-        <span class="text-text-secondary text-sm" role="status" data-testid="programming-build-results-loading" jhiTranslate="loading"></span>
+        <span class="text-muted-color text-sm" role="status" data-testid="programming-build-results-loading" jhiTranslate="loading"></span>
     }
     <div class="flex flex-col gap-4!">
         @for (card of cards(); track card.id) {

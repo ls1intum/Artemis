@@ -1,7 +1,7 @@
 <div class="mx-auto flex max-w-5xl flex-col gap-8 px-6! py-8" data-testid="usage-dashboard">
     <header class="flex flex-col gap-2">
         <h1 class="m-0 text-3xl font-bold">{{ 'artemisApp.usageDashboard.title' | artemisTranslate }}</h1>
-        <p class="m-0 text-text-secondary" jhiTranslate="artemisApp.usageDashboard.subtitle"></p>
+        <p class="m-0 text-muted-color" jhiTranslate="artemisApp.usageDashboard.subtitle"></p>
     </header>
 
     @if (failed()) {
@@ -171,7 +171,7 @@
             <ul class="m-0 grid list-none grid-cols-2 gap-4! p-0 sm:grid-cols-5">
                 @for (type of exerciseTypes; track type) {
                     <li class="flex flex-col rounded-lg border border-border bg-surface-raised p-4!" [attr.data-testid]="'usage-type-' + type">
-                        <span class="text-sm text-text-secondary">{{ 'artemisApp.usageDashboard.exerciseTypes.' + type | artemisTranslate }}</span>
+                        <span class="text-sm text-muted-color">{{ 'artemisApp.usageDashboard.exerciseTypes.' + type | artemisTranslate }}</span>
                         <span class="text-xl font-bold">{{ semester.exercisesByType[type] ?? 0 | number }}</span>
                     </li>
                 }
@@ -193,18 +193,18 @@
             </ul>
         </section>
 
-        <p class="m-0 text-sm text-text-secondary" data-testid="usage-footer" jhiTranslate="artemisApp.usageDashboard.footer"></p>
+        <p class="m-0 text-sm text-muted-color" data-testid="usage-footer" jhiTranslate="artemisApp.usageDashboard.footer"></p>
     } @else if (statistics()) {
-        <output class="block text-text-secondary" data-testid="usage-empty">{{ 'artemisApp.usageDashboard.empty' | artemisTranslate }}</output>
+        <output class="block text-muted-color" data-testid="usage-empty">{{ 'artemisApp.usageDashboard.empty' | artemisTranslate }}</output>
     } @else {
-        <output class="block text-text-secondary" data-testid="usage-loading">{{ 'artemisApp.usageDashboard.loading' | artemisTranslate }}</output>
+        <output class="block text-muted-color" data-testid="usage-loading">{{ 'artemisApp.usageDashboard.loading' | artemisTranslate }}</output>
     }
 </div>
 
 <!-- The heading of a number: its name and a button that explains in a tooltip what the number counts. -->
 <ng-template #label let-key="key">
     @let name = 'artemisApp.usageDashboard.' + key | artemisTranslate;
-    <span class="flex items-center gap-1 text-sm text-text-secondary">
+    <span class="flex items-center gap-1 text-sm text-muted-color">
         {{ name }}
         <ng-container [ngTemplateOutlet]="hint" [ngTemplateOutletContext]="{ key: key, name: name }" />
     </span>
@@ -214,7 +214,7 @@
     @let text = 'artemisApp.usageDashboard.hints.' + key | artemisTranslate;
     <button
         type="button"
-        class="inline-flex cursor-help items-center border-0 bg-transparent p-0 text-text-secondary"
+        class="inline-flex cursor-help items-center border-0 bg-transparent p-0 text-muted-color"
         [attr.aria-label]="'artemisApp.usageDashboard.hintsLabel' | artemisTranslate: { name: name }"
         [tumAetUiTooltip]="text"
         [attr.data-testid]="'usage-hint-' + key"

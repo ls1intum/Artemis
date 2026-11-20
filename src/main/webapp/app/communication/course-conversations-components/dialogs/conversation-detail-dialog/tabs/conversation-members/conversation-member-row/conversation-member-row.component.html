@@ -15,7 +15,7 @@
             }
             <a
                 (click)="userNameClicked()"
-                class="text-text!"
+                class="text-color!"
                 [class.disabled]="isCurrentUser()"
                 [attr.aria-disabled]="isCurrentUser()"
                 #keyboardAction16
@@ -28,7 +28,7 @@
                 {{ userLabel() }}
             </a>
             @if (!conversationMember()?.isStudent) {
-                <fa-icon class="ms-1 text-text-secondary" [icon]="userIcon()" [tumAetUiTooltip]="userTooltip()" />
+                <fa-icon class="ms-1 text-muted-color" [icon]="userIcon()" [tumAetUiTooltip]="userTooltip()" />
             }
         </span>
         @if (canBeRemovedFromConversation() || canBeGrantedChannelModeratorRole() || canBeRevokedChannelModeratorRole()) {
