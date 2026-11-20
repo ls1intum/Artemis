@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongSupplier;
 
 import jakarta.ws.rs.BadRequestException;
@@ -47,7 +48,7 @@ public class SshFingerprintsProviderService {
     private final LongSupplier nanoClock;
 
     /** The fingerprints that were read last, with the time they were read. Replaced as a whole. */
-    private volatile CachedFingerprints cached;
+    private final AtomicReference<CachedFingerprints> cached = new AtomicReference<>();
 
     @Autowired
     public SshFingerprintsProviderService(SshServer sshServer) {
@@ -79,19 +80,19 @@ public class SshFingerprintsProviderService {
      * @throws BadRequestException if there is an error loading keys from the SSH server.
      */
     public List<SshHostKeyFingerprintDTO> getHostKeyFingerprints() {
-        CachedFingerprints current = cached;
+        CachedFingerprints current = cached.get();
         if (isFresh(current)) {
             return current.fingerprints();
         }
         synchronized (this) {
-            CachedFingerprints currentInLock = cached;
+            CachedFingerprints currentInLock = cached.get();
             if (isFresh(currentInLock)) {
                 return currentInLock.fingerprints();
             }
             List<SshHostKeyFingerprintDTO> loaded = loadFingerprints();
             // Nothing is kept when no key could be read, so the next request reads again
             if (!loaded.isEmpty()) {
-                cached = new CachedFingerprints(loaded, nanoClock.getAsLong());
+                cached.set(new CachedFingerprints(loaded, nanoClock.getAsLong()));
             }
             return loaded;
         }
