@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.atlas.service;
+package de.tum.cit.aet.artemis.core.service.llm;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -53,16 +53,16 @@ import tools.jackson.databind.json.JsonMapper;
  * Synchronous Spring AI {@link ChatModel} adapter for the OpenAI Responses API.
  *
  * <p>
- * Spring AI 2.0.1 does not expose Responses as a chat model. Atlas therefore uses this narrow
+ * Spring AI 2.0.2 does not expose Responses as a chat model. Callers therefore use this narrow
  * adapter behind a dedicated {@code ChatClient}; Spring AI's native {@code ToolCallingAdvisor}
  * owns tool execution and recursion. Each request is stateless ({@code store=false}) and carries
  * the complete conversation history, including the original ordered Responses output items. The
  * latter is required to replay reasoning items and their encrypted content on the next round.
  */
-public final class AtlasResponsesChatModel implements ChatModel {
+public final class OpenAiResponsesChatModel implements ChatModel {
 
     /** Metadata key containing the original ordered Responses output items. */
-    public static final String RESPONSES_OUTPUT_ITEMS_METADATA_KEY = "atlas.responses.output-items";
+    public static final String RESPONSES_OUTPUT_ITEMS_METADATA_KEY = "openai.responses.output-items";
 
     private final OpenAIClient openAIClient;
 
@@ -71,13 +71,13 @@ public final class AtlasResponsesChatModel implements ChatModel {
     private final OpenAiChatOptions defaultOptions;
 
     /**
-     * Creates an Atlas Responses adapter.
+     * Creates a Responses adapter.
      *
      * @param openAIClient provider-aware synchronous OpenAI client
      * @param objectMapper JSON parser used for tool schemas
      * @param defaultModel model/deployment used when a request does not override it
      */
-    public AtlasResponsesChatModel(OpenAIClient openAIClient, JsonMapper objectMapper, @Nullable String defaultModel) {
+    public OpenAiResponsesChatModel(OpenAIClient openAIClient, JsonMapper objectMapper, @Nullable String defaultModel) {
         this.openAIClient = openAIClient;
         this.objectMapper = objectMapper;
         OpenAiChatOptions.Builder options = OpenAiChatOptions.builder();
@@ -109,7 +109,7 @@ public final class AtlasResponsesChatModel implements ChatModel {
     @Override
     public ChatResponse call(Prompt prompt) {
         if (Thread.currentThread().isInterrupted()) {
-            throw new CancellationException("Atlas Responses dispatch interrupted before request");
+            throw new CancellationException("Responses dispatch interrupted before request");
         }
         OpenAiChatOptions options = requireOpenAiOptions(prompt.getOptions());
         ResponseCreateParams.Builder request = ResponseCreateParams.builder().inputOfResponse(toInputItems(prompt.getInstructions())).store(false)
@@ -121,7 +121,7 @@ public final class AtlasResponsesChatModel implements ChatModel {
         applyTools(request, options);
 
         if (Thread.currentThread().isInterrupted()) {
-            throw new CancellationException("Atlas Responses dispatch interrupted before request");
+            throw new CancellationException("Responses dispatch interrupted before request");
         }
         Response response = openAIClient.responses().create(request.build());
         return toChatResponse(response, model);
@@ -132,7 +132,7 @@ public final class AtlasResponsesChatModel implements ChatModel {
             return defaultOptions;
         }
         if (!(options instanceof OpenAiChatOptions openAiOptions)) {
-            throw new IllegalArgumentException("Atlas Responses requires OpenAiChatOptions, got " + options.getClass().getName());
+            throw new IllegalArgumentException("OpenAI Responses requires OpenAiChatOptions, got " + options.getClass().getName());
         }
         return openAiOptions;
     }
@@ -147,7 +147,7 @@ public final class AtlasResponsesChatModel implements ChatModel {
         if (StringUtils.hasText(defaultOptions.getDeploymentName())) {
             return defaultOptions.getDeploymentName();
         }
-        throw new IllegalArgumentException("Atlas Responses requires a model or deployment name");
+        throw new IllegalArgumentException("OpenAI Responses requires a model or deployment name");
     }
 
     private static void applyReasoningAndSampling(ResponseCreateParams.Builder request, OpenAiChatOptions options) {
@@ -182,7 +182,7 @@ public final class AtlasResponsesChatModel implements ChatModel {
             });
         }
         catch (JacksonException ex) {
-            throw new IllegalArgumentException("Invalid JSON schema for Atlas tool " + definition.name(), ex);
+            throw new IllegalArgumentException("Invalid JSON schema for tool " + definition.name(), ex);
         }
         Map<String, JsonValue> parameters = new LinkedHashMap<>();
         schema.forEach((key, value) -> parameters.put(key, JsonValue.from(value)));
@@ -231,19 +231,19 @@ public final class AtlasResponsesChatModel implements ChatModel {
         Object metadata = assistantMessage.getMetadata().get(RESPONSES_OUTPUT_ITEMS_METADATA_KEY);
         if (metadata != null) {
             if (!(metadata instanceof List<?> outputItems)) {
-                throw new IllegalArgumentException("Atlas Responses assistant metadata must contain a list of output items");
+                throw new IllegalArgumentException("OpenAI Responses assistant metadata must contain a list of output items");
             }
             List<ResponseInputItem> replay = new ArrayList<>(outputItems.size());
             for (Object outputItem : outputItems) {
                 if (!(outputItem instanceof ResponseOutputItem item)) {
-                    throw new IllegalArgumentException("Atlas Responses assistant metadata contains an unsupported output item");
+                    throw new IllegalArgumentException("OpenAI Responses assistant metadata contains an unsupported output item");
                 }
                 replay.add(toInputItem(item));
             }
             return List.copyOf(replay);
         }
         if (assistantMessage.hasToolCalls()) {
-            throw new IllegalArgumentException("Atlas Responses assistant tool calls require preserved Responses output metadata");
+            throw new IllegalArgumentException("OpenAI Responses assistant tool calls require preserved Responses output metadata");
         }
         if (!assistantMessage.getMedia().isEmpty()) {
             throw unsupported("assistant media");
@@ -349,6 +349,6 @@ public final class AtlasResponsesChatModel implements ChatModel {
     }
 
     private static IllegalArgumentException unsupported(String kind) {
-        return new IllegalArgumentException("Unsupported Atlas Responses " + kind);
+        return new IllegalArgumentException("Unsupported OpenAI Responses " + kind);
     }
 }
