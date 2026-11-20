@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,6 +30,16 @@ final class BuildFileSyntax {
     /** A keyword or type right before a Gradle variable that declares it, e.g. {@code def}, matched at the end of the code before the variable. */
     private static final Pattern GRADLE_DECLARATION_BEFORE = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})(?:def|var|final|String|Object)\\s++$");
 
+    /**
+     * The Ares version as a complete string literal on the right of {@code aresVersion =}, e.g. {@code aresVersion = '2.2.1'}. An expression such as
+     * {@code '2.2' + '.1'} or an interpolation such as {@code "${base}.1"} pins no version Artemis could read or replace, so it is no pin.
+     */
+    private static final Pattern GRADLE_ARES_VERSION = Pattern
+            .compile("(?<!\\p{javaJavaIdentifierPart})(aresVersion\\s*=\\s*['\"])([^'\"$]+)(['\"])(?=[ \\t]*+(?:[;}\\r\\n]|//|/\\*|$))");
+
+    /** The Ares version as the text of {@code <ares.version>}; a reference to another property, e.g. {@code ${base.version}}, is no pin. */
+    private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version>)([^<$]+)(</ares\\.version>)");
+
     /** The start tag of the profiles of a POM; XML allows whitespace before its {@code >}. */
     private static final Pattern MAVEN_PROFILES_START = Pattern.compile("<profiles\\s*+>");
 
@@ -53,7 +65,7 @@ final class BuildFileSyntax {
      * @param comments for each character of the POM whether it belongs to a comment
      * @return for each character of a Maven POM whether it lies in its {@code <profiles>} section, whose properties apply only while their profile is active
      */
-    static boolean[] mavenProfiles(String content, boolean[] comments) {
+    private static boolean[] mavenProfiles(String content, boolean[] comments) {
         // Both tags are searched outside comments, e.g. not in <!-- Example: <profiles> -->; the masked text keeps the offsets of the content.
         String code = withoutMarked(content, comments);
         boolean[] profiles = new boolean[content.length()];
@@ -68,14 +80,34 @@ final class BuildFileSyntax {
     }
 
     /**
-     * @param versionPin the pattern of a pin of the Ares version in a POM
+     * The places that pin the Ares version in a build file. A pin inside a comment, e.g. {@code // aresVersion = '2.3.0'}, or inside a Gradle string, e.g.
+     * {@code "aresVersion = '2.3.0'"}, has no effect on the build, so it is neither read nor replaced. Neither is a pin in a Maven profile, which applies
+     * only while its profile is active, so the pin of the POM itself is the one the build uses, nor a local variable of a Gradle method or closure, e.g.
+     * {@code def aresVersion = '2.3.0'} in a helper method.
+     *
+     * @param content   the content of the build file
+     * @param buildTool the build tool the file belongs to
+     * @return the pins outside comments and strings, in the order of the file
+     */
+    static List<MatchResult> aresVersionPins(String content, SecurityPolicyRepositoryFiles.BuildTool buildTool) {
+        boolean[] noCode = buildTool == SecurityPolicyRepositoryFiles.BuildTool.GRADLE ? gradleCommentsAndStrings(content) : mavenComments(content);
+        boolean[] profiles = buildTool == SecurityPolicyRepositoryFiles.BuildTool.MAVEN ? mavenProfiles(content, noCode) : new boolean[content.length()];
+        List<MatchResult> pins = versionPattern(buildTool).matcher(content).results().filter(pin -> !noCode[pin.start()] && !profiles[pin.start()]).toList();
+        return buildTool == SecurityPolicyRepositoryFiles.BuildTool.MAVEN ? pins : pins.stream().filter(pin -> !declaresLocalGradleVariable(content, noCode, pin.start())).toList();
+    }
+
+    private static Pattern versionPattern(SecurityPolicyRepositoryFiles.BuildTool buildTool) {
+        return buildTool == SecurityPolicyRepositoryFiles.BuildTool.GRADLE ? GRADLE_ARES_VERSION : MAVEN_ARES_VERSION;
+    }
+
+    /**
      * @return whether a profile of the POM pins the Ares version; while such a profile is active, e.g. through {@code activeByDefault}, Maven uses its pin
      *         instead of the one of the POM itself
      */
-    static boolean pinsInMavenProfile(String pom, Pattern versionPin) {
+    static boolean pinsInMavenProfile(String pom) {
         boolean[] comments = mavenComments(pom);
         boolean[] profiles = mavenProfiles(pom, comments);
-        return versionPin.matcher(pom).results().anyMatch(pin -> !comments[pin.start()] && profiles[pin.start()]);
+        return MAVEN_ARES_VERSION.matcher(pom).results().anyMatch(pin -> !comments[pin.start()] && profiles[pin.start()]);
     }
 
     /**
@@ -83,7 +115,7 @@ final class BuildFileSyntax {
      * @return whether the Gradle code at the offset declares a local variable of a method or closure, e.g. {@code def aresVersion = '2.3.0'} in a helper
      *         method, which sets no project property; a declaration at the top level of the script declares a script variable the build may use
      */
-    static boolean declaresLocalGradleVariable(String content, boolean[] noCode, int offset) {
+    private static boolean declaresLocalGradleVariable(String content, boolean[] noCode, int offset) {
         int depth = 0;
         for (int index = 0; index < offset; index++) {
             if (!noCode[index] && content.charAt(index) == '{') {
