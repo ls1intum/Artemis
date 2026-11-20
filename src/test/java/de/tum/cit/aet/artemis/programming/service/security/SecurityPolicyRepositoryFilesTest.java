@@ -757,7 +757,8 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "ext { aresVersion = '2.2' + '.1' }\n", "ext { aresVersion = \"${base}.1\" }\n", "ext.aresVersion = '2.2.1'.trim()\n" })
+    @ValueSource(strings = { "ext { aresVersion = '2.2' + '.1' }\n", "ext { aresVersion = \"${base}.1\" }\n", "ext.aresVersion = '2.2.1'.trim()\n",
+            "ext { aresVersion = '2.2.1' }\next.aresVersion = \"${base}.1\"\n" })
     void aGradleExpressionIsNoPin(String gradleBuild) throws IOException {
         // Artemis could neither read the version of an expression nor replace it without changing what the build computes.
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).isEmpty();
@@ -766,6 +767,10 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isFalse();
         assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo(gradleBuild);
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, "<properties><ares.version>${base.version}</ares.version></properties>")).isEmpty();
+        // Next to a literal pin, an assignment without a readable value leaves the version the build uses unknown.
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null,
+                "<properties><ares.version>2.2.1</ares.version></properties><properties><ares.version>${base.version}</ares.version></properties>")).isEmpty();
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("ext { aresVersion = '2.2.1' }\nif (aresVersion == '2.2.1') { println 'Ares 2' }\n", null)).contains("2.2.1");
     }
 
     @ParameterizedTest
@@ -877,6 +882,9 @@ class SecurityPolicyRepositoryFilesTest {
         // XML allows whitespace before the > of a tag.
         String spacedProfile = profile.replace("<profiles>", "<profiles >").replace("</profiles>", "</profiles\n>");
         assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + spacedProfile)).unsupportedReasons()).containsExactly(reason);
+        // A reference to another property replaces the version of the POM as well, e.g. with next.ares.version = 2.3.0.
+        String referencingProfile = profile.replace("<ares.version>2.3.0</ares.version>", "<ares.version>${next.ares.version}</ares.version>");
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + referencingProfile)).unsupportedReasons()).containsExactly(reason);
         // A Gradle build that pins the version is the one the exercise uses, and a profile in a comment pins nothing.
         assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles("ext { aresVersion = '2.2.1' }\n", profile)).unsupportedReasons()).isEmpty();
         assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + "<!-- " + profile + " -->")).unsupportedReasons()).isEmpty();
