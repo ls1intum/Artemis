@@ -166,7 +166,8 @@ final class AresTestSources {
     record Summary(String path, List<TypeDeclaration> topLevelTypes, List<SecurityFrameworkState.UnsupportedReasonType> problems, boolean usesAres1, List<String> aresApis) {
     }
 
-    private record Declaration(int start, int bodyStart, int bodyEnd, boolean annotationType, String simpleName, @Nullable String superclass, List<String> supertypes) {
+    private record Declaration(int start, int bodyStart, int bodyEnd, boolean annotationType, boolean interfaceType, String simpleName, @Nullable String superclass,
+            List<String> supertypes) {
     }
 
     private AresTestSources() {
@@ -203,6 +204,11 @@ final class AresTestSources {
         List<TypeDeclaration> types = typeDeclarations(masked, packageName, declarations, policiesByType, methodPoliciesByType, registers, tests);
         if (types.stream().filter(TypeDeclaration::isRelevant).count() > 1) {
             addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.MULTIPLE_TOP_LEVEL_TYPES);
+        }
+        for (int index = 0; index < declarations.size(); index++) {
+            if (declarations.get(index).interfaceType() && types.get(index).isRelevant()) {
+                addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.TEST_INTERFACE);
+            }
         }
         return new Summary(path, List.copyOf(types), List.copyOf(problems), masked.contains(ARES_1_PACKAGE), aresApis(masked));
     }
@@ -363,14 +369,14 @@ final class AresTestSources {
 
     /**
      * The member types that are in scope in the body of a type and shadow a single-type import of the same simple name there: its own and those it inherits
-     * from its superclasses and superinterfaces. Like Java, the first candidate name of a supertype that exists wins. The member types of a type outside
-     * the repository, e.g. of a library, are unknown.
+     * from its superclasses and superinterfaces. Like Java, the first candidate name of a supertype that exists wins.
      *
      * @param type  a top-level type of the repository
      * @param types the top-level types of the repository, by their qualified names
-     * @return the simple names of the member types
+     * @return the simple names of the member types; empty if the type extends or implements a type outside the repository, e.g. of a library, whose member
+     *         types are unknown
      */
-    static Set<String> memberTypesInScope(TypeDeclaration type, Map<String, TypeDeclaration> types) {
+    static Optional<Set<String>> memberTypesInScope(TypeDeclaration type, Map<String, TypeDeclaration> types) {
         Set<String> memberTypes = new HashSet<>();
         Set<String> visited = new HashSet<>();
         Deque<TypeDeclaration> pending = new ArrayDeque<>(List.of(type));
@@ -378,10 +384,16 @@ final class AresTestSources {
             TypeDeclaration current = pending.pop();
             if (visited.add(current.qualifiedName())) {
                 memberTypes.addAll(current.memberTypes());
-                current.supertypes().forEach(candidates -> candidates.stream().filter(types::containsKey).findFirst().map(types::get).ifPresent(pending::push));
+                for (List<String> candidates : current.supertypes()) {
+                    Optional<String> supertype = candidates.stream().filter(types::containsKey).findFirst();
+                    if (supertype.isEmpty()) {
+                        return Optional.empty();
+                    }
+                    pending.push(types.get(supertype.get()));
+                }
             }
         }
-        return memberTypes;
+        return Optional.of(memberTypes);
     }
 
     /**
@@ -451,8 +463,8 @@ final class AresTestSources {
         String header = masked.substring(matcher.end(), bodyStart);
         Matcher superclass = SUPERCLASS.matcher(header);
         String superclassName = superclass.find() ? superclass.group(1) : null;
-        return new Declaration(matcher.start(), bodyStart, bodyEnd < 0 ? masked.length() : bodyEnd, matcher.group(1).startsWith("@"), matcher.group(2), superclassName,
-                supertypeNames(header));
+        return new Declaration(matcher.start(), bodyStart, bodyEnd < 0 ? masked.length() : bodyEnd, matcher.group(1).startsWith("@"), "interface".equals(matcher.group(1)),
+                matcher.group(2), superclassName, supertypeNames(header));
     }
 
     /**

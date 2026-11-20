@@ -355,7 +355,8 @@
                     "ARES_1": "{{ location }}: The tests use Ares 1, whose own sandbox keeps running.",
                     "NO_ARES_2": "{{ location }}: The tests do not use Ares 2.",
                     "NO_ARES_VERSION_PINNED": "{{ location }}: The build file does not pin an Ares version.",
-                    "ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS": "{{ location }}: A test method, possibly one inherited from another test class, uses the Ares sandbox through its own @Policy annotation, although the annotation of the test class switches the sandbox off."
+                    "ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS": "{{ location }}: A test method, possibly one inherited from another test class, uses the Ares sandbox through its own @Policy annotation, although the annotation of the test class switches the sandbox off.",
+                    "TEST_INTERFACE": "{{ location }}: An interface declares tests or Ares annotations, which every class that implements it inherits."
                 },
                 "sync": {
                     "inactive": "Activating restores the previous policy or generates a default one.",

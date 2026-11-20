@@ -331,7 +331,7 @@ public final class SecurityPolicyRepositoryFiles {
             declaring = superclassOf(declaring.get(), testClassesByName.keySet()).map(testClassesByName::get);
         }
         // A member type shadows an import of the same simple name in the class that declares or inherits it, not in its superclasses.
-        Map<String, Set<String>> memberTypes = new HashMap<>();
+        Map<String, Optional<Set<String>>> memberTypes = new HashMap<>();
         chain.forEach(type -> memberTypes.put(type.qualifiedName(), AresTestSources.memberTypesInScope(type, typesByName)));
         for (int index = 0; index < chain.size(); index++) {
             AresTestSources.TypeDeclaration type = chain.get(index);
@@ -349,26 +349,25 @@ public final class SecurityPolicyRepositoryFiles {
      * Whether a subclass overrides the test method, so that JUnit runs the override with its own annotations instead: it declares a test method with the
      * same signature, and is in the same package unless the method is public or protected. A name that several test methods of the type share is never
      * overridden as a whole, so it counts as inherited, and so does a signature with a simple type name that may name different types in the two files,
-     * e.g. through wildcard imports of {@code java.util.*} and {@code java.sql.*}, or that a member type of the class hierarchy may shadow.
+     * e.g. through wildcard imports of {@code java.util.*} and {@code java.sql.*}, or that a member type of the class hierarchy may shadow, also an unknown one
+     * of a supertype outside the repository.
      *
      * @param subclasses  the classes between the class that runs the tests and the type, including the former
-     * @param memberTypes the simple names of the member types in scope in each class of the hierarchy, by its qualified name
+     * @param memberTypes the simple names of the member types in scope in each class of the hierarchy, by its qualified name; empty where unknown
      */
     private static boolean isOverridden(AresTestSources.TypeDeclaration type, String method, List<AresTestSources.TypeDeclaration> subclasses,
-            Map<String, Set<String>> memberTypes) {
+            Map<String, Optional<Set<String>>> memberTypes) {
         List<AresTestCases.TestSignature> signatures = type.testSignatures().stream().filter(signature -> signature.name().equals(method)).toList();
         if (signatures.size() != 1) {
             return false;
         }
         AresTestCases.TestSignature signature = signatures.getFirst();
-        if (signature.dependsOnPackage()) {
+        if (signature.dependsOnPackage() || !importsAreNotShadowed(signature, type, memberTypes)) {
             return false;
         }
-        Set<String> signatureMemberTypes = memberTypes.get(type.qualifiedName());
         for (AresTestSources.TypeDeclaration subclass : subclasses) {
             boolean canOverride = signature.visibleInOtherPackages() || subclass.packageName().equals(type.packageName());
-            Set<String> candidateMemberTypes = memberTypes.get(subclass.qualifiedName());
-            if (canOverride && subclass.testSignatures().stream().anyMatch(candidate -> isSameSignature(candidate, candidateMemberTypes, signature, signatureMemberTypes))) {
+            if (canOverride && declares(subclass, signature, memberTypes)) {
                 return true;
             }
         }
@@ -376,13 +375,22 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * @return whether the candidate declares the signature: the same text, with no type name of either resolved through an import that a member type in
-     *         scope of its class shadows instead
+     * @return whether the class declares a test method with the signature, whose type names really name the types the signature names
      */
-    private static boolean isSameSignature(AresTestCases.TestSignature candidate, Set<String> candidateMemberTypes, AresTestCases.TestSignature signature,
-            Set<String> signatureMemberTypes) {
-        return candidate.text().equals(signature.text()) && candidate.importedNames().stream().noneMatch(candidateMemberTypes::contains)
-                && signature.importedNames().stream().noneMatch(signatureMemberTypes::contains);
+    private static boolean declares(AresTestSources.TypeDeclaration type, AresTestCases.TestSignature signature, Map<String, Optional<Set<String>>> memberTypes) {
+        return type.testSignatures().stream().anyMatch(candidate -> candidate.text().equals(signature.text()) && importsAreNotShadowed(candidate, type, memberTypes));
+    }
+
+    /**
+     * @param declaringType the class that declares the signature
+     * @param memberTypes   the member types in scope in each class of the hierarchy, see {@link #isOverridden}
+     * @return whether every type name of the signature that an import resolves really names the imported type: no member type in scope of the class, also no
+     *         unknown one of a supertype outside the repository, shadows it
+     */
+    private static boolean importsAreNotShadowed(AresTestCases.TestSignature signature, AresTestSources.TypeDeclaration declaringType,
+            Map<String, Optional<Set<String>>> memberTypes) {
+        return signature.importedNames().isEmpty()
+                || memberTypes.get(declaringType.qualifiedName()).map(types -> signature.importedNames().stream().noneMatch(types::contains)).orElse(false);
     }
 
     private static SecurityFrameworkState.PolicyFile policyFile(String path, List<String> referencedBy, PolicyFileReader reader, boolean verifiedAresVersion) {

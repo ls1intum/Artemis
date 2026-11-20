@@ -884,6 +884,67 @@ class SecurityPolicyRepositoryFilesTest {
         assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", false);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void aTestInterfaceIsNotSupported(boolean implementedBySwitchedOffClass) throws IOException {
+        writeBuildFile();
+        // Either the interface carries the policy for its default test, or the test has an active policy of its own while the class switches the sandbox off.
+        String interfacePolicy = implementedBySwitchedOffClass ? "" : SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION;
+        String methodPolicy = implementedBySwitchedOffClass ? SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION : "";
+        String sharedTests = """
+                package de.example;
+
+                import org.junit.jupiter.api.Test;
+
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+
+                @Public
+                %s
+                interface SharedTests {
+
+                    %s
+                    @Test
+                    default void sharedTest() {
+                    }
+                }
+                """.formatted(interfacePolicy, methodPolicy);
+        writeSource("test/de/example/SharedTests.java", sharedTests);
+        String implementing = TEST_CLASS.formatted("de.example", "SortingTest").replace("class SortingTest", "class SortingTest implements SharedTests");
+        if (implementedBySwitchedOffClass) {
+            implementing = implementing.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        }
+        writeSource("test/de/example/SortingTest.java", implementing);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // JUnit runs sharedTest() in SortingTest as well, under an annotation that neither the assignments nor the state of SortingTest show.
+        assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_INTERFACE, "test/de/example/SharedTests.java");
+    }
+
+    @Test
+    void anInterfaceWithoutTestsOrAresAnnotationsIsSupported() throws IOException {
+        writeBuildFile();
+        writeSource("test/de/example/Answers.java", "package de.example;\n\ninterface Answers {\n\n    default int answer() {\n        return 42;\n    }\n}\n");
+        String implementing = TEST_CLASS.formatted("de.example", "SortingTest").replace("class SortingTest", "class SortingTest implements Answers");
+        writeSource("test/de/example/SortingTest.java", implementing);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isNotEqualTo(SecurityActivationStatus.UNSUPPORTED);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = { "MoreSortingTest extends SortingTest implements java.io.Serializable",
+            "MoreSortingTest extends SortingTest implements Comparable<MoreSortingTest>, Cloneable" })
+    void aSupertypeOutsideTheRepositoryMayShadowAnImportedParameterType(String declaration) throws IOException {
+        writeBuildFile();
+        String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
+        writeSource("test/de/example/MoreSortingTest.java", importingOverride(declaration, "public void runs(Date date)"));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // A member type Date of a library interface would shadow the import, so runs(Date) may be an overload and the inherited test may still run with the sandbox.
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", true);
+    }
+
     /**
      * @return a switched-off test class that imports {@code java.util.Date} and declares one test method
      */

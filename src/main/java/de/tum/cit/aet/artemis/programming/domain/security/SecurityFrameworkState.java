@@ -99,6 +99,11 @@ public record SecurityFrameworkState(SecurityActivationStatus status, List<Strin
          * A test method of a test class whose {@code @Policy} switches the sandbox off has an active annotation of its own. Ares applies it, so the method runs
          * with the sandbox, while the class counts as switched off.
          */
-        ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS
+        ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS,
+        /**
+         * An interface declares tests or carries Ares annotations. JUnit runs its default test methods in every class that implements it, so neither the
+         * assignments nor the state of that class could show them.
+         */
+        TEST_INTERFACE
     }
 }
