@@ -9,8 +9,8 @@
     align-items: center;
     gap: 1rem;
     padding: 1rem 2rem;
-    border-bottom: 1px solid var(--bs-border-color);
-    background: var(--step-hero-bg-start, rgba(var(--bs-primary-rgb), 0.04));
+    border-bottom: 1px solid var(--border-color);
+    background: var(--step-hero-bg-start, color-mix(in srgb, var(--primary) 4%, transparent));
 
     .step-hero-icon {
         flex-shrink: 0;
@@ -21,9 +21,9 @@
         align-items: center;
         justify-content: center;
         font-size: 1.2rem;
-        color: var(--bs-white);
-        background: var(--step-hero-color, var(--bs-primary));
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+        color: var(--white);
+        background: var(--step-hero-color, var(--primary));
+        box-shadow: 0 2px 6px color-mix(in srgb, var(--black) 12%, transparent);
     }
 
     .step-hero-action {
@@ -31,10 +31,10 @@
         display: inline-flex;
         align-items: center;
         padding: 0.4rem 0.85rem;
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--border-color);
         border-radius: 0.5rem;
-        background: var(--bs-body-bg);
-        color: var(--bs-body-color);
+        background: var(--body-bg);
+        color: var(--body-color);
         font-weight: 500;
         font-size: 0.8rem;
         text-decoration: none;
@@ -43,8 +43,8 @@
         flex-shrink: 0;
 
         &:hover {
-            background: var(--overview-card-hover-bg, var(--bs-tertiary-bg));
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            background: var(--overview-card-hover-bg);
+            box-shadow: 0 2px 8px color-mix(in srgb, var(--black) 6%, transparent);
         }
     }
 
@@ -57,7 +57,7 @@
 
         p {
             margin: 0;
-            color: var(--bs-secondary-color);
+            color: var(--text-body-secondary);
             font-size: 0.85rem;
             line-height: 1.4;
         }
@@ -66,28 +66,28 @@
 
 // Step-specific hero colors
 .step-hero--general {
-    --step-hero-color: #6366f1;
-    --step-hero-bg-start: rgba(99, 102, 241, 0.06);
+    --step-hero-color: var(--indigo);
+    --step-hero-bg-start: color-mix(in srgb, var(--step-hero-color) 6%, transparent);
 }
 
 .step-hero--enrollment {
-    --step-hero-color: #0ea5e9;
-    --step-hero-bg-start: rgba(14, 165, 233, 0.06);
+    --step-hero-color: var(--info);
+    --step-hero-bg-start: color-mix(in srgb, var(--step-hero-color) 6%, transparent);
 }
 
 .step-hero--communication {
-    --step-hero-color: #8b5cf6;
-    --step-hero-bg-start: rgba(139, 92, 246, 0.06);
+    --step-hero-color: var(--purple);
+    --step-hero-bg-start: color-mix(in srgb, var(--step-hero-color) 6%, transparent);
 }
 
 .step-hero--assessment {
-    --step-hero-color: #f59e0b;
-    --step-hero-bg-start: rgba(245, 158, 11, 0.06);
+    --step-hero-color: var(--warning);
+    --step-hero-bg-start: color-mix(in srgb, var(--step-hero-color) 6%, transparent);
 }
 
 .step-hero--explore {
-    --step-hero-color: #10b981;
-    --step-hero-bg-start: rgba(16, 185, 129, 0.06);
+    --step-hero-color: var(--teal);
+    --step-hero-bg-start: color-mix(in srgb, var(--step-hero-color) 6%, transparent);
 }
 
 // ── Indented settings below a toggle ──────────────────
@@ -101,26 +101,13 @@
 .step-body {
     padding: 1.5rem 2rem 2rem;
 
-    // Direct selector for same-component controls
-    .form-control,
-    .form-select {
-        background-color: var(--onboarding-input-bg, #fff);
-    }
-
-    // ::ng-deep needed to reach form controls inside child components (e.g. the markdown editor)
-    // stylelint-disable-next-line no-descending-specificity
-    ::ng-deep .form-control,
-    ::ng-deep .form-select {
-        background-color: var(--onboarding-input-bg, #fff);
-    }
-
     // Override markdown editor CSS variables so they cascade into child components
-    --md-editor-background: var(--onboarding-input-bg, #fff);
-    --md-tab-list-bg: var(--onboarding-input-bg, #fff);
+    --md-editor-background: var(--onboarding-input-bg, var(--white));
+    --md-tab-list-bg: var(--onboarding-input-bg, var(--white));
 
     ::ng-deep .markdown-preview,
     ::ng-deep .background-editor-high {
-        background-color: var(--onboarding-input-bg, #fff);
+        background-color: var(--onboarding-input-bg, var(--white));
     }
 }
 
@@ -129,7 +116,7 @@
     display: inline-flex;
     border-radius: 0.5rem;
     overflow: hidden;
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--border-color);
 
     .toggle-btn {
         display: inline-flex;
@@ -139,25 +126,25 @@
         font-weight: 500;
         font-size: 0.9rem;
         border: none;
-        background: var(--overview-card-nested-bg, var(--bs-body-bg));
-        color: var(--bs-secondary-color);
+        background: var(--overview-card-nested-bg, var(--body-bg));
+        color: var(--text-body-secondary);
         cursor: pointer;
         transition: all 0.2s ease;
 
         &:first-child {
-            border-right: 1px solid var(--bs-border-color);
+            border-right: 1px solid var(--border-color);
         }
 
         &.active-enabled {
-            background: var(--bs-success);
-            color: var(--bs-white);
-            border-color: var(--bs-success);
+            background: var(--success);
+            color: var(--white);
+            border-color: var(--success);
         }
 
         &.active-disabled {
-            background: var(--bs-danger);
-            color: var(--bs-white);
-            border-color: var(--bs-danger);
+            background: var(--danger);
+            color: var(--white);
+            border-color: var(--danger);
         }
     }
 }
@@ -175,7 +162,7 @@
     font-size: 0.8rem;
     font-weight: 400;
     cursor: pointer;
-    color: var(--bs-primary);
+    color: var(--primary);
     text-decoration: none;
 
     &:hover {

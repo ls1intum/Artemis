@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -31,6 +32,7 @@ import dayjs from 'dayjs/esm';
         OnboardingCommunicationComponent,
         OnboardingAssessmentAiComponent,
         OnboardingExploreComponent,
+        TumAetUiButtonDirective,
     ],
 })
 export class CourseOnboardingComponent implements OnInit {

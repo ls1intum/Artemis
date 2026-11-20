@@ -180,8 +180,7 @@ export class CourseTutorialGroupsComponent implements SidebarView {
 
     private loadAndSetTutorialLectures(courseId: number) {
         this.lectureService.findAllTutorialLecturesByCourseId(courseId).subscribe({
-            next: ({ body }) => {
-                const tutorialLectures = body ?? [];
+            next: (tutorialLectures) => {
                 this.tutorialLectures.set(tutorialLectures);
                 this.updateCachedLectures(tutorialLectures, courseId);
             },

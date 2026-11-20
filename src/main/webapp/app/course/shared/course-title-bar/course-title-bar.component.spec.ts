@@ -72,7 +72,7 @@ describe('CourseTitleBarComponent', () => {
         contentElement.textContent = 'Test Content';
 
         // Get the div where ng-content would be rendered
-        const contentContainer = fixture.debugElement.query(By.css('.d-flex.gap-2')).nativeElement;
+        const contentContainer = fixture.debugElement.query(By.css('.title-bar-actions')).nativeElement;
         contentContainer.appendChild(contentElement);
 
         fixture.detectChanges();
@@ -85,8 +85,8 @@ describe('CourseTitleBarComponent', () => {
     it('should have the correct styling classes on the title bar', () => {
         const titleBar = fixture.debugElement.query(By.css('#course-title-bar'));
         expect(titleBar.classes['module-bg']).toBeTruthy();
-        expect(titleBar.classes['rounded']).toBeTruthy();
-        expect(titleBar.classes['rounded-3']).toBeTruthy();
-        expect(titleBar.classes['sticky-top']).toBeTruthy();
+        expect(titleBar.classes['rounded-sm']).toBeTruthy();
+        expect(titleBar.classes['sticky']).toBeTruthy();
+        expect(titleBar.classes['top-0']).toBeTruthy();
     });
 });

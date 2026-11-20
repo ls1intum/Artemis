@@ -65,7 +65,7 @@
             /* Even at phone widths, reserve the card's borders so they cannot overlap the neighbouring divider. */
             min-width: 2px;
 
-            .card {
+            .editor-panel {
                 height: 100%;
             }
         }
@@ -138,7 +138,41 @@
 }
 
 /* ==========================================================================
-   Shared secondary header (file browser, instructions, Monaco editor, build output)
+   Panels of the editor (file browser, instructions, Monaco editor, build output)
+   ========================================================================== */
+
+.editor-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    color: var(--body-color);
+    overflow-wrap: break-word;
+    background-color: var(--card-bg);
+    background-clip: border-box;
+    border: 1px solid var(--border-color);
+    border-radius: 0.15rem;
+}
+
+.editor-panel-body {
+    flex: 1 1 auto;
+    padding: 1rem;
+    color: var(--body-color);
+
+    input {
+        max-width: 100%;
+    }
+}
+
+.editor-panel-footer {
+    padding: 0.5rem 1rem;
+    color: var(--body-color);
+    background-color: color-mix(in srgb, var(--body-color) 3%, transparent);
+    border-top: 1px solid var(--border-color);
+}
+
+/* ==========================================================================
+   Shared primary header (file browser, instructions, Monaco editor, build output)
    ========================================================================== */
 
 .code-editor-panel-header {
@@ -166,7 +200,7 @@
    Shared secondary header (used by file browser, Monaco editor, and build output)
    ========================================================================== */
 
-.card-second-header {
+.editor-panel-second-header {
     display: flex;
     align-items: center;
     min-height: 38px;
@@ -191,7 +225,7 @@
 .editor-sidebar-left.collapsed--horizontal {
     flex: none !important;
 
-    .card-header {
+    .editor-panel-header {
         height: 100%;
         width: 100%;
 
@@ -200,8 +234,8 @@
         }
     }
 
-    .card-body,
-    .card-second-header {
+    .editor-panel-body,
+    .editor-panel-second-header {
         display: none !important;
     }
 
@@ -246,7 +280,7 @@
         column-gap: 10px;
 
         > :not(:first-child) {
-            border-left: 1px solid rgba(0, 0, 0, 0.125);
+            border-left: 1px solid var(--border-color);
             padding-left: 20px;
         }
     }
@@ -260,7 +294,7 @@
 
         > :not(:first-child) {
             padding-top: 5px;
-            border-top: 1px solid rgba(0, 0, 0, 0.125);
+            border-top: 1px solid var(--border-color);
         }
 
         span {
@@ -273,7 +307,7 @@
 .editor-sidebar-right.collapsed--horizontal {
     flex: none !important;
 
-    .card-header {
+    .editor-panel-header {
         height: 100%;
         width: 100%;
 
@@ -291,7 +325,7 @@
         }
     }
 
-    .card-second-header {
+    .editor-panel-second-header {
         display: none !important;
     }
 
@@ -338,7 +372,7 @@
 }
 
 /* Build output */
-.editor-bottom.collapsed--vertical .card-body {
+.editor-bottom.collapsed--vertical .editor-panel-body {
     display: none;
 }
 

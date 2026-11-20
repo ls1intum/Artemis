@@ -30,7 +30,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
                         <label class="" for="field_presentationScoreEnabled" jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score Enabled</label>
                         <fa-icon
                             [icon]="faQuestionCircle"
-                            class="text-text-secondary"
+                            class="text-muted-color"
                             tumAetUiTooltip="{{ 'artemisApp.exercise.presentationScoreEnabled.description' | artemisTranslate }}"
                         />
                     </div>

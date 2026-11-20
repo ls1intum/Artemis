@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumLiveFilePickerComponent } from './tum-live-file-picker.component';
 import { TumLiveUploadComponent } from 'app/lecture/manage/lecture-units/tum-live-upload/tum-live-upload.component';
-import { TumLiveTransferEvent, TumLiveUploadService, TumLiveUploadState } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
+import { TumLiveTransferError, TumLiveTransferEvent, TumLiveUploadService, TumLiveUploadState } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 
 describe('TumLiveUploadComponent', () => {
     let fixture: ComponentFixture<TumLiveUploadComponent>;
@@ -22,7 +24,7 @@ describe('TumLiveUploadComponent', () => {
         fixture.detectChanges();
     };
     const query = (testId: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
-    const chooseFile = () => component.onFileChosen({ target: { files: [new File(['video'], 'lecture.mp4')] } } as unknown as Event);
+    const chooseFile = () => component.file.set(new File(['video'], 'lecture.mp4', { type: 'video/mp4' }));
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -30,8 +32,8 @@ describe('TumLiveUploadComponent', () => {
             providers: [MockProvider(TumLiveUploadService)],
         })
             .overrideComponent(TumLiveUploadComponent, {
-                remove: { imports: [TranslateDirective, ArtemisTranslatePipe] },
-                add: { imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)] },
+                remove: { imports: [TranslateDirective, ArtemisTranslatePipe, TumLiveFilePickerComponent] },
+                add: { imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe, (value) => value ?? ''), MockComponent(TumLiveFilePickerComponent)] },
             })
             .compileComponents();
         service = TestBed.inject(TumLiveUploadService);
@@ -50,7 +52,7 @@ describe('TumLiveUploadComponent', () => {
     it('uploads the chosen file and then shows the conversion', () => {
         render({ connected: true });
         const transfer = new Subject<TumLiveTransferEvent>();
-        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: 'https://tum.live/u' }));
+        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: '/upload-a' }));
         const transferSpy = vi.spyOn(service, 'transfer').mockReturnValue(transfer);
         chooseFile();
         fixture.detectChanges();
@@ -59,7 +61,7 @@ describe('TumLiveUploadComponent', () => {
         transfer.next({ type: 'progress', percent: 40 });
         fixture.detectChanges();
 
-        expect(transferSpy).toHaveBeenCalledWith('https://tum.live/u', expect.any(File));
+        expect(transferSpy).toHaveBeenCalledWith('/upload-a', expect.any(File));
         expect(component.transferProgress()).toBe(40);
         expect(query('tum-live-upload-cancel')).not.toBeNull();
 
@@ -72,10 +74,65 @@ describe('TumLiveUploadComponent', () => {
         expect(query('tum-live-upload-discard')).not.toBeNull();
     });
 
+    it('takes the initial file and starts once before the first status response', () => {
+        const states = new Subject<TumLiveUploadState>();
+        const transfer = new Subject<TumLiveTransferEvent>();
+        vi.spyOn(service, 'getState').mockReturnValue(states);
+        const start = vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: '/transfer' }));
+        const send = vi.spyOn(service, 'transfer').mockReturnValue(transfer);
+        const file = new File(['video'], 'lecture.mp4', { type: 'video/mp4' });
+        fixture.componentRef.setInput('lectureUnitId', 7);
+        fixture.componentRef.setInput('initialFile', file);
+        fixture.detectChanges();
+        states.next({ connected: true });
+        fixture.detectChanges();
+        transfer.next({ type: 'progress', percent: 100 });
+
+        expect(start).toHaveBeenCalledExactlyOnceWith(7);
+        expect(send).toHaveBeenCalledExactlyOnceWith('/transfer', file);
+        expect(component.transferring()).toBe(true);
+
+        transfer.complete();
+        expect(component.transferring()).toBe(false);
+        expect(component.pendingRef()).toBe('reference-a-0000');
+    });
+
+    it('checks the exact reference after losing the transfer response and leaves it intact on destroy', () => {
+        const ref = 'reference-a-0000';
+        render({ connected: true });
+        vi.spyOn(service, 'start').mockReturnValue(of({ ref, uploadUrl: '/transfer' }));
+        vi.spyOn(service, 'transfer').mockReturnValue(throwError(() => new TumLiveTransferError('network', 0)));
+        const discard = vi.spyOn(service, 'discard');
+        chooseFile();
+
+        component.upload();
+        state.next({ connected: true, pendingRef: ref });
+        expect(component.uncertainRef()).toBe(ref);
+        expect(component.transferring()).toBe(false);
+        fixture.destroy();
+        expect(discard).not.toHaveBeenCalled();
+    });
+
+    it('recognises conversion after a lost acceptance response without asking to upload the file again', () => {
+        const ref = 'reference-a-0000';
+        render({ connected: true });
+        vi.spyOn(service, 'start').mockReturnValue(of({ ref, uploadUrl: '/transfer' }));
+        vi.spyOn(service, 'transfer').mockReturnValue(throwError(() => new TumLiveTransferError('HTTP 504', 504)));
+        const discard = vi.spyOn(service, 'discard');
+        chooseFile();
+
+        component.upload();
+        state.next({ connected: true, pendingRef: ref, converting: true });
+        expect(component.uncertainRef()).toBeUndefined();
+        expect(component.file()).toBeUndefined();
+        expect(component.pendingRef()).toBe(ref);
+        expect(discard).not.toHaveBeenCalled();
+    });
+
     it('discards the upload when its transfer fails', () => {
         render({ connected: true });
-        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: 'https://tum.live/u' }));
-        vi.spyOn(service, 'transfer').mockReturnValue(throwError(() => new Error('HTTP 413')));
+        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: '/upload-a' }));
+        vi.spyOn(service, 'transfer').mockReturnValue(throwError(() => new TumLiveTransferError('HTTP 413', 413)));
         const discardSpy = vi.spyOn(service, 'discard').mockReturnValue(of(undefined));
         chooseFile();
 
@@ -83,7 +140,63 @@ describe('TumLiveUploadComponent', () => {
         fixture.detectChanges();
 
         expect(discardSpy).toHaveBeenCalledWith(7, 'reference-a-0000');
-        expect(component.transferError()).toBe('HTTP 413');
+        expect(component.transferError()?.message).toBe('HTTP 413');
+    });
+
+    it('keeps a pending upload when another request is already transferring it', () => {
+        render({ connected: true });
+        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: '/transfer' }));
+        vi.spyOn(service, 'transfer').mockReturnValue(throwError(() => new TumLiveTransferError('HTTP 409', 409, 'error.tumLiveUploadInProgress')));
+        const discardSpy = vi.spyOn(service, 'discard');
+
+        chooseFile();
+        component.upload();
+
+        expect(discardSpy).not.toHaveBeenCalled();
+        expect(component.transferProgress()).toBeUndefined();
+        expect(component.transferError()?.translationKey).toBe('error.tumLiveUploadInProgress');
+        state.next({ connected: true, pendingRef: 'reference-a-0000' });
+        expect(component.transferError()?.status).toBe(409);
+
+        state.next({ connected: true, lastError: 'The video transfer to TUM.Live failed.' });
+        expect(component.transferError()).toBeUndefined();
+        expect(discardSpy).not.toHaveBeenCalled();
+    });
+
+    it('offers to discard an unconfirmed pending upload without claiming that it is converting', () => {
+        render({ connected: true });
+        vi.spyOn(service, 'start').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+        const discard = vi.spyOn(service, 'discard').mockReturnValue(of(undefined));
+        const transfer = vi.spyOn(service, 'transfer');
+        const status = fixture.nativeElement.querySelector('[role=status]');
+        chooseFile();
+
+        component.upload();
+        state.next({ connected: true, pendingRef: 'unconfirmed-reference', converting: false });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[role=status]')).toBe(status);
+        expect(status.textContent).toContain('artemisApp.tumLiveUpload.pending');
+        expect(query('tum-live-upload-discard')).not.toBeNull();
+        expect(transfer).not.toHaveBeenCalled();
+        expect(discard).not.toHaveBeenCalled();
+    });
+
+    it('shows a competing reservation after a rejected start and leaves it untouched when the page closes', () => {
+        render({ connected: true });
+        vi.spyOn(service, 'start').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, error: { message: 'error.tumLiveUploadInProgress' } })));
+        const discard = vi.spyOn(service, 'discard');
+        const transfer = vi.spyOn(service, 'transfer');
+        chooseFile();
+
+        component.upload();
+        state.next({ connected: true, pendingRef: 'another-editors-reference' });
+        expect(component.transferError()?.translationKey).toBe('error.tumLiveUploadInProgress');
+        expect(component.pendingRef()).toBe('another-editors-reference');
+
+        fixture.destroy();
+        expect(transfer).not.toHaveBeenCalled();
+        expect(discard).not.toHaveBeenCalled();
     });
 
     it('leaves the reason of a failed start to the error alert', () => {
@@ -127,7 +240,7 @@ describe('TumLiveUploadComponent', () => {
     it('cancels a running transfer and discards its upload', () => {
         render({ connected: true });
         const transfer = new Subject<TumLiveTransferEvent>();
-        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: 'https://tum.live/u' }));
+        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: '/upload-a' }));
         vi.spyOn(service, 'transfer').mockReturnValue(transfer);
         const discardSpy = vi.spyOn(service, 'discard').mockReturnValue(of(undefined));
         chooseFile();
@@ -150,10 +263,26 @@ describe('TumLiveUploadComponent', () => {
 
         component.cancel();
         expect(discardSpy).not.toHaveBeenCalled();
-        start.next({ ref: 'reference-a-0000', uploadUrl: 'https://tum.live/u' });
+        start.next({ ref: 'reference-a-0000', uploadUrl: '/upload-a' });
 
         expect(transferSpy).not.toHaveBeenCalled();
         expect(discardSpy).toHaveBeenCalledWith(7, 'reference-a-0000');
+    });
+
+    it('does not discard another editor’s reservation after cancelling a conflicting start', () => {
+        render({ connected: true });
+        const start = new Subject<{ ref: string; uploadUrl: string }>();
+        vi.spyOn(service, 'start').mockReturnValue(start);
+        const transferSpy = vi.spyOn(service, 'transfer');
+        const discardSpy = vi.spyOn(service, 'discard');
+        chooseFile();
+        component.upload();
+        component.cancel();
+        start.error(new HttpErrorResponse({ status: 409 }));
+
+        expect(component.busy()).toBe(false);
+        expect(transferSpy).not.toHaveBeenCalled();
+        expect(discardSpy).not.toHaveBeenCalled();
     });
 
     it('starts no new upload until a cancelled start and its discard are answered', () => {
@@ -177,10 +306,10 @@ describe('TumLiveUploadComponent', () => {
 
         discard.complete();
         component.upload();
-        startB.next({ ref: 'reference-b-0000', uploadUrl: 'https://tum.live/b' });
+        startB.next({ ref: 'reference-b-0000', uploadUrl: '/upload-b' });
 
         expect(startSpy).toHaveBeenCalledTimes(2);
-        expect(transferSpy).toHaveBeenCalledWith('https://tum.live/b', expect.any(File));
+        expect(transferSpy).toHaveBeenCalledWith('/upload-b', expect.any(File));
         expect(discardSpy).toHaveBeenCalledOnce();
     });
 
@@ -203,7 +332,7 @@ describe('TumLiveUploadComponent', () => {
 
     it('recognises the attachment of its upload even without seeing it pending', () => {
         render({ connected: true });
-        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: 'https://tum.live/u' }));
+        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: '/upload-a' }));
         vi.spyOn(service, 'transfer').mockReturnValue(of({ type: 'done' } as TumLiveTransferEvent));
         const attached = vi.fn();
         component.attached.subscribe(attached);
@@ -229,6 +358,34 @@ describe('TumLiveUploadComponent', () => {
         expect(attached).toHaveBeenCalledOnce();
     });
 
+    it('ignores a stale poll when a transfer conflict triggers a fresh read', () => {
+        vi.useFakeTimers();
+        const pending = { connected: true, pendingRef: 'reference-a-0000' };
+        render({ connected: true });
+        const transfer = new Subject<TumLiveTransferEvent>();
+        vi.spyOn(service, 'start').mockReturnValue(of({ ref: pending.pendingRef, uploadUrl: '/transfer' }));
+        vi.spyOn(service, 'transfer').mockReturnValue(transfer);
+        chooseFile();
+        component.upload();
+        state.next(pending);
+
+        const stalePoll = new Subject<TumLiveUploadState>();
+        vi.spyOn(service, 'getState').mockReturnValueOnce(stalePoll).mockReturnValue(of(pending));
+        vi.advanceTimersByTime(15_000);
+        expect(stalePoll.observed).toBe(true);
+
+        transfer.error(new TumLiveTransferError('HTTP 409', 409, 'error.tumLiveUploadInProgress'));
+        stalePoll.next({ connected: true });
+        expect(stalePoll.observed).toBe(false);
+        expect(component.state()).toEqual(pending);
+        expect(component.transferError()?.status).toBe(409);
+
+        vi.spyOn(service, 'getState').mockReturnValue(of({ connected: true }));
+        vi.advanceTimersByTime(15_000);
+        expect(component.state()?.pendingRef).toBeUndefined();
+        expect(component.transferError()).toBeUndefined();
+    });
+
     it('reads the state again after reading it failed, and then shows the section', () => {
         vi.useFakeTimers();
         vi.spyOn(service, 'getState')
@@ -247,7 +404,7 @@ describe('TumLiveUploadComponent', () => {
 
     it('reports a sent file, and gives up a transfer that leaving the page stops', () => {
         render({ connected: true });
-        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: 'https://tum.live/u' }));
+        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: '/upload-a' }));
         const transfer = new Subject<TumLiveTransferEvent>();
         vi.spyOn(service, 'transfer').mockReturnValue(transfer);
         const discardSpy = vi.spyOn(service, 'discard').mockReturnValue(of(undefined));
@@ -273,7 +430,7 @@ describe('TumLiveUploadComponent', () => {
         component.upload();
 
         fixture.destroy();
-        start.next({ ref: 'reference-a-0000', uploadUrl: 'https://tum.live/u' });
+        start.next({ ref: 'reference-a-0000', uploadUrl: '/upload-a' });
 
         expect(discardSpy).toHaveBeenCalledExactlyOnceWith(7, 'reference-a-0000');
         expect(transferSpy).not.toHaveBeenCalled();
@@ -281,7 +438,7 @@ describe('TumLiveUploadComponent', () => {
 
     it('reports a file that was sent completely and keeps its upload when the page is left', () => {
         render({ connected: true });
-        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: 'https://tum.live/u' }));
+        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: '/upload-a' }));
         vi.spyOn(service, 'transfer').mockReturnValue(of({ type: 'done' } as TumLiveTransferEvent));
         const discardSpy = vi.spyOn(service, 'discard').mockReturnValue(of(undefined));
         const transferred = vi.fn();

@@ -6,7 +6,7 @@ import { CalendarMobileMonthPresentationComponent } from 'app/calendar/mobile/mo
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CalendarMobileDayPresentationComponent } from 'app/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowUpFromBracket, faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRotateRight, faArrowUpFromBracket, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { CalendarOverviewComponent } from 'app/calendar/shared/calendar-overview/calendar-overview-component.directive';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
@@ -43,6 +43,7 @@ export class CalendarMobileOverviewComponent extends CalendarOverviewComponent {
     private readonly viewState = inject(CalendarViewStateService);
 
     readonly faArrowUpFromBracket = faArrowUpFromBracket;
+    readonly faArrowRotateRight = faArrowRotateRight;
     readonly faFilter = faFilter;
     readonly CalendarEventFilterOption = CalendarEventFilterOption;
 

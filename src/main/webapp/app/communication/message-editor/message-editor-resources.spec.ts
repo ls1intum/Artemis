@@ -17,28 +17,24 @@ describe('Formatted message resources', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         lectures.findAllByCourseIdWithSlides.mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: [
+            of([
+                {
+                    id: 2,
+                    title: 'Lecture 2',
+                    lectureUnits: [
                         {
-                            id: 2,
-                            title: 'Lecture 2',
-                            lectureUnits: [
-                                {
-                                    type: 'attachment',
-                                    name: 'Slides',
-                                    attachment: { link: '/attachments/lecture/handout.pdf', studentVersion: '/attachments/lecture/student.pdf', version: 3 },
-                                    slides: [
-                                        { id: 7, slideNumber: 3 },
-                                        { id: 8, slideNumber: 5 },
-                                    ],
-                                },
-                                { type: 'text', name: 'Text unit' },
+                            type: 'attachment',
+                            name: 'Slides',
+                            attachment: { link: '/attachments/lecture/handout.pdf', studentVersion: '/attachments/lecture/student.pdf', version: 3 },
+                            slides: [
+                                { id: 7, slideNumber: 3 },
+                                { id: 8, slideNumber: 5 },
                             ],
                         },
+                        { type: 'text', name: 'Text unit' },
                     ],
-                }),
-            ),
+                },
+            ]),
         );
         faqs.findAllByCourseIdAndState.mockReturnValue(of(new HttpResponse({ body: [{ id: 9, questionTitle: 'How to submit?' }] })));
         files.addAttachmentVersionToUrl.mockReturnValue('/attachments/lecture/student.pdf?version=3');
@@ -84,11 +80,7 @@ describe('Formatted message resources', () => {
 
     it('finds lectures that have no attachment units or slides', async () => {
         lectures.findAllByCourseIdWithSlides.mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: [{ id: 4, title: 'Intro [recap]' }, { id: 5, title: 'Unit-free lecture', lectureUnits: [{ type: 'text', name: 'Text unit' }] }, { id: 6 }],
-                }),
-            ),
+            of([{ id: 4, title: 'Intro [recap]' }, { id: 5, title: 'Unit-free lecture', lectureUnits: [{ type: 'text', name: 'Text unit' }] }, { id: 6 }]),
         );
 
         expect(await resources.search('slides', 'lecture', 1)).toEqual([

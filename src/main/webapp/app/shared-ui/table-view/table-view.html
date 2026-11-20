@@ -62,7 +62,7 @@
                             }
                             @if (col.headerIcon || col.headerTooltip) {
                                 <span tabindex="0" [tumAetUiTooltip]="col.headerTooltip ? (col.headerTooltip | artemisTranslate) : undefined">
-                                    <fa-icon [icon]="col.headerIcon?.includes('hashtag') ? faHashtag : col.headerIcon?.includes('comment') ? faComment : faCircleQuestion" />
+                                    <fa-icon [icon]="col.headerIcon ?? faCircleQuestion" />
                                 </span>
                             }
                         </div>

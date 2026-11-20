@@ -31,49 +31,53 @@ export class ComplaintApi {
      *
      *
      * @param complaintRequest
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createComplaint(complaintRequest: ComplaintRequest): Observable<Complaint> {
+    createComplaint(complaintRequest: ComplaintRequest, options?: import('./request-options').RequestOptions): Observable<Complaint> {
         const url = `${this.basePath}/api/assessment/complaints`;
-        return this.http.post<Complaint>(url, complaintRequest);
+        return this.http.post<Complaint>(url, complaintRequest, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param submissionId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getComplaintBySubmissionIdForAssessment(submissionId: number): Observable<Complaint> {
+    getComplaintBySubmissionIdForAssessment(submissionId: number, options?: import('./request-options').RequestOptions): Observable<Complaint> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'submissionId', submissionId);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/complaints/for-assessment${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Complaint>(url);
+        return this.http.get<Complaint>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param queryParam
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getComplaints(queryParam: ComplaintsQuery): Observable<GetComplaints200Response> {
+    getComplaints(queryParam: ComplaintsQuery, options?: import('./request-options').RequestOptions): Observable<GetComplaints200Response> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'query', queryParam);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/complaints${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<GetComplaints200Response>(url);
+        return this.http.get<GetComplaints200Response>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param queryParam
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getComplaintsForTutor(queryParam: ComplaintsForTutorQuery): Observable<Array<Complaint>> {
+    getComplaintsForTutor(queryParam: ComplaintsForTutorQuery, options?: import('./request-options').RequestOptions): Observable<Array<Complaint>> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'query', queryParam);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/complaints/for-tutor${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Array<Complaint>>(url);
+        return this.http.get<Array<Complaint>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

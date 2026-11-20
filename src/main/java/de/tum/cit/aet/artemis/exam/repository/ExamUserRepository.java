@@ -21,6 +21,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentSearchDTO;
@@ -135,6 +136,21 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
 
     @EntityGraph(type = LOAD, attributePaths = { "exam", "exam.examUsers" })
     Optional<ExamUser> findWithExamWithExamUsersById(long examUserId);
+
+    /**
+     * Finds the course of the exam an exam user is registered for, without loading the exam user or the exam.
+     *
+     * @param examUserId the id of the exam user
+     * @return the course of the exam, or empty if the exam user does not exist
+     */
+    @Query("""
+            SELECT c
+            FROM ExamUser eu
+                JOIN eu.exam e
+                JOIN e.course c
+            WHERE eu.id = :examUserId
+            """)
+    Optional<Course> findCourseByExamUserId(@Param("examUserId") long examUserId);
 
     /**
      * Returns the IDs of users who are already registered as exam users for the given exam, filtered to the provided user IDs.
