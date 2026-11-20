@@ -159,6 +159,14 @@ describe('ChecklistPanelComponent', () => {
             expect(component.getCategoryColorClass('SOMETHING_ELSE')).toBe('bg-(--tumaet-ui-muted-color) text-white');
             expect(component.getCategoryColorClass(undefined)).toBe('bg-(--tumaet-ui-muted-color) text-white');
         });
+
+        it('colors a known difficulty delta and falls back to the muted text color', () => {
+            expect(component.getDeltaClass('HIGHER')).toBe('text-state-danger');
+            expect(component.getDeltaClass('LOWER')).toBe('text-state-warning');
+            expect(component.getDeltaClass('MATCH')).toBe('text-state-success');
+            expect(component.getDeltaClass('SOMETHING_ELSE')).toBe('text-muted-color');
+            expect(component.getDeltaClass(undefined)).toBe('text-muted-color');
+        });
     });
 
     describe('AI Action Methods', () => {
