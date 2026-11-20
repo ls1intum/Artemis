@@ -472,13 +472,21 @@ serves Docker Hub images at the registry root. It is a transparent path for ever
 but it only applies to images with a Docker Hub name, and the Docker daemon falls back to Docker Hub when the
 mirror does not answer, after a connect timeout on every pull. That is why the Artemis jobs name Harbor explicitly
 instead of relying on it: the helper pulls from `harbor.aet.cit.tum.de/dockerhub-ghr-proxy`, which the mirror does not
-touch, and fails visibly. A mirror entry that points at a host the runners cannot reach makes every pull slow, so
-check `docker info` on a runner when pulls stall.
+touch, and fails visibly.
 
-Images that Docker pulls by itself during a job are not covered: add them to one of the two when a new job needs
-one. The images of a job `container:` or of `services:` are the exception: the runner pulls them before the first
-step runs, so neither the helper nor the action can route them. Name the Harbor image directly in the declaration
-(`harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/postgres:18` instead of `postgres:18`). No workflow declares
+The Harbor check above says nothing about the mirror, because they are separate endpoints. Check the mirror on its own
+from a runner when pulls stall. `docker info --format '{{json .RegistryConfig.Mirrors}}'` prints the mirrors the Docker
+daemon actually uses; a change to `/etc/docker/daemon.json` only counts after `systemctl reload docker`. Then
+`curl -sS -o /dev/null -w '%{http_code}\n' https://docker-mirror.aet.cit.tum.de:8765/v2/` prints `200` when each
+mirror answers. A mirror entry that points at a host the runners cannot reach makes every pull slow.
+
+Images that Docker pulls by itself during a job are not covered by the helper or the action. Adding such an image to
+the helper does not help when a command pulls it again: `docker pull`, `docker run --pull=always` and
+`docker compose pull` contact Docker Hub for a Docker Hub name whatever the helper provisioned, and the Testcontainers
+prefix does not affect Docker CLI commands. Replace those pulls with the helper (`--refresh` forces a fresh pull) or
+name the Harbor image directly (`harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/postgres:18` instead of
+`postgres:18`). The images of a job `container:` or of `services:` are pulled by the runner before the first step runs,
+so neither the helper nor the action can route them; name the Harbor image in the declaration. No workflow declares
 either today. A Docker Hub image in a workflow of a GitHub-hosted runner needs no change, because those runners have
 their own allowance.
 
