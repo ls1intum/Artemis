@@ -9,6 +9,8 @@ import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.convert.ApplicationConversionService;
@@ -79,6 +81,21 @@ class LlmConfigurationValidatorTest {
                             .contains("artemis.llm.presets.vec: embeddings need an endpoint of type openai")
                             .contains("artemis.llm.presets.vec: an embeddings preset takes no timeout or max-retries").contains("artemis.llm.presets.lost.endpoint is required");
                 });
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "https://user:secret@example.org/v1", "https://example.org/v1?key=secret", "https://example.org/v1#fragment" })
+    void anEndpointUrlCarriesNoCredentialsQueryOrFragment(String url) {
+        runner(List.of(), "artemis.hyperion.llm-presets.default=large", "artemis.llm.endpoints.logos.base-url=" + url)
+                .run(context -> assertThat(rootMessage(context.getStartupFailure()))
+                        .contains("artemis.llm.endpoints.logos.base-url must not contain credentials, a query or a fragment"));
+    }
+
+    @Test
+    void endpointDiagnosticsNeverContainTheKeyOrHeaders() {
+        var endpoint = new LlmProperties.Endpoint(LlmProperties.EndpointType.OPENAI, "https://llm.example.org/v1", "secret-value", java.time.Duration.ofSeconds(1), 0, null, null,
+                Map.of("X-Gateway-Token", "header-secret"), List.of());
+        assertThat(endpoint.toString()).contains("llm.example.org").doesNotContain("secret-value", "header-secret");
     }
 
     @Test

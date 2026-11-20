@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.course.service.home;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.RejectedExecutionException;
@@ -11,87 +9,57 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.springframework.ai.chat.messages.SystemMessage;
-import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.setup.OpenAiSetup;
 
-import com.openai.client.OpenAIClient;
-import com.openai.client.OpenAIClientAsync;
-
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.course.config.CourseHomeAiProperties;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.observation.ObservationRegistry;
 
-/** A separately owned model and transport, with no queue and no retries. */
+/** Calls Home's preset with a fixed time limit, no retries, a small output budget and at most four requests at once, without a queue. */
 public final class SpringAiCourseHomeClient implements CourseHomeAiClient {
 
     static final Duration TIMEOUT = Duration.ofSeconds(3);
 
-    private final ChatModel model;
+    static final int MAX_OUTPUT_TOKENS = 160;
 
-    private final AutoCloseable syncTransport;
+    private final ChatClient chatClient;
 
-    private final AutoCloseable asyncTransport;
+    private final boolean usesLegacyMaxTokens;
+
+    private final int outputTokens;
 
     private final MeterRegistry meters;
 
     private final ThreadPoolExecutor workers = new ThreadPoolExecutor(0, 4, 60, TimeUnit.SECONDS, new SynchronousQueue<>(),
             Thread.ofPlatform().daemon(true).name("course-home-ai-", 0).factory());
 
-    private record Setup(ChatModel model, AutoCloseable syncTransport, AutoCloseable asyncTransport) {
+    public SpringAiCourseHomeClient(CourseHomeAiProperties properties, LlmClientService llmClientService, MeterRegistry meters) {
+        this(model(properties, llmClientService), llmClientService.preset(properties.llmPreset()), meters);
     }
 
-    public SpringAiCourseHomeClient(CourseHomeAiProperties properties, MeterRegistry meters) {
-        this(setup(properties, meters), meters);
+    SpringAiCourseHomeClient(ChatModel model, LlmProperties.Preset preset, MeterRegistry meters) {
+        this.chatClient = ChatClient.create(model);
+        // Servers such as Ollama read only max_tokens; a preset that sets that field gets the budget in the same field, and a lower preset limit stays in force.
+        this.usesLegacyMaxTokens = preset.maxTokens() != null;
+        this.outputTokens = preset.outputTokenLimit() == null ? MAX_OUTPUT_TOKENS : Math.min(MAX_OUTPUT_TOKENS, preset.outputTokenLimit());
+        this.meters = meters;
     }
 
-    private SpringAiCourseHomeClient(Setup setup, MeterRegistry meters) {
-        this(setup.model(), setup.syncTransport(), setup.asyncTransport(), meters);
-    }
-
-    private static Setup setup(CourseHomeAiProperties properties, MeterRegistry meters) {
+    private static ChatModel model(CourseHomeAiProperties properties, LlmClientService llmClientService) {
         if (!properties.isConfigured()) {
             throw new IllegalArgumentException("Home AI provider configuration is incomplete");
         }
-        OpenAIClient sync = OpenAiSetup.setupSyncClient(properties.baseUrl(), properties.apiKey(), null, null, null, null, false, false, properties.model(), TIMEOUT, 0, null,
-                Map.of(), ObservationRegistry.NOOP, meters, List.of());
-        OpenAIClientAsync async;
-        try {
-            async = OpenAiSetup.setupAsyncClient(properties.baseUrl(), properties.apiKey(), null, null, null, null, false, false, properties.model(), TIMEOUT, 0, null, Map.of(),
-                    ObservationRegistry.NOOP, meters, List.of());
-        }
-        catch (RuntimeException ex) {
-            sync.close();
-            throw ex;
-        }
-        try {
-            var model = OpenAiChatModel.builder().openAiClient(sync).openAiClientAsync(async)
-                    .options(OpenAiChatOptions.builder().model(properties.model()).timeout(TIMEOUT).maxRetries(0).maxCompletionTokens(160).build()).build();
-            return new Setup(model, sync::close, async::close);
-        }
-        catch (RuntimeException ex) {
-            sync.close();
-            async.close();
-            throw ex;
-        }
-    }
-
-    SpringAiCourseHomeClient(ChatModel model, AutoCloseable syncTransport, AutoCloseable asyncTransport, MeterRegistry meters) {
-        this.model = model;
-        this.syncTransport = syncTransport;
-        this.asyncTransport = asyncTransport;
-        this.meters = meters;
+        return llmClientService.chatModel(properties.llmPreset(), TIMEOUT, 0);
     }
 
     @Override
     public CompletableFuture<Optional<String>> generate(Input input) {
         try {
             return CompletableFuture.supplyAsync(() -> {
-                var response = model.call(new Prompt(List.of(new SystemMessage(input.systemPrompt()), new UserMessage(input.userPrompt()))));
+                var response = chatClient.prompt().system(input.systemPrompt()).user(input.userPrompt()).options(outputOptions()).call().chatResponse();
                 return response == null || response.getResult() == null || response.getResult().getOutput() == null ? Optional.<String>empty()
                         : Optional.ofNullable(response.getResult().getOutput().getText());
             }, workers).orTimeout(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS).exceptionally(error -> {
@@ -105,6 +73,18 @@ public final class SpringAiCourseHomeClient implements CourseHomeAiClient {
         }
     }
 
+    /** A fresh builder per call: the chat client consumes a mutable options builder. */
+    private OpenAiChatOptions.Builder outputOptions() {
+        OpenAiChatOptions.Builder options = OpenAiChatOptions.builder();
+        if (usesLegacyMaxTokens) {
+            options.maxTokens(outputTokens);
+        }
+        else {
+            options.maxCompletionTokens(outputTokens);
+        }
+        return options;
+    }
+
     private void record(String outcome) {
         meters.counter("artemis.course.home.ai.request", "outcome", outcome).increment();
     }
@@ -112,16 +92,5 @@ public final class SpringAiCourseHomeClient implements CourseHomeAiClient {
     @Override
     public void close() {
         workers.shutdownNow();
-        closeTransport(syncTransport);
-        closeTransport(asyncTransport);
-    }
-
-    private void closeTransport(AutoCloseable transport) {
-        try {
-            transport.close();
-        }
-        catch (Exception ex) {
-            record("close_failure");
-        }
     }
 }

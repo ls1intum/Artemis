@@ -83,6 +83,21 @@ public class LlmClientService {
     }
 
     /**
+     * A separate chat model of a preset whose calls use their own time limit and SDK retries instead of the preset's, for a task that must answer within a fixed
+     * time and must not retry. It shares the endpoint's connections and is not cached.
+     *
+     * @param presetName a configured preset with {@code api: responses} or {@code api: chat-completions}
+     * @param timeout    the time limit of one call
+     * @param maxRetries the SDK retries of one call
+     * @return the chat model; every response carries the preset name under {@link #PRESET_METADATA_KEY}
+     */
+    public ChatModel chatModel(String presetName, Duration timeout, int maxRetries) {
+        Preset preset = preset(presetName);
+        OpenAIClient client = endpointClient(preset).withOptions(options -> options.timeout(timeout).maxRetries(maxRetries));
+        return chatModel(presetName, preset, client);
+    }
+
+    /**
      * @param presetName a configured preset
      * @return the preset
      * @throws IllegalArgumentException when the preset is not configured
@@ -127,7 +142,10 @@ public class LlmClientService {
 
     private ChatModel createChatModel(String presetName) {
         Preset preset = preset(presetName);
-        OpenAIClient client = client(preset);
+        return chatModel(presetName, preset, client(preset));
+    }
+
+    private ChatModel chatModel(String presetName, Preset preset, OpenAIClient client) {
         OpenAiChatOptions options = options(preset);
         // the startup validation ensures that every preset has an api
         ChatModel model = switch (preset.api()) {
@@ -151,9 +169,13 @@ public class LlmClientService {
         return options.build();
     }
 
-    private OpenAIClient client(Preset preset) {
+    private OpenAIClient endpointClient(Preset preset) {
         Endpoint endpoint = properties.requiredEndpointOf(preset);
-        OpenAIClient client = clientsByEndpoint.computeIfAbsent(preset.endpoint(), name -> createClient(endpoint));
+        return clientsByEndpoint.computeIfAbsent(preset.endpoint(), name -> createClient(endpoint));
+    }
+
+    private OpenAIClient client(Preset preset) {
+        OpenAIClient client = endpointClient(preset);
         if (preset.timeout() == null && preset.maxRetries() == null) {
             return client;
         }

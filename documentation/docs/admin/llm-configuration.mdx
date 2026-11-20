@@ -10,7 +10,7 @@ import { CalloutVariant } from '../../src/components/Callout/Callout.types';
 import Callout from '../../src/components/Callout/Callout';
 
 Artemis calls language models directly for [Hyperion](./hyperion), the [Atlas agent](./artemis-intelligence#atlas-agent),
-[Deimos](./deimos) and the embeddings of [global search](./global-search-weaviate). All of them read one
+[Deimos](./deimos), [Course Home](./course-home-ai) welcomes and the embeddings of [global search](./global-search-weaviate). All of them read one
 configuration block, `artemis.llm`. Iris and Athena are separate services; configure their models in Pyris and Athena.
 
 The configuration has three parts:
@@ -89,7 +89,7 @@ HTTP client per endpoint.
 | Key                                 | Default  | Meaning                                                                                                                                       |
 | ----------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `type`                              | `openai` | `openai` for OpenAI and every OpenAI-compatible server or gateway, `microsoft-foundry` for Azure OpenAI / Microsoft Foundry.                  |
-| `base-url`                          | required | The API base URL. For OpenAI-compatible servers it ends with `/v1`, for example `https://api.openai.com/v1` or `http://localhost:11434/v1`. |
+| `base-url`                          | required | The API base URL, without credentials, query or fragment. For OpenAI-compatible servers it ends with `/v1`, for example `https://api.openai.com/v1` or `http://localhost:11434/v1`. |
 | `api-key`                           | none     | Sent as a bearer token (`openai`) or as the Azure key header (`microsoft-foundry`). Without a key, Artemis sends no `Authorization` header.  |
 | `timeout`                           | `300s`   | Time limit of one request.                                                                                                                    |
 | `max-retries`                       | `3`      | Retries of the provider SDK after a failed request.                                                                                           |
@@ -140,6 +140,7 @@ several tasks has an `llm-presets` map: each task can have its own key, and a ta
 | Hyperion exercise generation, `artemis.hyperion.exercise-generation.enabled` | `artemis.hyperion.agent.llm-preset`, and optionally `artemis.hyperion.agent.profiles.<name>.llm-preset`. These presets need `max-retries: 0`.                                                                                                                      |
 | Atlas agent, `artemis.atlas.atlasllm.enabled`                           | `artemis.atlas.atlasllm.llm-presets` with `default`, `chat`, `orchestrator`, `worker`, `flavor-strip`                                                                                                                                                                  |
 | Deimos, `artemis.deimos.enabled`                                        | `artemis.deimos.llm-preset`                                                                                                                                                                                                                                            |
+| Course Home, `artemis.course-home.ai.enabled`                          | `artemis.course-home.ai.llm-preset`, with `location` (`LOCAL` or `CLOUD`) for the students' consent, see [Course Home AI](./course-home-ai)                                                                                                                            |
 | Global search, `artemis.weaviate.vectorizer-module: text2vec-openai`    | `artemis.weaviate.embedding-llm-preset`, a preset with `api: embeddings`                                                                                                                                                                                               |
 
 The quiz question pool and Deimos send lecture material or student code to their model. Choose a preset on an endpoint
@@ -218,6 +219,7 @@ module has no new assignment.
 | `artemis.hyperion.quiz-pool.base-url`, `api-key`, `allowed-models`, `generator-model`, `judge-model`, `timeout`          | `artemis.hyperion.quiz-pool.generator-llm-preset` and `judge-llm-preset`                                  |
 | Model options of `artemis.hyperion.agent.profiles.<name>`                                                                | `artemis.hyperion.agent.profiles.<name>.llm-preset`                                                       |
 | `artemis.deimos.llm.*`                                                                                                   | `artemis.deimos.llm-preset`                                                                               |
+| `artemis.course-home.ai.base-url`, `api-key`, `model`                                                                    | `artemis.course-home.ai.llm-preset`                                                                       |
 | `artemis.weaviate.open-ai-base-url`, `gpu-api-key`, `open-ai-embedding-model`                                            | An embeddings preset, assigned with `artemis.weaviate.embedding-llm-preset`. The endpoint's `base-url` now ends with `/v1` |
 
 <Callout variant={CalloutVariant.warning}>
@@ -230,6 +232,7 @@ module has no new assignment.
 - [Hyperion setup](./hyperion)
 - [Artemis Intelligence and the Atlas agent](./artemis-intelligence)
 - [Deimos](./deimos)
+- [Course Home AI](./course-home-ai)
 - [Global search with Weaviate](./global-search-weaviate)
 - [AI Worker](./aiworker)
 - [Spring AI development](/developer/spring-ai)

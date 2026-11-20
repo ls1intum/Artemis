@@ -56,7 +56,7 @@ public class LlmConfigurationValidator {
             "artemis.atlas.orchestrator.worker-reasoning-effort", "artemis.atlas.orchestrator.responses-api-enabled", "artemis.deimos.llm", "artemis.hyperion.quiz-pool.base-url",
             "artemis.hyperion.quiz-pool.api-key", "artemis.hyperion.quiz-pool.allowed-models", "artemis.hyperion.quiz-pool.generator-model",
             "artemis.hyperion.quiz-pool.judge-model", "artemis.hyperion.quiz-pool.timeout", "artemis.weaviate.open-ai-base-url", "artemis.weaviate.gpu-api-key",
-            "artemis.weaviate.open-ai-embedding-model");
+            "artemis.weaviate.open-ai-embedding-model", "artemis.course-home.ai.base-url", "artemis.course-home.ai.api-key", "artemis.course-home.ai.model");
 
     /** Model options that effort profiles no longer carry (they moved to presets), in uniform form so YAML and environment variable names both match. */
     private static final Set<String> REMOVED_PROFILE_FIELDS = Set.of("model", "temperature", "topp", "reasoningeffort", "verbosity", "maxcompletiontokens");
@@ -111,6 +111,9 @@ public class LlmConfigurationValidator {
         }
         else if (!isHttpUrl(endpoint.baseUrl())) {
             errors.add(key + ".base-url must be an http or https URL");
+        }
+        else if (!isPlainUrl(endpoint.baseUrl())) {
+            errors.add(key + ".base-url must not contain credentials, a query or a fragment; put the key in api-key and headers in custom-headers");
         }
         if (endpoint.type() == EndpointType.MICROSOFT_FOUNDRY && !endpoint.hasApiKey()) {
             errors.add(key + ".api-key is required for type microsoft-foundry");
@@ -320,6 +323,11 @@ public class LlmConfigurationValidator {
         catch (URISyntaxException e) {
             return false;
         }
+    }
+
+    private static boolean isPlainUrl(String value) {
+        URI uri = URI.create(value);
+        return uri.getUserInfo() == null && uri.getQuery() == null && uri.getFragment() == null;
     }
 
     private static String host(@Nullable String baseUrl) {
