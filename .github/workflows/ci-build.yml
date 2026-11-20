@@ -94,9 +94,9 @@ jobs:
         # needed for release-eligible artifacts, so `-Psbom` is gated behind `is_release_build`
         # (computed in ci.yml: release events + develop/main/release-branch pushes). PRs and
         # feature branches ship a WAR without SBOM — AdminSbomResource returns 404 and the admin
-        # UI shows an info banner. The multi-arch docker-release image always builds with -Psbom
-        # (see the Dockerfile); docker-pr reuses this WAR via external_builder, inheriting the
-        # no-SBOM PR build.
+        # UI shows an info banner. Both docker-pr and the multi-arch docker-release image package this
+        # WAR via external_builder, so a release or mainline image carries the SBOM and a PR, merge-queue
+        # or manually dispatched image does not.
         #
         # Resolve dependencies from the warm Gradle cache only (--offline). The dependency cache
         # (~426 MB) is restored on nearly every build, so going offline skips the slow per-request
@@ -325,30 +325,133 @@ jobs:
           path: docker-tag.txt
           if-no-files-found: error
 
-  # Release / default-branch path: multi-arch publish via the shared reusable workflow.
-  # The reusable workflow runs its own checkout and cannot see `build-war`'s artifact,
-  # so it rebuilds the .war inside the image. This path only fires for push/release.
-  docker-release:
-    name: Build and Push Docker Image
+  # Release / default-branch path: one image per architecture, each on a native runner and each from the .war that
+  # `build-war` built, then one multi-arch manifest in `docker-release`. Building from the artifact rather than
+  # inside the image saves two complete Gradle and pnpm builds per push, and the published image holds exactly
+  # the .war that E2E tests and that a release uploads.
+  docker-release-platform:
+    name: Build Docker Image (${{ matrix.platform }})
+    needs: build-war
     if: ${{ !inputs.is_pr }}
-    # The reusable only checks out and pushes to GHCR via GITHUB_TOKEN (no attestation/release).
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
-    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@ee1b52f07891ed489887681c09c52b4a83fa9fb2  # v1.2.0
-    with:
-      # Check out the exact commit the sha-<commit> tag names (not the mutable branch tip), so image
-      # content and the tag stay pinned to the same commit. The `type=ref` tags come from the event
-      # context, not this ref, so they are unaffected.
-      ref: ${{ inputs.commit_sha }}
-      image-name: ls1intum/artemis
-      docker-file: ./deployment/docker/artemis/Dockerfile
-      # `type=ref` gives the release tag or branch name; `sha-<commit>` is the immutable per-commit
-      # handle deployments pull by. The reusable turns the bare `sha-<sha>` line into `type=raw`.
-      tags: |
-        type=ref,event=tag
-        type=ref,event=branch
-        sha-${{ inputs.commit_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Download .war artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: Artemis.war
+          path: build/libs
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069  # v4.4.1
+      - name: Log in to GHCR
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550  # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract labels
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302  # v6.2.0
+        with:
+          images: ghcr.io/ls1intum/artemis
+          labels: |
+            org.opencontainers.image.revision=${{ inputs.commit_sha }}
+      # Pushed by digest only; `docker-release` gives both digests their tags in one manifest list.
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc  # v7.4.0
+        with:
+          context: .
+          file: ./deployment/docker/artemis/Dockerfile
+          platforms: ${{ matrix.platform }}
+          build-args: WAR_FILE_STAGE=external_builder
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=ghcr.io/ls1intum/artemis,push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=docker-release-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=docker-release-${{ matrix.platform }}
+      - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "${RUNNER_TEMP}/digests"
+          touch "${RUNNER_TEMP}/digests/${DIGEST#sha256:}"
+          echo "PLATFORM_PAIR=${PLATFORM//\//-}" >> "$GITHUB_ENV"
+      - name: Upload digest
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: docker-digest-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # Same tags as the shared ls1intum workflow this replaces: `latest` on the default branch, the branch or release
+  # tag name, and the immutable `sha-<commit>` that deployments pull. `image_tag` is the branch or release tag name.
+  docker-release:
+    name: Build and Push Docker Image
+    needs: docker-release-platform
+    if: ${{ !inputs.is_pr }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: docker-digest-*
+          merge-multiple: true
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069  # v4.4.1
+      - name: Log in to GHCR
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550  # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract tags
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302  # v6.2.0
+        with:
+          images: ghcr.io/ls1intum/artemis
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+            type=ref,event=tag
+            type=raw,value=sha-${{ inputs.commit_sha }}
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          set -Eeuo pipefail
+          tags=()
+          while IFS= read -r tag; do tags+=(-t "$tag"); done < <(jq -r '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          sources=()
+          for digest in *; do sources+=("ghcr.io/ls1intum/artemis@sha256:${digest}"); done
+          [ "${#sources[@]}" -eq 2 ] || { echo "::error::Expected two platform digests, got ${#sources[@]}."; exit 1; }
+          docker buildx imagetools create "${tags[@]}" "${sources[@]}"
+      - name: Inspect image
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs.version }}
+        run: docker buildx imagetools inspect "ghcr.io/ls1intum/artemis:${IMAGE_TAG}"
 
   # Mirrors the `docker-tag` artifact upload from `docker-pr` for the release path so that
   # .github/actions/e2e-setup can consume it uniformly regardless of which docker job produced
@@ -374,9 +477,8 @@ jobs:
           path: docker-tag.txt
           if-no-files-found: error
 
-  # Signs and attests the image that `docker-release` pushed. Kept as a separate job because the
-  # reusable workflow that builds the image is shared across ls1intum repositories and deliberately
-  # holds no attestation or signing scopes; adding them here keeps that reusable unchanged.
+  # Signs and attests the image that `docker-release` pushed. Kept as a separate job so that only it holds the
+  # attestation and signing scopes, and so that merge-queue and manual images, which nobody deploys, stay unsigned.
   #
   # Two artefacts are produced for the same digest, because two different consumers ask for them:
   #   * a GitHub build-provenance attestation, pushed to the registry, verified with
