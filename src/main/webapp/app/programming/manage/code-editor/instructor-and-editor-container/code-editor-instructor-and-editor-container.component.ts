@@ -17,12 +17,11 @@ import {
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faArrowLeft, faArrowRight, faCheckDouble, faCircleNotch, faPlus, faSpinner, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faCaretDown, faCheckDouble, faCircleNotch, faPlus, faSpinner, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorHeight } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -34,7 +33,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProblemStatementAiOperationsHelper } from 'app/hyperion/problem-statement/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiDialogComponent,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
@@ -51,7 +59,6 @@ import { DiffReviewBannerComponent } from 'app/programming/shared/diff-review-ba
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementService } from 'app/hyperion/problem-statement/problem-statement.service';
 import { InlineRefinementEvent } from 'app/hyperion/problem-statement/problem-statement.utils';
-import { ButtonModule } from 'primeng/button';
 import { HyperionGenerationActivityFacade, HyperionGenerationCompletedEvent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { Router } from '@angular/router';
 import { HYPERION_GENERATION_BLOCKER_KEY, hyperionGenerationBlocker, usesCanonicalProblemStatementSync } from 'app/hyperion/exercise-generation/hyperion-generation-support';
@@ -90,7 +97,6 @@ interface ConsistencyIssueNavigationIssue {
 @Component({
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
-    styleUrl: 'code-editor-instructor-and-editor-container.scss',
     // Keep review comment state scoped to each editor container instance.
     providers: [ExerciseReviewCommentService, TumAetUiConfirmationService, HyperionGenerationActivityFacade],
     imports: [
@@ -101,11 +107,10 @@ interface ConsistencyIssueNavigationIssue {
         CodeEditorContainerComponent,
         IncludedInScoreBadgeComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownItem,
-        NgbTooltip,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiTooltipDirective,
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseEditableInstructionComponent,
@@ -113,7 +118,6 @@ interface ConsistencyIssueNavigationIssue {
         FormsModule,
         A11yModule,
         DiffReviewBannerComponent,
-        ButtonModule,
         TumAetUiButtonDirective,
         TumAetUiConfirmDialogComponent,
         TumAetUiDialogComponent,
@@ -211,6 +215,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     // Icons
     protected readonly faPlus = faPlus;
+    protected readonly faCaretDown = faCaretDown;
     protected readonly faTimes = faTimes;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faTimesCircle = faTimesCircle;

@@ -29,7 +29,7 @@ import {
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleQuestion, faComment, faHashtag, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCircleQuestion, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -45,8 +45,8 @@ export interface ColumnDef<T> {
     field?: string;
     header?: string;
     headerKey?: string;
-    /** PrimeIcons CSS class string, e.g. 'pi pi-hashtag'. Rendered as <i> in the column header. */
-    headerIcon?: string;
+    /** Icon shown after the header text; a column with only a `headerTooltip` shows a question mark. */
+    headerIcon?: IconDefinition;
     /** Translation key shown as a the table tooltip on the column header. */
     headerTooltip?: string;
     width?: string;
@@ -242,8 +242,6 @@ export class TableViewComponent<T> {
     protected readonly faSort = faSort;
     protected readonly faSortUp = faSortUp;
     protected readonly faSortDown = faSortDown;
-    protected readonly faHashtag = faHashtag;
-    protected readonly faComment = faComment;
     protected readonly faCircleQuestion = faCircleQuestion;
     protected readonly sortField = computed(() => this.query().field ?? this.resolvedOptions().initialSortField);
     protected readonly sortOrder = computed(() => (this.query().field ? this.query().order : this.resolvedOptions().initialSortOrder));
