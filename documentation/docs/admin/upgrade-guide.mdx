@@ -2,7 +2,7 @@
 id: upgrade-guide
 title: Upgrade Guide
 sidebar_label: Upgrade Guide
-last_reviewed: 2026-11-12
+last_reviewed: 2026-11-20
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -196,6 +196,24 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 ## Version-Specific Migration Steps
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
+
+### 10.8: Configuration Keys That Spring Cannot Bind Any More
+
+Artemis now refuses to start when the configuration sets a key that Spring Boot or one of its libraries marks as removed or deprecated without a replacement key of the same type (`spring.properties.migrator.fail: on-error`, using `spring-boot-properties-migrator`). Before, such a key was ignored without a message, so a setting could stop working unnoticed.
+
+**Some of these keys still work.** For example, Spring AI deprecated its chat memory, so `spring.ai.chat.memory.repository.jdbc.initialize-schema` is rejected although Spring AI still reads it. The check looks at every source of the environment, which includes environment variables, command-line arguments and a config server, not only the configuration files. A key that has a replacement of the same type is only renamed on the fly and logged as a warning, which does not stop the start.
+
+The error log names each key and its source at the end of the start-up. Remove the key or replace it as described there, then start again. To start anyway while you fix the configuration, set `spring.properties.migrator.fail` (or the environment variable `SPRING_PROPERTIES_MIGRATOR_FAIL`) to `never`. The report stays in the log.
+
+This release moves to Spring Boot 4.2, which renamed `server.forward-headers-strategy` to `server.request.header.forwarded.strategy` and its value `native` to `web-server` (`framework` and `none` keep their names). Artemis sets `web-server`. **If your configuration sets the old key, replace it with the new key before you upgrade, and map its value.** Do not only delete it: without a key, Artemis uses `web-server`, and then Tomcat believes `X-Forwarded-For` from the proxies in `server.tomcat.remoteip.internal-proxies`, see [Client Address of Requests](#108-client-address-of-requests). Spring Boot refuses to start when both keys are set, and the old key alone is rejected by the check above.
+
+### 10.8: Relative Redirects
+
+Tomcat now answers a redirect that the application gives as a relative address with a relative `Location` header instead of making it absolute: `server.tomcat.servlet.use-relative-redirects` (formerly `server.tomcat.use-relative-redirects`) defaults to `true` in Spring Boot 4.2. Browsers handle this, but a client or proxy that cannot follow a relative `Location` header needs `server.tomcat.servlet.use-relative-redirects: false`.
+
+### 10.8: Error Tag of Server Error Metrics
+
+An exception that Spring handles and answers with a 5xx status is now recorded on the `http.server.requests` metric with its class name in the `error` tag, where it was `none` before. Requests with a 4xx status are not affected. **If an alert or a dashboard counts `error!="none"` as an unexpected failure, it reports more server errors than before**, although these requests already had `outcome="SERVER_ERROR"`.
 
 ### 10.8: Embedding Artemis from LTI Platforms
 

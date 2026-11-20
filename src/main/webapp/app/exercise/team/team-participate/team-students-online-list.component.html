@@ -17,7 +17,7 @@
                 <span class="student-name"
                     >{{ student.name }}
                     @if (isSelf(student)) {
-                        <span class="text-text-secondary">(you)</span>
+                        <span class="text-muted-color">(you)</span>
                     }
                 </span>
                 @if (isOther(student) && lastActionDate(student)) {

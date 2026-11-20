@@ -193,8 +193,6 @@
     --color-surface-sunken: var(--tumaet-ui-control-background);
     --color-surface-raised: var(--tumaet-ui-content-background);
     --color-surface-hover: var(--tumaet-ui-hover-background);
-    --color-text: var(--tumaet-ui-text-color);
-    --color-text-secondary: var(--tumaet-ui-muted-color);
 }
 
 /* The migrated modules and components: Tailwind scans every template and component in them. eslint.config.mjs and stylelint.config.json lock the same list. */

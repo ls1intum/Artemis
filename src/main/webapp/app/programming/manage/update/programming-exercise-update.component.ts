@@ -1634,6 +1634,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateExercisePackageName(validationErrorReasons: ValidationReason[]): void {
+        // The package name of a saved exercise is read-only. Do not let a name that was valid when the exercise was created, but is not any more, block saving other changes.
+        if (this.isEdit && !this.isImportFromExistingExercise && !this.isImportFromFile && !this.isImportFromSharing && this.programmingExercise.id !== undefined) {
+            return;
+        }
         let regex;
         switch (this.programmingExercise.programmingLanguage) {
             case ProgrammingLanguage.JAVA:
