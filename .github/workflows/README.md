@@ -351,6 +351,25 @@ if the dedicated workflow is removed without a replacement.
   `python3 supporting_scripts/check_action_pinning.py`; its unit test is
   `supporting_scripts/test_check_action_pinning.py`.
 
+## Gradle build cache
+
+`gradle.properties` sets `org.gradle.caching=true`. Gradle then stores task outputs, compiled classes above all,
+in the local build cache, and `setup-gradle` saves that cache with the rest of the Gradle home. As with the
+dependency cache, only `develop` runs write it; pull request and merge queue runs restore the entry of the same job
+and only read it.
+
+A pull request that changes no public signature in `src/main/java` gets `compileTestJava` from the cache, because
+Gradle keys test compilation on the ABI of the main classes. `compileJava` itself recompiles whenever any main source
+changes, since the server is a single Gradle project. Jobs on the same run do not share the cache with each other; they
+start in parallel and each one reads what its own `develop` run saved.
+
+Two exceptions keep the cache from changing what CI checks:
+
+- `Test` tasks never use the cache (`gradle/test.gradle`). Their results depend on Docker, Testcontainers and images
+  that Gradle does not track, and CI reads each run's console log for failed tests and server starts.
+- `ci-codeql.yml` builds with `--no-build-cache`. CodeQL extracts Java by tracing javac, so classes taken from the cache
+  would be missing from its database.
+
 ## Reusable workflows — `ci-*.yml`
 
 Most `ci-*.yml` files have `on: workflow_call:` and are invoked only by `ci.yml`. `ci-gradle-wrapper.yml` also has the direct push trigger documented above. Rules:
