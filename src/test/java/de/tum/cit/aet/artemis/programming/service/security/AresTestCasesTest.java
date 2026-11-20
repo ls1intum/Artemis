@@ -214,12 +214,19 @@ class AresTestCasesTest {
     @Test
     void anExplicitReceiverParameterIsNoPartOfTheSignature() {
         String source = """
+                import java.lang.annotation.ElementType;
+                import java.lang.annotation.Target;
                 import java.util.Date;
 
                 class SortingTest {
 
+                    // Only a type annotation may annotate the receiver.
+                    @Target(ElementType.TYPE_USE)
+                    @interface Checked {
+                    }
+
                     @Test
-                    public void runs(@Deprecated SortingTest this, Date date) {
+                    public void runs(@Checked SortingTest this, Date date) {
                     }
                 }
                 """;

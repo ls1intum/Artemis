@@ -24,8 +24,15 @@ final class BuildFileSyntax {
      */
     private static final Set<String> GROOVY_KEYWORDS_BEFORE_EXPRESSIONS = Set.of("return", "throw", "assert", "case", "in", "yield", "else", "do");
 
-    /** The Ares agent as a Gradle dependency of a configuration, e.g. {@code aresAgent "de.tum.cit.ase:ares:${aresVersion}:agent"}; group 1 is the configuration. */
-    private static final Pattern GRADLE_ARES_AGENT = Pattern.compile("([A-Za-z_$][\\w$]*+)\\s*+\\(?\\s*+['\"]de\\.tum\\.cit\\.ase:ares:[^'\"\\s]+:agent['\"]");
+    /** The name of a configuration that {@code add} of the dependency handler takes, e.g. {@code add('aresAgent', ...)}, as group 2. */
+    private static final String ADDED_TO_CONFIGURATION = "(?<![\\w$])add\\s*+\\(\\s*+['\"]([A-Za-z_$][\\w$]*+)['\"]\\s*+,";
+
+    /**
+     * The Ares agent as a Gradle dependency of a configuration, e.g. {@code aresAgent "de.tum.cit.ase:ares:${aresVersion}:agent"} or
+     * {@code dependencies.add('aresAgent', "de.tum.cit.ase:ares:${aresVersion}:agent")}; the configuration is group 1 or 2, see {@link #configurationOf}.
+     */
+    private static final Pattern GRADLE_ARES_AGENT = Pattern
+            .compile("(?:([A-Za-z_$][\\w$]*+)\\s*+\\(?|" + ADDED_TO_CONFIGURATION + ")\\s*+['\"]de\\.tum\\.cit\\.ase:ares:[^'\"\\s]+:agent['\"]");
 
     /** The variable, property or object an interpolation in a Gradle string starts with, e.g. {@code agentJar} in {@code ${agentJar.singleFile}}. */
     private static final Pattern INTERPOLATED_NAME = Pattern.compile("\\$\\{?\\s*+([A-Za-z_]\\w*+)");
@@ -38,12 +45,18 @@ final class BuildFileSyntax {
     /** A reference to a Gradle configuration, e.g. {@code configurations.aresAgent}. */
     private static final Pattern CONFIGURATION_REFERENCE = Pattern.compile("configurations\\s*+\\.\\s*+([A-Za-z_$][\\w$]*+)");
 
+    /** A dependency written after the name of its configuration, e.g. {@code aresAgent "..."} or {@code agent("...")}; group 1 is the configuration. */
+    private static final String NAMED_DEPENDENCY = "(?!add\\s*+\\()([A-Za-z_$][\\w$]*+)[ \\t]*+(?:\\(\\s*+)?(?:['\"]|\\w++[ \\t]*+[(:])";
+
+    /** A dependency that {@code add} of the dependency handler declares, e.g. {@code dependencies.add('aresAgent', "...")}; group 2 is the configuration. */
+    private static final String ADDED_DEPENDENCY = "(?:dependencies\\s*+\\.\\s*+)?" + ADDED_TO_CONFIGURATION;
+
     /**
      * A dependency declaration at the start of a line, after a semicolon or after the brace that opens a block, e.g. {@code aresAgent "de.tum.cit.ase:ares:1.0:agent"}
-     * or {@code dependencies { agent("de.tum.cit.ase:ares:1.0:agent") }}, with the name of its configuration; the arguments in parentheses may start on the next
-     * line.
+     * or {@code dependencies { agent("de.tum.cit.ase:ares:1.0:agent") }} or {@code add('agent', "de.tum.cit.ase:ares:1.0:agent")}, with the name of its
+     * configuration as group 1 or 2, see {@link #configurationOf}; the arguments in parentheses may start on the next line.
      */
-    private static final Pattern DEPENDENCY_DECLARATION = Pattern.compile("(?m)(?:^|[;{])[ \\t]*+([A-Za-z_$][\\w$]*+)[ \\t]*+(?:\\(\\s*+)?(?:['\"]|\\w++[ \\t]*+[(:])");
+    private static final Pattern DEPENDENCY_DECLARATION = Pattern.compile("(?m)(?:^|[;{])[ \\t]*+(?:" + NAMED_DEPENDENCY + "|" + ADDED_DEPENDENCY + ")");
 
     /** An assignment of an empty file collection. */
     private static final Pattern EMPTY_COLLECTION = Pattern.compile("\\s*+=\\s*+(?:files|objects\\s*+\\.\\s*+fileCollection)\\s*+\\(\\s*+\\)\\s*+");
@@ -134,14 +147,22 @@ final class BuildFileSyntax {
     }
 
     /**
+     * @param declaration a match of {@link #GRADLE_ARES_AGENT} or {@link #DEPENDENCY_DECLARATION}
+     * @return the configuration it declares a dependency of, written before the dependency or as the first argument of {@code add}
+     */
+    private static String configurationOf(MatchResult declaration) {
+        return declaration.group(1) != null ? declaration.group(1) : declaration.group(2);
+    }
+
+    /**
      * Checks every configuration that declares the Ares agent, e.g. both {@code smokeAgent} and {@code testAgent}, since the test JVM may take its agent from
      * any of them.
      */
     private static boolean gradleAttachesAresAgent(String code) {
-        return GRADLE_ARES_AGENT.matcher(code).results().map(dependency -> dependency.group(1)).distinct().anyMatch(configuration -> {
+        return GRADLE_ARES_AGENT.matcher(code).results().map(BuildFileSyntax::configurationOf).distinct().anyMatch(configuration -> {
             // A configuration with more dependencies than the Ares agent leaves open which file an agent takes from it, e.g. JaCoCo, so the agent then has
             // to name Ares itself.
-            boolean onlyTheAresAgent = DEPENDENCY_DECLARATION.matcher(code).results().filter(declaration -> declaration.group(1).equals(configuration)).count() == 1;
+            boolean onlyTheAresAgent = DEPENDENCY_DECLARATION.matcher(code).results().filter(declaration -> configurationOf(declaration).equals(configuration)).count() == 1;
             return javaAgents(code).anyMatch(agent -> namesAres(agent) || (onlyTheAresAgent && takesFileFrom(code, agent, configuration)));
         });
     }

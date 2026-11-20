@@ -157,6 +157,11 @@ class SecurityPolicyEditorServiceTest {
     /** Runs once after the next checkout, e.g. another instructor's change that is pushed while this change is being prepared. */
     private Runnable afterNextCheckout;
 
+    /** Runs once when the tests repository is read the second time, e.g. a push between two reads of one answer. */
+    private Runnable beforeSecondTestsRead;
+
+    private final AtomicInteger testsReads = new AtomicInteger();
+
     private LocalVCPushProcessingService localVCPushProcessingService;
 
     private BareGitRepositoryService bareGitRepositoryService;
@@ -224,7 +229,14 @@ class SecurityPolicyEditorServiceTest {
         }).when(gitService).pushCommitWithLease(any(Repository.class), anyString(), anyString(), anyString());
 
         bareGitRepositoryService = mock(BareGitRepositoryService.class);
-        when(bareGitRepositoryService.getBareRepository(eq(testsUri), anyString(), anyBoolean())).thenAnswer(_ -> bareRepository(testsRemote));
+        when(bareGitRepositoryService.getBareRepository(eq(testsUri), anyString(), anyBoolean())).thenAnswer(_ -> {
+            Runnable hook = beforeSecondTestsRead;
+            if (hook != null && testsReads.incrementAndGet() == 2) {
+                beforeSecondTestsRead = null;
+                hook.run();
+            }
+            return bareRepository(testsRemote);
+        });
         when(bareGitRepositoryService.getBareRepository(eq(templateUri), anyString(), anyBoolean())).thenAnswer(_ -> bareRepository(templateRemote));
 
         TempFileUtilService tempFileUtilService = mock(TempFileUtilService.class);
@@ -393,6 +405,20 @@ class SecurityPolicyEditorServiceTest {
             assertThat(file.after()).startsWith("# Ares 2 security policy for the tests of this repository.\n").contains("onThisPathAndAllPathsBelow: \"logs/\"");
         });
         assertThat(pushedHead()).isEqualTo(editor.baseCommitHash());
+    }
+
+    @Test
+    void refusesAPolicyPathBelowAFile() throws Exception {
+        pushToTests("notes.txt", "notes\n");
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyDocumentDTO belowAFile = withTestClasses(loadedPolicy(editor), "notes.txt/Stress.yaml", List.of("de.example.StressTest"));
+        String headBefore = pushedHead();
+
+        // No file can be written below notes.txt, so the change is refused as invalid instead of failing while it is written.
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> editorService.commit(exercise(), change(editor, added(belowAFile, List.of("de.example.StressTest"))), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyInvalidPath"));
+        assertThat(pushedHead()).isEqualTo(headBefore);
     }
 
     @Test
@@ -630,8 +656,9 @@ class SecurityPolicyEditorServiceTest {
         afterNextCheckout = () -> pushToTests(STRESS_TEST_PATH,
                 STRESS_TEST.replace("Policy(value = \"SecurityPolicy.yaml\")", "Policy(value = \"SecurityPolicy.yaml\", activated = false)"));
 
-        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(changed, BOTH_CLASSES)), user))
-                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityFrameworkPushFailed"));
+        // A conflict, so the editor offers to reload instead of a retry of the same commit.
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.commit(exercise(), change(editor, edited(changed, BOTH_CLASSES)), user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityFrameworkConcurrentChange"));
         assertThat(readPushed(STRESS_TEST_PATH)).hasValueSatisfying(content -> assertThat(content).contains("Policy(value = \"SecurityPolicy.yaml\", activated = false)"));
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(POLICY);
     }
@@ -1231,12 +1258,17 @@ class SecurityPolicyEditorServiceTest {
 
     @Test
     void readsThePoliciesAndTheStateFromTheSameCommit() throws Exception {
-        pushToTests("README.md", "Another commit\n");
+        String loadedHead = pushedHead();
+        // An answer that read the policies and the state separately would see this push, which switches StressTest off, between its two reads.
+        testsReads.set(0);
+        beforeSecondTestsRead = () -> pushToTests(STRESS_TEST_PATH,
+                STRESS_TEST.replace("Policy(value = \"SecurityPolicy.yaml\")", "Policy(value = \"SecurityPolicy.yaml\", activated = false)"));
 
         SecurityPolicyCommitResultDTO snapshot = editorService.getEditorWithConfig(exercise());
 
-        assertThat(snapshot.editor().baseCommitHash()).isEqualTo(pushedHead());
+        assertThat(snapshot.editor().baseCommitHash()).isEqualTo(loadedHead);
         assertThat(snapshot.config().status()).isEqualTo("CONFIGURED");
+        assertThat(snapshot.config().disabledTestClasses()).isEmpty();
         assertThat(loadedPolicy(snapshot.editor()).testClasses()).containsExactlyElementsOf(BOTH_CLASSES);
     }
 

@@ -1151,9 +1151,12 @@ class SecurityFrameworkServiceTest {
                 .contains(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION + "\nclass SortingTest").doesNotContain(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION));
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
 
-        // The last real deactivation is the restore point: SortingTest was on and ClassTest off before it.
-        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).disabledTestClasses()).containsExactly("de.example.ClassTest");
+        // The last real deactivation is the restore point: SortingTest was on and ClassTest off before it, with the policy file of that commit.
+        SecurityFrameworkConfigDTO activated = securityFrameworkService.activate(exercise, "2.2.1", user);
+        assertThat(activated.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
+        assertThat(activated.disabledTestClasses()).containsExactly("de.example.ClassTest");
         assertThat(readPushed("test/de/example/SortingTest.java")).contains(TEST_CLASS);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(CUSTOM_POLICY);
     }
 
     @Test

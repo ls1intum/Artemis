@@ -536,6 +536,9 @@ public class SecurityPolicyEditorService {
             if (!samePath && !vacated.contains(path) && Files.exists(root.resolve(path), LinkOption.NOFOLLOW_LINKS)) {
                 throw refused("The file " + path + " already exists in the tests repository.", "securityPolicyFileExists", Map.of("path", path));
             }
+            if (liesBelowAFile(root, path, vacated)) {
+                throw refused("The policy path " + path + " lies below a file of the tests repository.", "securityPolicyInvalidPath", Map.of("path", path));
+            }
             // A policy that already scans dependencies may keep doing so, so that the editor can still change it; only switching scanning on needs the agent.
             if (usesInstrumentation(document.languageConfiguration()) && !javaAgent && !usesInstrumentation(previousLanguageConfiguration)) {
                 throw refused("The build of the tests repository does not attach the Ares agent, which scanning dependencies needs.", "securityPolicyAgentMissing",
@@ -885,6 +888,20 @@ public class SecurityPolicyEditorService {
                 .filter(validPath -> POLICY_FILE_EXTENSIONS.stream().anyMatch(validPath::endsWith))
                 .filter(validPath -> validPath.indexOf('"') < 0 && validPath.indexOf('\\') < 0 && validPath.chars().noneMatch(Character::isISOControl));
         return path.orElseThrow(() -> refused("The policy path " + policyPath + " is not valid.", "securityPolicyInvalidPath", Map.of("path", String.valueOf(policyPath))));
+    }
+
+    /**
+     * @param vacated the paths the change frees, whose files no longer block a path below them
+     * @return whether a directory of the path is a file of the checkout instead, e.g. {@code notes.txt} in {@code notes.txt/SecurityPolicy.yaml}
+     */
+    private static boolean liesBelowAFile(Path root, String path, Set<String> vacated) {
+        for (Path parent = root.resolve(path).getParent(); parent != null && parent.startsWith(root) && !parent.equals(root); parent = parent.getParent()) {
+            String relative = root.relativize(parent).toString().replace('\\', '/');
+            if (Files.exists(parent, LinkOption.NOFOLLOW_LINKS) && !Files.isDirectory(parent, LinkOption.NOFOLLOW_LINKS) && !vacated.contains(relative)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

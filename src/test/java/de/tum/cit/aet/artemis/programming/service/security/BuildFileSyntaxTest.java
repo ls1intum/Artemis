@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class BuildFileSyntaxTest {
 
@@ -24,6 +26,19 @@ class BuildFileSyntaxTest {
 
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(gradle))).isTrue();
         assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, maven))).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "add('aresAgent', \"de.tum.cit.ase:ares:${aresVersion}:agent\")",
+            "dependencies.add(\"aresAgent\", \"de.tum.cit.ase:ares:${aresVersion}:agent\")" })
+    void recognizesTheAgentOfTheTemplatesDeclaredWithAdd(String declaration) throws IOException {
+        String gradle = Files.readString(TEMPLATES.resolve("test/gradle/projectTemplate/build.gradle"), StandardCharsets.UTF_8);
+        String added = gradle.replace("aresAgent \"de.tum.cit.ase:ares:${aresVersion}:agent\"", declaration);
+        assertThat(added).isNotEqualTo(gradle);
+
+        // add of the dependency handler adds the same dependency to the same configuration, which the test JVM takes its agent from.
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(added))).isTrue();
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(added.replace("configurations.aresAgent", "configurations.otherAgent")))).isFalse();
     }
 
     @Test
