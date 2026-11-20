@@ -158,6 +158,25 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponentFixture.detectChanges();
     }
 
+    it.each(['new lecture', 'existing lecture', 'new lecture with a recording'])('includes buffered Markdown on Save (%s)', async (scenario) => {
+        const isEdit = scenario === 'existing lecture';
+        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: isEdit ? { id: 6, title: 'Lecture' } : undefined });
+        lectureUpdateComponentFixture.detectChanges();
+        lectureUpdateComponent.isEditMode.set(isEdit);
+        if (scenario === 'new lecture with a recording') {
+            lectureUpdateComponent['recording'].set(new File(['video'], 'lecture.mp4', { type: 'video/mp4' }));
+        }
+
+        const editor: MarkdownEditorMonacoComponent = lectureUpdateComponentFixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
+        const description = 'Description typed immediately before saving';
+        vi.spyOn(editor, 'flushPendingTextChange').mockImplementation(() => editor.markdownChange.emit(description));
+        const save = vi.spyOn(lectureService, isEdit ? 'update' : 'create').mockReturnValue(new Subject<Lecture>());
+
+        lectureUpdateComponent.save();
+
+        expect(save).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ description }));
+    });
+
     it('should create lecture', async () => {
         await configureActiveRouteMockAndCompileComponents();
         lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1' } as Lecture);

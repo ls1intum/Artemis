@@ -148,6 +148,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
 
     titleSection = viewChild(LectureTitleChannelNameComponent);
     unitSection = viewChild(LectureUpdateUnitsComponent);
+    private readonly descriptionEditor = viewChild(MarkdownEditorMonacoComponent);
     private readonly detailsSection = viewChild<ElementRef<HTMLElement>>('detailsSection');
     private readonly periodSection = viewChild<ElementRef<HTMLElement>>('periodSection');
     courseId = signal<number | undefined>(undefined);
@@ -517,6 +518,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         if (this.isSaving() || this.recordingRecovery()) {
             return;
         }
+        this.descriptionEditor()?.flushPendingTextChange();
         const recording = this.recording();
         if (!this.isEditMode() && (recording || this.savedRecording())) {
             if (recording && !this.isLectureSeriesCreationMode() && !this.recordingInvalid()) {
