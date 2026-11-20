@@ -2669,9 +2669,8 @@ describe('ExamParticipationComponent', () => {
             showSubmissionHint();
 
             const heading: HTMLElement = hint().querySelector('h2')!;
-            // global.scss sets the font weight of headings outside a cascade layer, so the weight needs the important modifier
             expect(heading.classList).toContain('text-lg');
-            expect(heading.classList).toContain('font-semibold!');
+            expect(heading.classList).toContain('font-semibold');
 
             const button: HTMLElement = hint().querySelector('#showExamSummaryButton')!;
             expect(button).not.toBeNull();

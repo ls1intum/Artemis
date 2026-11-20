@@ -12,7 +12,7 @@
                 @if (isSidebarCollapsed()) {
                     <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
                 }
-                <h3 class="m-0 min-w-0 truncate text-lg leading-tight font-semibold!" data-testid="exam-start-title">
+                <h3 class="m-0 min-w-0 truncate text-lg leading-tight font-semibold" data-testid="exam-start-title">
                     {{ exam().title }}
                 </h3>
             </div>
@@ -78,7 +78,7 @@
     } @else {
         <!-- The same 40px title row with the rule below it as the header of every exercise page (see jhi-exam-exercise-header). -->
         <div class="mb-3 flex h-10 shrink-0 items-center border-b border-(--border-color)" data-testid="exam-finished-header">
-            <h3 class="m-0 min-w-0 flex-1 truncate text-lg leading-tight font-semibold!" data-testid="exam-finished-title">
+            <h3 class="m-0 min-w-0 flex-1 truncate text-lg leading-tight font-semibold" data-testid="exam-finished-title">
                 <span
                     jhiTranslate="artemisApp.examParticipation.finish"
                     [translateValues]="{

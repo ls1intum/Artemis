@@ -161,7 +161,7 @@
             @case ('method') {
                 <fieldset class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <legend class="presentation-assessment-methods__legend col-span-full flex flex-col gap-1">
-                        <h3 class="m-0 text-lg font-semibold!">{{ 'artemisApp.presentationAssessment.gradingMethod.question' | artemisTranslate }}</h3>
+                        <h3 class="m-0 text-lg font-semibold">{{ 'artemisApp.presentationAssessment.gradingMethod.question' | artemisTranslate }}</h3>
                         <p class="m-0 text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.gradingMethod.hint"></p>
                     </legend>
                     @for (method of gradingMethods; track method) {
@@ -200,7 +200,7 @@
                 } @else {
                     <section class="flex flex-col gap-6">
                         <div class="flex flex-col gap-1">
-                            <h3 class="m-0 text-lg font-semibold!">{{ 'artemisApp.presentationAssessment.scoreConfiguration.title' | artemisTranslate }}</h3>
+                            <h3 class="m-0 text-lg font-semibold">{{ 'artemisApp.presentationAssessment.scoreConfiguration.title' | artemisTranslate }}</h3>
                             <p class="m-0 text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.scoreConfiguration.hint"></p>
                         </div>
                         <ng-container [ngTemplateOutlet]="maxPointsField" />

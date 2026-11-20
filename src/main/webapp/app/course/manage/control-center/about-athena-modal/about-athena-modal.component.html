@@ -27,8 +27,7 @@
                     <jhi-athena-logo [size]="40" />
                 </div>
                 <div class="flex-1">
-                    <!-- global.scss sets the font weight of headings outside a cascade layer, so the weight needs the important modifier. -->
-                    <h2 class="m-0 mb-1 text-2xl font-semibold!" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.meetAthena"></h2>
+                    <h2 class="m-0 mb-1 text-2xl font-semibold" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.meetAthena"></h2>
                     <p class="m-0 mb-2 text-base text-(--body-color)" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.subtitle"></p>
                     <p class="m-0 text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.description"></p>
                 </div>
@@ -39,7 +38,7 @@
 
             <!-- Section: What Athena can do -->
             <section>
-                <h3 class="m-0 mb-3! text-lg font-semibold!" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.whatAthenaCanDo"></h3>
+                <h3 class="m-0 mb-3! text-lg font-semibold" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.whatAthenaCanDo"></h3>
                 <div class="flex flex-col gap-5">
                     @for (card of whatAthenaCanDo; track card.titleKey) {
                         <div class="flex items-start gap-4">
@@ -59,7 +58,7 @@
 
             <!-- Section: What to expect -->
             <section>
-                <h3 class="m-0 mb-3! text-lg font-semibold!" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.whatToExpect"></h3>
+                <h3 class="m-0 mb-3! text-lg font-semibold" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.whatToExpect"></h3>
                 <div class="flex flex-col gap-5">
                     @for (card of whatToExpect; track card.titleKey) {
                         <div class="flex items-start gap-4">

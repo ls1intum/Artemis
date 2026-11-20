@@ -16,7 +16,7 @@
 </ng-template>
 <div>
     <div class="mb-2 flex content-center">
-        <h3 class="font-medium!" jhiTranslate="artemisApp.programmingExercise.configureGrading.title"></h3>
+        <h3 class="font-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.title"></h3>
     </div>
     @if (!isLoading()) {
         <div class="top-bar">
@@ -87,7 +87,7 @@
                             />
                         </div>
                         <div class="w-5/12 flex-none">
-                            <h2 class="mb-12 font-medium!">
+                            <h2 class="mb-12 font-medium">
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.title"></span>
                                 @if (!!changedTestCaseIds().length) {
                                     <span
@@ -113,7 +113,7 @@
                     <div class="grading-table-layout">
                         <div class="w-7/12 flex-none">
                             <div class="mb-6 flex items-center justify-between">
-                                <h2 class="font-medium!" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.title"></h2>
+                                <h2 class="font-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.title"></h2>
                                 <jhi-programming-exercise-grading-table-actions
                                     [exercise]="programmingExercise"
                                     [hasUnsavedChanges]="!!changedCategoryIds().length"
@@ -132,7 +132,7 @@
                             />
                         </div>
                         <div class="w-5/12 flex-none">
-                            <h2 class="mb-12 font-medium!">
+                            <h2 class="mb-12 font-medium">
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.title"></span>
                                 @if (!!changedCategoryIds().length) {
                                     <span

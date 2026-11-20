@@ -1121,9 +1121,8 @@ describe('ExamResultSummaryComponent', () => {
             fixture.detectChanges();
 
             const heading = element('h3[jhiTranslate="artemisApp.exam.exercises"]')!;
-            // global.scss sets the font weight of headings outside a cascade layer, so the weight needs the important modifier
             expect(heading.classList).toContain('text-base');
-            expect(heading.classList).toContain('font-semibold!');
+            expect(heading.classList).toContain('font-semibold');
             expect(heading.getAttribute('data-testid')).toBe('exam-summary-heading');
             expect(heading.classList).toContain('mb-3!');
             expect(element('fa-icon.info-icon')!.parentElement!.classList).toContain('mb-6!');

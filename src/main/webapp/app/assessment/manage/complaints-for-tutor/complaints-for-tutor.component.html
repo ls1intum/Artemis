@@ -5,7 +5,7 @@
 }
 @if (!isLoading() && complaint()) {
     <h3
-        class="mb-2 text-base leading-tight font-semibold!"
+        class="mb-2 text-base leading-tight font-semibold"
         [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.review' : 'artemisApp.complaint.review'"
     ></h3>
 }
@@ -48,7 +48,7 @@
         </div>
         <div class="flex flex-wrap gap-y-2">
             <div class="w-full md:w-6/12">
-                <h4 class="mb-2 text-base leading-tight font-semibold!">
+                <h4 class="mb-2 text-base leading-tight font-semibold">
                     <span [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.title' : 'artemisApp.complaint.title'"></span>
                     @if (handled()) {
                         <small>
@@ -83,7 +83,7 @@
             @if (handled() || isAllowedToRespond) {
                 <div class="w-full md:w-6/12">
                     <h4
-                        class="mb-2 text-base leading-tight font-semibold!"
+                        class="mb-2 text-base leading-tight font-semibold"
                         [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedbackResponse.title' : 'artemisApp.complaintResponse.title'"
                     ></h4>
                     <div class="flex flex-col">

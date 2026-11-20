@@ -1,6 +1,6 @@
 @if (isCurrentUserSubmissionAuthor()) {
     <div class="mt-6 rounded-lg border border-(--border-color) bg-(--module-bg) p-4" data-testid="complaint-form-card">
-        <h3 class="text-base font-semibold!" [jhiTranslate]="complaintType() === ComplaintType.COMPLAINT ? 'artemisApp.complaint.title' : 'artemisApp.moreFeedback.title'"></h3>
+        <h3 class="text-base font-semibold" [jhiTranslate]="complaintType() === ComplaintType.COMPLAINT ? 'artemisApp.complaint.title' : 'artemisApp.moreFeedback.title'"></h3>
         @if (complaintType() !== ComplaintType.COMPLAINT) {
             <p>
                 {{ (exercise().teamMode ? 'artemisApp.moreFeedback.descriptionTeam' : 'artemisApp.moreFeedback.description') | artemisTranslate }}

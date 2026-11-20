@@ -218,9 +218,8 @@ describe('ComplaintsFormComponent', () => {
         it('should render the heading as a 16px semibold section heading', () => {
             const heading = fixture.debugElement.query(By.css('h3')).nativeElement as HTMLElement;
 
-            // global.scss sets the font weight of headings outside a cascade layer, so the weight needs the important modifier.
             expect(heading.classList.contains('text-base')).toBe(true);
-            expect(heading.classList.contains('font-semibold!')).toBe(true);
+            expect(heading.classList.contains('font-semibold')).toBe(true);
         });
 
         it('should render the heading for a request for more feedback in the same style', () => {
@@ -229,7 +228,7 @@ describe('ComplaintsFormComponent', () => {
 
             const heading = fixture.debugElement.query(By.css('h3')).nativeElement as HTMLElement;
             expect(heading.classList.contains('text-base')).toBe(true);
-            expect(heading.classList.contains('font-semibold!')).toBe(true);
+            expect(heading.classList.contains('font-semibold')).toBe(true);
         });
 
         it('should present the form in a card of the same language as the complaint and the feedback cards', () => {

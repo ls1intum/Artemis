@@ -3,7 +3,7 @@
         <div class="flex items-start gap-4 px-6 pt-6">
             <div class="shrink-0 pt-[6px]"><jhi-iris-logo [size]="IrisLogoSize.SMALL" [decorative]="true" /></div>
             <div>
-                <h2 class="m-0 text-2xl font-semibold!" jhiTranslate="artemisApp.iris.aboutIrisModal.meetIris"></h2>
+                <h2 class="m-0 text-2xl font-semibold" jhiTranslate="artemisApp.iris.aboutIrisModal.meetIris"></h2>
             </div>
         </div>
     </ng-template>
@@ -15,7 +15,7 @@
         </div>
         <hr class="about-iris__divider mt-8 mb-8" />
         <section>
-            <h3 class="mb-3 text-lg font-semibold!" jhiTranslate="artemisApp.iris.aboutIrisModal.whatIrisCanDo"></h3>
+            <h3 class="mb-3 text-lg font-semibold" jhiTranslate="artemisApp.iris.aboutIrisModal.whatIrisCanDo"></h3>
             <div class="flex flex-col gap-5">
                 @for (card of whatIrisCanDo; track card.titleKey) {
                     <div class="flex items-start gap-4">
@@ -32,7 +32,7 @@
         </section>
         <hr class="about-iris__divider my-8" />
         <section>
-            <h3 class="mb-3 text-lg font-semibold!" jhiTranslate="artemisApp.iris.aboutIrisModal.whatToExpect"></h3>
+            <h3 class="mb-3 text-lg font-semibold" jhiTranslate="artemisApp.iris.aboutIrisModal.whatToExpect"></h3>
             <div class="flex flex-col gap-5">
                 @for (card of whatToExpect; track card.titleKey) {
                     <div class="flex items-start gap-4">
@@ -51,7 +51,7 @@
         <div class="flex items-start gap-1">
             <div class="-mt-2 flex h-9 w-9 shrink-0 items-center justify-center" aria-hidden="true"><fa-icon [icon]="faShield" /></div>
             <div>
-                <h3 class="mb-1 text-base font-normal!" jhiTranslate="artemisApp.iris.aboutIrisModal.privacyTitle"></h3>
+                <h3 class="mb-1 text-base font-normal" jhiTranslate="artemisApp.iris.aboutIrisModal.privacyTitle"></h3>
                 <p class="about-iris__muted m-0 text-sm" [jhiTranslate]="privacyDescKey()"></p>
                 <p class="mt-2 mb-0 text-xs" jhiTranslate="artemisApp.iris.aboutIrisModal.privacyDisclaimer"></p>
             </div>

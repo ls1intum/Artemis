@@ -132,9 +132,8 @@ describe('ComplaintsForTutorComponent', () => {
         expect(columnHeadings).toHaveLength(2);
         expect(fixture.nativeElement.querySelectorAll('h3')).toHaveLength(1);
 
-        // global.scss sets the font weight of headings outside a cascade layer, so the weight needs the important modifier.
         for (const heading of [sectionHeading, ...columnHeadings]) {
-            expect(['mb-2', 'text-base', 'leading-tight', 'font-semibold!'].every((utility) => heading.classList.contains(utility))).toBe(true);
+            expect(['mb-2', 'text-base', 'leading-tight', 'font-semibold'].every((utility) => heading.classList.contains(utility))).toBe(true);
         }
         expect(columnHeadings[0].className).toBe(columnHeadings[1].className);
         // The textareas follow their heading directly in both columns.

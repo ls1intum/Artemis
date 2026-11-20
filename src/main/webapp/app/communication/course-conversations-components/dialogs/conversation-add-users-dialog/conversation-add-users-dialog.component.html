@@ -1,7 +1,7 @@
 @if (isInitialized) {
     <div class="flex flex-col gap-4">
         <div class="flex items-start justify-between gap-2 pt-4">
-            <h4 class="m-0 text-xl font-medium!">
+            <h4 class="m-0 text-xl font-medium">
                 @if (getAsChannel(activeConversation()); as channel) {
                     <span>
                         {{ 'artemisApp.dialogs.addUsers.addUsersToChannel' | artemisTranslate }}
