@@ -130,6 +130,16 @@ class AresPolicyAnnotationsTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = { "public@Policy(\"SecurityPolicy.yaml\")", "@SuppressWarnings(\"unused\")@Policy(\"SecurityPolicy.yaml\")" })
+    void rewritesAPolicyRightAfterAModifierOrAnotherAnnotation(String annotation) {
+        String deactivated = AresPolicyAnnotations.setActive(source("import de.tum.cit.ase.ares.api.Policy;", annotation), false);
+
+        // Java needs no whitespace before an @, so the annotation is the imported Ares one.
+        assertThat(deactivated).contains("@Policy(value = \"SecurityPolicy.yaml\", activated = false)");
+        assertThat(isDeactivated(deactivated)).isTrue();
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = { "import de.tum.cit.ase.ares.api.Policy;", "import de.tum.cit.ase.ares.api.*;", "import de.tum.cit.ase.ares.api . Policy;",
             "import de . tum.cit.ase.ares.api /* Ares */ . *;" })
     void rewritesTheSimpleNameIfItRefersToAres(String imports) {

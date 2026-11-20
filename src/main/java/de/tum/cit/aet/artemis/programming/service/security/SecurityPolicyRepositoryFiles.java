@@ -594,19 +594,21 @@ public final class SecurityPolicyRepositoryFiles {
      * Adds test classes to the list of test classes of a policy file, see {@link SecurityPolicyYaml#addTestClasses(String, List, boolean)}.
      *
      * @param repositoryRoot root of the checked-out exercise-tests repository
-     * @param policyPath     the validated path of the policy file relative to the root
+     * @param policyPath     the path of the policy file relative to the root as an annotation writes it, which is validated first
      * @param testClasses    the fully qualified names to add
      * @return whether the list now contains the classes; false if the file cannot be read or its list cannot be located, in which case it is unchanged
      */
     public static boolean addTestClassesToPolicy(Path repositoryRoot, String policyPath, List<String> testClasses) {
         Path root = repositoryRoot.toAbsolutePath().normalize();
-        PolicyFileContent content = readPolicyFile(root, policyPath);
-        if (content.content() == null) {
+        // The canonical path is the file the evaluation read, e.g. policies/SecurityPolicy.yaml for policies\SecurityPolicy.yaml.
+        Optional<String> validatedPath = validatePolicyPath(policyPath);
+        PolicyFileContent content = validatedPath.map(path -> readPolicyFile(root, path)).orElse(null);
+        if (content == null || content.content() == null) {
             return false;
         }
         boolean verifiedAresVersion = readAresVersion(root).filter(SecurityPolicySchema.VERIFIED_ARES_VERSION::equals).isPresent();
         Optional<String> updated = SecurityPolicyYaml.addTestClasses(content.content(), testClasses, verifiedAresVersion);
-        updated.ifPresent(policy -> writePolicy(root, policyPath, policy));
+        updated.ifPresent(policy -> writePolicy(root, validatedPath.get(), policy));
         return updated.isPresent();
     }
 
