@@ -484,12 +484,13 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
     }
 
-    @Test
-    void aHelperWhoseTestAnnotationIsImportedFromElsewhereIsNoTestClass() throws IOException {
+    @ParameterizedTest
+    @ValueSource(strings = { "import example.metadata.Test;", "import static example.Markers.Test;" })
+    void aHelperWhoseTestAnnotationIsImportedFromElsewhereIsNoTestClass(String testImport) throws IOException {
         writeBuildFile();
         writeTestClass("test/de/example/SortingTest.java", "de.example", "SortingTest");
-        // @Test is example.metadata.Test here, so the helper has no JUnit test and needs neither Ares nor a policy.
-        writeSource("test/de/example/Helper.java", "package de.example;\n\nimport example.metadata.Test;\n\nclass Helper {\n\n    @Test\n    void describes() {\n    }\n}\n");
+        // @Test is example.metadata.Test or the member type example.Markers.Test here, so the helper has no JUnit test and needs neither Ares nor a policy.
+        writeSource("test/de/example/Helper.java", "package de.example;\n\n" + testImport + "\n\nclass Helper {\n\n    @Test\n    void describes() {\n    }\n}\n");
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
         assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);

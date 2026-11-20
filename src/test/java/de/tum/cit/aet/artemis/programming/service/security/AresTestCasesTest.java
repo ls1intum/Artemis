@@ -226,4 +226,26 @@ class AresTestCasesTest {
 
         assertThat(AresTestCases.testCases(source)).containsExactly("sorts");
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "import example.metadata.Test;", "import static example.Markers.Test;" })
+    void aTestAnnotationThatAnImportGivesToAnotherTypeMarksNoTest(String testImport) {
+        String source = testImport + """
+
+
+                class SortingTest {
+
+                    @Test
+                    void helper() {
+                    }
+
+                    @org.junit.jupiter.api.Test
+                    void sorts() {
+                    }
+                }
+                """;
+
+        // The single-static import binds Test to the member type example.Markers.Test, like a single-type import.
+        assertThat(AresTestCases.testCases(source)).containsExactly("sorts");
+    }
 }

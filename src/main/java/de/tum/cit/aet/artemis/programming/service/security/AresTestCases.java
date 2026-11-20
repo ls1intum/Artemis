@@ -56,13 +56,6 @@ final class AresTestCases {
      */
     private static final Pattern TYPE_VARIABLE = Pattern.compile("[<,]\\s*" + TYPE_VARIABLE_NAME);
 
-    /**
-     * A single-type import, group 1 being the imported type; a static import names a member and is no type import. Its parts repeat possessively, so its
-     * search stays linear.
-     */
-    private static final Pattern SINGLE_TYPE_IMPORT = Pattern
-            .compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s++(?!static\\s)(\\p{javaJavaIdentifierPart}++(?:\\s*+\\.\\s*+\\p{javaJavaIdentifierPart}++)*+)\\s*+;");
-
     /** The name of any annotation, also a qualified one. Its parts repeat possessively, so long qualified names do not grow the stack. */
     private static final Pattern ANNOTATION_NAME = Pattern
             .compile("@\\s*+\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+(?:\\s*+\\.\\s*+\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+)*+");
@@ -340,13 +333,12 @@ final class AresTestCases {
     }
 
     /**
-     * @return the types the single-type imports of the masked source name, by their simple names
+     * @return the types the single-type imports and the single-static imports of the masked source name, by their simple names
      */
     private static Map<String, String> importedTypes(String masked) {
         Map<String, String> imported = new HashMap<>();
-        Matcher imports = SINGLE_TYPE_IMPORT.matcher(masked);
-        while (imports.find()) {
-            String type = WHITESPACE.matcher(imports.group(1)).replaceAll("");
+        // A single-static import may import a member type, e.g. import static example.Markers.Test, which binds the simple name as well.
+        for (String type : AresPolicyAnnotations.singleTypeImports(masked)) {
             imported.putIfAbsent(type.substring(type.lastIndexOf('.') + 1), type);
         }
         return imported;
