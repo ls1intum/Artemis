@@ -72,9 +72,11 @@ export const INVALID_DIRECTORY_NAME_PATTERN = RegExp('^[\\w-]+(/[\\w-]+)*$');
 export const PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
 
 // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
-// with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
+// with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations.
+// The first two lookaheads refuse the names that Ares 2 cannot supervise (a package that contains or lies inside a namespace it reserves, e.g. "de", "de.tum", "org",
+// "java.util"). Keep them in sync with PACKAGE_NAME_REGEX_FOR_JAVA_KOTLIN in ProgrammingExerciseValidationService.
 export const PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN =
-    '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$';
+    '^(?!(?:de|de\\.tum|de\\.tum\\.cit|de\\.tum\\.cit\\.ase|de\\.tum\\.cit\\.ase\\.ares|com|org|net|com\\.ibm|com\\.tngtech)$)(?!(?:java|javax|sun|jdk|com\\.sun|net\\.bytebuddy|org\\.aspectj|com\\.ibm\\.wala|com\\.tngtech\\.archunit|de\\.tum\\.cit\\.ase\\.ares\\.api)(?:\\.|$))(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$';
 // Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
 // with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
 export const APP_NAME_PATTERN_FOR_SWIFT =

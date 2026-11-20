@@ -386,8 +386,8 @@
                 "packageName": {
                     "undefined": "You need to specify a package name.",
                     "pattern": {
-                        "JAVA": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\".",
-                        "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\".",
+                        "JAVA": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\". Names that contain or lie inside a package reserved for the test security (for example \"de\", \"de.tum\", \"org\", \"net\" or \"java.util\") are not allowed.",
+                        "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\". Names that contain or lie inside a package reserved for the test security (for example \"de\", \"de.tum\", \"org\", \"net\" or \"java.util\") are not allowed.",
                         "SWIFT": "The package name must consist of one or more valid Swift identifiers without any separator, e.g. \"SwiftEx\".",
                         "JAVA_BLACKBOX": "The package name must be a valid Java identifier. In addition, no dots are allowed in the package name of DejaGnu projects.",
                         "GO": "The package name must be a valid Go identifier, e.g. \"exercise\".",

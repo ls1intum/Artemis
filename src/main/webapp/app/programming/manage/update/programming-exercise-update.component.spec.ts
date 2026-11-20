@@ -1983,6 +1983,16 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { language: ProgrammingLanguage.GO, projectType: undefined, packageName: 'Not Valid!', expected: 'artemisApp.exercise.form.packageName.pattern.GO' },
                 { language: ProgrammingLanguage.DART, projectType: undefined, packageName: 'Not Valid!', expected: 'artemisApp.exercise.form.packageName.pattern.DART' },
                 { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'de/', expected: 'artemisApp.exercise.form.packageName.pattern.KOTLIN' },
+                // Ares 2 cannot supervise a package that contains or lies inside a namespace it reserves
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_GRADLE, packageName: 'de', expected: 'artemisApp.exercise.form.packageName.pattern.JAVA' },
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_MAVEN, packageName: 'de.tum', expected: 'artemisApp.exercise.form.packageName.pattern.JAVA' },
+                {
+                    language: ProgrammingLanguage.JAVA,
+                    projectType: ProjectType.PLAIN_MAVEN,
+                    packageName: 'java.util',
+                    expected: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                },
+                { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'org', expected: 'artemisApp.exercise.form.packageName.pattern.KOTLIN' },
                 {
                     language: ProgrammingLanguage.JAVA,
                     projectType: ProjectType.MAVEN_BLACKBOX,

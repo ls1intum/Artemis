@@ -151,6 +151,8 @@ Cannot be combined with static code analysis, and cannot be changed after the ex
 
 For some languages — Java, Kotlin, Swift, Go and Dart — you can specify the package that the exercise template uses, which defines the package structure students must follow. This keeps submissions consistent, which matters when tests locate classes by their fully qualified name.
 
+For Java and Kotlin, the package name must not be a package that the test security (Ares 2) reserves or that contains such a package. Names like `de`, `de.tum`, `de.tum.cit`, `org`, `net`, `java.util` or `org.aspectj.lang` are rejected, because every test of such an exercise would fail with an Ares security error and the template and the solution could not be built. `de.tum.in`, `de.test` or `edu.example.sorting` are fine.
+
 #### Solution Repository Checkout
 
 Checks out the solution repository alongside the student's submission during the build, so tests can compare the two directly.

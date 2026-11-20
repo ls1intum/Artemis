@@ -67,9 +67,14 @@ public class ProgrammingExerciseValidationService {
     /**
      * Java package name Regex according to Java 14 JLS
      * (<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1">https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1</a>)
-     * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
+     * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations.
+     * <p>
+     * The first two lookaheads refuse the names that Ares 2 cannot supervise: a package that contains a namespace Ares reserves (<code>de</code>, <code>de.tum</code>,
+     * <code>org</code>, <code>net</code>, ...) and a package inside one (<code>java.*</code>, <code>org.aspectj.*</code>, <code>de.tum.cit.ase.ares.api.*</code>, ...).
+     * Every test of such an exercise fails with an Ares security error, so the template and the solution would never build. The list is the one of
+     * <code>WalaPathClassification.RESERVED_PACKAGE_PREFIXES</code> in Ares and has to be kept in sync with the client constant <code>PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN</code>.
      */
-    private static final String PACKAGE_NAME_REGEX_FOR_JAVA_KOTLIN = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z]\\w*(?:\\.[A-Z_a-z]\\w*){0,255}$";
+    private static final String PACKAGE_NAME_REGEX_FOR_JAVA_KOTLIN = "^(?!(?:de|de\\.tum|de\\.tum\\.cit|de\\.tum\\.cit\\.ase|de\\.tum\\.cit\\.ase\\.ares|com|org|net|com\\.ibm|com\\.tngtech)$)(?!(?:java|javax|sun|jdk|com\\.sun|net\\.bytebuddy|org\\.aspectj|com\\.ibm\\.wala|com\\.tngtech\\.archunit|de\\.tum\\.cit\\.ase\\.ares\\.api)(?:\\.|$))(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z]\\w*(?:\\.[A-Z_a-z]\\w*){0,255}$";
 
     /**
      * Swift package name Regex derived from

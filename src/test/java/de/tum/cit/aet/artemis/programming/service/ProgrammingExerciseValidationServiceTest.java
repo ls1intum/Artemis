@@ -110,7 +110,7 @@ class ProgrammingExerciseValidationServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "de.test", "de.tum.cit.aet", "a", "de.test.sorting" })
+    @ValueSource(strings = { "de.test", "de.tum.cit.aet", "a", "de.test.sorting", "de.tum.in", "net.java", "org.example", "javax2.test", "de.tum.cit.ase.ares.other", "dee" })
     void validatePackageName_acceptsAWellFormedJavaPackage(String packageName) {
         assertThatCode(() -> validationService.validatePackageName(exerciseWithPackageName(ProgrammingLanguage.JAVA, packageName))).doesNotThrowAnyException();
     }
@@ -121,6 +121,18 @@ class ProgrammingExerciseValidationServiceTest {
         // A reserved word or an illegal character produces a template repository that does not compile, which the student cannot fix.
         assertThatExceptionOfType(BadRequestAlertException.class).as("the package name '%s' must be rejected", packageName)
                 .isThrownBy(() -> validationService.validatePackageName(exerciseWithPackageName(ProgrammingLanguage.JAVA, packageName))).withMessageContaining("invalid");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "de", "de.tum", "de.tum.cit", "de.tum.cit.ase", "de.tum.cit.ase.ares", "com", "org", "net", "com.ibm", "com.tngtech", "java", "java.util",
+            "javax.swing", "sun.misc", "jdk.internal", "com.sun", "com.sun.test", "net.bytebuddy", "org.aspectj.lang", "com.ibm.wala.test", "com.tngtech.archunit",
+            "de.tum.cit.ase.ares.api", "de.tum.cit.ase.ares.api.test" })
+    void validatePackageName_rejectsAPackageThatAresCannotSupervise(String packageName) {
+        // Ares 2 refuses to run any test when a compiled class lies in a package that contains or lies inside one of its reserved namespaces.
+        for (ProgrammingLanguage language : List.of(ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN)) {
+            assertThatExceptionOfType(BadRequestAlertException.class).as("the package name '%s' must be rejected for %s", packageName, language)
+                    .isThrownBy(() -> validationService.validatePackageName(exerciseWithPackageName(language, packageName))).withMessageContaining("invalid");
+        }
     }
 
     @Test
