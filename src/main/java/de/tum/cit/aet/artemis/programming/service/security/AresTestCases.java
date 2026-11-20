@@ -298,7 +298,7 @@ final class AresTestCases {
     /**
      * @return the masked text without its annotations and their arguments, also nested ones such as {@code @Wrap(@Flag(true))}, each replaced by a space
      */
-    private static String withoutAnnotations(String masked) {
+    static String withoutAnnotations(String masked) {
         StringBuilder text = new StringBuilder();
         int position = 0;
         while (position < masked.length()) {
@@ -434,7 +434,8 @@ final class AresTestCases {
      *         such as {@code Date} in {@code implements Marker<Date>}; empty if it declares none
      */
     private static String typeParameterList(String header) {
-        String parameters = header.stripLeading();
+        // An annotation of a type parameter may have arguments with a >, e.g. @Flag(1 > 0), which is no end of the list.
+        String parameters = withoutAnnotations(header).stripLeading();
         if (!parameters.startsWith("<")) {
             return "";
         }

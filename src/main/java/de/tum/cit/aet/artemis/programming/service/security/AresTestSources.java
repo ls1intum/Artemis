@@ -515,7 +515,8 @@ final class AresTestSources {
     private static List<String> supertypeNames(String header) {
         StringBuilder outsideBrackets = new StringBuilder();
         int nesting = 0;
-        for (char character : header.toCharArray()) {
+        // Without annotations, whose arguments may contain a < or >, e.g. Marker<@Flag(1 > 0) Date>, the parentheses enclose the record components only.
+        for (char character : AresTestCases.withoutAnnotations(header).toCharArray()) {
             if (character == '<' || character == '(') {
                 nesting++;
             }

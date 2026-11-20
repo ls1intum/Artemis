@@ -712,7 +712,8 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @ParameterizedTest
-    @CsvSource(delimiter = '|', value = { "MoreSortingTest|    java.util.Map<String, Date> dates;|false", "MoreSortingTest<Date extends java.sql.Date>||true" })
+    @CsvSource(delimiter = '|', value = { "MoreSortingTest|    java.util.Map<String, Date> dates;|false", "MoreSortingTest<Date extends java.sql.Date>||true",
+            "MoreSortingTest<@Flag(1 > 0) Date>||true" })
     void onlyATypeVariableInScopeShadowsAnImportedParameterType(String declaration, String field, boolean unsupported) throws IOException {
         writeBuildFile();
         String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
@@ -933,16 +934,17 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).noneMatch(reason -> reason.location().equals("de.helpers.Child"));
     }
 
-    @Test
-    void aTypeArgumentOfASupertypeDeclaresNoTypeVariable() throws IOException {
+    @ParameterizedTest
+    @ValueSource(strings = { "Marker<Date>", "Marker<@Flag(1 > 0) Date>" })
+    void aTypeArgumentOfASupertypeDeclaresNoTypeVariable(String marker) throws IOException {
         writeBuildFile();
         String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
         writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
         writeSource("test/de/example/Marker.java", "package de.example;\n\ninterface Marker<T> {\n}\n");
-        writeSource("test/de/example/MoreSortingTest.java", importingOverride("MoreSortingTest extends SortingTest implements Marker<Date>", "public void runs(Date date)"));
+        writeSource("test/de/example/MoreSortingTest.java", importingOverride("MoreSortingTest extends SortingTest implements " + marker, "public void runs(Date date)"));
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
-        // Date in Marker<Date> is the imported java.util.Date, so runs(Date) overrides the inherited test.
+        // Date in Marker<Date> is the imported java.util.Date, also after an annotation whose argument contains a >, so runs(Date) overrides the inherited test.
         assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", false);
     }
 
