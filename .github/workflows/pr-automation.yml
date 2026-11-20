@@ -2,7 +2,7 @@ name: Pull Request Automation
 
 # Every pull_request_target event starts this one workflow, and each job picks the actions it handles. These jobs need a
 # write token or secrets, which a pull request from a fork never gets with `pull_request`, so they cannot live in ci.yml.
-# pull_request_target always runs the workflow of the base branch, never the copy in the pull request.
+# GitHub always runs the default branch's copy of a pull_request_target workflow, never the one in the pull request.
 on:
   pull_request_target:
     types: [opened, edited, ready_for_review, synchronize, reopened, labeled, closed]
