@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { TextFieldModule } from '@angular/cdk/text-field';
 import { FormsModule } from '@angular/forms';
@@ -36,7 +36,13 @@ export class CalendarSubscriptionPopoverComponent {
     subscriptionToken = input.required<string>();
     courseId = input.required<number>();
     isMobile = input<boolean>(false);
-    copiedUrl = signal(false);
+    /** Whether a replacement of the subscription link is running, during which the old link is not offered. */
+    resetting = input<boolean>(false);
+    /** Emitted when the user confirms that the subscription link is replaced by a new one. */
+    subscriptionResetRequested = output<void>();
+    confirmingReset = signal(false);
+    /** The link that was copied last, for the short time that the check mark says so. */
+    copiedUrl = signal<string | undefined>(undefined);
     includeLectureEvents = signal(true);
     includeExerciseEvents = signal(true);
     includeTutorialEvents = signal(true);
@@ -48,27 +54,36 @@ export class CalendarSubscriptionPopoverComponent {
     selectedLanguage = signal<'ENGLISH' | 'GERMAN'>('ENGLISH');
     languageOptions = computed(() => this.computeLanguageOptions());
     subscriptionUrl = computed<string>(() => this.buildCalendarSubscriptionURL());
+    /** The check mark is only for the link that is shown: after a reset or a change of the options, the copied link is not the one on display. */
+    copyConfirmed = computed(() => this.copiedUrl() !== undefined && this.copiedUrl() === this.subscriptionUrl());
 
     constructor() {
-        effect(() => {
-            if (this.copiedUrl()) {
-                return this.setTimerToToggleBackCopiedUrl();
+        // The callback of an effect registers a cleanup only through onCleanup, not by returning a function: it cancels the timer of an earlier copy when another link is copied,
+        // and when the component is destroyed
+        effect((onCleanup) => {
+            if (this.copiedUrl() !== undefined) {
+                onCleanup(this.setTimerToToggleBackCopiedUrl());
             }
-            return undefined;
         });
     }
 
     copySubscriptionUrlToClipboard() {
         const url = this.subscriptionUrl();
-        if (url) {
-            this.copiedUrl.set(true);
+        if (url && !this.resetting()) {
+            this.copiedUrl.set(url);
             void navigator.clipboard.writeText(url);
         }
+    }
+
+    resetSubscriptionLink() {
+        this.confirmingReset.set(false);
+        this.subscriptionResetRequested.emit();
     }
 
     /** Opens the popover next to the element that received the click. */
     open(event: Event): void {
         const origin = event.currentTarget;
+        this.confirmingReset.set(false);
         if (origin instanceof HTMLElement) {
             this.calendarSubscriptionPopover()?.open(origin);
         }
@@ -102,7 +117,7 @@ export class CalendarSubscriptionPopoverComponent {
 
     private setTimerToToggleBackCopiedUrl(): () => void {
         const id = window.setTimeout(() => {
-            this.copiedUrl.set(false);
+            this.copiedUrl.set(undefined);
         }, 1500);
         return () => clearTimeout(id);
     }

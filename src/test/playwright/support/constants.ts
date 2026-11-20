@@ -105,6 +105,14 @@ export enum QuizMode {
     INDIVIDUAL = 'INDIVIDUAL',
 }
 
+// PresentationGradingMethod
+// Copied from app/presentation/shared/entities/presentation-assessment.model
+export enum PresentationGradingMethod {
+    PASS_FAIL = 'PASS_FAIL',
+    SCORE = 'SCORE',
+    RUBRIC = 'RUBRIC',
+}
+
 // Exercise commit entity displayed in commit history
 export type ExerciseCommit = {
     message: string;

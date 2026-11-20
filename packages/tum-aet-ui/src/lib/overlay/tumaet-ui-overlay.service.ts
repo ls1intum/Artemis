@@ -4,9 +4,20 @@ import { Directionality } from '@angular/cdk/bidi';
 
 export type TumAetUiOverlayPlacement = 'top' | 'bottom' | 'left' | 'right';
 
+/**
+ * How a panel above or below its origin lines up with it: centred, or with its start or end edge on the origin's.
+ * A panel beside its origin (`left`, `right`) is always centred.
+ */
+export type TumAetUiOverlayAlignment = 'center' | 'start' | 'end';
+
 interface TumAetUiConnectedOverlayOptions {
     hasBackdrop?: boolean;
+    alignment?: TumAetUiOverlayAlignment;
     matchOriginWidth?: boolean;
+    /** Keep a content-sized panel at least as wide as its trigger. */
+    minWidthFromOrigin?: boolean;
+    /** Minimum panel width when the trigger is narrower. */
+    minWidth?: number;
 }
 
 const OFFSET = 8;
@@ -29,8 +40,15 @@ export class TumAetUiOverlayService {
     private readonly overlay = inject(Overlay);
     private readonly directionality = inject(Directionality);
 
-    positionStrategy(origin: ElementRef<HTMLElement> | HTMLElement, placement: TumAetUiOverlayPlacement): FlexibleConnectedPositionStrategy {
-        const positions = placement === 'top' || placement === 'bottom' ? VERTICAL_POSITIONS[placement] : this.horizontalPositions(placement);
+    positionStrategy(
+        origin: ElementRef<HTMLElement> | HTMLElement,
+        placement: TumAetUiOverlayPlacement,
+        alignment: TumAetUiOverlayAlignment = 'center',
+    ): FlexibleConnectedPositionStrategy {
+        const positions =
+            placement === 'top' || placement === 'bottom'
+                ? VERTICAL_POSITIONS[placement].map((position): ConnectedPosition => ({ ...position, originX: alignment, overlayX: alignment }))
+                : this.horizontalPositions(placement);
         return this.overlay.position().flexibleConnectedTo(origin).withPositions(positions).withFlexibleDimensions(false).withPush(true).withViewportMargin(VIEWPORT_MARGIN);
     }
 
@@ -44,19 +62,27 @@ export class TumAetUiOverlayService {
 
     createConnectedOverlay(origin: ElementRef<HTMLElement> | HTMLElement, placement: TumAetUiOverlayPlacement, options: TumAetUiConnectedOverlayOptions = {}): OverlayRef {
         const originElement = origin instanceof ElementRef ? origin.nativeElement : origin;
+        const originSize = () => ({
+            width: options.matchOriginWidth ? originElement.getBoundingClientRect().width : undefined,
+            minWidth: options.minWidthFromOrigin ? Math.max(originElement.getBoundingClientRect().width, options.minWidth ?? 0) : undefined,
+        });
         const overlayRef = this.overlay.create({
             panelClass: 'tumaet-ui-overlay',
-            positionStrategy: this.positionStrategy(origin, placement),
+            positionStrategy: this.positionStrategy(origin, placement, options.alignment),
             scrollStrategy: this.overlay.scrollStrategies.reposition(),
             hasBackdrop: options.hasBackdrop ?? false,
             backdropClass: 'cdk-overlay-transparent-backdrop',
             direction: this.directionality,
-            width: options.matchOriginWidth ? originElement.getBoundingClientRect().width : undefined,
+            ...originSize(),
+            maxWidth: options.minWidthFromOrigin ? `calc(100vw - ${2 * VIEWPORT_MARGIN}px)` : undefined,
         });
-        if (options.matchOriginWidth && typeof ResizeObserver !== 'undefined') {
-            const resizeObserver = new ResizeObserver(() => overlayRef.updateSize({ width: originElement.getBoundingClientRect().width }));
+        if ((options.matchOriginWidth || options.minWidthFromOrigin) && typeof ResizeObserver !== 'undefined') {
+            const resizeObserver = new ResizeObserver(() => overlayRef.updateSize(originSize()));
             const disconnect = () => resizeObserver.disconnect();
-            resizeObserver.observe(originElement);
+            overlayRef.attachments().subscribe(() => {
+                overlayRef.updateSize(originSize());
+                resizeObserver.observe(originElement);
+            });
             overlayRef.detachments().subscribe({ next: disconnect, complete: disconnect });
         }
         return overlayRef;

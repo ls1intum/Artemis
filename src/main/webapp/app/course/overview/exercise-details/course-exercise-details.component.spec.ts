@@ -79,7 +79,6 @@ import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -199,7 +198,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(PlagiarismCasesService),
                 MockProvider(AlertService),
                 MockProvider(IrisSettingsService),
-                MockProvider(DialogService),
                 { provide: CourseConversationsService, useClass: MockCourseConversationsService },
             ],
         });
@@ -377,7 +375,6 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.studentParticipations[0].submissions![0].results![0]).toStrictEqual(changedResult);
         expect(comp.plagiarismCaseInfo()).toEqual(plagiarismCaseInfo);
         expect(comp.showMoreResults()).toBe(false);
-        expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
     });
 
     it('should not be a quiz exercise', () => {
@@ -1496,13 +1493,6 @@ describe('CourseExerciseDetailsComponent', () => {
 
             comp.toggleShowMoreResults();
             expect(comp.showMoreResults()).toBe(false);
-        });
-
-        it.each([
-            { badge: 'bg-success', rated: true },
-            { badge: 'bg-info', rated: false },
-        ])('should use the badge $badge for a result with rated $rated', ({ badge, rated }) => {
-            expect(comp.exerciseRatedBadge({ rated } as Result)).toBe(badge);
         });
     });
 

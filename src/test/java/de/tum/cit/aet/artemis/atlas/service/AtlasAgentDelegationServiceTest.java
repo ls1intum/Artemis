@@ -120,7 +120,8 @@ class AtlasAgentDelegationServiceTest {
         toolContext.put(OrchestratorToolContextKeys.COURSE_ID_KEY, 42L);
         OpenAiChatOptions.Builder options = OpenAiChatOptions.builder().deploymentName(ORCHESTRATOR_DEPLOYMENT).temperature(1.0);
 
-        ChatResponse response = newService(true).delegateOrchestratorRound("ORCHESTRATOR PROMPT", "do work", options, toolContext);
+        ChatResponse response = newService(true).delegateOrchestratorRound("ORCHESTRATOR PROMPT", "do work", options, toolContext, ignored -> {
+        });
 
         assertThat(response).isSameAs(expected);
         // No course-id breadcrumb is appended for the orchestrator — the prompt is passed verbatim.
@@ -149,7 +150,8 @@ class AtlasAgentDelegationServiceTest {
         AtlasAgentDelegationService service = new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, chatMemory, CHAT_PROPERTIES, orchestratorProperties,
                 new AtlasResponsesChatClient(ChatClient.create(responsesModel)));
 
-        ChatResponse result = service.delegateOrchestratorRound("SYSTEM", "work", OpenAiChatOptions.builder().deploymentName("gpt-5.6-luna"), new HashMap<>());
+        ChatResponse result = service.delegateOrchestratorRound("SYSTEM", "work", OpenAiChatOptions.builder().deploymentName("gpt-5.6-luna"), new HashMap<>(), ignored -> {
+        });
 
         assertThat(result).isSameAs(orchestratorResponse);
         verify(responsesModel).call(any(Prompt.class));
@@ -173,7 +175,8 @@ class AtlasAgentDelegationServiceTest {
         toolContext.put(OrchestratorToolContextKeys.COURSE_ID_KEY, 7L);
         OpenAiChatOptions.Builder options = OpenAiChatOptions.builder().deploymentName(ORCHESTRATOR_DEPLOYMENT);
 
-        ChatResponse response = newService(false).delegateOrchestratorRound("PROMPT", "msg", options, toolContext);
+        ChatResponse response = newService(false).delegateOrchestratorRound("PROMPT", "msg", options, toolContext, ignored -> {
+        });
 
         assertThat(response).isSameAs(expected);
         assertThat(toolContext).containsEntry(OrchestratorToolContextKeys.COURSE_ID_KEY, 7L);
@@ -185,8 +188,8 @@ class AtlasAgentDelegationServiceTest {
         Map<String, Object> toolContext = new HashMap<>();
         OpenAiChatOptions.Builder options = OpenAiChatOptions.builder().deploymentName(ORCHESTRATOR_DEPLOYMENT);
 
-        assertThatThrownBy(() -> service.delegateOrchestratorRound("PROMPT", "msg", options, toolContext)).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("ChatClient is not configured");
+        assertThatThrownBy(() -> service.delegateOrchestratorRound("PROMPT", "msg", options, toolContext, ignored -> {
+        })).isInstanceOf(IllegalStateException.class).hasMessageContaining("ChatClient is not configured");
     }
 
     @Test

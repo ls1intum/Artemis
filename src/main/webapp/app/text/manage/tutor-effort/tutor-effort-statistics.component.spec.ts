@@ -5,17 +5,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorEffortStatisticsComponent } from 'app/text/manage/tutor-effort/tutor-effort-statistics.component';
-import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
-import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
+import { TutorEffort } from 'app/openapi/model/tutor-effort';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
@@ -23,10 +21,9 @@ describe('TutorEffortStatisticsComponent', () => {
     let fixture: ComponentFixture<TutorEffortStatisticsComponent>;
     let component: TutorEffortStatisticsComponent;
     let compiled: any;
-    let textExerciseService: TextExerciseService;
+    let http: HttpTestingController;
     let textAssessmentService: TextAssessmentService;
     let getNumberOfTutorsInvolvedInAssessmentStub: any;
-    let calculateTutorEffortStub: any;
     let router: Router;
     const tutorEffortsMocked: TutorEffort[] = [
         {
@@ -64,29 +61,36 @@ describe('TutorEffortStatisticsComponent', () => {
             ],
         }).compileComponents();
 
-        textExerciseService = TestBed.inject(TextExerciseService);
+        http = TestBed.inject(HttpTestingController);
         textAssessmentService = TestBed.inject(TextAssessmentService);
         router = TestBed.inject(Router);
-        // Create spies before detectChanges to capture calls made during ngOnInit
+        // Create the spy before detectChanges to capture the call made during ngOnInit
         getNumberOfTutorsInvolvedInAssessmentStub = vi.spyOn(textAssessmentService, 'getNumberOfTutorsInvolvedInAssessment');
-        calculateTutorEffortStub = vi.spyOn(textExerciseService, 'calculateTutorEffort');
 
         fixture = TestBed.createComponent(TutorEffortStatisticsComponent);
         component = fixture.componentInstance;
         compiled = fixture.debugElement.nativeElement;
         fixture.detectChanges();
+        http.expectOne('/api/assessment/courses/1/exercises/1/tutor-effort').flush([]);
     });
 
-    it('should call loadTutorEfforts and calculateTutorEffort on init', () => {
+    const flushTutorEfforts = (tutorEfforts: TutorEffort[]) => {
+        const request = http.expectOne('/api/assessment/courses/1/exercises/1/tutor-effort');
+        expect(request.request.method).toBe('GET');
+        request.flush(tutorEfforts);
+    };
+
+    it('should load the tutor efforts and the number of tutors on init', () => {
         component.ngOnInit();
-        expect(calculateTutorEffortStub).toHaveBeenCalledWith(1, 1);
+        flushTutorEfforts(tutorEffortsMocked);
+        expect(component.tutorEfforts()).toEqual(tutorEffortsMocked);
         expect(getNumberOfTutorsInvolvedInAssessmentStub).toHaveBeenCalledWith(1, 1);
     });
 
-    it('should call loadTutorEfforts', () => {
-        fixture.detectChanges();
+    it('should reload the tutor efforts', () => {
         component.loadTutorEfforts();
-        expect(calculateTutorEffortStub).toHaveBeenCalledWith(1, 1);
+        flushTutorEfforts(tutorEffortsMocked);
+        expect(component.numberOfSubmissions()).toBe(3);
     });
 
     it('should check tutor effort response handler with non-empty input', () => {
@@ -168,10 +172,10 @@ describe('TutorEffortStatisticsComponent', () => {
                 totalTimeSpentMinutes: 32,
             },
         ];
-        vi.spyOn(textExerciseService, 'calculateTutorEffort').mockReturnValue(of(tutorEfforts));
         vi.spyOn(component, 'loadNumberOfTutorsInvolved').mockImplementation(() => {});
 
         component.ngOnInit();
+        flushTutorEfforts(tutorEfforts);
 
         expect(component.medianValue()).toBe(25);
 

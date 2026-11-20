@@ -5,7 +5,7 @@
     <!-- Creating has no course shell yet, so the page brings the same frame: a title bar that stays in view above a
          scrolling content card. -->
     <div class="course-create-layout" data-testid="course-create-layout">
-        <div id="course-create-title-bar" class="module-bg rounded-lg px-3">
+        <div id="course-create-title-bar" class="module-bg rounded-lg px-4!">
             <h1 id="jhi-course-heading-create" class="course-create-title" jhiTranslate="artemisApp.course.home.createLabel"></h1>
         </div>
         <div id="course-create-body" class="module-bg rounded-lg">
@@ -19,7 +19,7 @@
         <div class="course-form-sections">
             <!-- Section: General -->
             <section class="course-form-section" aria-labelledby="course-section-general">
-                <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center justify-between gap-4!">
                     <h2 id="course-section-general" class="course-form-section-title" jhiTranslate="artemisApp.course.form.sections.general"></h2>
                     @if (course.id) {
                         <a
@@ -32,7 +32,7 @@
                     }
                 </div>
 
-                <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
+                <div class="flex flex-col gap-12! sm:flex-row sm:items-start">
                     <!-- Course icon -->
                     <div class="flex shrink-0 flex-col items-start gap-1.5">
                         <span class="course-form-label" jhiTranslate="artemisApp.course.courseIcon"></span>
@@ -88,8 +88,8 @@
                         }
                     </div>
 
-                    <div class="flex min-w-0 flex-1 flex-col gap-4">
-                        <div class="flex items-start gap-4">
+                    <div class="flex min-w-0 flex-1 flex-col gap-6!">
+                        <div class="flex items-start gap-6!">
                             <tumaet-ui-form-field
                                 class="min-w-0 flex-1"
                                 [label]="'artemisApp.course.title' | artemisTranslate"
@@ -207,7 +207,7 @@
                     />
                 </tumaet-ui-form-field>
 
-                <div class="grid gap-4 md:grid-cols-2">
+                <div class="grid gap-6! md:grid-cols-2">
                     <tumaet-ui-form-field
                         #startDateField
                         class="min-w-0"
@@ -296,7 +296,7 @@
                     <tumaet-ui-message severity="warn">{{ 'artemisApp.forms.configurationForm.timeZoneInput.changeWarning' | artemisTranslate }}</tumaet-ui-message>
                 }
 
-                <div class="flex flex-col gap-3">
+                <div class="flex flex-col gap-4!">
                     <div class="course-form-option">
                         <tumaet-ui-checkbox inputId="field_testCourse" name="testCourse" formControlName="testCourse" (changed)="changeTestCourseEnabled()" />
                         <label class="course-form-option-label" jhiTranslate="artemisApp.course.testCourse.title" for="field_testCourse"></label>
@@ -321,7 +321,7 @@
             <!-- Section: Exercises & Grading -->
             <section class="course-form-section" aria-labelledby="course-section-exercises">
                 <h2 id="course-section-exercises" class="course-form-section-title" jhiTranslate="artemisApp.course.form.sections.exercises"></h2>
-                <div class="grid gap-4 md:grid-cols-2">
+                <div class="grid gap-6! md:grid-cols-2">
                     <tumaet-ui-form-field class="min-w-0" controlId="field_maxPoints" [invalid]="showError('maxPoints')">
                         <span tumAetUiFormFieldLabel class="flex items-center gap-1">
                             <span jhiTranslate="artemisApp.course.maxPoints.title"></span>
@@ -384,7 +384,7 @@
                     />
                 </tumaet-ui-form-field>
 
-                <div class="flex flex-col gap-3">
+                <div class="flex flex-col gap-4!">
                     <div class="course-form-option">
                         <tumaet-ui-checkbox
                             inputId="field_maxComplaintSettingEnabled"
@@ -397,7 +397,7 @@
                     </div>
                     @if (complaintsEnabled()) {
                         <div class="course-form-nested">
-                            <div class="grid gap-4 md:grid-cols-2">
+                            <div class="grid gap-6! md:grid-cols-2">
                                 <ng-container
                                     *ngTemplateOutlet="
                                         numberField;
@@ -432,7 +432,7 @@
                                     }
                                 "
                             />
-                            <div class="grid gap-4 md:grid-cols-2">
+                            <div class="grid gap-6! md:grid-cols-2">
                                 <ng-container
                                     *ngTemplateOutlet="
                                         numberField;
@@ -500,9 +500,9 @@
                     <h2 id="course-section-features" class="course-form-section-title" jhiTranslate="artemisApp.course.form.sections.additionalFeatures.title"></h2>
                     <p class="course-form-hint" jhiTranslate="artemisApp.course.form.sections.additionalFeatures.info"></p>
                 </div>
-                <div class="flex flex-col gap-3">
+                <div class="flex flex-col gap-4!">
                     <jhi-feature-overlay [enabled]="atlasEnabled()">
-                        <div class="flex flex-col gap-3">
+                        <div class="flex flex-col gap-4!">
                             <div id="learning-paths-setting" class="course-form-option" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
                                 <tumaet-ui-checkbox inputId="field_learningPathsEnabled" name="learningPathsEnabled" formControlName="learningPathsEnabled" />
                                 <label class="course-form-option-label" jhiTranslate="artemisApp.course.learningPaths.label" for="field_learningPathsEnabled"></label>
@@ -512,7 +512,7 @@
                                  fields, so only expose the controls in edit mode to avoid silently dropping them on creation.
                                  Changing the settings is admin-only (server-enforced), so only admins see the controls. -->
                             @if (course.id && isAdmin() && atlasLLMEnabled()) {
-                                <div class="flex flex-col gap-3" [jhiFeatureToggleHide]="FeatureToggle.AtlasAgent">
+                                <div class="flex flex-col gap-4!" [jhiFeatureToggleHide]="FeatureToggle.AtlasAgent">
                                     <div class="course-form-option">
                                         <tumaet-ui-checkbox
                                             inputId="field_autoOrchestratorEnabled"
@@ -533,7 +533,7 @@
                                     </div>
                                     @if (courseForm.get('autoOrchestratorEnabled')?.value) {
                                         <div class="course-form-nested">
-                                            <div class="grid gap-4 md:grid-cols-2">
+                                            <div class="grid gap-6! md:grid-cols-2">
                                                 <tumaet-ui-form-field
                                                     class="min-w-0"
                                                     [label]="'artemisApp.course.autoOrchestration.debounceWindowSecondsOverride.label' | artemisTranslate"
@@ -675,7 +675,7 @@
             <!-- Section: Enrollment -->
             <section class="course-form-section" aria-labelledby="course-section-enrollment">
                 <h2 id="course-section-enrollment" class="course-form-section-title" jhiTranslate="artemisApp.course.form.sections.enrollment"></h2>
-                <div class="flex flex-col gap-3">
+                <div class="flex flex-col gap-4!">
                     @if (ltiEnabled() && !course.enrollmentEnabled) {
                         <div class="course-form-option">
                             <tumaet-ui-checkbox inputId="field_onlineCourse" name="onlineCourse" formControlName="onlineCourse" (changed)="changeOnlineCourse()" />
@@ -697,7 +697,7 @@
                     }
                     @if (course.enrollmentEnabled) {
                         <div class="course-form-nested">
-                            <div class="grid gap-4 md:grid-cols-2">
+                            <div class="grid gap-6! md:grid-cols-2">
                                 <tumaet-ui-form-field
                                     #enrollmentStartDateField
                                     class="min-w-0"
@@ -859,7 +859,7 @@
                     <span class="text-muted-color" jhiTranslate="artemisApp.course.form.requiredLegend"></span>
                 }
             </div>
-            <div class="ms-auto flex shrink-0 items-center gap-4">
+            <div class="ms-auto flex shrink-0 items-center gap-6!">
                 <button type="button" id="cancel-save" tumAetUiButton severity="secondary" variant="outlined" (click)="previousState()">
                     <fa-icon [icon]="faBan" />
                     <span jhiTranslate="entity.action.cancel"></span>

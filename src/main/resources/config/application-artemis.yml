@@ -208,14 +208,14 @@ artemis:
     enabled: false # Optional standalone coordination; Hyperion generation enables this automatically on eligible core nodes.
     # ids: [worker-1]
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
-    # Shared services retain their default prices. Generation uses only explicitly supplied EUR rates; missing rates remain unknown.
+    # API-reported USD amounts take precedence. Generation uses only explicitly supplied USD rates; missing rates remain unknown.
     # Use dated provider rates and bracket-quote dotted model keys. Configure each model in
     # one source only: environment variables normalize model keys differently from YAML.
     # model-costs:
     #   "[provider/model]":
-    #     input-cost-per-million-eur: <your-input-rate>
-    #     output-cost-per-million-eur: <your-output-rate>
-    #     cached-input-cost-per-million-eur: <your-cached-input-rate>
+    #     input-cost-per-million-usd: <your-input-rate>
+    #     output-cost-per-million-usd: <your-output-rate>
+    #     cached-input-cost-per-million-usd: <your-cached-input-rate>
   atlas:
     # *-model values are Azure deployment aliases — replace with your own deployment names.
     chat-model: gpt-5.4-mini

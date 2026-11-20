@@ -1,7 +1,7 @@
 import { faLink, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { describe, expect, it } from 'vitest';
 
-import { createPresentationSidebarData, hasResultPoints } from 'app/presentation/manage/presentation-assessment-management.helper';
+import { createPresentationSidebarData } from 'app/presentation/manage/presentation-assessment-management.helper';
 import type { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
 
 describe('Presentation assessment management helpers', () => {
@@ -29,7 +29,5 @@ describe('Presentation assessment management helpers', () => {
                 subtitleLeftIcon: faLink,
             }),
         );
-        expect(hasResultPoints(0)).toBe(true);
-        expect(hasResultPoints(null)).toBe(false);
     });
 });

@@ -1,14 +1,14 @@
-<div class="doughnut mx-3">
+<div class="doughnut mx-4!">
     @if (titleLink()) {
         <a [routerLink]="['/course-management', course().id, titleLink()]">
-            <div class="text-center h5 m-0">{{ 'artemisApp.course.detail.' + doughnutChartTitle() + 'Title' | artemisTranslate }}</div>
+            <h5 class="text-center m-0">{{ 'artemisApp.course.detail.' + doughnutChartTitle() + 'Title' | artemisTranslate }}</h5>
         </a>
     }
     @if (!titleLink()) {
         <h5 class="text-center">{{ 'artemisApp.course.detail.' + doughnutChartTitle() + 'Title' | artemisTranslate }}</h5>
     }
     <div
-        class="doughnut-chart-container position-relative"
+        class="doughnut-chart-container relative"
         [ngClass]="titleLink() ? 'clickable' : ''"
         (click)="openCorrespondingPage()"
         #keyboardAction10
@@ -18,20 +18,20 @@
         (keydown.space)="titleLink() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
         (keyup.space)="titleLink() && $event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
     >
-        <div class="doughnut-chart-text" data-testid="course-chart-values">
+        <div class="doughnut-chart-text" [class.llm-cost-value]="contentType() === 'LLM_COST'" data-testid="course-chart-values">
             @if (receivedStats()) {
                 @if (currentPercentage() !== undefined) {
-                    <div class="h4">{{ currentPercentage() }}%</div>
+                    <div class="chart-value chart-value--large">{{ currentPercentage() }}%</div>
                 } @else if (showText()) {
-                    <div class="h4">{{ showText() }}</div>
+                    <div class="chart-value chart-value--large">{{ showText() }}</div>
                 }
                 @if (!showText()) {
-                    <div class="h6">{{ currentAbsolute() }} / {{ currentMax() }}</div>
+                    <div class="chart-value chart-value--small">{{ currentAbsolute() }} / {{ currentMax() }}</div>
                 } @else if (currentPercentage() !== undefined) {
-                    <div class="h6">{{ showText() }}</div>
+                    <div class="chart-value chart-value--small">{{ showText() }}</div>
                 }
             } @else {
-                <div class="h3">
+                <div class="chart-value chart-value--spinner">
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 </div>
             }
@@ -43,4 +43,12 @@
             [ariaLabel]="'artemisApp.course.detail.' + doughnutChartTitle() + 'Title' | artemisTranslate"
         />
     </div>
+    @if (contentType() === 'LLM_COST' && unpricedRequests() > 0) {
+        <p
+            class="text-center text-sm text-muted-color"
+            data-testid="course-llm-unpriced-requests"
+            jhiTranslate="artemisApp.course.detail.llmCostUnpricedRequests"
+            [translateValues]="{ count: unpricedRequests() }"
+        ></p>
+    }
 </div>

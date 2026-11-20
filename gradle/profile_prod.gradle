@@ -87,7 +87,6 @@ if (prebuiltWebappDir.exists()) {
             .withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.files(
             "packages/tum-aet-ui/package.json",
-            "packages/tum-aet-ui/ng-package.json",
             "packages/tum-aet-ui/tsconfig.base.json",
             "packages/tum-aet-ui/tsconfig.lib.json",
             "packages/tum-aet-ui/tsconfig.lib.prod.json",

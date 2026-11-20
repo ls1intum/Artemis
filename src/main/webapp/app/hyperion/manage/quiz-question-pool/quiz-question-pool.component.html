@@ -155,19 +155,14 @@
                     [title]="'artemisApp.hyperion.quizQuestionPool.progress.emptyTitle' | artemisTranslate"
                     [description]="'artemisApp.hyperion.quizQuestionPool.progress.empty' | artemisTranslate"
                 >
-                    @if (isInstructor()) {
-                        <button
-                            tumAetUiEmptyStateActions
-                            tumAetUiButton
-                            type="button"
-                            size="small"
-                            [disabled]="isStartingBuild() || isRunning() || isModelMissing()"
-                            (click)="startBuild()"
-                        >
-                            <fa-icon [icon]="faPlay" class="me-1" />
-                            <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.build"></span>
-                        </button>
-                    }
+                    <ng-container tumAetUiEmptyStateActions>
+                        @if (isInstructor()) {
+                            <button tumAetUiButton type="button" size="small" [disabled]="isStartingBuild() || isRunning() || isModelMissing()" (click)="startBuild()">
+                                <fa-icon [icon]="faPlay" class="me-1" />
+                                <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.build"></span>
+                            </button>
+                        }
+                    </ng-container>
                 </tumaet-ui-empty-state>
             }
         }

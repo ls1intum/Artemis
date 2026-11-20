@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,6 +44,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -86,6 +88,7 @@ import de.tum.cit.aet.artemis.lecture.service.TumLiveUploadService;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
@@ -204,6 +207,7 @@ public class LectureResource {
                     channelName, course == null ? null : CourseDTO.from(course));
         }
 
+        @Schema(name = "SimpleLectureCourseDTO")
         public record CourseDTO(Long id, String title, String shortName, String semester) {
 
             public static CourseDTO from(@NonNull Course course) {
@@ -302,13 +306,24 @@ public class LectureResource {
     /**
      * Search for all lectures by title and course title. The result is pageable.
      *
-     * @param search The pageable search containing the page size, page number and query string
+     * @param page         the zero-based page number
+     * @param pageSize     the maximum number of lectures on one page
+     * @param sortingOrder the sort direction
+     * @param sortedColumn the lecture field used for sorting
+     * @param searchTerm   the title fragment to find
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("lectures")
     @EnforceAtLeastStudent
     @ManualConfig
-    public ResponseEntity<SearchResultPageDTO<SimpleLectureDTO>> getAllLecturesOnPage(SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<SimpleLectureDTO>> getAllLecturesOnPage(@RequestParam int page, @RequestParam int pageSize, @RequestParam SortingOrder sortingOrder,
+            @RequestParam String sortedColumn, @RequestParam(defaultValue = "") String searchTerm) {
+        SearchTermPageableSearchDTO<String> search = new SearchTermPageableSearchDTO<>();
+        search.setPage(page);
+        search.setPageSize(pageSize);
+        search.setSortingOrder(sortingOrder);
+        search.setSortedColumn(sortedColumn);
+        search.setSearchTerm(searchTerm);
         final var user = userRepository.getUserWithAuthorities();
         final SearchResultPageDTO<Lecture> lecturePage = lectureService.getAllOnPageWithSize(search, user);
         // The import search table only displays the lecture title and its course's title/semester; channel name is not needed here
@@ -465,6 +480,7 @@ public class LectureResource {
         }
     }
 
+    @Schema(name = "LectureSlidesAttachmentDTO")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record AttachmentDTO(Long id, String link, String name, ZonedDateTime releaseDate, @Nullable List<Integer> displayPageNumbers) {
 
@@ -473,6 +489,7 @@ public class LectureResource {
         }
     }
 
+    @Schema(name = "LectureSlidesAttachmentVideoUnitDTO")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record AttachmentVideoUnitDTO(Long id, String name, List<SlideDTO> slides, @Nullable AttachmentDTO attachment, ZonedDateTime releaseDate, String type,
             @Nullable String videoSource, @Nullable VideoSourceType videoSourceType, @Nullable String youtubeVideoId) {
@@ -578,7 +595,7 @@ public class LectureResource {
      */
     @FeatureUsage(UserFeature.LECTURE_PAGES)
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
-    @GetMapping("lectures/{lectureId}/title")
+    @GetMapping(value = "lectures/{lectureId}/title", produces = MediaType.TEXT_PLAIN_VALUE)
     @EnforceAtLeastStudentInLecture
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
         final var title = lectureRepository.getLectureTitle(lectureId);

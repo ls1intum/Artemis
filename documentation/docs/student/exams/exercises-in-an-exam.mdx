@@ -2,7 +2,7 @@
 id: exercises-in-an-exam
 title: Exercises in an Exam
 sidebar_label: Exercises in an Exam
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-18
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -11,6 +11,7 @@ import Image, {ImageSize} from "../../../src/components/Image/Image";
 import examQuizExercises from '../assets/exams/exam_quiz_exercises.png';
 import examTextExercises from '../assets/exams/exam_text_exercises.png';
 import examModelingExercises from '../assets/exams/exam_modeling_exercises.png';
+import examFileUploadAutomatic from '../assets/exams/exam_file_upload_automatic.png';
 import examProgrammingExercises from '../assets/exams/exam_programming_exercises.png';
 import examCloneRepository from '../assets/exams/exam_clone_repository.png';
 import conflictState from '../assets/exams/conflict_state.png';
@@ -23,11 +24,9 @@ import submissionPolicyPenalty from '../assets/exams/exam_submission_policy_pena
 An exam can mix every exercise type Artemis supports. They share the navigation sidebar and the clock described
 under [Take an Exam](/student/exams/take-an-exam), and differ in how you work and how you submit.
 
-Text, modeling, programming and file upload exercises all dock the problem statement to the right — above your solution area on a small
-screen. The arrow at its top corner collapses it when you want the editor to fill the space, and dragging the
-divider resizes the panes.
-
-import examFileUploadAutomatic from '../assets/exams/exam_file_upload_automatic.png';
+In text, modeling, programming and file upload exercises, the problem statement appears beside your solution area
+or above it on a small screen. Use the arrow in the corner to collapse or expand the statement. Drag the divider
+to resize the panes.
 
 ## Quiz Exercises
 
@@ -37,7 +36,8 @@ between them or use the question overview on the left, which jumps to a question
 The overview also tells you what you have answered: each question type has its own colour, and an answered question
 is shown differently from an unanswered one, so a glance is enough to find what you have skipped.
 
-To submit, select another exercise in the navigation sidebar. Your work is also saved every 30 seconds.
+Select **Save exercise** or move to another exercise to save your answers. Artemis also saves them automatically
+as described under [Saving Your Work](/student/exams/take-an-exam#saving-your-work).
 
 <Image src={examQuizExercises} alt="A quiz exercise in an exam with the question overview on the left" size={ImageSize.large} caption="A quiz exercise during an exam" />
 
@@ -53,8 +53,8 @@ The elements available for your diagram type sit on the right of the editor; dra
 placed element lets you set its name, attributes and methods. To connect two elements, drag from the edge of one to
 the other and Artemis draws the connection.
 
-**Help** explains the editor if you have not used it before, and the fullscreen control gives the diagram your whole
-screen.
+**Help** explains the editor. Use the fullscreen control to give the diagram more space. Select **Exit Fullscreen**
+to return to the exam layout.
 
 <Image src={examModelingExercises} alt="A modeling exercise with the Apollon editor" size={ImageSize.large} caption="A modeling exercise during an exam" />
 
@@ -73,22 +73,24 @@ Drop the file your answer consists of — a scan, a drawing, a spreadsheet — i
 
 ## Programming Exercises
 
-Depending on the exercise you may work in the browser, in your own editor, or either.
+Depending on the exercise you may work in the browser, in your own editor, or either. Use the submission steps for
+the editor you choose and check that Artemis receives your latest solution before working time ends.
+
+### Working in the Browser Editor
 
 In the browser you get three panes: the file browser, the code editor and the instructions. The file browser shows
 the whole project and lets you add, rename and delete files and folders — which is worth doing carefully, since
 deleting a file the tests expect will fail the build. The editor marks the line where a compilation error occurred.
 
-**Refresh** discards your unsaved editor changes and reloads the files from the last commit. Your editor changes are
-saved every 30 seconds.
+Artemis attempts to save editor changes every 30 seconds. **Refresh** reloads the files from the latest commit
+and can discard changes you have yet to submit.
 
-**Submit** sends your code to be built and tested; the result area changes from having no result to building, and
-then to the result itself. Nothing is built until you submit.
+Select **Submit** to send your code for a build. Check the result area to see whether your submission was received
+and whether the build succeeded.
 
 <Callout variant={CalloutVariant.danger}>
 
-  A programming exercise never submits itself. If you finish the exam without choosing **Submit**, the code you
-  wrote is not graded.
+  Select **Submit** after your final changes in the browser editor so Artemis receives your latest code for grading.
 
 </Callout>
 
@@ -96,11 +98,11 @@ then to the result itself. Nothing is built until you submit.
 
 ### Working in Your Own Editor
 
-**Code** gives you the repository address. With a **token** the address contains the token. Over **SSH** the address contains no
-credential and the public key that you registered identifies you. Over **HTTPS** the address contains no token either, and Git asks for
-your Artemis password. See [Integrated Code Lifecycle](/student/tools-reference/integrated-code-lifecycle#cloning-the-repository-to-your-computer)
-for the three methods. Clone it,
-open the project in your editor, work, then commit and push — pushing does what **Submit** does in the browser.
+1. Open **Code** and copy a clone URL for the authentication method you set up. See
+   [Cloning the Repository to Your Computer](/student/tools-reference/integrated-code-lifecycle#cloning-the-repository-to-your-computer).
+2. Clone the exercise repository and open it in your local editor. Work on your solution and check that it builds.
+3. Commit your changes and push them to the exercise repository before working time ends. A successful push sends
+   your solution to Artemis and triggers a build. Check the submission and build status in Artemis.
 
 <Image src={examCloneRepository} alt="The Code dialog offering the clone URL" size={ImageSize.large} caption="Getting the repository address" />
 
@@ -116,9 +118,9 @@ open the project in your editor, work, then commit and push — pushing does wha
 
 ### Limited Feedback
 
-Your instructor may hide the test results during the exam. You then learn only whether your code compiled: a failed
-build means it did not, and a passing build means it compiled but says nothing about your score. Both are normal in
-an exam.
+Your instructor may hide test results during the exam. **Build successful, no tests executed** confirms that the
+build passed. Your score becomes available with the exam results. If you see **Build failed**, review any
+available build output, fix the errors, and submit again before working time ends if your submission limit allows it.
 
 ### Submission Limits
 

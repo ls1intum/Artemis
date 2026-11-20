@@ -3,14 +3,14 @@
         tumAetUiButton
         size="small"
         severity="secondary"
-        class="me-3 open-repository-button"
+        class="me-4! open-repository-button"
         [routerLink]="repositoryLink()"
         target="_blank"
         rel="noopener noreferrer"
-        [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo' | artemisTranslate"
+        [tumAetUiTooltip]="'artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo' | artemisTranslate"
     >
         <fa-icon [icon]="faExternalLink" />
-        <span class="d-none d-lg-inline" jhiTranslate="artemisApp.editor.repo"></span>
+        <span class="hidden min-[992px]:inline" jhiTranslate="artemisApp.editor.repo"></span>
     </a>
 }
 @if (commitState() === CommitState.CONFLICT) {
@@ -21,11 +21,11 @@
             tumAetUiButton
             size="small"
             severity="danger"
-            class="me-3"
+            class="me-4!"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [forceDisabled]="disableActions() || isResolvingConflict()"
             (click)="resetRepository()"
-            [ngbTooltip]="'artemisApp.editor.conflict.resetRepository' | artemisTranslate"
+            [tumAetUiTooltip]="'artemisApp.editor.conflict.resetRepository' | artemisTranslate"
         >
             @if (isResolvingConflict()) {
                 <span>
@@ -45,11 +45,11 @@
         tumAetUiButton
         size="small"
         severity="secondary"
-        class="me-3"
+        class="me-4!"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [forceDisabled]="disableActions() || editorState() === EditorState.REFRESHING || editorState() === EditorState.SAVING || commitState() === CommitState.COMMITTING"
         (click)="onRefresh()"
-        [ngbTooltip]="'artemisApp.editor.refresh.refreshFilesDescription' | artemisTranslate"
+        [tumAetUiTooltip]="'artemisApp.editor.refresh.refreshFilesDescription' | artemisTranslate"
     >
         @if (editorState() === EditorState.REFRESHING) {
             <span>
@@ -58,7 +58,7 @@
             </span>
         } @else {
             <fa-icon [icon]="faSync" />
-            <span class="d-none d-lg-inline" jhiTranslate="artemisApp.editor.refresh.performRefresh"></span>
+            <span class="hidden min-[992px]:inline" jhiTranslate="artemisApp.editor.refresh.performRefresh"></span>
         }
     </button>
     <button
@@ -75,11 +75,11 @@
             (commitState() !== CommitState.UNCOMMITTED_CHANGES && commitState() !== CommitState.CLEAN)
         "
         (click)="commit()"
-        [ngbTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
+        [tumAetUiTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
     >
         <span>
             <fa-icon [icon]="farPlayCircle" />
-            <span class="d-none d-lg-inline" jhiTranslate="artemisApp.editor.submit"></span>
+            <span class="hidden min-[992px]:inline" jhiTranslate="artemisApp.editor.submit"></span>
         </span>
     </button>
 }

@@ -5,6 +5,7 @@ import { ProfileInfo } from '../profile-info.model';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
 import { firstValueFrom } from 'rxjs';
+import { setAllowedImageHosts } from 'app/foundation/util/image-host-policy.util';
 
 @Service()
 export class ProfileService {
@@ -20,6 +21,7 @@ export class ProfileService {
         this.profileInfo = await firstValueFrom(this.http.get<ProfileInfo>('management/info'));
         this.featureToggleService.initializeFeatureToggles(this.profileInfo.features);
         this.browserFingerprintService.initialize(this.profileInfo.studentExamStoreSessionData);
+        setAllowedImageHosts(this.profileInfo.allowedImageHosts);
     }
 
     /** Public readonly getter */

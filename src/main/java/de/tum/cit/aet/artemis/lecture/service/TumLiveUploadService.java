@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import java.io.InputStream;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -22,11 +23,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TumLiveRecordingCleanup;
 import de.tum.cit.aet.artemis.lecture.domain.TumLiveUnitUpload;
-import de.tum.cit.aet.artemis.lecture.dto.TumLiveUploadStartDTO;
 import de.tum.cit.aet.artemis.lecture.dto.TumLiveUploadStateDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TumLiveRecordingCleanupRepository;
@@ -39,8 +41,8 @@ import de.tum.cit.aet.artemis.videosource.dto.GocastUploadTargetDTO;
 import de.tum.cit.aet.artemis.videosource.service.GocastIntegrationException;
 
 /**
- * Uploads the video of an attachment video unit to the connected TUM.Live course. The editor's browser sends the file straight to TUM.Live; Artemis attaches
- * the converted recording in the background (see {@link TumLiveUploadScheduler}), so nothing depends on the page staying open. Each upload goes into a new
+ * Uploads the video of an attachment video unit to the connected TUM.Live course. Artemis streams the file to TUM.Live and attaches the
+ * converted recording in the background (see {@link TumLiveUploadScheduler}), so nothing depends on the page staying open. Each upload goes into a new
  * TUM.Live lecture; a replaced, failed or discarded one is deleted there through the cleanup queue.
  */
 @Conditional(LectureEnabled.class)
@@ -73,46 +75,109 @@ public class TumLiveUploadService {
 
     private final Duration maxAge;
 
+    private final DistributedMap<String, String> activeTransfers;
+
     /** The rows of deleted units that the previous cleanup run found; see {@link #purgeRowsOfDeletedUnits()}. */
     private final AtomicReference<Set<Long>> rowsOfDeletedUnitsFoundBefore = new AtomicReference<>(Set.of());
 
     public TumLiveUploadService(TumLiveUnitUploadRepository uploadRepository, TumLiveRecordingCleanupRepository cleanupRepository,
             AttachmentVideoUnitRepository attachmentVideoUnitRepository, Optional<GocastBindingApi> gocastBindingApi,
-            Optional<LectureContentProcessingService> contentProcessingService, @Value("${artemis.tum-live.upload-max-age:PT6H}") Duration maxAge) {
+            Optional<LectureContentProcessingService> contentProcessingService, DistributedDataProvider distributedDataProvider,
+            @Value("${artemis.tum-live.upload-max-age:PT6H}") Duration maxAge) {
         this.uploadRepository = uploadRepository;
         this.cleanupRepository = cleanupRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.gocastBindingApi = gocastBindingApi;
         this.contentProcessingService = contentProcessingService;
         this.maxAge = maxAge;
+        this.activeTransfers = distributedDataProvider.getExpiringMap("tum-live-active-transfers", maxAge);
     }
 
     /**
-     * Starts an upload for a unit, or hands out a new upload URL for the pending one if its transfer has not started yet.
+     * Reserves an upload reference for the unit so the browser can cancel the transfer while it is running.
      *
      * @param unit the unit, with its lecture and course
-     * @return the upload's reference and where to send the file
+     * @return the pending upload's reference
      */
-    public TumLiveUploadStartDTO start(AttachmentVideoUnit unit) {
+    public String start(AttachmentVideoUnit unit) {
         GocastBindingApi api = gocastBindingApi.orElseThrow(() -> notConnected());
         GocastUploadConnectionDTO connection = api.findUploadConnection(unit.getLecture().getCourse().getId()).orElseThrow(TumLiveUploadService::notConnected);
-        TumLiveUnitUpload upload = uploadRepository.startPending(unit.getId(), connection.integrationId(), connection.grantId(), connection.courseSlug(), newReference(),
-                ZonedDateTime.now());
-        GocastUploadTargetDTO target;
+        String ref = newReference();
+        TumLiveUnitUpload upload = uploadRepository.startPending(unit.getId(), connection.integrationId(), connection.grantId(), connection.courseSlug(), ref, ZonedDateTime.now());
+        if (!ref.equals(upload.getPendingRef())) {
+            throw uploadInProgress();
+        }
+        return ref;
+    }
+
+    /**
+     * Sends the body directly to TUM.Live for the unit's exact pending reference.
+     *
+     * @param unit the attachment video unit
+     * @param ref  the upload's reference
+     * @param file the incoming file stream
+     */
+    public void transfer(AttachmentVideoUnit unit, String ref, InputStream file) {
+        GocastBindingApi api = gocastBindingApi.orElseThrow(TumLiveUploadService::notConnected);
+        TumLiveUnitUpload upload = uploadRepository.findByLectureUnitId(unit.getId()).filter(pending -> ref.equals(pending.getPendingRef()))
+                .orElseThrow(TumLiveUploadService::uploadNoLongerPending);
+        if (upload.getPendingStreamId() != null) {
+            throw uploadInProgress();
+        }
+        // Creating a new ticket invalidates an unused one in TUM.Live. Only one request may issue and spend a ticket for this reference at a time.
+        String owner = newReference();
+        if (activeTransfers.putIfAbsent(ref, owner) != null) {
+            throw uploadInProgress();
+        }
         try {
-            target = api.createUpload(upload.getPendingGrantId(), upload.getPendingRef(), title(unit));
+            GocastUploadTargetDTO target = createUploadTarget(api, upload, unit, ref);
+            if (!uploadRepository.recordPendingStream(unit.getId(), ref, target.streamId())) {
+                throw uploadNoLongerPending();
+            }
+            transferFile(api, unit.getId(), ref, target, file);
+        }
+        finally {
+            activeTransfers.remove(ref, owner);
+        }
+    }
+
+    private void transferFile(GocastBindingApi api, long unitId, String ref, GocastUploadTargetDTO target, InputStream file) {
+        try {
+            api.transferUpload(target, file);
+        }
+        catch (RuntimeException exception) {
+            // A disconnected browser may never send its discard request, or may have retried while this transfer still owned the reference.
+            try {
+                uploadRepository.discardPending(unitId, ref, "The video transfer to TUM.Live failed.", ZonedDateTime.now());
+            }
+            catch (RuntimeException cleanupFailure) {
+                exception.addSuppressed(cleanupFailure);
+            }
+            throw exception;
+        }
+    }
+
+    private static GocastUploadTargetDTO createUploadTarget(GocastBindingApi api, TumLiveUnitUpload upload, AttachmentVideoUnit unit, String ref) {
+        try {
+            return api.createUpload(upload.getPendingGrantId(), ref, title(unit));
         }
         catch (GocastIntegrationException exception) {
             if (exception.getUpstreamStatus().isSameCodeAs(HttpStatus.CONFLICT)) {
-                throw new ConflictException("The pending upload is already being transferred. Discard it to start another one.", ENTITY_NAME, "tumLiveUploadInProgress");
+                throw uploadInProgress();
             }
             if (exception.getUpstreamStatus().isSameCodeAs(HttpStatus.NOT_FOUND)) {
                 throw notConnected();
             }
             throw exception;
         }
-        uploadRepository.recordPendingStream(unit.getId(), upload.getPendingRef(), target.streamId());
-        return new TumLiveUploadStartDTO(upload.getPendingRef(), target.uploadUrl());
+    }
+
+    private static ConflictException uploadInProgress() {
+        return new ConflictException("The pending upload is already being transferred or converted.", ENTITY_NAME, "tumLiveUploadInProgress");
+    }
+
+    private static ConflictException uploadNoLongerPending() {
+        return new ConflictException("This upload is no longer pending.", ENTITY_NAME, "tumLiveUploadNoLongerPending");
     }
 
     /**
