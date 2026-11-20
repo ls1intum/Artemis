@@ -1,5 +1,5 @@
-<div class="border rounded p-3 mb-3" data-testid="build-container-editor">
-    <div class="flex items-end gap-3 mb-2">
+<div class="border rounded p-4! mb-4!" data-testid="build-container-editor">
+    <div class="flex items-end gap-4! mb-2">
         @if (showsSettings()) {
             <div class="grow">
                 <label [for]="'field_container_name_' + containerIndex()">{{ 'artemisApp.programmingExercise.buildContainersEditor.containerName' | artemisTranslate }}</label>
@@ -92,7 +92,7 @@
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.scopeRepositoriesHelp" />
             </div>
             @if (scopesRepositories()) {
-                <div class="flex flex-wrap gap-3 mt-1">
+                <div class="flex flex-wrap gap-4! mt-1">
                     @for (repositoryType of repositoryTypes; track repositoryType) {
                         <div class="flex items-center gap-2">
                             <tumaet-ui-checkbox
@@ -125,7 +125,7 @@
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.overrideDockerFlagsHelp" />
             </div>
             @if (overridesDockerFlags()) {
-                <div class="flex flex-wrap items-start gap-3 mt-1">
+                <div class="flex flex-wrap items-start gap-4! mt-1">
                     @if (customNetworks()) {
                         <div>
                             <label [for]="'field_container_network_' + containerIndex()">{{
