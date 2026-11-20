@@ -85,8 +85,10 @@ jobs:
           path: build/test-results/test/*.xml
           reporter: java-junit
 
-  client-style:
-    name: Client Code Style
+  # One job and one install for every client check. The application itself is type checked by `ng build` in
+  # ci-build.yml, with strict templates, so this job does not compile it again.
+  client:
+    name: Client Style and Compilation
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -116,6 +118,24 @@ jobs:
       - name: TUM AET UI Styles
         run: pnpm run tum-aet-ui:stylelint
         if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      # `--include files` only. knip also reports unused exports, exported types and enum members,
+      # of which Artemis still has a large backlog (117 / 221 / 26 at the time this gate was added),
+      # so gating on those would red every pull request from day one. Files are the tier that is
+      # clean today and the one that matches the server check: nothing can reach this file at all.
+      # `pnpm run dead-code:client:report` prints the full picture for anyone working the backlog
+      # down; tighten this gate as those numbers reach zero.
+      # knip reads only TypeScript under src/main/webapp and packages/tum-aet-ui, so a change that this
+      # job skips (markdown, documentation) cannot leave a client file unreachable.
+      - name: Client dead code check
+        run: pnpm run dead-code:client
+        if: ${{ !cancelled() }}
+      - name: Prepare client sources
+        run: pnpm run prebuild
+        if: ${{ !cancelled() && inputs.check_test_types }}
+      - name: Compile TypeScript Test Files With Typechecking
+        if: inputs.check_test_types
+        # Reuses the prebuild outputs of the step above, so the UI package is built once.
+        run: pnpm exec tsc --project config/client/tsconfig.spec.json
       - name: Install Playwright Dependencies
         run: pnpm install --frozen-lockfile
         working-directory: src/test/playwright
@@ -129,10 +149,13 @@ jobs:
         working-directory: src/test/playwright
         if: ${{ !cancelled() }}
 
-  client-compilation:
-    name: Client Compilation
+  # The UI library's own checks take several minutes (a browser install alone takes up to seven), so they run in a job
+  # of their own, in parallel to the client job, and only when the library or its integration changed.
+  tum-aet-ui:
+    name: TUM AET UI
+    if: ${{ inputs.has_tum_aet_ui }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -150,59 +173,56 @@ jobs:
           cache: 'pnpm'
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
-      - name: Compile TypeScript Files With Typechecking
-        run: pnpm run compile
-      - name: Compile TypeScript Test Files With Typechecking
-        if: inputs.check_test_types
-        # `compile` already ran prebuild; reuse those outputs without building the UI package twice.
-        run: pnpm exec tsc --project config/client/tsconfig.spec.json
+      - name: Prepare client sources
+        run: pnpm run prebuild
       - name: Compile Artemis With TUM AET UI Source
         run: pnpm run tum-aet-ui:source:check:prepared
-        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+        if: ${{ !cancelled() }}
       - name: Test TUM AET UI in Isolation
         run: pnpm run tum-aet-ui:test:coverage
-        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+        if: ${{ !cancelled() }}
       - name: Prepare TUM AET UI Storybook
         run: pnpm --dir packages/tum-aet-ui run storybook:prepare
-        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+        if: ${{ !cancelled() }}
       - name: Type Check TUM AET UI Stories
         run: pnpm --dir packages/tum-aet-ui run storybook:typecheck:prepared
-        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+        if: ${{ !cancelled() }}
       - name: Install TUM AET UI Storybook Browser
         run: pnpm --dir packages/tum-aet-ui exec playwright install --with-deps --only-shell chromium
-        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+        if: ${{ !cancelled() }}
       - name: Test TUM AET UI Stories
         run: pnpm --dir packages/tum-aet-ui run storybook:test:prepared
-        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+        if: ${{ !cancelled() }}
       - name: Build TUM AET UI Storybook
         run: pnpm --dir packages/tum-aet-ui run storybook:build:prepared
-        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+        if: ${{ !cancelled() }}
       - name: Test TUM AET UI AutoDocs
         run: pnpm --dir packages/tum-aet-ui run storybook:docs:test:built
-        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+        if: ${{ !cancelled() }}
       - name: Validate TUM AET UI Package Artifact
         id: tum-aet-ui-package
         run: pnpm run tum-aet-ui:pack:check
-        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+        if: ${{ !cancelled() }}
       - name: Test TUM AET UI With Minimum Peer Versions
         run: pnpm run tum-aet-ui:test:consumer minimum
-        if: ${{ !cancelled() && inputs.has_tum_aet_ui && steps.tum-aet-ui-package.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.tum-aet-ui-package.outcome == 'success' }}
       - name: Test TUM AET UI With Latest Compatible Peer Versions
         run: pnpm run tum-aet-ui:test:consumer latest
-        if: ${{ !cancelled() && inputs.has_tum_aet_ui && steps.tum-aet-ui-package.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.tum-aet-ui-package.outcome == 'success' }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: failure() && inputs.has_tum_aet_ui
+        if: failure()
         with:
           name: tum-aet-ui-consumer
           path: build/test-results/tum-aet-ui-consumer/
           if-no-files-found: ignore
           retention-days: 7
 
+  # LOC, class dependencies and over-fetching queries: two source scans that share one checkout.
   code-quality:
     name: Server Code Quality
     if: ${{ inputs.has_java }}  # Java-specific
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -242,25 +262,15 @@ jobs:
             --event-type "$EVENT_TYPE" \
             --base-branch "$BASE_BRANCH"
 
-  query-quality:
-    name: Query Quality Check
-    if: ${{ inputs.has_java }}  # Java-specific
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # find_slow_queries.py is a pure source scan (no git diff), so pin the PR head to
-          # match the style jobs and exercise exactly the tree Build/Test do.
-          ref: ${{ inputs.commit_sha }}
-      - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: '3.14'
-      - name: Query quality check
+      # find_slow_queries.py is a pure source scan (no git diff), so it reads exactly the PR head tree that
+      # Build/Test check. The full-history checkout above already holds that commit.
+      - name: Check out the tested commit
+        if: ${{ !cancelled() }}
+        env:
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+        run: git checkout --quiet --detach "$COMMIT_SHA"
+      - name: Query Quality Check
+        if: ${{ !cancelled() }}
         run: |
           set -Eeuo pipefail
           output=$(python supporting_scripts/find_slow_queries.py)

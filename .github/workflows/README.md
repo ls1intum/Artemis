@@ -107,7 +107,7 @@ client — Java/TypeScript style, lint, type-check, architecture, plus the Java-
 (class-dependency caps, query over-fetching). `test` (`ci-test.yml`) runs only the server and
 client test suites and the AI worker sandbox tests. On draft PRs the whole `test` workflow is deferred,
 while `quality` still runs relevant style, lint, architecture and type checks on GitHub-hosted runners.
-On drafts, **Quality / Client Compilation** also compiles the test TypeScript with
+On drafts, **Quality / Client Style and Compilation** also compiles the test TypeScript with
 `pnpm exec tsc --project config/client/tsconfig.spec.json` after the existing compilation prebuild,
 so draft test-code type errors remain visible. This split (mirroring Angular/TypeScript/Vite) keeps a 30-second style
 failure from being buried behind the multi-minute test jobs; the Java analyses are the server
@@ -214,7 +214,7 @@ gate closed.
 A draft `pull_request` event defers the entire `ci-test.yml` workflow: server tests, client tests and
 AI worker sandbox tests. E2E and CodeQL also defer draft PRs. Relevant public style, lint,
 architecture and type checks continue, including test TypeScript compilation in
-**Quality / Client Compilation**. The WAR build and the PR image needed for a draft test server
+**Quality / Client Style and Compilation**. The WAR build and the PR image needed for a draft test server
 remain available. This saves test-runner time during implementation, with the tradeoff that
 integration-test feedback arrives after **Ready for review** or a manual full CI run.
 
@@ -296,7 +296,7 @@ relative to the merge base with the actual PR target; missing history falls back
   full validation. Strict test compilation prepares assets once; `--prebuilt` reuses them for test
   execution, including full fallbacks. Standalone callers still prepare assets by default.
   Ready PRs retain strict test TypeScript compilation and custom ESLint-rule tests in the client suite.
-  Drafts compile test TypeScript in **Quality / Client Compilation**. A selected test failure fails;
+  Drafts compile test TypeScript in **Quality / Client Style and Compilation**. A selected test failure fails;
   it does not retry as a full suite.
 - **E2E:** mapped application changes run their module tests, declared cross-module consumer workflows,
   changed E2E specs and login/logout/system-health smoke specs. The checked-in dependency contract must
@@ -398,6 +398,23 @@ These workflows are intentionally NOT folded into the umbrella:
 The documentation maintenance link check resolves root-relative site URLs against the checked-out documentation
 root before filtering to external HTTP(S) links. Maintenance issue bodies stay below GitHub's limit; oversized
 reports link to the full workflow logs, which retain every finding. Transient external outages remain report findings.
+
+## Docker images
+
+`ci-build.yml` builds the server and client once, in `build-war`, and every Docker image packages that `.war`
+through the Dockerfile's `external_builder` stage instead of building the application inside the image:
+
+- `docker-pr` pushes an amd64 image for internal pull requests (`pr-<number>`, `sha-<commit>`), which E2E and test
+  server deployments pull.
+- On every other event, `docker-release-platform` builds one image per architecture on a native GitHub-hosted runner
+  (`ubuntu-24.04`, `ubuntu-24.04-arm`) and pushes it by digest. `docker-release` then publishes both as one
+  multi-arch manifest with the tags `latest` (default branch), the branch or release tag name and `sha-<commit>`,
+  and `sign-mainline-image` signs it.
+
+The image therefore holds exactly the `.war` that E2E tests and that a release uploads, and a release or mainline
+image carries the SBOM because `build-war` builds those with `-Psbom`. The Dockerfile's own `builder` stage remains
+for local builds and for `testserver-deployment.yml`, which builds an image itself when CI has not published one for
+the commit.
 
 ## E2E image identity and readiness
 
