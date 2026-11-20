@@ -69,16 +69,6 @@ public final class SecurityPolicyRepositoryFiles {
 
     private static final String MAVEN_BUILD_FILE = "pom.xml";
 
-    /**
-     * The Ares version as a complete string literal on the right of {@code aresVersion =}, e.g. {@code aresVersion = '2.2.1'}. An expression such as
-     * {@code '2.2' + '.1'} or an interpolation such as {@code "${base}.1"} pins no version Artemis could read or replace, so it is no pin.
-     */
-    private static final Pattern GRADLE_ARES_VERSION = Pattern
-            .compile("(?<!\\p{javaJavaIdentifierPart})(aresVersion\\s*=\\s*['\"])([^'\"$]+)(['\"])(?=[ \\t]*+(?:[;}\\r\\n]|//|/\\*|$))");
-
-    /** The Ares version as the text of {@code <ares.version>}; a reference to another property, e.g. {@code ${base.version}}, is no pin. */
-    private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version>)([^<$]+)(</ares\\.version>)");
-
     private static final Pattern WINDOWS_DRIVE = Pattern.compile("[A-Za-z]:");
 
     private static final Pattern BLANK_OR_COMMENT_LINE = Pattern.compile("^[ \\t]*(#.*)?$");
@@ -242,7 +232,7 @@ public final class SecurityPolicyRepositoryFiles {
                     SecurityFrameworkState.UnsupportedReasonType.ARES_1));
         }
         Optional<BuildTool> buildTool = detectBuildTool(buildFiles.gradleBuild(), buildFiles.mavenPom());
-        boolean pinsInProfile = buildFiles.mavenPom() != null && BuildFileSyntax.pinsInMavenProfile(buildFiles.mavenPom(), MAVEN_ARES_VERSION);
+        boolean pinsInProfile = buildFiles.mavenPom() != null && BuildFileSyntax.pinsInMavenProfile(buildFiles.mavenPom());
         if (pinsInProfile && buildTool.filter(BuildTool.GRADLE::equals).isEmpty()) {
             reasons.add(new SecurityFrameworkState.UnsupportedReason(MAVEN_BUILD_FILE, SecurityFrameworkState.UnsupportedReasonType.ARES_VERSION_IN_MAVEN_PROFILE));
         }
@@ -616,30 +606,13 @@ public final class SecurityPolicyRepositoryFiles {
      * @return the build tool whose build file pins an Ares version
      */
     static Optional<BuildTool> detectBuildTool(@Nullable String gradleBuild, @Nullable String mavenPom) {
-        if (gradleBuild != null && !aresVersionPins(gradleBuild, BuildTool.GRADLE).isEmpty()) {
+        if (gradleBuild != null && !BuildFileSyntax.aresVersionPins(gradleBuild, BuildTool.GRADLE).isEmpty()) {
             return Optional.of(BuildTool.GRADLE);
         }
-        if (mavenPom != null && !aresVersionPins(mavenPom, BuildTool.MAVEN).isEmpty()) {
+        if (mavenPom != null && !BuildFileSyntax.aresVersionPins(mavenPom, BuildTool.MAVEN).isEmpty()) {
             return Optional.of(BuildTool.MAVEN);
         }
         return Optional.empty();
-    }
-
-    /**
-     * The places that pin the Ares version in a build file. A pin inside a comment, e.g. {@code // aresVersion = '2.3.0'}, or inside a Gradle string, e.g.
-     * {@code "aresVersion = '2.3.0'"}, has no effect on the build, so it is neither read nor replaced. Neither is a pin in a Maven profile, which applies
-     * only while its profile is active, so the pin of the POM itself is the one the build uses, nor a local variable of a Gradle method or closure, e.g.
-     * {@code def aresVersion = '2.3.0'} in a helper method.
-     *
-     * @param content   the content of the build file
-     * @param buildTool the build tool the file belongs to
-     * @return the pins outside comments and strings, in the order of the file
-     */
-    private static List<MatchResult> aresVersionPins(String content, BuildTool buildTool) {
-        boolean[] noCode = buildTool == BuildTool.GRADLE ? BuildFileSyntax.gradleCommentsAndStrings(content) : BuildFileSyntax.mavenComments(content);
-        boolean[] profiles = buildTool == BuildTool.MAVEN ? BuildFileSyntax.mavenProfiles(content, noCode) : new boolean[content.length()];
-        List<MatchResult> pins = versionPattern(buildTool).matcher(content).results().filter(pin -> !noCode[pin.start()] && !profiles[pin.start()]).toList();
-        return buildTool == BuildTool.MAVEN ? pins : pins.stream().filter(pin -> !BuildFileSyntax.declaresLocalGradleVariable(content, noCode, pin.start())).toList();
     }
 
     /**
@@ -661,7 +634,7 @@ public final class SecurityPolicyRepositoryFiles {
     public static Optional<String> parseAresVersion(@Nullable String gradleBuild, @Nullable String mavenPom) {
         return detectBuildTool(gradleBuild, mavenPom).map(buildTool -> {
             String content = buildTool == BuildTool.GRADLE ? gradleBuild : mavenPom;
-            return aresVersionPins(content, buildTool).getFirst().group(2).trim();
+            return BuildFileSyntax.aresVersionPins(content, buildTool).getFirst().group(2).trim();
         });
     }
 
@@ -686,7 +659,7 @@ public final class SecurityPolicyRepositoryFiles {
     private static String withAresVersion(String content, BuildTool buildTool, String aresVersion) {
         StringBuilder updated = new StringBuilder();
         int copiedUntil = 0;
-        for (MatchResult pin : aresVersionPins(content, buildTool)) {
+        for (MatchResult pin : BuildFileSyntax.aresVersionPins(content, buildTool)) {
             updated.append(content, copiedUntil, pin.start()).append(pin.group(1)).append(aresVersion).append(pin.group(3));
             copiedUntil = pin.end();
         }
@@ -978,10 +951,6 @@ public final class SecurityPolicyRepositoryFiles {
 
     private static Path buildFile(Path repositoryRoot, BuildTool buildTool) {
         return repositoryRoot.resolve(buildTool == BuildTool.GRADLE ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE);
-    }
-
-    private static Pattern versionPattern(BuildTool buildTool) {
-        return buildTool == BuildTool.GRADLE ? GRADLE_ARES_VERSION : MAVEN_ARES_VERSION;
     }
 
     private static Optional<String> readFileIfPresent(Path file) {
