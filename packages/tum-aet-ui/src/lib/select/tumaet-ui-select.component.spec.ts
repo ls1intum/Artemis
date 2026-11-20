@@ -302,6 +302,30 @@ describe('TumAetUiSelectComponent', () => {
             expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[1].id);
         });
 
+        it.each([
+            {
+                remaining: 'one option that can be chosen',
+                options: [
+                    { label: 'Charlie', value: 'c' },
+                    { label: 'Delta', value: 'd', unavailable: true },
+                ],
+                activeIndex: 0,
+            },
+            { remaining: 'only disabled options', options: [{ label: 'Delta', value: 'd', unavailable: true }], activeIndex: undefined },
+        ])('activates the last option that can be chosen when the options shrink below the active one to $remaining', ({ options, activeIndex }) => {
+            fixture.componentRef.setInput('options', [...WITH_DISABLED, { label: 'Delta', value: 'd' }]);
+            fixture.detectChanges();
+            openPanel();
+            triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'End', keyCode: END, bubbles: true }));
+            fixture.detectChanges();
+
+            fixture.componentRef.setInput('options', options);
+            fixture.detectChanges();
+
+            const activeId = triggerButton().getAttribute('aria-activedescendant');
+            expect(activeId).toBe(activeIndex === undefined ? null : optionElements()[activeIndex].id);
+        });
+
         it('closes on Tab without selecting when the active option is disabled', () => {
             component.writeValue('b');
             fixture.detectChanges();

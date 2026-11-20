@@ -211,8 +211,14 @@ final class SecurityPolicyYaml {
             missing.forEach(testClass -> replacement.append(newline).append(indent).append("  - ").append(quote(testClass)));
         }
         else {
-            StringBuilder list = new StringBuilder(trimmed.substring(0, trimmed.length() - 1).stripTrailing());
-            missing.forEach(testClass -> list.append(", ").append(quote(testClass)));
+            String entries = trimmed.substring(0, trimmed.length() - 1).stripTrailing();
+            StringBuilder list = new StringBuilder(entries);
+            // YAML allows a comma after the last entry, e.g. ["a",]; that comma then separates the first added class.
+            String separator = entries.endsWith(",") ? " " : ", ";
+            for (String testClass : missing) {
+                list.append(separator).append(quote(testClass));
+                separator = ", ";
+            }
             replacement.append(' ').append(list).append(']').append(trailingComment);
         }
         return Optional.of(replacement.toString());

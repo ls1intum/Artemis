@@ -189,7 +189,8 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
             if (optionCount === 0) {
                 this.keyManager.setActiveItem(-1);
             } else if (this.activeIndex() >= optionCount) {
-                this.keyManager.setActiveItem(optionCount - 1);
+                // The last option that can be chosen; -1 if none can be chosen.
+                this.keyManager.setActiveItem(this.visibleOptions().findLastIndex((option) => !this.isOptionDisabled(option)));
             } else if (this.isOpen() && this.activeIndex() < 0) {
                 this.keyManager.setFirstItemActive();
             }

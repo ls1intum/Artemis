@@ -64,6 +64,7 @@ import org.springframework.core.io.Resource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
@@ -907,8 +908,9 @@ class SecurityFrameworkServiceTest {
     void aConcurrentPushIsNeitherOverwrittenNorReportedAsApplied() throws Exception {
         pushConcurrentlyAfterCheckout = true;
 
-        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise(ProgrammingLanguage.JAVA), user))
-                .matches(exception -> "securityFrameworkPushFailed".equals(exception.getErrorKey()));
+        // A conflict, so the instructor can reload and try again, unlike after a failure of the push itself.
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise(ProgrammingLanguage.JAVA), user))
+                .matches(exception -> "securityFrameworkConcurrentChange".equals(exception.getErrorKey()));
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(CUSTOM_POLICY);
         assertThat(readPushed("README.md")).contains("Edited in the online editor");
     }
@@ -1050,8 +1052,8 @@ class SecurityFrameworkServiceTest {
         afterNextCheckout = () -> assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise, user))
                 .matches(exception -> "securityFrameworkProcessingFailed".equals(exception.getErrorKey()));
         // B's push is rejected, because its checkout no longer matches the repository.
-        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> securityFrameworkService.updateFrameworkVersion(exercise, "2.3.0", user))
-                .matches(exception -> "securityFrameworkPushFailed".equals(exception.getErrorKey()));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> securityFrameworkService.updateFrameworkVersion(exercise, "2.3.0", user))
+                .matches(exception -> "securityFrameworkConcurrentChange".equals(exception.getErrorKey()));
         String pushedHead = pushedHead();
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
         assertThat(submittedCommits).containsExactly(pushedHead);
