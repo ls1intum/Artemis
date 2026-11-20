@@ -15,7 +15,7 @@
     </tumaet-ui-tab-list>
 </tumaet-ui-tabs>
 
-<div class="sp-stack-4 pt-4">
+<div class="sp-stack-4 pt-6!">
     @if (uncommittedTabs().has(activeTab())) {
         <div class="flex justify-end">
             <tumaet-ui-tag severity="warn" size="sm" [tumAetUiTooltip]="prefix + 'uncommittedHelp' | artemisTranslate" tabindex="0" data-testid="security-behaviour-uncommitted">
