@@ -81,7 +81,15 @@ export class CreateAttachmentVideoUnitComponent implements OnInit, RecordingLeav
                 this.courseId.set(courseIdParam ? Number(courseIdParam) : undefined);
                 const courseId = this.courseId();
                 const lectureId = this.lectureId();
-                const checkpoint = courseId && lectureId ? this.redirect.recover(courseId, lectureId) : undefined;
+                if (!courseId || !lectureId) {
+                    return;
+                }
+                const recovery = this.redirect.recoverPendingSave(courseId, lectureId);
+                this.recovery.set(recovery);
+                if (recovery) {
+                    return;
+                }
+                const checkpoint = this.redirect.recover(courseId, lectureId);
                 if (checkpoint?.unitId) {
                     this.savedRecording.set(checkpoint);
                     this.continueRecording();
@@ -96,9 +104,10 @@ export class CreateAttachmentVideoUnitComponent implements OnInit, RecordingLeav
         const { file, fileName } = attachmentVideoUnitFormData?.fileProperties || {};
 
         const lectureId = this.lectureId();
+        const courseId = this.courseId();
         // A unit may start without a file and a video, so its video can be uploaded to TUM.Live once it exists.
         const recording = attachmentVideoUnitFormData.recording;
-        if (!name || lectureId === undefined || this.isLoading() || this.savedRecording() || this.recovery()) {
+        if (!name || lectureId === undefined || this.isLoading() || this.savedRecording() || this.recovery() || (recording && courseId === undefined)) {
             return;
         }
 
@@ -118,6 +127,7 @@ export class CreateAttachmentVideoUnitComponent implements OnInit, RecordingLeav
 
         this.isLoading.set(true);
         if (recording) {
+            this.redirect.checkpointPendingSave({ courseId: courseId!, lectureId });
             this.savingRecording.set(true);
         }
 
@@ -143,11 +153,11 @@ export class CreateAttachmentVideoUnitComponent implements OnInit, RecordingLeav
                         }
                         return;
                     }
-                    if (created.id === undefined || this.courseId() === undefined) {
+                    if (created.id === undefined) {
                         this.markSaveUnknown();
                         return;
                     }
-                    const target = { courseId: this.courseId()!, lectureId, unitId: created.id };
+                    const target = { courseId: courseId!, lectureId, unitId: created.id };
                     this.recording = recording;
                     this.createdUnit = created;
                     this.savedRecording.set(target);
@@ -155,9 +165,12 @@ export class CreateAttachmentVideoUnitComponent implements OnInit, RecordingLeav
                     this.continueRecording();
                 },
                 error: (res: HttpErrorResponse | Error) => {
-                    if (recording && createOutcomeIsUnknown(res)) {
-                        this.markSaveUnknown(res);
-                        return;
+                    if (recording) {
+                        if (createOutcomeIsUnknown(res)) {
+                            this.markSaveUnknown(res);
+                            return;
+                        }
+                        this.redirect.checkpoint();
                     }
                     if (res instanceof Error) {
                         this.alertService.error(res.message);

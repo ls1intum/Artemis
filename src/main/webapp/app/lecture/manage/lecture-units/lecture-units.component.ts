@@ -1,7 +1,7 @@
 import { Component, DestroyRef, ElementRef, Injector, OnInit, afterNextRender, computed, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { RecordingRecoveryScope, TumLiveSaveRecoveryComponent } from './tum-live-upload/tum-live-save-recovery.component';
-import { confirmRecordingLeave, createOutcomeIsUnknown, injectRecordingAvailability, unknownCreateDetail } from './tum-live-upload/tum-live-creation';
+import { RecordingRedirect, confirmRecordingLeave, createOutcomeIsUnknown, injectRecordingAvailability, unknownCreateDetail } from './tum-live-upload/tum-live-creation';
 import { TumLiveUploadComponent } from 'app/lecture/manage/lecture-units/tum-live-upload/tum-live-upload.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
@@ -122,6 +122,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     private readonly injector = inject(Injector);
     private readonly confirmation = inject(TumAetUiConfirmationService);
     private readonly translate = inject(TranslateService);
+    private readonly recordingRedirect = new RecordingRedirect();
 
     protected readonly faScissors = faScissors;
     protected readonly faSpinner = faSpinner;
@@ -327,6 +328,14 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 this.onCreateLectureUnit(LectureUnitType.EXERCISE);
             }
         });
+        const { id: lectureId, course } = this.lecture();
+        if (course?.id !== undefined && lectureId !== undefined) {
+            const recovery = this.recordingRedirect.recoverPendingSave(course.id, lectureId);
+            if (recovery) {
+                this.recordingRecovery.set(recovery);
+                this.openCreationForm(LectureUnitType.ATTACHMENT_VIDEO);
+            }
+        }
     }
 
     /**
@@ -432,8 +441,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
         const { description, name, releaseDate, videoSource, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
         const recording = attachmentVideoUnitFormData.recording;
+        const lecture = this.lecture();
+        const courseId = lecture.course?.id;
         // A unit may start without a file and a video, so its video can be uploaded to TUM.Live once it exists.
-        if (!name || this.recordingSaving() || this.recordingRecovery()) {
+        if (!name || this.recordingSaving() || this.recordingRecovery() || (recording && courseId === undefined)) {
             return;
         }
 
@@ -445,15 +456,17 @@ export class LectureUpdateUnitsComponent implements OnInit {
         attachmentVideoUnit.competencyLinks = competencyLinks;
 
         const upload = !!file && !!fileName && file.size > 0;
+        const lectureId = lecture.id!;
+        if (recording) {
+            this.recordingRedirect.checkpointPendingSave({ courseId: courseId!, lectureId });
+            this.recordingSaving.set(true);
+        }
         const request = this.attachmentVideoUnitService.create(
-            this.lecture().id!,
+            lectureId,
             attachmentVideoUnit,
             upload ? this.attachmentForUpload(new Attachment(), name, releaseDate) : undefined,
             upload ? withFileName(file, fileName) : undefined,
         );
-        if (recording) {
-            this.recordingSaving.set(true);
-        }
         const creation = this.trackCreation(request);
         // A regular PDF or link save continues after the editor closes. A recording create owns a browser file and ends with its editor.
         const subscription = (recording ? creation.pipe(takeUntilDestroyed(this.destroyRef)) : creation)
@@ -475,13 +488,19 @@ export class LectureUpdateUnitsComponent implements OnInit {
                         this.markRecordingSaveUnknown();
                         return;
                     }
+                    this.recordingRedirect.checkpoint();
                     this.openEditor(created, recording);
                     this.unitManagementComponent()?.loadData();
                 },
                 error: (res: HttpErrorResponse | Error) => {
-                    if (recording && createOutcomeIsUnknown(res)) {
-                        this.markRecordingSaveUnknown(res);
-                    } else if (res instanceof Error) {
+                    if (recording) {
+                        if (createOutcomeIsUnknown(res)) {
+                            this.markRecordingSaveUnknown(res);
+                            return;
+                        }
+                        this.recordingRedirect.checkpoint();
+                    }
+                    if (res instanceof Error) {
                         this.alertService.error(res.message);
                     } else if (res.error?.params === 'file' && res.error?.title) {
                         this.alertService.error(res.error.title);

@@ -221,7 +221,7 @@ describe('LectureUpdateComponent', () => {
 
         lecture.next({ id: 55, course: { id: 1 } } as Lecture);
         expect(createUnit).toHaveBeenCalledExactlyOnceWith(55, expect.objectContaining({ videoSource: undefined }));
-        expect(TestBed.inject(Location).getState()).toMatchObject({ tumLiveRecordingCheckpoint: { courseId: 1, lectureId: 55, unitSavePending: true } });
+        expect(TestBed.inject(Location).getState()).toMatchObject({ tumLiveRecordingSavePending: { courseId: 1, lectureId: 55 } });
         expect(navigate).not.toHaveBeenCalled();
         unit.next({ id: 90 });
         unit.complete();
@@ -233,6 +233,7 @@ describe('LectureUpdateComponent', () => {
             state: { lectureDetailsSavedAt: expect.any(String) },
         });
         expect((TestBed.inject(Location).getState() as Record<string, unknown>).tumLiveRecordingCheckpoint).toEqual({ courseId: 1, lectureId: 55, unitId: 90 });
+        expect(TestBed.inject(Location).getState()).not.toHaveProperty('tumLiveRecordingSavePending');
     });
 
     it.each(['lecture', 'unit'])('ignores the late %s save after confirming leave', async (phase) => {
@@ -285,25 +286,38 @@ describe('LectureUpdateComponent', () => {
         expect(navigate).not.toHaveBeenCalled();
     });
 
-    it.each([false, true])('recovers the saved unit after reload without creating it again (response failed: %s)', async (responseFailed) => {
+    it.each([
+        ['lecture', false],
+        ['lecture', true],
+        ['unit', false],
+        ['unit', true],
+    ])('restores recovery for the %s POST after reload (response failed: %s)', async (stage, responseFailed) => {
         await configureActiveRouteMockAndCompileComponents();
         vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/lectures/new');
-        const lectureCreate = vi.spyOn(lectureService, 'create').mockReturnValue(of({ id: 55 } as Lecture));
+        const lectureResponse = new Subject<Lecture>();
+        const lectureCreate = vi.spyOn(lectureService, 'create').mockReturnValue(lectureResponse);
         const unitResponse = new Subject<AttachmentVideoUnit>();
         const createUnit = vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'create').mockReturnValue(unitResponse);
         const savedUnit = new AttachmentVideoUnit();
         savedUnit.id = 90;
         savedUnit.name = 'Recording';
-        const read = vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(of({ id: 55, lectureUnits: [savedUnit] }));
+        const read =
+            stage === 'lecture'
+                ? vi.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of([{ id: 55, title: 'Lecture' }]))
+                : vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(of({ id: 55, lectureUnits: [savedUnit] }));
         const navigate = vi.spyOn(router, 'navigateByUrl');
         lectureUpdateComponentFixture.detectChanges();
 
         const recording = new File(['video'], 'lecture.mp4', { type: 'video/mp4' });
         lectureUpdateComponent['recording'].set(recording);
         lectureUpdateComponent.save();
-        expect(createUnit).toHaveBeenCalledOnce();
+        expect(TestBed.inject(Location).getState()).toMatchObject({ tumLiveRecordingSavePending: { courseId: 1 } });
+        if (stage === 'unit') {
+            lectureResponse.next({ id: 55 } as Lecture);
+        }
         if (responseFailed) {
-            unitResponse.error(new HttpErrorResponse({ status: 0 }));
+            const response = stage === 'lecture' ? lectureResponse : unitResponse;
+            response.error(new HttpErrorResponse({ status: 0 }));
         }
 
         lectureUpdateComponentFixture.destroy();
@@ -318,14 +332,39 @@ describe('LectureUpdateComponent', () => {
         recovery.query(By.css('button')).nativeElement.click();
         lectureUpdateComponentFixture.detectChanges();
 
-        expect(read).toHaveBeenCalledExactlyOnceWith(55);
-        expect((recovery.componentInstance as TumLiveSaveRecoveryComponent).entries()?.[0].navigation.target).toEqual({ courseId: 1, lectureId: 55, unitId: 90 });
+        expect(read).toHaveBeenCalledExactlyOnceWith(stage === 'lecture' ? 1 : 55);
+        expect((recovery.componentInstance as TumLiveSaveRecoveryComponent).entries()?.[0].navigation.target).toEqual({
+            courseId: 1,
+            lectureId: 55,
+            unitId: stage === 'unit' ? 90 : undefined,
+        });
         lectureUpdateComponent['recording'].set(recording);
         lectureUpdateComponent.save();
         lectureUpdateComponent['continueRecording']();
         expect(lectureCreate).toHaveBeenCalledOnce();
-        expect(createUnit).toHaveBeenCalledOnce();
+        expect(createUnit).toHaveBeenCalledTimes(stage === 'unit' ? 1 : 0);
         expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('clears the pending marker when the first lecture create is definitively rejected', async () => {
+        await configureActiveRouteMockAndCompileComponents();
+        lectureUpdateComponent.courseId.set(1);
+        lectureUpdateComponent['recording'].set(new File(['video'], 'lecture.mp4', { type: 'video/mp4' }));
+        const createLecture = vi
+            .spyOn(lectureService, 'create')
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 403 })))
+            .mockReturnValueOnce(of({ id: 55 } as Lecture));
+        const createUnit = vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'create').mockReturnValue(of({ id: 90 }));
+
+        lectureUpdateComponent.save();
+
+        expect(TestBed.inject(Location).getState()).not.toHaveProperty('tumLiveRecordingSavePending');
+        expect(createUnit).not.toHaveBeenCalled();
+
+        lectureUpdateComponent.save();
+
+        expect(createLecture).toHaveBeenCalledTimes(2);
+        expect(createUnit).toHaveBeenCalledOnce();
     });
 
     it('keeps the saved lecture retryable when the recording unit create is definitively rejected', async () => {
@@ -341,6 +380,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.save();
 
         expect((TestBed.inject(Location).getState() as Record<string, unknown>).tumLiveRecordingCheckpoint).toEqual({ courseId: 1, lectureId: 55 });
+        expect(TestBed.inject(Location).getState()).not.toHaveProperty('tumLiveRecordingSavePending');
         expect(lectureUpdateComponent['recordingRecovery']()).toBeUndefined();
 
         lectureUpdateComponent.save();

@@ -2,6 +2,9 @@ import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { TumLiveUploadService } from './services/tum-live-upload.service';
+import { TumLiveSaveRecoveryComponent } from './tum-live-upload/tum-live-save-recovery.component';
+import { LectureService } from '../services/lecture.service';
+import { Location } from '@angular/common';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Mock, MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -129,6 +132,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 MockProvider(TextUnitApi),
                 MockProvider(OnlineUnitApi),
                 MockProvider(AttachmentVideoUnitService),
+                MockProvider(LectureService),
                 MockProvider(LectureUnitManagementComponent),
                 { provide: Router, useClass: MockRouter },
                 {
@@ -595,6 +599,7 @@ describe('LectureUpdateUnitsComponent', () => {
     it('hands the MP4 to the newly created inline editor and leaves focus to the uploader', () => {
         vi.useFakeTimers();
         try {
+            wizardUnitComponentFixture.componentRef.setInput('lecture', { id: 1, course: { id: 7 } });
             wizardUnitComponentFixture.detectChanges();
             wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ATTACHMENT_VIDEO);
             const release = new Subject<AttachmentVideoUnit>();
@@ -666,6 +671,67 @@ describe('LectureUpdateUnitsComponent', () => {
         expect(wizardUnitComponent['recordingRecovery']()).toEqual({ courseId: 7, lectureId: 1 });
         expect(wizardUnitComponent.isEditingLectureUnit()).toBe(false);
         expect(wizardUnitComponent['initialRecording']()).toBeUndefined();
+    });
+
+    it.each([false, true])('recovers an inline recording unit after reload (response failed: %s)', (responseFailed) => {
+        const lecture = { id: 1, course: { id: 7 } };
+        const location = TestBed.inject(Location);
+        const response = new Subject<AttachmentVideoUnit>();
+        const create = vi.spyOn(attachmentVideoUnitService, 'create').mockImplementation(() => {
+            expect(location.getState()).toMatchObject({ tumLiveRecordingSavePending: { courseId: 7, lectureId: 1 } });
+            return response;
+        });
+        const savedUnit = new AttachmentVideoUnit();
+        savedUnit.id = 42;
+        const read = vi.spyOn(TestBed.inject(LectureService), 'findWithDetails').mockReturnValue(of({ id: 1, lectureUnits: [savedUnit] }));
+        wizardUnitComponentFixture.componentRef.setInput('lecture', lecture);
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ATTACHMENT_VIDEO);
+        const recording = new File(['mp4'], 'recording.mp4', { type: 'video/mp4' });
+        const data = { formProperties: { name: 'Recording' }, fileProperties: {}, recording };
+        wizardUnitComponent.createAttachmentVideoUnit(data);
+        if (responseFailed) {
+            response.error(new HttpErrorResponse({ status: 0 }));
+        }
+        wizardUnitComponentFixture.destroy();
+        wizardUnitComponentFixture = TestBed.createComponent(LectureUpdateUnitsComponent);
+        wizardUnitComponent = wizardUnitComponentFixture.componentInstance;
+        wizardUnitComponentFixture.componentRef.setInput('lecture', lecture);
+        wizardUnitComponentFixture.detectChanges();
+
+        const recovery = wizardUnitComponentFixture.debugElement.query(By.directive(TumLiveSaveRecoveryComponent));
+        const form = wizardUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormStubComponent)).componentInstance;
+        expect(form.recordingSaveLocked()).toBe(true);
+        recovery.query(By.css('button')).nativeElement.click();
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.createAttachmentVideoUnit(data);
+
+        expect(read).toHaveBeenCalledExactlyOnceWith(1);
+        expect((recovery.componentInstance as TumLiveSaveRecoveryComponent).entries()?.[0].navigation.target).toEqual({ courseId: 7, lectureId: 1, unitId: 42 });
+        expect(create).toHaveBeenCalledOnce();
+        expect(wizardUnitComponent.isEditingLectureUnit()).toBe(false);
+        expect(wizardUnitComponent['initialRecording']()).toBeUndefined();
+    });
+
+    it('clears the pending marker when the inline recording unit create is definitively rejected', () => {
+        wizardUnitComponentFixture.componentRef.setInput('lecture', { id: 1, course: { id: 7 } });
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ATTACHMENT_VIDEO);
+        const create = vi
+            .spyOn(attachmentVideoUnitService, 'create')
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 403 })))
+            .mockReturnValueOnce(of({ id: 42, type: LectureUnitType.ATTACHMENT_VIDEO }));
+        const recording = new File(['mp4'], 'recording.mp4', { type: 'video/mp4' });
+        const data = { formProperties: { name: 'Recording' }, fileProperties: {}, recording };
+
+        wizardUnitComponent.createAttachmentVideoUnit(data);
+
+        expect(TestBed.inject(Location).getState()).not.toHaveProperty('tumLiveRecordingSavePending');
+        expect(wizardUnitComponent['recordingRecovery']()).toBeUndefined();
+
+        wizardUnitComponent.createAttachmentVideoUnit(data);
+
+        expect(create).toHaveBeenCalledTimes(2);
     });
 
     it('should close the exercise form once its items are created and reload the list when their requests completed', async () => {

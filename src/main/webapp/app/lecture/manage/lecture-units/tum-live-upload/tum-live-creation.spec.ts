@@ -3,7 +3,7 @@ import { provideLocationMocks } from '@angular/common/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { Router, provideRouter, withRouterConfig } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { describe, expect, it } from 'vitest';
 import { RecordingNavigation, RecordingRedirect, createOutcomeIsUnknown } from './tum-live-creation';
@@ -24,14 +24,17 @@ describe('RecordingRedirect', () => {
         TestBed.configureTestingModule({
             providers: [
                 provideLocationMocks(),
-                provideRouter([
-                    {
-                        path: 'new',
-                        component: RecordingCreatePage,
-                        canDeactivate: [(page: RecordingCreatePage, _route, _current, next) => page.redirect.allows(next.url)],
-                    },
-                    { path: 'course-management/:courseId/lectures/:lectureId/edit', component: RecordingEditPage, canActivate: [canOpen] },
-                ]),
+                provideRouter(
+                    [
+                        {
+                            path: 'new',
+                            component: RecordingCreatePage,
+                            canDeactivate: [(page: RecordingCreatePage, _route, _current, next) => page.redirect.allows(next.url)],
+                        },
+                        { path: 'course-management/:courseId/lectures/:lectureId/edit', component: RecordingEditPage, canActivate: [canOpen] },
+                    ],
+                    withRouterConfig({ onSameUrlNavigation: 'reload' }),
+                ),
             ],
         });
         const harness = await RouterTestingHarness.create();
@@ -77,6 +80,77 @@ describe('RecordingRedirect', () => {
         await expect(reloaded.open(reloaded.recover(1, 2)!, false)).resolves.toBe(true);
         const accepted = TestBed.inject(Router).lastSuccessfulNavigation()?.extras.info as RecordingNavigation;
         expect(accepted.takeFile()).toBeUndefined();
+    });
+
+    it('restores only the pending save for the matching scope and clears it after acknowledgment', async () => {
+        const source = await sourcePage();
+        const location = TestBed.inject(Location);
+        location.replaceState('/new', '', { preserved: true, tumLiveRecordingSavePending: { courseId: 1, lectureId: 2 } });
+        expect(source.redirect.recoverPendingSave(1, 2)).toEqual({ courseId: 1, lectureId: 2 });
+
+        source.redirect.checkpointPendingSave({ courseId: 1 });
+        expect(source.redirect.recoverPendingSave(1)).toEqual({ courseId: 1, lectureId: undefined });
+        expect(source.redirect.recoverPendingSave(1, 2)).toBeUndefined();
+        expect(source.redirect.recoverPendingSave(5)).toBeUndefined();
+
+        source.redirect.checkpointPendingSave({ courseId: 1, lectureId: 2 });
+        source.redirect.checkpoint(target);
+        expect(source.redirect.recoverPendingSave(1, 2)).toBeUndefined();
+        expect(source.redirect.recover(1, 2)).toEqual(target);
+        expect(location.getState()).toMatchObject({ preserved: true });
+    });
+
+    it.each([false, true])('keeps a pending save when Angular cancels navigation (already reloaded: %s)', async (reloaded) => {
+        const source = await sourcePage();
+        const router = TestBed.inject(Router);
+        const location = TestBed.inject(Location);
+        const scope = { courseId: 1, lectureId: 2 };
+        if (reloaded) {
+            location.replaceState('/new', '', { tumLiveRecordingSavePending: scope });
+            expect(source.redirect.recoverPendingSave(1, 2)).toEqual(scope);
+        } else {
+            source.redirect.checkpointPendingSave(scope);
+        }
+
+        await expect(router.navigateByUrl(editUrl)).resolves.toBe(false);
+
+        expect(location.getState()).toMatchObject({ tumLiveRecordingSavePending: scope });
+    });
+
+    it.each([false, true])('keeps the checkpoint on same-URL navigation (pending save: %s)', async (pending) => {
+        const source = await sourcePage();
+        const scope = { courseId: 1, lectureId: 2 };
+        if (pending) {
+            source.redirect.checkpointPendingSave(scope);
+        } else {
+            source.redirect.checkpoint(scope);
+        }
+
+        await expect(TestBed.inject(Router).navigateByUrl('/new')).resolves.toBe(true);
+
+        const key = pending ? 'tumLiveRecordingSavePending' : 'tumLiveRecordingCheckpoint';
+        expect(TestBed.inject(Location).getState()).toMatchObject({ [key]: scope });
+    });
+
+    it('keeps a pending save when navigation fails with an error', async () => {
+        const source = await sourcePage();
+        const scope = { courseId: 1, lectureId: 2 };
+        source.redirect.checkpointPendingSave(scope);
+
+        await expect(TestBed.inject(Router).navigateByUrl('/unmatched')).rejects.toThrow();
+
+        expect(TestBed.inject(Location).getState()).toMatchObject({ tumLiveRecordingSavePending: scope });
+    });
+
+    it('keeps the acknowledged lecture if a leave attempt is canceled', async () => {
+        const source = await sourcePage();
+        const scope = { courseId: 1, lectureId: 2 };
+        TestBed.inject(Location).replaceState('/new', '', { tumLiveRecordingCheckpoint: scope });
+        expect(source.redirect.recover(1)).toEqual(scope);
+
+        await expect(TestBed.inject(Router).navigateByUrl(editUrl)).resolves.toBe(false);
+
+        expect(TestBed.inject(Location).getState()).toMatchObject({ tumLiveRecordingCheckpoint: scope });
     });
 });
 

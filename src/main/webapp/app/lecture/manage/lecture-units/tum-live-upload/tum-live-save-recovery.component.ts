@@ -6,11 +6,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { finalize, map } from 'rxjs';
-import { RecordingNavigation, lectureEditorCommands, unitEditorCommands } from './tum-live-creation';
+import { RecordingNavigation, RecordingSaveScope, lectureEditorCommands, unitEditorCommands } from './tum-live-creation';
 
-export interface RecordingRecoveryScope {
-    readonly courseId: number;
-    readonly lectureId?: number;
+export interface RecordingRecoveryScope extends RecordingSaveScope {
     readonly detail?: string;
 }
 

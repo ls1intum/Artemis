@@ -8,6 +8,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { Location } from '@angular/common';
 import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { RecordingNavigation } from '../tum-live-upload/tum-live-creation';
+import { TumLiveSaveRecoveryComponent } from '../tum-live-upload/tum-live-save-recovery.component';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { CreateAttachmentVideoUnitComponent } from 'app/lecture/manage/lecture-units/create-attachment-video-unit/create-attachment-video-unit.component';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
@@ -235,6 +236,60 @@ describe('CreateAttachmentVideoUnitComponent', () => {
         expect(form.recordingSaveLocked()).toBe(true);
         expect(component['recovery']()).toEqual({ courseId: 1, lectureId: 1 });
         expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it.each([false, true])('recovers a standalone recording unit after reload (response failed: %s)', (responseFailed) => {
+        const source = createAttachmentVideoUnitComponentFixture;
+        const location = TestBed.inject(Location);
+        const response = new Subject<AttachmentVideoUnit>();
+        const create = vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'create').mockImplementation(() => {
+            expect(location.getState()).toMatchObject({ tumLiveRecordingSavePending: { courseId: 1, lectureId: 1 } });
+            return response;
+        });
+        const savedUnit = new AttachmentVideoUnit();
+        savedUnit.id = 42;
+        const read = vi.spyOn(TestBed.inject(LectureService), 'findWithDetails').mockReturnValue(of({ id: 1, lectureUnits: [savedUnit] }));
+        const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl');
+        source.detectChanges();
+        const recording = new File(['mp4'], 'recording.mp4', { type: 'video/mp4' });
+        const data = { formProperties: { name: 'Recording' }, fileProperties: {}, recording };
+        source.componentInstance.createAttachmentVideoUnit(data);
+        if (responseFailed) {
+            response.error(new HttpErrorResponse({ status: 0 }));
+        }
+        source.destroy();
+        const reloaded = TestBed.createComponent(CreateAttachmentVideoUnitComponent);
+        reloaded.detectChanges();
+
+        const recovery = reloaded.debugElement.query(By.directive(TumLiveSaveRecoveryComponent));
+        recovery.query(By.css('button')).nativeElement.click();
+        reloaded.detectChanges();
+        reloaded.componentInstance.createAttachmentVideoUnit(data);
+
+        expect(read).toHaveBeenCalledExactlyOnceWith(1);
+        expect((recovery.componentInstance as TumLiveSaveRecoveryComponent).entries()?.[0].navigation.target).toEqual({ courseId: 1, lectureId: 1, unitId: 42 });
+        expect(create).toHaveBeenCalledOnce();
+        expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('clears the pending marker when the standalone recording unit create is definitively rejected', () => {
+        const fixture = createAttachmentVideoUnitComponentFixture;
+        const create = vi
+            .spyOn(TestBed.inject(AttachmentVideoUnitService), 'create')
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 403 })))
+            .mockReturnValueOnce(of({ id: 42 }));
+        fixture.detectChanges();
+        const recording = new File(['mp4'], 'recording.mp4', { type: 'video/mp4' });
+        const data = { formProperties: { name: 'Recording' }, fileProperties: {}, recording };
+
+        fixture.componentInstance.createAttachmentVideoUnit(data);
+
+        expect(TestBed.inject(Location).getState()).not.toHaveProperty('tumLiveRecordingSavePending');
+        expect(fixture.componentInstance['recovery']()).toBeUndefined();
+
+        fixture.componentInstance.createAttachmentVideoUnit(data);
+
+        expect(create).toHaveBeenCalledTimes(2);
     });
 
     it('asks before leaving a recording create and ignores the late result if confirmed', () => {

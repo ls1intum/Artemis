@@ -1,25 +1,26 @@
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DestroyRef, Signal, computed, inject } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { NavigationBehaviorOptions, Router } from '@angular/router';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { NavigationBehaviorOptions, NavigationCancel, NavigationEnd, NavigationError, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiConfirmationRequest, TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
-import { Observable, catchError, distinctUntilChanged, of, startWith, switchMap } from 'rxjs';
+import { Observable, catchError, distinctUntilChanged, filter, of, startWith, switchMap } from 'rxjs';
 
 const CHECKPOINT = 'tumLiveRecordingCheckpoint';
+const PENDING_SAVE = 'tumLiveRecordingSavePending';
 
-export interface RecordingTarget {
-    courseId: number;
-    lectureId: number;
-    unitId?: number;
+export interface RecordingSaveScope {
+    readonly courseId: number;
+    readonly lectureId?: number;
 }
 
-interface RecordingCheckpoint extends RecordingTarget {
-    unitSavePending?: true;
+export interface RecordingTarget extends RecordingSaveScope {
+    lectureId: number;
+    unitId?: number;
 }
 
 /** Angular navigation info is scoped to one navigation and stays in memory, unlike history state. */
@@ -56,17 +57,66 @@ export class RecordingRedirect {
     private readonly location = inject(Location);
     private readonly destroyRef = inject(DestroyRef);
     private next?: { url: string; info: RecordingNavigation };
+    private sourceEntry?: { path: string; target?: RecordingTarget; pending?: RecordingSaveScope };
 
-    checkpoint(target: RecordingCheckpoint): void {
+    constructor() {
+        // Angular replaces history state on rollback and on navigation to the current URL.
+        this.router.events
+            .pipe(
+                filter((event) => event instanceof NavigationCancel || event instanceof NavigationError || event instanceof NavigationEnd),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(() => {
+                if (this.sourceEntry?.path === this.location.path()) {
+                    this.writeCheckpoint();
+                }
+            });
+    }
+
+    checkpoint(target?: RecordingTarget): void {
+        this.sourceEntry = target ? { path: this.location.path(), target } : undefined;
+        this.writeCheckpoint();
+    }
+
+    checkpointPendingSave(scope: RecordingSaveScope): void {
+        this.sourceEntry = { path: this.location.path(), pending: scope };
+        this.writeCheckpoint();
+    }
+
+    private writeCheckpoint(): void {
         const state = (this.location.getState() ?? {}) as Record<string, unknown>;
-        state[CHECKPOINT] = target;
+        delete state[CHECKPOINT];
+        delete state[PENDING_SAVE];
+        const entry = this.sourceEntry;
+        if (entry?.target) {
+            state[CHECKPOINT] = entry.target;
+        }
+        if (entry?.pending) {
+            state[PENDING_SAVE] = entry.pending;
+        }
         this.location.replaceState(this.location.path(), '', state);
     }
 
-    recover(courseId: number, lectureId?: number): RecordingCheckpoint | undefined {
+    recoverPendingSave(courseId: number, lectureId?: number): RecordingSaveScope | undefined {
         const state = this.location.getState() as Record<string, unknown>;
-        const target = state?.[CHECKPOINT] as RecordingCheckpoint | undefined;
+        const scope = state?.[PENDING_SAVE] as RecordingSaveScope | undefined;
+        if (
+            scope?.courseId === courseId &&
+            (scope.lectureId === undefined || Number.isSafeInteger(scope.lectureId)) &&
+            (lectureId === undefined || scope.lectureId === lectureId)
+        ) {
+            const pending = { courseId, lectureId: scope.lectureId };
+            this.sourceEntry = { path: this.location.path(), pending };
+            return pending;
+        }
+        return undefined;
+    }
+
+    recover(courseId: number, lectureId?: number): RecordingTarget | undefined {
+        const state = this.location.getState() as Record<string, unknown>;
+        const target = state?.[CHECKPOINT] as RecordingTarget | undefined;
         if (target?.courseId === courseId && Number.isSafeInteger(target.lectureId) && (lectureId === undefined || target.lectureId === lectureId)) {
+            this.sourceEntry = { path: this.location.path(), target };
             return target;
         }
         return undefined;
