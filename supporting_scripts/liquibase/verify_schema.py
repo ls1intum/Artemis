@@ -134,6 +134,7 @@ GRANDFATHERED_UNBOUNDED_TEXT: set[tuple[str, str]] = {
     ("exam", "confirmation_end_text"),
     ("exam", "confirmation_start_text"),
     ("exam", "end_text"),
+    ("exam", "exam_mode"),
     ("exam", "start_text"),
     ("exam_live_event", "problem_statement"),
     ("exam_live_event", "text_content"),
@@ -173,6 +174,7 @@ GRANDFATHERED_UNBOUNDED_TEXT: set[tuple[str, str]] = {
     ("submission_version", "content"),
     ("system_notification", "text"),
     ("text_block", "text"),
+    ("tum_live_unit_upload", "expected_video_source"),
     ("tutorial_group", "additional_information"),
     ("tutorial_group_schedule", "location"),
     ("tutorial_group_session", "location"),
@@ -187,6 +189,10 @@ ALLOWED_TEXT_INTRODUCTIONS: dict[tuple[str, str, str, str, str], str] = {
         "Transactional-outbox payload for the Weaviate search sync; an internal, serialized operation record, not a user-facing free-text field.",
     ("config/liquibase/changelog/20261004235109_changelog.xml", "20261004235109-1-add-sender-origin-postgres", "senan-aslan", "iris_message", "sender_origin"):
         "A short enum ('IOS'/'ANDROID'); MySQL uses ENUM(...), PostgreSQL has no inline enum so it is stored as text. Effectively bounded, not free-form text.",
+    ("config/liquibase/changelog/20260624180225_changelog.xml", "20260624180225-1-postgres", "matyasht", "exam", "exam_mode"):
+        "A short enum ('REAL'/'TEST'/'TEST_WITH_SUPERVISED_SESSION'); MySQL uses ENUM(...), PostgreSQL has no inline enum so it is stored as text. Effectively bounded, not free-form text.",
+    ("config/liquibase/changelog/20261029130730_changelog.xml", "20261029130730-1-create-tum-live-unit-upload", "pat", "tum_live_unit_upload", "expected_video_source"):
+        "A copy of the unit's video URL, compared for equality with attachment_video_unit.video_source, which is unbounded text. Bounding the copy would make a long URL never match.",
 }
 
 # (changelog_file, changeset_id, author) -> (reason, introduces). A changeset under changelog/ the scanner
