@@ -337,7 +337,7 @@ function categorizeChangedFiles(changedFiles, options) {
 
     // Files to exclude from coverage reporting (cannot be properly tested)
     const excludedClientPatterns = ['.module.ts', '.spec.ts', '.routes.ts', '.route.ts'];
-    const excludedClientFiles = ['app.component.ts', 'app.config.ts', 'app.constants.ts', 'app.main.ts', 'app.routes.ts', 'polyfills.ts', 'primeng-artemis-theme.ts'];
+    const excludedClientFiles = ['app.component.ts', 'app.config.ts', 'app.constants.ts', 'app.main.ts', 'app.routes.ts', 'polyfills.ts'];
 
     for (const [filePath, changeType] of Object.entries(changedFiles)) {
         // Client files

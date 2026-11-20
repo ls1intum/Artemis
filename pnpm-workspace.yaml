@@ -23,7 +23,6 @@ catalog:
   '@angular/compiler-cli': 22.3.0
   '@angular/core': 22.3.0
   '@angular/forms': 22.3.0
-  '@angular/localize': 22.3.0
   '@angular/platform-browser': 22.3.0
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
@@ -129,11 +128,7 @@ overrides:
   'ng-mocks>@angular/platform-browser-dynamic': '^22.0.0'
   'ng-mocks>@angular/router': '^22.0.0'
   'ng-mocks>rxjs': '^7.8.2'
-  # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
-  # whose peer range requires the current Angular major). Without this pin it resolves to a
-  # straggler from an older major that violates that peer range; keep it equal to @angular/core.
-  '@angular/localize': 22.3.0
-  # @angular/animations is never declared either: it arrives as an optional auto-installed peer of
+  # @angular/animations is never declared: it arrives as an optional auto-installed peer of
   # @angular/platform-browser. Both sides of that edge pin an exact patch - platform-browser asks for
   # animations of its own version and animations asks for core of its own version - so without this pin
   # an Angular patch bump leaves animations behind on the old patch against the new core. Keep it equal
@@ -143,8 +138,6 @@ overrides:
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.10'
   '@babel/plugin-transform-modules-systemjs': '7.29.8'
-  '@primeuix/styled': '0.7.4'
-  '@primeuix/utils': '0.7.2'
   # lighthouse (a dev tool) asks for @sentry/node ^11.8.0. Its 11.10.0 release pulls @sentry/bundler-plugins with glob ^13.0.6, which is affected by
   # GHSA-3g3m-2fjr-6pw4 (fixed in glob 14.0.2). 11.11.0 is the first release whose bundler plugin uses glob ^14.0.3.
   '@sentry/node': '11.12.0'
@@ -265,7 +258,6 @@ minimumReleaseAgeExclude:
   - '@angular/core@22.3.0'
   - '@angular/forms@22.3.0'
   - '@angular/language-service@22.3.0'
-  - '@angular/localize@22.3.0'
   - '@angular/platform-browser@22.3.0'
   - '@angular/router@22.3.0'
   - '@angular/service-worker@22.3.0'

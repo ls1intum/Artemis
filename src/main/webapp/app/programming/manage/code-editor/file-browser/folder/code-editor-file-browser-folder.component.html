@@ -1,5 +1,5 @@
 <!--Folder-->
-<div class="list-group-item list-group-item--folder" id="file-browser-folder">
+<div class="file-tree-item file-tree-item--folder" id="file-browser-folder">
     <button
         type="button"
         (click)="onCollapseExpand()()"
@@ -12,7 +12,7 @@
         <fa-icon aria-hidden="true" [icon]="item().collapsed ? faFolder : faFolderOpen" [fixedWidth]="true" />
         @if (!isBeingRenamed()) {
             <span class="file-label-group">
-                <span class="ms-1 list-group-item__fileName">{{ item().text }}</span>
+                <span class="ms-1 file-tree-item__fileName">{{ item().text }}</span>
                 @for (badge of badges(); track badges().indexOf(badge)) {
                     <jhi-file-browser-badge [badge]="badge" />
                 }
@@ -30,7 +30,7 @@
                     (keyup.enter)="renameNode($event)"
                     (focusout)="renameNode($event)"
                     (keyup.esc)="clearRenamingNode($event)"
-                    class="list-group-item__input"
+                    class="file-tree-item__input"
             /></span>
         </span>
     }

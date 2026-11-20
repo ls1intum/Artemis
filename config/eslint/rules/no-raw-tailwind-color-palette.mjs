@@ -2,21 +2,21 @@
  * Forbid color classes that are NOT brand-bound semantic tokens in client templates:
  *   1. Raw Tailwind palette / arbitrary colors — `text-green-500`, `bg-red-100`, `border-t-sky-400`,
  *      `bg-green-500/50`, `text-[#ff0000]`. Not bound to the brand, so they break theming and dark mode.
- *   2. PrimeNG PRIMITIVE palette tokens used to express meaning — `text-(--p-red-500)`, `bg-(--p-green-300)`,
- *      and `var(--p-red-500)` inside `[style.*]` / `[color]` bindings. These ARE brand-bound (AuraArtemis maps
- *      `--p-red-500 -> var(--danger)`), but naming the PRIMITIVE tier ("red-500") to express a SEMANTIC role
- *      ("danger") is the documented design-token anti-pattern: it drifts and reads inconsistently.
+ *   2. PRIMITIVE palette tokens of the removed PrimeNG theme — `text-(--p-red-500)`, `bg-(--p-green-300)`,
+ *      and `var(--p-red-500)` inside `[style.*]` / `[color]` bindings. PrimeNG is no longer part of the client, so
+ *      these variables are undefined; the check keeps them from coming back. Naming a PRIMITIVE tier ("red-500")
+ *      to express a SEMANTIC role ("danger") is the documented design-token anti-pattern in any case.
  *   3. The older ARBITRARY brand-state form — `text-(--danger)`, `bg-(--success)` — superseded by the named
  *      `state-*` utilities below. (Only the four brand-state vars are flagged; component-local arbitrary vars
  *      like `text-(--artemis-alert-danger-color)`, and `var(--danger)` inside `[style.*]`, remain allowed.)
  *
  * Use the SEMANTIC tokens instead:
- *   - PrimeNG / tailwindcss-primeui (always-available, collision-safe): text-primary, bg-primary,
+ *   - Brand and neutral tokens defined in tailwind.css from theme variables: text-primary, bg-primary,
  *     text-primary-contrast, text-surface-*, bg-surface-*, text-muted-color, text-color.
  *   - Artemis state tokens via the NAMED `state-*` utilities (collision-free + dark-mode correct, defined by the
  *     `@theme inline` block in tailwind.css): text-state-danger, bg-state-success, border-state-warning,
- *     text-state-info; or `[style.color]="'var(--danger)'"` when the color is DYNAMIC; or a PrimeNG `severity`
- *     component (p-message / p-tag / p-button). info is CYAN: use state-info, never blue.
+ *     text-state-info; or `[style.color]="'var(--danger)'"` when the color is DYNAMIC; or the `severity` of a
+ *     TUM AET UI component (tumaet-ui-message, tumaet-ui-tag, tumAetUiButton). info is CYAN: use state-info, never blue.
  *
  * Scope: static `class="..."`, `[class.<palette>]`, the bound source of `[class]`/`[ngClass]`, and the bound
  * source of any binding (to catch `var(--p-*-NNN)` in `[style.*]`/`[color]`).
