@@ -719,9 +719,13 @@ public class SecurityFrameworkService {
                     processPushToTestRepository(exercise, testRepositoryUri, branch, commitHash, user);
                 }
             }
-            else if (process && checkedOutHead != null && isUnprocessedSecurityFrameworkCommit(exercise, repository, checkedOutHead)) {
-                // A retry after the processing of an earlier change failed: the change is already pushed, so resume its processing.
-                processPushToTestRepository(exercise, testRepositoryUri, branch, checkedOutHead, user);
+            else if (process && checkedOutHead != null) {
+                // A retry after the processing of an earlier change failed: the change is already pushed, so resume the processing at the head, which contains it.
+                Optional<String> unprocessed = unprocessedSecurityFrameworkCommit(exercise, repository, checkedOutHead);
+                if (unprocessed.isPresent()) {
+                    processPushToTestRepository(exercise, testRepositoryUri, branch, checkedOutHead, user);
+                    pendingProcessing().remove(pendingProcessingKey(exercise, unprocessed.get()));
+                }
             }
             return readConfig(repository);
         }
@@ -780,7 +784,7 @@ public class SecurityFrameworkService {
                 pendingProcessing().remove(pendingProcessingKey(exercise, commitHash));
             }
             catch (RuntimeException e) {
-                // The change itself is pushed. Retrying the same action resumes the processing, see isUnprocessedSecurityFrameworkCommit.
+                // The change itself is pushed. Retrying the same action resumes the processing, see unprocessedSecurityFrameworkCommit.
                 log.error("Could not process the Security Framework commit {} of the tests repository {}", commitHash, testRepositoryUri, e);
                 throw new InternalServerErrorAlertException("The Security Framework change was saved, but the builds could not be started. Please retry.", ENTITY_NAME,
                         "securityFrameworkProcessingFailed");
@@ -789,23 +793,28 @@ public class SecurityFrameworkService {
     }
 
     /**
-     * A Security Framework commit is unprocessed if its processing has not completed: either it is still recorded as pending, or the solution participation
-     * has no submission for it. The pending entry covers a processing that failed after it had saved the submission, e.g. while triggering the builds. The
-     * submission check covers a pending entry that is gone, e.g. after all nodes restarted, as long as the processing failed before saving the submission.
+     * A Security Framework commit is unprocessed if its processing has not completed: either it is still recorded as pending, or, as the head, the solution
+     * participation has no submission for it. The pending entry covers a processing that failed after it had saved the submission, e.g. while triggering the
+     * builds. The submission check covers a pending entry that is gone, e.g. after all nodes restarted, as long as the processing failed before saving the
+     * submission. Only the latest Security Framework commit counts: once its processing completed, it built every earlier one. If others pushed after it, the
+     * processing of the head builds it, too, so it is resumed unless the head was processed.
      *
-     * @return whether the head of the tests repository is a Security Framework commit whose processing has not completed
+     * @return the latest Security Framework commit up to the head, if its processing and the processing of the head have not completed
      */
-    private boolean isUnprocessedSecurityFrameworkCommit(ProgrammingExercise exercise, Repository repository, String head) throws IOException {
+    private Optional<String> unprocessedSecurityFrameworkCommit(ProgrammingExercise exercise, Repository repository, String head) throws IOException {
+        boolean headProcessed = solutionParticipationRepository.findByProgrammingExerciseId(exercise.getId())
+                .map(solutionParticipation -> programmingSubmissionRepository.existsByParticipationIdAndCommitHash(solutionParticipation.getId(), head)).orElse(true);
         try (RevWalk revWalk = new RevWalk(repository)) {
-            if (!revWalk.parseCommit(repository.resolve(head)).getFullMessage().contains(COMMIT_TRAILER)) {
-                return false;
+            revWalk.markStart(revWalk.parseCommit(repository.resolve(head)));
+            for (RevCommit commit : revWalk) {
+                if (commit.getFullMessage().contains(COMMIT_TRAILER)) {
+                    boolean isHead = commit.name().equals(head);
+                    boolean pending = pendingProcessing().get(pendingProcessingKey(exercise, commit.name())) != null;
+                    return (pending && (isHead || !headProcessed)) || (isHead && !headProcessed) ? Optional.of(commit.name()) : Optional.empty();
+                }
             }
         }
-        if (pendingProcessing().get(pendingProcessingKey(exercise, head)) != null) {
-            return true;
-        }
-        return solutionParticipationRepository.findByProgrammingExerciseId(exercise.getId())
-                .map(solutionParticipation -> !programmingSubmissionRepository.existsByParticipationIdAndCommitHash(solutionParticipation.getId(), head)).orElse(false);
+        return Optional.empty();
     }
 
     /**

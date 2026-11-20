@@ -1042,6 +1042,39 @@ class SecurityFrameworkServiceTest {
     }
 
     @Test
+    void aRetryResumesTheProcessingAtTheHeadIfTheCommitsAfterTheChangeWereNotProcessedEither() throws Exception {
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        doThrow(new VersionControlException("Build trigger failed")).when(localVCPushProcessingService).processNewPush(anyString(), any(Repository.class), any(), any(), any());
+        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise, user));
+        // Someone pushes on top of the change, and the processing of that commit fails, too.
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("README.md").toFile(), "An unrelated change\n", StandardCharsets.UTF_8));
+        String later = pushedHead();
+
+        // The processing of the head builds the change as well.
+        doNothing().when(localVCPushProcessingService).processNewPush(anyString(), any(Repository.class), any(), any(), any());
+        securityFrameworkService.deactivate(exercise, user);
+        verify(localVCPushProcessingService).processNewPush(eq(later), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()));
+
+        // Once it has completed, a further retry processes nothing.
+        securityFrameworkService.deactivate(exercise, user);
+        verify(localVCPushProcessingService, times(2)).processNewPush(anyString(), any(Repository.class), any(), any(), any());
+    }
+
+    @Test
+    void aRetryDoesNotResumeAChangeThatTheProcessingOfALaterCommitBuilt() throws Exception {
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        doThrow(new VersionControlException("Build trigger failed")).when(localVCPushProcessingService).processNewPush(anyString(), any(Repository.class), any(), any(), any());
+        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise, user));
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("README.md").toFile(), "An unrelated change\n", StandardCharsets.UTF_8));
+        when(programmingSubmissionRepository.existsByParticipationIdAndCommitHash(SOLUTION_PARTICIPATION_ID, pushedHead())).thenReturn(true);
+
+        doNothing().when(localVCPushProcessingService).processNewPush(anyString(), any(Repository.class), any(), any(), any());
+        securityFrameworkService.deactivate(exercise, user);
+
+        verify(localVCPushProcessingService, times(1)).processNewPush(anyString(), any(Repository.class), any(), any(), any());
+    }
+
+    @Test
     void aRepeatedActionDoesNotProcessAnAlreadyProcessedChangeAgain() throws Exception {
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
         securityFrameworkService.deactivate(exercise, user);
