@@ -10,7 +10,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -20,7 +20,16 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './build-plan-editor.component.html',
     styleUrls: ['./build-plan-editor.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, UpdatingResultComponent, NgbTooltip, FaIconComponent, CodeEditorHeaderComponent, MonacoEditorComponent, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        UpdatingResultComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
+        FaIconComponent,
+        CodeEditorHeaderComponent,
+        MonacoEditorComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     private buildPlanService = inject(BuildPlanService);

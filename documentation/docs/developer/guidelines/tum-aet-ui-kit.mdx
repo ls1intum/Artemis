@@ -15,8 +15,8 @@ research group at the Technical University of Munich](https://aet.cit.tum.de/). 
 as `@tumaet/ui-angular`. Artemis production builds consume its compiled public entry point and stylesheet.
 
 <Callout variant={CalloutVariant.info}>
-    TUM AET UI is the target component system for Artemis. Bootstrap, ng-bootstrap, and PrimeNG are migration-only dependencies. Use an existing TUM AET UI component whenever it
-    covers the requirement.
+    TUM AET UI is the component system of Artemis. Bootstrap, ng-bootstrap, and PrimeNG are removed from the client. Use an existing TUM AET UI component whenever it covers the
+    requirement, and add a missing capability to the kit.
 </Callout>
 
 Use the [TUM AET UI component reference](/developer/tum-aet-ui-reference) to inspect
@@ -231,9 +231,7 @@ mode; the package theme also sets the matching CSS `color-scheme` for browser co
 
 Button-only colors are centralized in the light/dark **Button palette** blocks of
 `packages/tum-aet-ui/themes.css`. The `--tumaet-ui-button-<severity>-{background,contrast,foreground}`
-properties let a host adjust buttons independently of status feedback. Existing Bootstrap and
-PrimeNG button adapters consume the same palette while migration continues; new controls use TUM
-AET UI directly. See [changing the global button palette](/developer/guidelines/client-theming#change-the-global-button-palette)
+properties let a host adjust buttons independently of status feedback. See [changing the global button palette](/developer/guidelines/client-theming#change-the-global-button-palette)
 for the property contract, overrides, and verification commands.
 
 Treat package token names and responsive thresholds as public styling contracts. Add a token only when a host needs a supported customization

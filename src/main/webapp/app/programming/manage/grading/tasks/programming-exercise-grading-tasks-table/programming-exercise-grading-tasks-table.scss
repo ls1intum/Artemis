@@ -19,6 +19,10 @@
         width: 100%;
         min-width: 0;
 
+        &--inactive {
+            background-color: var(--secondary);
+        }
+
         &__index {
             display: flex;
             align-items: center;
@@ -39,7 +43,7 @@
     }
 
     &__collapse {
-        color: var(--bs-card-color);
+        color: inherit;
         background: none;
         border: none;
         width: 2rem;
@@ -50,7 +54,7 @@
     &__button {
         border: none;
         background: none;
-        color: var(--bs-card-color);
+        color: inherit;
     }
 }
 
