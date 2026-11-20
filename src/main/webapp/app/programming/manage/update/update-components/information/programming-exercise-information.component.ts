@@ -346,7 +346,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             const uniqueShortName = this.ensureShortNameIsUnique(sanitizedShortName);
             this.programmingExercise().shortName = uniqueShortName;
         }
-        if (!this.isImport()) {
+        if (!this.isImport() && !this.programmingExerciseCreationConfig().packageNameEditedByUser) {
             // The package name field is hidden in simple mode, so it follows the short name
             this.programmingExercise().packageName = deriveDefaultPackageName(this.programmingExercise()) ?? this.programmingExercise().packageName;
         }

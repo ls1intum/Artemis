@@ -197,6 +197,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     categoriesChanged = (categories: ExerciseCategory[]) => this.updateCategories(categories);
     projectTypeChanged = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
     staticCodeAnalysisChanged = () => this.onStaticCodeAnalysisChanged();
+    packageNameEdited = () => (this.packageNameEditedByUser = true);
+    packageNameEditedByUser = false;
 
     auxiliaryRepositoryDuplicateNames = false;
     auxiliaryRepositoryDuplicateDirectories = false;
@@ -1162,7 +1164,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     /** In simple mode the package name field is hidden, so a new exercise gets a package name that fits the selected language. */
     private updateDefaultPackageName() {
-        if (this.isSimpleMode() && this.isCreate) {
+        if (this.isSimpleMode() && this.isCreate && !this.packageNameEditedByUser) {
             this.programmingExercise.packageName = deriveDefaultPackageName(this.programmingExercise) ?? this.programmingExercise.packageName;
         }
     }
@@ -1790,6 +1792,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         config.onWithDependenciesChanged = this.withDependenciesChanged;
         config.packageNameRequired = this.packageNameRequired;
         config.packageNamePattern = this.packageNamePattern;
+        config.packageNameEditedByUser = this.packageNameEditedByUser;
+        config.onPackageNameEdited = this.packageNameEdited;
         config.supportedLanguages = this.supportedLanguages;
         config.selectedProgrammingLanguage = this.selectedProgrammingLanguage;
         config.onProgrammingLanguageChange = this.programmingLanguageChanged;
