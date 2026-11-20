@@ -1,19 +1,19 @@
-<div class="flex items-center justify-center bg-surface-hover p-6!">
+<div class="flex items-center justify-center bg-surface-hover p-6">
     <div class="w-full max-w-[1140px] px-2 md:w-5/6 lg:w-2/3 lg:max-w-[760px]">
-        <div class="rounded-lg border border-solid border-border bg-surface-raised p-6! shadow md:p-12!">
-            <div class="mb-6! text-center">
+        <div class="rounded-lg border border-solid border-border bg-surface-raised p-6 shadow md:p-12">
+            <div class="mb-6 text-center">
                 <h3>
                     <fa-icon [icon]="faLock" />
                     <span jhiTranslate="global.menu.admin.loginWithPasskeyToUseAdminFeatures"></span>
                 </h3>
             </div>
             @if (!accountService.isLoggedInWithPasskey()) {
-                <p class="max-w-full text-wrap wrap-break-word" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></p>
-                <tumaet-ui-message severity="info" class="mb-6!">
+                <p class="max-w-full whitespace-normal wrap-break-word" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></p>
+                <tumaet-ui-message severity="info" class="mb-6">
                     <strong class="wrap-break-word" jhiTranslate="global.menu.admin.passkeyRestrictionExplanation"></strong>
                 </tumaet-ui-message>
             } @else {
-                <p class="max-w-full text-wrap wrap-break-word">
+                <p class="max-w-full whitespace-normal wrap-break-word">
                     <span jhiTranslate="global.menu.admin.passkeyApprovalInstructions.start"></span>
                     <a routerLink="/user-settings/credentials" class="no-underline!">
                         <span jhiTranslate="global.menu.admin.passkeyApprovalInstructions.link"></span>
@@ -21,7 +21,7 @@
                     </a>
                     <span jhiTranslate="global.menu.admin.passkeyApprovalInstructions.end"></span>
                 </p>
-                <tumaet-ui-message severity="warn" class="mb-6!">
+                <tumaet-ui-message severity="warn" class="mb-6">
                     <span class="wrap-break-word" jhiTranslate="global.menu.admin.passkeyNotYetApproved"></span>
                 </tumaet-ui-message>
             }

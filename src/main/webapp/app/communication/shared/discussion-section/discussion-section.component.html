@@ -27,13 +27,13 @@
                         (keyup.space)="$event.target === $event.currentTarget ? keyboardAction16.click() : undefined"
                     >
                         <div class="flex grow items-center justify-between">
-                            <h5 class="mb-0 font-medium!" jhiTranslate="artemisApp.communication.label">Communication</h5>
+                            <h5 class="mb-0 font-medium" jhiTranslate="artemisApp.communication.label">Communication</h5>
                             <fa-icon [icon]="faChevronRight" />
                         </div>
                     </div>
                     <!-- body -->
                     @if (noChannelAvailable()) {
-                        <div class="grow p-4!" jhiTranslate="artemisApp.communication.channel.noChannel"></div>
+                        <div class="grow p-4" jhiTranslate="artemisApp.communication.channel.noChannel"></div>
                     } @else {
                         <div [class]="embedded() ? 'flex w-full grow flex-col overflow-hidden px-2 pt-0' : 'grow px-4! pt-0 pb-4!'">
                             @if (currentPost(); as selectedPost) {
@@ -196,7 +196,7 @@
                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction183.click() : undefined"
             >
                 <fa-icon class="expand-postings-icon" [icon]="faChevronLeft" />
-                <span class="text-xl! leading-tight! font-medium!" jhiTranslate="artemisApp.communication.label">Communication</span>
+                <span class="text-xl leading-tight font-medium" jhiTranslate="artemisApp.communication.label">Communication</span>
                 <div class="spacer"></div>
                 <fa-icon class="expand-postings-icon" [icon]="faChevronLeft" />
             </div>

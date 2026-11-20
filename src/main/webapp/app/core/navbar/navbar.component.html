@@ -147,7 +147,7 @@
         </div>
         @if (navigationContextIndicatorData(); as context) {
             <div>|</div>
-            <a class="jh-course-link flex min-w-0 items-center gap-2" [routerLink]="context.routerLink" (click)="collapseNavbar()">
+            <a class="jh-course-link flex min-w-0 items-center gap-2!" [routerLink]="context.routerLink" (click)="collapseNavbar()">
                 @switch (context.type) {
                     @case ('course') {
                         <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: context.imagePath, courseTitle: context.title }" />

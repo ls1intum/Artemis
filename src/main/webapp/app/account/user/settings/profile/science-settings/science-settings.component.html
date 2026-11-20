@@ -1,25 +1,25 @@
 <div>
-    <h2 class="text-xl! font-bold!" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.title"></h2>
+    <h2 class="text-xl font-bold!" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.title"></h2>
     <tumaet-ui-message severity="info" [icon]="faInfoCircle">
         <span jhiTranslate="artemisApp.userSettings.scienceSettingsPage.description"></span>
     </tumaet-ui-message>
 </div>
 
 @if (!scienceFeatureActive()) {
-    <div class="mt-6!" data-testid="science-consent-feature-disabled" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.featureDisabled"></div>
+    <div class="mt-6" data-testid="science-consent-feature-disabled" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.featureDisabled"></div>
 } @else if (loading()) {
-    <div class="mt-6! flex justify-center">
+    <div class="mt-6 flex justify-center">
         <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" data-testid="science-consent-loading" />
     </div>
 } @else if (loadFailed()) {
-    <div class="mt-6!" data-testid="science-consent-load-failed">
+    <div class="mt-6" data-testid="science-consent-load-failed">
         <p jhiTranslate="artemisApp.userSettings.scienceSettingsPage.loadFailed"></p>
         <button type="button" tumAetUiButton severity="secondary" variant="outlined" data-testid="science-consent-retry" (click)="loadConsents()">
             <span jhiTranslate="entity.action.retry"></span>
         </button>
     </div>
 } @else {
-    <tumaet-ui-list class="mt-6! block" [ariaLabel]="'artemisApp.userSettings.scienceSettingsPage.title' | artemisTranslate" data-testid="science-consent-list">
+    <tumaet-ui-list class="mt-6 block" [ariaLabel]="'artemisApp.userSettings.scienceSettingsPage.title' | artemisTranslate" data-testid="science-consent-list">
         @for (consent of consents(); track consent.courseId) {
             <li tumAetUiListItem inline data-testid="science-consent-row">
                 <div class="min-w-0">
@@ -31,8 +31,8 @@
                         }
                     </div>
                 </div>
-                <div class="flex items-center gap-6!">
-                    <label class="flex items-center gap-2" for="science-course-{{ consent.courseId }}">
+                <div class="flex items-center gap-6">
+                    <label class="items-center gap-2" for="science-course-{{ consent.courseId }}">
                         <tumaet-ui-toggle-switch
                             inputId="science-course-{{ consent.courseId }}"
                             ariaLabelledBy="science-course-contribute-{{ consent.courseId }} science-course-title-{{ consent.courseId }}"

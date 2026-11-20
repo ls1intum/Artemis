@@ -1,5 +1,5 @@
 @if (form) {
-    <form class="flex flex-col gap-4!" [formGroup]="form" (ngSubmit)="submitForm()">
+    <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submitForm()">
         <!-- CHANNEL NAME -->
         <tumaet-ui-form-field
             [label]="'artemisApp.dialogs.createChannel.channelForm.nameInput.label' | artemisTranslate"

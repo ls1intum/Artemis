@@ -188,6 +188,17 @@
     color: var(--ui-text-muted-color);
 }
 
+/*
+ * The radius of `rounded` and the three shadows the application uses have the values Artemis has always rendered,
+ * not Tailwind's defaults.
+ */
+@theme {
+    --radius: 0.15rem;
+    --shadow-sm: 0 0.125rem 0.25rem rgb(0 0 0 / 7.5%);
+    --shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%);
+    --shadow-lg: 0 1rem 3rem rgb(0 0 0 / 17.5%);
+}
+
 @theme inline {
     --color-border: var(--tumaet-ui-border-color);
     --color-surface-sunken: var(--tumaet-ui-control-background);

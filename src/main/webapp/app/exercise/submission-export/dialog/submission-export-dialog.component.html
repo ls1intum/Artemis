@@ -21,16 +21,16 @@
       Only show download all checkbox for instructors & admins.
       -->
             @if (currentExercise.isAtLeastInstructor) {
-                <div class="inline-flex items-center gap-2">
-                    <label class="block font-medium mb-1">
+                <div class="inline-flex items-center gap-2!">
+                    <label class="font-medium mb-1!">
                         <tumaet-ui-checkbox class="accent-primary" name="allStudents" [(ngModel)]="exportAllParticipants" />
                         <strong [jhiTranslate]="'artemisApp.instructorDashboard.exportSubmissions.downloadAllStudents'"> Or download the submissions of all students </strong>
                     </label>
                 </div>
             }
             <ng-container>
-                <div class="inline-flex items-center gap-2">
-                    <label class="block font-medium mb-1">
+                <div class="inline-flex items-center gap-2!">
+                    <label class="font-medium mb-1!">
                         <tumaet-ui-checkbox class="accent-primary" name="filterLateSubmissions" [(ngModel)]="filterLateSubmissions" />
                         <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissions"></strong>
                     </label>
@@ -53,7 +53,7 @@
                 </div>
             </ng-container>
         </div>
-        <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4!">
+        <div class="flex flex-wrap! items-center justify-end gap-2! border-t border-border p-4!">
             <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="" (click)="clear()">
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
@@ -65,7 +65,7 @@
                 class=""
             >
                 @if (exportInProgress()) {
-                    <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
+                    <span class="me-1!"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
                 }
                 <span jhiTranslate="entity.action.export"></span>
             </button>

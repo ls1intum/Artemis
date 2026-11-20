@@ -5,7 +5,7 @@
 }
 @if (!isLoading() && complaint()) {
     <h3
-        class="mb-2! text-base! leading-tight! font-semibold!"
+        class="mb-2 text-base leading-tight font-semibold!"
         [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.review' : 'artemisApp.complaint.review'"
     ></h3>
 }
@@ -20,7 +20,7 @@
                 ></span
             ></tumaet-ui-message>
         }
-        <div class="mt-4! mb-4!">
+        <div class="mt-4 mb-4">
             @if (showLockDuration()) {
                 <tumaet-ui-message id="lockDuration" severity="info">
                     @if (lockedByCurrentUser()) {
@@ -48,7 +48,7 @@
         </div>
         <div class="flex flex-wrap gap-y-2">
             <div class="w-full md:w-6/12">
-                <h4 class="mb-2! text-base! leading-tight! font-semibold!">
+                <h4 class="mb-2 text-base leading-tight font-semibold!">
                     <span [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.title' : 'artemisApp.complaint.title'"></span>
                     @if (handled()) {
                         <small>
@@ -72,7 +72,7 @@
                 <textarea
                     [attr.aria-label]="'artemisApp.complaint.title' | artemisTranslate"
                     id="complaintTextArea"
-                    class="w-full px-1"
+                    class="w-full px-1!"
                     rows="4"
                     [(ngModel)]="complaintText"
                     [readonly]="true"
@@ -83,7 +83,7 @@
             @if (handled() || isAllowedToRespond) {
                 <div class="w-full md:w-6/12">
                     <h4
-                        class="mb-2! text-base! leading-tight! font-semibold!"
+                        class="mb-2 text-base leading-tight font-semibold!"
                         [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedbackResponse.title' : 'artemisApp.complaintResponse.title'"
                     ></h4>
                     <div class="flex flex-col">
@@ -93,7 +93,7 @@
                                     | artemisTranslate
                             "
                             id="responseTextArea"
-                            class="w-full px-1"
+                            class="w-full px-1!"
                             rows="4"
                             [maxlength]="maxComplaintResponseTextLimit()"
                             [(ngModel)]="complaintResponse.responseText"
@@ -136,7 +136,7 @@
                         </div>
                     }
                     @if (!complaint().accepted && complaint().complaintType === ComplaintType.MORE_FEEDBACK) {
-                        <div class="flex flex-wrap gap-y-2 justify-end mt-4!">
+                        <div class="flex flex-wrap gap-y-2 justify-end mt-4">
                             <div class="w-full">
                                 <button
                                     id="respondToMoreFeedbackButton"

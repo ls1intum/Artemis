@@ -2,8 +2,8 @@
     @if (course()) {
         <div>
             <div class="flex flex-wrap justify-between">
-                <div class="flex items-center px-4!">
-                    <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" class="me-2 min-[576px]:hidden!" (click)="openSidebar()">
+                <div class="flex items-center px-4">
+                    <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" class="me-2! min-[576px]:hidden!" (click)="openSidebar()">
                         <fa-icon [icon]="faChevronLeft" />
                     </button>
                     <h4
@@ -54,7 +54,7 @@
                         </div>
                     }
                 }
-                <div class="flex flex-wrap gap-2 px-4! py-2">
+                <div class="flex flex-wrap gap-2 px-4 py-2">
                     <!-- Todo: Small Screens Support -->
                     <div class="flex flex-wrap items-center" role="toolbar">
                         <div class="me-1 flex items-center">

@@ -1,7 +1,7 @@
 <form>
     <div>
         <tumaet-ui-table-layout [loading]="loading()" [empty]="content().resultsOnPage.length === 0 && !loading()">
-            <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+            <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
                 <input
                     tumAetUiInput
                     tumAetUiInputSize="small"
@@ -13,7 +13,7 @@
                     [(ngModel)]="searchTerm"
                 />
                 <span class="flex-1"></span>
-                <label class="flex items-center gap-1 text-sm whitespace-nowrap">
+                <label class="items-center gap-1 text-sm whitespace-nowrap">
                     <input type="checkbox" [(ngModel)]="importRelations" name="importRelations" />
                     <span jhiTranslate="artemisApp.competency.import.importRelations"></span>
                 </label>

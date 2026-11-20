@@ -1,6 +1,6 @@
 <form name="exerciseFilterForm" (ngSubmit)="applyFilter()">
-    <div class="flex items-center justify-between gap-3! border-b border-border p-4!">
-        <h4 class="text-xl font-semibold">
+    <div class="flex items-center justify-between gap-3 border-b border-border p-4">
+        <h4 class="">
             <fa-icon [icon]="faFilter" />
             <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.modalTitle"></span>
         </h4>
@@ -16,8 +16,8 @@
             ×
         </button>
     </div>
-    <div class="p-4!">
-        <div class="mb-4!">
+    <div class="p-4">
+        <div class="mb-4">
             @if (noFiltersAvailable()) {
                 <div>
                     <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.noFilterAvailable"></span>
@@ -25,7 +25,7 @@
             }
 
             @if (selectableCategoryOptions().length || selectedCategoryOptions().length) {
-                <label for="exercise-categories-filter-selection" class="block font-medium mb-1 text-base font-semibold" jhiTranslate="artemisApp.exercise.categories"></label>
+                <label for="exercise-categories-filter-selection" class="font-medium mb-1 text-base font-semibold" jhiTranslate="artemisApp.exercise.categories"></label>
 
                 <tumaet-ui-autocomplete
                     #categoriesFilterSelection
@@ -65,7 +65,7 @@
         </div>
 
         @if (typeFilter()?.isDisplayed) {
-            <div class="mb-4!">
+            <div class="mb-4">
                 <span id="exercise-type-filter-label" class="block font-medium mb-1 text-base font-semibold" jhiTranslate="artemisApp.ratingList.exerciseType"></span>
                 <div id="exercise-type-filter-selection" role="group" aria-labelledby="exercise-type-filter-label">
                     @for (typeFilter of typeFilter()!.options; track typeFilter) {
@@ -84,7 +84,7 @@
         <!--    On typescript version 5.5.4 the explicit check for difficultyFilter is needed,
         as otherwise typescript thinks it could be undefined in the loop (the client would not start in this case) -->
         @if (difficultyFilter()?.isDisplayed && difficultyFilter()) {
-            <div class="mb-4!">
+            <div class="mb-4">
                 <span id="difficulty-filter-label" class="block font-medium mb-1 text-base font-semibold" jhiTranslate="artemisApp.exercise.difficulty"></span>
                 <div id="difficulty-filter-selection" role="group" aria-labelledby="difficulty-filter-label">
                     @for (difficultyFilterOption of difficultyFilter()!.options; track difficultyFilterOption) {
@@ -107,9 +107,9 @@
         <!--    On typescript version 5.5.4 the explicit check for achievedScore is needed,
         as otherwise typescript thinks achievedScore could be undefined (the client would not start in this case) -->
         @if (achievedScore && achievedScore?.isDisplayed) {
-            <div class="mb-4!">
+            <div class="mb-4">
                 <label
-                    class="block font-medium mb-1 text-base font-semibold"
+                    class="font-medium mb-1 text-base font-semibold"
                     for="achieved-score-range-slider"
                     jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievedScore"
                 ></label>
@@ -128,9 +128,9 @@
         <!--    On typescript version 5.5.4 the explicit check for achievablePoints is needed,
         as otherwise typescript thinks achievablePoints could be undefined (the client would not start in this case) -->
         @if (achievablePoints && achievablePoints.isDisplayed) {
-            <div class="mb-4!">
+            <div class="mb-4">
                 <label
-                    class="block font-medium mb-1 text-base font-semibold"
+                    class="font-medium mb-1 text-base font-semibold"
                     for="achieved-points-range-slider"
                     jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievablePoints"
                 ></label>
@@ -145,7 +145,7 @@
             </div>
         }
     </div>
-    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4!">
+    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4">
         <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="" (click)="clearFilter()">
             <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.clearFilter"></span>
         </button>

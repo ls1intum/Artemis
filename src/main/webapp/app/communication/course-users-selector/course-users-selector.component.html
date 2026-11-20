@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-4!" (focusout)="onTouched()">
+<div class="flex flex-col gap-4" (focusout)="onTouched()">
     <div class="flex flex-col gap-1">
         @if (label()) {
             <label class="text-sm font-medium" [for]="id + '-search-input'">{{ label() }}</label>
@@ -46,7 +46,7 @@
             <small class="text-xs text-muted-color" jhiTranslate="artemisApp.userSelector.helpText">Type at least 3 characters to search for users by name or login</small>
         }
     </div>
-    <div class="flex flex-wrap items-center justify-end gap-4!">
+    <div class="flex flex-wrap items-center justify-end gap-4">
         @if (rolesToAllowSearchingIn().includes('students')) {
             <div class="flex items-center gap-2">
                 <tumaet-ui-checkbox inputId="students" [checked]="searchStudents()" (changed)="searchStudents.set($event.checked); onFilterChange()" />

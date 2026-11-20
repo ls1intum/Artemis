@@ -54,7 +54,7 @@
     @if (selectedCount() > 0 && course()?.isAtLeastEditor) {
         <ng-template titleBarToolbar>
             <div class="selection-bar" animate.enter="selection-entering" animate.leave="selection-leaving">
-                <div class="flex items-center flex-wrap gap-4! mt-2 pt-2 border-x-0 border-b-0 border-t border-solid border-border">
+                <div class="flex items-center flex-wrap gap-4 mt-2 pt-2 border-x-0 border-b-0 border-t border-solid border-border">
                     <div class="flex items-center gap-2">
                         <span
                             class="text-muted-color text-[0.875em]"
@@ -133,7 +133,7 @@
 
     @if (loaded() && cards().length === 0) {
         <tumaet-ui-empty-state
-            class="mt-12!"
+            class="mt-12"
             [icon]="search() ? faMagnifyingGlass : faCode"
             [title]="
                 search()
@@ -167,11 +167,11 @@
     @if (loadingBuildResults()) {
         <span class="text-muted-color text-sm" role="status" data-testid="programming-build-results-loading" jhiTranslate="loading"></span>
     }
-    <div class="flex flex-col gap-4!">
+    <div class="flex flex-col gap-4">
         @for (card of cards(); track card.id) {
             <div class="exercise-card-host">
                 <tumaet-ui-panel [toggleable]="true" [toggleAriaLabel]="card.title">
-                    <div tumAetUiPanelHeader class="flex items-center gap-2 w-full">
+                    <div tumAetUiPanelHeader class="flex items-center gap-2! w-full">
                         @if (isGroup() && card.group) {
                             <fa-icon [icon]="faLayerGroup" [fixedWidth]="true" />
                         } @else if (card.icon) {
@@ -205,8 +205,8 @@
 
                     <!-- Group footer: shared group meta info on the left, group-level actions on the right -->
                     @if (isGroup() && card.group) {
-                        <div class="flex items-center justify-between flex-wrap gap-4! mt-4!">
-                            <div class="flex flex-wrap gap-4! text-[0.875em] text-muted-color">
+                        <div class="flex items-center justify-between flex-wrap gap-4 mt-4">
+                            <div class="flex flex-wrap gap-4 text-[0.875em] text-muted-color">
                                 <span>
                                     <span class="font-semibold"><span jhiTranslate="artemisApp.exercise.release"></span>:</span>
                                     @if (card.group.releaseDate) {

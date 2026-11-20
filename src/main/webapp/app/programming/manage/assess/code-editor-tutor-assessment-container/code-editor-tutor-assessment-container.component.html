@@ -1,6 +1,6 @@
 @if (participationCouldNotBeFetched() || lockLimitReached() || assessmentNotPossibleYet() || resultNotFound()) {
     <nav class="rounded-sm border border-solid border-border bg-surface-raised">
-        <div class="p-4!">
+        <div class="p-4">
             @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
                 <span id="assessment-not-possible-yet">
                     <fa-icon [icon]="faCircleInfo" class="text-state-info" [fixedWidth]="true" />
@@ -93,7 +93,7 @@
                 <div editorTitle *ngTemplateOutlet="editorTitle"></div>
                 <div editorToolbar *ngTemplateOutlet="editorToolbar"></div>
                 <ng-container editorSidebar *ngTemplateOutlet="editorSidebar" />
-                <div class="mt-4!" *ngTemplateOutlet="editorBottom" editorBottom></div>
+                <div class="mt-4" *ngTemplateOutlet="editorBottom" editorBottom></div>
             </jhi-code-editor-container>
         }
         <!--        </ng-container>-->
@@ -163,7 +163,7 @@
         <ng-template #editorSidebar>
             @if (exercise()) {
                 <jhi-assessment-instructions
-                    class="flex-auto p-4! markdown-preview instructions-wrapper__content overflow-auto"
+                    class="flex-auto p-4 markdown-preview instructions-wrapper__content overflow-auto!"
                     [exercise]="exercise()!"
                     [programmingParticipation]="participation()"
                     [gradingCriteria]="exercise().gradingCriteria"
@@ -171,7 +171,7 @@
             }
         </ng-template>
         <ng-template #editorBottom>
-            <div class="mt-4!">
+            <div class="mt-4">
                 @if (manualResult()?.id; as resultId) {
                     <jhi-unreferenced-feedback
                         [(feedbacks)]="unreferencedFeedback"
@@ -192,7 +192,7 @@
     <ng-template #noSubmission>
         <!-- while assessment is not possible yet the submission does exist, so the card above explains that instead -->
         @if (!loadingInitialSubmission() && !assessmentNotPossibleYet() && !resultNotFound()) {
-            <tumaet-ui-message severity="warn" class="mt-6!">
+            <tumaet-ui-message severity="warn" class="mt-6">
                 <div class="text-center">
                     <p jhiTranslate="artemisApp.programmingAssessment.notFound"></p>
                     <a [routerLink]="exerciseDashboardLink()" tumAetUiButton severity="info" size="small" class="me-1 mb-1 assessment-dashboard">

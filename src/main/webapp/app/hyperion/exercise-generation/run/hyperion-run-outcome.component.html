@@ -11,7 +11,7 @@
     <tumaet-ui-message [severity]="view().severity" class="block">
         <div class="flex min-w-0 flex-col gap-2">
             <!-- The verdict is the answer, so it is the largest thing on the page once a run is over. -->
-            <h2 class="text-xl font-medium" id="hyperion-run-outcome-title">{{ view().titleKey | artemisTranslate }}</h2>
+            <h2 class="" id="hyperion-run-outcome-title">{{ view().titleKey | artemisTranslate }}</h2>
             <p class="m-0 text-sm wrap-anywhere">{{ view().bodyKey | artemisTranslate }}</p>
             @if (view().terminationReasonKey; as reasonKey) {
                 <p class="m-0 text-sm wrap-anywhere" data-testid="hyperion-run-outcome-reason" [jhiTranslate]="reasonKey"></p>
@@ -26,7 +26,7 @@
     </tumaet-ui-message>
 
     @if (checks().length) {
-        <div class="mt-4!" data-testid="hyperion-run-outcome-checks">
+        <div class="mt-4" data-testid="hyperion-run-outcome-checks">
             <h3 class="hyperion-outcome-checks-title">{{ 'artemisApp.hyperion.generation.verdict.title' | artemisTranslate }}</h3>
             <ul class="m-0 flex list-none flex-col gap-1 p-0">
                 @for (check of checks(); track check.labelKey) {
@@ -48,7 +48,7 @@
         </div>
     }
 
-    <p class="mt-4! mb-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.outcome.disclaimer"></p>
+    <p class="mt-4 mb-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.outcome.disclaimer"></p>
 
     @if (hasTechnicalDetails()) {
         <!--
@@ -57,7 +57,7 @@
             transcript is a reasoning trace rather than output - and the count on the header means collapsing it hides
             no statement about the run.
         -->
-        <tumaet-ui-panel class="mt-4! block" toggleable [collapsed]="true" [header]="technicalDetailsHeader()" data-testid="hyperion-run-outcome-technical">
+        <tumaet-ui-panel class="mt-4 block" toggleable [collapsed]="true" [header]="technicalDetailsHeader()" data-testid="hyperion-run-outcome-technical">
             @for (message of view().serverMessages; track message) {
                 <p class="m-0 text-sm wrap-anywhere text-muted-color" lang="en">{{ message }}</p>
             }

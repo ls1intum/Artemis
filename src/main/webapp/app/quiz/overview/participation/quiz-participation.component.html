@@ -1,13 +1,13 @@
 <div #quizRoot [id]="'exercise-' + quizExercise()?.id" class="relative flex min-h-100 flex-col">
     @if (quizExercise()) {
         @if (mode() === 'live' && quizExercise().quizEnded && !shouldTreatAsSubmittedForUi()) {
-            <div id="missed-deadline-message" class="my-4! flex justify-center text-center">
+            <div id="missed-deadline-message" class="my-4 flex justify-center text-center!">
                 <span [jhiTranslate]="'artemisApp.quizExercise.missedDeadlinePracticeHint'"></span>
             </div>
         } @else {
             @if (mode() === 'preview' || mode() === 'solution') {
                 <div id="quiz-header" #quizHeader class="module-bg -mx-3">
-                    <div class="module-bg flex items-center justify-between gap-2 px-3! pt-2">
+                    <div class="module-bg flex items-center justify-between gap-2 px-3 pt-2">
                         <h5 class="mb-0 flex items-center gap-2">
                             <!-- Show the title only in preview and solution modes. In live and practice modes it is rendered by a dedicated exercise header component above this view. -->
                             @if (mode() === 'preview' || mode() === 'solution') {
@@ -74,7 +74,7 @@
                                     }
                                 </div>
                             } @else if (mode() !== 'solution') {
-                                <div class="text-center">
+                                <div class="text-center!">
                                     <div id="quiz-score" [ngClass]="{ incorrect: userScore() < totalScore() }">
                                         <span class="colon-suffix" jhiTranslate="artemisApp.quizExercise.totalScore"></span>
                                         <span id="quiz-score-result"
@@ -95,7 +95,7 @@
             <!-- TODO the STEPWIZARD SECTION is duplicated it quiz-exam-submission.component.html, should be merged to a shared component -->
             <!-- TODO for a follow-up: Much of this template relies on method calls in the template. We should avoid this for performance reasons -->
             <div class="flex flex-col md:flex-row">
-                <div class="pe-3! md:shrink-0">
+                <div class="pe-3 md:shrink-0">
                     <div
                         #stepWizard
                         class="quiz-navigation stepwizardquiz sticky-top-stepwizard hide-scrollbar-unless-scrolling"
@@ -163,7 +163,7 @@
                 <!-- END STEPWIZARD SECTION -->
                 <!-- QUESTION CONTENT SECTION -->
                 <!-- TODO the QUESTION CONTENT SECTION is duplicated it quiz-exam-submission.component.html, should be merged to a shared component -->
-                <div class="quiz-content mb-4! min-w-0 md:flex-1">
+                <div class="quiz-content mb-4 min-w-0 md:flex-1">
                     @if (!waitingForQuizStart()) {
                         @if (!submission().submitted && !showingResult() && remainingTimeSeconds() >= 0) {
                             <p jhiTranslate="artemisApp.quizExercise.quizInstructions.live"></p>
@@ -239,7 +239,7 @@
             <div class="sticky bottom-0 z-[1020] mt-auto -mx-3">
                 @if (mode() === 'live') {
                     <!-- The status row below sits on the card's own surface at its bottom edge, so it needs no rule above it. -->
-                    <div class="fs-small module-bg -mb-4 flex w-full items-center justify-between px-3! py-2">
+                    <div class="fs-small module-bg -mb-4 flex w-full items-center justify-between px-3 py-2">
                         @if (!showingResult()) {
                             @if (!waitingForQuizStart()) {
                                 <div>

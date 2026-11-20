@@ -1,5 +1,5 @@
 <div>
-    <div class="flex w-full flex-wrap items-center justify-between p-4!">
+    <div class="flex w-full flex-wrap items-center justify-between p-4">
         <span jhiTranslate="artemisApp.learningPath.navigation.overview.title" class="w-full font-bold md:w-auto"></span>
         <div class="w-full md:w-auto">
             <button tumAetUiButton severity="secondary" variant="outlined" (click)="openCompetencyGraph()" id="open-competency-graph-button" type="button">
@@ -7,9 +7,9 @@
             </button>
         </div>
     </div>
-    <hr class="m-0!" />
+    <hr class="m-0" />
     @if (isLoading()) {
-        <div class="m-6! flex justify-center">
+        <div class="m-6 flex justify-center">
             <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
         </div>
     } @else if (competencies()) {
@@ -20,7 +20,7 @@
                     <div role="heading" aria-level="2">
                         <button
                             type="button"
-                            class="flex w-full cursor-pointer flex-wrap items-center border-0 border-b border-solid border-(--border-color) bg-(--module-bg) px-4! py-4! text-start text-base text-(--module-text)"
+                            class="flex w-full flex-wrap items-center border-0 border-b border-solid border-(--border-color) bg-(--module-bg) px-4 py-4 text-left text-(--module-text)"
                             [attr.aria-expanded]="expanded"
                             [attr.aria-controls]="'nav-overview-competency-' + competency.id"
                             (click)="toggleCompetency(competency.id)"

@@ -65,13 +65,13 @@
 
     @if (hasNoTutorialGroups()) {
         <tumaet-ui-empty-state
-            class="mt-12!"
+            class="mt-12"
             data-testid="tutorial-groups-intro"
             [icon]="faUsers"
             [title]="'artemisApp.pages.tutorialGroupsManagement.noTutorialGroupsTitle' | artemisTranslate"
             [description]="'artemisApp.pages.tutorialGroupsManagement.intro' | artemisTranslate"
         >
-            <div tumAetUiEmptyStateActions class="flex flex-wrap items-center justify-center gap-2">
+            <div tumAetUiEmptyStateActions class="flex flex-wrap! items-center justify-center gap-2!">
                 @if (isAtLeastEditor()) {
                     <jhi-tutorial-groups-import-button [courseId]="currentCourseId" (importFinished)="loadTutorialGroups()" />
                     <a

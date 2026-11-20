@@ -7,7 +7,7 @@
     </ng-template>
 
     <!-- The dialog is as wide as the original 50rem dialog including its padding, and as high as 45rem including header and footer. -->
-    <div class="flex h-[min(37.5rem,calc(90dvh-7.5rem))] w-[min(48rem,calc(90dvw-2rem))] flex-col gap-4! text-[0.9rem] leading-normal" data-testid="user-registration-modal">
+    <div class="flex h-[min(37.5rem,calc(90dvh-7.5rem))] w-[min(48rem,calc(90dvw-2rem))] flex-col gap-4 text-[0.9rem] leading-normal" data-testid="user-registration-modal">
         <p class="mb-0 text-muted-color" jhiTranslate="userRegistrationModal.description"></p>
 
         <!-- Search bar row -->
@@ -33,7 +33,7 @@
             <tumaet-ui-message severity="info" class="w-full [&_.tumaet-ui-message-text]:flex-1" data-testid="user-registration-selection-info">
                 <span class="flex w-full items-center justify-between gap-2">
                     <span>{{ 'userRegistrationModal.selectedCount' | artemisTranslate: { count: selectedCount() } }}</span>
-                    <button tumAetUiButton type="button" variant="text" severity="secondary" size="small" class="py-0" (click)="clearSelection()">
+                    <button tumAetUiButton type="button" variant="text" severity="secondary" size="small" class="py-0!" (click)="clearSelection()">
                         <span jhiTranslate="userRegistrationModal.clearSelection"></span>
                     </button>
                 </span>
@@ -59,13 +59,13 @@
                 </div>
             } @else if (noResults()) {
                 <div class="flex flex-1 flex-col items-center justify-center rounded-lg border border-border p-8 text-center text-muted-color">
-                    <fa-icon class="mb-4! text-[2.5rem] opacity-40" [icon]="faUsers" />
+                    <fa-icon class="mb-4 text-[2.5rem] opacity-40" [icon]="faUsers" />
                     <p class="mb-1 font-semibold">{{ 'userRegistrationModal.noResultsTitle' | artemisTranslate: { term: searchTerm() } }}</p>
                     <p class="text-sm text-muted-color" jhiTranslate="userRegistrationModal.noResultsHint"></p>
                 </div>
             } @else {
                 <div class="flex flex-1 flex-col items-center justify-center rounded-lg border border-border p-8 text-center text-muted-color">
-                    <fa-icon class="mb-4! text-[2.5rem] opacity-40" [icon]="faSearch" />
+                    <fa-icon class="mb-4 text-[2.5rem] opacity-40" [icon]="faSearch" />
                     <p class="mb-1 font-semibold" jhiTranslate="userRegistrationModal.initialTitle"></p>
                     <p class="text-sm text-muted-color" jhiTranslate="userRegistrationModal.initialHint"></p>
                 </div>

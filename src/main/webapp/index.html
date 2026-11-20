@@ -82,20 +82,23 @@
             :root {
                 color-scheme: light dark;
             }
-            html,
-            body {
-                margin: 0;
-                padding: 0;
-                background: #e9ecef;
-                color: #212529;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                min-height: 100vh;
-            }
-            @media (prefers-color-scheme: dark) {
+            /* In the layer of the element defaults (content/scss/_base.scss), so the theme replaces these values once it has loaded. */
+            @layer base {
                 html,
                 body {
-                    background: #303030;
-                    color: #f8f9fa;
+                    margin: 0;
+                    padding: 0;
+                    background: #e9ecef;
+                    color: #212529;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    min-height: 100vh;
+                }
+                @media (prefers-color-scheme: dark) {
+                    html,
+                    body {
+                        background: #303030;
+                        color: #f8f9fa;
+                    }
                 }
             }
             .app-boot {

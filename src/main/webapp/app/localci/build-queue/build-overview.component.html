@@ -18,8 +18,8 @@
     <div class="build-queue-main-content">
         <jhi-build-job-statistics #statisticsComponent />
 
-        <div class="mb-12!">
-            <div class="flex items-center gap-4! mb-4!">
+        <div class="mb-12">
+            <div class="flex items-center gap-4 mb-4">
                 <h5 id="build-queue-running-heading" class="mb-0 flex items-center gap-2">
                     <span jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></span>
                     <tumaet-ui-tag severity="info" [value]="runningBuildJobs().length.toString()" />
@@ -46,8 +46,8 @@
                 (jobClick)="navigateToJobDetail($event)"
             />
         </div>
-        <div class="mb-12!">
-            <div class="flex items-center gap-4! mb-4!">
+        <div class="mb-12">
+            <div class="flex items-center gap-4 mb-4">
                 <h5 id="build-queue-queued-heading" class="mb-0 flex items-center gap-2">
                     <span jhiTranslate="artemisApp.buildQueue.queuedBuildJobs"></span>
                     <tumaet-ui-tag severity="secondary" [value]="queuedBuildJobs().length.toString()" />
@@ -74,7 +74,7 @@
             />
         </div>
         <div>
-            <h5 id="build-queue-finished-heading" class="mb-4! flex items-center gap-2">
+            <h5 id="build-queue-finished-heading" class="mb-4 flex items-center gap-2">
                 <span jhiTranslate="artemisApp.buildQueue.finishedBuildJobs"></span>
                 <tumaet-ui-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
             </h5>
@@ -120,7 +120,7 @@
         </ng-template>
         <div class="overflow-auto">
             @if (rawBuildLogsString()) {
-                <pre class="mb-0">{{ rawBuildLogsString() }}</pre>
+                <pre class="mb-0!">{{ rawBuildLogsString() }}</pre>
             } @else {
                 <span jhiTranslate="artemisApp.buildQueue.logs.noLogs"></span>
             }
@@ -149,15 +149,15 @@
     <tumaet-ui-button-group>
         <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-running-heading')">
             <span jhiTranslate="artemisApp.buildQueue.running"></span>
-            <tumaet-ui-tag severity="info" class="ms-1" [value]="(runningBuildJobs()?.length || 0).toString()" />
+            <tumaet-ui-tag severity="info" class="ms-1!" [value]="(runningBuildJobs()?.length || 0).toString()" />
         </tumaet-ui-button>
         <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-queued-heading')">
             <span jhiTranslate="artemisApp.buildQueue.queued"></span>
-            <tumaet-ui-tag severity="info" class="ms-1" [value]="(queuedBuildJobs()?.length || 0).toString()" />
+            <tumaet-ui-tag severity="info" class="ms-1!" [value]="(queuedBuildJobs()?.length || 0).toString()" />
         </tumaet-ui-button>
         <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-finished-heading')">
             <span jhiTranslate="artemisApp.buildQueue.finished"></span>
-            <tumaet-ui-tag severity="info" class="ms-1" [value]="(finishedBuildJobs()?.length || 0).toString()" />
+            <tumaet-ui-tag severity="info" class="ms-1!" [value]="(finishedBuildJobs()?.length || 0).toString()" />
         </tumaet-ui-button>
     </tumaet-ui-button-group>
     <span

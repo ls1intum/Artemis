@@ -11,7 +11,7 @@
         (click)="onNodeSelect.emit(item())"
         [attr.aria-label]="item().text"
         [attr.aria-pressed]="item().checked"
-        class="flex min-w-0 items-center border-0 bg-transparent p-0 text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+        class="flex min-w-0 items-center border-0 bg-transparent p-0 text-left text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
         [class.flex-1]="!isBeingRenamed()"
     >
         <fa-icon aria-hidden="true" [icon]="faFile" [fixedWidth]="true" />

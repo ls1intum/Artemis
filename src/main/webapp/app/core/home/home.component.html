@@ -1,19 +1,19 @@
 <!-- The layout sits on an inner element: a display utility on the element with [hidden] would keep it visible. -->
 <div [hidden]="loading() || account()">
-    <div class="module-bg flex min-h-screen w-full flex-col justify-center px-3! py-12!">
+    <div class="module-bg flex min-h-screen w-full flex-col justify-center px-3 py-12">
         <div class="text-center md:mx-auto md:w-2/3">
             <h1 jhiTranslate="home.title"></h1>
             <p class="home-subtitle font-light" jhiTranslate="home.subtitle"></p>
         </div>
 
-        <div class="my-6! flex justify-center">
-            <div class="login-col px-3!">
+        <div class="my-6 flex justify-center">
+            <div class="login-col px-3">
                 <div class="login-form">
-                    <div class="mb-12!">
+                    <div class="mb-12">
                         <!-- STAGE 1: Username / Email Entry -->
                         @if (currentStage() === 1) {
                             <form (change)="inputChange($event)" (ngSubmit)="onContinue()" name="identifierForm" role="form">
-                                <div class="mb-4! pb-2">
+                                <div class="mb-4 pb-2">
                                     <label class="mb-2" for="username" jhiTranslate="global.form.username">Login or email</label>
                                     <input
                                         #usernameInput
@@ -37,7 +37,7 @@
                                     }
                                 </div>
 
-                                <div class="mt-4! flex flex-wrap">
+                                <div class="mt-4 flex flex-wrap">
                                     <tumaet-ui-button
                                         id="continue-button"
                                         type="submit"
@@ -58,7 +58,7 @@
                         <!-- STAGE 2: Password or SSO Auth -->
                         @if (currentStage() === 2) {
                             <!-- Disabled Login/Email Field -->
-                            <div class="mb-4! pb-2">
+                            <div class="mb-4 pb-2">
                                 <label class="mb-2" for="usernameDisabled" jhiTranslate="global.form.username">Login or email</label>
                                 <input tumAetUiInput class="w-full" id="usernameDisabled" name="usernameDisabled" [value]="username" disabled type="text" />
                             </div>
@@ -66,16 +66,16 @@
                             <!-- Option A: Password Flow -->
                             @if (loginMethod() === 'PASSWORD') {
                                 <form (change)="inputChange($event)" (ngSubmit)="login()" name="loginForm" role="form">
-                                    <div class="mb-4!">
+                                    <div class="mb-4">
                                         @if (authenticationError()) {
-                                            <tumaet-ui-message severity="error" class="my-4! w-full" aria-live="assertive">
+                                            <tumaet-ui-message severity="error" class="my-4 w-full" aria-live="assertive">
                                                 <span [jhiTranslate]="'home.errors.failedToLogin'"> Failed to sign in! Please check your login and password and try again. </span>
                                             </tumaet-ui-message>
                                         }
                                     </div>
 
-                                    <div class="mb-4! pb-2">
-                                        <label for="password" class="mb-2 block" jhiTranslate="login.form.password">Password</label>
+                                    <div class="mb-4 pb-2">
+                                        <label for="password" class="mb-2" jhiTranslate="login.form.password">Password</label>
                                         <input
                                             #passwordInput
                                             #passwordForm="ngModel"
@@ -89,14 +89,14 @@
                                             [minlength]="PASSWORD_MIN_LENGTH"
                                             [maxLength]="PASSWORD_MAX_LENGTH"
                                         />
-                                        <div class="mt-1 text-end">
-                                            <a class="text-[0.875em] text-primary" jhiTranslate="login.password.forgot" routerLink="/account/reset/request"></a>
+                                        <div class="mt-1 text-right">
+                                            <a class="text-[0.875em] text-primary!" jhiTranslate="login.password.forgot" routerLink="/account/reset/request"></a>
                                         </div>
                                     </div>
 
                                     <ng-container *ngTemplateOutlet="termsAndRememberMe; context: { $implicit: 'password' }" />
 
-                                    <div class="mt-6! flex flex-col gap-4!">
+                                    <div class="mt-6 flex flex-col gap-4">
                                         <tumaet-ui-button
                                             id="login-button"
                                             type="submit"
@@ -123,7 +123,7 @@
                             @if (loginMethod() === 'OIDC') {
                                 <ng-container *ngTemplateOutlet="termsAndRememberMe; context: { $implicit: 'oidc' }" />
 
-                                <div class="mt-6! flex flex-col gap-4!">
+                                <div class="mt-6 flex flex-col gap-4">
                                     <tumaet-ui-button
                                         id="oidc-login-button"
                                         type="button"
@@ -152,7 +152,7 @@
                             @if (loginMethod() === 'SAML2') {
                                 <ng-container *ngTemplateOutlet="termsAndRememberMe; context: { $implicit: 'saml' }" />
 
-                                <div class="mt-6! flex flex-col gap-4!">
+                                <div class="mt-6 flex flex-col gap-4">
                                     @if (profileInfo()?.saml2) {
                                         <jhi-saml2-login
                                             [acceptedTerms]="!needsToAcceptTerms() || userAcceptedTerms"
@@ -177,9 +177,9 @@
 
                         <!-- ALWAYS VISIBLE: Passkey Option -->
                         @if (isPasskeyEnabled()) {
-                            <div class="my-4! flex items-center">
+                            <div class="my-4 flex items-center">
                                 <div class="h-px grow bg-border"></div>
-                                <span class="mx-4! text-muted-color" jhiTranslate="login.divider">or</span>
+                                <span class="mx-4 text-muted-color" jhiTranslate="login.divider">or</span>
                                 <div class="h-px grow bg-border"></div>
                             </div>
 
@@ -200,9 +200,9 @@
 
                         <!-- Registration link (Stage 1 only) -->
                         @if (currentStage() === 1 && isRegistrationEnabled()) {
-                            <div class="mt-6! text-center">
+                            <div class="mt-6 text-center">
                                 <span jhiTranslate="global.messages.info.register.noaccount"></span>&nbsp;
-                                <a class="text-primary" jhiTranslate="global.messages.info.register.link" routerLink="/account/register"></a>
+                                <a class="text-primary!" jhiTranslate="global.messages.info.register.link" routerLink="/account/register"></a>
                             </div>
                         }
                     </div>
@@ -210,7 +210,7 @@
 
                 <!-- Single shared template fragment for remember-me and terms of use -->
                 <ng-template #termsAndRememberMe let-prefix>
-                    <div class="my-4!">
+                    <div class="my-4">
                         <div class="mb-0.5 flex min-h-6 items-center gap-2">
                             <tumaet-ui-checkbox [inputId]="'rememberMe_' + prefix" name="rememberMe" [(checked)]="rememberMe" />
                             <label class="cursor-pointer" [for]="'rememberMe_' + prefix" jhiTranslate="login.form.rememberme">Remember me</label>

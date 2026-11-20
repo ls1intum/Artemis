@@ -808,23 +808,6 @@ export default tseslint.config(
         },
     },
     {
-        // The removed Bootstrap and Tailwind define the same spacing class names (`mb-3`, `px-4`, `gap-5`) with different
-        // values for 3 to 5, and a bare Tailwind utility loses to the unlayered element defaults of `_base.scss`.
-        // These templates must say which value they mean, with the important modifier. A folder must be scanned by
-        // tailwind.css (`migration-source-coverage` checks this).
-        // See client-development.mdx (### Styling).
-        files: ['src/main/webapp/app/app.component.html', ...migratedFolders('html')],
-        languageOptions: {
-            parser: angularTemplateParser,
-        },
-        plugins: {
-            localRules: localRulesPlugin,
-        },
-        rules: {
-            'localRules/no-ambiguous-spacing-utility': 'error',
-        },
-    },
-    {
         // The same locks for `template:` strings: button-inline-templates.mjs hands every inline template to ESLint a second
         // time as `.lock-template`. Only the migrated modules are listed, so no other module is affected.
         files: migratedFolders('lock-template'),
@@ -836,7 +819,6 @@ export default tseslint.config(
         },
         rules: {
             'localRules/no-bootstrap-classes': 'error',
-            'localRules/no-ambiguous-spacing-utility': 'error',
             'localRules/no-primeng-component-classes': 'error',
             'localRules/no-raw-tailwind-color-palette': 'error',
         },

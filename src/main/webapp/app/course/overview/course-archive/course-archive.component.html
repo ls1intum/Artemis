@@ -1,20 +1,15 @@
 @if (courses()) {
-    <div class="pb-4!">
+    <div class="pb-4">
         <div class="flex items-center justify-between">
             <div class="flex justify-start gap-1">
-                <h3 class="mb-0 font-medium" jhiTranslate="artemisApp.course.archive.title"></h3>
+                <h3 class="mb-0" jhiTranslate="artemisApp.course.archive.title"></h3>
                 <fa-icon [icon]="faQuestionCircle" [size]="iconSize" class="self-center text-muted-color" [tumAetUiTooltip]="'artemisApp.course.archive.tip' | artemisTranslate" />
             </div>
             @if (courses().length || testCourses().length) {
-                <div class="ms-1 flex items-center justify-between gap-4!">
+                <div class="ms-1 flex items-center justify-between gap-4">
                     @if (courses().length) {
                         <div class="inline-flex text-primary">
-                            <button
-                                id="sort-test"
-                                type="button"
-                                (click)="onSort()"
-                                class="inline-flex cursor-pointer items-center border-0 bg-transparent p-0 text-base text-primary no-underline"
-                            >
+                            <button id="sort-test" type="button" (click)="onSort()" class="inline-flex items-center border-0 bg-transparent p-0 text-primary no-underline">
                                 <fa-icon id="icon-test-down" [icon]="isSortAscending() ? faArrowDown19 : faArrowUp19" />
                                 <span class="ms-1" jhiTranslate="artemisApp.course.archive.sort"></span>
                             </button>
@@ -25,13 +20,13 @@
             }
         </div>
     </div>
-    <div class="py-4!">
+    <div class="py-4">
         @if (archiveGroups().length) {
             <div class="mb-0">
                 @for (semester of archiveGroups(); track semester; let last = $last; let i = $index) {
                     <button
                         type="button"
-                        class="flex w-full items-center justify-between border-0 bg-transparent px-4! text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+                        class="flex w-full items-center justify-between border-0 bg-transparent px-4 text-left text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
                         (click)="isCourseFoundInSemester(semester) && toggleCollapseState(semester)"
                         [disabled]="!isCourseFoundInSemester(semester)"
                         [attr.aria-expanded]="!semesterCollapsed()[semester]"
@@ -42,7 +37,7 @@
                         <fa-icon [icon]="semesterCollapsed()[semester] ? faAngleDown : faAngleUp" />
                     </button>
                     @if (!semesterCollapsed()[semester]) {
-                        <div class="mx-auto mt-2 w-full px-4!">
+                        <div class="mx-auto mt-2 w-full px-4">
                             <div class="course-grid items-center justify-center">
                                 @for (course of coursesBySemester()[semester] | searchFilter: ['title'] : searchCourseText(); track course) {
                                     <div class="course-card-wrapper p-0">
@@ -60,13 +55,13 @@
                         </div>
                     }
                     @if (!last) {
-                        <hr class="mx-4!" />
+                        <hr class="mx-4" />
                     }
                 }
             </div>
         } @else {
             <div class="flex justify-center">
-                <h4 class="mb-0 text-center text-muted-color!" jhiTranslate="artemisApp.course.archive.noCoursesPreviousSemester"></h4>
+                <h4 class="mb-0 text-center text-muted-color" jhiTranslate="artemisApp.course.archive.noCoursesPreviousSemester"></h4>
             </div>
         }
     </div>

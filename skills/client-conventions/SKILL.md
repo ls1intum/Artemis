@@ -273,16 +273,13 @@ values, hex and `rgb()` colours, PrimeNG selectors and Bootstrap component selec
 Add a new module to `migratedModules`, to the Stylelint override and to the `@source` list of
 `tailwind.css`; `pnpm run test:rules` checks that the three agree.
 
-Tailwind utilities are in a cascade layer and lose to unlayered CSS: the element defaults in
-`src/main/webapp/content/scss/_base.scss` (`p`, `h1` to `h6`, `ul`, `a`) and component SCSS. The spacing steps 0, 1, 2
-and `auto` and a few helpers (`text-center`, `overflow-hidden`, `border`, `text-primary`) are defined
-unlayered and important in `src/main/webapp/content/scss/_utilities.scss`, so they are written bare; do not add classes
-there. Write every other step with the important modifier where it has to win (`mb-6!`). For the
-steps 3 to 5 this is mandatory: Bootstrap used the same names with another scale (16, 24 and 48px
-against Tailwind's 12, 16 and 20px), so `localRules/no-ambiguous-spacing-utility` rejects a bare
-`*-3`, `*-4` or `*-5` and suggests the Tailwind value (`mb-3!`, `mb-4!`, `mb-5!`) or the step with
-the former Bootstrap size (`mb-3` to `mb-4!`, `mb-4` to `mb-6!`, `mb-5` to `mb-12!`). See
-_Spacing utilities_ in `documentation/docs/developer/guidelines/client-development.mdx`.
+Tailwind utilities are in the cascade layer `utilities`. The element defaults in
+`src/main/webapp/content/scss/_base.scss` (`p`, `h1` to `h6`, `ul`, `a`) are in the layer `base`, so a utility
+overrides them without a modifier. Component SCSS and the classes of TUM AET UI are not in a layer and win over
+every utility: write the important modifier where a utility has to override them (`mb-6!`). Bootstrap used the
+spacing names with another scale for the steps 3 to 5 (16, 24 and 48px against Tailwind's 12, 16 and 20px); markup
+from an old branch needs `mb-3` to `mb-4`, `mb-4` to `mb-6` and `mb-5` to `mb-12`. See _Spacing utilities_ in
+`documentation/docs/developer/guidelines/client-development.mdx`.
 
 If TUM AET UI lacks a reusable capability, add or evolve a package component around native HTML,
 Angular Aria (`@angular/aria`, for composite widgets such as menus and tabs), or stable Angular CDK

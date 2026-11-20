@@ -1,6 +1,6 @@
 <form id="csvExportOptionsForm" name="exportOptionForm" role="form" novalidate>
-    <div class="mb-4! flex items-center justify-between pt-4!">
-        <h2 class="m-0 text-xl! font-medium!" jhiTranslate="export.dialogTitle">Export Options</h2>
+    <div class="mb-4 flex items-center justify-between pt-4">
+        <h2 class="m-0 text-xl font-medium!" jhiTranslate="export.dialogTitle">Export Options</h2>
         <button
             tumAetUiButton
             type="button"
@@ -21,15 +21,15 @@
         </tumaet-ui-tab-list>
         <tumaet-ui-tab-panels class="p-0!">
             <tumaet-ui-tab-panel [value]="1" class="block pt-2">
-                <div class="mb-4!">
+                <div class="mb-4">
                     <p class="intro-text" jhiTranslate="export.excelFile.introText"></p>
                 </div>
             </tumaet-ui-tab-panel>
             <tumaet-ui-tab-panel [value]="2" class="block pt-2">
-                <div class="mb-4!">
+                <div class="mb-4">
                     <p class="intro-text" jhiTranslate="export.csvFile.introText"></p>
                 </div>
-                <div class="mb-4!">
+                <div class="mb-4">
                     <span class="block font-bold" id="csv-field-separator-label" jhiTranslate="export.csvFile.fieldSeparator.label"></span>
                     <div class="inline-flex flex-wrap gap-1" role="group" aria-labelledby="csv-field-separator-label">
                         @for (fieldSeparator of CsvFieldSeparator | keyvalue; track fieldSeparator) {
@@ -46,7 +46,7 @@
                         }
                     </div>
                 </div>
-                <div class="mb-4!">
+                <div class="mb-4">
                     <span class="block font-bold" id="csv-quote-strings-label" jhiTranslate="export.csvFile.quoteStrings.label"></span>
                     <div class="inline-flex flex-wrap gap-1" role="group" aria-labelledby="csv-quote-strings-label">
                         @for (quoteString of CsvQuoteStrings | keyvalue; track quoteString) {
@@ -63,7 +63,7 @@
                         }
                     </div>
                 </div>
-                <div class="mb-4!">
+                <div class="mb-4">
                     <span class="block font-bold" id="csv-decimal-separator-label" jhiTranslate="export.csvFile.decimalSeparator.label"></span>
                     <div class="inline-flex flex-wrap gap-1" role="group" aria-labelledby="csv-decimal-separator-label">
                         @for (separator of CsvDecimalSeparator | keyvalue; track separator) {
@@ -83,7 +83,7 @@
             </tumaet-ui-tab-panel>
         </tumaet-ui-tab-panels>
     </tumaet-ui-tabs>
-    <div class="mt-4! flex justify-end gap-1">
+    <div class="mt-4 flex justify-end gap-1">
         <button type="button" tumAetUiButton size="small" severity="secondary" data-testid="export-cancel-button" (click)="cancel()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>

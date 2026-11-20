@@ -1,5 +1,5 @@
-<div class="mb-4! flex items-center justify-between">
-    <h2 class="mb-0 text-xl! font-bold!" jhiTranslate="artemisApp.userSettings.accountInformation"></h2>
+<div class="mb-4 flex items-center justify-between">
+    <h2 class="mb-0 text-xl font-bold!" jhiTranslate="artemisApp.userSettings.accountInformation"></h2>
     @if (currentUser()?.internal) {
         <tumaet-ui-button
             data-button-intent="workflow"
@@ -12,7 +12,7 @@
         </tumaet-ui-button>
     }
 </div>
-<div class="mb-4! flex flex-col gap-2 empty:hidden">
+<div class="mb-4 flex flex-col gap-2 empty:hidden">
     @if (emailChangeRequested()) {
         <tumaet-ui-message severity="success" data-testid="settings-success-message">
             <span jhiTranslate="settings.messages.successEmailChangeRequested"></span>
@@ -38,7 +38,7 @@
             <div class="flex flex-col gap-2">
                 <strong jhiTranslate="settings.pendingEmailChange.title"></strong>
                 <span jhiTranslate="settings.pendingEmailChange.description"></span>
-                <ul class="list-disc pl-5">
+                <ul class="list-disc">
                     <li data-testid="pending-email-change-current">
                         <span jhiTranslate="settings.pendingEmailChange.currentAddress"></span>
                         <span class="font-semibold">{{ currentUser()?.email }}</span>:
@@ -81,7 +81,7 @@
     }
 </div>
 @if (currentUser(); as user) {
-    <div class="flex flex-col items-center gap-6! md:grid md:grid-cols-[auto_minmax(0,1fr)] md:items-stretch">
+    <div class="flex flex-col items-center gap-6 md:grid md:grid-cols-[auto_minmax(0,1fr)] md:items-stretch">
         <input
             [attr.aria-label]="'artemisApp.userSettings.accountInformationPage.profilePicture' | artemisTranslate"
             type="file"
@@ -150,7 +150,7 @@
                 <li tumAetUiListItem>
                     <dl class="mb-0 flex min-w-0 items-center gap-1">
                         <dt class="text-muted-color shrink-0"><span jhiTranslate="artemisApp.userSettings.accountInformationPage.fullName"></span>:</dt>
-                        <dd class="mb-0! min-w-0 break-words text-base!">{{ user.name }}</dd>
+                        <dd class="mb-0 min-w-0 break-words text-base!">{{ user.name }}</dd>
                     </dl>
                 </li>
             }
@@ -158,7 +158,7 @@
                 <li tumAetUiListItem>
                     <dl class="mb-0 flex min-w-0 items-center gap-1">
                         <dt class="text-muted-color shrink-0"><span jhiTranslate="artemisApp.userSettings.accountInformationPage.login"></span>:</dt>
-                        <dd class="mb-0! min-w-0 break-words text-base!">{{ user.login }}</dd>
+                        <dd class="mb-0 min-w-0 break-words text-base!">{{ user.login }}</dd>
                     </dl>
                 </li>
             }
@@ -166,7 +166,7 @@
                 <li tumAetUiListItem>
                     <dl class="mb-0 flex min-w-0 items-center gap-1">
                         <dt class="text-muted-color shrink-0"><span jhiTranslate="artemisApp.userSettings.accountInformationPage.email"></span>:</dt>
-                        <dd class="mb-0! min-w-0 break-words text-base!">{{ user.email }}</dd>
+                        <dd class="mb-0 min-w-0 break-words text-base!">{{ user.email }}</dd>
                     </dl>
                 </li>
             }
@@ -174,7 +174,7 @@
                 <li tumAetUiListItem>
                     <dl class="mb-0 flex min-w-0 items-center gap-1">
                         <dt class="text-muted-color shrink-0"><span jhiTranslate="artemisApp.userSettings.accountInformationPage.registrationNumber"></span>:</dt>
-                        <dd class="mb-0! min-w-0 break-words text-base!">{{ user.visibleRegistrationNumber }}</dd>
+                        <dd class="mb-0 min-w-0 break-words text-base!">{{ user.visibleRegistrationNumber }}</dd>
                     </dl>
                 </li>
             }
@@ -182,7 +182,7 @@
                 <li tumAetUiListItem>
                     <dl class="mb-0 flex min-w-0 items-center gap-1">
                         <dt class="text-muted-color shrink-0"><span jhiTranslate="artemisApp.userSettings.accountInformationPage.joinedArtemis"></span>:</dt>
-                        <dd class="mb-0! min-w-0 break-words text-base!">{{ user.createdDate | artemisDate }}</dd>
+                        <dd class="mb-0 min-w-0 break-words text-base!">{{ user.createdDate | artemisDate }}</dd>
                     </dl>
                 </li>
             }

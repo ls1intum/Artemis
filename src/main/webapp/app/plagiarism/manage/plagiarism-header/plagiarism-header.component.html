@@ -1,12 +1,12 @@
-<div class="plagiarism-header flex items-center justify-between p-4!">
+<div class="plagiarism-header flex items-center justify-between p-4">
     <div class="flex items-center">
-        <h5 class="mb-0! font-medium">
+        <h5 class="mb-0">
             {{ comparison()?.submissionA?.studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }},
             {{ comparison()?.submissionB?.studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}
         </h5>
     </div>
 
-    <div class="flex items-center gap-4!">
+    <div class="flex items-center gap-4">
         @if (!exercise()?.teamMode) {
             @if (comparison()?.status === plagiarismStatus.CONFIRMED) {
                 <button
@@ -44,7 +44,7 @@
             ></button>
         } @else {
             <fa-icon [icon]="faCircleInfo" class="text-muted-color" />
-            <p class="m-0!"><small jhiTranslate="artemisApp.plagiarism.teamModeDisabled"></small></p>
+            <p class="m-0"><small jhiTranslate="artemisApp.plagiarism.teamModeDisabled"></small></p>
         }
 
         <div class="plagiarism-header-divider h-6 w-px"></div>
@@ -52,7 +52,7 @@
         <div class="flex gap-1">
             <button
                 type="button"
-                class="split-control inline-flex cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 text-muted-color hover:bg-surface-hover"
+                class="split-control inline-flex items-center border-0 bg-transparent p-0 text-muted-color hover:bg-surface-hover"
                 (click)="expandSplitPane('left')"
                 data-qa="split-view-left"
                 [attr.aria-label]="'artemisApp.plagiarism.expandLeftPane' | artemisTranslate"
@@ -64,7 +64,7 @@
             </button>
             <button
                 type="button"
-                class="split-control inline-flex cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 text-muted-color hover:bg-surface-hover"
+                class="split-control inline-flex items-center border-0 bg-transparent p-0 text-muted-color hover:bg-surface-hover"
                 (click)="resetSplitPanes()"
                 data-qa="split-view-even"
                 [attr.aria-label]="'artemisApp.plagiarism.resetSplitPanes' | artemisTranslate"
@@ -76,7 +76,7 @@
             </button>
             <button
                 type="button"
-                class="split-control inline-flex cursor-pointer items-center rounded-sm border-0 bg-transparent p-0 text-muted-color hover:bg-surface-hover"
+                class="split-control inline-flex items-center border-0 bg-transparent p-0 text-muted-color hover:bg-surface-hover"
                 (click)="expandSplitPane('right')"
                 data-qa="split-view-right"
                 [attr.aria-label]="'artemisApp.plagiarism.expandRightPane' | artemisTranslate"

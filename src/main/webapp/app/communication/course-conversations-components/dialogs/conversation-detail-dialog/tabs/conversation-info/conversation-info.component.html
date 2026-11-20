@@ -86,7 +86,7 @@
         }
         <!-- Notification -->
         <div id="notification-section" class="flex flex-col gap-2 px-2 py-1">
-            <h6 class="m-0 text-base! font-medium!" jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notification">Notification</h6>
+            <h6 class="m-0 text-base font-medium" jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notification">Notification</h6>
             <p class="m-0 text-sm text-muted-color" data-testid="notification-description">
                 @if (!isNotificationsEnabled()) {
                     <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notificationsDisabled"></span>
@@ -100,7 +100,7 @@
                     <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.seeSettingsLink"></span>
                 </a>
             </p>
-            <div class="flex items-center gap-4!">
+            <div class="flex items-center gap-4">
                 <tumaet-ui-select-button
                     id="muteSelectButton"
                     [options]="muteOptions()"
@@ -114,7 +114,7 @@
         </div>
         <!-- More Info -->
         <div id="moreinfo-section" class="flex flex-col gap-2 px-2 py-1">
-            <h6 class="m-0 text-base! font-medium!" jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.moreInfo">More info</h6>
+            <h6 class="m-0 text-base font-medium" jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.moreInfo">More info</h6>
             <div class="flex flex-col gap-2 text-[0.9rem] text-muted-color">
                 @if (activeConversation()?.creator) {
                     <div class="flex items-center gap-2">

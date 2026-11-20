@@ -119,7 +119,7 @@ describe('ExamExerciseHeaderComponent', () => {
             expect([...actions.classList], button).toEqual(expect.arrayContaining([`[&_${button}]:py-1!`, `[&_${button}]:leading-5!`]));
         }
         // 12px between the rule and the content
-        expect(fixture.nativeElement.querySelector('[data-testid="exam-exercise-header"]').classList).toContain('mb-3!');
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-exercise-header"]').classList).toContain('mb-3');
     });
 
     it('shows the leading and the suffix element on the title row, around the title and apart from the action', () => {

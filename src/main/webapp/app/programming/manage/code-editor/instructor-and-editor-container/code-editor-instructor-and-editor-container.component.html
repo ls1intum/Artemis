@@ -1,6 +1,6 @@
 @if (loadingState() === LOADING_STATE.INITIALIZING || loadingState() === LOADING_STATE.FETCHING_FAILED) {
     <nav class="rounded-[0.15rem] border border-(--border-color) bg-(--card-bg)">
-        <div class="p-4!">
+        <div class="p-4">
             @if (loadingState() === LOADING_STATE.INITIALIZING) {
                 <span>
                     <fa-icon [icon]="faCircleNotch" animation="spin" />
@@ -18,7 +18,7 @@
 } @else if (exercise(); as exercise) {
     <!-- The @else branch already excludes the two loading states, and the alias narrows the exercise signal to a
          non-null value for the whole block so the bindings below keep type-checking their optional participations. -->
-    <div class="module-bg p-4! pt-1!">
+    <div class="module-bg p-4 pt-1">
         <jhi-code-editor-container
             [participation]="selectedParticipation!"
             [editable]="!isProblemStatementEditingLocked()"
@@ -83,7 +83,7 @@
                             <div class="flex w-full">
                                 <button
                                     type="button"
-                                    class="grow text-start"
+                                    class="grow text-left!"
                                     tumAetUiMenuItem
                                     [disabled]="
                                         loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
@@ -101,7 +101,7 @@
                                     <div class="my-1 w-px self-stretch bg-(--border-color)"></div>
                                     <button
                                         type="button"
-                                        class="shrink w-auto px-2"
+                                        class="shrink w-auto! px-2!"
                                         tumAetUiMenuItem
                                         (triggered)="createAssignmentParticipation()"
                                         [disabled]="
@@ -124,7 +124,7 @@
                                     <div class="my-1 w-px self-stretch bg-(--border-color)"></div>
                                     <button
                                         type="button"
-                                        class="shrink w-auto px-2 text-state-danger"
+                                        class="shrink w-auto! px-2! text-state-danger"
                                         tumAetUiMenuItem
                                         (triggered)="deleteAssignmentParticipation()"
                                         [disabled]="isExerciseGenerationActionBlocked() || loadingState() !== LOADING_STATE.CLEAR"

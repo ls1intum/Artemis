@@ -6,7 +6,7 @@
             type="button"
             severity="primary"
             size="small"
-            class="gap-1! rounded-full! font-medium shadow-sm"
+            class="gap-1! rounded-full! font-medium shadow-sm!"
             data-testid="inline-refinement-trigger"
             (click)="expand()"
             [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.triggerButton' | artemisTranslate"
@@ -21,7 +21,7 @@
                 [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.placeholder' | artemisTranslate"
                 #instructionInput
                 type="text"
-                class="w-full max-w-lg min-w-80 border-none bg-transparent px-2 py-1 text-sm text-color outline-none placeholder:text-muted-color disabled:opacity-60"
+                class="w-full max-w-lg min-w-80 border-none bg-transparent px-2 py-1 text-color outline-none placeholder:text-muted-color disabled:opacity-60"
                 data-testid="inline-refinement-input"
                 [placeholder]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.placeholder' | artemisTranslate"
                 [ngModel]="instruction()"

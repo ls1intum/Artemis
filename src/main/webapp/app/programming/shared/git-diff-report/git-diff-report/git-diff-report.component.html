@@ -51,7 +51,7 @@
                 (onClick)="allowSplitView.set(!allowSplitView())"
             />
             <jhi-git-diff-line-stat
-                class="mt-1 font-bold"
+                class="mt-1! font-bold"
                 [hidden]="!initialDiffsReady()"
                 [addedLineCount]="repositoryDiffInformation().totalLineChange.addedLineCount"
                 [removedLineCount]="repositoryDiffInformation().totalLineChange.removedLineCount"
@@ -90,7 +90,7 @@
                     </div>
                 </div>
                 <!-- Only hidden while collapsed, so a loaded diff editor keeps its state. -->
-                <div class="px-5! py-4!" [id]="'git-diff-file-panel-body-' + $index" [hidden]="collapsed">
+                <div class="px-5 py-4" [id]="'git-diff-file-panel-body-' + $index" [hidden]="collapsed">
                     <jhi-git-diff-file
                         [allowSplitView]="allowSplitView()"
                         [diffInformation]="diffInformation"
@@ -104,7 +104,7 @@
 </div>
 <div class="flex w-full items-center justify-center text-2xl">
     @if (nothingToDisplay()) {
-        <div class="mt-4! text-(--secondary)" jhiTranslate="artemisApp.repository.commitHistory.commitDetails.empty"></div>
+        <div class="mt-4 text-(--secondary)" jhiTranslate="artemisApp.repository.commitHistory.commitDetails.empty"></div>
     } @else if (!initialDiffsReady()) {
         <div>
             <fa-icon [icon]="faSpinner" animation="spin" />

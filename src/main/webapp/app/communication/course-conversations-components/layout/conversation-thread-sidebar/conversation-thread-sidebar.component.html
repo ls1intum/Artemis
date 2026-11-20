@@ -14,7 +14,7 @@
         <div class="thread-card" data-testid="conversation-thread-card">
             <!-- header -->
             <div class="thread-card-header cursor-default">
-                <h5 class="mb-0 font-medium!" jhiTranslate="artemisApp.conversationsLayout.threadSideBar.label">Thread</h5>
+                <h5 class="mb-0 font-medium" jhiTranslate="artemisApp.conversationsLayout.threadSideBar.label">Thread</h5>
                 <div class="flex items-center gap-2">
                     <fa-icon
                         class="pointer me-2"
@@ -33,7 +33,7 @@
             <div #scrollBody class="scrollbar wrapper-scroll-y thread-answer-post mx-1 pt-0" data-testid="conversation-thread-scroll-body">
                 @if (post() !== undefined) {
                     <div class="my-2">
-                        <div class="py-4! px-0">
+                        <div class="py-4 px-0">
                             <jhi-post
                                 [readOnlyMode]="readOnlyMode()"
                                 [posting]="post()"
@@ -47,7 +47,7 @@
                                 [hasChannelModerationRights]="hasChannelModerationRights()"
                             />
                         </div>
-                        <div class="message-input mx-4! pt-2">
+                        <div class="message-input mx-4 pt-2">
                             @if (!readOnlyMode()) {
                                 <jhi-message-reply-inline-input
                                     [activeConversation]="conversation()"

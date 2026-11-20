@@ -7,7 +7,7 @@
         </div>
         @if (!examUserMode()) {
             <div class="flex justify-center items-center">
-                <table tumAetUiTable size="small" class="w-auto">
+                <table tumAetUiTable size="small" class="w-auto!">
                     <thead>
                         <tr>
                             <th>Login</th>
@@ -39,7 +39,7 @@
         }
         @if (examUserMode()) {
             <div class="flex justify-center items-center">
-                <table tumAetUiTable size="small" class="w-auto">
+                <table tumAetUiTable size="small" class="w-auto!">
                     <thead>
                         <tr>
                             <th>Login</th>
@@ -76,7 +76,7 @@
             <div class="mt-2">
                 <input id="importCSV" type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
                 @if (validationError() || noUsersFoundError()) {
-                    <div class="mt-6! mb-2 text-state-danger">
+                    <div class="mt-6 mb-2 text-state-danger">
                         <div [jhiTranslate]="'artemisApp.importUsers.usersForImport.importFailed'"></div>
                         <ul class="mt-1">
                             @if (validationError()) {
@@ -96,7 +96,7 @@
             </div>
         </div>
         @if (previewUsers().length > 0) {
-            <div class="flex flex-col gap-2 mt-6!">
+            <div class="flex flex-col gap-2 mt-6">
                 <div>
                     <label class="label-narrow font-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
                     <jhi-help-icon text="artemisApp.importUsers.usersForImport.tooltip" class="me-1" />

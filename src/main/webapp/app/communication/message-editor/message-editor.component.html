@@ -43,7 +43,7 @@
             </button>
             <div
                 #advancedBar
-                class="message-editor-advanced-toolbar absolute start-0 z-10 flex max-w-full flex-wrap items-center gap-1 rounded-md border p-1 shadow-md"
+                class="message-editor-advanced-toolbar absolute start-0 z-10 flex max-w-full flex-wrap items-center gap-1 rounded-md border! border-(--border-color)! p-1 shadow-md"
                 [class]="barBelow() ? 'top-full mt-1' : 'bottom-full mb-1'"
                 [id]="advancedToolbarId"
                 [hidden]="!toolbarExpanded()"
@@ -182,7 +182,7 @@
             (compositionstart)="linkComposing.set(true)"
             (compositionend)="linkComposing.set(false)"
         >
-            <label class="flex min-w-0 flex-1 flex-col gap-1 text-sm">
+            <label class="min-w-0 flex-1 flex-col gap-1 text-sm">
                 {{ 'artemisApp.communication.formattedEditor.linkText' | artemisTranslate }}
                 <input
                     data-testid="message-link-text"
@@ -195,7 +195,7 @@
                     (keydown.enter)="saveLink($event)"
                 />
             </label>
-            <label class="flex min-w-0 flex-1 flex-col gap-1 text-sm">
+            <label class="min-w-0 flex-1 flex-col gap-1 text-sm">
                 {{ 'artemisApp.communication.formattedEditor.linkUrl' | artemisTranslate }}
                 <input
                     tumAetUiInput
@@ -238,7 +238,7 @@
                 <fa-icon [icon]="icons.faXmark" />
             </button>
             @if (linkInvalid()) {
-                <p [id]="listId + '-link-error'" class="m-0 w-full text-sm text-state-danger" role="alert">
+                <p [id]="listId + '-link-error'" class="m-0! w-full text-sm text-state-danger" role="alert">
                     {{ 'artemisApp.communication.formattedEditor.invalidLink' | artemisTranslate }}
                 </p>
             }
@@ -294,7 +294,7 @@
     @let shortHint = 'artemisApp.communication.formattedEditor.hintShort' | artemisTranslate;
     @let detailsHint = 'artemisApp.communication.formattedEditor.hintDetails' | artemisTranslate;
     <div class="message-editor-divider message-editor-muted flex items-start gap-1 border-t py-1 ps-2 pe-1 text-xs">
-        <p class="m-0 min-w-0 flex-1 py-1" aria-hidden="true" data-testid="message-editor-hint">{{ wideHint() ? triggersHint + ' ' + shortHint : shortHint }}</p>
+        <p class="m-0! min-w-0 flex-1 py-1" aria-hidden="true" data-testid="message-editor-hint">{{ wideHint() ? triggersHint + ' ' + shortHint : shortHint }}</p>
         <span [id]="hintId" class="sr-only">{{ triggersHint + ' ' + shortHint + ' ' + detailsHint }}</span>
         <button
             type="button"
@@ -335,14 +335,14 @@
                 {{ 'artemisApp.communication.formattedEditor.choose' | artemisTranslate }}
             }
         </div>
-        <ul [id]="listId" role="listbox" class="m-0 list-none p-1" [attr.aria-label]="'artemisApp.communication.formattedEditor.suggestions' | artemisTranslate">
+        <ul [id]="listId" role="listbox" class="m-0! list-none p-1!" [attr.aria-label]="'artemisApp.communication.formattedEditor.suggestions' | artemisTranslate">
             @for (suggestion of suggestions(); track suggestion.markdown; let index = $index) {
                 <li
                     tabindex="-1"
                     role="option"
                     [id]="listId + '-' + index"
                     [attr.aria-selected]="index === activeIndex()"
-                    class="message-suggestion flex cursor-pointer items-center justify-between gap-6! rounded-sm px-2 py-1"
+                    class="message-suggestion flex cursor-pointer items-center justify-between gap-6 rounded-sm px-2 py-1"
                     (mousedown)="$event.preventDefault()"
                     (click)="accept(suggestion)"
                     (keydown.enter)="accept(suggestion); $event.preventDefault(); $event.stopPropagation()"

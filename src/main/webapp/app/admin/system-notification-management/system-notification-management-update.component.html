@@ -3,7 +3,7 @@
         <h5 *adminTitleBarTitle id="myNotificationLabel" class="mb-0" jhiTranslate="artemisApp.systemNotification.createOrEditLabel"></h5>
         <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm" [formGroup]="form">
             <div>
-                <div class="mb-4! flex flex-col gap-2">
+                <div class="mb-4 flex flex-col gap-2">
                     <label for="title" class="font-bold" jhiTranslate="artemisApp.systemNotification.title"></label>
                     <input
                         id="title"
@@ -19,7 +19,7 @@
                         <small id="title-maxlength-error" class="text-state-danger text-sm" jhiTranslate="artemisApp.systemNotification.titleMaxlength"></small>
                     }
                 </div>
-                <div class="mb-4! flex flex-col gap-2">
+                <div class="mb-4 flex flex-col gap-2">
                     <label for="text" class="font-bold" jhiTranslate="artemisApp.systemNotification.text"></label>
                     <input
                         id="text"
@@ -35,11 +35,11 @@
                         <small id="text-maxlength-error" class="text-state-danger text-sm" jhiTranslate="artemisApp.systemNotification.textMaxlength"></small>
                     }
                 </div>
-                <div class="mb-4! flex flex-col gap-2">
+                <div class="mb-4 flex flex-col gap-2">
                     <label for="type" class="font-bold" jhiTranslate="artemisApp.systemNotification.type"></label>
                     <tumaet-ui-select inputId="type" [options]="systemNotificationTypes" optionLabel="name" optionValue="value" formControlName="type" class="w-full" />
                 </div>
-                <div class="mb-4! flex flex-col gap-2">
+                <div class="mb-4 flex flex-col gap-2">
                     <label for="notificationDate" class="font-bold" jhiTranslate="artemisApp.systemNotification.notificationDate"></label>
                     <tumaet-ui-date-picker
                         inputId="notificationDate"
@@ -49,7 +49,7 @@
                         [ariaRequired]="true"
                     />
                 </div>
-                <div class="mb-4! flex flex-col gap-2">
+                <div class="mb-4 flex flex-col gap-2">
                     <label for="expireDate" class="font-bold" jhiTranslate="artemisApp.systemNotification.expireDate"></label>
                     <tumaet-ui-date-picker
                         inputId="expireDate"
@@ -65,7 +65,7 @@
                     }
                 </div>
                 @if (!form.get('id')?.value) {
-                    <div class="mb-4!">
+                    <div class="mb-4">
                         <div class="flex items-center gap-2">
                             <tumaet-ui-checkbox
                                 [inputId]="'sendMaintenanceEmail'"
@@ -83,7 +83,7 @@
                     </div>
                 }
             </div>
-            <div class="mt-4! flex items-center gap-2">
+            <div class="mt-4 flex items-center gap-2">
                 <button id="cancelButton" type="button" tumAetUiButton size="small" severity="secondary" (click)="goToOverview()">
                     <fa-icon [icon]="faBan" />
                     <span jhiTranslate="entity.action.cancel"></span>

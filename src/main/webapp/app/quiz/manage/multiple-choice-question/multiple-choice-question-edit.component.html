@@ -127,7 +127,7 @@
                 </div>
             </div>
             @if (reEvaluationInProgress()) {
-                <div class="w-full px-3! md:w-1/6">
+                <div class="w-full px-3 md:w-1/6">
                     <div class="flex items-center [&>*]:mx-1" [class]="reEvaluationInProgress() ? 'mx-[5px] mb-[15px]' : ''">
                         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
                         <jhi-points-input
@@ -162,7 +162,7 @@
                 </div>
             }
             @if (reEvaluationInProgress()) {
-                <div class="flex w-full items-center gap-2 px-3! md:w-1/4">
+                <div class="flex w-full items-center gap-2 px-3 md:w-1/4">
                     <button
                         type="button"
                         tumAetUiButton

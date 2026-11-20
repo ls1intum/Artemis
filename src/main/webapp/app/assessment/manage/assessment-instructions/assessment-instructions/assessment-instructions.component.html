@@ -47,7 +47,7 @@
     @switch (exercise().type) {
         @case (ExerciseType.PROGRAMMING) {
             @let programmingExerciseValue = this.programmingExercise();
-            <div class="mb-4!">
+            <div class="mb-4">
                 <a jhiSecureLink [href]="programmingExerciseValue?.solutionParticipation?.repositoryUri">
                     <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution" />
                 </a>

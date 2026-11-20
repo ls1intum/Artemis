@@ -1,5 +1,5 @@
 <tumaet-ui-dialog dismissableMask [visible]="true" (visibleChange)="onVisibleChange($event)" size="medium" [header]="TRANSLATION_BASE + '.feedbackModal.header' | artemisTranslate">
-    <div class="mb-4! flex justify-between">
+    <div class="mb-4 flex justify-between">
         <ng-container *ngTemplateOutlet="detailTemplate; context: { label: TRANSLATION_BASE + '.task', value: feedbackDetail().taskName }" />
         <ng-container
             *ngTemplateOutlet="
@@ -14,7 +14,7 @@
         <ng-container *ngTemplateOutlet="detailTemplate; context: { label: TRANSLATION_BASE + '.errorCategory', value: 'Student Error' }" />
     </div>
 
-    <h5 class="mb-4!" [jhiTranslate]="TRANSLATION_BASE + '.feedbackModal.feedbackTitle'"></h5>
+    <h5 class="mb-4" [jhiTranslate]="TRANSLATION_BASE + '.feedbackModal.feedbackTitle'"></h5>
     @if (longFeedbackText()) {
         <p>{{ longFeedbackText() }}</p>
     } @else {
@@ -23,7 +23,7 @@
 </tumaet-ui-dialog>
 
 <ng-template #detailTemplate let-label="label" let-value="value">
-    <div class="rounded-sm border border-solid border-border px-4! pt-2 wrap-break-word">
+    <div class="rounded-sm border border-solid border-border px-4 pt-2 wrap-break-word">
         <span class="font-bold" [jhiTranslate]="label"></span>
         <p>{{ value }}</p>
     </div>

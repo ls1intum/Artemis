@@ -5,7 +5,7 @@
                 <fa-icon class="me-2" [icon]="open() ? faAngleDown : faAngleRight" />
             </button>
             <div class="task__row">
-                <div class="task__row__cell gap-4!">
+                <div class="task__row__cell gap-4">
                     <b>{{ index() + 1 }}</b>
                     <span class="task__field" [tumAetUiTooltip]="task().taskName" tumAetUiTooltipDescribesHost="false">
                         <b>{{ task().taskName }}</b></span
@@ -53,7 +53,7 @@
                         [attr.aria-label]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.visibility' | artemisTranslate"
                         [disabled]="task().taskName === NOT_ASSIGNED_TO_TASK_NAME"
                         [(ngModel)]="task().visibility"
-                        class="w-full rounded-sm border border-solid border-(--border-color) bg-(--module-bg) px-3! py-1.5 text-(--body-color)"
+                        class="w-full rounded-sm border border-solid border-(--border-color) bg-(--module-bg) px-3 py-1.5 text-(--body-color)"
                         name="{{ task().taskName }}-visibility"
                         (change)="taskUpdateHandler()"
                     >
@@ -87,8 +87,8 @@
         <div class="task__body">
             @for (test of task().testCases; track test; let j = $index) {
                 <div class="task__row" [class.task__row--inactive]="!test.active">
-                    <div class="task__row__cell gap-4!">
-                        <span class="ps-4!">{{ formatTestIndex(index(), j) }}</span>
+                    <div class="task__row__cell gap-4">
+                        <span class="ps-4">{{ formatTestIndex(index(), j) }}</span>
                         <span class="task__field" [tumAetUiTooltip]="test.testName" tumAetUiTooltipDescribesHost="false">{{ test.testName }}</span>
                     </div>
                     <div class="task__row__cell task__row__cell--small">
@@ -129,7 +129,7 @@
                         <select
                             [attr.aria-label]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.visibility' | artemisTranslate"
                             [(ngModel)]="test.visibility"
-                            class="w-full rounded-sm border border-solid border-(--border-color) bg-(--module-bg) px-3! py-1.5 text-(--body-color)"
+                            class="w-full rounded-sm border border-solid border-(--border-color) bg-(--module-bg) px-3 py-1.5 text-(--body-color)"
                             name="{{ test.testName }}-visibility"
                             (change)="testUpdateHandler(test)"
                         >

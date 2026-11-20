@@ -1104,7 +1104,7 @@ describe('ExamResultSummaryComponent', () => {
             expect(aiButton.parentElement!.classList).toContain('justify-end');
             // the old float and the extra right margin left the button 8px short of the edge
             expect(aiButton.classList).not.toContain('float-right');
-            expect(aiButton.classList).not.toContain('mr-2!');
+            expect(aiButton.classList).not.toContain('mr-2');
         });
 
         it('makes the back-to-overview button a small one', () => {
@@ -1121,8 +1121,8 @@ describe('ExamResultSummaryComponent', () => {
             fixture.detectChanges();
 
             const heading = element('h3[jhiTranslate="artemisApp.exam.exercises"]')!;
-            // the important modifiers are needed because the unlayered global heading rules would win otherwise
-            expect(heading.classList).toContain('text-base!');
+            // global.scss sets the font weight of headings outside a cascade layer, so the weight needs the important modifier
+            expect(heading.classList).toContain('text-base');
             expect(heading.classList).toContain('font-semibold!');
             expect(heading.getAttribute('data-testid')).toBe('exam-summary-heading');
             expect(heading.classList).toContain('mb-3!');

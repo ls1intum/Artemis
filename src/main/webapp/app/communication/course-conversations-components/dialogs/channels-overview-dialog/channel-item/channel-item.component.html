@@ -27,7 +27,7 @@
             </div>
         }
     </div>
-    <div class="flex items-center gap-1 opacity-0! group-hover:opacity-100! focus-within:opacity-100! [@media(hover:none)]:opacity-100!">
+    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100! focus-within:opacity-100 [@media(hover:none)]:opacity-100">
         @if (canJoinChannel(channel())) {
             <button
                 [id]="'register' + channel().id"
