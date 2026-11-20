@@ -962,6 +962,27 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         });
     });
 
+    describe('generated package name', () => {
+        it('should include the course short name once the course is loaded', () => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.params = of({ courseId });
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.shortName = 'sorting';
+            route.data = of({ programmingExercise: exercise });
+            course.shortName = 'itp';
+            course.defaultProgrammingLanguage = ProgrammingLanguage.JAVA;
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            comp.isSimpleMode.set(true);
+
+            comp.ngOnInit();
+
+            expect(comp.programmingExercise.packageName).toBe('de.tum.cit.aet.itp.sorting');
+        });
+    });
+
     describe('programming language change and features', () => {
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);

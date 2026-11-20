@@ -651,6 +651,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                                     ) {
                                         this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
                                     }
+                                    // The generated package name contains the course short name, which is known only now
+                                    this.updateDefaultPackageName();
                                 });
                                 // we need the course id  to make the request to the server if it's an import from file
                                 if (this.isImportFromFile || this.isImportFromSharing) {
@@ -670,6 +672,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                                     ) {
                                         this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
                                     }
+                                    this.updateDefaultPackageName();
                                     this.exerciseCategories = this.programmingExercise.categories || [];
 
                                     this.loadCourseExerciseCategories(this.programmingExercise.course.id);
