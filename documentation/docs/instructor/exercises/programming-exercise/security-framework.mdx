@@ -107,6 +107,7 @@ lists the reasons, which can be:
   This includes a test method the class inherits from another test class without overriding it.
 - Tests or Ares annotations are inside a nested class.
 - An interface declares tests or Ares annotations, which every class that implements it inherits.
+- A test class inherits a test method with its own `@Policy` annotation from another test class without overriding it.
 - A file declares several top-level types that are test classes or carry a `@Policy` annotation.
 - A test class registers Ares but has no `@Policy` annotation of its own.
 - A test class does not register Ares through `@Public`, `@Hidden`, `@PublicTest` or `@HiddenTest`.

@@ -303,45 +303,58 @@ public final class SecurityPolicyRepositoryFiles {
             if (!testClass.registersSandbox()) {
                 reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES));
             }
-            if (hasActiveMethodPolicyWhileSwitchedOff(testClass, testClassesByName, typesByName)) {
+            List<MethodPolicyInEffect> methodPolicies = methodPoliciesInEffect(testClass, testClassesByName, typesByName);
+            boolean switchedOff = testClass.policies().size() == 1 && testClass.policies().getFirst().isEvaluable() && !testClass.policies().getFirst().isActivated();
+            if (switchedOff && methodPolicies.stream().anyMatch(policy -> policy.annotation().isEvaluable() && policy.annotation().isActivated())) {
                 reasons.add(
                         new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS));
+            }
+            else if (methodPolicies.stream().anyMatch(MethodPolicyInEffect::inherited)) {
+                reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.INHERITED_METHOD_POLICY));
             }
         }
         return reasons;
     }
 
     /**
-     * Ares applies the annotation of a test method instead of the one of its class, so an active method annotation in a class whose annotation switches the
-     * sandbox off runs that test with the sandbox. That holds for the test methods the class inherits from other test classes as well, because Ares reads the
-     * annotation of the method where it is declared before the one of the class that runs it, unless a class in between overrides the method. Neither the
-     * state of the class nor its assignments could show that, so such a class is not supported.
+     * A method annotation that Ares applies to a test the class runs.
+     *
+     * @param inherited whether the class inherits the test method from another test class instead of declaring it
      */
-    private static boolean hasActiveMethodPolicyWhileSwitchedOff(AresTestSources.TypeDeclaration testClass, Map<String, AresTestSources.TypeDeclaration> testClassesByName,
+    private record MethodPolicyInEffect(AresPolicyAnnotations.Annotation annotation, boolean inherited) {
+    }
+
+    /**
+     * Ares applies the annotation of a test method instead of the one of its class, also to the test methods a class inherits from other test classes, because
+     * it reads the annotation of the method where it is declared before the one of the class that runs it, unless a class in between overrides the method.
+     * An active one in a class whose annotation switches the sandbox off runs that test with the sandbox, and an inherited one keeps the test of the subclass
+     * on another policy than its class. Neither the state of the class nor its assignments could show that, so such a class is not supported.
+     *
+     * @return the method annotations Ares applies to the tests the class runs: its own and those of the test methods it inherits without an override
+     */
+    private static List<MethodPolicyInEffect> methodPoliciesInEffect(AresTestSources.TypeDeclaration testClass, Map<String, AresTestSources.TypeDeclaration> testClassesByName,
             Map<String, AresTestSources.TypeDeclaration> typesByName) {
-        if (testClass.policies().size() != 1 || !testClass.policies().getFirst().isEvaluable() || testClass.policies().getFirst().isActivated()) {
-            return false;
-        }
         List<AresTestSources.TypeDeclaration> chain = new ArrayList<>();
         Set<String> visited = new HashSet<>();
         Optional<AresTestSources.TypeDeclaration> declaring = Optional.of(testClass);
+        // Like Java, the first candidate of the superclass that exists wins, also if it is no test class, which ends the chain of test classes.
         while (declaring.isPresent() && visited.add(declaring.get().qualifiedName())) {
             chain.add(declaring.get());
-            declaring = superclassOf(declaring.get(), testClassesByName.keySet()).map(testClassesByName::get);
+            declaring = superclassOf(declaring.get(), typesByName.keySet()).map(testClassesByName::get);
         }
         // A member type shadows an import of the same simple name in the class that declares or inherits it, not in its superclasses.
         Map<String, Optional<Set<String>>> memberTypes = new HashMap<>();
         chain.forEach(type -> memberTypes.put(type.qualifiedName(), AresTestSources.memberTypesInScope(type, typesByName)));
+        List<MethodPolicyInEffect> policies = new ArrayList<>();
         for (int index = 0; index < chain.size(); index++) {
             AresTestSources.TypeDeclaration type = chain.get(index);
             for (Map.Entry<String, AresPolicyAnnotations.Annotation> methodPolicy : type.methodPolicies().entrySet()) {
-                AresPolicyAnnotations.Annotation annotation = methodPolicy.getValue();
-                if (annotation.isEvaluable() && annotation.isActivated() && !isOverridden(type, methodPolicy.getKey(), chain.subList(0, index), memberTypes)) {
-                    return true;
+                if (!isOverridden(type, methodPolicy.getKey(), chain.subList(0, index), memberTypes)) {
+                    policies.add(new MethodPolicyInEffect(methodPolicy.getValue(), index > 0));
                 }
             }
         }
-        return false;
+        return policies;
     }
 
     /**

@@ -165,6 +165,30 @@ class AresTestCasesTest {
     }
 
     @Test
+    void offersOnlyTheTestMethodsOfTheClassItselfAndNotThoseOfANestedGroup() {
+        String source = """
+                class SortingTest {
+
+                    @net.jqwik.api.Example
+                    void runs() {
+                    }
+
+                    @net.jqwik.api.Group
+                    class Edges {
+
+                        @net.jqwik.api.Example
+                        void sorts() {
+                        }
+                    }
+                }
+                """;
+
+        // A @Policy on the method of the group would not be accepted, so it is no test case to assign.
+        assertThat(AresTestCases.testCases(source)).containsExactly("runs");
+        assertThat(AresTestCases.testAnnotationOffsets(source)).containsOnlyKeys("runs");
+    }
+
+    @Test
     void anExplicitReceiverParameterIsNoPartOfTheSignature() {
         String source = """
                 import java.util.Date;

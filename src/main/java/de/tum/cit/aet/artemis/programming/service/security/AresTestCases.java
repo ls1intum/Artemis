@@ -211,7 +211,7 @@ final class AresTestCases {
         Matcher type = AresPolicyAnnotations.TYPE_DECLARATION.matcher(masked);
         while (type.find()) {
             int body = masked.indexOf('{', type.end());
-            Set<String> names = body < 0 ? Set.of() : typeVariables(masked.substring(type.end(), body));
+            Set<String> names = body < 0 ? Set.of() : typeVariables(typeParameterList(masked.substring(type.end(), body)));
             if (!names.isEmpty()) {
                 int bodyEnd = AresPolicyAnnotations.matchingBrace(masked, body);
                 typeVariableScopes.add(new TypeVariableScope(body, bodyEnd < 0 ? masked.length() : bodyEnd, names));
@@ -429,6 +429,28 @@ final class AresTestCases {
     }
 
     /**
+     * @param header the part of a type declaration between its name and its body
+     * @return the type parameters the type declares, e.g. {@code <T extends Comparable<T>>}, without the type arguments of the types it extends or implements,
+     *         such as {@code Date} in {@code implements Marker<Date>}; empty if it declares none
+     */
+    private static String typeParameterList(String header) {
+        String parameters = header.stripLeading();
+        if (!parameters.startsWith("<")) {
+            return "";
+        }
+        int nesting = 0;
+        for (int index = 0; index < parameters.length(); index++) {
+            char character = parameters.charAt(index);
+            nesting += character == '<' ? 1 : 0;
+            nesting -= character == '>' ? 1 : 0;
+            if (nesting == 0) {
+                return parameters.substring(0, index + 1);
+            }
+        }
+        return parameters;
+    }
+
+    /**
      * @return the offset of the name of the method that the annotation ending at the offset annotates; -1 if none follows before the next body or statement
      */
     static int methodNameOffsetAfter(String masked, int offset) {
@@ -447,12 +469,14 @@ final class AresTestCases {
 
     private static TestMethods testMethods(String source) {
         String masked = AresPolicyAnnotations.mask(source);
+        int[] depth = AresTestSources.braceDepths(masked);
         Map<String, Integer> offsets = new LinkedHashMap<>();
         Map<String, Integer> declarations = new HashMap<>();
         Set<String> overloaded = new LinkedHashSet<>();
         for (MatchResult annotation : testAnnotations(masked)) {
             MatchResult method = methodAfter(masked, annotation.end());
-            if (method != null) {
+            // Only a method of the top-level type is a test case of its own, not one of a nested type such as a jqwik group, where no @Policy may go.
+            if (method != null && depth[method.start(1)] == 1) {
                 String name = method.group(1);
                 offsets.putIfAbsent(name, annotation.start());
                 // Two test annotations of one method find the same declaration; another declaration with the name is an overload.

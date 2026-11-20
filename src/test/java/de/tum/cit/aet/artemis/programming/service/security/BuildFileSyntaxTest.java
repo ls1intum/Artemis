@@ -41,6 +41,9 @@ class BuildFileSyntaxTest {
         assertThat(BuildFileSyntax.attachesAresAgent(
                 gradle(direct.replace("agent \"de.tum.cit.ase:ares:${aresVersion}:agent\"", "agent(\n        \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n    )")))).isTrue();
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(chained))).isTrue();
+        // The declaration may follow the brace that opens the block of dependencies on the same line.
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(direct.replace("dependencies {\n    agent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}",
+                "dependencies { agent(\"de.tum.cit.ase:ares:${aresVersion}:agent\") }")))).isTrue();
     }
 
     @Test

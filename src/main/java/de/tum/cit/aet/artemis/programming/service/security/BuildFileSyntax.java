@@ -34,10 +34,11 @@ final class BuildFileSyntax {
     private static final Pattern CONFIGURATION_REFERENCE = Pattern.compile("configurations\\s*+\\.\\s*+([A-Za-z_$][\\w$]*+)");
 
     /**
-     * A dependency declaration at the start of a line or after a semicolon, e.g. {@code aresAgent "de.tum.cit.ase:ares:1.0:agent"}, with the name of its
-     * configuration; the arguments in parentheses may start on the next line.
+     * A dependency declaration at the start of a line, after a semicolon or after the brace that opens a block, e.g. {@code aresAgent "de.tum.cit.ase:ares:1.0:agent"}
+     * or {@code dependencies { agent("de.tum.cit.ase:ares:1.0:agent") }}, with the name of its configuration; the arguments in parentheses may start on the next
+     * line.
      */
-    private static final Pattern DEPENDENCY_DECLARATION = Pattern.compile("(?m)(?:^|;)[ \\t]*+([A-Za-z_$][\\w$]*+)[ \\t]*+(?:\\(\\s*+)?(?:['\"]|\\w++[ \\t]*+[(:])");
+    private static final Pattern DEPENDENCY_DECLARATION = Pattern.compile("(?m)(?:^|[;{])[ \\t]*+([A-Za-z_$][\\w$]*+)[ \\t]*+(?:\\(\\s*+)?(?:['\"]|\\w++[ \\t]*+[(:])");
 
     /** An assignment of an empty file collection. */
     private static final Pattern EMPTY_COLLECTION = Pattern.compile("\\s*+=\\s*+(?:files|objects\\s*+\\.\\s*+fileCollection)\\s*+\\(\\s*+\\)\\s*+");

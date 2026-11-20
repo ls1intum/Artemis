@@ -104,6 +104,11 @@ public record SecurityFrameworkState(SecurityActivationStatus status, List<Strin
          * An interface declares tests or carries Ares annotations. JUnit runs its default test methods in every class that implements it, so neither the
          * assignments nor the state of that class could show them.
          */
-        TEST_INTERFACE
+        TEST_INTERFACE,
+        /**
+         * A test class inherits a test method with a {@code @Policy} annotation of its own from another test class without overriding it. Ares applies that
+         * annotation to the test of the subclass, which its assignment to a policy could not show.
+         */
+        INHERITED_METHOD_POLICY
     }
 }

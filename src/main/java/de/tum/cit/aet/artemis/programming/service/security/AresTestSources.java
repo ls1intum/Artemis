@@ -460,7 +460,7 @@ final class AresTestSources {
     /**
      * @return for every offset the number of braces that are open there; the brace that opens a body has the depth outside of it
      */
-    private static int[] braceDepths(String masked) {
+    static int[] braceDepths(String masked) {
         int[] depths = new int[masked.length() + 1];
         int depth = 0;
         for (int index = 0; index < masked.length(); index++) {

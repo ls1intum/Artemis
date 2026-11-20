@@ -69,6 +69,7 @@ export enum SecurityUnsupportedReasonType {
     NO_ARES_VERSION_PINNED = 'NO_ARES_VERSION_PINNED',
     ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS = 'ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS',
     TEST_INTERFACE = 'TEST_INTERFACE',
+    INHERITED_METHOD_POLICY = 'INHERITED_METHOD_POLICY',
 }
 
 /** A policy file that an active policy points to. */

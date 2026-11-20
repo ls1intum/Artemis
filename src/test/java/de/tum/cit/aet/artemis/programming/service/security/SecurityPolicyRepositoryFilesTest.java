@@ -897,6 +897,55 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).isEmpty();
     }
 
+    @ParameterizedTest
+    @CsvSource({ "'', true", "'    @Test\n    void runs() {\n    }\n', false" })
+    void anActiveSubclassThatInheritsATestMethodWithItsOwnPolicyIsUnsupported(String override, boolean unsupported) throws IOException {
+        writeBuildFile();
+        String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    void runs()";
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
+        String subclass = TEST_CLASS.formatted("de.example", "MoreSortingTest").replace("class MoreSortingTest", "class MoreSortingTest extends SortingTest");
+        writeSource("test/de/example/MoreSortingTest.java", subclass.replace("    @Test\n    void runs() {\n    }\n", override.replace("\\n", "\n")));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // Ares runs the inherited runs() of MoreSortingTest with the annotation of SortingTest#runs, whatever policy MoreSortingTest is assigned to.
+        SecurityFrameworkState.UnsupportedReason reason = new SecurityFrameworkState.UnsupportedReason("de.example.MoreSortingTest",
+                SecurityFrameworkState.UnsupportedReasonType.INHERITED_METHOD_POLICY);
+        if (unsupported) {
+            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).contains(reason);
+        }
+        else {
+            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).doesNotContain(reason);
+        }
+    }
+
+    @Test
+    void theSuperclassIsTheFirstExistingCandidateEvenIfItIsNoTestClass() throws IOException {
+        writeBuildFile();
+        String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs()";
+        writeSource("test/de/tests/Base.java", publicTestClass("de.tests", "Base").replace("    @Test\n    void runs()", annotated));
+        writeSource("test/de/helpers/Base.java", "package de.helpers;\n\npublic class Base {\n}\n");
+        String child = TEST_CLASS.formatted("de.helpers", "Child").replace("class Child", "class Child extends Base").replace("void runs()", "void sorts()")
+                .replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        writeSource("test/de/helpers/Child.java", child.replace("import org.junit.jupiter.api.Test;", "import de.tests.*;\nimport org.junit.jupiter.api.Test;"));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // Child extends de.helpers.Base of its own package, not the test class de.tests.Base of the wildcard import, so it inherits no test method.
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).noneMatch(reason -> reason.location().equals("de.helpers.Child"));
+    }
+
+    @Test
+    void aTypeArgumentOfASupertypeDeclaresNoTypeVariable() throws IOException {
+        writeBuildFile();
+        String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
+        writeSource("test/de/example/Marker.java", "package de.example;\n\ninterface Marker<T> {\n}\n");
+        writeSource("test/de/example/MoreSortingTest.java", importingOverride("MoreSortingTest extends SortingTest implements Marker<Date>", "public void runs(Date date)"));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // Date in Marker<Date> is the imported java.util.Date, so runs(Date) overrides the inherited test.
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", false);
+    }
+
     @Test
     void aTypeVariableOfAMemberTypeDoesNotShadowAnImportedParameterType() throws IOException {
         writeBuildFile();
@@ -953,7 +1002,7 @@ class SecurityPolicyRepositoryFilesTest {
         String parent = TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated);
         writeSource("test/de/example/SortingTest.java", parent.replace("class SortingTest", parentDeclaration));
         writeSource("test/de/example/Dates.java", "package de.example;\n\ninterface Dates {\n\n    class Date {\n    }\n}\n");
-        writeSource("test/de/example/MoreDates.java", "package de.example;\n\ninterface MoreDates extends java.io.Serializable, Dates {\n}\n");
+        writeSource("test/de/example/MoreDates.java", "package de.example;\n\ninterface MoreDates extends Dates {\n}\n");
         writeSource("test/de/example/MoreSortingTest.java", importingOverride(childDeclaration, "public void runs(Date date)"));
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
