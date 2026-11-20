@@ -35,7 +35,10 @@ jobs:
       # Measured with the command below: 158 edges before the split and 163 after it.
       # 166 rather than 165 since the credential change check: the passkey WebAuthn configurer reaches
       # the session freshness service at startup, because it hands it to the passkey registration filters.
-      MAX_INSTANTIATED_BEANS: 166
+      # 167 rather than 166 since the explicit LLM configuration: LlmConfigurationValidator checks the artemis.llm catalog
+      # and the preset assignments before the server accepts requests, so it and LlmProperties start eagerly. The shared
+      # Spring AI chat client it replaced no longer starts, so the net change is one bean. Measured: 167 in the CI run.
+      MAX_INSTANTIATED_BEANS: 167
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
