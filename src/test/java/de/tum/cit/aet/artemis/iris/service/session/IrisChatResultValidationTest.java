@@ -171,7 +171,7 @@ class IrisChatResultValidationTest {
         var trace = new de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace();
         trace.setId(9L);
         when(usage.findLLMTokenUsageTraceById(9L)).thenReturn(Optional.of(trace));
-        var tokens = List.of(new de.tum.cit.aet.artemis.admin.domain.LLMRequest("model", 10, 1f, 5, 1f, "pipeline"));
+        var tokens = List.of(new de.tum.cit.aet.artemis.admin.domain.LLMRequest("model", 10, 5, "pipeline"));
         var tracedJob = job.withTraceId(9L);
         var status = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, List.of("Try again"), tokens);
         assertThat(service.handleStatusUpdate(tracedJob, status)).isEqualTo(tracedJob);

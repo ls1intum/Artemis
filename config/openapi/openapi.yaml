@@ -798,7 +798,7 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/PresentationAssessmentRequest'}
+            schema: {$ref: '#/components/schemas/PresentationAssessment'}
         required: true
       responses:
         '200':
@@ -1755,6 +1755,28 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
+  /api/lecture/lecture-units/{lectureUnitId}/tumlive-upload/file:
+    post:
+      tags: [tum-live-upload]
+      operationId: transferUpload
+      parameters:
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: ref
+        in: query
+        required: true
+        schema: {type: string}
+      requestBody:
+        content:
+          application/octet-stream:
+            schema: {type: string, format: binary}
+          video/mp4:
+            schema: {type: string, format: binary}
+        required: true
+      responses:
+        '204': {description: No Content}
   /api/lecture/courses/{courseId}/lectures:
     get:
       tags: [lecture]
@@ -2220,6 +2242,16 @@ paths:
                 type: array
                 items: {type: string, maxLength: 128}
                 maxItems: 500
+  /api/calendar/subscription-token/rotate:
+    post:
+      tags: [calendar]
+      operationId: rotateCalendarEventSubscriptionToken
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema: {type: string}
   /api/assessment/exercises/{exerciseId}/tutor-participations:
     post:
       tags: [tutor-participation]
@@ -2364,7 +2396,7 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/PresentationAssessmentRequest'}
+            schema: {$ref: '#/components/schemas/PresentationAssessment'}
         required: true
       responses:
         '200':
@@ -3456,6 +3488,21 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/TumLiveUploadedUnit'}
+  /api/lecture/courses/{courseId}/tumlive-upload-availability:
+    get:
+      tags: [tum-live-upload]
+      operationId: getTumLiveUploadAvailability
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TumLiveUploadAvailability'}
   /api/lecture/courses/{courseId}/lectures-with-slides:
     get:
       tags: [lecture]
@@ -3851,16 +3898,6 @@ paths:
     get:
       tags: [calendar]
       operationId: getCalendarEventSubscriptionToken
-      responses:
-        '200':
-          description: OK
-          content:
-            text/plain:
-              schema: {type: string}
-  /api/calendar/subscription-token/rotate:
-    post:
-      tags: [calendar]
-      operationId: rotateCalendarEventSubscriptionToken
       responses:
         '200':
           description: OK
@@ -4346,50 +4383,6 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/RatingListItem'}
-  /api/assessment/courses/{courseId}/presentation-assessments/{assessmentId}/rubric:
-    get:
-      tags: [presentation-assessment]
-      operationId: getPresentationRubric
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: assessmentId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/PresentationRubric'}
-  /api/assessment/courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}/ratings:
-    get:
-      tags: [presentation-assessment]
-      operationId: getPresentationRubricRatings
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: assessmentId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: instanceId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items: {$ref: '#/components/schemas/PresentationRubricRating'}
   /api/assessment/courses/{courseId}/presentation-assessments/student-rows:
     get:
       tags: [presentation-assessment]
@@ -4962,8 +4955,8 @@ components:
         outputTokens: {type: integer, format: int64}
         cachedInputTokens: {type: integer, format: int64}
         cachedInputTokensComplete: {type: boolean}
-        estimatedCostEur: {type: number, format: double}
-        estimatedCostEurComplete: {type: boolean}
+        costUsd: {type: number, format: double}
+        costUsdComplete: {type: boolean}
         models:
           type: array
           items: {type: string}
@@ -4972,8 +4965,8 @@ components:
           items: {type: string}
         providerRequestIdsComplete: {type: boolean}
       required: [agentTurns, attempts, cachedInputTokens, cachedInputTokensComplete,
-        estimatedCostEur, estimatedCostEurComplete, inputTokens, modelCalls, models,
-        outputTokens, providerRequestIds, providerRequestIdsComplete, toolCalls]
+        costUsd, costUsdComplete, inputTokens, modelCalls, models, outputTokens, providerRequestIds,
+        providerRequestIdsComplete, toolCalls]
     DiagramType:
       type: string
       enum: [ClassDiagram, ObjectDiagram, ActivityDiagram, UseCaseDiagram, CommunicationDiagram,
@@ -5661,18 +5654,14 @@ components:
         id: {type: integer, format: int64}
         presentationDate: {type: string, format: date-time}
         resultPoints: {type: number, format: double, maximum: 10000, minimum: 0}
-        passed: {type: boolean}
         studentLogin: {type: string, minLength: 1}
         language: {type: string, maxLength: 10, minLength: 0}
-        mode: {$ref: '#/components/schemas/PresentationAssessmentMode'}
+        mode:
+          type: string
+          enum: [ONLINE, IN_PERSON]
         location: {type: string, maxLength: 255, minLength: 0}
         meetingLink: {type: string, maxLength: 1000, minLength: 0, pattern: '^https?://\S+$'}
         remark: {type: string, maxLength: 1000, minLength: 0}
-        ratings:
-          type: array
-          items: {$ref: '#/components/schemas/PresentationRubricRating'}
-          maxItems: 20
-          minItems: 1
       required: [language, mode, presentationDate, studentLogin]
     SubmissionWithParticipation:
       type: object
@@ -5929,13 +5918,6 @@ components:
         entityId: {type: integer, format: int64}
         title: {type: string}
         lectureId: {type: integer, format: int64}
-    PresentationRubric:
-      type: object
-      properties:
-        criteria:
-          type: array
-          items: {$ref: '#/components/schemas/PresentationRubricCriterion'}
-        assessedInstanceCount: {type: integer, format: int64}
     ParticipationExercise:
       type: object
       properties:
@@ -6586,22 +6568,18 @@ components:
       properties:
         presentationDate: {type: string, format: date-time}
         resultPoints: {type: number, format: double, maximum: 10000, minimum: 0}
-        passed: {type: boolean}
         studentLogins:
           type: array
           items: {type: string, minLength: 1}
           maxItems: 500
           minItems: 0
         language: {type: string, maxLength: 10, minLength: 0}
-        mode: {$ref: '#/components/schemas/PresentationAssessmentMode'}
+        mode:
+          type: string
+          enum: [ONLINE, IN_PERSON]
         location: {type: string, maxLength: 255, minLength: 0}
         meetingLink: {type: string, maxLength: 1000, minLength: 0, pattern: '^https?://\S+$'}
         remark: {type: string, maxLength: 1000, minLength: 0}
-        ratings:
-          type: array
-          items: {$ref: '#/components/schemas/PresentationRubricRating'}
-          maxItems: 20
-          minItems: 1
       required: [language, mode, presentationDate, studentLogins]
     MultipleChoiceQuizQuestionWithoutSolution:
       required: [type]
@@ -6723,11 +6701,6 @@ components:
     CompetencyTaxonomy:
       type: string
       enum: [REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE]
-    PresentationRubricLevel:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        description: {type: string, maxLength: 1000, minLength: 0}
     QuizExerciseForStudentResponse:
       discriminator:
         propertyName: quizQuestionsType
@@ -6853,13 +6826,6 @@ components:
           additionalProperties: {type: string}
           description: Action-specific context parameters
       required: [actionType, problemStatementMarkdown]
-    PresentationRubricRating:
-      type: object
-      properties:
-        criterionId: {type: integer, format: int64}
-        levelId: {type: integer, format: int64}
-        comment: {type: string, maxLength: 1000, minLength: 0}
-      required: [criterionId, levelId]
     GeneratedQuizQuestion:
       type: object
       description: One generated quiz question
@@ -7090,12 +7056,11 @@ components:
       type: object
       description: Response containing consistency check costs
       properties:
-        promptEur: {type: number, format: double, description: Prompt costs in EUR,
-          example: 0.011224}
-        completionEur: {type: number, format: double, description: Completion costs
-            in EUR, example: 0.016513}
-        totalEur: {type: number, format: double, description: Total costs in EUR,
-          example: 0.027738}
+        totalUsd: {type: number, format: double, description: Known cost in USD; a
+            lower bound when incomplete, example: 0.027738}
+        totalUsdComplete: {type: boolean, description: Whether every recorded request
+            has a USD cost}
+      required: [totalUsdComplete]
     Phase:
       type: string
       enum: [PREPARING, DESIGNING, VERIFYING, REVIEWING, REPAIRING, SAVING]
@@ -7497,18 +7462,6 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
-    PresentationRubricCriterion:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        name: {type: string, maxLength: 255, minLength: 0}
-        description: {type: string, maxLength: 1000, minLength: 0}
-        weight: {type: integer, format: int32, maximum: 100, minimum: 1}
-        scale: {$ref: '#/components/schemas/PresentationRubricScale'}
-        levels:
-          type: array
-          items: {$ref: '#/components/schemas/PresentationRubricLevel'}
-      required: [levels, name, scale, weight]
     ExerciseGenerationRetainedFile:
       type: object
       description: A file of a generated candidate that was not saved to the exercise
@@ -8681,22 +8634,6 @@ components:
         failure: {type: string, description: 'Why the build stopped early, absent
             when it ran through'}
       required: [id, startedAt, trigger]
-    PresentationAssessmentRequest:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string, maxLength: 255, minLength: 0}
-        description: {type: string, maxLength: 1000, minLength: 0}
-        gradingMethod: {$ref: '#/components/schemas/PresentationGradingMethod'}
-        maxPoints: {type: number, format: double, exclusiveMinimum: 0, maximum: 10000}
-        courseId: {type: integer, format: int64}
-        exerciseId: {type: integer, format: int64}
-        rubricCriteria:
-          type: array
-          items: {$ref: '#/components/schemas/PresentationRubricCriterion'}
-          maxItems: 20
-          minItems: 1
-      required: [gradingMethod, title]
     GradingCriterion:
       type: object
       properties:
@@ -8856,10 +8793,10 @@ components:
         id: {type: integer, format: int64}
         presentationDate: {type: string, format: date-time}
         resultPoints: {type: number, format: double, maximum: 10000, minimum: 0}
-        passed: {type: boolean}
-        rubricScore: {type: number, format: double}
         language: {type: string, maxLength: 10, minLength: 0}
-        mode: {$ref: '#/components/schemas/PresentationAssessmentMode'}
+        mode:
+          type: string
+          enum: [ONLINE, IN_PERSON]
         location: {type: string, maxLength: 255, minLength: 0}
         meetingLink: {type: string, maxLength: 1000, minLength: 0}
         remark: {type: string, maxLength: 1000, minLength: 0}
@@ -9002,13 +8939,13 @@ components:
       type: object
       properties:
         id: {type: integer, format: int64}
-        title: {type: string}
-        description: {type: string}
-        gradingMethod: {$ref: '#/components/schemas/PresentationGradingMethod'}
-        maxPoints: {type: number, format: double}
+        title: {type: string, maxLength: 255, minLength: 0}
+        description: {type: string, maxLength: 1000, minLength: 0}
+        maxPoints: {type: number, format: double, exclusiveMinimum: 0, maximum: 10000}
         courseId: {type: integer, format: int64}
         exerciseId: {type: integer, format: int64}
         exerciseTitle: {type: string}
+      required: [maxPoints, title]
     ExerciseOverview:
       type: object
       properties:
@@ -9052,6 +8989,10 @@ components:
           type: array
           items: {$ref: '#/components/schemas/ParticipationOverview'}
           uniqueItems: true
+    TumLiveUploadAvailability:
+      type: object
+      properties:
+        available: {type: boolean}
     ExerciseGenerationVerdict:
       type: object
       description: The structured outcome of the differential verification, so the
@@ -9617,11 +9558,11 @@ components:
             this run was admitted against}
         modelCalls: {type: integer, format: int64, description: Provider responses
             accounted for so far}
-        estimatedCostEur: {type: number, format: double, description: 'Estimated cost
-            in EUR, absent when any model used has no configured price'}
-        estimatedCostComplete: {type: boolean, description: Whether a price was configured
-            for every response counted so far}
-      required: [billableTokens, cachedInputTokens, estimatedCostComplete, inputTokens,
+        costUsd: {type: number, format: double, description: 'Cost in USD, absent
+            when any response has neither a reported USD cost nor complete USD prices'}
+        costUsdComplete: {type: boolean, description: Whether every response counted
+            so far has a reported or completely estimated USD cost}
+      required: [billableTokens, cachedInputTokens, costUsdComplete, inputTokens,
         modelCalls, outputTokens, tokenBudget]
     LectureSlidesAttachmentVideoUnit:
       type: object

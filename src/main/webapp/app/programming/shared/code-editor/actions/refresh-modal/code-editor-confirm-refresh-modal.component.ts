@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiButtonDirective, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -10,10 +10,10 @@ import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-edi
     selector: 'jhi-code-editor-confirm-refresh-modal',
     templateUrl: './code-editor-confirm-refresh-modal.component.html',
     providers: [CodeEditorRepositoryFileService],
-    imports: [FormsModule, TranslateDirective, FaIconComponent],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, TumAetUiButtonDirective],
 })
 export class CodeEditorConfirmRefreshModalComponent {
-    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogRef = inject<TumAetUiDialogRef<boolean>>(TumAetUiDialogRef);
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;

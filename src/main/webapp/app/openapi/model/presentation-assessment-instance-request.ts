@@ -8,19 +8,24 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import type { PresentationRubricRating } from './presentation-rubric-rating';
-import type { PresentationAssessmentMode } from './presentation-assessment-mode';
 
 export interface PresentationAssessmentInstanceRequest {
     id?: number;
     presentationDate: string;
     resultPoints?: number;
-    passed?: boolean;
     studentLogin: string;
     language: string;
-    mode: PresentationAssessmentMode;
+    mode: PresentationAssessmentInstanceRequestModeEnum;
     location?: string;
     meetingLink?: string;
     remark?: string;
-    ratings?: Array<PresentationRubricRating>;
 }
+
+export type PresentationAssessmentInstanceRequestModeEnum = 'ONLINE' | 'IN_PERSON';
+
+export const PresentationAssessmentInstanceRequestModeEnum = {
+    Online: 'ONLINE' as const,
+    InPerson: 'IN_PERSON' as const,
+} as const;
+
+export const PresentationAssessmentInstanceRequestModeEnumValues = ['ONLINE', 'IN_PERSON'] as const;

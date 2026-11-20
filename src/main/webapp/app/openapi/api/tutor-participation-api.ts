@@ -28,22 +28,20 @@ export class TutorParticipationApi {
      *
      * @param exerciseId
      * @param exampleSubmissionRequest
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    assessExampleSubmissionForTutorParticipation(exerciseId: number, exampleSubmissionRequest: ExampleSubmissionRequest, options?: import('./request-options').RequestOptions): Observable<TutorParticipation> {
+    assessExampleSubmissionForTutorParticipation(exerciseId: number, exampleSubmissionRequest: ExampleSubmissionRequest): Observable<TutorParticipation> {
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/assess-example-submission`;
-        return this.http.post<TutorParticipation>(url, exampleSubmissionRequest, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.post<TutorParticipation>(url, exampleSubmissionRequest);
     }
 
     /**
      *
      *
      * @param exerciseId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    initTutorParticipation(exerciseId: number, options?: import('./request-options').RequestOptions): Observable<TutorParticipation> {
+    initTutorParticipation(exerciseId: number): Observable<TutorParticipation> {
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/tutor-participations`;
-        return this.http.post<TutorParticipation>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.post<TutorParticipation>(url, null);
     }
 
 }

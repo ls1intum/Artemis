@@ -28,11 +28,10 @@ export class RatingApi {
      *
      * @param resultId
      * @param ratingValue
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createRatingForResult(resultId: number, ratingValue: number, options?: import('./request-options').RequestOptions): Observable<number> {
+    createRatingForResult(resultId: number, ratingValue: number): Observable<number> {
         const url = `${this.basePath}/api/assessment/results/${resultId}/rating/${ratingValue}`;
-        return this.http.post<number>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.post<number>(url, null);
     }
 
     /**
@@ -42,27 +41,25 @@ export class RatingApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getRatingForInstructorDashboard(courseId: number, page?: number, size?: number, sort?: Array<string>, options?: import('./request-options').RequestOptions): Observable<Array<RatingListItem>> {
+    getRatingForInstructorDashboard(courseId: number, page?: number, size?: number, sort?: Array<string>): Observable<Array<RatingListItem>> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'page', page);
         appendQueryParam(queryParams, 'size', size);
         appendQueryParam(queryParams, 'sort', sort);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/courses/${courseId}/rating${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Array<RatingListItem>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.get<Array<RatingListItem>>(url);
     }
 
     /**
      *
      *
      * @param resultId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getRatingForResult(resultId: number, options?: import('./request-options').RequestOptions): Observable<number> {
+    getRatingForResult(resultId: number): Observable<number> {
         const url = `${this.basePath}/api/assessment/results/${resultId}/rating`;
-        return this.http.get<number>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.get<number>(url);
     }
 
     /**
@@ -70,11 +67,10 @@ export class RatingApi {
      *
      * @param resultId
      * @param ratingValue
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    updateRatingForResult(resultId: number, ratingValue: number, options?: import('./request-options').RequestOptions): Observable<number> {
+    updateRatingForResult(resultId: number, ratingValue: number): Observable<number> {
         const url = `${this.basePath}/api/assessment/results/${resultId}/rating/${ratingValue}`;
-        return this.http.put<number>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.put<number>(url, null);
     }
 
 }

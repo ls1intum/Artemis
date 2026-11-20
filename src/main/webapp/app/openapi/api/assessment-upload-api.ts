@@ -26,11 +26,10 @@ export class AssessmentUploadApi {
      *
      *
      * @param exerciseId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    downloadManualAssessmentTemplate(exerciseId: number, options?: import('./request-options').RequestOptions): Observable<HttpResponse<Blob>> {
+    downloadManualAssessmentTemplate(exerciseId: number): Observable<HttpResponse<Blob>> {
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/manual-assessments/template`;
-        return this.http.get(url, { ...(options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) }), responseType: 'blob', observe: 'response' });
+        return this.http.get(url, { responseType: 'blob', observe: 'response' });
     }
 
     /**
@@ -38,15 +37,14 @@ export class AssessmentUploadApi {
      *
      * @param exerciseId
      * @param file
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    uploadManualAssessments(exerciseId: number, file: File, options?: import('./request-options').RequestOptions): Observable<AssessmentUploadResult> {
+    uploadManualAssessments(exerciseId: number, file: File): Observable<AssessmentUploadResult> {
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/manual-assessments`;
         const formData = new FormData();
         if (file !== undefined && file !== null) {
             formData.append('file', file);
         }
-        return this.http.post<AssessmentUploadResult>(url, formData, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.post<AssessmentUploadResult>(url, formData);
     }
 
 }

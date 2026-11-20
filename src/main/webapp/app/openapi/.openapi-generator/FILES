@@ -299,17 +299,12 @@ model/presentation-assessment-instance-request.ts
 model/presentation-assessment-instance.ts
 model/presentation-assessment-instances-batch-create.ts
 model/presentation-assessment-mode.ts
-model/presentation-assessment-request.ts
 model/presentation-assessment-statistics.ts
 model/presentation-assessment-student-row.ts
 model/presentation-assessment-student.ts
 model/presentation-assessment.ts
 model/presentation-grading-method.ts
-model/presentation-rubric-criterion.ts
-model/presentation-rubric-level.ts
-model/presentation-rubric-rating.ts
 model/presentation-rubric-scale.ts
-model/presentation-rubric.ts
 model/problem-statement-generation-request.ts
 model/problem-statement-generation-response.ts
 model/problem-statement-global-refinement-request.ts
@@ -476,6 +471,7 @@ model/text-unit.ts
 model/timing.ts
 model/tokens.ts
 model/transcription-status.ts
+model/tum-live-upload-availability.ts
 model/tum-live-upload-start.ts
 model/tum-live-upload-state.ts
 model/tum-live-uploaded-unit.ts

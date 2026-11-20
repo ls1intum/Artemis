@@ -1,3 +1,10 @@
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { TumLiveUploadService } from './services/tum-live-upload.service';
+import { TumLiveSaveRecoveryComponent } from './tum-live-upload/tum-live-save-recovery.component';
+import { LectureService } from '../services/lecture.service';
+import { Location } from '@angular/common';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Mock, MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -18,7 +25,11 @@ import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
-import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
+import {
+    AttachmentVideoUnitFormComponent,
+    AttachmentVideoUnitFormData,
+    ConfirmedContent,
+} from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -73,6 +84,12 @@ class AttachmentVideoUnitFormStubComponent {
     hasCancelButton = input<boolean>(false);
     formSubmitted = output<AttachmentVideoUnitFormData>();
     autosave = input<boolean>(false);
+    recordingAvailable = input(false);
+    recordingSaveLocked = input(false);
+    recordingSaving = input(false);
+    recordingTransferActive = input(false);
+    recordingPending = input(false);
+    savingConfirmed = input<ConfirmedContent>();
     formChanged = output<UnitFormChange<AttachmentVideoUnitFormData>>();
     fileUploadRequested = output<AttachmentVideoUnitFormData>();
     videoSourceSaveRequested = output<AttachmentVideoUnitFormData>();
@@ -108,10 +125,14 @@ describe('LectureUpdateUnitsComponent', () => {
             ],
             schemas: [NO_ERRORS_SCHEMA],
             providers: [
+                TumAetUiConfirmationService,
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(TumLiveUploadService, { getState: () => of({ connected: false }), isAvailable: () => of(false) }),
                 MockProvider(AlertService),
                 MockProvider(TextUnitApi),
                 MockProvider(OnlineUnitApi),
                 MockProvider(AttachmentVideoUnitService),
+                MockProvider(LectureService),
                 MockProvider(LectureUnitManagementComponent),
                 { provide: Router, useClass: MockRouter },
                 {
@@ -573,6 +594,144 @@ describe('LectureUpdateUnitsComponent', () => {
         expect(sentUnit).toMatchObject({ name: 'Recording' });
         expect(sentAttachment).toBeUndefined();
         expect(sentFile).toBeUndefined();
+    });
+
+    it('hands the MP4 to the newly created inline editor and leaves focus to the uploader', () => {
+        vi.useFakeTimers();
+        try {
+            wizardUnitComponentFixture.componentRef.setInput('lecture', { id: 1, course: { id: 7 } });
+            wizardUnitComponentFixture.detectChanges();
+            wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ATTACHMENT_VIDEO);
+            const release = new Subject<AttachmentVideoUnit>();
+            const create = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(release);
+            const editor = document.createElement('div');
+            const input = editor.appendChild(document.createElement('input'));
+            const focus = vi.spyOn(input, 'focus');
+            wizardUnitComponent.editFormContainer = computed(() => new ElementRef(editor));
+            const recording = new File(['mp4'], 'recording.mp4', { type: 'video/mp4' });
+            const slides = new File(['%PDF'], 'slides.pdf', { type: 'application/pdf' });
+            const data = { formProperties: { name: 'Recording' }, fileProperties: { file: slides, fileName: slides.name }, recording };
+
+            wizardUnitComponent.createAttachmentVideoUnit(data);
+            wizardUnitComponent.createAttachmentVideoUnit(data);
+            expect(create).toHaveBeenCalledOnce();
+            expect(create).toHaveBeenCalledWith(1, expect.objectContaining({ name: 'Recording' }), expect.any(Attachment), slides);
+            expect(wizardUnitComponent['initialRecording']()).toBeUndefined();
+
+            release.next({ id: 42, type: LectureUnitType.ATTACHMENT_VIDEO });
+            release.complete();
+            vi.advanceTimersByTime(100);
+            expect(wizardUnitComponent['editingUnitId']()).toBe(42);
+            expect(wizardUnitComponent['initialRecording']()).toBe(recording);
+            expect(focus).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('leaves a normal inline PDF create running after the editor is destroyed', () => {
+        const request = new Subject<AttachmentVideoUnit>();
+        vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(request);
+        wizardUnitComponentFixture.detectChanges();
+        const file = new File(['%PDF'], 'slides.pdf', { type: 'application/pdf' });
+        wizardUnitComponent.createAttachmentVideoUnit({ formProperties: { name: 'Slides' }, fileProperties: { file, fileName: file.name } });
+
+        wizardUnitComponentFixture.destroy();
+        expect(request.observed).toBe(true);
+        request.next(new AttachmentVideoUnit());
+        request.complete();
+
+        expect(wizardUnitComponent.isSavingContent()).toBe(false);
+    });
+
+    it('keeps the open attachment draft when the creation card is clicked again', () => {
+        wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ATTACHMENT_VIDEO);
+        const close = vi.spyOn(wizardUnitComponent, 'onCloseLectureUnitForms');
+
+        wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ATTACHMENT_VIDEO);
+
+        expect(close).not.toHaveBeenCalled();
+        expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBe(true);
+    });
+
+    it('keeps an unknown inline save locked when the creation form is closed and reopened', () => {
+        wizardUnitComponentFixture.componentRef.setInput('lecture', { id: 1, course: { id: 7 } });
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ATTACHMENT_VIDEO);
+        const create = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+        const recording = new File(['mp4'], 'recording.mp4', { type: 'video/mp4' });
+        const data = { formProperties: { name: 'Recording' }, fileProperties: {}, recording };
+
+        wizardUnitComponent.createAttachmentVideoUnit(data);
+        wizardUnitComponent.onCloseLectureUnitForms();
+        wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ATTACHMENT_VIDEO);
+        wizardUnitComponent.createAttachmentVideoUnit(data);
+
+        expect(create).toHaveBeenCalledOnce();
+        expect(wizardUnitComponent['recordingRecovery']()).toEqual({ courseId: 7, lectureId: 1 });
+        expect(wizardUnitComponent.isEditingLectureUnit()).toBe(false);
+        expect(wizardUnitComponent['initialRecording']()).toBeUndefined();
+    });
+
+    it.each([false, true])('recovers an inline recording unit after reload (response failed: %s)', (responseFailed) => {
+        const lecture = { id: 1, course: { id: 7 } };
+        const location = TestBed.inject(Location);
+        const response = new Subject<AttachmentVideoUnit>();
+        const create = vi.spyOn(attachmentVideoUnitService, 'create').mockImplementation(() => {
+            expect(location.getState()).toMatchObject({ tumLiveRecordingSavePending: { courseId: 7, lectureId: 1 } });
+            return response;
+        });
+        const savedUnit = new AttachmentVideoUnit();
+        savedUnit.id = 42;
+        const read = vi.spyOn(TestBed.inject(LectureService), 'findWithDetails').mockReturnValue(of({ id: 1, lectureUnits: [savedUnit] }));
+        wizardUnitComponentFixture.componentRef.setInput('lecture', lecture);
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ATTACHMENT_VIDEO);
+        const recording = new File(['mp4'], 'recording.mp4', { type: 'video/mp4' });
+        const data = { formProperties: { name: 'Recording' }, fileProperties: {}, recording };
+        wizardUnitComponent.createAttachmentVideoUnit(data);
+        if (responseFailed) {
+            response.error(new HttpErrorResponse({ status: 0 }));
+        }
+        wizardUnitComponentFixture.destroy();
+        wizardUnitComponentFixture = TestBed.createComponent(LectureUpdateUnitsComponent);
+        wizardUnitComponent = wizardUnitComponentFixture.componentInstance;
+        wizardUnitComponentFixture.componentRef.setInput('lecture', lecture);
+        wizardUnitComponentFixture.detectChanges();
+
+        const recovery = wizardUnitComponentFixture.debugElement.query(By.directive(TumLiveSaveRecoveryComponent));
+        const form = wizardUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormStubComponent)).componentInstance;
+        expect(form.recordingSaveLocked()).toBe(true);
+        recovery.query(By.css('button')).nativeElement.click();
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.createAttachmentVideoUnit(data);
+
+        expect(read).toHaveBeenCalledExactlyOnceWith(1);
+        expect((recovery.componentInstance as TumLiveSaveRecoveryComponent).entries()?.[0].navigation.target).toEqual({ courseId: 7, lectureId: 1, unitId: 42 });
+        expect(create).toHaveBeenCalledOnce();
+        expect(wizardUnitComponent.isEditingLectureUnit()).toBe(false);
+        expect(wizardUnitComponent['initialRecording']()).toBeUndefined();
+    });
+
+    it('clears the pending marker when the inline recording unit create is definitively rejected', () => {
+        wizardUnitComponentFixture.componentRef.setInput('lecture', { id: 1, course: { id: 7 } });
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ATTACHMENT_VIDEO);
+        const create = vi
+            .spyOn(attachmentVideoUnitService, 'create')
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 403 })))
+            .mockReturnValueOnce(of({ id: 42, type: LectureUnitType.ATTACHMENT_VIDEO }));
+        const recording = new File(['mp4'], 'recording.mp4', { type: 'video/mp4' });
+        const data = { formProperties: { name: 'Recording' }, fileProperties: {}, recording };
+
+        wizardUnitComponent.createAttachmentVideoUnit(data);
+
+        expect(TestBed.inject(Location).getState()).not.toHaveProperty('tumLiveRecordingSavePending');
+        expect(wizardUnitComponent['recordingRecovery']()).toBeUndefined();
+
+        wizardUnitComponent.createAttachmentVideoUnit(data);
+
+        expect(create).toHaveBeenCalledTimes(2);
     });
 
     it('should close the exercise form once its items are created and reload the list when their requests completed', async () => {

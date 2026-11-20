@@ -15,13 +15,10 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { PresentationAssessmentRequest } from '../model/presentation-assessment-request';
 import { PresentationAssessment } from '../model/presentation-assessment';
 import { PresentationAssessmentStatistics } from '../model/presentation-assessment-statistics';
 import { PresentationAssessmentStudentRow } from '../model/presentation-assessment-student-row';
 import { Direction } from '../model/direction';
-import { PresentationRubric } from '../model/presentation-rubric';
-import { PresentationRubricRating } from '../model/presentation-rubric-rating';
 import { PresentationAssessmentInstancesBatchCreate } from '../model/presentation-assessment-instances-batch-create';
 import { PresentationAssessmentInstance } from '../model/presentation-assessment-instance';
 import { PresentationAssessmentInstanceRequest } from '../model/presentation-assessment-instance-request';
@@ -36,12 +33,12 @@ export class PresentationAssessmentApi {
      *
      *
      * @param courseId
-     * @param presentationAssessmentRequest
+     * @param presentationAssessment
      * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createPresentationAssessment(courseId: number, presentationAssessmentRequest: PresentationAssessmentRequest, options?: import('./request-options').RequestOptions): Observable<PresentationAssessment> {
+    createPresentationAssessment(courseId: number, presentationAssessment: PresentationAssessment, options?: import('./request-options').RequestOptions): Observable<PresentationAssessment> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/presentation-assessments`;
-        return this.http.post<PresentationAssessment>(url, presentationAssessmentRequest, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.post<PresentationAssessment>(url, presentationAssessment, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -125,31 +122,6 @@ export class PresentationAssessmentApi {
      *
      * @param courseId
      * @param assessmentId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
-     */
-    getPresentationRubric(courseId: number, assessmentId: number, options?: import('./request-options').RequestOptions): Observable<PresentationRubric> {
-        const url = `${this.basePath}/api/assessment/courses/${courseId}/presentation-assessments/${assessmentId}/rubric`;
-        return this.http.get<PresentationRubric>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
-    }
-
-    /**
-     *
-     *
-     * @param courseId
-     * @param assessmentId
-     * @param instanceId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
-     */
-    getPresentationRubricRatings(courseId: number, assessmentId: number, instanceId: number, options?: import('./request-options').RequestOptions): Observable<Array<PresentationRubricRating>> {
-        const url = `${this.basePath}/api/assessment/courses/${courseId}/presentation-assessments/${assessmentId}/instances/${instanceId}/ratings`;
-        return this.http.get<Array<PresentationRubricRating>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
-    }
-
-    /**
-     *
-     *
-     * @param courseId
-     * @param assessmentId
      * @param presentationAssessmentInstancesBatchCreate
      * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
@@ -163,12 +135,12 @@ export class PresentationAssessmentApi {
      *
      * @param courseId
      * @param assessmentId
-     * @param presentationAssessmentRequest
+     * @param presentationAssessment
      * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    updatePresentationAssessment(courseId: number, assessmentId: number, presentationAssessmentRequest: PresentationAssessmentRequest, options?: import('./request-options').RequestOptions): Observable<PresentationAssessment> {
+    updatePresentationAssessment(courseId: number, assessmentId: number, presentationAssessment: PresentationAssessment, options?: import('./request-options').RequestOptions): Observable<PresentationAssessment> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/presentation-assessments/${assessmentId}`;
-        return this.http.put<PresentationAssessment>(url, presentationAssessmentRequest, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.put<PresentationAssessment>(url, presentationAssessment, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**

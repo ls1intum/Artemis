@@ -18,7 +18,7 @@
         (keydown.space)="titleLink() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
         (keyup.space)="titleLink() && $event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
     >
-        <div class="doughnut-chart-text" data-testid="course-chart-values">
+        <div class="doughnut-chart-text" [class.llm-cost-value]="contentType() === 'LLM_COST'" data-testid="course-chart-values">
             @if (receivedStats()) {
                 @if (currentPercentage() !== undefined) {
                     <div class="chart-value chart-value--large">{{ currentPercentage() }}%</div>
@@ -43,4 +43,12 @@
             [ariaLabel]="'artemisApp.course.detail.' + doughnutChartTitle() + 'Title' | artemisTranslate"
         />
     </div>
+    @if (contentType() === 'LLM_COST' && unpricedRequests() > 0) {
+        <p
+            class="text-center text-sm text-muted-color"
+            data-testid="course-llm-unpriced-requests"
+            jhiTranslate="artemisApp.course.detail.llmCostUnpricedRequests"
+            [translateValues]="{ count: unpricedRequests() }"
+        ></p>
+    }
 </div>

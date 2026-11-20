@@ -8,9 +8,7 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import type { PresentationRubricCriterion } from './presentation-rubric-criterion';
 
-export interface PresentationRubric {
-    criteria?: Array<PresentationRubricCriterion>;
-    assessedInstanceCount?: number;
+export interface TumLiveUploadAvailability {
+    available?: boolean;
 }

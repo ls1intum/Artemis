@@ -1,5 +1,5 @@
 <div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="flex items-center gap-2">
         @if (!isImportFromExistingExercise && !(isImportFromFile || isImportFromSharing) && !programmingExercise.id) {
             <h2 id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.createLabel"></h2>
         } @else if (!isImportFromExistingExercise && programmingExercise.id) {
@@ -11,7 +11,7 @@
     </div>
     <tumaet-ui-confirm-dialog key="hyperionSettingsReloadConfirmation" />
     @if (generationSaveBlocked()) {
-        <div role="status" class="my-3 flex flex-wrap items-center gap-2" data-testid="hyperion-settings-save-blocked">
+        <div role="status" class="my-4! flex flex-wrap items-center gap-2" data-testid="hyperion-settings-save-blocked">
             @if (generationActivity.statusLoadFailed()) {
                 <span jhiTranslate="artemisApp.hyperion.generation.run.statusUnavailable"></span>
                 <button type="button" tumAetUiButton variant="outlined" (click)="generationActivity.retryStatus()" data-testid="hyperion-settings-retry-status">
@@ -42,7 +42,7 @@
                 [courseId]="courseId()"
                 [(isAuxiliaryRepositoryInputValid)]="isAuxiliaryRepositoryInputValid"
             />
-            <hr class="mb-5" />
+            <hr class="mb-12!" />
             @if (!isSimpleMode()) {
                 <!-- The mode section would only contain the difficulty in the simple mode,
                 in the simple mode the difficulty will be part of the general section -->
@@ -52,7 +52,7 @@
                     [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
                     (triggerValidation)="calculateFormStatusSections()"
                 />
-                <hr class="mb-5" />
+                <hr class="mb-12!" />
             }
             <jhi-programming-exercise-language
                 [(programmingExercise)]="programmingExercise"
@@ -60,10 +60,10 @@
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
-            <hr class="mb-5" />
+            <hr class="mb-12!" />
             @if (!isSimpleMode()) {
                 <jhi-programming-exercise-version-control [programmingExercise]="programmingExercise" [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()" />
-                <hr class="mb-5" />
+                <hr class="mb-12!" />
             }
             <!-- Shown in the advanced mode, collapsed until a window is wanted. The simple mode shows it only for a window that a date change there invalidated, which blocks saving -->
             @if (isBuildTimeWindowDisplayed()) {
@@ -72,7 +72,7 @@
                     [buildTimeWindow]="programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow"
                     [error]="getBuildTimeWindowError()"
                 />
-                <hr class="mb-5" />
+                <hr class="mb-12!" />
             }
             <jhi-programming-exercise-problem
                 [editingLocked]="generationEditingLocked()"
@@ -84,7 +84,7 @@
                 (problemStatementSaved)="onCanonicalStatementSaved($event)"
                 (programmingExerciseChange)="programmingExercise = $event"
             />
-            <hr class="mb-5" />
+            <hr class="mb-12!" />
             <jhi-programming-exercise-grading
                 class="form-step"
                 [programmingExercise]="programmingExercise"

@@ -29,33 +29,30 @@ export class ExampleSubmissionApi {
      *
      * @param exerciseId
      * @param exampleSubmissionRequest
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createExampleSubmission(exerciseId: number, exampleSubmissionRequest: ExampleSubmissionRequest, options?: import('./request-options').RequestOptions): Observable<ExampleSubmissionDetail> {
+    createExampleSubmission(exerciseId: number, exampleSubmissionRequest: ExampleSubmissionRequest): Observable<ExampleSubmissionDetail> {
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/example-submissions`;
-        return this.http.post<ExampleSubmissionDetail>(url, exampleSubmissionRequest, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.post<ExampleSubmissionDetail>(url, exampleSubmissionRequest);
     }
 
     /**
      *
      *
      * @param exampleSubmissionId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    deleteExampleSubmission(exampleSubmissionId: number, options?: import('./request-options').RequestOptions): Observable<void> {
+    deleteExampleSubmission(exampleSubmissionId: number): Observable<void> {
         const url = `${this.basePath}/api/assessment/example-submissions/${exampleSubmissionId}`;
-        return this.http.delete<void>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.delete<void>(url);
     }
 
     /**
      *
      *
      * @param exampleSubmissionId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getExampleSubmission(exampleSubmissionId: number, options?: import('./request-options').RequestOptions): Observable<ExampleSubmissionDetail> {
+    getExampleSubmission(exampleSubmissionId: number): Observable<ExampleSubmissionDetail> {
         const url = `${this.basePath}/api/assessment/example-submissions/${exampleSubmissionId}`;
-        return this.http.get<ExampleSubmissionDetail>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.get<ExampleSubmissionDetail>(url);
     }
 
     /**
@@ -63,14 +60,13 @@ export class ExampleSubmissionApi {
      *
      * @param exerciseId
      * @param sourceSubmissionId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    importExampleSubmission(exerciseId: number, sourceSubmissionId: number, options?: import('./request-options').RequestOptions): Observable<ExampleSubmissionDetail> {
+    importExampleSubmission(exerciseId: number, sourceSubmissionId: number): Observable<ExampleSubmissionDetail> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'sourceSubmissionId', sourceSubmissionId);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/example-submissions/import${queryString ? `?${queryString}` : ''}`;
-        return this.http.post<ExampleSubmissionDetail>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.post<ExampleSubmissionDetail>(url, null);
     }
 
     /**
@@ -78,11 +74,10 @@ export class ExampleSubmissionApi {
      *
      * @param exerciseId
      * @param exampleSubmissionId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    prepareExampleAssessment(exerciseId: number, exampleSubmissionId: number, options?: import('./request-options').RequestOptions): Observable<void> {
+    prepareExampleAssessment(exerciseId: number, exampleSubmissionId: number): Observable<void> {
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/example-submissions/${exampleSubmissionId}/prepare-assessment`;
-        return this.http.post<void>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.post<void>(url, null);
     }
 
     /**
@@ -90,11 +85,10 @@ export class ExampleSubmissionApi {
      *
      * @param exerciseId
      * @param exampleSubmissionRequest
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    updateExampleSubmission(exerciseId: number, exampleSubmissionRequest: ExampleSubmissionRequest, options?: import('./request-options').RequestOptions): Observable<ExampleSubmissionDetail> {
+    updateExampleSubmission(exerciseId: number, exampleSubmissionRequest: ExampleSubmissionRequest): Observable<ExampleSubmissionDetail> {
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/example-submissions`;
-        return this.http.put<ExampleSubmissionDetail>(url, exampleSubmissionRequest, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.put<ExampleSubmissionDetail>(url, exampleSubmissionRequest);
     }
 
 }

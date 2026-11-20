@@ -1,6 +1,7 @@
-package de.tum.cit.aet.artemis.localvc.service;
+package de.tum.cit.aet.artemis.localvc.service.ssh;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -16,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -25,11 +27,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils;
-import de.tum.cit.aet.artemis.localvc.service.ssh.SshFingerprintsProviderService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.localvc.dto.SshHostKeyFingerprintDTO;
 
-class SshFingerprintsProviderServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class SshFingerprintsProviderServiceTest {
 
     private SshServer sshServer;
 
@@ -78,24 +78,59 @@ class SshFingerprintsProviderServiceIntegrationTest extends AbstractSpringIntegr
             doReturn(keyPairProvider).when(sshServer).getKeyPairProvider();
             fingerprintsProviderService = new SshFingerprintsProviderService(sshServer);
 
-            var allFingerprints = fingerprintsProviderService.getAllSshFingerprints();
+            var allFingerprints = fingerprintsProviderService.getHostKeyFingerprints();
 
-            assertThat(allFingerprints).containsOnlyKeys("RSA");
-            assertThat(allFingerprints.get("RSA")).containsExactly(expectedFingerprint, HashUtils.getSha256Fingerprint(secondKeyPair.getPublic()));
-            assertThat(fingerprintsProviderService.getSshFingerPrints()).containsEntry("RSA", expectedFingerprint);
+            assertThat(allFingerprints).containsExactly(new SshHostKeyFingerprintDTO("RSA", expectedFingerprint),
+                    new SshHostKeyFingerprintDTO("RSA", HashUtils.getSha256Fingerprint(secondKeyPair.getPublic())));
+            assertThat(fingerprintsProviderService.getSshFingerPrints()).containsExactly(Map.entry("RSA", expectedFingerprint));
         }
 
         @Test
-        void readTheKeyFilesOnlyOnce() throws GeneralSecurityException, IOException {
-            doReturn(Set.of(testKeyPair)).when(keyPairProvider).loadKeys(null);
+        void keepTheFingerprintsForTheCacheDurationOnly() throws GeneralSecurityException, IOException {
+            KeyPair secondKeyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+            doReturn(Set.of(testKeyPair)).doReturn(List.of(testKeyPair, secondKeyPair)).when(keyPairProvider).loadKeys(null);
             doReturn(keyPairProvider).when(sshServer).getKeyPairProvider();
-            fingerprintsProviderService = new SshFingerprintsProviderService(sshServer);
+            AtomicLong nanos = new AtomicLong(1_000);
+            fingerprintsProviderService = new SshFingerprintsProviderService(sshServer, nanos::get);
 
-            fingerprintsProviderService.getAllSshFingerprints();
-            fingerprintsProviderService.getAllSshFingerprints();
-            fingerprintsProviderService.getSshFingerPrints();
-
+            assertThat(fingerprintsProviderService.getHostKeyFingerprints()).hasSize(1);
+            // nothing is read again just before the time is over, also not for the other method
+            nanos.addAndGet(SshFingerprintsProviderService.CACHE_DURATION.toNanos() - 1);
+            assertThat(fingerprintsProviderService.getHostKeyFingerprints()).hasSize(1);
+            assertThat(fingerprintsProviderService.getSshFingerPrints()).hasSize(1);
             verify(keyPairProvider, times(1)).loadKeys(null);
+
+            // when it is over, a key that was added in the meantime is published
+            nanos.addAndGet(1);
+            assertThat(fingerprintsProviderService.getHostKeyFingerprints()).hasSize(2);
+            verify(keyPairProvider, times(2)).loadKeys(null);
+        }
+
+        @Test
+        void publishNoKeyThatWasRemovedOnceTheCacheDurationIsOver() throws GeneralSecurityException, IOException {
+            KeyPair secondKeyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+            doReturn(List.of(testKeyPair, secondKeyPair)).doReturn(Set.of(secondKeyPair)).when(keyPairProvider).loadKeys(null);
+            doReturn(keyPairProvider).when(sshServer).getKeyPairProvider();
+            AtomicLong nanos = new AtomicLong(1_000);
+            fingerprintsProviderService = new SshFingerprintsProviderService(sshServer, nanos::get);
+            assertThat(fingerprintsProviderService.getHostKeyFingerprints()).hasSize(2);
+
+            nanos.addAndGet(SshFingerprintsProviderService.CACHE_DURATION.toNanos());
+
+            assertThat(fingerprintsProviderService.getHostKeyFingerprints()).extracting(SshHostKeyFingerprintDTO::fingerprint)
+                    .containsExactly(HashUtils.getSha256Fingerprint(secondKeyPair.getPublic()));
+        }
+
+        @Test
+        void readTheKeyFilesAgainAfterAFailureAndAfterNoKeyWasFound() throws GeneralSecurityException, IOException {
+            doThrow(new IOException()).doReturn(Set.of()).doReturn(Set.of(testKeyPair)).when(keyPairProvider).loadKeys(null);
+            doReturn(keyPairProvider).when(sshServer).getKeyPairProvider();
+            fingerprintsProviderService = new SshFingerprintsProviderService(sshServer, () -> 1_000L);
+
+            assertThatThrownBy(() -> fingerprintsProviderService.getHostKeyFingerprints()).isInstanceOf(BadRequestException.class);
+            assertThat(fingerprintsProviderService.getHostKeyFingerprints()).isEmpty();
+            assertThat(fingerprintsProviderService.getHostKeyFingerprints()).hasSize(1);
+            verify(keyPairProvider, times(3)).loadKeys(null);
         }
 
         @Test

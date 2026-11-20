@@ -55,6 +55,10 @@ overrides:
   # Reached via postcss, whose range allows the patched release pinned here
   # (GHSA: custom generators can loop indefinitely when size is zero).
   nanoid: '6.0.2'
+  # CVE-2026-133245 (uncaught RangeError on two consecutive low surrogates) and CVE-2026-133244 (parse5-html-rewriting-stream
+  # skips escaping after a closed script or style element). Both are fixed from 8.1.1 only, with no patched 7.x release.
+  # Reached through cheerio and hast-util-raw, whose ranges stop at 7.x. Build-time HTML processing only, never served.
+  parse5: '8.1.1'
   postcss: '8.5.32'
   # CVE-2026-9358 (DoS through uncontrolled AST recursion). Two majors are reachable
   # in the docs tree, so both lines are pinned to their patched release.

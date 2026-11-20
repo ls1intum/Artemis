@@ -29,11 +29,10 @@ export class GradeStepApi {
      *
      *
      * @param courseId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getAllGradeStepsForCourse(courseId: number, options?: import('./request-options').RequestOptions): Observable<GradeSteps> {
+    getAllGradeStepsForCourse(courseId: number): Observable<GradeSteps> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/grading-scale/grade-steps`;
-        return this.http.get<GradeSteps>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.get<GradeSteps>(url);
     }
 
     /**
@@ -41,11 +40,10 @@ export class GradeStepApi {
      *
      * @param courseId
      * @param examId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getAllGradeStepsForExam(courseId: number, examId: number, options?: import('./request-options').RequestOptions): Observable<GradeSteps> {
+    getAllGradeStepsForExam(courseId: number, examId: number): Observable<GradeSteps> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/exams/${examId}/grading-scale/grade-steps`;
-        return this.http.get<GradeSteps>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.get<GradeSteps>(url);
     }
 
     /**
@@ -53,14 +51,13 @@ export class GradeStepApi {
      *
      * @param courseId
      * @param gradePercentage
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getGradeStepByPercentageForCourse(courseId: number, gradePercentage: number, options?: import('./request-options').RequestOptions): Observable<Grade> {
+    getGradeStepByPercentageForCourse(courseId: number, gradePercentage: number): Observable<Grade> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'gradePercentage', gradePercentage);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/courses/${courseId}/grading-scale/match-grade-step${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Grade>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.get<Grade>(url);
     }
 
     /**
@@ -69,14 +66,13 @@ export class GradeStepApi {
      * @param courseId
      * @param examId
      * @param gradePercentage
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getGradeStepByPercentageForExam(courseId: number, examId: number, gradePercentage: number, options?: import('./request-options').RequestOptions): Observable<Grade> {
+    getGradeStepByPercentageForExam(courseId: number, examId: number, gradePercentage: number): Observable<Grade> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'gradePercentage', gradePercentage);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/courses/${courseId}/exams/${examId}/grading-scale/match-grade-step${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Grade>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.get<Grade>(url);
     }
 
     /**
@@ -84,11 +80,10 @@ export class GradeStepApi {
      *
      * @param courseId
      * @param gradeStepId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getGradeStepsByIdForCourse(courseId: number, gradeStepId: number, options?: import('./request-options').RequestOptions): Observable<GradeStep> {
+    getGradeStepsByIdForCourse(courseId: number, gradeStepId: number): Observable<GradeStep> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/grading-scale/grade-steps/${gradeStepId}`;
-        return this.http.get<GradeStep>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.get<GradeStep>(url);
     }
 
     /**
@@ -97,11 +92,10 @@ export class GradeStepApi {
      * @param courseId
      * @param examId
      * @param gradeStepId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getGradeStepsByIdForExam(courseId: number, examId: number, gradeStepId: number, options?: import('./request-options').RequestOptions): Observable<GradeStep> {
+    getGradeStepsByIdForExam(courseId: number, examId: number, gradeStepId: number): Observable<GradeStep> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/exams/${examId}/grading-scale/grade-steps/${gradeStepId}`;
-        return this.http.get<GradeStep>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.get<GradeStep>(url);
     }
 
 }

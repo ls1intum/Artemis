@@ -1,11 +1,11 @@
-import { Component, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 import { ConfirmFeedbackChannelCreationModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/confirm-feedback-channel-creation/confirm-feedback-channel-creation-modal.component';
-import { AlertService } from 'app/foundation/service/alert.service';
-import { getErrorMessage } from 'app/foundation/util/global.utils';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -13,21 +13,50 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-feedback-detail-channel-modal',
     templateUrl: './feedback-detail-channel-modal.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        TumAetUiDialogComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectButtonComponent,
+        ConfirmFeedbackChannelCreationModalComponent,
+    ],
 })
 export class FeedbackDetailChannelModalComponent {
-    private alertService = inject(AlertService);
     private readonly formBuilder = inject(FormBuilder);
-    private readonly activeModal = inject(NgbActiveModal);
-    private readonly modalService = inject(NgbModal);
+    private readonly translateService = inject(TranslateService);
 
     protected readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel';
     feedbackDetail = input.required<FeedbackDetail>();
     exerciseDueDate = input<dayjs.Dayjs | undefined>();
     currentDateTime = signal(dayjs());
     formSubmitted = output<{ channelDto: ChannelDTO; navigate: boolean }>();
+    /** Emits once the dialog was closed, whether a channel was requested or not, so the host can remove it. */
+    closed = output<void>();
 
     isConfirmModalOpen = signal(false);
+    /** Settles the pending {@link handleModal} call once the confirmation dialog reports its result. */
+    private resolveConfirmation?: (confirmed: boolean) => void;
+
+    private readonly currentLanguage = toSignal(this.translateService.onLangChange);
+    protected readonly visibilityOptions = computed(() => {
+        this.currentLanguage();
+        return [
+            { label: this.translateService.instant(this.TRANSLATION_BASE + '.visibilityPublic'), value: false },
+            { label: this.translateService.instant(this.TRANSLATION_BASE + '.visibilityPrivate'), value: true },
+        ];
+    });
+    protected readonly announcementOptions = computed(() => {
+        this.currentLanguage();
+        return [
+            { label: this.translateService.instant(this.TRANSLATION_BASE + '.announcementChannelYes'), value: true },
+            { label: this.translateService.instant(this.TRANSLATION_BASE + '.announcementChannelNo'), value: false },
+        ];
+    });
 
     form: FormGroup = this.formBuilder.group({
         name: ['', [Validators.required, Validators.maxLength(30), Validators.pattern('^[a-z0-9-]{1}[a-z0-9-]{0,30}$')]],
@@ -38,7 +67,6 @@ export class FeedbackDetailChannelModalComponent {
 
     async submitForm(navigate: boolean): Promise<void> {
         if (this.form.valid && !this.isConfirmModalOpen()) {
-            this.isConfirmModalOpen.set(true);
             const result = await this.handleModal();
             if (result) {
                 const channelDTO = new ChannelDTO();
@@ -51,28 +79,38 @@ export class FeedbackDetailChannelModalComponent {
                 this.formSubmitted.emit({ channelDto: channelDTO, navigate });
                 this.closeModal();
             }
-            this.isConfirmModalOpen.set(false);
         }
     }
 
-    async handleModal(): Promise<boolean> {
-        try {
-            const modalRef = this.modalService.open(ConfirmFeedbackChannelCreationModalComponent, { centered: true });
-            // affectedStudentsCount is a signal input(); when the modal is opened imperatively via NgbModal it must
-            // be assigned a signal (not a plain number) so that calling affectedStudentsCount() in the template works.
-            modalRef.componentInstance.affectedStudentsCount = signal(this.feedbackDetail().count);
-            return await modalRef.result;
-        } catch (error) {
-            this.alertService.error(getErrorMessage(error));
-            return false;
-        }
+    /**
+     * Shows the confirmation dialog and waits for the answer.
+     *
+     * @returns whether the creation of the channel was confirmed
+     */
+    handleModal(): Promise<boolean> {
+        return new Promise<boolean>((resolve) => {
+            this.resolveConfirmation = resolve;
+            this.isConfirmModalOpen.set(true);
+        });
+    }
+
+    protected onConfirmationClosed(confirmed: boolean): void {
+        this.isConfirmModalOpen.set(false);
+        this.resolveConfirmation?.(confirmed);
+        this.resolveConfirmation = undefined;
     }
 
     closeModal(): void {
-        this.activeModal.close();
+        this.closed.emit();
     }
 
     dismissModal(): void {
-        this.activeModal.dismiss();
+        this.closed.emit();
+    }
+
+    protected onVisibleChange(visible: boolean): void {
+        if (!visible) {
+            this.dismissModal();
+        }
     }
 }

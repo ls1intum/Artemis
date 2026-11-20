@@ -5,14 +5,23 @@
     cursor: default;
 }
 
-.badge {
+.file-badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.15rem;
     user-select: none;
     background-color: var(--code-editor-file-browser-badge-background);
-    color: var(--bs-body-color);
+    color: var(--body-color);
 }
 
-.badge.on-colored-background {
+.file-badge.on-colored-background {
     /* Only slightly darken the background and always use white text */
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: color-mix(in srgb, black 15%, transparent);
     color: var(--colored-btn-font);
 }

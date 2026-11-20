@@ -27,11 +27,10 @@ export class ComplaintResponseApi {
      *
      *
      * @param complaintId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    lockComplaint(complaintId: number, options?: import('./request-options').RequestOptions): Observable<ComplaintResponse> {
+    lockComplaint(complaintId: number): Observable<ComplaintResponse> {
         const url = `${this.basePath}/api/assessment/complaints/${complaintId}/response`;
-        return this.http.post<ComplaintResponse>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.post<ComplaintResponse>(url, null);
     }
 
     /**
@@ -39,22 +38,20 @@ export class ComplaintResponseApi {
      *
      * @param complaintId
      * @param complaintResponseUpdate
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    refreshLockOrResolveComplaint(complaintId: number, complaintResponseUpdate: ComplaintResponseUpdate, options?: import('./request-options').RequestOptions): Observable<ComplaintResponse> {
+    refreshLockOrResolveComplaint(complaintId: number, complaintResponseUpdate: ComplaintResponseUpdate): Observable<ComplaintResponse> {
         const url = `${this.basePath}/api/assessment/complaints/${complaintId}/response`;
-        return this.http.patch<ComplaintResponse>(url, complaintResponseUpdate, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.patch<ComplaintResponse>(url, complaintResponseUpdate);
     }
 
     /**
      *
      *
      * @param complaintId
-     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    removeLockFromComplaint(complaintId: number, options?: import('./request-options').RequestOptions): Observable<void> {
+    removeLockFromComplaint(complaintId: number): Observable<void> {
         const url = `${this.basePath}/api/assessment/complaints/${complaintId}/response`;
-        return this.http.delete<void>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.delete<void>(url);
     }
 
 }
