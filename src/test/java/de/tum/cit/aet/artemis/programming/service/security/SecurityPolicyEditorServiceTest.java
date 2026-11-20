@@ -288,7 +288,14 @@ class SecurityPolicyEditorServiceTest {
                 FileUtils.writeStringToFile(checkout.resolve(path).toFile(), content, StandardCharsets.UTF_8);
                 git.add().addFilepattern(".").call();
                 GitService.commit(git).setMessage("Change " + path).setAuthor("Other Instructor", "other@example.org").call();
-                git.push().call();
+                // A rejected ref update does not throw, so a test could otherwise run without the commit it relies on.
+                for (PushResult result : git.push().call()) {
+                    for (RemoteRefUpdate update : result.getRemoteUpdates()) {
+                        if (update.getStatus() != RemoteRefUpdate.Status.OK) {
+                            throw new IllegalStateException("The push of " + path + " was not accepted: " + update.getStatus());
+                        }
+                    }
+                }
             }
         }
         catch (Exception e) {
@@ -312,6 +319,12 @@ class SecurityPolicyEditorServiceTest {
             try (TreeWalk treeWalk = TreeWalk.forPath(repository, path, revWalk.parseCommit(head).getTree())) {
                 return treeWalk == null ? Optional.empty() : Optional.of(new String(repository.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8));
             }
+        }
+    }
+
+    private String parentOf(String commit) throws IOException {
+        try (var repository = new FileRepositoryBuilder().setGitDir(testsRemote.toFile()).setBare().build(); RevWalk revWalk = new RevWalk(repository)) {
+            return revWalk.parseCommit(ObjectId.fromString(commit)).getParent(0).name();
         }
     }
 
@@ -910,12 +923,16 @@ class SecurityPolicyEditorServiceTest {
     void aRetryResumesTheProcessingAlsoAfterAnUnrelatedCommitBeforeTheChange() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         pushToTests("README.md", "An unrelated change\n");
+        String unrelated = pushedHead();
+        assertThat(unrelated).isNotEqualTo(editor.baseCommitHash());
         SecurityPolicyChangeDTO change = change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest")),
                 added(withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of("de.example.StressTest")), List.of("de.example.StressTest")));
         doThrow(new VersionControlException("Build trigger failed")).when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any());
 
         assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> editorService.commit(exercise(), change, user));
         String pushed = pushedHead();
+        // The change was saved on top of the unrelated commit, not on the commit the editor loaded.
+        assertThat(parentOf(pushed)).isEqualTo(unrelated);
         doNothing().when(localVCPushProcessingService).processNewPush(anyString(), any(), any(), any(), any());
         editorService.commit(exercise(), change, user);
 
