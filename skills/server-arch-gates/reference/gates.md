@@ -234,7 +234,7 @@ Extract a service rather than raising the limit.
 or a bean can trip it, and the failure surfaces in a step whose name does not mention counting.
 
 **Query quality.** A new `@EntityGraph` with more fetch paths than the baseline allows fails the
-Query Quality Check job in `.github/workflows/ci-quality.yml`. Reuse an existing counted method
+Query Quality Check step of the Server Code Quality job in `.github/workflows/ci-quality.yml`. Reuse an existing counted method
 where you can. Local check: `supporting_scripts/find_slow_queries.py`.
 
 ## Column mapping

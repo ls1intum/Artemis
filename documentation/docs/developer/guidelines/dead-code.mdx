@@ -5,7 +5,7 @@ sidebar_label: Dead Code
 last_reviewed: 2026-11-18
 ---
 
-Artemis deletes code that nothing can reach. Two checks enforce this on every pull request, one for
+Artemis deletes code that nothing can reach. Two checks enforce this on pull requests, one for
 the server and one for the client, and both are part of the required **All required CI Passed** gate.
 
 ## Why a check rather than an occasional cleanup
@@ -17,8 +17,10 @@ single caller passes every one of them.
 
 The result is that dead code is found only when somebody goes looking, and it is created most often
 by a pull request that is otherwise a clean deletion — removing the last caller of a class is exactly
-the change that leaves the class behind. Both checks therefore run on every pull request, including
-ones that touch no Java and no TypeScript at all.
+the change that leaves the class behind. Both checks therefore run on pull requests that touch no
+Java and no TypeScript at all. The server check runs on every pull request, because it also reads the
+documentation for references. The client check reads only TypeScript, so it skips a pull request that
+changes nothing but Markdown and the documentation.
 
 ## The server check
 

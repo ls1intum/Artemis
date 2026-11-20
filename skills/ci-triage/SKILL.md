@@ -11,7 +11,7 @@ Use drafts only while the implementation is unfinished. Once implementation is c
 as non-draft or mark it ready for review immediately. Draft `pull_request` runs defer the entire
 `ci-test.yml` workflow (server, client and AI worker sandbox tests), E2E, CodeQL and review bots.
 Relevant style, lint, architecture and type checks still run on public runners. Test TypeScript
-compilation runs in **Quality / Client Compilation** for drafts; the WAR and draft test-server image builds
+compilation runs in **Quality / Client Style and Compilation** for drafts; the WAR and draft test-server image builds
 remain available. Integration-test feedback arrives after ready-for-review or a manual full run.
 Pending or failing CI, reviews and test-server validation do not by themselves require draft status.
 Keep unverified checklist items open and require passing checks and approvals before merge; follow
