@@ -200,6 +200,21 @@ class ProgrammingExerciseValidationServiceTest {
                 .isThrownBy(() -> validationService.validatePackageName(exerciseWithPackageName(ProgrammingLanguage.DART, "class")));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "when", "de.tum.when", "de.fun.sorting", "de.object", "val" })
+    void validatePackageName_rejectsKotlinKeywordsOnlyForKotlin(String packageName) {
+        // Java allows these words, but the package declaration of the Kotlin templates would not compile with them.
+        assertThatExceptionOfType(BadRequestAlertException.class).as("the Kotlin package name '%s' must be rejected", packageName)
+                .isThrownBy(() -> validationService.validatePackageName(exerciseWithPackageName(ProgrammingLanguage.KOTLIN, packageName))).withMessageContaining("invalid");
+        assertThatCode(() -> validationService.validatePackageName(exerciseWithPackageName(ProgrammingLanguage.JAVA, packageName))).doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "de.whenever", "de.tum.funky", "de.values" })
+    void validatePackageName_acceptsKotlinPackagesThatOnlyContainAKeyword(String packageName) {
+        assertThatCode(() -> validationService.validatePackageName(exerciseWithPackageName(ProgrammingLanguage.KOTLIN, packageName))).doesNotThrowAnyException();
+    }
+
     @Test
     void validatePackageName_forALanguageThatNeedsNone_acceptsAnything() {
         ProgrammingExercise exercise = new ProgrammingExercise();

@@ -5,6 +5,7 @@ import {
     PACKAGE_NAME_PATTERN_FOR_GO,
     PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX,
     PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
+    PACKAGE_NAME_PATTERN_FOR_KOTLIN,
 } from 'app/foundation/constants/input.constants';
 import { ProblemStatementGlobalRefinementRequest } from 'app/openapi/model/problem-statement-global-refinement-request';
 import { ProblemStatementTargetedRefinementRequest } from 'app/openapi/model/problem-statement-targeted-refinement-request';
@@ -215,8 +216,9 @@ export function deriveProposedPackageName(title: string, language: ProgrammingLa
 function packageNamePatternFor(language: ProgrammingLanguage, projectType?: ProjectType): string | undefined {
     switch (language) {
         case ProgrammingLanguage.JAVA:
-        case ProgrammingLanguage.KOTLIN:
             return projectType === ProjectType.MAVEN_BLACKBOX ? PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX : PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN;
+        case ProgrammingLanguage.KOTLIN:
+            return PACKAGE_NAME_PATTERN_FOR_KOTLIN;
         case ProgrammingLanguage.SWIFT:
             return APP_NAME_PATTERN_FOR_SWIFT;
         case ProgrammingLanguage.GO:

@@ -1,4 +1,4 @@
-import { MAX_PACKAGE_NAME_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/foundation/constants/input.constants';
+import { MAX_PACKAGE_NAME_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN, PACKAGE_NAME_PATTERN_FOR_KOTLIN } from 'app/foundation/constants/input.constants';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES, deriveProposedPackageName } from 'app/hyperion/problem-statement/problem-statement.utils';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
@@ -121,15 +121,17 @@ export function deriveDefaultPackageName(exercise: ProgrammingExercise): string 
             language,
             [PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES, courseShortName, exercise.shortName].filter(Boolean).join('.').toLowerCase(),
         );
-        if (packageName.length <= MAX_PACKAGE_NAME_LENGTH && new RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN).test(packageName)) {
+        if (
+            packageName.length <= MAX_PACKAGE_NAME_LENGTH &&
+            new RegExp(language === ProgrammingLanguage.KOTLIN ? PACKAGE_NAME_PATTERN_FOR_KOTLIN : PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN).test(packageName)
+        ) {
             return packageName;
         }
     }
-    const fallback = deriveProposedPackageName(exercise.title || exercise.shortName, language, exercise.projectType);
-    return fallback && escapeKotlinKeywords(language, fallback);
+    return deriveProposedPackageName(exercise.title || exercise.shortName, language, exercise.projectType);
 }
 
-// Hard keywords of Kotlin that are valid in Java and therefore pass PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN, but break the package declaration of a Kotlin template
+// Hard keywords of Kotlin that are valid in Java; PACKAGE_NAME_PATTERN_FOR_KOTLIN refuses them, so a segment like the course short name gets a suffix instead
 const KOTLIN_ONLY_HARD_KEYWORDS = new Set(['as', 'fun', 'in', 'is', 'object', 'typealias', 'typeof', 'val', 'var', 'when']);
 
 function escapeKotlinKeywords(language: ProgrammingLanguage, packageName: string): string {

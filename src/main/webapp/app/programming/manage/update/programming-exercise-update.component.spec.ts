@@ -2014,6 +2014,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     expected: 'artemisApp.exercise.form.packageName.pattern.JAVA',
                 },
                 { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'org', expected: 'artemisApp.exercise.form.packageName.pattern.KOTLIN' },
+                // Kotlin keywords that Java allows break the package declaration of the Kotlin templates
+                { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'de.tum.in.when', expected: 'artemisApp.exercise.form.packageName.pattern.KOTLIN' },
                 // The build guards of the test templates reject the packages of Ares and of the libraries that come with it
                 {
                     language: ProgrammingLanguage.JAVA,
@@ -2053,6 +2055,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_MAVEN, packageName: 'de.tum.in' },
                 { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_MAVEN, packageName: 'org.example' },
                 { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'net.kotlin' },
+                { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'de.example.whenever' },
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_GRADLE, packageName: 'de.tum.in.when' },
             ])('accepts the package name $packageName for $language $projectType', ({ language, projectType, packageName }) => {
                 // The tests of a black-box exercise are not run with Ares, so it may use a name that Ares reserves for other project types
                 comp.programmingExercise.programmingLanguage = language;

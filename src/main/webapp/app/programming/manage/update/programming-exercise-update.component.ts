@@ -36,6 +36,7 @@ import {
     PACKAGE_NAME_PATTERN_FOR_GO,
     PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX,
     PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
+    PACKAGE_NAME_PATTERN_FOR_KOTLIN,
     PROGRAMMING_EXERCISE_NAME_MAX_LENGTH,
     PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN,
 } from 'app/foundation/constants/input.constants';
@@ -145,6 +146,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly destroyRef = inject(DestroyRef);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
+    private readonly packageNameRegexForKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
     private readonly appNameRegexForSwift = RegExp(APP_NAME_PATTERN_FOR_SWIFT);
     private readonly packageNameRegexForGo = RegExp(PACKAGE_NAME_PATTERN_FOR_GO);
@@ -1184,8 +1186,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 this.packageNamePattern = APP_NAME_PATTERN_FOR_SWIFT;
                 break;
             case ProgrammingLanguage.JAVA:
-            case ProgrammingLanguage.KOTLIN:
                 this.packageNamePattern = useBlackboxPattern ? PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX : PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN;
+                break;
+            case ProgrammingLanguage.KOTLIN:
+                this.packageNamePattern = PACKAGE_NAME_PATTERN_FOR_KOTLIN;
                 break;
             case ProgrammingLanguage.GO:
                 this.packageNamePattern = PACKAGE_NAME_PATTERN_FOR_GO;
@@ -1566,7 +1570,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 }
                 break;
             case ProgrammingLanguage.KOTLIN:
-                regex = this.packageNameRegexForJavaKotlin;
+                regex = this.packageNameRegexForKotlin;
                 break;
             case ProgrammingLanguage.SWIFT:
                 regex = this.appNameRegexForSwift;
