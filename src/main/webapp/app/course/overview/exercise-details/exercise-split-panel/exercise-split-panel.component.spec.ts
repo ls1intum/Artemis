@@ -14,6 +14,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { User } from 'app/account/user/user.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { ExerciseSplitPanelComponent } from 'app/course/overview/exercise-details/exercise-split-panel/exercise-split-panel.component';
@@ -485,6 +487,7 @@ describe('ExerciseSplitPanelComponent details panel with its real template', () 
 
     afterEach(() => {
         vi.unstubAllGlobals();
+        localStorage.clear();
     });
 
     const render = (exercise: Partial<Exercise>, mode: 'graded' | 'practice', practice?: StudentParticipation) => {
@@ -494,6 +497,104 @@ describe('ExerciseSplitPanelComponent details panel with its real template', () 
         fixture.componentRef.setInput('practiceParticipation', practice);
         fixture.detectChanges();
     };
+
+    it.each([false, true])('restores the saved course panel state %s for Iris', (isCollapsed) => {
+        localStorage.setItem('course-side-panel-collapsed-1', String(isCollapsed));
+        fixture.componentRef.setInput('irisEnabled', true);
+        render({ type: ExerciseType.PROGRAMMING }, 'graded');
+
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        expect(fixture.componentInstance.showIris()).toBe(true);
+        expect(panels.collapsedStateStorageKey()).toBe('course-side-panel-collapsed-1');
+        expect(panels.isRightPanelCollapsed()).toBe(isCollapsed);
+    });
+
+    it('restores the same course preference for Communication when Iris is disabled', () => {
+        const course = new Course();
+        course.id = 1;
+        course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+        localStorage.setItem('course-side-panel-collapsed-1', 'true');
+        render({ type: ExerciseType.PROGRAMMING, course }, 'graded');
+
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        expect(fixture.componentInstance.showIris()).toBe(false);
+        expect(fixture.componentInstance.showDiscussion()).toBe(true);
+        expect(panels.isRightPanelCollapsed()).toBe(true);
+    });
+
+    it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ])(
+        'keeps exercise details visible with a %s editor despite a collapsed course preference',
+        (type) => {
+            localStorage.setItem('course-side-panel-collapsed-1', 'true');
+            fixture.componentRef.setInput('irisEnabled', true);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            const exercise: Partial<ProgrammingExercise> = { type, allowOnlineEditor: true };
+            render(exercise, 'graded');
+
+            const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+            const content: HTMLElement = fixture.nativeElement.querySelector('[data-testid="right-panel-content"]');
+            expect(fixture.componentInstance.showEditorPanel()).toBe(true);
+            expect(panels.isRightPanelCollapsed()).toBe(false);
+            expect(content.hidden).toBe(false);
+            expect(panels.rightPanels()[0].label()).toBe('artemisApp.courseOverview.exerciseDetails.details');
+            if (type !== ExerciseType.QUIZ) {
+                expect(content.querySelector('jhi-problem-statement')).not.toBeNull();
+            }
+        },
+    );
+
+    it.each([false, true])('keeps the saved course preference %s unchanged when opening and closing an editor panel', (isCollapsed) => {
+        localStorage.setItem('course-side-panel-collapsed-1', String(isCollapsed));
+        fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+        render({ type: ExerciseType.TEXT }, 'graded');
+
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        panels.collapseRightPanel();
+        fixture.detectChanges();
+        expect(panels.isRightPanelCollapsed()).toBe(true);
+        expect(localStorage.getItem('course-side-panel-collapsed-1')).toBe(String(isCollapsed));
+
+        panels.expandRightPanel();
+        fixture.detectChanges();
+        expect(panels.isRightPanelCollapsed()).toBe(false);
+        expect(localStorage.getItem('course-side-panel-collapsed-1')).toBe(String(isCollapsed));
+    });
+
+    it('restores the course preference after switching into and out of an editor in the same instance', () => {
+        localStorage.setItem('course-side-panel-collapsed-1', 'true');
+        fixture.componentRef.setInput('irisEnabled', true);
+        render({ type: ExerciseType.TEXT }, 'graded');
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        expect(panels.isRightPanelCollapsed()).toBe(true);
+
+        fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+        fixture.detectChanges();
+        expect(panels.isRightPanelCollapsed()).toBe(false);
+
+        panels.expandRightPanel();
+        fixture.componentRef.setInput('studentParticipation', undefined);
+        fixture.detectChanges();
+        expect(panels.isRightPanelCollapsed()).toBe(true);
+        expect(localStorage.getItem('course-side-panel-collapsed-1')).toBe('true');
+    });
+
+    it('keeps the panel choice across exercises and restores the default for a different course', () => {
+        fixture.componentRef.setInput('irisEnabled', true);
+        render({ type: ExerciseType.PROGRAMMING }, 'graded');
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        panels.collapseRightPanel();
+        fixture.detectChanges();
+
+        render({ id: 2, type: ExerciseType.PROGRAMMING }, 'graded');
+        expect(panels.isRightPanelCollapsed()).toBe(true);
+        expect(localStorage.getItem('course-side-panel-collapsed-1')).toBe('true');
+
+        fixture.componentRef.setInput('courseId', 2);
+        render({ id: 3, type: ExerciseType.PROGRAMMING }, 'graded');
+        expect(panels.collapsedStateStorageKey()).toBe('course-side-panel-collapsed-2');
+        expect(panels.isRightPanelCollapsed()).toBe(false);
+        expect(localStorage.getItem('course-side-panel-collapsed-2')).toBeNull();
+    });
 
     it.each([false, true])('passes the known course staff purpose %s to both snapshot downloads', (isAtLeastTutor) => {
         fixture.componentRef.setInput('exampleSolutionInfo', {

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CdkScrollable, ScrollDispatcher } from '@angular/cdk/scrolling';
 import { DOCUMENT } from '@angular/common';
@@ -28,10 +28,15 @@ class ResizeObserverMock {
 
 @Component({
     template: `
-        <jhi-resizable-panels [useViewportWidthForCollapse]="useViewportWidthForCollapse" [storageKey]="storageKey" [flushLeftPanel]="flushLeftPanel">
+        <jhi-resizable-panels
+            [useViewportWidthForCollapse]="useViewportWidthForCollapse"
+            [storageKey]="storageKey"
+            [collapsedStateStorageKey]="collapsedStateStorageKey()"
+            [flushLeftPanel]="flushLeftPanel"
+        >
             <ng-template jhiPanel [label]="'left'" [icon]="faAlignLeft"><div id="left-marker">Left Content</div></ng-template>
-            <ng-template jhiPanel [label]="'right'">Right Content<input aria-label="Draft" value="Right Content" /></ng-template>
-            <ng-template jhiPanel [label]="'iris'" [icon]="faComment" [startsCollapsed]="irisStartsCollapsed">Iris Content</ng-template>
+            <ng-template jhiPanel [label]="'communication'">Right Content<input aria-label="Draft" value="Right Content" /></ng-template>
+            <ng-template jhiPanel [label]="'iris'" [icon]="faComment" [startsCollapsed]="irisStartsCollapsed()">Iris Content</ng-template>
         </jhi-resizable-panels>
     `,
     imports: [ResizablePanelsComponent, PanelDirective],
@@ -39,10 +44,11 @@ class ResizeObserverMock {
 class ResizablePanelsTestComponent {
     protected readonly faAlignLeft = faAlignLeft;
     protected readonly faComment = faComment;
-    irisStartsCollapsed = false;
+    readonly irisStartsCollapsed = signal(false);
     useViewportWidthForCollapse = false;
     flushLeftPanel = false;
     storageKey: string | undefined = undefined;
+    readonly collapsedStateStorageKey = signal<string | undefined>(undefined);
 }
 
 describe('ResizablePanelsComponent', () => {
@@ -58,14 +64,16 @@ describe('ResizablePanelsComponent', () => {
 
     afterEach(() => {
         ResizeObserverMock.instances = [];
+        vi.restoreAllMocks();
         vi.unstubAllGlobals();
         localStorage.clear();
     });
 
-    const createFixture = (irisStartsCollapsed = false, useViewportWidthForCollapse = false) => {
+    const createFixture = (irisStartsCollapsed = false, useViewportWidthForCollapse = false, collapsedStateStorageKey?: string) => {
         fixture = TestBed.createComponent(ResizablePanelsTestComponent);
-        fixture.componentInstance.irisStartsCollapsed = irisStartsCollapsed;
+        fixture.componentInstance.irisStartsCollapsed.set(irisStartsCollapsed);
         fixture.componentInstance.useViewportWidthForCollapse = useViewportWidthForCollapse;
+        fixture.componentInstance.collapsedStateStorageKey.set(collapsedStateStorageKey);
         fixture.detectChanges();
         return fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
     };
@@ -302,6 +310,35 @@ describe('ResizablePanelsComponent', () => {
         expect(fixture.nativeElement.querySelector('.panel-surface[hidden]').hasAttribute('inert')).toBe(true);
     });
 
+    it('applies a changed panel start state before the user chooses a collapsed state', () => {
+        const component = createFixture();
+
+        fixture.componentInstance.irisStartsCollapsed.set(true);
+        fixture.detectChanges();
+        expect(component.isRightPanelCollapsed()).toBe(true);
+
+        fixture.componentInstance.irisStartsCollapsed.set(false);
+        fixture.detectChanges();
+        expect(component.isRightPanelCollapsed()).toBe(false);
+    });
+
+    it.each([false, true])('preserves the user-selected collapsed state %s when the panel start state changes', (isCollapsed) => {
+        const component = createFixture();
+        if (isCollapsed) {
+            component.collapseRightPanel();
+        } else {
+            component.expandRightPanel();
+        }
+
+        fixture.componentInstance.irisStartsCollapsed.set(true);
+        fixture.detectChanges();
+        expect(component.isRightPanelCollapsed()).toBe(isCollapsed);
+
+        fixture.componentInstance.irisStartsCollapsed.set(false);
+        fixture.detectChanges();
+        expect(component.isRightPanelCollapsed()).toBe(isCollapsed);
+    });
+
     it('should expand the selected collapsed right panel on click', () => {
         const component = createFixture(true);
         const collapsedTabs = fixture.nativeElement.querySelectorAll('.collapsed-right-panel-tab') as NodeListOf<HTMLButtonElement>;
@@ -324,6 +361,161 @@ describe('ResizablePanelsComponent', () => {
 
         expect(component.isRightPanelCollapsed()).toBe(false);
         expect(fixture.nativeElement.textContent).toContain('Iris Content');
+    });
+
+    describe('remembered collapsed state', () => {
+        const courseKey = 'course-side-panel-collapsed-1';
+
+        it('restores a collapsed panel after recreating the page', () => {
+            createFixture(false, false, courseKey);
+            fixture.nativeElement.querySelector('.right-panel-collapse-button').click();
+            fixture.detectChanges();
+            expect(localStorage.getItem(courseKey)).toBe('true');
+
+            fixture.destroy();
+            const restored = createFixture(false, false, courseKey);
+            expect(restored.isRightPanelCollapsed()).toBe(true);
+            expect(fixture.nativeElement.querySelector('[data-testid="right-panel-content"]').hidden).toBe(true);
+            expect(fixture.nativeElement.querySelectorAll('[data-testid="collapsed-panel-tab"]')).toHaveLength(2);
+        });
+
+        it.each([
+            { tab: 'Communication', index: 0 },
+            { tab: 'Iris', index: 1 },
+        ])('remembers the shared panel as expanded after reopening $tab', ({ index }) => {
+            localStorage.setItem(courseKey, 'true');
+            const component = createFixture(true, false, courseKey);
+
+            fixture.nativeElement.querySelectorAll('[data-testid="collapsed-panel-tab"]')[index].click();
+            fixture.detectChanges();
+            expect(component.activeRightIndex()).toBe(index);
+            expect(component.isRightPanelCollapsed()).toBe(false);
+            expect(localStorage.getItem(courseKey)).toBe('false');
+
+            fixture.destroy();
+            const restored = createFixture(true, false, courseKey);
+            expect(restored.isRightPanelCollapsed()).toBe(false);
+            expect(fixture.nativeElement.querySelector('[data-testid="right-panel-content"]').hidden).toBe(false);
+            expect(fixture.nativeElement.querySelector('[data-testid="collapsed-panel-tab"]')).toBeNull();
+        });
+
+        it('restores each course independently when the course changes in the same component', () => {
+            const otherCourseKey = 'course-side-panel-collapsed-2';
+            const component = createFixture(false, false, courseKey);
+            component.collapseRightPanel();
+            fixture.detectChanges();
+
+            fixture.componentInstance.collapsedStateStorageKey.set(otherCourseKey);
+            fixture.detectChanges();
+            expect(component.isRightPanelCollapsed()).toBe(false);
+            expect(localStorage.getItem(otherCourseKey)).toBeNull();
+            component.collapseRightPanel();
+            component.expandRightPanel();
+            fixture.detectChanges();
+            expect(localStorage.getItem(otherCourseKey)).toBe('false');
+
+            fixture.componentInstance.collapsedStateStorageKey.set(courseKey);
+            fixture.detectChanges();
+            expect(component.isRightPanelCollapsed()).toBe(true);
+            expect(localStorage.getItem(courseKey)).toBe('true');
+        });
+
+        it('remembers drag-to-collapse without overwriting the saved panel width', () => {
+            fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+            fixture.componentInstance.storageKey = 'test-split';
+            fixture.componentInstance.collapsedStateStorageKey.set(courseKey);
+            fixture.detectChanges();
+            const component = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+            component.onResizeEnd([70, 30]);
+            component.onResizeEnd([95, 5]);
+            fixture.detectChanges();
+
+            expect(component.isRightPanelCollapsed()).toBe(true);
+            expect(localStorage.getItem(courseKey)).toBe('true');
+            expect(localStorage.getItem('test-split')).toBe('[70,30]');
+
+            fixture.destroy();
+            expect(createFixture(false, false, courseKey).isRightPanelCollapsed()).toBe(true);
+        });
+
+        it.each([false, true])('keeps the saved collapsed state %s when the panel start state changes', (isCollapsed) => {
+            localStorage.setItem(courseKey, String(isCollapsed));
+            const component = createFixture(!isCollapsed, false, courseKey);
+            expect(component.isRightPanelCollapsed()).toBe(isCollapsed);
+
+            fixture.componentInstance.irisStartsCollapsed.set(isCollapsed);
+            fixture.detectChanges();
+            fixture.componentInstance.irisStartsCollapsed.set(!isCollapsed);
+            fixture.detectChanges();
+            expect(component.isRightPanelCollapsed()).toBe(isCollapsed);
+        });
+
+        it('preserves the desktop preference while using the combined tabs on a narrow screen', () => {
+            localStorage.setItem(courseKey, 'true');
+            const component = createFixture(false, false, courseKey);
+            const host = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).nativeElement;
+            const observer = ResizeObserverMock.instances.find((instance) => instance.observe.mock.calls.some(([target]) => target === host))!;
+            observer.resize(600);
+            fixture.detectChanges();
+            fixture.nativeElement.querySelectorAll('[data-testid="resizable-panel-tab"]')[2].click();
+            fixture.detectChanges();
+            expect(component.activeSingleIndex()).toBe(2);
+            expect(localStorage.getItem(courseKey)).toBe('true');
+
+            observer.resize(1200);
+            fixture.detectChanges();
+            expect(component.isRightPanelCollapsed()).toBe(true);
+            expect(fixture.nativeElement.querySelectorAll('[data-testid="collapsed-panel-tab"]')).toHaveLength(2);
+        });
+
+        it.each([false, true])('uses the requested start state %s when the stored value is invalid', (startsCollapsed) => {
+            localStorage.setItem(courseKey, 'invalid');
+            const component = createFixture(startsCollapsed, false, courseKey);
+
+            expect(component.isRightPanelCollapsed()).toBe(startsCollapsed);
+            expect(localStorage.getItem(courseKey)).toBe('invalid');
+        });
+
+        it('leaves storage untouched until the user chooses a state', () => {
+            const setItem = vi.spyOn(Storage.prototype, 'setItem');
+            const component = createFixture(false, false, courseKey);
+
+            fixture.componentInstance.irisStartsCollapsed.set(true);
+            fixture.detectChanges();
+            expect(component.isRightPanelCollapsed()).toBe(true);
+            expect(setItem).not.toHaveBeenCalled();
+        });
+
+        it('keeps changes in memory without a persistence key', () => {
+            const setItem = vi.spyOn(Storage.prototype, 'setItem');
+            const component = createFixture();
+            component.collapseRightPanel();
+            fixture.detectChanges();
+            expect(component.isRightPanelCollapsed()).toBe(true);
+
+            component.expandRightPanel();
+            fixture.detectChanges();
+            expect(component.isRightPanelCollapsed()).toBe(false);
+            expect(setItem).not.toHaveBeenCalled();
+        });
+
+        it('still allows collapsing and expanding when browser storage is unavailable', () => {
+            vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+                throw new DOMException('Storage unavailable', 'SecurityError');
+            });
+            vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+                throw new DOMException('Storage unavailable', 'SecurityError');
+            });
+
+            const component = createFixture(true, false, courseKey);
+            expect(component.isRightPanelCollapsed()).toBe(true);
+            component.expandRightPanel();
+            fixture.detectChanges();
+            expect(component.isRightPanelCollapsed()).toBe(false);
+            component.collapseRightPanel();
+            fixture.detectChanges();
+            expect(component.isRightPanelCollapsed()).toBe(true);
+        });
     });
 
     it('should observe the host element for the responsive breakpoint by default', () => {

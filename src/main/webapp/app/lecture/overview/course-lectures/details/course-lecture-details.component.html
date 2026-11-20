@@ -25,7 +25,12 @@
             right that collapse to an icon rail. The panels component supplies the card and its scrolling, so the
             content below carries neither.
         -->
-        <jhi-resizable-panels class="flex-1 overflow-hidden" [useViewportWidthForCollapse]="true" storageKey="lecture-details-split">
+        <jhi-resizable-panels
+            class="flex-1 overflow-hidden"
+            [useViewportWidthForCollapse]="true"
+            storageKey="lecture-details-split"
+            [collapsedStateStorageKey]="courseId() === undefined ? undefined : 'course-side-panel-collapsed-' + courseId()"
+        >
             <ng-template jhiPanel [label]="'artemisApp.courseOverview.lectureDetails.lectureContent'" [icon]="faChalkboardTeacher">
                 <!-- Above the description rather than inside it, so the dates still show for a lecture without one. -->
                 <div class="flex flex-row flex-wrap gap-2 mb-2">
