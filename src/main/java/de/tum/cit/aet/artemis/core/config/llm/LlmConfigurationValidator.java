@@ -249,15 +249,27 @@ public class LlmConfigurationValidator {
                         && (name.getNumberOfElements() != map.getNumberOfElements() + 1 || !known.contains(uniform(name.getLastElement(ConfigurationPropertyName.Form.UNIFORM))))) {
                     unknown.add(name + " names no task of this llm-presets map (check the spelling, also of environment variables)");
                 }
-                // A misspelt map name (llm-preset, LLM_PRESETS) would leave every task on the configured map silently; no other key of the parent starts with llm.
+                // A misspelt map path would leave every task on the configured map silently: an extra underscore anywhere in an environment variable
+                // (LLM_PRESETS, ATLAS_LLM) splits the path, and llm-preset is the singular of the module's single keys; no other key of the parent starts with llm.
                 ConfigurationPropertyName parent = map.getParent();
-                if (parent.isAncestorOf(name) && !map.equals(name) && !map.isAncestorOf(name)
-                        && name.getElement(parent.getNumberOfElements(), ConfigurationPropertyName.Form.UNIFORM).startsWith("llm")) {
+                boolean underMap = map.equals(name) || map.isAncestorOf(name);
+                boolean splitPath = flat(name).startsWith(flat(map));
+                boolean llmSibling = parent.isAncestorOf(name) && name.getElement(parent.getNumberOfElements(), ConfigurationPropertyName.Form.UNIFORM).startsWith("llm");
+                if (!underMap && (splitPath || llmSibling)) {
                     unknown.add(name + " is no key; the presets of this module go under " + map);
                 }
             }));
         }
         errors.addAll(unknown);
+    }
+
+    /** The name without any separator, so that a path split by an extra underscore compares equal to the intended one. */
+    private static String flat(ConfigurationPropertyName name) {
+        StringBuilder flat = new StringBuilder();
+        for (int i = 0; i < name.getNumberOfElements(); i++) {
+            flat.append(name.getElement(i, ConfigurationPropertyName.Form.UNIFORM));
+        }
+        return flat.toString();
     }
 
     private static String uniform(String key) {

@@ -145,13 +145,20 @@ class LlmConfigurationValidatorTest {
 
     @Test
     void aMisspeltMapNameIsRejectedInsteadOfLeavingTheTaskOnTheDefault() {
-        runner(List.of(), "artemis.hyperion.llm-presets.default=large", "artemis.hyperion.llm-preset.faq-rewrite=small")
+        LlmPresetAssignments atlas = () -> List.of(LlmPresetAssignment.ofMap("artemis.atlas.atlasllm.llm-presets", "chat", null, "large"));
+        runner(List.of(atlas), "artemis.hyperion.llm-presets.default=large", "artemis.hyperion.llm-preset.faq-rewrite=small")
                 .withInitializer(context -> context.getEnvironment().getPropertySources().replace(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME,
                         new SystemEnvironmentPropertySource(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME,
-                                Map.of("ARTEMIS_HYPERION_LLM_PRESETS_CHECKLIST", "small"))))
+                                Map.of("ARTEMIS_HYPERION_LLM_PRESETS_CHECKLIST", "small", "ARTEMIS_ATLAS_ATLAS_LLM_LLMPRESETS_CHAT", "small"))))
                 .run(context -> assertThat(rootMessage(context.getStartupFailure()))
                         .contains("artemis.hyperion.llm-preset.faq-rewrite is no key; the presets of this module go under artemis.hyperion.llm-presets")
-                        .contains("artemis.hyperion.llm.presets.checklist is no key; the presets of this module go under artemis.hyperion.llm-presets"));
+                        .contains("artemis.hyperion.llm.presets.checklist is no key; the presets of this module go under artemis.hyperion.llm-presets")
+                        .contains("artemis.atlas.atlas.llm.llmpresets.chat is no key; the presets of this module go under artemis.atlas.atlasllm.llm-presets"));
+        // the canonical spellings, also with dashes in YAML, are accepted
+        runner(List.of(atlas), "artemis.hyperion.llm-presets.default=large", "artemis.atlas.atlas-llm.llm-presets.chat=small")
+                .withInitializer(context -> context.getEnvironment().getPropertySources().replace(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME,
+                        new SystemEnvironmentPropertySource(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME, Map.of("ARTEMIS_HYPERION_LLMPRESETS_CHECKLIST", "small"))))
+                .run(context -> assertThat(context).hasNotFailed());
     }
 
     @Test
