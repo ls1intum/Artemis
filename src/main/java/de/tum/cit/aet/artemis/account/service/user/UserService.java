@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.repository.cleanup.LearningDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
@@ -52,7 +53,6 @@ import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
-import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
@@ -118,7 +118,7 @@ public class UserService {
 
     private final FileService fileService;
 
-    private final Optional<ScienceEventApi> scienceEventApi;
+    private final LearningDataCleanupRepository learningDataCleanupRepository;
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
@@ -140,7 +140,7 @@ public class UserService {
 
     public UserService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository,
             AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
-            InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
+            InstanceMessageSendService instanceMessageSendService, FileService fileService, LearningDataCleanupRepository learningDataCleanupRepository,
             ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
             AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService,
             CourseNotificationSettingService courseNotificationSettingService, UserCourseNotificationStatusService userCourseNotificationStatusService,
@@ -155,7 +155,7 @@ public class UserService {
         this.passwordService = passwordService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.fileService = fileService;
-        this.scienceEventApi = scienceEventApi;
+        this.learningDataCleanupRepository = learningDataCleanupRepository;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.learnerProfileApi = learnerProfileApi;
         this.savedPostRepository = savedPostRepository;
@@ -601,6 +601,7 @@ public class UserService {
      */
     protected void anonymizeUser(User user) {
         final String originalLogin = user.getLogin();
+        learningDataCleanupRepository.deleteScienceData(user.getId(), originalLogin);
         final String randomPassword = RandomUtil.generatePassword();
         final String userImageString = user.getImageUrl();
         final String anonymizedLogin = lowerCase(RandomUtil.generateRandomAlphanumericString(), Locale.ENGLISH);
@@ -625,8 +626,6 @@ public class UserService {
 
         userRepository.save(user);
         userRepository.flush();
-
-        scienceEventApi.ifPresent(api -> api.renameIdentity(originalLogin, anonymizedLogin));
 
         if (userImageString != null) {
             fileService.schedulePathForDeletion(new FileSystemLocation.ProfilePicture(userImageString).path(), 0);

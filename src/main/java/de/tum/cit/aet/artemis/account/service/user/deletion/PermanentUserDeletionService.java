@@ -186,6 +186,7 @@ public class PermanentUserDeletionService {
             userOwnedContentDeletionService.deleteTutorParticipations(userId);
         }
 
+        userOwnedContentDeletionService.deleteScienceData(login, userId);
         resolveDirectReferences(userId, forced);
 
         int deleted = userRepository.deleteUserRow(userId);
@@ -193,7 +194,6 @@ public class PermanentUserDeletionService {
             throw new IllegalStateException("Expected to delete one user row, deleted " + deleted);
         }
 
-        userOwnedContentDeletionService.anonymiseScienceEvents(login, userId);
         auditEventRepository.add(new AuditEvent(actor, AUDIT_EVENT_TYPE,
                 Map.of("targetUserId", userId, "mode", mode.name(), "affectedObjects", impact.totalAffectedObjects(), "outcome", UserDeletionResultStatus.DELETED.name())));
         scheduleExternalCleanup(filesToDelete);

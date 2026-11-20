@@ -30,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
@@ -54,7 +55,9 @@ import de.tum.cit.aet.artemis.atlas.repository.ScienceCourseConsentRepository;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceEnabledCourseRepository;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceResearchExportAuditRepository;
 import de.tum.cit.aet.artemis.atlas.service.ScienceCourseService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForRoleAssignmentDTO;
@@ -65,6 +68,9 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
     private static final String TEST_PREFIX = "scienceintegration";
 
     private Course course;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     @Autowired
     private ScienceCourseService scienceCourseService;
@@ -794,6 +800,53 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
         var disabled = request.get(path, HttpStatus.OK, ScienceCourseConsentDTO.class);
         assertThat(disabled.active()).isTrue();
         assertThat(disabled.scienceEnabled()).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testReactivationRequiresANewDecision(boolean previousDecision) throws Exception {
+        scienceCourseService.enableCourse(course.getId());
+        scienceCourseService.saveConsentForCurrentUser(course.getId(), previousDecision);
+        scienceCourseService.enableCourse(course.getId());
+        assertThat(scienceCourseService.getConsentForCurrentUser(course.getId()).active()).isEqualTo(previousDecision);
+        scienceCourseService.disableCourse(course.getId());
+        scienceCourseService.enableCourse(course.getId());
+        scienceCourseService.enableCourse(course.getId());
+
+        assertThat(scienceCourseService.getConsentForCurrentUser(course.getId()).active()).isNull();
+        assertThat(scienceCourseService.getConsentsForCurrentUser()).anySatisfy(consent -> {
+            assertThat(consent.courseId()).isEqualTo(course.getId());
+            assertThat(consent.active()).isNull();
+        });
+        sendPutRequest(new ScienceEventDTO(ScienceEventType.EXERCISE__OPEN, 3L, course.getId()));
+        assertThat(markersOfType(ScienceEventType.EXERCISE__OPEN)).isEmpty();
+
+        scienceCourseService.saveConsentForCurrentUser(course.getId(), previousDecision);
+        scienceCourseService.saveConsentForCurrentUser(course.getId(), previousDecision);
+        assertThat(markersOfType(previousDecision ? ScienceEventType.SCIENCE__OPT_IN : ScienceEventType.SCIENCE__OPT_OUT)).hasSize(2);
+        scienceCourseService.saveConsentForCurrentUser(course.getId(), true);
+        sendPutRequest(new ScienceEventDTO(ScienceEventType.EXERCISE__OPEN, 3L, course.getId()));
+        assertThat(markersOfType(ScienceEventType.EXERCISE__OPEN)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testHistoricalDataRemainsAccessibleAfterConsentReset() throws Exception {
+        Course leftCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        scienceCourseService.enableCourse(leftCourse.getId());
+        scienceCourseService.saveConsentForCurrentUser(leftCourse.getId(), true);
+        userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), leftCourse.getId(), CourseRole.STUDENT);
+        scienceEventRepository.save(ScienceEvent.of(TEST_PREFIX + "student1", ScienceEventType.EXERCISE__OPEN, null, leftCourse.getId(), ZonedDateTime.now()));
+        scienceCourseService.disableCourse(leftCourse.getId());
+        scienceCourseService.enableCourse(leftCourse.getId());
+
+        assertThat(scienceCourseService.getConsentForCurrentUser(leftCourse.getId()).active()).isNull();
+        long historicalCourseId = leftCourse.getId();
+        assertThat(scienceCourseService.getConsentsForCurrentUser()).anyMatch(consent -> historicalCourseId == consent.courseId());
+        scienceCourseService.deleteScienceDataForCurrentUser(leftCourse.getId());
+        assertThat(scienceEventRepository.findAllByIdentity(TEST_PREFIX + "student1"))
+                .noneMatch(event -> Long.valueOf(historicalCourseId).equals(event.getCourseId()) && event.getType() == ScienceEventType.EXERCISE__OPEN);
     }
 
     @Test

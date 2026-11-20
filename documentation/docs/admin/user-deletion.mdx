@@ -2,7 +2,7 @@
 id: user-deletion
 title: Deleting User Accounts
 sidebar_label: User Deletion
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-20
 ---
 
 There are two ways to take an account out of service, and they are very different. **Deactivating** it locks the person
@@ -133,10 +133,9 @@ Once you confirm, Artemis works through the account in this order:
    to the rest of the team. A team the person was the only member of is deleted together with its work.
 5. It removes the account itself.
 
-Science data collection events are handled differently, because they record a login rather than a reference to the
-account. The person's consent decisions are deleted, and their events are kept under the placeholder identity
-`deleted-user-<id>`. See [Science Data Collection](/admin/science-data-collection#deleting-science-data) for what that
-means for research exports.
+Artemis also deletes the account’s science consent decisions and all its science events, including decision and
+deletion markers. They are absent from future research exports; files already handed to researchers cannot be recalled.
+See [Science Data Collection](/admin/science-data-collection#deleting-science-data).
 
 Artemis knows a rule for every kind of data that can point at an account, and the build fails if a new kind is added
 without one. Should a deletion nevertheless meet data it cannot place, it stops at that point and reports the account

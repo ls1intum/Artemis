@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -14,6 +15,11 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.cleanup.CommunicationDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.UserReferenceCount;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.atlas.domain.science.ScienceCourseConsent;
+import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
+import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
+import de.tum.cit.aet.artemis.atlas.repository.ScienceCourseConsentRepository;
+import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
@@ -54,6 +60,12 @@ class UserOwnedContentDeletionServiceTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private ScienceCourseConsentRepository scienceCourseConsentRepository;
+
+    @Autowired
+    private ScienceEventRepository scienceEventRepository;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -122,8 +134,30 @@ class UserOwnedContentDeletionServiceTest extends AbstractSpringIntegrationIndep
             userOwnedContentDeletionService.deletePlagiarismCases(userId);
             userOwnedContentDeletionService.deleteCommunicationContent(userId);
             userOwnedContentDeletionService.deleteTutorParticipations(userId);
-            userOwnedContentDeletionService.anonymiseScienceEvents(user.getLogin(), userId);
+            userOwnedContentDeletionService.deleteScienceData(user.getLogin(), userId);
         }).doesNotThrowAnyException();
+    }
+
+    @Test
+    void deletesAllScienceDataForOnlyTheAccount() {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "science");
+        User other = userUtilService.createAndSaveUser(TEST_PREFIX + "scienceother");
+        Course course = courseUtilService.addEmptyCourse();
+        ScienceCourseConsent consent = new ScienceCourseConsent();
+        consent.setUser(user);
+        consent.setCourse(course);
+        consent.setActive(true);
+        scienceCourseConsentRepository.save(consent);
+        scienceEventRepository.save(ScienceEvent.of(user.getLogin(), ScienceEventType.SCIENCE__OPT_IN, null, course.getId(), ZonedDateTime.now()));
+        scienceEventRepository.save(ScienceEvent.of(user.getLogin(), ScienceEventType.EXERCISE__OPEN, null, null, ZonedDateTime.now()));
+        ScienceEvent otherEvent = scienceEventRepository.save(ScienceEvent.of(other.getLogin(), ScienceEventType.EXERCISE__OPEN, null, course.getId(), ZonedDateTime.now()));
+
+        userOwnedContentDeletionService.deleteScienceData(user.getLogin(), user.getId());
+        userOwnedContentDeletionService.deleteScienceData(user.getLogin(), user.getId());
+
+        assertThat(scienceEventRepository.findAllByIdentity(user.getLogin())).isEmpty();
+        assertThat(scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), course.getId())).isEmpty();
+        assertThat(scienceEventRepository.findById(otherEvent.getId())).isPresent();
     }
 
     @Test

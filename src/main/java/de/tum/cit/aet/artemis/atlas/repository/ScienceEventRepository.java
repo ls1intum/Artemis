@@ -54,6 +54,9 @@ public interface ScienceEventRepository extends ArtemisJpaRepository<ScienceEven
 
     Set<ScienceEvent> findAllByIdentity(String identity);
 
+    @Query("SELECT DISTINCT event.courseId FROM ScienceEvent event WHERE event.identity = :identity AND event.type IN :types AND event.courseId IS NOT NULL")
+    Set<Long> findDecisionCourseIds(@Param("identity") String identity, @Param("types") Set<ScienceEventType> types);
+
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
@@ -64,6 +67,9 @@ public interface ScienceEventRepository extends ArtemisJpaRepository<ScienceEven
             """)
     int deleteInteractionEventsByIdentityAndCourseId(@Param("identity") String identity, @Param("courseId") long courseId,
             @Param("retainedTypes") Set<ScienceEventType> retainedTypes);
+
+    @Query("SELECT COUNT(event) > 0 FROM ScienceEvent event WHERE event.identity = :identity AND event.courseId = :courseId AND event.type IN :types")
+    boolean hasDecision(@Param("identity") String identity, @Param("courseId") long courseId, @Param("types") Set<ScienceEventType> types);
 
     /**
      * Deletes a student's interaction events in a course and records the deletion on the science timeline, as one unit:

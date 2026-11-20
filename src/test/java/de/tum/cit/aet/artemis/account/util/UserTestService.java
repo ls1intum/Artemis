@@ -207,8 +207,7 @@ public class UserTestService {
 
         // check only if owner of event is asserted
         if (originalUser.getLogin().equals(scienceEvent.getIdentity())) {
-            final var deletedEvent = scienceEventRepository.findById(scienceEvent.getId()).orElseThrow();
-            assertThat(deletedEvent.getIdentity()).isEqualTo(deletedUser.getLogin());
+            assertThat(scienceEventRepository.findById(scienceEvent.getId())).isEmpty();
         }
     }
 
@@ -239,6 +238,7 @@ public class UserTestService {
 
         // Permanent rather than soft deletion: the row itself is gone, so there is nothing left to anonymize.
         assertThat(userTestRepository.findById(student.getId())).isEmpty();
+        assertThat(scienceEventRepository.findById(scienceEvent.getId())).isEmpty();
     }
 
     /**
