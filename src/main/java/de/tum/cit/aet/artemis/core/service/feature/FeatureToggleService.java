@@ -113,12 +113,9 @@ public class FeatureToggleService {
     private void initFeatures() {
         // The map is shared across all nodes by the distributed data provider.
         features = distributedDataProvider.getMap("features");
+        features.putIfAbsent(Feature.SmartQuizzes, false);
 
-        // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except Science, TutorSuggestions, AtlasAgent, RateLimit, GlobalSearch, AutonomousTutor, Deimos, and the retired ones) are
-        // enabled once
-        // the
-        // system starts up
+        // Features without a specific default start enabled.
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && !RETIRED_FEATURES.contains(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions
                     && feature != Feature.AtlasAgent && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor

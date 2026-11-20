@@ -1,6 +1,3 @@
-@import '../../../../../../../node_modules/bootstrap/scss/functions';
-@import '../../../../../../../node_modules/bootstrap/scss/variables';
-@import '../../../../../../../node_modules/bootstrap/scss/mixins';
 @import './course-variables';
 @import 'src/main/webapp/content/scss/artemis-mixins';
 
@@ -97,7 +94,7 @@
  * Opts the shell's links (breadcrumbs, sidebar) out of the hover underline from `global.scss` — see the comment there
  * for why the exclusions belong in one `:not()` argument list.
  */
-a:not(.btn, .tab-link):hover {
+a:not(.tumaet-ui-btn, .tab-link):hover {
     text-decoration: none !important;
 }
 

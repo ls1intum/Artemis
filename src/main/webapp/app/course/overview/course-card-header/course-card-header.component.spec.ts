@@ -52,7 +52,7 @@ describe('CourseCardHeaderComponent', () => {
         const router = TestBed.inject(Router);
         const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
-        const link = fixture.nativeElement.querySelector('a.stretched-link') as HTMLElement;
+        const link = fixture.nativeElement.querySelector('a.cover-link') as HTMLElement;
         link.click();
 
         expect(navigateByUrlSpy).toHaveBeenCalledTimes(1);
@@ -80,7 +80,7 @@ describe('CourseCardHeaderComponent', () => {
             fixture.componentRef.setInput('courseTitle', longTitle);
             fixture.detectChanges();
 
-            const title = fixture.nativeElement.querySelector('.card-title') as HTMLElement;
+            const title = fixture.nativeElement.querySelector('.course-title') as HTMLElement;
             expect(title.textContent?.trim()).toBe(longTitle);
             expect(title.getAttribute('title')).toBe(longTitle);
         });
@@ -90,7 +90,7 @@ describe('CourseCardHeaderComponent', () => {
             fixture.componentRef.setInput('courseTitle', longTitle);
             fixture.detectChanges();
 
-            const stretchedLink = fixture.nativeElement.querySelector('a.stretched-link') as HTMLElement;
+            const stretchedLink = fixture.nativeElement.querySelector('a.cover-link') as HTMLElement;
             expect(stretchedLink.getAttribute('title')).toBe(longTitle);
         });
 
@@ -105,7 +105,7 @@ describe('CourseCardHeaderComponent', () => {
             fixture.detectChanges();
 
             const container = fixture.nativeElement.querySelector('.course-title-container') as HTMLElement;
-            const title = fixture.nativeElement.querySelector('.card-title') as HTMLElement;
+            const title = fixture.nativeElement.querySelector('.course-title') as HTMLElement;
             const titleStyle = getComputedStyle(title);
             // Without min-width: 0 a flex item never shrinks below its longest word and overflows the card.
             expect(getComputedStyle(container).minWidth).toBe('0px');

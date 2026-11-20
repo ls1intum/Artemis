@@ -128,7 +128,7 @@ class GenerationPayloadBoundaryTest {
             default -> null;
         };
         assertThatThrownBy(() -> new ProviderUsageUpdate.Call(field.equals("model") ? "x".repeat(1025) : "model", field.equals("request") ? "x".repeat(1025) : null,
-                field.equals("input") ? -1 : 10, field.equals("output") ? -1 : 2, cachedTokens)).isInstanceOf(IllegalArgumentException.class)
+                field.equals("input") ? -1 : 10, field.equals("output") ? -1 : 2, cachedTokens, null)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Invalid provider usage metadata");
     }
 }

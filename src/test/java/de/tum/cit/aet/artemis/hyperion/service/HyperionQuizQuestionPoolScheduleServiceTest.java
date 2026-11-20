@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -25,6 +26,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.core.task.TaskExecutor;
 
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.domain.HyperionCourseSettings;
@@ -53,6 +56,9 @@ class HyperionQuizQuestionPoolScheduleServiceTest {
     private HyperionQuizQuestionPoolModelService modelService;
 
     @Mock
+    private FeatureToggleService featureToggleService;
+
+    @Mock
     private TaskExecutor executor;
 
     private HyperionQuizQuestionPoolScheduleService scheduler;
@@ -67,7 +73,9 @@ class HyperionQuizQuestionPoolScheduleServiceTest {
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
         when(modelService.isConfigured()).thenReturn(true);
-        scheduler = new HyperionQuizQuestionPoolScheduleService(settingsRepository, courseRepository, buildRepository, buildService, modelService, executor, 7);
+        when(featureToggleService.isFeatureEnabled(Feature.SmartQuizzes)).thenReturn(true);
+        scheduler = new HyperionQuizQuestionPoolScheduleService(settingsRepository, courseRepository, buildRepository, buildService, modelService, featureToggleService, executor,
+                7);
     }
 
     @AfterEach
@@ -168,6 +176,33 @@ class HyperionQuizQuestionPoolScheduleServiceTest {
         order.verify(buildService).buildAndRelease(2L, null, 2L, "lease", openDeadline);
         order.verify(buildService).buildAndRelease(3L, null, 3L, "lease", openDeadline);
         order.verify(buildService).buildAndRelease(1L, null, 1L, "lease", openDeadline);
+    }
+
+    @Test
+    void buildEnabledPools_skipsGenerationWhenSmartQuizzesAreDisabled() {
+        when(featureToggleService.isFeatureEnabled(Feature.SmartQuizzes)).thenReturn(false);
+
+        assertThat(scheduler.buildEnabledPools(now, openDeadline)).isZero();
+        verify(settingsRepository, never()).findAll();
+        verify(buildService, never()).tryStart(anyLong());
+    }
+
+    @Test
+    void buildEnabledPools_startsNoFurtherCourseWhenSmartQuizzesAreTurnedOff() {
+        Course first = course(1L, null);
+        when(settingsRepository.findAll()).thenReturn(List.of(settings(1L, true), settings(2L, true)));
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(first));
+        when(buildService.tryStart(1L)).thenReturn("lease");
+        QuizQuestionPoolBuild build = new QuizQuestionPoolBuild();
+        build.setId(10L);
+        when(buildService.recordStart(first, QuizQuestionPoolBuildTrigger.SCHEDULED, 0)).thenReturn(build);
+        doAnswer(invocation -> {
+            when(featureToggleService.isFeatureEnabled(Feature.SmartQuizzes)).thenReturn(false);
+            return null;
+        }).when(buildService).buildAndRelease(1L, null, 10L, "lease", openDeadline);
+
+        assertThat(scheduler.buildEnabledPools(now, openDeadline)).isEqualTo(1);
+        verify(courseRepository, never()).findById(2L);
     }
 
     @Test

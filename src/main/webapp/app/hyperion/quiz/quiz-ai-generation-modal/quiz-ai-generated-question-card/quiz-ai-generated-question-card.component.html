@@ -1,11 +1,11 @@
 <article class="rounded-xl border border-border bg-surface-raised p-5!" data-testid="quiz-ai-generated-question-card">
     <div class="mb-2 flex items-center justify-between gap-3!">
-        <h5 class="m-0 text-base leading-tight font-bold text-text">{{ questionIndex() + 1 }}. {{ question().title }}</h5>
+        <h5 class="m-0 text-base leading-tight font-bold text-color">{{ questionIndex() + 1 }}. {{ question().title }}</h5>
         <tumaet-ui-tag severity="secondary" size="sm" [rounded]="true" class="whitespace-nowrap uppercase">
             <span [jhiTranslate]="getQuestionTypeLabelKey(question().type)"></span>
         </tumaet-ui-tag>
     </div>
-    <div class="mb-4! text-text" data-testid="question-text" [jhiMarkdown]="question().questionText"></div>
+    <div class="mb-4! text-color" data-testid="question-text" [jhiMarkdown]="question().questionText"></div>
     <div class="flex flex-col gap-2">
         @for (option of question().options; track option.text) {
             <div
@@ -14,7 +14,7 @@
                 [attr.data-correct]="option.correct ? true : undefined"
                 data-testid="quiz-ai-generated-option"
             >
-                <div class="font-semibold text-text" [jhiMarkdown]="option.text"></div>
+                <div class="font-semibold text-color" [jhiMarkdown]="option.text"></div>
                 @if (option.correct) {
                     <tumaet-ui-tag severity="success" size="sm" class="uppercase">
                         <span jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.correct"></span>

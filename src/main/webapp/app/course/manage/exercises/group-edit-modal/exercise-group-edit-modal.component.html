@@ -1,13 +1,13 @@
 <tumaet-ui-dialog [(visible)]="visible" [header]="headerStringKey() | artemisTranslate" [closable]="true" [closeOnEscape]="true" [dismissableMask]="false" size="medium">
-    <div class="d-flex flex-column gap-4">
+    <div class="flex flex-col gap-6!">
         <!-- Name + Points -->
-        <div class="d-flex flex-wrap gap-3">
-            <div class="flex-grow-1">
-                <label class="fw-semibold d-block mb-1" for="group-edit-title" jhiTranslate="artemisApp.exerciseManagement.groupEdit.name"></label>
+        <div class="flex flex-wrap gap-4!">
+            <div class="grow">
+                <label class="font-semibold block mb-1" for="group-edit-title" jhiTranslate="artemisApp.exerciseManagement.groupEdit.name"></label>
                 <input
                     id="group-edit-title"
                     tumAetUiInput
-                    class="w-100"
+                    class="w-full"
                     [attr.maxlength]="MAX_TITLE_LENGTH"
                     [ngModel]="draftTitle()"
                     (ngModelChange)="draftTitle.set($event)"
@@ -16,13 +16,13 @@
                 />
             </div>
             <div>
-                <label class="d-flex align-items-center gap-1 fw-semibold mb-1" for="group-edit-max-points">
+                <label class="flex items-center gap-1 font-semibold mb-1" for="group-edit-max-points">
                     <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.maxPoints"></span>
                     <fa-icon
                         [icon]="faCircleInfo"
                         [tumAetUiTooltip]="'artemisApp.exerciseManagement.groupEdit.maxPointsTooltip' | artemisTranslate"
                         tumAetUiTooltipPlacement="top"
-                        class="text-muted"
+                        class="text-muted-color"
                     />
                 </label>
                 <jhi-points-input
@@ -38,7 +38,7 @@
 
         <!-- Dates -->
         <div>
-            <div class="fw-semibold mb-2" jhiTranslate="artemisApp.exerciseManagement.groupEdit.dates"></div>
+            <div class="font-semibold mb-2" jhiTranslate="artemisApp.exerciseManagement.groupEdit.dates"></div>
             <tumaet-ui-message severity="warn" [icon]="faTriangleExclamation" class="mb-2">
                 <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesOverrideWarning"></span>
             </tumaet-ui-message>

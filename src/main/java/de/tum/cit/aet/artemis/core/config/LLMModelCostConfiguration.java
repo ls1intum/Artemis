@@ -26,8 +26,8 @@ import org.springframework.context.annotation.Profile;
 @ConfigurationProperties(prefix = "artemis.llm")
 public class LLMModelCostConfiguration {
 
-    private static final Map<String, ModelCostProperties> DEFAULT_MODEL_COSTS = Map.of("gpt-5-mini", modelCost(0.23f, 1.84f), "gpt-5.4", modelCost(2.30f, 13.80f), "gpt-5.4-mini",
-            modelCost(0.69f, 4.14f));
+    private static final Map<String, ModelCostProperties> DEFAULT_MODEL_COSTS = Map.of("gpt-5-mini", modelCost(0.25f, 2f, 0.025f), "gpt-5.4", modelCost(2.50f, 15f, 0.25f),
+            "gpt-5.4-mini", modelCost(0.75f, 4.50f, 0.075f));
 
     private static final Pattern NON_ALPHANUMERIC_PATTERN = Pattern.compile("[^a-zA-Z0-9]");
 
@@ -67,10 +67,11 @@ public class LLMModelCostConfiguration {
         return NON_ALPHANUMERIC_PATTERN.matcher(value).replaceAll("");
     }
 
-    private static ModelCostProperties modelCost(float inputCostPerMillionEur, float outputCostPerMillionEur) {
+    private static ModelCostProperties modelCost(float inputCostPerMillionUsd, float outputCostPerMillionUsd, float cachedInputCostPerMillionUsd) {
         ModelCostProperties properties = new ModelCostProperties();
-        properties.setInputCostPerMillionEur(inputCostPerMillionEur);
-        properties.setOutputCostPerMillionEur(outputCostPerMillionEur);
+        properties.setInputCostPerMillionUsd(inputCostPerMillionUsd);
+        properties.setOutputCostPerMillionUsd(outputCostPerMillionUsd);
+        properties.setCachedInputCostPerMillionUsd(cachedInputCostPerMillionUsd);
         return properties;
     }
 
@@ -83,28 +84,56 @@ public class LLMModelCostConfiguration {
     }
 
     /**
-     * Properties for a single model's token costs in EUR.
+     * Optional USD rates for a single model.
      */
     public static class ModelCostProperties {
 
-        private float inputCostPerMillionEur = 0f;
+        private Float inputCostPerMillionUsd;
 
-        private float outputCostPerMillionEur = 0f;
+        private Float outputCostPerMillionUsd;
 
-        public float getInputCostPerMillionEur() {
-            return inputCostPerMillionEur;
+        private Float cachedInputCostPerMillionUsd;
+
+        private Float cacheWriteInputCostPerMillionUsd;
+
+        public Float getInputCostPerMillionUsd() {
+            return inputCostPerMillionUsd;
         }
 
-        public void setInputCostPerMillionEur(float inputCostPerMillionEur) {
-            this.inputCostPerMillionEur = inputCostPerMillionEur;
+        public void setInputCostPerMillionUsd(Float inputCostPerMillionUsd) {
+            this.inputCostPerMillionUsd = inputCostPerMillionUsd;
         }
 
-        public float getOutputCostPerMillionEur() {
-            return outputCostPerMillionEur;
+        public Float getOutputCostPerMillionUsd() {
+            return outputCostPerMillionUsd;
         }
 
-        public void setOutputCostPerMillionEur(float outputCostPerMillionEur) {
-            this.outputCostPerMillionEur = outputCostPerMillionEur;
+        public void setOutputCostPerMillionUsd(Float outputCostPerMillionUsd) {
+            this.outputCostPerMillionUsd = outputCostPerMillionUsd;
+        }
+
+        public Float getCachedInputCostPerMillionUsd() {
+            return cachedInputCostPerMillionUsd;
+        }
+
+        public void setCachedInputCostPerMillionUsd(Float cachedInputCostPerMillionUsd) {
+            this.cachedInputCostPerMillionUsd = cachedInputCostPerMillionUsd;
+        }
+
+        public Float getCacheWriteInputCostPerMillionUsd() {
+            return cacheWriteInputCostPerMillionUsd;
+        }
+
+        public void setCacheWriteInputCostPerMillionUsd(Float cacheWriteInputCostPerMillionUsd) {
+            this.cacheWriteInputCostPerMillionUsd = cacheWriteInputCostPerMillionUsd;
+        }
+
+        public void setInputCostPerMillionEur(float ignored) {
+            // Bind the model entry to suppress seeded USD defaults without storing the legacy rate.
+        }
+
+        public void setOutputCostPerMillionEur(float ignored) {
+            // Bind the model entry to suppress seeded USD defaults without storing the legacy rate.
         }
     }
 }

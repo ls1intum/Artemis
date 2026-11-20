@@ -1,11 +1,11 @@
 <ng-template #helpTextTemplate let-translationKey="translationKey">
     <ng-template #tipContent><span [innerHTML]="translationKey | artemisTranslate | safeHtml"></span></ng-template>
     @if (bonus.id) {
-        <fa-icon [icon]="faQuestionCircle" class="text-(--tumaet-ui-muted-color)" tumAetUiTooltipPlacement="right" [tumAetUiTooltip]="tipContent" />
+        <fa-icon [icon]="faQuestionCircle" class="text-muted-color" tumAetUiTooltipPlacement="right" [tumAetUiTooltip]="tipContent" />
     }
     @if (!bonus.id) {
         <div class="flex items-baseline">
-            <fa-icon [icon]="faQuestionCircle" class="text-(--tumaet-ui-muted-color)" />
+            <fa-icon [icon]="faQuestionCircle" class="text-muted-color" />
             <label [innerHTML]="translationKey | artemisTranslate | safeHtml" class="ps-1 pb-1"></label>
         </div>
     }

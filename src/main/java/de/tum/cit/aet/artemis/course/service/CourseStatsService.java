@@ -211,6 +211,8 @@ public class CourseStatsService {
      */
     public CourseManagementDetailViewDTO getStatsForDetailView(Course course, GradingScale gradingScale) {
 
+        double currentTotalLlmCostInUsd = llmTokenUsageTraceRepository.calculateTotalLlmCostInUsdForCourse(course.getId());
+        long unpricedLlmRequestCount = llmTokenUsageTraceRepository.countUnpricedRequestsForCourse(course.getId());
         long start = System.currentTimeMillis();
         Set<Exercise> courseExercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
         log.debug("exerciseRepository.findAllExercisesByCourseId took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
@@ -218,7 +220,7 @@ public class CourseStatsService {
         Set<Long> courseExerciseIdsWithManualAssessments = exerciseRepository.findExerciseIdsWithManualAssessmentByCourseId(course.getId());
         log.debug("exerciseRepository.findExerciseIdsWithManualAssessmentsByCourseId took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
         if (courseExercises == null || courseExercises.isEmpty()) {
-            return new CourseManagementDetailViewDTO(0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0.0, 0.0, 0.0);
+            return new CourseManagementDetailViewDTO(0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0.0, 0.0, currentTotalLlmCostInUsd, unpricedLlmRequestCount);
         }
         // For the average score we need to only consider scores which are included completely or as bonus
         Set<Exercise> includedExercises = courseExercises.stream().filter(Exercise::isCourseExercise)
@@ -297,13 +299,9 @@ public class CourseStatsService {
         }
         double currentAbsoluteAverageScore = roundScoreSpecifiedByCourseSettings((averageScoreForCourse / 100.0) * currentMaxAverageScore, course);
         double currentPercentageAverageScore = currentMaxAverageScore > 0.0 ? roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course) : 0.0;
-        start = System.currentTimeMillis();
-        double currentTotalLlmCostInEur = llmTokenUsageTraceRepository.calculateTotalLlmCostInEurForCourse(course.getId());
-        log.debug("llmTokenUsageTraceRepository.calculateTotalLlmCostInEurForCourse took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
-
         return new CourseManagementDetailViewDTO(currentPercentageAssessments, numberOfAssessments, numberOfSubmissions, currentPercentageComplaints, currentAbsoluteComplaints,
                 currentMaxComplaints, currentPercentageMoreFeedbacks, currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks, currentPercentageAverageScore,
-                currentAbsoluteAverageScore, currentMaxAverageScore, currentTotalLlmCostInEur);
+                currentAbsoluteAverageScore, currentMaxAverageScore, currentTotalLlmCostInUsd, unpricedLlmRequestCount);
     }
 
     private double calculatePercentage(double positive, double total) {

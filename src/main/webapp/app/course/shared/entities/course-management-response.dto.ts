@@ -49,6 +49,7 @@ export interface CourseMemberDTO {
 }
 
 export interface CourseConfigurationResponseDTO {
+    studentWelcomeContext?: string;
     id: number;
     gradeRelevant: boolean;
     dataRetentionHold: boolean;
