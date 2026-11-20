@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 154 features, 1201 REST endpoints in 29 modules, and 75 interaction overrides.
+Currently 20 product areas, 154 features, 1202 REST endpoints in 29 modules, and 76 interaction overrides.
 
 ## Courses
 
@@ -761,7 +761,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | lecture | `AttachmentVideoUnitPlaylistResource` | 0 | 1 | 0 | 0 |
 | lecture | `LectureTranscriptionResource` | 0 | 1 | 0 | 0 |
-| lecture | `TumLiveUploadResource` | 2 | 0 | 3 | 0 |
+| lecture | `TumLiveUploadResource` | 2 | 0 | 4 | 0 |
 
 ### Create and manage lectures
 
@@ -1561,6 +1561,7 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/iris/chat/courses/{courseId}/sessions/overview` (`IRIS_CHAT`)
 * `GET api/iris/courses/{courseId}/iris-settings` (`IRIS_SETTINGS`)
 * `GET api/iris/courses/{courseId}/status` (`IRIS_CHAT`)
+* `GET api/lecture/courses/{courseId}/tumlive-upload-availability` (`LECTURE_VIDEO`)
 * `GET api/lecture/courses/{courseId}/tumlive-uploads` (`LECTURE_VIDEO`)
 * `GET api/lecture/lecture-units/{lectureUnitId}/tumlive-upload` (`LECTURE_VIDEO`)
 * `GET api/lecture/lectures/{lectureId}/title` (`LECTURE_PAGES`)
