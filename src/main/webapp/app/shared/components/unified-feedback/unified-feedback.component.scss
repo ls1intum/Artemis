@@ -58,6 +58,24 @@
     &:has(.unified-feedback-title-input) {
         align-items: flex-start;
     }
+
+    // On a phone the tooltip of a cut-off title cannot be opened, so a read-only card wraps its title and moves its
+    // points under it once both do not fit in one row. Editing keeps one row, so the points input stays next to the title.
+    @media (max-width: 39.99rem) {
+        &:not(:has(.unified-feedback-points-input)) {
+            flex-wrap: wrap;
+            row-gap: 0.25rem;
+
+            .unified-feedback-header-left {
+                flex-basis: 10rem;
+            }
+
+            .unified-feedback-title {
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+        }
+    }
 }
 
 .unified-feedback-header-left {

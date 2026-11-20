@@ -48,6 +48,8 @@ import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -91,6 +93,8 @@ public class AthenaFeedbackSuggestionsService {
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     private final Optional<FeatureUsageCollector> featureUsageCollector;
 
     @Value("${artemis.athena.allowed-feedback-requests:10}")
@@ -99,18 +103,20 @@ public class AthenaFeedbackSuggestionsService {
     /**
      * Create a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
      *
-     * @param athenaRestTemplate        REST template used for the communication with Athena
-     * @param athenaModuleService       Athena module serviced used to determine the urls for different modules
-     * @param athenaDTOConverterService Service to convert exercises and submissions to DTOs
-     * @param llmTokenUsageService      Service to store the usage of LLM tokens
-     * @param learnerProfileApi         API for learner profile operations
-     * @param courseCompetencyApi       API for course competency operations
-     * @param featureUsageCollector     counts feedback suggestion requests for the feature usage analysis
+     * @param athenaRestTemplate           REST template used for the communication with Athena
+     * @param athenaModuleService          Athena module serviced used to determine the urls for different modules
+     * @param athenaDTOConverterService    Service to convert exercises and submissions to DTOs
+     * @param llmTokenUsageService         Service to store the usage of LLM tokens
+     * @param learnerProfileApi            API for learner profile operations
+     * @param courseCompetencyApi          API for course competency operations
+     * @param courseAthenaConfigRepository repository for the course-level Athena configuration, read to resolve a
+     *                                         course's feedback style defaults for non-graded text feedback
+     * @param featureUsageCollector        counts feedback suggestion requests for the feature usage analysis
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
             AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, ResultRepository resultRepository,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseCompetencyApi> courseCompetencyApi, UserAiPreferenceService userAiPreferenceService,
-            Optional<FeatureUsageCollector> featureUsageCollector) {
+            CourseAthenaConfigRepository courseAthenaConfigRepository, Optional<FeatureUsageCollector> featureUsageCollector) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         this.userAiPreferenceService = userAiPreferenceService;
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
@@ -121,6 +127,7 @@ public class AthenaFeedbackSuggestionsService {
         this.learnerProfileApi = learnerProfileApi;
         this.resultRepository = resultRepository;
         this.courseCompetencyApi = courseCompetencyApi;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.featureUsageCollector = featureUsageCollector;
     }
 
@@ -152,13 +159,12 @@ public class AthenaFeedbackSuggestionsService {
 
     /**
      * Extract the learner profile from a submission if it's a student participation.
-     * This method handles the extraction of learner profile information from a submission,
-     * with proper error handling and logging.
      *
      * @param submission the submission to extract the profile from
+     * @param requester  the user whose profile counts for a team participation, which has no single student, or null to use none
      * @return the learner profile or null if not available
      */
-    private LearnerProfile extractLearnerProfile(Submission submission) {
+    private LearnerProfile extractLearnerProfile(Submission submission, @Nullable User requester) {
         if (submission == null) {
             log.debug("Cannot extract learner profile: submission is null");
             return null;
@@ -169,22 +175,55 @@ public class AthenaFeedbackSuggestionsService {
             return null;
         }
 
-        // Get the student from the participation
-        var studentOpt = studentParticipation.getStudent();
-        if (studentOpt.isEmpty()) {
+        var student = studentParticipation.getStudent().orElse(requester);
+        if (student == null) {
             log.debug("Cannot extract learner profile: no student found in participation");
             return null;
         }
 
-        var student = studentOpt.get();
+        return learnerProfileApi.map(api -> api.getOrCreateLearnerProfile(student)).orElse(null);
+    }
 
+    /**
+     * Builds the learner profile DTO sent to Athena for a submission, applying the course's feedback style defaults
+     * where the student has not set a preference of their own (see {@link LearnerProfileDTO#withCourseDefaults}).
+     * <p>
+     * Only used for text requests: Athena's programming and modeling modules do not read the learner profile. Within
+     * text, only non-graded feedback is adapted to it, so the course defaults are only looked up for such a request,
+     * which saves the query for graded ones. The course defaults also apply without a profile, as when Atlas is disabled,
+     * but not when reading the profile failed: the student may have a preference of their own, so neither is sent then.
+     * A failure reading the course configuration is deliberately not caught and fails the request: continuing would
+     * silently replace the defaults the instructor configured with neutral values.
+     *
+     * @param submission          the submission to extract the profile from
+     * @param exercise            the exercise the submission belongs to, used to look up the course's Athena configuration
+     * @param applyCourseDefaults whether the request is non-graded, so that Athena adapts it to the profile and the course
+     *                                defaults apply
+     * @param user                the user requesting the feedback, whose preference counts for a non-graded request of a team
+     * @return the resulting DTO, or null if the submission has neither a learner profile nor course defaults that apply
+     */
+    private LearnerProfileDTO buildLearnerProfileDTO(Submission submission, Exercise exercise, boolean applyCourseDefaults, @Nullable User user) {
+        LearnerProfile learnerProfile;
         try {
-            return learnerProfileApi.map(api -> api.getOrCreateLearnerProfile(student)).orElse(null);
+            learnerProfile = extractLearnerProfile(submission, applyCourseDefaults ? user : null);
         }
         catch (Exception e) {
-            log.error("Error retrieving learner profile for student {}: {}", student.getId(), e.getMessage());
+            log.error("Error retrieving learner profile for a submission of exercise {}: {}", exercise.getId(), e.getMessage());
             return null;
         }
+        if (!applyCourseDefaults || (learnerProfile != null && learnerProfile.hasSetupFeedbackPreferences())) {
+            return LearnerProfileDTO.of(learnerProfile);
+        }
+
+        // The course is null for an exam exercise whose exam is masked out, and its id for a transient exercise/course pair
+        // built in a test rather than persisted; both read the same as a course with no Athena configuration, i.e. no course default.
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Long courseId = course != null ? course.getId() : null;
+        CourseAthenaConfigDTO courseConfig = courseId != null ? courseAthenaConfigRepository.findConfigByCourseId(courseId).orElse(null) : null;
+        int defaultFeedbackDetail = courseConfig != null ? courseConfig.defaultFeedbackDetail() : 0;
+        int defaultFeedbackFormality = courseConfig != null ? courseConfig.defaultFeedbackFormality() : 0;
+        return learnerProfile != null ? LearnerProfileDTO.withCourseDefaults(learnerProfile, defaultFeedbackDetail, defaultFeedbackFormality)
+                : LearnerProfileDTO.ofCourseDefaults(defaultFeedbackDetail, defaultFeedbackFormality);
     }
 
     /**
@@ -241,7 +280,7 @@ public class AthenaFeedbackSuggestionsService {
         List<CourseCompetencyDTO> competencies = courseCompetencyApi.map(api -> api.findAllByExerciseId(exercise.getId()).stream().map(CourseCompetencyDTO::of).toList())
                 .orElse(null);
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, extractSelectedLLMUsage(user, isGraded), latestSubmissionDTO, competencies);
+                buildLearnerProfileDTO(submission, exercise, !isGraded, user), isGraded, extractSelectedLLMUsage(user, isGraded), latestSubmissionDTO, competencies);
         final long startNanos = System.nanoTime();
         // stays true if the call to Athena throws, so a failed request is recorded as a failure rather than not at all
         boolean failed = true;
@@ -285,6 +324,8 @@ public class AthenaFeedbackSuggestionsService {
             return List.of();
         }
 
+        // No learner profile: Athena's programming and modeling modules do not read it, and looking it up would query,
+        // or even create, a profile for every submission, including each one processed at the due date.
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
         final long startNanos = System.nanoTime();
@@ -329,6 +370,8 @@ public class AthenaFeedbackSuggestionsService {
                     "Exercise", "exerciseIdDoesNotMatch");
         }
 
+        // No learner profile: Athena's programming and modeling modules do not read it, and looking it up would query,
+        // or even create, a profile for every submission, including each one processed at the due date.
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
         final long startNanos = System.nanoTime();
