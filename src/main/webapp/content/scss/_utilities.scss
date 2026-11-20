@@ -1,0 +1,209 @@
+@use 'sass:string';
+
+// Utility classes whose names Artemis templates use without Tailwind's important modifier, and which must still
+// override the element defaults of `_base.scss` and the rules of component stylesheets.
+// Tailwind emits its utilities into a cascade layer, so a plain `mb-0` loses to every unlayered rule: `<p class="mb-0">`
+// would keep the paragraph margin. The classes below are therefore unlayered and important. They cover the bare
+// spellings that are in use: the spacing steps 0, 1, 2 and `auto`, and a few alignment, overflow, border and colour
+// helpers. Every other step is written with the important modifier in the template (`mb-4!`), which Tailwind
+// handles on its own.
+// Do not add classes here. In new code, add the important modifier where a utility has to win.
+
+$spacing-steps: (
+    '0': 0,
+    '1': 0.25rem,
+    '2': 0.5rem,
+    'auto': auto,
+);
+$spacing-sides: (
+    '': ('',),
+    'x': (
+        '-right',
+        '-left',
+    ),
+    'y': (
+        '-top',
+        '-bottom',
+    ),
+    't': ('-top',),
+    'e': ('-right',),
+    'b': ('-bottom',),
+    's': ('-left',),
+);
+
+// A class for one side has to come after the class for all sides, so `p-1 pb-0` ends without bottom padding
+// whatever the order in the class attribute. Hence the sides are the outer loop, in the order of `$spacing-sides`.
+@each $property in (margin, padding) {
+    @each $side, $suffixes in $spacing-sides {
+        @each $step, $value in $spacing-steps {
+            // Padding has no `auto`.
+            @if $property == margin or $step != 'auto' {
+                .#{string.slice('#{$property}', 1, 1)}#{$side}-#{$step} {
+                    @each $suffix in $suffixes {
+                        #{$property}#{$suffix}: $value !important;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@each $step, $value in $spacing-steps {
+    @if $step != 'auto' {
+        .gap-#{$step} {
+            gap: $value !important;
+        }
+    }
+}
+
+$utility-declarations: (
+    'align-baseline': (
+        vertical-align: baseline,
+    ),
+    'align-middle': (
+        vertical-align: middle,
+    ),
+    'align-top': (
+        vertical-align: top,
+    ),
+    'bg-primary': (
+        background-color: $primary,
+    ),
+    'bg-transparent': (
+        background-color: transparent,
+    ),
+    'border': (
+        border: 1px solid $border-color,
+    ),
+    'border-0': (
+        border: 0,
+    ),
+    'border-5': (
+        border-width: 5px,
+    ),
+    'border-primary': (
+        border-color: $primary,
+    ),
+    'bottom-0': (
+        bottom: 0,
+    ),
+    'end-0': (
+        right: 0,
+    ),
+    'flex-nowrap': (
+        flex-wrap: nowrap,
+    ),
+    'flex-row': (
+        flex-direction: row,
+    ),
+    'flex-wrap': (
+        flex-wrap: wrap,
+    ),
+    'float-end': (
+        float: right,
+    ),
+    'float-none': (
+        float: none,
+    ),
+    'h-auto': (
+        height: auto,
+    ),
+    'invisible': (
+        visibility: hidden,
+    ),
+    'opacity-0': (
+        opacity: 0,
+    ),
+    'opacity-25': (
+        opacity: 0.25,
+    ),
+    'opacity-50': (
+        opacity: 0.5,
+    ),
+    'opacity-75': (
+        opacity: 0.75,
+    ),
+    'opacity-100': (
+        opacity: 1,
+    ),
+    'overflow-auto': (
+        overflow: auto,
+    ),
+    'overflow-hidden': (
+        overflow: hidden,
+    ),
+    'overflow-x-auto': (
+        overflow-x: auto,
+    ),
+    'overflow-x-hidden': (
+        overflow-x: hidden,
+    ),
+    'overflow-y-auto': (
+        overflow-y: auto,
+    ),
+    'overflow-y-scroll': (
+        overflow-y: scroll,
+    ),
+    'rounded': (
+        border-radius: 0.15rem,
+    ),
+    'shadow': (
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15),
+    ),
+    'shadow-lg': (
+        box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175),
+    ),
+    'shadow-sm': (
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075),
+    ),
+    'start-0': (
+        left: 0,
+    ),
+    'text-center': (
+        text-align: center,
+    ),
+    'text-danger': (
+        color: $danger,
+    ),
+    'text-end': (
+        text-align: right,
+    ),
+    'text-info': (
+        color: $info,
+    ),
+    'text-nowrap': (
+        white-space: nowrap,
+    ),
+    'text-primary': (
+        color: $primary,
+    ),
+    'text-start': (
+        text-align: left,
+    ),
+    'text-white': (
+        color: $white,
+    ),
+    'text-wrap': (
+        white-space: normal,
+    ),
+    'top-0': (
+        top: 0,
+    ),
+    'visible': (
+        visibility: visible,
+    ),
+    'w-auto': (
+        width: auto,
+    ),
+    'z-1': (
+        z-index: 1,
+    ),
+);
+
+@each $class, $declarations in $utility-declarations {
+    .#{$class} {
+        @each $property, $value in $declarations {
+            #{$property}: $value !important;
+        }
+    }
+}

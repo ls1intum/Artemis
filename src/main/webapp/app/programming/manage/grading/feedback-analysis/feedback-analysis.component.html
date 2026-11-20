@@ -1,4 +1,4 @@
-<div class="m-3 flex flex-col gap-3">
+<div class="m-4! flex flex-col gap-4!">
     <h3 class="m-0 p-0" [jhiTranslate]="TRANSLATION_BASE + '.title'" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
     <tumaet-ui-table-layout
         [loading]="isLoading()"
@@ -116,3 +116,29 @@
         />
     </tumaet-ui-table-layout>
 </div>
+@if (feedbackModalDetail(); as feedbackDetail) {
+    <jhi-feedback-modal [feedbackDetail]="feedbackDetail" (closed)="feedbackModalDetail.set(undefined)" />
+}
+@if (filterModalFilters(); as filters) {
+    <jhi-feedback-filter-modal
+        [taskArray]="taskNames()"
+        [testCaseNames]="testCaseNames()"
+        [minCount]="minCount()"
+        [maxCount]="maxCount()"
+        [errorCategories]="errorCategories()"
+        [initialFilters]="filters"
+        (filterApplied)="applyFilters($event)"
+        (closed)="filterModalFilters.set(undefined)"
+    />
+}
+@if (affectedStudentsModalDetail(); as feedbackDetail) {
+    <jhi-affected-students-modal [courseId]="courseId()" [exerciseId]="exerciseId()" [feedbackDetail]="feedbackDetail" (closed)="affectedStudentsModalDetail.set(undefined)" />
+}
+@if (channelModalDetail(); as feedbackDetail) {
+    <jhi-feedback-detail-channel-modal
+        [feedbackDetail]="feedbackDetail"
+        [exerciseDueDate]="exerciseDueDate()"
+        (formSubmitted)="createFeedbackChannel(feedbackDetail, $event)"
+        (closed)="channelModalDetail.set(undefined)"
+    />
+}
