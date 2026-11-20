@@ -57,8 +57,8 @@ import de.tum.cit.aet.artemis.atlas.repository.ScienceResearchExportAuditReposit
 import de.tum.cit.aet.artemis.atlas.service.ScienceCourseService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForRoleAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
@@ -70,7 +70,7 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
     private Course course;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleRepository;
 
     @Autowired
     private ScienceCourseService scienceCourseService;
