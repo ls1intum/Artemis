@@ -21,7 +21,7 @@
                 [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.placeholder' | artemisTranslate"
                 #instructionInput
                 type="text"
-                class="w-full max-w-lg min-w-80 border-none bg-transparent px-2 py-1 text-sm text-text outline-none placeholder:text-text-secondary disabled:opacity-60"
+                class="w-full max-w-lg min-w-80 border-none bg-transparent px-2 py-1 text-sm text-color outline-none placeholder:text-muted-color disabled:opacity-60"
                 data-testid="inline-refinement-input"
                 [placeholder]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.placeholder' | artemisTranslate"
                 [ngModel]="instruction()"
@@ -30,7 +30,7 @@
                 [disabled]="isLoading()"
                 [attr.maxlength]="MAX_INSTRUCTION_LENGTH"
             />
-            <span class="px-1 text-xs whitespace-nowrap" [class.text-state-danger]="isNearLimit()" [class.text-text-secondary]="!isNearLimit()">
+            <span class="px-1 text-xs whitespace-nowrap" [class.text-state-danger]="isNearLimit()" [class.text-muted-color]="!isNearLimit()">
                 {{ instruction().length }}/{{ MAX_INSTRUCTION_LENGTH }}
             </span>
             <button

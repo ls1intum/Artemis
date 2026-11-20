@@ -311,7 +311,7 @@ export class ChecklistPanelComponent {
         COHERENCE: 'bg-state-info text-white',
         COMPLETENESS: 'bg-state-success text-white',
     };
-    private static readonly CATEGORY_DEFAULT_COLOR = 'bg-text-secondary text-white';
+    private static readonly CATEGORY_DEFAULT_COLOR = 'bg-(--tumaet-ui-muted-color) text-white';
     private static readonly DIFFICULTY_SEVERITY_MAP: Record<string, 'success' | 'warn' | 'danger'> = { EASY: 'success', MEDIUM: 'warn', HARD: 'danger' };
     private static readonly DELTA_CLASS_MAP: Record<string, string> = { HIGHER: 'text-state-danger', LOWER: 'text-state-warning', MATCH: 'text-state-success' };
     private static readonly DELTA_LABEL_KEYS: Record<string, string> = {
@@ -355,7 +355,7 @@ export class ChecklistPanelComponent {
     }
 
     getDeltaClass(delta: string | undefined): string {
-        return ChecklistPanelComponent.DELTA_CLASS_MAP[delta ?? ''] ?? 'text-text-secondary';
+        return ChecklistPanelComponent.DELTA_CLASS_MAP[delta ?? ''] ?? 'text-muted-color';
     }
 
     // Quality radar chart for Clarity, Coherence, Completeness
