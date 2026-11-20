@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Component, input, output } from '@angular/core';
+import { Component, forwardRef, input, output, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Subject, of, throwError } from 'rxjs';
@@ -1664,9 +1664,15 @@ describe('ProgrammingExerciseSecurityComponent rendering', () => {
     });
 });
 
-/** Stands in for the policy editor, whose lifetime the card decides. */
-@Component({ selector: 'jhi-programming-exercise-security-policies', template: '' })
+/** Stands in for the policy editor, whose lifetime the card decides; the card finds it as the policy editor. */
+@Component({
+    selector: 'jhi-programming-exercise-security-policies',
+    template: '',
+    providers: [{ provide: ProgrammingExerciseSecurityPoliciesComponent, useExisting: forwardRef(() => PolicyEditorStubComponent) }],
+})
 class PolicyEditorStubComponent {
+    readonly totalChanges = signal(0);
+    readonly importPending = signal(false);
     readonly exerciseId = input.required<number>();
     readonly config = input<SecurityFrameworkConfig>();
     readonly versionOptions = input<unknown>();
@@ -1708,6 +1714,19 @@ describe('ProgrammingExerciseSecurityComponent policy editor', () => {
         fixture.detectChanges();
         return fixture.debugElement.query(By.directive(PolicyEditorStubComponent)).componentInstance as PolicyEditorStubComponent;
     }
+
+    it('counts a YAML import that is still pending as an unsaved change, so saving the exercise asks first', () => {
+        const editor = showExercise(42);
+        const comp = fixture.componentInstance;
+        expect(comp.unsavedPolicyChanges()).toBe(0);
+
+        editor.importPending.set(true);
+        expect(comp.unsavedPolicyChanges()).toBe(1);
+        editor.totalChanges.set(2);
+        expect(comp.unsavedPolicyChanges()).toBe(3);
+        editor.importPending.set(false);
+        expect(comp.unsavedPolicyChanges()).toBe(2);
+    });
 
     it('creates a new policy editor for another configured exercise instead of reusing the one with the changes of the previous exercise', () => {
         const first = showExercise(42);

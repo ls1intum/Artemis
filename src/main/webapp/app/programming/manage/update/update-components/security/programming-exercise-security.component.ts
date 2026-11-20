@@ -130,8 +130,14 @@ export class ProgrammingExerciseSecurityComponent {
 
     readonly isEditMode = computed(() => this.mode() === 'edit');
     private readonly policiesEditor = viewChild(ProgrammingExerciseSecurityPoliciesComponent);
-    /** The number of unsaved changes to the security policies; saving the exercise neither commits nor keeps them. */
-    readonly unsavedPolicyChanges = computed(() => this.policiesEditor()?.totalChanges() ?? 0);
+    /**
+     * The number of unsaved changes to the security policies; saving the exercise neither commits nor keeps them. A YAML import that is still on its way
+     * counts as one, because it only becomes a change once it applies.
+     */
+    readonly unsavedPolicyChanges = computed(() => {
+        const editor = this.policiesEditor();
+        return (editor?.totalChanges() ?? 0) + (editor?.importPending() ? 1 : 0);
+    });
     readonly isCreateMode = computed(() => this.mode() === 'create');
     readonly isImportMode = computed(() => this.mode() === 'import');
     readonly isSupportedLanguage = computed(() => {
