@@ -316,7 +316,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
         assertThat(pushedHead()).isEqualTo(headBefore);
 
         put("deactivate", null, HttpStatus.OK);
-        put("framework-version", "2.2.1", HttpStatus.BAD_REQUEST);
+        request.putAndExpectError(basePath + "/framework-version?frameworkVersion=2.2.1", null, HttpStatus.BAD_REQUEST, "securityFrameworkNotActive");
     }
 
     @Test

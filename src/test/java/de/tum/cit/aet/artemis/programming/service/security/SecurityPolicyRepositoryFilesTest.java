@@ -540,10 +540,12 @@ class SecurityPolicyRepositoryFilesTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "../outside.yaml", "/etc/policy.yaml", ".git/config", "C:\\policy.yaml", "", "  ", "a\0b.yaml", "\\policy.yaml", ".", ".git", "..",
-            "a/../../policy.yaml" })
+            "a/../../policy.yaml", "x\\..\\.git\\config", "a\\..\\..\\policy.yaml" })
     void rejectsPolicyPathsOutsideTheRepository(String path) {
         assertThat(SecurityPolicyRepositoryFiles.validatePolicyPath(path)).isEmpty();
         assertThat(SecurityPolicyRepositoryFiles.validatePolicyPath("./policies/../SecurityPolicy.yaml")).contains("SecurityPolicy.yaml");
+        // A backslash separates names, so the path is normalized as the checkout resolves it.
+        assertThat(SecurityPolicyRepositoryFiles.validatePolicyPath(".\\policies\\..\\SecurityPolicy.yaml")).contains("SecurityPolicy.yaml");
     }
 
     @Test
@@ -700,6 +702,46 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(Files.readString(root.resolve("pom.xml"))).isEqualTo(pom.replace("<ares.version>2.2.1</ares.version>", "<ares.version>2.4.0</ares.version>"));
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, "<profiles><profile><properties><ares.version>2.3.0</ares.version></properties></profile></profiles>"))
                 .isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "<!-- Profiles go into <profiles> -->\n", "<!-- </profiles> -->\n" })
+    void aProfileTagInACommentNeitherStartsNorEndsTheProfiles(String comment) throws IOException {
+        String pom = """
+                <project>
+                  %s
+                  <properties>
+                    <ares.version>2.2.1</ares.version>
+                  </properties>
+                  <profiles>
+                    <!-- </profiles> -->
+                    <profile>
+                      <properties>
+                        <ares.version>2.3.0</ares.version>
+                      </properties>
+                    </profile>
+                  </profiles>
+                </project>
+                """.formatted(comment.strip());
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, pom)).contains("2.2.1");
+        FileUtils.writeStringToFile(root.resolve("pom.xml").toFile(), pom, StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
+
+        assertThat(Files.readString(root.resolve("pom.xml"))).isEqualTo(pom.replace("<ares.version>2.2.1</ares.version>", "<ares.version>2.4.0</ares.version>"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "def helper() {\n    def aresVersion = '2.3.0'\n    return aresVersion\n}\n", "tasks.register('notes') {\n    String aresVersion = \"2.3.0\"\n}\n",
+            "def describe = {\n    final aresVersion = '2.3.0'\n}\n" })
+    void aLocalVariableOfAGradleMethodOrClosureIsNoPin(String helper) throws IOException {
+        String gradleBuild = helper + "ext { aresVersion = '2.2.1' }\n";
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
+        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), gradleBuild, StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
+
+        assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo(helper + "ext { aresVersion = '2.4.0' }\n");
     }
 
     @Test

@@ -1474,6 +1474,22 @@ describe('ProgrammingExerciseSecurityComponent rendering', () => {
         expect(query(element, 'security-retry')).toBeNull();
     });
 
+    it('disables Retry while the exercise is being saved, like the other sync actions', () => {
+        const element = renderEdit(inactiveConfig());
+        service.activate.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
+        fixture.componentInstance.onToggleChanged(true);
+        fixture.detectChanges();
+        expect((query(element, 'security-retry') as HTMLButtonElement).disabled).toBe(false);
+
+        fixture.componentRef.setInput('isSaving', true);
+        fixture.detectChanges();
+        (query(element, 'security-retry') as HTMLButtonElement).click();
+
+        expect((query(element, 'security-retry') as HTMLButtonElement).disabled).toBe(true);
+        expect(service.activate).toHaveBeenCalledOnce();
+        expect(fixture.componentInstance.status()).toBe(SecurityActivationStatus.ERROR);
+    });
+
     it('renders UNSUPPORTED with its reasons and neither a switch nor a version select', () => {
         const element = renderEdit(unsupportedConfig());
         expect(query(element, 'security-card')?.classList).toContain('sf-card--unsupported');

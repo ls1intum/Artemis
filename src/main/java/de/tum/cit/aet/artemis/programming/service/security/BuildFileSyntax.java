@@ -24,6 +24,9 @@ final class BuildFileSyntax {
     /** The Ares 1 library as the artifact of a Maven dependency. */
     private static final Pattern MAVEN_ARES_1_DEPENDENCY = Pattern.compile("<artifactId>\\s*+" + ARES_1_ARTIFACT + "\\s*+</artifactId>");
 
+    /** A keyword or type right before a Gradle variable that declares it, e.g. {@code def}, matched at the end of the code before the variable. */
+    private static final Pattern GRADLE_DECLARATION_BEFORE = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})(?:def|var|final|String|Object)\\s++$");
+
     private static final String MAVEN_PROFILES_START = "<profiles>";
 
     private static final String MAVEN_PROFILES_END = "</profiles>";
@@ -49,17 +52,35 @@ final class BuildFileSyntax {
      * @return for each character of a Maven POM whether it lies in its {@code <profiles>} section, whose properties apply only while their profile is active
      */
     static boolean[] mavenProfiles(String content, boolean[] comments) {
+        // Both tags are searched outside comments, e.g. not in <!-- Example: <profiles> -->; the masked text keeps the offsets of the content.
+        String code = withoutMarked(content, comments);
         boolean[] profiles = new boolean[content.length()];
-        int start = content.indexOf(MAVEN_PROFILES_START);
+        int start = code.indexOf(MAVEN_PROFILES_START);
         while (start >= 0) {
-            int close = content.indexOf(MAVEN_PROFILES_END, start);
+            int close = code.indexOf(MAVEN_PROFILES_END, start);
             int end = close < 0 ? content.length() : close + MAVEN_PROFILES_END.length();
-            if (!comments[start]) {
-                Arrays.fill(profiles, start, end, true);
-            }
-            start = content.indexOf(MAVEN_PROFILES_START, end);
+            Arrays.fill(profiles, start, end, true);
+            start = code.indexOf(MAVEN_PROFILES_START, end);
         }
         return profiles;
+    }
+
+    /**
+     * @param noCode for each character of the build file whether it belongs to a comment or a string
+     * @return whether the Gradle code at the offset declares a local variable of a method or closure, e.g. {@code def aresVersion = '2.3.0'} in a helper
+     *         method, which sets no project property; a declaration at the top level of the script declares a script variable the build may use
+     */
+    static boolean declaresLocalGradleVariable(String content, boolean[] noCode, int offset) {
+        int depth = 0;
+        for (int index = 0; index < offset; index++) {
+            if (!noCode[index] && content.charAt(index) == '{') {
+                depth++;
+            }
+            else if (!noCode[index] && content.charAt(index) == '}') {
+                depth--;
+            }
+        }
+        return depth > 0 && GRADLE_DECLARATION_BEFORE.matcher(withoutMarked(content.substring(0, offset), noCode)).find();
     }
 
     /**
