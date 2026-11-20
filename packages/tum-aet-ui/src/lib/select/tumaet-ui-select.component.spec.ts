@@ -278,6 +278,30 @@ describe('TumAetUiSelectComponent', () => {
             expect(triggerButton().getAttribute('aria-activedescendant')).toBeNull();
         });
 
+        it('activates the first and last options that can be chosen with Home and End on the closed trigger', () => {
+            fixture.componentRef.setInput('options', [
+                { label: 'Bravo', value: 'b', unavailable: true },
+                { label: 'Charlie', value: 'c' },
+                { label: 'Delta', value: 'd', unavailable: true },
+            ]);
+            component.writeValue(undefined);
+            fixture.detectChanges();
+            const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+
+            triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+            fixture.detectChanges();
+            expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[1].id);
+            triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            fixture.detectChanges();
+            expect(emitSpy).toHaveBeenLastCalledWith('c');
+
+            component.writeValue(undefined);
+            fixture.detectChanges();
+            triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+            fixture.detectChanges();
+            expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[1].id);
+        });
+
         it('closes on Tab without selecting when the active option is disabled', () => {
             component.writeValue('b');
             fixture.detectChanges();
@@ -473,6 +497,26 @@ describe('TumAetUiSelectComponent', () => {
             expect(emitSpy).not.toHaveBeenCalled();
             expect(listbox()).toBeNull();
             expect(document.activeElement).toBe(triggerButton());
+        });
+
+        it('activates the first option that can be chosen after the query changes', () => {
+            fixture.componentRef.setInput('options', [
+                { label: 'Bravo', value: 'b', unavailable: true },
+                { label: 'Brick', value: 'r' },
+            ]);
+            fixture.componentRef.setInput('optionDisabled', 'unavailable');
+            component.writeValue(undefined);
+            fixture.detectChanges();
+            const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+            openPanel();
+
+            type('br');
+            const field = requireFilterField();
+            expect(field.getAttribute('aria-activedescendant')).toBe(optionElements()[1].id);
+            field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            fixture.detectChanges();
+
+            expect(emitSpy).toHaveBeenCalledWith('r');
         });
 
         it('shows no search field unless asked for one', () => {

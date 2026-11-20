@@ -350,7 +350,12 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
             if (event.key === 'Home' || event.key === 'End') {
                 event.preventDefault();
                 this.open();
-                this.setActive(event.key === 'Home' ? 0 : this.visibleOptions().length - 1);
+                // The first and last options that can be chosen, as with the arrow keys.
+                if (event.key === 'Home') {
+                    this.keyManager.setFirstItemActive();
+                } else {
+                    this.keyManager.setLastItemActive();
+                }
                 return;
             }
             if (event.key.length === 1 && event.key !== ' ' && !event.ctrlKey && !event.metaKey && !event.altKey) {
@@ -394,8 +399,8 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
 
     protected onFilterInput(event: Event): void {
         this.filterText.set((event.target as HTMLInputElement).value);
-        // The previous active option may have been filtered away, so start again at the top of what is left.
-        this.keyManager.setActiveItem(this.visibleOptions().length > 0 ? 0 : -1);
+        // The previous active option may have been filtered away, so start again at the first option of what is left that can be chosen; -1 if none can be chosen.
+        this.keyManager.setActiveItem(this.visibleOptions().findIndex((option) => !this.isOptionDisabled(option)));
     }
 
     protected onFilterKeydown(event: KeyboardEvent): void {
