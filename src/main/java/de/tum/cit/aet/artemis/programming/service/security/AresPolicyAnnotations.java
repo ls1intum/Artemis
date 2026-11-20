@@ -452,7 +452,7 @@ final class AresPolicyAnnotations {
         Matcher names = POLICY_ANNOTATION_NAME.matcher(masked);
         while (names.find()) {
             boolean qualified = names.group(1) != null;
-            if (qualified || (simpleNameIsAres && !isPartOfQualifiedName(masked, names.start()) && !isShadowedAt(masked, "Policy", names.start()))) {
+            if (qualified || (simpleNameIsAres && !followsADot(masked, names.start()) && !isShadowedAt(masked, "Policy", names.start()))) {
                 annotation(sources, names.start(), names.end()).ifPresent(annotations::add);
             }
         }
@@ -483,10 +483,17 @@ final class AresPolicyAnnotations {
     }
 
     /**
-     * @return whether the character before the {@code @} makes it part of a longer name, which then is not the simple Ares annotation
+     * An {@code @} starts a new token, so a modifier or another annotation right before it, e.g. {@code public@Policy} or {@code @Public@Policy}, does not
+     * make it part of a longer name. Only a dot before it does, as in the qualified type {@code Outer. @Policy Inner}, whose annotation is no Ares marker.
+     *
+     * @return whether the last character before the {@code @}, apart from whitespace, is a dot
      */
-    private static boolean isPartOfQualifiedName(String masked, int at) {
-        return at > 0 && (Character.isJavaIdentifierPart(masked.charAt(at - 1)) || masked.charAt(at - 1) == '.');
+    static boolean followsADot(String masked, int at) {
+        int before = at - 1;
+        while (before >= 0 && Character.isWhitespace(masked.charAt(before))) {
+            before--;
+        }
+        return before >= 0 && masked.charAt(before) == '.';
     }
 
     /**

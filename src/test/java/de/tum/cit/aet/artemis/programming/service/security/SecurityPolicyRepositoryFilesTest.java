@@ -345,6 +345,18 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void addsTestClassesToThePolicyFileAtTheCanonicalPath() throws IOException {
+        writeBuildFile();
+        SecurityPolicyRepositoryFiles.writePolicy(root, "policies/SecurityPolicy.yaml", POLICY);
+
+        // The annotation may separate the names with a backslash; the evaluation reads policies/SecurityPolicy.yaml, so that file gets the class.
+        assertThat(SecurityPolicyRepositoryFiles.addTestClassesToPolicy(root, "policies\\SecurityPolicy.yaml", List.of("de.example.NewTest"))).isTrue();
+        assertThat(Files.readString(root.resolve("policies/SecurityPolicy.yaml")))
+                .isEqualTo(POLICY.replace("    - \"de.example.SortingTest\"\n", "    - \"de.example.SortingTest\"\n    - \"de.example.NewTest\"\n"));
+        assertThat(SecurityPolicyRepositoryFiles.addTestClassesToPolicy(root, "../SecurityPolicy.yaml", List.of("de.example.NewTest"))).isFalse();
+    }
+
+    @Test
     void namesTestClassesAfterTheirDeclarationAndNotTheirFile() throws IOException {
         writeBuildFile();
         writeSource("test/de/example/Helpers.java", TEST_CLASS.formatted("de.example", "ActualTest"));
@@ -498,6 +510,20 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void anAresMarkerRightAfterAModifierOrAnotherAnnotationCounts() throws IOException {
+        writeBuildFile();
+        String policy = SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION;
+        // Java needs no whitespace before an @, so final@Public is the modifier final and the annotation @Public.
+        String header = "@Public\n" + policy + "\nclass";
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace(header, policy + "@Public\nfinal class"));
+        writeSource("test/de/example/OtherTest.java", TEST_CLASS.formatted("de.example", "OtherTest").replace(header, policy + "\nfinal@Public class"));
+        String listed = "    - \"de.example.SortingTest\"\n";
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY.replace(listed, listed + "    - \"de.example.OtherTest\"\n"));
+
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
+    }
+
+    @Test
     void annotationsWithWhitespaceAfterTheAtSignCount() throws IOException {
         writeBuildFile();
         String spaced = TEST_CLASS.formatted("de.example", "SortingTest").replace("@Public", "@ /* Ares */ Public").replace("    @Test", "    @ Test");
@@ -506,7 +532,8 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
 
         // A qualified test annotation written with whitespace makes a test class too, which then needs a policy.
-        String withoutPolicy = TEST_CLASS.formatted("de.example", "OtherTest").replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n", "");
+        // Without @Public, only the JUnit annotation makes OtherTest a test class.
+        String withoutPolicy = TEST_CLASS.formatted("de.example", "OtherTest").replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n", "").replace("@Public\n", "");
         writeSource("test/de/example/OtherTest.java", withoutPolicy.replace("    @Test", "    @ org . junit.jupiter.api.Test"));
 
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY, "de.example.OtherTest");
@@ -1577,6 +1604,24 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("ext { aresVersion = '2.2.1' }\nif (aresVersion == '2.2.1') { println 'Ares 2' }\n", null)).contains("2.2.1");
     }
 
+    @Test
+    void pinsOfDifferentVersionsPinNone() throws IOException {
+        // The later assignment wins in Gradle, which the reader cannot tell in general, so neither version is read or replaced.
+        String gradleBuild = "project.ext.aresVersion = '2.3.0'\nproject.ext.aresVersion = '2.2.1'\n";
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).isEmpty();
+        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), gradleBuild, StandardCharsets.UTF_8);
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isFalse();
+
+        // Pins of the same version leave no doubt, and a spaced Maven tag is a pin that is replaced as written.
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("project.ext.aresVersion = '2.2.1'\nproject.ext.aresVersion = '2.2.1'\n", null)).contains("2.2.1");
+        String pom = "<properties><ares.version >2.2.1</ares.version\n></properties>";
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, pom)).contains("2.2.1");
+        FileUtils.writeStringToFile(root.resolve("pom.xml").toFile(), pom, StandardCharsets.UTF_8);
+        Files.delete(root.resolve("build.gradle"));
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
+        assertThat(Files.readString(root.resolve("pom.xml"))).isEqualTo(pom.replace("2.2.1", "2.4.0"));
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "ext { aresVersion = '2.2.1' }\n", "ext.aresVersion = '2.2.1'; // Ares 2\n", "ext.aresVersion = \"2.2.1\" /* Ares 2 */\n",
             "ext.aresVersion = '2.2.1'" })
@@ -1689,6 +1734,8 @@ class SecurityPolicyRepositoryFilesTest {
         // A reference to another property replaces the version of the POM as well, e.g. with next.ares.version = 2.3.0.
         String referencingProfile = profile.replace("<ares.version>2.3.0</ares.version>", "<ares.version>${next.ares.version}</ares.version>");
         assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + referencingProfile)).unsupportedReasons()).containsExactly(reason);
+        String spacedProperty = profile.replace("<ares.version>2.3.0</ares.version>", "<ares.version >2.3.0</ares.version\n>");
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + spacedProperty)).unsupportedReasons()).containsExactly(reason);
         // A Gradle build that pins the version is the one the exercise uses, and a profile in a comment pins nothing.
         assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles("ext { aresVersion = '2.2.1' }\n", profile)).unsupportedReasons()).isEmpty();
         assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + "<!-- " + profile + " -->")).unsupportedReasons()).isEmpty();

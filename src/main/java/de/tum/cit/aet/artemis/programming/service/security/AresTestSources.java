@@ -669,9 +669,9 @@ final class AresTestSources {
         List<Integer> offsets = new ArrayList<>();
         while (uses.find()) {
             boolean qualified = uses.group(1) != null;
-            boolean partOfLongerName = uses.start() > 0 && (Character.isJavaIdentifierPart(masked.charAt(uses.start() - 1)) || masked.charAt(uses.start() - 1) == '.');
+            boolean simpleNameApplies = simpleNameIsAres && !AresPolicyAnnotations.followsADot(masked, uses.start());
             // A type of the same name that the file declares itself shadows the Ares one where it is in scope.
-            if (qualified || (simpleNameIsAres && !partOfLongerName && !AresPolicyAnnotations.isShadowedAt(masked, simpleName, uses.start()))) {
+            if (qualified || (simpleNameApplies && !AresPolicyAnnotations.isShadowedAt(masked, simpleName, uses.start()))) {
                 offsets.add(uses.start());
             }
         }

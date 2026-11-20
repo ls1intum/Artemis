@@ -79,13 +79,16 @@ final class BuildFileSyntax {
             .compile("(?<!\\p{javaJavaIdentifierPart})(aresVersion\\s*=\\s*['\"])([^'\"$]+)(['\"])(?=[ \\t]*+(?:[;}\\r\\n]|//|/\\*|$))");
 
     /** The Ares version as the text of {@code <ares.version>}; a reference to another property, e.g. {@code ${base.version}}, is no pin. */
-    private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version>)([^<$]+)(</ares\\.version>)");
+    private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version\\s*+>)([^<$]+)(</ares\\.version\\s*+>)");
 
     /** Any assignment of the Ares version in Gradle, whatever its value, e.g. also {@code aresVersion = "${base}.1"}; {@code ==} compares and is none. */
     private static final Pattern GRADLE_ARES_VERSION_ASSIGNMENT = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})aresVersion\\s*+=(?!=)");
 
-    /** Any definition of the Ares version in a POM, whatever its value, e.g. also {@code <ares.version>${next.ares.version}</ares.version>}. */
-    private static final Pattern MAVEN_ARES_VERSION_DEFINITION = Pattern.compile("<ares\\.version>[^<]*+</ares\\.version>");
+    /**
+     * Any definition of the Ares version in a POM, whatever its value, e.g. also {@code <ares.version>${next.ares.version}</ares.version>}; XML allows
+     * whitespace before the {@code >} of both tags.
+     */
+    private static final Pattern MAVEN_ARES_VERSION_DEFINITION = Pattern.compile("<ares\\.version\\s*+>[^<]*+</ares\\.version\\s*+>");
 
     /** The start tag of the profiles of a POM; XML allows whitespace before its {@code >}. */
     private static final Pattern MAVEN_PROFILES_START = Pattern.compile("<profiles\\s*+>");
@@ -438,7 +441,7 @@ final class BuildFileSyntax {
      * {@code "aresVersion = '2.3.0'"}, has no effect on the build, so it is neither read nor replaced. Neither is a pin in a Maven profile, which applies
      * only while its profile is active, so the pin of the POM itself is the one the build uses, nor a local variable of a Gradle method or closure, e.g.
      * {@code def aresVersion = '2.3.0'} in a helper method. If another assignment that counts has no readable value, e.g. {@code aresVersion = "${base}.1"}
-     * or {@code <ares.version>${next}</ares.version>}, the version the build uses is unknown, so there are no pins.
+     * or {@code <ares.version>${next}</ares.version>}, or if the pins name different versions, the version the build uses is unknown, so there are no pins.
      *
      * @param content   the content of the build file
      * @param buildTool the build tool the file belongs to
@@ -451,9 +454,11 @@ final class BuildFileSyntax {
         IntPredicate counts = start -> !noCode[start] && !profiles[start] && !(gradle && declaresLocalGradleVariable(content, noCode, start));
         List<MatchResult> pins = (gradle ? GRADLE_ARES_VERSION : MAVEN_ARES_VERSION).matcher(content).results().filter(pin -> counts.test(pin.start())).toList();
         Set<Integer> readable = pins.stream().map(MatchResult::start).collect(Collectors.toSet());
-        boolean allReadable = (gradle ? GRADLE_ARES_VERSION_ASSIGNMENT : MAVEN_ARES_VERSION_DEFINITION).matcher(content).results().mapToInt(MatchResult::start)
-                .filter(counts).allMatch(readable::contains);
-        return allReadable ? pins : List.of();
+        boolean allReadable = (gradle ? GRADLE_ARES_VERSION_ASSIGNMENT : MAVEN_ARES_VERSION_DEFINITION).matcher(content).results().mapToInt(MatchResult::start).filter(counts)
+                .allMatch(readable::contains);
+        // Pins of different versions leave open which one the dependency reads, e.g. after a later assignment of project.ext.aresVersion.
+        boolean oneVersion = pins.stream().map(pin -> pin.group(2).trim()).distinct().count() <= 1;
+        return allReadable && oneVersion ? pins : List.of();
     }
 
     /**
