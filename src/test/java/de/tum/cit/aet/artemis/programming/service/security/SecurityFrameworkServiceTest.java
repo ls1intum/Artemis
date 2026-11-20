@@ -905,6 +905,23 @@ class SecurityFrameworkServiceTest {
     }
 
     @Test
+    void aPushThatFailsAfterTheServerTookItIsApplied() throws Exception {
+        // The server takes the commit, but the answer to the push is lost, e.g. because the connection breaks.
+        doAnswer(call -> {
+            String remoteRef = "refs/heads/" + call.getArgument(2, String.class);
+            try (Git git = new Git(call.getArgument(0, Repository.class))) {
+                git.push().setRefSpecs(new RefSpec(call.getArgument(1, String.class) + ":" + remoteRef)).call();
+            }
+            throw new TransportException("Connection reset while reading the answer to the push");
+        }).when(gitService).pushCommitWithLease(any(Repository.class), anyString(), anyString(), anyString());
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        // The change is saved, so it is neither a conflict nor a failed push, and its processing starts.
+        assertThat(securityFrameworkService.deactivate(exercise, user).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+        verify(localVCPushProcessingService).processNewPush(eq(pushedHead()), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()));
+    }
+
+    @Test
     void aConcurrentPushIsNeitherOverwrittenNorReportedAsApplied() throws Exception {
         pushConcurrentlyAfterCheckout = true;
 
