@@ -215,16 +215,6 @@ CSSStyleDeclaration.prototype.setProperty = function (property: string, value: s
     }
 };
 
-// PrimeNG UIX motion relies on matchMedia; mock it globally to avoid setup in individual specs.
-vi.mock('@primeuix/motion', () => ({
-    __esModule: true,
-    createMotion: vi.fn(() => ({
-        enter: vi.fn(() => Promise.resolve()),
-        leave: vi.fn(() => Promise.resolve()),
-        cancel: vi.fn(),
-        update: vi.fn(),
-    })),
-}));
 // Mock SVG methods not available in jsdom
 if (typeof SVGElement !== 'undefined') {
     Object.defineProperty(SVGElement.prototype, 'getBBox', {
