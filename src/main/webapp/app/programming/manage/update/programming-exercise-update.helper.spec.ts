@@ -43,6 +43,17 @@ describe('deriveDefaultPackageName', () => {
         expect(deriveDefaultPackageName(exercise(ProgrammingLanguage.JAVA, 'for', 'For Loops'))).toBe('de.tum.cit.aet.forloops');
     });
 
+    it('should suffix Kotlin keywords that Java allows, so the Kotlin templates compile', () => {
+        expect(deriveDefaultPackageName(exercise(ProgrammingLanguage.KOTLIN, 'When', 'When', 'itp'))).toBe('de.tum.cit.aet.itp.whenexercise');
+        expect(deriveDefaultPackageName(exercise(ProgrammingLanguage.KOTLIN, 'sorting', 'Sorting', 'fun'))).toBe('de.tum.cit.aet.funexercise.sorting');
+        // The short name is a Java keyword, so the title-based fallback is used and needs the suffix too
+        expect(deriveDefaultPackageName(exercise(ProgrammingLanguage.KOTLIN, 'for', 'When'))).toBe('de.tum.cit.aet.whenexercise');
+    });
+
+    it('should keep Kotlin keywords in Java package names', () => {
+        expect(deriveDefaultPackageName(exercise(ProgrammingLanguage.JAVA, 'when', 'When', 'itp'))).toBe('de.tum.cit.aet.itp.when');
+    });
+
     it('should derive a name in the rules of other languages', () => {
         expect(deriveDefaultPackageName(exercise(ProgrammingLanguage.SWIFT, 'sorting'))).toBe('BubbleSort');
         expect(deriveDefaultPackageName(exercise(ProgrammingLanguage.GO, 'sorting'))).toBe('bubblesort');

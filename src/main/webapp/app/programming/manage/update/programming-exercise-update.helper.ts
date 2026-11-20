@@ -108,6 +108,7 @@ export const IS_DISPLAYED_IN_SIMPLE_MODE: Record<ProgrammingExerciseInputField, 
 /**
  * Derives the package name of a new exercise, so instructors do not have to pick one. Java and Kotlin get
  * "de.tum.cit.aet.<course short name>.<exercise short name>"; other languages, and short names that are Java keywords, fall back to a name derived from the title.
+ * Kotlin keywords that Java allows get a suffix, because the Kotlin templates would not compile with them.
  */
 export function deriveDefaultPackageName(exercise: ProgrammingExercise): string | undefined {
     const language = exercise.programmingLanguage;
@@ -116,10 +117,27 @@ export function deriveDefaultPackageName(exercise: ProgrammingExercise): string 
     }
     if ((language === ProgrammingLanguage.JAVA || language === ProgrammingLanguage.KOTLIN) && exercise.projectType !== ProjectType.MAVEN_BLACKBOX) {
         const courseShortName = getCourseFromExercise(exercise)?.shortName;
-        const packageName = [PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES, courseShortName, exercise.shortName].filter(Boolean).join('.').toLowerCase();
+        const packageName = escapeKotlinKeywords(
+            language,
+            [PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES, courseShortName, exercise.shortName].filter(Boolean).join('.').toLowerCase(),
+        );
         if (packageName.length <= MAX_PACKAGE_NAME_LENGTH && new RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN).test(packageName)) {
             return packageName;
         }
     }
-    return deriveProposedPackageName(exercise.title || exercise.shortName, language, exercise.projectType);
+    const fallback = deriveProposedPackageName(exercise.title || exercise.shortName, language, exercise.projectType);
+    return fallback && escapeKotlinKeywords(language, fallback);
+}
+
+// Hard keywords of Kotlin that are valid in Java and therefore pass PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN, but break the package declaration of a Kotlin template
+const KOTLIN_ONLY_HARD_KEYWORDS = new Set(['as', 'fun', 'in', 'is', 'object', 'typealias', 'typeof', 'val', 'var', 'when']);
+
+function escapeKotlinKeywords(language: ProgrammingLanguage, packageName: string): string {
+    if (language !== ProgrammingLanguage.KOTLIN) {
+        return packageName;
+    }
+    return packageName
+        .split('.')
+        .map((segment) => (KOTLIN_ONLY_HARD_KEYWORDS.has(segment) ? `${segment}exercise` : segment))
+        .join('.');
 }
