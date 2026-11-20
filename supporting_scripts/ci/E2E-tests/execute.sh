@@ -72,11 +72,16 @@ cd deployment/docker || { echo "ERROR: Failed to change to docker directory" >&2
 # Clean up stale reporter-failed marker from previous runs (self-hosted runners have persistent workspaces)
 rm -f ../../src/test/playwright/test-reports/.reporter-failed
 
-# Pull the images to avoid using outdated images
+# Pull the images again to avoid using outdated ones. The helper replaces `docker compose pull`, which would
+# ask Docker Hub: Docker Hub limits anonymous pulls per IP address and the runners share few addresses, so the
+# Docker Hub images of the stack come through the registry proxy and the others (ghcr.io, ...) directly.
 # --env-file ../../.env is needed because .env lives in the project root but we cd'd into deployment/docker/
 # COMPOSE_FILE intentionally contains both -f arguments for the Redis overlay.
 # shellcheck disable=SC2086
-docker compose --env-file ../../.env -f $COMPOSE_FILE pull --quiet --policy always || exit $?
+STACK_IMAGES=$(docker compose --env-file ../../.env -f $COMPOSE_FILE config --images) || exit $?
+STACK_IMAGES=$(printf '%s\n' "$STACK_IMAGES" | sort -u)
+# shellcheck disable=SC2086
+bash ../../supporting_scripts/ci/pull-through-registry-proxy.sh --refresh $STACK_IMAGES || exit $?
 
 # A compose stack must serve the revision whose tests are being run. Local runs without an expected SHA skip this check.
 if [ -n "${ARTEMIS_EXPECTED_COMMIT_SHA:-}" ] || [ "${GITHUB_ACTIONS:-}" = "true" ]; then
