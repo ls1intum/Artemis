@@ -5,7 +5,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { DebugElement } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { Subject, of, throwError } from 'rxjs';
+import { EMPTY, Subject, of, throwError } from 'rxjs';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
@@ -15,20 +15,19 @@ import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/progr
 import { BuildRunState, ProgrammingBuildRunService, SelectedBuildRun, SelectedBuildRunStatus } from 'app/programming/shared/services/programming-build-run.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/programming/shared/actions/trigger-all-button/programming-exercise-trigger-all-button.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { DurationPipe } from 'app/foundation/pipes/duration.pipe';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 
@@ -61,7 +60,6 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [
-                MockModule(NgbTooltipModule),
                 ProgrammingExerciseInstructorSubmissionStateComponent,
                 ProgrammingExerciseTriggerAllButtonComponent,
                 ButtonComponent,
@@ -78,7 +76,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -484,10 +482,10 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         const allButton = getTriggerAllButton();
         expect(trigger.getAttribute('aria-expanded')).toBe('true');
         expect(getTriggerFailedButton()).not.toBeNull();
-        const openDialog = vi.spyOn(TestBed.inject(DialogService), 'open').mockImplementation(() => {
+        const openDialog = vi.spyOn(TestBed.inject(TumAetUiDialogService), 'open').mockImplementation(() => {
             fixture.detectChanges();
             expect(trigger.getAttribute('aria-expanded')).toBe('false');
-            return null;
+            return { onClose: EMPTY } as unknown as TumAetUiDialogRef<unknown>;
         });
         allButton.click();
         expect(openDialog).toHaveBeenCalledOnce();

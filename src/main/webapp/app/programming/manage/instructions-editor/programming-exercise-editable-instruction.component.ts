@@ -36,10 +36,9 @@ import { UrlAction } from 'app/editor/monaco-editor/model/actions/url.action';
 import { TaskAction } from 'app/editor/monaco-editor/model/actions/task.action';
 import { TestCaseAction } from 'app/editor/monaco-editor/model/actions/test-case.action';
 import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
-import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -73,10 +72,10 @@ import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
     encapsulation: ViewEncapsulation.None,
     imports: [
         MarkdownEditorMonacoComponent,
-        NgClass,
         FaIconComponent,
         TranslateDirective,
-        NgbTooltip,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
         ProgrammingExerciseInstructionAnalysisComponent,
         ArtemisTranslatePipe,
         ProgrammingExerciseInstructionComponent,

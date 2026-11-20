@@ -2,7 +2,7 @@
  * Shared scanning of the class names in an Angular template, for the template rules that judge individual class
  * tokens (`no-bootstrap-classes`, `no-ambiguous-spacing-utility`); `no-primeng-component-classes` and
  * `no-raw-tailwind-color-palette` share its notion of what a class list is. Every function is pure (no ESLint context), so
- * tools such as supporting_scripts/migration/migrate.mjs can reuse the exact same extraction.
+ * other tools can reuse the exact same extraction.
  *
  * Each token comes with its offset in the scanned text, so a rule can point at, or rewrite, just that token.
  */

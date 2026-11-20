@@ -1,12 +1,10 @@
-/* Bootstrap Reboot remains the reset while legacy Bootstrap coexists with TUM AET UI. */
+/* Preflight is not imported: content/scss/_base.scss holds the element defaults of the application. */
 @layer theme, base, utilities;
 
 @import 'tailwindcss/theme.css' layer(theme);
 
-/* Limit scanning because Bootstrap classes such as `collapse` and `table` are also valid Tailwind utilities. */
+/* Scanning is limited to the folders listed with `@source` below. */
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
-
-@plugin 'tailwindcss-primeui';
 
 /*
  * Width of the grey dividers between the app shell's regions (sidebar / title bar / content / footer). Under the
@@ -56,40 +54,11 @@
     --color-state-info: var(--info);
 }
 
-/* Scanning may precede a module becoming fully Bootstrap-free; the migration rule checks locked paths are covered. */
-@source './app/programming/manage/code-editor/instructor-and-editor-container';
-@source './app/programming/manage/detail';
-@source './app/programming/manage/vcs-repository-access-log-view';
-@source './app/programming/manage/status';
-@source './app/programming/shared/instructions-render/step-wizard';
-@source './app/programming/manage/assess/repo-export/export-dialog';
-@source './app/programming/manage/consistency-check';
-@source './app/programming/manage/edit-selected';
-@source './app/programming/manage/grading/feedback-analysis';
-@source './app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students';
-@source './app/programming/shared/commits-info';
-@source './app/programming/shared/diff-review-banner';
-@source './app/programming/shared/programming-exercise-update-timeline';
-@source './app/programming/shared/build-window-notice';
-@source './app/programming/manage/update/update-components/build-time-window';
-
-/* The submit-button forms describe why they are blocked, and dim the blocked button, with these utilities. They are
-   still Bootstrap-heavy, so scanning them would also emit .col-11/.col-12/.bg-primary as Tailwind utilities on top of
-   Bootstrap's own. Emit just the ones they use instead. A blocked button is aria-disabled rather than disabled, so it
-   stays focusable and keeps the pointer events its tooltip needs; that also means :disabled cannot style it. */
-@source inline("sr-only");
-@source inline("hidden");
-@source inline("sm:inline");
-@source inline("aria-disabled:opacity-60");
-@source inline("aria-disabled:cursor-not-allowed");
-
-/* The Bootstrap-heavy drag-and-drop question editor uses these utilities for its text length hint and live counter. */
-@source inline("max-w-[150px] pointer-events-none absolute bottom-2 right-3 z-[4] text-xs leading-none text-muted-color text-state-danger");
-
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';
 
-/* Prevent bare Bootstrap component names from becoming Tailwind utilities in scanned modules. */
+/* `localRules/no-bootstrap-classes` bans the class names `collapse` and `table` in templates, so a stray use must not
+   start to render as the Tailwind utility of the same name either. */
 @source not inline("collapse");
 @source not inline("table");
 
@@ -99,7 +68,7 @@
 :root {
     color-scheme: light;
 
-    --tumaet-ui-font-family: var(--bs-body-font-family);
+    --tumaet-ui-font-family: var(--font-family-sans-serif);
     --tumaet-ui-primary-color: color-mix(in srgb, var(--primary) 88%, black);
     --tumaet-ui-primary-contrast-color: var(--colored-btn-font);
     --tumaet-ui-accent-color: var(--primary-dark);
@@ -138,7 +107,7 @@
 [data-theme='dark'] {
     color-scheme: dark;
 
-    /* A solid blue with a white label, matching the legacy Bootstrap primary button (and light mode), rather than a
+    /* A solid blue with a white label, matching the primary button of the light theme, rather than a
        pale tint with near-black text that reads as washed-out on a dark page. */
     --tumaet-ui-primary-color: var(--primary);
     --tumaet-ui-primary-contrast-color: var(--colored-btn-font);
@@ -171,8 +140,52 @@
     *,
     ::before,
     ::after {
-        border-color: var(--p-content-border-color);
+        border-color: var(--ui-border-color);
     }
+}
+
+/*
+ * The brand colour and the neutral surface ramp as Tailwind colours (`text-primary`, `bg-primary/10`,
+ * `border-surface-200`). Their values are theme variables, see "Tailwind colour utilities" in
+ * content/scss/themes/_default-variables.scss and _dark-variables.scss.
+ */
+@theme inline {
+    --color-primary: var(--ui-primary);
+    --color-primary-contrast: var(--ui-primary-contrast);
+    --color-surface-0: var(--ui-surface-0);
+    --color-surface-50: var(--ui-surface-50);
+    --color-surface-100: var(--ui-surface-100);
+    --color-surface-200: var(--ui-surface-200);
+    --color-surface-300: var(--ui-surface-300);
+    --color-surface-400: var(--ui-surface-400);
+    --color-surface-500: var(--ui-surface-500);
+    --color-surface-600: var(--ui-surface-600);
+    --color-surface-700: var(--ui-surface-700);
+    --color-surface-800: var(--ui-surface-800);
+    --color-surface-900: var(--ui-surface-900);
+    --color-surface-950: var(--ui-surface-950);
+}
+
+@utility border-surface {
+    border-color: var(--ui-border-color);
+}
+
+@utility bg-emphasis {
+    background: var(--ui-emphasis-background);
+    color: var(--ui-emphasis-color);
+}
+
+@utility bg-highlight {
+    background: var(--ui-highlight-background);
+    color: var(--ui-highlight-color);
+}
+
+@utility text-color {
+    color: var(--ui-text-color);
+}
+
+@utility text-muted-color {
+    color: var(--ui-text-muted-color);
 }
 
 @theme inline {
@@ -183,17 +196,6 @@
     --color-text: var(--tumaet-ui-text-color);
     --color-text-secondary: var(--tumaet-ui-muted-color);
 }
-
-/* Button action groups migrated to TUM AET UI; keep their layout utilities explicit. */
-@source './app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component.html';
-@source './app/programming/manage/code-editor/file-browser/file/code-editor-file-browser-file.component.html';
-@source './app/programming/manage/code-editor/file-browser/folder/code-editor-file-browser-folder.component.html';
-@source './app/programming/manage/grading/charts/test-case-distribution-chart.component.html';
-@source './app/programming/manage/grading/table-actions/programming-exercise-grading-table-actions.component.html';
-@source './app/programming/manage/grading/tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component.html';
-@source './app/programming/manage/version-history/programming-exercise-version-programming-metadata.component.html';
-@source './app/programming/shared/actions/trigger-build-button/programming-exercise-trigger-build-button.component.html';
-@source './app/programming/shared/code-editor/actions/code-editor-actions.component.html';
 
 /* The migrated modules and components: Tailwind scans every template and component in them. eslint.config.mjs and stylelint.config.json lock the same list. */
 @source './app/account';
@@ -222,6 +224,7 @@
 @source './app/notification';
 @source './app/plagiarism';
 @source './app/presentation';
+@source './app/programming';
 @source './app/quiz';
 @source './app/shared';
 @source './app/shared-ui';
@@ -231,5 +234,3 @@
 @source './app/videosource';
 
 /* Participation build and repository export controls live outside the migrated exercise module. */
-@source './app/programming/shared/actions';
-@source './app/programming/manage/assess/repo-export/export-button';
