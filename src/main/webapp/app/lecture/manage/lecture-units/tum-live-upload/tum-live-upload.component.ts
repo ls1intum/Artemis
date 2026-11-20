@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { TumLiveFilePickerComponent } from './tum-live-file-picker.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressBarComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -17,13 +19,20 @@ const POLL_INTERVAL_MS = 15_000;
     selector: 'jhi-tum-live-upload',
     templateUrl: './tum-live-upload.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressBarComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressBarComponent, TumLiveFilePickerComponent],
 })
 export class TumLiveUploadComponent {
     private readonly tumLiveUploadService = inject(TumLiveUploadService);
     private readonly destroyRef = inject(DestroyRef);
 
     readonly lectureUnitId = input.required<number>();
+    /** One selected file, handed off by the keyed editor of this newly saved unit. */
+    readonly initialFile = input<File>();
+    readonly initialFileConsumed = output<void>();
+    private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
+    private didTakeInitialFile = false;
+    private needsFocus = false;
+
     /** Emits when an upload of this page was attached to the unit, so the page can show the unit's new video link. */
     readonly attached = output<void>();
     /** Emits when this page sent a file to TUM.Live, so the page knows the unit has a video there now, also if it is left before the video is attached. */
@@ -33,6 +42,22 @@ export class TumLiveUploadComponent {
     readonly file = signal<File | undefined>(undefined);
     /** The share of the file sent so far, while it is sent. */
     readonly transferProgress = signal<number | undefined>(undefined);
+    readonly transferring = computed(() => this.transferProgress() !== undefined);
+    readonly uncertainRef = signal<string | undefined>(undefined);
+    readonly acceptedRef = signal<string | undefined>(undefined);
+    readonly pendingRef = computed(() => this.uncertainRef() ?? this.acceptedRef() ?? this.state()?.pendingRef);
+    protected readonly statusMessage = computed(() => {
+        if (this.transferring()) {
+            return this.transferProgress() === 100 ? 'artemisApp.tumLiveUpload.awaiting' : 'artemisApp.tumLiveUpload.uploading';
+        }
+        if (this.uncertainRef()) {
+            return 'artemisApp.tumLiveUpload.checkingTransfer';
+        }
+        if (this.pendingRef()) {
+            return this.acceptedRef() || this.state()?.converting ? 'artemisApp.tumLiveUpload.processing' : 'artemisApp.tumLiveUpload.pending';
+        }
+        return undefined;
+    });
     readonly transferError = signal<TumLiveTransferError | undefined>(undefined);
     readonly attachedNow = signal(false);
     /** Set while a cancelled start or a discard is still answered, so the editor waits for the pending upload to be released. */
@@ -57,6 +82,25 @@ export class TumLiveUploadComponent {
             const lectureUnitId = this.lectureUnitId();
             untracked(() => this.load(lectureUnitId));
         });
+        effect(() => {
+            const file = this.initialFile();
+            if (file && !this.didTakeInitialFile) {
+                this.didTakeInitialFile = true;
+                this.needsFocus = true;
+                untracked(() => {
+                    this.file.set(file);
+                    this.initialFileConsumed.emit();
+                    this.upload();
+                });
+            }
+        });
+        effect(() => {
+            const heading = this.heading();
+            if (heading && this.needsFocus) {
+                this.needsFocus = false;
+                untracked(() => heading.nativeElement.focus());
+            }
+        });
         this.destroyRef.onDestroy(() => {
             this.destroyed = true;
             // The start may have created the upload already; its answer still arrives and gives it up.
@@ -74,14 +118,9 @@ export class TumLiveUploadComponent {
         });
     }
 
-    onFileChosen(event: Event): void {
-        this.file.set((event.target as HTMLInputElement).files?.[0]);
-        this.transferError.set(undefined);
-    }
-
     upload(): void {
         const file = this.file();
-        if (!file || this.busy()) {
+        if (!file || this.busy() || this.transferring() || this.pendingRef()) {
             return;
         }
         this.transferError.set(undefined);
@@ -112,12 +151,17 @@ export class TumLiveUploadComponent {
                     complete: () => {
                         this.activeRef = undefined;
                         this.transferProgress.set(undefined);
-                        this.file.set(undefined);
-                        this.transferred.emit();
+                        this.markAccepted(target.ref);
                         this.load(this.lectureUnitId());
                     },
                     error: (error: TumLiveTransferError) => {
-                        if (error.status === 409) {
+                        if ([0, 502, 503, 504].includes(error.status)) {
+                            this.activeRef = undefined;
+                            this.uncertainRef.set(target.ref);
+                            this.transferProgress.set(undefined);
+                            this.transferError.set(error);
+                            this.load(unitId);
+                        } else if (error.status === 409) {
                             // Another request may already be sending this reference. Keep its upload pending.
                             this.activeRef = undefined;
                             this.transferProgress.set(undefined);
@@ -129,7 +173,7 @@ export class TumLiveUploadComponent {
                     },
                 });
             },
-            error: () => {
+            error: (error: unknown) => {
                 if (this.starting === attempt) {
                     this.starting = undefined;
                 }
@@ -141,7 +185,11 @@ export class TumLiveUploadComponent {
                     this.load(this.lectureUnitId());
                     return;
                 }
-                // The error alert names the reason.
+                if (error instanceof HttpErrorResponse) {
+                    const key: unknown = error.error?.message;
+                    const translated = typeof key === 'string' && key.startsWith('error.') ? key : undefined;
+                    this.transferError.set(new TumLiveTransferError(error.message, error.status, translated));
+                }
                 this.transferProgress.set(undefined);
                 this.load(this.lectureUnitId());
             },
@@ -167,8 +215,11 @@ export class TumLiveUploadComponent {
 
     /** Gives up the upload that TUM.Live converts, for example to start another one. */
     discardPending(): void {
-        const ref = this.state()?.pendingRef;
+        const ref = this.pendingRef();
         if (ref) {
+            this.uncertainRef.set(undefined);
+            this.acceptedRef.set(undefined);
+            this.transferError.set(undefined);
             this.discard(this.lectureUnitId(), ref);
         }
     }
@@ -215,9 +266,28 @@ export class TumLiveUploadComponent {
             });
     }
 
+    private markAccepted(ref: string): void {
+        this.acceptedRef.set(ref);
+        this.file.set(undefined);
+        this.transferError.set(undefined);
+        this.transferred.emit();
+    }
+
     private apply(state: TumLiveUploadState): void {
-        const watched = this.state()?.pendingRef ?? this.startedRef;
+        const uncertain = this.uncertainRef();
+        const watched = uncertain ?? this.startedRef ?? this.state()?.pendingRef;
         this.state.set(state);
+        if (uncertain) {
+            if (state.attachedRef === uncertain || (state.pendingRef === uncertain && state.converting)) {
+                this.uncertainRef.set(undefined);
+                this.markAccepted(uncertain);
+            } else if (state.pendingRef !== uncertain) {
+                this.uncertainRef.set(undefined);
+            }
+        }
+        if (this.acceptedRef() && this.acceptedRef() !== state.pendingRef) {
+            this.acceptedRef.set(undefined);
+        }
         if (!state.pendingRef && this.transferError()?.translationKey === 'error.tumLiveUploadInProgress') {
             this.transferError.set(undefined);
         }
