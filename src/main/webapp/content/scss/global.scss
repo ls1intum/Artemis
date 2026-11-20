@@ -138,30 +138,8 @@ a.disabled {
     cursor: default;
 }
 
-.text-normal {
-    color: $body-color !important;
-}
-
 .clickable {
     cursor: pointer;
-}
-
-.overflow-ellipsis {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.overflow-parent {
-    min-width: 0;
-}
-
-.border-lightgrey {
-    border-color: $border-lightgrey;
-}
-
-.text-lightgrey {
-    color: $text-lightgrey;
 }
 
 .form-inline {
@@ -174,16 +152,6 @@ a.disabled {
 textarea {
     background-color: $form-control-focus-background;
     color: $form-control-color !important;
-}
-
-/* ==========================================================================
-Browser Upgrade Prompt
-========================================================================== */
-.browserupgrade {
-    margin: 0.2em 0;
-    background: $browserupgrade-color-background;
-    color: $browserupgrade-color;
-    padding: 0.2em 0;
 }
 
 /* ==========================================================================
@@ -262,14 +230,6 @@ a[tumAetUiButton].disabled {
     width: 40% !important;
 }
 
-.w-60 {
-    width: 60% !important;
-}
-
-.max-vw-30 {
-    max-width: 30vw !important;
-}
-
 .break {
     white-space: normal;
     word-break: break-all;
@@ -289,18 +249,8 @@ a[tumAetUiButton].disabled {
     background-color: var(--body-bg);
 }
 
-.main-container {
-    @media (max-width: 576px) {
-        padding: 0;
-    }
-}
-
 .no-flex-shrink {
     flex-shrink: 0;
-}
-
-.flex-basis-50 {
-    flex-basis: 50%;
 }
 
 a:hover {
@@ -333,33 +283,8 @@ entity tables helpers
 ========================================================================== */
 
 /* Remove the padding from an element */
-$padding-sides: 'left', 'right', 'top', 'bottom', 'all';
-
-@each $side in $padding-sides {
-    @if $side == 'all' {
-        .no-padding {
-            padding: 0 !important;
-        }
-    } @else {
-        .no-padding-#{$side} {
-            padding-#{$side}: 0 !important;
-        }
-    }
-}
-
-.width-min {
-    width: 1% !important;
-}
-
-/* Makes toolbar not wrap on smaller screens
-   http://www.sketchingwithcss.com/samplechapter/cheatsheet.html#right */
-.flex-btn-group-container {
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-direction: row;
-    flex-direction: row;
-    -webkit-justify-content: flex-end;
-    justify-content: flex-end;
+.no-padding {
+    padding: 0 !important;
 }
 
 .editor-outline-background {
@@ -367,40 +292,8 @@ $padding-sides: 'left', 'right', 'top', 'bottom', 'all';
     max-width: max-content;
 }
 
-.thread-dump-modal-lock {
-    max-width: 450px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 .resizable-dragging {
     user-select: none;
-}
-
-.header-container {
-    display: flex;
-    flex-direction: row;
-}
-
-.total-score-wrapper {
-    margin-left: auto;
-    float: right;
-    display: flex;
-    align-items: center;
-    flex-direction: row;
-    margin-right: 10px;
-}
-
-.btn-total-score {
-    color: $btn-total-score-color;
-    border-radius: 6px;
-    border: none;
-}
-
-.span-total-score {
-    margin-right: 5px;
-    font-weight: bold;
 }
 
 .result-orange {
@@ -470,34 +363,6 @@ pre {
     border-radius: 4px;
 }
 
-.code-error,
-.code-warning,
-.code-success {
-    padding: 2px 4px;
-    font-size: 90%;
-    border-radius: 4px;
-    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
-}
-
-.code-success {
-    padding: 2px 4px;
-    font-size: 90%;
-    color: $code-success-color;
-    background-color: $code-success-background;
-    border-radius: 4px;
-    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
-}
-
-.code-error {
-    color: $code-error-color;
-    background-color: $code-error-background;
-}
-
-.code-warning {
-    color: $code-warning-color;
-    background-color: $code-warning-background;
-}
-
 code.password {
     color: $code-password !important;
     background: $code-password-background;
@@ -514,12 +379,6 @@ code.password:hover {
 
 .apollon-editor label {
     margin-bottom: 0;
-}
-
-.tiny-icon-button {
-    padding: 0.25rem 0.5rem !important;
-    font-size: 0.75rem !important;
-    line-height: 1.2 !important;
 }
 
 .assessments {
@@ -606,10 +465,6 @@ code.password:hover {
 
 .unreferencedFeedback {
     background-color: $unreferenced-feedback-background;
-}
-
-.displaycolor {
-    background: $displaycolor-background;
 }
 
 // Kit overlays (dialogs, calendars, select panels, tooltips) open in this one container, so they all share one layer.
@@ -1312,15 +1167,6 @@ jhi-iris-base-chatbot .interim-message .bubble-left p:last-child {
     > span {
         display: block;
         overflow-x: auto;
-    }
-}
-
-// Compact metadata layout for the narrow left panel in Iris split view
-.iris-split-left .result-metadata {
-    flex-wrap: wrap;
-
-    > span:not([class]) {
-        display: none;
     }
 }
 
