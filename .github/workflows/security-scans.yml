@@ -10,20 +10,13 @@ name: Security Scans
 # Only the rules of the highest severity and the secret scan fail the run. Everything else is reported as an artifact of the
 # run and is reviewed, so that a new scan does not stop development before its findings have been triaged.
 
+# Pull requests against develop and develop pushes run these scans as the `security` job of ci.yml, so that they share its
+# cancellation. The weekly scan of the whole history keeps its own schedule here.
 on:
-  pull_request:
-    branches: [develop]
-    paths-ignore:
-      - 'documentation/**'
-  push:
-    branches: [develop]
+  workflow_call:
   schedule:
     - cron: '17 4 * * 2'
   workflow_dispatch:
-
-concurrency:
-  group: security-scans-${{ github.event_name }}-${{ github.event.pull_request.number || github.sha }}
-  cancel-in-progress: true
 
 permissions: {}
 

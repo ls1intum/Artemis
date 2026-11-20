@@ -691,10 +691,11 @@ jobs:
       has_java: ${{ needs.detect-changes.outputs.has_java == 'true' }}
       has_tum_aet_ui: ${{ needs.detect-changes.outputs.has_tum_aet_ui == 'true' }}
 
+  # A push already validates the wrapper through ci-gradle-wrapper.yml's own push trigger (see the README).
   gradle-wrapper:
     name: Validate Gradle Wrapper
     needs: detect-changes
-    if: needs.detect-changes.outputs.has_gradle == 'true'
+    if: needs.detect-changes.outputs.has_gradle == 'true' && github.event_name != 'push'
     uses: ./.github/workflows/ci-gradle-wrapper.yml
     permissions:
       contents: read
@@ -1088,6 +1089,48 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
+  # Advisory. Runs inside this workflow so that a new push or closing the pull request cancels it with the rest of the run.
+  # Pull requests against develop and develop pushes only; the weekly scan of the whole history is security-scans.yml's own schedule.
+  security:
+    name: Security Scans
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.current == 'true' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'develop') ||
+       (github.event_name == 'push' && github.ref == 'refs/heads/develop'))
+    uses: ./.github/workflows/security-scans.yml
+    permissions:
+      contents: read
+
+  # Advisory. Runs on a self-hosted runner and executes the checked-out code, so never for a fork pull request,
+  # and like the other test suites not for a draft. A merge group has already passed it on its pull request.
+  android:
+    name: Android E2E
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.current == 'true' &&
+      needs.detect-changes.outputs.build_relevant == 'true' &&
+      needs.detect-changes.outputs.tests_deferred != 'true' &&
+      github.event_name != 'merge_group' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    uses: ./.github/workflows/test-android.yml
+    permissions:
+      contents: read
+      checks: write
+
+  # Advisory, and outside the required gate on purpose: a title fix only starts a metadata run, in which the gate does not run.
+  pr-title:
+    name: Validate PR Title
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    permissions:
+      contents: read
+    steps:
+      - uses: Slashgear/action-check-pr-title@76166c63ec0b25cdbe693e5e972e83ca186313fb  # v6.0.0
+        with:
+          regexp: '^`(Administration|Lectures|Tutorial groups|Communication|Notifications|Exercises|Programming exercises|Quiz exercises|Modeling exercises|Text exercises|File upload exercises|Team exercises|Exam mode|Integrated code lifecycle|LocalCI|LocalVC|Assessment|Grading|Plagiarism checks|Learning analytics|Adaptive learning|Learning path|Iris|Hyperion|Athena|Global search|Integrated markdown editor|Mobile apps|Scalability|Usability|Performance|Infrastructure|Migration|Development|General)`:\s[A-Z].*$'
+
   # The single required status check. Depends on every deterministic job — build, test, and
   # the quality gates — plus `e2e`. `e2e` is required, but with a flakiness-aware verdict: an E2E
   # result of `failure` includes test, infrastructure and unclassified failures. Helios history
@@ -1218,6 +1261,9 @@ jobs:
       - sonar
       - codeql
       - coverage-report
+      - security
+      - android
+      - pr-title
     runs-on: ubuntu-latest
     permissions:
       actions: read  # actions-timeline reads the run's jobs API
@@ -1236,8 +1282,8 @@ jobs:
           NEEDS: ${{ toJSON(needs) }}
           # Everything except these is required (i.e. in all-required-ci-passed's needs).
           # `e2e` is now required (blocks merge on a real, non-flaky regression; known-flaky-only
-          # runs are exonerated); only codeql and coverage-report remain advisory.
-          ADVISORY: codeql coverage-report
+          # runs are exonerated); codeql, coverage-report, security, android and pr-title remain advisory.
+          ADVISORY: codeql coverage-report security android pr-title
         run: |
           set -Eeuo pipefail
           icon() {

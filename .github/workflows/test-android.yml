@@ -1,40 +1,8 @@
 name: Android E2E Tests
 
+# Called by ci.yml (`android` job), which decides when it runs and cancels it with the rest of the run.
 on:
-  pull_request:
-    paths-ignore:
-      - 'README.md'
-      - '.github/CODE_OF_CONDUCT.md'
-      - '.github/CONTRIBUTING.md'
-      - 'LICENSE'
-      - '.github/SECURITY.md'
-      - 'documentation/**'
-      - '.github/**'
-      - '!.github/workflows/test-android.yml'
-  push:
-    branches:
-      - develop
-      - main
-      - release/*
-    tags:
-      - '[0-9]+.[0-9]+'
-      - '[0-9]+.[0-9]+.[0-9]+'
-    paths-ignore:
-      - 'README.md'
-      - '.github/CODE_OF_CONDUCT.md'
-      - '.github/CONTRIBUTING.md'
-      - 'LICENSE'
-      - '.github/SECURITY.md'
-      - 'documentation/**'
-      - '.github/**'
-      - '!.github/workflows/test-android.yml'
-  release:
-    types:
-      - created
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  workflow_call:
 
 permissions: {}  # default-deny; the job grants only what it needs
 
