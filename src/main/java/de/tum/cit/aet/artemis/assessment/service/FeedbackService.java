@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -12,9 +13,12 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -23,8 +27,15 @@ public class FeedbackService {
 
     private final LongFeedbackTextRepository longFeedbackTextRepository;
 
-    public FeedbackService(LongFeedbackTextRepository longFeedbackTextRepository) {
+    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    private final ScaFeedbackRepository scaFeedbackRepository;
+
+    public FeedbackService(LongFeedbackTextRepository longFeedbackTextRepository, TestCaseFeedbackRepository testCaseFeedbackRepository,
+            ScaFeedbackRepository scaFeedbackRepository) {
         this.longFeedbackTextRepository = longFeedbackTextRepository;
+        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
+        this.scaFeedbackRepository = scaFeedbackRepository;
     }
 
     /**
@@ -86,6 +97,34 @@ public class FeedbackService {
         feedback.setPenalty(originalFeedback.getPenalty());
         feedback.setMessage(originalFeedback.getMessage());
         return feedback;
+    }
+
+    /**
+     * Copies the typed automatic feedback (test-case and SCA rows) of the old result to the new result.
+     * The rows are loaded from the database (the old result's collections may be uninitialized) and the
+     * copies share the deduplicated message rows. No-op for results of non-programming exercises.
+     *
+     * @param newResult the result to copy the typed feedback to
+     * @param oldResult the result to copy the typed feedback from
+     */
+    public void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
+        if (oldResult == null || oldResult.getId() == null) {
+            return;
+        }
+        // fetch the shared message rows eagerly: the copies keep the message reference, and the new result
+        // may be synthesized for serialization right away (e.g. exam test-run drafts) - a lazy proxy would
+        // fail there with a LazyInitializationException
+        testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(oldResult.getId())).stream().map(this::copyTestCaseFeedback)
+                .forEach(newResult::addTestCaseFeedback);
+        scaFeedbackRepository.findWithMessageByResultIds(List.of(oldResult.getId())).stream().map(this::copyScaFeedback).forEach(newResult::addScaFeedback);
+
+        // Insert the copies right away when the target result already exists: a synthesized legacy view is addressed by the id of the row it comes from, so every caller that
+        // serializes the new result afterwards needs those ids. The rows are new, so this persists them in place - the ids land on these very instances and the eagerly
+        // fetched test cases and messages above survive, both of which a merge copy would lose. A result that is not persisted yet gets its rows through the caller's save.
+        if (newResult.getId() != null) {
+            newResult.setTestCaseFeedbacks(testCaseFeedbackRepository.saveAll(newResult.getTestCaseFeedbacks()));
+            newResult.setScaFeedbacks(scaFeedbackRepository.saveAll(newResult.getScaFeedbacks()));
+        }
     }
 
     private Feedback copyFeedback(final Feedback originalFeedback, final Optional<LongFeedbackText> longFeedbackText) {

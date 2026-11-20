@@ -21,6 +21,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ManualResultCreationRepository;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -46,6 +47,9 @@ class TextSubmissionLockConcurrencyTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ManualResultCreationRepository manualResultCreationRepository;
 
     @Autowired
     private TextSubmissionService textSubmissionService;
@@ -137,7 +141,7 @@ class TextSubmissionLockConcurrencyTest extends AbstractSpringIntegrationIndepen
     void saveManualResultIfCorrectionRoundIsFree_roundTaken_savesNothing() {
         TextSubmission submission = saveSubmissionWithManualResultOfRoundZero();
 
-        Optional<Result> savedResult = resultRepository.saveManualResultIfCorrectionRoundIsFree(submission.getId(), 0, newManualResult(submission, 0));
+        Optional<Result> savedResult = manualResultCreationRepository.saveManualResultIfCorrectionRoundIsFree(submission.getId(), 0, newManualResult(submission, 0));
 
         assertThat(savedResult).isEmpty();
         assertThat(countResultsOfRound(submission.getId(), 0)).isEqualTo(1);
@@ -151,7 +155,7 @@ class TextSubmissionLockConcurrencyTest extends AbstractSpringIntegrationIndepen
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM result WHERE submission_id = ? AND correction_round = 0 AND assessment_type IS NULL", Long.class,
                 submission.getId())).as("the result of round 0 has no assessment type yet").isEqualTo(1);
 
-        Optional<Result> savedResult = resultRepository.saveManualResultIfCorrectionRoundIsFree(submission.getId(), 0, newManualResult(submission, 0));
+        Optional<Result> savedResult = manualResultCreationRepository.saveManualResultIfCorrectionRoundIsFree(submission.getId(), 0, newManualResult(submission, 0));
 
         assertThat(savedResult).isEmpty();
         assertThat(countResultsOfRound(submission.getId(), 0)).isEqualTo(1);
@@ -167,7 +171,7 @@ class TextSubmissionLockConcurrencyTest extends AbstractSpringIntegrationIndepen
                 status -> jdbcTemplate.update("UPDATE result SET correction_round = 0 WHERE submission_id = ? AND assessment_type = 'AUTOMATIC_ATHENA'", submission.getId()));
         assertThat(updatedResults).as("the Athena result is placed in round 0").isEqualTo(1);
 
-        Optional<Result> savedResult = resultRepository.saveManualResultIfCorrectionRoundIsFree(submission.getId(), 0, newManualResult(submission, 0));
+        Optional<Result> savedResult = manualResultCreationRepository.saveManualResultIfCorrectionRoundIsFree(submission.getId(), 0, newManualResult(submission, 0));
 
         assertThat(savedResult).hasValueSatisfying(result -> assertThat(result.getId()).isNotNull());
         assertThat(countResultsOfRound(submission.getId(), 0, "AUTOMATIC_ATHENA")).as("the Athena result stays in round 0").isEqualTo(1);

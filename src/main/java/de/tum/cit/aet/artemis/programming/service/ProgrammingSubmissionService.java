@@ -29,9 +29,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ManualResultCreationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
-import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -104,10 +103,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, FeedbackService feedbackService, Optional<AthenaApi> athenaApi,
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ComplaintRepository complaintRepository, ParticipationAuthorizationCheckService participationAuthCheckService, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ComplaintRepository complaintRepository, ParticipationAuthorizationCheckService participationAuthCheckService,
+            ManualResultCreationRepository manualResultCreationRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, manualResultCreationRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.asyncBuildTriggerService = asyncBuildTriggerService;
@@ -580,7 +579,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // Copy the typed automatic feedback (test cases + static code analysis); the rows are loaded
             // from the database (the collections may be uninitialized) and the copies share the
             // deduplicated message rows, so this is cheap.
-            copyTypedFeedbackToResult(newResult, existingResult);
+            feedbackService.copyTypedFeedbackToResult(newResult, existingResult);
 
             newResult.copyProgrammingExerciseCounters(existingResult);
         }
