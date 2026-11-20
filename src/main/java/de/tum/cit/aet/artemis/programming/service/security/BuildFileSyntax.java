@@ -8,8 +8,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
- * Reads the syntax of the build files of a tests repository as far as the Security Framework needs it: which parts are comments or strings, so that a
- * pinned Ares version or the Ares agent in a comment is not mistaken for code, see {@link SecurityPolicyRepositoryFiles}.
+ * Reads the syntax of the build files of a tests repository as far as the Security Framework needs it: which parts are comments, strings or Maven
+ * profiles, so that a pinned Ares version, the Ares agent or a library in a comment is not mistaken for code, see {@link SecurityPolicyRepositoryFiles}.
  */
 final class BuildFileSyntax {
 
@@ -22,7 +22,6 @@ final class BuildFileSyntax {
     /** The Ares agent as a Gradle dependency of a configuration, e.g. {@code aresAgent "de.tum.cit.ase:ares:${aresVersion}:agent"}; group 1 is the configuration. */
     private static final Pattern GRADLE_ARES_AGENT = Pattern.compile("([A-Za-z_$][\\w$]*+)\\s*+\\(?\\s*+['\"]de\\.tum\\.cit\\.ase:ares:[^'\"\\s]+:agent['\"]");
 
-    /** The argument of a {@code -javaagent} option; group 1 is the agent, up to the end of the string or argument. */
     /** The variable, property or object an interpolation in a Gradle string starts with, e.g. {@code agentJar} in {@code ${agentJar.singleFile}}. */
     private static final Pattern INTERPOLATED_NAME = Pattern.compile("\\$\\{?\\s*+([A-Za-z_]\\w*+)");
 
@@ -49,14 +48,39 @@ final class BuildFileSyntax {
     /** The last characters of a line after which a Gradle statement continues on the next line. */
     private static final String CONTINUING_ENDS = "=(,.+:";
 
+    /** The argument of a {@code -javaagent} option; group 1 is the agent, up to the end of the string or argument. */
     private static final Pattern JAVA_AGENT = Pattern.compile("-javaagent:((?:\\$\\{[^}'\"\\n]*+}?|[^'\"\\s,)<$]|\\$(?!\\{))*+)");
 
     /** The Ares agent as a Maven artifact: the {@code agent} classifier of the {@code ares} artifact. */
     private static final Pattern MAVEN_ARES_AGENT = Pattern
             .compile("<artifactId>\\s*ares\\s*</artifactId>\\s*(<version>[^<]*</version>\\s*)?(<type>[^<]*</type>\\s*)?<classifier>\\s*agent\\s*</classifier>");
 
+    private static final String ARES_1_ARTIFACT = "artemis-java-test-sandbox";
+
+    /** The Ares 1 library in a Gradle dependency, e.g. {@code 'de.tum.in.ase:artemis-java-test-sandbox:1.13.0'} or {@code name: 'artemis-java-test-sandbox'}. */
+    private static final Pattern GRADLE_ARES_1_DEPENDENCY = Pattern.compile("[:'\"]\\s*+" + ARES_1_ARTIFACT + "\\s*+[:'\"]");
+
+    /** The Ares 1 library as the artifact of a Maven dependency. */
+    private static final Pattern MAVEN_ARES_1_DEPENDENCY = Pattern.compile("<artifactId>\\s*+" + ARES_1_ARTIFACT + "\\s*+</artifactId>");
+
+    private static final String MAVEN_PROFILES_START = "<profiles>";
+
+    private static final String MAVEN_PROFILES_END = "</profiles>";
+
     private BuildFileSyntax() {
         throw new UnsupportedOperationException("Utility class");
+    }
+
+    /**
+     * @param buildFiles the build files at the root of a repository
+     * @return whether a build file declares a dependency on the Ares 1 library {@code artemis-java-test-sandbox}; a mention in a comment, e.g. one that
+     *         records the migration to Ares 2, does not count
+     */
+    static boolean declaresAres1Dependency(SecurityPolicyRepositoryFiles.BuildFiles buildFiles) {
+        String gradleBuild = buildFiles.gradleBuild();
+        String mavenPom = buildFiles.mavenPom();
+        return (gradleBuild != null && GRADLE_ARES_1_DEPENDENCY.matcher(withoutMarked(gradleBuild, gradleComments(gradleBuild))).find())
+                || (mavenPom != null && MAVEN_ARES_1_DEPENDENCY.matcher(withoutMarked(mavenPom, mavenComments(mavenPom))).find());
     }
 
     /**
@@ -360,5 +384,23 @@ final class BuildFileSyntax {
             start = content.indexOf("<!--", end);
         }
         return comment;
+    }
+
+    /**
+     * @param comments for each character of the POM whether it belongs to a comment
+     * @return for each character of a Maven POM whether it lies in its {@code <profiles>} section, whose properties apply only while their profile is active
+     */
+    static boolean[] mavenProfiles(String content, boolean[] comments) {
+        boolean[] profiles = new boolean[content.length()];
+        int start = content.indexOf(MAVEN_PROFILES_START);
+        while (start >= 0) {
+            int close = content.indexOf(MAVEN_PROFILES_END, start);
+            int end = close < 0 ? content.length() : close + MAVEN_PROFILES_END.length();
+            if (!comments[start]) {
+                Arrays.fill(profiles, start, end, true);
+            }
+            start = content.indexOf(MAVEN_PROFILES_START, end);
+        }
+        return profiles;
     }
 }

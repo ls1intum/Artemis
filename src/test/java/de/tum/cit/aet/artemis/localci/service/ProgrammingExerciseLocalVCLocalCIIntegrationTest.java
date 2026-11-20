@@ -1507,7 +1507,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         body.set("securityFramework", objectMapper.valueToTree(new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null)));
         long exercisesBefore = programmingExerciseRepository.count();
 
-        request.postWithResponseBody("/api/programming/programming-exercises/setup?emptyRepositories=true", body, ProgrammingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+        request.postAndExpectError("/api/programming/programming-exercises/setup?emptyRepositories=true", body, HttpStatus.BAD_REQUEST,
+                "securityFrameworkChoiceWithEmptyRepositories");
 
         assertThat(programmingExerciseRepository.count()).isEqualTo(exercisesBefore);
     }

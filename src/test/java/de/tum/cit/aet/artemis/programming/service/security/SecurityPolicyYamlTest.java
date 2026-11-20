@@ -38,7 +38,7 @@ class SecurityPolicyYamlTest {
 
     @Test
     void appendsToABlockListAndKeepsEverythingElse() {
-        String updated = SecurityPolicyYaml.addTestClasses(BLOCK_LIST_POLICY, List.of("de.example.SortingTest", "de.example.NewTest")).orElseThrow();
+        String updated = SecurityPolicyYaml.addTestClasses(BLOCK_LIST_POLICY, List.of("de.example.SortingTest", "de.example.NewTest"), false).orElseThrow();
 
         assertThat(updated).isEqualTo(BLOCK_LIST_POLICY.replace("    - de.example.ClassTest\n", "    - de.example.ClassTest\n    - \"de.example.NewTest\"\n"));
     }
@@ -47,7 +47,7 @@ class SecurityPolicyYamlTest {
     void turnsAnEmptyInlineListIntoABlockList() {
         String policy = "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ ]\n  theFollowingResourceAccessesArePermitted: { }\n";
 
-        assertThat(SecurityPolicyYaml.addTestClasses(policy, List.of("de.example.NewTest")))
+        assertThat(SecurityPolicyYaml.addTestClasses(policy, List.of("de.example.NewTest"), false))
                 .contains("regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses:\n    - \"de.example.NewTest\"\n  theFollowingResourceAccessesArePermitted: { }\n");
     }
 
@@ -55,13 +55,41 @@ class SecurityPolicyYamlTest {
     void extendsAFilledInlineList() {
         String policy = "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [\"de.example.SortingTest\"]\n";
 
-        assertThat(SecurityPolicyYaml.addTestClasses(policy, List.of("de.example.NewTest")))
+        assertThat(SecurityPolicyYaml.addTestClasses(policy, List.of("de.example.NewTest"), false))
                 .contains("regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [\"de.example.SortingTest\", \"de.example.NewTest\"]\n");
     }
 
     @Test
+    void readsTheListWithTheRulesOfThePinnedAresVersion() {
+        String policy = """
+                thisPolicyFileCompliesToThePolicyVersion: 1
+                regardingTheSupervisedCode:
+                  theFollowingProgrammingLanguageConfigurationIsUsed: JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ
+                  theSupervisedCodeUsesTheFollowingPackage: "de.example"
+                  theFollowingClassesAreTestClasses: [yes]
+                  theFollowingResourceAccessesArePermitted:
+                    regardingFileSystemInteractions: [ ]
+                    regardingNetworkConnections: [ ]
+                    regardingCommandExecutions: [ ]
+                    regardingThreadCreations: [ ]
+                    regardingPackageImports: [ ]
+                    regardingTimeouts: [ ]
+                """;
+
+        // Ares 2.2.1 reads yes as the class name yes, as the state does when it reports the missing class; YAML 1.1 reads a Boolean.
+        assertThat(SecurityPolicyYaml.addTestClasses(policy, List.of("de.example.NewTest"), true)).contains(policy.replace("[yes]", "[yes, \"de.example.NewTest\"]"));
+        assertThat(SecurityPolicyYaml.addTestClasses(policy, List.of("de.example.NewTest"), false)).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "value: !!int 0xZZ\n", "value: !!binary \"%%%\"\n" })
+    void readsAMalformedScalarAsAnUnreadablePolicy(String yaml) {
+        assertThat(SecurityPolicyYaml.read(yaml).valid()).isFalse();
+    }
+
+    @Test
     void leavesTheFileAloneIfNothingIsMissing() {
-        assertThat(SecurityPolicyYaml.addTestClasses(BLOCK_LIST_POLICY, List.of("de.example.ClassTest"))).contains(BLOCK_LIST_POLICY);
+        assertThat(SecurityPolicyYaml.addTestClasses(BLOCK_LIST_POLICY, List.of("de.example.ClassTest"), false)).contains(BLOCK_LIST_POLICY);
     }
 
     @Test
@@ -69,9 +97,9 @@ class SecurityPolicyYamlTest {
         String commented = BLOCK_LIST_POLICY.replace("  theFollowingClassesAreTestClasses:\n", "  theFollowingClassesAreTestClasses: # the tests\n")
                 .replace("    - de.example.ClassTest\n", "    # structural tests\n\n    - de.example.ClassTest # keep\n");
 
-        assertThat(SecurityPolicyYaml.addTestClasses(commented, List.of("de.example.NewTest")))
+        assertThat(SecurityPolicyYaml.addTestClasses(commented, List.of("de.example.NewTest"), false))
                 .contains(commented.replace("    - de.example.ClassTest # keep\n", "    - de.example.ClassTest # keep\n    - \"de.example.NewTest\"\n"));
-        assertThat(SecurityPolicyYaml.addTestClasses("regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ ] # none yet\n", List.of("de.example.NewTest")))
+        assertThat(SecurityPolicyYaml.addTestClasses("regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ ] # none yet\n", List.of("de.example.NewTest"), false))
                 .contains("regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: # none yet\n    - \"de.example.NewTest\"\n");
     }
 
@@ -79,7 +107,7 @@ class SecurityPolicyYamlTest {
     void acceptsACommentBehindTheSectionHeader() {
         String commented = BLOCK_LIST_POLICY.replace("regardingTheSupervisedCode:\n", "regardingTheSupervisedCode: # sandbox settings\n");
 
-        assertThat(SecurityPolicyYaml.addTestClasses(commented, List.of("de.example.NewTest")))
+        assertThat(SecurityPolicyYaml.addTestClasses(commented, List.of("de.example.NewTest"), false))
                 .contains(commented.replace("    - de.example.ClassTest\n", "    - de.example.ClassTest\n    - \"de.example.NewTest\"\n"));
     }
 
@@ -88,9 +116,9 @@ class SecurityPolicyYamlTest {
         String withoutList = "regardingTheSupervisedCode:\n  theMainClassInsideThisPackageIs: \"Client\"\n";
         String twoSupervisedCodes = "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ ]\n---\nregardingTheSupervisedCode:\n  x: 1\n";
 
-        assertThat(SecurityPolicyYaml.addTestClasses(withoutList, List.of("de.example.NewTest"))).isEmpty();
+        assertThat(SecurityPolicyYaml.addTestClasses(withoutList, List.of("de.example.NewTest"), false)).isEmpty();
         assertThat(SecurityPolicyYaml.read(withoutList).testClasses()).isEmpty();
-        assertThat(SecurityPolicyYaml.addTestClasses(twoSupervisedCodes, List.of("de.example.NewTest"))).isEmpty();
+        assertThat(SecurityPolicyYaml.addTestClasses(twoSupervisedCodes, List.of("de.example.NewTest"), false)).isEmpty();
     }
 
     @Test
@@ -125,7 +153,7 @@ class SecurityPolicyYamlTest {
             "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses:\n    - de.example.SortingTest\n      - continued\n" })
     void leavesAValidPolicyAloneIfTheListCannotBeExtendedSafely(String policy) {
         assertThat(SecurityPolicyYaml.read(policy).testClasses()).isPresent();
-        assertThat(SecurityPolicyYaml.addTestClasses(policy, List.of("de.example.NewTest"))).isEmpty();
+        assertThat(SecurityPolicyYaml.addTestClasses(policy, List.of("de.example.NewTest"), false)).isEmpty();
     }
 
     @Test
@@ -133,9 +161,10 @@ class SecurityPolicyYamlTest {
         String crlf = "regardingTheSupervisedCode:\r\n  theFollowingClassesAreTestClasses:\r\n    - \"de.example.SortingTest\"\r\n";
         String withoutFinalLineBreak = "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses:\n    - \"de.example.SortingTest\"";
 
-        assertThat(SecurityPolicyYaml.addTestClasses(crlf, List.of("de.example.NewTest")))
+        assertThat(SecurityPolicyYaml.addTestClasses(crlf, List.of("de.example.NewTest"), false))
                 .contains("regardingTheSupervisedCode:\r\n  theFollowingClassesAreTestClasses:\r\n    - \"de.example.SortingTest\"\r\n    - \"de.example.NewTest\"\r\n");
-        assertThat(SecurityPolicyYaml.addTestClasses(withoutFinalLineBreak, List.of("de.example.NewTest"))).contains(withoutFinalLineBreak + "\n    - \"de.example.NewTest\"");
+        assertThat(SecurityPolicyYaml.addTestClasses(withoutFinalLineBreak, List.of("de.example.NewTest"), false))
+                .contains(withoutFinalLineBreak + "\n    - \"de.example.NewTest\"");
     }
 
     @Test
@@ -143,9 +172,9 @@ class SecurityPolicyYamlTest {
         String trailingWhitespace = "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ ]   \n";
         String hashInAName = "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ \"a#b\" ]  # tests\n";
 
-        assertThat(SecurityPolicyYaml.addTestClasses(trailingWhitespace, List.of("de.example.NewTest")))
+        assertThat(SecurityPolicyYaml.addTestClasses(trailingWhitespace, List.of("de.example.NewTest"), false))
                 .contains("regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses:\n    - \"de.example.NewTest\"\n");
-        assertThat(SecurityPolicyYaml.addTestClasses(hashInAName, List.of("de.example.NewTest")))
+        assertThat(SecurityPolicyYaml.addTestClasses(hashInAName, List.of("de.example.NewTest"), false))
                 .contains("regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ \"a#b\", \"de.example.NewTest\"]  # tests\n");
     }
 

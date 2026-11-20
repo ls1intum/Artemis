@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -129,7 +130,7 @@ class ProgrammingExerciseImportFromFileServiceTest {
      * Runs an import of the given zip from the test resources and returns the created exercise.
      *
      * @param fixtureName the name of the zip in {@code test-data/import-from-file}
-     * @return the exercise the creation service returned
+     * @return the exercise the import returned, which is the one the creation service created
      */
     private ProgrammingExercise importFixture(String fixtureName) throws Exception {
         return importFixture(fixtureName, java.util.Map.of(), false);
@@ -186,8 +187,11 @@ class ProgrammingExerciseImportFromFileServiceTest {
 
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
         Course course = new Course();
-        programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(originalExercise, buildConfig, zipFile, course, user, false, securityFrameworkChoice);
-        return importedExercise;
+        ProgrammingExercise result = programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(originalExercise, buildConfig, zipFile, course, user, false,
+                securityFrameworkChoice);
+        // The import returns the exercise the creation service created, also when it continues after a failed Security Framework choice.
+        assertThat(result).isSameAs(importedExercise);
+        return result;
     }
 
     @Test

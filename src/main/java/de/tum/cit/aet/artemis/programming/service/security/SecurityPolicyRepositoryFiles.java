@@ -72,8 +72,6 @@ public final class SecurityPolicyRepositoryFiles {
 
     private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version>)([^<]+)(</ares\\.version>)");
 
-    private static final String ARES_1_ARTIFACT = "artemis-java-test-sandbox";
-
     private static final Pattern WINDOWS_DRIVE = Pattern.compile("[A-Za-z]:");
 
     private static final Pattern BLANK_OR_COMMENT_LINE = Pattern.compile("^[ \\t]*(#.*)?$");
@@ -121,10 +119,11 @@ public final class SecurityPolicyRepositoryFiles {
     public record BuildFiles(@Nullable String gradleBuild, @Nullable String mavenPom) {
 
         /**
-         * @return whether a build file refers to the Ares 1 library {@code artemis-java-test-sandbox}
+         * @return whether a build file declares a dependency on the Ares 1 library {@code artemis-java-test-sandbox}; a mention in a comment, e.g. one that
+         *         records the migration to Ares 2, does not count
          */
         boolean usesAres1() {
-            return (gradleBuild != null && gradleBuild.contains(ARES_1_ARTIFACT)) || (mavenPom != null && mavenPom.contains(ARES_1_ARTIFACT));
+            return BuildFileSyntax.declaresAres1Dependency(this);
         }
     }
 
@@ -595,7 +594,8 @@ public final class SecurityPolicyRepositoryFiles {
 
     /**
      * The places that pin the Ares version in a build file. A pin inside a comment, e.g. {@code // aresVersion = '2.3.0'}, or inside a Gradle string, e.g.
-     * {@code "aresVersion = '2.3.0'"}, has no effect on the build, so it is neither read nor replaced.
+     * {@code "aresVersion = '2.3.0'"}, has no effect on the build, so it is neither read nor replaced. Neither is a pin in a Maven profile, which applies
+     * only while its profile is active; the pin of the POM itself is the one the build uses.
      *
      * @param content   the content of the build file
      * @param buildTool the build tool the file belongs to
@@ -603,7 +603,8 @@ public final class SecurityPolicyRepositoryFiles {
      */
     private static List<MatchResult> aresVersionPins(String content, BuildTool buildTool) {
         boolean[] noCode = buildTool == BuildTool.GRADLE ? BuildFileSyntax.gradleCommentsAndStrings(content) : BuildFileSyntax.mavenComments(content);
-        return versionPattern(buildTool).matcher(content).results().filter(pin -> !noCode[pin.start()]).toList();
+        boolean[] profiles = buildTool == BuildTool.MAVEN ? BuildFileSyntax.mavenProfiles(content, noCode) : new boolean[content.length()];
+        return versionPattern(buildTool).matcher(content).results().filter(pin -> !noCode[pin.start()] && !profiles[pin.start()]).toList();
     }
 
     /**
@@ -778,7 +779,7 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * Adds test classes to the list of test classes of a policy file, see {@link SecurityPolicyYaml#addTestClasses(String, List)}.
+     * Adds test classes to the list of test classes of a policy file, see {@link SecurityPolicyYaml#addTestClasses(String, List, boolean)}.
      *
      * @param repositoryRoot root of the checked-out exercise-tests repository
      * @param policyPath     the validated path of the policy file relative to the root
@@ -791,7 +792,8 @@ public final class SecurityPolicyRepositoryFiles {
         if (content.content() == null) {
             return false;
         }
-        Optional<String> updated = SecurityPolicyYaml.addTestClasses(content.content(), testClasses);
+        boolean verifiedAresVersion = readAresVersion(root).filter(SecurityPolicySchema.VERIFIED_ARES_VERSION::equals).isPresent();
+        Optional<String> updated = SecurityPolicyYaml.addTestClasses(content.content(), testClasses, verifiedAresVersion);
         updated.ifPresent(policy -> writePolicy(root, policyPath, policy));
         return updated.isPresent();
     }

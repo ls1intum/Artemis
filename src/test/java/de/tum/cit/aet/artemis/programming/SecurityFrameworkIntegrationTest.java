@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+import org.yaml.snakeyaml.Yaml;
 
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -110,6 +112,16 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
             params.add("frameworkVersion", frameworkVersion);
         }
         return request.putWithResponseBodyAndParams(basePath + "/" + action, null, SecurityFrameworkConfigDTO.class, expectedStatus, params);
+    }
+
+    /**
+     * @return the entries of {@code theFollowingClassesAreTestClasses} of a policy, as YAML reads them
+     */
+    @SuppressWarnings("unchecked")
+    private static List<String> testClassesOf(String policy) {
+        Map<String, Object> root = new Yaml().load(policy);
+        Map<String, Object> supervisedCode = (Map<String, Object>) root.get("regardingTheSupervisedCode");
+        return (List<String>) supervisedCode.get("theFollowingClassesAreTestClasses");
     }
 
     /**
@@ -239,7 +251,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
         assertThat(activated.disabledTestClasses()).containsExactly("de.example.ClassTest");
         Path repository = pulledTestsRepository();
         assertThat(Files.readString(repository.resolve("test/de/example/NewTest.java"))).contains(ACTIVE_ANNOTATION);
-        assertThat(Files.readString(repository.resolve("SecurityPolicy.yaml"))).contains("- \"de.example.NewTest\"").contains("- \"de.example.SortingTest\"");
+        assertThat(testClassesOf(Files.readString(repository.resolve("SecurityPolicy.yaml")))).contains("de.example.SortingTest", "de.example.NewTest");
     }
 
     @Test
@@ -250,8 +262,12 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
 
         SecurityFrameworkConfigDTO config = put("test-classes", null, HttpStatus.OK);
 
-        assertThat(config.policyFiles()).singleElement().satisfies(policyFile -> assertThat(policyFile.missingTestClasses()).isNullOrEmpty());
-        assertThat(Files.readString(pulledTestsRepository().resolve("SecurityPolicy.yaml"))).contains("- \"de.example.NewTest\"").contains("- \"de.example.SortingTest\"");
+        // The pushed policy still reads as a policy, and its list holds both classes.
+        assertThat(config.policyFiles()).singleElement().satisfies(policyFile -> {
+            assertThat(policyFile.problem()).isNull();
+            assertThat(policyFile.missingTestClasses()).isNullOrEmpty();
+        });
+        assertThat(testClassesOf(Files.readString(pulledTestsRepository().resolve("SecurityPolicy.yaml")))).containsExactly("de.example.SortingTest", "de.example.NewTest");
     }
 
     @Test
@@ -325,7 +341,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
         RepositoryExportTestUtil.writeFilesAndPush(testsRepository, Map.of(), "Add a symbolic link");
         String headBefore = pushedHead();
 
-        put("deactivate", null, HttpStatus.BAD_REQUEST);
+        request.putAndExpectError(basePath + "/deactivate", null, HttpStatus.BAD_REQUEST, "securityFrameworkSymbolicLinks");
         assertThat(pushedHead()).isEqualTo(headBefore);
         assertThat(Files.readString(testsRepository.workingCopyPath().resolve("SecurityPolicy.yaml"), StandardCharsets.UTF_8)).isEqualTo(POLICY);
     }

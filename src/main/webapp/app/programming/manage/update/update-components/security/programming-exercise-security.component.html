@@ -1,7 +1,7 @@
 @if (isAvailable()) {
-    <div class="mb-3">
+    <div class="mb-4!">
         <h4 class="mb-1 text-lg font-semibold">{{ 'artemisApp.programmingExercise.security.title' | artemisTranslate }}</h4>
-        <p class="mb-3 text-sm text-muted-color" jhiTranslate="artemisApp.programmingExercise.security.description"></p>
+        <p class="mb-4! text-sm text-muted-color" jhiTranslate="artemisApp.programmingExercise.security.description"></p>
 
         <!-- Keyed by the exercise, so the policy editor of another exercise is never reused; in simple mode it is only hidden, so its unsaved changes survive. -->
         @for (exerciseId of advancedViewExercise(); track exerciseId) {

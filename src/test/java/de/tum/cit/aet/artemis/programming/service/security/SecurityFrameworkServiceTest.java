@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -536,11 +537,17 @@ class SecurityFrameworkServiceTest {
     void committedBuildOutputDoesNotDecideTheState() throws Exception {
         // The root of the tests repository has a build.gradle, so build/ is build output there, even though it was committed by mistake.
         pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("build/generated/de/example/GeneratedTest.java").toFile(),
-                TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8));
+                TEST_CLASS.replace("SortingTest", "GeneratedTest").replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION),
+                StandardCharsets.UTF_8));
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
 
-        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
-        assertThat(securityFrameworkService.updateFrameworkVersion(exercise, "2.3.0", user).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
+        // A switched-off GeneratedTest would show up as a disabled test class, if the scanner read the build output.
+        SecurityFrameworkConfigDTO config = securityFrameworkService.getConfig(exercise);
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
+        assertThat(config.disabledTestClasses()).isEmpty();
+        SecurityFrameworkConfigDTO updated = securityFrameworkService.updateFrameworkVersion(exercise, "2.3.0", user);
+        assertThat(updated.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
+        assertThat(updated.disabledTestClasses()).isEmpty();
         assertThat(readPushed("build.gradle")).hasValueSatisfying(content -> assertThat(content).contains("aresVersion = '2.3.0'"));
     }
 
@@ -735,7 +742,19 @@ class SecurityFrameworkServiceTest {
         SecurityFrameworkConfigDTO config = securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "2.2.1", user);
 
         assertThat(config.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
-        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).hasValueSatisfying(policy -> assertThat(policy).contains("regardingThreadCreations: [ ]"));
+        // Each of the six kinds of resource access is listed, and none permits anything.
+        Map<String, Object> permitted = permittedResourceAccesses(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).orElseThrow());
+        assertThat(permitted).hasSize(6).allSatisfy((kind, accesses) -> assertThat(accesses).isEqualTo(List.of()));
+    }
+
+    /**
+     * @return the section {@code theFollowingResourceAccessesArePermitted} of a policy, as YAML reads it
+     */
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> permittedResourceAccesses(String policy) {
+        Map<String, Object> root = SecurityPolicyYaml.newYaml().load(policy);
+        Map<String, Object> supervisedCode = (Map<String, Object>) root.get("regardingTheSupervisedCode");
+        return (Map<String, Object>) supervisedCode.get("theFollowingResourceAccessesArePermitted");
     }
 
     private void pushPolicyAndVersion(String policy, String aresVersion) throws Exception {
