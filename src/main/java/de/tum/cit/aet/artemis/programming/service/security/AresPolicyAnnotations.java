@@ -146,10 +146,6 @@ final class AresPolicyAnnotations {
     }
 
     /**
-     * @return the path in normalized form with forward slashes, e.g. {@code SecurityPolicy.yaml} for {@code ./SecurityPolicy.yaml}; the path as written
-     *         if it is not a valid path
-     */
-    /**
      * @param packageName a package name
      * @return a pattern of the package and the dot after it as Java allows them to be written in the masked source: whitespace may surround each dot
      */
@@ -161,6 +157,10 @@ final class AresPolicyAnnotations {
         return pattern.toString();
     }
 
+    /**
+     * @return the path in normalized form with forward slashes, e.g. {@code SecurityPolicy.yaml} for {@code ./SecurityPolicy.yaml}; the path as written
+     *         if it is not a valid path
+     */
     private static String normalizePath(String path) {
         try {
             String normalized = Path.of(path).normalize().toString().replace('\\', '/');
