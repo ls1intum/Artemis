@@ -316,6 +316,7 @@
                 "frameworkVersion": "Framework-Version",
                 "frameworkVersionHelp": "Die Ares-Version, die in der Build-Datei des Test-Repositorys festgelegt ist. Wähle eine ältere Version nur, wenn die Aufgabe ein älteres Sandbox-Verhalten reproduzieren muss.",
                 "status": {
+                    "loading": "Wird geladen",
                     "inactive": "Inaktiv",
                     "generating": "Wird erstellt",
                     "configured": "Konfiguriert",
@@ -326,6 +327,7 @@
                     "unknown": "Nach dem Import bekannt"
                 },
                 "desc": {
+                    "loading": "Der Zustand des Security Frameworks im Test-Repository wird gelesen.",
                     "inactive": "Alle Testklassen laufen ohne Sandbox.",
                     "generating": "Die Sicherheitsrichtlinie wird in das Test-Repository committet.",
                     "configuredEdit": "Das Test-Repository ist für die Sandbox eingerichtet. Artemis hat die Dateien geprüft, aber noch kein Ares-Build hat bestätigt, dass Ares die Richtlinie akzeptiert.",
@@ -361,6 +363,7 @@
                     "INHERITED_METHOD_POLICY": "{{ location }}: Die Testklasse erbt von einer anderen Testklasse eine Testmethode mit eigener @Policy-Annotation, sodass dieser Test diese Policy behält, egal welcher Policy die Klasse zugeordnet ist."
                 },
                 "sync": {
+                    "loading": "Der Zustand des Test-Repositorys wird geladen…",
                     "inactive": "Beim Aktivieren wird die vorherige Richtlinie wiederhergestellt oder eine Standardrichtlinie erzeugt.",
                     "generating": "Richtlinie wird in das exercise-tests-Repository committet …",
                     "configured": "Richtlinie ist im Test-Repository committet · noch nicht durch einen Ares-Build bestätigt.",

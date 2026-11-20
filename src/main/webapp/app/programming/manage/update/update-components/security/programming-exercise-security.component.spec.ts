@@ -1569,7 +1569,60 @@ describe('ProgrammingExerciseSecurityComponent rendering', () => {
         expect(query(element, 'security-error-detail')?.textContent).toContain('REPAIR_FAILED');
         expect(query(element, 'security-repair')).not.toBeNull();
         expect(query(element, 'security-deactivate')).not.toBeNull();
+        // Retry re-runs the failed repair, which the server may already have pushed before it failed.
+        expect(query(element, 'security-retry')).not.toBeNull();
+    });
+
+    it('retries a failed repair with its own version, not with the restored one', () => {
+        const element = renderEdit(misconfiguredConfig(SecurityPolicyFileProblem.MISSING));
         expect(query(element, 'security-retry')).toBeNull();
+        service.activate.mockReturnValueOnce(throwError(() => new Error('PROCESSING_FAILED')));
+        fixture.componentInstance.onFrameworkVersionChanged('3.4.1');
+        fixture.detectChanges();
+        expect(fixture.componentInstance.config().frameworkVersion).toBe('3.3.0');
+
+        service.activate.mockReturnValueOnce(of(configuredConfig('3.4.1')));
+        (query(element, 'security-retry') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(service.activate).toHaveBeenLastCalledWith(42, '3.4.1');
+        expect(fixture.componentInstance.status()).toBe(SecurityActivationStatus.CONFIGURED);
+        expect(query(element, 'security-retry')).toBeNull();
+    });
+
+    it.each([
+        [SecurityPolicyFileProblem.TOO_LARGE, true],
+        [SecurityPolicyFileProblem.INVALID_PATH, true],
+        [SecurityPolicyFileProblem.MISSING, false],
+        [SecurityPolicyFileProblem.UNPARSEABLE, false],
+    ])('locks the version select of a misconfigured exercise only for a problem no version resolves (%s)', async (problem, locked) => {
+        const element = renderEdit(misconfiguredConfig(problem));
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.isVersionSelectDisabled()).toBe(locked);
+        expect((query(element, 'security-deactivate') as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it('shows that the config is loading instead of the placeholder status', () => {
+        const load$ = new Subject<SecurityFrameworkConfig>();
+        service.getConfig.mockReturnValue(load$);
+        fixture.componentRef.setInput('programmingExercise', javaExercise(42));
+        fixture.componentRef.setInput('mode', 'edit');
+        fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
+        fixture.detectChanges();
+        const element = fixture.nativeElement as HTMLElement;
+
+        expect(query(element, 'security-loading')).not.toBeNull();
+        expect(query(element, 'security-card')?.classList).toContain('sf-card--loading');
+        expect(query(element, 'security-status-text')?.textContent).not.toContain('configuredEdit');
+        expect(query(element, 'security-sync-line')?.textContent).toContain('sync.loading');
+
+        load$.next(inactiveConfig());
+        fixture.detectChanges();
+
+        expect(query(element, 'security-loading')).toBeNull();
+        expect(query(element, 'security-card')?.classList).toContain('sf-card--inactive');
     });
 
     it('disables Retry while the exercise is being saved, like the other sync actions', () => {

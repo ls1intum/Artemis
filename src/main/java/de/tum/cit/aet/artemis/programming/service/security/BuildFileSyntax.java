@@ -67,9 +67,10 @@ final class BuildFileSyntax {
     /** A keyword or type right before a Gradle variable that declares it, e.g. {@code def}, matched at the end of the code before the variable. */
     private static final Pattern GRADLE_DECLARATION_BEFORE = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})(?:def|var|final|String|Object)\\s++$");
 
-    private static final String MAVEN_PROFILES_START = "<profiles>";
+    /** The start tag of the profiles of a POM; XML allows whitespace before its {@code >}. */
+    private static final Pattern MAVEN_PROFILES_START = Pattern.compile("<profiles\\s*+>");
 
-    private static final String MAVEN_PROFILES_END = "</profiles>";
+    private static final Pattern MAVEN_PROFILES_END = Pattern.compile("</profiles\\s*+>");
 
     private BuildFileSyntax() {
         throw new UnsupportedOperationException("Utility class");
@@ -194,15 +195,18 @@ final class BuildFileSyntax {
         return INTERPOLATION.matcher(agent).replaceAll("").toLowerCase(Locale.ROOT).contains("ares");
     }
 
-    /** @return the content without the marked characters */
+    /**
+     * @param marked for each character of the content whether to remove it
+     * @return the content with the marked characters replaced by spaces, so offsets stay the same, e.g. those of {@link #mavenProfiles(String, boolean[])}
+     */
     private static String withoutMarked(String content, boolean[] marked) {
-        StringBuilder code = new StringBuilder(content.length());
-        for (int index = 0; index < content.length(); index++) {
-            if (!marked[index]) {
-                code.append(content.charAt(index));
+        char[] characters = content.toCharArray();
+        for (int index = 0; index < characters.length; index++) {
+            if (marked[index]) {
+                characters[index] = ' ';
             }
         }
-        return code.toString();
+        return new String(characters);
     }
 
     /**
@@ -398,12 +402,12 @@ final class BuildFileSyntax {
         // Both tags are searched outside comments, e.g. not in <!-- Example: <profiles> -->; the masked text keeps the offsets of the content.
         String code = withoutMarked(content, comments);
         boolean[] profiles = new boolean[content.length()];
-        int start = code.indexOf(MAVEN_PROFILES_START);
-        while (start >= 0) {
-            int close = code.indexOf(MAVEN_PROFILES_END, start);
-            int end = close < 0 ? content.length() : close + MAVEN_PROFILES_END.length();
-            Arrays.fill(profiles, start, end, true);
-            start = code.indexOf(MAVEN_PROFILES_START, end);
+        Matcher start = MAVEN_PROFILES_START.matcher(code);
+        Matcher end = MAVEN_PROFILES_END.matcher(code);
+        int from = 0;
+        while (start.find(from)) {
+            from = end.find(start.end()) ? end.end() : content.length();
+            Arrays.fill(profiles, start.start(), from, true);
         }
         return profiles;
     }

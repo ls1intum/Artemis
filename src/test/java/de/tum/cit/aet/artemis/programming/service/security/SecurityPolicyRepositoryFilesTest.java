@@ -454,6 +454,16 @@ class SecurityPolicyRepositoryFilesTest {
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES, "de.example.OtherTest");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "import de.tum.cit.ase.ares.api.jupiter . Public;", "import de . tum.cit.ase.ares.api.jupiter /* Ares */ . *;" })
+    void anImportWithWhitespaceAroundItsDotsRegistersAres(String aresImport) throws IOException {
+        writeBuildFile();
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("import de.tum.cit.ase.ares.api.jupiter.Public;", aresImport));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
+    }
+
     @Test
     void aClassLiteralOfTheSecurityExtensionOutsideExtendWithRegistersNothing() throws IOException {
         writeBuildFile();
@@ -1301,7 +1311,7 @@ class SecurityPolicyRepositoryFilesTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "../outside.yaml", "/etc/policy.yaml", ".git/config", "C:\\policy.yaml", "", "  ", "a\0b.yaml", "\\policy.yaml", ".", ".git", "..",
-            "a/../../policy.yaml", "x\\..\\.git\\config", "a\\..\\..\\policy.yaml" })
+            "a/../../policy.yaml", "x\\..\\.git\\config", "a\\..\\..\\policy.yaml", ".GIT/config", ".Git", "./.gIt/hooks/pre-commit.yaml" })
     void rejectsPolicyPathsOutsideTheRepository(String path) {
         assertThat(SecurityPolicyRepositoryFiles.validatePolicyPath(path)).isEmpty();
         assertThat(SecurityPolicyRepositoryFiles.validatePolicyPath("./policies/../SecurityPolicy.yaml")).contains("SecurityPolicy.yaml");
@@ -1433,7 +1443,8 @@ class SecurityPolicyRepositoryFilesTest {
             assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(gradle, mavenPom)).unsupportedReasons()).contains(reason);
         }
         else {
-            assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(gradle, mavenPom)).unsupportedReasons()).doesNotContain(reason);
+            assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(gradle, mavenPom)).unsupportedReasons())
+                    .noneMatch(unsupported -> unsupported.type() == SecurityFrameworkState.UnsupportedReasonType.ARES_1);
         }
     }
 
@@ -1503,6 +1514,25 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isTrue();
 
         assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo(helper + "ext { aresVersion = '2.4.0' }\n");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ext { aresVersion = '2.2' + '.1' }\n", "ext { aresVersion = \"${base}.1\" }\n", "ext.aresVersion = '2.2.1'.trim()\n" })
+    void aGradleExpressionIsNoPin(String gradleBuild) throws IOException {
+        // Artemis could neither read the version of an expression nor replace it without changing what the build computes.
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).isEmpty();
+        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), gradleBuild, StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isFalse();
+        assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo(gradleBuild);
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null, "<properties><ares.version>${base.version}</ares.version></properties>")).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ext { aresVersion = '2.2.1' }\n", "ext.aresVersion = '2.2.1'; // Ares 2\n", "ext.aresVersion = \"2.2.1\" /* Ares 2 */\n",
+            "ext.aresVersion = '2.2.1'" })
+    void aCompleteLiteralIsAPin(String gradleBuild) {
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
     }
 
     @Test
@@ -1604,6 +1634,9 @@ class SecurityPolicyRepositoryFilesTest {
         // While the profile is active, Maven uses its version instead of the one of the POM, which Artemis would read and change.
         assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + profile)).unsupportedReasons()).containsExactly(reason);
         assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, profile)).unsupportedReasons()).containsExactly(reason);
+        // XML allows whitespace before the > of a tag.
+        String spacedProfile = profile.replace("<profiles>", "<profiles >").replace("</profiles>", "</profiles\n>");
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + spacedProfile)).unsupportedReasons()).containsExactly(reason);
         // A Gradle build that pins the version is the one the exercise uses, and a profile in a comment pins nothing.
         assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles("ext { aresVersion = '2.2.1' }\n", profile)).unsupportedReasons()).isEmpty();
         assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + "<!-- " + profile + " -->")).unsupportedReasons()).isEmpty();
@@ -1678,13 +1711,27 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void aPolicyBelowAFileIsAnInvalidPathAndOneBelowAMissingDirectoryIsMissing() throws IOException {
+        FileUtils.writeStringToFile(root.resolve("notes.txt").toFile(), "notes", StandardCharsets.UTF_8);
+        Path absoluteRoot = root.toAbsolutePath().normalize();
+
+        // No file can be below notes.txt, so repairing the policy could not write it there.
+        assertThat(SecurityPolicyRepositoryFiles.readPolicyFile(absoluteRoot, "notes.txt/SecurityPolicy.yaml").problem())
+                .isEqualTo(SecurityFrameworkState.PolicyFileProblem.INVALID_PATH);
+        assertThat(SecurityPolicyRepositoryFiles.readPolicyFile(absoluteRoot, "notes.txt/nested/SecurityPolicy.yaml").problem())
+                .isEqualTo(SecurityFrameworkState.PolicyFileProblem.INVALID_PATH);
+        assertThat(SecurityPolicyRepositoryFiles.readPolicyFile(absoluteRoot, "policies/SecurityPolicy.yaml").problem())
+                .isEqualTo(SecurityFrameworkState.PolicyFileProblem.MISSING);
+    }
+
+    @Test
     void refusesToWriteOrDeleteAPolicyWhereThereIsNoFile() throws IOException {
         Files.createDirectories(root.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).resolve("nested"));
         FileUtils.writeStringToFile(root.resolve("notes.txt").toFile(), "notes", StandardCharsets.UTF_8);
 
         assertThatIllegalArgumentException().isThrownBy(() -> SecurityPolicyRepositoryFiles.writePolicy(root, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, POLICY));
         assertThatIllegalArgumentException().isThrownBy(() -> SecurityPolicyRepositoryFiles.writePolicy(root, "../SecurityPolicy.yaml", POLICY));
-        assertThatThrownBy(() -> SecurityPolicyRepositoryFiles.writePolicy(root, "notes.txt/SecurityPolicy.yaml", POLICY)).isInstanceOf(UncheckedIOException.class);
+        assertThatIllegalArgumentException().isThrownBy(() -> SecurityPolicyRepositoryFiles.writePolicy(root, "notes.txt/SecurityPolicy.yaml", POLICY));
         // A directory at the path of a policy is no policy file, so deleting the policy leaves it alone.
         SecurityPolicyRepositoryFiles.deletePolicyFile(root, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME);
         assertThat(root.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).resolve("nested")).isDirectory();

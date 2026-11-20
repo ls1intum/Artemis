@@ -34,6 +34,7 @@ import {
     SecurityVersionCompatibilityVerdict,
     TRANSIENT_SECURITY_STATUSES,
     UNREPAIRABLE_POLICY_FILE_PROBLEMS,
+    VERSION_INDEPENDENT_POLICY_FILE_PROBLEMS,
     isSameSecurityChoice,
     isSecurityConfigured,
     securityFrameworkProblemMessages,
@@ -231,6 +232,8 @@ export class ProgrammingExerciseSecurityComponent {
     readonly loadFailed = signal(false);
     /** True while the persisted (edit) or source (import) config is loading. Keeps the controls disabled until it settles, so an early toggle cannot be overwritten by a late load. */
     readonly loading = signal(false);
+    /** True after a sync operation failed until it or another one runs, so Retry can re-run it, also when the card fell back to MISCONFIGURED. */
+    readonly hasFailedOperation = signal(false);
 
     readonly isActive = computed(() => isSecurityConfigured(this.config()));
     /**
@@ -309,10 +312,17 @@ export class ProgrammingExerciseSecurityComponent {
      * The version selector is locked while a sync is in flight and while the card is in ERROR. A version picked in
      * ERROR would only change local state (no request is made unless the exercise is active), while Retry still
      * re-runs the previously failed operation for the old version - so the shown selection could silently diverge
-     * from what Retry actually does.
+     * from what Retry actually does. It is also locked while a policy file has a problem that no version resolves, e.g.
+     * one too large to read, because picking a version activates with it, which the server rejects for the same file.
      */
     readonly isVersionSelectDisabled = computed(
-        () => this.isBusy() || this.isSaving() || this.status() === SecurityActivationStatus.ERROR || this.frameworkVersions().length === 0 || !this.isVersionSaved(),
+        () =>
+            this.isBusy() ||
+            this.isSaving() ||
+            this.status() === SecurityActivationStatus.ERROR ||
+            this.frameworkVersions().length === 0 ||
+            !this.isVersionSaved() ||
+            this.hasVersionIndependentProblem(),
     );
     /** The toggle sits "on" whenever the sandbox is on or being turned on (or errored while on). */
     readonly isToggleOn = computed(() => {
@@ -329,10 +339,22 @@ export class ProgrammingExerciseSecurityComponent {
 
     /** Import from a file or the sharing platform: the state of the tests is only known after the import. */
     readonly isStateUnknown = computed(() => this.isImportMode() && this.sourceExerciseId() === undefined);
-    /** Lowercase status name, used to key the state-based CSS class (sf-card--configured, etc.) and the pill label. */
-    readonly statusVariant = computed(() => (this.isStateUnknown() ? 'unknown' : this.status().toLowerCase()));
+    /**
+     * Lowercase status name, used to key the state-based CSS class (sf-card--configured, etc.) and the pill label. While the config loads, the card shows no
+     * status, because the initial one is only a placeholder.
+     */
+    readonly statusVariant = computed(() => {
+        if (this.loading()) {
+            return 'loading';
+        }
+        return this.isStateUnknown() ? 'unknown' : this.status().toLowerCase();
+    });
     /** Why the config is MISCONFIGURED or UNSUPPORTED, one translatable message per broken policy file or reason. */
     readonly problemMessages = computed(() => securityFrameworkProblemMessages(this.config()));
+    /** Whether a broken policy file exists that no version resolves, see {@link VERSION_INDEPENDENT_POLICY_FILE_PROBLEMS}. */
+    private readonly hasVersionIndependentProblem = computed(() =>
+        (this.config().policyFiles ?? []).some((file) => file.problem !== undefined && VERSION_INDEPENDENT_POLICY_FILE_PROBLEMS.has(file.problem)),
+    );
     /** Whether a broken policy file exists that activating cannot repair, so Repair is disabled. */
     readonly hasUnrepairableProblem = computed(() =>
         (this.config().policyFiles ?? []).some((file) => file.problem !== undefined && UNREPAIRABLE_POLICY_FILE_PROBLEMS.has(file.problem)),
@@ -517,6 +539,7 @@ export class ProgrammingExerciseSecurityComponent {
         this.pendingOperation = undefined;
         // The policy editor of the previous exercise is replaced, together with its pending commit.
         this.policyCommitPending.set(false);
+        this.hasFailedOperation.set(false);
         this.config.set({ status: SecurityActivationStatus.CONFIGURED });
         this.lastSettledActive.set(true);
         this.loadConfig(exerciseId);
@@ -621,7 +644,6 @@ export class ProgrammingExerciseSecurityComponent {
         }
     }
 
-    /** MISCONFIGURED in edit mode: activating again writes the missing policy files with the selected version. */
     /** CONFIGURED in edit mode: adds the test classes that point to a policy file but are missing from it, so Ares does not treat them like student code. */
     onAddDiscoveredTestClasses(): void {
         const exerciseId = this.editExerciseId();
@@ -630,6 +652,7 @@ export class ProgrammingExerciseSecurityComponent {
         }
     }
 
+    /** MISCONFIGURED in edit mode: activating again writes the missing policy files with the selected version. */
     onRepair(): void {
         const exerciseId = this.editExerciseId();
         if (exerciseId !== undefined) {
@@ -795,7 +818,8 @@ export class ProgrammingExerciseSecurityComponent {
      * settle to the returned config on success, or drop to ERROR on failure - keeping the failed
      * operation so the retry button re-runs exactly it. Defining the error contract here once means
      * every action (activate, repair, deactivate, version change) handles failure identically. A failed action on a
-     * MISCONFIGURED exercise leaves it misconfigured, so Repair and Deactivate stay available and Repair doubles as the retry.
+     * MISCONFIGURED exercise leaves it misconfigured, so Repair and Deactivate stay available. Retry is offered too: the server may have pushed a repair
+     * with another version before it failed, which Repair, with the restored version, would change again.
      */
     private runOperation(transientPatch: Partial<SecurityFrameworkConfig>, run: () => Observable<SecurityFrameworkConfig>): void {
         // Also guards a confirmation that was accepted while a commit of the policy editor was pending.
@@ -807,6 +831,7 @@ export class ProgrammingExerciseSecurityComponent {
         // A misconfigured exercise falls back to its settled state on failure, which includes the version the repository still pins.
         const versionBefore = this.config().frameworkVersion;
         this.pendingOperation = { visit, transientPatch, run };
+        this.hasFailedOperation.set(false);
         this.patchConfig(cloneWith(transientPatch, { errorDetail: undefined }));
         run().subscribe({
             next: (next) => {
@@ -822,6 +847,7 @@ export class ProgrammingExerciseSecurityComponent {
                     return;
                 }
                 const errorDetail = this.errorDetailOf(error);
+                this.hasFailedOperation.set(true);
                 if (statusOnFailure === SecurityActivationStatus.MISCONFIGURED) {
                     this.patchConfig({ status: statusOnFailure, errorDetail, frameworkVersion: versionBefore });
                 } else {

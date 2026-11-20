@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -68,9 +69,15 @@ public final class SecurityPolicyRepositoryFiles {
 
     private static final String MAVEN_BUILD_FILE = "pom.xml";
 
-    private static final Pattern GRADLE_ARES_VERSION = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})(aresVersion\\s*=\\s*['\"])([^'\"]+)(['\"])");
+    /**
+     * The Ares version as a complete string literal on the right of {@code aresVersion =}, e.g. {@code aresVersion = '2.2.1'}. An expression such as
+     * {@code '2.2' + '.1'} or an interpolation such as {@code "${base}.1"} pins no version Artemis could read or replace, so it is no pin.
+     */
+    private static final Pattern GRADLE_ARES_VERSION = Pattern
+            .compile("(?<!\\p{javaJavaIdentifierPart})(aresVersion\\s*=\\s*['\"])([^'\"$]+)(['\"])(?=[ \\t]*+(?:[;}\\r\\n]|//|/\\*|$))");
 
-    private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version>)([^<]+)(</ares\\.version>)");
+    /** The Ares version as the text of {@code <ares.version>}; a reference to another property, e.g. {@code ${base.version}}, is no pin. */
+    private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version>)([^<$]+)(</ares\\.version>)");
 
     private static final Pattern WINDOWS_DRIVE = Pattern.compile("[A-Za-z]:");
 
@@ -450,7 +457,9 @@ public final class SecurityPolicyRepositoryFiles {
         catch (InvalidPathException _) {
             return Optional.empty();
         }
-        if (normalized.isEmpty() || normalized.equals("..") || normalized.startsWith("../") || normalized.equals(".git") || normalized.startsWith(".git/")) {
+        // A file system that ignores the case, e.g. on macOS or Windows, also resolves .GIT to the Git directory.
+        String lowerCase = normalized.toLowerCase(Locale.ROOT);
+        if (normalized.isEmpty() || normalized.equals("..") || normalized.startsWith("../") || lowerCase.equals(".git") || lowerCase.startsWith(".git/")) {
             return Optional.empty();
         }
         return Optional.of(normalized);
@@ -465,7 +474,7 @@ public final class SecurityPolicyRepositoryFiles {
      */
     static PolicyFileContent readPolicyFile(Path root, String path) {
         Path file = root.resolve(path).normalize();
-        if (!file.startsWith(root) || hasSymbolicLinkOnPath(root, file)) {
+        if (!file.startsWith(root) || blocksPolicyFile(root, file)) {
             return PolicyFileContent.failed(SecurityFrameworkState.PolicyFileProblem.INVALID_PATH);
         }
         if (!Files.exists(file, LinkOption.NOFOLLOW_LINKS)) {
@@ -485,9 +494,14 @@ public final class SecurityPolicyRepositoryFiles {
         }
     }
 
-    private static boolean hasSymbolicLinkOnPath(Path root, Path file) {
+    /**
+     * @return whether a component of the path below the root is a symbolic link, or a directory above the file is a file instead, e.g. {@code notes.txt} in
+     *         {@code notes.txt/SecurityPolicy.yaml}, so no policy file can be at the path
+     */
+    private static boolean blocksPolicyFile(Path root, Path file) {
         for (Path current = file; current != null && current.startsWith(root) && !current.equals(root); current = current.getParent()) {
-            if (Files.isSymbolicLink(current)) {
+            boolean fileAsDirectory = !current.equals(file) && Files.exists(current, LinkOption.NOFOLLOW_LINKS) && !Files.isDirectory(current, LinkOption.NOFOLLOW_LINKS);
+            if (Files.isSymbolicLink(current) || fileAsDirectory) {
                 return true;
             }
         }
@@ -715,7 +729,7 @@ public final class SecurityPolicyRepositoryFiles {
     public static void writePolicy(Path repositoryRoot, String policyPath, String policy) {
         Path root = repositoryRoot.toAbsolutePath().normalize();
         Path file = root.resolve(policyPath).normalize();
-        if (validatePolicyPath(policyPath).isEmpty() || !file.startsWith(root) || hasSymbolicLinkOnPath(root, file)
+        if (validatePolicyPath(policyPath).isEmpty() || !file.startsWith(root) || blocksPolicyFile(root, file)
                 || (Files.exists(file, LinkOption.NOFOLLOW_LINKS) && !Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS))) {
             throw new IllegalArgumentException("Refusing to write the policy file " + policyPath);
         }
@@ -731,7 +745,7 @@ public final class SecurityPolicyRepositoryFiles {
     public static void deletePolicyFile(Path repositoryRoot, String policyPath) {
         Path root = repositoryRoot.toAbsolutePath().normalize();
         Path file = root.resolve(policyPath).normalize();
-        if (!file.startsWith(root) || hasSymbolicLinkOnPath(root, file) || !Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) {
+        if (!file.startsWith(root) || blocksPolicyFile(root, file) || !Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) {
             return;
         }
         try {
@@ -760,8 +774,8 @@ public final class SecurityPolicyRepositoryFiles {
 
     /**
      * Switches every Ares {@code @Policy} annotation in the Java files of the repository on or off. Only the {@code activated} flag changes: the policy file
-     * an annotation points to and its other arguments are kept, so an instructor's custom policy path survives a deactivate/activate cycle and the
-     * cycle restores every annotation exactly.
+     * an annotation points to and its other arguments are kept, so an instructor's custom policy path survives a deactivate/activate cycle, which restores
+     * the policy and the activation of every annotation; see {@link AresPolicyAnnotations#setActive(String, boolean)} for how its spelling may change.
      *
      * @param repositoryRoot root of the checked-out exercise-tests repository
      * @param active         whether the annotations should enforce their policy

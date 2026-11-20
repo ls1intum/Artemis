@@ -21,7 +21,9 @@ import { ProjectType } from 'app/programming/shared/entities/programming-exercis
  * Client-only states:
  * - GENERATING: transient. Activation, a repair or a version change is being committed to the tests repository.
  * - DELETING:   transient. The security policy is being removed from the tests repository.
- * - ERROR:      the last operation failed; the repository keeps its previous state.
+ * - ERROR:      the last operation failed; the card shows the last known state. A failure before the push leaves
+ *               the repository as it was, but one after it, e.g. while the builds are triggered, may have
+ *               changed it already.
  *
  * GENERATING, DELETING and ERROR only occur in edit mode (an existing exercise with a real repository). In
  * create and import mode, changes are only staged and sent with the create or import request.
@@ -53,6 +55,12 @@ export const UNREPAIRABLE_POLICY_FILE_PROBLEMS: ReadonlySet<SecurityPolicyFilePr
     SecurityPolicyFileProblem.INVALID_PATH,
     SecurityPolicyFileProblem.TOO_LARGE,
     SecurityPolicyFileProblem.UNPARSEABLE,
+]);
+
+/** Policy file problems that no Ares version resolves, because the file cannot be read whatever the version checks, so changing the version cannot repair them. */
+export const VERSION_INDEPENDENT_POLICY_FILE_PROBLEMS: ReadonlySet<SecurityPolicyFileProblem> = new Set([
+    SecurityPolicyFileProblem.INVALID_PATH,
+    SecurityPolicyFileProblem.TOO_LARGE,
 ]);
 
 /** Why Artemis cannot manage the sandbox of a tests repository, mirroring the server's {@code SecurityFrameworkState.UnsupportedReasonType}. */
