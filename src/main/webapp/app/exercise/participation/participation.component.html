@@ -152,7 +152,7 @@
                     [title]="'artemisApp.programmingExercise.resubmitSingleLabel'"
                 />
             } @else {
-                <fa-icon [icon]="faCircleNotch" animation="spin" class="text-text-secondary" />
+                <fa-icon [icon]="faCircleNotch" animation="spin" class="text-muted-color" />
             }
         }
         @if (basicPresentationEnabled() && !dto.testRun && dto.presentationScore !== 1) {
@@ -373,7 +373,7 @@
             @if (cell.data.individualDueDate) {
                 {{ cell.data.individualDueDate | artemisDate }}
             } @else {
-                <span class="italic text-text-secondary" jhiTranslate="artemisApp.participation.noIndividualDueDate"></span>
+                <span class="italic text-muted-color" jhiTranslate="artemisApp.participation.noIndividualDueDate"></span>
             }
             @if (exercise()!.isAtLeastInstructor) {
                 <button

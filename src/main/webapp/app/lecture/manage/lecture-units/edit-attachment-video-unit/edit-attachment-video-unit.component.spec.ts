@@ -1,10 +1,14 @@
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumLiveTransferEvent } from '../services/tum-live-upload.service';
+import { RecordingNavigation } from '../tum-live-upload/tum-live-creation';
+import { TumLiveUploadComponent } from '../tum-live-upload/tum-live-upload.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from '../attachment-video-unit-form/attachment-video-unit-form.component';
 import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 import { AttachmentVideoUnitService } from '../services/attachment-video-unit.service';
@@ -58,6 +62,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
                         }),
                         parent: {
                             parent: {
+                                parent: { snapshot: { paramMap: convertToParamMap({ courseId: 1 }) } },
                                 paramMap: of({
                                     get: (key: string) => {
                                         switch (key) {
@@ -173,6 +178,97 @@ describe('EditAttachmentVideoUnitComponent', () => {
 
         expect(form.videoSourceControl!.value).toBe('https://tum.live/w/algo/55');
         expect(fixture.componentInstance.attachmentVideoUnit()?.videoSource).toBe('https://tum.live/w/algo/55');
+    });
+
+    it('automatically starts the recording handed by the standalone create page exactly once', () => {
+        const recording = new File(['mp4'], 'recording.mp4', { type: 'video/mp4' });
+        const info = new RecordingNavigation({ courseId: 1, lectureId: 1, unitId: 1 }, recording, attachmentVideoUnit);
+        vi.spyOn(router, 'currentNavigation').mockReturnValue({ extras: { info } } as ReturnType<Router['currentNavigation']>);
+        fixture.destroy();
+        fixture = TestBed.createComponent(EditAttachmentVideoUnitComponent);
+        const uploads = TestBed.inject(TumLiveUploadService);
+        const start = vi.spyOn(uploads, 'start').mockReturnValue(of({ ref: 'own-reference', uploadUrl: '/upload' }));
+        const transfer = vi.spyOn(uploads, 'transfer').mockReturnValue(new Subject<TumLiveTransferEvent>());
+        vi.spyOn(uploads, 'discard').mockReturnValue(of(undefined));
+
+        fixture.detectChanges();
+        fixture.detectChanges();
+
+        expect(start).toHaveBeenCalledExactlyOnceWith(1);
+        expect(transfer).toHaveBeenCalledExactlyOnceWith('/upload', recording);
+        expect(info.takeFile()).toBeUndefined();
+        fixture.destroy();
+    });
+
+    it('asks before a changed link discards a pending recording even with autosave off', () => {
+        vi.spyOn(TestBed.inject(TumLiveUploadService), 'getState').mockReturnValue(of({ connected: true, pendingRef: 'pending', converting: true }));
+        const link = 'https://live.rbg.tum.de/w/course/51';
+        updateAttachmentVideoUnitSpy.mockReturnValue(of({ ...attachmentVideoUnit, videoSource: link }));
+        fixture.detectChanges();
+        const data = { formProperties: { name: 'Recording', videoSource: link }, fileProperties: {} };
+        const dialogs = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+
+        fixture.componentInstance.updateAttachmentVideoUnit(data);
+        expect(updateAttachmentVideoUnitSpy).not.toHaveBeenCalled();
+        expect(dialogs.request(undefined)?.header).toBe('artemisApp.tumLiveUpload.replacePendingLinkTitle');
+        dialogs.request(undefined)!.reject?.();
+        expect(updateAttachmentVideoUnitSpy).not.toHaveBeenCalled();
+
+        fixture.componentInstance.updateAttachmentVideoUnit(data);
+        dialogs.request(undefined)!.accept();
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledOnce();
+        expect(updateAttachmentVideoUnitSpy.mock.calls[0][2].videoSource).toBe(link);
+    });
+
+    it.each([50, 100])('warns before saving and leaving during a %s%% upload', (progress) => {
+        const uploads = TestBed.inject(TumLiveUploadService);
+        const transfer = new Subject<TumLiveTransferEvent>();
+        vi.spyOn(uploads, 'start').mockReturnValue(of({ ref: 'own-reference', uploadUrl: '/upload' }));
+        vi.spyOn(uploads, 'transfer').mockReturnValue(transfer);
+        const discard = vi.spyOn(uploads, 'discard').mockReturnValue(of(undefined));
+        fixture.detectChanges();
+        const uploader: TumLiveUploadComponent = fixture.debugElement.query(By.directive(TumLiveUploadComponent)).componentInstance;
+        uploader.file.set(new File(['mp4'], 'recording.mp4', { type: 'video/mp4' }));
+        uploader.upload();
+        transfer.next({ type: 'progress', percent: progress });
+        updateAttachmentVideoUnitSpy.mockReturnValue(of(attachmentVideoUnit));
+        const dialogs = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+
+        fixture.componentInstance.updateAttachmentVideoUnit({ formProperties: { name: 'Recording', videoSource: attachmentVideoUnit.videoSource }, fileProperties: {} });
+        expect(updateAttachmentVideoUnitSpy).not.toHaveBeenCalled();
+        expect(dialogs.request(undefined)?.message).toBe(progress === 100 ? 'artemisApp.tumLiveUpload.leaveSentMessage' : 'artemisApp.tumLiveUpload.leaveMessage');
+
+        dialogs.request(undefined)!.accept();
+        expect(discard).toHaveBeenCalledExactlyOnceWith(1, 'own-reference');
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledOnce();
+    });
+
+    it.each([false, true])('keeps the original link baseline if a recording attaches during confirmation (link edited: %s)', (editedLink) => {
+        const uploads = TestBed.inject(TumLiveUploadService);
+        vi.spyOn(uploads, 'start').mockReturnValue(of({ ref: 'own-reference', uploadUrl: '/upload' }));
+        vi.spyOn(uploads, 'transfer').mockReturnValue(new Subject<TumLiveTransferEvent>());
+        vi.spyOn(uploads, 'discard').mockReturnValue(of(undefined));
+        fixture.detectChanges();
+        const uploader: TumLiveUploadComponent = fixture.debugElement.query(By.directive(TumLiveUploadComponent)).componentInstance;
+        uploader.file.set(new File(['mp4'], 'recording.mp4', { type: 'video/mp4' }));
+        uploader.upload();
+
+        const loaded = attachmentVideoUnit.videoSource;
+        const sent = editedLink ? 'https://example.com/edited' : loaded;
+        const attached = 'https://tum.live/w/algo/55';
+        const response = { ...attachmentVideoUnit, videoSource: attached } as AttachmentVideoUnit;
+        updateAttachmentVideoUnitSpy.mockReturnValue(of(response));
+        fixture.componentInstance.updateAttachmentVideoUnit({ formProperties: { name: 'Renamed', videoSource: sent }, fileProperties: {} });
+        const dialogs = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        expect(updateAttachmentVideoUnitSpy).not.toHaveBeenCalled();
+
+        vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(of(response));
+        fixture.componentInstance.onTumLiveVideoAttached(1);
+        dialogs.request(undefined)!.accept();
+
+        expect(updateAttachmentVideoUnitSpy.mock.calls[0][2]).toMatchObject({ videoSource: sent, loadedVideoSource: loaded });
+        expect(navigateSpy).toHaveBeenCalledTimes(editedLink ? 0 : 1);
     });
 
     it('should update attachment video unit with file change without notification', () => {

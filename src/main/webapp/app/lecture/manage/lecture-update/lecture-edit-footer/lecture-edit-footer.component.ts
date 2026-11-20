@@ -32,6 +32,8 @@ export class LectureEditFooterComponent {
     /** The lecture details differ from what was last saved. */
     readonly hasChanges = input(false);
     readonly isSaving = input(false);
+    readonly allowLeaveWhileSaving = input(false);
+    readonly saveLabel = input('entity.action.save');
     /** Translation key of why the details cannot be saved, such as a missing title; undefined while they can. */
     readonly invalidReason = input<string>();
     /** When the details were last saved on this page; shown until the next change. */
