@@ -41,6 +41,7 @@ $dark: $gray-900;
 
 $body-color: $gray-900;
 $text-body-secondary: $secondary;
+$body-secondary-color: rgba($body-color, 0.75);
 $body-bg: $gray-200;
 
 $navbar-dark-color: rgba($white, 0.6);
@@ -468,7 +469,7 @@ $notification-sb-overlay-bg: rgba(0, 0, 0, 0.2);
 $notification-sb-box-shadow: rgba(0, 0, 0, 0.5);
 $notification-sb-even-child-bg: #f1f1f1;
 $notification-sb-hover-child-bg: rgba(62, 138, 204, 0.2);
-$notification-sb-icon-color: var(--bs-body-color);
+$notification-sb-icon-color: var(--body-color);
 
 // Text Editor
 $text-editor-background: #f8fafc;
@@ -744,3 +745,32 @@ $global-search-lecture-accent: #9333ea;
 $global-search-result-icon-bg: rgba($global-search-lecture-accent, 0.12);
 $global-search-result-hover-border: rgba($global-search-lecture-accent, 0.5);
 $global-search-result-hover-bg: rgba($global-search-lecture-accent, 0.05);
+
+// Tailwind colour utilities
+// The values behind `text-primary`, `text-color`, `text-muted-color`, `border-surface`, `bg-highlight` and the
+// neutral `surface` ramp (`bg-surface-100`); tailwind.css maps the utilities to these variables.
+$ui-primary: $primary;
+$ui-primary-contrast: #fff;
+$ui-text-color: #334155;
+$ui-text-muted-color: #64748b;
+$ui-border-color: #e2e8f0;
+$ui-highlight-background: mix($primary, #fff, 10%);
+$ui-highlight-color: mix($primary, #000, 60%);
+$ui-emphasis-background: #f1f5f9;
+$ui-emphasis-color: #1e293b;
+$ui-surface-0: #fff;
+$ui-surface-50: #f8fafc;
+$ui-surface-100: #f1f5f9;
+$ui-surface-200: #e2e8f0;
+$ui-surface-300: #cbd5e1;
+$ui-surface-400: #94a3b8;
+$ui-surface-500: #64748b;
+$ui-surface-600: #475569;
+$ui-surface-700: #334155;
+$ui-surface-800: #1e293b;
+$ui-surface-900: #0f172a;
+$ui-surface-950: #020617;
+
+// Tables of rendered markdown
+$markdown-table-color: $black;
+$markdown-table-border-color: $border-color;

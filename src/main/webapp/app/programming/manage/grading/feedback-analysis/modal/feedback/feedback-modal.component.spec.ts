@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback/feedback-modal.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
@@ -10,7 +9,6 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 describe('FeedbackModalComponent', () => {
     let fixture: ComponentFixture<FeedbackModalComponent>;
     let component: FeedbackModalComponent;
-    let activeModal: NgbActiveModal;
     let http: HttpTestingController;
 
     const mockFeedbackDetail: FeedbackDetail = {
@@ -27,11 +25,10 @@ describe('FeedbackModalComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FeedbackModalComponent],
-            providers: [NgbActiveModal, provideHttpClient(), provideHttpClientTesting(), provideTranslateService()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), provideTranslateService()],
         }).compileComponents();
         fixture = TestBed.createComponent(FeedbackModalComponent);
         component = fixture.componentInstance;
-        activeModal = TestBed.inject(NgbActiveModal);
         http = TestBed.inject(HttpTestingController);
         fixture.componentRef.setInput('feedbackDetail', mockFeedbackDetail);
         fixture.detectChanges();
@@ -61,10 +58,11 @@ describe('FeedbackModalComponent', () => {
         expect(component.feedbackDetail().testCaseName).toBe('testCase1');
     });
 
-    it('should call close on activeModal when close is triggered', () => {
+    it('should emit closed when the dialog is closed', () => {
         http.expectOne('/api/assessment/feedbacks/1/long-feedback').flush('Loaded long feedback');
-        const closeSpy = vi.spyOn(activeModal, 'close');
-        component.activeModal.close();
-        expect(closeSpy).toHaveBeenCalledOnce();
+        const closedSpy = vi.fn();
+        component.closed.subscribe(closedSpy);
+        (document.querySelector('[role="dialog"] button[aria-label]') as HTMLButtonElement).click();
+        expect(closedSpy).toHaveBeenCalledOnce();
     });
 });
