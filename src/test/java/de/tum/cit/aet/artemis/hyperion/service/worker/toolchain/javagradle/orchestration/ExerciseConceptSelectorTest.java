@@ -266,7 +266,7 @@ class ExerciseConceptSelectorTest {
         when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any()))
                 .thenReturn(new SpecFidelityCritic.ConceptSelectionReview(true, null, List.of("No candidate passed.")));
         var events = new java.util.ArrayList<ProviderUsageUpdate>();
-        var usage = new WorkerUsageRecorder(100_000, 0.5, true, events::add);
+        var usage = new WorkerUsageRecorder(100_000, 0.5, events::add);
         var selection = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", "", 2, () -> false, usage, null);
         assertThat(selection.accepted()).isFalse();
         assertThat(usage.snapshot().agentTurns()).isEqualTo(selection.turns()).isPositive();

@@ -83,16 +83,15 @@ class AtlasResponsesToolLoopTest {
         withUsage(last, 20, 3);
         when(last.usage().orElseThrow()._additionalProperties()).thenReturn(Map.of("cost", JsonValue.from(0.02), "cost_currency", JsonValue.from("USD")));
         when(responseService.create(any(ResponseCreateParams.class))).thenReturn(first, last);
-        var adapter = new OpenAiResponsesChatModel(openAIClient, new JsonMapper(), "gpt-5.6-luna");
-        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L);
-        var service = new AtlasAgentDelegationService(null, mock(AtlasPromptTemplateService.class), null, new de.tum.cit.aet.artemis.atlas.config.AtlasAgentProperties("chat", 1.0),
-                properties, new de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasResponsesChatClient(ChatClient.create(adapter)));
+        // The orchestrator preset carries the model and reasoning effort; the harness passes no per-call model options.
+        var adapter = new OpenAiResponsesChatModel(openAIClient, new JsonMapper(), OpenAiChatOptions.builder().deploymentName("gpt-5.6-luna").reasoningEffort("xhigh").build());
+        var client = ChatClient.create(adapter);
+        var service = new AtlasAgentDelegationService(client, client, client, mock(AtlasPromptTemplateService.class), null);
         var read = FunctionToolCallback.<Map<String, Object>, String>builder("listCompetencyIndex", input -> "{}").inputType(Map.class).build();
         var terminal = org.springframework.ai.tool.method.MethodToolCallbackProvider.builder().toolObjects(new AtlasOrchestratorTerminalToolService()).build();
         Map<String, Object> context = new java.util.HashMap<>(Map.of("courseId", 42L));
         List<ChatResponse> providerResponses = new ArrayList<>();
-        var result = service.delegateOrchestratorRound("system", "work", OpenAiChatOptions.builder().deploymentName("gpt-5.6-luna").reasoningEffort("xhigh"), context,
-                providerResponses::add, org.springframework.ai.tool.ToolCallbackProvider.from(read), terminal);
+        var result = service.delegateOrchestratorRound("system", "work", context, providerResponses::add, org.springframework.ai.tool.ToolCallbackProvider.from(read), terminal);
         assertThat(AtlasToolCallBudget.existingBudget(context).completion().message()).isEqualTo("Verified the mappings.");
         assertThat(result.getMetadata().getModel()).isEqualTo("gpt-test");
         assertThat(providerResponses).hasSize(2);

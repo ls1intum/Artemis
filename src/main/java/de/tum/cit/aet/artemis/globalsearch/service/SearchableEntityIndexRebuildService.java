@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntityReconcileStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.embedding.SearchableEntityEmbeddingClient;
 import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.Property;
@@ -85,6 +87,8 @@ public class SearchableEntityIndexRebuildService {
 
     private final WeaviateConfigurationProperties properties;
 
+    private final LlmProperties llmProperties;
+
     private final WeaviateService weaviateService;
 
     private final SearchableEntitySyncStateRepository syncStateRepository;
@@ -93,15 +97,16 @@ public class SearchableEntityIndexRebuildService {
 
     private final WeaviateOutboxRepository outboxRepository;
 
-    public SearchableEntityIndexRebuildService(Optional<WeaviateClient> clientOptional, WeaviateConfigurationProperties properties, Environment environment,
-            WeaviateService weaviateService, SearchableEntitySyncStateRepository syncStateRepository, SearchableEntityReconcileStateRepository reconcileStateRepository,
-            WeaviateOutboxRepository outboxRepository) {
+    public SearchableEntityIndexRebuildService(Optional<WeaviateClient> clientOptional, WeaviateConfigurationProperties properties, LlmProperties llmProperties,
+            Environment environment, WeaviateService weaviateService, SearchableEntitySyncStateRepository syncStateRepository,
+            SearchableEntityReconcileStateRepository reconcileStateRepository, WeaviateOutboxRepository outboxRepository) {
         boolean isOpenApiDocsGeneration = Boolean.parseBoolean(environment.getProperty("artemis.openapi-docs-generation", "false"));
         if (clientOptional.isEmpty() && !isOpenApiDocsGeneration) {
             throw new IllegalStateException("WeaviateClient bean is required when Weaviate is enabled and not in OpenAPI docs generation mode");
         }
         this.client = clientOptional.orElse(null);
         this.properties = properties;
+        this.llmProperties = llmProperties;
         this.weaviateService = weaviateService;
         this.syncStateRepository = syncStateRepository;
         this.reconcileStateRepository = reconcileStateRepository;
@@ -151,7 +156,7 @@ public class SearchableEntityIndexRebuildService {
     String desiredSignature() {
         boolean embeds = SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(properties.vectorizerModule());
         String signature = "layout=" + INDEX_LAYOUT_VERSION + ";mode=" + properties.vectorizerModule();
-        return embeds ? signature + ";model=" + properties.openAiEmbeddingModel() : signature;
+        return embeds ? signature + ";model=" + SearchableEntityEmbeddingClient.embeddingModel(properties, llmProperties) : signature;
     }
 
     /**

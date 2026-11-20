@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
+import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
@@ -351,7 +351,7 @@ class HyperionCodeGenerationServiceTest {
         ChatResponse response = new ChatResponse(List.of(new Generation(new AssistantMessage(jsonResponse))),
                 ChatResponseMetadata.builder().model("gpt-5-mini").usage(usage).build());
         var traces = mock(LLMTokenUsageTraceRepository.class);
-        var accounting = new LLMTokenUsageService(traces, mock(LLMTokenUsageRequestRepository.class), new LLMModelCostConfiguration());
+        var accounting = new LLMTokenUsageService(traces, mock(LLMTokenUsageRequestRepository.class), LlmTestCatalog.empty());
         ChatClient chatClient = ChatClient.builder(chatModel).defaultAdvisors(ChatModelCallAdvisor.builder().chatModel(chatModel).build()).build();
         var testedStrategy = new TestCodeGenerationStrategy(chatClient, templates, accounting);
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
@@ -601,7 +601,7 @@ class HyperionCodeGenerationServiceTest {
         private RepositoryType repositoryType = RepositoryType.SOLUTION;
 
         public TestCodeGenerationStrategy(ChatClient chatClient, HyperionPromptTemplateService templates, LLMTokenUsageService llmTokenUsageService) {
-            super(chatClient, templates, llmTokenUsageService);
+            super(de.tum.cit.aet.artemis.hyperion.service.HyperionTestChatClients.returning(chatClient), templates, llmTokenUsageService);
         }
 
         @Override
