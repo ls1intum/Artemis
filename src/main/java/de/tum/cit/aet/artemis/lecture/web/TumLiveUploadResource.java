@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.dto.TumLiveUploadAvailabilityDTO;
 import de.tum.cit.aet.artemis.lecture.dto.TumLiveUploadStartDTO;
 import de.tum.cit.aet.artemis.lecture.dto.TumLiveUploadStateDTO;
 import de.tum.cit.aet.artemis.lecture.dto.TumLiveUploadedUnitDTO;
@@ -121,6 +122,19 @@ public class TumLiveUploadResource {
     public ResponseEntity<Void> discardUpload(@PathVariable long lectureUnitId, @RequestParam String ref) {
         tumLiveUploadService.discard(findUnit(lectureUnitId), ref);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * GET courses/:courseId/tumlive-upload-availability : Tells editors whether they can select a recording before creating a unit.
+     *
+     * @param courseId the course
+     * @return whether the course can upload to TUM.Live
+     */
+    @GetMapping("courses/{courseId}/tumlive-upload-availability")
+    @EnforceAtLeastEditorInCourse
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    public ResponseEntity<TumLiveUploadAvailabilityDTO> getTumLiveUploadAvailability(@PathVariable long courseId) {
+        return ResponseEntity.ok(new TumLiveUploadAvailabilityDTO(tumLiveUploadService.isUploadAvailable(courseId)));
     }
 
     /**

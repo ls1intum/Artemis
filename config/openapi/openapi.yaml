@@ -3469,6 +3469,21 @@ paths:
                 type: array
                 items: {$ref: '#/components/schemas/SimpleLecture'}
                 uniqueItems: true
+  /api/lecture/courses/{courseId}/tumlive-upload-availability:
+    get:
+      tags: [tum-live-upload]
+      operationId: getTumLiveUploadAvailability
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TumLiveUploadAvailability'}
   /api/lecture/courses/{courseId}/tumlive-uploads:
     get:
       tags: [tum-live-upload]
@@ -8865,6 +8880,10 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/StudentExport'}
+    TumLiveUploadAvailability:
+      type: object
+      properties:
+        available: {type: boolean}
     TumLiveUploadState:
       type: object
       properties:
