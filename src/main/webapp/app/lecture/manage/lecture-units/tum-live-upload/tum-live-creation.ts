@@ -18,6 +18,10 @@ export interface RecordingTarget {
     unitId?: number;
 }
 
+interface RecordingCheckpoint extends RecordingTarget {
+    unitSavePending?: true;
+}
+
 /** Angular navigation info is scoped to one navigation and stays in memory, unlike history state. */
 export class RecordingNavigation {
     constructor(
@@ -46,22 +50,22 @@ export function unitEditorCommands(target: RecordingTarget): (string | number)[]
     return ['/course-management', target.courseId, 'lectures', target.lectureId, 'unit-management', 'attachment-video-units', target.unitId!, 'edit'];
 }
 
-/** The source form remembers only acknowledged IDs in history and the selected file in the running app. */
+/** The source form remembers acknowledged IDs and an unresolved save in history. The file stays in memory. */
 export class RecordingRedirect {
     private readonly router = inject(Router);
     private readonly location = inject(Location);
     private readonly destroyRef = inject(DestroyRef);
     private next?: { url: string; info: RecordingNavigation };
 
-    checkpoint(target: RecordingTarget): void {
+    checkpoint(target: RecordingCheckpoint): void {
         const state = (this.location.getState() ?? {}) as Record<string, unknown>;
         state[CHECKPOINT] = target;
         this.location.replaceState(this.location.path(), '', state);
     }
 
-    recover(courseId: number, lectureId?: number): RecordingTarget | undefined {
+    recover(courseId: number, lectureId?: number): RecordingCheckpoint | undefined {
         const state = this.location.getState() as Record<string, unknown>;
-        const target = state?.[CHECKPOINT] as RecordingTarget | undefined;
+        const target = state?.[CHECKPOINT] as RecordingCheckpoint | undefined;
         if (target?.courseId === courseId && Number.isSafeInteger(target.lectureId) && (lectureId === undefined || target.lectureId === lectureId)) {
             return target;
         }

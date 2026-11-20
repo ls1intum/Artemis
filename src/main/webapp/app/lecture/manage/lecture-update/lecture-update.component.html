@@ -124,7 +124,7 @@
                             [(invalid)]="recordingInvalid"
                             [disabled]="recordingSaving() || !!savedRecording()?.unitId || !!recordingRecovery()"
                         />
-                        @if (savedRecording()?.unitId || (savedRecording() && !recording())) {
+                        @if (!recordingRecovery() && (savedRecording()?.unitId || (savedRecording() && !recording()))) {
                             <div>
                                 <button tumAetUiButton type="button" [disabled]="recordingSaving()" (click)="continueRecording()">
                                     {{ 'artemisApp.tumLiveUpload.openSaved' | artemisTranslate }}

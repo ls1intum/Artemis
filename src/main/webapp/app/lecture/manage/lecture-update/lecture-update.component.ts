@@ -269,10 +269,15 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         } else {
             const checkpoint = this.recordingRedirect.recover(this.courseId()!);
             if (checkpoint) {
-                this.keepCreatedLecture(checkpoint.lectureId);
-                this.savedRecording.set(checkpoint);
-                this.recordingNeedsReselection.set(true);
-                this.continueRecording();
+                const { unitSavePending, ...target } = checkpoint;
+                this.keepCreatedLecture(target.lectureId);
+                this.savedRecording.set(target);
+                if (unitSavePending) {
+                    this.markRecordingSaveUnknown();
+                } else {
+                    this.recordingNeedsReselection.set(true);
+                    this.continueRecording();
+                }
             }
         }
     }
@@ -575,11 +580,11 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
                     if (!checkpoint) {
                         this.keepCreatedLecture(id);
                         this.lastSavedAt.set(dayjs());
-                        const target = { courseId, lectureId: id };
-                        this.savedRecording.set(target);
-                        this.recordingRedirect.checkpoint(target);
+                        this.savedRecording.set({ courseId, lectureId: id });
                         this.calendarService.reloadEvents();
                     }
+                    // Record the unresolved save before sending it. A reload can abort the response without aborting the server write.
+                    this.recordingRedirect.checkpoint({ courseId, lectureId: id, unitSavePending: true });
                     const unit = new AttachmentVideoUnit();
                     unit.name = this.translateService.instant('artemisApp.tumLiveUpload.recordingName');
                     return this.attachmentVideoUnits.create(id, unit);
@@ -606,6 +611,10 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
                     if (createOutcomeIsUnknown(error)) {
                         this.markRecordingSaveUnknown(error);
                     } else if (error instanceof HttpErrorResponse) {
+                        const target = this.savedRecording();
+                        if (target) {
+                            this.recordingRedirect.checkpoint(target);
+                        }
                         this.onSaveError(error);
                     }
                 },
@@ -618,7 +627,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
 
     protected continueRecording(file = this.recording()): void {
         const target = this.savedRecording();
-        if (target) {
+        if (target && !this.recordingRecovery()) {
             const savedAt = this.lastSavedAt();
             void this.recordingRedirect.open(target, false, file, this.createdRecordingUnit, savedAt ? { [DETAILS_SAVED_AT_STATE_KEY]: savedAt.toISOString() } : undefined);
         }
