@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.security;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
@@ -389,8 +390,8 @@ class SecurityPolicyRepositoryFilesTest {
         SecurityFrameworkState state = SecurityPolicyRepositoryFiles.evaluate(root);
 
         assertThat(state.status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
-        assertThat(state.policyFiles()).extracting(SecurityFrameworkState.PolicyFile::referencedBy).containsExactly(List.of("de.example.SortingTest"),
-                List.of("de.example.SortingTest#sortsManyElements"));
+        assertThat(state.policyFiles()).extracting(SecurityFrameworkState.PolicyFile::policyPath, SecurityFrameworkState.PolicyFile::referencedBy)
+                .containsExactly(tuple("SecurityPolicy.yaml", List.of("de.example.SortingTest")), tuple("Stress.yaml", List.of("de.example.SortingTest#sortsManyElements")));
         assertThat(state.policyFiles()).allSatisfy(policyFile -> assertThat(policyFile.missingTestClasses()).isEmpty());
     }
 
@@ -888,8 +889,14 @@ class SecurityPolicyRepositoryFilesTest {
         writeSource("test/de/example/MoreSortingTest.java", leaf.replace("import java.util.Date;\n", imports));
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
-        // A class of another package does not inherit SortingTest.Date, so neither do its subclasses, even in the package of SortingTest.
-        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", unsupported);
+        // A class of another package does not inherit SortingTest.Date, so neither do its subclasses, even in the package of SortingTest. The active
+        // MiddleSortingTest inherits runs(java.util.Date) with its own policy in both cases.
+        var middleInherits = new SecurityFrameworkState.UnsupportedReason(middlePackage + ".MiddleSortingTest",
+                SecurityFrameworkState.UnsupportedReasonType.INHERITED_METHOD_POLICY);
+        var leafKeeps = new SecurityFrameworkState.UnsupportedReason("de.example.MoreSortingTest",
+                SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS);
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons())
+                .containsExactlyInAnyOrderElementsOf(unsupported ? List.of(middleInherits, leafKeeps) : List.of(middleInherits));
     }
 
     @Test
@@ -899,16 +906,19 @@ class SecurityPolicyRepositoryFilesTest {
         // 30 layers of two interfaces that each extend both interfaces of the layer below: visiting every path would take about 2^30 steps per interface.
         for (int layer = 0; layer < 30; layer++) {
             String supertypes = layer == 0 ? "" : " extends Layer" + (layer - 1) + "A, Layer" + (layer - 1) + "B";
+            // Only the shared base at the bottom declares a member type, so finding it takes the traversal of the whole graph.
+            String body = layer == 0 ? " {\n\n    class Date {\n    }\n}\n" : " {\n}\n";
             for (String side : List.of("A", "B")) {
-                writeSource("test/de/example/Layer" + layer + side + ".java", "package de.example;\n\ninterface Layer" + layer + side + supertypes + " {\n}\n");
+                writeSource("test/de/example/Layer" + layer + side + ".java", "package de.example;\n\ninterface Layer" + layer + side + supertypes + body);
             }
         }
-        String implementing = TEST_CLASS.formatted("de.example", "SortingTest").replace("class SortingTest", "class SortingTest implements Layer29A, Layer29B");
-        writeSource("test/de/example/SortingTest.java", implementing.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION));
+        String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
+        writeSource("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated));
+        writeSource("test/de/example/MoreSortingTest.java", importingOverride("MoreSortingTest extends SortingTest implements Layer29A, Layer29B", "public void runs(Date date)"));
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
-        // The switched-off class makes the evaluation collect the member types in scope of its hierarchy.
-        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).isEmpty();
+        // The member type Layer0A.Date shadows the import, so runs(Date) is an overload and the inherited test still runs with the sandbox.
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", true);
     }
 
     @ParameterizedTest
@@ -1103,7 +1113,7 @@ class SecurityPolicyRepositoryFilesTest {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = { "MoreSortingTest extends SortingTest implements java.io.Serializable",
-            "MoreSortingTest extends SortingTest implements Comparable<MoreSortingTest>, Cloneable" })
+            "MoreSortingTest extends SortingTest implements java.util.RandomAccess, Cloneable" })
     void aSupertypeOutsideTheRepositoryMayShadowAnImportedParameterType(String declaration) throws IOException {
         writeBuildFile();
         String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(java.util.Date date)";
@@ -1168,11 +1178,15 @@ class SecurityPolicyRepositoryFilesTest {
     private void assertKeepsAnInheritedActivePolicy(String testClass, boolean expected) {
         SecurityFrameworkState.UnsupportedReason reason = new SecurityFrameworkState.UnsupportedReason(testClass,
                 SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS);
+        SecurityFrameworkState state = SecurityPolicyRepositoryFiles.evaluate(root);
         if (expected) {
-            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).contains(reason);
+            assertThat(state.unsupportedReasons()).contains(reason);
         }
         else {
-            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).doesNotContain(reason);
+            // The subclass is recognized as a switched-off test class, not ignored.
+            assertThat(state.unsupportedReasons()).doesNotContain(reason);
+            assertThat(state.status()).as("unsupported reasons %s", state.unsupportedReasons()).isEqualTo(SecurityActivationStatus.CONFIGURED);
+            assertThat(state.disabledTestClasses()).contains(testClass);
         }
     }
 

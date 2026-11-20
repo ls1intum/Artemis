@@ -47,6 +47,16 @@ class BuildFileSyntaxTest {
     }
 
     @Test
+    void checksEveryConfigurationThatDeclaresTheAresAgent() {
+        String twoConfigurations = "dependencies {\n    smokeAgent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n    testAgent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\n"
+                + "test {\n    jvmArgs \"-javaagent:${configurations.testAgent.singleFile}\"\n}\n";
+
+        // The test JVM takes the agent from testAgent, the second configuration that declares the Ares agent.
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(twoConfigurations))).isTrue();
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(twoConfigurations.replace("configurations.testAgent", "configurations.otherAgent")))).isFalse();
+    }
+
+    @Test
     void anotherAgentOrACommentIsNoAresAgent() {
         String jacoco = "dependencies {\n    aresAgent 'org.jacoco:org.jacoco.agent:0.8.16:runtime'\n}\ntest {\n    jvmArgs \"-javaagent:${jacocoJar}\"\n}\n";
         String commented = "dependencies {\n    // aresAgent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\ntest {\n    // jvmArgs '-javaagent:ares.jar'\n}\n";

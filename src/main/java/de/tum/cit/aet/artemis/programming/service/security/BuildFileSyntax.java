@@ -117,16 +117,17 @@ final class BuildFileSyntax {
         return gradle || maven;
     }
 
+    /**
+     * Checks every configuration that declares the Ares agent, e.g. both {@code smokeAgent} and {@code testAgent}, since the test JVM may take its agent from
+     * any of them.
+     */
     private static boolean gradleAttachesAresAgent(String code) {
-        Matcher dependency = GRADLE_ARES_AGENT.matcher(code);
-        if (!dependency.find()) {
-            return false;
-        }
-        String configuration = dependency.group(1);
-        // A configuration with more dependencies than the Ares agent leaves open which file an agent takes from it, e.g. JaCoCo, so the agent then has to
-        // name Ares itself.
-        boolean onlyTheAresAgent = DEPENDENCY_DECLARATION.matcher(code).results().filter(declaration -> declaration.group(1).equals(configuration)).count() == 1;
-        return javaAgents(code).anyMatch(agent -> namesAres(agent) || (onlyTheAresAgent && takesFileFrom(code, agent, configuration)));
+        return GRADLE_ARES_AGENT.matcher(code).results().map(dependency -> dependency.group(1)).distinct().anyMatch(configuration -> {
+            // A configuration with more dependencies than the Ares agent leaves open which file an agent takes from it, e.g. JaCoCo, so the agent then has
+            // to name Ares itself.
+            boolean onlyTheAresAgent = DEPENDENCY_DECLARATION.matcher(code).results().filter(declaration -> declaration.group(1).equals(configuration)).count() == 1;
+            return javaAgents(code).anyMatch(agent -> namesAres(agent) || (onlyTheAresAgent && takesFileFrom(code, agent, configuration)));
+        });
     }
 
     /**

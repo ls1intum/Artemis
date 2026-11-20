@@ -1123,8 +1123,11 @@ class SecurityFrameworkServiceTest {
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
 
         assertThat(securityFrameworkService.deactivate(exercise, user).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
-        assertThat(readPushed("test/de/example/SortingTest.java"))
-                .hasValueSatisfying(content -> assertThat(content).contains(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION + "\nclass SortingTest"));
+        // Deactivating switches only the class off; the method stays switched off.
+        String deactivated = withSwitchedOffMethod.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\nclass SortingTest",
+                SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION + "\nclass SortingTest");
+        assertThat(deactivated).isNotEqualTo(withSwitchedOffMethod);
+        assertThat(readPushed("test/de/example/SortingTest.java")).contains(deactivated);
         assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
 
         assertThat(readPushed("test/de/example/SortingTest.java")).contains(withSwitchedOffMethod);
