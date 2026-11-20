@@ -17,7 +17,12 @@ Gradle-related pull requests, it also runs directly on pushes to `develop`, `mai
 OpenSSF Scorecard only treats the committed `gradle-wrapper.jar` as a verified binary when it can
 associate a successful Gradle wrapper validation workflow with the latest commit, which it cannot do
 reliably through a reusable-workflow call alone. The direct push trigger provides that evidence while
-the reusable call keeps wrapper validation inside the existing required PR gate.
+the reusable call keeps wrapper validation inside the existing required PR gate. On a push, `ci.yml` skips its own
+call, so the wrapper is validated once per commit.
+
+`security-scans.yml` is called by `ci.yml` and keeps its weekly `schedule:` for the scan of the whole history, as
+`ci-sonar.yml` keeps its manual trigger. The other events that start workflows next to `ci.yml` are
+`pull_request_target` (`pr-automation.yml`), which needs a write token, and the `workflow_run` listeners below.
 
 `scorecard.yml` starts after that direct validation succeeds on `develop`, using a `workflow_run`
 trigger. Starting both workflows on the same push lets Scorecard finish before validation and flag
@@ -51,6 +56,9 @@ ci.yml                                                            (single entry 
 │   ADVISORY — runs for signal, never blocks merge:
 ├── codeql          ── uses ci-codeql.yml         (Java + JS/TS security scan; non-fork; not gated)
 ├── coverage-report                 (internal PRs; posts the coverage table at ~test time; not a check, not gated)
+├── security        ── uses security-scans.yml    (PRs against develop and develop pushes; Semgrep, gitleaks, OSV, Trivy)
+├── android         ── uses test-android.yml      (non-fork, non-draft, build-relevant; self-hosted Android runner)
+├── pr-title                        (pull requests; module prefix of the title; also runs on title edits)
 │
 │   DEPLOY — develop only, never on a PR:
 ├── deploy-docs                  (publishes the docs to GitHub Pages; needs `docs`; job-level `pages` concurrency)
@@ -162,8 +170,9 @@ The umbrella workflow groups runs by PR number and sets `cancel-in-progress` for
 A new push cancels the previous revision so its E2E jobs release their self-hosted runners and the
 new revision can start.
 
-The `Cancel Closed PR CI` workflow also cancels active umbrella runs when the PR is closed or
-merged. It looks up the exact `ci-pr-{N}` concurrency group and confirms the PR is still closed
+The `cancel-ci` job of `pr-automation.yml` also cancels active umbrella runs when the PR is closed or
+merged. Because the security scans, the Android E2E tests and the title check are jobs of the umbrella, this
+cancels them too. It looks up the exact `ci-pr-{N}` concurrency group and confirms the PR is still closed
 before requesting cancellation. The closure workflow uses trusted base code and leaves the CI
 run for the resulting `develop` push in its own group.
 
@@ -373,7 +382,6 @@ These workflows are intentionally NOT folded into the umbrella:
 | Workflow | Reason |
 |---|---|
 | `codeql-analysis.yml` | Holds only the weekly `schedule:` cron (cron cannot live in a `workflow_call` child). The PR/push CodeQL signal is folded into the umbrella as the advisory `codeql` job (→ `ci-codeql.yml`), which the scheduled remnant also reuses. |
-| `test-android.yml` | Different self-hosted runner pool, clones a separate repo, 60-minute job. |
 | `publish-hyperion-sandbox-image.yml` | Manual publication of independently versioned Hyperion toolchain images; separate from Artemis application releases. |
 | `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
 | `nightly-lti-interop.yml` | Scheduled default-branch interop check; not part of PR/push CI. |
@@ -384,7 +392,8 @@ These workflows are intentionally NOT folded into the umbrella:
 | `deploy-documentation.yml` | **Split:** the automatic develop-push docs deploy is now ci.yml's `deploy-docs` job (reusing `ci-docs.yml`'s build); this file is the `workflow_dispatch` manual-redeploy fallback. Both share the `pages` concurrency group. |
 | `testserver-deployment.yml`, `prod-like-deployment.yml` | Manual deploy workflows. |
 | `pullrequest-coverage-reporter.yml` | **Fork PRs only.** Posts the coverage table for fork PRs (where an in-run token can't write); hardened against a `workflow_run` pwn-request. Internal PRs use `ci.yml`'s in-run `coverage-report` job instead, so the table appears at ~test time rather than after the run. |
-| All `pull_request_target` / `issues` / `schedule` workflows | Need elevated tokens or run on different trigger surfaces. |
+| `pr-automation.yml` | The single `pull_request_target` workflow: labels, author assignment, the `ready for review` label, the `ready to merge` and description validators and the cancellation of a closed PR's CI. These jobs need a write token or secrets, which a fork's `pull_request` run never gets. Each job's `if` selects the event actions it handles, so every pull request event starts this workflow at most once. GitHub always runs the default branch's copy, so a pull request cannot test its own changes to it. |
+| All `issues` / `schedule` workflows | Run on different trigger surfaces. |
 
 The documentation maintenance link check resolves root-relative site URLs against the checked-out documentation
 root before filtering to external HTTP(S) links. Maintenance issue bodies stay below GitHub's limit; oversized

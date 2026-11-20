@@ -139,6 +139,6 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
   all remaining tasks, required approvals, resolved threads, passing checks and mergeability are verified.
   If metadata permissions or release context are missing, report the gap and request maintainer help.
 - PR titles use a backticked module followed by a colon, e.g. `` `Development`: Improve documentation ``.
-  Allowed modules and the exact pattern are in `.github/workflows/validate-pr-title.yml`.
+  Allowed modules and the exact pattern are in the `pr-title` job of `.github/workflows/ci.yml`.
   Do not infer the format from squash-merge subjects, which omit the backticks.
 - Commit subjects are concise and imperative, without backticks; wrap bodies near 72 characters.
