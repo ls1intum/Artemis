@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -872,6 +873,25 @@ class SecurityPolicyRepositoryFilesTest {
 
         // A class of another package does not inherit SortingTest.Date, so neither do its subclasses, even in the package of SortingTest.
         assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", unsupported);
+    }
+
+    @Test
+    @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void aSupertypeThatSeveralBranchesOfTheHierarchyShareIsVisitedOnce() throws IOException {
+        writeBuildFile();
+        // 30 layers of two interfaces that each extend both interfaces of the layer below: visiting every path would take about 2^30 steps per interface.
+        for (int layer = 0; layer < 30; layer++) {
+            String supertypes = layer == 0 ? "" : " extends Layer" + (layer - 1) + "A, Layer" + (layer - 1) + "B";
+            for (String side : List.of("A", "B")) {
+                writeSource("test/de/example/Layer" + layer + side + ".java", "package de.example;\n\ninterface Layer" + layer + side + supertypes + " {\n}\n");
+            }
+        }
+        String implementing = TEST_CLASS.formatted("de.example", "SortingTest").replace("class SortingTest", "class SortingTest implements Layer29A, Layer29B");
+        writeSource("test/de/example/SortingTest.java", implementing.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // The switched-off class makes the evaluation collect the member types in scope of its hierarchy.
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).isEmpty();
     }
 
     @Test

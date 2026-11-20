@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.security;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -394,7 +395,8 @@ final class AresTestSources {
      *         types are unknown
      */
     static Optional<Set<String>> memberTypesInScope(TypeDeclaration type, Map<String, TypeDeclaration> types) {
-        return memberTypesOf(type, types, new HashSet<>()).map(memberTypes -> memberTypes.stream().map(InheritedMemberType::simpleName).collect(Collectors.toSet()));
+        return memberTypesOf(type, types, new HashSet<>(), new HashMap<>())
+                .map(memberTypes -> memberTypes.stream().map(InheritedMemberType::simpleName).collect(Collectors.toSet()));
     }
 
     /**
@@ -404,17 +406,25 @@ final class AresTestSources {
     }
 
     /**
-     * @param path the types whose member types are being collected, which ends a cycle of supertypes
+     * @param path      the types whose member types are being collected, which ends a cycle of supertypes
+     * @param completed the member types of the types collected so far, by their qualified names, so a supertype that several branches of the hierarchy
+     *                      share is visited once
      * @return the member types of the type, see {@link #memberTypesInScope}; empty if they are unknown
      */
-    private static Optional<Set<InheritedMemberType>> memberTypesOf(TypeDeclaration type, Map<String, TypeDeclaration> types, Set<String> path) {
+    private static Optional<Set<InheritedMemberType>> memberTypesOf(TypeDeclaration type, Map<String, TypeDeclaration> types, Set<String> path,
+            Map<String, Set<InheritedMemberType>> completed) {
+        Set<InheritedMemberType> known = completed.get(type.qualifiedName());
+        if (known != null) {
+            return Optional.of(known);
+        }
         if (!path.add(type.qualifiedName())) {
             return Optional.empty();
         }
         Set<InheritedMemberType> memberTypes = new HashSet<>();
         type.memberTypes().forEach(memberType -> memberTypes.add(new InheritedMemberType(memberType.simpleName(), type.packageName(), memberType.visibleInOtherPackages())));
         for (List<String> candidates : type.supertypes()) {
-            Optional<Set<InheritedMemberType>> inherited = candidates.stream().filter(types::containsKey).findFirst().flatMap(name -> memberTypesOf(types.get(name), types, path));
+            Optional<Set<InheritedMemberType>> inherited = candidates.stream().filter(types::containsKey).findFirst()
+                    .flatMap(name -> memberTypesOf(types.get(name), types, path, completed));
             if (inherited.isEmpty()) {
                 return Optional.empty();
             }
@@ -422,6 +432,7 @@ final class AresTestSources {
                     .forEach(memberTypes::add);
         }
         path.remove(type.qualifiedName());
+        completed.put(type.qualifiedName(), memberTypes);
         return Optional.of(memberTypes);
     }
 

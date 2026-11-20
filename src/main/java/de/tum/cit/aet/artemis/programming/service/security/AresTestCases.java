@@ -51,18 +51,21 @@ final class AresTestCases {
     /**
      * A name in angle brackets that may declare a type variable, e.g. {@code Date} in {@code <X, @Marker Date extends java.sql.Date>}, group 1 being the
      * name. It is matched once the annotations are removed, and the separator after the name stays unconsumed, so the next name after a comma is found as
-     * well. It is only
-     * searched in the headers of types and methods, where it also matches a type argument such as {@code String} in a return type {@code List<String>}, which
-     * only makes the check more cautious.
+     * well. It is only searched in the headers of types and methods, where it also matches a type argument such as {@code String} in a return type
+     * {@code List<String>}, which only makes the check more cautious.
      */
     private static final Pattern TYPE_VARIABLE = Pattern.compile("[<,]\\s*" + TYPE_VARIABLE_NAME);
 
-    /** A single-type import, group 1 being the imported type; a static import names a member and is no type import. */
-    private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s+(?!static\\s)([\\p{javaJavaIdentifierPart}.\\s]+?)\\s*;");
+    /**
+     * A single-type import, group 1 being the imported type; a static import names a member and is no type import. Its parts repeat possessively, so its
+     * search stays linear.
+     */
+    private static final Pattern SINGLE_TYPE_IMPORT = Pattern
+            .compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s++(?!static\\s)(\\p{javaJavaIdentifierPart}++(?:\\s*+\\.\\s*+\\p{javaJavaIdentifierPart}++)*+)\\s*+;");
 
     /** The name of any annotation, also a qualified one. Its parts repeat possessively, so long qualified names do not grow the stack. */
     private static final Pattern ANNOTATION_NAME = Pattern
-            .compile("@\\s*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+(?:\\s*\\.\\s*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+)*+");
+            .compile("@\\s*+\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+(?:\\s*+\\.\\s*+\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+)*+");
 
     /** A complete Java identifier, also with letters outside ASCII, that is followed by an opening parenthesis. */
     private static final Pattern IDENTIFIER_BEFORE_PARENTHESIS = Pattern
@@ -84,13 +87,17 @@ final class AresTestCases {
     private static final char UNRESOLVED_TYPE = '?';
 
     /** The name of an explicit receiver parameter, e.g. {@code runs(SortingTest this)}, which is no formal parameter and so no part of the signature. */
-    private static final Pattern RECEIVER_PARAMETER = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})this\\s*$");
+    private static final Pattern RECEIVER_PARAMETER = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})this\\s*+$");
 
     /** The modifier {@code final} of a parameter. */
     private static final Pattern FINAL_MODIFIER = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})final(?!\\p{javaJavaIdentifierPart})");
 
-    /** The name of a parameter at the end of its declaration, with the brackets of an array declared after the name, e.g. {@code values[]}. */
-    private static final Pattern PARAMETER_NAME = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\s*((?:\\[\\s*])*)\\s*$");
+    /**
+     * The name of a parameter at the end of its declaration, with the brackets of an array declared after the name, e.g. {@code values[]}. It starts only at
+     * the start of a name and repeats possessively, so its search stays linear.
+     */
+    private static final Pattern PARAMETER_NAME = Pattern
+            .compile("(?<!\\p{javaJavaIdentifierPart})\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+\\s*+((?:\\[\\s*+])*+)\\s*+$");
 
     private AresTestCases() {
         throw new UnsupportedOperationException("Utility class");
