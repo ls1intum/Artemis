@@ -181,13 +181,23 @@ public class TumLiveUploadService {
     }
 
     /**
+     * Whether a course has an active connection that can be used for an upload.
+     *
+     * @param courseId the Artemis course
+     * @return whether editors of the course can start an upload
+     */
+    public boolean isUploadAvailable(long courseId) {
+        return gocastBindingApi.flatMap(api -> api.findUploadConnection(courseId)).isPresent();
+    }
+
+    /**
      * The upload state of a unit for its editors, with the conversion progress of a pending upload read from TUM.Live.
      *
      * @param unit the unit, with its lecture and course
      * @return the state
      */
     public TumLiveUploadStateDTO getState(AttachmentVideoUnit unit) {
-        boolean connected = gocastBindingApi.flatMap(api -> api.findUploadConnection(unit.getLecture().getCourse().getId())).isPresent();
+        boolean connected = isUploadAvailable(unit.getLecture().getCourse().getId());
         Optional<TumLiveUnitUpload> upload = uploadRepository.findByLectureUnitId(unit.getId());
         if (upload.isEmpty()) {
             return new TumLiveUploadStateDTO(connected, null, null, false, 0, null, null);

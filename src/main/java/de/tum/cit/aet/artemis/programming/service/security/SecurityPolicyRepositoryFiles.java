@@ -439,7 +439,8 @@ public final class SecurityPolicyRepositoryFiles {
         }
         String normalized;
         try {
-            normalized = Path.of(path).normalize().toString().replace('\\', '/');
+            // A backslash separates names as on Windows, so a .. behind it is resolved here, before the checks below, and not only by the checkout.
+            normalized = Path.of(path.replace('\\', '/')).normalize().toString().replace('\\', '/');
         }
         catch (InvalidPathException _) {
             return Optional.empty();
@@ -608,7 +609,8 @@ public final class SecurityPolicyRepositoryFiles {
     /**
      * The places that pin the Ares version in a build file. A pin inside a comment, e.g. {@code // aresVersion = '2.3.0'}, or inside a Gradle string, e.g.
      * {@code "aresVersion = '2.3.0'"}, has no effect on the build, so it is neither read nor replaced. Neither is a pin in a Maven profile, which applies
-     * only while its profile is active; the pin of the POM itself is the one the build uses.
+     * only while its profile is active, so the pin of the POM itself is the one the build uses, nor a local variable of a Gradle method or closure, e.g.
+     * {@code def aresVersion = '2.3.0'} in a helper method.
      *
      * @param content   the content of the build file
      * @param buildTool the build tool the file belongs to
@@ -617,7 +619,8 @@ public final class SecurityPolicyRepositoryFiles {
     private static List<MatchResult> aresVersionPins(String content, BuildTool buildTool) {
         boolean[] noCode = buildTool == BuildTool.GRADLE ? BuildFileSyntax.gradleCommentsAndStrings(content) : BuildFileSyntax.mavenComments(content);
         boolean[] profiles = buildTool == BuildTool.MAVEN ? BuildFileSyntax.mavenProfiles(content, noCode) : new boolean[content.length()];
-        return versionPattern(buildTool).matcher(content).results().filter(pin -> !noCode[pin.start()] && !profiles[pin.start()]).toList();
+        List<MatchResult> pins = versionPattern(buildTool).matcher(content).results().filter(pin -> !noCode[pin.start()] && !profiles[pin.start()]).toList();
+        return buildTool == BuildTool.MAVEN ? pins : pins.stream().filter(pin -> !BuildFileSyntax.declaresLocalGradleVariable(content, noCode, pin.start())).toList();
     }
 
     /**

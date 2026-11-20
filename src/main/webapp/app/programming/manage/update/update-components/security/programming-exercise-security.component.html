@@ -270,7 +270,7 @@
                                 @if (config().errorDetail) {
                                     <span class="sf-error-detail" data-testid="security-error-detail">{{ config().errorDetail }}</span>
                                 }
-                                <button type="button" class="sf-retry" (click)="onRetry()" data-testid="security-retry">
+                                <button type="button" class="sf-retry" [disabled]="isBusy() || isSaving()" (click)="onRetry()" data-testid="security-retry">
                                     <fa-icon [icon]="faRotateRight" />
                                     <span jhiTranslate="artemisApp.programmingExercise.security.retry"></span>
                                 </button>
