@@ -32,7 +32,7 @@ import { FileTypeService } from 'app/programming/shared/services/file-type.servi
 import { EditorPosition } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, ConnectionError, checkIfSubmissionIsError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange, RepositoryType } from '../model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
@@ -869,12 +869,14 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         }
 
         const currentText = this.editor().getText();
+        const repositoryTarget = this.repositoryFileService.getRestResourceUrl();
         this.repositoryFileService
-            .updateFiles([{ fileName, fileContent: currentText }], true)
+            .runExclusive(() => this.repositoryFileService.updateFiles([{ fileName, fileContent: currentText }], true, repositoryTarget))
             .pipe(take(1))
             .subscribe({
                 next: (saveResult) => {
-                    if ('error' in saveResult) {
+                    if (this.repositoryFileService.getRestResourceUrl() !== repositoryTarget) return;
+                    if (checkIfSubmissionIsError(saveResult) || Object.values(saveResult).some((error) => !!error)) {
                         this.onError.emit('saveFailed');
                         return;
                     }
@@ -885,6 +887,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                     this.exerciseReviewCommentService.markInlineFixAppliedInContext(commentId);
                 },
                 error: (error: Error) => {
+                    if (this.repositoryFileService.getRestResourceUrl() !== repositoryTarget) return;
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('saveFailed' + error.message);
                     } else {

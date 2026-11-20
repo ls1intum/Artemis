@@ -26,6 +26,10 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
         this.restResourceUrl = this.calculateRestResourceURL(domain);
     }
 
+    getRestResourceUrl(): string | undefined {
+        return this.restResourceUrl;
+    }
+
     calculateRestResourceURL(domain: DomainChange): string | undefined {
         const [domainType, domainValue] = domain;
         switch (domainType) {

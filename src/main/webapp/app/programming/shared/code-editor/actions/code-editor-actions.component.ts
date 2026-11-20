@@ -2,8 +2,8 @@ import { TumAetUiButtonDirective, TumAetUiDialogRef, TumAetUiDialogService, TumA
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
-import { EMPTY, Observable, Subscription, of, throwError } from 'rxjs';
+import { catchError, concatMap, filter, finalize, map, reduce, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, Subject, Subscription, firstValueFrom, from, of, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash-es';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -18,12 +18,22 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getLocalRepositoryLink } from 'app/foundation/util/navigation.utils';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import {
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+    ConnectionError,
+    MAX_FILE_UPDATE_BATCH_SIZE_BYTES,
+    checkIfSubmissionIsError,
+} from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/services/code-editor-submission.service';
 import { CommitState, EditorState, FileSubmission, FileSubmissionError, GitConflictState } from '../model/code-editor.model';
 import { CodeEditorConfirmRefreshModalComponent } from 'app/programming/shared/code-editor/actions/refresh-modal/code-editor-confirm-refresh-modal.component';
 import { CodeEditorResolveConflictModalComponent } from 'app/programming/shared/code-editor/actions/conflict-modal/code-editor-resolve-conflict-modal.component';
+
+type FileUpdate = { fileName: string; fileContent: string };
+
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 @Component({
     selector: 'jhi-code-editor-actions',
@@ -59,7 +69,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
 
     readonly isBuildingChange = output<boolean>();
     readonly onSavedFiles = output<{
-        [fileName: string]: string | undefined;
+        [fileName: string]: string | null | undefined;
     }>();
     readonly onRefreshFiles = output<void>();
     readonly onCommit = output<void>();
@@ -87,6 +97,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     faExternalLink = faExternalLink;
 
     private previousEditorState: EditorState | undefined;
+    private saveInProgress = false;
+    private saveFinished = new Subject<boolean>();
 
     constructor() {
         effect(() => {
@@ -234,26 +246,75 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             .subscribe();
     }
 
+    async saveBeforeSwitching(): Promise<void> {
+        while (this.saveInProgress || !_isEmpty(this.unsavedFiles())) {
+            if (this.saveInProgress) {
+                if (!(await firstValueFrom(this.saveFinished))) {
+                    throw new Error('The pending save failed');
+                }
+            } else {
+                await firstValueFrom(this.saveChangedFiles());
+            }
+        }
+    }
+
     saveChangedFiles(andCommit = false): Observable<FileSubmission | FileSubmissionError | undefined> {
-        if (this.disableActions()) {
+        if (this.disableActions() || this.saveInProgress) {
             return EMPTY;
         }
         const unsavedFilesValue = this.unsavedFiles();
         if (!_isEmpty(unsavedFilesValue)) {
             this.editorState.set(EditorState.SAVING);
             const unsavedFiles = Object.entries(unsavedFilesValue).map(([fileName, fileContent]) => ({ fileName, fileContent }));
-            return this.repositoryFileService.updateFiles(unsavedFiles, andCommit).pipe(
-                tap((fileSubmission: FileSubmission | FileSubmissionError) => {
-                    if (!('error' in fileSubmission)) {
-                        const completedFiles = Object.fromEntries(
-                            Object.entries(fileSubmission).filter(([fileName, error]) => error || this.unsavedFiles()[fileName] === unsavedFilesValue[fileName]),
-                        );
-                        if (!_isEmpty(completedFiles)) {
-                            this.onSavedFiles.emit(completedFiles);
-                        }
+            const combinedSubmission: FileSubmission = Object.create(null);
+            const validFiles = unsavedFiles.filter(({ fileName, fileContent }) => {
+                if (new TextEncoder().encode(fileContent).length > MAX_FILE_SIZE_BYTES) {
+                    combinedSubmission[fileName] = `The file exceeds the size limit of ${MAX_FILE_SIZE_BYTES} bytes.`;
+                    return false;
+                }
+                return true;
+            });
+            const hasOversizedFiles = !_isEmpty(combinedSubmission);
+            const fileUpdateBatches = this.createFileUpdateBatches(validFiles);
+            const repositoryTarget = this.repositoryFileService.getRestResourceUrl();
+            let previousBatchReportedError = false;
+            let saveSucceeded = false;
+            const saveFinished = (this.saveFinished = new Subject<boolean>());
+            this.saveInProgress = true;
+            const saveOperation = from(fileUpdateBatches).pipe(
+                concatMap((fileUpdateBatch, index) => {
+                    if (previousBatchReportedError) {
+                        return EMPTY;
                     }
+                    return this.saveFileUpdateBatch(fileUpdateBatch, andCommit && !hasOversizedFiles && index === fileUpdateBatches.length - 1, repositoryTarget).pipe(
+                        tap((submission) => {
+                            previousBatchReportedError = Object.values(submission).some((error) => !!error);
+                        }),
+                    );
+                }),
+                reduce((submission, batchSubmission) => {
+                    for (const [fileName, error] of Object.entries(batchSubmission)) {
+                        submission[fileName] = error;
+                    }
+                    return submission;
+                }, combinedSubmission),
+                filter(() => this.repositoryFileService.getRestResourceUrl() === repositoryTarget),
+                tap((fileSubmission: FileSubmission) => {
+                    const completedFiles = Object.fromEntries(
+                        Object.entries(fileSubmission).filter(([fileName, error]) => error || this.unsavedFiles()[fileName] === unsavedFilesValue[fileName]),
+                    );
+                    if (!_isEmpty(completedFiles)) {
+                        this.onSavedFiles.emit(completedFiles);
+                    }
+                    if (previousBatchReportedError || hasOversizedFiles) {
+                        throw new Error('At least one file could not be saved');
+                    }
+                    saveSucceeded = true;
                 }),
                 catchError((error: Error) => {
+                    if (this.repositoryFileService.getRestResourceUrl() !== repositoryTarget) {
+                        return EMPTY;
+                    }
                     this.editorState.set(EditorState.UNSAVED_CHANGES);
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('saveFailed' + error.message);
@@ -263,12 +324,56 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                     return throwError(() => error);
                 }),
             );
+            return this.repositoryFileService
+                .runExclusive(() => saveOperation)
+                .pipe(
+                    finalize(() => {
+                        this.saveInProgress = false;
+                        saveFinished.next(saveSucceeded);
+                        saveFinished.complete();
+                    }),
+                );
         }
         return of(undefined);
     }
 
+    private saveFileUpdateBatch(fileUpdateBatch: FileUpdate[], andCommit: boolean, repositoryTarget: string | undefined): Observable<FileSubmission> {
+        return this.repositoryFileService.updateFiles(fileUpdateBatch, andCommit, repositoryTarget).pipe(
+            map((fileSubmission) => {
+                if (checkIfSubmissionIsError(fileSubmission)) {
+                    throw new Error(fileSubmission.error);
+                }
+                return fileSubmission;
+            }),
+        );
+    }
+
+    private createFileUpdateBatches(fileUpdates: FileUpdate[]): FileUpdate[][] {
+        const encoder = new TextEncoder();
+        const batches: FileUpdate[][] = [];
+        let currentBatch: FileUpdate[] = [];
+        let currentBatchSize = 2; // JSON array brackets
+
+        for (const fileUpdate of fileUpdates) {
+            const serializedUpdateSize = encoder.encode(JSON.stringify(fileUpdate)).length;
+            const separatorSize = currentBatch.length > 0 ? 1 : 0;
+            if (currentBatch.length > 0 && currentBatchSize + separatorSize + serializedUpdateSize >= MAX_FILE_UPDATE_BATCH_SIZE_BYTES) {
+                batches.push(currentBatch);
+                currentBatch = [];
+                currentBatchSize = 2;
+            }
+            currentBatch.push(fileUpdate);
+            currentBatchSize += (currentBatch.length > 1 ? 1 : 0) + serializedUpdateSize;
+        }
+
+        if (currentBatch.length > 0) {
+            batches.push(currentBatch);
+        }
+        return batches;
+    }
+
     commit() {
-        if (this.disableActions() || this.commitState() === CommitState.COMMITTING) {
+        if (this.disableActions() || this.saveInProgress || this.commitState() === CommitState.COMMITTING) {
             return;
         }
         of(undefined)

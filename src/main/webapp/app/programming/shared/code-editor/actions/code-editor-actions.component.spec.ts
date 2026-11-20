@@ -13,7 +13,7 @@ import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/a
 import { MockCodeEditorConflictStateService } from 'test/helpers/mocks/service/mock-code-editor-conflict-state.service';
 import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock-code-editor-repository.service';
-import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, EditorState, FileSubmission, FileSubmissionError, GitConflictState, RepositoryError } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
@@ -54,6 +54,8 @@ describe('CodeEditorActionsComponent', () => {
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
     let codeEditorRepositoryService: CodeEditorRepositoryService;
     let updateFilesStub: ReturnType<typeof vi.spyOn>;
+    let updateFileContentStub: ReturnType<typeof vi.spyOn>;
+    let getRestResourceUrlStub: ReturnType<typeof vi.spyOn>;
     let commitStub: ReturnType<typeof vi.spyOn>;
     let pullStub: ReturnType<typeof vi.spyOn>;
     let resetRepositoryStub: ReturnType<typeof vi.spyOn>;
@@ -87,6 +89,8 @@ describe('CodeEditorActionsComponent', () => {
         fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
         updateFilesStub = vi.spyOn(codeEditorRepositoryFileService, 'updateFiles');
+        updateFileContentStub = vi.spyOn(codeEditorRepositoryFileService, 'updateFileContent');
+        getRestResourceUrlStub = vi.spyOn(codeEditorRepositoryFileService, 'getRestResourceUrl');
         codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
         commitStub = vi.spyOn(codeEditorRepositoryService, 'commit');
         pullStub = vi.spyOn(codeEditorRepositoryService, 'pull');
@@ -198,8 +202,9 @@ describe('CodeEditorActionsComponent', () => {
 
         // receive result for save
         saveObservable.next(savedFilesResult);
+        saveObservable.complete();
         expect(comp.editorState()).toEqual(EditorState.SAVING);
-        expect(updateFilesStub).toHaveBeenNthCalledWith(1, [{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false);
+        expect(updateFilesStub).toHaveBeenNthCalledWith(1, [{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false, 'api/programming/participations/1/repository');
         expect(onSavedFilesSpy).toHaveBeenCalledWith(savedFilesResult);
 
         fixture.detectChanges();
@@ -217,8 +222,242 @@ describe('CodeEditorActionsComponent', () => {
         fixture.componentRef.setInput('unsavedFiles', { fileName: 'newer collaborative edit' });
         fixture.detectChanges();
         saveObservable.next({ fileName: null });
+        saveObservable.complete();
 
         expect(onSavedFilesSpy).not.toHaveBeenCalled();
+    });
+
+    it('should save three 7 MiB files in batches and commit only with the last batch', () => {
+        const largeFileContent = 'a'.repeat(7 * 1024 * 1024);
+        const unsavedFiles = {
+            'first.txt': largeFileContent,
+            'second.txt': largeFileContent,
+            'third.txt': largeFileContent,
+        };
+        const firstBatchResponse = new Subject<FileSubmission>();
+        const onSavedFilesSpy = vi.spyOn(comp.onSavedFiles, 'emit');
+        fixture.componentRef.setInput('unsavedFiles', unsavedFiles);
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
+        updateFilesStub.mockReturnValueOnce(firstBatchResponse).mockReturnValueOnce(of({ 'third.txt': undefined }));
+
+        comp.saveChangedFiles(true).subscribe();
+
+        const allFileUpdates = Object.entries(unsavedFiles).map(([fileName, fileContent]) => ({ fileName, fileContent }));
+        expect(new TextEncoder().encode(JSON.stringify(allFileUpdates)).length).toBeGreaterThan(20 * 1024 * 1024);
+        const firstBatch = [
+            { fileName: 'first.txt', fileContent: largeFileContent },
+            { fileName: 'second.txt', fileContent: largeFileContent },
+        ];
+        expect(updateFilesStub).toHaveBeenCalledOnce();
+        expect(updateFilesStub).toHaveBeenCalledWith(firstBatch, false, 'api/programming/participations/1/repository');
+        expect(new TextEncoder().encode(JSON.stringify(firstBatch)).length).toBeLessThan(20 * 1024 * 1024);
+
+        firstBatchResponse.next({ 'first.txt': undefined, 'second.txt': undefined });
+        firstBatchResponse.complete();
+
+        const secondBatch = [{ fileName: 'third.txt', fileContent: largeFileContent }];
+        expect(updateFilesStub).toHaveBeenCalledTimes(2);
+        expect(updateFilesStub).toHaveBeenLastCalledWith(secondBatch, true, 'api/programming/participations/1/repository');
+        expect(new TextEncoder().encode(JSON.stringify(secondBatch)).length).toBeLessThan(20 * 1024 * 1024);
+        expect(onSavedFilesSpy).toHaveBeenCalledWith({ 'first.txt': undefined, 'second.txt': undefined, 'third.txt': undefined });
+    });
+
+    it.each([false, true])('should keep using the original repository and ignore stale results (failure: %s)', (failure) => {
+        const largeFileContent = 'a'.repeat(7 * 1024 * 1024);
+        const firstBatchResponse = new Subject<FileSubmission>();
+        const onSavedFilesSpy = vi.spyOn(comp.onSavedFiles, 'emit');
+        const onErrorSpy = vi.spyOn(comp.onError, 'emit');
+        fixture.componentRef.setInput('unsavedFiles', {
+            'first.txt': largeFileContent,
+            'second.txt': largeFileContent,
+            'third.txt': largeFileContent,
+        });
+        getRestResourceUrlStub.mockReturnValue('api/programming/participations/1/repository');
+        updateFilesStub.mockReturnValueOnce(firstBatchResponse).mockReturnValueOnce(of({ 'third.txt': undefined }));
+
+        comp.saveChangedFiles(true).subscribe();
+        getRestResourceUrlStub.mockReturnValue('api/programming/participations/2/repository');
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
+        if (failure) {
+            firstBatchResponse.error(new Error('old repository failed'));
+        } else {
+            firstBatchResponse.next({ 'first.txt': undefined, 'second.txt': undefined });
+            firstBatchResponse.complete();
+        }
+
+        expect(updateFilesStub).toHaveBeenCalledTimes(failure ? 1 : 2);
+        expect(updateFilesStub.mock.calls[0][2]).toBe('api/programming/participations/1/repository');
+        if (!failure) {
+            expect(updateFilesStub.mock.calls[1][2]).toBe('api/programming/participations/1/repository');
+        }
+        expect(onSavedFilesSpy).not.toHaveBeenCalled();
+        expect(onErrorSpy).not.toHaveBeenCalled();
+        expect(comp.editorState()).toBe(EditorState.UNSAVED_CHANGES);
+    });
+
+    it('should not start a second save while the first save is in progress', () => {
+        const saveResponse = new Subject<FileSubmission>();
+        fixture.componentRef.setInput('unsavedFiles', { 'file.txt': 'older content' });
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
+        updateFilesStub.mockReturnValue(saveResponse);
+
+        comp.saveChangedFiles().subscribe();
+        fixture.componentRef.setInput('unsavedFiles', { 'file.txt': 'newer content' });
+        // The parent resets this state through its unsavedFiles setter when editing during a request.
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
+        comp.saveChangedFiles().subscribe();
+        comp.commit();
+
+        expect(updateFilesStub).toHaveBeenCalledExactlyOnceWith([{ fileName: 'file.txt', fileContent: 'older content' }], false, 'api/programming/participations/1/repository');
+        expect(commitStub).not.toHaveBeenCalled();
+        saveResponse.next({ 'file.txt': null });
+        saveResponse.complete();
+        updateFilesStub.mockReturnValue(of({ 'file.txt': null }));
+        comp.saveChangedFiles().subscribe();
+        expect(updateFilesStub).toHaveBeenCalledTimes(2);
+        expect(updateFilesStub.mock.calls[1][0]).toEqual([{ fileName: 'file.txt', fileContent: 'newer content' }]);
+    });
+
+    it('should flush edits made during an active save before allowing a repository switch', async () => {
+        const activeSave = new Subject<FileSubmission>();
+        const newerSave = new Subject<FileSubmission>();
+        fixture.componentRef.setInput('unsavedFiles', { 'file.txt': 'older content' });
+        updateFilesStub.mockReturnValueOnce(activeSave).mockReturnValueOnce(newerSave);
+        comp.onSavedFiles.subscribe(() => fixture.componentRef.setInput('unsavedFiles', {}));
+        comp.onSave();
+        fixture.componentRef.setInput('unsavedFiles', { 'file.txt': 'newer content' });
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
+        const switched = vi.fn();
+        const switching = comp.saveBeforeSwitching().then(switched);
+        expect(switched).not.toHaveBeenCalled();
+        activeSave.next({ 'file.txt': null });
+        activeSave.complete();
+        await Promise.resolve();
+        expect(updateFilesStub).toHaveBeenCalledTimes(2);
+        expect(updateFilesStub.mock.calls[1][0]).toEqual([{ fileName: 'file.txt', fileContent: 'newer content' }]);
+        expect(updateFilesStub.mock.calls[1][2]).toBe('api/programming/participations/1/repository');
+        expect(switched).not.toHaveBeenCalled();
+        newerSave.next({ 'file.txt': null });
+        newerSave.complete();
+        await switching;
+        expect(switched).toHaveBeenCalledOnce();
+    });
+
+    it('should preserve a successful file named __proto__ in the aggregated result', () => {
+        const unsavedFiles = Object.fromEntries([['__proto__', 'content']]);
+        const saveResponse = Object.fromEntries([['__proto__', null]]);
+        const onSavedFilesSpy = vi.spyOn(comp.onSavedFiles, 'emit');
+        fixture.componentRef.setInput('unsavedFiles', unsavedFiles);
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
+        updateFilesStub.mockReturnValue(of(saveResponse));
+
+        comp.saveChangedFiles().subscribe();
+
+        const emittedSubmission = onSavedFilesSpy.mock.calls[0][0];
+        expect(Object.hasOwn(emittedSubmission, '__proto__')).toBe(true);
+        expect(emittedSubmission['__proto__']).toBeNull();
+    });
+
+    it('should stop before the final committing batch when an earlier file update reports an error', () => {
+        const largeFileContent = 'a'.repeat(7 * 1024 * 1024);
+        const firstBatchResponse = new Subject<FileSubmission>();
+        const onSavedFilesSpy = vi.spyOn(comp.onSavedFiles, 'emit');
+        const onCommitSpy = vi.spyOn(comp.onCommit, 'emit');
+        fixture.componentRef.setInput('unsavedFiles', {
+            'first.txt': largeFileContent,
+            'second.txt': largeFileContent,
+            'third.txt': largeFileContent,
+        });
+        comp.commitState.set(CommitState.UNCOMMITTED_CHANGES);
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
+        updateFilesStub.mockReturnValue(firstBatchResponse);
+
+        comp.commit();
+        firstBatchResponse.next({ 'first.txt': null, 'second.txt': 'save failed' });
+        firstBatchResponse.complete();
+
+        expect(updateFilesStub).toHaveBeenCalledOnce();
+        expect(updateFilesStub.mock.calls[0][1]).toBe(false);
+        expect(onSavedFilesSpy).toHaveBeenCalledWith({ 'first.txt': null, 'second.txt': 'save failed' });
+        expect(onCommitSpy).not.toHaveBeenCalled();
+        expect(comp.isBuilding()).toBe(false);
+        expect(comp.commitState()).toBe(CommitState.UNCOMMITTED_CHANGES);
+    });
+
+    it.each([true, false])('should report an oversized file without blocking valid files (valid file present: %s)', (withValidFile) => {
+        const files: Record<string, string> = { 'oversized.txt': 'a'.repeat(10 * 1024 * 1024 + 1) };
+        if (withValidFile) files['small.txt'] = 'valid content';
+        fixture.componentRef.setInput('unsavedFiles', files);
+        comp.commitState.set(CommitState.UNCOMMITTED_CHANGES);
+        const onSavedFilesSpy = vi.spyOn(comp.onSavedFiles, 'emit');
+        const onCommitSpy = vi.spyOn(comp.onCommit, 'emit');
+        updateFilesStub.mockReturnValue(of({ 'small.txt': null }));
+
+        comp.commit();
+
+        expect(updateFilesStub).toHaveBeenCalledTimes(withValidFile ? 1 : 0);
+        if (withValidFile) {
+            expect(updateFilesStub).toHaveBeenCalledWith([{ fileName: 'small.txt', fileContent: 'valid content' }], false, 'api/programming/participations/1/repository');
+        }
+        expect(onSavedFilesSpy).toHaveBeenCalledOnce();
+        const result = onSavedFilesSpy.mock.calls[0][0];
+        expect(result['oversized.txt']).toBe('The file exceeds the size limit of 10485760 bytes.');
+        if (withValidFile) expect(result['small.txt']).toBeNull();
+        expect(updateFileContentStub).not.toHaveBeenCalled();
+        expect(commitStub).not.toHaveBeenCalled();
+        expect(onCommitSpy).not.toHaveBeenCalled();
+    });
+
+    it('should stop batched saving for a checkout conflict without a file name', () => {
+        const largeFileContent = 'a'.repeat(7 * 1024 * 1024);
+        const firstBatchResponse = new Subject<FileSubmission | FileSubmissionError>();
+        const onErrorSpy = vi.spyOn(comp.onError, 'emit');
+        fixture.componentRef.setInput('unsavedFiles', {
+            'first.txt': largeFileContent,
+            'second.txt': largeFileContent,
+            'third.txt': largeFileContent,
+        });
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
+        updateFilesStub.mockReturnValue(firstBatchResponse);
+
+        comp.saveChangedFiles(true).subscribe({ error: () => {} });
+        firstBatchResponse.next({ error: RepositoryError.CHECKOUT_CONFLICT, participationId: 1 });
+
+        expect(updateFilesStub).toHaveBeenCalledOnce();
+        expect(onErrorSpy).toHaveBeenCalledWith('saveFailed');
+    });
+
+    it('should delegate escaped file content to the shared bounded upload path', () => {
+        const escapedFileContent = '\u0001'.repeat(4 * 1024 * 1024);
+        const fileUpdates = [{ fileName: 'escaped.txt', fileContent: escapedFileContent }];
+        fixture.componentRef.setInput('unsavedFiles', { 'escaped.txt': escapedFileContent });
+        updateFilesStub.mockReturnValue(of({ 'escaped.txt': null }));
+
+        comp.saveChangedFiles(true).subscribe();
+
+        expect(new TextEncoder().encode(escapedFileContent).length).toBeLessThan(10 * 1024 * 1024);
+        expect(new TextEncoder().encode(JSON.stringify(fileUpdates)).length).toBeGreaterThan(20 * 1024 * 1024);
+        expect(updateFilesStub).toHaveBeenCalledExactlyOnceWith(fileUpdates, true, 'api/programming/participations/1/repository');
+    });
+
+    it('should continue saving after a successful file named error', () => {
+        const largeFileContent = 'a'.repeat(7 * 1024 * 1024);
+        const firstBatchResponse = new Subject<FileSubmission>();
+        const onSavedFilesSpy = vi.spyOn(comp.onSavedFiles, 'emit');
+        fixture.componentRef.setInput('unsavedFiles', {
+            error: largeFileContent,
+            'second.txt': largeFileContent,
+            'third.txt': largeFileContent,
+        });
+        updateFilesStub.mockReturnValueOnce(firstBatchResponse).mockReturnValueOnce(of({ 'third.txt': undefined }));
+
+        comp.saveChangedFiles(true).subscribe();
+        firstBatchResponse.next({ error: null, 'second.txt': undefined });
+        firstBatchResponse.complete();
+
+        expect(updateFilesStub).toHaveBeenCalledTimes(2);
+        expect(updateFilesStub.mock.calls[1][0]).toEqual([{ fileName: 'third.txt', fileContent: largeFileContent }]);
+        expect(onSavedFilesSpy).toHaveBeenCalledWith({ error: null, 'second.txt': undefined, 'third.txt': undefined });
     });
 
     it('should call repositoryFileService to save unsavedFiles and emit an error on failure', () => {
@@ -236,7 +475,7 @@ describe('CodeEditorActionsComponent', () => {
         comp.onSave();
 
         // waiting for save result
-        expect(updateFilesStub).toHaveBeenNthCalledWith(1, [{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false);
+        expect(updateFilesStub).toHaveBeenNthCalledWith(1, [{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false, 'api/programming/participations/1/repository');
         expect(comp.editorState()).toEqual(EditorState.SAVING);
 
         fixture.detectChanges();

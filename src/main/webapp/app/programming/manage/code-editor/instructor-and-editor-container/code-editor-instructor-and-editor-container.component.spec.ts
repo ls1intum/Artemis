@@ -89,7 +89,7 @@ type ComponentInternals = Omit<CodeEditorInstructorAndEditorContainerComponent, 
 const internals = (c: CodeEditorInstructorAndEditorContainerComponent): ComponentInternals => c as unknown as ComponentInternals;
 
 interface CodeEditorContainerStub {
-    actions?: () => { onSave: ReturnType<typeof vi.fn>; executeRefresh?: () => Observable<boolean> };
+    actions?: () => { onSave?: ReturnType<typeof vi.fn>; saveBeforeSwitching?: ReturnType<typeof vi.fn>; executeRefresh?: () => Observable<boolean> };
     allowNextUnloadWithoutConfirmation?: ReturnType<typeof vi.fn>;
     canDeactivate?: () => boolean;
     hasCleanRepositoryState?: () => boolean;
@@ -128,7 +128,7 @@ function setEditableInstructions(comp: CodeEditorInstructorAndEditorContainerCom
 }
 
 function createDefaultContainerStub(): CodeEditorContainerStub {
-    const actions = { onSave: vi.fn() };
+    const actions = { onSave: vi.fn(), saveBeforeSwitching: vi.fn().mockResolvedValue(undefined) };
     const monacoEditor = { clearReviewCommentDrafts: vi.fn() };
     return {
         actions: () => actions,
@@ -557,22 +557,55 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
     });
 
-    it('ignores a stale exercise response after navigating to another exercise', () => {
+    it('ignores a stale exercise response after navigating to another exercise', async () => {
         const routeParams = new Subject<Record<string, string>>();
         (TestBed.inject(ActivatedRoute) as any).params = routeParams;
         const firstLoad = new Subject<ProgrammingExercise>();
         const secondLoad = new Subject<ProgrammingExercise>();
         vi.spyOn(comp, 'loadExercise').mockImplementation((exerciseId) => (exerciseId === 41 ? firstLoad : secondLoad));
-        vi.spyOn(comp, 'saveChangesAndSelectDomain').mockImplementation(() => undefined);
+        vi.spyOn(comp, 'saveChangesAndSelectDomain').mockResolvedValue(undefined);
 
         comp.ngOnInit();
         routeParams.next({ exerciseId: '41', repositoryType: RepositoryType.TESTS, repositoryId: '0' });
+        await Promise.resolve();
         routeParams.next({ exerciseId: '42', repositoryType: RepositoryType.TESTS, repositoryId: '0' });
+        await Promise.resolve();
         secondLoad.next(createMockExercise({ id: 42, title: 'Current exercise' }));
         firstLoad.next(createMockExercise({ id: 41, title: 'Stale exercise' }));
 
         expect(comp.exercise()!.id).toBe(42);
         expect(comp.exercise()!.title).toBe('Current exercise');
+    });
+
+    it.each([false, true])('saves before route loading can remove the editor and cancels on failure (%s)', async (failure) => {
+        const routeParams = new Subject<Record<string, string>>();
+        (TestBed.inject(ActivatedRoute) as any).params = routeParams;
+        let finishSave!: () => void;
+        let failSave!: () => void;
+        const saveBeforeSwitching = vi.fn().mockReturnValue(
+            new Promise<void>((resolve, reject) => {
+                finishSave = resolve;
+                failSave = () => reject(new Error('save failed'));
+            }),
+        );
+        setCodeEditorContainer(comp, { actions: () => ({ saveBeforeSwitching }) });
+        comp.loadingState.set(LOADING_STATE.CLEAR);
+        const loadExercise = vi.spyOn(comp, 'loadExercise').mockReturnValue(new Subject<ProgrammingExercise>());
+        const setDomain = TestBed.inject(DomainService).setDomain as ReturnType<typeof vi.fn>;
+
+        comp.ngOnInit();
+        routeParams.next({ exerciseId: '42', repositoryType: RepositoryType.TESTS, repositoryId: '0' });
+        expect(saveBeforeSwitching).toHaveBeenCalledOnce();
+        expect(comp.loadingState()).toBe(LOADING_STATE.CLEAR);
+        expect(loadExercise).not.toHaveBeenCalled();
+        expect(setDomain).not.toHaveBeenCalled();
+        if (failure) failSave();
+        else finishSave();
+        await Promise.resolve();
+
+        expect(comp.loadingState()).toBe(failure ? LOADING_STATE.CLEAR : LOADING_STATE.INITIALIZING);
+        expect(loadExercise).toHaveBeenCalledTimes(failure ? 0 : 1);
+        expect(setDomain).not.toHaveBeenCalled();
     });
 
     describe('Consistency Checks', () => {
@@ -1034,17 +1067,29 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         expect(router.navigate).toHaveBeenCalledWith(['../..', RepositoryType.TESTS, 'test'], expect.anything());
     });
 
-    it('saves and switches domains normally when exercise generation does not lock editing', () => {
-        const onSave = vi.fn();
-        setCodeEditorContainer(comp, { actions: () => ({ onSave }) });
+    it.each([false, true])('waits for saving before switching and stays on failure (%s)', async (failure) => {
+        let finishSave!: () => void;
+        let failSave!: () => void;
+        const saveBeforeSwitching = vi.fn().mockReturnValue(
+            new Promise<void>((resolve, reject) => {
+                finishSave = resolve;
+                failSave = () => reject(new Error('save failed'));
+            }),
+        );
+        setCodeEditorContainer(comp, { actions: () => ({ saveBeforeSwitching }) });
         vi.spyOn(comp as any, 'isProblemStatementEditingLocked').mockReturnValue(false);
         const setDomain = TestBed.inject(DomainService).setDomain as ReturnType<typeof vi.fn>;
         const domain: DomainChange = [DomainType.TEST_REPOSITORY, comp.exercise()!];
 
-        comp.saveChangesAndSelectDomain(domain);
+        const switching = comp.saveChangesAndSelectDomain(domain);
 
-        expect(onSave).toHaveBeenCalledOnce();
-        expect(setDomain).toHaveBeenCalledExactlyOnceWith(domain);
+        expect(saveBeforeSwitching).toHaveBeenCalledOnce();
+        expect(setDomain).not.toHaveBeenCalled();
+        if (failure) failSave();
+        else finishSave();
+        await switching;
+        if (failure) expect(setDomain).not.toHaveBeenCalled();
+        else expect(setDomain).toHaveBeenCalledExactlyOnceWith(domain);
     });
 });
 

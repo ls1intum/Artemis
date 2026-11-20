@@ -565,4 +565,36 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         assertThat(testRepo.bareRepositoryCommits().getFirst().getId()).isEqualTo(remoteCommit.getId());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateRawFilePreservesEscapedContentAndEnforcesSizeLimit() throws Exception {
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        String url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file";
+        String escapedContent = "\u0001".repeat(4 * 1024 * 1024);
+        assertThat(request.getObjectMapper().writeValueAsBytes(escapedContent).length).isGreaterThan(20 * 1024 * 1024);
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put(url).param("file", currentLocalFileName)
+                .contentType(org.springframework.http.MediaType.TEXT_PLAIN).content(escapedContent.getBytes(java.nio.charset.StandardCharsets.UTF_8)))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
+        Path localFile;
+        try (var local = gitService.getOrCheckoutRepository(programmingExercise.getVcsTestRepositoryUri(), true, true)) {
+            localFile = local.getLocalPath().resolve(currentLocalFileName);
+            assertThat(Files.readString(localFile)).isEqualTo(escapedContent);
+        }
+        byte[] oversizedContent = new byte[(int) de.tum.cit.aet.artemis.localvc.service.LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1];
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put(url).param("file", currentLocalFileName)
+                .contentType(org.springframework.http.MediaType.TEXT_PLAIN).content(oversizedContent))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().is(413));
+        assertThat(Files.readString(localFile)).isEqualTo(escapedContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void updateRawTestFileRejectsStudent() throws Exception {
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .put("/api/programming/programming-exercises/{id}/test-repository/file", programmingExercise.getId()).param("file", currentLocalFileName)
+                .contentType(org.springframework.http.MediaType.TEXT_PLAIN).content("not authorized"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
+    }
+
 }

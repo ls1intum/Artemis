@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { Subject, firstValueFrom, of } from 'rxjs';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -25,6 +25,46 @@ describe('CodeEditorRepositoryFileService', () => {
     });
 
     afterEach(() => httpTestingController.verify());
+
+    it('should upload escaped single-file content raw and commit only after the upload succeeds', async () => {
+        const content = '\u0001'.repeat(4 * 1024 * 1024);
+        expect(new TextEncoder().encode(JSON.stringify([{ fileName: 'escaped.txt', fileContent: content }])).length).toBeGreaterThan(20 * 1024 * 1024);
+        const result = firstValueFrom(service.runExclusive(() => service.updateFiles([{ fileName: 'escaped.txt', fileContent: content }], true)));
+        const upload = httpTestingController.expectOne(`${participationUrl}/file?file=escaped.txt`);
+        expect(upload.request.method).toBe('PUT');
+        expect(upload.request.body).toBe(content);
+        httpTestingController.expectNone(`${participationUrl}/commit`);
+        upload.flush(null);
+        httpTestingController.expectOne({ method: 'POST', url: `${participationUrl}/commit` }).flush(null);
+        expect(await result).toEqual({ 'escaped.txt': undefined });
+    });
+
+    it('should preserve ordering when a queued operation is cancelled', () => {
+        const first = new Subject<void>();
+        const later = vi.fn(() => of(undefined));
+        service.runExclusive(() => first).subscribe();
+        service
+            .runExclusive(() => of(undefined))
+            .subscribe()
+            .unsubscribe();
+        service.runExclusive(later).subscribe();
+        expect(later).not.toHaveBeenCalled();
+        first.complete();
+        expect(later).toHaveBeenCalledOnce();
+    });
+
+    it('should release the next write after a failed operation', () => {
+        const first = new Subject<void>();
+        const later = vi.fn(() => of(undefined));
+        const failed = vi.fn();
+        service.runExclusive(() => first).subscribe({ error: failed });
+        service.runExclusive(later).subscribe();
+        expect(later).not.toHaveBeenCalled();
+        const error = new Error('save failed');
+        first.error(error);
+        expect(failed).toHaveBeenCalledExactlyOnceWith(error);
+        expect(later).toHaveBeenCalledOnce();
+    });
 
     it('should read the files of the working copy if no commit is given', async () => {
         const result = firstValueFrom(service.getRepositoryContent());

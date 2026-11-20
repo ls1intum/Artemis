@@ -16,6 +16,7 @@ import {
     CreateFileChange,
     DeleteFileChange,
     EditorState,
+    FileSubmission,
     FileType,
     RenameFileChange,
     RepositoryType,
@@ -29,6 +30,11 @@ import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/en
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/actions/code-editor-actions.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ActivatedRoute } from '@angular/router';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 /**
  * Typed view onto the private/internal members of {@link CodeEditorMonacoComponent} that the
@@ -273,6 +279,8 @@ describe('CodeEditorMonacoComponent', () => {
             imports: [MonacoEditorComponent, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MockComponent(CodeEditorHeaderComponent)],
             providers: [
                 CodeEditorFileService,
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
 
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -1541,13 +1549,14 @@ describe('CodeEditorMonacoComponent', () => {
         expect(config.canSubmit()).toBe(false);
     });
 
-    it('should commit and mark inline fix as applied after successful code-editor apply', () => {
+    it.each(['class Foo {}', '\u0001'.repeat(4 * 1024 * 1024)])('should commit and mark an inline fix through the shared upload path (%#)', (content) => {
         fixture.componentRef.setInput('selectedFile', 'src/Foo.java');
         comp.fileSession.set({
-            'src/Foo.java': { code: 'class Foo {}', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+            'src/Foo.java': { code: content, cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
         });
         fixture.changeDetectorRef.detectChanges();
-        vi.spyOn(comp.editor(), 'getText').mockReturnValue('class Foo {}');
+        vi.spyOn(comp.editor(), 'getText').mockReturnValue(content);
+        const coordinate = vi.spyOn(codeEditorRepositoryFileService, 'runExclusive');
         const updateFilesSpy = vi.spyOn(codeEditorRepositoryFileService, 'updateFiles').mockReturnValue(of({} as any));
         const markAppliedSpy = vi.spyOn(internals(comp).exerciseReviewCommentService, 'markInlineFixAppliedInContext').mockImplementation(() => {});
         const onSavedFilesSpy = vi.fn();
@@ -1566,10 +1575,50 @@ describe('CodeEditorMonacoComponent', () => {
 
         internals(comp).persistInlineFixApplication(thread);
 
-        expect(updateFilesSpy).toHaveBeenCalledWith([{ fileName: 'src/Foo.java', fileContent: 'class Foo {}' }], true);
+        expect(coordinate).toHaveBeenCalledOnce();
+        expect(updateFilesSpy).toHaveBeenCalledWith([{ fileName: 'src/Foo.java', fileContent: content }], true, 'api/programming/participations/1/repository');
         expect(onSavedFilesSpy).toHaveBeenCalledWith({ 'src/Foo.java': undefined });
         expect(onInlineFixCommittedSpy).toHaveBeenCalled();
         expect(markAppliedSpy).toHaveBeenCalledWith(42);
+    });
+
+    it('should persist an inline fix only after all pending autosave batches', () => {
+        vi.spyOn(CodeEditorActionsComponent.prototype, 'ngOnInit').mockImplementation(() => {});
+        const actionsFixture = TestBed.createComponent(CodeEditorActionsComponent);
+        const actions = actionsFixture.componentInstance;
+        const oldContent = 'a'.repeat(7 * 1024 * 1024);
+        const firstBatch = new Subject<FileSubmission>();
+        const inlineFix = new Subject<FileSubmission>();
+        const update = vi
+            .spyOn(codeEditorRepositoryFileService, 'updateFiles')
+            .mockReturnValueOnce(firstBatch)
+            .mockReturnValueOnce(of({ 'third.txt': null }))
+            .mockReturnValueOnce(inlineFix);
+        actionsFixture.componentRef.setInput('unsavedFiles', { 'first.txt': oldContent, 'second.txt': oldContent, 'third.txt': oldContent });
+        actionsFixture.componentRef.setInput('editorState', EditorState.UNSAVED_CHANGES);
+        actionsFixture.componentRef.setInput('commitState', CommitState.UNCOMMITTED_CHANGES);
+        actions.saveChangedFiles().subscribe();
+
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('selectedFile', 'third.txt');
+        fixture.detectChanges();
+        vi.spyOn(comp.editor(), 'getText').mockReturnValue('fixed content');
+        comp.fileSession.set({ 'third.txt': { code: 'fixed content', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 } });
+        const markApplied = vi.spyOn(internals(comp).exerciseReviewCommentService, 'markInlineFixAppliedInContext').mockImplementation(() => {});
+        internals(comp).persistInlineFixApplication({ comments: [{ id: 42, type: CommentType.CONSISTENCY_CHECK }] } as CommentThread);
+        expect(update).toHaveBeenCalledOnce();
+        expect(markApplied).not.toHaveBeenCalled();
+
+        firstBatch.next({ 'first.txt': null, 'second.txt': null });
+        firstBatch.complete();
+        expect(update).toHaveBeenCalledTimes(3);
+        expect(update.mock.calls[1]).toEqual([[{ fileName: 'third.txt', fileContent: oldContent }], false, 'api/programming/participations/1/repository']);
+        expect(update.mock.calls[2]).toEqual([[{ fileName: 'third.txt', fileContent: 'fixed content' }], true, 'api/programming/participations/1/repository']);
+        expect(markApplied).not.toHaveBeenCalled();
+        inlineFix.next({ 'third.txt': null });
+        expect(markApplied).toHaveBeenCalledExactlyOnceWith(42);
+        actionsFixture.componentRef.setInput('unsavedFiles', {});
+        actionsFixture.destroy();
     });
 
     it('should not report an inline-fix file as saved after a newer edit', () => {

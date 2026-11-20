@@ -48,7 +48,7 @@ export class RenameFileChange extends FileChange {
     }
 }
 
-export type FileSubmission = { [fileName: string]: string | undefined };
+export type FileSubmission = { [fileName: string]: string | null | undefined };
 
 /**
  * Enumeration defining domain type.
@@ -78,7 +78,7 @@ export enum RepositoryError {
     CHECKOUT_CONFLICT = 'checkoutConflict',
 }
 
-export type FileSubmissionError = { error: RepositoryError; participationId: number; fileName: string };
+export type FileSubmissionError = { error: RepositoryError; participationId: number; fileName?: string };
 
 /**
  * Enumeration defining the state of the commit.
