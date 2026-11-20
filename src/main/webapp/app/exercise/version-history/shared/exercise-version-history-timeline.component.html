@@ -2,7 +2,7 @@
     <header class="border-b border-border p-3!">
         <h3 class="m-0 text-lg font-semibold">
             <span jhiTranslate="artemisApp.exercise.versionHistory.timeline.title"></span>
-            <span class="text-sm text-text-secondary">({{ totalItems() }})</span>
+            <span class="text-sm text-muted-color">({{ totalItems() }})</span>
         </h3>
     </header>
     <div class="min-h-0 overflow-auto p-3!">
@@ -37,13 +37,13 @@
                             <span class="flex min-w-0 flex-col items-start gap-1">
                                 <span class="font-semibold">#{{ entry.id }}</span>
                                 <span class="break-words">{{ entry.displayName }}</span>
-                                <span class="text-sm text-text-secondary">{{ entry.secondaryName }}</span>
+                                <span class="text-sm text-muted-color">{{ entry.secondaryName }}</span>
                                 @if (entry.createdDate) {
-                                    <span class="text-xs text-text-secondary" [title]="entry.createdDate | artemisDate: 'long' : true">{{
+                                    <span class="text-xs text-muted-color" [title]="entry.createdDate | artemisDate: 'long' : true">{{
                                         entry.createdDate | artemisDate: 'short' : true
                                     }}</span>
                                 } @else {
-                                    <span class="text-xs text-text-secondary">-</span>
+                                    <span class="text-xs text-muted-color">-</span>
                                 }
                             </span>
                         </button>

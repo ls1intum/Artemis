@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Collections;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -43,29 +44,45 @@ class TomcatConfigurationTest {
     }
 
     @Test
-    void requestWithTenLocalesIsServed() throws Exception {
-        assertThat(statusForAcceptLanguageWithEntries(10)).isEqualTo(200);
+    void requestWithTenLocalesIsServedWithAllOfThem() throws Exception {
+        assertServedWithLocales(10, 10);
     }
 
     @Test
-    void requestWithMoreLocalesThanTomcatsDefaultIsServed() throws Exception {
-        assertThat(statusForAcceptLanguageWithEntries(15)).isEqualTo(200);
+    void requestWithMoreLocalesThanTomcatsDefaultIsServedWithAllOfThem() throws Exception {
+        assertServedWithLocales(15, 15);
     }
 
     @Test
-    void requestAtTheConfiguredLimitIsServed() throws Exception {
-        assertThat(statusForAcceptLanguageWithEntries(TomcatConfiguration.MAX_ACCEPT_LANGUAGE_LOCALES)).isEqualTo(200);
+    void requestAtTheConfiguredLimitIsServedWithAllOfTheLocales() throws Exception {
+        assertServedWithLocales(TomcatConfiguration.MAX_ACCEPT_LANGUAGE_LOCALES, TomcatConfiguration.MAX_ACCEPT_LANGUAGE_LOCALES);
+    }
+
+    /**
+     * Tomcat 11.0.27 threw for a header above the limit, which made every request of such a client fail with a 500. Tomcat 11.0.28 ignores
+     * the extra locales, so the request is served with the locales up to the limit.
+     */
+    @Test
+    void requestAboveTheConfiguredLimitIsServedAndTheExtraLocalesAreIgnored() throws Exception {
+        assertServedWithLocales(TomcatConfiguration.MAX_ACCEPT_LANGUAGE_LOCALES + 1, TomcatConfiguration.MAX_ACCEPT_LANGUAGE_LOCALES);
     }
 
     @Test
-    void requestAboveTheConfiguredLimitIsRejected() throws Exception {
-        assertThat(statusForAcceptLanguageWithEntries(TomcatConfiguration.MAX_ACCEPT_LANGUAGE_LOCALES + 1)).isEqualTo(500);
+    void requestFarAboveTheConfiguredLimitIsServedWithTheLocalesUpToTheLimit() throws Exception {
+        assertServedWithLocales(TomcatConfiguration.MAX_ACCEPT_LANGUAGE_LOCALES * 10, TomcatConfiguration.MAX_ACCEPT_LANGUAGE_LOCALES);
     }
 
-    private int statusForAcceptLanguageWithEntries(int entries) throws IOException, InterruptedException {
+    /**
+     * Sends a header with the given number of language entries and checks that the request is served and how many of the locales the
+     * servlet could read, which the limit has to cap.
+     */
+    private void assertServedWithLocales(int entries, int expectedRetainedLocales) throws IOException, InterruptedException {
         var request = HttpRequest.newBuilder(URI.create("http://localhost:" + webServer.getPort() + "/")).header("Accept-Language", acceptLanguageWithEntries(entries)).GET()
                 .build();
-        return httpClient.send(request, HttpResponse.BodyHandlers.ofString()).statusCode();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        assertThat(response.statusCode()).as("status for %d entries", entries).isEqualTo(200);
+        assertThat(Integer.parseInt(response.body())).as("locales retained for %d entries", entries).isEqualTo(expectedRetainedLocales);
     }
 
     /**
@@ -79,13 +96,15 @@ class TomcatConfigurationTest {
     }
 
     /**
-     * Like Spring's {@code RequestContextFilter}, which resolves the locale of every request.
+     * Resolves the locale of every request like Spring's {@code RequestContextFilter}, which Tomcat 11.0.27 made fail above the limit,
+     * and answers with the number of locales that it could read.
      */
     private static class LocaleServlet extends HttpServlet {
 
         @Override
         protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-            response.getWriter().write(request.getLocale().toLanguageTag());
+            request.getLocale();
+            response.getWriter().write(String.valueOf(Collections.list(request.getLocales()).size()));
         }
     }
 }

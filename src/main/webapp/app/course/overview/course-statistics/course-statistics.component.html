@@ -8,7 +8,7 @@
         <header class="mb-6! flex flex-wrap items-start justify-between gap-4!">
             <div>
                 <h1 class="m-0! text-2xl! font-semibold! tracking-tight" jhiTranslate="artemisApp.courseOverview.statistics.redesign.title"></h1>
-                <p class="mt-2! mb-0! text-sm text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.subtitle"></p>
+                <p class="mt-2! mb-0! text-sm text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.subtitle"></p>
             </div>
             <a
                 href="https://docs.artemis.tum.de/student/progress-analytics/learning-analytics"
@@ -21,7 +21,7 @@
         @if (showFilters()) {
             <fieldset data-testid="statistics-filters" class="mb-6! rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background) p-5!">
                 <legend class="float-none w-auto px-2! text-base! font-semibold!" jhiTranslate="artemisApp.courseOverview.statistics.includeIndividualCategories"></legend>
-                <p class="mb-4! text-sm text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.filterScope"></p>
+                <p class="mb-4! text-sm text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.filterScope"></p>
                 <div class="flex flex-wrap gap-x-6! gap-y-3!">
                     <label class="flex! items-center gap-2! text-sm font-normal!"
                         ><tumaet-ui-checkbox [checked]="currentlyHidingNotIncludedInScoreExercises()" (checkedChange)="toggleNotIncludedInScoreExercises()" /><span
@@ -69,9 +69,7 @@
                         }
                         <div data-testid="total-score-label" class="statistics-score-center" [attr.aria-hidden]="hasScoreRingData() ? 'true' : null">
                             <strong class="text-3xl font-semibold tabular-nums">{{ displayedScores().currentPercentage }}%</strong
-                            ><span class="mt-1! text-sm tabular-nums text-(--tumaet-ui-muted-color)"
-                                >{{ displayedScores().creditedPoints }} / {{ displayedScores().attainablePoints }} pt</span
-                            >
+                            ><span class="mt-1! text-sm tabular-nums text-muted-color">{{ displayedScores().creditedPoints }} / {{ displayedScores().attainablePoints }} pt</span>
                         </div>
                     </div>
                     <ul class="m-0! flex list-none flex-col gap-3! p-0! text-sm">
@@ -86,7 +84,7 @@
                 @if (usesCreditedPointsRing()) {
                     <p
                         data-testid="statistics-type-totals-explanation"
-                        class="mt-3! mb-0! text-xs text-(--tumaet-ui-muted-color)"
+                        class="mt-3! mb-0! text-xs text-muted-color"
                         jhiTranslate="artemisApp.courseOverview.statistics.redesign.typeTotalsExplanation"
                     ></p>
                 }
@@ -109,42 +107,36 @@
             >
                 <div class="flex flex-1 items-center justify-between gap-4! p-6!">
                     <div>
-                        <h2 class="m-0! text-sm! font-medium! text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.submittedExercises"></h2>
-                        <p class="mt-2! mb-0! text-xs text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.submissionMeaning"></p>
+                        <h2 class="m-0! text-sm! font-medium! text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.submittedExercises"></h2>
+                        <p class="mt-2! mb-0! text-xs text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.submissionMeaning"></p>
                     </div>
                     <span class="whitespace-nowrap text-3xl font-semibold tabular-nums"
-                        >{{ submittedExerciseCount() }} <span class="text-lg font-normal text-(--tumaet-ui-muted-color)">/ {{ releasedExercises().length }}</span></span
+                        >{{ submittedExerciseCount() }} <span class="text-lg font-normal text-muted-color">/ {{ releasedExercises().length }}</span></span
                     >
                 </div>
                 @if (showMaterials()) {
                     <div class="flex flex-1 items-center justify-between gap-4! p-6!">
                         <div>
-                            <h2
-                                class="m-0! text-sm! font-medium! text-(--tumaet-ui-muted-color)"
-                                jhiTranslate="artemisApp.courseOverview.statistics.redesign.learningMaterials"
-                            ></h2>
-                            <p class="mt-2! mb-0! text-xs text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.markedComplete"></p>
+                            <h2 class="m-0! text-sm! font-medium! text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.learningMaterials"></h2>
+                            <p class="mt-2! mb-0! text-xs text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.markedComplete"></p>
                         </div>
                         <span class="whitespace-nowrap text-3xl font-semibold tabular-nums">
                             @if (materialsLoading() || materialsFailed()) {
                                 —
                             } @else {
-                                {{ materialCompleted() }} <span class="text-lg font-normal text-(--tumaet-ui-muted-color)">/ {{ materialTotal() }}</span>
+                                {{ materialCompleted() }} <span class="text-lg font-normal text-muted-color">/ {{ materialTotal() }}</span>
                             }
                         </span>
                     </div>
                 }
                 @if (showCompetencies()) {
                     <div class="flex flex-1 items-center justify-between gap-4! p-6!">
-                        <h2
-                            class="m-0! text-sm! font-medium! text-(--tumaet-ui-muted-color)"
-                            jhiTranslate="artemisApp.courseOverview.statistics.redesign.masteredCompetencies"
-                        ></h2>
+                        <h2 class="m-0! text-sm! font-medium! text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.masteredCompetencies"></h2>
                         <span class="whitespace-nowrap text-3xl font-semibold tabular-nums">
                             @if (competenciesLoading() || competenciesFailed()) {
                                 —
                             } @else {
-                                {{ masteredCompetencies() }} <span class="text-lg font-normal text-(--tumaet-ui-muted-color)">/ {{ competencies().length }}</span>
+                                {{ masteredCompetencies() }} <span class="text-lg font-normal text-muted-color">/ {{ competencies().length }}</span>
                             }
                         </span>
                     </div>
@@ -156,7 +148,7 @@
             @if (showMaterials()) {
                 <section class="rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background) p-5!" aria-labelledby="statistics-material-title">
                     <h2 id="statistics-material-title" class="m-0! text-lg! font-semibold!" jhiTranslate="artemisApp.courseOverview.statistics.redesign.materialCompletion"></h2>
-                    <p class="mt-1! text-sm text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.materialScope"></p>
+                    <p class="mt-1! text-sm text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.materialScope"></p>
                     @if (materialsLoading()) {
                         <p role="status" class="py-10! text-center" jhiTranslate="artemisApp.courseOverview.statistics.redesign.loading"></p>
                     } @else if (materialsFailed()) {
@@ -182,10 +174,10 @@
                                     />
                                 </div>
                             } @empty {
-                                <p class="text-sm text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.noMaterials"></p>
+                                <p class="text-sm text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.noMaterials"></p>
                             }
                         </div>
-                        <p class="mb-0! text-xs leading-relaxed text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.completionMeaning"></p>
+                        <p class="mb-0! text-xs leading-relaxed text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.completionMeaning"></p>
                     }
                 </section>
             }
@@ -249,7 +241,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <p class="m-0! p-5! text-xs text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.courseOverview.statistics.redesign.masteryMeaning"></p>
+                    <p class="m-0! p-5! text-xs text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.masteryMeaning"></p>
                 }
             </section>
         }
@@ -270,7 +262,7 @@
                         jhiTranslate="artemisApp.courseOverview.statistics.yourCreditedPoints"
                         [translateValues]="{ number: displayedScores().creditedPoints }"
                     ></p>
-                    <p class="m-0! text-(--tumaet-ui-muted-color) sm:col-span-2" jhiTranslate="artemisApp.courseOverview.statistics.yourCreditedPointsHelp"></p>
+                    <p class="m-0! text-muted-color sm:col-span-2" jhiTranslate="artemisApp.courseOverview.statistics.yourCreditedPointsHelp"></p>
                 } @else {
                     <p
                         id="absolute-course-score"

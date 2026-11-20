@@ -44,6 +44,32 @@ def sharedExclusions = [
     "deployment/docker/oidc-test/**",
 ]
 
+// Findings that are suppressed on purpose, one entry per file because Sonar matches an exclusion by rule and
+// file, not by line. Each of them is a case the rule cannot see through. They are listed here, in review, rather
+// than marked as false positives in the Sonar UI, where nobody would notice a change.
+//
+// Web:MouseEventWithoutKeyboardEquivalentCheck asks for a keydown/keyup attribute on every element that listens
+// for a click. These templates deliberately keep a pointer-only wrapper and give keyboard users a native control
+// that runs the same action: a button inside the post preview and the notification stack, the input of the
+// autocomplete (the options are reached with aria-activedescendant, never by focus), the Escape handler of the
+// fullscreen PDF dialog behind its backdrop. A key handler on the wrapper would trigger the action twice.
+def pointerOnlyWrapperTemplates = [
+    "packages/tum-aet-ui/src/lib/autocomplete/tumaet-ui-autocomplete.component.html",
+    "src/main/webapp/app/communication/course-conversations-components/posting-summary/posting-summary.component.html",
+    "src/main/webapp/app/communication/post/post.component.html",
+    "src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component.html",
+    "src/main/webapp/app/lecture/shared/pdf-viewer/pdf-viewer.component.html",
+]
+// Web:S5256 wants a th element in the same template as the table. The two build queue tables render their header
+// row through the jhi-build-jobs-header component, whose template holds the th cells.
+def headerComponentTemplates = [
+    "src/main/webapp/app/localci/build-queue/tables/running-jobs-table/running-jobs-table.component.html",
+    "src/main/webapp/app/localci/build-queue/tables/queued-jobs-table/queued-jobs-table.component.html",
+]
+def issueIgnores = []
+pointerOnlyWrapperTemplates.each { issueIgnores << ["Web:MouseEventWithoutKeyboardEquivalentCheck", it] }
+headerComponentTemplates.each { issueIgnores << ["Web:S5256", it] }
+
 sonar {
     properties {
         property "sonar.projectKey", "ls1intum_Artemis"
@@ -69,6 +95,12 @@ sonar {
         ].join(",")
 
         property "sonar.exclusions", sharedExclusions.join(",")
+
+        property "sonar.issue.ignore.multicriteria", issueIgnores.indices.collect { "e${it}" }.join(",")
+        issueIgnores.eachWithIndex { ignore, index ->
+            property "sonar.issue.ignore.multicriteria.e${index}.ruleKey", ignore[0]
+            property "sonar.issue.ignore.multicriteria.e${index}.resourceKey", ignore[1]
+        }
 
         // Clear the test root the plugin derives from the `test` source set. Test code is out of scope
         // by the agreement above, and leaving the root declared while `sonar.exclusions` removes the

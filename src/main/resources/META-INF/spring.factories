@@ -1,6 +1,11 @@
 org.springframework.boot.autoconfigure.AutoConfigurationImportFilter=\
 de.tum.cit.aet.artemis.core.config.SpringAIAutoConfigurationFilter
 
+# Workaround for the bean factory deadlock of Spring Framework 7.1.0 (spring-framework#37516), see the class comment.
+# Remove it together with the class once a fixed Spring Framework release is in use.
+org.springframework.context.ApplicationContextInitializer=\
+de.tum.cit.aet.artemis.core.config.BeanNamesByTypeCacheWorkaround
+
 org.springframework.boot.EnvironmentPostProcessor=\
 de.tum.cit.aet.artemis.core.config.FileUploadPathEnvironmentPostProcessor,\
 de.tum.cit.aet.artemis.core.config.RedisDiscoveryEnvironmentPostProcessor

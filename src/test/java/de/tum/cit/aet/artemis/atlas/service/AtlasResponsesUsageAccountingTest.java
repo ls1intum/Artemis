@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
+import de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesChatModel;
 
 /** Verifies the SDK decoder, Responses adapter and configured USD accounting together. */
 class AtlasResponsesUsageAccountingTest {
@@ -123,7 +124,7 @@ class AtlasResponsesUsageAccountingTest {
         var provider = mock(ResponseService.class);
         when(client.responses()).thenReturn(provider);
         when(provider.create(any(ResponseCreateParams.class))).thenReturn(nativeResponse);
-        return new AtlasResponsesChatModel(client, new JsonMapper(), "cache-model").call(new Prompt("accounting"));
+        return new OpenAiResponsesChatModel(client, new JsonMapper(), "cache-model").call(new Prompt("accounting"));
     }
 
     private static LLMModelCostConfiguration.ModelCostProperties rates() {

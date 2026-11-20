@@ -15,7 +15,7 @@
                     <div class="max-w-full shrink-0 px-2" [ngClass]="exerciseCount() && (totalReachableScore() || totalAbsoluteScore()) ? 'w-7/12' : 'w-full'">
                         @if (exerciseCount() && (totalReachableScore() || totalAbsoluteScore())) {
                             <div class="self-center">
-                                <div class="font-bold text-text-secondary" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
+                                <div class="font-bold text-muted-color" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
                                 <div class="font-bold">
                                     <div
                                         jhiTranslate="artemisApp.studentDashboard.points"
@@ -27,13 +27,13 @@
                                 </div>
                             </div>
                         } @else {
-                            <div class="font-bold text-text-secondary" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
+                            <div class="font-bold text-muted-color" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
                             <div class="font-bold">
                                 <span jhiTranslate="artemisApp.studentDashboard.noStatistics"></span>
                             </div>
                         }
                         <hr />
-                        <div class="font-bold text-text-secondary" jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel"></div>
+                        <div class="font-bold text-muted-color" jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel"></div>
                         @if (nextRelevantExercise() && nextRelevantExercise()!.id && course().id) {
                             <a class="raised-link exercise-title font-bold" [routerLink]="['/courses', course().id, 'exercises', nextRelevantExercise()!.id]">
                                 {{ nextRelevantExercise()!.title }}

@@ -113,7 +113,7 @@
                             }
                             @if (!sourceTeams || sourceTeams.length === 0) {
                                 <li class="team-list-item-container flex items-center">
-                                    <div class="team-list-item-index text-text-secondary">1</div>
+                                    <div class="team-list-item-index text-muted-color">1</div>
                                     <div class="border border-border px-3! py-2 team-list-item--teams py-12!" [class.has-warning]="sourceTeams?.length === 0">
                                         @if (showImportFromExercise() && sourceTeams?.length === 0) {
                                             <span jhiTranslate="artemisApp.team.noTeamsInSourceExercise"></span>
@@ -202,7 +202,7 @@
                                 ></span>
                             </strong>
                             <p
-                                [class.text-text-secondary]="importStrategy() !== ImportStrategy.PURGE_EXISTING"
+                                [class.text-muted-color]="importStrategy() !== ImportStrategy.PURGE_EXISTING"
                                 class="explanation mb-2"
                                 jhiTranslate="artemisApp.team.importStrategy.options.purgeExisting.explanation"
                             ></p>
@@ -226,7 +226,7 @@
                                 ></span>
                             </strong>
                             <p
-                                [class.text-text-secondary]="importStrategy() !== ImportStrategy.CREATE_ONLY"
+                                [class.text-muted-color]="importStrategy() !== ImportStrategy.CREATE_ONLY"
                                 class="explanation mb-0"
                                 jhiTranslate="artemisApp.team.importStrategy.options.createOnly.explanation"
                             ></p>

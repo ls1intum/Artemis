@@ -1,24 +1,26 @@
-<div class="modal-header">
-    <h4 class="modal-title">
-        <span [jhiTranslate]="TRANSLATION_BASE + '.title'"></span>
-    </h4>
-    <button type="button" class="btn-close" aria-label="Close" (click)="dismissModal()"></button>
-</div>
-<div class="modal-body">
-    <div class="mb-3 text-muted">
+<tumaet-ui-dialog dismissableMask [visible]="true" (visibleChange)="onVisibleChange($event)" size="medium" [header]="TRANSLATION_BASE + '.title' | artemisTranslate">
+    <div class="mb-4! text-muted-color">
         <p [jhiTranslate]="TRANSLATION_BASE + '.description'"></p>
     </div>
     @if (!exerciseDueDate() || currentDateTime().isBefore(exerciseDueDate())) {
-        <div class="alert alert-info mt-2">
-            <div [jhiTranslate]="TRANSLATION_BASE + '.dueDate'"></div>
-        </div>
+        <tumaet-ui-message class="mt-2 mb-4! block" severity="info">
+            <span [jhiTranslate]="TRANSLATION_BASE + '.dueDate'"></span>
+        </tumaet-ui-message>
     }
     <form [formGroup]="form" (ngSubmit)="submitForm(false)">
-        <div class="form-group">
-            <label for="name" [jhiTranslate]="TRANSLATION_BASE + '.label'"></label>
-            <input type="text" class="form-control" id="name" formControlName="name" [attr.placeholder]="TRANSLATION_BASE + '.placeholder' | artemisTranslate" />
+        <div class="mb-4!">
+            <label class="mb-2 inline-block" for="name" [jhiTranslate]="TRANSLATION_BASE + '.label'"></label>
+            <input
+                type="text"
+                tumAetUiInput
+                class="w-full"
+                id="name"
+                tumAetUiInputId="name"
+                formControlName="name"
+                [attr.placeholder]="TRANSLATION_BASE + '.placeholder' | artemisTranslate"
+            />
             @if (form.controls['name'].invalid && (form.controls['name'].dirty || form.controls['name'].touched)) {
-                <div class="alert alert-danger mt-2">
+                <tumaet-ui-message class="mt-2 block" severity="error">
                     @if (form.get('name')?.errors?.['required']) {
                         <div [jhiTranslate]="TRANSLATION_BASE + '.requiredValidationErrorName'"></div>
                     }
@@ -28,48 +30,58 @@
                     @if (form.get('name')?.errors?.['pattern']) {
                         <div [jhiTranslate]="TRANSLATION_BASE + '.regexValidationErrorName'"></div>
                     }
-                </div>
+                </tumaet-ui-message>
             }
         </div>
-        <div class="form-group">
-            <label for="description" [jhiTranslate]="TRANSLATION_BASE + '.descriptionLabel'"></label>
-            <input type="text" class="form-control" id="description" formControlName="description" [attr.placeholder]="TRANSLATION_BASE + '.placeholder' | artemisTranslate" />
+        <div class="mb-4!">
+            <label class="mb-2 inline-block" for="description" [jhiTranslate]="TRANSLATION_BASE + '.descriptionLabel'"></label>
+            <input
+                type="text"
+                tumAetUiInput
+                class="w-full"
+                id="description"
+                tumAetUiInputId="description"
+                formControlName="description"
+                [attr.placeholder]="TRANSLATION_BASE + '.placeholder' | artemisTranslate"
+            />
             @if (form.controls['description'].invalid && (form.controls['description'].dirty || form.controls['description'].touched)) {
-                <div class="alert alert-danger mt-2">
+                <tumaet-ui-message class="mt-2 block" severity="error">
                     @if (form.get('description')?.errors?.['required']) {
                         <div [jhiTranslate]="TRANSLATION_BASE + '.requiredValidationErrorDescription'"></div>
                     }
                     @if (form.get('description')?.errors?.['maxlength']) {
                         <div [jhiTranslate]="TRANSLATION_BASE + '.maxLengthValidationErrorDescription'" [translateValues]="{ max: '250' }"></div>
                     }
-                </div>
+                </tumaet-ui-message>
             }
         </div>
-        <div class="form-group">
-            <label [jhiTranslate]="TRANSLATION_BASE + '.channelVisibility'"></label>
-            <div class="btn-group" role="group">
-                <input type="radio" class="btn-check" id="public" formControlName="isPrivate" [value]="false" />
-                <label for="public" class="btn btn-outline-secondary" [jhiTranslate]="TRANSLATION_BASE + '.visibilityPublic'"></label>
-                <input type="radio" class="btn-check" id="private" formControlName="isPrivate" [value]="true" />
-                <label for="private" class="btn btn-outline-secondary" [jhiTranslate]="TRANSLATION_BASE + '.visibilityPrivate'"></label>
-            </div>
+        <div class="mb-4! flex items-center gap-2" role="group" aria-labelledby="feedback-channel-visibility-label">
+            <span id="feedback-channel-visibility-label" [jhiTranslate]="TRANSLATION_BASE + '.channelVisibility'"></span>
+            <tumaet-ui-select-button
+                data-testid="feedback-channel-visibility"
+                formControlName="isPrivate"
+                [options]="visibilityOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [allowEmpty]="false"
+            />
         </div>
-        <div class="form-group">
-            <label [jhiTranslate]="TRANSLATION_BASE + '.announcementChannel'"></label>
-            <div class="btn-group" role="group">
-                <input type="radio" class="btn-check" id="announcement" formControlName="isAnnouncementChannel" [value]="true" />
-                <label for="announcement" class="btn btn-outline-secondary" [jhiTranslate]="TRANSLATION_BASE + '.announcementChannelYes'"></label>
-                <input type="radio" class="btn-check" id="regular" formControlName="isAnnouncementChannel" [value]="false" />
-                <label for="regular" class="btn btn-outline-secondary" [jhiTranslate]="TRANSLATION_BASE + '.announcementChannelNo'"></label>
-            </div>
+        <div class="mb-4! flex items-center gap-2" role="group" aria-labelledby="feedback-channel-announcement-label">
+            <span id="feedback-channel-announcement-label" [jhiTranslate]="TRANSLATION_BASE + '.announcementChannel'"></span>
+            <tumaet-ui-select-button
+                data-testid="feedback-channel-announcement"
+                formControlName="isAnnouncementChannel"
+                [options]="announcementOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [allowEmpty]="false"
+            />
         </div>
 
-        <div class="form-group mt-3">
-            <p class="text-info">
-                <strong [jhiTranslate]="TRANSLATION_BASE + '.studentNumber'" [translateValues]="{ count: feedbackDetail().count }"></strong>
-            </p>
-        </div>
-        <div class="mt-3 text-muted">
+        <p class="mt-4! text-state-info">
+            <strong [jhiTranslate]="TRANSLATION_BASE + '.studentNumber'" [translateValues]="{ count: feedbackDetail().count }"></strong>
+        </p>
+        <div class="mt-4! text-muted-color">
             <p>
                 <strong [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateLabel'"></strong>
                 <span [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateDescription'"></span>
@@ -79,15 +91,12 @@
                 <span [jhiTranslate]="TRANSLATION_BASE + '.createChannelDescription'"></span>
             </p>
         </div>
-        <div class="d-flex justify-content-end mt-3">
-            <button
-                (click)="submitForm(true)"
-                type="button"
-                class="btn btn-primary me-2"
-                [disabled]="!form.valid"
-                [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateLabel'"
-            ></button>
-            <button (click)="submitForm(false)" type="button" class="btn btn-primary" [disabled]="!form.valid" [jhiTranslate]="TRANSLATION_BASE + '.createChannelLabel'"></button>
-        </div>
     </form>
-</div>
+    <ng-template #footer>
+        <button (click)="submitForm(true)" type="button" tumAetUiButton [disabled]="!form.valid" [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateLabel'"></button>
+        <button (click)="submitForm(false)" type="button" tumAetUiButton [disabled]="!form.valid" [jhiTranslate]="TRANSLATION_BASE + '.createChannelLabel'"></button>
+    </ng-template>
+</tumaet-ui-dialog>
+@if (isConfirmModalOpen()) {
+    <jhi-confirm-feedback-channel-creation-modal [affectedStudentsCount]="feedbackDetail().count" (closed)="onConfirmationClosed($event)" />
+}
