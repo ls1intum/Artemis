@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -255,7 +256,7 @@ class SecurityPolicyDocumentsTest {
     void rejectsValuesNoAresVersionAccepts() {
         SecurityPolicyDocumentDTO document = new SecurityPolicyDocumentDTO("SecurityPolicy.yaml", "not a preset", " ", null, null, List.of("de.example.A", "de.example.A"),
                 List.of(new FilePermissionDTO("logs/", false, false, false, false, false)), List.of(new NetworkPermissionDTO("local host", 70000, false, false, false)),
-                List.of(new CommandPermissionDTO("", List.of())), List.of(new ThreadPermissionDTO("java.lang.Thread", 0)),
+                List.of(new CommandPermissionDTO("", List.of())), List.of(new ThreadPermissionDTO("java.lang.Thread", -1)),
                 List.of(new PackagePermissionDTO("org mockito"), new PackagePermissionDTO("org mockito")), List.of(0L),
                 new TestBehaviorDTO(new StrictTimeoutDTO(0, "FORTNIGHTS", null, null), new OutputMirroringDTO(true, 0L), new HiddenTestsDTO(null, " "),
                         new PrivilegedExceptionsDTO(true, "two\nlines")));
@@ -264,8 +265,34 @@ class SecurityPolicyDocumentsTest {
 
         assertThat(problems).hasSize(17).anySatisfy(problem -> assertThat(problem).contains("is listed twice"))
                 .anySatisfy(problem -> assertThat(problem).contains("listed more than once")).anySatisfy(problem -> assertThat(problem).contains("logs/ grants no permission"))
-                .anySatisfy(problem -> assertThat(problem).contains("70000")).anySatisfy(problem -> assertThat(problem).contains("at least one thread"))
+                .anySatisfy(problem -> assertThat(problem).contains("70000")).anySatisfy(problem -> assertThat(problem).contains("must not be negative"))
                 .anySatisfy(problem -> assertThat(problem).contains("strict timeout")).anySatisfy(problem -> assertThat(problem).contains("single line"));
+    }
+
+    @Test
+    void acceptsAThreadCountOfZeroLikeTheSchemaOfAres() {
+        SecurityPolicyDocumentDTO base = fullDocument();
+        SecurityPolicyDocumentDTO document = new SecurityPolicyDocumentDTO(base.policyPath(), null, base.languageConfiguration(), base.supervisedPackage(), base.mainClass(),
+                base.testClasses(), base.files(), base.network(), base.commands(), List.of(new ThreadPermissionDTO("java.lang.Thread", 0)), base.packages(), base.timeouts(), null);
+
+        assertThat(SecurityPolicyDocuments.validate(document)).isEmpty();
+    }
+
+    @Test
+    void reportsEmptyEntriesInsteadOfFailing() {
+        SecurityPolicyDocumentDTO base = fullDocument();
+        SecurityPolicyDocumentDTO emptyFile = new SecurityPolicyDocumentDTO(base.policyPath(), null, base.languageConfiguration(), base.supervisedPackage(), base.mainClass(),
+                base.testClasses(), Arrays.asList(base.files().getFirst(), null), base.network(), base.commands(), base.threads(), base.packages(), base.timeouts(), null);
+        SecurityPolicyDocumentDTO emptyArgument = new SecurityPolicyDocumentDTO(base.policyPath(), null, base.languageConfiguration(), base.supervisedPackage(), base.mainClass(),
+                base.testClasses(), base.files(), base.network(), List.of(new CommandPermissionDTO("python3", Arrays.asList("check.py", null))), base.threads(), base.packages(),
+                base.timeouts(), null);
+        SecurityPolicyDocumentDTO missingUnit = new SecurityPolicyDocumentDTO(base.policyPath(), null, base.languageConfiguration(), base.supervisedPackage(), base.mainClass(),
+                base.testClasses(), base.files(), base.network(), base.commands(), base.threads(), base.packages(), base.timeouts(),
+                new TestBehaviorDTO(new StrictTimeoutDTO(5, null, null, null), null, null, null));
+
+        assertThat(SecurityPolicyDocuments.validate(emptyFile)).containsExactly("A permission entry is empty.");
+        assertThat(SecurityPolicyDocuments.validate(emptyArgument)).containsExactly("A command of the command permissions is not valid.");
+        assertThat(SecurityPolicyDocuments.validate(missingUnit)).containsExactly("The strict timeout must be positive and use a valid time unit.");
     }
 
     @Test

@@ -265,7 +265,8 @@ public class SecurityPolicyEditorService {
         securityFrameworkService.validateJavaExercise(exercise);
         String path = requireValidPolicyPath(importedFile.policyPath());
         String content = importedFile.content() == null ? "" : importedFile.content();
-        SecurityPolicyDocuments.Parsed parsed = content.length() > SecurityPolicyYaml.MAX_POLICY_SIZE
+        // The limit counts bytes in UTF-8, like the reader of a committed policy file, not characters.
+        SecurityPolicyDocuments.Parsed parsed = content.getBytes(StandardCharsets.UTF_8).length > SecurityPolicyYaml.MAX_POLICY_SIZE
                 ? new SecurityPolicyDocuments.Parsed(null, SecurityPolicyDocuments.ReadOnlyReason.TOO_LARGE, null)
                 : SecurityPolicyDocuments.parse(path, content, null);
         return new SecurityPolicyEditorDTO.PolicyDTO(path, null, parsed.document(), parsed.reason() == null ? null : parsed.reason().name(), parsed.errorLine(), List.of());

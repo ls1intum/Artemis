@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.RevWalkException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.slf4j.Logger;
@@ -48,7 +49,8 @@ final class SecurityFrameworkRestorePoint {
             }
             return (_, _) -> true;
         }
-        catch (GitAPIException | IOException e) {
+        // The history is read while it is iterated, so a commit that cannot be read there fails with a RevWalkException.
+        catch (GitAPIException | IOException | RevWalkException e) {
             // Switching every annotation on could override test classes an instructor switched off on purpose, so nothing is changed.
             log.error("Could not read the history of {} to restore the annotations", repository.getLocalPath(), e);
             throw new BadRequestAlertException("The state before the last deactivation cannot be read from the history of the tests repository.", ENTITY_NAME,

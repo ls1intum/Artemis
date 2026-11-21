@@ -714,6 +714,24 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @ParameterizedTest
+    @CsvSource(delimiter = '|', value = { "T extends java.util.Date|java.util.Date|false", "T extends java.util.Date & java.io.Serializable|java.util.Date|false",
+            "T extends Date|java.util.Date|false", "T|java.lang.Object|false", "T extends java.util.Date|java.sql.Timestamp|true", "T extends Other|Other|true" })
+    void anOverrideOfATestWithATypeVariableParameterMatchesTheErasureOfTheVariable(String typeParameter, String parameterType, boolean unsupported) throws IOException {
+        writeBuildFile();
+        String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(T value)";
+        String parent = TEST_CLASS.formatted("de.example", "SortingTest").replace("class SortingTest {", "class SortingTest<" + typeParameter + "> {")
+                .replace("    @Test\n    void runs()", annotated).replace("import org.junit.jupiter.api.Test;", "import java.util.Date;\n\nimport org.junit.jupiter.api.Test;");
+        writeSource("test/de/example/SortingTest.java", parent);
+        writeSource("test/de/example/MoreSortingTest.java",
+                importingOverride("MoreSortingTest extends SortingTest<" + parameterType + ">", "public void runs(" + parameterType + " value)"));
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // runs(T) erases to its leftmost bound, or to Object without one; an override with that type replaces it, so the switched-off subclass inherits no
+        // active method policy. Another type, or a bound the file does not resolve, keeps the inherited test.
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", unsupported);
+    }
+
+    @ParameterizedTest
     @CsvSource({ "a.Outer, false", "b.Outer, true" })
     void anOverrideMustNameTheSameOuterTypeForANestedParameterType(String childImport, boolean unsupported) throws IOException {
         writeBuildFile();

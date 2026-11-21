@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -597,6 +598,12 @@ public final class SecurityPolicyDocuments {
             problems.add("The preset " + document.preset() + " is not a valid preset name.");
         }
         validateTestClasses(document.testClasses(), problems);
+        // An omitted list is empty, but a list may still contain an empty entry, e.g. files: [null], which has no fields to check.
+        if (Stream.of(document.files(), document.network(), document.commands(), document.threads(), document.packages())
+                .anyMatch(entries -> entries.stream().anyMatch(Objects::isNull))) {
+            problems.add("A permission entry is empty.");
+            return problems;
+        }
         validateFiles(document.files(), problems);
         validateNetwork(document.network(), problems);
         validateCommands(document.commands(), problems);
@@ -657,7 +664,8 @@ public final class SecurityPolicyDocuments {
 
     private static void validateCommands(List<CommandPermissionDTO> commands, List<String> problems) {
         for (CommandPermissionDTO command : commands) {
-            if (isBlank(command.command()) || containsLineBreak(command.command()) || command.arguments().stream().anyMatch(SecurityPolicyDocuments::containsLineBreak)) {
+            if (isBlank(command.command()) || containsLineBreak(command.command())
+                    || command.arguments().stream().anyMatch(argument -> argument == null || containsLineBreak(argument))) {
                 problems.add("A command of the command permissions is not valid.");
             }
         }
@@ -668,15 +676,17 @@ public final class SecurityPolicyDocuments {
             if (isBlank(thread.threadClass()) || containsWhitespace(thread.threadClass())) {
                 problems.add("A class of the thread permissions is not valid.");
             }
-            if (thread.maxThreads() < 1) {
-                problems.add("The thread class " + thread.threadClass() + " must allow at least one thread.");
+            // Like the schema of Ares, which accepts 0, e.g. for a class whose threads the policy names without allowing any.
+            if (thread.maxThreads() < 0) {
+                problems.add("The number of threads of the class " + thread.threadClass() + " must not be negative.");
             }
         }
     }
 
     private static void validateTestBehavior(TestBehaviorDTO behavior, List<String> problems) {
         StrictTimeoutDTO timeout = behavior.strictTimeout();
-        if (timeout != null && (timeout.timeout() <= 0 || !TIME_UNITS.contains(timeout.timeUnit()) || (timeout.terminationGrace() != null && timeout.terminationGrace() < 0)
+        if (timeout != null && (timeout.timeout() <= 0 || timeout.timeUnit() == null || !TIME_UNITS.contains(timeout.timeUnit())
+                || (timeout.terminationGrace() != null && timeout.terminationGrace() < 0)
                 || (timeout.terminationGraceUnit() != null && !TIME_UNITS.contains(timeout.terminationGraceUnit())))) {
             problems.add("The strict timeout must be positive and use a valid time unit.");
         }

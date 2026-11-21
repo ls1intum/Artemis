@@ -5,6 +5,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -51,10 +52,11 @@ final class SecurityTestAssignments {
      * @param testCases         the names of its test methods, in their order in the source
      * @param inheritsTests     whether it extends another test class of the repository, whose test methods it inherits; they are not among its test cases
      *                              and use the policy of its class annotation
-     * @param extendedByTests   whether another test class of the repository extends it and therefore runs its test methods with their annotations
+     * @param runBySubclasses   the test methods that another test class of the repository runs with their annotations, because it extends this class
+     *                              without overriding them, see {@link AresTestInheritance#testMethodsRunBySubclasses(List, Map)}
      */
     record TestClass(String qualifiedName, String sourcePath, boolean active, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths, Set<String> defaultMethods,
-            Set<String> switchedOff, Set<String> overloaded, List<String> testCases, boolean inheritsTests, boolean extendedByTests) {
+            Set<String> switchedOff, Set<String> overloaded, List<String> testCases, boolean inheritsTests, Set<String> runBySubclasses) {
 
         /**
          * @return the test methods whose annotation stays as it is when the assignments of the class are rewritten, unless the method is assigned
@@ -111,7 +113,7 @@ final class SecurityTestAssignments {
             Set<String> defaults = requestedClassPolicyPath != null ? new LinkedHashSet<>() : new LinkedHashSet<>(defaultMethods);
             defaults.removeAll(methods.keySet());
             return new TestClass(qualifiedName, sourcePath, active, requestedClassPolicyPath, methods, defaults, switchedOff, overloaded, testCases, inheritsTests,
-                    extendedByTests);
+                    runBySubclasses);
         }
     }
 
@@ -124,14 +126,20 @@ final class SecurityTestAssignments {
      */
     static Map<String, TestClass> read(Map<String, String> javaSources) {
         Map<String, TestClass> testClasses = new TreeMap<>();
-        Map<String, String> testClassPaths = testClassPaths(javaSources);
+        List<AresTestSources.Summary> summaries = summaries(javaSources);
+        Map<String, AresTestSources.Summary> summariesByPath = new HashMap<>();
+        Map<String, AresTestSources.TypeDeclaration> typesByName = new HashMap<>();
+        summaries.forEach(summary -> {
+            summariesByPath.put(summary.path(), summary);
+            summary.topLevelTypes().forEach(type -> typesByName.putIfAbsent(type.qualifiedName(), type));
+        });
+        Map<String, String> testClassPaths = testClassPaths(summaries);
+        Map<String, Set<String>> runBySubclasses = AresTestInheritance.testMethodsRunBySubclasses(SecurityPolicyRepositoryFiles.testClasses(summaries), typesByName);
         Map<String, AresTestSources.TypeDeclaration> types = new TreeMap<>();
         for (Map.Entry<String, String> testClassPath : testClassPaths.entrySet()) {
-            String sourcePath = testClassPath.getValue();
-            Optional<AresTestSources.TypeDeclaration> type = AresTestSources.relevantType(AresTestSources.analyze(sourcePath, javaSources.get(sourcePath)));
+            Optional<AresTestSources.TypeDeclaration> type = AresTestSources.relevantType(summariesByPath.get(testClassPath.getValue()));
             type.filter(candidate -> candidate.qualifiedName().equals(testClassPath.getKey())).ifPresent(candidate -> types.put(testClassPath.getKey(), candidate));
         }
-        Set<String> extended = types.values().stream().flatMap(type -> type.superclass().stream()).filter(testClassPaths::containsKey).collect(Collectors.toSet());
         types.forEach((qualifiedName, type) -> {
             if (type.policies().size() != 1 || !type.policies().getFirst().isEvaluable()) {
                 return;
@@ -154,7 +162,7 @@ final class SecurityTestAssignments {
             String classPolicyPath = annotation.policyPath().filter(path -> !path.isBlank()).orElse(null);
             TestClass testClass = new TestClass(qualifiedName, sourcePath, annotation.isActivated(), classPolicyPath, Map.copyOf(methodPolicyPaths), Set.copyOf(defaultMethods),
                     Set.copyOf(switchedOff), AresTestCases.overloadedTestCases(source), AresTestCases.testCases(source),
-                    type.superclass().stream().anyMatch(testClassPaths::containsKey), extended.contains(qualifiedName));
+                    type.superclass().stream().anyMatch(testClassPaths::containsKey), Set.copyOf(runBySubclasses.getOrDefault(qualifiedName, Set.of())));
             testClasses.put(qualifiedName, testClass);
         });
         return testClasses;
@@ -219,7 +227,14 @@ final class SecurityTestAssignments {
      * @return the path of the source file of each test class, by the fully qualified name of the class, sorted by name
      */
     static Map<String, String> testClassPaths(Map<String, String> javaSources) {
-        List<AresTestSources.Summary> summaries = javaSources.entrySet().stream().map(source -> AresTestSources.analyze(source.getKey(), source.getValue())).toList();
+        return testClassPaths(summaries(javaSources));
+    }
+
+    private static List<AresTestSources.Summary> summaries(Map<String, String> javaSources) {
+        return javaSources.entrySet().stream().map(source -> AresTestSources.analyze(source.getKey(), source.getValue())).toList();
+    }
+
+    private static Map<String, String> testClassPaths(List<AresTestSources.Summary> summaries) {
         Set<String> testClassNames = SecurityPolicyRepositoryFiles.testClasses(summaries).stream().map(AresTestSources.TypeDeclaration::qualifiedName).collect(Collectors.toSet());
         Map<String, String> paths = new TreeMap<>();
         for (AresTestSources.Summary summary : summaries) {

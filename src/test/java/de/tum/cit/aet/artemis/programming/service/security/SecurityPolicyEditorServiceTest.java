@@ -886,6 +886,22 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void limitsTheSizeOfAnImportedPolicyInBytesLikeACommittedOne() {
+        // Each ä takes two bytes in UTF-8, so the comment keeps the file below the limit in characters but above it in bytes.
+        int characters = (SecurityPolicyYaml.MAX_POLICY_SIZE - POLICY.length()) / 2 + 1;
+        String multibyte = POLICY + "# " + "ä".repeat(characters) + "\n";
+        String ascii = POLICY + "# " + "a".repeat(characters) + "\n";
+
+        SecurityPolicyEditorDTO.PolicyDTO tooLarge = editorService.importPolicy(exercise(), new SecurityPolicyImportDTO("SecurityPolicy.yaml", multibyte));
+        SecurityPolicyEditorDTO.PolicyDTO withinTheLimit = editorService.importPolicy(exercise(), new SecurityPolicyImportDTO("SecurityPolicy.yaml", ascii));
+
+        assertThat(multibyte.length()).isLessThan(SecurityPolicyYaml.MAX_POLICY_SIZE);
+        assertThat(tooLarge.document()).isNull();
+        assertThat(tooLarge.readOnlyReason()).isEqualTo("TOO_LARGE");
+        assertThat(withinTheLimit.document()).isNotNull();
+    }
+
+    @Test
     void assignsSingleTestCasesWithAnnotationsOnTheirMethods() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
         SecurityPolicyDocumentDTO stress = withTestClasses(loadedPolicy(editor), "StressTests.yaml", List.of("de.example.SortingTest"));
@@ -1131,6 +1147,44 @@ class SecurityPolicyEditorServiceTest {
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), split, user))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyTestsOfSubclassesChange"));
+    }
+
+    @Test
+    void renamesThePolicyOfAClassWhoseSubclassOverridesTheTestMethodWithTheRedundantAnnotation() throws Exception {
+        pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("    @Test\n    void testMergeSort()",
+                "    @de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\n    @Test\n    void testMergeSort()"));
+        pushToTests("test/de/example/ChildTest.java", """
+                package de.example;
+
+                import org.junit.jupiter.api.Test;
+
+                @de.tum.cit.ase.ares.api.jupiter.Public
+                @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
+                class ChildTest extends SortingTest {
+
+                    @Test
+                    void testBubbleSort() {
+                    }
+
+                    @Test
+                    void testMergeSort() {
+                    }
+                }
+                """);
+        List<String> withChild = List.of("de.example.ChildTest", "de.example.SortingTest", "de.example.StressTest");
+        SecurityPolicyEditorDTO initial = editorService.getEditor(exercise());
+        editorService.commit(exercise(), change(initial, edited(withTestClasses(loadedPolicy(initial), "SecurityPolicy.yaml", withChild), withChild)), user);
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyChangeDTO.PolicyChangeDTO renamed = new SecurityPolicyChangeDTO.PolicyChangeDTO("SecurityPolicy.yaml",
+                withTestClasses(loadedPolicy(editor), "Renamed.yaml", withChild), withChild);
+
+        // ChildTest overrides testMergeSort, so it runs none of the methods of SortingTest, and the redundant annotation of the method may lose its path.
+        editorService.commit(exercise(), change(editor, renamed), user);
+
+        assertThat(readPushed(SORTING_TEST_PATH)).hasValueSatisfying(
+                source -> assertThat(source).contains("@de.tum.cit.ase.ares.api.Policy(value = \"Renamed.yaml\")\nclass SortingTest {").doesNotContain("SecurityPolicy.yaml"));
+        assertThat(readPushed("test/de/example/ChildTest.java"))
+                .hasValueSatisfying(source -> assertThat(source).contains("@de.tum.cit.ase.ares.api.Policy(value = \"Renamed.yaml\")"));
     }
 
     @Test

@@ -242,12 +242,16 @@ final class SecurityPolicyChangeRules {
     }
 
     /**
-     * Ares applies the annotation of a test method also when a subclass runs the method it inherits, before the annotation of the subclass. Changing which
-     * policy the test methods of a class extended by other test classes use would therefore also change the policy of those subclasses, which the editor
-     * shows as assigned on their own, so such a class can only change its class annotation.
+     * Ares applies the annotation of a test method also when a subclass runs the method it inherits, before the annotation of the subclass. Changing the
+     * annotation of a test method that another test class runs without an override would therefore also change the policy of that subclass, which the
+     * editor shows as assigned on its own. A method every subclass overrides runs with the annotations of the override, so its own may change, e.g. lose a
+     * redundant policy path when the class is renamed as a whole.
      */
     private static void requireKeptPolicyOfSubclasses(SecurityTestAssignments.TestClass testClass, SecurityTestAssignments.TestClass assigned) {
-        if (!testClass.extendedByTests() || (assigned.methodPolicyPaths().equals(testClass.methodPolicyPaths()) && assigned.defaultMethods().equals(testClass.defaultMethods()))) {
+        boolean keptForSubclasses = testClass.runBySubclasses().stream()
+                .allMatch(method -> Objects.equals(assigned.methodPolicyPaths().get(method), testClass.methodPolicyPaths().get(method))
+                        && assigned.defaultMethods().contains(method) == testClass.defaultMethods().contains(method));
+        if (keptForSubclasses) {
             return;
         }
         throw refused("Other test classes extend " + testClass.qualifiedName() + " and run its test methods with their policy. Assign its whole test class to a policy instead.",

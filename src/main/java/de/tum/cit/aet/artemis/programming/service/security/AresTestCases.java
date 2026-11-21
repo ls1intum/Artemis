@@ -62,6 +62,17 @@ final class AresTestCases {
      */
     private static final Pattern TYPE_VARIABLE = Pattern.compile("[<,]\\s*" + TYPE_VARIABLE_NAME);
 
+    /** A type parameter of a parameter list without annotations: its name, group 1, and its bounds after {@code extends}, group 2. */
+    private static final Pattern TYPE_PARAMETER = Pattern
+            .compile("\\s*+(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+)(?:\\s++extends(?!\\p{javaJavaIdentifierPart})(.*))?", Pattern.DOTALL);
+
+    /** The modifiers of a method that may precede its type parameters. Masked comments and literals cannot contain them. */
+    private static final Pattern METHOD_MODIFIERS = Pattern
+            .compile("(?:\\s*+(?:public|protected|private|static|final|abstract|synchronized|native|strictfp|default)(?!\\p{javaJavaIdentifierPart}))*+\\s*+");
+
+    /** The erasure of a type variable without a bound. */
+    private static final String OBJECT = "java.lang.Object";
+
     /** The name of any annotation, also a qualified one. Its parts repeat possessively, so long qualified names do not grow the stack. */
     private static final Pattern ANNOTATION_NAME = Pattern
             .compile("@\\s*+\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+(?:\\s*+\\.\\s*+\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+)*+");
@@ -194,7 +205,7 @@ final class AresTestCases {
     /**
      * The type variables a generic type declares, which are in scope between the braces of its body.
      */
-    private record TypeVariableScope(int bodyStart, int bodyEnd, Set<String> names) {
+    private record TypeVariableScope(int bodyStart, int bodyEnd, Set<String> names, Map<String, String> bounds) {
     }
 
     /**
@@ -223,10 +234,11 @@ final class AresTestCases {
         Matcher type = AresPolicyAnnotations.TYPE_DECLARATION.matcher(masked);
         while (type.find()) {
             int body = masked.indexOf('{', type.end());
-            Set<String> names = body < 0 ? Set.of() : typeVariables(typeParameterList(masked.substring(type.end(), body)));
+            String typeParameters = body < 0 ? "" : typeParameterList(masked.substring(type.end(), body));
+            Set<String> names = typeVariables(typeParameters);
             if (!names.isEmpty()) {
                 int bodyEnd = AresPolicyAnnotations.matchingBrace(masked, body);
-                typeVariableScopes.add(new TypeVariableScope(body, bodyEnd < 0 ? masked.length() : bodyEnd, names));
+                typeVariableScopes.add(new TypeVariableScope(body, bodyEnd < 0 ? masked.length() : bodyEnd, names, typeParameterBounds(typeParameters)));
             }
         }
         return typeVariableScopes;
@@ -245,10 +257,21 @@ final class AresTestCases {
         boolean visible = VISIBLE_IN_OTHER_PACKAGES.matcher(masked.substring(memberStart, method.start(1))).find();
         int declaration = method.start(1);
         // The type parameters of the method itself precede its return type.
-        Set<String> typeVariables = typeVariables(masked.substring(memberStart, declaration));
-        typeVariableScopes.stream().filter(scope -> scope.bodyStart() < declaration && declaration < scope.bodyEnd()).forEach(scope -> typeVariables.addAll(scope.names()));
+        String header = masked.substring(memberStart, declaration);
+        Set<String> typeVariables = typeVariables(header);
+        Map<String, String> bounds = new HashMap<>();
+        // The scopes are in the order of the file, so a type variable of a member type shadows one of the type around it, and one of the method both.
+        typeVariableScopes.stream().filter(scope -> scope.bodyStart() < declaration && declaration < scope.bodyEnd()).forEach(scope -> {
+            typeVariables.addAll(scope.names());
+            bounds.putAll(scope.bounds());
+        });
+        bounds.putAll(methodTypeParameterBounds(header));
         Set<String> importedNames = new HashSet<>();
         UnaryOperator<String> resolve = simpleName -> {
+            if (typeVariables.contains(simpleName)) {
+                // A type variable erases to its leftmost bound; a name that only may be a type variable stays unresolved.
+                return bounds.containsKey(simpleName) ? erasure(masked, bounds.get(simpleName), declaration, imported, typeVariables, importedNames) : null;
+            }
             String resolved = importedType(masked, simpleName, declaration, imported, typeVariables);
             if (resolved != null) {
                 importedNames.add(simpleName);
@@ -341,6 +364,86 @@ final class AresTestCases {
             names.add(typeVariable.group(1));
         }
         return names;
+    }
+
+    /**
+     * @param list a type parameter list without annotations, e.g. {@code <T extends java.util.Date & Comparable<T>, U>}, see {@link #typeParameterList(String)}
+     * @return the leftmost bound of each type variable the list declares, e.g. {@code java.util.Date} for {@code T}, without its type arguments; empty for
+     *         a type variable without a bound, e.g. {@code U}
+     */
+    private static Map<String, String> typeParameterBounds(String list) {
+        Map<String, String> bounds = new HashMap<>();
+        int nesting = 0;
+        int start = 1;
+        for (int index = 1; index < list.length(); index++) {
+            char character = list.charAt(index);
+            if (character == '<') {
+                nesting++;
+            }
+            else if (character == '>' && nesting > 0) {
+                nesting--;
+            }
+            else if (nesting == 0 && (character == ',' || character == '>')) {
+                Matcher parameter = TYPE_PARAMETER.matcher(list.substring(start, index));
+                if (parameter.matches()) {
+                    bounds.put(parameter.group(1), parameter.group(2) == null ? "" : leftmostBound(parameter.group(2)));
+                }
+                start = index + 1;
+            }
+        }
+        return bounds;
+    }
+
+    /**
+     * @param bounds the bounds of a type variable, e.g. {@code java.util.Date & Comparable<T>}
+     * @return the first of them without its type arguments and whitespace, e.g. {@code java.util.Date}
+     */
+    private static String leftmostBound(String bounds) {
+        StringBuilder bound = new StringBuilder();
+        int nesting = 0;
+        for (char character : bounds.toCharArray()) {
+            if (character == '&' && nesting == 0) {
+                break;
+            }
+            nesting += character == '<' ? 1 : 0;
+            if (nesting == 0 && !Character.isWhitespace(character)) {
+                bound.append(character);
+            }
+            nesting -= character == '>' ? 1 : 0;
+        }
+        return bound.toString();
+    }
+
+    /**
+     * @param header the masked header of a method up to its name, with its annotations, modifiers, type parameters and return type
+     * @return the bounds of the type variables the method declares, see {@link #typeParameterBounds(String)}
+     */
+    private static Map<String, String> methodTypeParameterBounds(String header) {
+        String withoutModifiers = METHOD_MODIFIERS.matcher(withoutAnnotations(header)).replaceFirst("");
+        return withoutModifiers.startsWith("<") ? typeParameterBounds(typeParameterList(withoutModifiers)) : Map.of();
+    }
+
+    /**
+     * The erasure of a type variable where the method at the offset is declared: its leftmost bound, qualified like a parameter type, or
+     * {@code java.lang.Object} without a bound.
+     *
+     * @return the qualified erasure; null if the bound is a simple name the file does not resolve, e.g. another type variable or a type of the package
+     */
+    private static @Nullable String erasure(String masked, String bound, int offset, Map<String, String> imported, Set<String> typeVariables, Set<String> importedNames) {
+        if (bound.isEmpty()) {
+            return OBJECT;
+        }
+        int dot = bound.indexOf('.');
+        String firstName = dot < 0 ? bound : bound.substring(0, dot);
+        if (typeVariables.contains(firstName)) {
+            return null;
+        }
+        String resolved = importedType(masked, firstName, offset, imported, typeVariables);
+        if (resolved != null) {
+            importedNames.add(firstName);
+            return resolved + bound.substring(firstName.length());
+        }
+        return dot >= 0 && Character.isLowerCase(firstName.charAt(0)) ? bound : null;
     }
 
     /**

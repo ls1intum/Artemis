@@ -270,21 +270,13 @@ public final class SecurityPolicyRepositoryFiles {
         while (added) {
             added = false;
             for (AresTestSources.TypeDeclaration type : allTypes) {
-                if (superclassOf(type, allTypeNames).filter(testClassNames::contains).isPresent() && testClassNames.add(type.qualifiedName())) {
+                if (AresTestInheritance.superclassOf(type, allTypeNames).filter(testClassNames::contains).isPresent() && testClassNames.add(type.qualifiedName())) {
                     added = true;
                 }
             }
         }
         return allTypes.stream().filter(type -> testClassNames.contains(type.qualifiedName())).sorted(Comparator.comparing(AresTestSources.TypeDeclaration::qualifiedName))
                 .toList();
-    }
-
-    /**
-     * The class a type extends, among the types of the repository: like Java, the first candidate that exists wins, so a class of the type's own package
-     * takes precedence over one of a wildcard import.
-     */
-    private static Optional<String> superclassOf(AresTestSources.TypeDeclaration type, Set<String> allTypeNames) {
-        return type.superclass().stream().filter(allTypeNames::contains).findFirst();
     }
 
     private static List<SecurityFrameworkState.UnsupportedReason> testClassReasons(List<AresTestSources.TypeDeclaration> testClasses, List<AresTestSources.Summary> summaries) {
@@ -297,12 +289,13 @@ public final class SecurityPolicyRepositoryFiles {
         Map<String, AresTestSources.TypeDeclaration> typesByName = new HashMap<>();
         summaries.forEach(summary -> summary.topLevelTypes().forEach(type -> typesByName.putIfAbsent(type.qualifiedName(), type)));
         for (AresTestSources.TypeDeclaration testClass : testClasses) {
-            addReasons(reasons, testClass, methodPoliciesInEffect(testClass, testClassesByName, typesByName));
+            addReasons(reasons, testClass, AresTestInheritance.methodPoliciesInEffect(testClass, testClassesByName, typesByName));
         }
         return reasons;
     }
 
-    private static void addReasons(List<SecurityFrameworkState.UnsupportedReason> reasons, AresTestSources.TypeDeclaration testClass, List<MethodPolicyInEffect> methodPolicies) {
+    private static void addReasons(List<SecurityFrameworkState.UnsupportedReason> reasons, AresTestSources.TypeDeclaration testClass,
+            List<AresTestInheritance.MethodPolicyInEffect> methodPolicies) {
         if (testClass.policies().size() != 1) {
             reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(),
                     testClass.policies().isEmpty() ? SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY
@@ -315,98 +308,9 @@ public final class SecurityPolicyRepositoryFiles {
         if (switchedOff && methodPolicies.stream().anyMatch(policy -> policy.annotation().isEvaluable() && policy.annotation().isActivated())) {
             reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS));
         }
-        else if (methodPolicies.stream().anyMatch(MethodPolicyInEffect::inherited)) {
+        else if (methodPolicies.stream().anyMatch(AresTestInheritance.MethodPolicyInEffect::inherited)) {
             reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.INHERITED_METHOD_POLICY));
         }
-    }
-
-    /**
-     * A method annotation that Ares applies to a test the class runs.
-     *
-     * @param inherited whether the class inherits the test method from another test class instead of declaring it
-     */
-    private record MethodPolicyInEffect(AresPolicyAnnotations.Annotation annotation, boolean inherited) {
-    }
-
-    /**
-     * Ares applies the annotation of a test method instead of the one of its class, also to the test methods a class inherits from other test classes, because
-     * it reads the annotation of the method where it is declared before the one of the class that runs it, unless a class in between overrides the method.
-     * An active one in a class whose annotation switches the sandbox off runs that test with the sandbox, and an inherited one keeps the test of the subclass
-     * on another policy than its class. Neither the state of the class nor its assignments could show that, so such a class is not supported.
-     *
-     * @return the method annotations Ares applies to the tests the class runs: its own and those of the test methods it inherits without an override
-     */
-    private static List<MethodPolicyInEffect> methodPoliciesInEffect(AresTestSources.TypeDeclaration testClass, Map<String, AresTestSources.TypeDeclaration> testClassesByName,
-            Map<String, AresTestSources.TypeDeclaration> typesByName) {
-        List<AresTestSources.TypeDeclaration> chain = new ArrayList<>();
-        Set<String> visited = new HashSet<>();
-        Optional<AresTestSources.TypeDeclaration> declaring = Optional.of(testClass);
-        // Like Java, the first candidate of the superclass that exists wins, also if it is no test class, which ends the chain of test classes.
-        while (declaring.isPresent() && visited.add(declaring.get().qualifiedName())) {
-            chain.add(declaring.get());
-            declaring = superclassOf(declaring.get(), typesByName.keySet()).map(testClassesByName::get);
-        }
-        // A member type shadows an import of the same simple name in the class that declares or inherits it, not in its superclasses.
-        Map<String, Optional<Set<String>>> memberTypes = new HashMap<>();
-        chain.forEach(type -> memberTypes.put(type.qualifiedName(), AresTestSources.memberTypesInScope(type, typesByName)));
-        List<MethodPolicyInEffect> policies = new ArrayList<>();
-        for (int index = 0; index < chain.size(); index++) {
-            AresTestSources.TypeDeclaration type = chain.get(index);
-            for (Map.Entry<String, AresPolicyAnnotations.Annotation> methodPolicy : type.methodPolicies().entrySet()) {
-                if (!isOverridden(type, methodPolicy.getKey(), chain.subList(0, index), memberTypes)) {
-                    policies.add(new MethodPolicyInEffect(methodPolicy.getValue(), index > 0));
-                }
-            }
-        }
-        return policies;
-    }
-
-    /**
-     * Whether a subclass overrides the test method, so that JUnit runs the override with its own annotations instead: it declares a test method with the
-     * same signature, and is in the same package unless the method is public or protected. A name that several test methods of the type share is never
-     * overridden as a whole, so it counts as inherited, and so does a signature with a simple type name that may name different types in the two files,
-     * e.g. through wildcard imports of {@code java.util.*} and {@code java.sql.*}, or that a member type of the class hierarchy may shadow, also an unknown one
-     * of a supertype outside the repository.
-     *
-     * @param subclasses  the classes between the class that runs the tests and the type, including the former
-     * @param memberTypes the simple names of the member types in scope in each class of the hierarchy, by its qualified name; empty where unknown
-     */
-    private static boolean isOverridden(AresTestSources.TypeDeclaration type, String method, List<AresTestSources.TypeDeclaration> subclasses,
-            Map<String, Optional<Set<String>>> memberTypes) {
-        List<AresTestCases.TestSignature> signatures = type.testSignatures().stream().filter(signature -> signature.name().equals(method)).toList();
-        if (signatures.size() != 1) {
-            return false;
-        }
-        AresTestCases.TestSignature signature = signatures.getFirst();
-        if (signature.dependsOnPackage() || !importsAreNotShadowed(signature, type, memberTypes)) {
-            return false;
-        }
-        for (AresTestSources.TypeDeclaration subclass : subclasses) {
-            boolean canOverride = signature.visibleInOtherPackages() || subclass.packageName().equals(type.packageName());
-            if (canOverride && declares(subclass, signature, memberTypes)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * @return whether the class declares a test method with the signature, whose type names really name the types the signature names
-     */
-    private static boolean declares(AresTestSources.TypeDeclaration type, AresTestCases.TestSignature signature, Map<String, Optional<Set<String>>> memberTypes) {
-        return type.testSignatures().stream().anyMatch(candidate -> candidate.text().equals(signature.text()) && importsAreNotShadowed(candidate, type, memberTypes));
-    }
-
-    /**
-     * @param declaringType the class that declares the signature
-     * @param memberTypes   the member types in scope in each class of the hierarchy, see {@link #isOverridden}
-     * @return whether every type name of the signature that an import resolves really names the imported type: no member type in scope of the class, also no
-     *         unknown one of a supertype outside the repository, shadows it
-     */
-    private static boolean importsAreNotShadowed(AresTestCases.TestSignature signature, AresTestSources.TypeDeclaration declaringType,
-            Map<String, Optional<Set<String>>> memberTypes) {
-        return signature.importedNames().isEmpty()
-                || memberTypes.get(declaringType.qualifiedName()).map(types -> signature.importedNames().stream().noneMatch(types::contains)).orElse(false);
     }
 
     private static SecurityFrameworkState.PolicyFile policyFile(String path, List<String> referencedBy, PolicyFileReader reader, boolean verifiedAresVersion) {
