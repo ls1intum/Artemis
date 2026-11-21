@@ -241,12 +241,7 @@ final class AresTestSources {
             }
             int owner = depth[annotation.start()] == 0 ? followingDeclaration(declarations, annotation.start()) : -1;
             if (owner < 0) {
-                int enclosing = enclosingDeclaration(declarations, annotation.start(), depth);
-                String method = enclosing >= 0 && !declarations.get(enclosing).annotationType() ? AresTestCases.methodNameAfter(masked, annotation.end()) : null;
-                // The annotation must be on a test declaration itself whose name no other test method has: a method that is no test may share the name
-                // of one, e.g. an overload, and an entry could not tell overloaded test methods apart.
-                boolean onTest = method != null && testDeclarations.contains(AresTestCases.methodNameOffsetAfter(masked, annotation.end()));
-                if (!onTest || methodPoliciesByType.get(enclosing).putIfAbsent(method, annotation) != null) {
+                if (!assignToTestMethod(annotation, masked, declarations, depth, testDeclarations, methodPoliciesByType)) {
                     // A field, a nested type, a method that is no test or one of several test methods with the same name: the editor cannot tell which test
                     // case the annotation belongs to.
                     addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
@@ -260,6 +255,20 @@ final class AresTestSources {
             }
         }
         return policiesByType;
+    }
+
+    /**
+     * Assigns an annotation inside a top-level type to the test method it annotates. The annotation must be on a test declaration itself whose name no other
+     * test method has: a method that is no test may share the name of one, e.g. an overload, and an entry could not tell overloaded test methods apart.
+     *
+     * @return whether the annotation annotates such a test method and is its only {@code @Policy} annotation
+     */
+    private static boolean assignToTestMethod(AresPolicyAnnotations.Annotation annotation, String masked, List<Declaration> declarations, int[] depth,
+            Set<Integer> testDeclarations, List<Map<String, AresPolicyAnnotations.Annotation>> methodPoliciesByType) {
+        int enclosing = enclosingDeclaration(declarations, annotation.start(), depth);
+        String method = enclosing >= 0 && !declarations.get(enclosing).annotationType() ? AresTestCases.methodNameAfter(masked, annotation.end()) : null;
+        boolean onTest = method != null && testDeclarations.contains(AresTestCases.methodNameOffsetAfter(masked, annotation.end()));
+        return onTest && methodPoliciesByType.get(enclosing).putIfAbsent(method, annotation) == null;
     }
 
     /**
@@ -353,28 +362,43 @@ final class AresTestSources {
             List<String> superclass = declaration.superclass() == null ? List.of() : resolveTypeName(masked, packageName, declaration.superclass());
             List<AresTestCases.TestSignature> testSignatures = new ArrayList<>();
             signatures.forEach((offset, signature) -> {
-                if (declaration.bodyStart() < offset && offset < declaration.bodyEnd() && depth[offset] == 1) {
+                if (isDeclaredInBody(declaration, offset, depth)) {
                     testSignatures.add(signature);
                 }
             });
-            // A type declared directly in the body is a member type; a local type of a method or a type nested in a member type is none.
-            Set<MemberType> memberTypes = new HashSet<>();
-            Matcher memberType = AresPolicyAnnotations.TYPE_DECLARATION.matcher(masked);
-            while (memberType.find()) {
-                if (declaration.bodyStart() < memberType.start() && memberType.start() < declaration.bodyEnd() && depth[memberType.start()] == 1) {
-                    String modifiers = masked.substring(AresTestCases.memberStart(masked, memberType.start()), memberType.start());
-                    if (!PRIVATE_MODIFIER.matcher(modifiers).find()) {
-                        boolean visible = declaration.interfaceType() || declaration.annotationType() || AresTestCases.VISIBLE_IN_OTHER_PACKAGES.matcher(modifiers).find();
-                        memberTypes.add(new MemberType(memberType.group(2), visible));
-                    }
-                }
-            }
+            Set<MemberType> memberTypes = declaredMemberTypes(masked, declaration, depth);
             List<List<String>> supertypes = declaration.supertypes().stream().map(name -> resolveTypeName(masked, packageName, name)).toList();
             types.add(new TypeDeclaration(declaration.simpleName(), qualifiedName, superclass, supertypes, List.copyOf(policiesByType.get(index)),
                     Collections.unmodifiableMap(new LinkedHashMap<>(methodPoliciesByType.get(index))), registers[index], tests[index], List.copyOf(testSignatures),
                     Set.copyOf(memberTypes)));
         }
         return types;
+    }
+
+    /**
+     * @return whether the offset lies directly in the body of the declaration, not in a member of it
+     */
+    private static boolean isDeclaredInBody(Declaration declaration, int offset, int[] depth) {
+        return declaration.bodyStart() < offset && offset < declaration.bodyEnd() && depth[offset] == 1;
+    }
+
+    /**
+     * @return the member types that are no private: a type declared directly in the body is a member type; a local type of a method or a type nested in a
+     *         member type is none
+     */
+    private static Set<MemberType> declaredMemberTypes(String masked, Declaration declaration, int[] depth) {
+        Set<MemberType> memberTypes = new HashSet<>();
+        Matcher memberType = AresPolicyAnnotations.TYPE_DECLARATION.matcher(masked);
+        while (memberType.find()) {
+            if (isDeclaredInBody(declaration, memberType.start(), depth)) {
+                String modifiers = masked.substring(AresTestCases.memberStart(masked, memberType.start()), memberType.start());
+                if (!PRIVATE_MODIFIER.matcher(modifiers).find()) {
+                    boolean visible = declaration.interfaceType() || declaration.annotationType() || AresTestCases.VISIBLE_IN_OTHER_PACKAGES.matcher(modifiers).find();
+                    memberTypes.add(new MemberType(memberType.group(2), visible));
+                }
+            }
+        }
+        return memberTypes;
     }
 
     /**
@@ -513,22 +537,7 @@ final class AresTestSources {
      * @param header the part of a type declaration between its name and its body
      */
     private static Supertypes supertypes(String header) {
-        StringBuilder outsideBrackets = new StringBuilder();
-        int nesting = 0;
-        // Without annotations, whose arguments may contain a < or >, e.g. Marker<@Flag(1 > 0) Date>, the parentheses enclose the record components only.
-        for (char character : AresTestCases.withoutAnnotations(header).toCharArray()) {
-            if (character == '<' || character == '(') {
-                nesting++;
-            }
-            else if (character == '>' || character == ')') {
-                nesting = Math.max(0, nesting - 1);
-                // The brackets separate tokens, e.g. Parent and implements in extends Parent<String>implements Marker.
-                outsideBrackets.append(nesting == 0 ? " " : "");
-            }
-            else if (nesting == 0) {
-                outsideBrackets.append(character);
-            }
-        }
+        String outsideBrackets = outsideBrackets(AresTestCases.withoutAnnotations(header));
         List<String> names = new ArrayList<>();
         String superclass = null;
         String keyword = null;
@@ -545,6 +554,30 @@ final class AresTestSources {
             }
         }
         return new Supertypes(superclass, List.copyOf(names));
+    }
+
+    /**
+     * @param header a header without annotations, whose arguments may contain a {@code <} or {@code >}, e.g. {@code Marker<@Flag(1 > 0) Date>}, so the
+     *                   parentheses enclose the record components only
+     * @return the header without its type arguments and record components
+     */
+    private static String outsideBrackets(String header) {
+        StringBuilder outsideBrackets = new StringBuilder();
+        int nesting = 0;
+        for (char character : header.toCharArray()) {
+            if (character == '<' || character == '(') {
+                nesting++;
+            }
+            else if (character == '>' || character == ')') {
+                nesting = Math.max(0, nesting - 1);
+                // The brackets separate tokens, e.g. Parent and implements in extends Parent<String>implements Marker.
+                outsideBrackets.append(nesting == 0 ? " " : "");
+            }
+            else if (nesting == 0) {
+                outsideBrackets.append(character);
+            }
+        }
+        return outsideBrackets.toString();
     }
 
     private static String qualify(@Nullable String packageName, String simpleName) {
