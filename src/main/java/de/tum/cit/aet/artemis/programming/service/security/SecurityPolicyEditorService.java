@@ -227,7 +227,7 @@ public class SecurityPolicyEditorService {
     }
 
     private static SecurityPolicyPreviewDTO.FileDTO previewOfChangedPolicy(Repository repository, RevTree tree, SecurityPolicyChangeDTO.PolicyChangeDTO policy,
-            Set<String> existingPaths) throws IOException {
+            Set<String> existingPaths) {
         String path = requireValidPolicyPath(policy.document().policyPath());
         @Nullable
         String previousPath = policy.previousPolicyPath() == null ? null : requireValidPolicyPath(policy.previousPolicyPath());
@@ -239,8 +239,7 @@ public class SecurityPolicyEditorService {
     /**
      * Only a policy file is deleted; for another path, e.g. a directory or an unrelated YAML file, the change removes the reference only.
      */
-    private static Optional<SecurityPolicyPreviewDTO.FileDTO> previewOfRemovedPolicy(Repository repository, RevTree tree, String path, Set<String> existingPaths)
-            throws IOException {
+    private static Optional<SecurityPolicyPreviewDTO.FileDTO> previewOfRemovedPolicy(Repository repository, RevTree tree, String path, Set<String> existingPaths) {
         @Nullable
         String before = existingPaths.contains(path) ? SecurityFrameworkCommitFiles.readPolicyFile(repository, tree, path).content() : null;
         return before != null && SecurityPolicyYaml.isPolicyShaped(before) ? Optional.of(new SecurityPolicyPreviewDTO.FileDTO(path, path, before, null)) : Optional.empty();
