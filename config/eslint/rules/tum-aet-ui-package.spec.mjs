@@ -50,7 +50,7 @@ const packageStyles = globSync(
     .join('\n');
 const storybookTheme = readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/themes.css'), 'utf8');
 const hostTailwind = readFileSync(resolve(repoRoot, 'src/main/webapp/tailwind.css'), 'utf8');
-const hostGlobalStyles = readFileSync(resolve(repoRoot, 'src/main/webapp/content/scss/global.scss'), 'utf8');
+const hostGlobalStyles = readFileSync(resolve(repoRoot, 'src/main/webapp/content/scss/_third-party.scss'), 'utf8');
 const workspace = parse(readFileSync(resolve(repoRoot, 'pnpm-workspace.yaml'), 'utf8'));
 const catalog = workspace.catalog ?? {};
 const namedCatalogs = workspace.catalogs ?? {};

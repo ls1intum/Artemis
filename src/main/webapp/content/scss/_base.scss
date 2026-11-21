@@ -457,3 +457,93 @@ $fluid-font-size-breakpoint: 1200px;
         display: none !important;
     }
 }
+
+/* ==========================================================================
+Rules outside the cascade layer
+
+They apply to every element of a kind, like the defaults above, but have to override component stylesheets or TUM AET
+UI classes, which a rule in the layer `base` cannot.
+========================================================================== */
+
+// Smooth transition between themes. SVG is excluded: `background` is not rendered on SVG elements,
+// so the transition can never be seen there, yet it still marks every node of an SVG subtree as
+// running a paint transition - which is enough to keep a surface on a stale raster.
+*:not(svg, svg *) {
+    transition:
+        background-color 0.2s,
+        background 0.2s;
+}
+
+html.modeling-exercise-editor-scroll-snap {
+    scroll-padding-block: calc(var(--header-height) + 1rem) 1rem;
+    scroll-snap-type: block proximity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.modeling-exercise-editor-scroll-snap {
+        scroll-snap-type: none;
+    }
+}
+
+/*
+ * Links are not underlined, except on hover. These two rules are important and outside the cascade layers on
+ * purpose: component stylesheets rely on their precedence (see below). All other element defaults are in the
+ * layer `base` of `_base.scss`.
+ */
+a {
+    text-decoration: none !important;
+}
+
+/*
+ * Restores the hover underline that the rule above removes. Keep every exclusion inside the one `:not()` argument
+ * list: a `:not()` counts as its most specific argument, so the whole selector stays at one class no matter how many
+ * classes are listed. Component stylesheets opt individual links out of this underline (navbar, course sidebar, admin
+ * sidebar) and rely on Angular's `[_ngcontent]` attribute to keep them one class above it. Chaining the exclusions as
+ * separate `:not()` clauses raises this rule past those overrides, and the anchor underline comes back on top of the
+ * one they draw themselves — a double underline under the label plus a stray dash beside the icon.
+ */
+a:not(.tumaet-ui-btn, .tumaet-ui-list-item-action, .tumaet-ui-menu-item, .tab-link):hover {
+    text-decoration: underline !important;
+}
+
+a.disabled {
+    pointer-events: none;
+    cursor: default;
+}
+
+/* Important and outside the cascade layers: it also sets the text colour of TUM AET UI text areas, whose own colour would win otherwise. */
+textarea {
+    color: $form-control-color !important;
+}
+
+/*
+ * Error highlight on input fields.
+ *
+ * TUM AET UI controls are excluded from both accents (here and on the invalid rule below): they paint their own
+ * state through `tumaet-ui-form-field [invalid]` / `tumAetUiInputInvalid`, which is a rounded 1px border on the
+ * control itself. The JHipster 5px stick does not follow those rounded corners, so it looked detached on an
+ * invalid field and — once a migrated field carries a real `required` — put a green bar down every valid one.
+ * `[class*='tumaet-ui-']` matches the package class every TUM AET UI control root carries, so components migrated
+ * later are covered without touching this rule again.
+ */
+.ng-valid[required]:not([class*='tumaet-ui-']),
+.ng-valid.required:not([class*='tumaet-ui-']) {
+    border-left: 5px solid $ng-valid-border;
+}
+
+/*
+ * Red invalid accent on form CONTROLS only, and only AFTER the user has interacted (dirty or touched):
+ * - a pristine, never-touched field on a fresh form must not show red (best practice — don't flag errors
+ *   before the user has done anything);
+ * - a [formGroup]/container element also receives `.ng-invalid`, so `:not(:has(.ng-invalid))` keeps the
+ *   accent on the innermost invalid element (the field), never a full-height bar down the wrapper.
+ * Applies app-wide, except to TUM AET UI controls — see the note on the valid rule above.
+ */
+.ng-invalid.ng-dirty:not(form):not(:has(.ng-invalid)):not([class*='tumaet-ui-']),
+.ng-invalid.ng-touched:not(form):not(:has(.ng-invalid)):not([class*='tumaet-ui-']) {
+    border-left: 5px solid $ng-invalid-border;
+}
+
+body.transparent-background {
+    background: transparent;
+}
