@@ -487,8 +487,7 @@ html.modeling-exercise-editor-scroll-snap {
 
 /*
  * Links are not underlined, except on hover. These two rules are important and outside the cascade layers on
- * purpose: component stylesheets rely on their precedence (see below). All other element defaults are in the
- * layer `base` of `_base.scss`.
+ * purpose: component stylesheets rely on their precedence (see below).
  */
 a {
     text-decoration: none !important;

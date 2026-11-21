@@ -109,8 +109,8 @@ $transition-color-length: 0.2s;
 }
 
 /*
- * A sidebar entry: a link, the toggle of the "more" menu, or an action. The colour is set here because a layered
- * utility would lose to the unlayered anchor colour of _base.scss.
+ * A sidebar entry: a link, the toggle of the "more" menu, or an action. The colour set here replaces the link colour
+ * that `_base.scss` gives to every anchor.
  */
 .nav-link-sidebar {
     display: block;

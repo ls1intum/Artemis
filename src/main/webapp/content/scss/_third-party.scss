@@ -22,7 +22,7 @@ Angular CDK
 //   1049-1053  Iris onboarding tour: click guard 1049, tour root and spotlight 1050, card 1051, coach mark 1052, highlighted target 1053
 //   1200       this container: kit dialogs and everything the kit opens above them
 //   100000     alert overlay
-// `delete-dialog-layering.spec.ts` compiles this file and checks that a confirmation opened from inside a kit dialog
+// `delete-dialog-layering.spec.ts` compiles the default theme, which includes this file, and checks that a confirmation opened from inside a kit dialog
 // (delete button in the presentation edit dialog) stacks above it.
 .cdk-overlay-container {
     z-index: 1200;
