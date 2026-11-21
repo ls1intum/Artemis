@@ -163,7 +163,9 @@ Switching on **Activate Security Framework** creates one commit in the tests rep
 
 The template and solution builds then run again. If the restored policy file is not valid for the selected version,
 or a missing test class cannot be added because the policy writes its list of test classes in a form Artemis does
-not rewrite, Artemis changes nothing and shows an error instead.
+not rewrite, Artemis changes nothing and shows an error instead. The same happens if no test class would run in the
+sandbox, e.g. because the only active one was deleted while the sandbox was off: switch on the `@Policy` annotation
+of a test class in the tests repository first.
 
 ## Choose the Framework Version
 
