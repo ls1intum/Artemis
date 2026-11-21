@@ -24,7 +24,6 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -128,7 +127,7 @@ public class SecurityFrameworkService {
     /** Marks the commits of this service whose push processing it runs itself, so a retry can tell an unprocessed change of its own from any other commit. */
     private static final String COMMIT_TRAILER = COMMIT_TRAILER_KEY + ": " + COMMIT_TRAILER_VALUE;
 
-    private static final String ACTION_TRAILER_KEY = "Security-Framework-Action";
+    static final String ACTION_TRAILER_KEY = "Security-Framework-Action";
 
     /**
      * Records what a commit of this service did, also for the commits made while an exercise is imported. Activating looks up the last deactivation by it,
@@ -137,7 +136,7 @@ public class SecurityFrameworkService {
      */
     private static final String ACTION_TRAILER = ACTION_TRAILER_KEY + ": ";
 
-    private static final String DEACTIVATE_ACTION = "deactivate";
+    static final String DEACTIVATE_ACTION = "deactivate";
 
     /**
      * The Security Framework commits whose push processing has not completed, by exercise id and commit hash. An entry is added before the commit is pushed and removed only
@@ -543,7 +542,7 @@ public class SecurityFrameworkService {
         SecurityPolicyRepositoryFiles.writeAresVersion(root, frameworkVersion);
         SecurityFrameworkState state = SecurityPolicyRepositoryFiles.evaluate(root);
         if (state.status() == SecurityActivationStatus.INACTIVE) {
-            SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, annotationStatesBeforeLastDeactivation(repository));
+            SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, SecurityFrameworkRestorePoint.annotationStatesBeforeLastDeactivation(repository));
             state = SecurityPolicyRepositoryFiles.evaluate(root);
         }
         // A policy that uses fields the release does not know would otherwise be reported as not repairable, which hides the actual reason.
@@ -674,49 +673,6 @@ public class SecurityFrameworkService {
                 .map(SecurityPolicyRepositoryFiles::validatePolicyPath).flatMap(Optional::stream).distinct()
                 .forEach(path -> SecurityPolicyRepositoryFiles.deletePolicyFileIfPolicy(root, path));
         SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, false);
-    }
-
-    /**
-     * Finds how the annotations were set before the most recent deactivation that actually switched something off, i.e. whose parent commit had at least
-     * one active annotation. A test class is matched by its fully qualified name, so a class that replaced another one at the same path is not mistaken for
-     * it; a class that did not exist then is switched on.
-     *
-     * @return whether each annotation should be switched on, see {@link SecurityPolicyRepositoryFiles#annotationStates(Map)}: the annotation of a test method
-     *         that did not exist then follows its class; all of them if the exercise was never deactivated by this service
-     */
-    private static SecurityPolicyRepositoryFiles.AnnotationDecision annotationStatesBeforeLastDeactivation(Repository repository) {
-        try (Git git = new Git(repository)) {
-            for (RevCommit commit : git.log().call()) {
-                if (commit.getParentCount() == 0 || !commit.getFooterLines(ACTION_TRAILER_KEY).contains(DEACTIVATE_ACTION)) {
-                    continue;
-                }
-                RevCommit parent;
-                try (RevWalk revWalk = new RevWalk(repository)) {
-                    parent = revWalk.parseCommit(commit.getParent(0));
-                }
-                if (SecurityFrameworkCommitFiles.evaluate(repository, parent.getTree()).status() == SecurityActivationStatus.UNSUPPORTED) {
-                    throw new BadRequestAlertException("The state before the last deactivation cannot be restored, because the tests used Ares in an unsupported way then.",
-                            ENTITY_NAME, "securityFrameworkRestorePointUnsupported");
-                }
-                Map<String, Boolean> states = SecurityPolicyRepositoryFiles.annotationStates(SecurityFrameworkCommitFiles.javaSources(repository, parent.getTree()));
-                if (states.containsValue(true)) {
-                    return (testClass, method) -> {
-                        if (testClass == null) {
-                            return true;
-                        }
-                        boolean classActive = states.getOrDefault(SecurityPolicyRepositoryFiles.annotationKey(testClass, null), true);
-                        return method == null ? classActive : states.getOrDefault(SecurityPolicyRepositoryFiles.annotationKey(testClass, method), classActive);
-                    };
-                }
-            }
-            return (_, _) -> true;
-        }
-        catch (GitAPIException | IOException e) {
-            // Switching every annotation on could override test classes an instructor switched off on purpose, so nothing is changed.
-            log.error("Could not read the history of {} to restore the annotations", repository.getLocalPath(), e);
-            throw new BadRequestAlertException("The state before the last deactivation cannot be read from the history of the tests repository.", ENTITY_NAME,
-                    "securityFrameworkRestorePointUnreadable");
-        }
     }
 
     /**
