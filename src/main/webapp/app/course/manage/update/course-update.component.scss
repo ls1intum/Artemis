@@ -33,7 +33,7 @@ $course-form-inset: 1rem;
     padding: $course-form-inset;
 }
 
-/* Bootstrap's heading styles are unlayered and would win over Tailwind utilities, so the size is set here. */
+/* The title is sized here; global.scss sets the font weight of headings outside a cascade layer, which a utility could not override. */
 .course-create-title {
     margin: 0;
     font-size: 1.25rem;

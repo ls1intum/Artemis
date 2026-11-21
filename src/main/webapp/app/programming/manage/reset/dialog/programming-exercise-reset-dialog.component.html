@@ -4,7 +4,7 @@
             <p [jhiTranslate]="'artemisApp.programmingExercise.reset.pleaseSelectOperations'" [translateValues]="{ title: programmingExercise.title }">
                 Please select the operations you want to perform on <strong>{{ programmingExercise.title }}</strong>:
             </p>
-            <ul class="mb-4! list-none ps-0!">
+            <ul class="mb-4 list-none ps-0">
                 @if (programmingExercise.isAtLeastInstructor) {
                     <li class="flex items-center gap-2">
                         <tumaet-ui-checkbox
@@ -30,7 +30,7 @@
                     </li>
                 }
             </ul>
-            <div class="mb-4!">
+            <div class="mb-4">
                 <label
                     for="confirm-exercise-name"
                     class="text-state-danger"
@@ -66,7 +66,7 @@
         </div>
     </form>
 } @else {
-    <div class="flex justify-center my-6!">
+    <div class="flex justify-center my-6">
         <fa-icon [icon]="faCircleNotch" animation="spin" />
     </div>
 }

@@ -3,7 +3,7 @@
 <div
     id="test-sidebar-card-small"
     class="flex justify-between rounded-sm item-border highlight-card bg-module items-end py-1"
-    [ngClass]="sidebarItem().conversation?.hasUnreadMessage && !sidebarItem().conversation?.isMuted ? 'border-primary' : 'border-module'"
+    [ngClass]="sidebarItem().conversation?.hasUnreadMessage && !sidebarItem().conversation?.isMuted ? 'border-(--primary)' : 'border-module'"
     [routerLinkActive]="'bg-selected border-selected'"
 >
     <a

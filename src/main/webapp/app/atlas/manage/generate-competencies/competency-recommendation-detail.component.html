@@ -1,6 +1,6 @@
 @if (form()) {
-    <div class="mb-2 rounded-md border border-border bg-(--overview-light-background-color)" [formGroup]="form()!">
-        <div class="flex flex-wrap justify-between gap-y-2 overflow-hidden border-b border-border bg-[color-mix(in_srgb,var(--tumaet-ui-text-color)_3%,transparent)] px-4! py-2">
+    <div class="mb-2 rounded-md border border-(--border-color) bg-(--overview-light-background-color)" [formGroup]="form()!">
+        <div class="flex flex-wrap justify-between gap-y-2 overflow-hidden border-b border-border bg-[color-mix(in_srgb,var(--tumaet-ui-text-color)_3%,transparent)] px-4 py-2">
             <div
                 class="clickable flex max-w-full items-center"
                 (click)="toggle()"
@@ -12,13 +12,13 @@
                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
             >
-                <div class="me-4!">
+                <div class="me-4">
                     <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed()" />
                 </div>
                 <h6 class="mb-0 truncate">{{ titleControl()?.value ?? '' }}</h6>
             </div>
             <div class="flex grow items-center justify-end">
-                <div class="me-4! flex items-center gap-1">
+                <div class="me-4 flex items-center gap-1">
                     <tumaet-ui-checkbox [inputId]="'viewed-' + index()" formControlName="viewed" />
                     <label for="viewed-{{ index() }}" jhiTranslate="artemisApp.competency.generate.viewedLabel"></label>
                 </div>
@@ -57,8 +57,8 @@
                 />
             </div>
         </div>
-        <div class="p-4!" [hidden]="isCollapsed()" formGroupName="competency">
-            <div class="mb-4!">
+        <div class="p-4" [hidden]="isCollapsed()" formGroupName="competency">
+            <div class="mb-4">
                 <label for="title-{{ index() }}" jhiTranslate="artemisApp.competency.title"></label>
                 <!-- The kit input keeps only a static id; tumAetUiInputId hands it the bound one, and the plain id shows the label association in the template. -->
                 <input
@@ -81,7 +81,7 @@
                     </tumaet-ui-message>
                 }
             </div>
-            <div class="mb-4!">
+            <div class="mb-4">
                 <label for="description-{{ index() }}" jhiTranslate="artemisApp.competency.description"></label>
                 @if (isInEditMode()) {
                     <jhi-markdown-editor-monaco
@@ -95,7 +95,7 @@
                     <div
                         id="description-{{ index() }}"
                         disabled="true"
-                        class="markdown-preview rounded-md border border-border p-1"
+                        class="markdown-preview rounded-md border border-(--border-color) p-1"
                         [jhiMarkdown]="descriptionControl()?.value || '&nbsp;'"
                     ></div>
                 }
@@ -110,7 +110,7 @@
                     </tumaet-ui-message>
                 }
             </div>
-            <div class="mb-4!">
+            <div class="mb-4">
                 <label for="taxonomy-{{ index() }}" jhiTranslate="artemisApp.competency.taxonomy"></label>
                 <jhi-taxonomy-select selectId="taxonomy-{{ index() }}" [form]="taxonomyControl()!" />
             </div>

@@ -3,14 +3,14 @@
     <div class="hidden flex-none md:block">
         <a class="exercise-row-icon" [routerLink]="routerLink()">
             @if (exercise().type) {
-                <fa-icon class="me-4!" [icon]="getIcon(exercise().type)" size="lg" [tumAetUiTooltip]="getIconTooltip(exercise().type) | artemisTranslate" />
+                <fa-icon class="me-4" [icon]="getIcon(exercise().type)" size="lg" [tumAetUiTooltip]="getIconTooltip(exercise().type) | artemisTranslate" />
             }
         </a>
     </div>
     <div class="max-width shrink-0 grow basis-0">
         <div class="exercise-row-line m-0 flex flex-wrap">
-            <div class="w-auto max-w-full flex-none p-0 md:hidden">
-                <h4 class="exercise-title font-medium">
+            <div class="w-auto max-w-full flex-none p-0! md:hidden">
+                <h4 class="exercise-title">
                     @if (exercise().type) {
                         <fa-icon [icon]="getIcon(exercise().type)" />
                     }
@@ -18,7 +18,7 @@
                     {{ exercise().title }}
                 </h4>
             </div>
-            <div class="hidden max-w-full shrink-0 grow basis-0 p-0 md:flex">
+            <div class="hidden max-w-full shrink-0 grow basis-0 p-0! md:flex">
                 <h5 class="exercise-title">{{ exercise().title }}</h5>
             </div>
             @if (!isPresentationMode()) {
@@ -38,7 +38,7 @@
                     [smallColumns]="true"
                     [equalColumns]="false"
                     [exercise]="enrichedExercise()"
-                    class="raised-actions mt-2 mb-2 max-w-full px-2"
+                    class="raised-actions mt-2! mb-2! max-w-full px-2!"
                 />
             }
             <jhi-exercise-categories
@@ -58,7 +58,7 @@
                     {{ dueDate() | artemisTimeAgo }}
                 </div>
             } @else {
-                <div class="mb-2 w-auto max-w-full flex-none px-2" jhiTranslate="artemisApp.courseOverview.exerciseList.noDueDate"></div>
+                <div class="mb-2 w-auto max-w-full flex-none px-2!" jhiTranslate="artemisApp.courseOverview.exerciseList.noDueDate"></div>
             }
         </div>
     </div>

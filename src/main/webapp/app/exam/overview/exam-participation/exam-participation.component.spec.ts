@@ -2638,7 +2638,7 @@ describe('ExamParticipationComponent', () => {
         it('insets the hint like the scroller of an exercise', () => {
             showSubmissionHint({ realExam: true, examLayoutActive: true });
 
-            expect(hint().classList).toContain('p-3!');
+            expect(hint().classList).toContain('p-3');
             expect(hint().classList).not.toContain('px-4!');
         });
 
@@ -2669,8 +2669,8 @@ describe('ExamParticipationComponent', () => {
             showSubmissionHint();
 
             const heading: HTMLElement = hint().querySelector('h2')!;
-            // the important modifiers are needed because the unlayered global heading rules would win otherwise
-            expect(heading.classList).toContain('text-lg!');
+            // global.scss sets the font weight of headings outside a cascade layer, so the weight needs the important modifier
+            expect(heading.classList).toContain('text-lg');
             expect(heading.classList).toContain('font-semibold!');
 
             const button: HTMLElement = hint().querySelector('#showExamSummaryButton')!;
@@ -2694,7 +2694,7 @@ describe('ExamParticipationComponent', () => {
             expect(scroller.getAttribute('data-testid')).toBe('exam-summary-scroll');
             // `scrollable-content` is 100vh minus a hard-coded 156px and ended 75px above the bottom of the card
             expect(scroller.classList).not.toContain('scrollable-content');
-            expect(scroller.classList).not.toContain('p-6!');
+            expect(scroller.classList).not.toContain('p-6');
         });
 
         it('leaves the summary of a test run, which sits in the card of the management shell, without a scroll container class', () => {
@@ -2723,9 +2723,9 @@ describe('ExamParticipationComponent', () => {
 
             const card: HTMLElement = fixture.debugElement.query(By.css('.end-view')).nativeElement;
             expect(card.getAttribute('data-testid')).toBe('exam-end-view');
-            expect(card.classList).toContain('pt-3!');
+            expect(card.classList).toContain('pt-3');
             // `px-3!` on the card would stack 12px on the 12px of the cover and put the text 24px from the edge
-            expect(card.classList).not.toContain('px-3!');
+            expect(card.classList).not.toContain('px-3');
             expect(card.classList).not.toContain('pt-4!');
         });
     });
@@ -2735,7 +2735,7 @@ describe('ExamParticipationComponent', () => {
 
         const scroller: HTMLElement = fixture.debugElement.query(By.css('.content-exam-height')).nativeElement;
         // the card is not a frame of white space around the exercise
-        expect(scroller.classList).toContain('p-3!');
+        expect(scroller.classList).toContain('p-3');
         expect(scroller.classList).not.toContain('px-4!');
     });
 

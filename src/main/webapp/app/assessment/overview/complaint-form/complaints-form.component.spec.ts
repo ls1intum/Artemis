@@ -218,8 +218,8 @@ describe('ComplaintsFormComponent', () => {
         it('should render the heading as a 16px semibold section heading', () => {
             const heading = fixture.debugElement.query(By.css('h3')).nativeElement as HTMLElement;
 
-            // Bootstrap's unlayered heading rules win over layered utilities, so the important modifier is required.
-            expect(heading.classList.contains('text-base!')).toBe(true);
+            // global.scss sets the font weight of headings outside a cascade layer, so the weight needs the important modifier.
+            expect(heading.classList.contains('text-base')).toBe(true);
             expect(heading.classList.contains('font-semibold!')).toBe(true);
         });
 
@@ -228,7 +228,7 @@ describe('ComplaintsFormComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             const heading = fixture.debugElement.query(By.css('h3')).nativeElement as HTMLElement;
-            expect(heading.classList.contains('text-base!')).toBe(true);
+            expect(heading.classList.contains('text-base')).toBe(true);
             expect(heading.classList.contains('font-semibold!')).toBe(true);
         });
 
@@ -236,7 +236,7 @@ describe('ComplaintsFormComponent', () => {
             const card = fixture.nativeElement.querySelector('[data-testid="complaint-form-card"]') as HTMLElement;
 
             expect(card).toBeTruthy();
-            for (const utility of ['mt-6!', 'rounded-lg', 'border', 'border-(--border-color)', 'bg-(--module-bg)', 'p-4!']) {
+            for (const utility of ['mt-6', 'rounded-lg', 'border', 'border-(--border-color)', 'bg-(--module-bg)', 'p-4']) {
                 expect(card.classList.contains(utility), utility).toBe(true);
             }
             // The card holds everything of the form, and the width is left to the host.

@@ -14,7 +14,7 @@
 >
     <fa-icon aria-hidden="true" [icon]="faListAlt" [fixedWidth]="true" class="problem-statement-icon" />
     <span class="file-label-group">
-        <span class="ms-1 file-tree-item__fileName problem-statement-text" jhiTranslate="artemisApp.exercise.problemStatement" [class.text-white]="item().checked"></span>
+        <span class="ms-1 file-tree-item__fileName problem-statement-text" jhiTranslate="artemisApp.exercise.problemStatement" [class.text-white!]="item().checked"></span>
         @for (badge of badges(); track badges().indexOf(badge)) {
             <jhi-file-browser-badge [badge]="badge" [onColoredBackground]="item().checked" />
         }

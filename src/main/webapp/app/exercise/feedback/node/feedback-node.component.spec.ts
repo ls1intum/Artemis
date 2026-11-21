@@ -137,8 +137,8 @@ describe('FeedbackNodeComponent', () => {
             expect(bar.classList).not.toContain('mb-6!');
 
             const title: HTMLElement = bar.querySelector('h4')!;
-            expect(title.classList).toContain('m-0!');
-            expect(title.classList).toContain('text-base!');
+            expect(title.classList).toContain('m-0');
+            expect(title.classList).toContain('text-base');
             expect(title.classList).toContain('font-semibold!');
         });
 
@@ -168,8 +168,8 @@ describe('FeedbackNodeComponent', () => {
             fixture.detectChanges();
 
             const title: HTMLElement = fixture.nativeElement.querySelector('.feedback-item h4.feedback-item__category');
-            expect(title.classList).toContain('m-0!');
-            expect(title.classList).toContain('text-base!');
+            expect(title.classList).toContain('m-0');
+            expect(title.classList).toContain('text-base');
             expect(title.classList).toContain('font-semibold!');
             // used by the Playwright page object ScaFeedbackModal
             expect(fixture.nativeElement.querySelector('.feedback-item__credits')?.textContent).toContain('1P');
@@ -180,7 +180,7 @@ describe('FeedbackNodeComponent', () => {
             fixture.detectChanges();
 
             const message: HTMLElement = fixture.nativeElement.querySelector('.feedback-item p');
-            expect(message.classList).toContain('mb-0!');
+            expect(message.classList).toContain('mb-0');
         });
     });
 });

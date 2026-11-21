@@ -55,7 +55,7 @@
                 }
             </div>
         </div>
-        <div class="grading-body-container mt-4!">
+        <div class="grading-body-container mt-4">
             @if (activeTab() === 'submission-policy') {
                 <div>
                     <jhi-programming-exercise-grading-submission-policy-configuration-actions
@@ -75,7 +75,7 @@
                 </div>
             }
         </div>
-        <div class="grading-body-container mt-4!">
+        <div class="grading-body-container mt-4">
             @if (activeTab() === 'test-cases') {
                 <div>
                     <div class="grading-table-layout">
@@ -87,7 +87,7 @@
                             />
                         </div>
                         <div class="w-5/12 flex-none">
-                            <h2 class="mb-12! font-medium!">
+                            <h2 class="mb-12 font-medium!">
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.title"></span>
                                 @if (!!changedTestCaseIds().length) {
                                     <span
@@ -112,7 +112,7 @@
                 <div>
                     <div class="grading-table-layout">
                         <div class="w-7/12 flex-none">
-                            <div class="mb-6! flex items-center justify-between">
+                            <div class="mb-6 flex items-center justify-between">
                                 <h2 class="font-medium!" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.title"></h2>
                                 <jhi-programming-exercise-grading-table-actions
                                     [exercise]="programmingExercise"
@@ -132,7 +132,7 @@
                             />
                         </div>
                         <div class="w-5/12 flex-none">
-                            <h2 class="mb-12! font-medium!">
+                            <h2 class="mb-12 font-medium!">
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.title"></span>
                                 @if (!!changedCategoryIds().length) {
                                     <span
@@ -153,7 +153,7 @@
                 </div>
             }
         </div>
-        <div class="grading-body-container mt-4!">
+        <div class="grading-body-container mt-4">
             @if (programmingExercise.isAtLeastEditor && activeTab() === 'feedback-analysis' && programmingExercise.title && programmingExercise.id && course().id) {
                 <jhi-feedback-analysis
                     [exerciseTitle]="programmingExercise.title"
@@ -177,7 +177,7 @@
     <select
         [id]="cell.data.id + '-state'"
         [ngModel]="cell.data.state"
-        class="w-full rounded-sm border border-solid border-(--border-color) bg-(--module-bg) p-1 text-(--body-color)"
+        class="w-full rounded-sm border border-(--border-color) bg-(--module-bg) p-1 text-(--body-color)"
         aria-label="State"
         (change)="updateEditedCategoryField(cell.data, EditableField.STATE)(getEventValue($event))"
     >

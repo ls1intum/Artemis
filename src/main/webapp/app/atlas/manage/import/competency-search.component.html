@@ -1,9 +1,9 @@
-<div class="rounded-md border border-border bg-surface-raised">
-    <div class="bg-[color-mix(in_srgb,var(--tumaet-ui-text-color)_3%,transparent)] px-4! py-2.5">
+<div class="rounded-md border border-(--border-color) bg-surface-raised">
+    <div class="bg-[color-mix(in_srgb,var(--tumaet-ui-text-color)_3%,transparent)] px-4 py-2.5">
         <h5 class="mb-0" jhiTranslate="artemisApp.competency.import.search.title"></h5>
     </div>
-    <div class="p-4! pb-1!">
-        <div class="mb-4!">
+    <div class="p-4 pb-1">
+        <div class="mb-4">
             <label for="competency-title-input" jhiTranslate="artemisApp.competency.import.search.labelCompetencyTitle"></label>
             <input
                 id="competency-title-input"
@@ -15,7 +15,7 @@
             />
         </div>
         <div [hidden]="!advancedSearchEnabled()">
-            <div class="mb-4!">
+            <div class="mb-4">
                 <label for="competency-description-input" jhiTranslate="artemisApp.competency.import.search.labelCompetencyDescription"></label>
                 <textarea
                     id="competency-description-input"
@@ -28,7 +28,7 @@
                 ></textarea>
             </div>
             <div class="flex gap-x-6">
-                <div class="mb-4! min-w-0 flex-1">
+                <div class="mb-4 min-w-0 flex-1">
                     <label for="course-title-input" jhiTranslate="artemisApp.competency.import.search.labelCourseTitle"></label>
                     <input
                         id="course-title-input"
@@ -39,10 +39,10 @@
                         (keydown.enter)="performSearch()"
                     />
                 </div>
-                <div class="mb-4! min-w-0 flex-1">
+                <div class="mb-4 min-w-0 flex-1">
                     <label for="course-semester-select" jhiTranslate="artemisApp.competency.import.search.labelCourseSemester"></label>
                     <tumaet-ui-select
-                        class="flex! w-full!"
+                        class="flex! w-full"
                         inputId="course-semester-select"
                         [options]="semesters"
                         [ngModel]="search().semester"

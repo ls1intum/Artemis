@@ -47,9 +47,9 @@
         </tumaet-ui-message>
     }
 
-    <section class="flex flex-col gap-6!">
-        <h2 class="m-0! text-lg! font-semibold!">{{ 'artemisApp.presentationAssessment.presentationDetails' | artemisTranslate }}</h2>
-        <div class="grid grid-cols-1 items-start gap-6! sm:grid-cols-2">
+    <section class="flex flex-col gap-6">
+        <h2 class="m-0 text-lg font-semibold!">{{ 'artemisApp.presentationAssessment.presentationDetails' | artemisTranslate }}</h2>
+        <div class="grid grid-cols-1 items-start gap-6 sm:grid-cols-2">
             <div class="flex flex-col gap-2">
                 <label for="presentation-instance-date">
                     <span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span>
@@ -147,7 +147,7 @@
         </div>
     </section>
 
-    <h2 class="m-0! text-lg! font-semibold!">{{ 'artemisApp.presentationAssessment.assessment' | artemisTranslate }}</h2>
+    <h2 class="m-0 text-lg font-semibold!">{{ 'artemisApp.presentationAssessment.assessment' | artemisTranslate }}</h2>
 
     @switch (gradingMethod()) {
         @case (PresentationGradingMethod.PASS_FAIL) {
@@ -159,7 +159,7 @@
                         @for (outcome of outcomes; track outcome.key) {
                             @let selected = editForm.controls.passed.value === outcome.value;
                             <label
-                                class="flex! min-h-10 cursor-pointer items-center gap-2 rounded-lg border ps-1.5 pe-4! text-sm"
+                                class="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border ps-1.5 pe-4 text-sm"
                                 [class]="selected ? 'border-(--primary) bg-(--sidebar-card-selected-bg)' : 'border-(--border-color)'"
                                 [for]="'presentation-instance-' + outcome.key"
                                 [attr.data-testid]="'presentation-instance-' + outcome.key"

@@ -1,5 +1,5 @@
-<div class="flex items-center justify-between gap-4! px-6! py-4!">
-    <h2 class="m-0 text-xl font-semibold" data-testid="holiday-calendar-month">{{ monthLabel() }}</h2>
+<div class="flex items-center justify-between gap-4 px-6 py-4">
+    <h2 class="m-0" data-testid="holiday-calendar-month">{{ monthLabel() }}</h2>
     <div class="flex items-center gap-2">
         <button tumAetUiButton size="small" severity="secondary" variant="outlined" type="button" data-testid="holiday-calendar-today" (click)="showCurrentMonth()">
             <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.calendar.today"></span>
@@ -34,7 +34,7 @@
 <div class="border-t border-(--tumaet-ui-border-color)" role="grid" data-testid="holiday-calendar-grid" [class.select-none]="isDragging()">
     <div class="grid grid-cols-7 border-b border-(--tumaet-ui-border-color)" role="row">
         @for (weekdayKey of weekdayKeys; track weekdayKey) {
-            <div class="px-4! py-2 text-sm font-semibold" role="columnheader"><span [jhiTranslate]="weekdayKey"></span></div>
+            <div class="px-4 py-2 text-sm font-semibold" role="columnheader"><span [jhiTranslate]="weekdayKey"></span></div>
         }
     </div>
 
@@ -57,7 +57,7 @@
                     -->
                     <button
                         type="button"
-                        class="flex h-full w-full cursor-pointer appearance-none flex-col items-stretch justify-start border-0 bg-transparent px-2 py-1.5 text-start text-inherit focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-(--tumaet-ui-primary-color)"
+                        class="flex h-full w-full cursor-pointer appearance-none flex-col items-stretch justify-start border-0 bg-transparent px-2 py-1.5 text-left text-inherit focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-(--tumaet-ui-primary-color)"
                         [class.cursor-default]="!day.inDisplayedMonth"
                         [class.opacity-45]="!day.inDisplayedMonth"
                         [disabled]="!day.inDisplayedMonth"
@@ -133,7 +133,7 @@
                         <!-- The bar gives the pointer up mid-drag, so a range being dragged over a holiday keeps following it. -->
                         <button
                             type="button"
-                            class="holiday-bar flex h-full w-full cursor-pointer flex-col justify-center overflow-hidden rounded px-2 text-start text-(--tumaet-ui-state-danger-foreground)"
+                            class="holiday-bar flex h-full w-full cursor-pointer flex-col justify-center overflow-hidden rounded px-2 text-left text-(--tumaet-ui-state-danger-foreground)"
                             [class.pointer-events-auto]="!isDragging()"
                             data-testid="holiday-calendar-event"
                             [class.holiday-bar-continues-before]="!bar.startsRun"

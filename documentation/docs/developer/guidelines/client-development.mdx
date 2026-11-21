@@ -920,9 +920,8 @@ describes the anatomy, sizes and responsive behaviour; the Storybook story **Dat
 Use Tailwind for application layout and TUM AET UI for reusable component styling. Add component SCSS
 only when semantic utilities and component contracts cannot express a genuinely component-specific
 rule. Keep global styles in `src/main/webapp/content/scss` limited to application-wide foundations:
-`_base.scss` holds the element defaults (body, headings, links, tables, form controls), `_utilities.scss`
-the few utility classes that have to override them (see [Spacing utilities](#spacing-utilities)), and
-the theme files the colours.
+`_base.scss` holds the element defaults (body, headings, links, tables, form controls) in the cascade
+layer `base`, and the theme files hold the colours.
 
 When an application component needs owned class selectors, use [BEM](https://getbem.com/introduction/):
 
@@ -960,7 +959,7 @@ what replaces it:
 | `justify-content-center` / `align-items-center` / `flex-column` | `justify-center` / `items-center` / `flex-col`                                                                                                                                            |
 | `text-muted`                                                    | `text-muted-color`                                                                                                                                                                        |
 | `text-danger` / `text-success` / `text-warning` / `text-info`   | `text-state-danger` / `text-state-success` / `text-state-warning` / `text-state-info`                                                                                                     |
-| `mb-3` / `p-4` / `gap-5` (Bootstrap's scale)                    | the Tailwind step with the same size and the important modifier: `mb-4!`, `p-6!`, `gap-12!` (see [Spacing utilities](#spacing-utilities))                                                 |
+| `mb-3` / `p-4` / `gap-5` (Bootstrap's scale)                    | the Tailwind step with the same size: `mb-4`, `p-6`, `gap-12` (see [Spacing utilities](#spacing-utilities))                                                                               |
 | PrimeIcons (`pi pi-*`)                                          | a Font Awesome icon with `fa-icon`                                                                                                                                                        |
 
 **Date and time fields use `tumaet-ui-date-picker`.** It is a signal-forms control: bind `[(value)]` to a `dayjs` signal or property, or `[formField]` on a signal form. `[min]` and `[max]` grey out the days outside a range in the calendar, but text typed into the field is not limited by them. The picker has no required flag and no message for an external error, so the consumer checks the range or the required state, marks the field with `[invalid]`, and explains the error next to it (`[ariaDescribedBy]` ties the text to the field). Typed text that is not a date leaves the last valid value in `value` and is reported through `(inputValidityChange)`, so a consumer must not submit while that is `false`. Use `[dateOnly]` for a date, `[timeOnly]` for a time and `[startAt]` for the month a calendar opens on while the field is empty. A reactive form that has not moved to signal forms adds `DatePickerControlDirective` (`app/shared-ui/date-picker-control`) to keep `formControlName`; it reports unparseable text as an `invalidDate` control error and goes away with the last such form. The field never gets narrower than its text needs: 15rem for a date and time, 11.5rem with `[dateOnly]` and 8rem with `[timeOnly]`; the `[inline]` variant has no minimum. A flex or grid parent therefore has to wrap or grow instead of squeezing it, so use `grid-cols-[repeat(auto-fit,minmax(15rem,1fr))]` (or the matching minimum) rather than a fixed column count. To keep at most two columns, use `grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]` with `gap-4`. Do not stack indents in front of a picker on a phone, because a clipping parent hides its buttons. Give the picker its `labelName` and project a help icon next to it with the `tumAetUiDatePickerLabelAddon` attribute, so label, icon and time-zone indicator stay on one line; combine `[hideLabelName]` with an external label only together with `[shouldDisplayTimeZoneWarning]="false"`. For a range, use two pickers rather than a range component.
@@ -1001,7 +1000,6 @@ removed libraries from coming back:
   the DOM (`'text-' + color`, `'btn btn-sm'`, `querySelector('.modal-dialog')`), which the template rules cannot see.
   Bare words such as `table` or `card` are ordinary identifiers in code and are not reported;
 - `no-primeng-component-classes` rejects PrimeNG root classes (`p-button`, `p-inputtext`) on plain elements;
-- `no-ambiguous-spacing-utility` rejects a bare `mb-3`, `px-4` or `gap-5`;
 - `no-restricted-imports` rejects `primeng`, `@ng-bootstrap/**` and `bootstrap`, in specs too;
 - Stylelint rejects hexadecimal, `rgb()`, `--bs-*` and `--p-*` values, PrimeNG selectors (`.p-*`, `p-*` tags, also
   behind `::ng-deep`) and Bootstrap component selectors (`.btn`, `.form-check`, `.modal`, ...).
@@ -1022,52 +1020,34 @@ defaults instead. Tailwind is imported with `source(none)` and an explicit `@sou
 emits utilities only for the listed folders. After a change to that list, restart the dev server: `ng serve` does not
 reliably pick up changes of `tailwind.css`.
 
-| Symptom                              | Cause                                                               | Fix                                               |
-| ------------------------------------ | ------------------------------------------------------------------- | ------------------------------------------------- |
-| A utility has no effect in the build | the folder is missing from `@source`                                | add it to the `@source` list of `tailwind.css`    |
-| A utility has no effect on one tag   | an unlayered rule of `_base.scss` or of component SCSS wins over it | write the important modifier, for example `mt-6!` |
-| Spacing is about a third too small   | a Bootstrap step was copied instead of converted by size            | see [Spacing utilities](#spacing-utilities)       |
+| Symptom                              | Cause                                                             | Fix                                               |
+| ------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------- |
+| A utility has no effect in the build | the folder is missing from `@source`                              | add it to the `@source` list of `tailwind.css`    |
+| A utility has no effect on one tag   | an unlayered rule of component SCSS or of a TUM AET UI class wins | write the important modifier, for example `mt-6!` |
+| Spacing is about a third too small   | a Bootstrap step was copied instead of converted by size          | see [Spacing utilities](#spacing-utilities)       |
 
 #### Spacing utilities
 
-Tailwind emits its utilities into a cascade layer, and a layered declaration loses to every unlayered one. The element
-defaults in `_base.scss` and the SCSS of the components are unlayered. A plain `<p class="mt-6">` therefore renders no
-top margin, because `_base.scss` sets `p { margin-top: 0 }`, and the same holds for headings, lists and every element
-that a component stylesheet gives a margin, a padding or a gap.
+Tailwind emits its utilities into the cascade layer `utilities`. The element defaults of `_base.scss` are in the layer
+`base`, which comes first, so a utility overrides them: `<p class="mt-6">` has a top margin and `<h2 class="text-xl">`
+the size of the utility. A declaration outside a layer still wins over every utility. That is the SCSS of the
+components, the classes of TUM AET UI and the rules of `global.scss` (the link colour, `pre`, `textarea` and the font
+weight of `h1` to `h4`). Where a utility has to override one of those, write Tailwind's important
+modifier: `mb-6!`, `text-state-danger!`.
 
-Two things make spacing predictable anyway:
+`rounded` and the shadows `shadow-sm`, `shadow` and `shadow-lg` have the values Artemis has always rendered, not
+Tailwind's defaults; `tailwind.css` sets them in its `@theme` block. A bare `border` draws a 1px line in the default
+border colour of Tailwind's base layer (`--ui-border-color`); add `border-(--border-color)` or another colour utility
+where a different colour is meant.
 
-- The steps 0, 1 and 2 and `auto` of margin, padding and gap (`m-0`, `mb-2`, `px-1`, `gap-2`, `mx-auto`) are defined in
-  `content/scss/_utilities.scss` as unlayered, important rules. They always win and are written without a modifier.
-  The same file covers a few alignment, overflow, border and colour helpers that templates use bare, such as
-  `text-center`, `overflow-hidden`, `border` and `text-primary`. Do not add classes to that file.
-- Every other step is written with Tailwind's important modifier where it has to win: `mb-4!`, `px-6!`, `gap-12!`.
-
-For the steps 3, 4 and 5 the modifier is mandatory. Bootstrap used the same class names with another scale, and
-templates written for it would now render a smaller space without any error:
+Bootstrap, which is removed, used the spacing class names of Tailwind with another scale for the steps 3 to 5. Keep
+that in mind when you bring over markup from an old branch:
 
 | Class suffix | Bootstrap (removed) | Tailwind         | Write for the Bootstrap size |
 | ------------ | ------------------- | ---------------- | ---------------------------- |
-| `-3`         | `1rem` (16px)       | `0.75rem` (12px) | `-4!`                        |
-| `-4`         | `1.5rem` (24px)     | `1rem` (16px)    | `-6!`                        |
-| `-5`         | `3rem` (48px)       | `1.25rem` (20px) | `-12!`                       |
-
-`localRules/no-ambiguous-spacing-utility` (`config/eslint/rules/no-ambiguous-spacing-utility.mjs`) reports every bare
-`m`, `mt`, `mb`, `ms`, `me`, `mx`, `my`, `p`, `pt`, `pb`, `ps`, `pe`, `px`, `py` and `gap` token with the step 3, 4 or 5
-in a static `class`, `[class.<token>]`, `[class]`, `[ngClass]` and the `styleClass` inputs, and offers both spellings as
-ESLint suggestions: the Tailwind step with the modifier (`mb-3!`), or the step that has the former Bootstrap size
-(`mb-4!`).
-
-The rule does not report a variant (`md:mb-3`), an important token (`mb-3!`), an arbitrary value (`mb-[3px]`), a
-negative one (`-mb-3`), the steps 0 to 2, steps above 5, and `ml`, `mr`, `pl` and `pr`. Neither does it report
-utilities that merely look similar, such as `gap-x-3` or `space-x-3`. It judges the class names that are in the
-template text: a name that an expression computes (`[class]="spacing"`), a literal inside an interpolation of a class
-list, a plain `ngClass="..."` attribute, the case body of an ICU expression and the inline `template:` of a component
-are not looked at.
-
-It is enabled as an error for the modules in `migratedModules` of `eslint.config.mjs`, in their external templates and
-in their `template:` strings. A module must also be in the `@source` list of `tailwind.css`, because the classes the
-rule asks for exist only if Tailwind scans the template; the `migration-source-coverage` test fails otherwise.
+| `-3`         | `1rem` (16px)       | `0.75rem` (12px) | `-4`                         |
+| `-4`         | `1.5rem` (24px)     | `1rem` (16px)    | `-6`                         |
+| `-5`         | `3rem` (48px)       | `1.25rem` (20px) | `-12`                        |
 
 ### Chart Instantiation
 

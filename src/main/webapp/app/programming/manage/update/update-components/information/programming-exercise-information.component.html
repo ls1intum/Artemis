@@ -4,7 +4,7 @@
         id="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle"
     ></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepMessage"></p>
-    <div class="mb-4!">
+    <div class="mb-4">
         <jhi-exercise-title-channel-name
             [exercise]="programmingExercise()"
             [course]="programmingExercise().course"
@@ -22,7 +22,7 @@
     @if (isEditFieldDisplayedRecord().shortName || (!programmingExerciseCreationConfig().isExamMode && isEditFieldDisplayedRecord().categories)) {
         <div class="flex flex-wrap -mx-2">
             @if (isEditFieldDisplayedRecord().shortName) {
-                <div class="mb-4! w-full px-2 min-[992px]:w-1/2">
+                <div class="mb-4 w-full px-2 min-[992px]:w-1/2">
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label
                         ><span class="text-state-danger" aria-hidden="true">*</span>
@@ -72,7 +72,7 @@
         </div>
     }
     @if (programmingExercise().shortName && isShortNameFieldValid()) {
-        <div class="mb-4!">
+        <div class="mb-4">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
                 <jhi-help-icon [text]="'artemisApp.programmingExercise.preview.tooltipLocalVC'" />
@@ -103,7 +103,7 @@
                 />
             }
             @if (!programmingExerciseCreationConfig().isImportFromExistingExercise && programmingExerciseCreationConfig().auxiliaryRepositoriesSupported) {
-                <div class="mb-4!">
+                <div class="mb-4">
                     @if (
                         programmingExercise().auxiliaryRepositories &&
                         programmingExercise().auxiliaryRepositories!.length > 0 &&
@@ -153,7 +153,7 @@
             }
         </div>
     }
-    <div class="mb-4!">
+    <div class="mb-4">
         @if (programmingExerciseCreationConfig().isImportFromExistingExercise) {
             <div class="flex items-center gap-2 mb-1">
                 <tumaet-ui-checkbox
@@ -198,7 +198,7 @@
 <ng-template #auxDescriptionTemplate let-cell>
     <textarea
         tumAetUiTextarea
-        class="w-full table-editable-field__input me-2"
+        class="w-full table-editable-field__input me-2!"
         [id]="cell.data.id + '-description'"
         [tumAetUiInputId]="cell.data.id + '-description'"
         [attr.aria-label]="'artemisApp.programmingExercise.auxiliaryRepository.description' | artemisTranslate"

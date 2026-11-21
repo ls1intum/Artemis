@@ -102,7 +102,7 @@
     </ng-template>
 
     @if (isEdit()) {
-        <div class="grid grid-cols-1 items-start gap-6! sm:grid-cols-[minmax(14rem,1.4fr)_minmax(12rem,1fr)]">
+        <div class="grid grid-cols-1 items-start gap-6 sm:grid-cols-[minmax(14rem,1.4fr)_minmax(12rem,1fr)]">
             <ng-container [ngTemplateOutlet]="detailFields" />
             <div class="flex min-w-0 flex-col gap-2" data-testid="presentation-grading-method">
                 <span jhiTranslate="artemisApp.presentationAssessment.gradingMethod.label"></span>
@@ -114,12 +114,12 @@
         </div>
     } @else {
         <ol
-            class="presentation-assessment-steps m-0! flex list-none gap-4! rounded-lg border border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-5! py-6! text-(--text-body-secondary)"
+            class="presentation-assessment-steps m-0 flex list-none gap-4 rounded-lg border border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-5 py-6 text-(--text-body-secondary)"
             data-testid="presentation-steps"
         >
             @for (candidate of steps(); track candidate.step; let index = $index) {
                 <li
-                    class="presentation-assessment-steps__step flex min-w-0 flex-auto items-center gap-4! last:flex-none"
+                    class="presentation-assessment-steps__step flex min-w-0 flex-auto items-center gap-4 last:flex-none"
                     [class.presentation-assessment-steps__step--current]="candidate.step === step()"
                     [attr.aria-current]="candidate.step === step() ? 'step' : null"
                 >
@@ -154,20 +154,20 @@
 
         @switch (step()) {
             @case ('details') {
-                <div class="grid grid-cols-1 items-start gap-6! sm:grid-cols-[minmax(14rem,1.4fr)_minmax(12rem,1fr)]">
+                <div class="grid grid-cols-1 items-start gap-6 sm:grid-cols-[minmax(14rem,1.4fr)_minmax(12rem,1fr)]">
                     <ng-container [ngTemplateOutlet]="detailFields" />
                 </div>
             }
             @case ('method') {
-                <fieldset class="grid grid-cols-1 gap-4! sm:grid-cols-3">
+                <fieldset class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <legend class="presentation-assessment-methods__legend col-span-full flex flex-col gap-1">
-                        <h3 class="m-0! text-lg! font-semibold!">{{ 'artemisApp.presentationAssessment.gradingMethod.question' | artemisTranslate }}</h3>
-                        <p class="m-0! text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.gradingMethod.hint"></p>
+                        <h3 class="m-0 text-lg font-semibold!">{{ 'artemisApp.presentationAssessment.gradingMethod.question' | artemisTranslate }}</h3>
+                        <p class="m-0 text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.gradingMethod.hint"></p>
                     </legend>
                     @for (method of gradingMethods; track method) {
                         @let selected = selectedGradingMethod() === method;
                         <label
-                            class="relative flex! cursor-pointer flex-col gap-2 rounded-lg border px-3.5 py-3.5"
+                            class="relative flex cursor-pointer flex-col gap-2 rounded-lg border px-3.5 py-3.5"
                             [class]="selected ? 'border-(--primary) bg-(--sidebar-card-selected-bg)' : 'border-(--border-color) bg-(--module-bg)'"
                             [for]="'grading-method-' + method"
                             [attr.data-testid]="'grading-method-' + method"
@@ -198,10 +198,10 @@
                 @if (selectedGradingMethod() === PresentationGradingMethod.RUBRIC) {
                     <jhi-presentation-rubric-editor [form]="rubricForm" [showErrors]="showRubricErrors()" />
                 } @else {
-                    <section class="flex flex-col gap-6!">
+                    <section class="flex flex-col gap-6">
                         <div class="flex flex-col gap-1">
-                            <h3 class="m-0! text-lg! font-semibold!">{{ 'artemisApp.presentationAssessment.scoreConfiguration.title' | artemisTranslate }}</h3>
-                            <p class="m-0! text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.scoreConfiguration.hint"></p>
+                            <h3 class="m-0 text-lg font-semibold!">{{ 'artemisApp.presentationAssessment.scoreConfiguration.title' | artemisTranslate }}</h3>
+                            <p class="m-0 text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.scoreConfiguration.hint"></p>
                         </div>
                         <ng-container [ngTemplateOutlet]="maxPointsField" />
                     </section>

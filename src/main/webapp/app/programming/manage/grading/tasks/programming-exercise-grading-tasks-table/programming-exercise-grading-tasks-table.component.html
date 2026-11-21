@@ -1,4 +1,4 @@
-<div class="mb-4! flex flex-col gap-4!">
+<div class="mb-4 flex flex-col gap-4">
     <h2 class="font-medium!">Tasks</h2>
     <div class="flex flex-wrap items-center justify-between gap-2">
         <div class="flex flex-wrap gap-2">
@@ -67,7 +67,7 @@
         </button>
         <button
             type="button"
-            class="task__row__cell task__row__cell--small ps-2 sort__button"
+            class="task__row__cell task__row__cell--small ps-2! sort__button"
             [tumAetUiTooltip]="'artemisApp.programmingExercise.configureGrading.help.weight' | artemisTranslate"
             tumAetUiTooltipPlacement="bottom"
             (click)="changeSort('weight')"
@@ -78,7 +78,7 @@
         </button>
         <button
             type="button"
-            class="task__row__cell task__row__cell--small ps-2 sort__button"
+            class="task__row__cell task__row__cell--small ps-2! sort__button"
             [tumAetUiTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusMultiplier' | artemisTranslate"
             tumAetUiTooltipPlacement="bottom"
             (click)="changeSort('multiplier')"
@@ -89,7 +89,7 @@
         </button>
         <button
             type="button"
-            class="task__row__cell task__row__cell--small ps-2 sort__button"
+            class="task__row__cell task__row__cell--small ps-2! sort__button"
             [tumAetUiTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusPoints' | artemisTranslate"
             tumAetUiTooltipPlacement="bottom"
             (click)="changeSort('bonusPoints')"

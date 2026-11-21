@@ -55,7 +55,7 @@ import { KeyValuePipe } from '@angular/common';
                             </div>
                             @for (e of submissionLimitControl.errors! | keyvalue; track e) {
                                 @if (submissionLimitControl.invalid && (submissionLimitControl.dirty || submissionLimitControl.touched)) {
-                                    <div class="rounded-md border p-6! border-state-danger text-state-danger bg-state-danger/10">
+                                    <div class="rounded-md border border-(--border-color) p-6! text-state-danger bg-state-danger/10">
                                         <div [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning' + '.' + e.key"></div>
                                     </div>
                                 }
@@ -81,7 +81,7 @@ import { KeyValuePipe } from '@angular/common';
                             </div>
                             @for (e of exceedingPenaltyControl.errors! | keyvalue; track e) {
                                 @if (exceedingPenaltyControl.invalid && (exceedingPenaltyControl.dirty || exceedingPenaltyControl.touched)) {
-                                    <div class="rounded-md border p-6! border-state-danger text-state-danger bg-state-danger/10">
+                                    <div class="rounded-md border border-(--border-color) p-6! text-state-danger bg-state-danger/10">
                                         <div
                                             [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning' + '.' + e.key"
                                         ></div>

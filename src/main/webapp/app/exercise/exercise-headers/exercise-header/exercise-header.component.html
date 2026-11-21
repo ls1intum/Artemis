@@ -3,7 +3,7 @@
     page reads like the other student pages. `px-*` rather than `p-*`, so Bootstrap's !important spacing does not
     overrule the class's vertical padding.
 -->
-<div #bar id="exercise-header" class="page-top-bar module-bg rounded-lg px-4! shell-divider-b flex items-center gap-2">
+<div #bar id="exercise-header" class="page-top-bar module-bg rounded-lg px-4 shell-divider-b flex items-center gap-2">
     @if (showSidebarToggle() && isSidebarCollapsed()) {
         <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
     }
