@@ -358,8 +358,9 @@ in the local build cache, and `setup-gradle` saves that cache with the rest of t
 dependency cache, only `develop` runs write it; pull request and merge queue runs restore the entry of the same job
 and only read it.
 
-A pull request that changes no public signature in `src/main/java` gets `compileTestJava` from the cache, because
-Gradle keys test compilation on the ABI of the main classes. `compileJava` itself recompiles whenever any main source
+A pull request that changes no test source and no public signature in `src/main/java` gets `compileTestJava` from the
+cache, provided its job's `develop` run saved an entry for the same inputs: Gradle keys test compilation on the test
+sources and on the ABI of the main classes, not on their method bodies. `compileJava` itself recompiles whenever any main source
 changes, since the server is a single Gradle project. Jobs on the same run do not share the cache with each other; they
 start in parallel and each one reads what its own `develop` run saved.
 
