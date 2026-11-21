@@ -3,7 +3,7 @@
         tumAetUiButton
         size="small"
         severity="secondary"
-        class="me-4! open-repository-button"
+        class="me-4 open-repository-button"
         [routerLink]="repositoryLink()"
         target="_blank"
         rel="noopener noreferrer"
@@ -21,7 +21,7 @@
             tumAetUiButton
             size="small"
             severity="danger"
-            class="me-4!"
+            class="me-4"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [forceDisabled]="disableActions() || isResolvingConflict()"
             (click)="resetRepository()"
@@ -45,7 +45,7 @@
         tumAetUiButton
         size="small"
         severity="secondary"
-        class="me-4!"
+        class="me-4"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [forceDisabled]="disableActions() || editorState() === EditorState.REFRESHING || editorState() === EditorState.SAVING || commitState() === CommitState.COMMITTING"
         (click)="onRefresh()"

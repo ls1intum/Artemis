@@ -49,7 +49,7 @@ export function addCommentBoxes(
 export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsistencyIssue, id: number, translateService: TranslateService) {
     const headingText = translateService.instant('artemisApp.hyperion.consistencyCheck.issueHeading');
     const node = document.createElement('div');
-    node.className = 'my-1 rounded-lg border border-state-warning bg-state-warning/10 p-4! text-start';
+    node.className = 'my-1 rounded-lg border border-(--border-color) bg-state-warning/10 p-4! text-start';
     node.innerHTML = `
       <h5 class='mb-2! text-lg font-bold'>${headingText}</h5>
       <div>${htmlForMarkdown(formatConsistencyCheckResults(issue))}</div>

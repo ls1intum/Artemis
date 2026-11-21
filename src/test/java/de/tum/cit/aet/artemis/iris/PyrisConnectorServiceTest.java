@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 
 class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
@@ -57,14 +59,14 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     void testExceptionV2(int httpStatus, Class<?> exceptionClass) {
         irisRequestMockProvider.mockRunError(httpStatus);
 
-        assertThatThrownBy(() -> pyrisConnectorService.executePipeline("programming-exercise-chat", null, Optional.empty())).isInstanceOf(exceptionClass);
+        assertThatThrownBy(() -> pyrisConnectorService.executePipeline("programming-exercise-chat", Map.of(), Optional.empty())).isInstanceOf(exceptionClass);
     }
 
     @ParameterizedTest
     @MethodSource("irisExceptions")
     void testExceptionLectureDeletionV2(int httpStatus, Class<?> exceptionClass) {
         irisRequestMockProvider.mockDeletionWebhookRunError(httpStatus);
-        assertThatThrownBy(() -> pyrisConnectorService.executeLectureDeletionWebhook(null)).isInstanceOf(exceptionClass);
+        assertThatThrownBy(() -> pyrisConnectorService.executeLectureDeletionWebhook(new PyrisWebhookLectureDeletionExecutionDTO(List.of(), null))).isInstanceOf(exceptionClass);
     }
 
 }

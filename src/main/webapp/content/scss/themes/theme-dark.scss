@@ -20,12 +20,13 @@ html {
 /* Bare specifier (not 'node_modules/…') so Tailwind's PostCSS @import resolver can resolve this .css file. */
 @import 'highlight.js/styles/monokai.css';
 
-.text-lightgrey {
-    color: $gray-400;
-}
-
-.text-primary {
-    color: lighten($primary, 30) !important;
+// The dark theme shows `text-primary` lighter than the brand colour. The rule is in the layer of the Tailwind
+// utilities and has a higher specificity, so it also applies to the important form of the utility (`text-primary!`).
+@layer utilities {
+    html .text-primary,
+    html .text-primary\! {
+        color: lighten($primary, 30) !important;
+    }
 }
 
 .cdk-overlay-container .tag-option {

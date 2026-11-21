@@ -15,7 +15,7 @@ import { PresentationStudentTableRow } from 'app/presentation/manage/presentatio
 @Component({
     selector: 'jhi-presentation-assessment-overview-table',
     templateUrl: './presentation-assessment-overview-table.component.html',
-    styleUrl: './presentation-assessment-overview-table.component.scss',
+    styleUrl: './presentation-assessment-table.scss',
     host: { class: 'block' },
     imports: [
         TumAetUiTableDirective,

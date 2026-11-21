@@ -14,12 +14,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 import org.w3c.dom.Document;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -57,7 +55,7 @@ public class JenkinsBuildPlanService {
     @Value("${artemis.continuous-integration.url}")
     private URI jenkinsServerUri;
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     private final JenkinsBuildPlanCreator jenkinsBuildPlanCreator;
 
@@ -73,11 +71,11 @@ public class JenkinsBuildPlanService {
 
     private final BuildPlanRepository buildPlanRepository;
 
-    public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
-            JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService, ProgrammingExerciseRepository programmingExerciseRepository,
+    public JenkinsBuildPlanService(@Qualifier("jenkinsRestClient") RestClient restClient, JenkinsBuildPlanCreator jenkinsBuildPlanCreator, JenkinsJobService jenkinsJobService,
+            JenkinsInternalUrlService jenkinsInternalUrlService, ProgrammingExerciseRepository programmingExerciseRepository,
             JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator, BuildPlanRepository buildPlanRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
-        this.restTemplate = restTemplate;
+        this.restClient = restClient;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
         this.jenkinsJobService = jenkinsJobService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -283,7 +281,7 @@ public class JenkinsBuildPlanService {
     public void triggerBuild(String projectKey, String planKey) {
         try {
             URI uri = JenkinsEndpoints.TRIGGER_BUILD.buildEndpoint(jenkinsServerUri, projectKey, planKey).build(true).toUri();
-            restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
+            restClient.post().uri(uri).retrieve().toBodilessEntity();
         }
         catch (RestClientException e) {
             log.error(e.getMessage(), e);
@@ -312,7 +310,7 @@ public class JenkinsBuildPlanService {
 
         try {
             URI uri = JenkinsEndpoints.LAST_BUILD.buildEndpoint(jenkinsServerUri, projectKey, planKey).build(true).toUri();
-            var buildStatus = restTemplate.getForObject(uri, JenkinsBuildStatusDTO.class);
+            var buildStatus = restClient.get().uri(uri).retrieve().body(JenkinsBuildStatusDTO.class);
             return buildStatus != null && buildStatus.building ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
         catch (HttpClientErrorException e) {
@@ -368,7 +366,7 @@ public class JenkinsBuildPlanService {
     public void enablePlan(String projectKey, String planKey) {
         try {
             URI uri = JenkinsEndpoints.ENABLE.buildEndpoint(jenkinsServerUri, projectKey, planKey).build(true).toUri();
-            restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
+            restClient.post().uri(uri).retrieve().toBodilessEntity();
         }
         catch (HttpClientErrorException e) {
             throw new JenkinsException("Unable to enable plan " + planKey + "; statusCode=" + e.getStatusCode() + "; body=" + e.getResponseBodyAsString());
