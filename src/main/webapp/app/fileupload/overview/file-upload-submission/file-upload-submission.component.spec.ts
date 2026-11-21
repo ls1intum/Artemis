@@ -893,8 +893,8 @@ describe('FileUploadSubmissionComponent', () => {
             // 'Your Submission' and 'Assessed submission'
             expect(headings).toHaveLength(2);
             headings.forEach((heading) => {
-                expect(heading.classList).toContain('text-base!');
-                expect(heading.classList).toContain('font-semibold!');
+                expect(heading.classList).toContain('text-base');
+                expect(heading.classList).toContain('font-semibold');
             });
         });
     });

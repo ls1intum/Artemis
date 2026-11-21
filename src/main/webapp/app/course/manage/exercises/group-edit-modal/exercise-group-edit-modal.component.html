@@ -1,9 +1,9 @@
 <tumaet-ui-dialog [(visible)]="visible" [header]="headerStringKey() | artemisTranslate" [closable]="true" [closeOnEscape]="true" [dismissableMask]="false" size="medium">
-    <div class="flex flex-col gap-6!">
+    <div class="flex flex-col gap-6">
         <!-- Name + Points -->
-        <div class="flex flex-wrap gap-4!">
+        <div class="flex flex-wrap gap-4">
             <div class="grow">
-                <label class="font-semibold block mb-1" for="group-edit-title" jhiTranslate="artemisApp.exerciseManagement.groupEdit.name"></label>
+                <label class="font-semibold mb-1" for="group-edit-title" jhiTranslate="artemisApp.exerciseManagement.groupEdit.name"></label>
                 <input
                     id="group-edit-title"
                     tumAetUiInput
@@ -16,7 +16,7 @@
                 />
             </div>
             <div>
-                <label class="flex items-center gap-1 font-semibold mb-1" for="group-edit-max-points">
+                <label class="items-center gap-1 font-semibold mb-1" for="group-edit-max-points">
                     <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.maxPoints"></span>
                     <fa-icon
                         [icon]="faCircleInfo"

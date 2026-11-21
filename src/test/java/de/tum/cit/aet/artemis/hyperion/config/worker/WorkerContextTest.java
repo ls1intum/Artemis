@@ -111,8 +111,9 @@ class WorkerContextTest {
                 }
                 String typeName = type.getName();
                 assertThat(typeName).doesNotStartWith("org.hibernate.");
+                // the Hyperion workload calls models through the shared LLM client service; no other workload gets one
                 boolean selectedWorkload = "hyperion-generation".equals(context.getEnvironment().getProperty("artemis.aiworker.workload"))
-                        && typeName.startsWith("de.tum.cit.aet.artemis.hyperion.service.worker.");
+                        && (typeName.startsWith("de.tum.cit.aet.artemis.hyperion.service.worker.") || typeName.startsWith("de.tum.cit.aet.artemis.core.service.llm."));
                 if (typeName.startsWith("de.tum.cit.aet.artemis.") && !ArtemisApp.class.isAssignableFrom(type) && !selectedWorkload
                         && !typeName.startsWith(WorkerContextTest.class.getName() + "$") && allowedInfrastructure.stream().noneMatch(typeName::startsWith)) {
                     unexpectedBeans.add(name + "=" + typeName);

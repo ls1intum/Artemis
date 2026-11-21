@@ -97,7 +97,7 @@ jobs:
         run: python3 -m unittest discover -s supporting_scripts/tests -p 'test_*.py'
       - name: Lint selection scripts
         run: |
-          shellcheck supporting_scripts/get_changed_modules.sh supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh supporting_scripts/ci/E2E-tests/verify-test-determination.sh supporting_scripts/ci/E2E-tests/prepare-docker-storage.sh
+          shellcheck supporting_scripts/get_changed_modules.sh supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh supporting_scripts/ci/E2E-tests/verify-test-determination.sh supporting_scripts/ci/E2E-tests/prepare-docker-storage.sh supporting_scripts/ci/E2E-tests/prepull-exercise-images.sh supporting_scripts/ci/pull-through-registry-proxy.sh
           for script in supporting_scripts/get_changed_modules.sh supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh supporting_scripts/ci/E2E-tests/verify-test-determination.sh; do
             bash -n "$script"
           done

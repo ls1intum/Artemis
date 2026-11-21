@@ -68,7 +68,7 @@
                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction36.click() : undefined"
             >
                 <img
-                    class="mt-1 mb-1 h-auto max-w-full rounded-sm border"
+                    class="mt-1 mb-1 h-auto max-w-full rounded-sm border border-(--border-color)"
                     [src]="postingContentPart()?.slideToReference"
                     [alt]="postingContentPart()?.referenceStr"
                     [title]="postingContentPart()?.referenceStr"
@@ -80,7 +80,7 @@
         }
         @if (imageNotFound()) {
             <tumaet-ui-card>
-                <h5 class="mb-0 text-xl! font-medium!"><fa-icon class="px-1" [icon]="faBan" /><span jhiTranslate="artemisApp.markdownEditor.preview.slideNotFound"></span></h5>
+                <h5 class="mb-0 text-xl font-medium"><fa-icon class="px-1" [icon]="faBan" /><span jhiTranslate="artemisApp.markdownEditor.preview.slideNotFound"></span></h5>
             </tumaet-ui-card>
         }
     </div>
@@ -100,7 +100,7 @@
                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction60.click() : undefined"
             >
                 <img
-                    class="mt-1 mb-1 h-auto max-w-full rounded-sm border"
+                    class="mt-1 mb-1 h-auto max-w-full rounded-sm border border-(--border-color)"
                     [src]="postingContentPart()?.imageToReference"
                     [alt]="postingContentPart()?.referenceStr"
                     [title]="postingContentPart()?.referenceStr"
@@ -111,7 +111,7 @@
             </a>
         } @else if (imageNotFound()) {
             <tumaet-ui-card>
-                <h5 class="mb-0 text-xl! font-medium!"><fa-icon class="px-1" [icon]="faBan" /><span jhiTranslate="artemisApp.markdownEditor.preview.imageNotFound"></span></h5>
+                <h5 class="mb-0 text-xl font-medium"><fa-icon class="px-1" [icon]="faBan" /><span jhiTranslate="artemisApp.markdownEditor.preview.imageNotFound"></span></h5>
             </tumaet-ui-card>
         }
     </div>
