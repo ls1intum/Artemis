@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch.config;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -10,6 +12,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.core.config.llm.LlmPresetAssignment;
+import de.tum.cit.aet.artemis.core.config.llm.LlmPresetAssignments;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateAuthenticationException;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConnectionException;
 import io.weaviate.client6.v1.api.Authentication;
@@ -22,7 +26,7 @@ import io.weaviate.client6.v1.api.WeaviateClient;
 @Configuration
 @Conditional(WeaviateEnabled.class)
 @EnableConfigurationProperties(WeaviateConfigurationProperties.class)
-public class WeaviateClientConfiguration {
+public class WeaviateClientConfiguration implements LlmPresetAssignments {
 
     private static final Logger log = LoggerFactory.getLogger(WeaviateClientConfiguration.class);
 
@@ -30,6 +34,17 @@ public class WeaviateClientConfiguration {
 
     public WeaviateClientConfiguration(WeaviateConfigurationProperties weaviateProperties) {
         this.weaviateProperties = weaviateProperties;
+    }
+
+    /**
+     * Hybrid search computes vectors with the preset assigned under {@code artemis.weaviate.embedding-llm-preset}; keyword-only search needs none.
+     */
+    @Override
+    public List<LlmPresetAssignment> llmPresetAssignments() {
+        if (!SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(weaviateProperties.vectorizerModule())) {
+            return List.of();
+        }
+        return List.of(LlmPresetAssignment.ofSingle("artemis.weaviate.embedding-llm-preset", weaviateProperties.embeddingLlmPreset(), LlmPresetAssignment.Usage.EMBEDDING));
     }
 
     /**
