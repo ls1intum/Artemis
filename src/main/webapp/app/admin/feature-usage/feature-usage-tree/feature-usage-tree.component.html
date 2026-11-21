@@ -1,5 +1,5 @@
 <tumaet-ui-table-layout [empty]="rows().length === 0" emptyTitle="artemisApp.featureUsage.noMatches">
-    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
         <button type="button" tumAetUiButton severity="secondary" size="small" variant="outlined" (click)="expandAll()" data-testid="expand-all">
             <span jhiTranslate="artemisApp.featureUsage.expandAll"></span>
         </button>
@@ -12,14 +12,14 @@
             <tr>
                 <th scope="col" jhiTranslate="artemisApp.featureUsage.column.feature"></th>
                 <th scope="col" jhiTranslate="artemisApp.featureUsage.column.status"></th>
-                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.actions"></th>
-                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.views"></th>
-                <th scope="col" class="text-end text-muted-color" jhiTranslate="artemisApp.featureUsage.column.automatic"></th>
-                <th scope="col" class="text-end text-muted-color" jhiTranslate="artemisApp.featureUsage.column.system"></th>
-                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.activeDays"></th>
+                <th scope="col" class="text-right!" jhiTranslate="artemisApp.featureUsage.column.actions"></th>
+                <th scope="col" class="text-right!" jhiTranslate="artemisApp.featureUsage.column.views"></th>
+                <th scope="col" class="text-right! text-muted-color" jhiTranslate="artemisApp.featureUsage.column.automatic"></th>
+                <th scope="col" class="text-right! text-muted-color" jhiTranslate="artemisApp.featureUsage.column.system"></th>
+                <th scope="col" class="text-right!" jhiTranslate="artemisApp.featureUsage.column.activeDays"></th>
                 <th scope="col" jhiTranslate="artemisApp.featureUsage.column.lastUsed"></th>
-                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.errorRate"></th>
-                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.meanDuration"></th>
+                <th scope="col" class="text-right!" jhiTranslate="artemisApp.featureUsage.column.errorRate"></th>
+                <th scope="col" class="text-right!" jhiTranslate="artemisApp.featureUsage.column.meanDuration"></th>
                 <th scope="col"><span class="sr-only" jhiTranslate="artemisApp.featureUsage.column.trend"></span></th>
             </tr>
         </thead>
@@ -122,16 +122,16 @@
                             @default {}
                         }
                     </td>
-                    <td class="text-end">{{ row.actionCount }}</td>
-                    <td class="text-end">{{ row.viewCount }}</td>
-                    <td class="text-end text-muted-color">{{ row.automaticCount }}</td>
-                    <td class="text-end text-muted-color">{{ row.systemCount }}</td>
-                    <td class="text-end">{{ row.activeDays ?? '-' }}</td>
+                    <td class="text-right">{{ row.actionCount }}</td>
+                    <td class="text-right">{{ row.viewCount }}</td>
+                    <td class="text-right text-muted-color">{{ row.automaticCount }}</td>
+                    <td class="text-right text-muted-color">{{ row.systemCount }}</td>
+                    <td class="text-right">{{ row.activeDays ?? '-' }}</td>
                     <td class="whitespace-nowrap">{{ row.lastUsedDay ?? '-' }}</td>
                     @let rate = errorRate(row);
                     @let mean = meanDuration(row);
-                    <td class="text-end" [class.text-state-danger]="(rate ?? 0) >= 5">{{ rate === undefined ? '-' : (rate | number: '1.0-1') + '%' }}</td>
-                    <td class="text-end">{{ mean === undefined ? '-' : (mean | number: '1.0-0') }}</td>
+                    <td class="text-right" [class.text-state-danger]="(rate ?? 0) >= 5">{{ rate === undefined ? '-' : (rate | number: '1.0-1') + '%' }}</td>
+                    <td class="text-right">{{ mean === undefined ? '-' : (mean | number: '1.0-0') }}</td>
                     <td>
                         @if ((row.kind === 'feature' || row.kind === 'endpoint') && hasCalls(row)) {
                             <button

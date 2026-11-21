@@ -1464,8 +1464,8 @@ class GenerationTaskServiceTest {
             usageSink.accept(responseWithTokens(7, 3));
             return outcomeWith(AgentLoopResult.Status.COMPLETED, null);
         });
-        HyperionGenerationSettings narrowed = new HyperionGenerationSettings("draft", "Quick draft", 20, java.time.Duration.ofMinutes(12), 10L, true, "CONTINUOUS", 128_000, null,
-                false, false);
+        HyperionGenerationSettings narrowed = new HyperionGenerationSettings("draft", "Quick draft", 20, java.time.Duration.ofMinutes(12), 10L, true, "CONTINUOUS", 128_000,
+                "testpreset", null, false, false);
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null, null,
                 null, narrowed));
@@ -1477,7 +1477,7 @@ class GenerationTaskServiceTest {
     @Test
     void resolvedSettings_areForwardedToOrchestrationSoTheEngineRunsTheProfile() {
         HyperionGenerationSettings thorough = new HyperionGenerationSettings("thorough", "Thorough", 90, java.time.Duration.ofMinutes(60), 6_000_000L, true, "CONTINUOUS", 256_000,
-                null, false, false);
+                "testpreset", null, false, false);
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), eq(thorough)))
                 .thenReturn(GenerationOutcome.stopped(new Seed(new WorkspaceSnapshot(List.of()), Map.of(), new GradingContext(false, Set.of(), Set.of())), false, "Run stopped"));
 

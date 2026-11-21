@@ -7,6 +7,8 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import java.net.ConnectException;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
 /**
@@ -102,6 +105,23 @@ class MockRestClientServersTest {
         var client = context.getBean("firstRestClient", RestClient.class);
 
         assertThatThrownBy(() -> client.get().uri("/missing").retrieve().body(String.class)).isInstanceOf(HttpClientErrorException.NotFound.class);
+    }
+
+    @Test
+    void shouldFailLikeAnUnreachableServerWhenNoExpectationWasSet() {
+        // Nothing asked for the server of this client, like a service that calls a remote server that its test does not mock.
+        var client = context.getBean("secondRestClient", RestClient.class);
+
+        assertThatThrownBy(() -> client.get().uri("/api/health").retrieve().body(String.class)).isInstanceOf(ResourceAccessException.class)
+                .hasRootCauseInstanceOf(ConnectException.class);
+    }
+
+    @Test
+    void shouldFailTheTestOnAnUnexpectedRequestOnceAnExpectationWasSet() {
+        servers.serverOf("firstRestClient").expect(requestTo("http://first.example/expected")).andRespond(withSuccess());
+        var client = context.getBean("firstRestClient", RestClient.class);
+
+        assertThatThrownBy(() -> client.get().uri("/other").retrieve().body(String.class)).isInstanceOf(AssertionError.class);
     }
 
     @Test

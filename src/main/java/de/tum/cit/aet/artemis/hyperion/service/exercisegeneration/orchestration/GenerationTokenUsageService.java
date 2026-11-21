@@ -1,12 +1,9 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -23,7 +20,8 @@ import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService.LLMTokenUsageBuilder;
 import de.tum.cit.aet.artemis.aiworker.api.LLMResponseCost;
-import de.tum.cit.aet.artemis.hyperion.config.GenerationModelCostConfiguration;
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 
 /** Records strict provider accounting for generation without changing shared LLM pricing or usage rules. */
@@ -39,27 +37,19 @@ public class GenerationTokenUsageService {
 
     private static final Logger log = LoggerFactory.getLogger(GenerationTokenUsageService.class);
 
-    private static final Pattern DATE_SUFFIX_PATTERN = Pattern.compile("-?\\d{4}-\\d{2}-\\d{2}$");
-
     private final LLMTokenUsageService tokenUsageService;
 
-    private final Map<String, ModelCost> costs;
+    private final LlmProperties llmProperties;
 
-    private final Map<String, ModelCost> costsByStrippedKey;
-
-    public GenerationTokenUsageService(LLMTokenUsageService tokenUsageService, GenerationModelCostConfiguration costConfiguration) {
+    public GenerationTokenUsageService(LLMTokenUsageService tokenUsageService, LlmProperties llmProperties) {
         this.tokenUsageService = tokenUsageService;
-        this.costs = costConfiguration.getModelCosts().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> modelCost(e.getValue())));
-        this.costsByStrippedKey = costConfiguration.getModelCosts().entrySet().stream()
-                .collect(Collectors.toMap(entry -> GenerationModelCostConfiguration.stripToAlphanumeric(entry.getKey()),
-                        entry -> new StrippedModelCost(entry.getKey(), GenerationModelCostConfiguration.stripToAlphanumeric(entry.getKey()), modelCost(entry.getValue())),
-                        GenerationTokenUsageService::throwOnStrippedCostCollision))
-                .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().cost()));
+        this.llmProperties = llmProperties;
     }
 
     /**
      * Builds usage with provider correlation and cache pricing without changing the shared persistence schema.
      *
+     * @param preset            the preset that made the call, whose endpoint price list prices it; null leaves the estimate incomplete
      * @param model             model identifier
      * @param inputTokens       number of input tokens
      * @param outputTokens      number of output tokens
@@ -68,14 +58,12 @@ public class GenerationTokenUsageService {
      * @param cachedInputTokens cache-read input tokens, when reported
      * @return request with configured costs, cache usage and transient provider metadata
      */
-    public GenerationUsage buildLLMRequest(String model, int inputTokens, int outputTokens, String pipelineId, @Nullable String providerRequestId,
+    public GenerationUsage buildLLMRequest(@Nullable String preset, String model, int inputTokens, int outputTokens, String pipelineId, @Nullable String providerRequestId,
             @Nullable Long cachedInputTokens) {
-        String normalized = model != null ? DATE_SUFFIX_PATTERN.matcher(model).replaceAll("") : "";
-        String stripped = GenerationModelCostConfiguration.stripToAlphanumeric(normalized);
-        ModelCost cost = costs.getOrDefault(normalized, costsByStrippedKey.getOrDefault(stripped, ModelCost.UNKNOWN));
+        ModelCost cost = modelCost(preset);
         if (cost.equals(ModelCost.UNKNOWN) && inputTokens + outputTokens > 0) {
-            log.warn("No LLM cost configured for model '{}' (normalized '{}', stripped '{}') on pipeline [{}]; recording an incomplete estimate. Known cost keys: {}", model,
-                    normalized, stripped, pipelineId, costs.keySet());
+            log.warn("No fallback price for model '{}' on pipeline [{}] (preset {}); recording an incomplete estimate. Add the model to the price list of the preset's endpoint",
+                    model, pipelineId, preset);
         }
         boolean zeroTokenRequest = (long) inputTokens + outputTokens == 0;
         boolean cachePriceResolved = cachedInputTokens != null ? cachedInputTokens == 0 || cost.cachedInputUsd() != null
@@ -95,26 +83,19 @@ public class GenerationTokenUsageService {
         return new GenerationUsage(model, inputTokens, outputTokens, pipelineId, providerRequestId, cachedInputTokens, complete, costUsd);
     }
 
-    private static ModelCost modelCost(GenerationModelCostConfiguration.ModelCostProperties properties) {
-        return new ModelCost(properties.getInputCostPerMillionUsd(), properties.getOutputCostPerMillionUsd(), properties.getCachedInputCostPerMillionUsd());
+    private ModelCost modelCost(@Nullable String presetName) {
+        LlmProperties.Preset preset = presetName == null ? null : llmProperties.preset(presetName);
+        LlmProperties.Price price = preset == null ? null : llmProperties.priceOf(preset);
+        return price == null ? ModelCost.UNKNOWN : new ModelCost(price.input(), price.output(), price.cachedInput());
     }
 
-    private static double orZero(@Nullable Float value) {
-        return value == null ? 0d : value.doubleValue();
+    private static double orZero(@Nullable Double value) {
+        return value == null ? 0d : value;
     }
 
-    private record ModelCost(@Nullable Float inputUsd, @Nullable Float outputUsd, @Nullable Float cachedInputUsd) {
+    private record ModelCost(@Nullable Double inputUsd, @Nullable Double outputUsd, @Nullable Double cachedInputUsd) {
 
         static final ModelCost UNKNOWN = new ModelCost(null, null, null);
-    }
-
-    private record StrippedModelCost(String originalKey, String strippedKey, ModelCost cost) {
-    }
-
-    private static StrippedModelCost throwOnStrippedCostCollision(StrippedModelCost existing, StrippedModelCost replacement) {
-        String message = new StringBuilder("Conflicting LLM model cost keys '").append(existing.originalKey()).append("' and '").append(replacement.originalKey())
-                .append("' normalize to identical stripped key '").append(existing.strippedKey()).append("'").toString();
-        throw new IllegalStateException(message);
     }
 
     /**
@@ -150,7 +131,7 @@ public class GenerationTokenUsageService {
             Double reportedCost = LLMResponseCost.reportedUsd(usage.getNativeUsage(), promptTokens, completionTokens);
             GenerationUsage request = reportedCost != null
                     ? new GenerationUsage(model, promptTokens, completionTokens, pipelineId, metadata.getId(), cachedInputTokens, true, reportedCost)
-                    : buildLLMRequest(model, promptTokens, completionTokens, pipelineId, metadata.getId(), cachedInputTokens);
+                    : buildLLMRequest(LlmClientService.presetOf(metadata), model, promptTokens, completionTokens, pipelineId, metadata.getId(), cachedInputTokens);
             LLMRequest persisted = new LLMRequest(model, promptTokens, completionTokens, pipelineId, cachedInputTokens == null ? 0 : cachedInputTokens.intValue(), 0,
                     request.costUsdComplete() ? request.costUsd() : null);
             tokenUsageService.saveLLMTokenUsage(List.of(persisted), serviceType, builderFunction);

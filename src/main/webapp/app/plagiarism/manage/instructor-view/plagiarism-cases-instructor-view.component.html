@@ -29,7 +29,7 @@
                 <div tumAetUiCardHeader class="border-b border-border px-5! py-3!">
                     <div class="grid grid-cols-4 items-center gap-x-6">
                         <div>
-                            <h5 class="mb-0!">
+                            <h5 class="mb-0">
                                 @if (exercise.type) {
                                     <fa-icon [icon]="getIcon(exercise.type)" />
                                 }
@@ -71,7 +71,7 @@
                     </div>
                 </div>
                 @for (plagiarismCase of groupedPlagiarismCases()[exercise!.id!]; track plagiarismCase; let plagiarismCaseIndex = $index) {
-                    <div class="mb-4! grid grid-cols-12 items-start gap-x-6">
+                    <div class="mb-4 grid grid-cols-12 items-start gap-x-6">
                         @if (plagiarismCase.student) {
                             <div class="col-span-1 text-center">
                                 <a [routerLink]="['/course-management', courseId(), 'plagiarism-cases', plagiarismCase.id]">

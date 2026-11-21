@@ -1,16 +1,16 @@
-<div class="grid grid-cols-1 gap-4! lg:grid-cols-2">
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
     @if (!this.isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.title) {
         <div class="min-w-0" [class.lg:col-span-2]="!isChannelFieldDisplayed()">
             @if (!hideTitleLabel()) {
                 <div>
-                    <label class="mb-1 inline-block" [class.font-semibold]="emphasizeLabels()" jhiTranslate="artemisApp.lecture.title" for="field_title"></label>
+                    <label class="mb-1" [class.font-semibold]="emphasizeLabels()" jhiTranslate="artemisApp.lecture.title" for="field_title"></label>
                     @if (showRequiredMarker()) {
                         <span class="text-state-danger" aria-hidden="true">*</span>
                     }
                     @if (titleHelpIconText()) {
                         <fa-icon
                             [icon]="faQuestionCircle"
-                            class="ms-1 text-muted-color"
+                            class="ms-1! text-muted-color"
                             role="img"
                             tabindex="0"
                             [attr.aria-label]="titleHelpIconText()! | artemisTranslate"
@@ -54,14 +54,14 @@
         <div class="min-w-0">
             @if (!hideChannelNameLabel()) {
                 <div>
-                    <label class="mb-1 inline-block" [class.font-semibold]="emphasizeLabels()" jhiTranslate="artemisApp.lecture.channelName" for="field_channel_name"></label>
+                    <label class="mb-1" [class.font-semibold]="emphasizeLabels()" jhiTranslate="artemisApp.lecture.channelName" for="field_channel_name"></label>
                     @if (showRequiredMarker()) {
                         <span class="text-state-danger" aria-hidden="true">*</span>
                     }
                     @if (channelNameHelpIconText()) {
                         <fa-icon
                             [icon]="faQuestionCircle"
-                            class="ms-1 text-muted-color"
+                            class="ms-1! text-muted-color"
                             role="img"
                             tabindex="0"
                             [attr.aria-label]="channelNameHelpIconText()! | artemisTranslate"

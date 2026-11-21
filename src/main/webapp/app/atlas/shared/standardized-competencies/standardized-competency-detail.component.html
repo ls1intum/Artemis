@@ -17,25 +17,25 @@
         </div>
     </div>
     <div class="me-8 flex flex-col">
-        <div class="mb-4!">
-            <h5 class="mb-1!" jhiTranslate="artemisApp.standardizedCompetency.model.title"></h5>
-            <p class="mb-0!">{{ competency().title }}</p>
+        <div class="mb-4">
+            <h5 class="mb-1" jhiTranslate="artemisApp.standardizedCompetency.model.title"></h5>
+            <p class="mb-0">{{ competency().title }}</p>
         </div>
-        <div class="mb-4!">
-            <h5 class="mb-1!" jhiTranslate="artemisApp.standardizedCompetency.model.description"></h5>
+        <div class="mb-4">
+            <h5 class="mb-1" jhiTranslate="artemisApp.standardizedCompetency.model.description"></h5>
             <p class="markdown-preview" [jhiMarkdown]="competency().description ?? '&nbsp;'"></p>
         </div>
-        <div class="mb-4!">
-            <h5 class="mb-1!" jhiTranslate="artemisApp.standardizedCompetency.model.taxonomy"></h5>
-            <p class="mb-0!" jhiTranslate="artemisApp.courseCompetency.taxonomies.{{ competency().taxonomy }}"></p>
+        <div class="mb-4">
+            <h5 class="mb-1" jhiTranslate="artemisApp.standardizedCompetency.model.taxonomy"></h5>
+            <p class="mb-0" jhiTranslate="artemisApp.courseCompetency.taxonomies.{{ competency().taxonomy }}"></p>
         </div>
-        <div class="mb-4!">
-            <h5 class="mb-1!" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></h5>
-            <p class="mb-0!">{{ knowledgeAreaTitle() }}</p>
+        <div class="mb-4">
+            <h5 class="mb-1" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></h5>
+            <p class="mb-0">{{ knowledgeAreaTitle() }}</p>
         </div>
-        <div class="mb-0!">
-            <h5 class="mb-1!" jhiTranslate="artemisApp.standardizedCompetency.model.source"></h5>
-            <p class="mb-0!">{{ sourceString() }}</p>
+        <div class="mb-0">
+            <h5 class="mb-1" jhiTranslate="artemisApp.standardizedCompetency.model.source"></h5>
+            <p class="mb-0">{{ sourceString() }}</p>
         </div>
     </div>
 </div>

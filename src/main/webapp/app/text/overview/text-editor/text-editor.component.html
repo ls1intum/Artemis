@@ -10,7 +10,7 @@
             <!--region Left Panel-->
             <div left-body class="text-editor-grid pb-2 w-full" [class.ps-2]="!isExamSummary()">
                 @if (teamCollaborationEnabled() && isActive) {
-                    <div class="grid-area-team-info pb-6! md:ps-2">
+                    <div class="grid-area-team-info pb-6 md:ps-2">
                         <jhi-team-participate-info-box
                             [exercise]="textExercise()"
                             [participation]="participation()"
@@ -21,12 +21,12 @@
                 }
                 <div class="grid-area-main">
                     <div>
-                        <tumaet-ui-tag severity="info" class="mb-2 inline-block" data-testid="word-count" [hidden]="submission() && !submission().submitted && isExamSummary()">
+                        <tumaet-ui-tag severity="info" class="mb-2! inline-block" data-testid="word-count" [hidden]="submission() && !submission().submitted && isExamSummary()">
                             <span jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount }"></span>
                         </tumaet-ui-tag>
                         <tumaet-ui-tag
                             severity="info"
-                            class="mb-2 inline-block"
+                            class="mb-2! inline-block"
                             data-testid="character-count"
                             [hidden]="submission() && !submission().submitted && isExamSummary()"
                         >
@@ -60,7 +60,7 @@
                         @if (!result()?.feedbacks?.length) {
                             <div class="flex flex-wrap">
                                 <div class="w-full lg:w-10/12 xl:w-8/12">
-                                    <b class="text-base font-semibold!" [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
+                                    <b class="text-base font-semibold" [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
                                     <hr />
                                     <jhi-text-result [result]="result()" [course]="course()" />
                                     <hr />
@@ -70,7 +70,7 @@
                         } @else {
                             <div class="flex flex-wrap">
                                 <div class="w-full lg:w-10/12 xl:w-8/12">
-                                    <b class="text-base font-semibold!" data-testid="assessed-submission-label">
+                                    <b class="text-base font-semibold" data-testid="assessed-submission-label">
                                         {{
                                             isOwnerOfParticipation()
                                                 ? ('artemisApp.textExercise.assessedSubmission' | artemisTranslate)
@@ -119,7 +119,7 @@
             <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
             <ng-container right-body>
                 @if (textExercise()!.problemStatement) {
-                    <p class="markdown-preview mb-4!">
+                    <p class="markdown-preview mb-4">
                         <span [jhiMarkdown]="textExercise()!.problemStatement!"></span>
                     </p>
                 }
