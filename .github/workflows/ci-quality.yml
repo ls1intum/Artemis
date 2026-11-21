@@ -132,7 +132,8 @@ jobs:
   client-compilation:
     name: Client Compilation
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # The TUM AET UI steps install a browser with its system packages, which alone took up to eight minutes.
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
