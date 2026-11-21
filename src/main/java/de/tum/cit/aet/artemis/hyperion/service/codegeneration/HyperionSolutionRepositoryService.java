@@ -1,12 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionChatClientService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -27,9 +27,9 @@ public class HyperionSolutionRepositoryService extends HyperionCodeGenerationSer
 
     private final HyperionProgrammingExerciseContextRendererService contextRenderer;
 
-    public HyperionSolutionRepositoryService(ChatClient chatClient, HyperionPromptTemplateService templates, GitService gitService,
+    public HyperionSolutionRepositoryService(HyperionChatClientService chatClients, HyperionPromptTemplateService templates, GitService gitService,
             HyperionProgrammingExerciseContextRendererService contextRenderer, LLMTokenUsageService llmTokenUsageService) {
-        super(chatClient, templates, llmTokenUsageService);
+        super(chatClients, templates, llmTokenUsageService);
         this.gitService = gitService;
         this.contextRenderer = contextRenderer;
     }

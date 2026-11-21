@@ -1,7 +1,3 @@
-// The instructor trigger-build button of the programming module still opens its manual-result confirmation with the PrimeNG dialog service, so the page spec has to provide it
-// until that module is migrated. Remove with the import in programming-exercise-instructor-trigger-build-button.component.ts.
-// eslint-disable-next-line no-restricted-imports
-import { DialogService as LegacyDialogService } from 'primeng/dynamicdialog';
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -88,7 +84,6 @@ describe('ParticipationSubmissionComponent', () => {
                 MockProvider(ParticipationWebsocketService, { subscribeForLatestResultOfParticipation: () => new BehaviorSubject<Result | undefined>(undefined) }),
                 MockProvider(ProfileService, { isProfileActive: () => true }),
                 MockProvider(TumAetUiDialogService),
-                MockProvider(LegacyDialogService),
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(SubmissionService),
                 MockProvider(ExerciseService),

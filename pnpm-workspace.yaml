@@ -10,21 +10,20 @@ catalog:
   '@analogjs/vite-plugin-angular': 2.9.7
   '@analogjs/vitest-angular': 2.9.7
   '@arethetypeswrong/cli': 0.18.5
-  '@angular-devkit/architect': 0.2202.7
-  '@angular-devkit/core': 22.2.7
+  '@angular-devkit/architect': 0.2203.0
+  '@angular-devkit/core': 22.3.0
   # Released from angular/components with @angular/cdk, and peers on exactly that cdk version:
   # move both together.
-  '@angular/aria': 22.2.7
-  '@angular/build': 22.2.7
-  '@angular/cdk': 22.2.7
-  '@angular/cli': 22.2.7
-  '@angular/common': 22.2.6
-  '@angular/compiler': 22.2.6
-  '@angular/compiler-cli': 22.2.6
-  '@angular/core': 22.2.6
-  '@angular/forms': 22.2.6
-  '@angular/localize': 22.2.6
-  '@angular/platform-browser': 22.2.6
+  '@angular/aria': 22.3.0
+  '@angular/build': 22.3.0
+  '@angular/cdk': 22.3.0
+  '@angular/cli': 22.3.0
+  '@angular/common': 22.3.0
+  '@angular/compiler': 22.3.0
+  '@angular/compiler-cli': 22.3.0
+  '@angular/core': 22.3.0
+  '@angular/forms': 22.3.0
+  '@angular/platform-browser': 22.3.0
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
@@ -51,7 +50,6 @@ catalog:
   eslint-plugin-storybook: 10.6.7
   jsdom: 30.0.1
   lodash-es: 4.18.1
-  ng-packagr: 22.2.6
   postcss: 8.5.32
   publint: 0.3.25
   playwright: 1.65.0
@@ -130,22 +128,16 @@ overrides:
   'ng-mocks>@angular/platform-browser-dynamic': '^22.0.0'
   'ng-mocks>@angular/router': '^22.0.0'
   'ng-mocks>rxjs': '^7.8.2'
-  # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
-  # whose peer range requires the current Angular major). Without this pin it resolves to a
-  # straggler from an older major that violates that peer range; keep it equal to @angular/core.
-  '@angular/localize': 22.2.6
-  # @angular/animations is never declared either: it arrives as an optional auto-installed peer of
+  # @angular/animations is never declared: it arrives as an optional auto-installed peer of
   # @angular/platform-browser. Both sides of that edge pin an exact patch - platform-browser asks for
   # animations of its own version and animations asks for core of its own version - so without this pin
   # an Angular patch bump leaves animations behind on the old patch against the new core. Keep it equal
   # to @angular/core.
-  '@angular/animations': 22.2.6
+  '@angular/animations': 22.3.0
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.10'
   '@babel/plugin-transform-modules-systemjs': '7.29.8'
-  '@primeuix/styled': '0.7.4'
-  '@primeuix/utils': '0.7.2'
   # lighthouse (a dev tool) asks for @sentry/node ^11.8.0. Its 11.10.0 release pulls @sentry/bundler-plugins with glob ^13.0.6, which is affected by
   # GHSA-3g3m-2fjr-6pw4 (fixed in glob 14.0.2). 11.11.0 is the first release whose bundler plugin uses glob ^14.0.3.
   '@sentry/node': '11.12.0'
@@ -250,3 +242,23 @@ allowBuilds:
   lmdb: true
   msgpackr-extract: true
   unrs-resolver: true
+
+# Temporary exceptions: Angular 22.3.0 was published on 2026-11-18 and 2026-11-19, less than the 24 hours pnpm requires
+# before it installs a new release. Remove this block on or after 2026-11-20.
+minimumReleaseAgeExclude:
+  - '@angular-devkit/architect@0.2203.0'
+  - '@angular-devkit/core@22.3.0'
+  - '@angular-devkit/schematics@22.3.0'
+  - '@angular/animations@22.3.0'
+  - '@angular/build@22.3.0'
+  - '@angular/cli@22.3.0'
+  - '@angular/common@22.3.0'
+  - '@angular/compiler-cli@22.3.0'
+  - '@angular/compiler@22.3.0'
+  - '@angular/core@22.3.0'
+  - '@angular/forms@22.3.0'
+  - '@angular/language-service@22.3.0'
+  - '@angular/platform-browser@22.3.0'
+  - '@angular/router@22.3.0'
+  - '@angular/service-worker@22.3.0'
+  - '@schematics/angular@22.3.0'

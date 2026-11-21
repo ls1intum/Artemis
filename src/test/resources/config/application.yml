@@ -143,14 +143,12 @@ artemis:
         api-base-url: https://mocke.tum.live/api/v2
 
 spring:
+    properties:
+        migrator:
+            # Tests shadow the production application.yml: fail on a removed configuration key here as well.
+            fail: on-error
     application:
         name: Artemis
-    ai:
-        chat:
-            memory:
-                repository:
-                    jdbc:
-                        initialize-schema: never # Disable JDBC schema init for tests (H2), prod uses Liquibase
     datasource:
         url: jdbc:mysql://artemis-mysql:3306/
         type: com.zaxxer.hikari.HikariDataSource
@@ -322,7 +320,10 @@ zonky:
 server:
     port: 8080
     url: http://localhost
-    forward-headers-strategy: native
+    request:
+        header:
+            forwarded:
+                strategy: web-server
 
 management:
     health:

@@ -2,7 +2,7 @@
 id: hardening-checklist
 title: Hardening Checklist
 sidebar_label: Hardening Checklist
-last_reviewed: 2026-11-17
+last_reviewed: 2026-11-19
 ---
 
 This page collects what an operator has to check before an Artemis installation goes into production and when it is upgraded. Every item links to the page that explains it. The list does not replace
@@ -46,6 +46,7 @@ The remaining items depend on how and where you run Artemis, so only you can ver
       container when it starts.
 - [ ] Firewall rules keep the container subnets away from internal services and from the metadata endpoint of your cloud provider.
 - [ ] `supporting_scripts/security/check-container-isolation.sh <network>` passes for the network of your build containers, or its failures are closed by firewall rules. It starts a small container on that network and tries to reach the host, a neighboring container and the internal services that you name in `CHECK_TARGETS` (for example the database, the broker and the metadata endpoint of your cloud provider). Start the services of `CHECK_TARGETS` first: a service that is not listening cannot be reached either, so the check would pass for it. Whether builds may reach the internet is reported and fails the check only with `CHECK_INTERNET=1`.
+- [ ] After every start of a build agent, its log shows `Build containers on the network '<network>' cannot reach [...]` for each network that builds can use except `none`, which needs no result because a container on it cannot connect anywhere, and none of the lines `can reach` (an error), `could not decide`, `could not resolve`, `was skipped` or `Ignoring the network isolation target`. Only the first line shows that the check established the isolation: the others are logged without an error, or only as a warning, so a log without errors can also mean that nothing was tested. Every service that the check tests must already be listening when it runs, about a minute after the start of the agent: a service that is not listening refuses the connection, which the check reports as unreachable. Restart the agent after you start such a service and read the log again. List the queue store in `artemis.continuous-integration.network-isolation-check.targets` by name when it is reachable over more than one address, and by its literal address when the name does not resolve to it. See [Network Model](/admin/production-setup/network-model).
 - [ ] Build agents authenticate with SSH keys (`artemis.version-control.build-agent-use-ssh`) where possible, and the allowed address ranges are set where your network permits it. See
       [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication).
 

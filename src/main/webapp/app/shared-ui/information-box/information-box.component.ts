@@ -76,7 +76,7 @@ export class InformationBoxComponent {
             case 'secondary':
                 return 'text-muted-color';
             default:
-                return 'text-(--tumaet-ui-text-color)';
+                return 'text-color';
         }
     });
 }

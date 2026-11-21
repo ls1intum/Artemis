@@ -1,7 +1,7 @@
 import { inputBinding } from '@angular/core';
 import { DirectiveFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseResetDialogComponent } from '../dialog/programming-exercise-reset-dialog.component';
@@ -10,15 +10,15 @@ import { ProgrammingExerciseResetButtonDirective } from './programming-exercise-
 describe('ProgrammingExerciseResetButtonDirective', () => {
     let fixture: DirectiveFixture<ProgrammingExerciseResetButtonDirective>;
     let open: ReturnType<typeof vi.fn>;
-    let close: ReturnType<typeof vi.fn>;
+    let dismiss: ReturnType<typeof vi.fn>;
     const exercise = new ProgrammingExercise(undefined, undefined);
 
     beforeEach(() => {
-        close = vi.fn();
-        open = vi.fn().mockReturnValue({ close });
+        dismiss = vi.fn();
+        open = vi.fn().mockReturnValue({ dismiss });
         TestBed.configureTestingModule({
             providers: [
-                { provide: DialogService, useValue: { open } },
+                { provide: TumAetUiDialogService, useValue: { open } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
@@ -42,9 +42,9 @@ describe('ProgrammingExerciseResetButtonDirective', () => {
         expect(stop).toHaveBeenCalledOnce();
         expect(open).toHaveBeenCalledExactlyOnceWith(
             ProgrammingExerciseResetDialogComponent,
-            expect.objectContaining({ modal: true, closable: true, closeOnEscape: true, data: { programmingExercise: exercise } }),
+            expect.objectContaining({ closable: true, closeOnEscape: true, data: { programmingExercise: exercise } }),
         );
         fixture.destroy();
-        expect(close).toHaveBeenCalledOnce();
+        expect(dismiss).toHaveBeenCalledOnce();
     });
 });

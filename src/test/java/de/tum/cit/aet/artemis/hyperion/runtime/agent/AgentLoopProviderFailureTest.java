@@ -71,7 +71,7 @@ class AgentLoopProviderFailureTest {
     void failedAccountingStopsAreErrorsRatherThanUserCancellations(String failure) {
         ChatModel model = mock(ChatModel.class);
         List<ProviderUsageUpdate> updates = new ArrayList<>();
-        var usage = new WorkerUsageRecorder(1000, 1, true, update -> {
+        var usage = new WorkerUsageRecorder(1000, 1, update -> {
             updates.add(update);
             if (failure.equals("accounting") && update.kind() == ProviderUsageUpdate.Kind.RESPONSE) {
                 throw new IllegalStateException("accounting delivery failed");

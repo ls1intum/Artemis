@@ -399,6 +399,7 @@ model/text-feedback.ts
 model/text-unit.ts
 model/timing.ts
 model/tokens.ts
+model/tum-live-upload-availability.ts
 model/tum-live-upload-start.ts
 model/tum-live-upload-state.ts
 model/tum-live-uploaded-unit.ts

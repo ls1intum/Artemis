@@ -19,6 +19,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 
+import org.jspecify.annotations.NonNull;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -150,6 +152,7 @@ public class StudentExam extends AbstractAuditingEntity {
         this.athenaFeedbackRequestedDate = athenaFeedbackRequestedDate;
     }
 
+    @NonNull
     public Exam getExam() {
         return exam;
     }

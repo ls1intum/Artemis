@@ -77,6 +77,14 @@ describe('TumLiveUploadService', () => {
         expect(httpMock.expectOne({ method: 'GET', url: 'api/lecture/courses/3/tumlive-uploads' })).toBeTruthy();
     });
 
+    it.each([true, false])('reports course upload availability (%s)', (available) => {
+        const result = vi.fn();
+        service.isAvailable(3).subscribe(result);
+
+        httpMock.expectOne({ method: 'GET', url: '/api/lecture/courses/3/tumlive-upload-availability' }).flush({ available });
+        expect(result).toHaveBeenCalledExactlyOnceWith(available);
+    });
+
     it('sends the raw file to Artemis and reports progress', () => {
         const events: TumLiveTransferEvent[] = [];
         let completed = false;
@@ -114,7 +122,7 @@ describe('TumLiveUploadService', () => {
     it('keeps Artemis translation keys separate from display text', () => {
         const error = vi.fn();
         service.transfer('/upload', new File(['video'], 'lecture.mp4')).subscribe({ error });
-        FakeXhr.last.respond(409, '{"status":409,"message":"error.tumLiveUploadInProgress"}');
+        FakeXhr.last.respond(409, '{"status":409,"detail":"Another upload is already running.","message":"error.tumLiveUploadInProgress"}');
 
         expect(error).toHaveBeenCalledWith(expect.any(TumLiveTransferError));
         expect(error).toHaveBeenCalledWith(expect.objectContaining({ status: 409, message: 'HTTP 409', translationKey: 'error.tumLiveUploadInProgress' }));
