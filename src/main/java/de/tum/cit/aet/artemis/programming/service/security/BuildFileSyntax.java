@@ -151,7 +151,7 @@ final class BuildFileSyntax {
      * @return the configuration it declares a dependency of, written before the dependency or as the first argument of {@code add}
      */
     private static String configurationOf(MatchResult declaration) {
-        return declaration.group(1) != null ? declaration.group(1) : declaration.group(2);
+        return declaration.group(declaration.group(1) != null ? 1 : 2);
     }
 
     /**

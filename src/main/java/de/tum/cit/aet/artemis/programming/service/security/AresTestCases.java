@@ -27,13 +27,19 @@ import de.tum.cit.aet.artemis.programming.dto.SecurityTestStructureDTO;
  */
 final class AresTestCases {
 
+    private static final String JUPITER_API = "org.junit.jupiter.api";
+
+    private static final String ARES_JUPITER_API = "de.tum.cit.ase.ares.api.jupiter";
+
+    private static final String JQWIK_API = "net.jqwik.api";
+
     /**
      * The annotations that make a method a test case: JUnit Jupiter, the Ares markers and jqwik, by their simple name, with the package each one is declared
      * in.
      */
-    private static final Map<String, String> TEST_ANNOTATION_PACKAGES = Map.of("Test", "org.junit.jupiter.api", "RepeatedTest", "org.junit.jupiter.api", "TestFactory",
-            "org.junit.jupiter.api", "TestTemplate", "org.junit.jupiter.api", "ParameterizedTest", "org.junit.jupiter.params", "PublicTest", "de.tum.cit.ase.ares.api.jupiter",
-            "HiddenTest", "de.tum.cit.ase.ares.api.jupiter", "Property", "net.jqwik.api", "Example", "net.jqwik.api");
+    private static final Map<String, String> TEST_ANNOTATION_PACKAGES = Map.of("Test", JUPITER_API, "RepeatedTest", JUPITER_API, "TestFactory", JUPITER_API, "TestTemplate",
+            JUPITER_API, "ParameterizedTest", "org.junit.jupiter.params", "PublicTest", ARES_JUPITER_API, "HiddenTest", ARES_JUPITER_API, "Property", JQWIK_API, "Example",
+            JQWIK_API);
 
     /** The simple names of the test annotations as alternatives of a regular expression. */
     private static final String TEST_ANNOTATION_NAMES = String.join("|", TEST_ANNOTATION_PACKAGES.keySet());

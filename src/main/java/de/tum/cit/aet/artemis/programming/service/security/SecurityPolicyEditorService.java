@@ -102,6 +102,13 @@ public class SecurityPolicyEditorService {
 
     private static final Set<String> POLICY_FILE_EXTENSIONS = Set.of(".yaml", ".yml");
 
+    private static final String THE_POLICY = "The policy ";
+
+    private static final String THE_TEST_CLASS = "The test class ";
+
+    /** The parameter of an error message that names a test class. */
+    private static final String TEST_CLASS = "testClass";
+
     private final SecurityFrameworkService securityFrameworkService;
 
     private final BareGitRepositoryService bareGitRepositoryService;
@@ -326,7 +333,7 @@ public class SecurityPolicyEditorService {
                 try (RevWalk revWalk = new RevWalk(repository)) {
                     commit = revWalk.parseCommit(id);
                 }
-                catch (IncorrectObjectTypeException e) {
+                catch (IncorrectObjectTypeException _) {
                     // The id names another object of the repository, e.g. a file, so it is no commit the editor could have loaded.
                     throw new ConflictException(message, ENTITY_NAME, "securityPolicyChanged");
                 }
@@ -358,15 +365,13 @@ public class SecurityPolicyEditorService {
             try (TreeWalk treeWalk = new TreeWalk(repository)) {
                 treeWalk.addTree(revWalk.parseCommit(head).getTree());
                 treeWalk.setRecursive(true);
-                while (treeWalk.next()) {
-                    if ((treeWalk.getRawMode(0) & FileMode.TYPE_MASK) != FileMode.TYPE_FILE) {
-                        continue;
+                while (!truncated && treeWalk.next()) {
+                    if ((treeWalk.getRawMode(0) & FileMode.TYPE_MASK) == FileMode.TYPE_FILE) {
+                        truncated = paths.size() == MAX_TEMPLATE_FILES;
+                        if (!truncated) {
+                            paths.add(treeWalk.getPathString());
+                        }
                     }
-                    if (paths.size() == MAX_TEMPLATE_FILES) {
-                        truncated = true;
-                        break;
-                    }
-                    paths.add(treeWalk.getPathString());
                 }
             }
             paths.sort(String::compareTo);
@@ -512,7 +517,7 @@ public class SecurityPolicyEditorService {
             if (policy.previousPolicyPath() != null) {
                 String previousPath = requireExistingPolicy(existing, requireValidPolicyPath(policy.previousPolicyPath()));
                 if (!touched.add(previousPath)) {
-                    throw refused("The policy " + previousPath + " is listed twice.", "securityPolicyDuplicate", Map.of("path", previousPath));
+                    throw listedTwice(previousPath);
                 }
                 if (!previousPath.equals(requireValidPolicyPath(policy.document().policyPath()))) {
                     vacated.add(previousPath);
@@ -536,7 +541,7 @@ public class SecurityPolicyEditorService {
                 previous = SecurityPolicyRepositoryFiles.readPolicyFile(root, previousPath).content();
                 SecurityPolicyDocumentDTO previousDocument = SecurityPolicyDocuments.parse(previousPath, previous, existing.get(previousPath).problem()).document();
                 if (previousDocument == null) {
-                    throw refused("The policy " + previousPath + " can only be changed in the repository, because the editor cannot keep all of its content.",
+                    throw refused(THE_POLICY + previousPath + " can only be changed in the repository, because the editor cannot keep all of its content.",
                             "securityPolicyReadOnly", Map.of("path", previousPath));
                 }
                 previousLanguageConfiguration = previousDocument.languageConfiguration();
@@ -546,7 +551,7 @@ public class SecurityPolicyEditorService {
                 throw refused("The file " + path + " already exists in the tests repository.", "securityPolicyFileExists", Map.of("path", path));
             }
             if (liesBelowAFile(root, path, deleted)) {
-                throw refused("The policy path " + path + " lies below a file of the tests repository.", "securityPolicyInvalidPath", Map.of("path", path));
+                throw invalidPath(path, "lies below a file of the tests repository.");
             }
             // A policy that already scans dependencies may keep doing so, so that the editor can still change it; only switching scanning on needs the agent.
             if (usesInstrumentation(document.languageConfiguration()) && !javaAgent && !usesInstrumentation(previousLanguageConfiguration)) {
@@ -660,7 +665,7 @@ public class SecurityPolicyEditorService {
         try {
             reassigned = reassignedTestClasses(testClasses, requestedEntries(change, testClasses, touched), vacated);
         }
-        catch (BadRequestAlertException e) {
+        catch (BadRequestAlertException _) {
             return List.of();
         }
         List<SecurityPolicyPreviewDTO.FileDTO> files = new ArrayList<>();
@@ -687,9 +692,9 @@ public class SecurityPolicyEditorService {
             return;
         }
         throw refused(
-                "The test class " + testClass.qualifiedName() + " inherits test methods that use the policy " + classPolicyPath
+                THE_TEST_CLASS + testClass.qualifiedName() + " inherits test methods that use the policy " + classPolicyPath
                         + " through its class annotation. Assign the whole class to a policy, or release it completely.",
-                "securityPolicyInheritedTestsLosePolicy", Map.of("testClass", testClass.qualifiedName(), "path", classPolicyPath));
+                "securityPolicyInheritedTestsLosePolicy", Map.of(TEST_CLASS, testClass.qualifiedName(), "path", classPolicyPath));
     }
 
     /**
@@ -702,7 +707,7 @@ public class SecurityPolicyEditorService {
             return;
         }
         throw refused("Other test classes extend " + testClass.qualifiedName() + " and run its test methods with their policy. Assign its whole test class to a policy instead.",
-                "securityPolicyTestsOfSubclassesChange", Map.of("testClass", testClass.qualifiedName()));
+                "securityPolicyTestsOfSubclassesChange", Map.of(TEST_CLASS, testClass.qualifiedName()));
     }
 
     /**
@@ -720,9 +725,9 @@ public class SecurityPolicyEditorService {
         }
         String overload = testClass.overloaded().stream().sorted().findFirst().orElseThrow();
         throw refused(
-                "The test class " + testClass.qualifiedName() + " has several test methods called " + overload + ", which can use the policy " + classPolicyPath
+                THE_TEST_CLASS + testClass.qualifiedName() + " has several test methods called " + overload + ", which can use the policy " + classPolicyPath
                         + " of the class only through the class annotation. Assign the whole class to a policy, or change these annotations in the repository.",
-                "securityPolicyOverloadsLosePolicy", Map.of("testClass", testClass.qualifiedName(), "test", overload, "path", classPolicyPath));
+                "securityPolicyOverloadsLosePolicy", Map.of(TEST_CLASS, testClass.qualifiedName(), "test", overload, "path", classPolicyPath));
     }
 
     /**
@@ -748,8 +753,8 @@ public class SecurityPolicyEditorService {
                     throw refused("The tests repository has no test " + entry + ".", "securityPolicyUnknownTest", Map.of("test", entry));
                 }
                 if (!testClass.active()) {
-                    throw refused("The test class " + testClass.qualifiedName() + " runs without the sandbox, so its tests cannot use a policy.", "securityPolicyTestSwitchedOff",
-                            Map.of("testClass", testClass.qualifiedName()));
+                    throw refused(THE_TEST_CLASS + testClass.qualifiedName() + " runs without the sandbox, so its tests cannot use a policy.", "securityPolicyTestSwitchedOff",
+                            Map.of(TEST_CLASS, testClass.qualifiedName()));
                 }
                 if (SecurityTestAssignments.isSwitchedOffEntry(testClass, entry)) {
                     throw refused("The test " + entry + " runs without the sandbox, so it cannot use a policy.", "securityPolicyTestCaseSwitchedOff", Map.of("test", entry));
@@ -759,8 +764,8 @@ public class SecurityPolicyEditorService {
                             Map.of("test", entry));
                 }
                 if (!declared.contains(testClass.qualifiedName())) {
-                    throw refused("The policy " + path + " does not declare the test class " + testClass.qualifiedName() + " of its test " + entry + ".",
-                            "securityPolicyTestClassNotDeclared", Map.of("path", path, "testClass", testClass.qualifiedName()));
+                    throw refused(THE_POLICY + path + " does not declare the test class " + testClass.qualifiedName() + " of its test " + entry + ".",
+                            "securityPolicyTestClassNotDeclared", Map.of("path", path, TEST_CLASS, testClass.qualifiedName()));
                 }
                 String other = requested.put(entry, path);
                 if (other != null && !other.equals(path)) {
@@ -872,24 +877,24 @@ public class SecurityPolicyEditorService {
             }
             String path = requireValidPolicyPath(policy.document().policyPath());
             if (!paths.add(path)) {
-                throw refused("The policy " + path + " is listed twice.", "securityPolicyDuplicate", Map.of("path", path));
+                throw listedTwice(path);
             }
             List<String> problems = SecurityPolicyDocuments.validate(policy.document());
             if (!problems.isEmpty()) {
-                throw refused("The policy " + path + " is not valid: " + String.join(" ", problems), "securityPolicyInvalid",
+                throw refused(THE_POLICY + path + " is not valid: " + String.join(" ", problems), "securityPolicyInvalid",
                         Map.of("path", path, "details", String.join(" ", problems)));
             }
         }
         for (String removedPath : change.removedPolicyPaths()) {
             String path = requireValidPolicyPath(removedPath);
             if (paths.contains(path)) {
-                throw refused("The policy " + path + " is listed twice.", "securityPolicyDuplicate", Map.of("path", path));
+                throw listedTwice(path);
             }
         }
         // A policy file cannot be the directory of another one, e.g. policies.yaml and policies.yaml/Stress.yaml.
         for (String path : paths) {
             if (paths.stream().anyMatch(other -> other.startsWith(path + "/"))) {
-                throw refused("The policy path " + path + " is also the directory of another policy.", "securityPolicyInvalidPath", Map.of("path", path));
+                throw invalidPath(path, "is also the directory of another policy.");
             }
         }
     }
@@ -902,7 +907,7 @@ public class SecurityPolicyEditorService {
         Optional<String> path = Optional.ofNullable(policyPath).flatMap(SecurityPolicyRepositoryFiles::validatePolicyPath)
                 .filter(validPath -> POLICY_FILE_EXTENSIONS.stream().anyMatch(validPath::endsWith))
                 .filter(validPath -> validPath.indexOf('"') < 0 && validPath.indexOf('\\') < 0 && validPath.chars().noneMatch(Character::isISOControl));
-        return path.orElseThrow(() -> refused("The policy path " + policyPath + " is not valid.", "securityPolicyInvalidPath", Map.of("path", String.valueOf(policyPath))));
+        return path.orElseThrow(() -> invalidPath(String.valueOf(policyPath), "is not valid."));
     }
 
     /**
@@ -926,6 +931,17 @@ public class SecurityPolicyEditorService {
     /**
      * @return the error that refuses a request; the client shows its translation with the parameters, so the message names the translation
      */
+    private static BadRequestAlertException listedTwice(String path) {
+        return refused(THE_POLICY + path + " is listed twice.", "securityPolicyDuplicate", Map.of("path", path));
+    }
+
+    /**
+     * @param problem what is wrong with the path, a sentence that follows it
+     */
+    private static BadRequestAlertException invalidPath(String path, String problem) {
+        return refused("The policy path " + path + " " + problem, "securityPolicyInvalidPath", Map.of("path", path));
+    }
+
     private static BadRequestAlertException refused(String defaultMessage, String errorKey, Map<String, Object> params) {
         return new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, defaultMessage, ENTITY_NAME, errorKey, Map.of("message", "error." + errorKey, "params", params));
     }

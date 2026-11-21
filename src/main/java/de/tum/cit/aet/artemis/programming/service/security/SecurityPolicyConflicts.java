@@ -187,7 +187,7 @@ final class SecurityPolicyConflicts {
         try {
             return revWalk.parseCommit(id);
         }
-        catch (IncorrectObjectTypeException e) {
+        catch (IncorrectObjectTypeException _) {
             throw policiesChanged();
         }
     }
