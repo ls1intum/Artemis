@@ -97,7 +97,7 @@ type Banner =
     | { kind: 'conflict'; authorName?: string; hash?: string; reloadFailed?: boolean }
     | { kind: 'failed'; message: string; commitMessage: string; retry?: 'review' }
     /** The change is pushed, but the builds it should start did not; Retry resumes them. */
-    | { kind: 'processingFailed'; hash?: string }
+    | { kind: 'processingFailed' }
     | { kind: 'orphaned'; files: string }
     | { kind: 'info'; text: string };
 
@@ -227,15 +227,19 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     readonly yamlPolicyId = signal<string | undefined>(undefined);
     readonly yamlUnsaved = signal<string | undefined>(undefined);
     readonly importNotice = signal<SecurityImportNotice | undefined>(undefined);
+    /** Why the unsaved YAML could not be rendered; a later attempt clears it, unlike the notice of an import. */
+    readonly yamlRenderError = signal<SecurityImportNotice | undefined>(undefined);
+    readonly yamlNotice = computed(() => this.yamlRenderError() ?? this.importNotice());
 
     private newPolicyCounter = 0;
     /** The last commit request that failed before its change was pushed, for Retry. */
     private failedRequest: CommitRequest | undefined;
     /**
-     * The latest change that was pushed although the builds it should start did not, with its short hash once known, for the Retry that resumes them. A
-     * later commit that fails before it is pushed does not affect it; one that succeeds, or is pushed itself, supersedes it.
+     * The latest change that was pushed although the builds it should start did not, for the Retry that resumes them. A later commit that fails before it
+     * is pushed does not affect it; one that succeeds, or is pushed itself, supersedes it. Its commit is not named: the policies read after the failure may
+     * already be those of a later push by someone else, whose head is no evidence of which commit failed.
      */
-    private unprocessed: { request: CommitRequest; hash?: string } | undefined;
+    private unprocessed: { request: CommitRequest } | undefined;
     /** Set while the policies of a pushed but unprocessed commit are not read yet, so loading them again reads them, see loadPushed. */
     private pendingRecovery: { keepUnsaved: boolean } | undefined;
     /** The number of the latest YAML import started for each policy, from {@link importSequence}. */
@@ -637,12 +641,6 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                     this.rebaseOnto(editor, false);
                 } else {
                     this.applyEditor(editor);
-                }
-                if (this.unprocessed) {
-                    this.unprocessed.hash = editor.lastCommit?.hash.substring(0, 7);
-                }
-                if (this.banner()?.kind === 'processingFailed') {
-                    this.banner.set(this.processingFailedBanner());
                 }
             },
             error: () => {
@@ -1154,6 +1152,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 this.reviewOpen.set(false);
                 this.pendingScan.set(undefined);
                 if (error.status === 409) {
+                    // A Retry of the pushed change that the server refuses can never succeed, because the policies changed since, so it is no longer offered;
+                    // a new change that conflicts leaves that Retry as it is.
+                    if (change === this.unprocessed?.request.change) {
+                        this.unprocessed = undefined;
+                    }
                     this.banner.set({ kind: 'conflict' });
                     // Name who changed the policies; the unsaved changes stay until the instructor reloads. A later reload or commit supersedes this lookup.
                     const lookup = ++this.conflictLookups;
@@ -1230,6 +1233,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         this.yamlPolicyId.set(policy.id);
         this.yamlUnsaved.set(undefined);
         this.importNotice.set(undefined);
+        this.yamlRenderError.set(undefined);
         this.yamlOpen.set(true);
     }
 
@@ -1238,13 +1242,14 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         // Only the latest preview of the policy the dialog still shows applies, so an earlier one that answers later does not replace it.
         const request = ++this.yamlPreviewCount;
         const policy = this.yamlPolicy();
+        this.yamlRenderError.set(undefined);
         if (!policy?.working) {
             this.yamlUnsaved.set(policy?.file?.content);
             return;
         }
         const path = this.paths().get(policy.id);
         if (!path) {
-            this.importNotice.set({ severity: 'error', text: this.translateService.instant(`${PREFIX}.problem.nameRequired`) });
+            this.yamlRenderError.set({ severity: 'error', text: this.translateService.instant(`${PREFIX}.problem.nameRequired`) });
             return;
         }
         const entry: SecurityPolicyChangeEntry = {
@@ -1261,7 +1266,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             },
             error: (error: HttpErrorResponse) => {
                 if (isCurrent()) {
-                    this.importNotice.set({ severity: 'error', text: this.errorMessage(error) });
+                    this.yamlRenderError.set({ severity: 'error', text: this.errorMessage(error) });
                 }
             },
         });
@@ -1278,6 +1283,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         if (!policy || !working || !path || path !== selected.policyPath) {
             return;
         }
+        // The outcome of the import replaces the error of an earlier rendering, which no longer describes what the dialog shows.
+        this.yamlRenderError.set(undefined);
         // Only the latest import of a policy applies, so an earlier one that answers later does not replace it.
         // The numbers keep increasing across discards, so an import from before one never matches the latest import of the policy.
         const generation = ++this.importSequence;
@@ -1355,7 +1362,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     private processingFailedBanner(): Banner {
-        return { kind: 'processingFailed', hash: this.unprocessed?.hash };
+        return { kind: 'processingFailed' };
     }
 
     /** The message of a refused request: the server's translated explanation, or a generic one. */

@@ -95,6 +95,7 @@
                                         [checked]="testCase.checked"
                                         [disabled]="!!testCase.coveredBy || testCase.switchedOff || testCase.overloaded"
                                         [ariaLabel]="(prefix + 'selectCase' | artemisTranslate) + ' ' + node.simpleName + '.' + testCase.name"
+                                        [ariaDescribedBy]="testCase.overloaded ? 'securityOverloaded-' + testCase.key : undefined"
                                         [tumAetUiTooltip]="
                                             testCase.switchedOff
                                                 ? (prefix + 'switchedOffCase' | artemisTranslate)
@@ -106,6 +107,12 @@
                                         "
                                         (changed)="toggleKeys([testCase.key])"
                                     />
+                                    @if (testCase.overloaded) {
+                                        <!-- The tooltip describes the checkbox only while it is open; the description of its input says why it cannot be selected. -->
+                                        <span class="sr-only" [id]="'securityOverloaded-' + testCase.key" data-testid="security-add-test-cases-overloaded">{{
+                                            prefix + 'overloadedCase' | artemisTranslate
+                                        }}</span>
+                                    }
                                     <span class="sp-twisty-spacer"></span>
                                     <span class="sp-mono" [class.sp-mut]="!!testCase.coveredBy || testCase.switchedOff">{{ testCase.name }}</span>
                                     <span class="sp-push">

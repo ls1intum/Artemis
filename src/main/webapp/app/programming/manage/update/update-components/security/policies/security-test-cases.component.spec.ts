@@ -52,11 +52,13 @@ describe('SecurityTestCasesComponent', () => {
         expect(fixture.nativeElement.querySelectorAll('[data-testid="security-test-cases-case"]')).toHaveLength(2);
     });
 
-    it('declares the classes of the tests and the extra classes, and marks removed extra classes', () => {
+    it('declares the classes of the tests and the extra classes, and compares them with the committed ones', () => {
+        // MathTest lost its only committed test, and StressTest got its first one.
         expect(comp.declaredClasses().map((declared) => [declared.simpleName, declared.fromTests, declared.state])).toEqual([
             ['Helper', false, 'removed'],
+            ['MathTest', false, 'removed'],
             ['SortingTest', true, 'committed'],
-            ['StressTest', true, 'committed'],
+            ['StressTest', true, 'new'],
         ]);
         expect(comp.declaredCount()).toBe(2);
     });

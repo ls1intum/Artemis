@@ -153,6 +153,15 @@ describe('SecurityAddTestCasesDialogComponent', () => {
         expect(comp.selection().has('de.c.OverloadTest#check')).toBe(false);
         handlers.toggleKeys(['de.c.OverloadTest#ordinary']);
         expect(comp.selection().has('de.c.OverloadTest#check')).toBe(true);
+
+        // The disabled checkbox of an overload is described by a text of its own, not only by its tooltip.
+        comp.visible.set(true);
+        (comp as unknown as { toggleOpen(key: string): void }).toggleOpen('de.c.OverloadTest');
+        fixture.detectChanges();
+        const root = (fixture.nativeElement as HTMLElement).ownerDocument;
+        const description = root.querySelector<HTMLElement>('[data-testid="security-add-test-cases-overloaded"]')!;
+        expect(description.id).toBe('securityOverloaded-de.c.OverloadTest#check');
+        expect(root.querySelector(`input[aria-describedby="${description.id}"]`)).not.toBeNull();
     });
 
     it('sets up the selection again from a newer structure that arrives while it is open', () => {

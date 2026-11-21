@@ -221,7 +221,7 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
 
         comp['commit']('Grant commons');
 
-        expect(comp.banner()).toEqual({ kind: 'processingFailed', hash: 'bbbbbbb' });
+        expect(comp.banner()).toEqual({ kind: 'processingFailed' });
         expect(comp.editor()?.baseCommitHash).toBe('b'.repeat(40));
         expect(comp.totalChanges()).toBe(0);
         expect(configs).toEqual([configured()]);
@@ -1210,7 +1210,22 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         first.error(new HttpErrorResponse({ status: 500 }));
 
         expect(comp.yamlUnsaved()).toBe('second');
-        expect(comp.importNotice()).toBeUndefined();
+        expect(comp.yamlNotice()).toBeUndefined();
+    });
+
+    it('clears the error of a failed rendering once the YAML renders', () => {
+        create(configured(), false);
+        comp['openYaml'](comp.policies()[0]);
+        service.previewPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp['renderYamlUnsaved']();
+        expect(comp.yamlNotice()?.severity).toBe('error');
+
+        // Switching to the committed YAML and back renders again, which succeeds this time.
+        service.previewPolicies.mockReturnValueOnce(of({ verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE, files: [{ path: 'SecurityPolicy.yaml', after: 'rendered' }] }));
+        comp['renderYamlUnsaved']();
+
+        expect(comp.yamlUnsaved()).toBe('rendered');
+        expect(comp.yamlNotice()).toBeUndefined();
     });
 
     it('shows the state of the card while turning the sandbox on, off and while committing', () => {
@@ -1406,6 +1421,32 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(service.previewPolicies).toHaveBeenLastCalledWith(42, expect.objectContaining({ frameworkVersion: '2.3.0' }));
     });
 
+    it('stops offering to resume the builds of a pushed change once the server refuses its Retry as outdated', () => {
+        create(configured(), false);
+        const policy = comp.policies()[0];
+        const granted = withRows(policy.working!, 'packages', [{ packageName: 'org.apache.commons' }]);
+        comp['onPolicyChange']({ ...policy, working: granted });
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'error.securityFrameworkProcessingFailed' } })));
+        service.getPolicies.mockReturnValue(of(editor('b'.repeat(40), granted)));
+        comp['commit']('Grant commons');
+        expect(comp.banner()).toEqual({ kind: 'processingFailed' });
+
+        // A new change that conflicts keeps the Retry of the pushed one.
+        comp['onPolicyChange']({ ...comp.policies()[0], working: withRows(granted, 'packages', []) });
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })));
+        comp['commit']('Revoke commons');
+        expect(comp.banner()?.kind).toBe('conflict');
+        comp['discard']();
+        expect(comp.banner()).toEqual({ kind: 'processingFailed' });
+
+        // Someone else changed the policies since, so the Retry of the pushed change conflicts and can never succeed.
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })));
+        comp['retryCommit']();
+        expect(comp.banner()?.kind).toBe('conflict');
+        comp['discard']();
+        expect(comp.banner()?.kind).toBe('info');
+    });
+
     it('keeps resuming the builds of a pushed change after a later commit fails before it is pushed', () => {
         create(configured(), false);
         const policy = comp.policies()[0];
@@ -1414,7 +1455,7 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'error.securityFrameworkProcessingFailed' } })));
         service.getPolicies.mockReturnValue(of(editor('b'.repeat(40), granted)));
         comp['commit']('Grant commons');
-        expect(comp.banner()).toEqual({ kind: 'processingFailed', hash: 'bbbbbbb' });
+        expect(comp.banner()).toEqual({ kind: 'processingFailed' });
 
         comp['onPolicyChange']({ ...comp.policies()[0], working: withRows(granted, 'packages', [{ packageName: 'org.apache.commons' }, { packageName: 'org.junit' }]) });
         service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
@@ -1422,7 +1463,7 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.banner()?.kind).toBe('failed');
 
         comp['discard']();
-        expect(comp.banner()).toEqual({ kind: 'processingFailed', hash: 'bbbbbbb' });
+        expect(comp.banner()).toEqual({ kind: 'processingFailed' });
 
         service.commitPolicies.mockReturnValueOnce(of({ editor: editor('b'.repeat(40), granted), config: configured() }));
         comp['retryCommit']();

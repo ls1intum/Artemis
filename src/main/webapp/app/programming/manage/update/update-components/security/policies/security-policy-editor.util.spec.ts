@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
 
 import { SecurityPolicyDocument, SecurityPolicyFile } from 'app/programming/shared/entities/security-policy.model';
@@ -213,6 +213,21 @@ describe('security-policy-editor.util', () => {
         expect(parseAresDate('2026-12-24 10:00 Not/AZone')).toBeUndefined();
     });
 
+    it('resolves a repeated or skipped wall time like java.time, whatever the date the editor runs on', () => {
+        vi.useFakeTimers();
+        try {
+            for (const today of ['2026-01-15T12:00:00Z', '2026-07-15T12:00:00Z']) {
+                vi.setSystemTime(new Date(today));
+                // 01:30 occurs twice when New York sets its clocks back; the earlier offset, daylight time, applies.
+                expect(parseAresDate('2026-11-01 01:30 America/New_York')?.toISOString()).toBe('2026-11-01T05:30:00.000Z');
+                // 02:30 is skipped when New York sets its clocks forward; it moves later by the gap, to 03:30 daylight time.
+                expect(parseAresDate('2026-03-08 02:30 America/New_York')?.toISOString()).toBe('2026-03-08T07:30:00.000Z');
+            }
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('diffs two files side by side and collapses unchanged lines', () => {
         const before = 'a\nb\nc\nd\ne\nf\n';
         const after = 'a\nb\nc\nd\nE\nf\ng\n';
@@ -236,5 +251,10 @@ describe('security-policy-editor.util', () => {
 
         const replaced = diffLines(lines.join('\n'), lines.map((line) => line + '!').join('\n'));
         expect(diffStats(replaced)).toEqual({ added: 10_000, removed: 10_000 });
+
+        // Beyond the bound, the lines are compared at the same positions, so two edits of the first and the last line count as two changed lines.
+        const ends = lines.map((line, index) => (index === 0 || index === lines.length - 1 ? line + '!' : line));
+        const endsAndMiddle = ends.map((line, index) => (index === 5_000 ? line + '?' : line));
+        expect(diffStats(diffLines(lines.join('\n'), endsAndMiddle.join('\n')))).toEqual({ added: 3, removed: 3 });
     });
 });

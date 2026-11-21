@@ -33,6 +33,8 @@ interface VisibleNode {
     selected: boolean;
     /** Whether some but not all scripts of a folder are checked. */
     partlySelected: boolean;
+    /** The tag of the row, e.g. that the path is already listed. */
+    badge?: string;
 }
 
 /** File names and extensions that are run as programs. */
@@ -94,15 +96,18 @@ export class SecurityBrowseDialogComponent {
     readonly tree = computed<BrowseNode[]>(() => {
         const files = (this.files() ?? []).filter((path) => this.mode() === 'paths' || isScript(path));
         const root: BrowseNode = { name: '', path: '', folder: true, children: [] };
+        // A path names one node of the tree, so the nodes are found by it instead of searching the children, which may be thousands in one folder.
+        const nodesByPath = new Map<string, BrowseNode>();
         for (const file of files) {
             let parent = root;
             const parts = file.split('/');
             parts.forEach((part, index) => {
                 const folder = index < parts.length - 1;
                 const path = parts.slice(0, index + 1).join('/') + (folder ? '/' : '');
-                let child = parent.children.find((node) => node.path === path);
+                let child = nodesByPath.get(path);
                 if (!child) {
                     child = { name: part, path, folder, children: [] };
+                    nodesByPath.set(path, child);
                     parent.children.push(child);
                 }
                 parent = child;
@@ -116,6 +121,7 @@ export class SecurityBrowseDialogComponent {
     readonly visibleNodes = computed<VisibleNode[]>(() => {
         const query = this.search().trim().toLowerCase();
         const expanded = this.expanded();
+        const badges = this.badges();
         const rows: VisibleNode[] = [];
         const visit = (nodes: BrowseNode[], depth: number) => {
             for (const node of nodes) {
@@ -123,7 +129,14 @@ export class SecurityBrowseDialogComponent {
                     continue;
                 }
                 const isExpanded = node.folder && (query.length > 0 || expanded.has(node.path));
-                rows.push({ node, depth, expanded: isExpanded, selected: this.isSelected(node), partlySelected: this.isPartlySelected(node) });
+                rows.push({
+                    node,
+                    depth,
+                    expanded: isExpanded,
+                    selected: this.isSelected(node),
+                    partlySelected: this.isPartlySelected(node),
+                    badge: badges.get(node.path),
+                });
                 if (isExpanded) {
                     visit(node.children, depth + 1);
                 }
@@ -134,6 +147,10 @@ export class SecurityBrowseDialogComponent {
     });
 
     readonly selectedPaths = computed(() => [...this.selection()].sort((first, second) => first.localeCompare(second)));
+    readonly selectedSummary = computed(() => this.selectedPaths().join(', '));
+    /** A folder selects only the scripts the tree lists, which are not all of them if the listing is truncated. */
+    readonly folderScriptsLabel = computed(() => (this.truncated() ? 'selectFolderListedScripts' : 'selectFolderScripts'));
+    readonly scriptsHint = computed(() => (this.truncated() ? 'scriptsHintTruncated' : 'scriptsHint'));
     /** The selected entries the tree has no row for, e.g. a command typed into the field, which only the summary can remove. */
     readonly unlistedSelection = computed(() => {
         const listed = new Set<string>();

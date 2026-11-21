@@ -125,11 +125,17 @@ export class SecurityTestCasesComponent {
     readonly declaredClasses = computed<DeclaredClass[]>(() => {
         const policy = this.policy();
         const fromTests = classesOfTests(policy.tests);
-        const names = [...new Set([...fromTests, ...policy.extraClasses, ...policy.baseExtraClasses])].sort((first, second) => first.localeCompare(second));
+        // The committed policy declares the classes of its committed tests, so a class whose tests were all removed is shown as removed, and one whose
+        // first test was just assigned as new.
+        const committedFromTests = classesOfTests(policy.baseTests);
+        const names = [...new Set([...fromTests, ...committedFromTests, ...policy.extraClasses, ...policy.baseExtraClasses])].sort((first, second) => first.localeCompare(second));
         return names.map((qualifiedName) => {
             const dot = qualifiedName.lastIndexOf('.');
             const isFromTests = fromTests.includes(qualifiedName);
-            const state = entryState(isFromTests || policy.extraClasses.includes(qualifiedName), isFromTests || policy.baseExtraClasses.includes(qualifiedName));
+            const state = entryState(
+                isFromTests || policy.extraClasses.includes(qualifiedName),
+                committedFromTests.includes(qualifiedName) || policy.baseExtraClasses.includes(qualifiedName),
+            );
             return { qualifiedName, simpleName: qualifiedName.substring(dot + 1), packageName: dot >= 0 ? qualifiedName.substring(0, dot) : '', fromTests: isFromTests, state };
         });
     });

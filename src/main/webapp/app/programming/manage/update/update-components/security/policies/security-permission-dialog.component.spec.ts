@@ -124,6 +124,19 @@ describe('SecurityPermissionDialogComponent', () => {
         handlers.setFileAction('read', true);
 
         expect(comp.problem()).toBe(PROBLEM + 'duplicate');
+        expect(comp.problemEntry()).toBe('a.txt');
+    });
+
+    it('names only the entries that are already listed, so the others can stay', () => {
+        open('files', undefined, ['a.txt']);
+        comp.path.set('a.txt, b.txt, c.txt');
+        handlers.setFileAction('read', true);
+        handlers.save();
+        fixture.detectChanges();
+
+        expect(comp.problem()).toBe(PROBLEM + 'duplicate');
+        expect(comp.problemEntry()).toBe('a.txt');
+        expect(saved).toEqual([]);
     });
 
     it('checks the host and the port of an endpoint', () => {

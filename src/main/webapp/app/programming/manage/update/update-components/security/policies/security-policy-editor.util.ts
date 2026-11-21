@@ -608,10 +608,25 @@ export function parseAresDate(value: string | undefined): dayjs.Dayjs | undefine
     return date?.isValid() ? date : undefined;
 }
 
-/** @returns the wall time in the time zone as the same instant in the browser's time zone; undefined for an unknown zone */
+/** One day in milliseconds, more than any change of the offset of a time zone at once. */
+const DAY_MILLISECONDS = 86_400_000;
+
+/**
+ * Resolves the wall time in the time zone like {@code java.time} does for Ares: a time that occurs twice, when the clocks are set back, takes the earlier
+ * offset, i.e. the first of the two instants; a time that the clocks skip is moved later by the length of the gap, i.e. read with the offset before it.
+ * Day.js itself resolves both with the offset the zone has on the day the editor runs, so the same date would mean another instant in summer and in winter.
+ *
+ * @returns the instant in the browser's time zone; undefined for an unknown zone
+ */
 function inZone(wallTime: string, zone: string): dayjs.Dayjs | undefined {
     try {
-        return dayjs.tz(wallTime, ARES_DATE_FORMAT, zone).local();
+        const asUtc = dayjs.utc(wallTime, ARES_DATE_FORMAT).valueOf();
+        const offsetAt = (instant: number) => dayjs(instant).tz(zone).utcOffset() * 60_000;
+        const offsetBefore = offsetAt(asUtc - DAY_MILLISECONDS);
+        const candidates = [offsetBefore, offsetAt(asUtc + DAY_MILLISECONDS)]
+            .map((offset) => asUtc - offset)
+            .filter((instant) => dayjs(instant).tz(zone).format(ARES_DATE_FORMAT) === wallTime);
+        return dayjs(candidates.length ? Math.min(...candidates) : asUtc - offsetBefore);
     } catch {
         return undefined;
     }
@@ -634,7 +649,10 @@ export type DiffRow =
 /** The number of unchanged lines kept around each change; longer unchanged runs collapse. */
 const DIFF_CONTEXT = 1;
 
-/** The most cells of the table of the longest common subsequence; a larger changed part is shown as removed and added as a whole, which bounds the memory. */
+/**
+ * The most cells of the table of the longest common subsequence, which bounds the memory. A larger changed part is compared line by line at the same
+ * positions instead, so an edit that keeps the number of lines still shows exactly; one that inserts or removes lines in it shows the lines after it as changed.
+ */
 const MAX_DIFF_CELLS = 1_000_000;
 
 /**
@@ -674,8 +692,18 @@ function diffMiddle(left: string[], right: string[], start: number, rows: DiffRo
     const added = (j: number): DiffRow => ({ kind: 'added', right: { number: start + j + 1, text: right[j] } });
     const width = right.length + 1;
     if ((left.length + 1) * width > MAX_DIFF_CELLS) {
-        left.forEach((_, i) => rows.push(removed(i)));
-        right.forEach((_, j) => rows.push(added(j)));
+        for (let k = 0; k < Math.max(left.length, right.length); k++) {
+            if (k < left.length && k < right.length && left[k] === right[k]) {
+                rows.push({ kind: 'same', left: { number: start + k + 1, text: left[k] }, right: { number: start + k + 1, text: right[k] } });
+                continue;
+            }
+            if (k < left.length) {
+                rows.push(removed(k));
+            }
+            if (k < right.length) {
+                rows.push(added(k));
+            }
+        }
         return;
     }
     const lengths = new Uint32Array((left.length + 1) * width);

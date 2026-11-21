@@ -205,13 +205,13 @@ export class SecurityTestBehaviourComponent {
         if (!current) {
             return;
         }
-        // A cleared number input emits null.
+        // A cleared number input emits null. A value beyond the safe integers, e.g. 1e20, is no exact whole number and does not fit the long of Ares.
         const parsed = value === null || String(value).trim() === '' ? undefined : Number(value);
         if (field === 'timeout') {
-            if (parsed !== undefined && Number.isInteger(parsed) && parsed > 0) {
+            if (parsed !== undefined && Number.isSafeInteger(parsed) && parsed > 0) {
                 this.update('strictTimeout', cloneWith(current, { timeout: parsed }));
             }
-        } else if (parsed === undefined || (Number.isInteger(parsed) && parsed >= 0)) {
+        } else if (parsed === undefined || (Number.isSafeInteger(parsed) && parsed >= 0)) {
             this.update('strictTimeout', cloneWith(current, { terminationGrace: parsed }));
         }
     }
@@ -250,7 +250,7 @@ export class SecurityTestBehaviourComponent {
         }
         // A number from the number input is checked as it is, so 1.5 is refused; only text may group its digits, e.g. 1_000_000.
         const parsed = typeof value === 'number' ? value : Number(value.replace(/[\s_.,]/g, ''));
-        if (current && Number.isInteger(parsed) && parsed > 0) {
+        if (current && Number.isSafeInteger(parsed) && parsed > 0) {
             this.update('outputMirroring', cloneWith(current, { maximumCharacters: parsed }));
         }
     }

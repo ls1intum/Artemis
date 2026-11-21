@@ -113,6 +113,21 @@ describe('SecurityTestBehaviourComponent', () => {
         expect(emitted.at(-1)).toBeUndefined();
     });
 
+    it('refuses numbers that are no exact whole number of the server', () => {
+        handlers.setStrictTimeout(true);
+        handlers.setMirrorOutput(true);
+        const before = emitted.at(-1);
+
+        // 9007199254740993 reads as 9007199254740992 and 1e20 does not fit a long, so neither changes the stored values.
+        handlers.setTimeoutField('timeout', '9007199254740993');
+        handlers.setTimeoutField('terminationGrace', 1e20);
+        handlers.setMaximumCharacters('100000000000000000000');
+
+        expect(emitted.at(-1)).toEqual(before);
+        handlers.setTimeoutField('terminationGrace', 0);
+        expect(emitted.at(-1)?.strictTimeout?.terminationGrace).toBe(0);
+    });
+
     it('hides tests for a period and flags a period that ends before it starts', () => {
         handlers.setHideTests(true);
         expect(emitted.at(-1)?.hiddenTests?.hiddenFrom).toBeDefined();

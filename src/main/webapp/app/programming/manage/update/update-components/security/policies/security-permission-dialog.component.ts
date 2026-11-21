@@ -231,14 +231,27 @@ export class SecurityPermissionDialogComponent {
 
     /** @returns a problem if two of the rows are the same, or one of them is a row of the policy other than the one that is edited */
     private duplicateProblem(): string | undefined {
+        return this.duplicateKeys().length ? 'duplicate' : undefined;
+    }
+
+    /** The entries that are listed twice in the fields or already listed elsewhere, which the problem names instead of every entry. */
+    readonly duplicateKeys = computed<string[]>(() => {
         const batchKeys = this.rows().map((row) => rowKey(this.kind(), row));
-        if (new Set(batchKeys).size < batchKeys.length) {
-            return 'duplicate';
-        }
         const edited = this.editing();
         const editedKey = edited ? rowKey(this.kind(), edited) : undefined;
-        return batchKeys.some((key) => key !== editedKey && this.existingKeys().has(key)) ? 'duplicate' : undefined;
-    }
+        const seen = new Set<string>();
+        const duplicates = new Set<string>();
+        for (const key of batchKeys) {
+            if (seen.has(key) || (key !== editedKey && this.existingKeys().has(key))) {
+                duplicates.add(key);
+            }
+            seen.add(key);
+        }
+        return [...duplicates];
+    });
+
+    /** The entries the problem names: the conflicting ones for a duplicate, otherwise every entry of the fields. */
+    readonly problemEntry = computed(() => (this.fieldProblem() === undefined && this.duplicateKeys().length ? this.duplicateKeys().join(', ') : this.target()));
 
     readonly canSave = computed(() => !this.grantsNothing() && this.problem() === undefined);
 

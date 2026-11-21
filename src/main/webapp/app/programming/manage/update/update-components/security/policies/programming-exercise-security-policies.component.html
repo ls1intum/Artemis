@@ -210,7 +210,7 @@
                         <span class="sp-message-row">
                             <span class="sp-grow">
                                 <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.processingFailed'"></span>
-                                <span class="text-sm">{{ prefix + 'banner.processingFailedText' | artemisTranslate: { hash: current.hash ?? '' } }}</span>
+                                <span class="text-sm">{{ prefix + 'banner.processingFailedText' | artemisTranslate }}</span>
                             </span>
                             <button
                                 type="button"
@@ -326,7 +326,7 @@
         [hasUnsavedChanges]="(summaries().get(policy.id)?.total ?? 0) > 0"
         [commitHash]="shortBaseCommit()"
         [canImport]="!!policy.working && !editingDisabled()"
-        [notice]="importNotice()"
+        [notice]="yamlNotice()"
         [importEpoch]="yamlImportEpoch()"
         (unsavedRequested)="renderYamlUnsaved()"
         (readingChange)="yamlFileReading.set($event)"

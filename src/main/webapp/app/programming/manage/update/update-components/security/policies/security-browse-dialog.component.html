@@ -31,7 +31,7 @@
                         [indeterminate]="entry.partlySelected"
                         [ariaLabel]="
                             mode() === 'scripts' && entry.node.folder
-                                ? (prefix + 'selectFolderScripts' | artemisTranslate: { folder: entry.node.path })
+                                ? (prefix + folderScriptsLabel() | artemisTranslate: { folder: entry.node.path })
                                 : (prefix + 'selectPath' | artemisTranslate) + ' ' + entry.node.path
                         "
                         (changed)="toggleSelected(entry.node, $event.checked)"
@@ -50,13 +50,13 @@
                         <span class="sp-twisty-spacer"></span>
                     }
                     <span class="sp-mono">{{ entry.node.name }}{{ entry.node.folder ? '/' : '' }}</span>
-                    @if (badges().get(entry.node.path); as badge) {
-                        <tumaet-ui-tag class="sp-push" severity="secondary" size="sm" [value]="badge" />
+                    @if (entry.badge) {
+                        <tumaet-ui-tag class="sp-push" severity="secondary" size="sm" [value]="entry.badge" />
                     }
                 </div>
             }
         </fieldset>
-        <p class="sp-mut m-0 text-xs" [jhiTranslate]="mode() === 'paths' ? prefix + 'pathsHint' : prefix + 'scriptsHint'"></p>
+        <p class="sp-mut m-0 text-xs" [jhiTranslate]="mode() === 'paths' ? prefix + 'pathsHint' : prefix + scriptsHint()" data-testid="security-browse-hint"></p>
         @if (truncated()) {
             <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'truncated'"></p>
         }
@@ -65,7 +65,7 @@
         <span class="me-auto self-center text-sm" data-testid="security-browse-summary">
             @if (selectedPaths().length) {
                 {{ prefix + 'selected' | artemisTranslate: { count: selectedPaths().length } }}
-                <span class="sp-mono">{{ selectedPaths().join(', ') }}</span>
+                <span class="sp-mono">{{ selectedSummary() }}</span>
                 @for (path of unlistedSelection(); track path) {
                     <button
                         type="button"

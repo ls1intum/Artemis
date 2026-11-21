@@ -70,6 +70,23 @@ describe('SecurityBrowseDialogComponent', () => {
         expect(comp.selectedPaths()).toEqual(['data/input.txt', 'scripts/run.sh', 'scripts/tools/setup.py']);
     });
 
+    it('says that a folder selects only the listed scripts if the listing is truncated', () => {
+        fixture.componentRef.setInput('mode', 'scripts');
+        fixture.componentRef.setInput('badges', new Map([['scripts/', 'listed']]));
+        fixture.detectChanges();
+        const root = (fixture.nativeElement as HTMLElement).ownerDocument;
+        const hint = (): string | null | undefined => root.querySelector('[data-testid="security-browse-hint"]')?.textContent;
+
+        expect(comp.folderScriptsLabel()).toBe('selectFolderScripts');
+        expect(hint()).toContain('scriptsHint');
+        expect(comp.visibleNodes().find((row) => row.node.path === 'scripts/')?.badge).toBe('listed');
+
+        fixture.componentRef.setInput('truncated', true);
+        fixture.detectChanges();
+        expect(comp.folderScriptsLabel()).toBe('selectFolderListedScripts');
+        expect(hint()).toContain('scriptsHintTruncated');
+    });
+
     it('clears the field when everything it named is deselected', () => {
         handlers.toggleSelected(node('data/input.txt'), false);
 
