@@ -32,7 +32,7 @@
                         [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds()"
                     />
                     <p>
-                        {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.description.' + tutorParticipation().status!.toString() | artemisTranslate }}
+                        {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.description.' + tutorParticipation().status! | artemisTranslate }}
                     </p>
 
                     @if (canOfferManualAssessmentUpload()) {
@@ -349,7 +349,8 @@
 
                                     @if (stats.toReview.done >= stats.toReview.total) {
                                         <ul>
-                                            @for (exampleSubmission of exampleSubmissionsToReview(); track exampleSubmission; let i = $index) {
+                                            @for (row of exampleReviewRows(); track row.submission; let i = $index) {
+                                                @let exampleSubmission = row.submission;
                                                 <li>
                                                     <button
                                                         type="button"
@@ -361,7 +362,7 @@
                                                     >
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.readExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
-                                                    @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
+                                                    @if (row.completed) {
                                                         <fa-icon class="text-state-success" [icon]="faCheckCircle" />
                                                     }
                                                 </li>
@@ -397,7 +398,8 @@
 
                                     @if (stats.toAssess.done >= stats.toAssess.total) {
                                         <ul>
-                                            @for (exampleSubmission of exampleSubmissionsToAssess(); track exampleSubmission; let i = $index) {
+                                            @for (row of exampleAssessmentRows(); track row.submission; let i = $index) {
+                                                @let exampleSubmission = row.submission;
                                                 <li>
                                                     <button
                                                         type="button"
@@ -409,7 +411,7 @@
                                                     >
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.assessExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
-                                                    @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
+                                                    @if (row.completed) {
                                                         <fa-icon class="text-state-success" [icon]="faCheckCircle" />
                                                     }
                                                 </li>
@@ -428,15 +430,23 @@
                             <span [jhiTranslate]="assessmentNotPossibleYet.translationKey" [translateValues]="{ date: assessmentNotPossibleYet.date | artemisDate }"></span>
                         </tumaet-ui-message>
                     }
-                    @for (correctionRound of correctionRoundIndices(); track correctionRound) {
+                    @for (round of submissionRowsByRound(); track $index; let correctionRound = $index) {
                         <div [attr.data-testid]="'correction-round-' + correctionRound">
                             @if ((tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED) && !isTestRun()) {
                                 <div class="mb-4! flex w-full items-center justify-between gap-2" data-testid="correction-round-header">
                                     <div class="flex items-center gap-1">
-                                        @if (!isExamMode()) {
+                                        @if (exercise().teamMode && !isTestRun()) {
+                                            <h4 class="m-0" data-testid="assessment-queue-title">
+                                                {{
+                                                    (exercise().isAtLeastInstructor
+                                                        ? 'artemisApp.exerciseAssessmentDashboard.allTeams'
+                                                        : 'artemisApp.exerciseAssessmentDashboard.yourTeams'
+                                                    ) | artemisTranslate
+                                                }}
+                                            </h4>
+                                        } @else if (!isExamMode()) {
                                             <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
-                                        }
-                                        @if (isExamMode()) {
+                                        } @else {
                                             <h4
                                                 class="m-0"
                                                 jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam"
@@ -473,7 +483,7 @@
                                 }
                                 @if (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED || isTestRun()) {
                                     <div class="overflow-x-auto">
-                                        @if (showSubmissionsForRound(correctionRound)) {
+                                        @if (round.showSubmissions) {
                                             <tumaet-ui-table-layout>
                                                 <table
                                                     class="exercise-table"
@@ -485,7 +495,11 @@
                                                 >
                                                     <thead>
                                                         <tr>
-                                                            <th tumAetUiSortableColumn="id"><span>Id</span></th>
+                                                            @if (exercise().teamMode && !isTestRun()) {
+                                                                <th jhiTranslate="artemisApp.team.shortName.label"></th>
+                                                            } @else {
+                                                                <th tumAetUiSortableColumn="id"><span>Id</span></th>
+                                                            }
                                                             <th tumAetUiSortableColumn="submissionDate">
                                                                 <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.submissionDate"></span>
                                                             </th>
@@ -501,22 +515,34 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        @if (unassessedSubmissionByRound()[correctionRound]?.id && !exercise().teamMode && !isTestRun()) {
+                                                        @for (row of round.unassessed; track row.submission.id) {
+                                                            @let submission = row.submission;
                                                             <tr>
-                                                                <td></td>
-                                                                <td>{{ unassessedSubmissionByRound()[correctionRound]!.submissionDate | artemisDate }}</td>
+                                                                <td>
+                                                                    @if (row.team; as team) {
+                                                                        <a
+                                                                            data-testid="assessment-queue-team"
+                                                                            [routerLink]="['/course-management', courseId(), 'exercises', exerciseId(), 'teams', team.id]"
+                                                                        >
+                                                                            {{ team.shortName }}
+                                                                        </a>
+                                                                    } @else if (exercise().teamMode || isTestRun()) {
+                                                                        {{ submission.id }}
+                                                                    }
+                                                                </td>
+                                                                <td>{{ submission.submissionDate | artemisDate }}</td>
                                                                 <td></td>
                                                                 @if (exercise().type === ExerciseType.TEXT) {
                                                                     <td>
-                                                                        <jhi-language-table-cell [submission]="unassessedSubmissionByRound()[correctionRound]!" />
+                                                                        <jhi-language-table-cell [submission]="submission" />
                                                                     </td>
                                                                 }
                                                                 <td>
                                                                     <span [tumAetUiTooltip]="assessmentNotPossibleYetTooltip()">
                                                                         <a
                                                                             data-testid="start-new-assessment"
-                                                                            [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink('new')"
-                                                                            [queryParams]="getAssessmentQueryParams(correctionRound)"
+                                                                            [routerLink]="assessmentNotPossibleYetReason() ? null : row.link"
+                                                                            [queryParams]="round.queryParams"
                                                                             [class.pointer-events-none]="
                                                                                 openingAssessmentEditorForNewSubmission() || !!assessmentNotPossibleYetReason()
                                                                             "
@@ -536,13 +562,25 @@
                                                                 </td>
                                                             </tr>
                                                         }
-                                                        @for (submission of assessedSubmissionsByRound()[correctionRound]; track submission) {
+                                                        @for (row of round.assessed; track row.submission) {
+                                                            @let submission = row.submission;
                                                             <tr>
-                                                                <td>{{ submission.id }}</td>
+                                                                <td>
+                                                                    @if (row.team; as team) {
+                                                                        <a
+                                                                            data-testid="assessment-queue-team"
+                                                                            [routerLink]="['/course-management', courseId(), 'exercises', exerciseId(), 'teams', team.id]"
+                                                                        >
+                                                                            {{ team.shortName }}
+                                                                        </a>
+                                                                    } @else if (!exercise().teamMode || isTestRun()) {
+                                                                        {{ submission.id }}
+                                                                    }
+                                                                </td>
                                                                 <td>{{ submission.submissionDate | artemisDate }}</td>
                                                                 <td>
                                                                     <jhi-result
-                                                                        [result]="getSubmissionResultByCorrectionRound(submission, correctionRound)"
+                                                                        [result]="row.result"
                                                                         [participation]="submission.participation!"
                                                                         [exercise]="exercise()"
                                                                         [isOwnParticipation]="false"
@@ -554,12 +592,17 @@
                                                                     </td>
                                                                 }
                                                                 <td>
-                                                                    @if ((isTestRun() && complaints().length === 0) || !isTestRun()) {
+                                                                    @if (exercise().teamMode && row.result?.assessor; as assessor) {
+                                                                        <span class="block text-sm text-muted-color" data-testid="assessment-queue-assessor">
+                                                                            <span jhiTranslate="artemisApp.result.assessor"></span>: {{ assessor.name || assessor.login }}
+                                                                        </span>
+                                                                    }
+                                                                    @if (((isTestRun() && complaints().length === 0) || !isTestRun()) && row.canContinue) {
                                                                         <span [tumAetUiTooltip]="assessmentNotPossibleYetTooltip()">
-                                                                            @if (submission && calculateSubmissionStatusIsDraft(submission, correctionRound)) {
+                                                                            @if (submission && row.isDraft) {
                                                                                 <a
-                                                                                    [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink(submission)"
-                                                                                    [queryParams]="getAssessmentQueryParams(correctionRound)"
+                                                                                    [routerLink]="assessmentNotPossibleYetReason() ? null : row.link"
+                                                                                    [queryParams]="round.queryParams"
                                                                                     id="continue-assessment"
                                                                                     [class.pointer-events-none]="!!assessmentNotPossibleYetReason()"
                                                                                     [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
@@ -573,10 +616,10 @@
                                                                                     }}
                                                                                 </a>
                                                                             } @else {
-                                                                                @if (!!getSubmissionResultByCorrectionRound(submission, correctionRound)) {
+                                                                                @if (!!row.result) {
                                                                                     <a
-                                                                                        [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink(submission)"
-                                                                                        [queryParams]="getAssessmentQueryParams(correctionRound)"
+                                                                                        [routerLink]="assessmentNotPossibleYetReason() ? null : row.link"
+                                                                                        [queryParams]="round.queryParams"
                                                                                         data-testid="open-assessment"
                                                                                         [class.pointer-events-none]="!!assessmentNotPossibleYetReason()"
                                                                                         [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
@@ -601,19 +644,11 @@
                                             </tumaet-ui-table-layout>
                                         } @else {
                                             <jhi-assessment-warning [exercise]="exercise()" />
-                                            @if (!exercise().teamMode) {
-                                                <tumaet-ui-message severity="info"
-                                                    ><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissions"></span
-                                                ></tumaet-ui-message>
-                                            } @else {
-                                                <tumaet-ui-message severity="warn"
-                                                    ><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.startAssessmentFromTeamPages"></span
-                                                ></tumaet-ui-message>
-                                            }
+                                            <tumaet-ui-message severity="info"><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissions"></span></tumaet-ui-message>
                                         }
                                         @if (
                                             isExamMode() &&
-                                            (!unassessedSubmissionByRound()[correctionRound]?.id || exercise().teamMode || isTestRun()) &&
+                                            (round.unassessed.length === 0 || isTestRun()) &&
                                             numberOfSubmissions().inTime !== numberOfAssessmentsOfCorrectionRounds()[correctionRound].inTime
                                         ) {
                                             <tumaet-ui-message severity="info">
@@ -678,7 +713,8 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @for (submissionWithComplaint of submissionsWithComplaints(); track submissionWithComplaint; let i = $index) {
+                                        @for (row of complaintRows(); track row.entry; let i = $index) {
+                                            @let submissionWithComplaint = row.entry;
                                             <tr>
                                                 <td>{{ i + 1 }}</td>
                                                 <td>{{ submissionWithComplaint.complaint.submittedTime | artemisDate }}</td>
@@ -694,8 +730,8 @@
                                                     @if (submissionWithComplaint.complaint.accepted === undefined) {
                                                         &gt;=
                                                     }
-                                                    {{ complaintService.getResponseTimeInSeconds(submissionWithComplaint.complaint) | artemisDurationFromSeconds: true }}
-                                                    @if (complaintService.shouldHighlightComplaint(submissionWithComplaint.complaint)) {
+                                                    {{ row.responseTime | artemisDurationFromSeconds: true }}
+                                                    @if (row.highlight) {
                                                         <fa-icon
                                                             [icon]="faExclamationTriangle"
                                                             class="text-state-warning"
@@ -717,13 +753,11 @@
                                                 <td>
                                                     @if (submissionWithComplaint.complaint.accepted === undefined) {
                                                         <a
-                                                            [class.pointer-events-none]="isComplaintLocked(submissionWithComplaint.complaint)"
-                                                            [routerLink]="
-                                                                isComplaintLocked(submissionWithComplaint.complaint) ? null : getAssessmentLink(submissionWithComplaint.submission)
-                                                            "
-                                                            [attr.aria-disabled]="isComplaintLocked(submissionWithComplaint.complaint) || null"
-                                                            [attr.tabindex]="isComplaintLocked(submissionWithComplaint.complaint) ? -1 : null"
-                                                            [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
+                                                            [class.pointer-events-none]="row.locked"
+                                                            [routerLink]="row.locked ? null : row.link"
+                                                            [attr.aria-disabled]="row.locked || null"
+                                                            [attr.tabindex]="row.locked ? -1 : null"
+                                                            [queryParams]="row.queryParams"
                                                             data-testid="evaluate-complaint"
                                                             tumAetUiButton
                                                             severity="success"
@@ -733,13 +767,7 @@
                                                             {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}
                                                         </a>
                                                     } @else {
-                                                        <a
-                                                            [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
-                                                            [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
-                                                            tumAetUiButton
-                                                            severity="primary"
-                                                            size="small"
-                                                        >
+                                                        <a [routerLink]="row.link" [queryParams]="row.queryParams" tumAetUiButton severity="primary" size="small">
                                                             <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                             {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
                                                         </a>
@@ -794,7 +822,8 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @for (moreFeedbackRequest of submissionsWithMoreFeedbackRequests(); track moreFeedbackRequest; let i = $index) {
+                                        @for (row of moreFeedbackRows(); track row.entry; let i = $index) {
+                                            @let moreFeedbackRequest = row.entry;
                                             <tr>
                                                 <td>{{ i + 1 }}</td>
                                                 <td>{{ moreFeedbackRequest.complaint.submittedTime | artemisDate }}</td>
@@ -805,8 +834,8 @@
                                                     @if (moreFeedbackRequest.complaint.accepted === undefined) {
                                                         &gt;=
                                                     }
-                                                    {{ complaintService.getResponseTimeInSeconds(moreFeedbackRequest.complaint) | artemisDurationFromSeconds: true }}
-                                                    @if (complaintService.shouldHighlightComplaint(moreFeedbackRequest.complaint)) {
+                                                    {{ row.responseTime | artemisDurationFromSeconds: true }}
+                                                    @if (row.highlight) {
                                                         <fa-icon
                                                             [icon]="faExclamationTriangle"
                                                             class="text-state-warning"
@@ -825,13 +854,11 @@
                                                 <td>
                                                     @if (moreFeedbackRequest.complaint.accepted === undefined) {
                                                         <a
-                                                            [class.pointer-events-none]="isComplaintLocked(moreFeedbackRequest.complaint)"
-                                                            [routerLink]="
-                                                                isComplaintLocked(moreFeedbackRequest.complaint) ? null : getAssessmentLink(moreFeedbackRequest.submission)
-                                                            "
-                                                            [attr.aria-disabled]="isComplaintLocked(moreFeedbackRequest.complaint) || null"
-                                                            [attr.tabindex]="isComplaintLocked(moreFeedbackRequest.complaint) ? -1 : null"
-                                                            [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
+                                                            [class.pointer-events-none]="row.locked"
+                                                            [routerLink]="row.locked ? null : row.link"
+                                                            [attr.aria-disabled]="row.locked || null"
+                                                            [attr.tabindex]="row.locked ? -1 : null"
+                                                            [queryParams]="row.queryParams"
                                                             tumAetUiButton
                                                             severity="success"
                                                             size="small"
@@ -842,8 +869,8 @@
                                                     } @else {
                                                         <button
                                                             type="button"
-                                                            [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
-                                                            [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
+                                                            [routerLink]="row.link"
+                                                            [queryParams]="row.queryParams"
                                                             tumAetUiButton
                                                             severity="primary"
                                                             size="small"

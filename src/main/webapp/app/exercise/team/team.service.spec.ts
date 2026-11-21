@@ -31,6 +31,26 @@ describe('Team overview service', () => {
         vi.restoreAllMocks();
     });
 
+    it.each([0, 1])('loads the team queue without requesting locks for round %s', (round) => {
+        service.findAssessmentQueueTeams(7, round).subscribe((queue) => {
+            expect(queue.map((entry) => entry.submission.id)).toEqual([11, 12]);
+            expect(dayjs.isDayjs(queue[0].submission.submissionDate)).toBe(true);
+            expect(dayjs.isDayjs(queue[0].submission.results?.[0].completionDate)).toBe(true);
+        });
+        const req = http.expectOne((request) => request.url === 'api/exercise/exercises/7/assessment-queue-teams');
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('correction-round')).toBe(String(round));
+        expect(req.request.params.has('lock')).toBe(false);
+        req.flush(
+            [11, 12].map((id) => ({
+                id,
+                participationId: id + 1,
+                shortName: `team-${id}`,
+                submission: { id, submissionDate: '2026-01-01T10:00:00Z', results: [{ completionDate: '2026-01-02T10:00:00Z' }] },
+            })),
+        );
+    });
+
     it.each(['student', 'staff'] as const)('should request the explicit %s overview and preserve its payload', (purpose) => {
         let received: Course | undefined;
         service

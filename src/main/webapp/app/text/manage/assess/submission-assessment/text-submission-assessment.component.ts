@@ -529,7 +529,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission, this.isTestRun());
+        assessmentNavigateBack(this.location, this.router, this.exercise, this.isTestRun());
     }
 
     /**

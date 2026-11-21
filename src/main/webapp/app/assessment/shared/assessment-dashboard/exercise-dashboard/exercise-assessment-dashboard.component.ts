@@ -11,7 +11,7 @@ import {
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -30,7 +30,8 @@ import { ComplaintService } from 'app/assessment/shared/services/complaint.servi
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Submission, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { Observable, of } from 'rxjs';
+import { Observable, interval, of } from 'rxjs';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { filter, finalize, map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -82,6 +83,7 @@ import type { TutorParticipationStatusEnum } from 'app/openapi/model/tutor-parti
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
+import { AssessmentQueueTeam, TeamService } from 'app/exercise/team/team.service';
 import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
 import { AssessmentUploadDialogComponent } from 'app/assessment/manage/assessment-upload/assessment-upload-dialog.component';
 
@@ -138,23 +140,24 @@ const tutorParticipationStatusByApiStatus: Record<TutorParticipationStatusEnum, 
     ],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
-    complaintService = inject(ComplaintService);
-    private exerciseService = inject(ExerciseService);
-    private alertService = inject(AlertService);
-    private translateService = inject(TranslateService);
-    private accountService = inject(AccountService);
-    private route = inject(ActivatedRoute);
-    private tutorParticipationApi = inject(TutorParticipationApi);
-    private submissionService = inject(SubmissionService);
-    private textSubmissionService = inject(TextSubmissionService);
-    private modelingSubmissionService = inject(ModelingSubmissionService);
-    private fileUploadSubmissionService = inject(FileUploadSubmissionService);
-    private artemisMarkdown = inject(ArtemisMarkdownService);
-    private router = inject(Router);
-    private programmingSubmissionService = inject(ProgrammingSubmissionService);
-    private sortService = inject(SortService);
-    private datePipe = inject(ArtemisDatePipe);
-    private destroyRef = inject(DestroyRef);
+    readonly complaintService = inject(ComplaintService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
+    private readonly accountService = inject(AccountService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly tutorParticipationApi = inject(TutorParticipationApi);
+    private readonly submissionService = inject(SubmissionService);
+    private readonly textSubmissionService = inject(TextSubmissionService);
+    private readonly modelingSubmissionService = inject(ModelingSubmissionService);
+    private readonly fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+    private readonly router = inject(Router);
+    private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private readonly sortService = inject(SortService);
+    private readonly datePipe = inject(ArtemisDatePipe);
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly teamService = inject(TeamService);
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
@@ -189,8 +192,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly feedbackRequestEnabled = signal(false);
     readonly tutorAssessmentPercentage = signal(0);
     readonly tutorParticipationStatus = signal<TutorParticipationStatus>(undefined!);
+    readonly assessmentQueueTeams = signal<ReadonlyMap<number, AssessmentQueueTeam>>(new Map());
     // Indexed by correction round (0, 1) — readonly so any in-place mutation is a compile error and updates go through .update() with a new array.
     readonly assessedSubmissionsByRound = signal<readonly (readonly Submission[])[]>([]);
+    readonly teamUnassessedSubmissionsByRound = signal<readonly (readonly Submission[])[]>([]);
     readonly unassessedSubmissionByRound = signal<readonly (Submission | undefined)[]>([]);
     readonly exampleSubmissionsToReview = signal<ExampleSubmission[]>([]);
     readonly exampleSubmissionsToAssess = signal<ExampleSubmission[]>([]);
@@ -209,7 +214,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly formattedGradingInstructions = signal<SafeHtml | undefined>(undefined);
     readonly formattedProblemStatement = signal<SafeHtml | undefined>(undefined);
     readonly formattedSampleSolution = signal<SafeHtml | undefined>(undefined);
-    getSubmissionResultByCorrectionRound = getSubmissionResultByCorrectionRound;
 
     // helper variables to display information message about why no new assessments are possible anymore.
     // Computed synchronously in calculateAssessmentProgressInformation alongside statsForDashboard.set(), so they render on that signal's CD tick.
@@ -363,6 +367,48 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     /**
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server
      */
+    readonly completedExampleSubmissionIds = computed(() => new Set(this.exampleSubmissionsCompletedByTutor().map((submission) => submission.id)));
+    readonly exampleReviewRows = computed(() => this.exampleSubmissionsToReview().map((submission) => ({ submission, completed: this.hasBeenCompletedByTutor(submission.id!) })));
+    readonly exampleAssessmentRows = computed(() =>
+        this.exampleSubmissionsToAssess().map((submission) => ({ submission, completed: this.hasBeenCompletedByTutor(submission.id!) })),
+    );
+
+    readonly submissionRowsByRound = computed(() =>
+        this.correctionRoundIndices().map((correctionRound) => {
+            const toRow = (submission: Submission, unassessed: boolean) => ({
+                submission,
+                team: this.exercise().teamMode && !this.isTestRun() ? this.assessmentQueueTeams().get(submission.participation?.id ?? -1) : undefined,
+                result: getSubmissionResultByCorrectionRound(submission, correctionRound),
+                canContinue: this.canContinueTeamTextAssessment(submission, correctionRound),
+                isDraft: this.calculateSubmissionStatusIsDraft(submission, correctionRound),
+                link: this.getAssessmentLink(unassessed && !this.exercise().teamMode ? 'new' : submission),
+            });
+            return {
+                unassessed: this.getUnassessedSubmissionsForRound(correctionRound).map((submission) => toRow(submission, true)),
+                assessed: (this.assessedSubmissionsByRound()[correctionRound] ?? []).map((submission) => toRow(submission, false)),
+                showSubmissions: this.showSubmissionsForRound(correctionRound),
+                queryParams: this.getAssessmentQueryParams(correctionRound),
+            };
+        }),
+    );
+
+    // Complaint ages and expiring locks must update even when no new queue data arrives.
+    private readonly complaintClock = toSignal(interval(1000));
+    readonly complaintRows = computed(() => this.buildComplaintRows(this.submissionsWithComplaints()));
+    readonly moreFeedbackRows = computed(() => this.buildComplaintRows(this.submissionsWithMoreFeedbackRequests()));
+
+    private buildComplaintRows(entries: SubmissionWithComplaintDTO[]) {
+        this.complaintClock();
+        return entries.map((entry) => ({
+            entry,
+            locked: this.isComplaintLocked(entry.complaint),
+            link: this.getAssessmentLink(entry.submission),
+            queryParams: this.getComplaintQueryParams(entry.complaint),
+            responseTime: this.complaintService.getResponseTimeInSeconds(entry.complaint),
+            highlight: this.complaintService.shouldHighlightComplaint(entry.complaint),
+        }));
+    }
+
     ngOnInit(): void {
         this.exerciseId.set(Number(this.route.snapshot.paramMap.get('exerciseId')));
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
@@ -445,6 +491,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.exerciseService.getForTutors(this.exerciseId()).subscribe({
             next: (res: HttpResponse<Exercise>) => {
                 const exercise = res.body!;
+                if (exercise.teamMode && this.exercise()?.id !== exercise.id) {
+                    this.assessmentQueueTeams.set(new Map());
+                    this.teamUnassessedSubmissionsByRound.set([]);
+                    this.assessedSubmissionsByRound.set([]);
+                }
                 this.exercise.set(exercise);
                 this.secondCorrectionEnabled.set(exercise.secondCorrectionEnabled);
                 this.formattedGradingInstructions.set(this.artemisMarkdown.safeHtmlForMarkdown(exercise.gradingInstructions));
@@ -475,7 +526,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 const tutorParticipation = exercise.tutorParticipations![0];
                 this.tutorParticipation.set(tutorParticipation);
                 this.tutorParticipationStatus.set(tutorParticipation.status!);
-                if (exercise.exampleSubmissions && exercise.exampleSubmissions.length > 0) {
+                if (exercise.exampleSubmissions?.length) {
                     this.exampleSubmissionsToReview.set(exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial));
                     this.exampleSubmissionsToAssess.set(exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial));
                 }
@@ -501,7 +552,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 }
                 this.getAllTutorAssessedSubmissionsForAllCorrectionRounds();
 
-                // The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 const isAfterDueDate = !exercise.dueDate || exercise.dueDate.isBefore(dayjs());
                 // Athena feedback requests, and thus the pre-due-date exception, are only supported for these exercise types
                 const supportsAthenaFeedbackRequests = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING].includes(exercise.type!);
@@ -640,7 +690,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             }
             // the submissions could not be fetched while assessment was blocked, so fetch them now
             const exercise = this.exercise();
-            if (exercise && !exercise.teamMode && !this.isTestRun()) {
+            if (exercise && !this.isTestRun()) {
                 this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
             }
         }, millisecondsUntilNextChange);
@@ -689,27 +739,33 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * in the exercise dashboard.
      */
     private getAllTutorAssessedSubmissionsForCorrectionRound(correctionRound: number): void {
+        if (this.exercise().teamMode && !this.isTestRun()) {
+            if (!this.assessmentNotPossibleYetReason()) {
+                this.loadTeamQueueForCorrectionRound(correctionRound);
+            }
+            return;
+        }
+
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
         if (this.isTestRun()) {
             submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId());
         } else {
             // TODO: This could be one generic endpoint.
-            switch (this.exercise().type) {
+            const exerciseType = this.exercise().type;
+            switch (exerciseType) {
                 case ExerciseType.TEXT:
-                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
-                        ? this.textSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
-                        : this.textSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
-                    break;
                 case ExerciseType.MODELING:
+                case ExerciseType.FILE_UPLOAD: {
+                    const service = {
+                        [ExerciseType.TEXT]: this.textSubmissionService,
+                        [ExerciseType.MODELING]: this.modelingSubmissionService,
+                        [ExerciseType.FILE_UPLOAD]: this.fileUploadSubmissionService,
+                    }[exerciseType];
                     submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
-                        ? this.modelingSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
-                        : this.modelingSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
+                        ? service.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
+                        : service.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
                     break;
-                case ExerciseType.FILE_UPLOAD:
-                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
-                        ? this.fileUploadSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
-                        : this.fileUploadSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
-                    break;
+                }
                 case ExerciseType.PROGRAMMING:
                     submissionsObservable = this.programmingSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
                     break;
@@ -748,10 +804,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      */
     private reconnectEntities = (submissions: Submission[]) => {
         return submissions.map((submission: Submission) => {
+            submission.results?.forEach((result) => {
+                result.submission = submission;
+            });
             const latestResult = getLatestSubmissionResult(submission);
             if (latestResult) {
-                // reconnect some associations
-                latestResult.submission = submission;
                 setLatestSubmissionResult(submission, latestResult);
             }
             return submission;
@@ -782,6 +839,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * the server will respond with a BAD REQUEST response here.
      */
     private getSubmissionWithoutAssessmentForCorrectionRound(correctionRound: number): void {
+        if (this.exercise().teamMode && !this.isTestRun()) {
+            this.loadTeamQueueForCorrectionRound(correctionRound);
+            return;
+        }
         let submissionObservable: Observable<Submission | undefined> = of();
         switch (this.exercise().type) {
             case ExerciseType.TEXT:
@@ -832,12 +893,52 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         });
     }
 
+    /** Loads team queue metadata without claiming assessment locks. */
+    private loadTeamQueueForCorrectionRound(correctionRound: number): void {
+        this.teamService
+            .findAssessmentQueueTeams(this.exerciseId(), correctionRound)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (teams) => {
+                    this.assessmentQueueTeams.set(new Map(teams.map((team) => [team.participationId, team])));
+                    const submissions = this.reconnectEntities(teams.map((team) => team.submission));
+                    submissions.forEach((submission) => {
+                        submission.participation!.submissions = [submission];
+                    });
+                    this.teamUnassessedSubmissionsByRound.update((rounds) => {
+                        const next = [...rounds];
+                        next[correctionRound] = submissions.filter((submission) => !getSubmissionResultByCorrectionRound(submission, correctionRound));
+                        return next;
+                    });
+                    this.assessedSubmissionsByRound.update((rounds) => {
+                        const next = [...rounds];
+                        next[correctionRound] = submissions.filter((submission) => !!getSubmissionResultByCorrectionRound(submission, correctionRound));
+                        return next;
+                    });
+                    this.sortSubmissionRows(correctionRound);
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+    }
+
+    /** Returns the submissions displayed as unassessed in this correction round. */
+    getUnassessedSubmissionsForRound(correctionRound: number): readonly Submission[] {
+        if (this.isTestRun()) {
+            return [];
+        }
+        if (this.exercise().teamMode) {
+            return this.teamUnassessedSubmissionsByRound()[correctionRound] ?? [];
+        }
+        const proposal = this.unassessedSubmissionByRound()[correctionRound];
+        return proposal ? [proposal] : [];
+    }
+
     /**
      * Whether to show graded submissions and actions regarding them
      * @param correctionRound Round to check for unassessed submissions
      */
     showSubmissionsForRound(correctionRound: number): boolean {
-        const unassessedSubmissionExist = !!this.unassessedSubmissionByRound()[correctionRound]?.id;
+        const unassessedSubmissionExist = this.getUnassessedSubmissionsForRound(correctionRound).length > 0;
         const assessedSubmissionsExist = !!this.assessedSubmissionsByRound()[correctionRound]?.length;
 
         return (unassessedSubmissionExist || assessedSubmissionsExist) && !this.exercise().allowComplaintsForAutomaticAssessments;
@@ -875,11 +976,20 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param exampleSubmissionId Id of the example submission which to check for completion
      */
     hasBeenCompletedByTutor(exampleSubmissionId: number) {
-        return this.exampleSubmissionsCompletedByTutor().filter((exampleSubmission) => exampleSubmission.id === exampleSubmissionId).length > 0;
+        return this.completedExampleSubmissionIds().has(exampleSubmissionId);
     }
 
     private onError(error: string) {
         this.alertService.error(error);
+    }
+
+    /** Matches the text editor's draft lock without changing other exercise types. */
+    canContinueTeamTextAssessment(submission: Submission, correctionRound: number): boolean {
+        if (!this.exercise().teamMode || this.isTestRun() || this.exercise().type !== ExerciseType.TEXT) {
+            return true;
+        }
+        const result = getSubmissionResultByCorrectionRound(submission, correctionRound);
+        return !!result?.completionDate || !result?.assessor || !!this.exercise().isAtLeastInstructor || result.assessor.id === this.tutor()?.id;
     }
 
     /**
@@ -976,7 +1086,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param submission
      */
     getSubmissionToViewFromComplaintSubmission(submission: Submission): Submission | undefined {
-        const submissionToView = this.submissionsWithComplaints().find((dto) => dto.submission.id === submission.id)?.submission;
+        const matchingSubmission = this.submissionsWithComplaints().find((dto) => dto.submission.id === submission.id)?.submission;
+        const submissionToView = matchingSubmission ? deepClone(matchingSubmission) : undefined;
         if (submissionToView) {
             if (submissionToView.results) {
                 submissionToView.results = submissionToView.results.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);
@@ -1038,6 +1149,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     sortSubmissionRows(correctionRound: number) {
+        if (this.exercise().teamMode) {
+            this.teamUnassessedSubmissionsByRound.update((rounds) => {
+                const next = [...rounds];
+                const sorted = [...(next[correctionRound] ?? [])];
+                this.sortService.sortByProperty(sorted, this.sortPredicates[0], this.reverseOrders[0]);
+                next[correctionRound] = sorted;
+                return next;
+            });
+        }
         this.assessedSubmissionsByRound.update((rounds) => {
             const next = [...rounds];
             const sorted = [...(next[correctionRound] ?? [])];

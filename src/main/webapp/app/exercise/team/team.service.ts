@@ -10,6 +10,7 @@ import { TeamSearchUser } from 'app/exercise/shared/entities/team/team-search-us
 import { downloadFile } from 'app/foundation/util/download.util';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { Observable, Subscription } from 'rxjs';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { filter, map, shareReplay } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
@@ -51,6 +52,13 @@ export type TeamResponse = HttpResponse<Team>;
 export type TeamArrayResponse = HttpResponse<Team[]>;
 
 const teamAssignmentUpdatesWebsocketTopic = '/user/topic/team-assignments';
+
+export interface AssessmentQueueTeam {
+    participationId: number;
+    id: number;
+    shortName: string;
+    submission: Submission;
+}
 
 export interface ITeamService {
     /**
@@ -201,6 +209,25 @@ export class TeamService implements ITeamService, OnDestroy {
                 observe: 'response',
             })
             .pipe(map((res: TeamArrayResponse) => TeamService.convertTeamArrayResponseDatesFromServer(res)));
+    }
+
+    /** Loads the team assessment queue and converts its dates without claiming submissions. */
+    findAssessmentQueueTeams(exerciseId: number, correctionRound = 0): Observable<AssessmentQueueTeam[]> {
+        return this.http.get<AssessmentQueueTeam[]>(`api/exercise/exercises/${exerciseId}/assessment-queue-teams`, { params: { 'correction-round': correctionRound } }).pipe(
+            map((teams) => {
+                teams.forEach(({ submission }) => {
+                    submission.submissionDate = convertDateFromServer(submission.submissionDate);
+                    if (submission.participation) {
+                        submission.participation.individualDueDate = convertDateFromServer(submission.participation.individualDueDate);
+                        submission.participation.initializationDate = convertDateFromServer(submission.participation.initializationDate);
+                    }
+                    submission.results?.forEach((result) => {
+                        result.completionDate = convertDateFromServer(result.completionDate);
+                    });
+                });
+                return teams;
+            }),
+        );
     }
 
     /**

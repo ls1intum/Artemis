@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionOwnerDTO;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
@@ -613,4 +614,22 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                  )
             """)
     Optional<Submission> findLatestSubmissionByParticipationId(@Param("participationId") long participationId);
+
+    /**
+     * Selects existing queue submissions without answer bodies.
+     *
+     * @param ids the submission ids
+     * @return submission metadata
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO(s.id, s.submitted, s.type, s.exampleSubmission, s.submissionDate,
+                TYPE(s), p.id, p.initializationState, p.initializationDate, p.individualDueDate, team.name,
+                programming.buildFailed, programming.commitHash, text.language)
+            FROM Submission s JOIN StudentParticipation p ON p.id = s.participation.id JOIN p.team team
+            LEFT JOIN ProgrammingSubmission programming ON programming.id = s.id
+                LEFT JOIN TextSubmission text ON text.id = s.id
+            WHERE s.id IN :ids
+            """)
+    List<AssessmentQueueSubmissionDTO> findTeamQueueMetadata(@Param("ids") List<Long> ids);
+
 }

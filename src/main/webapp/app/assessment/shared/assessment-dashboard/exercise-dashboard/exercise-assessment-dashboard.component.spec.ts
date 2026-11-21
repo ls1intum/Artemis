@@ -4,7 +4,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
@@ -31,7 +31,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Language } from 'app/course/shared/entities/course.model';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getSubmissionResultByCorrectionRound } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -73,6 +73,7 @@ import dayjs from 'dayjs/esm';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { AssessmentQueueTeam, TeamService } from 'app/exercise/team/team.service';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;
@@ -103,6 +104,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let translateService: TranslateService;
 
     let submissionService: SubmissionService;
+    let teamService: TeamService;
 
     // The correction round is stated explicitly rather than implied by the position in the results array.
     const result1 = { id: 11, correctionRound: 0 } as Result;
@@ -235,7 +237,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockTranslateValuesDirective,
         MockComponent(AssessmentWarningComponent),
         MockPipe(ArtemisDatePipe),
-        MockPipe(ArtemisTranslatePipe),
+        MockPipe(ArtemisTranslatePipe, (key) => key ?? ''),
     ];
 
     const providers = [
@@ -275,6 +277,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         exerciseService = TestBed.inject(ExerciseService);
         programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
         submissionService = TestBed.inject(SubmissionService);
+        teamService = TestBed.inject(TeamService);
+        vi.spyOn(teamService, 'findAssessmentQueueTeams').mockReturnValue(of([]));
         vi.spyOn(submissionService, 'getSubmissionsWithComplaintsForTutor').mockReturnValue(of(new HttpResponse({ body: [] })));
         const router = fixture.debugElement.injector.get(Router);
         navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
@@ -338,6 +342,140 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         translateService.use('en'); // Change language.
         expect(setupGraphSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+        [false, 'artemisApp.exerciseAssessmentDashboard.yourTeams'],
+        [true, 'artemisApp.exerciseAssessmentDashboard.allTeams'],
+    ])('shows the correct team queue and links team names to details, instructor=%s', (isInstructor, title) => {
+        const teamExercise = { ...modelingExercise, exerciseGroup: undefined, teamMode: true, isAtLeastInstructor: isInstructor } as ModelingExercise;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: teamExercise, headers: new HttpHeaders() })));
+        vi.spyOn(teamService, 'findAssessmentQueueTeams').mockReturnValue(
+            of([
+                { participationId: 42, id: 32, shortName: 'team-a', submission: { id: 43, participation: { id: 42 }, submissionDate: dayjs() } as Submission },
+                { participationId: 44, id: 33, shortName: 'team-b', submission: { id: 45, participation: { id: 44 }, submissionDate: dayjs() } as Submission },
+                {
+                    participationId: 46,
+                    id: 34,
+                    shortName: 'team-c',
+                    submission: {
+                        id: 47,
+                        participation: { id: 46 },
+                        submissionDate: dayjs(),
+                        results: [{ id: 48, correctionRound: 0, assessmentType: AssessmentType.MANUAL, assessor: { id: 12, login: 'other-tutor' } }],
+                    } as Submission,
+                },
+            ]),
+        );
+        accountService.userIdentity.set({ id: 10, login: isInstructor ? 'instructor1' : 'tutor1' } as User);
+        fixture.detectChanges();
+        comp.tutorParticipationStatus.set(TutorParticipationStatus.TRAINED);
+        comp.numberOfAssessmentsOfCorrectionRounds.update((rounds) => rounds.slice(0, 1));
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="assessment-queue-title"]').textContent.trim()).toBe(title);
+        const teamLink = fixture.nativeElement.querySelector('[data-testid="assessment-queue-team"]') as HTMLAnchorElement;
+        expect(teamLink.textContent.trim()).toBe('team-a');
+        expect(teamLink.getAttribute('href')).toBe('/course-management/1/exercises/17/teams/32');
+        const startLinks = [...fixture.nativeElement.querySelectorAll('[data-testid="start-new-assessment"]')] as HTMLAnchorElement[];
+        expect(startLinks).toHaveLength(2);
+        expect(startLinks[0].getAttribute('href')).toContain('/submissions/43/assessment');
+        expect(startLinks[1].getAttribute('href')).toContain('/submissions/45/assessment');
+        expect(fixture.nativeElement.querySelector('#continue-assessment').getAttribute('href')).toContain('/submissions/47/assessment');
+        expect(fixture.nativeElement.querySelector('[data-testid="assessment-queue-assessor"]').textContent).toContain('other-tutor');
+        expect(modelingSubmissionStubWithoutAssessment).not.toHaveBeenCalled();
+    });
+
+    it.each(['failure', 'empty', 'replacement'])('keeps the team queue snapshot during refresh: %s', (outcome) => {
+        const exercise = deepClone(modelingExercise);
+        exercise.exerciseGroup = undefined;
+        exercise.teamMode = true;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exercise })));
+        const teams: AssessmentQueueTeam[] = [
+            { participationId: 42, id: 32, shortName: 'team-a', submission: { id: 43, participation: { id: 42 } } },
+            {
+                participationId: 44,
+                id: 33,
+                shortName: 'team-b',
+                submission: { id: 45, participation: { id: 44 }, results: [{ id: 46, correctionRound: 0, assessmentType: AssessmentType.MANUAL }] },
+            },
+        ];
+        const queueSpy = vi.mocked(teamService.findAssessmentQueueTeams).mockReturnValue(of(teams));
+        comp.loadAll();
+        const knownTeams = comp.assessmentQueueTeams();
+        const assessed = comp.assessedSubmissionsByRound();
+        const unassessed = comp.teamUnassessedSubmissionsByRound();
+        expect(assessed[0].map((submission) => submission.id)).toEqual([45]);
+        expect(unassessed[0].map((submission) => submission.id)).toEqual([43]);
+
+        const refresh = new Subject<AssessmentQueueTeam[]>();
+        queueSpy.mockReturnValue(refresh);
+        comp.loadAll();
+        expect(comp.assessmentQueueTeams()).toBe(knownTeams);
+        expect(comp.assessedSubmissionsByRound()).toBe(assessed);
+        expect(comp.teamUnassessedSubmissionsByRound()).toBe(unassessed);
+
+        if (outcome === 'failure') {
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            refresh.error(new HttpErrorResponse({ status: 400, error: { detail: 'Queue refresh failed' } }));
+            expect(alertSpy).toHaveBeenCalledWith('error.http.400');
+            expect(comp.assessmentQueueTeams()).toBe(knownTeams);
+            expect(comp.assessedSubmissionsByRound()).toBe(assessed);
+            expect(comp.teamUnassessedSubmissionsByRound()).toBe(unassessed);
+            queueSpy.mockReturnValue(of([]));
+            comp.loadAll();
+        } else {
+            refresh.next(outcome === 'empty' ? [] : [teams[1]]);
+            refresh.complete();
+        }
+
+        expect([...comp.assessmentQueueTeams().keys()]).toEqual(outcome === 'replacement' ? [44] : []);
+        expect(comp.assessedSubmissionsByRound()[0].map((submission) => submission.id)).toEqual(outcome === 'replacement' ? [45] : []);
+        expect(comp.teamUnassessedSubmissionsByRound()[0]).toEqual([]);
+    });
+
+    it.each([
+        [false, 12, false, 0],
+        [false, 10, false, 1],
+        [false, undefined, false, 1],
+        [true, 12, false, 1],
+        [false, 12, true, 0],
+    ])('matches text draft Continue access: instructor=%s, assessor=%s, completed=%s', (isInstructor, assessorId, completed, expectedLinks) => {
+        const exercise = deepClone(modelingExercise) as TextExercise;
+        exercise.type = ExerciseType.TEXT;
+        exercise.teamMode = true;
+        exercise.exerciseGroup = undefined;
+        exercise.isAtLeastInstructor = isInstructor;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exercise, headers: new HttpHeaders() })));
+        vi.spyOn(teamService, 'findAssessmentQueueTeams').mockReturnValue(
+            of([
+                {
+                    participationId: 42,
+                    id: 32,
+                    shortName: 'team-a',
+                    submission: {
+                        id: 43,
+                        participation: { id: 42 },
+                        results: [
+                            {
+                                id: 44,
+                                correctionRound: 0,
+                                assessmentType: AssessmentType.MANUAL,
+                                assessor: assessorId === undefined ? undefined : { id: assessorId, login: 'reviewer' },
+                                completionDate: completed ? dayjs() : undefined,
+                            },
+                        ],
+                    } as Submission,
+                },
+            ]),
+        );
+        accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
+        fixture.detectChanges();
+        comp.tutorParticipationStatus.set(TutorParticipationStatus.TRAINED);
+        comp.numberOfAssessmentsOfCorrectionRounds.update((rounds) => rounds.slice(0, 1));
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('#continue-assessment')).toHaveLength(expectedLinks);
+        expect(!!fixture.nativeElement.querySelector('[data-testid="assessment-queue-assessor"]')).toBe(assessorId !== undefined);
     });
 
     it('should hide the complaints shortcut when the course has complaints disabled', () => {
@@ -538,6 +676,21 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.assessedSubmissionsByRound()[1]![0]).toEqual(modelingSubmissionAssessed);
         expect(comp.assessedSubmissionsByRound()[1]![0]?.participation!.submissions![0]).toEqual(comp.assessedSubmissionsByRound()[1]![0]);
         expect(comp.assessedSubmissionsByRound()[1]![0]?.latestResult).toEqual(result2);
+    });
+
+    it('reconnects an older manual result when a newer automatic result exists', () => {
+        const manualResult = { id: 10, assessmentType: AssessmentType.MANUAL, correctionRound: 0 } as Result;
+        const automaticResult = { id: 11, assessmentType: AssessmentType.AUTOMATIC } as Result;
+        const submission = { id: 42, commitHash: 'abc123', results: [automaticResult, manualResult] } as ProgrammingSubmission;
+
+        comp['reconnectEntities']([submission]);
+
+        expect(submission.latestResult).toBe(automaticResult);
+        expect(automaticResult.submission).toBe(submission);
+        const roundResult = getSubmissionResultByCorrectionRound(submission, 0);
+        expect(roundResult).toBe(manualResult);
+        expect(roundResult?.submission).toBe(submission);
+        expect((roundResult?.submission as ProgrammingSubmission).commitHash).toBe('abc123');
     });
 
     it('should set exam and stats properties', () => {
@@ -741,6 +894,29 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         }
     });
 
+    it('refreshes complaint ages when time passes without a queue update', () => {
+        vi.useFakeTimers();
+        const clockFixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
+        try {
+            const clockComponent = clockFixture.componentInstance;
+            clockComponent.exercise.set(deepClone(modelingExercise));
+            clockComponent.courseId.set(1);
+            clockComponent.exerciseId.set(modelingExercise.id!);
+            vi.spyOn(TestBed.inject(ComplaintService), 'getResponseTimeInSeconds').mockReturnValueOnce(10).mockReturnValue(11);
+            clockComponent.submissionsWithMoreFeedbackRequests.set([{ submission: { id: 123 }, complaint: { complaintType: ComplaintType.MORE_FEEDBACK } }]);
+            const rows = clockComponent.moreFeedbackRows();
+            expect(rows[0].responseTime).toBe(10);
+            expect(clockComponent.moreFeedbackRows()).toBe(rows);
+
+            vi.advanceTimersByTime(1000);
+
+            expect(clockComponent.moreFeedbackRows()[0].responseTime).toBe(11);
+        } finally {
+            clockFixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
     describe('getComplaintQueryParams', () => {
         it('Expect more feedback request to delegate the correct query', () => {
             const moreFeedbackComplaint = { complaintType: ComplaintType.MORE_FEEDBACK };
@@ -820,6 +996,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             const submissionToView = comp.getSubmissionToViewFromComplaintSubmission(inputSubmission);
 
             expect(submissionToView).toEqual(expectedSubmissionToView);
+            expect(fakeDTOList[0].submission.results).toBe(fakeResults);
+            expect(fakeResults).toHaveLength(4);
         });
     });
 
@@ -843,6 +1021,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         }
 
         lockedSpy.mockReturnValue(false);
+        comp.exercise.set(deepClone(comp.exercise()));
         fixture.changeDetectorRef.markForCheck();
         fixture.detectChanges();
         for (const link of links) {
@@ -1038,6 +1217,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should apply a column header sort of the assessed submissions of a correction round', () => {
+        comp.exercise.set(modelingExercise);
         const sortService = TestBed.inject(SortService);
         const sortByPropertySpy = vi.spyOn(sortService, 'sortByProperty');
         const firstSubmission = { id: 2 } as Submission;

@@ -442,6 +442,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         else {
             // in case no resultId is set we get result by correctionRound
+            authCheckService.checkTeamAssessmentAccessElseThrow(textSubmission);
             result = textSubmission.getResultForCorrectionRound(correctionRound);
 
             if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
