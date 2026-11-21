@@ -2,7 +2,7 @@
 id: aiworker
 title: AI Worker Operations
 sidebar_label: AI Worker Setup
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-20
 ---
 
 AI Worker runs bounded, explicitly installed workloads outside the Artemis server.
@@ -170,14 +170,13 @@ implementation: unsupported combinations advertise no usable capacity. This keep
 resource policy and credentials operator-controlled, not selectable by models or jobs.
 
 The shipped workload is `hyperion-generation`, schema `1`, profile `java-gradle`.
-Configure its worker-local Spring AI chat model with `spring.ai.model.chat=openai` and
-`spring.ai.openai.*`, as described in [Hyperion setup](/admin/hyperion#configure-spring-ai).
+Give the worker the same `artemis.llm` block as core, as described in
+[LLM configuration](/admin/llm-configuration#ai-worker-nodes). Core sends the name of the preset with each run.
 Hyperion generation sends model requests from the worker process directly to the
 configured provider. Core sends the assignment and receives evidence through the
 distributed-data provider; it does not proxy generation model requests.
-Chat is disabled by default in the generic executable. Other workloads do not need model
-credentials unless their implementation uses a model. Use `max-retries: 0` when exact
-provider accounting is required. Content telemetry stays off unless explicitly approved.
+Other workloads do not need model credentials unless their implementation uses a model.
+Presets for exercise generation need `max-retries: 0`, so that every provider call is counted. Content telemetry stays off unless explicitly approved.
 
 ## Capacity and administration
 

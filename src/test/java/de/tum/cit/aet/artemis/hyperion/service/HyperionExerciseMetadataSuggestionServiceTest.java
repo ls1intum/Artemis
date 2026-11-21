@@ -6,12 +6,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.ai.chat.client.ChatClient;
@@ -21,9 +26,11 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.openai.OpenAiChatOptions;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -83,12 +90,37 @@ class HyperionExerciseMetadataSuggestionServiceTest {
     }
 
     private HyperionExerciseMetadataSuggestionService service(ChatClient chatClient, List<ChatModel> chatModels) {
-        return new HyperionExerciseMetadataSuggestionService(chatClient, chatModels, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository, courseRepository,
-                programmingExerciseRepository);
+        return new HyperionExerciseMetadataSuggestionService(HyperionTestChatClients.returning(chatClient), new HyperionPromptTemplateService(), llmTokenUsageService,
+                userRepository, courseRepository, programmingExerciseRepository);
     }
 
     private ExerciseGenerationMetadataSuggestionResponseDTO suggest(HyperionExerciseMetadataSuggestionService service, String brief) {
         return service.suggestMetadata(COURSE_ID, brief, ProjectType.GRADLE_GRADLE);
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = { "null, null, , 2048", "null, 256, , 256", "9000, null, 2048, ", "100, null, 100, " }, nullValues = "null")
+    void outputLimitIsTheLowerOfTheTaskCeilingAndThePresetLimitInThePresetsField(Integer presetMaxTokens, Integer presetMaxCompletionTokens, Integer sentMaxTokens,
+            Integer sentMaxCompletionTokens) {
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"title\": \"Bounded Stack\"}")))));
+        // a preset's model carries OpenAI options, into which the ChatClient merges the request options
+        when(chatModel.getDefaultOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        HyperionChatClientService chatClients = mock(HyperionChatClientService.class);
+        when(chatClients.forTask(any())).thenReturn(ChatClient.create(chatModel));
+        when(chatClients.presetFor(any())).thenReturn(
+                new LlmProperties.Preset("test", "m", LlmProperties.Api.CHAT_COMPLETIONS, null, null, null, null, presetMaxTokens, presetMaxCompletionTokens, null, null));
+        var service = new HyperionExerciseMetadataSuggestionService(chatClients, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository, courseRepository,
+                programmingExerciseRepository);
+
+        suggest(service, BRIEF);
+
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompt.capture());
+        assertThat(prompt.getValue().getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+            assertThat(options.getMaxTokens()).isEqualTo(sentMaxTokens);
+            assertThat(options.getMaxCompletionTokens()).isEqualTo(sentMaxCompletionTokens);
+        });
     }
 
     @Test

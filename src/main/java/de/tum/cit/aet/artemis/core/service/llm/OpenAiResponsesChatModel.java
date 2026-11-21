@@ -42,6 +42,7 @@ import com.openai.models.responses.ResponseInputItem;
 import com.openai.models.responses.ResponseOutputItem;
 import com.openai.models.responses.ResponseOutputMessage;
 import com.openai.models.responses.ResponseStatus;
+import com.openai.models.responses.ResponseTextConfig;
 import com.openai.models.responses.ResponseUsage;
 import com.openai.models.responses.Tool;
 
@@ -64,6 +65,8 @@ public final class OpenAiResponsesChatModel implements ChatModel {
     /** Metadata key containing the original ordered Responses output items. */
     public static final String RESPONSES_OUTPUT_ITEMS_METADATA_KEY = "openai.responses.output-items";
 
+    private static final String NO_REASONING = "none";
+
     private final OpenAIClient openAIClient;
 
     private final JsonMapper objectMapper;
@@ -71,20 +74,29 @@ public final class OpenAiResponsesChatModel implements ChatModel {
     private final OpenAiChatOptions defaultOptions;
 
     /**
-     * Creates a Responses adapter.
+     * Creates a Responses adapter with a default model only.
      *
      * @param openAIClient provider-aware synchronous OpenAI client
      * @param objectMapper JSON parser used for tool schemas
      * @param defaultModel model/deployment used when a request does not override it
      */
     public OpenAiResponsesChatModel(OpenAIClient openAIClient, JsonMapper objectMapper, @Nullable String defaultModel) {
+        this(openAIClient, objectMapper,
+                StringUtils.hasText(defaultModel) ? OpenAiChatOptions.builder().deploymentName(defaultModel).build() : OpenAiChatOptions.builder().build());
+    }
+
+    /**
+     * Creates a Responses adapter whose default options (model, reasoning effort, sampling and output limit) apply to every request that does not
+     * override them; a {@code ChatClient} starts each request from these options.
+     *
+     * @param openAIClient   provider-aware synchronous OpenAI client
+     * @param objectMapper   JSON parser used for tool schemas
+     * @param defaultOptions the default request options
+     */
+    public OpenAiResponsesChatModel(OpenAIClient openAIClient, JsonMapper objectMapper, OpenAiChatOptions defaultOptions) {
         this.openAIClient = openAIClient;
         this.objectMapper = objectMapper;
-        OpenAiChatOptions.Builder options = OpenAiChatOptions.builder();
-        if (StringUtils.hasText(defaultModel)) {
-            options.deploymentName(defaultModel);
-        }
-        this.defaultOptions = options.store(false).build();
+        this.defaultOptions = defaultOptions.mutate().store(false).build();
     }
 
     /**
@@ -151,11 +163,24 @@ public final class OpenAiResponsesChatModel implements ChatModel {
     }
 
     private static void applyReasoningAndSampling(ResponseCreateParams.Builder request, OpenAiChatOptions options) {
-        if (StringUtils.hasText(options.getReasoningEffort())) {
-            request.reasoning(Reasoning.builder().effort(ReasoningEffort.of(options.getReasoningEffort())).build());
+        String effort = options.getReasoningEffort();
+        if (StringUtils.hasText(effort)) {
+            request.reasoning(Reasoning.builder().effort(ReasoningEffort.of(effort)).build());
         }
-        else if (options.getTemperature() != null) {
+        // Reasoning models reject sampling options unless the reasoning effort is none.
+        if (options.getTemperature() != null && (!StringUtils.hasText(effort) || NO_REASONING.equals(effort))) {
             request.temperature(options.getTemperature());
+        }
+        if (options.getTopP() != null) {
+            request.topP(options.getTopP());
+        }
+        if (StringUtils.hasText(options.getVerbosity())) {
+            request.text(ResponseTextConfig.builder().verbosity(ResponseTextConfig.Verbosity.of(options.getVerbosity())).build());
+        }
+        // The Responses API has one output limit; it takes either Chat Completions field.
+        Integer outputLimit = options.getMaxCompletionTokens() != null ? options.getMaxCompletionTokens() : options.getMaxTokens();
+        if (outputLimit != null) {
+            request.maxOutputTokens(outputLimit.longValue());
         }
         if (options.getParallelToolCalls() != null) {
             request.parallelToolCalls(options.getParallelToolCalls());
