@@ -815,11 +815,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             return;
         }
         this.complaintService.findBySubmissionIdForAssessment(submission.id!).subscribe({
-            next: (res) => {
-                if (!res.body) {
+            next: (complaint) => {
+                if (!complaint) {
                     return;
                 }
-                this.complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.manualResult()));
+                this.complaint.set(this.complaintService.convertComplaintFromServer(complaint, this.manualResult()));
             },
             error: (err: HttpErrorResponse) => {
                 this.onError(err?.message);

@@ -4,9 +4,9 @@ import { Component, DoCheck, OnDestroy, inject, input } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
-import { GradingService } from 'app/assessment/manage/grading/grading-service';
+import { GradeStepApi } from 'app/openapi/api/grade-step-api';
 import { Subscription } from 'rxjs';
-import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
+import type { GradeSteps } from 'app/openapi/model/grade-steps';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -41,7 +41,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [TumAetUiCheckboxComponent, TumAetUiTooltipDirective, HasAnyAuthorityDirective, FormsModule, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class PresentationScoreComponent implements DoCheck, OnDestroy {
-    private readonly gradingService = inject(GradingService);
+    private readonly gradeStepApi = inject(GradeStepApi);
 
     protected readonly faQuestionCircle = faQuestionCircle;
 
@@ -49,23 +49,23 @@ export class PresentationScoreComponent implements DoCheck, OnDestroy {
 
     readonly exercise = input<Exercise>(undefined!);
 
-    private gradeStepsDTO?: GradeStepsDTO;
-    private gradeStepsDTOSub?: Subscription;
+    private gradeSteps?: GradeSteps;
+    private gradeStepsSub?: Subscription;
 
     ngDoCheck(): void {
         const exercise = this.exercise();
-        if (!this.gradeStepsDTOSub && exercise.course?.id) {
-            this.gradeStepsDTOSub = this.gradingService.findGradeStepsForCourse(exercise.course.id).subscribe((gradeStepsDTO) => {
-                if (gradeStepsDTO.body) {
-                    this.gradeStepsDTO = gradeStepsDTO.body;
+        if (!this.gradeStepsSub && exercise.course?.id) {
+            this.gradeStepsSub = this.gradeStepApi.getAllGradeStepsForCourse(exercise.course.id).subscribe((gradeSteps) => {
+                if (gradeSteps) {
+                    this.gradeSteps = gradeSteps;
                 }
             });
         }
     }
 
     ngOnDestroy(): void {
-        if (this.gradeStepsDTOSub) {
-            this.gradeStepsDTOSub.unsubscribe();
+        if (this.gradeStepsSub) {
+            this.gradeStepsSub.unsubscribe();
         }
     }
 
@@ -78,6 +78,6 @@ export class PresentationScoreComponent implements DoCheck, OnDestroy {
     }
 
     private isGradedPresentation(): boolean {
-        return !!(this.exercise().course && (this.gradeStepsDTO?.presentationsNumber ?? 0) > 0);
+        return !!(this.exercise().course && (this.gradeSteps?.presentationsNumber ?? 0) > 0);
     }
 }

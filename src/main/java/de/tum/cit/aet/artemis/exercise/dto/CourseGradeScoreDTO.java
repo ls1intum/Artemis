@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * A student's score on one exercise, projected straight from the database for the score calculation.
@@ -21,7 +22,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
  * @param type              the exercise type, which the per-type score breakdown groups by
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseGradeScoreDTO(long participationId, long userId, long exerciseId, double score, @Nullable Boolean rated, @Nullable Double presentationScore,
-        @NotNull ExerciseType type) {
+public record CourseGradeScoreDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long participationId, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long userId,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long exerciseId, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double score, @Nullable Boolean rated,
+        @Nullable Double presentationScore, @NotNull ExerciseType type) {
 
 }

@@ -79,7 +79,6 @@ import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
 import type { TutorParticipationStatusEnum } from 'app/openapi/model/tutor-participation';
-import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
 import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
@@ -607,10 +606,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 error: (response: string) => this.onError(response),
             });
         } else {
-            this.complaintService.getComplaintsForTestRun(this.exerciseId()).subscribe({
-                next: (res: HttpResponse<ComplaintDTO[]>) => {
-                    this.complaints.set(res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? []);
-                },
+            this.complaintService.findAll({ exerciseId: this.exerciseId() }).subscribe({
+                next: (complaints) => this.complaints.set(complaints),
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
         }

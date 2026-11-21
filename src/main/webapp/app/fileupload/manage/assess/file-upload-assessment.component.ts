@@ -512,11 +512,11 @@ export class FileUploadAssessmentComponent implements OnInit {
         }
 
         this.complaintService.findBySubmissionIdForAssessment(submissionId).subscribe({
-            next: (res) => {
-                if (!res.body) {
+            next: (complaint) => {
+                if (!complaint) {
                     return;
                 }
-                this.complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.result()));
+                this.complaint.set(this.complaintService.convertComplaintFromServer(complaint, this.result()));
             },
             error: (err: HttpErrorResponse) => {
                 onError(this.alertService, err);

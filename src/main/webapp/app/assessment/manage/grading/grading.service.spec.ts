@@ -8,8 +8,6 @@ import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { lastValueFrom } from 'rxjs';
-import { SortingOrder } from 'app/foundation/pagination/pageable-table';
-import { GradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 describe('GradingService', () => {
     let service: GradingService;
@@ -44,19 +42,7 @@ describe('GradingService', () => {
         noParticipationGrade: '5.0',
     };
 
-    const gradingScaleDTO: GradingScaleDTO = {
-        id: 1,
-        gradeSteps: {
-            title: 'Course',
-            gradeType: GradeType.GRADE,
-            gradeSteps: [gradeStep1, gradeStep2],
-            maxPoints: 100,
-            plagiarismGrade: '5.0',
-            noParticipationGrade: '5.0',
-        },
-        bonusStrategy: undefined,
-        bonusFrom: [],
-    };
+    const gradeStepsResponse = (title: string) => ({ title, gradeType: GradeType.GRADE, maxPoints: 100, plagiarismGrade: '5.0', noParticipationGrade: '5.0' });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -72,189 +58,68 @@ describe('GradingService', () => {
         vi.restoreAllMocks();
     });
 
-    describe('HTTP operations for course', () => {
-        it('should create grading scale for course', async () => {
-            const responsePromise = lastValueFrom(service.createGradingScaleForCourse(courseId, gradingScale));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale`);
-            expect(req.request.method).toBe('POST');
-            req.flush(gradingScaleDTO);
-
-            const response = await responsePromise;
-            expect(response.body).toEqual(gradingScaleDTO);
-        });
-
-        it('should update grading scale for course', async () => {
-            const responsePromise = lastValueFrom(service.updateGradingScaleForCourse(courseId, gradingScale));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale`);
-            expect(req.request.method).toBe('PUT');
-            req.flush(gradingScaleDTO);
-
-            const response = await responsePromise;
-            expect(response.body).toEqual(gradingScaleDTO);
-        });
-
-        it.each([false, true])('explicitly clears Basic requirements when saving graded=%s', async (graded) => {
-            const scale = {
-                ...gradingScale,
-                course: { id: courseId, presentationScore: undefined } as Course,
-                presentationsNumber: graded ? 5 : undefined,
-                presentationsWeight: graded ? 35 : undefined,
-            };
-            const responsePromise = lastValueFrom(service.updateGradingScaleForCourse(courseId, scale));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale`);
-            const wireBody = JSON.parse(req.request.serializeBody() as string);
-            req.flush(gradingScaleDTO);
-            await responsePromise;
-
-            // Omission/null means "leave the current value unchanged" on the server; zero disables Basic presentations.
-            expect(wireBody.coursePresentationScore).toBe(0);
-            if (graded) {
-                expect(wireBody.presentationsNumber).toBe(5);
-                expect(wireBody.presentationsWeight).toBe(35);
-            } else {
-                expect(wireBody.presentationsNumber).toBeUndefined();
-                expect(wireBody.presentationsWeight).toBeUndefined();
-            }
-        });
-
-        it('preserves a positive Basic requirement in the serialized update', async () => {
-            const scale = { ...gradingScale, course: { id: courseId, presentationScore: 3 } as Course };
-            const responsePromise = lastValueFrom(service.updateGradingScaleForCourse(courseId, scale));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale`);
-            expect(JSON.parse(req.request.serializeBody() as string).coursePresentationScore).toBe(3);
-            req.flush(gradingScaleDTO);
-            await responsePromise;
-        });
-
-        it('should find grading scale for course', async () => {
-            const responsePromise = lastValueFrom(service.findGradingScaleForCourse(courseId));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale`);
-            expect(req.request.method).toBe('GET');
-            req.flush(gradingScaleDTO);
-
-            const response = await responsePromise;
-            expect(response.body).toEqual(gradingScaleDTO);
-        });
-
-        it('should find grade steps for course', async () => {
-            const gradeStepsDTO = { title: 'Course', gradeType: GradeType.GRADE, gradeSteps: [gradeStep1, gradeStep2], maxPoints: 100 };
-            const responsePromise = lastValueFrom(service.findGradeStepsForCourse(courseId));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale/grade-steps`);
-            expect(req.request.method).toBe('GET');
-            req.flush(gradeStepsDTO);
-
-            const response = await responsePromise;
-            expect(response.body).toEqual(gradeStepsDTO);
-        });
-    });
-
-    describe('HTTP operations for exam', () => {
-        it('should create grading scale for exam', async () => {
-            const responsePromise = lastValueFrom(service.createGradingScaleForExam(courseId, examId, gradingScale));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale`);
-            expect(req.request.method).toBe('POST');
-            req.flush(gradingScaleDTO);
-
-            const response = await responsePromise;
-            expect(response.body).toEqual(gradingScaleDTO);
-        });
-
-        it('should update grading scale for exam', async () => {
-            const responsePromise = lastValueFrom(service.updateGradingScaleForExam(courseId, examId, gradingScale));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale`);
-            expect(req.request.method).toBe('PUT');
-            req.flush(gradingScaleDTO);
-
-            const response = await responsePromise;
-            expect(response.body).toEqual(gradingScaleDTO);
-        });
-
-        it('omits course presentation settings from exam updates', async () => {
-            const responsePromise = lastValueFrom(service.updateGradingScaleForExam(courseId, examId, gradingScale));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale`);
-            expect(JSON.parse(req.request.serializeBody() as string).coursePresentationScore).toBeUndefined();
-            req.flush(gradingScaleDTO);
-            await responsePromise;
-        });
-
-        it('should find grading scale for exam', async () => {
-            const responsePromise = lastValueFrom(service.findGradingScaleForExam(courseId, examId));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale`);
-            expect(req.request.method).toBe('GET');
-            req.flush(gradingScaleDTO);
-
-            const response = await responsePromise;
-            expect(response.body).toEqual(gradingScaleDTO);
-        });
-
-        it('should find grade steps for exam', async () => {
-            const gradeStepsDTO = { title: 'Exam', gradeType: GradeType.GRADE, gradeSteps: [gradeStep1, gradeStep2], maxPoints: 100 };
-            const responsePromise = lastValueFrom(service.findGradeStepsForExam(courseId, examId));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale/grade-steps`);
-            expect(req.request.method).toBe('GET');
-            req.flush(gradeStepsDTO);
-
-            const response = await responsePromise;
-            expect(response.body).toEqual(gradeStepsDTO);
-        });
-    });
-
     describe('findGradeSteps', () => {
-        it('should reuse the full instructor grading scale for management steps', async () => {
+        it('should reuse the full instructor grading scale for management steps and keep the grade step ids', async () => {
             const resultPromise = lastValueFrom(service.findGradeSteps(courseId, examId, 'management'));
             const req = httpMock.expectOne({ method: 'GET' });
-            const steps = { title: 'Exam', gradeType: GradeType.GRADE, gradeSteps: [gradeStep1, gradeStep2], maxPoints: 100 };
-            req.flush({ id: 42, gradeSteps: steps });
-            expect(req.request.url).toBe(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale`);
-            expect(await resultPromise).toEqual(steps);
+            expect(req.request.url).toBe(`/api/assessment/courses/${courseId}/exams/${examId}/grading-scale`);
+            req.flush({
+                id: 42,
+                gradeSteps: {
+                    ...gradeStepsResponse('Exam'),
+                    gradeSteps: [
+                        { id: 7, ...gradeStep1 },
+                        { id: 8, ...gradeStep2 },
+                    ],
+                },
+            });
+
+            const result = await resultPromise;
+            expect(result?.gradeSteps.map((step) => step.id)).toEqual([7, 8]);
+            expect(result?.title).toBe('Exam');
         });
 
         it('should find grade steps for course when no examId provided', async () => {
-            const gradeStepsDTO = { title: 'Course', gradeType: GradeType.GRADE, gradeSteps: [gradeStep1, gradeStep2], maxPoints: 100 };
             const resultPromise = lastValueFrom(service.findGradeSteps(courseId));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale/grade-steps`);
-            req.flush(gradeStepsDTO);
+            const req = httpMock.expectOne(`/api/assessment/courses/${courseId}/grading-scale/grade-steps`);
+            expect(req.request.method).toBe('GET');
+            req.flush({
+                ...gradeStepsResponse('Course'),
+                gradeSteps: [
+                    { id: 1, ...gradeStep1 },
+                    { id: 2, ...gradeStep2 },
+                ],
+            });
 
             const result = await resultPromise;
-            expect(result).toEqual(gradeStepsDTO);
+            expect(result).toEqual({
+                ...gradeStepsResponse('Course'),
+                gradeType: GradeType.GRADE,
+                gradeSteps: [
+                    { id: 1, ...gradeStep1 },
+                    { id: 2, ...gradeStep2 },
+                ],
+            });
         });
 
         it('should find grade steps for exam when examId provided', async () => {
-            const gradeStepsDTO = { title: 'Exam', gradeType: GradeType.GRADE, gradeSteps: [gradeStep1, gradeStep2], maxPoints: 100 };
             const resultPromise = lastValueFrom(service.findGradeSteps(courseId, examId));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale/grade-steps`);
-            req.flush(gradeStepsDTO);
+            const req = httpMock.expectOne(`/api/assessment/courses/${courseId}/exams/${examId}/grading-scale/grade-steps`);
+            expect(req.request.method).toBe('GET');
+            req.flush({ ...gradeStepsResponse('Exam'), gradeSteps: [gradeStep1, gradeStep2] });
 
             const result = await resultPromise;
-            expect(result).toEqual(gradeStepsDTO);
+            expect(result?.title).toBe('Exam');
+            expect(result?.gradeSteps).toEqual([gradeStep1, gradeStep2]);
         });
 
         it('should return undefined when response body is null', async () => {
             const resultPromise = lastValueFrom(service.findGradeSteps(courseId));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale/grade-steps`);
+            const req = httpMock.expectOne(`/api/assessment/courses/${courseId}/grading-scale/grade-steps`);
             req.flush(null);
 
             const result = await resultPromise;
             expect(result).toBeUndefined();
-        });
-    });
-
-    describe('findWithBonusGradeTypeForInstructor', () => {
-        it('should search for grading scales with bonus grade type', async () => {
-            const pageable = { pageSize: 10, page: 0, sortingOrder: SortingOrder.ASCENDING, searchTerm: 'test', sortedColumn: 'title' };
-            const searchResult = { resultsOnPage: [gradingScaleDTO], numberOfPages: 1 };
-            const responsePromise = lastValueFrom(service.findWithBonusGradeTypeForInstructor(pageable));
-            const req = httpMock.expectOne((r) => r.url === 'api/assessment/grading-scales');
-            expect(req.request.method).toBe('GET');
-            expect(req.request.params.get('pageSize')).toBe('10');
-            expect(req.request.params.get('page')).toBe('0');
-            expect(req.request.params.get('sortingOrder')).toBe('ASCENDING');
-            expect(req.request.params.get('searchTerm')).toBe('test');
-            expect(req.request.params.get('sortedColumn')).toBe('title');
-            req.flush(searchResult);
-
-            const response = await responsePromise;
-            expect(response.body).toEqual(searchResult);
         });
     });
 

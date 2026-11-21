@@ -10,13 +10,13 @@ import { BonusApi } from 'app/openapi/api/bonus-api';
 import type { BonusResponse } from 'app/openapi/model/bonus-response';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
-import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { of, throwError } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { HttpResponse } from '@angular/common/http';
 import { DeleteDialogComponent } from 'app/shared-ui/delete-dialog/component/delete-dialog.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
@@ -25,7 +25,10 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { toGradingScaleResponse } from 'test/helpers/sample/grading-scale-response';
+import { GradingScaleApi } from 'app/openapi/api/grading-scale-api';
+import type { GradingScale as GradingScaleResponse } from 'app/openapi/model/grading-scale';
+import type { SearchResultPageDTOGradingScale } from 'app/openapi/model/search-result-page-dto-grading-scale';
 
 describe('BonusComponent', () => {
     let component: BonusComponent;
@@ -37,6 +40,7 @@ describe('BonusComponent', () => {
 
     let findGradeStepsSpy: MockInstance;
     let findWithBonusSpy: MockInstance;
+    let gradingScaleApi: GradingScaleApi;
     let findBonusForExamSpy: MockInstance;
 
     const courseId = 1;
@@ -216,8 +220,8 @@ describe('BonusComponent', () => {
         ],
     };
 
-    const searchResult: SearchResult<GradingScaleDTO> = {
-        resultsOnPage: [toGradingScaleDTO(sourceGradingScale)],
+    const searchResult: SearchResultPageDTOGradingScale = {
+        resultsOnPage: [toGradingScaleResponse(sourceGradingScale)],
         numberOfPages: 1,
     };
 
@@ -299,6 +303,7 @@ describe('BonusComponent', () => {
                 MockProvider(GradingService),
                 MockProvider(BonusService),
                 MockProvider(BonusApi),
+                MockProvider(GradingScaleApi),
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -311,11 +316,10 @@ describe('BonusComponent', () => {
         bonusService = TestBed.inject(BonusService);
         bonusApi = TestBed.inject(BonusApi);
         gradingService = TestBed.inject(GradingService);
+        gradingScaleApi = TestBed.inject(GradingScaleApi);
 
         findBonusForExamSpy = vi.spyOn(bonusApi, 'getBonusForExam').mockReturnValue(of(bonusResponse));
-        findWithBonusSpy = vi
-            .spyOn(gradingService, 'findWithBonusGradeTypeForInstructor')
-            .mockReturnValue(of({ body: searchResult } as HttpResponse<SearchResult<GradingScaleDTO>>));
+        findWithBonusSpy = vi.spyOn(gradingScaleApi, 'getAllGradingScalesInInstructorGroupOnPage').mockReturnValue(of(searchResult));
         findGradeStepsSpy = vi.spyOn(gradingService, 'findGradeSteps').mockReturnValue(of(examGradeSteps));
         vi.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
     });
@@ -338,16 +342,8 @@ describe('BonusComponent', () => {
         expect(findBonusForExamSpy).toHaveBeenCalledTimes(1);
         expect(findBonusForExamSpy).toHaveBeenCalledWith(courseId, examId);
 
-        const state: SearchTermPageableSearch = {
-            page: 1,
-            pageSize: 100,
-            searchTerm: '',
-            sortingOrder: SortingOrder.DESCENDING,
-            sortedColumn: 'ID',
-        };
-
         expect(findWithBonusSpy).toHaveBeenCalledTimes(1);
-        expect(findWithBonusSpy).toHaveBeenCalledWith(state);
+        expect(findWithBonusSpy).toHaveBeenCalledWith('', 'ID', 1, 100, 'DESCENDING');
 
         expect(findGradeStepsSpy).toHaveBeenCalledTimes(1);
         expect(findGradeStepsSpy).toHaveBeenCalledWith(courseId, examId, 'management');
@@ -374,7 +370,7 @@ describe('BonusComponent', () => {
         // course/exam from the bonus response and hide the reconstruction this test asserts.
         findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const searchDto: GradingScaleDTO = {
+        const searchDto: GradingScaleResponse = {
             id: 99,
             gradeSteps: {
                 title: 'Awesome Bonus Source',
@@ -385,7 +381,7 @@ describe('BonusComponent', () => {
                 noParticipationGrade: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
             },
         };
-        findWithBonusSpy.mockReturnValue(of({ body: { resultsOnPage: [searchDto], numberOfPages: 1 } } as HttpResponse<SearchResult<GradingScaleDTO>>));
+        findWithBonusSpy.mockReturnValue(of({ resultsOnPage: [searchDto], numberOfPages: 1 }));
 
         component.ngOnInit();
 
@@ -676,5 +672,41 @@ describe('BonusComponent', () => {
 
         expect(bonusFinalGradeSpy).toHaveBeenCalledTimes(1);
         expect(bonusFinalGradeSpy).toHaveBeenCalledWith(dynamicExample, bonus, examGradeSteps);
+    });
+
+    describe('grading scale search request', () => {
+        beforeEach(() => {
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                imports: [BonusComponent],
+                providers: [
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                    { provide: ActivatedRoute, useValue: route },
+                    MockProvider(GradingService, { findGradeSteps: () => of(examGradeSteps), sortGradeSteps: (gradeSteps) => gradeSteps, setGradePoints: () => {} }),
+                    MockProvider(BonusService, { generateBonusExamples: () => bonusExamples }),
+                    MockProvider(BonusApi, { getBonusForExam: () => throwError(() => ({ status: 404 })) }),
+                    MockProvider(AlertService),
+                    { provide: TranslateService, useClass: MockTranslateService },
+                ],
+            }).overrideComponent(BonusComponent, { set: { template: '' } });
+        });
+
+        it('sends every query parameter the server requires, sortedColumn included, and lists the returned scales', () => {
+            const http = TestBed.inject(HttpTestingController);
+            const searchFixture = TestBed.createComponent(BonusComponent);
+
+            searchFixture.componentInstance.ngOnInit();
+
+            const request = http.expectOne((req) => req.url.startsWith('/api/assessment/grading-scales'));
+            expect(request.request.method).toBe('GET');
+            const query = new URL(request.request.urlWithParams, 'http://localhost').searchParams;
+            expect(Object.fromEntries(query)).toEqual({ searchTerm: '', sortedColumn: 'ID', page: '1', pageSize: '100', sortingOrder: 'DESCENDING' });
+            request.flush(searchResult);
+            http.verify();
+
+            expect(searchFixture.componentInstance.sourceGradingScales()).toHaveLength(1);
+            expect(searchFixture.componentInstance.sourceGradingScales()[0].id).toBe(sourceGradingScale.id);
+        });
     });
 });

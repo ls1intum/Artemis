@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ParamMap, Router, RouterModule, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
-import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
@@ -47,7 +47,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
-import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import type { Complaint as ComplaintDTO } from 'app/openapi/model/complaint';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -173,9 +173,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     it('should place the complaint banner and form beside the diagram, not in the scrolling feedback pane', async () => {
         vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
-        vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(
-            of({ body: { id: 1, complaintText: 'Why only 80%?' } as ComplaintDTO } as HttpResponse<ComplaintDTO>),
-        );
+        vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of({ id: 1, complaintText: 'Why only 80%?' }));
 
         component.ngOnInit();
         await fixture.whenStable();
@@ -213,8 +211,8 @@ describe('ModelingAssessmentEditorComponent', () => {
             const submission = getSubmissionWithData();
 
             modelingSubmissionSpy.mockReturnValue(of(submission));
-            const complaintDTO = <ComplaintDTO>{ id: 1, complaintText: 'Why only 80%?' };
-            complaintSpy.mockReturnValue(of({ body: complaintDTO } as HttpResponse<ComplaintDTO>));
+            const complaintDTO: ComplaintDTO = { id: 1, complaintText: 'Why only 80%?' };
+            complaintSpy.mockReturnValue(of(complaintDTO));
 
             const handleFeedbackSpy = vi.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
             const verifyFeedbackSpy = vi.spyOn(component, 'validateFeedback');
@@ -519,7 +517,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 },
             } as ModelingSubmission;
             vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
-            vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of(new HttpResponse<ComplaintDTO>({ body: undefined })));
+            vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of(undefined));
             const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree');
             const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
 
@@ -831,7 +829,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 ),
             );
         } else {
-            serviceSpy.mockReturnValue(of({ body: changedResult } as EntityResponseType));
+            serviceSpy.mockReturnValue(of(new HttpResponse({ body: changedResult })));
         }
 
         component.ngOnInit();

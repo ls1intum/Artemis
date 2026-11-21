@@ -13,7 +13,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { filter } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
-import { HttpResponse } from '@angular/common/http';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -22,7 +21,6 @@ import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/
 import { ComplaintRequestComponent } from 'app/assessment/overview/complaint-request/complaint-request.component';
 import { ComplaintResponseComponent } from 'app/assessment/manage/complaint-response/complaint-response.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 @Component({
     selector: 'jhi-complaint-student-view',
@@ -107,9 +105,9 @@ export class ComplaintsStudentViewComponent implements OnInit {
     loadPotentialComplaint(): void {
         const submissionId = this.submission.id!;
         (this.forStaff() ? this.complaintService.findBySubmissionIdForAssessment(submissionId) : this.complaintService.findBySubmissionId(submissionId))
-            .pipe(filter((res) => !!res.body))
-            .subscribe((res: HttpResponse<ComplaintDTO>) => {
-                this.complaint.set(this.complaintService.convertComplaintFromServer(res.body!, this.result()));
+            .pipe(filter((complaint) => !!complaint))
+            .subscribe((complaint) => {
+                this.complaint.set(this.complaintService.convertComplaintFromServer(complaint, this.result()));
             });
     }
 

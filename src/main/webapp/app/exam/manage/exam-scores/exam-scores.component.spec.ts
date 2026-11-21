@@ -48,7 +48,9 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { GradingScaleApi } from 'app/openapi/api/grading-scale-api';
+import type { GradingScale as GradingScaleResponse } from 'app/openapi/model/grading-scale';
+import { toGradingScaleResponse } from 'test/helpers/sample/grading-scale-response';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@e965/xlsx', async (importOriginal) => {
@@ -63,6 +65,7 @@ describe('ExamScoresComponent', () => {
     let comp: ExamScoresComponent;
     let examService: ExamManagementService;
     let gradingService: GradingService;
+    let gradingScaleApi: GradingScaleApi;
 
     const gradeStep1: GradeStep = {
         isPassingGrade: false,
@@ -279,15 +282,8 @@ describe('ExamScoresComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
+                MockProvider(GradingScaleApi, { getGradingScaleForExam: () => of(toGradingScaleResponse(new GradingScale())) }),
                 MockProvider(GradingService, {
-                    findGradingScaleForExam: () => {
-                        return of(
-                            new HttpResponse({
-                                body: toGradingScaleDTO(new GradingScale()),
-                                status: 200,
-                            }),
-                        );
-                    },
                     findMatchingGradeStep: () => {
                         return gradeStep1;
                     },
@@ -322,6 +318,7 @@ describe('ExamScoresComponent', () => {
         comp = fixture.componentInstance;
         examService = TestBed.inject(ExamManagementService);
         gradingService = TestBed.inject(GradingService);
+        gradingScaleApi = TestBed.inject(GradingScaleApi);
         examScoresOfParticipantScoreTable = [examScoreStudent1, examScoreStudent2, examScoreStudent3];
         examScoresRequests = [];
     });
@@ -418,7 +415,7 @@ describe('ExamScoresComponent', () => {
 
     it('should sort the student results by the column chosen in the table header', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: structuredClone(examScoreDTO) })));
-        vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ status: 404 })));
+        vi.spyOn(gradingScaleApi, 'getGradingScaleForExam').mockReturnValue(of(null as unknown as GradingScaleResponse));
         fixture.detectChanges();
 
         comp.onSortChange({ field: 'login', order: 1 });
@@ -434,7 +431,7 @@ describe('ExamScoresComponent', () => {
 
     it('histogram should have correct entries', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ status: 404 })));
+        vi.spyOn(gradingScaleApi, 'getGradingScaleForExam').mockReturnValue(of(null as unknown as GradingScaleResponse));
         fixture.detectChanges();
 
         expectCorrectExamScoreDto(comp, examScoreDTO);
@@ -516,7 +513,7 @@ describe('ExamScoresComponent', () => {
 
     it('histogram should skip not submitted exams', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ status: 404 })));
+        vi.spyOn(gradingScaleApi, 'getGradingScaleForExam').mockReturnValue(of(null as unknown as GradingScaleResponse));
         fixture.detectChanges();
         comp.toggleFilterForSubmittedExam();
 
@@ -982,7 +979,7 @@ describe('ExamScoresComponent', () => {
         dto.studentResults[0].gradeWithBonus = { bonusStrategy: BonusStrategy.POINTS, pending: true };
         dto.studentResults[1].gradeWithBonus = { bonusStrategy: BonusStrategy.POINTS, pending: false, finalGrade: '1.0' };
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
-        vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: toGradingScaleDTO(gradingScale) })));
+        vi.spyOn(gradingScaleApi, 'getGradingScaleForExam').mockReturnValue(of(toGradingScaleResponse(gradingScale)));
         fixture.detectChanges();
         const finalGrades = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('[data-testid="exam-final-grade"]')).map((cell) => cell.textContent?.trim());
         expect(finalGrades.slice(0, 2)).toEqual(['-', '1.0']);
@@ -1178,7 +1175,7 @@ describe('ExamScoresComponent', () => {
         const examScoreDTOWithGrades = examScoreDTO;
         examScoreDTOWithGrades.studentResults[0].hasPassed = true;
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOWithGrades })));
-        vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: toGradingScaleDTO(gradingScale) })));
+        vi.spyOn(gradingScaleApi, 'getGradingScaleForExam').mockReturnValue(of(toGradingScaleResponse(gradingScale)));
         vi.spyOn(gradingService, 'sortGradeSteps').mockImplementation((steps) => steps);
         vi.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
         fixture.detectChanges();
@@ -1210,7 +1207,7 @@ describe('ExamScoresComponent', () => {
         examScoreDTOOnePassing.studentResults[0].hasPassed = true;
         it('should set table state correctly if non empty submissions filter is activated', () => {
             vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
-            vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
+            vi.spyOn(gradingScaleApi, 'getGradingScaleForExam').mockReturnValue(of(toGradingScaleResponse(gradingScale)));
             comp.filterForNonEmptySubmissions.set(false);
             comp.ngOnInit();
 
@@ -1256,7 +1253,7 @@ describe('ExamScoresComponent', () => {
 
         it('should set table state correctly if only submitted exams filter is activated', () => {
             vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
-            vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
+            vi.spyOn(gradingScaleApi, 'getGradingScaleForExam').mockReturnValue(of(toGradingScaleResponse(gradingScale)));
             comp.filterForSubmittedExams.set(false);
             comp.ngOnInit();
 
@@ -1302,7 +1299,7 @@ describe('ExamScoresComponent', () => {
 
         it('should set table state correctly if both exams are activated', () => {
             vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
-            vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
+            vi.spyOn(gradingScaleApi, 'getGradingScaleForExam').mockReturnValue(of(toGradingScaleResponse(gradingScale)));
             comp.ngOnInit();
             comp.filterForNonEmptySubmissions.set(false);
             comp.filterForSubmittedExams.set(false);

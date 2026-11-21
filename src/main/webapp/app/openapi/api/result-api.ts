@@ -12,7 +12,7 @@
  * ResultApi - API service
  * @generated from OpenAPI specification
  */
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ExternalSubmissionResult } from '../model/external-submission-result';
@@ -35,13 +35,14 @@ export class ResultApi {
      * @param exerciseId
      * @param studentLogin
      * @param externalSubmissionResult
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createResultForExternalSubmission(exerciseId: number, studentLogin: string, externalSubmissionResult: ExternalSubmissionResult): Observable<Result> {
+    createResultForExternalSubmission(exerciseId: number, studentLogin: string, externalSubmissionResult: ExternalSubmissionResult, options?: import('./request-options').RequestOptions): Observable<Result> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'studentLogin', studentLogin);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/external-submission-results${queryString ? `?${queryString}` : ''}`;
-        return this.http.post<Result>(url, externalSubmissionResult);
+        return this.http.post<Result>(url, externalSubmissionResult, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -53,8 +54,9 @@ export class ResultApi {
      * @param feedbackId3
      * @param feedbackId4
      * @param feedbackId5
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getAffectedStudentsWithFeedback(exerciseId: number, feedbackId1?: number, feedbackId2?: number, feedbackId3?: number, feedbackId4?: number, feedbackId5?: number): Observable<Array<FeedbackAffectedStudent>> {
+    getAffectedStudentsWithFeedback(exerciseId: number, feedbackId1?: number, feedbackId2?: number, feedbackId3?: number, feedbackId4?: number, feedbackId5?: number, options?: import('./request-options').RequestOptions): Observable<Array<FeedbackAffectedStudent>> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'feedbackId1', feedbackId1);
         appendQueryParam(queryParams, 'feedbackId2', feedbackId2);
@@ -63,17 +65,18 @@ export class ResultApi {
         appendQueryParam(queryParams, 'feedbackId5', feedbackId5);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/feedback-details-participation${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Array<FeedbackAffectedStudent>>(url);
+        return this.http.get<Array<FeedbackAffectedStudent>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param participationId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getBuildJobIdsForResultsOfParticipation(participationId: number): Observable<{ [key: string]: string; }> {
+    getBuildJobIdsForResultsOfParticipation(participationId: number, options?: import('./request-options').RequestOptions): Observable<{ [key: string]: string; }> {
         const url = `${this.basePath}/api/assessment/participations/${participationId}/results/build-job-ids`;
-        return this.http.get<{ [key: string]: string; }>(url);
+        return this.http.get<{ [key: string]: string; }>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -90,8 +93,9 @@ export class ResultApi {
      * @param pageSize
      * @param sortingOrder
      * @param sortedColumn
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getFeedbackDetailsPaged(exerciseId: number, groupFeedback: boolean, filterTasks?: Array<string>, filterTestCases?: Array<string>, filterOccurrence?: Array<string>, searchTerm?: string, filterErrorCategories?: Array<string>, page?: number, pageSize?: number, sortingOrder?: 'ASCENDING' | 'DESCENDING', sortedColumn?: string): Observable<FeedbackAnalysisResponse> {
+    getFeedbackDetailsPaged(exerciseId: number, groupFeedback: boolean, filterTasks?: Array<string>, filterTestCases?: Array<string>, filterOccurrence?: Array<string>, searchTerm?: string, filterErrorCategories?: Array<string>, page?: number, pageSize?: number, sortingOrder?: 'ASCENDING' | 'DESCENDING', sortedColumn?: string, options?: import('./request-options').RequestOptions): Observable<FeedbackAnalysisResponse> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'groupFeedback', groupFeedback);
         appendQueryParam(queryParams, 'filterTasks', filterTasks);
@@ -105,17 +109,18 @@ export class ResultApi {
         appendQueryParam(queryParams, 'sortedColumn', sortedColumn);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/feedback-details${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<FeedbackAnalysisResponse>(url);
+        return this.http.get<FeedbackAnalysisResponse>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param exerciseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getMaxCount(exerciseId: number): Observable<number> {
+    getMaxCount(exerciseId: number, options?: import('./request-options').RequestOptions): Observable<number> {
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/feedback-details-max-count`;
-        return this.http.get<number>(url);
+        return this.http.get<number>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -123,10 +128,11 @@ export class ResultApi {
      *
      * @param participationId
      * @param resultId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getResultDetails(participationId: number, resultId: number): Observable<Array<Feedback>> {
+    getResultDetails(participationId: number, resultId: number, options?: import('./request-options').RequestOptions): Observable<Array<Feedback>> {
         const url = `${this.basePath}/api/assessment/participations/${participationId}/results/${resultId}/details`;
-        return this.http.get<Array<Feedback>>(url);
+        return this.http.get<Array<Feedback>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -134,13 +140,14 @@ export class ResultApi {
      *
      * @param exerciseId
      * @param withSubmissions
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getResultsForExerciseWithPointsPerCriterion(exerciseId: number, withSubmissions?: boolean): Observable<Array<ResultWithPointsPerGradingCriterion>> {
+    getResultsForExerciseWithPointsPerCriterion(exerciseId: number, withSubmissions?: boolean, options?: import('./request-options').RequestOptions): Observable<Array<ResultWithPointsPerGradingCriterion>> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'withSubmissions', withSubmissions);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/results-with-points-per-criterion${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Array<ResultWithPointsPerGradingCriterion>>(url);
+        return this.http.get<Array<ResultWithPointsPerGradingCriterion>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -150,15 +157,16 @@ export class ResultApi {
      * @param searchTerm
      * @param page
      * @param pageSize
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    searchExternalSubmissionCandidates(exerciseId: number, searchTerm: string, page?: number, pageSize?: number): Observable<Array<ExternalSubmissionCandidate>> {
+    searchExternalSubmissionCandidates(exerciseId: number, searchTerm: string, page?: number, pageSize?: number, options?: import('./request-options').RequestOptions): Observable<HttpResponse<Array<ExternalSubmissionCandidate>>> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'searchTerm', searchTerm);
         appendQueryParam(queryParams, 'page', page);
         appendQueryParam(queryParams, 'pageSize', pageSize);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/exercises/${exerciseId}/external-submission-candidates${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Array<ExternalSubmissionCandidate>>(url);
+        return this.http.get<Array<ExternalSubmissionCandidate>>(url, { ...(options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) }), observe: 'response' });
     }
 
 }

@@ -795,11 +795,11 @@ describe('ParticipationComponent', () => {
                 presentationScoreEnabled: true,
                 course,
             });
-            component.gradeStepsDTO.set({ presentationsNumber: 2, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
+            component.gradeSteps.set({ presentationsNumber: 2, gradeSteps: [] });
 
             expect(component.gradedPresentationEnabled()).toBe(true);
 
-            component.gradeStepsDTO.set({ presentationsNumber: 0, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
+            component.gradeSteps.set({ presentationsNumber: 0, gradeSteps: [] });
             expect(component.gradedPresentationEnabled()).toBe(false);
         });
     });
@@ -1076,7 +1076,7 @@ describe('ParticipationComponent', () => {
 
         beforeEach(() => {
             component.exercise.set(gradedExercise);
-            component.gradeStepsDTO.set({ presentationsNumber: 2, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
+            component.gradeSteps.set({ presentationsNumber: 2, gradeSteps: [] });
         });
 
         it('should call update and reload on success', () => {
@@ -1140,7 +1140,7 @@ describe('ParticipationComponent', () => {
         });
 
         it('should not call update when gradedPresentationEnabled is false', () => {
-            component.gradeStepsDTO.set({ presentationsNumber: 0, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
+            component.gradeSteps.set({ presentationsNumber: 0, gradeSteps: [] });
             const updateStub = vi.spyOn(participationService, 'update');
 
             component.addGradedPresentation({ ...sampleDto, presentationScore: 50 });

@@ -1,48 +1,61 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { Result, ResultSimpleDTO } from 'app/exercise/shared/entities/result/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ComplaintDTO, ParticipantDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { User } from 'app/account/user/user.model';
-import { Feedback, convertFeedbacksFromServer } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, convertFeedbackFromServer } from 'app/assessment/shared/entities/feedback.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { feedbackTypeByResponse, visibilityByResponse } from 'app/assessment/shared/util/feedback-response.util';
+import { ComplaintApi } from 'app/openapi/api/complaint-api';
+import type { Complaint as ComplaintDTO } from 'app/openapi/model/complaint';
+import type { ComplaintBySubmissionQuery } from 'app/openapi/model/complaint-by-submission-query';
+import type { ComplaintFeedback } from 'app/openapi/model/complaint-feedback';
+import type { ComplaintsForTutorQuery } from 'app/openapi/model/complaints-for-tutor-query';
+import type { ComplaintsQuery } from 'app/openapi/model/complaints-query';
+import type { Exercise as ExerciseResponse } from 'app/openapi/model/exercise';
+import type { GetComplaints200Response } from 'app/openapi/model/get-complaints200response';
+import type { Participant } from 'app/openapi/model/participant';
+import type { ResultSimple } from 'app/openapi/model/result-simple';
 
-export type EntityResponseType = HttpResponse<ComplaintDTO>;
-export type EntityResponseTypeArray = HttpResponse<ComplaintDTO[]>;
+/** The queries of {@link ComplaintApi#getComplaints} that return a list of complaints. */
+export type ComplaintListQuery = Exclude<ComplaintsQuery, ComplaintBySubmissionQuery>;
 
-export interface IComplaintService {
-    isComplaintLockedForLoggedInUser: (complaint: Complaint, exercise: Exercise) => boolean | undefined;
-    isComplaintLockedByLoggedInUser: (complaint: Complaint) => boolean | undefined;
-    isComplaintLocked: (complaint: Complaint) => boolean | undefined;
-    findBySubmissionIdForAssessment: (submissionId: number) => Observable<EntityResponseType>;
-    findForTutorByCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
-    findForTutorByExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
-    findBySubmissionId: (submissionId: number) => Observable<EntityResponseType>;
-    getComplaintsForTestRun: (exerciseId: number) => Observable<EntityResponseTypeArray>;
-    findAllByTutorIdForCourseId: (tutorId: number, courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
-    findAllByTutorIdForExerciseId: (tutorId: number, exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
-    findAllByCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
-    findAllByCourseIdAndExamId: (courseId: number, examId: number) => Observable<EntityResponseTypeArray>;
-    findAllByExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
-    findAllWithoutStudentInformationForCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
-    findAllWithoutStudentInformationForExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
-}
+const complaintTypeByResponse: Record<NonNullable<ComplaintDTO['complaintType']>, ComplaintType> = {
+    COMPLAINT: ComplaintType.COMPLAINT,
+    MORE_FEEDBACK: ComplaintType.MORE_FEEDBACK,
+};
 
+const assessmentTypeByResponse: Record<NonNullable<ResultSimple['assessmentType']>, AssessmentType> = {
+    AUTOMATIC: AssessmentType.AUTOMATIC,
+    SEMI_AUTOMATIC: AssessmentType.SEMI_AUTOMATIC,
+    MANUAL: AssessmentType.MANUAL,
+    AUTOMATIC_ATHENA: AssessmentType.AUTOMATIC_ATHENA,
+};
+
+const exerciseTypeByResponse: Record<NonNullable<ExerciseResponse['type']>, ExerciseType> = {
+    text: ExerciseType.TEXT,
+    programming: ExerciseType.PROGRAMMING,
+    modeling: ExerciseType.MODELING,
+    'file-upload': ExerciseType.FILE_UPLOAD,
+    quiz: ExerciseType.QUIZ,
+};
+
+/**
+ * Reads complaints through the generated {@link ComplaintApi} and converts them to the client {@link Complaint}: dates become dayjs, the
+ * enums become the client enums, and the participant becomes a student or a team. Also keeps the complaint lock rules.
+ */
 @Service()
-export class ComplaintService implements IComplaintService {
-    private http = inject(HttpClient);
+export class ComplaintService {
+    private complaintApi = inject(ComplaintApi);
     private complaintResponseService = inject(ComplaintResponseService);
-
-    private resourceUrl = 'api/assessment/complaints';
 
     /**
      * Checks if a complaint is locked for the currently logged-in user
@@ -85,107 +98,37 @@ export class ComplaintService implements IComplaintService {
     }
 
     /**
-     * Find complaint by Submission id.
-     * @param submissionId
+     * Finds the complaint about a result of the submission, for the owner of the participation. The server answers with an empty body when
+     * there is none.
+     * @param submissionId the submission whose complaint is requested
      */
-    findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
-        return this.http.get<ComplaintDTO>(`${this.resourceUrl}?submissionId=${submissionId}`, { observe: 'response' });
-    }
-
-    /** Find complaint detail for assessment rather than the participation owner. */
-    findBySubmissionIdForAssessment(submissionId: number): Observable<EntityResponseType> {
-        return this.http.get<ComplaintDTO>(`${this.resourceUrl}/for-assessment?submissionId=${submissionId}`, { observe: 'response' });
-    }
-
-    /** Find the current tutor's complaints in a course without student identities. */
-    findForTutorByCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        return this.requestComplaintsFromUrl(`${this.resourceUrl}/for-tutor?courseId=${courseId}&complaintType=${complaintType}`);
-    }
-
-    /** Find the current tutor's complaints in precisely one exercise without student identities. */
-    findForTutorByExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        return this.requestComplaintsFromUrl(`${this.resourceUrl}/for-tutor?exerciseId=${exerciseId}&complaintType=${complaintType}`);
+    findBySubmissionId(submissionId: number): Observable<ComplaintDTO | undefined> {
+        return this.complaintApi.getComplaints({ submissionId }).pipe(map((body) => (!body || Array.isArray(body) ? undefined : body)));
     }
 
     /**
-     * Find complaints for the instructor for a specified test run exercise (complaintType == 'COMPLAINT').
-     * @param exerciseId
+     * Finds the complaint about a result of the submission for its assessors rather than the participation owner. The server answers with
+     * an empty body when there is none.
+     * @param submissionId the submission whose complaint is requested
      */
-    getComplaintsForTestRun(exerciseId: number): Observable<EntityResponseTypeArray> {
-        return this.http.get<ComplaintDTO[]>(`${this.resourceUrl}?exerciseId=${exerciseId}`, { observe: 'response' });
+    findBySubmissionIdForAssessment(submissionId: number): Observable<ComplaintDTO | undefined> {
+        return this.complaintApi.getComplaintBySubmissionIdForAssessment(submissionId).pipe(map((body) => body ?? undefined));
     }
 
     /**
-     * Find all complaints by tutor id, course id, and complaintType.
-     * @param tutorId
-     * @param courseId
-     * @param complaintType
+     * Finds the complaints of a course, exercise, exam or test run with student information, for instructors.
+     * @param query the scope of the list, which selects the server handler
      */
-    findAllByTutorIdForCourseId(tutorId: number, courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?courseId=${courseId}&complaintType=${complaintType}&tutorId=${tutorId}`;
-        return this.requestComplaintsFromUrl(url);
+    findAll(query: ComplaintListQuery): Observable<Complaint[]> {
+        return this.complaintApi.getComplaints(query).pipe(map((body) => this.convertComplaintListFromServer(body)));
     }
 
     /**
-     * Find all complaints by course id and complaintType without student's information
-     * @param courseId - the course id for which the complaints should be retrieved
-     * @param complaintType - the type of complaint
+     * Finds the complaints of a course or exercise without student information, for tutors.
+     * @param query the scope of the list, and whether it holds the complaints about every assessor or only the current user's
      */
-    findAllWithoutStudentInformationForCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}/for-tutor?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
-        return this.requestComplaintsFromUrl(url);
-    }
-
-    /**
-     * Find all complaints of a single exercise and complaintType without student's information.
-     * Used by the tutor "All" scope on exercise-scoped pages, so it cannot leak complaints of other exercises.
-     * @param exerciseId - the exercise id for which the complaints should be retrieved
-     * @param complaintType - the type of complaint
-     */
-    findAllWithoutStudentInformationForExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}/for-tutor?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
-        return this.requestComplaintsFromUrl(url);
-    }
-
-    /**
-     * Find all complaints by tutor id, exercise id, and complaintType.
-     * @param tutorId
-     * @param exerciseId
-     * @param complaintType
-     */
-    findAllByTutorIdForExerciseId(tutorId: number, exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?exerciseId=${exerciseId}&complaintType=${complaintType}&tutorId=${tutorId}`;
-        return this.requestComplaintsFromUrl(url);
-    }
-
-    /**
-     * Find all complaints by course id and complaintType.
-     * @param courseId
-     * @param complaintType
-     */
-    findAllByCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?courseId=${courseId}&complaintType=${complaintType}`;
-        return this.requestComplaintsFromUrl(url);
-    }
-
-    /**
-     * Find all complaints by course id and exam id.
-     * @param courseId
-     * @param examId
-     */
-    findAllByCourseIdAndExamId(courseId: number, examId: number): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?courseId=${courseId}&examId=${examId}`;
-        return this.requestComplaintsFromUrl(url);
-    }
-
-    /**
-     * Find all complaints by exercise id and complaintType.
-     * @param exerciseId
-     * @param complaintType
-     */
-    findAllByExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?exerciseId=${exerciseId}&complaintType=${complaintType}`;
-        return this.requestComplaintsFromUrl(url);
+    findAllForTutor(query: ComplaintsForTutorQuery): Observable<Complaint[]> {
+        return this.complaintApi.getComplaintsForTutor(query).pipe(map((body) => this.convertComplaintListFromServer(body)));
     }
 
     /**
@@ -259,10 +202,6 @@ export class ComplaintService implements IComplaintService {
         return complaintStartDate.add(complaintTimeFrame, 'days');
     }
 
-    private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {
-        return this.http.get<ComplaintDTO[]>(url, { observe: 'response' });
-    }
-
     /**
      * Converts a complaint DTO into a {@link Complaint}, attaching the already-loaded result the complaint belongs to.
      * Used when the surrounding component already holds the full result (e.g. assessment editors). The result may be
@@ -276,7 +215,7 @@ export class ComplaintService implements IComplaintService {
 
     /**
      * Converts a complaint DTO into a {@link Complaint}, reconstructing the reduced result from the DTO.
-     * Used for complaint lists where only the slim {@link ResultSimpleDTO} is available.
+     * Used for complaint lists where only the slim {@link ResultSimple} is available.
      */
     public convertComplaintFromServerInList(dto: ComplaintDTO): Complaint {
         const complaint = this.convertComplaintBaseFromServer(dto);
@@ -286,6 +225,10 @@ export class ComplaintService implements IComplaintService {
         return complaint;
     }
 
+    private convertComplaintListFromServer(body: GetComplaints200Response | null): Complaint[] {
+        return Array.isArray(body) ? body.map((dto) => this.convertComplaintFromServerInList(dto)) : [];
+    }
+
     /**
      * Converts the fields shared by both complaint conversions (without the result, which differs between the two).
      */
@@ -293,7 +236,7 @@ export class ComplaintService implements IComplaintService {
         const complaint = new Complaint();
         complaint.id = dto.id;
         complaint.complaintText = dto.complaintText;
-        complaint.complaintType = dto.complaintType;
+        complaint.complaintType = dto.complaintType && complaintTypeByResponse[dto.complaintType];
         complaint.accepted = dto.complaintIsAccepted;
         complaint.submittedTime = dto.submittedTime ? dayjs(dto.submittedTime) : undefined;
         complaint.assessorKey = dto.assessorKey;
@@ -309,7 +252,7 @@ export class ComplaintService implements IComplaintService {
     /**
      * Assigns the participant of the complaint as either a student or a team, depending on the DTO flag.
      */
-    private assignParticipant(complaint: Complaint, participant?: ParticipantDTO): void {
+    private assignParticipant(complaint: Complaint, participant?: Participant): void {
         if (participant?.isStudent === true) {
             complaint.student = hydrate(new User(), {
                 id: participant.id,
@@ -326,28 +269,27 @@ export class ComplaintService implements IComplaintService {
     }
 
     /**
-     * Reconstructs a {@link Result} from the slim {@link ResultSimpleDTO} contained in a complaint list response.
+     * Reconstructs a {@link Result} from the slim {@link ResultSimple} contained in a complaint list response.
      */
-    private convertResultSimpleFromServer(resultDto: ResultSimpleDTO): Result {
+    private convertResultSimpleFromServer(resultDto: ResultSimple): Result {
         const result = new Result();
         result.id = resultDto.id;
         result.completionDate = resultDto.completionDate ? dayjs(resultDto.completionDate) : undefined;
         result.score = resultDto.score;
         result.rated = resultDto.rated;
         result.successful = resultDto.successful;
-        result.assessmentType = resultDto.assessmentType;
+        result.assessmentType = resultDto.assessmentType && assessmentTypeByResponse[resultDto.assessmentType];
 
         if (resultDto.assessor) {
             result.assessor = hydrate(new User(), {
                 id: resultDto.assessor.id,
                 login: resultDto.assessor.login,
                 name: resultDto.assessor.name,
-                email: resultDto.assessor.email,
             });
         }
 
         if (resultDto.feedbacks) {
-            result.feedbacks = convertFeedbacksFromServer(resultDto.feedbacks);
+            result.feedbacks = resultDto.feedbacks.map((feedback) => this.convertFeedbackFromServer(feedback));
         }
 
         if (resultDto.submission) {
@@ -362,7 +304,7 @@ export class ComplaintService implements IComplaintService {
                 if (exerciseDto || resultDto.exerciseTitle) {
                     const exercise: Partial<Exercise> = {
                         id: exerciseDto?.id,
-                        type: exerciseDto?.type,
+                        type: exerciseDto?.type && exerciseTypeByResponse[exerciseDto.type],
                         title: resultDto.exerciseTitle,
                     };
                     participation.exercise = exercise as Exercise;
@@ -372,6 +314,25 @@ export class ComplaintService implements IComplaintService {
             result.submission = submission;
         }
         return result;
+    }
+
+    /**
+     * Converts a feedback of a complaint's result like every other feedback from the server, including the test case it names.
+     */
+    private convertFeedbackFromServer(feedback: ComplaintFeedback): Feedback {
+        return convertFeedbackFromServer({
+            id: feedback.id,
+            text: feedback.text,
+            detailText: feedback.detailText,
+            hasLongFeedbackText: feedback.hasLongFeedbackText,
+            reference: feedback.reference,
+            credits: feedback.credits,
+            positive: feedback.positive,
+            type: feedback.type && feedbackTypeByResponse[feedback.type],
+            visibility: feedback.visibility && visibilityByResponse[feedback.visibility],
+            testCaseName: feedback.testCaseName,
+            gradingInstruction: feedback.gradingInstruction,
+        });
     }
 
     /**

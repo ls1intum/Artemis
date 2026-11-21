@@ -44,7 +44,7 @@ import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import type { Complaint as ComplaintDTO } from 'app/openapi/model/complaint';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
@@ -164,12 +164,9 @@ describe('FileUploadAssessmentComponent', () => {
                 {
                     provide: ComplaintService,
                     useValue: {
-                        findBySubmissionIdForAssessment: vi.fn().mockReturnValue(of({ body: null })),
+                        findBySubmissionIdForAssessment: vi.fn().mockReturnValue(of(undefined)),
                         convertComplaintFromServer: vi.fn((dto: ComplaintDTO, result?: Result) =>
-                            Object.assign(new Complaint(), dto, {
-                                accepted: dto.complaintIsAccepted ?? (dto as Complaint).accepted,
-                                result,
-                            }),
+                            Object.assign(new Complaint(), { id: dto.id, complaintText: dto.complaintText, accepted: dto.complaintIsAccepted, result }),
                         ),
                         getFeedbacksForUpdateAfterComplaint: vi.fn((feedbacks: Feedback[]) => feedbacks),
                         getComplaintResponseForUpdateAfterComplaint: vi.fn((complaintResponse: ComplaintResponse) => complaintResponse),
@@ -444,11 +441,9 @@ describe('FileUploadAssessmentComponent', () => {
             const result = createResult(submission);
             result.hasComplaint = true;
             setLatestSubmissionResult(submission, result);
-            const complaint = new ComplaintDTO();
-            complaint.id = 555;
-            complaint.complaintText = 'Test complaint';
+            const complaint: ComplaintDTO = { id: 555, complaintText: 'Test complaint' };
             vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
-            vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
+            vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of(complaint));
 
             component.ngOnInit();
 
@@ -1112,18 +1107,15 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should load complaint successfully', () => {
-            const complaint = new Complaint();
-            complaint.id = 123;
-            complaint.complaintText = 'Test complaint';
-            vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
+            vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of({ id: 123, complaintText: 'Test complaint' }));
 
             component.getComplaint();
 
-            expect(component.complaint()).toEqual(complaint);
+            expect(component.complaint()).toEqual(Object.assign(new Complaint(), { id: 123, complaintText: 'Test complaint', accepted: undefined, result: component.result() }));
         });
 
         it('should not set complaint when response body is null', () => {
-            vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of({ body: null } as HttpResponse<ComplaintDTO>));
+            vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of(undefined));
 
             component.getComplaint();
 

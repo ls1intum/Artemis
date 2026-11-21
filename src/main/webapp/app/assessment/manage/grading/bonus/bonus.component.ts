@@ -26,7 +26,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { toGradingScale } from 'app/assessment/shared/util/grading-scale-response.util';
+import { GradingScaleApi } from 'app/openapi/api/grading-scale-api';
 import { Course } from 'app/course/shared/entities/course.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
@@ -72,6 +73,7 @@ export class BonusComponent implements OnInit {
     private bonusService = inject(BonusService);
     private bonusApi = inject(BonusApi);
     private gradingService = inject(GradingService);
+    private gradingScaleApi = inject(GradingScaleApi);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private alertService = inject(AlertService);
@@ -172,20 +174,22 @@ export class BonusComponent implements OnInit {
                     throw error;
                 }),
             ),
-            this.gradingService.findWithBonusGradeTypeForInstructor(this.state).pipe(
-                tap((gradingScalesDto) => {
-                    this.sourceGradingScales.set(
-                        gradingScalesDto.body?.resultsOnPage.map((dto) => {
-                            const scale = toEntity(dto);
-                            // The search response carries the owning course/exam only as a flat title/maxPoints pair inside
-                            // gradeSteps; reconstruct a minimal course so the dropdown label and the bonus example calculation
-                            // can read them.
-                            scale.course = hydrate(new Course(), { title: dto.gradeSteps.title, maxPoints: dto.gradeSteps.maxPoints });
-                            return scale;
-                        }) ?? [],
-                    );
-                }),
-            ),
+            this.gradingScaleApi
+                .getAllGradingScalesInInstructorGroupOnPage(this.state.searchTerm, this.state.sortedColumn, this.state.page, this.state.pageSize, this.state.sortingOrder)
+                .pipe(
+                    tap((gradingScalesPage) => {
+                        this.sourceGradingScales.set(
+                            gradingScalesPage.resultsOnPage?.map((dto) => {
+                                const scale = toGradingScale(dto);
+                                // The search response carries the owning course/exam only as a flat title/maxPoints pair inside
+                                // gradeSteps; reconstruct a minimal course so the dropdown label and the bonus example calculation
+                                // can read them.
+                                scale.course = hydrate(new Course(), { title: dto.gradeSteps.title, maxPoints: dto.gradeSteps.maxPoints });
+                                return scale;
+                            }) ?? [],
+                        );
+                    }),
+                ),
             this.gradingService.findGradeSteps(this.courseId, this.examId, 'management').pipe(
                 tap((gradeSteps) => {
                     if (gradeSteps) {

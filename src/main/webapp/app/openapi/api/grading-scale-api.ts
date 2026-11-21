@@ -30,10 +30,11 @@ export class GradingScaleApi {
      *
      * @param courseId
      * @param gradingScaleUpdate
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createGradingScaleForCourse(courseId: number, gradingScaleUpdate: GradingScaleUpdate): Observable<GradingScale> {
+    createGradingScaleForCourse(courseId: number, gradingScaleUpdate: GradingScaleUpdate, options?: import('./request-options').RequestOptions): Observable<GradingScale> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/grading-scale`;
-        return this.http.post<GradingScale>(url, gradingScaleUpdate);
+        return this.http.post<GradingScale>(url, gradingScaleUpdate, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -42,20 +43,22 @@ export class GradingScaleApi {
      * @param courseId
      * @param examId
      * @param gradingScaleUpdate
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createGradingScaleForExam(courseId: number, examId: number, gradingScaleUpdate: GradingScaleUpdate): Observable<GradingScale> {
+    createGradingScaleForExam(courseId: number, examId: number, gradingScaleUpdate: GradingScaleUpdate, options?: import('./request-options').RequestOptions): Observable<GradingScale> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/exams/${examId}/grading-scale`;
-        return this.http.post<GradingScale>(url, gradingScaleUpdate);
+        return this.http.post<GradingScale>(url, gradingScaleUpdate, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    deleteGradingScaleForCourse(courseId: number): Observable<void> {
+    deleteGradingScaleForCourse(courseId: number, options?: import('./request-options').RequestOptions): Observable<void> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/grading-scale`;
-        return this.http.delete<void>(url);
+        return this.http.delete<void>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -63,39 +66,44 @@ export class GradingScaleApi {
      *
      * @param courseId
      * @param examId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    deleteGradingScaleForExam(courseId: number, examId: number): Observable<void> {
+    deleteGradingScaleForExam(courseId: number, examId: number, options?: import('./request-options').RequestOptions): Observable<void> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/exams/${examId}/grading-scale`;
-        return this.http.delete<void>(url);
+        return this.http.delete<void>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param searchTerm
+     * @param sortedColumn The column to sort by
      * @param page
      * @param pageSize
      * @param sortingOrder
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getAllGradingScalesInInstructorGroupOnPage(searchTerm: string, page?: number, pageSize?: number, sortingOrder?: 'ASCENDING' | 'DESCENDING'): Observable<SearchResultPageDTOGradingScale> {
+    getAllGradingScalesInInstructorGroupOnPage(searchTerm: string, sortedColumn: string, page?: number, pageSize?: number, sortingOrder?: 'ASCENDING' | 'DESCENDING', options?: import('./request-options').RequestOptions): Observable<SearchResultPageDTOGradingScale> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'searchTerm', searchTerm);
         appendQueryParam(queryParams, 'page', page);
         appendQueryParam(queryParams, 'pageSize', pageSize);
         appendQueryParam(queryParams, 'sortingOrder', sortingOrder);
+        appendQueryParam(queryParams, 'sortedColumn', sortedColumn);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/grading-scales${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<SearchResultPageDTOGradingScale>(url);
+        return this.http.get<SearchResultPageDTOGradingScale>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getGradingScaleForCourse(courseId: number): Observable<GradingScale> {
+    getGradingScaleForCourse(courseId: number, options?: import('./request-options').RequestOptions): Observable<GradingScale> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/grading-scale`;
-        return this.http.get<GradingScale>(url);
+        return this.http.get<GradingScale>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -103,10 +111,11 @@ export class GradingScaleApi {
      *
      * @param courseId
      * @param examId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getGradingScaleForExam(courseId: number, examId: number): Observable<GradingScale> {
+    getGradingScaleForExam(courseId: number, examId: number, options?: import('./request-options').RequestOptions): Observable<GradingScale> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/exams/${examId}/grading-scale`;
-        return this.http.get<GradingScale>(url);
+        return this.http.get<GradingScale>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -114,10 +123,11 @@ export class GradingScaleApi {
      *
      * @param courseId
      * @param gradingScaleUpdate
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    updateGradingScaleForCourse(courseId: number, gradingScaleUpdate: GradingScaleUpdate): Observable<GradingScale> {
+    updateGradingScaleForCourse(courseId: number, gradingScaleUpdate: GradingScaleUpdate, options?: import('./request-options').RequestOptions): Observable<GradingScale> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/grading-scale`;
-        return this.http.put<GradingScale>(url, gradingScaleUpdate);
+        return this.http.put<GradingScale>(url, gradingScaleUpdate, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -126,10 +136,11 @@ export class GradingScaleApi {
      * @param courseId
      * @param examId
      * @param gradingScaleUpdate
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    updateGradingScaleForExam(courseId: number, examId: number, gradingScaleUpdate: GradingScaleUpdate): Observable<GradingScale> {
+    updateGradingScaleForExam(courseId: number, examId: number, gradingScaleUpdate: GradingScaleUpdate, options?: import('./request-options').RequestOptions): Observable<GradingScale> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/exams/${examId}/grading-scale`;
-        return this.http.put<GradingScale>(url, gradingScaleUpdate);
+        return this.http.put<GradingScale>(url, gradingScaleUpdate, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

@@ -8,9 +8,9 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import type { Feedback } from './feedback';
 import type { SubmissionWithParticipation } from './submission-with-participation';
 import type { UserPublicInfo } from './user-public-info';
+import type { ComplaintFeedback } from './complaint-feedback';
 
 export interface ResultSimple {
     id?: number;
@@ -21,7 +21,7 @@ export interface ResultSimple {
     assessmentType?: ResultSimpleAssessmentTypeEnum;
     submission?: SubmissionWithParticipation;
     assessor?: UserPublicInfo;
-    feedbacks?: Array<Feedback>;
+    feedbacks?: Array<ComplaintFeedback>;
     exerciseTitle?: string;
 }
 
