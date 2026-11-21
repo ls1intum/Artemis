@@ -93,6 +93,20 @@ class BuildJobQueueItemValidatorTest {
     }
 
     @Test
+    void testJobOfAContainerWithoutTheTestRepositoryIsAccepted() {
+        var job = job(uri("PROJ", "proj-student1"), null, null, new String[0], new String[0], null, null, null);
+
+        assertThatCode(() -> BuildJobQueueItemValidator.validate(job)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void testInvalidTestRepositoryUriIsRejected() {
+        var job = job(uri("PROJ", "proj-student1"), uri("..", "..x"), null, new String[0], new String[0], null, null, null);
+
+        assertThatThrownBy(() -> BuildJobQueueItemValidator.validate(job)).isInstanceOf(LocalCIException.class);
+    }
+
+    @Test
     void testAuxiliaryRepositoriesNeedOneCheckoutDirectoryEach() {
         var missingDirectories = job(uri("PROJ", "proj-student1"), uri("PROJ", "proj-tests"), null, new String[] { uri("PROJ", "proj-aux") }, new String[0], null, null, null);
         var withoutDirectories = job(uri("PROJ", "proj-student1"), uri("PROJ", "proj-tests"), null, new String[] { uri("PROJ", "proj-aux") }, null, null, null, null);

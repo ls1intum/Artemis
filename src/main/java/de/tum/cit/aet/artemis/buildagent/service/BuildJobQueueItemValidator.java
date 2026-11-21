@@ -35,7 +35,8 @@ final class BuildJobQueueItemValidator {
     static void validate(BuildJobQueueItem buildJob) {
         RepositoryInfo repositoryInfo = buildJob.repositoryInfo();
         validateRepositoryUri(repositoryInfo.assignmentRepositoryUri(), true);
-        validateRepositoryUri(repositoryInfo.testRepositoryUri(), true);
+        // a build container scoped to exclude the test repository is queued without its URI, so the instructor's tests never reach it
+        validateRepositoryUri(repositoryInfo.testRepositoryUri(), false);
         validateRepositoryUri(repositoryInfo.solutionRepositoryUri(), false);
         String[] auxiliaryRepositoryUris = repositoryInfo.auxiliaryRepositoryUris();
         if (auxiliaryRepositoryUris != null) {
