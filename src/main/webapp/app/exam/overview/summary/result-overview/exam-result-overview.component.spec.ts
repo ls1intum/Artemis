@@ -583,9 +583,8 @@ describe('ExamResultOverviewComponent', () => {
             render();
 
             const heading: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-summary-heading"]');
-            // global.scss sets the font weight of headings outside a cascade layer, so the weight needs the important modifier
             expect(heading.classList).toContain('text-base');
-            expect(heading.classList).toContain('font-semibold!');
+            expect(heading.classList).toContain('font-semibold');
         });
 
         describe('points and grade summary', () => {

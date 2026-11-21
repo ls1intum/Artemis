@@ -23,7 +23,6 @@ $font-size-base: 0.9rem !default;
 $line-height-base: 1.5 !default;
 $headings-margin-bottom: 0.5rem !default;
 $paragraph-margin-bottom: 1rem !default;
-$link-hover-color: mix(black, $link-color, 20%) !default;
 $code-color: $pink !default;
 $mark-bg: mix(white, $yellow, 80%) !default;
 
@@ -92,6 +91,13 @@ $fluid-font-size-breakpoint: 1200px;
         font-weight: 500;
         line-height: 1.2;
         color: inherit;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        font-weight: 400;
     }
 
     h1 {
@@ -172,6 +178,10 @@ $fluid-font-size-breakpoint: 1200px;
         font-weight: bolder;
     }
 
+    b {
+        font-weight: 500;
+    }
+
     small,
     .small {
         font-size: 0.875em;
@@ -202,10 +212,7 @@ $fluid-font-size-breakpoint: 1200px;
     a {
         color: $link-color;
         text-decoration: underline;
-
-        &:hover {
-            color: $link-hover-color;
-        }
+        cursor: pointer; // also for anchors without `href`
 
         &:not([href]):not([class]),
         &:not([href]):not([class]):hover {
@@ -224,10 +231,17 @@ $fluid-font-size-breakpoint: 1200px;
 
     pre {
         display: block;
-        margin-top: 0;
-        margin-bottom: 1rem;
+        padding: 9.5px;
+        margin: 0 0 10px;
         overflow: auto;
-        font-size: 0.875em;
+        font-size: 13px;
+        line-height: 1.4268;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+        color: $artemis-pre-color;
+        background-color: $artemis-pre-background;
+        border: 1px solid $artemis-pre-border;
+        border-radius: 4px;
 
         code {
             font-size: inherit;
@@ -317,6 +331,10 @@ $fluid-font-size-breakpoint: 1200px;
         font-family: inherit;
         font-size: inherit;
         line-height: inherit;
+    }
+
+    textarea {
+        background-color: $form-control-focus-background;
     }
 
     button,

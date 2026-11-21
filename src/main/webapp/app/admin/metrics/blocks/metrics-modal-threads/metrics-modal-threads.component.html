@@ -25,7 +25,7 @@
             <h6 class="flex items-center gap-2 flex-wrap">
                 <tumaet-ui-tag [severity]="getBadgeSeverity(thread.threadState)" [value]="thread.threadState" data-testid="thread-state-tag" />
                 {{ thread.threadName }} (ID {{ thread.threadId }})
-                <a (click)="thread.showThreadDump = !thread.showThreadDump" href="javascript:void(0);" class="text-primary!">
+                <a (click)="thread.showThreadDump = !thread.showThreadDump" href="javascript:void(0);" class="text-primary">
                     <span [hidden]="thread.showThreadDump" jhiTranslate="metrics.jvm.threads.dump.show"></span>
                     <span [hidden]="!thread.showThreadDump" jhiTranslate="metrics.jvm.threads.dump.hide"></span>
                 </a>

@@ -1,8 +1,8 @@
 @if (questions().status !== 'DISABLED') {
     <section aria-labelledby="home-questions-heading" data-testid="home-questions">
         <div class="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-            <h2 id="home-questions-heading" class="text-lg font-semibold! m-0">{{ 'artemisApp.courseHome.questions' | artemisTranslate }}</h2>
-            <a [routerLink]="['/courses', courseId(), 'communication']" class="text-(--tumaet-ui-primary-color)! text-sm">{{
+            <h2 id="home-questions-heading" class="text-lg font-semibold m-0">{{ 'artemisApp.courseHome.questions' | artemisTranslate }}</h2>
+            <a [routerLink]="['/courses', courseId(), 'communication']" class="text-(--tumaet-ui-primary-color) text-sm">{{
                 'artemisApp.courseHome.allQuestions' | artemisTranslate
             }}</a>
         </div>
@@ -13,7 +13,7 @@
                 @for (question of questions().items ?? []; track question.postId) {
                     @let destination = target(courseId(), { kind: 'THREAD', id: question.postId, conversationId: question.conversationId, focusReplyId: question.focusReplyId });
                     <li class="py-3 first:pt-0 last:pb-0">
-                        <a [routerLink]="destination.commands" [queryParams]="destination.queryParams" class="text-(--tumaet-ui-primary-color)! block font-medium wrap-anywhere">{{
+                        <a [routerLink]="destination.commands" [queryParams]="destination.queryParams" class="text-(--tumaet-ui-primary-color) block font-medium wrap-anywhere">{{
                             question.title
                         }}</a>
                         <div class="flex flex-wrap items-center gap-2 mt-2 text-sm">

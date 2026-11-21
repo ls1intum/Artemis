@@ -60,7 +60,7 @@
                         @if (!result()?.feedbacks?.length) {
                             <div class="flex flex-wrap">
                                 <div class="w-full lg:w-10/12 xl:w-8/12">
-                                    <b class="text-base font-semibold!" [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
+                                    <b class="text-base font-semibold" [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
                                     <hr />
                                     <jhi-text-result [result]="result()" [course]="course()" />
                                     <hr />
@@ -70,7 +70,7 @@
                         } @else {
                             <div class="flex flex-wrap">
                                 <div class="w-full lg:w-10/12 xl:w-8/12">
-                                    <b class="text-base font-semibold!" data-testid="assessed-submission-label">
+                                    <b class="text-base font-semibold" data-testid="assessed-submission-label">
                                         {{
                                             isOwnerOfParticipation()
                                                 ? ('artemisApp.textExercise.assessedSubmission' | artemisTranslate)

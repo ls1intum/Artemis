@@ -33,7 +33,7 @@ $course-form-inset: 1rem;
     padding: $course-form-inset;
 }
 
-/* The title is sized here; global.scss sets the font weight of headings outside a cascade layer, which a utility could not override. */
+/* The title is sized here, with the rest of the header. */
 .course-create-title {
     margin: 0;
     font-size: 1.25rem;

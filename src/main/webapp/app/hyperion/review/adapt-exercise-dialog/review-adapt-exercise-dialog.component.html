@@ -183,20 +183,14 @@
                                             <div class="mt-1.5">
                                                 <small class="block font-semibold" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixLabel"></small>
                                                 @if (fix.expectedCode) {
-                                                    <pre
-                                                        class="mb-0! rounded-md border-l-[3px] border-l-state-danger/40 bg-state-danger/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
-                                                        >{{ fix.expectedCode }}</pre>
+                                                    <pre class="mb-0">{{ fix.expectedCode }}</pre>
                                                 }
-                                                <pre
-                                                    class="mb-0! rounded-md border-l-[3px] border-l-state-success/40 bg-state-success/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
-                                                    >{{ fix.replacementCode }}</pre>
+                                                <pre class="mb-0">{{ fix.replacementCode }}</pre>
                                             </div>
                                         } @else if (fix.expectedCode) {
                                             <div class="mt-1.5">
                                                 <small class="block font-semibold" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixRemoveLabel"></small>
-                                                <pre
-                                                    class="mb-0! rounded-md border-l-[3px] border-l-state-danger/40 bg-state-danger/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
-                                                    >{{ fix.expectedCode }}</pre>
+                                                <pre class="mb-0">{{ fix.expectedCode }}</pre>
                                             </div>
                                         }
                                     }

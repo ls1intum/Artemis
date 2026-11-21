@@ -92,25 +92,11 @@ html:fullscreen:has(> body > .apollon-fullscreen-frame) > .cdk-overlay-container
 Typography and links
 ===============================================================*/
 
-body,
-h1,
-h2,
-h3,
-h4 {
-    font-weight: 400;
-}
-
-a:not(.tumaet-ui-btn, .tumaet-ui-list-item-action, .tumaet-ui-menu-item, .tab-link) {
-    color: $link-color;
-    cursor: pointer;
-}
-
-/* An anchor without `href` and `class` is a placeholder, not a link (`_base.scss` says the same in its layer). */
-a:not([href]):not([class]) {
-    color: inherit;
-}
-
-/* `_base.scss` underlines links by default */
+/*
+ * Links are not underlined, except on hover. These two rules are important and outside the cascade layers on
+ * purpose: component stylesheets rely on their precedence (see below). All other element defaults are in the
+ * layer `base` of `_base.scss`.
+ */
 a {
     text-decoration: none !important;
 }
@@ -144,16 +130,16 @@ a.disabled {
     cursor: pointer;
 }
 
+/* Important and outside the cascade layers: it also sets the text colour of TUM AET UI text areas, whose own colour would win otherwise. */
+textarea {
+    color: $form-control-color !important;
+}
+
 .form-inline {
     display: flex;
     flex-flow: row wrap;
     align-items: center;
     text-align: left;
-}
-
-textarea {
-    background-color: $form-control-focus-background;
-    color: $form-control-color !important;
 }
 
 /* ==========================================================================
@@ -255,11 +241,6 @@ a[tumAetUiButton].disabled {
     flex-shrink: 0;
 }
 
-a:hover {
-    /* make sure browsers use the pointer cursor for anchors, even with no href */
-    cursor: pointer;
-}
-
 .hand,
 [jhisortby] {
     cursor: pointer;
@@ -330,10 +311,6 @@ span.bold {
     font-weight: bold;
 }
 
-b {
-    font-weight: 500;
-}
-
 .negative,
 .positive {
     padding: 2px 4px;
@@ -349,20 +326,6 @@ b {
 .positive {
     color: $positive-color;
     background-color: $positive-background;
-}
-
-pre {
-    display: block;
-    padding: 9.5px;
-    margin: 0 0 10px;
-    font-size: 13px;
-    line-height: 1.4268;
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
-    color: $artemis-pre-color;
-    background-color: $artemis-pre-background;
-    border: 1px solid $artemis-pre-border;
-    border-radius: 4px;
 }
 
 code.password {

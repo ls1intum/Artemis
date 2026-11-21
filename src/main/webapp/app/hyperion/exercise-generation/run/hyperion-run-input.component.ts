@@ -20,7 +20,7 @@ import { ExerciseGenerationInput } from 'app/openapi/model/exercise-generation-i
                 <p class="mt-0 mb-4! whitespace-pre-wrap wrap-anywhere" data-testid="hyperion-run-input-prompt">{{ prompt }}</p>
             }
             @if (context().reviewFeedback?.length) {
-                <h2 class="font-semibold" jhiTranslate="artemisApp.hyperion.generation.run.selectedFeedback"></h2>
+                <h2 jhiTranslate="artemisApp.hyperion.generation.run.selectedFeedback"></h2>
                 <ul class="m-0 flex list-none flex-col gap-4! p-0" data-testid="hyperion-run-input-feedback">
                     @for (thread of context().reviewFeedback; track $index) {
                         <li class="border-l-2 border-border pl-3">

@@ -4,7 +4,7 @@
     [class]="isEndView() ? 'mx-auto w-full max-w-[900px] max-[900px]:max-w-[600px] max-[600px]:max-w-[500px]' : ''"
 >
     <div class="flex min-w-0 items-center gap-2">
-        <h3 class="m-0 truncate text-base leading-tight font-semibold!" data-testid="exam-bar-title">{{ examTitle() }}</h3>
+        <h3 class="m-0 truncate text-base leading-tight font-semibold" data-testid="exam-bar-title">{{ examTitle() }}</h3>
         @if (isTestRun()) {
             <tumaet-ui-tag id="testRunRibbon" severity="danger" class="shrink-0">
                 <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>

@@ -3,7 +3,7 @@
 <span class="sr-only" role="status">{{ status ? (status | artemisTranslate) : '' }}</span>
 @if (transferring() || pendingRef() || current?.connected || current?.attachedRef || transferError()) {
     <section class="mt-6 flex flex-col gap-2 rounded border border-(--border-color) p-4" data-testid="tum-live-upload">
-        <h3 #heading tabindex="-1" class="">{{ 'artemisApp.tumLiveUpload.title' | artemisTranslate }}</h3>
+        <h3 #heading tabindex="-1">{{ 'artemisApp.tumLiveUpload.title' | artemisTranslate }}</h3>
         @if (transferProgress() !== undefined) {
             <span>{{ status! | artemisTranslate }}</span>
             <span>{{ file()?.name }}</span>

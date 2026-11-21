@@ -1031,9 +1031,9 @@ reliably pick up changes of `tailwind.css`.
 Tailwind emits its utilities into the cascade layer `utilities`. The element defaults of `_base.scss` are in the layer
 `base`, which comes first, so a utility overrides them: `<p class="mt-6">` has a top margin and `<h2 class="text-xl">`
 the size of the utility. A declaration outside a layer still wins over every utility. That is the SCSS of the
-components, the classes of TUM AET UI and the rules of `global.scss` (the link colour, `pre`, `textarea` and the font
-weight of `h1` to `h4`). Where a utility has to override one of those, write Tailwind's important
-modifier: `mb-6!`, `text-state-danger!`.
+components and the classes of TUM AET UI. Where a utility has to override one of those, write Tailwind's important
+modifier: `mb-6!`, `text-state-danger!`. `global.scss` keeps two element rules outside the layers on purpose: links
+are not underlined except on hover, and the text colour of a `textarea`.
 
 `rounded` and the shadows `shadow-sm`, `shadow` and `shadow-lg` have the values Artemis has always rendered, not
 Tailwind's defaults; `tailwind.css` sets them in its `@theme` block. A bare `border` draws a 1px line in the default
