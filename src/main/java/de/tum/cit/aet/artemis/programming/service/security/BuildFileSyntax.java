@@ -115,6 +115,12 @@ final class BuildFileSyntax {
 
     private static final Pattern MAVEN_PROFILES_END = Pattern.compile("</profiles\\s*+>");
 
+    /** A single profile of a POM, from its start tag to its end tag. */
+    private static final Pattern MAVEN_PROFILE = Pattern.compile("<profile\\s*+>.*?</profile\\s*+>", Pattern.DOTALL);
+
+    /** The activation of a profile, e.g. through {@code activeByDefault} or a property, which can make the profile apply without being named in the build. */
+    private static final Pattern MAVEN_ACTIVATION = Pattern.compile("<activation\\s*+>");
+
     private BuildFileSyntax() {
         throw new UnsupportedOperationException("Utility class");
     }
@@ -138,7 +144,7 @@ final class BuildFileSyntax {
      * {@code configurations.aresAgent}. Another agent, such as JaCoCo, and text in comments do not count. Only the build file of the build tool that pins
      * the Ares version counts, see {@link SecurityPolicyRepositoryFiles#detectBuildTool(String, String)}, since another build file the repository keeps,
      * e.g. a {@code pom.xml} next to the {@code build.gradle}, does not run; without a pin, the Gradle build counts if there is one. A Maven build that runs the
-     * tests in its own JVM, with a {@code forkCount} of 0, attaches no agent, since Surefire then ignores the {@code argLine} that names it.
+     * tests in its own JVM attaches no agent, see {@link #runsTestsInMavenJvm(String)}.
      *
      * @param buildFiles the build files at the root of a repository
      * @return whether the build file of the repository's build tool attaches the Ares agent
@@ -147,10 +153,23 @@ final class BuildFileSyntax {
         Optional<SecurityPolicyRepositoryFiles.BuildTool> buildTool = SecurityPolicyRepositoryFiles.detectBuildTool(buildFiles.gradleBuild(), buildFiles.mavenPom());
         boolean maven = buildTool.map(SecurityPolicyRepositoryFiles.BuildTool.MAVEN::equals).orElse(buildFiles.gradleBuild() == null);
         if (maven) {
-            return Stream.ofNullable(buildFiles.mavenPom()).map(content -> withoutMarked(content, mavenComments(content))).anyMatch(
-                    code -> MAVEN_ARES_AGENT.matcher(code).find() && !MAVEN_TESTS_IN_PROCESS.matcher(code).find() && javaAgents(code).anyMatch(BuildFileSyntax::namesAres));
+            return Stream.ofNullable(buildFiles.mavenPom()).map(content -> withoutMarked(content, mavenComments(content)))
+                    .anyMatch(code -> MAVEN_ARES_AGENT.matcher(code).find() && !runsTestsInMavenJvm(code) && javaAgents(code).anyMatch(BuildFileSyntax::namesAres));
         }
         return gradleAttachesAresAgent(withoutMarked(buildFiles.gradleBuild(), gradleComments(buildFiles.gradleBuild())));
+    }
+
+    /**
+     * Whether Surefire runs the tests in the Maven JVM, where it ignores its {@code argLine}: with a {@code forkCount} of 0 in the POM itself or in a profile
+     * that can apply on its own through an activation, e.g. {@code activeByDefault}. A profile without an activation only applies if the build names it,
+     * which the build of the Artemis templates, {@code mvn clean test}, does not do.
+     *
+     * @param code the POM without comments
+     */
+    private static boolean runsTestsInMavenJvm(String code) {
+        boolean[] profiles = mavenProfiles(code, new boolean[code.length()]);
+        return MAVEN_TESTS_IN_PROCESS.matcher(code).results().anyMatch(forkCount -> !profiles[forkCount.start()] || MAVEN_PROFILE.matcher(code).results()
+                .anyMatch(profile -> profile.start() < forkCount.start() && forkCount.end() <= profile.end() && MAVEN_ACTIVATION.matcher(profile.group()).find()));
     }
 
     /**

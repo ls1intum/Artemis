@@ -533,8 +533,10 @@ class SecurityPolicyEditorServiceTest {
         SecurityPolicyPreviewDTO preview = editorService.preview(exercise(),
                 change(editor, edited(loadedPolicy(editor), List.of("de.example.SortingTest#testMergeSort", "de.example.StressTest"))));
 
-        // Only the annotations change, so the policy itself is not rewritten; the review shows the test class instead.
-        assertThat(preview.files()).filteredOn(file -> file.path().endsWith(".java")).singleElement().satisfies(file -> {
+        // Only the annotations change: the preview renders the policy as it is, which the review dialog leaves out, and shows the test class.
+        assertThat(preview.files()).extracting(SecurityPolicyPreviewDTO.FileDTO::path).containsExactly(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, SORTING_TEST_PATH);
+        assertThat(preview.files().getFirst()).satisfies(policy -> assertThat(policy.after()).isEqualTo(policy.before()));
+        assertThat(preview.files().getLast()).satisfies(file -> {
             assertThat(file.path()).isEqualTo(SORTING_TEST_PATH);
             assertThat(file.before()).isEqualTo(SORTING_TEST);
             assertThat(file.after()).contains("@de.tum.cit.ase.ares.api.Policy\nclass SortingTest {")
@@ -1038,6 +1040,31 @@ class SecurityPolicyEditorServiceTest {
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.commit(exercise(), pin, user))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
         assertThat(readPushed("pom.xml")).contains(pom);
+    }
+
+    @Test
+    void refusesToPinAVersionIfAnotherPinOfTheSameVersionWasAddedSinceThePoliciesWereLoaded() throws Exception {
+        pushToTests("build.gradle", "ext {\n    aresVersion = '2.1.0'\n}\n");
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyChangeDTO pin = new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, "2.2.1", List.of(), List.of());
+        pushToTests("build.gradle", "ext {\n    aresVersion = '2.1.0'\n}\nproject.ext.aresVersion = '2.1.0'\n");
+
+        // The review showed one pin, so the commit must not rewrite the second one.
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.commit(exercise(), pin, user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
+        assertThat(readPushed("build.gradle")).contains("ext {\n    aresVersion = '2.1.0'\n}\nproject.ext.aresVersion = '2.1.0'\n");
+    }
+
+    @Test
+    void pinsAVersionAfterAnotherChangeOfTheBuildFile() throws Exception {
+        pushToTests("build.gradle", "ext {\n    aresVersion = '2.1.0'\n}\n");
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyChangeDTO pin = new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, "2.2.1", List.of(), List.of());
+        pushToTests("build.gradle", "repositories {\n    mavenCentral()\n}\next {\n    aresVersion = '2.1.0'\n}\n");
+
+        editorService.commit(exercise(), pin, user);
+
+        assertThat(readPushed("build.gradle")).contains("repositories {\n    mavenCentral()\n}\next {\n    aresVersion = '2.2.1'\n}\n");
     }
 
     @Test

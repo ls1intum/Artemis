@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.security;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -45,11 +46,32 @@ final class SecurityFrameworkCommitFiles {
     }
 
     /**
-     * @return the path of the build file that pins the Ares version in the commit, e.g. {@code build.gradle}; empty if none pins one
+     * The places that pin the Ares version in a commit. A change of the version rewrites all of them, see
+     * {@link SecurityPolicyRepositoryFiles#pinAresVersion(String, String, String)}.
+     *
+     * @param buildFile the build file that pins the version, e.g. {@code build.gradle}
+     * @param pinLines  the line of each pin, without the whitespace around it, in the order of the file, e.g. {@code aresVersion = '2.2.1'}
      */
-    static Optional<String> aresBuildFile(Repository repository, RevTree tree) throws IOException {
-        return SecurityPolicyRepositoryFiles.detectBuildTool(readFile(repository, tree, GRADLE_BUILD_FILE).orElse(null), readFile(repository, tree, MAVEN_BUILD_FILE).orElse(null))
-                .map(buildTool -> buildTool == SecurityPolicyRepositoryFiles.BuildTool.GRADLE ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE);
+    record AresPins(String buildFile, List<String> pinLines) {
+    }
+
+    /**
+     * @return the places that pin the Ares version in the build file of the commit that pins it; empty if no build file pins one
+     */
+    static Optional<AresPins> aresPins(Repository repository, RevTree tree) throws IOException {
+        String gradleBuild = readFile(repository, tree, GRADLE_BUILD_FILE).orElse(null);
+        String mavenPom = readFile(repository, tree, MAVEN_BUILD_FILE).orElse(null);
+        return SecurityPolicyRepositoryFiles.detectBuildTool(gradleBuild, mavenPom).map(buildTool -> {
+            boolean gradle = buildTool == SecurityPolicyRepositoryFiles.BuildTool.GRADLE;
+            String content = gradle ? gradleBuild : mavenPom;
+            List<String> pinLines = BuildFileSyntax.aresVersionPins(content, buildTool).stream().map(pin -> lineAround(content, pin.start())).toList();
+            return new AresPins(gradle ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE, pinLines);
+        });
+    }
+
+    private static String lineAround(String content, int offset) {
+        int lineEnd = content.indexOf('\n', offset);
+        return content.substring(content.lastIndexOf('\n', offset) + 1, lineEnd < 0 ? content.length() : lineEnd).strip();
     }
 
     /**

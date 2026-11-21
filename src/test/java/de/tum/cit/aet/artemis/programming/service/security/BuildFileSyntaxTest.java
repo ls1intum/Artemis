@@ -15,8 +15,21 @@ class BuildFileSyntaxTest {
 
     private static final Path TEMPLATES = Path.of("src", "main", "resources", "templates", "java");
 
+    private static final String MAVEN_TEMPLATE = "test/maven/projectTemplate/pom.xml";
+
     private static SecurityPolicyRepositoryFiles.BuildFiles gradle(String content) {
         return new SecurityPolicyRepositoryFiles.BuildFiles(content, null);
+    }
+
+    private static SecurityPolicyRepositoryFiles.BuildFiles mavenBuild(String content) {
+        return new SecurityPolicyRepositoryFiles.BuildFiles(null, content);
+    }
+
+    /** Adds the setting to the configuration of Surefire only, not to the properties of the POM or the configuration of another plugin. */
+    private static String inSurefireConfiguration(String pom, String setting) {
+        String changed = pom.replaceFirst("(<artifactId>maven-surefire-plugin</artifactId>\\s*+<version>[^<]*+</version>\\s*+<configuration>)", "$1" + setting);
+        assertThat(changed).isNotEqualTo(pom);
+        return changed;
     }
 
     @Test
@@ -31,13 +44,33 @@ class BuildFileSyntaxTest {
     @ParameterizedTest
     @ValueSource(strings = { "<forkCount>0</forkCount>", "<forkCount> 0C </forkCount>" })
     void theAgentOfTheArgLineDoesNotCountIfSurefireRunsTheTestsInTheMavenJvm(String forkCount) throws IOException {
-        String maven = Files.readString(TEMPLATES.resolve("test/maven/projectTemplate/pom.xml"), StandardCharsets.UTF_8);
+        String maven = Files.readString(TEMPLATES.resolve(MAVEN_TEMPLATE), StandardCharsets.UTF_8);
 
-        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, maven.replace("<argLine>", forkCount + "<argLine>")))).isFalse();
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(inSurefireConfiguration(maven, forkCount)))).isFalse();
         // A forked test JVM gets the argLine, and a forkCount in a comment has no effect.
-        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, maven.replace("<argLine>", "<forkCount>1</forkCount><argLine>")))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, maven.replace("<argLine>", "<!-- " + forkCount + " --><argLine>"))))
-                .isTrue();
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(inSurefireConfiguration(maven, "<forkCount>1</forkCount>")))).isTrue();
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(inSurefireConfiguration(maven, "<!-- " + forkCount + " -->")))).isTrue();
+    }
+
+    @Test
+    void theForkCountPropertyAlsoRunsTheTestsInTheMavenJvm() throws IOException {
+        String maven = Files.readString(TEMPLATES.resolve(MAVEN_TEMPLATE), StandardCharsets.UTF_8);
+        String inProcess = maven.replaceFirst("<properties>", "<properties><forkCount>0</forkCount>");
+
+        assertThat(inProcess).isNotEqualTo(maven);
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(inProcess))).isFalse();
+    }
+
+    @Test
+    void aForkCountInAProfileCountsOnlyIfTheProfileCanApplyOnItsOwn() throws IOException {
+        String maven = Files.readString(TEMPLATES.resolve(MAVEN_TEMPLATE), StandardCharsets.UTF_8);
+        String optIn = "<profiles><profile><id>inProcess</id><properties><forkCount>0</forkCount></properties></profile></profiles></project>";
+        String byDefault = "<profiles><profile><id>inProcess</id><activation><activeByDefault>true</activeByDefault></activation>"
+                + "<properties><forkCount>0</forkCount></properties></profile></profiles></project>";
+
+        // The build of the templates names no profile, so a profile without an activation does not apply to it.
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", optIn)))).isTrue();
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault)))).isFalse();
     }
 
     @ParameterizedTest
