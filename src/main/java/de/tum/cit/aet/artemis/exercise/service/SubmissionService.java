@@ -36,9 +36,8 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ManualResultCreationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
-import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -46,6 +45,7 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.LockedAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -97,15 +97,13 @@ public class SubmissionService {
 
     private final Optional<AthenaApi> athenaApi;
 
-    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
-
-    private final ScaFeedbackRepository scaFeedbackRepository;
+    private final ManualResultCreationRepository manualResultCreationRepository;
 
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, ParticipationRepository participationRepository,
-            ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository) {
+            ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi,
+            ManualResultCreationRepository manualResultCreationRepository) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -118,8 +116,7 @@ public class SubmissionService {
         this.complaintRepository = complaintRepository;
         this.feedbackService = feedbackService;
         this.athenaApi = athenaApi;
-        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
-        this.scaFeedbackRepository = scaFeedbackRepository;
+        this.manualResultCreationRepository = manualResultCreationRepository;
     }
 
     /**
@@ -413,36 +410,8 @@ public class SubmissionService {
     public Set<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
         Collection<Feedback> oldFeedback = oldResult.getFeedbacks();
         copyFeedbackToResult(newResult, oldFeedback);
-        copyTypedFeedbackToResult(newResult, oldResult);
+        feedbackService.copyTypedFeedbackToResult(newResult, oldResult);
         return newResult.getFeedbacks();
-    }
-
-    /**
-     * Copies the typed automatic feedback (test-case and SCA rows) of the old result to the new result.
-     * The rows are loaded from the database (the old result's collections may be uninitialized) and the
-     * copies share the deduplicated message rows. No-op for results of non-programming exercises.
-     *
-     * @param newResult the result to copy the typed feedback to
-     * @param oldResult the result to copy the typed feedback from
-     */
-    public void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
-        if (oldResult == null || oldResult.getId() == null) {
-            return;
-        }
-        // fetch the shared message rows eagerly: the copies keep the message reference, and the new result
-        // may be synthesized for serialization right away (e.g. exam test-run drafts) - a lazy proxy would
-        // fail there with a LazyInitializationException
-        testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyTestCaseFeedback)
-                .forEach(newResult::addTestCaseFeedback);
-        scaFeedbackRepository.findWithMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyScaFeedback).forEach(newResult::addScaFeedback);
-
-        // Insert the copies right away when the target result already exists: a synthesized legacy view is addressed by the id of the row it comes from, so every caller that
-        // serializes the new result afterwards needs those ids. The rows are new, so this persists them in place - the ids land on these very instances and the eagerly
-        // fetched test cases and messages above survive, both of which a merge copy would lose. A result that is not persisted yet gets its rows through the caller's save.
-        if (newResult.getId() != null) {
-            newResult.setTestCaseFeedbacks(testCaseFeedbackRepository.saveAll(newResult.getTestCaseFeedbacks()));
-            newResult.setScaFeedbacks(scaFeedbackRepository.saveAll(newResult.getScaFeedbacks()));
-        }
     }
 
     /**
@@ -463,24 +432,51 @@ public class SubmissionService {
     }
 
     /**
-     * This method is used to create a copy of a result, used in the exam mode with correctionRound > 1,
-     * because an assessment with current correctionRound > 1 contains all previous work,
-     * which the tutor can then edit. Assigns the newly created Result to the submission
+     * Builds, without saving it, the manual result the current user starts to assess the submission with in the given correction round. From the second round on, the
+     * result is a copy of the result of the previous round, because an assessment in a later round contains all previous work, which the tutor can then edit.
      *
-     * @param submission submission to which the new Result is assigned
-     * @param oldResult  result to copy from
-     * @return the newly created copy of the oldResult
+     * @param submission      the submission the result belongs to
+     * @param correctionRound the correction round of the result
+     * @return the new result with its feedback copies, not persisted yet
      */
-    public Result copyResultFromPreviousRoundAndSave(Submission submission, Result oldResult) {
-        if (oldResult == null) {
-            return saveNewEmptyResult(submission);
-        }
+    private Result buildManualResultForCorrectionRound(Submission submission, int correctionRound) {
         Result newResult = new Result();
-        setExerciseIdFromSubmission(submission, newResult);
-        // Set before copying the feedback, which saves the result: the result owns the foreign key to its submission.
         newResult.setSubmission(submission);
-        copyFeedbackToNewResult(newResult, oldResult);
-        return copyResultContentAndAddToSubmission(submission, newResult, oldResult);
+        newResult.setExerciseId(submission.getParticipation().getExercise().getId());
+        newResult.setAssessor(userRepository.getUser());
+        newResult.setCorrectionRound(correctionRound);
+        newResult.setAssessmentType(AssessmentType.MANUAL);
+
+        Result previousRoundResult = submission.getResultForCorrectionRound(correctionRound - 1);
+        if (previousRoundResult != null) {
+            // The copies are saved together with the result through its cascade, so nothing is written before the round is known to be free.
+            if (previousRoundResult.getFeedbacks() != null) {
+                previousRoundResult.getFeedbacks().forEach(feedback -> newResult.addFeedback(feedbackService.copyFeedback(feedback)));
+            }
+            feedbackService.copyTypedFeedbackToResult(newResult, previousRoundResult);
+            newResult.setScore(previousRoundResult.getScore());
+            newResult.setRated(previousRoundResult.isRated());
+            newResult.copyProgrammingExerciseCounters(previousRoundResult);
+        }
+        return newResult;
+    }
+
+    /**
+     * Creates the manual result of the current user for the given correction round, unless another tutor has created a manual result of that round in the meantime.
+     *
+     * @param submission      the submission the result belongs to
+     * @param correctionRound the correction round of the result
+     * @return the created result, which is also added to the submission
+     * @throws LockedAlertException if another tutor created a manual result of the round since the submission was loaded
+     */
+    private Result createManualResultForCorrectionRound(Submission submission, int correctionRound) {
+        Result newResult = buildManualResultForCorrectionRound(submission, correctionRound);
+        // Nothing is written for a submission another tutor locked in the meantime: saving that tutor's result from here could overwrite or remove its feedback.
+        Result savedResult = manualResultCreationRepository.saveManualResultIfCorrectionRoundIsFree(submission.getId(), correctionRound, newResult)
+                .orElseThrow(() -> new LockedAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed"));
+        submission.addResult(savedResult);
+        submissionRepository.save(submission);
+        return savedResult;
     }
 
     /**
@@ -507,7 +503,7 @@ public class SubmissionService {
             feedbackToCopy.removeIf(feedback -> (feedback.getId() == null || feedback.getId() < 0) && (feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback()));
         }
         copyFeedbackToResult(newResult, feedbackToCopy);
-        copyTypedFeedbackToResult(newResult, oldResult);
+        feedbackService.copyTypedFeedbackToResult(newResult, oldResult);
         newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
         return newResult;
     }
@@ -668,22 +664,20 @@ public class SubmissionService {
 
     /**
      * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e.
-     * the client will not allow tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
+     * the client will not allow tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first, atomically,
+     * so that two tutors who open the submission at the same time do not both create a result for the round.
      *
      * @param submission      the submission to lock
      * @param correctionRound the correction round to lock the submission for, must not be negative
      * @return the locked result
      * @throws BadRequestAlertException if the correction round is negative
+     * @throws LockedAlertException     if another tutor created the result of the round since the submission was loaded
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         Result result = submission.getResultForCorrectionRound(correctionRound);
-        if (result == null && correctionRound > 0) {
-            // copy the result of the previous correction round
-            result = copyResultFromPreviousRoundAndSave(submission, submission.getResultForCorrectionRound(correctionRound - 1));
-        }
-        else if (result == null) {
-            result = saveNewEmptyResult(submission);
+        if (result == null) {
+            result = createManualResultForCorrectionRound(submission, correctionRound);
         }
 
         if (result.getAssessor() == null) {
