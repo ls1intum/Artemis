@@ -57,27 +57,40 @@ final class AresTestInheritance {
     }
 
     /**
-     * The test methods of a test class that other test classes run as their own tests, because they extend it without overriding the methods. Ares applies
-     * the annotations of these methods also when a subclass runs them, so changing them changes the policy of the subclass.
+     * Which test classes run test methods they inherit from other test classes of the repository, i.e. extend them without overriding the methods. Ares
+     * applies the annotations of these methods also when a subclass runs them, so changing them changes the policy of the subclass, and the subclass runs
+     * them with its class annotation where they have none.
      *
+     * @param runBySubclasses the names of the inherited test methods by the qualified name of the class that declares them; a class without such methods is
+     *                            left out
+     * @param runInherited    the qualified names of the test classes that run at least one inherited test method
+     */
+    record Inheritance(Map<String, Set<String>> runBySubclasses, Set<String> runInherited) {
+    }
+
+    /**
      * @param testClasses the test classes of the repository, see {@link SecurityPolicyRepositoryFiles#testClasses(List)}
      * @param typesByName the top-level types of the repository by their qualified name
-     * @return the names of these test methods by the qualified name of the class that declares them; a class without such methods is left out
+     * @return the test methods inherited without an override, see {@link Inheritance}
      */
-    static Map<String, Set<String>> testMethodsRunBySubclasses(List<AresTestSources.TypeDeclaration> testClasses, Map<String, AresTestSources.TypeDeclaration> typesByName) {
+    static Inheritance inheritance(List<AresTestSources.TypeDeclaration> testClasses, Map<String, AresTestSources.TypeDeclaration> typesByName) {
         Map<String, AresTestSources.TypeDeclaration> testClassesByName = new HashMap<>();
         testClasses.forEach(testClass -> testClassesByName.put(testClass.qualifiedName(), testClass));
         Map<String, Set<String>> runBySubclasses = new HashMap<>();
+        Set<String> runInherited = new HashSet<>();
         for (AresTestSources.TypeDeclaration testClass : testClasses) {
             Hierarchy hierarchy = Hierarchy.of(testClass, testClassesByName, typesByName);
             for (int index = 1; index < hierarchy.chain().size(); index++) {
                 AresTestSources.TypeDeclaration type = hierarchy.chain().get(index);
                 List<AresTestSources.TypeDeclaration> subclasses = hierarchy.chain().subList(0, index);
                 type.testSignatures().stream().map(AresTestCases.TestSignature::name).filter(method -> !isOverridden(type, method, subclasses, hierarchy.memberTypes()))
-                        .forEach(method -> runBySubclasses.computeIfAbsent(type.qualifiedName(), _ -> new HashSet<>()).add(method));
+                        .forEach(method -> {
+                            runBySubclasses.computeIfAbsent(type.qualifiedName(), _ -> new HashSet<>()).add(method);
+                            runInherited.add(testClass.qualifiedName());
+                        });
             }
         }
-        return runBySubclasses;
+        return new Inheritance(runBySubclasses, runInherited);
     }
 
     /**

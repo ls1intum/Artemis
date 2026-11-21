@@ -117,15 +117,25 @@ final class SecurityPolicyConflicts {
             throw policiesChanged();
         }
         try (RevWalk revWalk = new RevWalk(repository)) {
-            RevTree baseTree = parseCommit(revWalk, base).getTree();
-            Map<String, SecurityTestAssignments.TestClass> loaded = SecurityTestAssignments.read(SecurityFrameworkCommitFiles.javaSources(repository, baseTree));
+            Map<String, String> baseSources = SecurityFrameworkCommitFiles.javaSources(repository, parseCommit(revWalk, base).getTree());
+            Map<String, String> headSources = head == null ? Map.of() : SecurityFrameworkCommitFiles.javaSources(repository, revWalk.parseCommit(head).getTree());
+            Map<String, SecurityTestAssignments.TestClass> loaded = SecurityTestAssignments.read(baseSources);
             for (SecurityTestAssignments.TestClass testClass : split) {
                 SecurityTestAssignments.TestClass loadedClass = loaded.get(testClass.qualifiedName());
-                if (loadedClass == null || !new HashSet<>(loadedClass.testCases()).containsAll(testClass.testCases())) {
+                // A test that replaces a loaded one under the same name, e.g. runs() by runs(RepetitionInfo), was not shown either; a changed body was.
+                if (loadedClass == null || !testSignatures(baseSources.get(loadedClass.sourcePath())).containsAll(testSignatures(headSources.get(testClass.sourcePath())))) {
                     throw policiesChanged();
                 }
             }
         }
+    }
+
+    /**
+     * @return the signatures of the test methods of a source file, e.g. {@code runs(int)}; none if there is no source
+     */
+    private static Set<String> testSignatures(@Nullable String source) {
+        return source == null ? Set.of()
+                : AresTestCases.testSignatures(AresPolicyAnnotations.mask(source)).values().stream().map(AresTestCases.TestSignature::text).collect(Collectors.toSet());
     }
 
     /**

@@ -384,7 +384,8 @@ final class AresTestCases {
                 nesting--;
             }
             else if (nesting == 0 && (character == ',' || character == '>')) {
-                Matcher parameter = TYPE_PARAMETER.matcher(list.substring(start, index));
+                // Whitespace may surround a parameter, e.g. <T >, also one without a bound.
+                Matcher parameter = TYPE_PARAMETER.matcher(list.substring(start, index).strip());
                 if (parameter.matches()) {
                     bounds.put(parameter.group(1), parameter.group(2) == null ? "" : leftmostBound(parameter.group(2)));
                 }
@@ -492,6 +493,10 @@ final class AresTestCases {
             }
             else if (character == '>') {
                 typeArguments--;
+                // The name may follow the type arguments directly, e.g. List<String>values, so they are replaced by a separator, not dropped.
+                if (typeArguments == 0) {
+                    parameter.append(' ');
+                }
             }
             else if (character == ',' && typeArguments == 0) {
                 addFormalParameter(types, parameter.toString(), resolve);

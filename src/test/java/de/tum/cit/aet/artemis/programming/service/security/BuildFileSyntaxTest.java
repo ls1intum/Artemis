@@ -129,6 +129,22 @@ class BuildFileSyntaxTest {
     }
 
     @Test
+    void anArgLineOutsideSurefireOrThatAProfileMayReplaceDoesNotCount() throws IOException {
+        String maven = Files.readString(TEMPLATES.resolve(MAVEN_TEMPLATE), StandardCharsets.UTF_8);
+        String argLine = "<argLine>-javaagent:ares-agent.jar</argLine>";
+        String withoutAgent = maven.replace("\"-javaagent:${project.build.directory}/ares/ares-agent.jar\"", "");
+        String optIn = "<profiles><profile><id>other</id><build><plugins><plugin><artifactId>maven-surefire-plugin</artifactId><configuration>" + argLine
+                + "</configuration></plugin></plugins></build></profile></profiles></project>";
+        String byDefault = optIn.replace("<id>other</id>", "<id>other</id><activation><activeByDefault>true</activeByDefault></activation>");
+
+        // An argLine that is neither the configuration of Surefire nor its property reaches no test JVM.
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(withoutAgent.replace("</project>", "<reporting>" + argLine + "</reporting></project>")))).isFalse();
+        // A profile the build does not name changes nothing, but one that can apply on its own may replace the argLine of the POM.
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", optIn)))).isTrue();
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault)))).isFalse();
+    }
+
+    @Test
     void aGradleAgentCountsOnlyIfATaskReceivesIt() throws IOException {
         String gradle = Files.readString(TEMPLATES.resolve("test/gradle/projectTemplate/build.gradle"), StandardCharsets.UTF_8);
         String notRegistered = gradle.replace("jvmArgumentProviders.add(aresJvmArguments)", "");
@@ -137,6 +153,9 @@ class BuildFileSyntaxTest {
 
         assertThat(notRegistered).isNotEqualTo(gradle);
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(notRegistered))).isFalse();
+        // The registration may put its argument on the next line.
+        assertThat(BuildFileSyntax
+                .attachesAresAgent(gradle(gradle.replace("jvmArgumentProviders.add(aresJvmArguments)", "jvmArgumentProviders.add(\n        aresJvmArguments\n    )")))).isTrue();
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(direct + "def agentArgument = \"-javaagent:${configurations.agent.singleFile}\"\n"))).isFalse();
         // The arguments of jvmArgs may continue on the following lines.
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(listed))).isTrue();
@@ -146,7 +165,9 @@ class BuildFileSyntaxTest {
     void onlyTheBuildFileOfTheBuildToolThatPinsAresCounts() {
         String gradleWithoutAgent = "ext { aresVersion = '2.2.1' }\n";
         String mavenWithAgent = "<properties><ares.version>2.2.1</ares.version></properties><artifactId>ares</artifactId><classifier>agent</classifier>"
-                + "<argLine>-javaagent:${settings.localRepository}/de/tum/cit/ase/ares/${ares.version}/ares-${ares.version}-agent.jar</argLine>";
+                + "<build><plugins><plugin><artifactId>maven-surefire-plugin</artifactId><configuration>"
+                + "<argLine>-javaagent:${settings.localRepository}/de/tum/cit/ase/ares/${ares.version}/ares-${ares.version}-agent.jar</argLine>"
+                + "</configuration></plugin></plugins></build>";
         assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, mavenWithAgent))).isTrue();
 
         // The Gradle build pins the Ares version, so it is the build that runs; the pom.xml next to it does not attach the agent to the tests.

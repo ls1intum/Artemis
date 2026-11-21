@@ -278,4 +278,14 @@ class AresTestCasesTest {
         // The single-static import binds Test to the member type example.Markers.Test, like a single-type import.
         assertThat(AresTestCases.testCases(source)).containsExactly("sorts");
     }
+
+    @Test
+    void readsTheTypesOfParametersWrittenWithoutOptionalWhitespace() {
+        String source = "class SortingTest<T > {\n\n    @Test\n    void runs(T value) {\n    }\n\n    @Test\n    void sorts(java.util.List<String>values) {\n    }\n}\n";
+
+        // The type parameter erases to Object also with whitespace before >, and the name may follow the type arguments directly.
+        assertThat(AresTestCases.testSignatures(AresPolicyAnnotations.mask(source)).values()).extracting(AresTestCases.TestSignature::text)
+                .containsExactlyInAnyOrder("runs(java.lang.Object)", "sorts(java.util.List)");
+    }
+
 }

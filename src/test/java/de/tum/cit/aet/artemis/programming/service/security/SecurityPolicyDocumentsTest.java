@@ -263,10 +263,14 @@ class SecurityPolicyDocumentsTest {
 
         List<String> problems = SecurityPolicyDocuments.validate(document);
 
-        assertThat(problems).hasSize(17).anySatisfy(problem -> assertThat(problem).contains("is listed twice"))
-                .anySatisfy(problem -> assertThat(problem).contains("listed more than once")).anySatisfy(problem -> assertThat(problem).contains("logs/ grants no permission"))
-                .anySatisfy(problem -> assertThat(problem).contains("70000")).anySatisfy(problem -> assertThat(problem).contains("must not be negative"))
-                .anySatisfy(problem -> assertThat(problem).contains("strict timeout")).anySatisfy(problem -> assertThat(problem).contains("single line"));
+        // Every section reports its own problems, so a missing one is not hidden by another one of the same count.
+        assertThat(problems).containsExactly("The programming language configuration is missing.", "The preset not a preset is not a valid preset name.",
+                "The test class de.example.A is listed twice.", "The path logs/ grants no permission.", "A host of the network permissions is not valid.",
+                "The port 70000 is not between 0 and 65535.", "The endpoint local host:70000 grants no permission.", "A command of the command permissions is not valid.",
+                "The number of threads of the class java.lang.Thread must not be negative.", "A package of the package imports is not valid.",
+                "A package of the package imports is not valid.", "A timeout must be positive.",
+                "A resource is listed more than once; the editor could not tell the entries apart afterwards.", "The strict timeout must be positive and use a valid time unit.",
+                "The maximum number of mirrored characters must be positive.", "The dates of the hidden tests are not valid.", "The failure message must be a single line.");
     }
 
     @Test

@@ -50,10 +50,11 @@ final class SecurityTestAssignments {
      * @param overloaded        the test cases that more than one test method has, see {@link AresTestCases#overloadedTestCases(String)}; they cannot be
      *                              assigned one by one
      * @param testCases         the names of its test methods, in their order in the source
-     * @param inheritsTests     whether it extends another test class of the repository, whose test methods it inherits; they are not among its test cases
+     * @param inheritsTests     whether it runs a test method it inherits from another test class of the repository without overriding it, see
+     *                              {@link AresTestInheritance#inheritance(List, Map)}; such a method is not among its test cases
      *                              and use the policy of its class annotation
      * @param runBySubclasses   the test methods that another test class of the repository runs with their annotations, because it extends this class
-     *                              without overriding them, see {@link AresTestInheritance#testMethodsRunBySubclasses(List, Map)}
+     *                              without overriding them, see {@link AresTestInheritance#inheritance(List, Map)}
      */
     record TestClass(String qualifiedName, String sourcePath, boolean active, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths, Set<String> defaultMethods,
             Set<String> switchedOff, Set<String> overloaded, List<String> testCases, boolean inheritsTests, Set<String> runBySubclasses) {
@@ -75,13 +76,14 @@ final class SecurityTestAssignments {
             if (!active) {
                 return entries;
             }
-            boolean overridden = !keptMethods().isEmpty() || methodPolicyPaths.values().stream().anyMatch(path -> !path.equals(classPolicyPath));
+            Set<String> kept = keptMethods();
+            boolean overridden = !kept.isEmpty() || methodPolicyPaths.values().stream().anyMatch(path -> !path.equals(classPolicyPath));
             if (classPolicyPath != null && !overridden) {
                 entries.put(qualifiedName, classPolicyPath);
                 return entries;
             }
             for (String testCase : testCases) {
-                if (keptMethods().contains(testCase) || overloaded.contains(testCase)) {
+                if (kept.contains(testCase) || overloaded.contains(testCase)) {
                     continue;
                 }
                 String path = methodPolicyPaths.getOrDefault(testCase, classPolicyPath);
@@ -134,7 +136,7 @@ final class SecurityTestAssignments {
             summary.topLevelTypes().forEach(type -> typesByName.putIfAbsent(type.qualifiedName(), type));
         });
         Map<String, String> testClassPaths = testClassPaths(summaries);
-        Map<String, Set<String>> runBySubclasses = AresTestInheritance.testMethodsRunBySubclasses(SecurityPolicyRepositoryFiles.testClasses(summaries), typesByName);
+        AresTestInheritance.Inheritance inheritance = AresTestInheritance.inheritance(SecurityPolicyRepositoryFiles.testClasses(summaries), typesByName);
         Map<String, AresTestSources.TypeDeclaration> types = new TreeMap<>();
         for (Map.Entry<String, String> testClassPath : testClassPaths.entrySet()) {
             Optional<AresTestSources.TypeDeclaration> type = AresTestSources.relevantType(summariesByPath.get(testClassPath.getValue()));
@@ -161,8 +163,8 @@ final class SecurityTestAssignments {
             // Like an annotation of a method, an empty path, e.g. @Policy(value = ""), names no policy file: the class uses the strict default policy.
             String classPolicyPath = annotation.policyPath().filter(path -> !path.isBlank()).orElse(null);
             TestClass testClass = new TestClass(qualifiedName, sourcePath, annotation.isActivated(), classPolicyPath, Map.copyOf(methodPolicyPaths), Set.copyOf(defaultMethods),
-                    Set.copyOf(switchedOff), AresTestCases.overloadedTestCases(source), AresTestCases.testCases(source),
-                    type.superclass().stream().anyMatch(testClassPaths::containsKey), Set.copyOf(runBySubclasses.getOrDefault(qualifiedName, Set.of())));
+                    Set.copyOf(switchedOff), AresTestCases.overloadedTestCases(source), AresTestCases.testCases(source), inheritance.runInherited().contains(qualifiedName),
+                    Set.copyOf(inheritance.runBySubclasses().getOrDefault(qualifiedName, Set.of())));
             testClasses.put(qualifiedName, testClass);
         });
         return testClasses;

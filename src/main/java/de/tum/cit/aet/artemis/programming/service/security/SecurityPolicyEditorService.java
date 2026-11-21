@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.security;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService.ENTITY_NAME;
 import static de.tum.cit.aet.artemis.programming.service.security.SecurityPolicyChangeRules.THE_POLICY;
+import static de.tum.cit.aet.artemis.programming.service.security.SecurityPolicyChangeRules.fileExists;
 import static de.tum.cit.aet.artemis.programming.service.security.SecurityPolicyChangeRules.holdsPolicy;
 import static de.tum.cit.aet.artemis.programming.service.security.SecurityPolicyChangeRules.invalidPath;
 import static de.tum.cit.aet.artemis.programming.service.security.SecurityPolicyChangeRules.liesBelowAFile;
@@ -198,8 +199,9 @@ public class SecurityPolicyEditorService {
                 .collect(Collectors.toCollection(TreeSet::new));
         List<SecurityPolicyPreviewDTO.FileDTO> files = new ArrayList<>();
         Set<String> changedPaths = new HashSet<>();
+        Set<String> deleted = deletedPolicyFiles(repository, tree, change);
         for (SecurityPolicyChangeDTO.PolicyChangeDTO policy : change.policies()) {
-            files.add(previewOfChangedPolicy(repository, tree, policy, existingPaths));
+            files.add(previewOfChangedPolicy(repository, tree, policy, existingPaths, deleted));
             changedPaths.add(policy.previousPolicyPath() == null ? requireValidPolicyPath(policy.document().policyPath()) : requireValidPolicyPath(policy.previousPolicyPath()));
         }
         for (String removedPath : change.removedPolicyPaths()) {
@@ -226,11 +228,36 @@ public class SecurityPolicyEditorService {
         return new SecurityPolicyPreviewDTO(files, frameworkVersion, combined.verdict().name(), combined.problems());
     }
 
+    /**
+     * The policy files the change deletes, which make room for the policies it writes, like {@link #changedPaths} of a commit: the removed ones and those
+     * it renames, if they hold a policy.
+     */
+    private static Set<String> deletedPolicyFiles(Repository repository, RevTree tree, SecurityPolicyChangeDTO change) {
+        Set<String> vacated = new HashSet<>();
+        change.removedPolicyPaths().forEach(removedPath -> vacated.add(requireValidPolicyPath(removedPath)));
+        for (SecurityPolicyChangeDTO.PolicyChangeDTO policy : change.policies()) {
+            if (policy.previousPolicyPath() != null && !policy.previousPolicyPath().equals(policy.document().policyPath())) {
+                vacated.add(requireValidPolicyPath(policy.previousPolicyPath()));
+            }
+        }
+        return vacated.stream().filter(path -> holdsPolicy(SecurityFrameworkCommitFiles.readPolicyFile(repository, tree, path))).collect(Collectors.toSet());
+    }
+
+    /**
+     * Like a commit, the preview refuses a policy at a path that another file already takes, unless the change deletes that file, so the review never shows a
+     * file that the commit would refuse to write.
+     */
     private static SecurityPolicyPreviewDTO.FileDTO previewOfChangedPolicy(Repository repository, RevTree tree, SecurityPolicyChangeDTO.PolicyChangeDTO policy,
-            Set<String> existingPaths) {
+            Set<String> existingPaths, Set<String> deleted) throws IOException {
         String path = requireValidPolicyPath(policy.document().policyPath());
         @Nullable
         String previousPath = policy.previousPolicyPath() == null ? null : requireValidPolicyPath(policy.previousPolicyPath());
+        if (!path.equals(previousPath) && !deleted.contains(path) && SecurityFrameworkCommitFiles.exists(repository, tree, path)) {
+            throw fileExists(path);
+        }
+        if (SecurityFrameworkCommitFiles.liesBelowAFile(repository, tree, path, deleted)) {
+            throw invalidPath(path, "lies below a file of the tests repository.");
+        }
         @Nullable
         String before = previousPath != null && existingPaths.contains(previousPath) ? SecurityFrameworkCommitFiles.readPolicyFile(repository, tree, previousPath).content() : null;
         return new SecurityPolicyPreviewDTO.FileDTO(path, previousPath, before, SecurityPolicyDocuments.render(policy.document(), before));
@@ -304,8 +331,9 @@ public class SecurityPolicyEditorService {
                 });
         log.info("User {} changed the security policies {} and removed the references to {} of programming exercise {}", user.getLogin(),
                 change.policies().stream().map(policy -> policy.document().policyPath()).toList(), change.removedPolicyPaths(), exercise.getId());
-        // The policies and the state are read from one commit, so a commit pushed right after this one cannot mix two states in the answer.
-        return readTestRepository(exercise, (repository, commit) -> commitResultAt(repository, commit, exercise.getPackageName()));
+        // The policies and the state are read from one commit, so a commit pushed right after this one cannot mix two states in the answer. The change is
+        // pushed and processed at this point, so a failed read names that: the editor then reads the saved policies again instead of reporting a failed save.
+        return readTestRepository(exercise, (repository, commit) -> commitResultAt(repository, commit, exercise.getPackageName()), "securityPolicySavedButNotRead");
     }
 
     /**
@@ -403,6 +431,10 @@ public class SecurityPolicyEditorService {
     }
 
     private <T> T readTestRepository(ProgrammingExercise exercise, CommitReader<T> reader) {
+        return readTestRepository(exercise, reader, "securityFrameworkReadFailed");
+    }
+
+    private <T> T readTestRepository(ProgrammingExercise exercise, CommitReader<T> reader, String errorKey) {
         LocalVCRepositoryUri testRepositoryUri = securityFrameworkService.testRepositoryUri(exercise);
         String branch = securityFrameworkService.repositoryBranch(exercise);
         try (Repository repository = bareGitRepositoryService.getBareRepository(testRepositoryUri, branch, false); RevWalk revWalk = new RevWalk(repository)) {
@@ -414,7 +446,7 @@ public class SecurityPolicyEditorService {
         }
         catch (IOException e) {
             log.error("Could not read the tests repository of exercise {}", exercise.getId(), e);
-            throw new InternalServerErrorAlertException("Could not read the tests repository.", ENTITY_NAME, "securityFrameworkReadFailed");
+            throw new InternalServerErrorAlertException("Could not read the tests repository.", ENTITY_NAME, errorKey);
         }
     }
 
@@ -611,7 +643,7 @@ public class SecurityPolicyEditorService {
         @Nullable
         String previousLanguageConfiguration = previousPath == null ? null : editableDocument(previousPath, previous, existing).languageConfiguration();
         if (!path.equals(previousPath) && !deleted.contains(path) && Files.exists(root.resolve(path), LinkOption.NOFOLLOW_LINKS)) {
-            throw refused("The file " + path + " already exists in the tests repository.", "securityPolicyFileExists", Map.of("path", path));
+            throw fileExists(path);
         }
         if (liesBelowAFile(root, path, deleted)) {
             throw invalidPath(path, "lies below a file of the tests repository.");

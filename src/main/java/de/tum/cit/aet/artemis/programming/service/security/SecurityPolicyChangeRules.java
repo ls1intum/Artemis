@@ -112,6 +112,10 @@ final class SecurityPolicyChangeRules {
         return false;
     }
 
+    static BadRequestAlertException fileExists(String path) {
+        return refused("The file " + path + " already exists in the tests repository.", "securityPolicyFileExists", Map.of("path", path));
+    }
+
     static boolean holdsPolicy(SecurityPolicyRepositoryFiles.PolicyFileContent content) {
         return content.problem() == null && content.content() != null && SecurityPolicyYaml.isPolicyShaped(content.content());
     }

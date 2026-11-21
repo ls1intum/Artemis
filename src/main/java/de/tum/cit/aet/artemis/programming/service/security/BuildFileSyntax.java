@@ -200,24 +200,29 @@ final class BuildFileSyntax {
     /**
      * The {@code -javaagent} options Surefire passes to the test JVM: those of the {@code argLine} in its configuration or, if it has none, of its
      * {@code argLine} property, with the properties they refer to replaced by their values, e.g. {@code @{argLine}} or {@code ${aresAgentArgument}}. An
-     * option in a property that no such {@code argLine} reads, in the configuration of another plugin, e.g. Failsafe, or in a profile does not count.
+     * option in a property that no such {@code argLine} reads, in the configuration of another plugin, e.g. Failsafe, or elsewhere in the POM does not
+     * count. A profile that can apply on its own and sets an {@code argLine} may replace these, so then no option counts.
      *
      * @param code the POM without comments
      */
     private static Stream<String> surefireJavaAgents(String code) {
-        boolean[] ignored = mavenProfiles(code, new boolean[code.length()]);
-        MAVEN_PLUGIN.matcher(code).results().filter(plugin -> !MAVEN_SUREFIRE.matcher(plugin.group()).find())
-                .forEach(plugin -> Arrays.fill(ignored, plugin.start(), plugin.end(), true));
+        boolean[] profiles = mavenProfiles(code, new boolean[code.length()]);
+        if (MAVEN_ARG_LINE.matcher(code).results().anyMatch(argLine -> profiles[argLine.start()] && inProfileWithActivation(code, argLine))) {
+            return Stream.empty();
+        }
+        boolean[] surefire = new boolean[code.length()];
+        MAVEN_PLUGIN.matcher(code).results().filter(plugin -> MAVEN_SUREFIRE.matcher(plugin.group()).find())
+                .forEach(plugin -> Arrays.fill(surefire, plugin.start(), plugin.end(), true));
         boolean[] properties = new boolean[code.length()];
         Map<String, String> values = new HashMap<>();
-        MAVEN_PROPERTIES.matcher(code).results().filter(section -> !ignored[section.start()]).forEach(section -> {
+        MAVEN_PROPERTIES.matcher(code).results().filter(section -> !profiles[section.start()]).forEach(section -> {
             Arrays.fill(properties, section.start(), section.end(), true);
             MAVEN_PROPERTY.matcher(section.group(1)).results().forEach(property -> values.put(property.group(1), property.group(2)));
         });
-        List<MatchResult> argLines = MAVEN_ARG_LINE.matcher(code).results().filter(argLine -> !ignored[argLine.start()]).toList();
+        List<MatchResult> argLines = MAVEN_ARG_LINE.matcher(code).results().filter(argLine -> !profiles[argLine.start()]).toList();
+        List<MatchResult> configured = argLines.stream().filter(argLine -> surefire[argLine.start()]).toList();
         // The argLine of the configuration replaces the property, which then only counts where @{argLine} or ${argLine} refers to it.
-        List<MatchResult> used = argLines.stream().anyMatch(argLine -> !properties[argLine.start()]) ? argLines.stream().filter(argLine -> !properties[argLine.start()]).toList()
-                : argLines;
+        List<MatchResult> used = configured.isEmpty() ? argLines.stream().filter(argLine -> properties[argLine.start()]).toList() : configured;
         return used.stream().map(argLine -> withPropertyValues(argLine.group(1), values)).flatMap(BuildFileSyntax::javaAgents);
     }
 
@@ -255,7 +260,7 @@ final class BuildFileSyntax {
         GRADLE_ASSIGNMENT.matcher(code).results().filter(assignment -> mentions(statementAfter(code, assignment.end()), Set.of(providerClass)))
                 .forEach(assignment -> holders.add(assignment.group(1)));
         return GRADLE_PROVIDER_REGISTRATION.matcher(code).results()
-                .anyMatch(registration -> mentions(code.substring(registration.end(), endOfArguments(code, registration.end())), holders));
+                .anyMatch(registration -> mentions(code.substring(registration.end(), endOfArguments(code, registration.start())), holders));
     }
 
     private static boolean mentions(String text, Set<String> names) {
@@ -308,8 +313,13 @@ final class BuildFileSyntax {
      */
     private static boolean runsTestsInMavenJvm(String code) {
         boolean[] profiles = mavenProfiles(code, new boolean[code.length()]);
-        return MAVEN_TESTS_IN_PROCESS.matcher(code).results().anyMatch(forkCount -> !profiles[forkCount.start()] || MAVEN_PROFILE.matcher(code).results()
-                .anyMatch(profile -> profile.start() < forkCount.start() && forkCount.end() <= profile.end() && MAVEN_ACTIVATION.matcher(profile.group()).find()));
+        return MAVEN_TESTS_IN_PROCESS.matcher(code).results().anyMatch(forkCount -> !profiles[forkCount.start()] || inProfileWithActivation(code, forkCount));
+    }
+
+    /** Whether the match lies in a profile that can apply on its own through an activation, e.g. {@code activeByDefault}, see {@link #runsTestsInMavenJvm}. */
+    private static boolean inProfileWithActivation(String code, MatchResult match) {
+        return MAVEN_PROFILE.matcher(code).results()
+                .anyMatch(profile -> profile.start() < match.start() && match.end() <= profile.end() && MAVEN_ACTIVATION.matcher(profile.group()).find());
     }
 
     /**
