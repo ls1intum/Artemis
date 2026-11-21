@@ -820,8 +820,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
      * Finds the id of the latest result a student may see for a participation (the highest visible result id), or empty if none is visible. A result is visible when it is
-     * automatic
-     * (including Athena) or a completed manual assessment whose assessment due date is unset or has passed, mirroring {@link #findLatestResultWithFeedbacksBySubmissionId}.
+     * a completed automatic result, an Athena result, or a completed manual assessment whose assessment due date is unset or has passed, mirroring
+     * {@link #findLatestResultWithFeedbacksBySubmissionId}. A multi-container build's result stays without a completion date until its last container has finished.
      * Selecting
      * only the id avoids materializing the discarded result history; exam hiding is applied by the caller beforehand.
      *
@@ -834,7 +834,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 SELECT MAX(r2.id) FROM Result r2
                     JOIN r2.submission s2 JOIN s2.participation p2 LEFT JOIN p2.exercise e2
                 WHERE p2.id = :participationId AND (
-                    r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                    (r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC AND r2.completionDate IS NOT NULL)
                     OR r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                     OR (r2.completionDate IS NOT NULL AND (e2.assessmentDueDate IS NULL OR e2.assessmentDueDate < :dateTime))
                 )
@@ -935,10 +935,10 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     Set<Result> findLatestResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
 
     /**
-     * Finds the latest results for the given submission IDs, including the assessment note.
+     * Finds the latest completed results for the given submission IDs, including the assessment note. Results still being built or assessed have no completion date yet.
      *
      * @param submissionIds the submission IDs for which to find the latest results
-     * @return a set of latest results with assessment notes
+     * @return a set of latest completed results with assessment notes
      */
     @Query("""
             SELECT r
@@ -949,7 +949,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                  SELECT MAX(r2.id)
                  FROM Result r2
                  WHERE r2.submission.id = r.submission.id
-                 AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
+                 AND r2.completionDate IS NOT NULL AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                )
             """)
     Set<Result> findLatestResultsWithAssessmentNoteBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
@@ -966,7 +966,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                     JOIN s2.results r2
                   WHERE s2.id = :submissionId
                     AND (
-                      r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                      (r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC AND r2.completionDate IS NOT NULL)
                       OR r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                       OR (
                         r2.completionDate IS NOT NULL

@@ -772,7 +772,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<AssessmentPublicationRecipientDTO> findAssessmentPublicationRecipients(@Param("exerciseId") long exerciseId);
 
     /**
-     * Get all participations for an exercise with each latest {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).
+     * Get all participations for an exercise with each latest completed {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).
      *
      * @param exerciseId Exercise id.
      * @return participations for exercise.
@@ -789,12 +789,13 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     FROM Submission s2 JOIN s2.results r2
                     WHERE s2.participation = p
                       AND r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                      AND r2.completionDate IS NOT NULL
                 ))
             """)
     List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacks(@Param("exerciseId") long exerciseId);
 
     /**
-     * Get all participations without individual due date for an exercise with each latest {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).
+     * Get all participations without individual due date for an exercise with each latest completed {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).
      *
      * @param exerciseId Exercise id.
      * @return participations for the exercise.
@@ -815,6 +816,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     FROM Submission s2 JOIN s2.results r2
                     WHERE s2.participation = p
                         AND r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                        AND r2.completionDate IS NOT NULL
                 )
             """)
     Optional<StudentParticipation> findByIdWithLatestAutomaticResultAndFeedbacks(@Param("participationId") long participationId);
@@ -1269,7 +1271,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * for the course overview, plus the latest programming submission with a rated automatic result when it differs.
      * This preserves the student's automatic result while a newer manual submission is hidden. Each submission's
      * result side is bounded to the latest result, latest grade-relevant result, and latest rated automatic fallback.
-     * The grade-relevant candidate preserves a released manual grade while a later Athena request is pending or failed. Unlike the
+     * The grade-relevant candidate preserves a released manual grade while a later Athena request is pending or failed, and neither fallback is the
+     * automatic result of a build that is still running (no completion date yet), so the previous grade stays a candidate during a rebuild. Unlike the
      * entity fetch used by the deprecated dashboard, this selects only the programming participation's clone URL from
      * subtype-specific data and selects no student, team, feedback, or exercise entity.
      *
@@ -1319,6 +1322,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         SELECT automaticResult.id
                         FROM Result automaticResult
                         WHERE automaticResult.submission = submission
+                            AND (automaticResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC OR automaticResult.completionDate IS NOT NULL)
                             AND automaticResult.rated = TRUE
                             AND (automaticResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                                 OR automaticResult.successful = TRUE)
@@ -1331,6 +1335,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         FROM Submission newerSubmission
                             JOIN newerSubmission.results newerAutomaticResult
                         WHERE newerSubmission.participation = participation
+                            AND (newerAutomaticResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC OR newerAutomaticResult.completionDate IS NOT NULL)
                             AND newerAutomaticResult.rated = TRUE
                             AND (newerAutomaticResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                                 OR newerAutomaticResult.successful = TRUE)
@@ -1351,6 +1356,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         SELECT MAX(latestRatedResult.id)
                         FROM Result latestRatedResult
                         WHERE latestRatedResult.submission = submission
+                            AND (latestRatedResult.assessmentType IS NULL OR latestRatedResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC OR latestRatedResult.completionDate IS NOT NULL)
                             AND latestRatedResult.rated = TRUE
                             AND (latestRatedResult.assessmentType IS NULL
                                 OR latestRatedResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
@@ -1360,6 +1366,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         SELECT MAX(latestAutomaticResult.id)
                         FROM Result latestAutomaticResult
                         WHERE latestAutomaticResult.submission = submission
+                            AND (latestAutomaticResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC OR latestAutomaticResult.completionDate IS NOT NULL)
                             AND latestAutomaticResult.rated = TRUE
                             AND (latestAutomaticResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                                 OR latestAutomaticResult.successful = TRUE)
@@ -1544,6 +1551,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         SELECT automaticResult.id
                         FROM Result automaticResult
                         WHERE automaticResult.submission = submission
+                            AND (automaticResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC OR automaticResult.completionDate IS NOT NULL)
                             AND automaticResult.rated = TRUE
                             AND (automaticResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                                 OR automaticResult.successful = TRUE)
@@ -1556,6 +1564,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         FROM Submission newerSubmission
                             JOIN newerSubmission.results newerAutomaticResult
                         WHERE newerSubmission.participation = participation
+                            AND (newerAutomaticResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC OR newerAutomaticResult.completionDate IS NOT NULL)
                             AND newerAutomaticResult.rated = TRUE
                             AND (newerAutomaticResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                                 OR newerAutomaticResult.successful = TRUE)
@@ -1576,6 +1585,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         SELECT MAX(latestRatedResult.id)
                         FROM Result latestRatedResult
                         WHERE latestRatedResult.submission = submission
+                            AND (latestRatedResult.assessmentType IS NULL OR latestRatedResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC OR latestRatedResult.completionDate IS NOT NULL)
                             AND latestRatedResult.rated = TRUE
                             AND (latestRatedResult.assessmentType IS NULL
                                 OR latestRatedResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
@@ -1585,6 +1595,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         SELECT MAX(latestAutomaticResult.id)
                         FROM Result latestAutomaticResult
                         WHERE latestAutomaticResult.submission = submission
+                            AND (latestAutomaticResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC OR latestAutomaticResult.completionDate IS NOT NULL)
                             AND latestAutomaticResult.rated = TRUE
                             AND (latestAutomaticResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                                 OR latestAutomaticResult.successful = TRUE)

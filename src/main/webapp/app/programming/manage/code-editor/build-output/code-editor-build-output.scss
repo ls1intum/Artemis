@@ -12,6 +12,13 @@ Build-output
         margin: 0;
     }
 
+    &__container {
+        margin: 6px 0 2px;
+        color: var(--secondary);
+        font-weight: bold;
+        clear: left;
+    }
+
     &__entry {
         &-date {
             width: 130px;

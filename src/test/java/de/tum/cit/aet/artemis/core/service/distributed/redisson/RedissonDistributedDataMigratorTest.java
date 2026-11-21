@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSch
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyFor;
+import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyPatternFor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
@@ -250,11 +251,11 @@ class RedissonDistributedDataMigratorTest {
      */
     @Test
     void testARerunOverAnAlreadyMovedMapEntryDoesNotDuplicateIt() {
-        int current = VERSION;
+        int current = FIRST_VERSION;
         redissonClient.getMap(keyFor(UNVERSIONED, "processingJobs")).put("running", "agent-1");
         redissonClient.getMap(keyFor(current, "processingJobs")).put("running", "agent-1");
 
-        migrationService().migrateToCurrentVersion();
+        migrationServiceFor(FIRST_VERSION).migrateToCurrentVersion();
 
         assertThat(redissonClient.getMap(keyFor(current, "processingJobs"))).hasSize(1).containsEntry("running", "agent-1");
     }
@@ -273,7 +274,7 @@ class RedissonDistributedDataMigratorTest {
         redissonClient.getMapCache(keyFor(1, "pyris-job-map-v2")).put("job-1", "session-1", 1, TimeUnit.HOURS);
         redissonClient.getMap(keyFor(1, "buildAgentInformation")).put("agent-1", "details");
 
-        migrationService().migrateToCurrentVersion();
+        migrationServiceFor(2).migrateToCurrentVersion();
 
         assertThat(redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue")).readAll()).containsExactly("job-1");
         assertThat(redissonClient.getMap(keyFor(2, "processingJobs"))).containsEntry("running", "agent-1");
@@ -293,7 +294,7 @@ class RedissonDistributedDataMigratorTest {
         redissonClient.getQueue("buildResultQueue").add("result-1");
         redissonClient.getPriorityQueue("buildJobQueue").add("job-1");
 
-        migrationService().migrateToCurrentVersion();
+        migrationServiceFor(2).migrateToCurrentVersion();
 
         assertThat(redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue")).readAll()).containsExactly("job-1");
         assertThat(redissonClient.getQueue(keyFor(2, "buildResultQueue"))).isEmpty();
@@ -307,7 +308,7 @@ class RedissonDistributedDataMigratorTest {
         redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue")).add("already-moved");
         redissonClient.getPriorityQueue(keyFor(1, "buildJobQueue")).add("still-waiting");
 
-        migrationService().migrateToCurrentVersion();
+        migrationServiceFor(2).migrateToCurrentVersion();
 
         assertThat(redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue")).readAll()).containsExactlyInAnyOrder("already-moved", "still-waiting");
         assertThat(redissonClient.getPriorityQueue(keyFor(1, "buildJobQueue"))).isEmpty();
@@ -333,6 +334,54 @@ class RedissonDistributedDataMigratorTest {
         assertThat(redissonClient.getQueue(keyFor(UNVERSIONED, "buildResultQueue")).readAll()).containsExactly("must-remain-unversioned");
         assertThat(redissonClient.getQueue(keyFor(VERSION, "buildResultQueue"))).isEmpty();
         assertThat(redissonClient.getQueue(keyFor(VERSION + 1, "buildResultQueue"))).isEmpty();
+    }
+
+    /**
+     * Version 3 changed the shape of a queued build job, so the build structures are flushed rather than moved;
+     * DistributedDataSchema.V2_TO_V3_STRUCTURES explains why a dropped entry heals itself. What cannot be rebuilt moves.
+     */
+    @Test
+    void testDropsTheBuildStructuresOfVersionTwoAndKeepsWhatCannotBeRebuilt() {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set("2");
+        redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue")).add("job-1");
+        redissonClient.getMap(keyFor(2, "processingJobs")).put("running", "agent-1");
+        redissonClient.getQueue(keyFor(2, "buildResultQueue")).add("result-1");
+        redissonClient.getQueue(keyFor(2, "deferredBuildResultQueue")).add("result-2");
+        redissonClient.getMap(keyFor(2, "features")).put("Science", Boolean.FALSE);
+        // the maps the live Iris services read when a Pyris callback of a run in flight arrives
+        List<String> irisMaps = List.of("pyris-job-map-v2", "pyris-chat-job-client-id-map", "pyris-chat-material-version-map", "pyris-global-search-material-version-map");
+        for (String irisMap : irisMaps) {
+            redissonClient.getMapCache(keyFor(2, irisMap)).put("run-1", irisMap + "-value", 1, TimeUnit.HOURS);
+        }
+
+        migrationServiceFor(3).migrateToCurrentVersion();
+
+        assertThat(redissonClient.getMap(keyFor(3, "features")).get("Science")).isEqualTo(Boolean.FALSE);
+        for (String irisMap : irisMaps) {
+            RMapCache<Object, Object> migrated = redissonClient.getMapCache(keyFor(3, irisMap));
+            assertThat(migrated.get("run-1")).as(irisMap).isEqualTo(irisMap + "-value");
+            // carried over with the lifetime it had left, so an abandoned run still expires
+            assertThat(migrated.remainTimeToLive("run-1")).as(irisMap).isPositive().isLessThanOrEqualTo(Duration.ofHours(1).toMillis());
+        }
+        assertThat(redissonClient.getPriorityQueue(keyFor(3, "buildJobQueue"))).isEmpty();
+        assertThat(redissonClient.getMap(keyFor(3, "processingJobs"))).isEmpty();
+        assertThat(redissonClient.getQueue(keyFor(3, "buildResultQueue"))).isEmpty();
+        assertThat(redissonClient.getQueue(keyFor(3, "deferredBuildResultQueue"))).isEmpty();
+        // the namespace migrated away from is emptied, so the incompatible entries are gone rather than stranded
+        assertThat(redissonClient.getKeys().getKeysByPattern(keyPatternFor(2))).isEmpty();
+        assertThat(storedVersion()).isEqualTo("3");
+    }
+
+    @Test
+    void testAnUnversionedStoreEndsAtTheCurrentVersionWithoutItsBuildQueue() {
+        redissonClient.getPriorityQueue("buildJobQueue").add("job-1");
+        redissonClient.getMap("features").put("Science", Boolean.FALSE);
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.getMap(keyFor(VERSION, "features")).get("Science")).isEqualTo(Boolean.FALSE);
+        assertThat(redissonClient.getPriorityQueue(keyFor(VERSION, "buildJobQueue"))).isEmpty();
+        assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));
     }
 
     /**

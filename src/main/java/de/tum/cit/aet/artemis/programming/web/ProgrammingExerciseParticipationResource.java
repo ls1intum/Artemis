@@ -231,7 +231,10 @@ public class ProgrammingExerciseParticipationResource {
         }
 
         List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submissions.stream()
-                .map(submission -> ProgrammingSubmissionWithResultsDTO.of(submission, hideResults ? List.of() : mapResults(submission.getResults()))).toList();
+                // the result of a build that is still running holds only part of its feedback, so it is left out like on the other student endpoints
+                .map(submission -> ProgrammingSubmissionWithResultsDTO.of(submission,
+                        hideResults ? List.of() : mapResults(submission.getResults().stream().filter(result -> result != null && !result.isBuildInProgress()).toList())))
+                .toList();
         ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.of(participation.getProgrammingExercise());
         var response = ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs);
         return ResponseEntity.ok(canSeeParticipantInformation(participation) ? response : response.withoutParticipantInformation());

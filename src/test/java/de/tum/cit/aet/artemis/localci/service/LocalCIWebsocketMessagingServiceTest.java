@@ -54,7 +54,7 @@ class LocalCIWebsocketMessagingServiceTest {
                         "https://example.org/solution.git", new String[0], new String[0]),
                 new JobTimingInfo(ZonedDateTime.now(), null, null, null, 0),
                 new BuildConfig("echo build", "image:1", "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, "assignment", "tests", "solution", null),
-                null, null);
+                null, null, null);
 
         messagingService.sendBuildJobUpdate(job);
 

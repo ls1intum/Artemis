@@ -2,7 +2,7 @@
 id: configure-the-build
 title: Configure the Build
 sidebar_label: Configure the Build
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-10
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -11,6 +11,9 @@ import Image, {ImageSize} from "../../../../src/components/Image/Image";
 
 import buildPlanPhases from '../assets/programming/build-plan-phases.png';
 import containerConfiguration from '../assets/programming/build-container-configuration.png';
+import singleContainer from '../assets/programming/build-containers-single-container.png';
+import secondContainer from '../assets/programming/build-containers-second-container.png';
+import containerSettings from '../assets/programming/build-containers-container-settings.png';
 
 Every push to a student repository triggers a build, and the build is what turns code into a result. A new exercise starts with a working build for its language, so most exercises need nothing from this page. Come here when you need to change what the build runs, how long it may take, what the container it runs in is allowed to do, or when you want to add code quality checks.
 
@@ -106,7 +109,9 @@ Update the build plan accordingly (see the [Adapt Build Phases](#adapt-build-pha
 You edit this on the dedicated build plan editor page, which you open with **Edit build plan** beside
 **Repositories and builds** on the exercise detail page (see [Adapt Build Phases](#adapt-build-phases-optional)).
 
-The default maximum build duration (120 seconds) usually doesn't need changes.
+The default maximum build duration (120 seconds) usually doesn't need changes. When the build runs in
+[several containers](#run-the-build-in-several-containers-optional), it applies to each of them, and a container can set
+a shorter timeout of its own.
 
 Use the slider to adjust the time limit for build plan execution:
 
@@ -135,7 +140,69 @@ These settings help ensure that resource usage is balanced while allowing for fl
 If set too high, the specified values may be overwritten by the maximum restrictions set by the administrators.
 Contact the administrators for more information.
 
+When the build runs in [several containers](#run-the-build-in-several-containers-optional), these settings apply to
+every container, and a container can override them with **Override Docker flags for this container**.
+
 We plan to add more options to the container configuration in the future.
+
+## Run the Build in Several Containers (Optional)
+
+**Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
+
+You configure the containers in the build plan editor (see [Adapt Build Phases](#adapt-build-phases-optional)). A new
+exercise has one container, and the editor then shows only the **Docker Image**, the **Build Phases** and **Add Container**.
+The settings of the exercise already apply to a single container, so the editor hides the container's own settings.
+
+<Image src={singleContainer} alt="The build plan editor with one container, showing only its Docker image, its build phases and the Add Container button" size={ImageSize.large} caption="A build plan with one container" />
+
+Choose **Add Container** to add a second container. Every container then shows the following settings:
+
+<Image src={secondContainer} alt="The build plan editor with the settings of a build container" size={ImageSize.large} caption="The settings of a build container" />
+
+- **Container Name**: identifies the container, for example in the build logs. Use only letters, digits and
+  underscores, do not start with a digit, and give every container a different name.
+- **Docker Image**: the image the container runs. Leave it empty to use the default image of the programming language.
+- **Timeout (seconds)**: the maximum duration of this container. Leave it empty to use the timeout of the exercise. A
+  container timeout cannot exceed the timeout of the exercise, which has to cover the slowest container. Set a shorter
+  timeout for a container with short phases, so that a hanging submission frees its build agent, and the student
+  receives the result, sooner.
+- **Check out only selected repositories**: by default, a container checks out every repository configured for the
+  exercise. Tick it and select the repositories this container needs. The assignment repository is always checked out.
+- **Override Docker flags for this container**: gives the container its own network, CPU count, memory limits or
+  environment variables. A field you leave empty takes the value of the exercise. The environment variables are added to
+  those of the exercise, and a variable with the same name replaces the value of the exercise.
+- **Build Phases**: the phases this container runs, configured as described in [Adapt Build Phases](#adapt-build-phases-optional).
+  Every container needs at least one phase, and the phase names within a container must be different.
+
+<Image src={containerSettings} alt="A container that checks out only the Tests repository and overrides the Docker flags of the exercise" size={ImageSize.medium} caption="Selected repositories and Docker flags of a container" />
+
+Choose **Remove this container** to remove a container. Once only one container is left, the editor returns to the
+simple view, unless that container still has one of its own settings, such as a timeout or a repository selection. A
+hidden setting would still apply, so the editor keeps the settings visible until you clear them. The detail page of the
+exercise shows the containers in the same way.
+
+<Callout variant={CalloutVariant.tip}>
+
+  To keep student code away from your tests, run the student's tests in a container that does not check out the
+  **Tests** repository: tick **Check out only selected repositories** and select nothing else. Run your own tests in a
+  second container that checks out the **Tests** repository.
+
+</Callout>
+
+### How Several Containers Are Built and Graded
+
+Each container runs as a build job of its own. The containers run in parallel, possibly on different build agents, and
+do not depend on each other: they cannot share files, and you cannot make one container wait for another. Every
+container checks out its repositories itself.
+
+The student receives one result for the submission, which stays in progress until every container has finished. Artemis
+then grades the tests of all containers together, as if a single container had reported them. A test reported by
+several containers counts once, and if it failed in any of them, it counts as failed. The build counts as failed when a
+container fails to build or does not finish, for example because of its timeout, even if the other containers passed
+all of their tests. The build logs of a failed container are shown with the name of the container.
+
+The solution build determines the test cases of the exercise, as usual. With several containers, the test cases of all
+containers count, so a test case is only deactivated when no container reports it.
 
 ## Customize Online IDE Run Configuration (Optional)
 

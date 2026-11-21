@@ -32,7 +32,8 @@ class BuildJobQueueItemValidatorTest {
         var timing = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now(), null, null, 60);
         var buildConfig = new BuildConfig("script", "image", "commit", "assignmentCommit", "testCommit", "main", null, null, false, false, List.of(), 0, assignmentCheckoutPath,
                 testCheckoutPath, solutionCheckoutPath, null);
-        return new BuildJobQueueItem("job-1", "name", new BuildAgentDTO("agent", "address", "display"), 1L, 2L, 3L, 0, 1, null, repositoryInfo, timing, buildConfig, null, null);
+        return new BuildJobQueueItem("job-1", "name", new BuildAgentDTO("agent", "address", "display"), 1L, 2L, 3L, 0, 1, null, repositoryInfo, timing, buildConfig, null, null,
+                null);
     }
 
     private static BuildJobQueueItem jobWithAssignmentUri(String assignmentUri) {

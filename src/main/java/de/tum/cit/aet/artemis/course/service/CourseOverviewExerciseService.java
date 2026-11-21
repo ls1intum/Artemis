@@ -255,8 +255,11 @@ public class CourseOverviewExerciseService {
                 firstRow.testRun(), firstRow.individualDueDate(), firstRow.repositoryUri(), submissions, hasSubmitted);
     }
 
-    private Optional<SubmissionOverviewDTO> visibleSubmission(ParticipationOverviewRowDTO submissionRow, List<ParticipationOverviewRowDTO> submissionRows,
+    private Optional<SubmissionOverviewDTO> visibleSubmission(ParticipationOverviewRowDTO submissionRow, List<ParticipationOverviewRowDTO> allSubmissionRows,
             ExerciseForCourseOverviewDTO exercise, ZonedDateTime calculationTime) {
+        // The result of a build that is still running holds only part of its feedback and no score, so it is left out like on the other student views; the
+        // previous result of the submission then stays visible, and a submission with no other result is shown as one without a result yet.
+        List<ParticipationOverviewRowDTO> submissionRows = allSubmissionRows.stream().filter(row -> !isBuildInProgress(row)).toList();
         ParticipationOverviewRowDTO latestResultRow = submissionRows.stream().filter(row -> row.resultId() != null)
                 .max(Comparator.comparingLong(ParticipationOverviewRowDTO::resultId)).orElse(null);
         if (latestResultRow != null && latestResultRow.resultAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && !isGradeRelevant(latestResultRow)) {
@@ -331,6 +334,10 @@ public class CourseOverviewExerciseService {
 
     private static boolean isManual(@Nullable AssessmentType assessmentType) {
         return assessmentType == AssessmentType.MANUAL || assessmentType == AssessmentType.SEMI_AUTOMATIC;
+    }
+
+    private static boolean isBuildInProgress(ParticipationOverviewRowDTO row) {
+        return row.resultId() != null && row.resultAssessmentType() == AssessmentType.AUTOMATIC && row.resultCompletionDate() == null;
     }
 
     private static boolean isAutomatic(ParticipationOverviewRowDTO row) {

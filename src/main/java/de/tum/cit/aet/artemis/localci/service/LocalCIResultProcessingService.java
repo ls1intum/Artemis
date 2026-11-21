@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -34,7 +35,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResultLimits;
-import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
@@ -89,7 +90,9 @@ public class LocalCIResultProcessingService {
 
     private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
 
-    private final Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService;
+    private final LocalCIBuildGroupService buildGroupService;
+
+    private final LocalCIFinishedBuildJobService finishedBuildJobService;
 
     private final ProgrammingExerciseDeletionService programmingExerciseDeletionService;
 
@@ -108,8 +111,8 @@ public class LocalCIResultProcessingService {
             BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
             ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService,
-            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService,
-            ProgrammingExerciseDeletionService programmingExerciseDeletionService) {
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseDeletionService programmingExerciseDeletionService,
+            LocalCIBuildGroupService buildGroupService, LocalCIFinishedBuildJobService finishedBuildJobService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -120,8 +123,9 @@ public class LocalCIResultProcessingService {
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
         this.distributedDataAccessService = distributedDataAccessService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
-        this.localCIQueueWebsocketService = localCIQueueWebsocketService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
+        this.buildGroupService = buildGroupService;
+        this.finishedBuildJobService = finishedBuildJobService;
     }
 
     /**
@@ -293,8 +297,12 @@ public class LocalCIResultProcessingService {
             buildResult = limitedBuildResult;
             buildLogs = limitedBuildLogs;
         }
-        BuildJob savedBuildJob;
         Result result = null;
+        // Whether the result is the one to report: a single-container result always is, a container's once it completed its group.
+        boolean completedResult = buildJob.buildGroup() == null;
+        boolean resultExpected = true;
+        BuildJob savedBuildJob = null;
+        BuildStatus buildStatus = determineBuildStatus(buildJob, buildException);
 
         SecurityUtils.setSystemAuthorizationObject();
         Optional<Participation> participationOptional;
@@ -326,8 +334,19 @@ public class LocalCIResultProcessingService {
                 }
 
                 boolean testsExpected = buildJob.buildConfig().areTestsExpected();
-                result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult, testsExpected);
-
+                if (buildJob.buildGroup() != null) {
+                    LocalCIBuildGroupService.ContainerOutcome outcome = buildGroupService.processContainerResult(participation, buildJob, buildResult, buildLogs, buildStatus,
+                            testsExpected);
+                    if (outcome != null) {
+                        result = outcome.result();
+                        savedBuildJob = outcome.savedBuildJob();
+                        completedResult = outcome.completed();
+                        resultExpected = !outcome.arrivedTooLate();
+                    }
+                }
+                else {
+                    result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult, testsExpected);
+                }
             }
             else {
                 log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
@@ -350,34 +369,28 @@ public class LocalCIResultProcessingService {
                 programmingExerciseParticipation.setProgrammingExercise(exercise);
             }
 
-            // save build job to database
-            if (buildException != null) {
-                if (buildException.getCause() instanceof CancellationException && buildException.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
-                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
-                }
-                else if (buildException.getCause() instanceof TimeoutException) {
-                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.TIMEOUT, result);
-                }
-                else {
-                    log.error("Error while processing build job: {}", buildJob, buildException);
-                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, result);
-                }
+            if (buildStatus == BuildStatus.FAILED) {
+                log.error("Error while processing build job: {}", buildJob, buildException);
             }
-            else {
-                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
-                if (programmingExerciseParticipation != null) {
-                    updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise().getId());
-                }
+            // Save the build job to the database, unless the container path already saved it linked to the aggregated result.
+            if (savedBuildJob == null) {
+                savedBuildJob = finishedBuildJobService.saveFinishedBuildJob(buildJob, buildStatus, result);
+            }
+            if (buildException == null && programmingExerciseParticipation != null) {
+                updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise().getId());
             }
 
             if (programmingExerciseParticipation != null) {
-                if (result != null) {
-                    programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
-                }
-                else {
+                if (result == null && resultExpected) {
                     log.error("Result could not be processed for build job: {}", buildJob);
                     programmingSubmissionMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
                             new BuildTriggerWebsocketError("Result could not be processed", programmingExerciseParticipation.getId()));
+                }
+                // A container's partial result must not be reported: the client clears the pending submission on any result, and
+                // the same call sends the score over LTI and to Iris. Completion comes from the outcome, since a draft assessment
+                // the feedback was merged into has no completion date.
+                else if (completedResult) {
+                    programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
                 }
 
                 if (!buildLogs.isEmpty()) {
@@ -391,62 +404,73 @@ public class LocalCIResultProcessingService {
             }
         }
 
-        // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository
-        if (isSolutionBuildOfTestOrAuxPush(buildJob)) {
-            log.info("Triggering build of template repository for solution build with id {}", buildJob.id());
-            try {
-                // Keep lifecycle-lock waits off both result workers and the shared ForkJoinPool.
-                // The independent thread establishes its own security context.
-                runFollowUpAsync(() -> SecurityUtils
-                        .runAsSystem(() -> runWhileExerciseExists(buildJob.exerciseId(), () -> programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(),
-                                buildJob.buildConfig().testCommitHash(), SubmissionType.TEST, buildJob.repositoryInfo().triggeredByPushTo()))));
-            }
-            catch (EntityNotFoundException e) {
-                // Something went wrong while retrieving the template participation.
-                // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
-                // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build
-                // manually.
-                log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", buildJob.exerciseId(), e);
-            }
+        // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository.
+        // A multi-container build triggers it once, from the container that completed its group.
+        if (isSolutionBuildOfTestOrAuxPush(buildJob) && completedResult) {
+            triggerTemplateBuild(buildJob.exerciseId(), buildJob.id(), buildJob.buildConfig().testCommitHash(), buildJob.repositoryInfo().triggeredByPushTo());
+        }
+    }
+
+    private void triggerTemplateBuild(long exerciseId, String buildJobId, String testCommitHash, RepositoryType triggeredByPushTo) {
+        log.info("Triggering build of template repository for solution build with id {}", buildJobId);
+        try {
+            // Keep lifecycle-lock waits off both result workers and the shared ForkJoinPool.
+            // The independent thread establishes its own security context.
+            runFollowUpAsync(() -> SecurityUtils.runAsSystem(() -> runWhileExerciseExists(exerciseId,
+                    () -> programmingTriggerService.triggerTemplateBuildAndNotifyUser(exerciseId, testCommitHash, SubmissionType.TEST, triggeredByPushTo))));
+        }
+        catch (EntityNotFoundException e) {
+            // Something went wrong while retrieving the template participation.
+            // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
+            // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build
+            // manually.
+            log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", exerciseId, e);
         }
     }
 
     /**
-     * Save a finished build job to the database and send a WebSocket notification.
+     * Closes the build groups whose aggregated result stayed in progress although no container will complete it, see
+     * {@link LocalCIBuildGroupService}, and reports each finalized result like a completed build: to the student, and for a
+     * solution build of a test or auxiliary push by building the template.
      *
-     * @param queueItem   the build job object from the queue
-     * @param buildStatus the status of the build job (SUCCESSFUL, FAILED, CANCELLED)
-     * @param result      the submission result
-     *
-     * @return the saved the build job
+     * @param maxMissingJobRetries    the number of retries after which a missing job is not retried again
+     * @param missingJobsRetriedSince the start of the retry window: a missing job submitted before it is not retried
+     * @return the number of build groups finalized by this run
      */
-    private BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
-        try {
-            BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
-            buildJobRepository.findByBuildJobId(queueItem.id()).ifPresent(existingBuildJob -> buildJob.setId(existingBuildJob.getId()));
-            BuildJob savedBuildJob = buildJobRepository.save(buildJob);
+    public int finalizeCompletedBuildGroups(int maxMissingJobRetries, ZonedDateTime missingJobsRetriedSince) {
+        return buildGroupService.finalizeCompletedBuildGroups(maxMissingJobRetries, missingJobsRetriedSince, this::reportFinalizedBuildGroup);
+    }
 
-            // Send WebSocket notification for the finished build job
-            // Refetch with eager loading to avoid LazyInitializationException
-            final BuildJob finalSavedBuildJob = savedBuildJob;
-            localCIQueueWebsocketService.ifPresent(service -> {
-                try {
-                    buildJobRepository.findWithDataByBuildJobId(finalSavedBuildJob.getBuildJobId()).ifPresent(buildJobWithData -> {
-                        FinishedBuildJobDTO finishedBuildJobDTO = FinishedBuildJobDTO.of(buildJobWithData);
-                        service.sendFinishedBuildJobOverWebsocket(finishedBuildJobDTO);
-                    });
-                }
-                catch (Exception e) {
-                    log.warn("Could not send finished build job notification over WebSocket", e);
-                }
-            });
+    private void reportFinalizedBuildGroup(Result finalizedResult, ProgrammingExerciseParticipation participation, BuildJob buildJob) {
+        programmingMessagingService.notifyUserAboutNewResult(finalizedResult, participation);
+        if (buildJob.getRepositoryType() == RepositoryType.SOLUTION
+                && (buildJob.getTriggeredByPushTo() == RepositoryType.TESTS || buildJob.getTriggeredByPushTo() == RepositoryType.AUXILIARY)) {
+            triggerTemplateBuild(buildJob.getExerciseId(), buildJob.getBuildJobId(), testCommitHashOf(finalizedResult, buildJob), buildJob.getTriggeredByPushTo());
+        }
+    }
 
-            return savedBuildJob;
+    /**
+     * The test commit a solution build was built against, read from its result because the build config that names it is
+     * gone once the job has left the queue.
+     */
+    private static String testCommitHashOf(Result finalizedResult, BuildJob buildJob) {
+        if (finalizedResult.getSubmission() instanceof ProgrammingSubmission submission && submission.getType() == SubmissionType.TEST && submission.getCommitHash() != null) {
+            return submission.getCommitHash();
         }
-        catch (Exception e) {
-            log.error("Could not save build job to database", e);
-            return null;
+        return buildJob.getCommitHash();
+    }
+
+    private BuildStatus determineBuildStatus(BuildJobQueueItem buildJob, Throwable buildException) {
+        if (buildException == null) {
+            return BuildStatus.SUCCESSFUL;
         }
+        if (buildException.getCause() instanceof CancellationException && buildException.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+            return BuildStatus.CANCELLED;
+        }
+        if (buildException.getCause() instanceof TimeoutException) {
+            return BuildStatus.TIMEOUT;
+        }
+        return BuildStatus.FAILED;
     }
 
     private void updateExerciseBuildDurationAsync(long exerciseId) {

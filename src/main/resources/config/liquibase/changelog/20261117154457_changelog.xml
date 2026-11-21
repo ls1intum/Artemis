@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!-- Build group shared by the container jobs of one multi-container build, under which their results are merged;
+         null for a single-container job. -->
+    <changeSet id="20261117154457-01-add-build-group-id-to-build-job" author="greinwald">
+        <addColumn tableName="build_job">
+            <column name="build_group_id" type="varchar(255)"/>
+        </addColumn>
+        <createIndex indexName="idx_build_job_build_group_id" tableName="build_job">
+            <column name="build_group_id"/>
+        </createIndex>
+    </changeSet>
+    <!-- Whether the build a job ran failed to build, which its status does not record; a build group derives the
+         submission's build-failed flag from its jobs. -->
+    <changeSet id="20261117154457-02-add-build-failed-to-build-job" author="greinwald">
+        <addColumn tableName="build_job">
+            <column name="build_failed" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <!-- Whether the build script of a job exited cleanly and reported no failed test, which neither its status nor its
+         merged feedback records; a multi-container solution build may complete a test case synchronization only if
+         every job of its group ran clean. A job that never reported does not count as clean. -->
+    <changeSet id="20261117154457-03-add-clean-run-to-build-job" author="greinwald">
+        <addColumn tableName="build_job">
+            <column name="clean_run" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
