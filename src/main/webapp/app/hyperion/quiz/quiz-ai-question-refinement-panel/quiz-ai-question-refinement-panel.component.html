@@ -1,7 +1,7 @@
 @if (hyperionEnabled && (isOpen() || externalReasoning() !== undefined) && !isRefinementPanelCollapsed()) {
     <div class="bg-(--overview-card-bg) px-6 pb-6" data-testid="quiz-ai-refinement-panel">
         @if (refinementExplanation() !== undefined || externalReasoning() !== undefined) {
-            <div class="mb-3! rounded-md border border-border bg-surface-raised px-4! py-3.5" data-testid="refinement-explanation-card">
+            <div class="mb-3 rounded-md border border-(--border-color) bg-surface-raised px-4 py-3.5" data-testid="refinement-explanation-card">
                 <div class="mb-2 flex items-center gap-2">
                     <fa-icon [icon]="faWandMagicSparkles" class="text-sm text-primary" />
                     <span class="text-xs font-bold tracking-wide text-primary uppercase" jhiTranslate="artemisApp.quizExercise.aiGeneration.refinement.changesLabel"></span>
@@ -13,7 +13,7 @@
                                 severity="secondary"
                                 variant="text"
                                 size="small"
-                                class="size-6 rounded-full! p-0! text-xs"
+                                class="size-6 rounded-full! p-0!"
                                 data-testid="refinement-restore-button"
                                 (click)="restorePreviousQuestion()"
                                 [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.refinement.restoreChanges' | artemisTranslate"
@@ -28,7 +28,7 @@
                             severity="secondary"
                             variant="text"
                             size="small"
-                            class="size-6 rounded-full! p-0! text-xs"
+                            class="size-6 rounded-full! p-0!"
                             data-testid="refinement-dismiss-button"
                             (click)="dismissReasoning()"
                             [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.refinement.dismissChanges' | artemisTranslate"
@@ -46,7 +46,7 @@
                 <textarea
                     tumAetUiInput
                     [attr.aria-label]="promptPlaceholder()"
-                    class="h-11 flex-1 resize-none"
+                    class="h-11 flex-1"
                     data-testid="refinement-textarea"
                     [placeholder]="promptPlaceholder()"
                     maxlength="2000"

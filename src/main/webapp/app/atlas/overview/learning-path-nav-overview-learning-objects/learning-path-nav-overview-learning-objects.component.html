@@ -4,7 +4,7 @@
             <div
                 data-testid="learning-object"
                 (click)="selectLearningObject(learningObject)"
-                class="flex flex-wrap items-center p-4!"
+                class="flex flex-wrap items-center p-4"
                 [ngClass]="{
                     'bg-(--overview-light-background-color) text-(--primary)':
                         currentLearningObject()?.id === learningObject.id && currentLearningObject()?.type === learningObject.type,
@@ -29,16 +29,16 @@
                 @if (learningObject.completed) {
                     <fa-icon [icon]="faCheckCircle" class="w-full px-2 text-state-success md:w-auto" />
                 } @else if (nextLearningObjectOnPath()?.id === learningObject.id) {
-                    <tumaet-ui-tag class="ms-2" severity="warn" size="sm">
+                    <tumaet-ui-tag class="ms-2!" severity="warn" size="sm">
                         {{ 'artemisApp.learningPath.navigation.overview.nextLearningObjectOnPathLabel' | artemisTranslate }}
                     </tumaet-ui-tag>
                 }
             </div>
             @if (!last) {
-                <hr class="m-0!" />
+                <hr class="m-0" />
             }
         } @empty {
-            <div class="p-4! text-(--text-body-secondary)">
+            <div class="p-4 text-(--text-body-secondary)">
                 <em
                     ><small><span jhiTranslate="artemisApp.learningPath.navigation.overview.emptyLearningObjectsLabel"></span></small
                 ></em>

@@ -81,8 +81,8 @@ class GenerationOrchestrationServiceTest {
     private final GenerationWorkerRegistryService.Claim claim = new GenerationWorkerRegistryService.Claim(
             new ExecutionIdentity("job", 42, UUID.randomUUID(), "worker", UUID.randomUUID()), "sha256:" + "a".repeat(64), GenerationToolchain.JAVA_GRADLE);
 
-    private final HyperionGenerationSettings settings = new HyperionGenerationSettings("draft", "Draft", 20, Duration.ofMinutes(10), 100_000, true, "CONTINUOUS", 128_000, null,
-            false, false);
+    private final HyperionGenerationSettings settings = new HyperionGenerationSettings("draft", "Draft", 20, Duration.ofMinutes(10), 100_000, true, "CONTINUOUS", 128_000,
+            "testpreset", null, false, false);
 
     private final WorkspaceSnapshot snapshot = new WorkspaceSnapshot(List.of(new WorkspaceFile("problem-statement.md", "statement".getBytes(StandardCharsets.UTF_8), false)));
 
@@ -403,10 +403,9 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void explicitProfileOptionsAreCarriedIntoAuthorizedWorkerAssignment() {
-        var options = org.springframework.ai.openai.OpenAiChatOptions.builder().model("assigned-model").reasoningEffort("low").temperature(0.2).topP(0.8).maxCompletionTokens(2048)
-                .verbosity("low").build();
-        var explicit = new HyperionGenerationSettings("draft", "Draft", 15, Duration.ofMinutes(4), 4000, false, "FRESH", 64000, options, false, true);
+    void profilePresetIsCarriedIntoAuthorizedWorkerAssignment() {
+        var options = org.springframework.ai.openai.OpenAiChatOptions.builder().build();
+        var explicit = new HyperionGenerationSettings("draft", "Draft", 15, Duration.ofMinutes(4), 4000, false, "FRESH", 64000, "draftpreset", options, false, true);
         deliveries.add(event(1, WorkerEvent.Type.FINISHED, output(true, "draft")));
         var result = service.generate(exercise, user, "Generate", "job", GenerationMode.ADAPT, () -> false, progress, fileUpdates::add, usage, null, Instant.now().plusSeconds(600),
                 explicit);
@@ -417,12 +416,7 @@ class GenerationOrchestrationServiceTest {
         assertThat(assignment.brief().mode()).isEqualTo(de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode.ADAPT);
         assertThat(assignment.parameters()).satisfies(parameters -> {
             assertThat(parameters.maxTurns()).isEqualTo(15);
-            assertThat(parameters.model()).isEqualTo("assigned-model");
-            assertThat(parameters.reasoningEffort()).isEqualTo("low");
-            assertThat(parameters.temperature()).isEqualTo(0.2);
-            assertThat(parameters.topP()).isEqualTo(0.8);
-            assertThat(parameters.maxCompletionTokens()).isEqualTo(2048);
-            assertThat(parameters.verbosity()).isEqualTo("low");
+            assertThat(parameters.llmPreset()).isEqualTo("draftpreset");
             assertThat(parameters.stagedGeneration()).isFalse();
             assertThat(parameters.stagedContext()).isEqualTo("FRESH");
         });

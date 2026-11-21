@@ -1,15 +1,15 @@
 <tumaet-ui-dialog dismissableMask [visible]="true" (visibleChange)="onVisibleChange($event)" size="medium" [header]="TRANSLATION_BASE + '.title' | artemisTranslate">
-    <div class="mb-4! text-muted-color">
+    <div class="mb-4 text-muted-color">
         <p [jhiTranslate]="TRANSLATION_BASE + '.description'"></p>
     </div>
     @if (!exerciseDueDate() || currentDateTime().isBefore(exerciseDueDate())) {
-        <tumaet-ui-message class="mt-2 mb-4! block" severity="info">
+        <tumaet-ui-message class="mt-2 mb-4 block" severity="info">
             <span [jhiTranslate]="TRANSLATION_BASE + '.dueDate'"></span>
         </tumaet-ui-message>
     }
     <form [formGroup]="form" (ngSubmit)="submitForm(false)">
-        <div class="mb-4!">
-            <label class="mb-2 inline-block" for="name" [jhiTranslate]="TRANSLATION_BASE + '.label'"></label>
+        <div class="mb-4">
+            <label class="mb-2" for="name" [jhiTranslate]="TRANSLATION_BASE + '.label'"></label>
             <input
                 type="text"
                 tumAetUiInput
@@ -33,8 +33,8 @@
                 </tumaet-ui-message>
             }
         </div>
-        <div class="mb-4!">
-            <label class="mb-2 inline-block" for="description" [jhiTranslate]="TRANSLATION_BASE + '.descriptionLabel'"></label>
+        <div class="mb-4">
+            <label class="mb-2" for="description" [jhiTranslate]="TRANSLATION_BASE + '.descriptionLabel'"></label>
             <input
                 type="text"
                 tumAetUiInput
@@ -55,7 +55,7 @@
                 </tumaet-ui-message>
             }
         </div>
-        <div class="mb-4! flex items-center gap-2" role="group" aria-labelledby="feedback-channel-visibility-label">
+        <div class="mb-4 flex items-center gap-2" role="group" aria-labelledby="feedback-channel-visibility-label">
             <span id="feedback-channel-visibility-label" [jhiTranslate]="TRANSLATION_BASE + '.channelVisibility'"></span>
             <tumaet-ui-select-button
                 data-testid="feedback-channel-visibility"
@@ -66,7 +66,7 @@
                 [allowEmpty]="false"
             />
         </div>
-        <div class="mb-4! flex items-center gap-2" role="group" aria-labelledby="feedback-channel-announcement-label">
+        <div class="mb-4 flex items-center gap-2" role="group" aria-labelledby="feedback-channel-announcement-label">
             <span id="feedback-channel-announcement-label" [jhiTranslate]="TRANSLATION_BASE + '.announcementChannel'"></span>
             <tumaet-ui-select-button
                 data-testid="feedback-channel-announcement"
@@ -78,10 +78,10 @@
             />
         </div>
 
-        <p class="mt-4! text-state-info">
+        <p class="mt-4 text-state-info">
             <strong [jhiTranslate]="TRANSLATION_BASE + '.studentNumber'" [translateValues]="{ count: feedbackDetail().count }"></strong>
         </p>
-        <div class="mt-4! text-muted-color">
+        <div class="mt-4 text-muted-color">
             <p>
                 <strong [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateLabel'"></strong>
                 <span [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateDescription'"></span>
