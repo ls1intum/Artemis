@@ -17,7 +17,7 @@
         @if (isEditFieldDisplayedRecord().points) {
             <div class="min-w-0 flex-1 px-2">
                 <div class="mb-4" data-testid="points-field">
-                    <label class="label-narrow" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
+                    <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
                     <span class="text-state-danger" aria-hidden="true">*</span>
                     <jhi-points-input
                         [required]="true"
@@ -38,7 +38,7 @@
         @if (isEditFieldDisplayedRecord().bonusPoints) {
             <div class="min-w-0 flex-1 px-2">
                 <div class="mb-4" [hidden]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
-                    <label class="label-narrow" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
+                    <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
                     @if (programmingExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                         <span class="text-state-danger" aria-hidden="true">*</span>
                     }
@@ -67,7 +67,7 @@
     </div>
     @if (programmingExercise().staticCodeAnalysisEnabled) {
         <div class="mt-2 mb-6">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title" for="field_maxPenalty"
+            <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title" for="field_maxPenalty"
                 >Max Static Code Analysis Penalty</label
             >
             <fa-icon

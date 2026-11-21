@@ -24,7 +24,7 @@
             @if (isEditFieldDisplayedRecord().shortName) {
                 <div class="mb-4 w-full px-2 min-[992px]:w-1/2">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label
+                        <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label
                         ><span class="text-state-danger" aria-hidden="true">*</span>
                         <jhi-help-icon text="artemisApp.programmingExercise.shortNameTooltip" />
                     </div>
@@ -59,7 +59,7 @@
             @if (!programmingExerciseCreationConfig().isExamMode && isEditFieldDisplayedRecord().categories) {
                 <div class="w-full px-2" [class]="isEditFieldDisplayedRecord().shortName ? 'min-[992px]:w-1/2' : ''" id="creation-config-selector">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories"></label>
+                        <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.exercise.categories"></label>
                         <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
                     </div>
                     <jhi-category-selector
@@ -74,7 +74,7 @@
     @if (programmingExercise().shortName && isShortNameFieldValid()) {
         <div class="mb-4">
             <div>
-                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
+                <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
                 <jhi-help-icon [text]="'artemisApp.programmingExercise.preview.tooltipLocalVC'" />
             </div>
             <jhi-programming-exercise-repository-and-build-plan-details

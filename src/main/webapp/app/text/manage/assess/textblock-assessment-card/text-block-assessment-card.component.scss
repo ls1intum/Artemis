@@ -3,6 +3,10 @@
 span {
     white-space: pre-wrap;
 
+    &.clickable {
+        cursor: pointer;
+    }
+
     &:hover {
         &.clickable {
             background: var(--textblock-assessment-span-hover-background);

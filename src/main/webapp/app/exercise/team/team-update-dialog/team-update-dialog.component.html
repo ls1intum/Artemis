@@ -1,7 +1,7 @@
 <form id="teamUpdateDialogForm" name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
     <div class="p-4">
         <div class="mb-4">
-            <label class="label-narrow" jhiTranslate="artemisApp.team.name.label" for="teamName"></label>
+            <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.team.name.label" for="teamName"></label>
             <input
                 tumAetUiInput
                 type="text"
@@ -24,7 +24,7 @@
         </div>
         <div class="mb-4">
             <div>
-                <label class="label-narrow" jhiTranslate="artemisApp.team.shortName.label" for="teamShortName"></label>
+                <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.team.shortName.label" for="teamShortName"></label>
                 <jhi-help-icon text="artemisApp.team.shortName.tooltip" />
             </div>
             <input
@@ -53,7 +53,7 @@
         <div class="mb-4">
             <div class="flex items-end">
                 <div>
-                    <label class="label-narrow" for="teamOwnerInput" jhiTranslate="artemisApp.team.owner.label"></label>
+                    <label class="inline-block mb-[0.1rem]" for="teamOwnerInput" jhiTranslate="artemisApp.team.owner.label"></label>
                     <jhi-help-icon text="artemisApp.team.owner.tooltip" class="me-1" />
                 </div>
                 @if (searchingOwner) {
@@ -92,7 +92,7 @@
         </div>
         <div class="mb-4">
             <div class="flex items-end">
-                <label for="teamStudentsInput" class="label-narrow me-1" jhiTranslate="artemisApp.team.students"></label>
+                <label for="teamStudentsInput" class="inline-block mb-[0.1rem] me-1" jhiTranslate="artemisApp.team.students"></label>
                 @if (searchingStudents) {
                     <fa-icon class="search-searching" [icon]="faSpinner" animation="spin" />
                 }

@@ -1,4 +1,4 @@
-<div #quizRoot [id]="'exercise-' + quizExercise()?.id" class="relative flex min-h-100 flex-col">
+<div #quizRoot [id]="'exercise-' + quizExercise()?.id" class="relative flex min-h-full flex-col">
     @if (quizExercise()) {
         @if (mode() === 'live' && quizExercise().quizEnded && !shouldTreatAsSubmittedForUi()) {
             <div id="missed-deadline-message" class="my-4 flex justify-center text-center!">
@@ -6,8 +6,8 @@
             </div>
         } @else {
             @if (mode() === 'preview' || mode() === 'solution') {
-                <div id="quiz-header" #quizHeader class="module-bg -mx-3">
-                    <div class="module-bg flex items-center justify-between gap-2 px-3 pt-2">
+                <div id="quiz-header" #quizHeader class="bg-(--module-bg) -mx-3">
+                    <div class="bg-(--module-bg) flex items-center justify-between gap-2 px-3 pt-2">
                         <h5 class="mb-0 flex items-center gap-2">
                             <!-- Show the title only in preview and solution modes. In live and practice modes it is rendered by a dedicated exercise header component above this view. -->
                             @if (mode() === 'preview' || mode() === 'solution') {
@@ -239,7 +239,7 @@
             <div class="sticky bottom-0 z-[1020] mt-auto -mx-3">
                 @if (mode() === 'live') {
                     <!-- The status row below sits on the card's own surface at its bottom edge, so it needs no rule above it. -->
-                    <div class="fs-small module-bg -mb-4 flex w-full items-center justify-between px-3 py-2">
+                    <div class="text-[0.875rem] bg-(--module-bg) -mb-4 flex w-full items-center justify-between px-3 py-2">
                         @if (!showingResult()) {
                             @if (!waitingForQuizStart()) {
                                 <div>

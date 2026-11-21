@@ -3,7 +3,7 @@
         @let currentCourse = course();
         <!-- only display after isCodeOfConductAccepted() is loaded and set to false -->
         @if (currentCourse && isCodeOfConductAccepted() === false) {
-            <div class="module-bg px-4 py-4 scrollable-content code-of-conduct-panel" data-testid="code-of-conduct-panel">
+            <div class="bg-(--module-bg) px-4 py-4 scrollable-content code-of-conduct-panel" data-testid="code-of-conduct-panel">
                 <jhi-course-conversations-code-of-conduct [course]="currentCourse" />
                 <button
                     data-testid="acceptCodeOfConductButton"
@@ -56,7 +56,7 @@
                             </div>
                         }
                         <div
-                            class="communication-message-wrap module-bg scrollable-communication-content shrink-0 grow basis-0 rounded-lg"
+                            class="communication-message-wrap bg-(--module-bg) scrollable-communication-content shrink-0 grow basis-0 rounded-lg"
                             [class.is-answer-thread-open]="!!postInThread()"
                         >
                             @if (activeConversation()) {
@@ -107,7 +107,7 @@
         }
     </jhi-loading-indicator-container>
 } @else if (isManagementView() && !isCommunicationEnabled() && course()?.isAtLeastInstructor) {
-    <div class="module-bg scrollable-content rounded-lg p-4">
+    <div class="bg-(--module-bg) scrollable-content rounded-lg p-4">
         <jhi-feature-activation
             [headerTitle]="'artemisApp.communicationDisabled.title'"
             [description]="'artemisApp.communicationDisabled.description'"

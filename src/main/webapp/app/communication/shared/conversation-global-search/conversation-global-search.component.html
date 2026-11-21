@@ -1,5 +1,5 @@
 <div class="search-block" [class.active]="isSearchActive()">
-    <div class="search-bar page-top-bar shell-divider-b module-bg me-2 flex w-full flex-wrap items-stretch rounded-lg px-2">
+    <div class="search-bar page-top-bar shell-divider-b bg-(--module-bg) me-2 flex w-full flex-wrap items-stretch rounded-lg px-2">
         @if (isSidebarCollapsed()) {
             <div class="me-2 hidden items-center min-[576px]:flex">
                 <jhi-course-sidebar-toggle-button [isCollapsed]="true" [isCommunicationModule]="true" (toggleSidebar)="toggleSidebar.emit()" />

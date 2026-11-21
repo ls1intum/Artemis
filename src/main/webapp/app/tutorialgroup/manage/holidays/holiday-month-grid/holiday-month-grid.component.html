@@ -58,7 +58,7 @@
                     <button
                         type="button"
                         class="flex h-full w-full cursor-pointer appearance-none flex-col items-stretch justify-start border-0 bg-transparent px-2 py-1.5 text-left text-inherit focus-visible:-outline-offset-2 focus-visible:outline-2 focus-visible:outline-(--tumaet-ui-primary-color)"
-                        [class.cursor-default]="!day.inDisplayedMonth"
+                        [class.cursor-default!]="!day.inDisplayedMonth"
                         [class.opacity-45]="!day.inDisplayedMonth"
                         [disabled]="!day.inDisplayedMonth"
                         [attr.data-day]="day.dayKey"

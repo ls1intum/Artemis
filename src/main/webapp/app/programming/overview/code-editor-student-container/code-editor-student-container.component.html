@@ -1,5 +1,5 @@
 <!-- As a page of its own, the editor is framed like the other editors of the course management, which sit on a module surface with a gutter. -->
-<div [id]="'exercise-' + exercise()?.id" [class]="fullPage() ? 'module-bg p-4! pt-1!' : ''">
+<div [id]="'exercise-' + exercise()?.id" [class]="fullPage() ? 'bg-(--module-bg) p-4! pt-1!' : ''">
     @if (loadingParticipation() || participationCouldNotBeFetched()) {
         <nav class="rounded-[0.15rem] border border-(--border-color) bg-(--card-bg)">
             <div class="p-4">

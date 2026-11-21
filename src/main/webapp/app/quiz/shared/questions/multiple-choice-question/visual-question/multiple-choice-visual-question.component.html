@@ -5,13 +5,13 @@
         id="mc-question"
         tumAetUiInput
         tumAetUiInputSize="small"
-        class="form-group-narrow w-full"
+        class="mb-[0.2rem] w-full"
         [(ngModel)]="question().text"
         rows="5"
         (input)="this.questionChanged.emit()"
         placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.textPlaceholder' | artemisTranslate }}"
     ></textarea>
-    <div class="form-group-narrow visual-question-hint">
+    <div class="mb-[0.2rem] visual-question-hint">
         <fa-icon
             [icon]="faQuestionCircle"
             class="me-1 text-(--text-body-secondary)"
@@ -45,8 +45,8 @@
     </div>
     <h4 jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.answersTitle"></h4>
     @for (answerOption of question().answerOptions; track answerOption; let i = $index) {
-        <div id="answer-option-{{ i }}" class="visual-answer-option form-group-narrow">
-            <div class="form-group-narrow visual-answer-question-container">
+        <div id="answer-option-{{ i }}" class="visual-answer-option mb-[0.2rem]">
+            <div class="mb-[0.2rem] visual-answer-question-container">
                 <div
                     class="visual-answer"
                     [ngClass]="answerOption.isCorrect ? 'visual-answer-correct-container' : 'visual-answer-wrong-container'"
@@ -115,7 +115,7 @@
                     </button>
                 }
             </div>
-            <div class="form-group-narrow visual-question-hint">
+            <div class="mb-[0.2rem] visual-question-hint">
                 <fa-icon
                     [icon]="faQuestionCircle"
                     class="me-1 text-(--text-body-secondary)"

@@ -2,7 +2,7 @@
     <div class="mb-2 rounded-md border border-(--border-color) bg-(--overview-light-background-color)" [formGroup]="form()!">
         <div class="flex flex-wrap justify-between gap-y-2 overflow-hidden border-b border-border bg-[color-mix(in_srgb,var(--tumaet-ui-text-color)_3%,transparent)] px-4 py-2">
             <div
-                class="clickable flex max-w-full items-center"
+                class="cursor-pointer flex max-w-full items-center"
                 (click)="toggle()"
                 [attr.aria-expanded]="!isCollapsed()"
                 #keyboardAction4
@@ -13,7 +13,7 @@
                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
             >
                 <div class="me-4">
-                    <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed()" />
+                    <fa-icon [icon]="faChevronRight" class="rotate-icon inline-block align-middle" [class.rotated]="!isCollapsed()" />
                 </div>
                 <h6 class="mb-0 truncate">{{ titleControl()?.value ?? '' }}</h6>
             </div>

@@ -13,11 +13,11 @@
         }
         <div class="thread-card" data-testid="conversation-thread-card">
             <!-- header -->
-            <div class="thread-card-header cursor-default">
+            <div class="thread-card-header cursor-default!">
                 <h5 class="mb-0 font-medium" jhiTranslate="artemisApp.conversationsLayout.threadSideBar.label">Thread</h5>
                 <div class="flex items-center gap-2">
                     <fa-icon
-                        class="pointer me-2"
+                        class="cursor-pointer me-2"
                         [icon]="isExpanded() ? faCompress : faExpand"
                         (click)="toggleExpand()"
                         [tumAetUiTooltip]="
@@ -26,7 +26,12 @@
                                 : ('artemisApp.conversationsLayout.threadSideBar.expand' | artemisTranslate)
                         "
                     />
-                    <fa-icon class="pointer" [tumAetUiTooltip]="'artemisApp.conversationsLayout.threadSideBar.close' | artemisTranslate" [icon]="faXmark" (click)="closeThread()" />
+                    <fa-icon
+                        class="cursor-pointer"
+                        [tumAetUiTooltip]="'artemisApp.conversationsLayout.threadSideBar.close' | artemisTranslate"
+                        [icon]="faXmark"
+                        (click)="closeThread()"
+                    />
                 </div>
             </div>
             <!-- body -->

@@ -2,7 +2,7 @@
     <div class="forwarded-message-container">
         <div class="left-border-line"></div>
         <div class="forwarded-message-content">
-            <span class="forwarded-message-channel fs-x-small flex items-center">
+            <span class="forwarded-message-channel text-[0.75rem] flex items-center">
                 <fa-icon [icon]="faShare" class="item-icon me-[0.3rem]" />
                 <span>
                     <span [jhiTranslate]="'artemisApp.communication.forward.' + (isSourceUnavailable() ? 'forwardedFromUnknown' : 'forwardedFrom')"></span>&nbsp;{{ sourceName() }}
@@ -40,10 +40,10 @@
                     <span class="post-header-date-separator">-</span>
                     <span class="post-header-date">
                         @if (postingIsOfToday()) {
-                            <span [jhiTranslate]="todayFlag() ?? ''" id="today-flag" class="fs-x-small"></span>
+                            <span [jhiTranslate]="todayFlag() ?? ''" id="today-flag" class="text-[0.75rem]"></span>
                         }
                         <span
-                            class="fs-x-small"
+                            class="text-[0.75rem]"
                             [tumAetUiTooltip]="postingIsOfToday() ? '' : (originalPostDetails()?.creationDate | artemisDate: 'time')"
                             tumAetUiTooltipDescribesHost="false"
                             >{{
