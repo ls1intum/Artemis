@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,6 +45,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.FileSystemResource;
 
@@ -1393,6 +1395,22 @@ class SecurityPolicyEditorServiceTest {
 
         assertThat(files.paths()).containsExactly("build.gradle", "data/input.txt", "scripts/check.py", "src/de/example/Client.java");
         assertThat(files.truncated()).isFalse();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "0, false", "1, true" })
+    void listsAtMostTheMaximumNumberOfTemplateFiles(int filesBeyondTheMaximum, boolean truncated) throws Exception {
+        Map<String, String> files = new HashMap<>();
+        for (int i = 0; i < SecurityPolicyEditorService.MAX_TEMPLATE_FILES + filesBeyondTheMaximum; i++) {
+            files.put("files/file" + i + ".txt", "");
+        }
+        templateRemote = newDirectory("large-template-").resolve("template.git");
+        createRemote(templateRemote, files);
+
+        SecurityTemplateFilesDTO listed = editorService.getTemplateFiles(exercise());
+
+        assertThat(listed.paths()).hasSize(SecurityPolicyEditorService.MAX_TEMPLATE_FILES);
+        assertThat(listed.truncated()).isEqualTo(truncated);
     }
 
     @Test
