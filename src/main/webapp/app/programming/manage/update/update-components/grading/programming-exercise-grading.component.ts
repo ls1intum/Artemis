@@ -92,14 +92,6 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit {
     readonly editPolicyUrl = signal<string | undefined>(undefined);
 
     constructor() {
-        // Exercises saved before this restriction may still have a Count out limit with manual assessment off.
-        effect(() => {
-            const exercise = this.programmingExercise();
-            if (exercise.assessmentType !== AssessmentType.SEMI_AUTOMATIC && exercise.featureBonusPoints !== undefined) {
-                untracked(() => this.setCountOut(false));
-            }
-        });
-
         // A field only exists while its part of the form is shown: the max penalty once static code analysis is on, the policy
         // with its edit field. That can begin after the first render, and a subscription made once after that render would
         // never see such a field, leaving the form status stale. Each subscription therefore follows its field.
@@ -145,7 +137,7 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit {
 
     calculateFormStatus() {
         const programmingExercise = this.programmingExercise();
-        // Count out is available regardless of whether the exercise contributes to the course score.
+        // Validate the bonus input whenever it is visible, including in Count out mode.
         const bonusPointsValidOrHidden =
             this.bonusPointsField()?.valid ||
             (programmingExercise.featureBonusPoints == undefined && programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY);

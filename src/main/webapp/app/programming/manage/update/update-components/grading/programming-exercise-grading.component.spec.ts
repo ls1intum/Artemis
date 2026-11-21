@@ -132,14 +132,14 @@ describe('ProgrammingExerciseGradingComponent', () => {
         expect(exercise.bonusPoints).toBe(5);
     });
 
-    it('shows the mode picker only with manual assessment enabled and restores Count in when disabled', () => {
+    it('shows the mode picker only with manual assessment enabled and preserves the limit until explicitly disabled', () => {
         exercise.featureBonusPoints = 5;
         exercise.bonusPoints = 0;
         const countOut = () => fixture.debugElement.query(By.css('[data-testid="feature-bonus-count-out"]'));
         fixture.detectChanges();
         expect(countOut()).toBeNull();
-        expect(exercise.featureBonusPoints).toBeUndefined();
-        expect(exercise.bonusPoints).toBe(5);
+        expect(exercise.featureBonusPoints).toBe(5);
+        expect(exercise.bonusPoints).toBe(0);
 
         const timeline = fixture.debugElement.query(By.css('jhi-programming-exercise-timeline'));
         timeline.triggerEventHandler('assessmentTypeChange', AssessmentType.SEMI_AUTOMATIC);
