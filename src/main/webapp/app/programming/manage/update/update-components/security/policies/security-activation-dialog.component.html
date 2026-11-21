@@ -1,0 +1,120 @@
+@let prefix = 'artemisApp.programmingExercise.security.advanced.' + mode() + '.';
+<tumaet-ui-dialog [header]="prefix + 'title' | artemisTranslate" [(visible)]="visible" (hidden)="onHidden()" size="medium" data-testid="security-activation-dialog">
+    <div class="sp-stack-3">
+        <p class="sp-mut m-0 text-sm" [jhiTranslate]="prefix + 'description'"></p>
+        @switch (mode()) {
+            @case ('activate') {
+                <div class="sp-consequence">
+                    <fa-icon [icon]="faPlus" />
+                    <span [jhiTranslate]="prefix + 'annotations'"></span>
+                </div>
+                <div class="sp-consequence">
+                    <fa-icon [icon]="faShieldHalved" />
+                    <span [jhiTranslate]="prefix + 'control'"></span>
+                </div>
+                <div class="sp-row">
+                    <span class="sp-label-row">
+                        <label class="sp-label" for="securityActivationVersion">{{ prefix + 'version' | artemisTranslate }}</label>
+                        <jhi-security-help [text]="prefix + 'versionHelp' | artemisTranslate" />
+                    </span>
+                    <tumaet-ui-select
+                        inputId="securityActivationVersion"
+                        size="small"
+                        [options]="versionOptions()"
+                        optionLabel="label"
+                        optionValue="version"
+                        optionDisabled="incompatible"
+                        [ngModel]="version()"
+                        [ngModelOptions]="{ standalone: true }"
+                        (selectionChange)="onVersionChange($event)"
+                        data-testid="security-activation-version"
+                    />
+                    @if (version()) {
+                        <span class="sp-mut text-xs" [jhiTranslate]="version() === latestVersion() ? prefix + 'latest' : prefix + 'older'"></span>
+                    }
+                </div>
+                <div class="sp-consequence">
+                    <fa-icon [icon]="faCircleInfo" />
+                    <span [jhiTranslate]="prefix + 'build'"></span>
+                </div>
+            }
+            @case ('deactivate') {
+                <div class="sp-consequence">
+                    <fa-icon [icon]="faTrashCan" />
+                    @if (policyPaths().length === 1) {
+                        <span>{{ prefix + 'deleteOne' | artemisTranslate: { file: policyPaths()[0] } }}</span>
+                    } @else {
+                        <span>{{ prefix + 'deleteMany' | artemisTranslate: { count: policyPaths().length } }}</span>
+                    }
+                </div>
+                <div class="sp-consequence">
+                    <fa-icon [icon]="faCircleXmark" />
+                    <span [jhiTranslate]="prefix + 'control'"></span>
+                </div>
+                @if (apiFiles().length || unsavedChanges()) {
+                    <tumaet-ui-message severity="warn" [icon]="faTriangleExclamation" data-testid="security-activation-api-uses">
+                        <span class="text-sm">
+                            @if (apiFiles().length) {
+                                <strong>{{ countKey(prefix + 'apiUsesTitle', apiFiles().length) | artemisTranslate: { count: apiFiles().length } }}</strong>
+                                {{ prefix + 'apiUses' | artemisTranslate: { apis: apis().join(', '), files: apiFiles().join(', ') } }}
+                                @if (repositoryLink(); as link) {
+                                    <a [routerLink]="link" target="_blank" class="ms-1 inline-flex items-center gap-1" data-testid="security-activation-show-files">
+                                        <span [jhiTranslate]="prefix + 'showFiles'"></span>
+                                        <fa-icon [icon]="faUpRightFromSquare" size="xs" />
+                                    </a>
+                                }
+                            }
+                            @if (unsavedChanges()) {
+                                <span class="block">{{ countKey(prefix + 'discarded', unsavedChanges()) | artemisTranslate: { count: unsavedChanges() } }}</span>
+                            }
+                        </span>
+                    </tumaet-ui-message>
+                }
+            }
+            @case ('scanOn') {
+                <div class="sp-consequence">
+                    <fa-icon [icon]="faMagnifyingGlass" />
+                    <span><strong [jhiTranslate]="prefix + 'beforeTitle'"></strong> {{ prefix + 'before' | artemisTranslate }}</span>
+                </div>
+                <div class="sp-consequence">
+                    <fa-icon [icon]="faShieldHalved" />
+                    <span><strong [jhiTranslate]="prefix + 'whileTitle'"></strong> {{ prefix + 'while' | artemisTranslate }}</span>
+                </div>
+                <tumaet-ui-message severity="warn" [icon]="faTriangleExclamation">
+                    <span class="text-sm">
+                        <strong [jhiTranslate]="prefix + 'slowerTitle'"></strong> {{ prefix + 'slower' | artemisTranslate }}
+                        @if (strictTimeouts()) {
+                            {{ prefix + 'timeouts' | artemisTranslate }}
+                        }
+                    </span>
+                </tumaet-ui-message>
+            }
+            @case ('scanOff') {
+                <div class="sp-consequence">
+                    <fa-icon [icon]="faMagnifyingGlass" />
+                    <span><strong [jhiTranslate]="prefix + 'beforeTitle'"></strong> {{ prefix + 'before' | artemisTranslate }}</span>
+                </div>
+                <div class="sp-consequence">
+                    <fa-icon [icon]="faShieldHalved" />
+                    <span><strong [jhiTranslate]="prefix + 'whileTitle'"></strong> {{ prefix + 'while' | artemisTranslate }}</span>
+                </div>
+                <tumaet-ui-message severity="warn" [icon]="faTriangleExclamation">
+                    <span class="text-sm"><strong [jhiTranslate]="prefix + 'riskTitle'"></strong> {{ prefix + 'risk' | artemisTranslate }}</span>
+                </tumaet-ui-message>
+            }
+            @default {}
+        }
+    </div>
+    <ng-template #footer>
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="visible.set(false)" jhiTranslate="entity.action.cancel"></button>
+        <button
+            type="button"
+            tumAetUiButton
+            [severity]="mode() === 'deactivate' || mode() === 'scanOff' ? 'danger' : 'primary'"
+            [disabled]="busy() || (mode() === 'activate' && !version())"
+            (click)="confirm()"
+            data-testid="security-activation-confirm"
+            [jhiTranslate]="prefix + 'confirm'"
+        ></button>
+    </ng-template>
+</tumaet-ui-dialog>

@@ -1,0 +1,49 @@
+@let prefix = 'artemisApp.programmingExercise.security.advanced.declare.';
+<tumaet-ui-dialog [header]="prefix + 'title' | artemisTranslate" [(visible)]="visible" size="medium" data-testid="security-declare-classes-dialog">
+    <div class="sp-stack-3">
+        <p class="sp-mut m-0 text-sm">{{ prefix + 'description' | artemisTranslate: { file: policyFile() } }}</p>
+        <tumaet-ui-search-field [(value)]="search" [placeholder]="prefix + 'search'" />
+        <div class="sp-tree" role="group" [attr.aria-label]="prefix + 'inRepository' | artemisTranslate">
+            <div class="sp-tree-group" aria-hidden="true" [jhiTranslate]="prefix + 'inRepository'"></div>
+            @if (structure() === undefined) {
+                <div class="sp-row p-2">
+                    <tumaet-ui-progress-spinner />
+                    <span jhiTranslate="artemisApp.programmingExercise.security.advanced.loading"></span>
+                </div>
+            } @else if (!shown().length) {
+                <p class="sp-mut m-0 p-2 text-sm">{{ prefix + 'empty' | artemisTranslate: { query: search() } }}</p>
+            }
+            @for (option of shown(); track option.qualifiedName) {
+                <div class="sp-tree-row sp-level-0" [class.sp-selected]="!option.fromTests && selection().has(option.qualifiedName)" data-testid="security-declare-classes-row">
+                    <tumaet-ui-checkbox
+                        [checked]="option.fromTests || selection().has(option.qualifiedName)"
+                        [disabled]="option.fromTests"
+                        [ariaLabel]="(prefix + 'declare' | artemisTranslate) + ' ' + option.qualifiedName"
+                        [tumAetUiTooltip]="option.fromTests ? (prefix + 'fromTestsHelp' | artemisTranslate) : undefined"
+                        (changed)="toggle(option)"
+                    />
+                    <span class="sp-class-name">
+                        <span class="sp-mono">{{ option.simpleName }}</span>
+                        <span class="sp-mono sp-mut text-xs">{{ option.packageName }}</span>
+                    </span>
+                    @if (option.helper) {
+                        <span class="sp-mut sp-push text-xs" [jhiTranslate]="prefix + 'noTests'"></span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+    <ng-template #footer>
+        <span class="sp-mut me-auto self-center text-sm">
+            @if (addedCount() || removedCount()) {
+                {{ addedCount() ? '+' + addedCount() : '' }}{{ addedCount() && removedCount() ? ' · ' : '' }}{{ removedCount() ? '−' + removedCount() : '' }}
+            } @else {
+                {{ 'artemisApp.programmingExercise.security.advanced.assign.noChanges' | artemisTranslate }}
+            }
+        </span>
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="visible.set(false)" jhiTranslate="entity.action.cancel"></button>
+        <button type="button" tumAetUiButton [disabled]="!addedCount() && !removedCount()" (click)="apply()" data-testid="security-declare-classes-apply">
+            {{ 'artemisApp.programmingExercise.security.advanced.assign.apply' | artemisTranslate }}
+        </button>
+    </ng-template>
+</tumaet-ui-dialog>

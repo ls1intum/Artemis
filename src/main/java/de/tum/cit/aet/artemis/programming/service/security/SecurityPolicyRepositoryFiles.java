@@ -13,6 +13,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -20,7 +21,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
@@ -93,6 +93,13 @@ public final class SecurityPolicyRepositoryFiles {
 
         BuildTool(String aresLanguageConfiguration) {
             this.aresLanguageConfiguration = aresLanguageConfiguration;
+        }
+
+        /**
+         * @return the language configuration of a policy Artemis generates for this build tool
+         */
+        public String aresLanguageConfiguration() {
+            return aresLanguageConfiguration;
         }
     }
 
@@ -189,6 +196,13 @@ public final class SecurityPolicyRepositoryFiles {
             anyActive = true;
             annotation.policyPath().filter(path -> !path.isBlank())
                     .ifPresent(path -> classesByPolicyPath.computeIfAbsent(path, _ -> new ArrayList<>()).add(testClass.qualifiedName()));
+            // Ares applies the annotation of a test method instead of the one of the class, so the method's policy file is read as well.
+            testClass.methodPolicies().forEach((method, methodAnnotation) -> {
+                if (methodAnnotation.isEvaluable() && methodAnnotation.isActivated()) {
+                    methodAnnotation.policyPath().filter(path -> !path.isBlank()).ifPresent(path -> classesByPolicyPath.computeIfAbsent(path, _ -> new ArrayList<>())
+                            .add(testClass.qualifiedName() + SecurityTestAssignments.METHOD_SEPARATOR + method));
+                }
+            });
         }
         boolean verifiedAresVersion = parseAresVersion(buildFiles.gradleBuild(), buildFiles.mavenPom()).filter(SecurityPolicySchema.VERIFIED_ARES_VERSION::equals).isPresent();
         List<SecurityFrameworkState.PolicyFile> policyFiles = new ArrayList<>();
@@ -228,7 +242,7 @@ public final class SecurityPolicyRepositoryFiles {
         }
         summaries.forEach(summary -> summary.problems().forEach(problem -> reasons.add(new SecurityFrameworkState.UnsupportedReason(summary.path(), problem))));
         if (!usesAres1) {
-            reasons.addAll(testClassReasons(testClasses));
+            reasons.addAll(testClassReasons(testClasses, summaries));
         }
         return reasons;
     }
@@ -247,7 +261,7 @@ public final class SecurityPolicyRepositoryFiles {
      * The test classes are the relevant top-level types of the sources, see {@link AresTestSources.TypeDeclaration#isRelevant()}, and every class that
      * extends one of them, because it inherits its tests. Such a subclass must then carry its own annotation as well.
      */
-    private static List<AresTestSources.TypeDeclaration> testClasses(List<AresTestSources.Summary> summaries) {
+    static List<AresTestSources.TypeDeclaration> testClasses(List<AresTestSources.Summary> summaries) {
         List<AresTestSources.TypeDeclaration> allTypes = summaries.stream().flatMap(summary -> summary.topLevelTypes().stream()).toList();
         Set<String> allTypeNames = allTypes.stream().map(AresTestSources.TypeDeclaration::qualifiedName).collect(Collectors.toSet());
         Set<String> testClassNames = new HashSet<>();
@@ -273,11 +287,15 @@ public final class SecurityPolicyRepositoryFiles {
         return type.superclass().stream().filter(allTypeNames::contains).findFirst();
     }
 
-    private static List<SecurityFrameworkState.UnsupportedReason> testClassReasons(List<AresTestSources.TypeDeclaration> testClasses) {
+    private static List<SecurityFrameworkState.UnsupportedReason> testClassReasons(List<AresTestSources.TypeDeclaration> testClasses, List<AresTestSources.Summary> summaries) {
         if (!testClasses.isEmpty() && testClasses.stream().noneMatch(testClass -> testClass.registersSandbox() || !testClass.policies().isEmpty())) {
             return List.of(new SecurityFrameworkState.UnsupportedReason(testClasses.getFirst().qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.NO_ARES_2));
         }
         List<SecurityFrameworkState.UnsupportedReason> reasons = new ArrayList<>();
+        Map<String, AresTestSources.TypeDeclaration> testClassesByName = new HashMap<>();
+        testClasses.forEach(testClass -> testClassesByName.put(testClass.qualifiedName(), testClass));
+        Map<String, AresTestSources.TypeDeclaration> typesByName = new HashMap<>();
+        summaries.forEach(summary -> summary.topLevelTypes().forEach(type -> typesByName.putIfAbsent(type.qualifiedName(), type)));
         for (AresTestSources.TypeDeclaration testClass : testClasses) {
             if (testClass.policies().size() != 1) {
                 reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(),
@@ -287,8 +305,106 @@ public final class SecurityPolicyRepositoryFiles {
             if (!testClass.registersSandbox()) {
                 reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES));
             }
+            List<MethodPolicyInEffect> methodPolicies = methodPoliciesInEffect(testClass, testClassesByName, typesByName);
+            boolean switchedOff = testClass.policies().size() == 1 && testClass.policies().getFirst().isEvaluable() && !testClass.policies().getFirst().isActivated();
+            if (switchedOff && methodPolicies.stream().anyMatch(policy -> policy.annotation().isEvaluable() && policy.annotation().isActivated())) {
+                reasons.add(
+                        new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS));
+            }
+            else if (methodPolicies.stream().anyMatch(MethodPolicyInEffect::inherited)) {
+                reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.INHERITED_METHOD_POLICY));
+            }
         }
         return reasons;
+    }
+
+    /**
+     * A method annotation that Ares applies to a test the class runs.
+     *
+     * @param inherited whether the class inherits the test method from another test class instead of declaring it
+     */
+    private record MethodPolicyInEffect(AresPolicyAnnotations.Annotation annotation, boolean inherited) {
+    }
+
+    /**
+     * Ares applies the annotation of a test method instead of the one of its class, also to the test methods a class inherits from other test classes, because
+     * it reads the annotation of the method where it is declared before the one of the class that runs it, unless a class in between overrides the method.
+     * An active one in a class whose annotation switches the sandbox off runs that test with the sandbox, and an inherited one keeps the test of the subclass
+     * on another policy than its class. Neither the state of the class nor its assignments could show that, so such a class is not supported.
+     *
+     * @return the method annotations Ares applies to the tests the class runs: its own and those of the test methods it inherits without an override
+     */
+    private static List<MethodPolicyInEffect> methodPoliciesInEffect(AresTestSources.TypeDeclaration testClass, Map<String, AresTestSources.TypeDeclaration> testClassesByName,
+            Map<String, AresTestSources.TypeDeclaration> typesByName) {
+        List<AresTestSources.TypeDeclaration> chain = new ArrayList<>();
+        Set<String> visited = new HashSet<>();
+        Optional<AresTestSources.TypeDeclaration> declaring = Optional.of(testClass);
+        // Like Java, the first candidate of the superclass that exists wins, also if it is no test class, which ends the chain of test classes.
+        while (declaring.isPresent() && visited.add(declaring.get().qualifiedName())) {
+            chain.add(declaring.get());
+            declaring = superclassOf(declaring.get(), typesByName.keySet()).map(testClassesByName::get);
+        }
+        // A member type shadows an import of the same simple name in the class that declares or inherits it, not in its superclasses.
+        Map<String, Optional<Set<String>>> memberTypes = new HashMap<>();
+        chain.forEach(type -> memberTypes.put(type.qualifiedName(), AresTestSources.memberTypesInScope(type, typesByName)));
+        List<MethodPolicyInEffect> policies = new ArrayList<>();
+        for (int index = 0; index < chain.size(); index++) {
+            AresTestSources.TypeDeclaration type = chain.get(index);
+            for (Map.Entry<String, AresPolicyAnnotations.Annotation> methodPolicy : type.methodPolicies().entrySet()) {
+                if (!isOverridden(type, methodPolicy.getKey(), chain.subList(0, index), memberTypes)) {
+                    policies.add(new MethodPolicyInEffect(methodPolicy.getValue(), index > 0));
+                }
+            }
+        }
+        return policies;
+    }
+
+    /**
+     * Whether a subclass overrides the test method, so that JUnit runs the override with its own annotations instead: it declares a test method with the
+     * same signature, and is in the same package unless the method is public or protected. A name that several test methods of the type share is never
+     * overridden as a whole, so it counts as inherited, and so does a signature with a simple type name that may name different types in the two files,
+     * e.g. through wildcard imports of {@code java.util.*} and {@code java.sql.*}, or that a member type of the class hierarchy may shadow, also an unknown one
+     * of a supertype outside the repository.
+     *
+     * @param subclasses  the classes between the class that runs the tests and the type, including the former
+     * @param memberTypes the simple names of the member types in scope in each class of the hierarchy, by its qualified name; empty where unknown
+     */
+    private static boolean isOverridden(AresTestSources.TypeDeclaration type, String method, List<AresTestSources.TypeDeclaration> subclasses,
+            Map<String, Optional<Set<String>>> memberTypes) {
+        List<AresTestCases.TestSignature> signatures = type.testSignatures().stream().filter(signature -> signature.name().equals(method)).toList();
+        if (signatures.size() != 1) {
+            return false;
+        }
+        AresTestCases.TestSignature signature = signatures.getFirst();
+        if (signature.dependsOnPackage() || !importsAreNotShadowed(signature, type, memberTypes)) {
+            return false;
+        }
+        for (AresTestSources.TypeDeclaration subclass : subclasses) {
+            boolean canOverride = signature.visibleInOtherPackages() || subclass.packageName().equals(type.packageName());
+            if (canOverride && declares(subclass, signature, memberTypes)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return whether the class declares a test method with the signature, whose type names really name the types the signature names
+     */
+    private static boolean declares(AresTestSources.TypeDeclaration type, AresTestCases.TestSignature signature, Map<String, Optional<Set<String>>> memberTypes) {
+        return type.testSignatures().stream().anyMatch(candidate -> candidate.text().equals(signature.text()) && importsAreNotShadowed(candidate, type, memberTypes));
+    }
+
+    /**
+     * @param declaringType the class that declares the signature
+     * @param memberTypes   the member types in scope in each class of the hierarchy, see {@link #isOverridden}
+     * @return whether every type name of the signature that an import resolves really names the imported type: no member type in scope of the class, also no
+     *         unknown one of a supertype outside the repository, shadows it
+     */
+    private static boolean importsAreNotShadowed(AresTestCases.TestSignature signature, AresTestSources.TypeDeclaration declaringType,
+            Map<String, Optional<Set<String>>> memberTypes) {
+        return signature.importedNames().isEmpty()
+                || memberTypes.get(declaringType.qualifiedName()).map(types -> signature.importedNames().stream().noneMatch(types::contains)).orElse(false);
     }
 
     private static SecurityFrameworkState.PolicyFile policyFile(String path, List<String> referencedBy, PolicyFileReader reader, boolean verifiedAresVersion) {
@@ -307,7 +423,8 @@ public final class SecurityPolicyRepositoryFiles {
         if (policy.testClasses().isEmpty()) {
             return new SecurityFrameworkState.PolicyFile(path, referencedBy, SecurityFrameworkState.PolicyFileProblem.TEST_CLASS_LIST_NOT_FOUND, List.of());
         }
-        List<String> missing = referencedBy.stream().filter(testClass -> !policy.testClasses().get().contains(testClass)).toList();
+        List<String> missing = referencedBy.stream().map(SecurityTestAssignments::testClassOf).distinct().filter(testClass -> !policy.testClasses().get().contains(testClass))
+                .toList();
         return new SecurityFrameworkState.PolicyFile(path, referencedBy, null, missing);
     }
 
@@ -393,19 +510,49 @@ public final class SecurityPolicyRepositoryFiles {
         return javaSources;
     }
 
-    private static BuildFiles buildFiles(Path repositoryRoot) {
+    static BuildFiles buildFiles(Path repositoryRoot) {
         return new BuildFiles(readFileIfPresent(repositoryRoot.resolve(GRADLE_BUILD_FILE)).orElse(null), readFileIfPresent(repositoryRoot.resolve(MAVEN_BUILD_FILE)).orElse(null));
     }
 
     /**
+     * Decides whether an Ares {@code @Policy} annotation enforces its policy.
+     */
+    @FunctionalInterface
+    public interface AnnotationDecision {
+
+        /**
+         * @param testClass the fully qualified name of the test class of the Java file; null if the file has none
+         * @param method    the test method the annotation is on; null for the annotation of the class
+         * @return whether the annotation should enforce its policy
+         */
+        boolean isActive(@Nullable String testClass, @Nullable String method);
+    }
+
+    /**
+     * @param testClass the fully qualified name of a test class
+     * @param method    the test method of an annotation; null for the annotation of the class
+     * @return the key of the annotation in {@link #annotationStates(Map)}
+     */
+    public static String annotationKey(String testClass, @Nullable String method) {
+        return method == null ? testClass : testClass + SecurityTestAssignments.METHOD_SEPARATOR + method;
+    }
+
+    /**
      * @param javaSources the Java sources of a repository by their path relative to its root
-     * @return for every test class with an evaluable {@code @Policy} annotation whether it is switched on, by the fully qualified name of the class
+     * @return for every evaluable {@code @Policy} annotation of a test class or of one of its test methods whether it is switched on, by
+     *         {@link #annotationKey(String, String)}
      */
     public static Map<String, Boolean> annotationStates(Map<String, String> javaSources) {
         Map<String, Boolean> states = new TreeMap<>();
         javaSources.forEach((path, source) -> AresTestSources.relevantType(AresTestSources.analyze(path, source))
-                .filter(type -> type.policies().size() == 1 && type.policies().getFirst().isEvaluable())
-                .ifPresent(type -> states.put(type.qualifiedName(), type.policies().getFirst().isActivated())));
+                .filter(type -> type.policies().size() == 1 && type.policies().getFirst().isEvaluable()).ifPresent(type -> {
+                    states.put(annotationKey(type.qualifiedName(), null), type.policies().getFirst().isActivated());
+                    type.methodPolicies().forEach((method, annotation) -> {
+                        if (annotation.isEvaluable()) {
+                            states.put(annotationKey(type.qualifiedName(), method), annotation.isActivated());
+                        }
+                    });
+                }));
         return states;
     }
 
@@ -458,7 +605,7 @@ public final class SecurityPolicyRepositoryFiles {
      * @param mavenPom    content of {@code pom.xml}, if the repository has one
      * @return the build tool whose build file pins an Ares version
      */
-    private static Optional<BuildTool> detectBuildTool(@Nullable String gradleBuild, @Nullable String mavenPom) {
+    static Optional<BuildTool> detectBuildTool(@Nullable String gradleBuild, @Nullable String mavenPom) {
         if (gradleBuild != null && !BuildFileSyntax.aresVersionPins(gradleBuild, BuildTool.GRADLE).isEmpty()) {
             return Optional.of(BuildTool.GRADLE);
         }
@@ -505,14 +652,43 @@ public final class SecurityPolicyRepositoryFiles {
         }
         Path buildFile = buildFile(repositoryRoot, buildTool.get());
         String content = readFile(buildFile);
+        return writeIfChanged(buildFile, content, withAresVersion(content, buildTool.get(), aresVersion));
+    }
+
+    /** Replaces every Ares version pinned in code, not in comments, of the build file content. */
+    private static String withAresVersion(String content, BuildTool buildTool, String aresVersion) {
         StringBuilder updated = new StringBuilder();
         int copiedUntil = 0;
-        for (MatchResult pin : BuildFileSyntax.aresVersionPins(content, buildTool.get())) {
+        for (MatchResult pin : BuildFileSyntax.aresVersionPins(content, buildTool)) {
             updated.append(content, copiedUntil, pin.start()).append(pin.group(1)).append(aresVersion).append(pin.group(3));
             copiedUntil = pin.end();
         }
-        updated.append(content, copiedUntil, content.length());
-        return writeIfChanged(buildFile, content, updated.toString());
+        return updated.append(content, copiedUntil, content.length()).toString();
+    }
+
+    /**
+     * A build file whose pinned Ares version changes.
+     *
+     * @param path   the path of the build file relative to the repository root
+     * @param before its content before
+     * @param after  its content with the other version pinned
+     */
+    public record BuildFileChange(String path, String before, String after) {
+    }
+
+    /**
+     * Pins another Ares version in the content of the build file, like {@link #writeAresVersion(Path, String)} does in a checkout.
+     *
+     * @param gradleBuild the content of {@code build.gradle}; null if there is none
+     * @param mavenPom    the content of {@code pom.xml}; null if there is none
+     * @param aresVersion the version to pin
+     * @return the build file before and after; empty if no build file pins a version
+     */
+    public static Optional<BuildFileChange> pinAresVersion(@Nullable String gradleBuild, @Nullable String mavenPom, String aresVersion) {
+        return detectBuildTool(gradleBuild, mavenPom).map(buildTool -> {
+            String content = buildTool == BuildTool.GRADLE ? gradleBuild : mavenPom;
+            return new BuildFileChange(buildTool == BuildTool.GRADLE ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE, content, withAresVersion(content, buildTool, aresVersion));
+        });
     }
 
     /**
@@ -534,16 +710,38 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * Deletes the policy file, if present.
+     * Deletes a policy file, if present. A path that leaves the repository or passes a symbolic link is left alone.
      *
      * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @param policyPath     the validated path of the policy file relative to the root
      */
-    public static void deletePolicy(Path repositoryRoot) {
+    private static void deletePolicyFile(Path repositoryRoot, String policyPath) {
+        Path root = repositoryRoot.toAbsolutePath().normalize();
+        Path file = root.resolve(policyPath).normalize();
+        if (!file.startsWith(root) || blocksPolicyFile(root, file) || !Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) {
+            return;
+        }
         try {
-            Files.deleteIfExists(repositoryRoot.resolve(POLICY_FILE_NAME));
+            Files.delete(file);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * Deletes a file when the Security Framework is deactivated, if it has the shape of a policy, see {@link SecurityPolicyYaml#isPolicyShaped(String)}. A
+     * policy goes even if the pinned Ares version would refuse it; any other file stays, e.g. a build file, a YAML configuration or a file whose YAML is broken
+     * that an annotation points to.
+     *
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @param policyPath     the validated path of the file relative to the root
+     */
+    public static void deletePolicyFileIfPolicy(Path repositoryRoot, String policyPath) {
+        Path root = repositoryRoot.toAbsolutePath().normalize();
+        PolicyFileContent content = readPolicyFile(root, policyPath);
+        if (content.problem() == null && content.content() != null && SecurityPolicyYaml.isPolicyShaped(content.content())) {
+            deletePolicyFile(root, policyPath);
         }
     }
 
@@ -561,29 +759,27 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * Switches the Ares {@code @Policy} annotations of each test class on or off, as decided per class. The Security Framework only changes repositories in
-     * which every file has at most one relevant top-level type, see {@link AresTestSources}, so one decision per class is one decision per file. The
-     * annotations of a file without such a type are switched on.
+     * Switches the Ares {@code @Policy} annotations of each Java file on or off, as decided per annotation: for the annotation of the test class and for
+     * the one of each test method, so that a switched-off test method stays so when its class is switched on again. A test class is identified by its
+     * fully qualified name, so a class that replaced another one in the same file is not mistaken for it. The Security Framework only changes
+     * repositories in which every file has at most one relevant top-level type, see {@link AresTestSources}; any other annotation of a file follows the
+     * decision for its class.
      *
-     * @param repositoryRoot     root of the checked-out exercise-tests repository
-     * @param activeForTestClass whether the annotations of the test class with a fully qualified name should enforce their policy
+     * @param repositoryRoot root of the checked-out exercise-tests repository
+     * @param decision       whether each annotation should enforce its policy
      * @return the number of files that changed
      */
-    public static int setPolicyAnnotationsActive(Path repositoryRoot, Predicate<String> activeForTestClass) {
-        return setPolicyAnnotationsActive(repositoryRoot,
-                (path, content) -> AresTestSources.relevantType(AresTestSources.analyze(path, content)).map(type -> activeForTestClass.test(type.qualifiedName())).orElse(true));
-    }
-
-    /**
-     * @param activeForFile whether the annotations of the file at a path, relative to the root with forward slashes, and with a content should enforce
-     *                          their policy
-     */
-    private static int setPolicyAnnotationsActive(Path repositoryRoot, BiPredicate<String, String> activeForFile) {
+    public static int setPolicyAnnotationsActive(Path repositoryRoot, AnnotationDecision decision) {
         int changedFiles = 0;
         for (Path javaFile : javaFiles(repositoryRoot)) {
             String content = readFile(javaFile);
-            boolean active = activeForFile.test(repositoryRoot.relativize(javaFile).toString().replace('\\', '/'), content);
-            if (writeIfChanged(javaFile, content, AresPolicyAnnotations.setActive(content, active))) {
+            String path = repositoryRoot.relativize(javaFile).toString().replace('\\', '/');
+            Optional<AresTestSources.TypeDeclaration> testClass = AresTestSources.relevantType(AresTestSources.analyze(path, content));
+            Map<Integer, String> methodsByOffset = new HashMap<>();
+            testClass.ifPresent(type -> type.methodPolicies().forEach((method, annotation) -> methodsByOffset.put(annotation.start(), method)));
+            String qualifiedName = testClass.map(AresTestSources.TypeDeclaration::qualifiedName).orElse(null);
+            String updated = AresPolicyAnnotations.setActive(content, annotation -> decision.isActive(qualifiedName, methodsByOffset.get(annotation.start())));
+            if (writeIfChanged(javaFile, content, updated)) {
                 changedFiles++;
             }
         }
@@ -763,7 +959,7 @@ public final class SecurityPolicyRepositoryFiles {
         return Files.isRegularFile(file) ? Optional.of(readFile(file)) : Optional.empty();
     }
 
-    private static String readFile(Path file) {
+    static String readFile(Path file) {
         try {
             return Files.readString(file, StandardCharsets.UTF_8);
         }
@@ -772,7 +968,7 @@ public final class SecurityPolicyRepositoryFiles {
         }
     }
 
-    private static boolean writeIfChanged(Path file, String previousContent, String newContent) {
+    static boolean writeIfChanged(Path file, String previousContent, String newContent) {
         if (newContent.equals(previousContent)) {
             return false;
         }

@@ -119,7 +119,7 @@ final class SecurityFrameworkCommitFiles {
         return false;
     }
 
-    private static Optional<String> readFile(Repository repository, RevTree tree, String path) throws IOException {
+    static Optional<String> readFile(Repository repository, RevTree tree, String path) throws IOException {
         try (TreeWalk treeWalk = TreeWalk.forPath(repository, path, tree)) {
             if (treeWalk == null) {
                 return Optional.empty();

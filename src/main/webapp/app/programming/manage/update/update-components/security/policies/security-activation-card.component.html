@@ -1,0 +1,145 @@
+@let prefix = 'artemisApp.programmingExercise.security.advanced.card.';
+<section class="sp-card" aria-labelledby="securityAdvancedActivateTitle" data-testid="security-advanced-card">
+    <div class="sp-row-between">
+        <div class="sp-switch-row">
+            <tumaet-ui-toggle-switch
+                inputId="securityAdvancedToggle"
+                ariaLabelledBy="securityAdvancedActivateTitle"
+                [ngModel]="toggleOn()"
+                [ngModelOptions]="{ standalone: true }"
+                [disabled]="locked() || state() === 'turningOn' || state() === 'turningOff' || state() === 'committing'"
+                (changed)="onToggle($event)"
+                data-testid="security-advanced-toggle"
+            />
+            <span class="sp-label-row">
+                <span id="securityAdvancedActivateTitle" class="sp-strong" [jhiTranslate]="prefix + 'activate'"></span>
+                <jhi-security-help [text]="prefix + 'activateHelp' | artemisTranslate" />
+            </span>
+        </div>
+        <div class="sp-tags" data-testid="security-advanced-status">
+            @switch (state()) {
+                @case ('inactive') {
+                    <tumaet-ui-tag severity="secondary" size="sm" [tumAetUiTooltip]="prefix + 'inactiveHelp' | artemisTranslate" tabindex="0">
+                        <span [jhiTranslate]="prefix + 'inactive'"></span>
+                    </tumaet-ui-tag>
+                }
+                @case ('turningOn') {
+                    <tumaet-ui-tag severity="info" size="sm">
+                        <fa-icon [icon]="faSpinner" class="sp-spin" />
+                        <span [jhiTranslate]="prefix + 'turningOn'"></span>
+                    </tumaet-ui-tag>
+                }
+                @case ('turningOff') {
+                    <tumaet-ui-tag severity="info" size="sm">
+                        <fa-icon [icon]="faSpinner" class="sp-spin" />
+                        <span [jhiTranslate]="prefix + 'turningOff'"></span>
+                    </tumaet-ui-tag>
+                }
+                @default {
+                    <tumaet-ui-tag severity="success" size="sm" [tumAetUiTooltip]="prefix + 'activeHelp' | artemisTranslate" tabindex="0">
+                        <span [jhiTranslate]="prefix + 'active'"></span>
+                    </tumaet-ui-tag>
+                    @if (state() === 'committing') {
+                        <tumaet-ui-tag severity="info" size="sm">
+                            <fa-icon [icon]="faSpinner" class="sp-spin" />
+                            <span [jhiTranslate]="prefix + 'committing'"></span>
+                        </tumaet-ui-tag>
+                    } @else {
+                        <tumaet-ui-tag
+                            severity="info"
+                            size="sm"
+                            [tumAetUiTooltip]="prefix + 'configuredHelp' | artemisTranslate"
+                            tabindex="0"
+                            data-testid="security-advanced-configured"
+                        >
+                            <fa-icon [icon]="faCheck" />
+                            <span [jhiTranslate]="prefix + 'configured'"></span>
+                        </tumaet-ui-tag>
+                    }
+                }
+            }
+        </div>
+    </div>
+
+    <div class="sp-switch-row items-start" [class.sp-scan-disabled]="!active()">
+        <tumaet-ui-toggle-switch
+            inputId="securityAdvancedScan"
+            ariaLabelledBy="securityAdvancedScanLabel"
+            [ngModel]="active() && scanDependencies()"
+            [ngModelOptions]="{ standalone: true }"
+            [disabled]="!active() || locked() || state() !== 'configured' || scanBlocked() || (!scanAvailable() && !scanDependencies())"
+            (changed)="onScan($event)"
+            data-testid="security-advanced-scan"
+        />
+        <span class="sp-label-row">
+            <span id="securityAdvancedScanLabel" class="sp-label sp-scan-label" [jhiTranslate]="prefix + 'scan'"></span>
+            <jhi-security-help
+                [text]="
+                    (!active() ? (prefix + 'scanInactive' | artemisTranslate) + ' ' : '') +
+                    (prefix + 'scanHelp' | artemisTranslate) +
+                    (active() && scanBlocked()
+                        ? ' ' + (prefix + 'scanReadOnly' | artemisTranslate)
+                        : active() && !scanAvailable()
+                          ? ' ' + (prefix + 'scanUnavailable' | artemisTranslate)
+                          : '')
+                "
+            />
+        </span>
+    </div>
+
+    <div class="sp-row-between">
+        <div class="sp-mut sp-row text-xs" data-testid="security-advanced-sync">
+            @if (lastCommit(); as commit) {
+                <span>{{ (active() ? prefix + 'synced' : prefix + 'notActive') | artemisTranslate }} · {{ prefix + 'commit' | artemisTranslate }}</span>
+                <span class="sp-mono">{{ commit.hash.substring(0, 7) }}</span>
+                <jhi-security-help [text]="(active() ? prefix + 'syncedHelp' : prefix + 'notActiveHelp') | artemisTranslate" />
+                @if (lastCommitDate(); as date) {
+                    <span>· {{ date | artemisTimeAgo }}</span>
+                }
+                @if (commit.authorName) {
+                    <span>{{ prefix + 'by' | artemisTranslate: { author: commit.authorName } }}</span>
+                }
+            }
+        </div>
+        <div class="sp-row">
+            <span class="sp-label-row">
+                @if (active()) {
+                    <label class="sp-label" for="securityAdvancedVersion">{{ prefix + 'version' | artemisTranslate }}</label>
+                } @else {
+                    <span class="sp-label" [jhiTranslate]="prefix + 'version'"></span>
+                }
+                <jhi-security-help [text]="(prefix + 'versionHelp' | artemisTranslate) + (active() ? ' ' + (prefix + 'versionHelpActive' | artemisTranslate) : '')" />
+            </span>
+            @if (active()) {
+                <tumaet-ui-select
+                    inputId="securityAdvancedVersion"
+                    size="small"
+                    [options]="versionOptions()"
+                    optionLabel="label"
+                    optionValue="version"
+                    optionDisabled="incompatible"
+                    [ngModel]="version()"
+                    [ngModelOptions]="{ standalone: true }"
+                    [disabled]="locked() || versionLocked() || state() !== 'configured'"
+                    (selectionChange)="onVersion($event)"
+                    data-testid="security-advanced-version"
+                />
+                @if (versionUncommitted()) {
+                    <tumaet-ui-tag
+                        severity="warn"
+                        size="sm"
+                        [tumAetUiTooltip]="prefix + 'versionUncommittedHelp' | artemisTranslate"
+                        tabindex="0"
+                        data-testid="security-advanced-version-uncommitted"
+                    >
+                        <span [jhiTranslate]="prefix + 'uncommitted'"></span>
+                    </tumaet-ui-tag>
+                }
+            } @else {
+                <tumaet-ui-tag severity="secondary" size="sm" [tumAetUiTooltip]="prefix + 'chooseOnActivationHelp' | artemisTranslate" tabindex="0">
+                    <span [jhiTranslate]="prefix + 'chooseOnActivation'"></span>
+                </tumaet-ui-tag>
+            }
+        </div>
+    </div>
+</section>

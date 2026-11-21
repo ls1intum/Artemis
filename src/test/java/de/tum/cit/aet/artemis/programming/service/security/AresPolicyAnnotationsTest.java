@@ -1,15 +1,47 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
+import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import de.tum.cit.aet.artemis.programming.domain.security.SecurityFrameworkState;
+
 /**
  * Tests that {@link AresPolicyAnnotations} rewrites exactly the Ares {@code @Policy} annotations of a source file, and only their activation flag.
  */
 class AresPolicyAnnotationsTest {
+
+    private static final String TEST_CLASS = """
+            package de.example;
+
+            import de.tum.cit.ase.ares.api.Policy;
+            import de.tum.cit.ase.ares.api.jupiter.Public;
+            import org.junit.jupiter.api.Test;
+
+            @Public
+            @Policy(value = "SecurityPolicy.yaml", withinPath = "test")
+            class SortingTest {
+
+                @Test
+                void testBubbleSort() {
+                }
+
+                @Policy(value = "Old.yaml", withinPath = "test")
+                @Test
+                void testMergeSort() {
+                }
+
+                @Test
+                void testQuickSort() {
+                }
+            }
+            """;
 
     /**
      * @return whether the source contains an Ares {@code @Policy} annotation that switches enforcement off
@@ -239,6 +271,147 @@ class AresPolicyAnnotationsTest {
         String original = "class A { String s = \"a(b\"; char c = ')'; /* ( */ // )\n}";
 
         assertThat(AresPolicyAnnotations.mask(original)).hasSameSizeAs(original).doesNotContain("a(b").contains("class A");
+    }
+
+    @Test
+    void pointsAnAnnotationToAnotherPolicyFileOrToNoneAndKeepsItsOtherArguments() {
+        String original = """
+                package de.example;
+
+                @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml", /* kept */ activated = true)
+                class SortingTest {
+                }
+                """;
+        AresPolicyAnnotations.Annotation annotation = AresPolicyAnnotations.find(original).getFirst();
+
+        assertThat(AresPolicyAnnotations.withPolicyPath(annotation, "StressTests.yaml"))
+                .isEqualTo("@de.tum.cit.ase.ares.api.Policy(value = \"StressTests.yaml\", /* kept */ activated = true)");
+        assertThat(AresPolicyAnnotations.withPolicyPath(annotation, null)).isEqualTo("@de.tum.cit.ase.ares.api.Policy(/* kept */ activated = true)");
+    }
+
+    @Test
+    void keepsAnUnnamedValueUnnamedAndAddsAMissingValue() {
+        AresPolicyAnnotations.Annotation unnamed = AresPolicyAnnotations.find(source("import de.tum.cit.ase.ares.api.Policy;", "@Policy(\"SecurityPolicy.yaml\")")).getFirst();
+        AresPolicyAnnotations.Annotation withoutValue = AresPolicyAnnotations.find(source("import de.tum.cit.ase.ares.api.Policy;", "@Policy(activated = false)")).getFirst();
+
+        assertThat(AresPolicyAnnotations.withPolicyPath(unnamed, "policies/Stress.yml")).isEqualTo("@Policy(\"policies/Stress.yml\")");
+        assertThat(AresPolicyAnnotations.withPolicyPath(unnamed, null)).isEqualTo("@Policy");
+        assertThat(AresPolicyAnnotations.withPolicyPath(withoutValue, "Stress.yaml")).isEqualTo("@Policy(value = \"Stress.yaml\", activated = false)");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "Stress\"Tests.yaml", "Stress\\Tests.yaml" })
+    void refusesAPathThatIsNoPlainStringLiteral(String policyPath) {
+        AresPolicyAnnotations.Annotation annotation = AresPolicyAnnotations.find(source("import de.tum.cit.ase.ares.api.Policy;", "@Policy(\"SecurityPolicy.yaml\")")).getFirst();
+
+        assertThatIllegalArgumentException().isThrownBy(() -> AresPolicyAnnotations.withPolicyPath(annotation, policyPath));
+    }
+
+    @Test
+    void assignsSingleTestCasesWithMethodAnnotations() {
+        String assigned = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", TEST_CLASS, null,
+                Map.of("testBubbleSort", "Stress.yaml", "testMergeSort", "SecurityPolicy.yaml"), Set.of());
+
+        assertThat(assigned).contains("@Public\n@Policy(withinPath = \"test\")\nclass SortingTest {")
+                .contains("    @Policy(value = \"Stress.yaml\", withinPath = \"test\")\n    @Test\n    void testBubbleSort()")
+                .contains("    @Policy(value = \"SecurityPolicy.yaml\", withinPath = \"test\")\n    @Test\n    void testMergeSort()")
+                .contains("    }\n\n    @Test\n    void testQuickSort()");
+        AresTestSources.TypeDeclaration type = AresTestSources.analyze("test/de/example/SortingTest.java", assigned).topLevelTypes().getFirst();
+        assertThat(type.methodPolicies()).containsOnlyKeys("testBubbleSort", "testMergeSort");
+        assertThat(AresTestSources.analyze("test/de/example/SortingTest.java", assigned).problems()).isEmpty();
+    }
+
+    @Test
+    void releasingATestCaseKeepsTheArgumentsOfItsOwn() {
+        String source = TEST_CLASS.replace("@Policy(value = \"SecurityPolicy.yaml\", withinPath = \"test\")\nclass", "@Policy(\"SecurityPolicy.yaml\")\nclass");
+
+        String assigned = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", source, null, Map.of("testBubbleSort", "Stress.yaml"), Set.of());
+
+        // testMergeSort goes back to the strict default policy, but keeps the withinPath the class does not set.
+        assertThat(assigned).contains("@Public\n@Policy\nclass SortingTest {").contains("    @Policy(withinPath = \"test\")\n    @Test\n    void testMergeSort()");
+        AresTestSources.TypeDeclaration type = AresTestSources.analyze("test/de/example/SortingTest.java", assigned).topLevelTypes().getFirst();
+        assertThat(type.methodPolicies().get("testMergeSort").policyPath()).isEmpty();
+        assertThat(type.methodPolicies().get("testBubbleSort").policyPath()).contains("Stress.yaml");
+    }
+
+    @Test
+    void keepsTheLinesOfAFileWithCarriageReturnLineEndings() {
+        String source = TEST_CLASS.replace("\n", "\r");
+        Map<String, String> methods = Map.of("testBubbleSort", "Stress.yaml", "testMergeSort", "SecurityPolicy.yaml");
+
+        String assigned = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", source, null, methods, Set.of());
+        String wholeClass = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", source, "Stress.yaml", Map.of(), Set.of());
+
+        assertThat(assigned).contains("    @Policy(value = \"Stress.yaml\", withinPath = \"test\")\r    @Test\r    void testBubbleSort()").doesNotContain("\n");
+        // Removing the annotation of testMergeSort removes its whole line, as in a file with line feeds.
+        String expected = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", TEST_CLASS, "Stress.yaml", Map.of(), Set.of()).replace("\n", "\r");
+        assertThat(wholeClass).isEqualTo(expected);
+    }
+
+    @Test
+    void anAnnotationOnAMethodThatIsNoTestIsNotSupported() {
+        String helper = "    @Policy(\"Missing.yaml\")\n    void helper() {\n    }\n\n";
+        String source = TEST_CLASS.replace("    @Test\n    void testQuickSort()", helper + "    @Test\n    void testQuickSort()");
+
+        AresTestSources.Summary summary = AresTestSources.analyze("test/de/example/SortingTest.java", source);
+
+        assertThat(summary.problems()).containsExactly(SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
+        assertThat(summary.topLevelTypes().getFirst().methodPolicies()).containsOnlyKeys("testMergeSort");
+    }
+
+    @Test
+    void anAnnotationOnAMethodThatIsNoTestButSharesTheNameOfOneIsNotSupported() {
+        String overload = "    @Policy(\"Q.yaml\")\n    void testQuickSort(int size) {\n    }\n\n";
+        String source = TEST_CLASS.replace("    @Test\n    void testQuickSort()", overload + "    @Test\n    void testQuickSort()");
+
+        AresTestSources.Summary summary = AresTestSources.analyze("test/de/example/SortingTest.java", source);
+
+        // Matching by the name alone would give the policy of the helper to the test testQuickSort.
+        assertThat(summary.problems()).containsExactly(SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
+        assertThat(summary.topLevelTypes().getFirst().methodPolicies()).containsOnlyKeys("testMergeSort");
+    }
+
+    @Test
+    void anAnnotationOnOneOfSeveralTestMethodsWithTheSameNameIsNotSupported() {
+        String parameterized = "    @org.junit.jupiter.params.ParameterizedTest\n    @org.junit.jupiter.params.provider.ValueSource(ints = { 1, 2 })\n";
+        String overload = "    @Policy(\"B.yaml\")\n    @Test\n    void testQuickSort() {\n    }\n\n" + parameterized + "    void testQuickSort(int size) {\n    }\n";
+        String source = TEST_CLASS.replace("    @Test\n    void testQuickSort() {\n    }\n", overload);
+
+        AresTestSources.Summary summary = AresTestSources.analyze("test/de/example/SortingTest.java", source);
+
+        // The entry SortingTest#testQuickSort names both methods, so the editor could not show which of them uses B.yaml.
+        assertThat(summary.problems()).containsExactly(SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
+        assertThat(summary.topLevelTypes().getFirst().methodPolicies()).containsOnlyKeys("testMergeSort");
+    }
+
+    @Test
+    void onlyTheTestAnnotationsOfJUnitAresAndJqwikMakeATest() {
+        String qualified = "    @example.Test\n    void helper() {\n    }\n\n    @org.junit.jupiter.api.Test\n    void qualified() {\n    }\n";
+        String source = TEST_CLASS.replace("    @Test\n    void testQuickSort() {\n    }\n", qualified);
+        String importedMarker = source.replace("import org.junit.jupiter.api.Test;", "import example.Test;");
+
+        // A marker of another package that is called Test does not make a test, also when the file imports it under its simple name.
+        assertThat(AresTestCases.testCases(source)).containsExactly("testBubbleSort", "testMergeSort", "qualified");
+        assertThat(AresTestCases.testCases(importedMarker)).containsExactly("qualified");
+    }
+
+    @Test
+    void assigningTheWholeClassRemovesTheMethodAnnotations() {
+        String assigned = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", TEST_CLASS, "Stress.yaml", Map.of(), Set.of());
+
+        assertThat(assigned).contains("@Policy(value = \"Stress.yaml\", withinPath = \"test\")\nclass SortingTest {").doesNotContain("Old.yaml")
+                .contains("    }\n\n    @Test\n    void testMergeSort()");
+        assertThat(AresPolicyAnnotations.assign("test/de/example/SortingTest.java", assigned, "Stress.yaml", Map.of(), Set.of())).isEqualTo(assigned);
+    }
+
+    @Test
+    void keepsTheOverridesOfTestCasesWithoutAPolicyFile() {
+        String source = TEST_CLASS.replace("@Policy(value = \"Old.yaml\", withinPath = \"test\")", "@Policy(activated = false)");
+
+        String assigned = AresPolicyAnnotations.assign("test/de/example/SortingTest.java", source, "Stress.yaml", Map.of(), Set.of("testMergeSort"));
+
+        assertThat(assigned).contains("@Policy(value = \"Stress.yaml\", withinPath = \"test\")\nclass SortingTest {")
+                .contains("    @Policy(activated = false)\n    @Test\n    void testMergeSort()");
     }
 
     @ParameterizedTest

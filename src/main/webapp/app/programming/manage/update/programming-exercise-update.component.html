@@ -10,6 +10,7 @@
         <jhi-documentation-button [type]="documentationType" />
     </div>
     <tumaet-ui-confirm-dialog key="hyperionSettingsReloadConfirmation" />
+    <tumaet-ui-confirm-dialog key="securityPolicyChangesOnSave" />
     @if (generationSaveBlocked()) {
         <div role="status" class="my-4 flex flex-wrap items-center gap-2" data-testid="hyperion-settings-save-blocked">
             @if (generationActivity.statusLoadFailed()) {
@@ -72,6 +73,7 @@
                     [stagedChoice]="stagedSecurityChoice()"
                     (stagedChoiceChange)="stagedSecurityChoice.set($event)"
                     [isSaving]="isSaving()"
+                    [advancedMode]="!isSimpleMode()"
                 />
                 <hr class="mb-12" />
             }

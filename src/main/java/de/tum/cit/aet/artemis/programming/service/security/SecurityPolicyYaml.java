@@ -75,6 +75,20 @@ final class SecurityPolicyYaml {
         return new ReadPolicy(true, testClasses(root));
     }
 
+    /**
+     * @param yaml the content of a file
+     * @return whether it has the shape of an Ares policy, i.e. a YAML mapping with a {@code regardingTheSupervisedCode} mapping, whatever the Ares version;
+     *         another YAML file, e.g. a configuration, has none
+     */
+    static boolean isPolicyShaped(String yaml) {
+        try {
+            return newYaml().load(yaml) instanceof Map<?, ?> root && root.get(SUPERVISED_CODE_KEY) instanceof Map<?, ?>;
+        }
+        catch (YAMLException | ClassCastException _) {
+            return false;
+        }
+    }
+
     static Optional<List<String>> testClasses(Map<?, ?> root) {
         if (!(root.get(SUPERVISED_CODE_KEY) instanceof Map<?, ?> supervisedCode) || !(supervisedCode.get(TEST_CLASSES_KEY) instanceof List<?> entries)) {
             return Optional.empty();

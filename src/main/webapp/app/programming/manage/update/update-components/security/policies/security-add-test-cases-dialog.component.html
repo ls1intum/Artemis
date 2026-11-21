@@ -1,0 +1,156 @@
+@let prefix = 'artemisApp.programmingExercise.security.advanced.assign.';
+<tumaet-ui-dialog [header]="prefix + 'title' | artemisTranslate" [(visible)]="visible" size="medium" data-testid="security-add-test-cases-dialog">
+    <div class="sp-stack-3">
+        <p class="sp-mut m-0 text-sm">{{ prefix + 'description' | artemisTranslate: { file: policyFile() } }}</p>
+        <tumaet-ui-search-field [(value)]="search" [placeholder]="prefix + 'search'" data-testid="security-add-test-cases-search" />
+        <div class="sp-tree" role="group" [attr.aria-label]="prefix + 'inRepository' | artemisTranslate">
+            <div class="sp-tree-group" aria-hidden="true" [jhiTranslate]="prefix + 'inRepository'"></div>
+            @if (structure() === undefined) {
+                <div class="sp-row p-2">
+                    <tumaet-ui-progress-spinner />
+                    <span jhiTranslate="artemisApp.programmingExercise.security.advanced.loading"></span>
+                </div>
+            } @else if (!view().length) {
+                <p class="sp-mut m-0 p-2 text-sm">{{ prefix + 'empty' | artemisTranslate: { query: search() } }}</p>
+            }
+            @for (group of view(); track group.packageName) {
+                @let packageOpen = group.open;
+                <div class="sp-tree-row sp-level-0" data-testid="security-add-test-cases-package">
+                    @if (group.available.length) {
+                        <tumaet-ui-checkbox
+                            [checked]="group.allSelected"
+                            [indeterminate]="group.partlySelected"
+                            [ariaLabel]="(prefix + 'selectPackage' | artemisTranslate) + ' ' + group.packageName"
+                            (changed)="toggleKeys(group.available)"
+                        />
+                    } @else {
+                        <span class="sp-spacer"></span>
+                    }
+                    <button
+                        type="button"
+                        class="sp-twisty"
+                        [attr.aria-expanded]="packageOpen"
+                        [attr.aria-label]="((packageOpen ? prefix + 'collapse' : prefix + 'expand') | artemisTranslate) + ' ' + group.packageName"
+                        (click)="toggleOpen(group.packageName)"
+                    >
+                        <fa-icon [icon]="packageOpen ? faChevronDown : faChevronRight" />
+                    </button>
+                    <span class="sp-mono sp-strong">{{ group.packageName }}</span>
+                    <span class="sp-push sp-mut text-xs">
+                        @if (group.available.length) {
+                            {{ prefix + 'selectedOf' | artemisTranslate: { selected: group.selected, total: group.available.length } }}
+                        } @else {
+                            {{ prefix + 'allCaptured' | artemisTranslate }}
+                        }
+                    </span>
+                </div>
+                @if (packageOpen) {
+                    @for (node of group.classes; track node.qualifiedName) {
+                        @let classOpen = node.open;
+                        @let locked = node.locked;
+                        @let lockedBy = node.lockedBy;
+                        <div class="sp-tree-row sp-level-1" [class.sp-selected]="node.allSelected" data-testid="security-add-test-cases-class">
+                            <tumaet-ui-checkbox
+                                [checked]="locked ? !node.switchedOff : node.allSelected"
+                                [indeterminate]="!locked && node.partlySelected"
+                                [disabled]="locked"
+                                [ariaLabel]="(prefix + 'selectClass' | artemisTranslate) + ' ' + node.simpleName"
+                                [tumAetUiTooltip]="
+                                    node.switchedOff
+                                        ? (prefix + 'switchedOff' | artemisTranslate)
+                                        : locked
+                                          ? (prefix + 'lockedBy' | artemisTranslate: { policy: lockedBy ?? '' })
+                                          : undefined
+                                "
+                                (changed)="toggleKeys(node.available)"
+                            />
+                            @if (node.expandable) {
+                                <button
+                                    type="button"
+                                    class="sp-twisty"
+                                    [attr.aria-expanded]="classOpen"
+                                    [attr.aria-label]="((classOpen ? prefix + 'collapse' : prefix + 'expand') | artemisTranslate) + ' ' + node.simpleName"
+                                    (click)="toggleOpen(node.qualifiedName)"
+                                >
+                                    <fa-icon [icon]="classOpen ? faChevronDown : faChevronRight" />
+                                </button>
+                            } @else {
+                                <span class="sp-twisty-spacer"></span>
+                            }
+                            <span class="sp-mono" [class.sp-mut]="locked">{{ node.simpleName }}</span>
+                            <span class="sp-push">
+                                @if (node.switchedOff) {
+                                    <tumaet-ui-tag severity="secondary" size="sm" [value]="prefix + 'switchedOffTag' | artemisTranslate" />
+                                } @else if (locked) {
+                                    <tumaet-ui-tag severity="secondary" size="sm" [value]="prefix + 'coveredBy' | artemisTranslate: { policy: lockedBy ?? '' }" />
+                                } @else {
+                                    <span class="sp-mut text-xs">{{ prefix + 'selectedOf' | artemisTranslate: { selected: node.selected, total: node.available.length } }}</span>
+                                }
+                            </span>
+                        </div>
+                        @if (classOpen && node.expandable) {
+                            @for (testCase of node.cases; track testCase.key) {
+                                <div class="sp-tree-row sp-level-2" [class.sp-selected]="testCase.checked && !testCase.coveredBy" data-testid="security-add-test-cases-case">
+                                    <tumaet-ui-checkbox
+                                        [checked]="testCase.checked"
+                                        [disabled]="!!testCase.coveredBy || testCase.switchedOff || testCase.overloaded"
+                                        [ariaLabel]="(prefix + 'selectCase' | artemisTranslate) + ' ' + node.simpleName + '.' + testCase.name"
+                                        [tumAetUiTooltip]="
+                                            testCase.switchedOff
+                                                ? (prefix + 'switchedOffCase' | artemisTranslate)
+                                                : testCase.coveredBy
+                                                  ? (prefix + 'lockedBy' | artemisTranslate: { policy: testCase.coveredBy })
+                                                  : testCase.overloaded
+                                                    ? (prefix + 'overloadedCase' | artemisTranslate)
+                                                    : undefined
+                                        "
+                                        (changed)="toggleKeys([testCase.key])"
+                                    />
+                                    <span class="sp-twisty-spacer"></span>
+                                    <span class="sp-mono" [class.sp-mut]="!!testCase.coveredBy || testCase.switchedOff">{{ testCase.name }}</span>
+                                    <span class="sp-push">
+                                        @if (testCase.switchedOff && !node.switchedOff) {
+                                            <tumaet-ui-tag severity="secondary" size="sm" [value]="prefix + 'switchedOffTag' | artemisTranslate" />
+                                        } @else if (testCase.coveredBy) {
+                                            <tumaet-ui-tag severity="secondary" size="sm" [value]="prefix + 'coveredBy' | artemisTranslate: { policy: testCase.coveredBy }" />
+                                        } @else if (testCase.change === 'added') {
+                                            <tumaet-ui-tag severity="success" size="sm" [value]="prefix + 'willBeAdded' | artemisTranslate" />
+                                        } @else if (testCase.change === 'removed') {
+                                            <tumaet-ui-tag severity="danger" size="sm" [value]="prefix + 'willBeRemoved' | artemisTranslate" />
+                                        }
+                                    </span>
+                                </div>
+                            }
+                        }
+                    }
+                }
+            }
+        </div>
+        <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'hint'"></p>
+    </div>
+    <ng-template #footer>
+        <button
+            type="button"
+            tumAetUiButton
+            severity="secondary"
+            variant="outlined"
+            class="me-auto"
+            [disabled]="!unselectedUnconnected().length"
+            (click)="selectAllUnconnected()"
+            data-testid="security-add-test-cases-all"
+        >
+            {{ prefix + 'selectAll' | artemisTranslate: { count: unselectedUnconnected().length } }}
+        </button>
+        <span class="sp-mut self-center text-sm" data-testid="security-add-test-cases-summary">
+            @if (addedCount() || removedCount()) {
+                {{ addedCount() ? '+' + addedCount() : '' }}{{ addedCount() && removedCount() ? ' · ' : '' }}{{ removedCount() ? '−' + removedCount() : '' }}
+            } @else {
+                {{ prefix + 'noChanges' | artemisTranslate }}
+            }
+        </span>
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="visible.set(false)" jhiTranslate="entity.action.cancel"></button>
+        <button type="button" tumAetUiButton [disabled]="!structure() || (!addedCount() && !removedCount())" (click)="apply()" data-testid="security-add-test-cases-apply">
+            {{ prefix + 'apply' | artemisTranslate }}
+        </button>
+    </ng-template>
+</tumaet-ui-dialog>

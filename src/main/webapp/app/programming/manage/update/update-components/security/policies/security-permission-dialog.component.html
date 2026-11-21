@@ -1,0 +1,231 @@
+@let prefix = 'artemisApp.programmingExercise.security.advanced.row.';
+@let invalid = problemField();
+<tumaet-ui-dialog [header]="titleKey() | artemisTranslate" [(visible)]="visible" size="large" data-testid="security-permission-dialog">
+    <form class="sp-grid-2" [class.sp-wide]="kind() === 'files' || kind() === 'network'" (ngSubmit)="save()" novalidate>
+        <div class="sp-stack-3">
+            @switch (kind()) {
+                @case ('files') {
+                    <div class="sp-stack">
+                        <label class="sp-label" for="securityRowPath">{{ prefix + 'files.target' | artemisTranslate }}</label>
+                        <div class="flex items-center gap-2">
+                            <input
+                                id="securityRowPath"
+                                name="path"
+                                tumAetUiInput
+                                class="sp-mono sp-grow"
+                                [ngModel]="path()"
+                                (ngModelChange)="path.set($event)"
+                                [tumAetUiInputInvalid]="invalid === 'first'"
+                                [tumAetUiInputDescribedBy]="invalid === 'first' ? 'securityPermissionProblem' : undefined"
+                                data-testid="security-permission-path"
+                            />
+                            @if (canBrowse()) {
+                                <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="openBrowse()" data-testid="security-permission-browse">
+                                    {{ prefix + 'browse' | artemisTranslate }}
+                                </button>
+                            }
+                        </div>
+                        <p class="sp-mut m-0 text-xs" [jhiTranslate]="isEditing() ? prefix + 'files.hintEdit' : prefix + 'files.hint'"></p>
+                    </div>
+                }
+                @case ('network') {
+                    <div class="sp-grid-2 sp-tight">
+                        <div class="sp-stack">
+                            <label class="sp-label" for="securityRowHost">{{ prefix + 'network.host' | artemisTranslate }}</label>
+                            <input
+                                id="securityRowHost"
+                                name="host"
+                                tumAetUiInput
+                                class="sp-mono"
+                                [ngModel]="host()"
+                                (ngModelChange)="host.set($event)"
+                                [tumAetUiInputInvalid]="invalid === 'first'"
+                                [tumAetUiInputDescribedBy]="invalid === 'first' ? 'securityPermissionProblem' : undefined"
+                                data-testid="security-permission-host"
+                            />
+                        </div>
+                        <div class="sp-stack">
+                            <label class="sp-label" for="securityRowPort">{{ prefix + 'network.port' | artemisTranslate }}</label>
+                            <input
+                                id="securityRowPort"
+                                name="port"
+                                tumAetUiInput
+                                class="sp-mono"
+                                inputmode="numeric"
+                                [ngModel]="portText()"
+                                (ngModelChange)="portText.set($event)"
+                                [tumAetUiInputInvalid]="invalid === 'port'"
+                                [tumAetUiInputDescribedBy]="invalid === 'port' ? 'securityPermissionProblem' : undefined"
+                                data-testid="security-permission-port"
+                            />
+                        </div>
+                    </div>
+                    <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'network.hint'"></p>
+                }
+                @case ('commands') {
+                    <div class="sp-grid-2 sp-tight">
+                        <div class="sp-stack">
+                            <label class="sp-label" for="securityRowCommand">{{ prefix + 'commands.command' | artemisTranslate }}</label>
+                            <div class="flex items-center gap-2">
+                                <input
+                                    id="securityRowCommand"
+                                    name="command"
+                                    tumAetUiInput
+                                    class="sp-mono sp-grow"
+                                    [ngModel]="command()"
+                                    (ngModelChange)="command.set($event)"
+                                    [tumAetUiInputInvalid]="invalid === 'first'"
+                                    [tumAetUiInputDescribedBy]="invalid === 'first' ? 'securityPermissionProblem' : undefined"
+                                    data-testid="security-permission-command"
+                                />
+                                @if (canBrowse()) {
+                                    <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="openBrowse()" data-testid="security-permission-browse">
+                                        {{ prefix + 'browse' | artemisTranslate }}
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                        <div class="sp-stack">
+                            <label class="sp-label" for="securityRowArguments">{{ prefix + 'commands.arguments' | artemisTranslate }}</label>
+                            <input
+                                id="securityRowArguments"
+                                name="arguments"
+                                tumAetUiInput
+                                class="sp-mono"
+                                [ngModel]="argumentsText()"
+                                (ngModelChange)="argumentsText.set($event)"
+                                [tumAetUiInputInvalid]="invalid === 'arguments'"
+                                [tumAetUiInputDescribedBy]="invalid === 'arguments' ? 'securityPermissionProblem' : undefined"
+                                data-testid="security-permission-arguments"
+                            />
+                        </div>
+                    </div>
+                    <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'commands.hint'"></p>
+                }
+                @case ('threads') {
+                    <div class="sp-grid-2 sp-tight">
+                        <div class="sp-stack">
+                            <label class="sp-label" for="securityRowThreadClass">{{ prefix + 'threads.threadClass' | artemisTranslate }}</label>
+                            <input
+                                id="securityRowThreadClass"
+                                name="threadClass"
+                                tumAetUiInput
+                                class="sp-mono"
+                                [ngModel]="threadClass()"
+                                (ngModelChange)="threadClass.set($event)"
+                                [tumAetUiInputInvalid]="invalid === 'first'"
+                                [tumAetUiInputDescribedBy]="invalid === 'first' ? 'securityPermissionProblem' : undefined"
+                                data-testid="security-permission-thread-class"
+                            />
+                        </div>
+                        <div class="sp-stack">
+                            <label class="sp-label" for="securityRowMaxThreads">{{ prefix + 'threads.maxThreads' | artemisTranslate }}</label>
+                            <input
+                                id="securityRowMaxThreads"
+                                name="maxThreads"
+                                tumAetUiInput
+                                class="sp-mono"
+                                inputmode="numeric"
+                                [ngModel]="maxThreadsText()"
+                                (ngModelChange)="maxThreadsText.set($event)"
+                                [tumAetUiInputInvalid]="invalid === 'maxThreads'"
+                                [tumAetUiInputDescribedBy]="invalid === 'maxThreads' ? 'securityPermissionProblem' : undefined"
+                                data-testid="security-permission-max-threads"
+                            />
+                        </div>
+                    </div>
+                    <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'threads.hint'"></p>
+                }
+                @case ('packages') {
+                    <div class="sp-stack">
+                        <label class="sp-label" for="securityRowPackage">{{ prefix + 'packages.packageName' | artemisTranslate }}</label>
+                        <input
+                            id="securityRowPackage"
+                            name="packageName"
+                            tumAetUiInput
+                            class="sp-mono"
+                            [ngModel]="packageName()"
+                            (ngModelChange)="packageName.set($event)"
+                            [tumAetUiInputInvalid]="invalid === 'first'"
+                            [tumAetUiInputDescribedBy]="invalid === 'first' ? 'securityPermissionProblem' : undefined"
+                            data-testid="security-permission-package"
+                        />
+                        <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'packages.hint'"></p>
+                    </div>
+                }
+                @default {}
+            }
+            @if (submitted() && problem(); as problemKey) {
+                <p id="securityPermissionProblem" class="m-0 text-sm text-state-danger" role="alert" data-testid="security-permission-problem">
+                    {{ problemKey | artemisTranslate: { entry: target() } }}
+                </p>
+            }
+            @if (!grantsNothing()) {
+                <p class="m-0 text-sm" data-testid="security-permission-summary">{{ summaryText() }}</p>
+            }
+        </div>
+        @if (kind() === 'files' || kind() === 'network') {
+            <div class="sp-stack-3">
+                <fieldset class="sp-perm-set">
+                    <legend class="sp-label" [jhiTranslate]="prefix + 'studentCodeMay'"></legend>
+                    @if (kind() === 'files') {
+                        @for (action of FILE_ACTIONS; track action) {
+                            <label class="sp-perm" [attr.for]="'securityRowAction-' + action">
+                                <tumaet-ui-checkbox
+                                    [inputId]="'securityRowAction-' + action"
+                                    [checked]="fileActions()[action]"
+                                    (changed)="setFileAction(action, $event.checked)"
+                                    [attr.data-testid]="'security-permission-action-' + action"
+                                />
+                                <span class="sp-row">
+                                    <span class="sp-strong text-sm">{{ prefix + 'files.action.' + action | artemisTranslate }}</span>
+                                    <span class="sp-perm-desc">{{ prefix + 'files.actionHint.' + action | artemisTranslate }}</span>
+                                </span>
+                            </label>
+                        }
+                    } @else {
+                        @for (action of NETWORK_ACTIONS; track action) {
+                            <label class="sp-perm" [attr.for]="'securityRowAction-' + action">
+                                <tumaet-ui-checkbox
+                                    [inputId]="'securityRowAction-' + action"
+                                    [checked]="networkActions()[action]"
+                                    (changed)="setNetworkAction(action, $event.checked)"
+                                    [attr.data-testid]="'security-permission-action-' + action"
+                                />
+                                <span class="sp-row">
+                                    <span class="sp-strong text-sm">{{ prefix + 'network.action.' + action | artemisTranslate }}</span>
+                                    <span class="sp-perm-desc">{{ prefix + 'network.actionHint.' + action | artemisTranslate }}</span>
+                                </span>
+                            </label>
+                        }
+                    }
+                </fieldset>
+                @if (grantsNothing()) {
+                    <p class="sp-mut m-0 text-sm" data-testid="security-permission-grants-nothing">
+                        {{ prefix + 'grantsNothing' | artemisTranslate: { noun: (prefix + kind() + '.nounInSentence' | artemisTranslate) } }}
+                    </p>
+                }
+            </div>
+        }
+        <button type="submit" hidden></button>
+    </form>
+    <ng-template #footer>
+        <span class="sp-mut me-auto self-center text-sm" [jhiTranslate]="isEditing() ? prefix + 'editNote' : prefix + 'addNote'"></span>
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="visible.set(false)" jhiTranslate="entity.action.cancel"></button>
+        <button type="button" tumAetUiButton (click)="save()" [disabled]="grantsNothing() || (submitted() && !canSave())" data-testid="security-permission-save">
+            {{ confirmKey() | artemisTranslate }}
+        </button>
+    </ng-template>
+</tumaet-ui-dialog>
+
+<jhi-security-browse-dialog
+    [(visible)]="browseOpen"
+    [mode]="browseMode()"
+    [files]="templateFiles()"
+    [truncated]="templateFilesTruncated()"
+    [failed]="templateFilesFailed()"
+    [badges]="browseBadges()"
+    [initialSelection]="browsedEntries()"
+    (selected)="onBrowsed($event)"
+    (retryRequested)="templateFilesRequested.emit()"
+/>

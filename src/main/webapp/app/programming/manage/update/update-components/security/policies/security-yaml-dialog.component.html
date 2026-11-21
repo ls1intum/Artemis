@@ -1,0 +1,127 @@
+@let prefix = 'artemisApp.programmingExercise.security.advanced.yaml.';
+<tumaet-ui-dialog [(visible)]="visible" size="large" data-testid="security-yaml-dialog">
+    <ng-template #header>
+        <div class="flex flex-col">
+            <span class="sp-mono">{{ fileName() }}</span>
+            <span class="sp-mut text-sm font-normal">{{ label() }} · {{ prefix + 'readOnly' | artemisTranslate }}</span>
+        </div>
+    </ng-template>
+    <div class="sp-stack-3">
+        <tumaet-ui-message severity="info" [icon]="faCircleInfo">
+            <span class="text-sm">
+                {{ prefix + 'keysExplained' | artemisTranslate }}
+                <ul class="sp-key-map">
+                    <li><span class="sp-mono">theFollowingResourceAccessesArePermitted</span> = {{ prefix + 'keyResources' | artemisTranslate }}</li>
+                    <li><span class="sp-mono">theFollowingTestBehaviorIsConfigured</span> = {{ prefix + 'keyBehaviour' | artemisTranslate }}</li>
+                    <li><span class="sp-mono">theFollowingClassesAreTestClasses</span> = {{ prefix + 'keyClasses' | artemisTranslate }}</li>
+                </ul>
+            </span>
+        </tumaet-ui-message>
+        <div class="sp-row-between">
+            <div class="inline-flex" role="group" [attr.aria-label]="prefix + 'viewLabel' | artemisTranslate" data-testid="security-yaml-view">
+                @for (option of viewOptions(); track option.value) {
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        size="small"
+                        [severity]="view() === option.value ? 'primary' : 'secondary'"
+                        [variant]="view() === option.value ? 'solid' : 'outlined'"
+                        [disabled]="option.disabled"
+                        [attr.aria-pressed]="view() === option.value"
+                        (click)="setView(option.value)"
+                        [attr.data-testid]="'security-yaml-view-' + option.value"
+                    >
+                        @if (option.value === 'committed' && commitHash()) {
+                            {{ option.labelKey | artemisTranslate }} · {{ commitHash() }}
+                        } @else {
+                            {{ option.labelKey | artemisTranslate }}
+                        }
+                    </button>
+                }
+            </div>
+            <span class="sp-mut sp-row text-xs">
+                @if (view() === 'unsaved') {
+                    <span class="sp-legend-swatch" aria-hidden="true"></span>
+                    <span>{{ prefix + 'uncommittedLines' | artemisTranslate: { count: changedLines() } }}</span>
+                }
+                <button
+                    type="button"
+                    tumAetUiButton
+                    severity="secondary"
+                    variant="outlined"
+                    size="small"
+                    [disabled]="shownContent() === undefined"
+                    [attr.aria-label]="prefix + 'copy' | artemisTranslate"
+                    [tumAetUiTooltip]="(copied() ? prefix + 'copied' : prefix + 'copy') | artemisTranslate"
+                    (click)="copy()"
+                    data-testid="security-yaml-copy"
+                >
+                    <fa-icon [icon]="faCopy" />
+                </button>
+            </span>
+        </div>
+        @if (shownContent() === undefined) {
+            @if (view() === 'committed') {
+                <p class="sp-mut m-0 text-sm" [jhiTranslate]="prefix + 'notCommitted'"></p>
+            } @else {
+                <div class="sp-row">
+                    <tumaet-ui-progress-spinner />
+                    <span [jhiTranslate]="prefix + 'rendering'"></span>
+                </div>
+            }
+        } @else {
+            <div class="sp-code" role="region" [tabindex]="scrollableRegionTabIndex" [attr.aria-label]="prefix + 'source' | artemisTranslate" data-testid="security-yaml-code">
+                @for (line of lines(); track line.number) {
+                    <div class="sp-code-line" [class.sp-code-new]="line.highlighted">
+                        <span>{{ line.number }}</span>
+                        <!-- The line keeps its whitespace, so nothing may stand between these parts. -->
+                        <span
+                            >{{ line.lead }}<span class="sp-key">{{ line.key }}</span
+                            >{{ line.rest }}</span
+                        >
+                    </div>
+                }
+            </div>
+        }
+        @if (importError(); as error) {
+            <tumaet-ui-message severity="error" [icon]="faCircleXmark" data-testid="security-yaml-import-error">
+                <span class="text-sm">{{ error | artemisTranslate }}</span>
+            </tumaet-ui-message>
+        } @else if (notice(); as importNotice) {
+            <tumaet-ui-message [severity]="importNotice.severity" [icon]="importNotice.severity === 'success' ? faCircleCheck : faCircleXmark" data-testid="security-yaml-notice">
+                <span class="text-sm">{{ importNotice.text }}</span>
+            </tumaet-ui-message>
+        }
+    </div>
+    <ng-template #footer>
+        <span class="sp-mut me-auto self-center text-sm" [jhiTranslate]="prefix + 'importHint'"></span>
+        @if (canImport()) {
+            <input
+                #fileInput
+                type="file"
+                class="sr-only"
+                accept=".yaml,.yml,text/yaml"
+                tabindex="-1"
+                [attr.aria-label]="prefix + 'importFile' | artemisTranslate"
+                (change)="onFileSelected($event)"
+            />
+            <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="fileInput.click()" data-testid="security-yaml-import">
+                <fa-icon [icon]="faUpload" />
+                <span [jhiTranslate]="prefix + 'import'"></span>
+            </button>
+        }
+        <button
+            type="button"
+            tumAetUiButton
+            severity="secondary"
+            variant="outlined"
+            [disabled]="shownContent() === undefined"
+            (click)="export()"
+            data-testid="security-yaml-export"
+        >
+            <fa-icon [icon]="faDownload" />
+            <span [jhiTranslate]="prefix + 'export'"></span>
+        </button>
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="visible.set(false)" jhiTranslate="entity.action.close"></button>
+    </ng-template>
+</tumaet-ui-dialog>

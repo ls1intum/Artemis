@@ -1,0 +1,326 @@
+@let prefix = 'artemisApp.programmingExercise.security.advanced.behaviour.';
+@let id = idPrefix();
+<tumaet-ui-tabs [value]="activeTab()" (valueChange)="onTabChange($event)">
+    <tumaet-ui-tab-list [attr.aria-label]="prefix + 'tabsLabel' | artemisTranslate">
+        @for (tab of TABS; track tab) {
+            <tumaet-ui-tab [value]="tab" [attr.data-testid]="'security-behaviour-tab-' + tab">
+                <span class="inline-flex items-center gap-2">
+                    <span [jhiTranslate]="prefix + 'tab.' + tab"></span>
+                    @if (uncommittedTabs().has(tab)) {
+                        <span class="sp-dot" [attr.aria-label]="prefix + 'uncommittedMark' | artemisTranslate" role="img"></span>
+                    }
+                </span>
+            </tumaet-ui-tab>
+        }
+    </tumaet-ui-tab-list>
+</tumaet-ui-tabs>
+
+<div class="sp-stack-4 pt-6!">
+    @if (uncommittedTabs().has(activeTab())) {
+        <div class="flex justify-end">
+            <tumaet-ui-tag severity="warn" size="sm" [tumAetUiTooltip]="prefix + 'uncommittedHelp' | artemisTranslate" tabindex="0" data-testid="security-behaviour-uncommitted">
+                <span jhiTranslate="artemisApp.programmingExercise.security.advanced.uncommitted"></span>
+            </tumaet-ui-tag>
+        </div>
+    }
+    @switch (activeTab()) {
+        @case ('securityFeedback') {
+            <div class="sp-stack sp-mid">
+                <span class="sp-label-row">
+                    <span [id]="id + 'LevelLabel'" class="sp-label">{{ prefix + 'feedbackLevel' | artemisTranslate }}</span>
+                    <jhi-security-help [text]="(prefix + 'feedbackLevelHelp' | artemisTranslate) + ' ' + (prefix + 'feedbackLevelUnavailable' | artemisTranslate)" />
+                </span>
+                <!-- Locked: no Ares2 release lets a policy choose the level yet. The options run from the least to the most information. -->
+                <tumaet-ui-select-button
+                    [attr.aria-labelledby]="id + 'LevelLabel'"
+                    [options]="FEEDBACK_LEVELS"
+                    [ngModel]="feedbackLevel"
+                    [ngModelOptions]="{ standalone: true }"
+                    [allowEmpty]="false"
+                    [itemTemplate]="levelOption"
+                    size="small"
+                    [disabled]="true"
+                    data-testid="security-behaviour-level"
+                />
+                <ng-template #levelOption let-level>{{ prefix + 'level.' + level | artemisTranslate }}</ng-template>
+                <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'feedbackLevelUnavailable'"></p>
+            </div>
+            <div class="sp-preview" aria-live="polite">
+                <div class="sp-mut sp-strong text-xs" [jhiTranslate]="prefix + 'preview'"></div>
+                <div class="sp-preview-card">
+                    <div class="sp-preview-title">
+                        <fa-icon [icon]="faCircleXmark" />
+                        <span [jhiTranslate]="prefix + 'securityViolation'"></span>
+                    </div>
+                    <div class="sp-preview-message sp-mono">{{ prefix + 'securityMessage' | artemisTranslate: { file: policyFile() } }}</div>
+                </div>
+            </div>
+        }
+        @case ('standardFeedback') {
+            <div class="sp-switch-row">
+                <tumaet-ui-toggle-switch
+                    [inputId]="id + 'Replace'"
+                    [ariaLabelledBy]="id + 'ReplaceLabel'"
+                    [ngModel]="!!privilegedExceptions()?.enabled"
+                    [ngModelOptions]="{ standalone: true }"
+                    [disabled]="disabled()"
+                    (changed)="setReplaceExceptions($event)"
+                    data-testid="security-behaviour-replace"
+                />
+                <span class="sp-label-row">
+                    <span [id]="id + 'ReplaceLabel'" class="sp-label" [jhiTranslate]="prefix + 'replaceExceptions'"></span>
+                    <jhi-security-help [text]="prefix + 'replaceExceptionsHelp' | artemisTranslate" />
+                </span>
+            </div>
+            <div class="sp-stack sp-narrow" [class.sp-dimmed]="!privilegedExceptions()?.enabled">
+                <span class="sp-label-row">
+                    <label class="sp-label" [for]="id + 'Message'">{{ prefix + 'message' | artemisTranslate }}</label>
+                    <jhi-security-help [text]="prefix + 'messageHelp' | artemisTranslate" />
+                </span>
+                <input
+                    [id]="id + 'Message'"
+                    [tumAetUiInputId]="id + 'Message'"
+                    tumAetUiInput
+                    [placeholder]="prefix + 'messagePlaceholder' | artemisTranslate"
+                    [ngModel]="shownMessage()"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="setFailureMessage($event)"
+                    [disabled]="disabled() || !privilegedExceptions()?.enabled"
+                    data-testid="security-behaviour-message"
+                />
+            </div>
+            <div class="sp-preview" aria-live="polite">
+                <div class="sp-mut sp-strong text-xs" [jhiTranslate]="prefix + 'preview'"></div>
+                <div class="sp-preview-card">
+                    <div class="sp-preview-title">
+                        <fa-icon [icon]="faCircleXmark" />
+                        <span [jhiTranslate]="prefix + 'regularFailure'"></span>
+                    </div>
+                    <!-- The message keeps its line breaks, so the indentation of this template must not reach it. -->
+                    <div
+                        class="sp-preview-message sp-mono"
+                        data-testid="security-behaviour-standard-preview"
+                        [textContent]="
+                            privilegedExceptions()?.enabled
+                                ? shownMessage().trim() || (prefix + 'messagePlaceholder' | artemisTranslate)
+                                : (prefix + 'originalException' | artemisTranslate)
+                        "
+                    ></div>
+                </div>
+            </div>
+        }
+        @case ('visibility') {
+            <div class="sp-switch-row">
+                <tumaet-ui-toggle-switch
+                    [inputId]="id + 'Hide'"
+                    [ariaLabelledBy]="id + 'HideLabel'"
+                    [ngModel]="!!hiddenTests()"
+                    [ngModelOptions]="{ standalone: true }"
+                    [disabled]="disabled()"
+                    (changed)="setHideTests($event)"
+                    data-testid="security-behaviour-hide"
+                />
+                <span class="sp-label-row">
+                    <span [id]="id + 'HideLabel'" class="sp-label" [jhiTranslate]="prefix + 'hideTests'"></span>
+                    <jhi-security-help [text]="prefix + 'hideTestsHelp' | artemisTranslate" />
+                </span>
+            </div>
+            <span class="sp-label sp-mut" [jhiTranslate]="prefix + 'timelineCaption'"></span>
+            @if (hiddenTests()) {
+                <div class="sp-timeline-wrap" role="img" [attr.aria-label]="prefix + 'timelineLabel' | artemisTranslate: { from: hiddenFromInput(), until: hiddenUntilInput() }">
+                    <div class="sp-timeline">
+                        <div class="sp-timeline-feedback" [jhiTranslate]="prefix + 'feedback'"></div>
+                        <div class="sp-timeline-hidden" [jhiTranslate]="prefix + 'hidden'"></div>
+                        <div class="sp-timeline-feedback" [jhiTranslate]="prefix + 'feedback'"></div>
+                    </div>
+                    <span class="sp-tick" style="left: 28.571%"></span>
+                    <span class="sp-tick" style="left: 71.429%"></span>
+                </div>
+            } @else {
+                <div class="sp-timeline sp-timeline-single" role="img" [attr.aria-label]="prefix + 'timelineAlways' | artemisTranslate">
+                    <div class="sp-timeline-feedback" [jhiTranslate]="prefix + 'feedback'"></div>
+                </div>
+            }
+            <div class="sp-marks" [class.sp-dimmed]="!hiddenTests()">
+                <div class="sp-stack">
+                    <span class="sp-label-row">
+                        <label class="sp-label" [for]="id + 'HiddenFrom'">{{ prefix + 'hiddenFrom' | artemisTranslate }}</label>
+                        <jhi-security-help [text]="(prefix + 'hiddenFromHelp' | artemisTranslate) + (hiddenTests() ? '' : ' ' + (prefix + 'turnOnFirst' | artemisTranslate))" />
+                    </span>
+                    <input
+                        [id]="id + 'HiddenFrom'"
+                        [tumAetUiInputId]="id + 'HiddenFrom'"
+                        tumAetUiInput
+                        class="sp-mono"
+                        type="datetime-local"
+                        [value]="hiddenFromInput()"
+                        (change)="onHiddenDateChange('hiddenFrom', $event)"
+                        [disabled]="disabled() || !hiddenTests()"
+                        [tumAetUiInputInvalid]="hiddenTests() && hiddenPeriodInvalid()"
+                        [tumAetUiInputDescribedBy]="hiddenTests() && hiddenPeriodInvalid() ? id + 'HiddenPeriodProblem' : undefined"
+                        data-testid="security-behaviour-hidden-from"
+                    />
+                </div>
+                <div class="sp-stack">
+                    <span class="sp-label-row">
+                        <label class="sp-label" [for]="id + 'HiddenUntil'">{{ prefix + 'hiddenUntil' | artemisTranslate }}</label>
+                        <jhi-security-help [text]="(prefix + 'hiddenUntilHelp' | artemisTranslate) + (hiddenTests() ? '' : ' ' + (prefix + 'turnOnFirst' | artemisTranslate))" />
+                    </span>
+                    <input
+                        [id]="id + 'HiddenUntil'"
+                        [tumAetUiInputId]="id + 'HiddenUntil'"
+                        tumAetUiInput
+                        class="sp-mono"
+                        type="datetime-local"
+                        [value]="hiddenUntilInput()"
+                        (change)="onHiddenDateChange('hiddenUntil', $event)"
+                        [disabled]="disabled() || !hiddenTests()"
+                        [tumAetUiInputInvalid]="hiddenTests() && hiddenPeriodInvalid()"
+                        [tumAetUiInputDescribedBy]="hiddenTests() && hiddenPeriodInvalid() ? id + 'HiddenPeriodProblem' : undefined"
+                        data-testid="security-behaviour-hidden-until"
+                    />
+                </div>
+            </div>
+            @if (hiddenTests() && hiddenPeriodInvalid()) {
+                <p
+                    [id]="id + 'HiddenPeriodProblem'"
+                    class="m-0 text-sm text-state-danger"
+                    role="alert"
+                    [jhiTranslate]="prefix + 'hiddenPeriodInvalid'"
+                    data-testid="security-behaviour-hidden-period-problem"
+                ></p>
+            }
+            <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'timeZone'"></p>
+        }
+        @case ('timeout') {
+            <div class="sp-switch-row">
+                <tumaet-ui-toggle-switch
+                    [inputId]="id + 'Timeout'"
+                    [ariaLabelledBy]="id + 'TimeoutLabel'"
+                    [ngModel]="!!strictTimeout()"
+                    [ngModelOptions]="{ standalone: true }"
+                    [disabled]="disabled()"
+                    (changed)="setStrictTimeout($event)"
+                    data-testid="security-behaviour-timeout"
+                />
+                <span class="sp-label-row">
+                    <span [id]="id + 'TimeoutLabel'" class="sp-label" [jhiTranslate]="prefix + 'strictTimeout'"></span>
+                    <jhi-security-help [text]="prefix + 'strictTimeoutHelp' | artemisTranslate" />
+                </span>
+            </div>
+            <div class="sp-grid-4" [class.sp-dimmed]="!strictTimeout()">
+                <div class="sp-stack">
+                    <span class="sp-label-row">
+                        <label class="sp-label" [for]="id + 'TimeLimit'">{{ prefix + 'timeLimit' | artemisTranslate }}</label>
+                        <jhi-security-help [text]="prefix + 'timeLimitHelp' | artemisTranslate" />
+                    </span>
+                    <input
+                        [id]="id + 'TimeLimit'"
+                        [tumAetUiInputId]="id + 'TimeLimit'"
+                        tumAetUiInput
+                        type="number"
+                        min="1"
+                        [ngModel]="shownTimeout().timeout"
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="setTimeoutField('timeout', $event)"
+                        (blur)="showStored($event, shownTimeout().timeout)"
+                        [disabled]="disabled() || !strictTimeout()"
+                        data-testid="security-behaviour-time-limit"
+                    />
+                </div>
+                <div class="sp-stack">
+                    <span class="sp-label-row">
+                        <label class="sp-label" [for]="id + 'TimeUnit'">
+                            <span aria-hidden="true">{{ prefix + 'unit.label' | artemisTranslate }}</span>
+                            <span class="sr-only">{{ prefix + 'timeLimitUnit' | artemisTranslate }}</span>
+                        </label>
+                    </span>
+                    <tumaet-ui-select
+                        [inputId]="id + 'TimeUnit'"
+                        [options]="timeUnitOptions()"
+                        optionLabel="label"
+                        optionValue="value"
+                        [ngModel]="shownTimeout().timeUnit"
+                        [ngModelOptions]="{ standalone: true }"
+                        [disabled]="disabled() || !strictTimeout()"
+                        (selectionChange)="setTimeoutUnit('timeUnit', $event)"
+                    />
+                </div>
+                <div class="sp-stack">
+                    <span class="sp-label-row">
+                        <label class="sp-label" [for]="id + 'Grace'">{{ prefix + 'gracePeriod' | artemisTranslate }}</label>
+                        <jhi-security-help [text]="prefix + 'gracePeriodHelp' | artemisTranslate" />
+                    </span>
+                    <input
+                        [id]="id + 'Grace'"
+                        [tumAetUiInputId]="id + 'Grace'"
+                        tumAetUiInput
+                        type="number"
+                        min="0"
+                        [ngModel]="shownTimeout().terminationGrace ?? ''"
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="setTimeoutField('terminationGrace', $event)"
+                        (blur)="showStored($event, shownTimeout().terminationGrace)"
+                        [disabled]="disabled() || !strictTimeout()"
+                        data-testid="security-behaviour-grace"
+                    />
+                </div>
+                <div class="sp-stack">
+                    <span class="sp-label-row">
+                        <label class="sp-label" [for]="id + 'GraceUnit'">
+                            <span aria-hidden="true">{{ prefix + 'unit.label' | artemisTranslate }}</span>
+                            <span class="sr-only">{{ prefix + 'gracePeriodUnit' | artemisTranslate }}</span>
+                        </label>
+                    </span>
+                    <tumaet-ui-select
+                        [inputId]="id + 'GraceUnit'"
+                        [options]="timeUnitOptions()"
+                        optionLabel="label"
+                        optionValue="value"
+                        [ngModel]="shownTimeout().terminationGraceUnit ?? 'MILLISECONDS'"
+                        [ngModelOptions]="{ standalone: true }"
+                        [disabled]="disabled() || !strictTimeout()"
+                        (selectionChange)="setTimeoutUnit('terminationGraceUnit', $event)"
+                    />
+                </div>
+            </div>
+        }
+        @case ('output') {
+            <div class="sp-switch-row">
+                <tumaet-ui-toggle-switch
+                    [inputId]="id + 'Mirror'"
+                    [ariaLabelledBy]="id + 'MirrorLabel'"
+                    [ngModel]="!!outputMirroring()?.mirrored"
+                    [ngModelOptions]="{ standalone: true }"
+                    [disabled]="disabled()"
+                    (changed)="setMirrorOutput($event)"
+                    data-testid="security-behaviour-mirror"
+                />
+                <span class="sp-label-row">
+                    <span [id]="id + 'MirrorLabel'" class="sp-label" [jhiTranslate]="prefix + 'mirrorOutput'"></span>
+                    <jhi-security-help [text]="prefix + 'mirrorOutputHelp' | artemisTranslate" />
+                </span>
+            </div>
+            <div class="sp-stack sp-xs" [class.sp-dimmed]="!outputMirroring()?.mirrored">
+                <span class="sp-label-row">
+                    <label class="sp-label" [for]="id + 'MaxChars'">{{ prefix + 'maximumCharacters' | artemisTranslate }}</label>
+                    <jhi-security-help [text]="prefix + 'maximumCharactersHelp' | artemisTranslate" />
+                </span>
+                <input
+                    [id]="id + 'MaxChars'"
+                    [tumAetUiInputId]="id + 'MaxChars'"
+                    tumAetUiInput
+                    type="number"
+                    min="1"
+                    [ngModel]="shownMaximumCharacters()"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="setMaximumCharacters($event)"
+                    (blur)="showStored($event, shownMaximumCharacters())"
+                    [disabled]="disabled() || !outputMirroring()?.mirrored"
+                    data-testid="security-behaviour-max-chars"
+                />
+            </div>
+        }
+        @default {}
+    }
+</div>

@@ -77,7 +77,7 @@ public record SecurityFrameworkState(SecurityActivationStatus status, List<Strin
     public enum UnsupportedReasonType {
         /** A {@code @Policy} argument is an expression instead of a literal. */
         UNEVALUABLE_ARGUMENTS,
-        /** A {@code @Policy} annotation is on a method, a field or a nested type. */
+        /** A {@code @Policy} annotation is on a method that is no test, a field or a nested type. */
         POLICY_NOT_ON_TOP_LEVEL_TYPE,
         /** A {@code @Policy} annotation is on an annotation type, i.e. a meta-annotation. */
         POLICY_ON_ANNOTATION_TYPE,
@@ -96,6 +96,21 @@ public record SecurityFrameworkState(SecurityActivationStatus status, List<Strin
         /** The build file does not pin an Ares version through {@code aresVersion} or {@code ares.version}. */
         NO_ARES_VERSION_PINNED,
         /** A Maven profile pins the Ares version, so the version the build uses depends on which profiles are active. */
-        ARES_VERSION_IN_MAVEN_PROFILE
+        ARES_VERSION_IN_MAVEN_PROFILE,
+        /**
+         * A test method of a test class whose {@code @Policy} switches the sandbox off has an active annotation of its own. Ares applies it, so the method runs
+         * with the sandbox, while the class counts as switched off.
+         */
+        ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS,
+        /**
+         * An interface declares tests or carries Ares annotations. JUnit runs its default test methods in every class that implements it, so neither the
+         * assignments nor the state of that class could show them.
+         */
+        TEST_INTERFACE,
+        /**
+         * A test class inherits a test method with a {@code @Policy} annotation of its own from another test class without overriding it. Ares applies that
+         * annotation to the test of the subclass, which its assignment to a policy could not show.
+         */
+        INHERITED_METHOD_POLICY
     }
 }

@@ -348,7 +348,7 @@
                 },
                 "unsupportedReason": {
                     "UNEVALUABLE_ARGUMENTS": "{{ location }}: A @Policy annotation uses an expression instead of a literal value.",
-                    "POLICY_NOT_ON_TOP_LEVEL_TYPE": "{{ location }}: A @Policy annotation is placed on a method, a field or a nested type instead of the test class.",
+                    "POLICY_NOT_ON_TOP_LEVEL_TYPE": "{{ location }}: A @Policy annotation is placed on a method that is not a test, on one of several test methods with the same name, on a field or on a nested type.",
                     "POLICY_ON_ANNOTATION_TYPE": "{{ location }}: A @Policy annotation is placed on an annotation type.",
                     "MULTIPLE_TOP_LEVEL_TYPES": "{{ location }}: The file declares more than one top-level type that is a test class or carries a @Policy annotation.",
                     "TESTS_IN_NESTED_TYPE": "{{ location }}: Tests or Ares annotations are inside a nested type.",
@@ -357,7 +357,10 @@
                     "ARES_1": "{{ location }}: The tests use Ares 1, whose own sandbox keeps running.",
                     "NO_ARES_2": "{{ location }}: The tests do not use Ares 2.",
                     "NO_ARES_VERSION_PINNED": "{{ location }}: The build file does not pin an Ares version.",
-                    "ARES_VERSION_IN_MAVEN_PROFILE": "{{ location }}: A Maven profile pins the Ares version, so the version the build uses depends on the active profiles."
+                    "ARES_VERSION_IN_MAVEN_PROFILE": "{{ location }}: A Maven profile pins the Ares version, so the version the build uses depends on the active profiles.",
+                    "ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS": "{{ location }}: A test method, possibly one inherited from another test class, uses the Ares sandbox through its own @Policy annotation, although the annotation of the test class switches the sandbox off.",
+                    "TEST_INTERFACE": "{{ location }}: An interface declares tests or Ares annotations, which every class that implements it inherits.",
+                    "INHERITED_METHOD_POLICY": "{{ location }}: The test class inherits a test method with its own @Policy annotation from another test class, so that test keeps that policy whatever the class is assigned to."
                 },
                 "sync": {
                     "loading": "Loading the state of the tests repository…",
@@ -385,6 +388,14 @@
                     "aresLibraryStays": "The tests also use other parts of Ares ({{ apis }}), so the Ares library stays in the build file.",
                     "confirm": "Deactivate"
                 },
+                "unsavedPoliciesOnSave": {
+                    "header": "Discard the unsaved security policy changes?",
+                    "message": {
+                        "one": "The security policies have 1 unsaved change. Saving the exercise does not save it and leaves this page, so it is discarded. To keep it, cancel and save it with Save Policies in Manage Security Policies first.",
+                        "other": "The security policies have {{ count }} unsaved changes. Saving the exercise does not save them and leaves this page, so they are discarded. To keep them, cancel and save them with Save Policies in Manage Security Policies first."
+                    },
+                    "confirm": "Discard and save"
+                },
                 "stagedDeactivationHint": "Once the exercise is saved, student code runs without the sandbox, and nothing the security policy configures for the tests applies. Hidden tests are then protected only by the test visibility settings of Artemis.",
                 "templateVersionUnsupported": "The template uses {{ version }}, which is no longer supported.",
                 "notApplied": {
@@ -398,7 +409,717 @@
                 "noLongerSupportedSuffix": "(no longer supported)",
                 "incompatibleSuffix": "(does not accept the policy)",
                 "unverifiedSuffix": "(compatibility not verified)",
-                "versionIncompatible": "Ares {{ version }} cannot be pinned, because it does not accept these parts of the policy: {{ details }}"
+                "versionIncompatible": "Ares {{ version }} cannot be pinned, because it does not accept these parts of the policy: {{ details }}",
+                "advanced": {
+                    "loading": "Loading…",
+                    "loadError": "The security policies could not be loaded.",
+                    "retry": "Retry",
+                    "uncommitted": "Unsaved",
+                    "uncommittedCount": "{{ count }} unsaved",
+                    "unsavedCount": {
+                        "one": "1 unsaved change",
+                        "other": "{{ count }} unsaved changes"
+                    },
+                    "card": {
+                        "activate": "Activate Ares2",
+                        "activateHelp": "Ares2, the Programming Exercise Security Framework, runs student code in a sandbox during the automated tests. Any access that no security policy allows fails the test case with a security violation.",
+                        "inactive": "Inactive",
+                        "inactiveHelp": "Student code runs without restrictions. No security policy is enforced.",
+                        "active": "Active",
+                        "activeHelp": "The automated tests run student code in the Ares2 sandbox and enforce the saved security policies.",
+                        "configured": "Configured",
+                        "configuredHelp": "Your security policies are saved in the tests repository. The next build of the template and solution shows whether Ares2 accepts them.",
+                        "turningOn": "Turning on…",
+                        "turningOff": "Turning off…",
+                        "committing": "Saving…",
+                        "scan": "Scan dependencies",
+                        "scanHelp": "Ares2 also checks the libraries that student code uses and detects forbidden accesses made through them. Test cases run considerably slower.",
+                        "scanInactive": "Available once Ares2 is active.",
+                        "scanUnavailable": "The build of this exercise does not attach the Ares2 agent, which scanning needs.",
+                        "scanReadOnly": "A policy is shown read-only, and switching affects every policy: fix it in the tests repository first.",
+                        "synced": "Saved",
+                        "notActive": "Not active",
+                        "commit": "commit",
+                        "syncedHelp": "The settings shown here were last saved in this commit of the tests repository. If someone else saves before you do, you are asked to reload first.",
+                        "notActiveHelp": "Builds since this commit run the tests without the sandbox.",
+                        "by": "by {{ author }}",
+                        "version": "Framework version",
+                        "versionHelp": "The Ares2 release determines which settings security policies can use.",
+                        "versionHelpActive": "A new release takes effect when you save.",
+                        "uncommitted": "Unsaved",
+                        "versionUncommittedHelp": "The selected release takes effect once you save.",
+                        "chooseOnActivation": "Choose on activation",
+                        "chooseOnActivationHelp": "When you turn on Ares2, you choose the release. The latest compatible release is preselected."
+                    },
+                    "activate": {
+                        "title": "Turn On Ares2",
+                        "description": "Student code runs inside the Ares2 sandbox. Confirming saves all of the following changes at once.",
+                        "annotations": "Turns the @Policy annotations of the test classes on and restores their policy files from the Git history, or generates a policy from the permissions of the template.",
+                        "control": "Enables Resource Access control and Test Behaviour control.",
+                        "version": "Framework version",
+                        "versionHelp": "The build of this exercise uses this release. You can change the release later.",
+                        "latest": "latest compatible release",
+                        "older": "older release",
+                        "build": "Starts a build of the template and solution, which shows whether Ares2 accepts the policies.",
+                        "confirm": "Turn On Ares2"
+                    },
+                    "deactivate": {
+                        "title": "Turn Off Ares2",
+                        "description": "Student code runs without a sandbox. Confirming saves all of the following changes at once.",
+                        "deleteOne": "Deletes {{ file }} and turns the @Policy annotations of the test classes off.",
+                        "deleteMany": "Deletes {{ count }} policy files and turns the @Policy annotations of the test classes off.",
+                        "control": "Disables Resource Access control and Test Behaviour control.",
+                        "apiUsesTitle": {
+                            "one": "1 test file uses other features of Ares2.",
+                            "other": "{{ count }} test files use other features of Ares2."
+                        },
+                        "apiUses": "Ares2 stays in the build, so they keep compiling: {{ files }} ({{ apis }}).",
+                        "showFiles": "Show Files in Repository",
+                        "discarded": {
+                            "one": "Your unsaved change is discarded.",
+                            "other": "Your {{ count }} unsaved changes are discarded."
+                        },
+                        "confirm": "Turn Off Ares2"
+                    },
+                    "scanOn": {
+                        "title": "Turn On Dependency Scanning",
+                        "description": "Ares2 also checks the libraries that student code uses. Confirming saves all of the following changes at once.",
+                        "beforeTitle": "Before the tests run,",
+                        "before": "Ares2 also analyses the libraries of the student code.",
+                        "whileTitle": "While the tests run,",
+                        "while": "Ares2 also checks every call into a library.",
+                        "slowerTitle": "Every test case runs severely slower.",
+                        "slower": "Turn it on only if the exercise needs it.",
+                        "timeouts": "Check that your strict timeouts are still long enough.",
+                        "confirm": "Turn On Scanning",
+                        "commitMessage": "Scan the dependencies of the student code",
+                        "committedTitle": "Dependency scanning turned on",
+                        "committedText": "Saved as commit {{ hash }}: Ares2 now checks the libraries of the student code as well. The build it started shows whether Ares2 accepts the policies."
+                    },
+                    "scanOff": {
+                        "title": "Turn Off Dependency Scanning",
+                        "description": "Ares2 checks only the student code itself. Confirming saves all of the following changes at once.",
+                        "beforeTitle": "Before the tests run,",
+                        "before": "Ares2 analyses only the student code itself.",
+                        "whileTitle": "While the tests run,",
+                        "while": "calls into libraries are no longer checked.",
+                        "riskTitle": "Forbidden accesses made through a library are no longer detected.",
+                        "risk": "For example, student code can read a file through a helper library unnoticed.",
+                        "confirm": "Turn Off Scanning",
+                        "commitMessage": "Stop scanning the dependencies of the student code",
+                        "committedTitle": "Dependency scanning turned off",
+                        "committedText": "Saved as commit {{ hash }}: Ares2 now checks only the student code itself. The build it started shows whether Ares2 accepts the policies."
+                    },
+                    "section": {
+                        "title": "Manage Security Policies",
+                        "description": "Define a security policy that determines which resources student code can access and how tests behave.",
+                        "emptyTitle": "No Security Policy Yet",
+                        "emptyDescription": "All test cases run under the restrictive default policy of Ares2. Add a security policy to define which resources student code can access and how test cases behave.",
+                        "addPolicy": "Add Security Policy"
+                    },
+                    "commitBar": {
+                        "restrictions": {
+                            "one": "1 allowed resource access",
+                            "other": "{{ count }} allowed resource accesses"
+                        },
+                        "behaviours": {
+                            "one": "1 set test behaviour",
+                            "other": "{{ count }} set test behaviours"
+                        },
+                        "testCases": {
+                            "one": "1 test case assignment",
+                            "other": "{{ count }} test case assignments"
+                        },
+                        "testClasses": {
+                            "one": "1 declared test class",
+                            "other": "{{ count }} declared test classes"
+                        },
+                        "settings": {
+                            "one": "1 policy setting",
+                            "other": "{{ count }} policy settings"
+                        },
+                        "build": {
+                            "one": "1 build setting",
+                            "other": "{{ count }} build settings"
+                        },
+                        "notEnforced": "Nothing is enforced until you save.",
+                        "nothing": "Everything is saved. There is nothing to save or discard.",
+                        "instructorsOnly": "Only instructors of the course can change the security policies.",
+                        "discard": "Discard",
+                        "commit": "Save Policies"
+                    },
+                    "policy": {
+                        "defaultName": "Security Policy {{ number }}",
+                        "unnamed": "Unnamed policy",
+                        "new": "New · unsaved",
+                        "newHelp": "This policy has not been saved yet. It takes effect once you save.",
+                        "changesHelp": {
+                            "one": "This policy has 1 unsaved change. It takes effect once you save.",
+                            "other": "This policy has {{ count }} unsaved changes. They take effect once you save."
+                        },
+                        "readOnly": "Read-only",
+                        "viewYaml": "View YAML",
+                        "delete": "Delete policy",
+                        "deleteLabel": "Delete {{ policy }}",
+                        "expand": "Expand {{ policy }}",
+                        "collapse": "Collapse {{ policy }}",
+                        "name": "Name",
+                        "nameHelp": "Determines the file name in the tests repository. Renaming the policy renames the file when you save.",
+                        "namePlaceholder": "e.g. Stress Tests",
+                        "presets": "Presets",
+                        "presetsHelp": "A preset adds the locked rows that a library or framework needs. Deselecting the preset removes its rows; rows you added yourself stay.",
+                        "presetsUnavailable": "No Ares2 release offers presets for instructors yet. Without a preset, the policy contains only the rows you add.",
+                        "noPreset": "None",
+                        "supervised": "Supervised code",
+                        "supervisedHelp": "Detected from the template repository. Ares2 supervises all code in this package. The policy version is the format version of the policy file.",
+                        "package": "Package",
+                        "mainClass": "Main class",
+                        "none": "none",
+                        "policyVersion": "Policy version",
+                        "box": {
+                            "resources": "Allow Resource Access",
+                            "behaviour": "Configure Test Behaviour",
+                            "tests": "Assign Test Cases"
+                        },
+                        "boxChangesHelp": {
+                            "one": "1 unsaved change in this section. It takes effect once you save.",
+                            "other": "{{ count }} unsaved changes in this section. They take effect once you save."
+                        },
+                        "readOnlyReason": {
+                            "MISSING": "{{ path }} does not exist, so it cannot be edited here.",
+                            "TOO_LARGE": "{{ path }} is too large to be edited here.",
+                            "INVALID_PATH": "The path {{ path }} leaves the repository or is not a regular file, so it cannot be edited here.",
+                            "YAML_ERROR": "{{ path }} has a YAML error on line {{ line }} and cannot be edited here without overwriting it.",
+                            "UNSUPPORTED_CONTENT": "{{ path }} uses fields or values the editor cannot show, so it cannot be edited here without changing them.",
+                            "DUPLICATE_RESOURCE": "{{ path }} lists a resource more than once, e.g. a path or a package, so it cannot be edited here without merging those entries."
+                        }
+                    },
+                    "resources": {
+                        "tabsLabel": "Resource category",
+                        "tab": {
+                            "files": "File System",
+                            "network": "Network System",
+                            "commands": "Command System",
+                            "threads": "Thread System",
+                            "packages": "Import System"
+                        },
+                        "hint": {
+                            "files": "Each path grants the listed actions on exactly this path and every path below it.",
+                            "network": "Each endpoint grants the listed actions on exactly this host and port.",
+                            "commands": "Each command may be started with exactly these arguments, in this order.",
+                            "threads": "Each thread class may be started up to the given number of times.",
+                            "packages": "Each package may be imported by student code."
+                        },
+                        "empty": {
+                            "files": "No path is allowed yet. Student code cannot access any file.",
+                            "network": "No endpoint is allowed yet. Student code cannot open any connection.",
+                            "commands": "No command is allowed yet. Student code cannot start any program.",
+                            "threads": "No thread class is allowed yet. Student code cannot start extra threads.",
+                            "packages": "No package is allowed yet. Student code cannot import extra packages."
+                        },
+                        "column": {
+                            "path": "Path",
+                            "host": "Host",
+                            "port": "Port",
+                            "command": "Command",
+                            "arguments": "With these arguments",
+                            "maxThreads": "Max threads",
+                            "threadClass": "Of this class",
+                            "package": "Student code may import",
+                            "granted": "Granted",
+                            "source": "Source",
+                            "actions": "Actions"
+                        },
+                        "noArguments": "none",
+                        "granted": {
+                            "read": "Read",
+                            "overwrite": "Overwrite",
+                            "create": "Create",
+                            "execute": "Execute",
+                            "delete": "Delete",
+                            "open": "Open",
+                            "send": "Send",
+                            "receive": "Receive",
+                            "import": "Import"
+                        },
+                        "grantedHelp": {
+                            "files": {
+                                "read": "Student code may open and read files on this path and every path below it.",
+                                "overwrite": "Student code may write to files that already exist on this path and every path below it.",
+                                "create": "Student code may create new files and folders on this path and every path below it.",
+                                "execute": "Student code may run files as programs on this path and every path below it.",
+                                "delete": "Student code may remove files and folders on this path and every path below it."
+                            },
+                            "network": {
+                                "open": "Student code may open a connection to this endpoint.",
+                                "send": "Student code may send data to this endpoint.",
+                                "receive": "Student code may receive data from this endpoint."
+                            },
+                            "commands": "Student code may start this program with exactly these arguments.",
+                            "threads": {
+                                "one": "Student code may start up to 1 thread of this class.",
+                                "other": "Student code may start up to {{ count }} threads of this class."
+                            },
+                            "packages": "Student code may use classes from this package."
+                        },
+                        "source": {
+                            "PRESET": "Preset · {{ preset }}",
+                            "COMMITTED": "Saved",
+                            "NEW": "Unsaved",
+                            "CHANGED": "Changed",
+                            "REMOVED": "Removed · unsaved"
+                        },
+                        "sourceHelp": {
+                            "PRESET": "Added and locked by the {{ preset }} preset. Deselect the preset to remove it.",
+                            "COMMITTED": "Saved and enforced.",
+                            "NEW": "Added since the last save. Enforced once you save.",
+                            "CHANGED": "Edited since the last save. The saved version is enforced until you save.",
+                            "REMOVED": "Deleted since the last save. Still enforced until you save."
+                        },
+                        "locked": "Locked by preset",
+                        "lockedHelp": "This row belongs to the {{ preset }} preset. To remove it, deselect the preset in the Presets field.",
+                        "actionsFor": "Actions for",
+                        "deleteRow": "Delete",
+                        "undo": "Undo",
+                        "undoLabel": "Undo the removal of",
+                        "delete": {
+                            "title": "Delete {{ noun }}",
+                            "question": "Are you sure you want to delete this {{ noun }} from the {{ tab }}?",
+                            "warning": {
+                                "files": "Ares2 will no longer allow student code to access {{ target }}. Tests that rely on it will fail with a security violation.",
+                                "network": "Ares2 will no longer allow student code to connect to {{ target }}. Tests that rely on it will fail with a security violation.",
+                                "commands": "Ares2 will no longer allow student code to execute {{ target }}. Tests that rely on it will fail with a security violation.",
+                                "threads": "Ares2 will no longer allow student code to create threads of {{ target }}. Tests that rely on it will fail with a security violation.",
+                                "packages": "Ares2 will no longer allow student code to import {{ target }}. Tests that rely on it will fail with a security violation."
+                            },
+                            "note": "The deletion is added as an unsaved change. Nothing reaches the repository until you save.",
+                            "confirm": "Delete"
+                        }
+                    },
+                    "row": {
+                        "files": {
+                            "noun": "Path",
+                            "nounInSentence": "path",
+                            "addTitle": "Add Path",
+                            "editTitle": "Edit Path",
+                            "target": "On this path and all paths below",
+                            "hint": "Relative to the test folder. Separate several paths with commas; each becomes its own row.",
+                            "hintEdit": "Relative to the test folder.",
+                            "action": {
+                                "read": "Read",
+                                "overwrite": "Overwrite",
+                                "create": "Create",
+                                "execute": "Execute",
+                                "delete": "Delete"
+                            },
+                            "actionHint": {
+                                "read": "Open and read files",
+                                "overwrite": "Write to files that already exist",
+                                "create": "Create new files and folders",
+                                "execute": "Run files as programs",
+                                "delete": "Remove files and folders"
+                            },
+                            "verb": {
+                                "read": "read",
+                                "overwrite": "overwrite",
+                                "create": "create",
+                                "execute": "execute",
+                                "delete": "delete",
+                                "any": "access"
+                            }
+                        },
+                        "network": {
+                            "noun": "Endpoint",
+                            "nounInSentence": "endpoint",
+                            "addTitle": "Add Endpoint",
+                            "editTitle": "Edit Endpoint",
+                            "host": "On this host",
+                            "port": "On this port",
+                            "hint": "Hostname or IP address; port between 0 and 65535.",
+                            "action": {
+                                "open": "Open",
+                                "send": "Send",
+                                "receive": "Receive"
+                            },
+                            "actionHint": {
+                                "open": "Open a connection to this endpoint",
+                                "send": "Send data to this endpoint",
+                                "receive": "Receive data from this endpoint"
+                            },
+                            "verb": {
+                                "open": "open connections to",
+                                "send": "send data to",
+                                "receive": "receive data from",
+                                "any": "connect to"
+                            }
+                        },
+                        "commands": {
+                            "noun": "Command",
+                            "nounInSentence": "command",
+                            "addTitle": "Add Command",
+                            "editTitle": "Edit Command",
+                            "command": "On this command",
+                            "arguments": "With these arguments",
+                            "hint": "Separated by spaces; the arguments must match exactly and in this order. Put an argument with spaces in double quotes. Separate several commands with commas.",
+                            "verb": "execute {{ target }}"
+                        },
+                        "threads": {
+                            "noun": "Thread Class",
+                            "nounInSentence": "thread class",
+                            "addTitle": "Add Thread Class",
+                            "editTitle": "Edit Thread Class",
+                            "threadClass": "On this class",
+                            "maxThreads": "With this max. amount",
+                            "hint": "Fully qualified class name; the number is the upper limit for this class.",
+                            "verb": "create up to {{ count }} threads of {{ target }}"
+                        },
+                        "packages": {
+                            "noun": "Package",
+                            "nounInSentence": "package",
+                            "addTitle": "Add Package",
+                            "editTitle": "Edit Package",
+                            "packageName": "On this package",
+                            "hint": "Fully qualified package name, e.g. org.apache.commons.lang3.",
+                            "verb": "import {{ target }}"
+                        },
+                        "or": "or",
+                        "warning": "With this row, student code may {{ action }}.",
+                        "browse": "Browse",
+                        "studentCodeMay": "Student code may",
+                        "grantsNothing": "Select at least one action to add the {{ noun }}.",
+                        "addNote": "Adds the row as an unsaved change. Nothing reaches the repository until you save.",
+                        "editNote": "Keeps the change as unsaved. Nothing reaches the repository until you save.",
+                        "saveChanges": "Save Changes",
+                        "problem": {
+                            "pathRequired": "Enter a path.",
+                            "pathCharacters": "A path cannot contain a line break or a NUL character.",
+                            "hostRequired": "Enter a host name or IP address without spaces.",
+                            "portRange": "Enter a port between 0 and 65535.",
+                            "commandRequired": "Enter a command.",
+                            "commandCharacters": "A command and its arguments cannot contain a line break or a NUL character.",
+                            "argumentsQuote": "Close the double quote of the arguments.",
+                            "listQuote": "Close the double quote of the entry.",
+                            "className": "Enter a fully qualified class name, e.g. java.lang.Thread.",
+                            "threadCount": "Enter a whole number of at least 1.",
+                            "packageName": "Enter a package name such as org.apache.commons.lang3.",
+                            "duplicate": "{{ entry }} is already listed. Edit the existing row instead."
+                        }
+                    },
+                    "browse": {
+                        "pathsTitle": "Select Paths",
+                        "scriptsTitle": "Select Commands",
+                        "searchPaths": "Search files and folders",
+                        "searchScripts": "Search scripts",
+                        "inTemplate": "Files in the template repository",
+                        "scriptsInTemplate": "Scripts in the template repository",
+                        "empty": "Nothing matches “{{ query }}”.",
+                        "loadFailed": "The files of the template repository could not be loaded.",
+                        "retry": "Retry",
+                        "selectPath": "Select",
+                        "selectFolderScripts": "Select all scripts in {{ folder }}, also those the search hides",
+                        "remove": "Remove {{ entry }}",
+                        "clear": "Clear the field",
+                        "expand": "Expand",
+                        "collapse": "Collapse",
+                        "pathsHint": "Select several paths at once — each becomes its own row with the same permissions. Tags show paths that already have an entry.",
+                        "scriptsHint": "Select several scripts at once — each becomes its own row. A folder selects all of its scripts, also those the search hides. Enter arguments in the dialog afterwards.",
+                        "truncated": "The template repository has more files than are listed here; type other paths directly.",
+                        "selected": "{{ count }} selected:",
+                        "nothingSelected": "Nothing selected",
+                        "select": "Select ({{ count }})"
+                    },
+                    "behaviour": {
+                        "tabsLabel": "Test behaviour category",
+                        "tab": {
+                            "securityFeedback": "Security Feedback",
+                            "standardFeedback": "Standard Feedback",
+                            "visibility": "Visibility",
+                            "timeout": "Timeout",
+                            "output": "Output"
+                        },
+                        "uncommittedMark": "(unsaved)",
+                        "uncommittedHelp": "Settings in this tab differ from the saved ones. They take effect once you save.",
+                        "feedbackLevel": "Error feedback level",
+                        "feedbackLevelHelp": "Determines how much students learn about a security violation, from I0 (only that the policy was violated) to I3 (the full Ares2 message plus the rule that allows the access). Feedback of hidden test cases is always redacted.",
+                        "feedbackLevelUnavailable": "No Ares2 release lets a policy choose the level yet: students see the full Ares2 message, as shown below.",
+                        "level": {
+                            "I3": "Maximum Information (I3)",
+                            "I2": "More Information (I2)",
+                            "I1": "Less Information (I1)",
+                            "I0": "Minimum Information (I0)"
+                        },
+                        "preview": "Preview of what students see",
+                        "securityViolation": "Ares2 security violation",
+                        "securityMessage": "Ares Security Error (Reason: Student-Code; Stage: Execution): de.student.StudentCode.exploit tried to illegally read File /etc/passwd via java.nio.file.Files.readString(java.nio.file.Path) but was blocked by Ares.",
+                        "replaceExceptions": "Replace exceptions shown to students with this message",
+                        "replaceExceptionsHelp": "Students see the message below instead of the exception and stack trace of a failed test case. Security violations keep their own feedback.",
+                        "message": "Message",
+                        "messageHelp": "Shown to students for every failed test case while the toggle above is on.",
+                        "messagePlaceholder": "Test failed.",
+                        "regularFailure": "regular test failure",
+                        "originalException": "java.lang.AssertionError: expected [1, 2, 3] but was [3, 2, 1]\n    at MergeSortTest.testMergeSort(MergeSortTest.java:27)",
+                        "hideTests": "Hide test case feedback from students between these dates",
+                        "hideTestsHelp": "Between the two dates, students only see that a test case is hidden. Its results appear once the hidden period has ended.",
+                        "feedback": "Students see the test results",
+                        "hidden": "Test results are hidden from students",
+                        "timelineCaption": "What students see",
+                        "timelineLabel": "What students see: the test results, then nothing from {{ from }} until {{ until }}, then the test results again",
+                        "timelineAlways": "What students see: the test results the whole time",
+                        "hiddenFrom": "Hidden from",
+                        "hiddenFromHelp": "From this moment on, students no longer see the results of the test cases of this policy.",
+                        "hiddenUntil": "Hidden until",
+                        "hiddenUntilHelp": "From this moment on, students see the results again, including those of submissions made in between.",
+                        "turnOnFirst": "Turn on the toggle above to set the dates.",
+                        "hiddenPeriodInvalid": "“Hidden until” must be after “Hidden from”.",
+                        "timeZone": "The dates use the time zone of your browser.",
+                        "strictTimeout": "Enforce a strict timeout for each test case",
+                        "strictTimeoutHelp": "Ares2 stops every test case that exceeds the time limit and marks it as failed.",
+                        "timeLimit": "Time limit",
+                        "timeLimitHelp": "Each test case gets this time on its own. Test cases do not share the limit.",
+                        "timeLimitUnit": "Time limit unit",
+                        "gracePeriod": "Grace period",
+                        "gracePeriodHelp": "After the time limit, a test case gets this much extra time to finish before Ares2 stops it and marks it as failed.",
+                        "gracePeriodUnit": "Grace period unit",
+                        "unit": {
+                            "label": "Unit",
+                            "NANOSECONDS": "Nanoseconds",
+                            "MICROSECONDS": "Microseconds",
+                            "MILLISECONDS": "Milliseconds",
+                            "SECONDS": "Seconds",
+                            "MINUTES": "Minutes",
+                            "HOURS": "Hours",
+                            "DAYS": "Days"
+                        },
+                        "mirrorOutput": "Mirror student output into the test results, up to this many characters",
+                        "mirrorOutputHelp": "Text that student code prints to the console appears in the test results, cut off after the maximum number of characters.",
+                        "maximumCharacters": "Maximum characters",
+                        "maximumCharactersHelp": "Output beyond this many characters is cut off in the test results."
+                    },
+                    "tests": {
+                        "assigned": "Assigned test cases ({{ count }})",
+                        "assignedHelp": "These test cases run under this policy. If you assign a whole class, test cases added to it later are included too.",
+                        "assignedTo": "Test cases assigned to {{ policy }}",
+                        "addTestCases": "Add Test Cases",
+                        "noTests": "No test cases are assigned. This policy applies to no test yet.",
+                        "allTestCases": "all test cases",
+                        "testCaseCount": {
+                            "one": "1 test case",
+                            "other": "{{ count }} test cases"
+                        },
+                        "declared": "Declared test classes ({{ count }})",
+                        "declaredHelp": "Ares2 treats code in these classes as test code, not as student code. Classes of assigned test cases are always included. Add helper classes without test annotations here.",
+                        "declaredIn": "Test classes declared in {{ policy }}",
+                        "addTestClass": "Add Test Class",
+                        "noClasses": "No test classes are declared yet.",
+                        "fromTests": "From test cases",
+                        "fromTestsHelp": "Declared automatically because test cases of this class are assigned. It stays declared as long as one of them is.",
+                        "removed": "Removed · unsaved",
+                        "testRemovedHelp": "Removed since the last save. Still applies until you save.",
+                        "classRemovedHelp": "Removed since the last save. Still declared until you save.",
+                        "testNewHelp": "Assigned since the last save. Takes effect once you save.",
+                        "classNewHelp": "Declared since the last save. Takes effect once you save.",
+                        "undo": "Undo",
+                        "undoLabel": "Undo the removal of",
+                        "removeLabel": "Remove",
+                        "remove": {
+                            "caseTitle": "Remove Test Case",
+                            "wholeClassTitle": "Remove Test Class",
+                            "classTitle": "Remove Test Class",
+                            "caseQuestion": "Are you sure you want to remove this test case from {{ policy }}?",
+                            "wholeClassQuestion": "Are you sure you want to remove this test class from {{ policy }}?",
+                            "classQuestion": "Are you sure you want to remove this test class from {{ policy }}?",
+                            "caseWarning": "This test case no longer runs under this policy.",
+                            "caseWarningUndeclared": "This test case no longer runs under this policy. {{ testClass }} is then no longer declared as a test class.",
+                            "wholeClassWarning": "The test cases of this class no longer run under this policy.",
+                            "wholeClassWarningUndeclared": "The test cases of this class no longer run under this policy. {{ testClass }} is then no longer declared as a test class.",
+                            "classWarning": "Ares2 treats code in {{ testClass }} as student code again. Test cases that use it can fail with a security violation.",
+                            "confirm": "Remove"
+                        }
+                    },
+                    "assign": {
+                        "title": "Assign Test Cases",
+                        "description": "Checked test cases are captured by {{ file }}. Uncheck one to release it for another policy; test cases captured by another policy are locked.",
+                        "search": "Search packages, classes and test cases",
+                        "inRepository": "Tests in the tests repository",
+                        "empty": "Nothing matches “{{ query }}”.",
+                        "selectPackage": "Select all available test cases in",
+                        "selectClass": "Select",
+                        "selectCase": "Select",
+                        "expand": "Expand",
+                        "collapse": "Collapse",
+                        "selectedOf": "{{ selected }} of {{ total }} selected",
+                        "allCaptured": "all captured by other policies",
+                        "coveredBy": "Covered by {{ policy }}",
+                        "lockedBy": "Assigned to {{ policy }}. Release it there first.",
+                        "switchedOff": "The sandbox is switched off for this class, so its test cases cannot use a policy.",
+                        "switchedOffCase": "This test case cannot be assigned: its own @Policy annotation switches the sandbox off.",
+                        "overloadedCase": "Several test methods have this name, so they use the policy only together with their whole test class. Select the other test cases of the class to include them.",
+                        "switchedOffTag": "Sandbox off",
+                        "willBeAdded": "Will be added",
+                        "willBeRemoved": "Will be removed",
+                        "hint": "A fully checked class is captured as a whole; otherwise only the checked test cases are.",
+                        "selectAll": "Select All Unconnected Test Cases ({{ count }})",
+                        "noChanges": "No changes",
+                        "apply": "Apply"
+                    },
+                    "declare": {
+                        "title": "Declare Test Classes",
+                        "description": "Checked classes are declared as test classes in {{ file }}. Uncheck a class to remove it.",
+                        "search": "Search classes",
+                        "inRepository": "Classes in the tests repository",
+                        "empty": "Nothing matches “{{ query }}”.",
+                        "declare": "Declare",
+                        "fromTestsHelp": "Declared automatically because test cases of this class are assigned.",
+                        "noTests": "no test annotations"
+                    },
+                    "yaml": {
+                        "readOnly": "read-only",
+                        "keysExplained": "The keys are the field names Ares2 reads. Each section matches a box in the editor:",
+                        "keyResources": "Allow Resource Access",
+                        "keyBehaviour": "Configure Test Behaviour",
+                        "keyClasses": "Assign Test Cases (declared test classes)",
+                        "viewLabel": "Version",
+                        "committed": "Saved",
+                        "unsaved": "With unsaved changes",
+                        "uncommittedLines": "Unsaved ({{ count }} lines)",
+                        "copy": "Copy YAML",
+                        "copied": "Copied",
+                        "notCommitted": "This policy has not been saved yet.",
+                        "rendering": "Rendering the policy…",
+                        "source": "YAML source",
+                        "importHint": "Import replaces this policy with the selected YAML file as unsaved changes.",
+                        "importFile": "YAML file to import",
+                        "import": "Import",
+                        "export": "Export",
+                        "importTooLarge": "The file is larger than 256 KB.",
+                        "importUnreadable": "The file could not be read. Select it again.",
+                        "imported": {
+                            "one": "Imported. 1 unsaved change in {{ policy }} — review it before you save.",
+                            "other": "Imported. {{ count }} unsaved changes in {{ policy }} — review them before you save."
+                        }
+                    },
+                    "review": {
+                        "title": "Review and Save Changes",
+                        "changed": {
+                            "restrictions": {
+                                "one": "1 allowed resource access changed",
+                                "other": "{{ count }} allowed resource accesses changed"
+                            },
+                            "behaviours": {
+                                "one": "1 set test behaviour changed",
+                                "other": "{{ count }} set test behaviours changed"
+                            },
+                            "testCases": {
+                                "one": "1 test case assignment changed",
+                                "other": "{{ count }} test case assignments changed"
+                            },
+                            "testClasses": {
+                                "one": "1 declared test class changed",
+                                "other": "{{ count }} declared test classes changed"
+                            },
+                            "settings": {
+                                "one": "1 policy setting changed",
+                                "other": "{{ count }} policy settings changed"
+                            },
+                            "build": {
+                                "one": "1 build setting changed",
+                                "other": "{{ count }} build settings changed"
+                            }
+                        },
+                        "basedOn": "based on commit {{ commit }}",
+                        "explanation": "Ares2 reads your settings from policy files (YAML) in the tests repository, so you do not edit these files yourself. The comparison below shows exactly what saving changes in them; View YAML explains the field names.",
+                        "rendering": "Rendering the changed files…",
+                        "newFile": "new file",
+                        "renamedFrom": "renamed from {{ file }}",
+                        "deleted": "deleted",
+                        "buildSettings": "Build settings",
+                        "testAnnotations": "Test class · @Policy annotations",
+                        "loadingTestCases": "Loading the test cases the change releases…",
+                        "testCasesFailed": "The test cases of the split test classes could not be loaded, so the review cannot show which ones lose their policy.",
+                        "retry": "Retry",
+                        "diffOf": "Side-by-side diff of {{ file }}",
+                        "before": "Before · {{ commit }}",
+                        "after": "After · your changes",
+                        "unchanged": {
+                            "one": "1 unchanged line",
+                            "other": "{{ count }} unchanged lines"
+                        },
+                        "assignments": "Test case assignments",
+                        "assignmentsWhere": "stored in the @Policy annotations of the test classes, not in the YAML files",
+                        "assigned": "Assigned:",
+                        "released": "Released:",
+                        "to": "to {{ file }}",
+                        "from": "from {{ file }}",
+                        "fixFirst": "Fix these before saving",
+                        "incompatible": "Ares2 {{ version }} does not accept these parts of the policies, so every test would fail. Remove them or choose a newer version:",
+                        "commitMessage": "Description of the change",
+                        "createsCommit": "Saving creates one commit with this description in the tests repository and starts a new build of the template and solution.",
+                        "compatible": "Checked against the pinned release Ares2 {{ version }}: every field in these files is supported.",
+                        "incompatibleShort": "The pinned release Ares2 {{ version }} does not support every field in these files.",
+                        "unverified": "Ares2 {{ version }} is not listed in the compatibility manifest, so Artemis cannot check whether it accepts every field.",
+                        "back": "Back to Editing",
+                        "commitAndPush": "Save Changes",
+                        "securitySettings": "security settings",
+                        "defaultMessage": {
+                            "one": "Update {{ subject }} (1 change)",
+                            "other": "Update {{ subject }} ({{ count }} changes)"
+                        }
+                    },
+                    "problem": {
+                        "nameRequired": "A security policy has no name.",
+                        "hiddenPeriod": "{{ policy }}: “Hidden until” must be after “Hidden from”.",
+                        "noTests": "{{ policy }} has no assigned test case. Artemis finds a policy through the test cases that use it, so assign at least one.",
+                        "sameFile": "Two policies would be saved to the same file, or a policy to the file of a deleted one. Rename one of them."
+                    },
+                    "banner": {
+                        "committing": "Saving…",
+                        "committingText": "Editing is paused until the push to the tests repository is processed.",
+                        "committed": "Saved",
+                        "committedText": "Saved as commit {{ hash }}. The build it started shows whether Ares2 accepts the new policy.",
+                        "conflict": "The policy changed in the repository",
+                        "conflictText": {
+                            "one": "{{ author }} saved a newer version ({{ hash }}) after you opened the editor. Reload to see it — your unsaved change is kept.",
+                            "other": "{{ author }} saved a newer version ({{ hash }}) after you opened the editor. Reload to see it — your {{ count }} unsaved changes are kept."
+                        },
+                        "conflictTextUnknown": {
+                            "one": "Someone saved a newer version to the tests repository after you opened the editor. Reload to see it — your unsaved change is kept.",
+                            "other": "Someone saved a newer version to the tests repository after you opened the editor. Reload to see it — your {{ count }} unsaved changes are kept."
+                        },
+                        "reload": "Reload",
+                        "reloadFailed": "The newer version could not be loaded. Your unsaved changes are kept; reload again.",
+                        "reloaded": "Reloaded the version saved as commit {{ hash }}. Your unsaved changes are kept — save again when ready.",
+                        "orphaned": "A policy you changed is gone from the repository",
+                        "orphanedText": "Since you opened the editor, someone deleted, renamed or broke {{ files }}, so it can no longer be edited here. Your unsaved changes to it are kept as a new policy: save it to keep them, or delete it to drop them.",
+                        "failed": "Saving failed — nothing was changed",
+                        "failedKept": "Your changes stay unsaved.",
+                        "failedGeneric": "The tests repository could not be changed.",
+                        "processingFailed": "Saved, but the builds did not start",
+                        "processingFailedText": "Saved as commit {{ hash }}, so the policies show it, but Artemis could not start the builds of the template and solution. Retry to start them.",
+                        "retry": "Retry",
+                        "tooOld": "Pinned version too old for this policy",
+                        "tooOldText": "Ares2 {{ version }} does not support these settings of the policies, so every test would fail. Choose a newer release.",
+                        "changeVersion": "Change Version",
+                        "readOnly": "Shown read-only",
+                        "openRepository": "Open Repository",
+                        "discarded": "All unsaved changes were discarded."
+                    },
+                    "discard": {
+                        "title": "Discard Unsaved Changes",
+                        "question": {
+                            "one": "Are you sure you want to discard your unsaved change?",
+                            "other": "Are you sure you want to discard all {{ count }} unsaved changes?"
+                        },
+                        "warning": "The editor returns to the version saved as commit {{ commit }}. Discarded changes cannot be restored.",
+                        "confirm": "Discard Changes"
+                    },
+                    "deletePolicy": {
+                        "title": "Delete Security Policy",
+                        "question": "Are you sure you want to delete {{ policy }}?",
+                        "committed": "Saving removes {{ file }} from the tests repository. Its {{ count }} assigned test entries then run under the restrictive default policy of Ares2.",
+                        "neverCommitted": "This policy was never saved. Its settings are lost.",
+                        "confirm": "Delete Policy"
+                    }
+                }
             },
             "onlineIdeExperienceLevel": {
                 "title": "Starting experience level in the Online IDE",

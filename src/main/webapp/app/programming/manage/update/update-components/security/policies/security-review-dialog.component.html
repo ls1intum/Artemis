@@ -1,0 +1,196 @@
+@let prefix = 'artemisApp.programmingExercise.security.advanced.review.';
+<tumaet-ui-dialog [(visible)]="visible" size="large" data-testid="security-review-dialog">
+    <ng-template #header>
+        <div class="flex flex-col">
+            <span [jhiTranslate]="prefix + 'title'"></span>
+            <span class="sp-mut text-sm font-normal" data-testid="security-review-summary">{{ summary() }}</span>
+        </div>
+    </ng-template>
+    <div class="sp-stack-3">
+        <p class="sp-mut m-0 text-sm" [jhiTranslate]="prefix + 'explanation'"></p>
+        @if (!preview()) {
+            <div class="sp-row" data-testid="security-review-loading">
+                <tumaet-ui-progress-spinner />
+                <span [jhiTranslate]="prefix + 'rendering'"></span>
+            </div>
+        } @else {
+            @for (diff of diffs(); track diff.path; let first = $first) {
+                <details class="sp-file" [open]="first" data-testid="security-review-file">
+                    <summary>
+                        <fa-icon class="sp-chevron" [icon]="faChevronRight" />
+                        <span class="sp-mono sp-strong">{{ diff.path }}</span>
+                        <span class="sp-mut text-xs">{{ diff.description }}</span>
+                        <span class="sp-push sp-row">
+                            <tumaet-ui-tag severity="success" size="sm" [value]="'+' + diff.added" />
+                            <tumaet-ui-tag severity="danger" size="sm" [value]="'−' + diff.removed" />
+                        </span>
+                    </summary>
+                    <div class="sp-diff-scroll" role="region" [tabindex]="scrollableRegionTabIndex" [attr.aria-label]="prefix + 'diffOf' | artemisTranslate: { file: diff.path }">
+                        <div class="sp-diff">
+                            <div class="sp-diff-head">
+                                <span></span>
+                                <span>{{ prefix + 'before' | artemisTranslate: { commit: baseCommit() ?? '' } }}</span>
+                                <span></span>
+                                <span [jhiTranslate]="prefix + 'after'"></span>
+                            </div>
+                            @for (row of diff.rows; track $index) {
+                                @switch (row.kind) {
+                                    @case ('collapsed') {
+                                        <div class="sp-diff-row sp-diff-gap">
+                                            <span></span>
+                                            <span>⋯ {{ countKey(prefix + 'unchanged', row.count) | artemisTranslate: { count: row.count } }}</span>
+                                            <span></span>
+                                            <span>⋯ {{ countKey(prefix + 'unchanged', row.count) | artemisTranslate: { count: row.count } }}</span>
+                                        </div>
+                                    }
+                                    @case ('same') {
+                                        <div class="sp-diff-row">
+                                            <span class="sp-diff-number">{{ row.left.number }}</span>
+                                            <span>&nbsp;&nbsp;{{ row.left.text }}</span>
+                                            <span class="sp-diff-number">{{ row.right.number }}</span>
+                                            <span>&nbsp;&nbsp;{{ row.right.text }}</span>
+                                        </div>
+                                    }
+                                    @case ('removed') {
+                                        <div class="sp-diff-row">
+                                            <span class="sp-diff-number sp-diff-removed">{{ row.left.number }}</span>
+                                            <span class="sp-diff-removed">− {{ row.left.text }}</span>
+                                            <span class="sp-diff-empty"></span>
+                                            <span class="sp-diff-empty"></span>
+                                        </div>
+                                    }
+                                    @case ('added') {
+                                        <div class="sp-diff-row">
+                                            <span class="sp-diff-empty"></span>
+                                            <span class="sp-diff-empty"></span>
+                                            <span class="sp-diff-number sp-diff-added">{{ row.right.number }}</span>
+                                            <span class="sp-diff-added">+ {{ row.right.text }}</span>
+                                        </div>
+                                    }
+                                    @case ('changed') {
+                                        <div class="sp-diff-row">
+                                            <span class="sp-diff-number sp-diff-removed">{{ row.left.number }}</span>
+                                            <span class="sp-diff-removed">− {{ row.left.text }}</span>
+                                            <span class="sp-diff-number sp-diff-added">{{ row.right.number }}</span>
+                                            <span class="sp-diff-added">+ {{ row.right.text }}</span>
+                                        </div>
+                                    }
+                                    @default {}
+                                }
+                            }
+                        </div>
+                    </div>
+                </details>
+            }
+            @if (assignments().length) {
+                <details class="sp-file" open data-testid="security-review-assignments">
+                    <summary>
+                        <fa-icon class="sp-chevron" [icon]="faChevronRight" />
+                        <span class="sp-strong" [jhiTranslate]="prefix + 'assignments'"></span>
+                        <span class="sp-mut text-xs" [jhiTranslate]="prefix + 'assignmentsWhere'"></span>
+                        <span class="sp-push sp-row">
+                            <tumaet-ui-tag severity="success" size="sm" [value]="'+' + assignmentsAdded()" />
+                            <tumaet-ui-tag severity="danger" size="sm" [value]="'−' + assignmentsRemoved()" />
+                        </span>
+                    </summary>
+                    <ul class="sp-assignments text-sm">
+                        @for (assignment of assignments(); track assignment.sign + assignment.entry + assignment.file) {
+                            <li>
+                                <span class="sp-mono" [class.sp-assigned-sign]="assignment.sign === '+'" [class.sp-released-sign]="assignment.sign === '−'" aria-hidden="true">{{
+                                    assignment.sign
+                                }}</span>
+                                <span class="sr-only" [jhiTranslate]="assignment.sign === '+' ? prefix + 'assigned' : prefix + 'released'"></span>
+                                <span class="sp-mono">{{ assignment.entry.replace('#', '.') }}</span>
+                                <span class="sp-mut">{{ (assignment.sign === '+' ? prefix + 'to' : prefix + 'from') | artemisTranslate: { file: assignment.file } }}</span>
+                            </li>
+                        }
+                    </ul>
+                </details>
+            }
+            @switch (assignmentsState()) {
+                @case ('loading') {
+                    <div class="sp-row" data-testid="security-review-assignments-loading">
+                        <tumaet-ui-progress-spinner />
+                        <span [jhiTranslate]="prefix + 'loadingTestCases'"></span>
+                    </div>
+                }
+                @case ('failed') {
+                    <tumaet-ui-message severity="error" [icon]="faCircleXmark" data-testid="security-review-assignments-failed">
+                        <span class="sp-row text-sm">
+                            <span [jhiTranslate]="prefix + 'testCasesFailed'"></span>
+                            <button
+                                type="button"
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="outlined"
+                                size="small"
+                                (click)="assignmentsRetry.emit()"
+                                data-testid="security-review-assignments-retry"
+                            >
+                                {{ prefix + 'retry' | artemisTranslate }}
+                            </button>
+                        </span>
+                    </tumaet-ui-message>
+                }
+                @default {}
+            }
+            @if (problems().length || verdict() === SecurityVersionCompatibilityVerdict.INCOMPATIBLE) {
+                <tumaet-ui-message severity="error" [icon]="faCircleXmark" data-testid="security-review-problems">
+                    <span class="text-sm">
+                        <strong [jhiTranslate]="prefix + 'fixFirst'"></strong>
+                        <ul class="sp-key-map">
+                            @for (problem of problems(); track problem) {
+                                <li>{{ problem }}</li>
+                            }
+                            @if (verdict() === SecurityVersionCompatibilityVerdict.INCOMPATIBLE) {
+                                <li>{{ prefix + 'incompatible' | artemisTranslate: { version: preview()?.frameworkVersion ?? '' } }}</li>
+                                @for (problem of preview()?.problems ?? []; track problem) {
+                                    <li class="sp-mono">{{ problem }}</li>
+                                }
+                            }
+                        </ul>
+                    </span>
+                </tumaet-ui-message>
+            }
+        }
+        <div class="sp-stack">
+            <label class="sp-label" for="securityCommitMessage">{{ prefix + 'commitMessage' | artemisTranslate }}</label>
+            <input
+                id="securityCommitMessage"
+                tumAetUiInput
+                [ngModel]="message()"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="message.set($event)"
+                data-testid="security-review-message"
+            />
+        </div>
+        <div class="sp-info-line">
+            <fa-icon [icon]="faCircleInfo" />
+            <span [jhiTranslate]="prefix + 'createsCommit'"></span>
+        </div>
+        @if (preview(); as rendered) {
+            <div class="sp-info-line" data-testid="security-review-verdict">
+                @switch (rendered.verdict) {
+                    @case (SecurityVersionCompatibilityVerdict.COMPATIBLE) {
+                        <fa-icon [icon]="faCheck" />
+                        <span>{{ prefix + 'compatible' | artemisTranslate: { version: rendered.frameworkVersion ?? '' } }}</span>
+                    }
+                    @case (SecurityVersionCompatibilityVerdict.INCOMPATIBLE) {
+                        <fa-icon [icon]="faTriangleExclamation" />
+                        <span>{{ prefix + 'incompatibleShort' | artemisTranslate: { version: rendered.frameworkVersion ?? '' } }}</span>
+                    }
+                    @default {
+                        <fa-icon [icon]="faTriangleExclamation" />
+                        <span>{{ prefix + 'unverified' | artemisTranslate: { version: rendered.frameworkVersion ?? '' } }}</span>
+                    }
+                }
+            </div>
+        }
+    </div>
+    <ng-template #footer>
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="visible.set(false)" [jhiTranslate]="prefix + 'back'"></button>
+        <button type="button" tumAetUiButton [disabled]="!canCommit()" (click)="commit()" data-testid="security-review-commit">
+            {{ prefix + 'commitAndPush' | artemisTranslate }}
+        </button>
+    </ng-template>
+</tumaet-ui-dialog>

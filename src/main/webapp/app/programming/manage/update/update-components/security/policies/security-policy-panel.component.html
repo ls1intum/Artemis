@@ -1,0 +1,213 @@
+@let prefix = 'artemisApp.programmingExercise.security.advanced.policy.';
+@let id = idPrefix();
+<tumaet-ui-panel
+    toggleable
+    [(collapsed)]="collapsed"
+    [toggleAriaLabel]="(collapsed() ? prefix + 'expand' : prefix + 'collapse') | artemisTranslate: { policy: policy().name }"
+    data-testid="security-policy-panel"
+>
+    <div tumAetUiPanelHeader class="sp-panel-head">
+        <span class="sp-panel-title">
+            <span class="sp-mono" data-testid="security-policy-file">{{ fileName() || (prefix + 'unnamed' | artemisTranslate) }}</span>
+            @if (summary().isNew) {
+                <tumaet-ui-tag severity="warn" size="sm" [tumAetUiTooltip]="prefix + 'newHelp' | artemisTranslate" tabindex="0" data-testid="security-policy-new">
+                    <span [jhiTranslate]="prefix + 'new'"></span>
+                </tumaet-ui-tag>
+            } @else if (summary().total) {
+                <tumaet-ui-tag
+                    severity="warn"
+                    size="sm"
+                    [tumAetUiTooltip]="countKey(prefix + 'changesHelp', summary().total) | artemisTranslate: { count: summary().total }"
+                    tabindex="0"
+                    data-testid="security-policy-changes"
+                    [value]="'artemisApp.programmingExercise.security.advanced.uncommittedCount' | artemisTranslate: { count: summary().total }"
+                />
+            }
+            @if (readOnly()) {
+                <tumaet-ui-tag severity="secondary" size="sm" [value]="prefix + 'readOnly' | artemisTranslate" data-testid="security-policy-read-only" />
+            }
+        </span>
+        <span class="sp-panel-actions">
+            <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="viewYaml.emit()" data-testid="security-policy-view-yaml">
+                <fa-icon [icon]="faCode" />
+                <span [jhiTranslate]="prefix + 'viewYaml'"></span>
+            </button>
+            <button
+                type="button"
+                tumAetUiButton
+                severity="danger"
+                variant="text"
+                size="small"
+                [disabled]="disabled()"
+                [attr.aria-label]="prefix + 'deleteLabel' | artemisTranslate: { policy: policy().name }"
+                [tumAetUiTooltip]="prefix + 'delete' | artemisTranslate"
+                (click)="deleteRequested.emit()"
+                data-testid="security-policy-delete"
+            >
+                <fa-icon [icon]="faTrashCan" />
+            </button>
+        </span>
+    </div>
+
+    <div class="sp-panel-body">
+        @if (working(); as document) {
+            <div class="sp-grid-2">
+                <div class="sp-stack">
+                    <span class="sp-label-row">
+                        <label class="sp-label" [for]="id + 'Name'">{{ prefix + 'name' | artemisTranslate }}</label>
+                        <jhi-security-help [text]="prefix + 'nameHelp' | artemisTranslate" />
+                    </span>
+                    <input
+                        [id]="id + 'Name'"
+                        [tumAetUiInputId]="id + 'Name'"
+                        tumAetUiInput
+                        [placeholder]="prefix + 'namePlaceholder' | artemisTranslate"
+                        [ngModel]="policy().name"
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="onNameChange($event)"
+                        [disabled]="disabled()"
+                        data-testid="security-policy-name"
+                    />
+                </div>
+                <div class="sp-stack">
+                    <span class="sp-label-row">
+                        <label class="sp-label" [for]="id + 'Presets'">{{ prefix + 'presets' | artemisTranslate }}</label>
+                        <jhi-security-help [text]="(presets().length ? prefix + 'presetsHelp' : prefix + 'presetsUnavailable') | artemisTranslate" />
+                    </span>
+                    <tumaet-ui-multi-select
+                        [inputId]="id + 'Presets'"
+                        [options]="presets()"
+                        optionLabel="label"
+                        optionValue="name"
+                        [placeholder]="prefix + 'noPreset' | artemisTranslate"
+                        [emptyMessage]="prefix + 'presetsUnavailable' | artemisTranslate"
+                        [ngModel]="selectedPresets()"
+                        [ngModelOptions]="{ standalone: true }"
+                        [disabled]="disabled()"
+                        (selectionChange)="onPresetsChange($event)"
+                        data-testid="security-policy-presets"
+                    />
+                </div>
+            </div>
+
+            <div class="sp-supervised" data-testid="security-policy-supervised">
+                <span class="sp-label-row">
+                    <span class="sp-label" [jhiTranslate]="prefix + 'supervised'"></span>
+                    <jhi-security-help [text]="prefix + 'supervisedHelp' | artemisTranslate" />
+                </span>
+                <span class="sp-supervised-items">
+                    <span>
+                        {{ prefix + 'package' | artemisTranslate }} <span class="sp-mono">{{ document.supervisedPackage ?? '–' }}</span>
+                    </span>
+                    <span>
+                        {{ prefix + 'mainClass' | artemisTranslate }} <span class="sp-mono">{{ document.mainClass ?? (prefix + 'none' | artemisTranslate) }}</span>
+                    </span>
+                    <span> {{ prefix + 'policyVersion' | artemisTranslate }} <span class="sp-mono">1</span> </span>
+                </span>
+            </div>
+
+            <tumaet-ui-panel
+                toggleable
+                [collapsed]="boxCollapsed().resources"
+                (collapsedChange)="setBoxCollapsed('resources', $event)"
+                [toggleAriaLabel]="prefix + 'box.resources' | artemisTranslate"
+                data-testid="security-policy-resources"
+            >
+                <span tumAetUiPanelHeader class="sp-panel-title">
+                    <span [jhiTranslate]="prefix + 'box.resources'"></span>
+                    @if (summary().restrictions) {
+                        <tumaet-ui-tag
+                            severity="warn"
+                            size="sm"
+                            [tumAetUiTooltip]="countKey(prefix + 'boxChangesHelp', summary().restrictions) | artemisTranslate: { count: summary().restrictions }"
+                            tabindex="0"
+                            [value]="'artemisApp.programmingExercise.security.advanced.uncommittedCount' | artemisTranslate: { count: summary().restrictions }"
+                        />
+                    }
+                </span>
+                <jhi-security-resource-access
+                    [document]="document"
+                    [base]="policy().base"
+                    [preset]="preset()"
+                    [disabled]="disabled()"
+                    [templateFiles]="templateFiles()"
+                    [templateFilesTruncated]="templateFilesTruncated()"
+                    [templateFilesFailed]="templateFilesFailed()"
+                    (documentChange)="onDocumentChange($event)"
+                    (templateFilesRequested)="templateFilesRequested.emit()"
+                />
+            </tumaet-ui-panel>
+
+            <tumaet-ui-panel
+                toggleable
+                [collapsed]="boxCollapsed().behaviour"
+                (collapsedChange)="setBoxCollapsed('behaviour', $event)"
+                [toggleAriaLabel]="prefix + 'box.behaviour' | artemisTranslate"
+                data-testid="security-policy-behaviour"
+            >
+                <span tumAetUiPanelHeader class="sp-panel-title">
+                    <span [jhiTranslate]="prefix + 'box.behaviour'"></span>
+                    @if (summary().behaviours) {
+                        <tumaet-ui-tag
+                            severity="warn"
+                            size="sm"
+                            [tumAetUiTooltip]="countKey(prefix + 'boxChangesHelp', summary().behaviours) | artemisTranslate: { count: summary().behaviours }"
+                            tabindex="0"
+                            [value]="'artemisApp.programmingExercise.security.advanced.uncommittedCount' | artemisTranslate: { count: summary().behaviours }"
+                        />
+                    }
+                </span>
+                <jhi-security-test-behaviour
+                    [behavior]="document.testBehavior"
+                    [baseBehavior]="policy().base?.testBehavior"
+                    [disabled]="disabled()"
+                    [policyFile]="fileName()"
+                    [idPrefix]="id"
+                    (behaviorChange)="onBehaviorChange($event)"
+                />
+            </tumaet-ui-panel>
+
+            <tumaet-ui-panel
+                toggleable
+                [collapsed]="boxCollapsed().tests"
+                (collapsedChange)="setBoxCollapsed('tests', $event)"
+                [toggleAriaLabel]="prefix + 'box.tests' | artemisTranslate"
+                data-testid="security-policy-tests"
+            >
+                <span tumAetUiPanelHeader class="sp-panel-title">
+                    <span [jhiTranslate]="prefix + 'box.tests'"></span>
+                    @if (summary().testCases + summary().testClasses) {
+                        <tumaet-ui-tag
+                            severity="warn"
+                            size="sm"
+                            [tumAetUiTooltip]="
+                                countKey(prefix + 'boxChangesHelp', summary().testCases + summary().testClasses)
+                                    | artemisTranslate: { count: summary().testCases + summary().testClasses }
+                            "
+                            tabindex="0"
+                            [value]="'artemisApp.programmingExercise.security.advanced.uncommittedCount' | artemisTranslate: { count: summary().testCases + summary().testClasses }"
+                        />
+                    }
+                </span>
+                <jhi-security-test-cases
+                    [policy]="policy()"
+                    [policyFile]="fileName()"
+                    [otherTests]="otherTests()"
+                    [structure]="structure()"
+                    [disabled]="disabled()"
+                    (assignmentChange)="onAssignmentChange($event)"
+                    (structureRequested)="structureRequested.emit()"
+                />
+            </tumaet-ui-panel>
+        } @else {
+            <tumaet-ui-message severity="secondary" [icon]="faLock" data-testid="security-policy-read-only-reason">
+                <span class="text-sm">
+                    {{
+                        prefix + 'readOnlyReason.' + (policy().file?.readOnlyReason ?? 'UNSUPPORTED_CONTENT')
+                            | artemisTranslate: { path: policy().file?.policyPath ?? '', line: policy().file?.errorLine ?? '' }
+                    }}
+                </span>
+            </tumaet-ui-message>
+        }
+    </div>
+</tumaet-ui-panel>

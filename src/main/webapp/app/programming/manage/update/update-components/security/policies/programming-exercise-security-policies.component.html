@@ -1,0 +1,353 @@
+@let prefix = 'artemisApp.programmingExercise.security.advanced.';
+<div class="sp-stack-4" data-testid="security-advanced-view">
+    <jhi-security-activation-card
+        [state]="cardState()"
+        [toggleOn]="toggleOn()"
+        [locked]="locked() || !canCommit()"
+        [scanDependencies]="shownScanDependencies()"
+        [scanAvailable]="scanAvailable()"
+        [scanBlocked]="scanBlockedByReadOnly()"
+        [lastCommit]="editor()?.lastCommit"
+        [versionOptions]="versionOptions()"
+        [version]="shownVersion()"
+        [versionUncommitted]="!!stagedVersion()"
+        [versionLocked]="!editor()"
+        (toggleRequested)="onToggleRequested($event)"
+        (scanRequested)="onScanRequested($event)"
+        (versionChange)="onVersionChange($event)"
+    />
+
+    @if (!isConfigured()) {
+        <ng-container [ngTemplateOutlet]="bannerTemplate" />
+    } @else {
+        <tumaet-ui-panel toggleable [(collapsed)]="sectionCollapsed" [toggleAriaLabel]="prefix + 'section.title' | artemisTranslate" data-testid="security-policies-section">
+            <div tumAetUiPanelHeader class="flex flex-col items-start gap-1">
+                <span class="text-lg font-semibold" [jhiTranslate]="prefix + 'section.title'"></span>
+                <span class="sp-mut text-sm font-normal" [jhiTranslate]="prefix + 'section.description'"></span>
+            </div>
+            <div class="sp-stack-4" [attr.inert]="isCommitting() ? '' : null">
+                @if (loading() && !editor()) {
+                    <div class="sp-row" data-testid="security-policies-loading">
+                        <tumaet-ui-progress-spinner />
+                        <span [jhiTranslate]="prefix + 'loading'"></span>
+                    </div>
+                } @else if (loadFailed()) {
+                    <tumaet-ui-message class="sp-message-fill" severity="error" [icon]="faCircleXmark" data-testid="security-policies-load-error">
+                        <span class="sp-message-row">
+                            <span class="sp-grow text-sm" [jhiTranslate]="prefix + 'loadError'"></span>
+                            <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="retryLoad()">
+                                <fa-icon [icon]="faRotateRight" />
+                                <span [jhiTranslate]="prefix + 'retry'"></span>
+                            </button>
+                        </span>
+                    </tumaet-ui-message>
+                } @else {
+                    @for (policy of policies(); track policy.id) {
+                        <jhi-security-policy-panel
+                            [policy]="policy"
+                            [summary]="summaries().get(policy.id) ?? noChanges"
+                            [policyPath]="paths().get(policy.id) ?? ''"
+                            [presets]="presets()"
+                            [structure]="structure()"
+                            [otherTests]="otherTestsByPolicy().get(policy.id) ?? noOtherTests"
+                            [templateFiles]="templateFiles()"
+                            [templateFilesTruncated]="templateFilesTruncated()"
+                            [templateFilesFailed]="templateFilesFailed()"
+                            [disabled]="editingDisabled()"
+                            (policyChange)="onPolicyChange($event)"
+                            (viewYaml)="openYaml(policy)"
+                            (deleteRequested)="askDeletePolicy(policy)"
+                            (structureRequested)="requestStructure()"
+                            (templateFilesRequested)="requestTemplateFiles()"
+                        />
+                    } @empty {
+                        <tumaet-ui-empty-state
+                            variant="plain"
+                            [title]="prefix + 'section.emptyTitle' | artemisTranslate"
+                            [description]="prefix + 'section.emptyDescription' | artemisTranslate"
+                            data-testid="security-policies-empty"
+                        />
+                    }
+                    <div>
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            severity="secondary"
+                            variant="outlined"
+                            [disabled]="editingDisabled()"
+                            (click)="addPolicy()"
+                            data-testid="security-policies-add"
+                        >
+                            <fa-icon [icon]="faPlus" />
+                            <span [jhiTranslate]="prefix + 'section.addPolicy'"></span>
+                        </button>
+                    </div>
+
+                    @if (totalChanges()) {
+                        <tumaet-ui-message class="sp-message-fill" severity="warn" data-testid="security-policies-commit-bar">
+                            <span class="sp-message-row">
+                                <span class="sp-grow sp-row">
+                                    <tumaet-ui-tag
+                                        severity="warn"
+                                        size="sm"
+                                        [value]="countKey(prefix + 'unsavedCount', totalChanges()) | artemisTranslate: { count: totalChanges() }"
+                                    />
+                                    <span class="text-sm">{{ changeText() }}. {{ prefix + 'commitBar.notEnforced' | artemisTranslate }}</span>
+                                </span>
+                                <span class="sp-row">
+                                    <button
+                                        type="button"
+                                        tumAetUiButton
+                                        severity="danger"
+                                        variant="outlined"
+                                        [disabled]="editingDisabled()"
+                                        (click)="discardOpen.set(true)"
+                                        data-testid="security-policies-discard"
+                                    >
+                                        {{ prefix + 'commitBar.discard' | artemisTranslate }}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        tumAetUiButton
+                                        [disabled]="editingDisabled() || loading() || importPending()"
+                                        (click)="openReview()"
+                                        data-testid="security-policies-commit"
+                                    >
+                                        {{ prefix + 'commitBar.commit' | artemisTranslate }}
+                                    </button>
+                                </span>
+                            </span>
+                        </tumaet-ui-message>
+                    } @else {
+                        <div class="sp-commit-bar-idle" data-testid="security-policies-commit-bar-idle">
+                            <span class="sp-mut sp-row text-sm">
+                                <fa-icon [icon]="faCircleCheck" />
+                                <span [jhiTranslate]="canCommit() ? prefix + 'commitBar.nothing' : prefix + 'commitBar.instructorsOnly'"></span>
+                            </span>
+                            <span class="sp-row">
+                                <button type="button" tumAetUiButton severity="danger" variant="outlined" disabled>{{ prefix + 'commitBar.discard' | artemisTranslate }}</button>
+                                <button type="button" tumAetUiButton disabled>{{ prefix + 'commitBar.commit' | artemisTranslate }}</button>
+                            </span>
+                        </div>
+                    }
+                }
+            </div>
+        </tumaet-ui-panel>
+        <ng-container [ngTemplateOutlet]="bannerTemplate" />
+    }
+</div>
+
+<ng-template #bannerTemplate>
+    <div class="sp-stack-3" aria-live="polite" data-testid="security-policies-banners">
+        @if (banner(); as current) {
+            @switch (current.kind) {
+                @case ('committing') {
+                    <tumaet-ui-message class="sp-message-fill" severity="info" role="status" data-testid="security-banner-committing">
+                        <span class="sp-message-row">
+                            <fa-icon [icon]="faSpinner" class="sp-spin" />
+                            <span class="sp-grow">
+                                <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.committing'"></span>
+                                <span class="text-sm" [jhiTranslate]="prefix + 'banner.committingText'"></span>
+                            </span>
+                        </span>
+                    </tumaet-ui-message>
+                }
+                @case ('committed') {
+                    <tumaet-ui-message severity="success" [icon]="faCircleCheck" role="status" dismissible (dismissed)="dismissBanner()" data-testid="security-banner-committed">
+                        <span class="sp-strong block" [jhiTranslate]="current.titleKey"></span>
+                        <span class="text-sm">{{ current.textKey | artemisTranslate: { hash: current.hash } }}</span>
+                    </tumaet-ui-message>
+                }
+                @case ('conflict') {
+                    <tumaet-ui-message class="sp-message-fill" severity="warn" [icon]="faTriangleExclamation" role="alert" data-testid="security-banner-conflict">
+                        <span class="sp-message-row">
+                            <span class="sp-grow">
+                                <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.conflict'"></span>
+                                <span class="text-sm">
+                                    @if (current.authorName && current.hash) {
+                                        {{
+                                            countKey(prefix + 'banner.conflictText', totalChanges())
+                                                | artemisTranslate: { author: current.authorName, hash: current.hash, count: totalChanges() }
+                                        }}
+                                    } @else {
+                                        {{ countKey(prefix + 'banner.conflictTextUnknown', totalChanges()) | artemisTranslate: { count: totalChanges() } }}
+                                    }
+                                </span>
+                                @if (current.reloadFailed) {
+                                    <span class="text-sm block" [jhiTranslate]="prefix + 'banner.reloadFailed'" data-testid="security-banner-reload-failed"></span>
+                                }
+                            </span>
+                            <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="reload(true)" data-testid="security-banner-reload">
+                                {{ prefix + 'banner.reload' | artemisTranslate }}
+                            </button>
+                        </span>
+                    </tumaet-ui-message>
+                }
+                @case ('failed') {
+                    <tumaet-ui-message class="sp-message-fill" severity="error" [icon]="faCircleXmark" role="alert" data-testid="security-banner-failed">
+                        <span class="sp-message-row">
+                            <span class="sp-grow">
+                                <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.failed'"></span>
+                                <span class="text-sm">{{ current.message }} {{ prefix + 'banner.failedKept' | artemisTranslate }}</span>
+                            </span>
+                            <button
+                                type="button"
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="outlined"
+                                size="small"
+                                [disabled]="locked()"
+                                (click)="retryCommit()"
+                                data-testid="security-banner-retry"
+                            >
+                                {{ prefix + 'banner.retry' | artemisTranslate }}
+                            </button>
+                        </span>
+                    </tumaet-ui-message>
+                }
+                @case ('processingFailed') {
+                    <tumaet-ui-message class="sp-message-fill" severity="warn" [icon]="faTriangleExclamation" role="alert" data-testid="security-banner-processing-failed">
+                        <span class="sp-message-row">
+                            <span class="sp-grow">
+                                <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.processingFailed'"></span>
+                                <span class="text-sm">{{ prefix + 'banner.processingFailedText' | artemisTranslate: { hash: current.hash ?? '' } }}</span>
+                            </span>
+                            <button
+                                type="button"
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="outlined"
+                                size="small"
+                                [disabled]="locked()"
+                                (click)="retryCommit()"
+                                data-testid="security-banner-retry"
+                            >
+                                {{ prefix + 'banner.retry' | artemisTranslate }}
+                            </button>
+                        </span>
+                    </tumaet-ui-message>
+                }
+                @case ('orphaned') {
+                    <tumaet-ui-message severity="warn" [icon]="faTriangleExclamation" role="alert" dismissible (dismissed)="dismissBanner()" data-testid="security-banner-orphaned">
+                        <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.orphaned'"></span>
+                        <span class="text-sm">{{ prefix + 'banner.orphanedText' | artemisTranslate: { files: current.files } }}</span>
+                    </tumaet-ui-message>
+                }
+                @case ('info') {
+                    <tumaet-ui-message severity="info" [icon]="faCircleInfo" role="status" dismissible (dismissed)="dismissBanner()" data-testid="security-banner-info">
+                        <span class="text-sm">{{ current.text }}</span>
+                    </tumaet-ui-message>
+                }
+                @default {}
+            }
+        }
+        @if (isConfigured() && versionTooOld()) {
+            <tumaet-ui-message class="sp-message-fill" severity="error" [icon]="faCircleXmark" role="alert" data-testid="security-banner-too-old">
+                <span class="sp-message-row">
+                    <span class="sp-grow">
+                        <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.tooOld'"></span>
+                        <span class="text-sm">{{ prefix + 'banner.tooOldText' | artemisTranslate: { version: versionCheck()?.frameworkVersion ?? '' } }}</span>
+                        <ul class="sp-key-map text-sm">
+                            @for (problem of versionCheck()?.problems ?? []; track problem) {
+                                <li class="sp-mono">{{ problem }}</li>
+                            }
+                        </ul>
+                    </span>
+                    <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="focusVersion()" data-testid="security-banner-change-version">
+                        {{ prefix + 'banner.changeVersion' | artemisTranslate }}
+                    </button>
+                </span>
+            </tumaet-ui-message>
+        }
+        @if (isConfigured() && readOnlyPolicies().length) {
+            <tumaet-ui-message class="sp-message-fill" severity="secondary" [icon]="faLock" role="alert" data-testid="security-banner-read-only">
+                <span class="sp-message-row">
+                    <span class="sp-grow">
+                        <span class="sp-strong block" [jhiTranslate]="prefix + 'banner.readOnly'"></span>
+                        @for (policy of readOnlyPolicies(); track policy.id) {
+                            <span class="block text-sm">
+                                {{
+                                    prefix + 'policy.readOnlyReason.' + (policy.file?.readOnlyReason ?? 'UNSUPPORTED_CONTENT')
+                                        | artemisTranslate: { path: policy.file?.policyPath ?? '', line: policy.file?.errorLine ?? '' }
+                                }}
+                            </span>
+                        }
+                    </span>
+                    @if (repositoryLink(); as link) {
+                        <a tumAetUiButton severity="secondary" variant="outlined" size="small" [routerLink]="link" target="_blank" data-testid="security-banner-open-repository">
+                            <span [jhiTranslate]="prefix + 'banner.openRepository'"></span>
+                            <fa-icon [icon]="faArrowUpRightFromSquare" />
+                        </a>
+                    }
+                </span>
+            </tumaet-ui-message>
+        }
+    </div>
+</ng-template>
+
+<jhi-security-activation-dialog
+    [(visible)]="dialogOpen"
+    [mode]="dialogMode()"
+    [versionOptions]="versionOptions()"
+    [initialVersion]="activationVersion()"
+    [latestVersion]="latestVersion()"
+    [policyPaths]="policyPaths()"
+    [aresApiUses]="aresApiUses()"
+    [repositoryLink]="repositoryLink()"
+    [unsavedChanges]="totalChanges()"
+    [strictTimeouts]="strictTimeouts()"
+    [busy]="loading() && (dialogMode() === 'scanOn' || dialogMode() === 'scanOff')"
+    (confirmed)="onDialogConfirmed($event)"
+    (cancelled)="onDialogCancelled()"
+/>
+
+<jhi-security-review-dialog
+    [(visible)]="reviewOpen"
+    [preview]="reviewPreview()"
+    [descriptions]="reviewDescriptions()"
+    [assignments]="reviewAssignments()"
+    [problems]="problems()"
+    [summary]="reviewSummary()"
+    [baseCommit]="shortBaseCommit()"
+    [defaultMessage]="defaultCommitMessage()"
+    [busy]="isCommitting() || loading() || importPending()"
+    [assignmentsState]="reviewAssignmentsState()"
+    (commitRequested)="commit($event)"
+    (assignmentsRetry)="requestStructure()"
+/>
+
+@if (yamlPolicy(); as policy) {
+    <jhi-security-yaml-dialog
+        [(visible)]="yamlOpen"
+        [policyPath]="paths().get(policy.id) ?? ''"
+        [label]="policy.name"
+        [committedContent]="policy.file?.content"
+        [unsavedContent]="yamlUnsaved()"
+        [hasUnsavedChanges]="(summaries().get(policy.id)?.total ?? 0) > 0"
+        [commitHash]="shortBaseCommit()"
+        [canImport]="!!policy.working && !editingDisabled()"
+        [notice]="importNotice()"
+        [importEpoch]="yamlImportEpoch()"
+        (unsavedRequested)="renderYamlUnsaved()"
+        (readingChange)="yamlFileReading.set($event)"
+        (imported)="importYaml($event)"
+    />
+}
+
+<jhi-security-confirm-dialog
+    [(visible)]="discardOpen"
+    [header]="discardHeader"
+    [question]="discardQuestion()"
+    [warning]="discardWarning()"
+    confirmLabel="artemisApp.programmingExercise.security.advanced.discard.confirm"
+    (confirmed)="discard()"
+/>
+
+<jhi-security-confirm-dialog
+    [(visible)]="deleteOpen"
+    [header]="deleteHeader"
+    [question]="deleteQuestion()"
+    [warning]="deleteWarning()"
+    confirmLabel="artemisApp.programmingExercise.security.advanced.deletePolicy.confirm"
+    (confirmed)="deletePolicy()"
+/>
