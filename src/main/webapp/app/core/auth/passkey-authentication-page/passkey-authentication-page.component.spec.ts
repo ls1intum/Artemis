@@ -259,7 +259,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const instructionSpans = fixture.nativeElement.querySelectorAll('p.text-wrap span[jhiTranslate]');
+        const instructionSpans = fixture.nativeElement.querySelectorAll('p.whitespace-normal span[jhiTranslate]');
         expect(instructionSpans.length).toBeGreaterThanOrEqual(3);
 
         const startSpan = Array.from<HTMLElement>(instructionSpans).find(

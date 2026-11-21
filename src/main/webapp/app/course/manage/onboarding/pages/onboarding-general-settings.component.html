@@ -12,7 +12,7 @@
         </div>
     </div>
     <div class="step-body">
-        <tumaet-ui-form-field class="mb-4!" [label]="'artemisApp.course.description' | artemisTranslate" controlId="onboarding-description">
+        <tumaet-ui-form-field class="mb-4" [label]="'artemisApp.course.description' | artemisTranslate" controlId="onboarding-description">
             <textarea
                 [attr.aria-label]="'artemisApp.course.description' | artemisTranslate"
                 tumAetUiTextarea
@@ -24,7 +24,7 @@
             ></textarea>
         </tumaet-ui-form-field>
 
-        <div class="relative mb-4! w-fit">
+        <div class="relative mb-4 w-fit">
             <span id="onboarding-color-label" class="mb-2 inline-block" jhiTranslate="artemisApp.course.color"></span>
             <button
                 type="button"
@@ -37,7 +37,7 @@
             <jhi-color-selector (selectedColor)="onSelectedColor($event)" />
         </div>
 
-        <div class="grid grid-cols-1 gap-4! mb-4! md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
             <div class="min-w-0">
                 <tumaet-ui-date-picker
                     inputId="onboarding-startDate"
@@ -74,7 +74,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-4! mb-4! md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
             <tumaet-ui-form-field class="min-w-0" [label]="'artemisApp.course.semester' | artemisTranslate" controlId="onboarding-semester" [invalid]="semesterMissing()">
                 <tumaet-ui-select
                     inputId="onboarding-semester"
@@ -98,7 +98,7 @@
             </tumaet-ui-form-field>
         </div>
 
-        <div class="grid grid-cols-1 gap-x-4 mb-4! md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-x-4 mb-4 md:grid-cols-2">
             <tumaet-ui-form-field class="min-w-0" [label]="'artemisApp.course.defaultProgrammingLanguage' | artemisTranslate" controlId="onboarding-default-programming-language">
                 <tumaet-ui-select
                     inputId="onboarding-default-programming-language"
@@ -113,7 +113,7 @@
 
         @if (irisEnabled) {
             <hr />
-            <div class="mb-4!">
+            <div class="mb-4">
                 <h5 class="flex items-center gap-2">
                     <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
                     <span jhiTranslate="artemisApp.course.onboarding.generalSettings.irisTitle"></span>
@@ -130,9 +130,9 @@
                     ></a>
                 </h5>
                 @if (isIrisEnabled()) {
-                    <p class="text-(--text-body-secondary) text-[0.875em] mb-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisEnabledHint"></p>
+                    <p class="text-(--text-body-secondary) text-[0.875em] mb-2!" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisEnabledHint"></p>
                 } @else {
-                    <p class="text-(--text-body-secondary) text-[0.875em] mb-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisDisabledHint"></p>
+                    <p class="text-(--text-body-secondary) text-[0.875em] mb-2!" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisDisabledHint"></p>
                 }
                 <jhi-enabled-toggle
                     class="max-w-fit"
@@ -141,14 +141,14 @@
                     testId="onboarding-iris"
                     (enabledChange)="setIrisEnabled($event)"
                 />
-                <p class="text-(--text-body-secondary) text-[0.875em] mt-2" [innerHTML]="'artemisApp.course.onboarding.generalSettings.irisPrivacyNote' | artemisTranslate"></p>
+                <p class="text-(--text-body-secondary) text-[0.875em] mt-2!" [innerHTML]="'artemisApp.course.onboarding.generalSettings.irisPrivacyNote' | artemisTranslate"></p>
             </div>
             <jhi-about-iris-modal [(visible)]="aboutIrisModalVisible" [hideTryButton]="true" />
         }
 
         @if (athenaEnabled) {
             <hr />
-            <div class="mb-4!">
+            <div class="mb-4">
                 <h5 class="flex items-center gap-2">
                     <jhi-athena-logo />
                     <span jhiTranslate="artemisApp.course.athenaConfig.title"></span>
@@ -161,12 +161,12 @@
                 } @else {
                     @for (feature of athenaFeatures; track feature.key) {
                         @let labelKey = 'artemisApp.course.athenaConfig.' + feature.key;
-                        <div class="mb-4!">
+                        <div class="mb-4">
                             <strong [jhiTranslate]="labelKey + '.label'"></strong>
                             @if (feature.enabled()) {
-                                <p class="text-(--text-body-secondary) text-sm mb-2" [jhiTranslate]="labelKey + '.enabledHint'"></p>
+                                <p class="text-(--text-body-secondary) text-sm mb-2!" [jhiTranslate]="labelKey + '.enabledHint'"></p>
                             } @else {
-                                <p class="text-(--text-body-secondary) text-sm mb-2" [jhiTranslate]="labelKey + '.disabledHint'"></p>
+                                <p class="text-(--text-body-secondary) text-sm mb-2!" [jhiTranslate]="labelKey + '.disabledHint'"></p>
                             }
                             <jhi-enabled-toggle
                                 class="max-w-fit"

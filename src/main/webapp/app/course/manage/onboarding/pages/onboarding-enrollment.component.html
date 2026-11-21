@@ -13,7 +13,7 @@
     </div>
     <div class="step-body">
         @if (ltiEnabled) {
-            <div class="flex items-center gap-4! mb-1">
+            <div class="flex items-center gap-4 mb-1">
                 <strong jhiTranslate="artemisApp.course.onlineCourse.title"></strong>
                 <div class="feature-toggle">
                     <button
@@ -45,7 +45,7 @@
             }
         }
 
-        <div class="flex items-center gap-4! mb-1">
+        <div class="flex items-center gap-4 mb-1">
             <strong jhiTranslate="artemisApp.course.enrollmentEnabled.title"></strong>
             <div class="feature-toggle">
                 <button
@@ -78,8 +78,8 @@
         }
 
         @if (course().enrollmentEnabled) {
-            <div class="step-indent mb-4!">
-                <div class="grid grid-cols-1 gap-4! mb-4! md:grid-cols-2">
+            <div class="step-indent mb-4">
+                <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
                     <div class="min-w-0">
                         <tumaet-ui-date-picker
                             inputId="onboarding-enrollmentStartDate"
@@ -100,12 +100,12 @@
                     </div>
                 </div>
 
-                <div class="mb-4!">
+                <div class="mb-4">
                     <span class="mb-2 inline-block" jhiTranslate="artemisApp.course.enrollmentConfirmationMessage"></span>
                     <jhi-markdown-editor-monaco class="markdown-editor" [markdown]="course().enrollmentConfirmationMessage" (markdownChange)="updateEnrollmentMessage($event)" />
                 </div>
 
-                <div class="flex items-center gap-4! mb-1">
+                <div class="flex items-center gap-4 mb-1">
                     <strong jhiTranslate="artemisApp.course.unenrollmentEnabled.title"></strong>
                     <div class="feature-toggle">
                         <button
@@ -137,7 +137,7 @@
                 }
 
                 @if (course().unenrollmentEnabled) {
-                    <div class="step-indent mb-4!">
+                    <div class="step-indent mb-4">
                         <tumaet-ui-date-picker
                             inputId="onboarding-unenrollmentEndDate"
                             labelName="artemisApp.course.unenrollmentEndDate"

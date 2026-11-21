@@ -238,7 +238,7 @@ describe('CodeEditorStudentIntegration', () => {
         findWithLatestResultSubject.next(participation);
         containerFixture.detectChanges();
 
-        expect((containerFixture.nativeElement as HTMLElement).firstElementChild!.classList.contains('module-bg')).toBe(fullPage);
+        expect((containerFixture.nativeElement as HTMLElement).firstElementChild!.classList.contains('bg-(--module-bg)')).toBe(fullPage);
         expect(containerDebugElement.query(By.css('jhi-programming-exercise-instructions')).nativeElement.classList.contains('hidden')).toBe(!fullPage);
     });
 

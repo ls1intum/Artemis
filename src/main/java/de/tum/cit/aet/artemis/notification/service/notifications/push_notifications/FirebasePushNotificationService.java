@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import tools.jackson.core.JacksonException;
 
@@ -35,9 +35,9 @@ public class FirebasePushNotificationService extends PushNotificationService {
     @Value("${artemis.push-notification-relay:https://hermes-staging.artemis.cit.tum.de}")
     private String relayServerBaseUrl;
 
-    public FirebasePushNotificationService(PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository, RestTemplate restTemplate,
-            @Qualifier("taskExecutor") Executor taskExecutor) {
-        super(restTemplate, taskExecutor);
+    public FirebasePushNotificationService(PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository,
+            @Qualifier("hermesRestClient") RestClient restClient, @Qualifier("taskExecutor") Executor taskExecutor) {
+        super(restClient, taskExecutor);
         repository = pushNotificationDeviceConfigurationRepository;
     }
 

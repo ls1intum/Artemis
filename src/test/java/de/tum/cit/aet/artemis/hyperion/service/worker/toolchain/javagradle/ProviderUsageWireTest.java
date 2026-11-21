@@ -59,7 +59,7 @@ class ProviderUsageWireTest {
                 """;
         try (var wire = fixture(completion)) {
             var events = new ArrayList<ProviderUsageUpdate>();
-            var recorder = spy(new WorkerUsageRecorder(1_000, 1, true, events::add));
+            var recorder = spy(new WorkerUsageRecorder(1_000, 1, events::add));
             var runner = new AgentLoopRunner(List.of(wire.model()), 128_000, Duration.ofMinutes(5), ProviderFailureCooldown.disabled());
             var tools = new RecordingTools();
 
@@ -88,7 +88,7 @@ class ProviderUsageWireTest {
             var call = ProviderUsageTransport.capture(response);
             assertThat(call.inputTokens()).isZero();
             assertThat(call.outputTokens()).isZero();
-            var recorder = new WorkerUsageRecorder(1_000, 1, true, ignored -> {
+            var recorder = new WorkerUsageRecorder(1_000, 1, ignored -> {
             });
             recorder.accept(response);
             assertThat(recorder.accountingState()).isEqualTo(AccountingState.COMPLETE);
@@ -108,7 +108,7 @@ class ProviderUsageWireTest {
             assertThat(call.inputTokens()).isEqualTo(10);
             assertThat(call.outputTokens()).isEqualTo(2);
             assertThat(call.cachedInputTokens()).isEqualTo(cacheReported ? 3L : null);
-            var recorder = new WorkerUsageRecorder(1_000, 1, true, ignored -> {
+            var recorder = new WorkerUsageRecorder(1_000, 1, ignored -> {
             });
             recorder.accept(response);
             assertThat(recorder.accountingState()).isEqualTo(AccountingState.COMPLETE);
@@ -125,7 +125,7 @@ class ProviderUsageWireTest {
             assertThat(reportedUsd(response)).isEqualTo(amount);
             var call = ProviderUsageTransport.capture(response);
             assertThat(call.totalCostUsd()).isEqualTo(amount);
-            assertThat(reportedUsd(ProviderUsageTransport.restore(call))).isEqualTo(amount);
+            assertThat(reportedUsd(ProviderUsageTransport.restore(call, null))).isEqualTo(amount);
         }
     }
 
@@ -148,7 +148,7 @@ class ProviderUsageWireTest {
             assertThat(priced).singleElement().satisfies(response -> {
                 var call = ProviderUsageTransport.capture(response);
                 assertThat(call.totalCostUsd()).isEqualTo(0.00001234);
-                assertThat(reportedUsd(ProviderUsageTransport.restore(call))).isEqualTo(0.00001234);
+                assertThat(reportedUsd(ProviderUsageTransport.restore(call, null))).isEqualTo(0.00001234);
             });
             assertThat(chunks.stream().flatMap(response -> response.getResults().stream()).map(generation -> generation.getOutput().getText()).toList())
                     .noneMatch(text -> text != null && text.contains("<|end|>"));

@@ -40,7 +40,7 @@
 .text-unit-fullscreen-header {
     box-shadow: inset 0 -1px 0 var(--border-color);
 
-    // The global heading rules are unlayered and therefore beat Tailwind utilities, so the title is sized here.
+    // The title is sized here, with the rest of the header.
     h5 {
         margin: 0;
         font-size: 1rem;

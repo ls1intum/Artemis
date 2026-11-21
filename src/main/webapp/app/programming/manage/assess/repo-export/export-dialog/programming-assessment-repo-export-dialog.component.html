@@ -2,7 +2,7 @@
     <form name="exportForm" role="form" (ngSubmit)="exportRepos()" #exportForm="ngForm">
         <div class="p-4!">
             @if (isRepoExportForMultipleExercises()) {
-                <div class="m-2 p-1">
+                <div class="m-2! p-1!">
                     <span style="font-weight: bold" jhiTranslate="artemisApp.instructorDashboard.exportRepos.currentlySelected"
                         >You are about to download all teams'/students' submissions of the following exercises:</span
                     >
@@ -141,7 +141,7 @@
                 </tumaet-ui-message>
             }
         </div>
-        <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4!">
+        <div class="flex flex-wrap! items-center justify-end gap-2! border-t border-border p-4!">
             <button type="button" tumAetUiButton variant="outlined" severity="secondary" (click)="clear()">
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
@@ -153,7 +153,7 @@
                 severity="secondary"
             >
                 @if (exportInProgress()) {
-                    <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
+                    <span class="me-1!"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
                 }
                 <span jhiTranslate="entity.action.export"></span>
             </button>

@@ -1,8 +1,12 @@
 <div class="resizable-container" [style.display]="isBeingPrinted() ? 'block' : 'flex'">
     <!--region LEFT SIDE-->
-    <div class="left rounded-[0.15rem] bg-surface-raised" [class]="isExerciseParticipation() ? 'border-0' : 'border border-border'" data-testid="resizeable-container-left">
+    <div
+        class="left rounded-[0.15rem] bg-surface-raised"
+        [class]="isExerciseParticipation() ? 'border-0' : 'border border-(--border-color)'"
+        data-testid="resizeable-container-left"
+    >
         @if (!isExerciseParticipation()) {
-            <div class="pane-header bg-primary text-white">
+            <div class="pane-header bg-(--primary) text-white">
                 <ng-content select="span[left-header]" />
                 <span class="flex-auto"></span>
                 <ng-content select="jhi-score-display[left-header]" />
@@ -17,7 +21,7 @@
     @if (!examTimeline() && showRightPanel()) {
         @if (collapsed() && !expandProblemStatement()) {
             <div
-                class="collapsed right text-white bg-primary"
+                class="collapsed right text-white bg-(--primary)"
                 data-testid="resizeable-container-collapsed"
                 (click)="collapsed.set(!collapsed())"
                 [attr.aria-expanded]="!collapsed()"
@@ -43,9 +47,9 @@
                 [style.width]="isBeingPrinted() ? 'fit-content' : '30vw'"
             >
                 <div class="draggable-left panel-divider-x" data-testid="resizeable-container-divider"></div>
-                <div class="pane flex flex-col rounded-[0.15rem] border border-border bg-surface-raised" data-testid="resizeable-container-right">
+                <div class="pane flex flex-col rounded-[0.15rem] border border-(--border-color) bg-surface-raised" data-testid="resizeable-container-right">
                     <div
-                        class="pane-header text-white bg-primary"
+                        class="pane-header text-white bg-(--primary)"
                         (click)="collapsed.set(!collapsed())"
                         [attr.aria-expanded]="!collapsed()"
                         #keyboardAction38
@@ -64,7 +68,7 @@
                         </h3>
                         <fa-icon id="right-header-icon" [icon]="faChevronRight" />
                     </div>
-                    <div class="pane-body p-4!">
+                    <div class="pane-body p-4">
                         <ng-content select="[right-body]" />
                     </div>
                 </div>

@@ -19,7 +19,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.tool.ToolCallbackProvider;
@@ -78,7 +77,7 @@ class AtlasExerciseMappingPreviewLifecycleTest {
         var memory = mock(ChatMemory.class);
         when(memory.get(SESSION_ID)).thenReturn(List.of(new AssistantMessage("Latest response")));
         var surface = new AtlasToolSurface(mock(ToolCallbackProvider.class));
-        agent = new AtlasAgentService(mock(ChatClient.class), memory, delegation, surface, surface, surface, surface, mock(ExecutionPlanStateManagerService.class), sessionCache,
+        agent = new AtlasAgentService(memory, delegation, surface, surface, surface, surface, mock(ExecutionPlanStateManagerService.class), sessionCache,
                 mock(AtlasAgentPreviewService.class));
     }
 

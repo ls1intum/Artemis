@@ -67,7 +67,7 @@ IRIS_COURSE_ID="${IRIS_COURSE_ID:-9022}"
 # Hyperion (AI exercise-variant generation) e2e support: when RUN_HYPERION=true the
 # runner starts a deterministic OpenAI-compatible mock LLM (a bare Python process, see
 # src/test/playwright/support/hyperion-mock-llm/) and enables Hyperion on the Artemis
-# server pointed at it via spring.ai.openai.*. Unlike Iris, Hyperion talks to the LLM
+# server pointed at it via an artemis.llm endpoint and preset. Unlike Iris, Hyperion talks to the LLM
 # directly through Spring AI, so no microservice is needed — just the mock. Off by
 # default so normal runs are unaffected. Run the variant suite with:
 #     RUN_HYPERION=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --filter "Variant"
@@ -386,9 +386,9 @@ if [ "$SKIP_SERVER" = false ]; then
     # Optional: start the deterministic mock LLM and enable Hyperion on the server.
     # Hyperion enablement (artemis.hyperion.enabled=true) also makes management/info
     # activeModuleFeatures include "hyperion", which the variant e2e suite probes to
-    # decide whether to run. The mock speaks the OpenAI Chat Completions API; Spring AI's
-    # OpenAI client points at it via spring.ai.openai.base-url (note the /v1 suffix — the
-    # SDK appends /chat/completions itself).
+    # decide whether to run. The mock speaks the OpenAI Chat Completions API, so its preset
+    # uses api chat-completions. The endpoint base URL ends with /v1; the SDK appends
+    # /chat/completions itself.
     if [ "$RUN_HYPERION" = true ]; then
         echo -e "${BLUE}Hyperion enabled (RUN_HYPERION=true): starting the mock LLM on port ${HYPERION_MOCK_LLM_PORT}...${NC}"
         # Kill any stale listener AND wait for the socket to be released — the new process cannot bind before.
@@ -418,10 +418,12 @@ if [ "$SKIP_SERVER" = false ]; then
             exit 1
         fi
         export ARTEMIS_HYPERION_ENABLED="true"
-        export SPRING_AI_OPENAI_BASE_URL="http://localhost:${HYPERION_MOCK_LLM_PORT}/v1"
-        export SPRING_AI_OPENAI_API_KEY="dummy-key"
-        export SPRING_AI_OPENAI_MICROSOFT_FOUNDRY="false"
-        export SPRING_AI_OPENAI_CHAT_MODEL="mock-model"
+        export ARTEMIS_LLM_ENDPOINTS_MOCK_BASEURL="http://localhost:${HYPERION_MOCK_LLM_PORT}/v1"
+        export ARTEMIS_LLM_ENDPOINTS_MOCK_APIKEY="dummy-key"
+        export ARTEMIS_LLM_PRESETS_MOCK_ENDPOINT="mock"
+        export ARTEMIS_LLM_PRESETS_MOCK_MODEL="mock-model"
+        export ARTEMIS_LLM_PRESETS_MOCK_API="chat-completions"
+        export ARTEMIS_HYPERION_LLMPRESETS_DEFAULT="mock"
     fi
 
     # Server environment variables

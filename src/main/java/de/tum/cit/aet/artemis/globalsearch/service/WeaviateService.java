@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinit
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateReferenceDefinition;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateSchemas;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
+import de.tum.cit.aet.artemis.globalsearch.service.embedding.SearchableEntityEmbeddingClient;
 import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.CollectionConfig;
@@ -49,6 +51,8 @@ public class WeaviateService {
 
     private final WeaviateConfigurationProperties properties;
 
+    private final LlmProperties llmProperties;
+
     private final boolean isOpenApiDocsGeneration;
 
     /**
@@ -70,13 +74,14 @@ public class WeaviateService {
      *
      * @throws IllegalStateException if the client is not available outside of OpenAPI docs generation
      */
-    public WeaviateService(Optional<WeaviateClient> clientOptional, WeaviateConfigurationProperties properties, Environment environment) {
+    public WeaviateService(Optional<WeaviateClient> clientOptional, WeaviateConfigurationProperties properties, LlmProperties llmProperties, Environment environment) {
         this.isOpenApiDocsGeneration = Boolean.parseBoolean(environment.getProperty("artemis.openapi-docs-generation", "false"));
         if (clientOptional.isEmpty() && !isOpenApiDocsGeneration) {
             throw new IllegalStateException("WeaviateClient bean is required when Weaviate is enabled and not in OpenAPI docs generation mode");
         }
         this.client = clientOptional.orElse(null);
         this.properties = properties;
+        this.llmProperties = llmProperties;
     }
 
     /**
@@ -145,7 +150,8 @@ public class WeaviateService {
                 if (SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(properties.vectorizerModule())) {
                     collection.vectorConfig(VectorConfig.selfProvided(vector -> vector
                             .vectorIndex(Hnsw.of(hnsw -> hnsw.multiVector(MultiVector.of(multiVector -> multiVector.aggregation(MultiVector.Aggregation.MAX_SIM)))))));
-                    log.info("Configured collection '{}' with chunk vectors provided by Artemis (model '{}')", collectionName, properties.openAiEmbeddingModel());
+                    log.info("Configured collection '{}' with chunk vectors provided by Artemis (model '{}')", collectionName,
+                            SearchableEntityEmbeddingClient.embeddingModel(properties, llmProperties));
                 }
                 else {
                     collection.vectorConfig(VectorConfig.selfProvided());

@@ -557,7 +557,7 @@ describe('ComplaintsStudentViewComponent', () => {
             }
         });
 
-        it('should keep the disabled state and the not-allowed class on the complain button', async () => {
+        it('should keep the disabled state and the not-allowed cursor on the complain button', async () => {
             await renderCourseView(of());
             // The complaint period is over, so complaining is not allowed any more.
             component.timeOfComplaintValid.set(false);
@@ -565,7 +565,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             const button = fixture.nativeElement.querySelector('#complain') as HTMLButtonElement;
             expect(button.disabled).toBe(true);
-            expect(button.classList.contains('not-allowed')).toBe(true);
+            expect(button.classList.contains('cursor-not-allowed')).toBe(true);
         });
 
         it('should place the request and the response side by side only from 1200px and stack them below', async () => {

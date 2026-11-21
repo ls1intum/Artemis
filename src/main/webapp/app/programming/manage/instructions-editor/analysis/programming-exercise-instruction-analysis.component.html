@@ -11,7 +11,7 @@
         </div>
     }
     <ng-template #testCasesTooltipContent>
-        <div class="text-start w-full">
+        <div class="text-left w-full">
             @if (invalidTestCases().length) {
                 <div>
                     <span [innerHTML]="'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCases' | artemisTranslate: { number: invalidTestCases().length }"
@@ -25,7 +25,7 @@
                 </div>
             }
             @if (missingTestCases().length) {
-                <div class="text-start">
+                <div class="text-left">
                     <span jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.missingTestCases" [translateValues]="{ number: missingTestCases().length }"></span>
                     <ul>
                         @for (test of missingTestCases(); track test) {
@@ -36,7 +36,7 @@
             }
 
             @if (repeatedTestCases().length) {
-                <div class="text-start">
+                <div class="text-left">
                     <span jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.repeatedTestCases" [translateValues]="{ number: repeatedTestCases().length }"></span>
                     <ul>
                         @for (test of repeatedTestCases(); track test) {
