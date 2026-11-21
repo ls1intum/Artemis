@@ -145,6 +145,23 @@ class BuildFileSyntaxTest {
     }
 
     @Test
+    void aPropertyOfTheArgLineThatAProfileMayReplaceDoesNotCount() throws IOException {
+        String template = Files.readString(TEMPLATES.resolve(MAVEN_TEMPLATE), StandardCharsets.UTF_8);
+        String agent = "\"-javaagent:${project.build.directory}/ares/ares-agent.jar\"";
+        // The argLine of Surefire takes the agent from a property, which a profile may set to another agent.
+        String maven = template.replace(agent, "${aresAgent}").replaceFirst("<properties>", "<properties>\n<aresAgent>" + Matcher.quoteReplacement(agent) + "</aresAgent>");
+        String optIn = "<profiles><profile><id>other</id><properties><aresAgent>-javaagent:other-agent.jar</aresAgent></properties></profile></profiles></project>";
+        String byDefault = optIn.replace("<id>other</id>", "<id>other</id><activation><activeByDefault>true</activeByDefault></activation>");
+
+        assertThat(maven).isNotEqualTo(template).contains("<aresAgent>");
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven))).isTrue();
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", optIn)))).isTrue();
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault)))).isFalse();
+        // A property that the argLine does not read changes nothing.
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault.replace("aresAgent>", "otherAgent>"))))).isTrue();
+    }
+
+    @Test
     void aGradleAgentCountsOnlyIfATaskReceivesIt() throws IOException {
         String gradle = Files.readString(TEMPLATES.resolve("test/gradle/projectTemplate/build.gradle"), StandardCharsets.UTF_8);
         String notRegistered = gradle.replace("jvmArgumentProviders.add(aresJvmArguments)", "");

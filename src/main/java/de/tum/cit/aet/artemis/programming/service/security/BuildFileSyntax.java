@@ -201,7 +201,8 @@ final class BuildFileSyntax {
      * The {@code -javaagent} options Surefire passes to the test JVM: those of the {@code argLine} in its configuration or, if it has none, of its
      * {@code argLine} property, with the properties they refer to replaced by their values, e.g. {@code @{argLine}} or {@code ${aresAgentArgument}}. An
      * option in a property that no such {@code argLine} reads, in the configuration of another plugin, e.g. Failsafe, or elsewhere in the POM does not
-     * count. A profile that can apply on its own and sets an {@code argLine} may replace these, so then no option counts.
+     * count. A profile that can apply on its own and sets an {@code argLine}, or a property one of these refers to, may replace them, so then no option
+     * counts.
      *
      * @param code the POM without comments
      */
@@ -215,15 +216,35 @@ final class BuildFileSyntax {
                 .forEach(plugin -> Arrays.fill(surefire, plugin.start(), plugin.end(), true));
         boolean[] properties = new boolean[code.length()];
         Map<String, String> values = new HashMap<>();
-        MAVEN_PROPERTIES.matcher(code).results().filter(section -> !profiles[section.start()]).forEach(section -> {
-            Arrays.fill(properties, section.start(), section.end(), true);
-            MAVEN_PROPERTY.matcher(section.group(1)).results().forEach(property -> values.put(property.group(1), property.group(2)));
+        Set<String> replaceable = new HashSet<>();
+        MAVEN_PROPERTIES.matcher(code).results().forEach(section -> {
+            if (!profiles[section.start()]) {
+                Arrays.fill(properties, section.start(), section.end(), true);
+                MAVEN_PROPERTY.matcher(section.group(1)).results().forEach(property -> values.put(property.group(1), property.group(2)));
+            }
+            else if (inProfileWithActivation(code, section)) {
+                MAVEN_PROPERTY.matcher(section.group(1)).results().forEach(property -> replaceable.add(property.group(1)));
+            }
         });
         List<MatchResult> argLines = MAVEN_ARG_LINE.matcher(code).results().filter(argLine -> !profiles[argLine.start()]).toList();
         List<MatchResult> configured = argLines.stream().filter(argLine -> surefire[argLine.start()]).toList();
         // The argLine of the configuration replaces the property, which then only counts where @{argLine} or ${argLine} refers to it.
         List<MatchResult> used = configured.isEmpty() ? argLines.stream().filter(argLine -> properties[argLine.start()]).toList() : configured;
+        if (used.stream().anyMatch(argLine -> referencedProperties(argLine.group(1), values).stream().anyMatch(replaceable::contains))) {
+            return Stream.empty();
+        }
         return used.stream().map(argLine -> withPropertyValues(argLine.group(1), values)).flatMap(BuildFileSyntax::javaAgents);
+    }
+
+    /** The names of the properties the text refers to, also through the values of the properties it refers to. */
+    private static Set<String> referencedProperties(String text, Map<String, String> values) {
+        Set<String> names = new HashSet<>();
+        List<String> texts = List.of(text);
+        for (int round = 0; round < MAVEN_PROPERTY_DEPTH && !texts.isEmpty(); round++) {
+            texts = texts.stream().flatMap(part -> MAVEN_PROPERTY_REFERENCE.matcher(part).results()).map(reference -> reference.group(1)).filter(names::add).map(values::get)
+                    .filter(value -> value != null).toList();
+        }
+        return names;
     }
 
     private static String withPropertyValues(String text, Map<String, String> values) {
