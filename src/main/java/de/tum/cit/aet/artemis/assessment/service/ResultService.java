@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -580,41 +581,35 @@ public class ResultService {
      * @return a list of results as described above for the given exercise.
      */
     public List<Result> resultsForExercise(Set<StudentParticipation> participations, boolean withSubmissions) {
-        // First pass: pick the single relevant submission per participation. Note that the relevance filter may replace a submission's results
-        // (see SubmissionFilterService for programming submissions), so getLatestGradingResult() must only be read after filtering.
-        final List<Submission> relevantSubmissions = new ArrayList<>();
+        Map<Long, Submission> submissionsByResultId = new LinkedHashMap<>();
         for (StudentParticipation participation : participations) {
-            // Filter out participations without students / teams
             if (participation.getParticipant() == null) {
                 continue;
             }
-
-            Optional<Submission> optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(participation.getSubmissions(), true);
-            if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestGradingResult() == null) {
-                continue;
-            }
-            participation.setSubmissionCount(participation.getSubmissions().size());
-            relevantSubmissions.add(optionalSubmission.get());
+            submissionFilterService.getLatestResultForExport(participation.getSubmissions()).ifPresent(result -> {
+                participation.setSubmissionCount(participation.getSubmissions().size());
+                submissionsByResultId.put(result.getId(), result.getSubmission());
+            });
         }
 
         // Second pass: load feedbacks (and the assessor) for exactly the results selected above. The participations were loaded without feedbacks on purpose, because
         // fetch-joining them for every result of the exercise multiplies the row count by the feedback fan-out and then discards most of it.
         // The load has to select Result rather than Feedback: a @OneToMany collection is only marked initialized when the owning entity is fetched with the collection, and
         // spring.jpa.open-in-view is disabled, so the entities returned here are detached. The assessor is included for the same reason - it is lazy but gets serialized.
-        final Set<Long> relevantResultIds = relevantSubmissions.stream().map(submission -> submission.getLatestGradingResult().getId()).collect(Collectors.toSet());
+        final Set<Long> relevantResultIds = submissionsByResultId.keySet();
         final Map<Long, Result> resultsWithFeedbacks = relevantResultIds.isEmpty() ? Map.of()
                 : resultRepository.findResultsWithFeedbacksAndAssessorByIdIn(relevantResultIds).stream().collect(Collectors.toMap(Result::getId, Function.identity()));
 
         final List<Result> results = new ArrayList<>();
-        for (Submission submission : relevantSubmissions) {
+        for (var entry : submissionsByResultId.entrySet()) {
             // Skip results that disappeared between the two queries (e.g. a concurrent assessment deletion). The first-pass result must not be used as a fallback: it comes from
             // a closed session with an uninitialized feedbacks collection, so reading it would throw a LazyInitializationException in the callers that sum up the feedbacks.
-            Result result = resultsWithFeedbacks.get(submission.getLatestGradingResult().getId());
+            Result result = resultsWithFeedbacks.get(entry.getKey());
             if (result == null) {
                 continue;
             }
             if (withSubmissions) {
-                result.setSubmission(submission);
+                result.setSubmission(entry.getValue());
             }
             results.add(result);
         }

@@ -1,10 +1,11 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ErrorHandler, OnInit, computed, inject, signal } from '@angular/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
-import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EMPTY, catchError, merge, switchMap, tap } from 'rxjs';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { ResultTemplateStatus, evaluateTemplateStatus } from 'app/exercise/result/result.utils';
 import { FeedbackComponent } from '../feedback.component';
@@ -21,8 +22,15 @@ export class StandaloneFeedbackComponent implements OnInit {
     private exerciseService = inject(ExerciseService);
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
 
+    private destroyRef = inject(DestroyRef);
+    private errorHandler = inject(ErrorHandler);
+
     readonly exercise = signal<Exercise | undefined>(undefined);
     readonly result = signal<Result | undefined>(undefined);
+    readonly resultsToDisplay = computed(() => {
+        const result = this.result();
+        return this.exercise() && result ? [result] : [];
+    });
     readonly participation = signal<Participation>(undefined!);
 
     readonly showMissingAutomaticFeedbackInformation = signal(false);
@@ -31,40 +39,51 @@ export class StandaloneFeedbackComponent implements OnInit {
     readonly latestDueDate = signal<dayjs.Dayjs | undefined>(undefined);
 
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
-            const exerciseId = parseInt(params['exerciseId'], 10);
-            const participationId = parseInt(params['participationId'], 10);
-            const resultId = parseInt(params['resultId'], 10);
+        this.route.params
+            .pipe(
+                switchMap((params) => {
+                    const exerciseId = Number(params['exerciseId']);
+                    const participationId = Number(params['participationId']);
+                    const resultId = Number(params['resultId']);
+                    this.result.set(undefined);
+                    this.latestDueDate.set(undefined);
+                    this.showMissingAutomaticFeedbackInformation.set(false);
 
-            this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
-                const exercise = exerciseResponse.body!.exercise;
-                this.exercise.set(exercise);
-                const participation = exercise?.studentParticipations?.find((participation) => participation.id === participationId);
-                if (participation) {
-                    participation.exercise = exercise;
-                    this.participation.set(participation);
-                }
-
-                const relevantResult = getAllResultsOfAllSubmissions(participation?.submissions).find((result) => result.id == resultId);
-
-                this.result.set(relevantResult);
-
-                // We set isBuilding here to false. It is the mobile applications responsibility to make the user aware if a participation is being built
-                const templateStatus = evaluateTemplateStatus(exercise, participation, relevantResult, false);
-                if (templateStatus == ResultTemplateStatus.MISSING) {
-                    this.messageKey.set('artemisApp.result.notLatestSubmission');
-                } else {
-                    this.messageKey.set(undefined);
-                }
-
-                this.setup();
-            });
-
-            (this.exerciseCacheService ?? this.exerciseService).getLatestDueDate(exerciseId).subscribe((latestDueDate) => {
-                this.latestDueDate.set(latestDueDate);
-                this.setup();
-            });
-        });
+                    const handleLoadError = (error: unknown) => {
+                        this.errorHandler.handleError(error);
+                        return EMPTY;
+                    };
+                    return merge(
+                        this.exerciseService.getExerciseDetails(exerciseId).pipe(
+                            tap((exerciseResponse) => {
+                                const exercise = exerciseResponse.body!.exercise;
+                                const participation = exercise?.studentParticipations?.find((candidate) => candidate.id === participationId);
+                                if (participation) {
+                                    participation.exercise = exercise;
+                                    this.participation.set(participation);
+                                }
+                                const result = getAllResultsOfAllSubmissions(participation?.submissions).find((candidate) => candidate.id === resultId);
+                                this.exercise.set(exercise);
+                                this.result.set(result);
+                                // The mobile application reports the build state independently.
+                                const templateStatus = evaluateTemplateStatus(exercise, participation, result, false);
+                                this.messageKey.set(templateStatus === ResultTemplateStatus.MISSING ? 'artemisApp.result.notLatestSubmission' : undefined);
+                                this.setup();
+                            }),
+                            catchError(handleLoadError),
+                        ),
+                        (this.exerciseCacheService ?? this.exerciseService).getLatestDueDate(exerciseId).pipe(
+                            tap((latestDueDate) => {
+                                this.latestDueDate.set(latestDueDate);
+                                this.setup();
+                            }),
+                            catchError(handleLoadError),
+                        ),
+                    );
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe();
     }
 
     private setup() {

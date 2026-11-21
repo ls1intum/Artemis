@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackSeverity;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -75,10 +76,11 @@ public record ProgrammingAssessmentResultDTO(Long id, ZonedDateTime completionDa
      * @param visibility          when the feedback becomes visible to the student
      * @param gradingInstruction  the structured grading instruction this feedback was created from
      * @param testCase            the test case that created this feedback; {@code null} for manual feedback
+     * @param severity            the impact of an AI feedback issue; {@code null} when unclassified
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ProgrammingAssessmentFeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive,
-            FeedbackType type, Visibility visibility, GradingInstructionDTO gradingInstruction, ResultDTO.TestCaseDTO testCase) implements Serializable {
+            FeedbackType type, Visibility visibility, GradingInstructionDTO gradingInstruction, ResultDTO.TestCaseDTO testCase, FeedbackSeverity severity) implements Serializable {
 
         /**
          * Converts a feedback item. The lazy {@code testCase} and {@code gradingInstruction} slots are mapped only
@@ -94,7 +96,7 @@ public record ProgrammingAssessmentResultDTO(Long id, ZonedDateTime completionDa
             var testCase = feedback.getTestCase();
             ResultDTO.TestCaseDTO testCaseDTO = testCase != null && Hibernate.isInitialized(testCase) ? ResultDTO.TestCaseDTO.of(testCase) : null;
             return new ProgrammingAssessmentFeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(),
-                    feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), gradingInstructionDTO, testCaseDTO);
+                    feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), gradingInstructionDTO, testCaseDTO, feedback.getSeverity());
         }
     }
 

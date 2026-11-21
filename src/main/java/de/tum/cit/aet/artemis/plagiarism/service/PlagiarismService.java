@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 
 @Conditional(PlagiarismEnabled.class)
 @Lazy
@@ -106,24 +105,6 @@ public class PlagiarismService {
             }
         }
         return true; // if the user is not found, we assume that the user has been deleted
-    }
-
-    /**
-     * filter a participation based on the last submission and make sure the last result - if available - has a minimum score - in case this is larger than 0
-     *
-     * @param minimumScore the minimum score
-     * @return a predicate that can be used in streams for filtering
-     */
-    @NonNull
-    public static Predicate<ProgrammingExerciseParticipation> filterParticipationMinimumScore(int minimumScore) {
-        return participation -> {
-            Submission submission = participation.findLatestSubmission().orElse(null);
-            // filter empty submissions
-            if (submission == null) {
-                return false;
-            }
-            return hasMinimumScore(submission, minimumScore);
-        };
     }
 
     /**

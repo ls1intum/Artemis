@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -16,23 +16,19 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
  * isCollapsed tracks whether an item is currently open or closed
  * text is any string passed to the component
  */
-export class FeedbackCollapseComponent implements OnInit {
+export class FeedbackCollapseComponent {
     /**
      * Number of chars at which the text will be cut and the collapse functionality is enabled
      */
     readonly FEEDBACK_PREVIEW_CHARACTER_LIMIT = 300;
 
     readonly feedback = input<FeedbackItem>(undefined!);
-    readonly previewText = signal<string | undefined>(undefined);
+    readonly previewText = computed(() => this.computeFeedbackPreviewText(this.feedback().text));
     readonly isCollapsed = signal(true);
 
     // Icons
     faAngleDown = faAngleDown;
     faAngleRight = faAngleRight;
-
-    ngOnInit(): void {
-        this.previewText.set(this.computeFeedbackPreviewText(this.feedback().text));
-    }
 
     /**
      * Computes the feedback preview for feedback texts with multiple lines or feedback that is longer than {@link FEEDBACK_PREVIEW_CHARACTER_LIMIT} characters.

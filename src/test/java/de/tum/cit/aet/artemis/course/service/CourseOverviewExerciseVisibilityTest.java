@@ -116,7 +116,7 @@ class CourseOverviewExerciseVisibilityTest {
                 Arguments.of(ExerciseType.PROGRAMMING, PAST, FUTURE, null, true, PAST, 20L, true, PAST, AssessmentType.MANUAL, false, false),
                 Arguments.of(ExerciseType.PROGRAMMING, PAST, null, null, true, PAST, 20L, true, null, AssessmentType.SEMI_AUTOMATIC, false, false),
                 Arguments.of(ExerciseType.PROGRAMMING, PAST, PAST, null, true, PAST, 20L, true, PAST, AssessmentType.MANUAL, true, true),
-                Arguments.of(ExerciseType.PROGRAMMING, PAST, FUTURE, null, true, PAST, 20L, true, null, AssessmentType.AUTOMATIC_ATHENA, true, true),
+                Arguments.of(ExerciseType.PROGRAMMING, PAST, FUTURE, null, true, PAST, 20L, true, null, AssessmentType.AUTOMATIC_ATHENA, true, false),
                 Arguments.of(ExerciseType.TEXT, PAST, FUTURE, null, true, PAST, 20L, true, PAST, AssessmentType.MANUAL, false, false),
                 Arguments.of(ExerciseType.TEXT, PAST, null, null, true, PAST, 20L, null, PAST, AssessmentType.MANUAL, false, false),
                 Arguments.of(ExerciseType.TEXT, PAST, null, null, true, PAST, 20L, true, PAST, AssessmentType.MANUAL, true, true));
@@ -131,8 +131,8 @@ class CourseOverviewExerciseVisibilityTest {
 
         var submission = response.exercises().iterator().next().studentParticipations().iterator().next().submissions().iterator().next();
         assertThat(submission.results()).singleElement().satisfies(result -> {
-            assertThat(result.id()).isEqualTo(20L);
-            assertThat(result.assessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
+            assertThat(result.id()).isEqualTo(19L);
+            assertThat(result.assessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
         });
     }
 
@@ -141,6 +141,19 @@ class CourseOverviewExerciseVisibilityTest {
     void retainsEarlierAutomaticSubmissionWhileNewerManualAssessmentIsHidden(boolean rated, boolean completed) {
         prepare(exercise(ExerciseType.PROGRAMMING, PAST, FUTURE), List.of(row(10L, PAST.minusHours(1), true, null, 19L, true, PAST, AssessmentType.AUTOMATIC),
                 row(11L, PAST, true, null, 21L, rated, completed ? PAST : null, AssessmentType.SEMI_AUTOMATIC)));
+
+        var response = service.getCourseExercisesForOverview(course, student);
+
+        assertThat(response.exercises().iterator().next().studentParticipations().iterator().next().submissions()).singleElement().satisfies(submission -> {
+            assertThat(submission.id()).isEqualTo(10L);
+            assertThat(submission.results()).singleElement().satisfies(result -> assertThat(result.id()).isEqualTo(19L));
+        });
+    }
+
+    @Test
+    void retainsEarlierCiResultWhileNewerSubmissionHasNoOfficialResult() {
+        prepare(exercise(ExerciseType.PROGRAMMING, null, null),
+                List.of(row(10L, PAST.minusHours(1), true, null, 19L, true, PAST, AssessmentType.AUTOMATIC), row(11L, PAST, true, null, null, null, null, null)));
 
         var response = service.getCourseExercisesForOverview(course, student);
 

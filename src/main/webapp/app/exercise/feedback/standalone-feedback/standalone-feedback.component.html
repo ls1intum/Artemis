@@ -1,4 +1,4 @@
-@if (exercise() && result(); as result) {
+@for (result of resultsToDisplay(); track result.id) {
     <jhi-result-detail
         [exercise]="exercise()"
         [result]="result"

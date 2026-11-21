@@ -100,7 +100,7 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
                     this.tearDownSubmissionSubscription();
                     return;
                 }
-                this.result.set(getLatestResultOfStudentParticipation(participation, this.showUngradedResults(), true));
+                this.result.set(this.selectLatestResult(true));
                 this.missingResultInfo.set(MissingResultInformation.NONE);
 
                 this.subscribeForNewResults();
@@ -154,6 +154,21 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
         }
     }
 
+    private selectLatestResult(showPendingAthenaFeedback: boolean): Result | undefined {
+        const participation = this.participation();
+        const exerciseType = this.exercise()?.type ?? participation.exercise?.type;
+        const showUngraded = this.showUngradedResults();
+        if (exerciseType === ExerciseType.PROGRAMMING) {
+            return getLatestResultOfStudentParticipation(participation, showUngraded, exerciseType);
+        }
+        return getLatestResultOfStudentParticipation(
+            participation,
+            showUngraded,
+            exerciseType,
+            (result) => showUngraded || result.rated === true || (showPendingAthenaFeedback && isAIResultAndIsBeingProcessed(result)),
+        );
+    }
+
     /**
      * Subscribes to new results for the current participation.
      */
@@ -162,23 +177,20 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
             this.resultSubscription.unsubscribe();
         }
         const exercise = this.exercise();
+        const isProgramming = (exercise?.type ?? this.participation().exercise?.type) === ExerciseType.PROGRAMMING;
         this.resultSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation().id!, this.personalParticipation(), exercise ? exercise.id : undefined)
             .pipe(
                 // Ignore initial null result of subscription
                 filter((result) => !!result),
-                // Ignore ungraded results if ungraded results are supposed to be ignored.
-                // If the result is a preliminary feedback(being generated), show it
-                filter((result: Result) => this.showUngradedResults() || result.rated === true || isAthenaAIResult(result)),
+                // Programming AI feedback has its own status in the feedback request and result history.
+                filter((result: Result) => (isAthenaAIResult(result) ? !isProgramming : this.showUngradedResults() || result.rated === true)),
                 map((result): Result => cloneWith(result, { completionDate: convertDateFromServer(result.completionDate) }) satisfies Result),
                 tap((result) => {
-                    const showUngradedResults = this.showUngradedResults();
-                    if ((isAthenaAIResult(result) && isAIResultAndIsBeingProcessed(result)) || result.rated) {
-                        this.result.set(result);
-                    } else if (result.rated === false && showUngradedResults) {
+                    if (result.rated || (result.rated === false && this.showUngradedResults()) || isAIResultAndIsBeingProcessed(result)) {
                         this.result.set(result);
                     } else {
-                        this.result.set(getLatestResultOfStudentParticipation(this.participation(), showUngradedResults, false));
+                        this.result.set(this.selectLatestResult(false));
                     }
                     this.onParticipationChange.emit();
                     if (result) {

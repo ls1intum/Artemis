@@ -1,3 +1,4 @@
+import { TranslateService } from '@ngx-translate/core';
 import {
     TumAetUiBarChartComponent,
     TumAetUiBarChartConfig,
@@ -8,8 +9,8 @@ import {
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 
-import { Component, DestroyRef, Injector, OnInit, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, Injector, OnInit, computed, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { catchError, finalize, map, take } from 'rxjs/operators';
@@ -28,7 +29,6 @@ import { isProgrammingExerciseParticipation } from 'app/programming/shared/utils
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
@@ -49,7 +49,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
-import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
+import { FeedbackItem, FeedbackItemCodeReference, FeedbackItemCodeReferenceLine } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 
 const CODE_REFERENCE_CONTEXT_LINES = 2;
@@ -76,6 +76,7 @@ const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
     ],
 })
 export class FeedbackComponent implements OnInit {
+    private translateService = inject(TranslateService);
     private resultApi = inject(ResultApi);
     private buildLogService = inject(BuildLogService);
     private feedbackService = inject(FeedbackService);
@@ -130,8 +131,10 @@ export class FeedbackComponent implements OnInit {
     readonly exerciseType = computed<ExerciseType | undefined>(
         () => this.resolvedExercise()?.type ?? (isProgrammingExerciseParticipation(this.participation()) ? ExerciseType.PROGRAMMING : undefined),
     );
-    /** Whether the score chart is currently shown; seeded from the input, hidden at runtime once we know there is no chart data (see updateChart). */
-    readonly scoreChartVisible = linkedSignal(() => this.showScoreChart());
+    readonly completedAiScore = computed(() => {
+        const result = this.result();
+        return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true && Number.isFinite(result.score) ? result.score : undefined;
+    });
 
     readonly isExamReviewPage = input(false);
     readonly isPrinting = input(false);
@@ -149,13 +152,29 @@ export class FeedbackComponent implements OnInit {
 
     readonly commitHash = signal<string | undefined>(undefined);
 
-    readonly chartData = signal<FeedbackChartData>({
-        xScaleMax: 100,
-        colors: [GraphColors.GREEN, GraphColors.RED],
-        results: [],
+    private readonly languageChange = toSignal(this.translateService.onLangChange ?? EMPTY);
+    readonly chartData = computed<FeedbackChartData>(() => {
+        const aiScore = this.completedAiScore();
+        if (aiScore !== undefined) {
+            this.languageChange();
+            return {
+                xScaleMax: Math.max(100, aiScore),
+                colors: ['var(--tumaet-ui-state-success)'],
+                results: [{ name: 'scores', series: [{ name: this.translateService.instant('artemisApp.result.detail.feedback'), value: aiScore }] }],
+            };
+        }
+        const exercise = this.resolvedExercise();
+        const nodes = this.feedbackItemNodes();
+        if (this.result().assessmentType !== AssessmentType.AUTOMATIC_ATHENA && exercise && nodes?.length) {
+            return this.feedbackChartService.create(nodes, exercise);
+        }
+        return { colors: [], results: [], xScaleMax: 0 };
     });
-    private readonly chartColors = computed(() => this.chartData().colors);
-    readonly scoreChartData = computed(() => stackedBarChart(this.chartData().results, this.chartColors()));
+    readonly scoreChartVisible = computed(() => this.showScoreChart() && this.chartData().results.length > 0);
+    readonly scoreChartData = computed(() => {
+        const { results, colors } = this.chartData();
+        return stackedBarChart(results, colors);
+    });
     readonly scoreChartConfig = computed<TumAetUiBarChartConfig>(() => ({
         horizontal: true,
         stacked: true,
@@ -170,6 +189,7 @@ export class FeedbackComponent implements OnInit {
 
     feedbackItemService!: FeedbackItemService; // set in ngOnInit() (selected based on exercise type)
     readonly feedbackItemNodes = signal<FeedbackNode[] | undefined>(undefined);
+    readonly snippetLines = signal<ReadonlyMap<FeedbackItemCodeReference, FeedbackItemCodeReferenceLine[]>>(new Map());
 
     /**
      * Load the result feedbacks if necessary and assign them to the component.
@@ -245,6 +265,7 @@ export class FeedbackComponent implements OnInit {
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
                         const exercise = this.resolvedExercise();
                         if (exercise) {
+                            this.snippetLines.set(new Map());
                             this.feedbackItemNodes.set(this.feedbackItemService.group(feedbackItems, exercise));
                             this.enrichFeedbackItemsWithCodeReferences(feedbackItems);
                         }
@@ -252,10 +273,8 @@ export class FeedbackComponent implements OnInit {
                             this.expandFeedbackItemGroups();
                         }
                     }
-                    if (this.scoreChartVisible() && this.feedbackItemNodes() !== undefined) {
-                        this.updateChart(this.feedbackItemNodes()!);
-                    }
-                    if (isStudentParticipation(this.participation())) {
+                    const isPreliminaryProgrammingResult = this.exerciseType() === ExerciseType.PROGRAMMING && result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+                    if (isStudentParticipation(this.participation()) && !isPreliminaryProgrammingResult) {
                         this.badge.set(ResultService.evaluateBadge(this.participation(), result));
                     }
                 },
@@ -312,24 +331,25 @@ export class FeedbackComponent implements OnInit {
             .getSelectedParticipationRepositoryFilesAtCommit(exerciseId, participationId, commitHash, referencedFilePaths)
             .pipe(
                 take(1),
+                takeUntilDestroyed(this.destroyRef),
                 catchError(() => EMPTY),
             )
             .subscribe((fileContentByPath) => {
                 if (!fileContentByPath) {
                     return;
                 }
-                feedbackItems.forEach((item) => {
-                    const reference = item.codeReference;
-                    const fileContent = reference && fileContentByPath.get(reference.filePath);
-                    if (reference && fileContent) {
-                        reference.lines = this.getReferencedLines(fileContent, reference.line, reference.lineEnd ?? reference.line);
+                const snippetLines = new Map<FeedbackItemCodeReference, FeedbackItemCodeReferenceLine[]>();
+                for (const { codeReference } of feedbackItems) {
+                    const fileContent = codeReference && fileContentByPath.get(codeReference.filePath);
+                    if (codeReference && fileContent) {
+                        snippetLines.set(codeReference, this.getReferencedLines(fileContent, codeReference.line, codeReference.lineEnd ?? codeReference.line));
                     }
-                });
-                this.feedbackItemNodes.update((nodes) => (nodes ? [...nodes] : nodes));
+                }
+                this.snippetLines.set(snippetLines);
             });
     }
 
-    private getReferencedLines(fileContent: string, lineStart: number, lineEnd: number): { line: number; code: string; referenced: boolean }[] {
+    private getReferencedLines(fileContent: string, lineStart: number, lineEnd: number): FeedbackItemCodeReferenceLine[] {
         const lines = fileContent.split(/\r?\n/);
         const firstLine = Math.max(1, lineStart - CODE_REFERENCE_CONTEXT_LINES);
         const lastLine = Math.min(lines.length, lineEnd + CODE_REFERENCE_CONTEXT_LINES, firstLine + MAX_DISPLAYED_CODE_REFERENCE_LINES - 1);
@@ -339,14 +359,8 @@ export class FeedbackComponent implements OnInit {
         });
     }
 
-    private updateChart(feedbackItemNodes: FeedbackNode[]) {
-        const exercise = this.resolvedExercise();
-        if (!exercise || feedbackItemNodes.length === 0) {
-            this.scoreChartVisible.set(false);
-            return;
-        }
-
-        this.chartData.set(this.feedbackChartService.create(feedbackItemNodes, exercise));
+    feedbackNodeKey(node: FeedbackNode) {
+        return isFeedbackGroup(node) ? node.name : ((node as FeedbackItem).feedbackReference ?? node);
     }
 
     getCommitHash(): string {

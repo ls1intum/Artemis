@@ -14,17 +14,21 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
 import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultGradeRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
@@ -33,6 +37,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -99,6 +104,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
+
+    @Autowired
+    private ResultGradeRepository resultGradeRepository;
 
     @Autowired
     private ResultService resultService;
@@ -194,6 +202,87 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @AfterEach
     void tearDown() {
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false,,", "true,,", "false,,true", "true,,true", "false,60,true", "true,60,true", "false,60,false", "true,60,false" })
+    void preliminaryResultsDoNotReplaceOfficialScores(boolean team, Double score, Boolean successful) {
+        programmingExercise.setMode(team ? ExerciseMode.TEAM : ExerciseMode.INDIVIDUAL);
+        programmingExercise = exerciseRepository.save(programmingExercise);
+        StudentParticipation participation;
+        if (team) {
+            Team programmingTeam = new Team();
+            programmingTeam.setShortName(TEST_PREFIX + "programming");
+            programmingTeam.setExercise(programmingExercise);
+            programmingTeam.addStudents(student1);
+            programmingTeam = teamRepository.save(programmingTeam);
+            participation = participationUtilService.addTeamParticipationForExercise(programmingExercise, programmingTeam.getId());
+        }
+        else {
+            participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, student1.getLogin());
+        }
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission().submitted(true).submissionDate(ZonedDateTime.now().minusHours(1)));
+        var official = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(30), submission);
+        var preliminary = new Result();
+        preliminary.setSubmission(official.getSubmission());
+        preliminary.setExerciseId(participation.getExercise().getId());
+        preliminary.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        preliminary.setRated(true);
+        preliminary.setScore(score);
+        preliminary.setSuccessful(successful);
+        preliminary.setCompletionDate(ZonedDateTime.now().plusMinutes(5));
+        preliminary = resultRepository.save(preliminary);
+
+        assertThat(resultGradeRepository.findLatestGradeRelevantResultWithCompletionDate(participation.getId())).get().extracting(Result::getId).isEqualTo(official.getId());
+        var exerciseId = participation.getExercise().getId();
+        if (team) {
+            assertThat(resultRepository.getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(exerciseId, participation.getTeam().orElseThrow().getId()))
+                    .extracting(Result::getId).contains(official.getId()).doesNotContain(preliminary.getId());
+            assertThat(resultRepository.getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(exerciseId, participation.getTeam().orElseThrow().getId()))
+                    .extracting(Result::getId).contains(official.getId()).doesNotContain(preliminary.getId());
+        }
+        else {
+            assertThat(resultRepository.getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exerciseId, student1.getId())).extracting(Result::getId)
+                    .contains(official.getId()).doesNotContain(preliminary.getId());
+            assertThat(resultRepository.getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exerciseId, student1.getId())).extracting(Result::getId)
+                    .contains(official.getId()).doesNotContain(preliminary.getId());
+        }
+
+        participantScoreScheduleService.executeScheduledTasks();
+        await().until(participantScoreScheduleService::isIdle);
+        var participantScore = participantScoreRepository.findAllByExercise(participation.getExercise()).getFirst();
+        assertThat(participantScore.getLastScore()).isEqualTo(official.getScore());
+        assertThat(participantScore.getLastRatedScore()).isEqualTo(official.getScore());
+
+        official.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        resultRepository.save(official);
+        assertThat(resultGradeRepository.findLatestGradeRelevantResultWithCompletionDate(participation.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false", "true" })
+    void successfulTextAthenaAssessmentRemainsGradeRelevant(boolean team) {
+        var participation = team ? teamTextParticipation : studentTextParticipation;
+        var official = resultRepository.findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElseThrow();
+        official.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        official.setSuccessful(true);
+        resultRepository.save(official);
+
+        assertThat(resultGradeRepository.findLatestGradeRelevantResultWithCompletionDate(participation.getId())).get().extracting(Result::getId).isEqualTo(official.getId());
+        var exerciseId = participation.getExercise().getId();
+        if (team) {
+            var teamId = participation.getTeam().orElseThrow().getId();
+            assertThat(resultRepository.getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(exerciseId, teamId)).extracting(Result::getId)
+                    .contains(official.getId());
+            assertThat(resultRepository.getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(exerciseId, teamId)).extracting(Result::getId)
+                    .contains(official.getId());
+        }
+        else {
+            assertThat(resultRepository.getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exerciseId, student1.getId())).extracting(Result::getId)
+                    .contains(official.getId());
+            assertThat(resultRepository.getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exerciseId, student1.getId())).extracting(Result::getId)
+                    .contains(official.getId());
+        }
     }
 
     private void testAllPreAuthorize() throws Exception {

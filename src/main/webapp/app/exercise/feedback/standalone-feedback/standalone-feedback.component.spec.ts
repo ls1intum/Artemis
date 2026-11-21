@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
+import { By } from '@angular/platform-browser';
+import { HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { StandaloneFeedbackComponent } from 'app/exercise/feedback/standalone-feedback/standalone-feedback.component';
@@ -22,6 +24,7 @@ describe('StandaloneFeedbackComponent', () => {
     let exerciseService: ExerciseService;
     let exerciseCacheService: ExerciseCacheService;
 
+    let routeParams: BehaviorSubject<{ exerciseId: string; participationId: string; resultId: string }>;
     let getExerciseDetailsMock: ReturnType<typeof vi.spyOn>;
     let getLatestDueDateMock: ReturnType<typeof vi.spyOn>;
 
@@ -32,9 +35,8 @@ describe('StandaloneFeedbackComponent', () => {
     const latestDueDate = new Date();
 
     beforeEach(async () => {
-        const activatedRouteStub = {
-            params: of({ exerciseId: '1', participationId: '2', resultId: '3', isTemplateStatusMissing: 'false' }),
-        };
+        routeParams = new BehaviorSubject({ exerciseId: '1', participationId: '2', resultId: '3' });
+        const activatedRouteStub = { params: routeParams };
 
         await TestBed.configureTestingModule({
             imports: [StandaloneFeedbackComponent, MockComponent(FeedbackComponent)],
@@ -69,6 +71,26 @@ describe('StandaloneFeedbackComponent', () => {
         expect(component.exercise()).toBe(exercise);
         expect(component.result()).toBe(result);
         expect(component.latestDueDate()).toBe(latestDueDate);
+    });
+
+    it('recreates the details for the current route and ignores an older request', () => {
+        fixture.detectChanges();
+        const initialDetails = fixture.debugElement.query(By.directive(FeedbackComponent)).componentInstance;
+        const nextResult = { id: 5, score: 60 };
+        const outdatedResult = { id: 4, score: 90 };
+        participation.submissions = [{ results: [result, outdatedResult, nextResult] }];
+        const outdatedRequest = new Subject<HttpResponse<{ exercise: ProgrammingExercise }>>();
+        getExerciseDetailsMock.mockReturnValueOnce(outdatedRequest);
+
+        routeParams.next({ exerciseId: '1', participationId: '2', resultId: '4' });
+        routeParams.next({ exerciseId: '1', participationId: '2', resultId: '5' });
+        outdatedRequest.next(new HttpResponse({ body: { exercise } }));
+        fixture.detectChanges();
+
+        expect(component.result()).toBe(nextResult);
+        const currentDetails = fixture.debugElement.query(By.directive(FeedbackComponent)).componentInstance;
+        expect(currentDetails).not.toBe(initialDetails);
+        expect(currentDetails.result()).toBe(nextResult);
     });
 
     it('should set showMissingAutomaticFeedbackInformation and messageKey correctly', async () => {

@@ -86,6 +86,7 @@ describe('ResultHistoryDropdownComponent', () => {
                         result: {
                             resultString: {
                                 automaticAIFeedbackInProgress: 'AI feedback request is being processed',
+                                automaticAIFeedbackSuccessful: 'Feedback',
                                 automaticAIFeedbackSuccessfulTooltip: 'AI-based feedback can include mistakes. Consider checking important information.',
                                 automaticAIFeedbackFailed: 'AI feedback generation failed.',
                                 automaticAIFeedbackFailedTooltip: 'AI feedback generation failed.',
@@ -249,6 +250,23 @@ describe('ResultHistoryDropdownComponent', () => {
             expect(component.getResultFeedbackMessage(result)).toBe('AI feedback request is being processed');
         });
 
+        it('shows completed programming Athena feedback without a score as feedback', () => {
+            fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING });
+            const result: Result = { id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
+
+            expect(component.getResultFeedbackMessage(result)).toBe('Feedback');
+        });
+
+        it('compares programming grade progress to the previous official result', () => {
+            fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING });
+            const earlierGrade = createResult(1, 30);
+            const ai: Result = { id: 2, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, score: 90 };
+            const latestGrade = createResult(3, 60);
+            fixture.componentRef.setInput('sortedHistoryResults', [latestGrade, ai, earlierGrade]);
+
+            expect(component.getResultFeedbackMessage(latestGrade)).toBe('artemisApp.result.progressString.niceProgress');
+        });
+
         it('should show failed AI feedback message instead of score progress for failed Athena results', () => {
             const result = { id: 1, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: false } as Result;
 
@@ -394,6 +412,22 @@ describe('ResultHistoryDropdownComponent', () => {
             const result = { id: 1, score: 50, submission: { id: 1 } } as unknown as Result;
 
             expect(component.getResultIconAnimation(result)).toBeUndefined();
+        });
+    });
+
+    describe.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('%s AI feedback history', (type) => {
+        it.each([0, 75, 100])('renders the completed score of %s percent alongside the AI indicator', (score) => {
+            const result: Result = { id: 1, score, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
+            fixture.componentRef.setInput('exercise', { ...defaultExercise, type });
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            component.resultsPopover()?.open(fixture.nativeElement);
+            fixture.detectChanges();
+
+            const row = document.querySelector<HTMLElement>('[data-testid="result-history-row"]');
+            expect(row?.textContent).toMatch(new RegExp(`(?<![\\d.-])${score}%`));
+            expect(row?.querySelector('[data-testid="ai-feedback-indicator"]')).toBeTruthy();
         });
     });
 

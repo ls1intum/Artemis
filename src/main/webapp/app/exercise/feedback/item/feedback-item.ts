@@ -27,4 +27,5 @@ export class FeedbackItem implements FeedbackNode {
     color?: FeedbackColor;
     feedbackReference!: Feedback; // always provided when a FeedbackItem is built; has to be connected to a result
     codeReference?: FeedbackItemCodeReference;
+    isAiFeedback?: boolean;
 }

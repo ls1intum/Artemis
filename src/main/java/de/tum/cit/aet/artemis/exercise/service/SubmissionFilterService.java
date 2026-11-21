@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -52,6 +53,22 @@ public class SubmissionFilterService {
     }
 
     /**
+     * Finds the official result of the latest eligible submission for the grade export.
+     *
+     * @param submissions the participation's submissions
+     * @return the selected result without replacing the submission's results
+     */
+    public Optional<Result> getLatestResultForExport(Set<Submission> submissions) {
+        return submissions.stream().map(submission -> {
+            if (submission instanceof ProgrammingSubmission programmingSubmission) {
+                Result latestResult = programmingSubmission.getLatestGradingResult();
+                return latestResult == null ? null : selectProgrammingResult(programmingSubmission, latestResult, true);
+            }
+            return isSubmissionRelevantForCourseDashboard(submission, true) ? submission.getLatestGradingResult() : null;
+        }).filter(Objects::nonNull).max(Comparator.comparing(Result::getSubmission));
+    }
+
+    /**
      * Determines if a submission is relevant for the course dashboard, and is safe to display there.
      *
      * @param submission the submission that is being checked.
@@ -71,7 +88,6 @@ public class SubmissionFilterService {
     private boolean isProgrammingSubmissionRelevantForCourseDashboard(ProgrammingSubmission programmingSubmission, boolean ignoreAssessmentDueDate) {
         Result latestResult = programmingSubmission.getLatestGradingResult();
         Participation participation = programmingSubmission.getParticipation();
-        Exercise exercise = participation.getExercise();
 
         // if the result is missing from this submission, we still consider it valid for the dashboard if it was created
         // during the allowed timeframe of the exercise (or participation, if the participant has a different due date)
@@ -79,14 +95,23 @@ public class SubmissionFilterService {
             Optional<ZonedDateTime> optionalDueDate = ExerciseDateService.getDueDate(participation);
             return optionalDueDate.map(dueDate -> programmingSubmission.getSubmissionDate() != null && programmingSubmission.getSubmissionDate().isBefore(dueDate)).orElse(true);
         }
-        // the latest automatic (or athena based) result can always be chosen if it is rated, a result that is not rated is not considered
+        Result selectedResult = selectProgrammingResult(programmingSubmission, latestResult, ignoreAssessmentDueDate);
+        if (selectedResult != null && selectedResult != latestResult) {
+            programmingSubmission.setResults(Set.of(selectedResult));
+        }
+        return selectedResult != null;
+    }
+
+    private Result selectProgrammingResult(ProgrammingSubmission submission, Result latestResult, boolean ignoreAssessmentDueDate) {
+        Exercise exercise = submission.getParticipation().getExercise();
+        // the latest official automatic result can always be chosen if it is rated, a result that is not rated is not considered
         if (!latestResult.isManual()) {
-            return latestResult.isRated();
+            return latestResult.isRated() ? latestResult : null;
         }
         // a manual result may only be shared if it is rated, its assessment is complete and the assessment due date has passed
         boolean isAssessmentPeriodOverOrIgnored = ignoreAssessmentDueDate || ExerciseDateService.isAfterAssessmentDueDate(exercise);
         if (isAssessmentPeriodOverOrIgnored && latestResult.isAssessmentComplete()) {
-            return latestResult.isRated();
+            return latestResult.isRated() ? latestResult : null;
         }
         /*
          * The last submission of manually graded programming exercises can contain automatic and manual results:
@@ -96,13 +121,12 @@ public class SubmissionFilterService {
          * (this already creates an empty manual result which is neither rated nor complete), but we should still show the student the latest
          * automatically determined score.
          */
-        var latestAutomaticResult = programmingSubmission.getAutomaticResults().stream().filter(Result::isRated)
-                .filter(result -> !result.isAthenaBased() || Boolean.TRUE.equals(result.isSuccessful())).max(Comparator.comparing(Result::getId));
-        if (latestAutomaticResult.isPresent()) {
-            programmingSubmission.setResults(Set.of(latestAutomaticResult.get()));
-            return true;
+        Result automaticResult = submission.getAutomaticResults().stream().filter(Result::isRated).filter(result -> !result.isAthenaBased())
+                .max(Comparator.comparing(Result::getId)).orElse(null);
+        if (automaticResult != null) {
+            automaticResult.setSubmission(submission);
         }
-        return false;
+        return automaticResult;
     }
 
     private boolean isNonProgrammingSubmissionRelevantForCourseDashboard(Submission submission, boolean ignoreAssessmentDueDate) {

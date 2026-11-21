@@ -25,6 +25,12 @@
                 "scoreChartAriaLabel": "Bar chart showing the achieved score of this submission",
                 "linkedToCommit": "linked to commit"
             },
+            "severity": {
+                "high": "High",
+                "medium": "Medium",
+                "low": "Low",
+                "unclassified": "Unclassified"
+            },
             "group": {
                 "wrong": "Wrong",
                 "warning": "Warning",

@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionWithResultsDTO;
-import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.TemplateSolutionParticipationDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 
@@ -256,7 +256,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         assertThat(submission.commitHash()).isEqualTo("solution-hash");
         assertThat(submission.submissionDate()).isNotNull();
         // Results stay nested under their submission: the client sorts submissions and reads last().results.
-        assertThat(submission.results()).extracting(ResultDTO::id).containsExactly(solutionResult.getId());
+        assertThat(submission.results()).extracting(ResultResponseDTO::id).containsExactly(solutionResult.getId());
         // A nested result must not re-emit its submission/participation subtree.
         assertThat(submission.results().getFirst().submission()).isNull();
         assertThat(submission.results().getFirst().participation()).isNull();
@@ -484,8 +484,8 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
     }
 
     private static List<Long> allResultIds(TemplateSolutionParticipationDTO participation) {
-        return participation.submissions().stream().filter(submission -> submission.results() != null).flatMap(submission -> submission.results().stream()).map(ResultDTO::id)
-                .toList();
+        return participation.submissions().stream().filter(submission -> submission.results() != null).flatMap(submission -> submission.results().stream())
+                .map(ResultResponseDTO::id).toList();
     }
 
     @Test
