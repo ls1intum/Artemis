@@ -50,6 +50,10 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
   rule, or a `WebsocketUserTopic`, as a constant of the module's `web/<Module>WebsocketTopics` class.
   Send only through `WebsocketMessagingService` with `TOPIC.at(...)`. Clients send only to `/app/...`
   `@MessageMapping` handlers, which check the sender; no `@SubscribeMapping`. [websocket](documentation/docs/developer/guidelines/websocket.mdx)
+- Every call to a language model, for chat or embeddings, uses a preset of `artemis.llm` and a client from
+  `LlmClientService`, without exceptions. A module adds only `llm-preset` keys and registers them as
+  `LlmPresetAssignments`; no own URL, API key, model or option keys, no own provider client or HTTP call. A missing
+  kind of call goes into `LlmClientService`. [AI pipelines](documentation/docs/developer/ai-pipelines.mdx#connect-a-feature-to-a-language-model)
 
 ### Client
 

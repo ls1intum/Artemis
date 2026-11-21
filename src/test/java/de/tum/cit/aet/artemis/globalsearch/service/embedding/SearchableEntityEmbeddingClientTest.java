@@ -13,18 +13,21 @@ import java.util.function.Function;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.client.RestClient;
 
 import com.sun.net.httpserver.HttpServer;
 
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEmbeddingProperties;
 import de.tum.cit.aet.artemis.globalsearch.dto.embedding.EmbeddingResponseDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.EmbeddingFailedException;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Tests {@link SearchableEntityEmbeddingClient} against a real local HTTP server, so the request format, the timeouts and
@@ -59,7 +62,7 @@ class SearchableEntityEmbeddingClientTest {
             JsonNode body = JsonObjectMapper.get().readTree(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
             requests.add(new RecordedRequest(exchange.getRequestMethod(), exchange.getRequestURI().getPath(), exchange.getRequestHeaders().getFirst("Authorization"), body));
             String response = responder.apply(body);
-            int status = response.startsWith("{") ? 200 : Integer.parseInt(response);
+            int status = response.matches("\\d{3}") ? Integer.parseInt(response) : 200;
             byte[] bytes = status == 200 ? response.getBytes(StandardCharsets.UTF_8) : new byte[0];
             exchange.getResponseHeaders().add("Content-Type", "application/json");
             exchange.sendResponseHeaders(status, bytes.length == 0 ? -1 : bytes.length);
@@ -71,7 +74,9 @@ class SearchableEntityEmbeddingClientTest {
         String baseUrl = "http://127.0.0.1:" + server.getAddress().getPort() + "/v1/";
         var properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", "", "text2vec-openai", "embedding", null, INSTRUCTION);
         var embeddingProperties = new WeaviateEmbeddingProperties(600, 30, maxInputs, queryTimeout, Duration.ofSeconds(10));
-        return new SearchableEntityEmbeddingClient(RestClient.builder(), properties, embeddingProperties, LlmTestCatalog.embedding(MODEL, baseUrl, "secret-key"));
+        var llmClientService = new LlmClientService(LlmTestCatalog.embedding(MODEL, baseUrl, "secret-key"), new JsonMapper(), ObservationRegistry.NOOP, new SimpleMeterRegistry(),
+                List.of());
+        return new SearchableEntityEmbeddingClient(properties, embeddingProperties, llmClientService);
     }
 
     /**
@@ -100,6 +105,7 @@ class SearchableEntityEmbeddingClientTest {
             assertThat(request.body().get("model").asString()).isEqualTo(MODEL);
             assertThat(request.body().get("input")).hasSize(1);
             assertThat(request.body().get("input").get(0).asString()).isEqualTo(INSTRUCTION + "flyweight pattern");
+            assertThat(request.body().get("encoding_format").asString()).isEqualTo("float");
         });
     }
 
@@ -144,6 +150,29 @@ class SearchableEntityEmbeddingClientTest {
         var client = clientFor(_ -> "503", Duration.ofSeconds(3), 32);
 
         assertThatThrownBy(() -> client.embedDocuments(List.of("a"))).isInstanceOf(EmbeddingFailedException.class);
+        // the outbox retries a failed write, so SDK retries are disabled, although the endpoint allows three
+        assertThat(requests).hasSize(1);
+    }
+
+    @Test
+    void embedQuery_turnsAnIndexBeyondIntIntoEmbeddingFailed() throws IOException {
+        var client = clientFor(_ -> "{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"index\":2147483648,\"embedding\":[1,0]}]}", Duration.ofSeconds(3), 32);
+
+        assertThatThrownBy(() -> client.embedQuery("anything")).isInstanceOf(EmbeddingFailedException.class).hasMessageContaining("index");
+    }
+
+    @Test
+    void embedQuery_turnsAnEmptyEntryIntoEmbeddingFailed() throws IOException {
+        var client = clientFor(_ -> "{\"object\":\"list\",\"data\":[null]}", Duration.ofSeconds(3), 32);
+
+        assertThatThrownBy(() -> client.embedQuery("anything")).isInstanceOf(EmbeddingFailedException.class);
+    }
+
+    @Test
+    void embedQuery_turnsANullBodyIntoEmbeddingFailed() throws IOException {
+        var client = clientFor(_ -> "null", Duration.ofSeconds(3), 32);
+
+        assertThatThrownBy(() -> client.embedQuery("anything")).isInstanceOf(EmbeddingFailedException.class);
     }
 
     @Test
@@ -152,6 +181,16 @@ class SearchableEntityEmbeddingClientTest {
         server.stop(0);
 
         assertThatThrownBy(() -> client.embedQuery("anything")).isInstanceOf(EmbeddingFailedException.class);
+    }
+
+    @Test
+    void embedFailsWithoutRequestWhenNoPresetIsAssigned() {
+        var properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", "", "text2vec-openai", null, null, INSTRUCTION);
+        var embeddingProperties = new WeaviateEmbeddingProperties(600, 30, 32, Duration.ofSeconds(3), Duration.ofSeconds(10));
+        var client = new SearchableEntityEmbeddingClient(properties, embeddingProperties,
+                new LlmClientService(LlmTestCatalog.empty(), new JsonMapper(), ObservationRegistry.NOOP, new SimpleMeterRegistry(), List.of()));
+
+        assertThatThrownBy(() -> client.embedQuery("anything")).isInstanceOf(EmbeddingFailedException.class).hasMessageContaining("embedding-llm-preset");
     }
 
     @Test

@@ -139,6 +139,29 @@ provider. Add cases for an admitted and a rejected user to
 
 Full guidance: `documentation/docs/developer/guidelines/websocket.mdx`.
 
+## Language models
+
+**Rule.** Every call to a language model, for chat or for embeddings, uses a preset of the catalog
+under `artemis.llm` and a client from `LlmClientService` in `core.service.llm`. A module adds only
+keys that name presets (`llm-preset`, `llm-presets`), registers them as `LlmPresetAssignments`, and
+never reads an endpoint's URL or key. There are no exceptions; a kind of call the core does not offer
+yet is added to `LlmClientService`.
+
+**Enforced by.**
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/LlmClientArchitectureTest.java`. It fails
+when a production class outside `core.service.llm` and `core.config.llm` depends on `com.openai.client..`,
+`com.openai.services..`, `org.springframework.ai.openai.setup..` or a Spring AI OpenAI model class, or reads `LlmProperties.Endpoint`
+or the methods that return endpoints. Request options, response, usage and exception types of the SDKs
+stay allowed. The test cannot see a module that adds its own URL and key properties and calls a model
+with a plain HTTP client; that is forbidden too, and reviews have to catch it.
+
+**Why it matters.** The core applies the preset's options, the timeouts and retries, the custom
+headers, Microsoft Foundry authentication and observations, and it tags every chat response with its
+preset for cost tracking. The startup validation checks every assignment. A module with its own client skips all of that, and every deployment has to
+configure the same provider a second time.
+
+Full guidance: `documentation/docs/developer/ai-pipelines.mdx#connect-a-feature-to-a-language-model`.
+
 ## Caching
 
 **Rule.** No `@Cache` (Hibernate second-level) annotations on entities or associations.

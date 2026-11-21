@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * Response body of the OpenAI-compatible embeddings endpoint; only the vectors and their positions are read.
+ * The vectors of an embeddings response with their positions, as the global search validates them before use.
  *
  * @param data one entry per input text
  */
