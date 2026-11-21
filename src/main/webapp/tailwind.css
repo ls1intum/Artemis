@@ -194,9 +194,9 @@
  */
 @theme {
     --radius: 0.15rem;
-    --shadow-sm: 0 0.125rem 0.25rem rgb(0 0 0 / 7.5%);
-    --shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%);
-    --shadow-lg: 0 1rem 3rem rgb(0 0 0 / 17.5%);
+    --shadow-sm: 0 0.125rem 0.25rem rgb(0 0 0 / 0.075);
+    --shadow: 0 0.5rem 1rem rgb(0 0 0 / 0.15);
+    --shadow-lg: 0 1rem 3rem rgb(0 0 0 / 0.175);
 }
 
 @theme inline {

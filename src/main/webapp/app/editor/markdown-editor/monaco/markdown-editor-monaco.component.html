@@ -68,7 +68,7 @@
                                     @for (tagColor of colors; track tagColor) {
                                         <button
                                             type="button"
-                                            class="w-[2.625rem] h-[2.625rem] p-0 cursor-pointer rounded-[3px] border border-(--border-color) hover:outline-2 hover:outline-[var(--color-selector-border)]"
+                                            class="w-[2.625rem] h-[2.625rem] p-0 cursor-pointer border border-(--border-color) hover:outline-2 hover:outline-[var(--color-selector-border)]"
                                             [style.background-color]="tagColor"
                                             (click)="runFromPopover(colorPopover, () => onSelectColor(tagColor))"
                                         ></button>

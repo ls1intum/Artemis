@@ -16,7 +16,7 @@
                         [attr.aria-describedby]="titleControl.errors?.['maxlength'] ? 'title-maxlength-error' : null"
                     />
                     @if (titleControl.errors?.['maxlength']) {
-                        <small id="title-maxlength-error" class="text-state-danger text-sm" jhiTranslate="artemisApp.systemNotification.titleMaxlength"></small>
+                        <small id="title-maxlength-error" class="text-state-danger leading-[calc(1.25/0.875)]" jhiTranslate="artemisApp.systemNotification.titleMaxlength"></small>
                     }
                 </div>
                 <div class="mb-4 flex flex-col gap-2">
@@ -32,7 +32,7 @@
                         [attr.aria-describedby]="textControl.errors?.['maxlength'] ? 'text-maxlength-error' : null"
                     />
                     @if (textControl.errors?.['maxlength']) {
-                        <small id="text-maxlength-error" class="text-state-danger text-sm" jhiTranslate="artemisApp.systemNotification.textMaxlength"></small>
+                        <small id="text-maxlength-error" class="text-state-danger leading-[calc(1.25/0.875)]" jhiTranslate="artemisApp.systemNotification.textMaxlength"></small>
                     }
                 </div>
                 <div class="mb-4 flex flex-col gap-2">
@@ -61,7 +61,11 @@
                         [ariaDescribedBy]="expireDate?.errors?.expireMustBeAfterNotification ? 'expireDate-order-error' : undefined"
                     />
                     @if (expireDate?.errors?.expireMustBeAfterNotification) {
-                        <small id="expireDate-order-error" class="text-state-danger text-sm" jhiTranslate="error.systemNotificationNeedsNotificationBeforeExpiration"></small>
+                        <small
+                            id="expireDate-order-error"
+                            class="text-state-danger leading-[calc(1.25/0.875)]"
+                            jhiTranslate="error.systemNotificationNeedsNotificationBeforeExpiration"
+                        ></small>
                     }
                 </div>
                 @if (!form.get('id')?.value) {

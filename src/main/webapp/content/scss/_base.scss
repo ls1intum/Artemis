@@ -39,6 +39,10 @@ $fluid-font-size-breakpoint: 1200px;
     }
 }
 
+// Third-party stylesheets that are loaded later (Apollon) use a layer named `components`. It is declared first, so the
+// element defaults still override it, as they did when they were not in a layer.
+@layer components, base;
+
 @layer base {
     :root {
         --font-family-sans-serif: #{$font-family-sans-serif};

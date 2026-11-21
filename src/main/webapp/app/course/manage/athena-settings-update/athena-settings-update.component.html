@@ -24,7 +24,10 @@
                 <!-- The title and hint describe the current state; the switch itself keeps the constant feature name. -->
                 <label [class.cursor-pointer]="loaded()" [for]="feature.testId + '-toggle'">
                     <span [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledLabel' : '.disabledLabel')"></span>
-                    <small class="block text-sm text-(--text-body-secondary)" [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledHint' : '.disabledHint')"></small>
+                    <small
+                        class="block leading-[calc(1.25/0.875)] text-(--text-body-secondary)"
+                        [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledHint' : '.disabledHint')"
+                    ></small>
                 </label>
             </div>
         }

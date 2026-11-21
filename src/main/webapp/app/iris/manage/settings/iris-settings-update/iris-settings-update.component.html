@@ -164,7 +164,9 @@
                                         placeholder="{{ 'artemisApp.iris.settings.additionalGuidelinesPlaceholder' | artemisTranslate }}"
                                     ></textarea>
                                     <div class="flex justify-end">
-                                        <small class="text-sm text-muted-color"> {{ getCustomInstructionsLength() }} / {{ CUSTOM_INSTRUCTIONS_MAX_LENGTH }} </small>
+                                        <small class="leading-[calc(1.25/0.875)] text-muted-color">
+                                            {{ getCustomInstructionsLength() }} / {{ CUSTOM_INSTRUCTIONS_MAX_LENGTH }}
+                                        </small>
                                     </div>
                                 </div>
 
@@ -184,7 +186,7 @@
                                         />
                                         <label for="proactiveStruggleEnabled">
                                             <strong jhiTranslate="artemisApp.iris.settings.proactiveStruggle"></strong>
-                                            <small class="block text-sm text-muted-color" jhiTranslate="artemisApp.iris.settings.proactiveStruggleHelp"></small>
+                                            <small class="block leading-[calc(1.25/0.875)] text-muted-color" jhiTranslate="artemisApp.iris.settings.proactiveStruggleHelp"></small>
                                         </label>
                                     </div>
 
@@ -206,7 +208,10 @@
                                         />
                                         <label for="legacyBuildTriggersEnabled">
                                             <strong jhiTranslate="artemisApp.iris.settings.legacyBuildTriggers"></strong>
-                                            <small class="block text-sm text-muted-color" jhiTranslate="artemisApp.iris.settings.legacyBuildTriggersHelp"></small>
+                                            <small
+                                                class="block leading-[calc(1.25/0.875)] text-muted-color"
+                                                jhiTranslate="artemisApp.iris.settings.legacyBuildTriggersHelp"
+                                            ></small>
                                         </label>
                                     </div>
 

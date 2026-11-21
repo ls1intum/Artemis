@@ -26,7 +26,7 @@
                                         <!-- Special formatting for LocalCI build agents -->
                                         <div class="build-agents-health">
                                             @for (agent of formatBuildAgents(healthDetail.value, healthDetail.key); track agent.name) {
-                                                <div class="mb-4 rounded-lg border dark:border-surface-700 p-2">
+                                                <div class="mb-4 rounded-lg border border-(--border-color) p-2">
                                                     <div class="mb-1 flex items-center justify-between">
                                                         <strong>{{ agent.displayName }}</strong>
                                                         <tumaet-ui-tag [severity]="getStatusBadgeSeverity(agent.status)" [value]="agent.status" data-testid="agent-status-tag" />

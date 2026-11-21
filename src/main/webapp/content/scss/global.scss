@@ -522,6 +522,38 @@ del.diffmod {
 /* ==========================================================================
     Markdown preview
 ========================================================================== */
+// Class names that stored content (problem statements, posts, FAQs) may still carry from the time the global stylesheet
+// defined them for every element. Templates do not use them any more.
+.markdown-preview {
+    .text-danger {
+        color: $danger;
+    }
+
+    .text-info {
+        color: $info;
+    }
+
+    .text-end {
+        text-align: right;
+    }
+
+    .text-start {
+        text-align: left;
+    }
+
+    .text-wrap {
+        white-space: normal;
+    }
+
+    .bg-primary {
+        background-color: $primary;
+    }
+
+    .border-primary {
+        border-color: $primary;
+    }
+}
+
 .markdown-preview {
     .background-editor-color {
         background: $markdown-preview-editor-background;

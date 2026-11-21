@@ -37,13 +37,15 @@
             </div>
         </ng-template>
         @if (isSearching()) {
-            <small class="text-xs text-muted-color" jhiTranslate="artemisApp.userSelector.searchingText">Searching for users...</small>
+            <small class="leading-[calc(1/0.75)] text-muted-color" jhiTranslate="artemisApp.userSelector.searchingText">Searching for users...</small>
         }
         @if (searchFailed()) {
-            <small class="text-xs text-state-danger" jhiTranslate="artemisApp.userSelector.searchFailedText">Search failed</small>
+            <small class="leading-[calc(1/0.75)] text-state-danger" jhiTranslate="artemisApp.userSelector.searchFailedText">Search failed</small>
         }
         @if (searchStudents()) {
-            <small class="text-xs text-muted-color" jhiTranslate="artemisApp.userSelector.helpText">Type at least 3 characters to search for users by name or login</small>
+            <small class="leading-[calc(1/0.75)] text-muted-color" jhiTranslate="artemisApp.userSelector.helpText"
+                >Type at least 3 characters to search for users by name or login</small
+            >
         }
     </div>
     <div class="flex flex-wrap items-center justify-end gap-4">

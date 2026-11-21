@@ -35,7 +35,7 @@
                                 <button
                                     type="button"
                                     data-testid="iris-context-option"
-                                    class="flex w-full cursor-pointer items-center gap-2 border-0 bg-transparent px-3 py-1.5 text-left focus-visible:bg-(--tumaet-ui-hover-background)"
+                                    class="flex w-full cursor-pointer items-center gap-2 border-0 bg-transparent px-3 py-1.5 text-left"
                                     [class.font-semibold]="option.value === selectedValue()"
                                     [attr.aria-current]="option.value === selectedValue() ? 'true' : null"
                                     (click)="selectOption(option, picker)"
