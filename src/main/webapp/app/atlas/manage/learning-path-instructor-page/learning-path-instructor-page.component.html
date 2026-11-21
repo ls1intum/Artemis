@@ -4,7 +4,7 @@
     </div>
 } @else if (learningPathsEnabled()) {
     <div>
-        <div class="flex w-full flex-wrap gap-4!">
+        <div class="flex w-full flex-wrap gap-4">
             <!-- TODO: The following section has been commented out as the functional implementation has not been decided yet. -->
             <!-- <div class="grow basis-0 bg-surface-raised p-2">-->
             <!--     <jhi-learning-paths-configuration [courseId]="courseId()" />-->
@@ -16,7 +16,7 @@
                 <jhi-learning-paths-table [courseId]="courseId()" />
             </div>
         </div>
-        <div class="w-full bg-surface-raised px-2 pt-4!">
+        <div class="w-full bg-surface-raised px-2 pt-4">
             <jhi-learning-paths-analytics [courseId]="courseId()" />
         </div>
     </div>

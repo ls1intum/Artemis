@@ -75,7 +75,7 @@ class HyperionCompetencyContextServiceTest {
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         service = new HyperionCompetencyContextService(Optional.of(courseCompetencyApi), Optional.of(competencyRelationApi), Optional.of(irisLectureSearchApi),
-                Optional.of(lectureUnitApi), Optional.of(templateService), chatClient);
+                Optional.of(lectureUnitApi), Optional.of(templateService), HyperionTestChatClients.returning(chatClient));
     }
 
     @AfterEach
@@ -90,13 +90,15 @@ class HyperionCompetencyContextServiceTest {
 
     @Test
     void isAvailable_returnsFalseWhenAtlasDisabled() {
-        var disabledService = new HyperionCompetencyContextService(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), null);
+        var disabledService = new HyperionCompetencyContextService(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                HyperionTestChatClients.returning(null));
         assertThat(disabledService.isAvailable()).isFalse();
     }
 
     @Test
     void computeContext_throwsBadRequestWhenAtlasNotEnabled() {
-        var disabledService = new HyperionCompetencyContextService(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), null);
+        var disabledService = new HyperionCompetencyContextService(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                HyperionTestChatClients.returning(null));
         assertThatThrownBy(() -> disabledService.computeContext(1L, List.of(1L))).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("Atlas module");
     }
 
@@ -193,7 +195,7 @@ class HyperionCompetencyContextServiceTest {
     @Test
     void computeContext_skipsExerciseSummaryWhenChatClientIsNull() {
         var serviceWithNullClient = new HyperionCompetencyContextService(Optional.of(courseCompetencyApi), Optional.of(competencyRelationApi), Optional.of(irisLectureSearchApi),
-                Optional.of(lectureUnitApi), Optional.of(new HyperionPromptTemplateService()), null);
+                Optional.of(lectureUnitApi), Optional.of(new HyperionPromptTemplateService()), HyperionTestChatClients.returning(null));
 
         Competency competency = makeCompetency(1L, "Algorithms");
         when(courseCompetencyApi.findAllForCourse(42L)).thenReturn(Set.of(competency));

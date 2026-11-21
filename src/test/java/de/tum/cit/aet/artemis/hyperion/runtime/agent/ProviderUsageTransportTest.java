@@ -17,7 +17,7 @@ class ProviderUsageTransportTest {
     @Test
     void preservesReportedMetadataWithoutFabricatingContent() {
         var call = new ProviderUsageUpdate.Call("model", "provider-id", 123, 45, 12L, null);
-        var response = ProviderUsageTransport.restore(call);
+        var response = ProviderUsageTransport.restore(call, null);
         assertThat(response.getResults()).isEmpty();
         assertThat(response.getMetadata().getUsage().getTotalTokens()).isEqualTo(168);
         assertThat(response.getMetadata().getUsage().getNativeUsage()).isNull();
@@ -27,21 +27,21 @@ class ProviderUsageTransportTest {
     @Test
     void missingCacheCountRemainsUnknown() {
         var call = new ProviderUsageUpdate.Call("model", "provider-id", 10, 20, null, null);
-        assertThat(ProviderUsageTransport.capture(ProviderUsageTransport.restore(call)).cachedInputTokens()).isNull();
+        assertThat(ProviderUsageTransport.capture(ProviderUsageTransport.restore(call, null)).cachedInputTokens()).isNull();
     }
 
     @Test
     void providerUsdCostSurvivesRoundTrip() {
         var call = new ProviderUsageUpdate.Call("model", "provider-id", 10, 20, null, 0.00001234);
 
-        assertThat(ProviderUsageTransport.capture(ProviderUsageTransport.restore(call))).isEqualTo(call);
+        assertThat(ProviderUsageTransport.capture(ProviderUsageTransport.restore(call, null))).isEqualTo(call);
     }
 
     @Test
     void invalidCostDoesNotDiscardUsage() {
         for (var call : List.of(new ProviderUsageUpdate.Call("model", "id", 10, 20, null, -1d), new ProviderUsageUpdate.Call("model", "id", 10, 20, null, Double.NaN))) {
             assertThat(call.totalCostUsd()).isNull();
-            assertThat(ProviderUsageTransport.capture(ProviderUsageTransport.restore(call)).inputTokens()).isEqualTo(10);
+            assertThat(ProviderUsageTransport.capture(ProviderUsageTransport.restore(call, null)).inputTokens()).isEqualTo(10);
         }
     }
 

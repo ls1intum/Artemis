@@ -11,7 +11,7 @@
             "linksNotAllowed": "Symbolische Links und Submodule sind nicht erlaubt: {{ path }}",
             "fileTooLarge": "Die Datei überschreitet die Grenze von {{ limit }} Bytes: {{ path }}"
         },
-        "quizQuestionPoolModelNotConfigured": "Smart Quizzes ist auf diesem Server nicht eingerichtet. Bitte wende dich an deine Administration, damit ein lokales Sprachmodell konfiguriert wird.",
+        "quizQuestionPoolModelNotConfigured": "Smart Quizzes ist auf diesem Server nicht eingerichtet. Bitte wende dich an deine Administration, damit Sprachmodelle dafür zugewiesen werden.",
         "tumLiveUploadInProgress": "Dieses Video wird bereits hochgeladen oder von TUM.Live konvertiert.",
         "tumLiveUploadNoLongerPending": "Dieser Upload ist nicht mehr offen.",
         "courseRequestTooManyPending": "Du hast bereits die maximale Anzahl an Kursanfragen, die auf eine Entscheidung warten. Bitte warte auf eine Entscheidung, bevor du eine weitere Anfrage sendest.",
@@ -313,8 +313,6 @@
         },
         "ProblemStatementGeneration": {
             "generatedProblemStatementTooLong": "Die generierte Aufgabenbeschreibung ist zu lang. Bitte versuche es erneut mit einer anderen Eingabe.",
-            "chatClientNotConfigured": "KI-Generierung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
-            "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert.",
             "problemStatementGenerationFailed": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es später erneut.",
             "problemStatementGenerationNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",
             "userPromptEmpty": "Die Benutzereingabe darf nicht leer sein.",
@@ -324,8 +322,6 @@
             "problemStatementEmpty": "Die Aufgabenbeschreibung darf nicht leer sein.",
             "userPromptEmpty": "Die Benutzereingabe darf nicht leer sein.",
             "userPromptTooLong": "Die Benutzereingabe ist zu lang. Bitte kürze deine Anweisungen und versuche es erneut.",
-            "chatClientNotConfigured": "KI-Verfeinerung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
-            "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert.",
             "problemStatementTooLong": "Die Aufgabenbeschreibung ist zu lang. Bitte kürze den Inhalt und versuche es erneut.",
             "problemStatementRefinementNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",
             "refinedProblemStatementTooLong": "Die verfeinerte Aufgabenbeschreibung ist zu lang. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",
@@ -338,8 +334,6 @@
             "instructionTooLong": "Die Verfeinerungsanweisung ist zu lang. Bitte kürze sie und versuche es erneut."
         },
         "ProblemStatementRewrite": {
-            "chatClientNotConfigured": "KI-Umschreibung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
-            "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert.",
             "problemStatementEmpty": "Die Aufgabenbeschreibung darf nicht leer sein.",
             "problemStatementRewriteFailed": "Fehler beim Umschreiben der Aufgabenstellung. Bitte versuche es später erneut.",
             "problemStatementRewriteNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",

@@ -21,7 +21,7 @@
         </div>
     </div>
     <div class="lti-course-card-body" data-testid="lti-course-card-body">
-        <div class="grid grid-cols-2 gap-x-6!">
+        <div class="grid grid-cols-2 gap-x-6">
             <!-- Left column -->
             <div>
                 <p><strong>ID:</strong> {{ course().id }}</p>
@@ -47,7 +47,7 @@
 
         <!-- Description -->
         @if (course().description) {
-            <p class="mt-4!">
+            <p class="mt-4">
                 <strong><span jhiTranslate="artemisApp.course.description"></span>:</strong>
                 <span class="text-muted-color" style="font-size: 0.95rem">{{ course().description }}</span>
             </p>

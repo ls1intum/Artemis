@@ -5,7 +5,7 @@
     <form name="dataExportConfirmationForm" (ngSubmit)="confirmDataExportRequest()" #dataExportConfirmationForm="ngForm">
         <p [jhiTranslate]="'artemisApp.dataExport.confirmationQuestion'">Are you sure you want to request?</p>
         @if (adminDialog()) {
-            <div class="mb-4!">
+            <div class="mb-4">
                 <div class="flex items-center gap-2">
                     <tumaet-ui-checkbox
                         inputId="request-for-other-user"

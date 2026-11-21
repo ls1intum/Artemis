@@ -1,5 +1,5 @@
 @if (containsProgrammingExercises.size !== 0) {
-    <tumaet-ui-message severity="info" class="mb-6! block">
+    <tumaet-ui-message severity="info" class="mb-6 block">
         <span jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.infoProgrammingExercises"></span>
     </tumaet-ui-message>
 }
@@ -19,7 +19,7 @@
             <tr [class]="exerciseGroupContainsExercises(exerciseGroup) ? '' : 'bg-(--hover-slightly-darker-body-bg)'">
                 <td>
                     <!-- Display general exercise group settings (name, mandatory) to the left -->
-                    <div class="grid grid-cols-[auto_1fr] items-center gap-x-6! gap-y-2">
+                    <div class="grid grid-cols-[auto_1fr] items-center gap-x-6 gap-y-2">
                         <label [for]="'exerciseGroup-' + groupIndex + '-title'" jhiTranslate="artemisApp.examManagement.exerciseGroup.title">Title</label>
                         <div>
                             <input
@@ -34,7 +34,7 @@
                             />
                             @if (getExerciseGroupTitleError(exerciseGroup); as groupTitleError) {
                                 <small
-                                    class="block text-start text-state-danger"
+                                    class="block text-left text-state-danger"
                                     [attr.data-testid]="'exercise-group-' + groupIndex + '-title-error'"
                                     [jhiTranslate]="groupTitleError"
                                 ></small>
@@ -102,7 +102,7 @@
                                             />
                                             @if (getNonProgrammingExerciseTitleError(exercise); as titleError) {
                                                 <small
-                                                    class="block text-start text-state-danger"
+                                                    class="block text-left text-state-danger"
                                                     [attr.data-testid]="'exercise-' + exercise.id + '-title-error'"
                                                     [jhiTranslate]="titleError"
                                                 ></small>
@@ -123,7 +123,7 @@
                                             />
                                             @if (getProgrammingExerciseTitleError(exercise); as titleError) {
                                                 <small
-                                                    class="block text-start text-state-danger"
+                                                    class="block text-left text-state-danger"
                                                     [attr.data-testid]="'exercise-' + exercise.id + '-title-error'"
                                                     [jhiTranslate]="titleError"
                                                 ></small>
@@ -146,7 +146,7 @@
                                             />
                                             @if (getProgrammingExerciseShortNameError(exercise); as shortNameError) {
                                                 <small
-                                                    class="block text-start text-state-danger"
+                                                    class="block text-left text-state-danger"
                                                     [attr.data-testid]="'programming-exercise-' + exercise.id + '-shortName-error'"
                                                     [jhiTranslate]="shortNameError"
                                                 ></small>

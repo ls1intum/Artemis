@@ -1,6 +1,6 @@
 <form [formGroup]="form()">
     @if (!isInConnectMode()) {
-        <div class="mb-4!">
+        <div class="mb-4">
             <label for="title" [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.title'"></label>
             <input
                 type="text"
@@ -30,7 +30,7 @@
         </div>
     }
     @if (!isInConnectMode()) {
-        <div class="mb-4!">
+        <div class="mb-4">
             <label for="description" jhiTranslate="artemisApp.courseCompetency.description"></label>
             <jhi-markdown-editor-monaco
                 [markdown]="descriptionControl?.value"
@@ -51,7 +51,7 @@
             }
         </div>
     }
-    <div class="mb-4!">
+    <div class="mb-4">
         <tumaet-ui-date-picker
             id="softDueDate"
             inputId="softDueDate-input"
@@ -63,7 +63,7 @@
         <small id="softDueDate-hint" class="text-muted-color" [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.create.softDueDateHint'"></small>
     </div>
     @if (!isInConnectMode()) {
-        <div class="mb-4!">
+        <div class="mb-4">
             <label for="taxonomy">
                 {{ 'artemisApp.courseCompetency.taxonomy' | artemisTranslate }}
                 @if (suggestedTaxonomies().length) {
@@ -74,7 +74,7 @@
         </div>
     }
     @if (!isInConnectMode()) {
-        <div class="mb-4!">
+        <div class="mb-4">
             <label for="masteryThreshold">
                 {{ 'artemisApp.courseCompetency.masteryThreshold' | artemisTranslate }}: {{ masteryThresholdControl!.value ?? DEFAULT_MASTERY_THRESHOLD }}%
                 @if (averageStudentScore() !== null && averageStudentScore() !== undefined) {
@@ -84,7 +84,7 @@
             <input required type="number" tumAetUiInput class="block w-full" name="masteryThreshold" id="masteryThreshold" min="1" max="100" formControlName="masteryThreshold" />
         </div>
     }
-    <div class="mb-4! flex items-center gap-1">
+    <div class="mb-4 flex items-center gap-1">
         <tumaet-ui-checkbox inputId="optional" formControlName="optional" />
         <label [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.optional'" for="optional"></label>
         <jhi-help-icon [text]="'artemisApp.' + courseCompetency()?.type + '.optionalDescription'" />

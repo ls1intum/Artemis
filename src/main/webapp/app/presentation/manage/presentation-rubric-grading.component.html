@@ -1,23 +1,23 @@
-<div class="flex flex-col gap-6!">
+<div class="flex flex-col gap-6">
     @let incomplete = form().hasError('ratingsIncomplete');
     @for (view of criterionViews(); track view.criterion.id; let index = $index) {
         @let criterion = view.criterion;
         @let rating = form().at(index);
         <article
-            class="flex flex-col gap-6! overflow-hidden rounded-lg border bg-(--module-bg) pb-6!"
+            class="flex flex-col gap-6 overflow-hidden rounded-lg border bg-(--module-bg) pb-6"
             [class]="incomplete && rating.controls.levelId.value === undefined ? 'border-state-warning' : 'border-(--border-color)'"
             [formGroup]="rating"
             [attr.data-testid]="'rubric-grading-criterion-' + index"
         >
             <!-- The head of a criterion is a band across the card, which separates it from the levels -->
-            <header class="flex items-start gap-4! border-b border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-6! py-4!">
+            <header class="flex items-start gap-4 border-b border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-6 py-4">
                 <span class="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-(--module-bg) text-sm font-semibold text-(--primary)" aria-hidden="true">{{
                     index + 1
                 }}</span>
                 <div class="min-w-0 flex-1">
-                    <h3 class="m-0! text-base! font-semibold!" [id]="'rubric-grading-name-' + index">{{ criterion.name }}</h3>
+                    <h3 class="m-0 text-base font-semibold" [id]="'rubric-grading-name-' + index">{{ criterion.name }}</h3>
                     @if (criterion.description) {
-                        <p class="mt-0.5! mb-0! text-sm text-(--text-body-secondary)">{{ criterion.description }}</p>
+                        <p class="mt-0.5 mb-0 text-sm text-(--text-body-secondary)">{{ criterion.description }}</p>
                     }
                 </div>
                 <div class="flex flex-col items-end">
@@ -27,19 +27,19 @@
             </header>
 
             <!-- All levels of a criterion side by side as long as they fit -->
-            <div class="grid grid-cols-1 gap-2 px-6! sm:grid-cols-[repeat(auto-fit,minmax(8rem,1fr))]" role="radiogroup" [attr.aria-labelledby]="'rubric-grading-name-' + index">
+            <div class="grid grid-cols-1 gap-2 px-6 sm:grid-cols-[repeat(auto-fit,minmax(8rem,1fr))]" role="radiogroup" [attr.aria-labelledby]="'rubric-grading-name-' + index">
                 @for (position of view.positionsHighestFirst; track position) {
                     @let level = criterion.levels[position];
                     @let selected = rating.controls.levelId.value === level.id;
                     <!-- The radio sits in the corner, so the key keeps the full width of the card -->
                     <label
-                        class="relative flex! cursor-pointer rounded-lg border py-2.5 ps-4! pe-8 text-sm"
+                        class="relative flex cursor-pointer rounded-lg border py-2.5 ps-4 pe-8 text-sm"
                         [class]="selected ? 'border-(--primary) bg-(--sidebar-card-selected-bg)' : 'border-(--border-color) hover:bg-(--sidebar-card-selected-bg)'"
                         [for]="'rubric-grading-level-' + index + '-' + position"
                         [attr.data-testid]="'rubric-grading-level-' + index + '-' + position"
                     >
                         <span class="flex min-w-0 flex-col gap-1">
-                            <strong class="font-semibold! whitespace-nowrap">{{ position + 1 }} – <span [jhiTranslate]="view.levelKeys[position]"></span></strong>
+                            <strong class="font-semibold whitespace-nowrap">{{ position + 1 }} – <span [jhiTranslate]="view.levelKeys[position]"></span></strong>
                             @if (level.description) {
                                 <span class="text-xs text-(--text-body-secondary)">{{ level.description }}</span>
                             }
@@ -60,7 +60,7 @@
             </div>
 
             @if (rating.controls.levelId.value !== undefined) {
-                <div class="flex flex-col gap-2 px-6!">
+                <div class="flex flex-col gap-2 px-6">
                     <label [for]="'rubric-grading-comment-' + index">{{
                         'artemisApp.presentationAssessment.rubric.feedbackFor' | artemisTranslate: { name: criterion.name }
                     }}</label>
@@ -85,7 +85,7 @@
                 </div>
             } @else {
                 <p
-                    class="m-0! flex items-center gap-2 px-6! text-sm"
+                    class="m-0 flex items-center gap-2 px-6 text-sm"
                     [class]="incomplete ? 'text-state-warning' : 'text-(--text-body-secondary)'"
                     [attr.data-testid]="'rubric-grading-unrated-' + index"
                 >
@@ -96,12 +96,12 @@
         </article>
     }
 
-    <div class="rounded-lg border border-(--border-color) bg-(--hover-slightly-darker-body-bg) p-6!">
+    <div class="rounded-lg border border-(--border-color) bg-(--hover-slightly-darker-body-bg) p-6">
         <ng-content />
     </div>
 
     @let overall = overallResult();
-    <div class="flex flex-col items-end gap-0.5 rounded-lg border border-(--border-color) bg-(--hover-slightly-darker-body-bg) p-6!" data-testid="rubric-grading-overall">
+    <div class="flex flex-col items-end gap-0.5 rounded-lg border border-(--border-color) bg-(--hover-slightly-darker-body-bg) p-6" data-testid="rubric-grading-overall">
         <span jhiTranslate="artemisApp.presentationAssessment.rubric.overallResult"></span>
         <strong class="text-2xl text-(--primary)">{{ overall === undefined ? '–' : overall + ' %' }}</strong>
         <span class="text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.rubric.calculatedAutomatically"></span>

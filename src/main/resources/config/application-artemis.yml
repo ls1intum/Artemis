@@ -6,12 +6,10 @@ artemis:
   course-home:
     ai:
       enabled: false
-      # Home uses its own explicitly configured OpenAI-compatible provider, independently of Iris and Atlas.
-      # location: LOCAL # LOCAL or CLOUD; LOCAL_AI consent never permits CLOUD.
-      # base-url: http://localhost:11434/v1
-      # api-key: <deployment-secret>
-      # model: <configured-chat-model>
-      # Fixed limits: 3 seconds, 160 output tokens, 4 workers, no queued work or retries.
+      # Home calls the LLM preset assigned here (see artemis.llm), independently of Iris and Atlas.
+      # location: LOCAL # LOCAL or CLOUD: where the preset's endpoint runs; LOCAL_AI consent never permits CLOUD.
+      # llm-preset: <preset>
+      # Fixed limits: 3 seconds, at most 160 output tokens, 4 workers, no queued work or retries.
   tum-live:
     integration-enabled: false
     # api-base-url: https://live.example.edu/api/v2
@@ -171,10 +169,18 @@ artemis:
   apollon:
     conversion-service-url: http://localhost:8080
   hyperion:
-    enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
+    enabled: false  # Set this to true to enable the hyperion service on startup; it requires the presets below (see artemis.llm).
+    # llm-presets:                  # Every task needs a preset; a task without its own key uses default.
+    #   default: large
+    #   problem-statement-rewrite: small
+    #   faq-rewrite: small
+    #   metadata-suggestion: small
+    #   competency-context: small
+    #   (also: problem-statement, consistency-check, checklist, assessment-criteria, quiz-generation, code-generation, variants)
     exercise-generation:
       enabled: false # Set consistently on all core/localvc writers. Authoring also requires LocalCI and a separate worker.
     agent:
+      # llm-preset: generation       # Preset of exercise generation; it and every profile preset need max-retries 0.
       max-job-duration: PT45M
       stale-job-timeout: PT50M
     generation:
@@ -183,20 +189,9 @@ artemis:
       shutdown-drain-timeout: PT11M
       test-case-sync-timeout: PT10M
     quiz-pool:
-      # The pool sends course material only to a self-hosted, OpenAI-compatible endpoint (for example Logos or vLLM): base-url and api-key
-      # below when set, otherwise the endpoint of Hyperion's chat model under spring.ai.openai. A cloud provider endpoint, including
-      # Microsoft Foundry, keeps the pool off. Leave generator-model and judge-model empty to turn the pool off; a model missing from
-      # allowed-models or an invalid base-url also keeps it off and is logged as a warning at startup.
-      base-url: # including the /v1 prefix, e.g. https://logos.example.org/v1; empty to use spring.ai.openai.base-url
-      api-key:
-      # HTTP timeout of one model call.
-      timeout: 5m
-      # Self-hosted models the pool may use; generator-model and judge-model must each be one of them.
-      allowed-models: Qwen/Qwen3.8-27B
-      # Model that generates pool questions.
-      generator-model: Qwen/Qwen3.8-27B
-      # Model that judges generated questions.
-      judge-model: Qwen/Qwen3.8-27B
+      # The pool sends lecture material to the presets below. Set both or neither; without them the pool is off.
+      # generator-llm-preset: selfhosted   # Preset that generates pool questions.
+      # judge-llm-preset: selfhosted       # Preset that judges generated questions.
       # Questions requested per generation call; a cell larger than this is filled in several calls.
       generation-batch-size: 8
       # A generation or filter claim older than this is treated as abandoned by a dead node and released at the next build.
@@ -212,31 +207,32 @@ artemis:
   aiworker:
     enabled: false # Optional standalone coordination; Hyperion generation enables this automatically on eligible core nodes.
     # ids: [worker-1]
-  llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
-    # API-reported USD amounts take precedence. Generation uses only explicitly supplied USD rates; missing rates remain unknown.
-    # Use dated provider rates and bracket-quote dotted model keys. Configure each model in
-    # one source only: environment variables normalize model keys differently from YAML.
-    # model-costs:
-    #   "[provider/model]":
-    #     input-cost-per-million-usd: <your-input-rate>
-    #     output-cost-per-million-usd: <your-output-rate>
-    #     cached-input-cost-per-million-usd: <your-cached-input-rate>
+  # LLM catalog: where Artemis connects (endpoints) and which models with which options it uses (presets). Artemis has no default
+  # model, endpoint or price; modules assign presets with their llm-preset / llm-presets keys. Names use lower-case letters and digits
+  # only, so that environment variables can set them. See https://docs.artemis.tum.de/admin/llm-configuration
+  # llm:
+  #   endpoints:
+  #     main:
+  #       base-url: https://api.openai.com/v1      # including the version prefix
+  #       api-key: <api-key>                       # empty: no Authorization header (e.g. a local server)
+  #       type: openai                             # openai (default; also LM Studio, Ollama, vLLM, gateways) or microsoft-foundry
+  #       timeout: 300s                            # default 300s
+  #       max-retries: 3                           # default 3
+  #       prices-usd-per-million:                  # fallback when the provider reports no USD amount; set the whole list in one source
+  #         - { model: gpt-6.1-terra, input: 1.00, cached-input: 0.05, cache-write: 1.25, output: 5.00 }
+  #   presets:
+  #     large:
+  #       endpoint: main
+  #       model: gpt-6.1-terra                     # deployment name on Microsoft Foundry
+  #       api: responses                           # responses, chat-completions or embeddings
+  #       reasoning-effort: medium
+  #     generation:
+  #       endpoint: main
+  #       model: gpt-6.1-terra
+  #       api: responses
+  #       max-retries: 0                           # exercise generation retries on its own
   atlas:
-    # *-model values are Azure deployment aliases — replace with your own deployment names.
-    chat-model: gpt-5.4-mini
-    temperature: 0.8
-    flavor-strip-model: gpt-5.6-luna # Model/deployment for narrative stripping; blank disables stripping (raw passthrough).
-    flavor-strip-reasoning-effort: high # Blank omits reasoning effort and uses flavor-strip-temperature.
-    flavor-strip-temperature: 1.0 # Temperature for the flavor-strip LLM call. Some models (e.g. gpt-5 family) only accept the default value of 1.
     orchestrator:
-      # Autonomous Atlas and flavor stripping use the isolated Responses adapter by default. Set responses-api-enabled
-      # to false and select a chat-completions deployment here to restore the shared ChatClient path.
-      model: gpt-5.6-luna
-      temperature: 1.0
-      reasoning-effort: xhigh
-      worker-model: gpt-5.6-luna
-      worker-reasoning-effort: high
-      responses-api-enabled: true
       # Automatic competency orchestration (Feature.AtlasAgent). Disabled by default;
       # admins flip the toggle to opt the instance in. The scheduler ticks at scheduler-rate-ms and only
       # claims a course's bucket once debounce-window-seconds have elapsed since the last content edit.
@@ -245,10 +241,13 @@ artemis:
       scheduler-rate-ms: 30000
     atlasllm:
       # The LLM-backed part of Atlas: the chat agent, the autonomous competency orchestrator, and the tool surfaces
-      # they call. Disabled by default. None of it works without spring.ai.model.chat and spring.ai.openai below, and
-      # leaving it off keeps roughly thirty beans, a scheduler and an event listener out of the context entirely.
+      # they call. Disabled by default. It needs the presets below (see artemis.llm), and leaving it off keeps roughly thirty
+      # beans, a scheduler and an event listener out of the context entirely.
       # Competencies, learning paths and learner profiles are the Atlas module itself and stay available either way.
       enabled: false
+      # llm-presets:                # chat, orchestrator, worker, flavor-strip; a task without its own key uses default
+      #   default: small
+      #   orchestrator: large
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
     programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
     data-export-creation-time: 0 0 4 * * * # every day at 4am
@@ -352,69 +351,26 @@ artemis:
         minimum-user-messages: 20
         recipients: []
 
-  # Deimos uses its own LLM config (not spring.ai.openai.*) to isolate student code from the shared Atlas/Hyperion endpoint
+  # Deimos sends student code to its preset, so it is always assigned explicitly (see artemis.llm).
   deimos:
-    enabled: true
+    enabled: false
+    # llm-preset: selfhosted
     executor:
       core-pool-size: 2
       max-pool-size: 4
       queue-capacity: 25
-    llm:
-      base-url: https://gpu.aet.cit.tum.de
-      api-key: dummy-key
-      model: openai/gpt-oss-120b
-      # The SDK appends /chat/completions itself; this path is stripped down to the prefix (e.g. /api)
-      completions-path: /api/chat/completions
-      temperature: 0
 
   weaviate:
     enabled: false
 
-# Configure Spring AI, if you want to use Hyperion or Atlas
+# Spring AI: only the chat memory of the Atlas chat agent; models and endpoints are configured under artemis.llm.
 spring:
   ai:
-    model:
-      chat: openai # use none to disable chat models
     chat:
       client:
         enabled: #{${artemis.hyperion.enabled} or ${artemis.atlas.enabled}}
       memory:
         max-messages: 20 # Maximum number of messages to retain in conversation history per session
-    # Single OpenAI module (official OpenAI Java SDK) since Spring AI 2.0.0-M6: one config tree serves
-    # Azure OpenAI / Microsoft Foundry (prod), OpenAI itself, and OpenAI-compatible local servers (dev).
-    # https://docs.spring.io/spring-ai/reference/api/chat/openai-chat.html
-    openai:
-      ## Variant 1 (active here): Azure OpenAI / Microsoft Foundry
-      base-url: https://endpoint.openai.azure.com
-      api-key: <api-key>
-      microsoft-foundry: true # auto-detected for *.openai.azure.com base URLs; set explicitly for custom domains
-      # HTTP client request timeout (default 60s) — LLM tool-calling loops can need several minutes.
-      # Must be set at this level (spring.ai.openai.timeout); the chat-level timeout key does not feed the HTTP client.
-      timeout: 5m
-      chat:
-        # The Azure deployment name; used as the request model by the default ChatClient
-        model: gpt-5-mini
-        # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
-        temperature: 1.0
-      ## Variant 2: local OpenAI-compatible server (LM Studio, Ollama, vLLM, ...) — same tree.
-      ## The SDK appends /chat/completions itself, so include the /v1 prefix in the base URL
-      ## (the former spring.ai.openai.chat.completions-path property no longer exists).
-      # base-url: http://localhost:1234/v1
-      # api-key: dummy-key      # most local servers ignore it
-      # timeout: 5m
-      # chat:
-      #   model: openai/gpt-oss-20b    # or whatever name your local server expects
-      #   temperature: 0.7
-    # Retry/response handling tuning for AI providers
-    retry:
-      # Treat HTTP 429 as transient to allow auto-retry by Spring AI
-      on-http-codes: [429]
-      # Conservative defaults; adjust if needed
-      max-attempts: 5
-      backoff:
-        initial-interval: 1000ms
-        multiplier: 2.0
-        max-interval: 30000ms
   # data:
     # Redis configuration, in case `artemis.continuous-integration.data-store` is set to `Redis`
     # redis:

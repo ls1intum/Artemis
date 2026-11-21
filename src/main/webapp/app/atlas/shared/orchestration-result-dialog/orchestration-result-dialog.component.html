@@ -1,6 +1,6 @@
 <tumaet-ui-dialog [(visible)]="visible" [closable]="true" [dismissableMask]="true" size="large" [header]="'artemisApp.atlasOrchestrator.resultDialog.title' | artemisTranslate">
     @if (summaryMessage()) {
-        <p class="summary-box mb-4!" data-testid="orchestration-summary">{{ summaryMessage() }}</p>
+        <p class="summary-box mb-4" data-testid="orchestration-summary">{{ summaryMessage() }}</p>
     }
     <tumaet-ui-table-layout [empty]="!hasActions()" emptyTitle="artemisApp.atlasOrchestrator.resultDialog.empty">
         <table tumAetUiTable size="small" data-testid="orchestration-actions">
@@ -20,7 +20,7 @@
                             {{ action.competencyTitle }}
                             <span class="ms-1 text-muted-color">#{{ action.competencyId }}</span>
                             @if (weightBandTag(action.weight); as tag) {
-                                <tumaet-ui-tag severity="secondary" class="ms-2" [value]="(tag.translationKey | artemisTranslate) + ' · ' + (tag.weight | number: '1.1-1')" />
+                                <tumaet-ui-tag severity="secondary" class="ms-2!" [value]="(tag.translationKey | artemisTranslate) + ' · ' + (tag.weight | number: '1.1-1')" />
                             }
                         </td>
                         <td>{{ action.detail }}</td>

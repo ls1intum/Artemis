@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.aiworker.domain.WorkerCommandType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record WorkerCommandDTO(int protocolVersion, WorkerCommandType type, ExecutionIdentityDTO identity, @Nullable ExecutionAssignmentDTO assignment) {
 
-    public static final int PROTOCOL_VERSION = 5;
+    public static final int PROTOCOL_VERSION = 6;
 
     public WorkerCommandDTO {
         if (protocolVersion != PROTOCOL_VERSION || type == null || identity == null
