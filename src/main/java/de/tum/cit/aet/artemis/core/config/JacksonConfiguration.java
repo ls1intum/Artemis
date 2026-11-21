@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import org.springframework.boot.jackson.autoconfigure.JsonFactoryBuilderCustomizer;
 import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
 import org.springframework.boot.jackson.autoconfigure.XmlMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
+import tools.jackson.core.StreamReadConstraints;
 import tools.jackson.datatype.hibernate7.Hibernate7Module;
 
 @Profile(PROFILE_CORE)
@@ -58,6 +60,19 @@ public class JacksonConfiguration {
     @Order(Ordered.LOWEST_PRECEDENCE)
     public JsonMapperBuilderCustomizer artemisJacksonDefaultsCustomizer() {
         return ArtemisJacksonDefaults::apply;
+    }
+
+    /**
+     * Limits the size of JSON request bodies parsed by the auto-configured {@code JsonMapper}.
+     * <p>
+     * The limits are deliberately generous compared to the largest expected request while preventing unbounded
+     * documents and excessively large individual strings from exhausting server resources.
+     *
+     * @return the customizer applied to the auto-configured JsonFactory builder
+     */
+    @Bean
+    public JsonFactoryBuilderCustomizer artemisStreamReadConstraintsCustomizer() {
+        return builder -> builder.streamReadConstraints(StreamReadConstraints.builder().maxDocumentLength(20L * 1024 * 1024).maxStringLength(2 * 1024 * 1024).build());
     }
 
     /**
