@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Lti13DynamicRegistrationComponent } from 'app/lti/overview/lti13-dynamic-registration/lti13-dynamic-registration.component';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router, convertToParamMap } from '@angular/router';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';
@@ -17,6 +17,9 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
     let comp: Lti13DynamicRegistrationComponent;
     let route: ActivatedRoute;
     let http: HttpClient;
+    let httpTesting: HttpTestingController;
+
+    const registrationUrl = `/api/lti/admin/lti13/dynamic-registration?openid_configuration=${encodeURIComponent(PLATFORM_CONFIGURATION_URL)}&registration_token=token`;
 
     beforeEach(async () => {
         route = {
@@ -39,6 +42,7 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         comp = fixture.componentInstance;
 
         http = TestBed.inject(HttpClient);
+        httpTesting = TestBed.inject(HttpTestingController);
     });
 
     afterEach(() => {
@@ -55,39 +59,27 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
     });
 
     it('onInit success to call dynamic registration endpoint', () => {
-        const httpStub = vi.spyOn(http, 'post').mockReturnValue(of({ body: {} }));
-
         expect(comp.isRegistering()).toBe(true);
 
         comp.ngOnInit();
 
-        expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith(
-            `/api/lti/admin/lti13/dynamic-registration?openid_configuration=${encodeURIComponent(PLATFORM_CONFIGURATION_URL)}&registration_token=token`,
-            null,
-            undefined,
-        );
+        const request = httpTesting.expectOne(registrationUrl);
+        expect(request.request.method).toBe('POST');
+        expect(request.request.body).toBeNull();
+        request.flush(null);
+        httpTesting.verify();
 
         expect(comp.isRegistering()).toBe(false);
         expect(comp.registeredSuccessfully()).toBe(true);
     });
 
     it('onInit dynamic registration fails on error', () => {
-        const httpStub = vi.spyOn(http, 'post').mockReturnValue(
-            throwError(() => ({
-                status: 400,
-                error: {},
-            })),
-        );
-
         comp.ngOnInit();
 
-        expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith(
-            `/api/lti/admin/lti13/dynamic-registration?openid_configuration=${encodeURIComponent(PLATFORM_CONFIGURATION_URL)}&registration_token=token`,
-            null,
-            undefined,
-        );
+        const request = httpTesting.expectOne(registrationUrl);
+        expect(request.request.method).toBe('POST');
+        request.flush({}, { status: 400, statusText: 'Bad Request' });
+        httpTesting.verify();
 
         expect(comp.isRegistering()).toBe(false);
         expect(comp.registeredSuccessfully()).toBe(false);

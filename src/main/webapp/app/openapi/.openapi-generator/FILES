@@ -233,6 +233,7 @@ model/lecture-unit-split.ts
 model/lecture-unit.ts
 model/lti-platform-configuration-update.ts
 model/lti-platform-configuration.ts
+model/lti13authentication-response.ts
 model/missing-content.ts
 model/missing-entity.ts
 model/modeling-feedback.ts
