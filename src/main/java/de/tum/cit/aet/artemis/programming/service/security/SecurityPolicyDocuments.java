@@ -596,47 +596,11 @@ public final class SecurityPolicyDocuments {
         if (document.preset() != null && !isPlainToken(document.preset())) {
             problems.add("The preset " + document.preset() + " is not a valid preset name.");
         }
-        Set<String> seenTestClasses = new HashSet<>();
-        for (String testClass : document.testClasses()) {
-            if (isBlank(testClass) || containsWhitespace(testClass)) {
-                problems.add("The test class entry \"" + testClass + "\" is not a valid name.");
-            }
-            else if (!seenTestClasses.add(testClass)) {
-                problems.add("The test class " + testClass + " is listed twice.");
-            }
-        }
-        for (FilePermissionDTO file : document.files()) {
-            if (isBlank(file.path()) || containsLineBreak(file.path())) {
-                problems.add("A path of the file system permissions is empty.");
-            }
-            if (!(file.read() || file.overwrite() || file.create() || file.execute() || file.delete())) {
-                problems.add("The path " + file.path() + " grants no permission.");
-            }
-        }
-        for (NetworkPermissionDTO endpoint : document.network()) {
-            if (isBlank(endpoint.host()) || containsWhitespace(endpoint.host())) {
-                problems.add("A host of the network permissions is not valid.");
-            }
-            if (endpoint.port() < 0 || endpoint.port() > MAX_PORT.intValue()) {
-                problems.add("The port " + endpoint.port() + " is not between 0 and 65535.");
-            }
-            if (!(endpoint.open() || endpoint.send() || endpoint.receive())) {
-                problems.add("The endpoint " + endpoint.host() + ":" + endpoint.port() + " grants no permission.");
-            }
-        }
-        for (CommandPermissionDTO command : document.commands()) {
-            if (isBlank(command.command()) || containsLineBreak(command.command()) || command.arguments().stream().anyMatch(SecurityPolicyDocuments::containsLineBreak)) {
-                problems.add("A command of the command permissions is not valid.");
-            }
-        }
-        for (ThreadPermissionDTO thread : document.threads()) {
-            if (isBlank(thread.threadClass()) || containsWhitespace(thread.threadClass())) {
-                problems.add("A class of the thread permissions is not valid.");
-            }
-            if (thread.maxThreads() < 1) {
-                problems.add("The thread class " + thread.threadClass() + " must allow at least one thread.");
-            }
-        }
+        validateTestClasses(document.testClasses(), problems);
+        validateFiles(document.files(), problems);
+        validateNetwork(document.network(), problems);
+        validateCommands(document.commands(), problems);
+        validateThreads(document.threads(), problems);
         for (PackagePermissionDTO permission : document.packages()) {
             if (isBlank(permission.packageName()) || containsWhitespace(permission.packageName())) {
                 problems.add("A package of the package imports is not valid.");
@@ -652,6 +616,62 @@ public final class SecurityPolicyDocuments {
             validateTestBehavior(document.testBehavior(), problems);
         }
         return problems;
+    }
+
+    private static void validateTestClasses(List<String> testClasses, List<String> problems) {
+        Set<String> seenTestClasses = new HashSet<>();
+        for (String testClass : testClasses) {
+            if (isBlank(testClass) || containsWhitespace(testClass)) {
+                problems.add("The test class entry \"" + testClass + "\" is not a valid name.");
+            }
+            else if (!seenTestClasses.add(testClass)) {
+                problems.add("The test class " + testClass + " is listed twice.");
+            }
+        }
+    }
+
+    private static void validateFiles(List<FilePermissionDTO> files, List<String> problems) {
+        for (FilePermissionDTO file : files) {
+            if (isBlank(file.path()) || containsLineBreak(file.path())) {
+                problems.add("A path of the file system permissions is empty.");
+            }
+            if (!(file.read() || file.overwrite() || file.create() || file.execute() || file.delete())) {
+                problems.add("The path " + file.path() + " grants no permission.");
+            }
+        }
+    }
+
+    private static void validateNetwork(List<NetworkPermissionDTO> network, List<String> problems) {
+        for (NetworkPermissionDTO endpoint : network) {
+            if (isBlank(endpoint.host()) || containsWhitespace(endpoint.host())) {
+                problems.add("A host of the network permissions is not valid.");
+            }
+            if (endpoint.port() < 0 || endpoint.port() > MAX_PORT.intValue()) {
+                problems.add("The port " + endpoint.port() + " is not between 0 and 65535.");
+            }
+            if (!(endpoint.open() || endpoint.send() || endpoint.receive())) {
+                problems.add("The endpoint " + endpoint.host() + ":" + endpoint.port() + " grants no permission.");
+            }
+        }
+    }
+
+    private static void validateCommands(List<CommandPermissionDTO> commands, List<String> problems) {
+        for (CommandPermissionDTO command : commands) {
+            if (isBlank(command.command()) || containsLineBreak(command.command()) || command.arguments().stream().anyMatch(SecurityPolicyDocuments::containsLineBreak)) {
+                problems.add("A command of the command permissions is not valid.");
+            }
+        }
+    }
+
+    private static void validateThreads(List<ThreadPermissionDTO> threads, List<String> problems) {
+        for (ThreadPermissionDTO thread : threads) {
+            if (isBlank(thread.threadClass()) || containsWhitespace(thread.threadClass())) {
+                problems.add("A class of the thread permissions is not valid.");
+            }
+            if (thread.maxThreads() < 1) {
+                problems.add("The thread class " + thread.threadClass() + " must allow at least one thread.");
+            }
+        }
     }
 
     private static void validateTestBehavior(TestBehaviorDTO behavior, List<String> problems) {
