@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -1001,7 +1002,9 @@ class SecurityFrameworkServiceTest {
         securityFrameworkService.deactivate(exercise(ProgrammingLanguage.JAVA), user);
 
         String pushedHead = pushedHead();
-        verify(localVCPushProcessingService).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()));
+        // The processing derives the exercise and the repository type from the location of the repository, so it gets the bare one on the server.
+        verify(localVCPushProcessingService).processNewPush(eq(pushedHead), argThat(repository -> remote.toFile().equals(repository.getDirectory())), eq(user),
+                eq(Optional.empty()), eq(Optional.empty()));
     }
 
     @Test
@@ -1585,6 +1588,46 @@ class SecurityFrameworkServiceTest {
         assertVersionIncompatible(
                 () -> securityFrameworkService.validateChoiceAgainstTemplate(ProjectType.PLAIN_MAVEN, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.2.1")));
         assertThat(securityFrameworkService.deviatesFromTemplate(null, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.2.1"))).isTrue();
+    }
+
+    @Test
+    void aNewTemplateKeepsItsVersionIfItsActivePolicyDoesNotWorkWithTheChosenOne() throws Exception {
+        Path checkout = newDirectory("template-");
+        Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(checkout.toFile()).call().close();
+        // The strict rules of the verified release apply only once it is pinned, so the check against the template before the exercise is created passes.
+        FileUtils.writeStringToFile(checkout.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).toFile(),
+                CUSTOM_POLICY.replace("thisPolicyFileCompliesToThePolicyVersion: 1", "thisPolicyFileCompliesToThePolicyVersion: 2"), StandardCharsets.UTF_8);
+        SecurityPolicyRepositoryFiles.writeAresVersion(checkout, "2.3.0");
+        String buildFile = Files.readString(checkout.resolve("build.gradle"));
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(checkout).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> SecurityFrameworkService.applyChoiceToNewTestRepository(checkout, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.2.1")))
+                .satisfies(exception -> {
+                    assertThat(exception.getErrorKey()).isEqualTo("securityFrameworkVersionIncompatible");
+                    assertThat(exception.getMessage()).contains(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME);
+                });
+        assertThat(Files.readString(checkout.resolve("build.gradle"))).isEqualTo(buildFile);
+
+        // A deactivated policy is checked again when it is activated, so the version is pinned.
+        SecurityFrameworkService.applyChoiceToNewTestRepository(checkout, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, "2.2.1"));
+        assertThat(Files.readString(checkout.resolve("build.gradle"))).contains("aresVersion = '2.2.1'");
+    }
+
+    @Test
+    void anActivationThatWouldLeaveNoTestClassInTheSandboxIsRefused() throws Exception {
+        // ClassTest is switched off on purpose before the deactivation, and the only test class that used the sandbox is deleted after it.
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/ClassTest.java").toFile(),
+                SECOND_TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        securityFrameworkService.deactivate(exercise, user);
+        pushCheckoutChange(checkout -> Files.delete(checkout.resolve("test/de/example/SortingTest.java")));
+        String headBefore = pushedHead();
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.activate(exercise, "2.2.1", user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityFrameworkNoActiveTestClass"));
+        assertThat(pushedHead()).isEqualTo(headBefore);
+        assertThat(readPushed("test/de/example/ClassTest.java")).hasValueSatisfying(content -> assertThat(content).contains(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION));
     }
 
     @Test

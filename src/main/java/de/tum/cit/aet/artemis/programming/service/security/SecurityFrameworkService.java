@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -21,6 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -487,7 +491,39 @@ public class SecurityFrameworkService {
             SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(repositoryRoot, false);
         }
         if (choice.frameworkVersion() != null) {
-            SecurityPolicyRepositoryFiles.writeAresVersion(repositoryRoot, choice.frameworkVersion());
+            pinVersionOfNewTestRepository(repositoryRoot, choice.frameworkVersion(), choice.action() == SecurityFrameworkAction.ACTIVATE);
+        }
+    }
+
+    /**
+     * Pins the chosen version. The check against the template before the exercise is created compares only the fields its policy uses, so a release whose
+     * rules the policy does not meet shows only once it is pinned: an active policy that the release cannot use is refused, and the build files are restored,
+     * so the template stays as it is.
+     *
+     * @param active whether the policy stays active; a deactivated policy is not used until it is activated, which checks it again
+     */
+    private static void pinVersionOfNewTestRepository(Path root, String frameworkVersion, boolean active) {
+        try {
+            Map<Path, String> buildFiles = new HashMap<>();
+            for (String buildFile : List.of(GRADLE_BUILD_FILE, MAVEN_BUILD_FILE)) {
+                Path file = root.resolve(buildFile);
+                if (Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) {
+                    buildFiles.put(file, Files.readString(file));
+                }
+            }
+            SecurityPolicyRepositoryFiles.writeAresVersion(root, frameworkVersion);
+            SecurityFrameworkState state = SecurityPolicyRepositoryFiles.evaluate(root);
+            if (active && state.status() == SecurityActivationStatus.MISCONFIGURED) {
+                for (Map.Entry<Path, String> buildFile : buildFiles.entrySet()) {
+                    FileUtils.writeStringToFile(buildFile.getKey().toFile(), buildFile.getValue(), StandardCharsets.UTF_8);
+                }
+                String details = state.policyFiles().stream().filter(policyFile -> policyFile.problem() != null)
+                        .map(policyFile -> policyFile.policyPath() + " (" + policyFile.problem() + ")").collect(Collectors.joining(", "));
+                throw versionIncompatible(frameworkVersion, details);
+            }
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -544,6 +580,11 @@ public class SecurityFrameworkService {
         if (state.status() == SecurityActivationStatus.INACTIVE) {
             SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, SecurityFrameworkRestorePoint.annotationStatesBeforeLastDeactivation(repository));
             state = SecurityPolicyRepositoryFiles.evaluate(root);
+        }
+        if (state.status() == SecurityActivationStatus.INACTIVE) {
+            // The test classes that used the sandbox before the deactivation are gone, and the others stay switched off as the instructor left them.
+            throw new BadRequestAlertException("No test class would use the sandbox after the activation. Switch on the @Policy annotation of a test class first.", ENTITY_NAME,
+                    "securityFrameworkNoActiveTestClass");
         }
         // A policy that uses fields the release does not know would otherwise be reported as not repairable, which hides the actual reason.
         requireCompatiblePolicyFiles(root, state, frameworkVersion);
