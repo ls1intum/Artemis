@@ -39,16 +39,44 @@ if (runtimeSources.some((source) => source.includes('--artemis-')) || artifactRu
 }
 
 const forbiddenAtRules = new Set(['custom-variant', 'import', 'source', 'theme']);
-const allowedLayers = new Set(['properties', 'tumaet-ui-cdk', 'tumaet-ui-theme']);
+const allowedLayers = new Set(['properties', 'tumaet-ui', 'tumaet-ui-cdk', 'tumaet-ui-theme']);
 stylesheet.walkAtRules((atRule) => {
     if (forbiddenAtRules.has(atRule.name)) {
         errors.push(`the compiled stylesheet contains @${atRule.name}`);
     }
-    if (atRule.name === 'layer' && !allowedLayers.has(atRule.params)) {
-        errors.push(`the compiled stylesheet contains unexpected @layer ${atRule.params}`);
+    if (atRule.name === 'layer') {
+        for (const layer of atRule.params.split(',').map((name) => name.trim())) {
+            if (!allowedLayers.has(layer)) {
+                errors.push(`the compiled stylesheet contains unexpected @layer ${layer}`);
+            }
+        }
     }
     if (atRule.name.endsWith('keyframes') && !atRule.params.startsWith('tumaet-')) {
         errors.push(`the compiled stylesheet contains unnamespaced keyframes ${atRule.params}`);
+    }
+});
+
+// A host overrides the package with a utility class of its own, which only works while every style of the package is in a
+// cascade layer. Outside a layer, a rule may only register or set custom properties.
+function isInLayer(node) {
+    for (let parent = node.parent; parent; parent = parent.parent) {
+        if (parent.type === 'atrule' && parent.name === 'layer') {
+            return true;
+        }
+    }
+    return false;
+}
+stylesheet.walkDecls((declaration) => {
+    const insideKeyframesOrProperty = (node) => {
+        for (let parent = node.parent; parent; parent = parent.parent) {
+            if (parent.type === 'atrule' && (parent.name.endsWith('keyframes') || parent.name === 'property')) {
+                return true;
+            }
+        }
+        return false;
+    };
+    if (!declaration.prop.startsWith('--') && !isInLayer(declaration) && !insideKeyframesOrProperty(declaration)) {
+        errors.push(`${declaration.parent.selector ?? declaration.parent.params}: ${declaration.prop} is outside a cascade layer`);
     }
 });
 

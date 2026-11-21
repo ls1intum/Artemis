@@ -38,9 +38,14 @@ $fluid-font-size-breakpoint: 1200px;
     }
 }
 
-// Third-party stylesheets that are loaded later (Apollon) use a layer named `components`. It is declared first, so the
-// element defaults still override it, as they did when they were not in a layer.
-@layer components, base;
+// The order of the cascade layers. A later layer overrides an earlier one, whatever the specificity of the selectors.
+// - `components`: third-party stylesheets that are loaded later (Apollon). Declared first, so the element defaults
+//   still override it, as they did when they were not in a layer.
+// - `base`: the element defaults below.
+// - `tumaet-ui-theme`, `tumaet-ui-cdk`, `tumaet-ui`: TUM AET UI. Its components override the element defaults.
+// - `utilities`: the Tailwind utilities of the application (declared in `tailwind.css`, which is loaded later).
+//   A utility class on a TUM AET UI component therefore overrides the style of the component.
+@layer components, base, tumaet-ui-theme, tumaet-ui-cdk, tumaet-ui;
 
 @layer base {
     :root {

@@ -1,24 +1,26 @@
-// Width and height are left to the host's layout classes on purpose: a size declared here would be unlayered and win
-// over a layered utility such as `h-4`.
-:host {
-    display: block;
-    border-radius: 0.25rem;
-    background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 10%, transparent);
-    animation: tumaet-ui-skeleton-pulse 1.2s ease-in-out infinite;
-}
-
-:host(.tumaet-ui-skeleton-circle) {
-    border-radius: 9999px;
-}
-
-@keyframes tumaet-ui-skeleton-pulse {
-    50% {
-        opacity: 0.5;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
+@layer tumaet-ui {
+    // Width and height are left to the host's layout classes on purpose: a size declared here would be unlayered and win
+    // over a layered utility such as `h-4`.
     :host {
-        animation: none;
+        display: block;
+        border-radius: 0.25rem;
+        background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 10%, transparent);
+        animation: tumaet-ui-skeleton-pulse 1.2s ease-in-out infinite;
+    }
+
+    :host(.tumaet-ui-skeleton-circle) {
+        border-radius: 9999px;
+    }
+
+    @keyframes tumaet-ui-skeleton-pulse {
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        :host {
+            animation: none;
+        }
     }
 }
