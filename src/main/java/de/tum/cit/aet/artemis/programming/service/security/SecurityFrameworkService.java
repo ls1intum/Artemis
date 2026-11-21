@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -20,11 +23,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -128,9 +130,9 @@ public class SecurityFrameworkService {
      * Records what a commit of this service did, also for the commits made while an exercise is imported. Activating looks up the last deactivation by it,
      * to restore the annotations as they were before.
      */
-    private static final String ACTION_TRAILER = "Security-Framework-Action: ";
+    static final String ACTION_TRAILER = "Security-Framework-Action: ";
 
-    private static final String DEACTIVATE_ACTION = "deactivate";
+    static final String DEACTIVATE_ACTION = "deactivate";
 
     /**
      * The Security Framework commits whose push processing has not completed, by exercise id and commit hash. An entry is added before the commit is pushed and removed only
@@ -465,7 +467,39 @@ public class SecurityFrameworkService {
             SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(repositoryRoot, false);
         }
         if (choice.frameworkVersion() != null) {
-            SecurityPolicyRepositoryFiles.writeAresVersion(repositoryRoot, choice.frameworkVersion());
+            pinVersionOfNewTestRepository(repositoryRoot, choice.frameworkVersion(), choice.action() == SecurityFrameworkAction.ACTIVATE);
+        }
+    }
+
+    /**
+     * Pins the chosen version. The check against the template before the exercise is created compares only the fields its policy uses, so a release whose
+     * rules the policy does not meet shows only once it is pinned: an active policy that the release cannot use is refused, and the build files are restored,
+     * so the template stays as it is.
+     *
+     * @param active whether the policy stays active; a deactivated policy is not used until it is activated, which checks it again
+     */
+    private static void pinVersionOfNewTestRepository(Path root, String frameworkVersion, boolean active) {
+        try {
+            Map<Path, String> buildFiles = new HashMap<>();
+            for (String buildFile : List.of(GRADLE_BUILD_FILE, MAVEN_BUILD_FILE)) {
+                Path file = root.resolve(buildFile);
+                if (Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) {
+                    buildFiles.put(file, Files.readString(file));
+                }
+            }
+            SecurityPolicyRepositoryFiles.writeAresVersion(root, frameworkVersion);
+            SecurityFrameworkState state = SecurityPolicyRepositoryFiles.evaluate(root);
+            if (active && state.status() == SecurityActivationStatus.MISCONFIGURED) {
+                for (Map.Entry<Path, String> buildFile : buildFiles.entrySet()) {
+                    FileUtils.writeStringToFile(buildFile.getKey().toFile(), buildFile.getValue(), StandardCharsets.UTF_8);
+                }
+                String details = state.policyFiles().stream().filter(policyFile -> policyFile.problem() != null)
+                        .map(policyFile -> policyFile.policyPath() + " (" + policyFile.problem() + ")").collect(Collectors.joining(", "));
+                throw versionIncompatible(frameworkVersion, details);
+            }
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -520,8 +554,13 @@ public class SecurityFrameworkService {
         SecurityPolicyRepositoryFiles.writeAresVersion(root, frameworkVersion);
         SecurityFrameworkState state = SecurityPolicyRepositoryFiles.evaluate(root);
         if (state.status() == SecurityActivationStatus.INACTIVE) {
-            SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, annotationStatesBeforeLastDeactivation(repository));
+            SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, SecurityFrameworkRestorePoint.annotationStatesBeforeLastDeactivation(repository));
             state = SecurityPolicyRepositoryFiles.evaluate(root);
+        }
+        if (state.status() == SecurityActivationStatus.INACTIVE) {
+            // The test classes that used the sandbox before the deactivation are gone, and the others stay switched off as the instructor left them.
+            throw new BadRequestAlertException("No test class would use the sandbox after the activation. Switch on the @Policy annotation of a test class first.", ENTITY_NAME,
+                    "securityFrameworkNoActiveTestClass");
         }
         // A policy that uses fields the release does not know would otherwise be reported as not repairable, which hides the actual reason.
         requireCompatiblePolicyFiles(root, state, frameworkVersion);
@@ -647,43 +686,6 @@ public class SecurityFrameworkService {
         }
         SecurityPolicyRepositoryFiles.deletePolicy(root);
         SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, false);
-    }
-
-    /**
-     * Finds how the annotations were set before the most recent deactivation that actually switched something off, i.e. whose parent commit had at least
-     * one active annotation. A test class is matched by its fully qualified name, so a class that replaced another one at the same path is not mistaken for
-     * it; a class that did not exist then is switched on.
-     *
-     * @return whether the annotations of a test class, by its fully qualified name, should be switched on; all of them if the exercise was never deactivated
-     *         by this service
-     */
-    private static Predicate<String> annotationStatesBeforeLastDeactivation(Repository repository) {
-        try (Git git = new Git(repository)) {
-            for (RevCommit commit : git.log().call()) {
-                if (commit.getParentCount() == 0 || !commit.getFullMessage().contains(ACTION_TRAILER + DEACTIVATE_ACTION)) {
-                    continue;
-                }
-                RevCommit parent;
-                try (RevWalk revWalk = new RevWalk(repository)) {
-                    parent = revWalk.parseCommit(commit.getParent(0));
-                }
-                if (SecurityFrameworkCommitFiles.evaluate(repository, parent.getTree()).status() == SecurityActivationStatus.UNSUPPORTED) {
-                    throw new BadRequestAlertException("The state before the last deactivation cannot be restored, because the tests used Ares in an unsupported way then.",
-                            ENTITY_NAME, "securityFrameworkRestorePointUnsupported");
-                }
-                Map<String, Boolean> states = SecurityPolicyRepositoryFiles.annotationStates(SecurityFrameworkCommitFiles.javaSources(repository, parent.getTree()));
-                if (states.containsValue(true)) {
-                    return testClass -> states.getOrDefault(testClass, true);
-                }
-            }
-            return _ -> true;
-        }
-        catch (GitAPIException | IOException e) {
-            // Switching every annotation on could override test classes an instructor switched off on purpose, so nothing is changed.
-            log.error("Could not read the history of {} to restore the annotations", repository.getLocalPath(), e);
-            throw new BadRequestAlertException("The state before the last deactivation cannot be read from the history of the tests repository.", ENTITY_NAME,
-                    "securityFrameworkRestorePointUnreadable");
-        }
     }
 
     /**
