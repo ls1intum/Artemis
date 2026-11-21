@@ -56,6 +56,7 @@ api/quiz-exercise-creation-update-resources.ts
 api/result-resources.ts
 api/rating-resources.ts
 api/grade-step-resources.ts
+api/admin-lti-configuration-resources.ts
 api/assessment-upload-resources.ts
 api/quiz-submission-resources.ts
 api/ingestion-browser-resources.ts
@@ -64,6 +65,7 @@ api/tutor-participation-resources.ts
 api/quiz-statistics-resources.ts
 api/hyperion-exercise-variant-resources.ts
 api/hyperion-problem-statement-resources.ts
+api/lti-resources.ts
 api/long-feedback-text-resources.ts
 api/admin-hyperion-generation-resources.ts
 api/online-unit-resources.ts
