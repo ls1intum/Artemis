@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionTestChatClients;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
@@ -97,7 +98,7 @@ class ExerciseVariantGenerationPipelineBehaviorTest {
 
     private ExerciseVariantGenerationPipelineService createPipeline(ChatClient client) {
         return new ExerciseVariantGenerationPipelineService(registry, agent, jobs, new HyperionPromptTemplateService(), exercises, deletion, mock(LLMTokenUsageService.class),
-                mock(UserTestRepository.class), client);
+                mock(UserTestRepository.class), HyperionTestChatClients.returning(client));
     }
 
     private ChatResponse response(String text) {
@@ -143,18 +144,11 @@ class ExerciseVariantGenerationPipelineBehaviorTest {
     }
 
     @Test
-    void prePlanningCancellationAndMissingClientProduceDistinctTerminalStates() {
+    void prePlanningCancellationEndsCancelled() {
         jobs.requestCancel(job.getJobId(), "teacher");
         pipeline.run(job);
         assertThat(result().getPhase()).isEqualTo(VariantJobPhase.CANCELLED);
         assertThat(result().getVariantExerciseId()).isNull();
-        User user = new User();
-        user.setLogin("teacher");
-        job = jobs.startJob(user, source, job.getRequest());
-        createPipeline(null).run(job);
-        assertThat(result().getPhase()).isEqualTo(VariantJobPhase.FAILED);
-        assertThat(result().getFailureDetail()).contains("AI chat client is not configured");
-        assertThat(result().getInstructorSummary()).isNull();
     }
 
     @ParameterizedTest

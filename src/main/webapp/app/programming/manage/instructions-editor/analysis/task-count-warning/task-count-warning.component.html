@@ -10,9 +10,9 @@
     </div>
 }
 <ng-template #tasksTooltipContent>
-    <div class="text-start w-full">
+    <div class="text-left w-full">
         @if (numOfTasks() > advisedMaxNumOfTasks()) {
-            <div class="text-start">
+            <div class="text-left">
                 <span jhiTranslate="artemisApp.programmingExercise.tasksAnalysis.numOfTasks" [translateValues]="{ number: numOfTasks(), limit: advisedMaxNumOfTasks() }"></span>
             </div>
         }

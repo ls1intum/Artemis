@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -38,7 +38,7 @@ class TelemetrySendingServiceTest {
 
     private final LocalCITelemetryApi agents = mock(LocalCITelemetryApi.class);
 
-    private final RestTemplate rest = new RestTemplate();
+    private final RestClient.Builder rest = RestClient.builder();
 
     private final MockRestServiceServer server = MockRestServiceServer.bindTo(rest).build();
 
@@ -62,7 +62,7 @@ class TelemetrySendingServiceTest {
     }
 
     private TelemetrySendingService sender(Optional<LocalCITelemetryApi> api) {
-        var sender = new TelemetrySendingService(env, rest, profiles, nodes, api);
+        var sender = new TelemetrySendingService(env, rest.build(), profiles, nodes, api);
         ReflectionTestUtils.setField(sender, "version", "10.0.0");
         ReflectionTestUtils.setField(sender, "serverUrl", "https://artemis.example");
         ReflectionTestUtils.setField(sender, "operator", "Operator");

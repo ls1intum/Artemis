@@ -1,4 +1,4 @@
-<div class="apollon-diagram-detail__header flex shrink-0 flex-wrap items-center gap-4! px-6! pt-6! pb-4!">
+<div class="apollon-diagram-detail__header flex shrink-0 flex-wrap items-center gap-4 px-6 pt-6 pb-4">
     <button type="button" tumAetUiButton severity="secondary" variant="text" size="small" data-testid="apollon-diagram-back" (click)="confirmExitDetailView(false)">
         <fa-icon [icon]="faArrowLeft" />
         <span jhiTranslate="artemisApp.apollonDiagram.back"></span>
@@ -46,7 +46,7 @@
     </div>
 </div>
 
-<div class="apollon-diagram-detail__canvas artemis-apollon-theme mx-6!">
+<div class="apollon-diagram-detail__canvas artemis-apollon-theme mx-6">
     <div #editorContainer class="apollon-diagram-detail__editor"></div>
 
     <!-- Apollon re-parents this cluster into its own top-right overlay region (see mountEditorActions). -->
@@ -85,7 +85,7 @@
     </div>
 </div>
 
-<div class="apollon-diagram-detail__footer flex shrink-0 flex-wrap items-center justify-end gap-2 px-6! pt-4! pb-6!">
+<div class="apollon-diagram-detail__footer flex shrink-0 flex-wrap items-center justify-end gap-2 px-6 pt-4 pb-6">
     <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" data-testid="apollon-diagram-cancel" (click)="confirmExitDetailView(true)">
         <span jhiTranslate="entity.action.cancel"></span>
     </button>

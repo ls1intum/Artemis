@@ -1,7 +1,7 @@
 <div>
     <h3
         id="general-information-title"
-        class="mb-[12px]! text-base! font-semibold!"
+        class="mb-[12px] text-base font-semibold"
         data-testid="exam-summary-heading"
         jhiTranslate="artemisApp.exam.examSummary.generalInformation"
     ></h3>
@@ -81,7 +81,7 @@
                             <span>{{ exam().examStudentReviewEnd | artemisDate }}</span>
                         }
                         @if (reviewIsOpen()) {
-                            <tumaet-ui-tag class="ms-2" severity="success"><span jhiTranslate="artemisApp.exam.studentReviewEnabled"></span></tumaet-ui-tag>
+                            <tumaet-ui-tag class="ms-2!" severity="success"><span jhiTranslate="artemisApp.exam.studentReviewEnabled"></span></tumaet-ui-tag>
                         }
                     </td>
                 </tr>

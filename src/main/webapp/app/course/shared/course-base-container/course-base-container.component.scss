@@ -98,10 +98,6 @@ a:not(.tumaet-ui-btn, .tab-link):hover {
     text-decoration: none !important;
 }
 
-.module-bg {
-    background-color: var(--module-bg);
-}
-
 @media print {
     .sidebar {
         display: none !important; /* Hide the sidebar */

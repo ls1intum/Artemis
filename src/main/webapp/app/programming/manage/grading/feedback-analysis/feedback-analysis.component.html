@@ -1,11 +1,11 @@
-<div class="m-4! flex flex-col gap-4!">
+<div class="m-4 flex flex-col gap-4">
     <h3 class="m-0 p-0" [jhiTranslate]="TRANSLATION_BASE + '.title'" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
     <tumaet-ui-table-layout
         [loading]="isLoading()"
         [empty]="!content().resultsOnPage?.length && !isLoading()"
         [emptyTitle]="selectedFiltersCount() > 0 || searchTerm() !== '' ? TRANSLATION_BASE + '.noDataFilter' : TRANSLATION_BASE + '.noData'"
     >
-        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
             <input
                 tumAetUiInput
                 tumAetUiInputSize="small"
@@ -23,7 +23,7 @@
                 [ngModel]="groupFeedback()"
                 (changed)="toggleGroupFeedback()"
             />
-            <label for="group-similar-feedback" class="m-0 flex items-center gap-1">
+            <label for="group-similar-feedback" class="m-0 items-center gap-1">
                 <span class="hidden md:inline" [jhiTranslate]="TRANSLATION_BASE + '.groupFeedback'"></span>
                 <fa-icon size="sm" [icon]="faCircleQuestion" [tumAetUiTooltip]="TRANSLATION_BASE + '.groupFeedbackTooltip' | artemisTranslate" />
             </label>

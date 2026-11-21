@@ -1,11 +1,11 @@
 <tumaet-ui-dialog [(visible)]="visible" [closable]="false" [closeOnEscape]="false" size="medium" [header]="'artemisApp.lti.initialization.header' | artemisTranslate">
     <span jhiTranslate="artemisApp.lti.initialization.body.welcome"></span>
-    <div class="mt-4! mb-4! flex items-center gap-2">
+    <div class="mt-4 mb-4 flex items-center gap-2">
         <label class="mb-0 flex-none min-[576px]:w-1/6" for="userLoginName"> <span jhiTranslate="artemisApp.lti.initialization.body.loginLabel"></span>: </label>
         <input id="userLoginName" type="text" tumAetUiInput class="min-w-0 flex-auto" disabled [ngModel]="loginName()" />
         <jhi-copy-to-clipboard-button [copyText]="loginName()" />
     </div>
-    <div class="mt-4! mb-4! flex items-center gap-2">
+    <div class="mt-4 mb-4 flex items-center gap-2">
         <label class="mb-0 flex-none min-[576px]:w-1/6" for="userPassword"> <span jhiTranslate="artemisApp.lti.initialization.body.passwordLabel"></span>: </label>
         <input id="userPassword" type="text" tumAetUiInput class="min-w-0 flex-auto" disabled [ngModel]="password()" />
         <jhi-copy-to-clipboard-button [copyText]="password()" />

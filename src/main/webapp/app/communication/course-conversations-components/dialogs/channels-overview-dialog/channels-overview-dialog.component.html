@@ -1,8 +1,8 @@
 <jhi-loading-indicator-container [isLoading]="isLoading()">
     @if (isInitialized) {
-        <div class="flex flex-col gap-4!" data-testid="channels-overview-dialog">
-            <div class="flex items-start justify-between gap-2 pt-4!">
-                <h4 class="m-0 text-xl! font-medium!">
+        <div class="flex flex-col gap-4" data-testid="channels-overview-dialog">
+            <div class="flex items-start justify-between gap-2 pt-4">
+                <h4 class="m-0 text-xl font-medium">
                     <span>{{ 'artemisApp.dialogs.channelOverview.title' | artemisTranslate: { courseTitle: course()?.title } }}</span>
                 </h4>
                 <button
@@ -11,7 +11,7 @@
                     severity="secondary"
                     variant="text"
                     rounded
-                    class="size-8 shrink-0 p-0"
+                    class="size-8 shrink-0 p-0!"
                     data-testid="dialog-close-button"
                     [attr.aria-label]="'entity.action.close' | artemisTranslate"
                     (click)="clear()"

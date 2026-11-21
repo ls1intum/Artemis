@@ -1,6 +1,6 @@
-<div class="flex flex-wrap items-start gap-8 p-6!">
+<div class="flex flex-wrap items-start gap-8 p-6">
     @if (timelineItems().length > 0) {
-        <div class="flex-initial flex flex-col gap-6!">
+        <div class="flex-initial flex flex-col gap-6">
             <h6 jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel"></h6>
             <jhi-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="timelineStatus.emit($event)" />
         </div>
@@ -9,7 +9,7 @@
         @if (exercisePartOfExerciseGroup()) {
             <jhi-exercise-group-date-notice (editGroupDates)="editGroupDates.emit()" />
         }
-        <div class="flex flex-col gap-4!" data-testid="assessment-section">
+        <div class="flex flex-col gap-4" data-testid="assessment-section">
             @let isInputDisplayedAccordingToCurrentModeRecord = isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
             <h6 jhiTranslate="artemisApp.assessment.assessment"></h6>
             @if (isEnablingToRunTestsAfterDueDateToggleVisible()) {

@@ -1,5 +1,5 @@
 <div class="notification-settings">
-    <div class="flex flex-wrap items-center justify-between gap-4!">
+    <div class="flex flex-wrap items-center justify-between gap-4">
         <h5 class="mb-0">
             <fa-icon [icon]="faBell" class="me-2" />
             <span jhiTranslate="artemisApp.courseNotification.setting.headline"></span>
@@ -22,7 +22,7 @@
     } @else {
         <div class="-mx-2 mt-2 flex flex-wrap items-stretch">
             @for (notificationSpecification of notificationSpecifications(); track notificationSpecification.identifier) {
-                <div class="mt-4! w-full max-w-full shrink-0 px-2 min-[768px]:w-1/2 min-[1200px]:w-1/3">
+                <div class="mt-4 w-full max-w-full shrink-0 px-2 min-[768px]:w-1/2 min-[1200px]:w-1/3">
                     <jhi-course-notification-setting-specification-card [settingSpecification]="notificationSpecification" (onOptionChanged)="optionChanged($event)" />
                 </div>
             }

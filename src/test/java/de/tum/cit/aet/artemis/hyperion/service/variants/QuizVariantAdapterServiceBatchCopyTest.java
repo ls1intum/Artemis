@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantPlacementDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionTestChatClients;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -62,7 +63,7 @@ class QuizVariantAdapterServiceBatchCopyTest {
 
         adapters = new QuizVariantAdapterService(quizExerciseRepository, quizExerciseImportService, mock(QuizExerciseService.class), mock(VariantPlacementService.class),
                 mock(ExerciseVariantJobService.class), JsonObjectMapper.get(), mock(HyperionPromptTemplateService.class), mock(LLMTokenUsageService.class),
-                mock(UserRepository.class), mock(ExerciseDeletionService.class), null);
+                mock(UserRepository.class), mock(ExerciseDeletionService.class), HyperionTestChatClients.returning(null));
 
         // Every load returns its own detached graph, which is what the repository does outside a transaction — the
         // whole point being that the two roles must not end up sharing one object.
