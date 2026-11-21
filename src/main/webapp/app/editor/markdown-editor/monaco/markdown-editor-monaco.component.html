@@ -12,20 +12,18 @@
     >
         <!-- Tab header row: tabs and (in edit mode) the action toolbar share one wrapping flex row. -->
         <div #actionPalette class="md-action-palette flex items-center flex-wrap gap-x-[0.1rem]">
-            <tumaet-ui-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" class="shrink-0 w-auto!">
-                <tumaet-ui-tab-list class="border-b-0!">
+            <tumaet-ui-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" class="shrink-0 w-auto">
+                <tumaet-ui-tab-list class="border-b-0">
                     @if (showEditButton()) {
-                        <tumaet-ui-tab [value]="TAB_EDIT" class="py-[0.1rem]! px-[0.5rem]! text-[0.9rem]! font-normal!"
-                            ><span jhiTranslate="entity.action.edit"></span
-                        ></tumaet-ui-tab>
+                        <tumaet-ui-tab [value]="TAB_EDIT" class="py-[0.1rem] px-[0.5rem] text-[0.9rem] font-normal"><span jhiTranslate="entity.action.edit"></span></tumaet-ui-tab>
                     }
                     @if (showVisualButton()) {
-                        <tumaet-ui-tab [value]="TAB_VISUAL" class="py-[0.1rem]! px-[0.5rem]! text-[0.9rem]! font-normal!"
+                        <tumaet-ui-tab [value]="TAB_VISUAL" class="py-[0.1rem] px-[0.5rem] text-[0.9rem] font-normal"
                             ><span jhiTranslate="entity.action.visual"></span
                         ></tumaet-ui-tab>
                     }
                     @if (showPreviewButton()) {
-                        <tumaet-ui-tab [value]="TAB_PREVIEW" class="py-[0.1rem]! px-[0.5rem]! text-[0.9rem]! font-normal!"
+                        <tumaet-ui-tab [value]="TAB_PREVIEW" class="py-[0.1rem] px-[0.5rem] text-[0.9rem] font-normal"
                             ><span jhiTranslate="entity.action.preview"></span
                         ></tumaet-ui-tab>
                     }

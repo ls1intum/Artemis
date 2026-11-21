@@ -201,7 +201,7 @@
                     </button>
                     <ng-template #sessionMenu>
                         <!-- Important: the menu's own unlayered `max-height: inherit` would otherwise beat this utility and let a long list grow to the viewport height. -->
-                        <tumaet-ui-menu class="w-[300px] max-h-[220px]! overflow-y-auto!">
+                        <tumaet-ui-menu class="w-[300px] max-h-[220px] overflow-y-auto!">
                             @for (group of sessionMenuGroups(); track group.labelKey) {
                                 <div role="group" [attr.aria-label]="group.labelKey | artemisTranslate">
                                     <div class="iris-chat__menu-group-label px-3 pt-2 pb-1 text-xs font-medium" aria-hidden="true" [jhiTranslate]="group.labelKey"></div>
@@ -446,7 +446,7 @@
                                             severity="secondary"
                                             variant="outlined"
                                             size="small"
-                                            class="iris-chat__suggestion flex-1 whitespace-normal!"
+                                            class="iris-chat__suggestion flex-1 whitespace-normal"
                                             [attr.aria-label]="suggestion"
                                             (click)="onSuggestionClick(suggestion)"
                                             [disabled]="isLoading()"

@@ -14,10 +14,10 @@
                             <th scope="col" jhiTranslate="artemisApp.featureUsage.column.feature"></th>
                             <th scope="col" jhiTranslate="artemisApp.featureUsage.column.modules"></th>
                             @if (section.key === 'onlyAutomatic') {
-                                <th scope="col" class="text-right!" jhiTranslate="artemisApp.featureUsage.column.automatic"></th>
-                                <th scope="col" class="text-right!" jhiTranslate="artemisApp.featureUsage.column.system"></th>
+                                <th scope="col" class="text-right" jhiTranslate="artemisApp.featureUsage.column.automatic"></th>
+                                <th scope="col" class="text-right" jhiTranslate="artemisApp.featureUsage.column.system"></th>
                             } @else if (section.key === 'noActions') {
-                                <th scope="col" class="text-right!" jhiTranslate="artemisApp.featureUsage.column.views"></th>
+                                <th scope="col" class="text-right" jhiTranslate="artemisApp.featureUsage.column.views"></th>
                             }
                             @if (section.key !== 'unused') {
                                 <th scope="col"><span class="sr-only" jhiTranslate="artemisApp.featureUsage.column.trend"></span></th>
@@ -27,13 +27,13 @@
                     <tbody>
                         @for (feature of section.features; track feature.feature) {
                             <tr [attr.data-testid]="'attention-row-' + feature.feature">
-                                <td class="text-muted-color">{{ areaTranslationKey(feature.area) | artemisTranslate }}</td>
+                                <td class="">{{ areaTranslationKey(feature.area) | artemisTranslate }}</td>
                                 <td>
                                     <span [tumAetUiTooltip]="featureTranslationKey(feature.feature, 'description') | artemisTranslate">{{
                                         featureTranslationKey(feature.feature, 'name') | artemisTranslate
                                     }}</span>
                                 </td>
-                                <td class="text-muted-color text-sm">{{ (feature.modules ?? []).join(', ') }}</td>
+                                <td class="text-sm">{{ (feature.modules ?? []).join(', ') }}</td>
                                 @if (section.key === 'onlyAutomatic') {
                                     <td class="text-right" data-testid="attention-automatic">{{ feature.automaticCount }}</td>
                                     <td class="text-right" data-testid="attention-system">{{ feature.systemCount }}</td>

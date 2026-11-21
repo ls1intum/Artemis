@@ -50,7 +50,7 @@
 } @else if (combinedSbom()) {
     <!-- Upgrade Recommendation Banner -->
     @if (versionInfo()?.updateAvailable) {
-        <tumaet-ui-message class="mb-6 block" [severity]="upgradeUrgency() === 'critical' ? 'error' : upgradeUrgency() === 'high' ? 'warn' : 'info'" data-testid="upgrade-banner">
+        <tumaet-ui-message class="mb-6" [severity]="upgradeUrgency() === 'critical' ? 'error' : upgradeUrgency() === 'high' ? 'warn' : 'info'" data-testid="upgrade-banner">
             <div class="flex items-center gap-4">
                 <fa-icon [icon]="faArrowUp" size="lg" />
                 <div class="grow">
@@ -173,7 +173,7 @@
 
     <!-- Filters -->
     <tumaet-ui-table-layout [empty]="filteredComponents().length === 0" emptyTitle="artemisApp.dependencies.noComponents">
-        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!" data-testid="filters-section">
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2" data-testid="filters-section">
             <div class="min-w-24 max-w-lg flex-1">
                 <tumaet-ui-icon-field [icon]="faSearch">
                     <input
@@ -192,7 +192,7 @@
             <tumaet-ui-button-group>
                 <tumaet-ui-button size="small" [severity]="selectedSource() === 'all' ? 'primary' : 'secondary'" (clicked)="updateSource('all')" data-testid="source-filter-all">
                     <span jhiTranslate="artemisApp.dependencies.sourceAll"></span>
-                    <tumaet-ui-tag class="ms-1!" severity="secondary" [value]="'' + totalComponentCount()" />
+                    <tumaet-ui-tag class="ms-1" severity="secondary" [value]="'' + totalComponentCount()" />
                 </tumaet-ui-button>
                 <tumaet-ui-button
                     [ariaLabel]="'artemisApp.dependencies.sourceServer' | artemisTranslate"
@@ -203,7 +203,7 @@
                 >
                     <fa-icon [icon]="faServer" class="me-1" />
                     <span class="hidden md:inline" jhiTranslate="artemisApp.dependencies.sourceServer"></span>
-                    <tumaet-ui-tag class="ms-1!" severity="secondary" [value]="'' + serverComponentCount()" />
+                    <tumaet-ui-tag class="ms-1" severity="secondary" [value]="'' + serverComponentCount()" />
                 </tumaet-ui-button>
                 <tumaet-ui-button
                     [ariaLabel]="'artemisApp.dependencies.sourceClient' | artemisTranslate"
@@ -214,7 +214,7 @@
                 >
                     <fa-icon [icon]="faDesktop" class="me-1" />
                     <span class="hidden md:inline" jhiTranslate="artemisApp.dependencies.sourceClient"></span>
-                    <tumaet-ui-tag class="ms-1!" severity="secondary" [value]="'' + clientComponentCount()" />
+                    <tumaet-ui-tag class="ms-1" severity="secondary" [value]="'' + clientComponentCount()" />
                 </tumaet-ui-button>
             </tumaet-ui-button-group>
             @if (vulnerabilities()?.totalVulnerabilities) {
@@ -347,7 +347,7 @@
         </table>
     </tumaet-ui-table-layout>
 } @else if (sbomUnavailable()) {
-    <tumaet-ui-message severity="info" class="block" data-testid="sbom-unavailable-message">
+    <tumaet-ui-message severity="info" class="" data-testid="sbom-unavailable-message">
         <div class="flex items-start gap-4">
             <fa-icon [icon]="faInfoCircle" size="lg" />
             <div>
@@ -358,7 +358,7 @@
         </div>
     </tumaet-ui-message>
 } @else {
-    <tumaet-ui-message severity="error" class="block" data-testid="sbom-load-error-message">
+    <tumaet-ui-message severity="error" class="" data-testid="sbom-load-error-message">
         <span jhiTranslate="artemisApp.dependencies.loadError"></span>
     </tumaet-ui-message>
 }

@@ -44,7 +44,7 @@
     }
 
     @if (statusLoadFailed()) {
-        <tumaet-ui-message severity="error" class="block" data-testid="hyperion-run-status-unavailable">
+        <tumaet-ui-message severity="error" class="" data-testid="hyperion-run-status-unavailable">
             <div class="flex min-w-0 flex-col gap-2">
                 <span jhiTranslate="artemisApp.hyperion.generation.run.statusUnavailable"></span>
                 @if (running()) {
@@ -146,7 +146,7 @@
     size="small"
 >
     <p>{{ 'artemisApp.hyperion.generationActivity.' + undoKey() + 'ConfirmMessage' | artemisTranslate }}</p>
-    <div tumAetUiDialogFooter class="flex justify-end gap-2!">
+    <div tumAetUiDialogFooter class="flex justify-end gap-2">
         <tumaet-ui-button severity="secondary" variant="outlined" (clicked)="dismissRevert()">
             <span jhiTranslate="entity.action.cancel"></span>
         </tumaet-ui-button>

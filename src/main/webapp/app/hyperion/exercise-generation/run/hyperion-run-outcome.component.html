@@ -5,7 +5,7 @@
     and wrong for a heading inside it - so it takes the same treatment from this component's own stylesheet instead.
 -->
 <section aria-labelledby="hyperion-run-outcome-title" data-testid="hyperion-run-outcome" [attr.data-severity]="view().severity">
-    <tumaet-ui-message [severity]="view().severity" class="block">
+    <tumaet-ui-message [severity]="view().severity" class="">
         <div class="flex min-w-0 flex-col gap-2">
             <!-- The verdict is the answer, so it is the largest thing on the page once a run is over. -->
             <h2 id="hyperion-run-outcome-title">{{ view().titleKey | artemisTranslate }}</h2>

@@ -473,10 +473,21 @@ UI classes, which a rule in the layer `base` cannot.
 // Smooth transition between themes. SVG is excluded: `background` is not rendered on SVG elements,
 // so the transition can never be seen there, yet it still marks every node of an SVG subtree as
 // running a paint transition - which is enough to keep a surface on a stale raster.
-*:not(svg, svg *) {
+// The rule is outside the layers for the elements of the application, where it has always overridden the transition
+// utilities. An element of TUM AET UI gets it from the layer `base` instead, so the transition that the component
+// declares for itself (a button, a toggle switch) still wins. `:where()` keeps the specificity of the selector.
+*:not(svg, svg *, :where([class*='tumaet'])) {
     transition:
         background-color 0.2s,
         background 0.2s;
+}
+
+@layer base {
+    *:not(svg, svg *) {
+        transition:
+            background-color 0.2s,
+            background 0.2s;
+    }
 }
 
 html.modeling-exercise-editor-scroll-snap {

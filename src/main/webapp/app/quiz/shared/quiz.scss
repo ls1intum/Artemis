@@ -82,6 +82,10 @@
 
     input {
         display: inline-block;
+    }
+
+    // The inputs of TUM AET UI components keep the width of the component.
+    input:not([class*='tumaet-ui-']) {
         width: 1rem;
     }
 
