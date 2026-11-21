@@ -1,12 +1,13 @@
-<div class="practice-quiz-container p-4 max-w-5xl mx-auto">
+<div class="practice-quiz-container p-4 max-w-4xl mx-auto">
     <!-- Header -->
     <div class="flex items-center justify-between border-b pb-4 mb-6">
         <div>
-            <h2 class="text-2xl font-bold flex items-center gap-2">
+            <h2 class="text-2xl font-bold flex items-center gap-2.5">
                 <fa-icon [icon]="faLightbulb" class="text-state-warning" />
-                Smart Practice Quizzes
+                <span>Smart Quiz</span>
+                <span class="text-xs font-normal px-2.5 py-0.5 rounded-full bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle"> exploratory </span>
             </h2>
-            <p class="text-sm text-muted-color mt-1">Formative adaptive practice tailored to your course concepts. These quizzes do not affect your grade.</p>
+            <p class="text-sm text-muted-color mt-1">Practice course concepts on-demand. These quizzes do not affect your grade.</p>
         </div>
         @if (state() !== 'OVERVIEW') {
             <button type="button" class="btn btn-outline-secondary btn-sm flex items-center gap-2" (click)="backToOverview()">
@@ -28,72 +29,50 @@
     @switch (state()) {
         <!-- 1. OVERVIEW / DASHBOARD STATE -->
         @case ('OVERVIEW') {
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <!-- Action Hero Card -->
-                <div class="md:col-span-2 bg-surface-card border border-surface-200 rounded-xl p-6 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-100 text-primary mb-3">
-                            <fa-icon [icon]="faAward" />
-                            Smart Practice Engine
-                        </span>
-                        <h3 class="text-xl font-bold text-color mb-2">Ready to test your knowledge?</h3>
-                        <p class="text-sm text-muted-color mb-4">Generate an on-demand practice quiz dynamically sampled from the course AI Question Pool.</p>
-                    </div>
-                    <div>
-                        <button
-                            type="button"
-                            class="btn btn-primary px-5 py-2.5 rounded-lg flex items-center gap-2 text-base font-semibold shadow hover:shadow-md transition"
-                            [disabled]="isLoading()"
-                            (click)="startNewQuiz()"
-                        >
-                            <fa-icon [icon]="faPlay" />
-                            <span>{{ isLoading() ? 'Generating Quiz...' : 'Generate Quiz' }}</span>
-                        </button>
-                    </div>
+            <!-- Minimalist Action Card -->
+            <div class="bg-surface-card border border-surface-200 rounded-xl p-6 shadow-sm mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-lg font-bold text-color mb-1">Generate a Practice Quiz</h3>
+                    <p class="text-sm text-muted-color mb-0">Questions are dynamically sampled from the course question pool.</p>
                 </div>
-
-                <!-- Info Card -->
-                <div class="border border-surface-200 rounded-xl p-6 bg-surface-card shadow-sm flex flex-col justify-center">
-                    <h4 class="text-base font-semibold text-color mb-2 flex items-center gap-2">
-                        <fa-icon [icon]="faClock" class="text-primary" />
-                        Safe Practice Space
-                    </h4>
-                    <p class="text-xs text-muted-color leading-relaxed">
-                        • Zero impact on your official course grade.<br />
-                        • Solutions and detailed explanations revealed right after submission.<br />
-                        • Review past sessions anytime to track your progress.
-                    </p>
-                </div>
+                <button
+                    type="button"
+                    class="btn btn-primary px-5 py-2.5 rounded-lg flex items-center gap-2 font-semibold shadow-sm hover:shadow transition shrink-0"
+                    [disabled]="isLoading()"
+                    (click)="startNewQuiz()"
+                >
+                    <fa-icon [icon]="faPlay" />
+                    <span>{{ isLoading() ? 'Generating...' : 'Generate Quiz' }}</span>
+                </button>
             </div>
 
             <!-- Past Sessions Section -->
             <div class="bg-surface-card border border-surface-200 rounded-xl p-6 shadow-sm">
-                <h3 class="text-lg font-bold text-color mb-4 flex items-center gap-2">
+                <h3 class="text-base font-bold text-color mb-4 flex items-center gap-2">
                     <fa-icon [icon]="faHistory" class="text-muted-color" />
-                    Your Practice History
+                    Past Quizzes
                 </h3>
 
                 @if (isLoading()) {
                     <div class="text-center py-8 text-muted-color">
                         <span class="spinner-border spinner-border-sm me-2"></span>
-                        Loading sessions...
+                        Loading...
                     </div>
                 } @else if (pastSessions().length === 0) {
-                    <div class="text-center py-10 bg-surface-50 rounded-lg border border-dashed border-surface-200">
-                        <p class="text-muted-color text-sm mb-3">No practice sessions completed yet.</p>
-                        <button type="button" class="btn btn-outline-primary btn-sm" (click)="startNewQuiz()">Start your first session</button>
+                    <div class="text-center py-8 bg-surface-50 rounded-lg border border-dashed border-surface-200">
+                        <p class="text-muted-color text-sm mb-0">No past quizzes completed yet. Click "Generate Quiz" to begin.</p>
                     </div>
                 } @else {
                     <div class="overflow-x-auto">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Session ID</th>
-                                    <th>Started At</th>
+                                    <th>#</th>
+                                    <th>Date</th>
                                     <th>Status</th>
                                     <th>Score</th>
                                     <th>Percentage</th>
-                                    <th class="text-end">Actions</th>
+                                    <th class="text-end">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -147,7 +126,7 @@
                     <div class="bg-surface-50 border border-surface-200 rounded-lg p-4 flex items-center justify-between">
                         <div>
                             <span class="text-xs uppercase font-bold tracking-wider text-primary">Practice Session Active</span>
-                            <p class="text-sm text-color font-medium mt-0.5">{{ session.questions.length }} Questions to solve. Select your answers below.</p>
+                            <p class="text-sm text-color font-medium mt-0.5">{{ session.questions.length }} Questions to solve.</p>
                         </div>
                         <button type="button" class="btn btn-success px-4 py-2 font-semibold flex items-center gap-2" [disabled]="isSubmitting()" (click)="submitQuiz()">
                             <fa-icon [icon]="faCheck" />
@@ -161,7 +140,7 @@
                             <div class="card-header bg-surface-50 border-b border-surface-200 py-3 px-5 flex items-center justify-between">
                                 <span class="font-bold text-color">Question {{ i + 1 }}: {{ q.title || 'Practice Question' }}</span>
                                 <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle text-xs">
-                                    {{ q.points ?? 1 }} {{ (q.points ?? 1) === 1 ? 'Point' : 'Points' }}
+                                    {{ q.difficulty || 'MEDIUM' }}
                                 </span>
                             </div>
 
@@ -212,7 +191,7 @@
                         <button type="button" class="btn btn-outline-secondary" (click)="backToOverview()">Cancel</button>
                         <button type="button" class="btn btn-success px-6 py-2.5 font-bold flex items-center gap-2 shadow" [disabled]="isSubmitting()" (click)="submitQuiz()">
                             <fa-icon [icon]="faCheck" />
-                            <span>{{ isSubmitting() ? 'Submitting...' : 'Submit Answers & See Solutions' }}</span>
+                            <span>{{ isSubmitting() ? 'Submitting...' : 'Submit Answers' }}</span>
                         </button>
                     </div>
                 </div>
@@ -251,20 +230,7 @@
                     @for (item of review.questions; track item.question.id; let i = $index) {
                         <div class="card shadow-sm border border-surface-200 rounded-xl overflow-hidden">
                             <div class="card-header bg-surface-50 border-b border-surface-200 py-3 px-5 flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-color">Question {{ i + 1 }}: {{ item.question.title || 'Practice Question' }}</span>
-                                    <span
-                                        class="badge text-xs"
-                                        [class.bg-purple-subtle]="item.isAdaptive"
-                                        [class.text-purple]="item.isAdaptive"
-                                        [class.border-purple-subtle]="item.isAdaptive"
-                                        [class.bg-blue-subtle]="!item.isAdaptive"
-                                        [class.text-blue]="!item.isAdaptive"
-                                        [class.border-blue-subtle]="!item.isAdaptive"
-                                    >
-                                        {{ item.isAdaptive ? 'Adaptive Item' : 'Baseline Item' }}
-                                    </span>
-                                </div>
+                                <span class="font-bold text-color">Question {{ i + 1 }}: {{ item.question.title || 'Practice Question' }}</span>
                                 <div>
                                     <span class="badge font-bold px-3 py-1.5" [class.bg-success]="(item.score ?? 0) > 0" [class.bg-danger]="(item.score ?? 0) === 0">
                                         {{ item.score ?? 0 | number: '1.0-1' }} / {{ item.question.points ?? 1 | number: '1.0-1' }} P
@@ -319,7 +285,7 @@
 
                     <!-- Bottom Return Action -->
                     <div class="flex justify-center pt-4">
-                        <button type="button" class="btn btn-outline-secondary px-6 py-2.5 font-semibold" (click)="backToOverview()">Back to Practice Overview</button>
+                        <button type="button" class="btn btn-outline-secondary px-6 py-2.5 font-semibold" (click)="backToOverview()">Back to Overview</button>
                     </div>
                 </div>
             }

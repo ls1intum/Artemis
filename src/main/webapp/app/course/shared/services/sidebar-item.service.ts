@@ -190,7 +190,7 @@ export class CourseSidebarItemService {
             routerLink: 'smart-quizzes',
             icon: faLightbulb,
             iconColor: '#f59e0b',
-            title: 'Smart Practice',
+            title: 'Smart Quizzes',
             translation: 'artemisApp.courseOverview.menu.smartQuizzes',
             hidden: false,
         };
