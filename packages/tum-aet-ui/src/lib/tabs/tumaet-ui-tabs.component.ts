@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, model } from '@angular/core';
 import { TabContent, TabPanel, Tabs } from '@angular/aria/tabs';
-import { TumAetUiTabsService } from './tumaet-ui-tabs.service';
+import { TumAetUiTabsSelectedColor, TumAetUiTabsService, TumAetUiTabsSize, TumAetUiTabsSurface } from './tumaet-ui-tabs.service';
 
 /**
  * Coordinates an accessible tab list with its associated tab panels.
@@ -32,8 +32,15 @@ export class TumAetUiTabsComponent {
 
     /** Value shared by the active tab and tab panel. */
     readonly value = model<number | string>();
+    /** `small` tabs use the small font size and tighter padding, to fit a compact header such as the title row of a panel. */
+    readonly size = input<TumAetUiTabsSize>('medium');
+    /** Whether the selected tab's label is in the `accent` color or the `text` color; the indicator below marks it either way. */
+    readonly selectedColor = input<TumAetUiTabsSelectedColor>('accent');
+    /** The surface the tab list sits on: the `content` background or the `muted` one, which its scroll buttons blend into. */
+    readonly surface = input<TumAetUiTabsSurface>('content');
 
     constructor() {
         this.tabsService.register(this.value, (selected) => this.value.set(selected));
+        this.tabsService.registerAppearance({ size: this.size, selectedColor: this.selectedColor, surface: this.surface });
     }
 }

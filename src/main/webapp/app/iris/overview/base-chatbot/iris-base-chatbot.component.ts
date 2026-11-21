@@ -166,6 +166,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly clipboard = inject(Clipboard);
     private readonly onboardingService = inject(IrisOnboardingService);
     private readonly irisChatHttpService = inject(IrisChatHttpService);
+    private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
     private readonly reducedMotionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     protected readonly reducedMotion = signal(this.reducedMotionQuery?.matches ?? false);
@@ -441,6 +442,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isFocused = signal(false);
     private cycleIntervalId: ReturnType<typeof setInterval> | undefined;
     private cycleFadeTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    private focusAfterAcceptanceTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
     readonly currentPlaceholder = computed(() => {
         const labels = this.interpolatedLabels();
@@ -702,6 +704,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Focus on message textarea after initialization
         const focusTimeoutId = setTimeout(() => this.focusChatInput(), 150);
         this.destroyRef.onDestroy(() => clearTimeout(focusTimeoutId));
+        this.destroyRef.onDestroy(() => clearTimeout(this.focusAfterAcceptanceTimeoutId));
         this.destroyRef.onDestroy(() => this.resetLiveAssistantDraftState());
         this.destroyRef.onDestroy(() => {
             if (this.draftSwapScrollRafId !== undefined) {
@@ -852,14 +855,20 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     private focusInputAfterAcceptance() {
-        setTimeout(() => this.focusChatInput(), 150);
+        this.focusAfterAcceptanceTimeoutId = setTimeout(() => this.focusChatInput(), 150);
     }
 
+    /**
+     * Focuses the chat input unless the user is working outside the chat, e.g. in the tab list that opened it or in the
+     * editor: taking the focus there would break their keyboard navigation.
+     */
     private focusChatInput(): void {
         const input = this.messageTextarea()?.nativeElement ?? this.acceptButton()?.nativeElement;
+        const focused = document.activeElement;
+        const focusIsElsewhere = !!focused && focused !== document.body && !this.elementRef.nativeElement.contains(focused);
         // CDK dialogs hide the page from assistive technology. A delayed chat update must not take
         // focus back from the welcome dialog (or another modal) into that hidden page.
-        if (input && !input.closest('[aria-hidden="true"]')) {
+        if (input && !focusIsElsewhere && !input.closest('[aria-hidden="true"]')) {
             input.focus();
         }
     }
