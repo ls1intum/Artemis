@@ -255,6 +255,29 @@ describe('SecurityPermissionDialogComponent', () => {
         expect(saved).toEqual([]);
     });
 
+    it('names a missing command and an invalid thread class', () => {
+        open('commands');
+        comp.command.set(' , ');
+        expect(comp.problem()).toBe(PROBLEM + 'commandRequired');
+        comp.command.set('python3');
+        expect(comp.problem()).toBeUndefined();
+
+        open('threads');
+        comp.threadClass.set('not a class');
+        expect(comp.problem()).toBe(PROBLEM + 'className');
+        comp.maxThreadsText.set('2');
+        comp.threadClass.set('java.lang.Thread');
+        expect(comp.problem()).toBeUndefined();
+    });
+
+    it('keeps the spaces inside an entry and joins quoted and unquoted text', () => {
+        expect(splitList('a  b, c')).toEqual(['a  b', 'c']);
+        expect(splitList('pre "quoted" post')).toEqual(['pre quoted post']);
+        expect(splitList('"a" , "" , b')).toEqual(['a', 'b']);
+        expect(splitList('""""')).toEqual(['"']);
+        expect(splitList('')).toEqual([]);
+    });
+
     it('splits lists and arguments', () => {
         expect(splitList(' a , ,b ')).toEqual(['a', 'b']);
         expect(splitList(' "a,b.csv" , " c " ,d e, "x""y"')).toEqual(['a,b.csv', ' c ', 'd e', 'x"y']);

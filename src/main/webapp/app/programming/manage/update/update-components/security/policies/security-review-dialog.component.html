@@ -25,7 +25,7 @@
                             <tumaet-ui-tag severity="danger" size="sm" [value]="'−' + diff.removed" />
                         </span>
                     </summary>
-                    <div class="sp-diff-scroll" role="region" [tabindex]="scrollableRegionTabIndex" [attr.aria-label]="prefix + 'diffOf' | artemisTranslate: { file: diff.path }">
+                    <section class="sp-diff-scroll" [tabindex]="scrollableRegionTabIndex" [attr.aria-label]="prefix + 'diffOf' | artemisTranslate: { file: diff.path }">
                         <div class="sp-diff">
                             <div class="sp-diff-head">
                                 <span></span>
@@ -79,7 +79,7 @@
                                 }
                             }
                         </div>
-                    </div>
+                    </section>
                 </details>
             }
             @if (assignments().length) {

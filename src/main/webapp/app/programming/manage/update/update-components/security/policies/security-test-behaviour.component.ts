@@ -149,11 +149,7 @@ export class SecurityTestBehaviourComponent {
     }
 
     protected setReplaceExceptions(enabled: boolean): void {
-        if (enabled) {
-            this.update('privilegedExceptions', { enabled: true, failureMessage: this.privilegedExceptions()?.failureMessage });
-        } else {
-            this.update('privilegedExceptions', this.offValue('privilegedExceptions'));
-        }
+        this.update('privilegedExceptions', enabled ? { enabled: true, failureMessage: this.privilegedExceptions()?.failureMessage } : this.offValue('privilegedExceptions'));
     }
 
     protected setFailureMessage(message: string): void {
@@ -162,15 +158,16 @@ export class SecurityTestBehaviourComponent {
     }
 
     protected setHideTests(hidden: boolean): void {
-        if (hidden) {
-            const from = dayjs().startOf('minute');
-            this.update('hiddenTests', {
-                hiddenFrom: this.hiddenTests()?.hiddenFrom ?? formatAresDate(from),
-                hiddenUntil: this.hiddenTests()?.hiddenUntil ?? formatAresDate(from.add(7, 'day').endOf('day').startOf('minute')),
-            });
-        } else {
-            this.update('hiddenTests', undefined);
-        }
+        this.update('hiddenTests', hidden ? this.hiddenPeriod() : undefined);
+    }
+
+    /** The current hidden period, or one from now until the end of the seventh day if the tests are not hidden yet. */
+    private hiddenPeriod(): NonNullable<SecurityTestBehavior['hiddenTests']> {
+        const from = dayjs().startOf('minute');
+        return {
+            hiddenFrom: this.hiddenTests()?.hiddenFrom ?? formatAresDate(from),
+            hiddenUntil: this.hiddenTests()?.hiddenUntil ?? formatAresDate(from.add(7, 'day').endOf('day').startOf('minute')),
+        };
     }
 
     protected onHiddenDateChange(field: 'hiddenFrom' | 'hiddenUntil', event: Event): void {
@@ -227,11 +224,10 @@ export class SecurityTestBehaviourComponent {
     }
 
     protected setMirrorOutput(mirrored: boolean): void {
-        if (mirrored) {
-            this.update('outputMirroring', { mirrored: true, maximumCharacters: this.outputMirroring()?.maximumCharacters ?? DEFAULT_MAXIMUM_CHARACTERS });
-        } else {
-            this.update('outputMirroring', this.offValue('outputMirroring'));
-        }
+        this.update(
+            'outputMirroring',
+            mirrored ? { mirrored: true, maximumCharacters: this.outputMirroring()?.maximumCharacters ?? DEFAULT_MAXIMUM_CHARACTERS } : this.offValue('outputMirroring'),
+        );
     }
 
     /**

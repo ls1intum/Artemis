@@ -98,7 +98,7 @@ export class SecurityTestCasesComponent {
 
     readonly assignedPackages = computed<PackageEntries[]>(() => {
         const policy = this.policy();
-        const state = (entry: string): EntryState => (!policy.tests.includes(entry) ? 'removed' : policy.baseTests.includes(entry) ? 'committed' : 'new');
+        const state = (entry: string): EntryState => entryState(policy.tests.includes(entry), policy.baseTests.includes(entry));
         // A removed test case whose whole class is assigned now still uses the policy, so it is not listed as removed.
         const entries = [...policy.tests, ...policy.baseTests.filter((entry) => !policy.tests.includes(entry) && !policy.tests.includes(testClassOf(entry)))];
         const byClass = new Map<string, ClassEntries>();
@@ -129,8 +129,7 @@ export class SecurityTestCasesComponent {
         return names.map((qualifiedName) => {
             const dot = qualifiedName.lastIndexOf('.');
             const isFromTests = fromTests.includes(qualifiedName);
-            const state: EntryState =
-                isFromTests || policy.extraClasses.includes(qualifiedName) ? (isFromTests || policy.baseExtraClasses.includes(qualifiedName) ? 'committed' : 'new') : 'removed';
+            const state = entryState(isFromTests || policy.extraClasses.includes(qualifiedName), isFromTests || policy.baseExtraClasses.includes(qualifiedName));
             return { qualifiedName, simpleName: qualifiedName.substring(dot + 1), packageName: dot >= 0 ? qualifiedName.substring(0, dot) : '', fromTests: isFromTests, state };
         });
     });
@@ -180,13 +179,16 @@ export class SecurityTestCasesComponent {
         this.assignmentChange.emit({ tests: this.policy().tests, extraClasses: [...this.policy().extraClasses, qualifiedName] });
     }
 
-    readonly removeHeader = computed<SecurityTranslatable>(() => ({
-        key: `${PREFIX}.remove.${this.removing()?.kind === 'class' ? 'classTitle' : this.removing()?.value.includes(TEST_CASE_SEPARATOR) ? 'caseTitle' : 'wholeClassTitle'}`,
-    }));
-    readonly removeQuestion = computed<SecurityTranslatable>(() => ({
-        key: `${PREFIX}.remove.${this.removing()?.kind === 'class' ? 'classQuestion' : this.removing()?.value.includes(TEST_CASE_SEPARATOR) ? 'caseQuestion' : 'wholeClassQuestion'}`,
-        params: { policy: this.policy().name },
-    }));
+    /** What the confirmation removes: a declared test class, a test case or a whole test class. */
+    private readonly removedTarget = computed<'class' | 'case' | 'wholeClass'>(() => {
+        const removing = this.removing();
+        if (removing?.kind === 'class') {
+            return 'class';
+        }
+        return removing?.value.includes(TEST_CASE_SEPARATOR) ? 'case' : 'wholeClass';
+    });
+    readonly removeHeader = computed<SecurityTranslatable>(() => ({ key: `${PREFIX}.remove.${this.removedTarget()}Title` }));
+    readonly removeQuestion = computed<SecurityTranslatable>(() => ({ key: `${PREFIX}.remove.${this.removedTarget()}Question`, params: { policy: this.policy().name } }));
     readonly removeWarning = computed<SecurityTranslatable | undefined>(() => {
         const removing = this.removing();
         if (!removing) {
@@ -203,4 +205,12 @@ export class SecurityTestCasesComponent {
             params: { testClass: simpleName },
         };
     });
+}
+
+/** @returns how an entry differs from the committed policy: removed if the working policy no longer has it, new if only the working policy has it */
+function entryState(inWorkingPolicy: boolean, inCommittedPolicy: boolean): EntryState {
+    if (!inWorkingPolicy) {
+        return 'removed';
+    }
+    return inCommittedPolicy ? 'committed' : 'new';
 }

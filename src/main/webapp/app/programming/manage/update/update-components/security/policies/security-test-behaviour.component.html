@@ -7,7 +7,8 @@
                 <span class="inline-flex items-center gap-2">
                     <span [jhiTranslate]="prefix + 'tab.' + tab"></span>
                     @if (uncommittedTabs().has(tab)) {
-                        <span class="sp-dot" [attr.aria-label]="prefix + 'uncommittedMark' | artemisTranslate" role="img"></span>
+                        <span class="sp-dot" aria-hidden="true"></span>
+                        <span class="sr-only" [jhiTranslate]="prefix + 'uncommittedMark'"></span>
                     }
                 </span>
             </tumaet-ui-tab>
@@ -127,7 +128,7 @@
             </div>
             <span class="sp-label sp-mut" [jhiTranslate]="prefix + 'timelineCaption'"></span>
             @if (hiddenTests()) {
-                <div class="sp-timeline-wrap" role="img" [attr.aria-label]="prefix + 'timelineLabel' | artemisTranslate: { from: hiddenFromInput(), until: hiddenUntilInput() }">
+                <figure class="sp-timeline-wrap" [attr.aria-label]="prefix + 'timelineLabel' | artemisTranslate: { from: hiddenFromInput(), until: hiddenUntilInput() }">
                     <div class="sp-timeline">
                         <div class="sp-timeline-feedback" [jhiTranslate]="prefix + 'feedback'"></div>
                         <div class="sp-timeline-hidden" [jhiTranslate]="prefix + 'hidden'"></div>
@@ -135,11 +136,11 @@
                     </div>
                     <span class="sp-tick" style="left: 28.571%"></span>
                     <span class="sp-tick" style="left: 71.429%"></span>
-                </div>
+                </figure>
             } @else {
-                <div class="sp-timeline sp-timeline-single" role="img" [attr.aria-label]="prefix + 'timelineAlways' | artemisTranslate">
+                <figure class="sp-timeline sp-timeline-single" [attr.aria-label]="prefix + 'timelineAlways' | artemisTranslate">
                     <div class="sp-timeline-feedback" [jhiTranslate]="prefix + 'feedback'"></div>
-                </div>
+                </figure>
             }
             <div class="sp-marks" [class.sp-dimmed]="!hiddenTests()">
                 <div class="sp-stack">

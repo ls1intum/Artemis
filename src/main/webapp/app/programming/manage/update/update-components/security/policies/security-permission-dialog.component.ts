@@ -167,72 +167,78 @@ export class SecurityPermissionDialogComponent {
 
     /** The translation key of the first problem of the fields, or undefined if the rows can be saved. */
     readonly problem = computed<string | undefined>(() => {
-        const prefix = `${ROW_PREFIX}problem.`;
+        const problem = this.fieldProblem() ?? this.duplicateProblem();
+        return problem === undefined ? undefined : `${ROW_PREFIX}problem.${problem}`;
+    });
+
+    /** @returns the first problem of the fields of the category; undefined if they are valid */
+    private fieldProblem(): string | undefined {
         switch (this.kind()) {
             case 'files':
-                if (!this.isEditing() && splitList(this.path()) === undefined) {
-                    return prefix + 'listQuote';
-                }
-                if (!this.rows().length || this.rows().some((row) => !(row as SecurityFilePermission).path.trim())) {
-                    return prefix + 'pathRequired';
-                }
-                if (this.rows().some((row) => UNSUPPORTED_CHARACTERS.test((row as SecurityFilePermission).path))) {
-                    return prefix + 'pathCharacters';
-                }
-                break;
+                return this.filesProblem();
             case 'network':
-                if (!this.host() || /\s/.test(this.host())) {
-                    return prefix + 'hostRequired';
-                }
-                if (!isWholeNumberWithin(this.port(), 0, MAX_PORT)) {
-                    return prefix + 'portRange';
-                }
-                break;
+                return this.networkProblem();
             case 'commands':
-                if (!this.isEditing() && splitList(this.command()) === undefined) {
-                    return prefix + 'listQuote';
-                }
-                if (!this.rows().length || this.rows().some((row) => !(row as SecurityCommandPermission).command.trim())) {
-                    return prefix + 'commandRequired';
-                }
-                if (!splitArguments(this.argumentsText())) {
-                    return prefix + 'argumentsQuote';
-                }
-                if (
-                    this.rows().some((row) =>
-                        [(row as SecurityCommandPermission).command, ...((row as SecurityCommandPermission).arguments ?? [])].some((part) => UNSUPPORTED_CHARACTERS.test(part)),
-                    )
-                ) {
-                    return prefix + 'commandCharacters';
-                }
-                break;
+                return this.commandsProblem();
             case 'threads':
-                if (!isQualifiedName(this.threadClass().trim()) && !THREAD_TOKENS.test(this.threadClass().trim())) {
-                    return prefix + 'className';
-                }
-                if (!isWholeNumberWithin(this.maxThreads(), 1, MAX_JAVA_INT)) {
-                    return prefix + 'threadCount';
-                }
-                break;
+                return this.threadsProblem();
             case 'packages':
-                if (!isQualifiedName(this.packageName().trim())) {
-                    return prefix + 'packageName';
-                }
-                break;
+                return isQualifiedName(this.packageName().trim()) ? undefined : 'packageName';
             default:
-                break;
+                return undefined;
         }
+    }
+
+    private filesProblem(): string | undefined {
+        if (!this.isEditing() && splitList(this.path()) === undefined) {
+            return 'listQuote';
+        }
+        const paths = this.rows().map((row) => (row as SecurityFilePermission).path);
+        if (!paths.length || paths.some((path) => !path.trim())) {
+            return 'pathRequired';
+        }
+        return paths.some((path) => UNSUPPORTED_CHARACTERS.test(path)) ? 'pathCharacters' : undefined;
+    }
+
+    private networkProblem(): string | undefined {
+        if (!this.host() || /\s/.test(this.host())) {
+            return 'hostRequired';
+        }
+        return isWholeNumberWithin(this.port(), 0, MAX_PORT) ? undefined : 'portRange';
+    }
+
+    private commandsProblem(): string | undefined {
+        if (!this.isEditing() && splitList(this.command()) === undefined) {
+            return 'listQuote';
+        }
+        const commands = this.rows().map((row) => row as SecurityCommandPermission);
+        if (!commands.length || commands.some((command) => !command.command.trim())) {
+            return 'commandRequired';
+        }
+        if (!splitArguments(this.argumentsText())) {
+            return 'argumentsQuote';
+        }
+        return commands.some((command) => [command.command, ...(command.arguments ?? [])].some((part) => UNSUPPORTED_CHARACTERS.test(part))) ? 'commandCharacters' : undefined;
+    }
+
+    private threadsProblem(): string | undefined {
+        const threadClass = this.threadClass().trim();
+        if (!isQualifiedName(threadClass) && !THREAD_TOKENS.test(threadClass)) {
+            return 'className';
+        }
+        return isWholeNumberWithin(this.maxThreads(), 1, MAX_JAVA_INT) ? undefined : 'threadCount';
+    }
+
+    /** @returns a problem if two of the rows are the same, or one of them is a row of the policy other than the one that is edited */
+    private duplicateProblem(): string | undefined {
         const batchKeys = this.rows().map((row) => rowKey(this.kind(), row));
         if (new Set(batchKeys).size < batchKeys.length) {
-            return prefix + 'duplicate';
+            return 'duplicate';
         }
         const edited = this.editing();
         const editedKey = edited ? rowKey(this.kind(), edited) : undefined;
-        if (this.rows().some((row) => rowKey(this.kind(), row) !== editedKey && this.existingKeys().has(rowKey(this.kind(), row)))) {
-            return prefix + 'duplicate';
-        }
-        return undefined;
-    });
+        return batchKeys.some((key) => key !== editedKey && this.existingKeys().has(key)) ? 'duplicate' : undefined;
+    }
 
     readonly canSave = computed(() => !this.grantsNothing() && this.problem() === undefined);
 
@@ -354,47 +360,70 @@ export class SecurityPermissionDialogComponent {
  * @returns the entries without the spaces around them, or undefined if a double quote is not closed
  */
 export function splitList(text: string): string[] | undefined {
-    const entries: string[] = [];
     // An entry is the quoted text, kept as it is, between the unquoted text before and after it, whose surrounding spaces are dropped.
-    let entry = '';
-    let pendingSpace = '';
-    let quoted = false;
-    const finish = () => {
-        if (entry.length > 0) {
-            entries.push(entry);
-        }
-        entry = '';
-        pendingSpace = '';
-    };
-    for (let index = 0; index < text.length; index++) {
-        const character = text[index];
-        if (quoted) {
-            if (character === '"' && text[index + 1] === '"') {
-                entry += '"';
-                index++;
-            } else if (character === '"') {
-                quoted = false;
-            } else {
-                entry += character;
-            }
-        } else if (character === '"') {
-            entry += entry.length > 0 ? pendingSpace : '';
-            pendingSpace = '';
-            quoted = true;
-        } else if (character === ',') {
-            finish();
-        } else if (/\s/.test(character)) {
-            pendingSpace += character;
-        } else {
-            entry += (entry.length > 0 ? pendingSpace : '') + character;
-            pendingSpace = '';
-        }
+    const state: ListState = { entries: [], entry: '', pendingSpace: '', quoted: false };
+    let index = 0;
+    while (index < text.length) {
+        index = state.quoted ? readQuoted(state, text, index) : readUnquoted(state, text, index);
     }
-    if (quoted) {
+    if (state.quoted) {
         return undefined;
     }
-    finish();
-    return entries;
+    finishEntry(state);
+    return state.entries;
+}
+
+/** What {@link splitList} has read so far. */
+interface ListState {
+    entries: string[];
+    entry: string;
+    /** The spaces after the entry, which belong to it only if more of it follows. */
+    pendingSpace: string;
+    quoted: boolean;
+}
+
+function finishEntry(state: ListState): void {
+    if (state.entry.length > 0) {
+        state.entries.push(state.entry);
+    }
+    state.entry = '';
+    state.pendingSpace = '';
+}
+
+/**
+ * Reads a character inside double quotes, where two double quotes stand for one.
+ * @returns the index of the next character to read
+ */
+function readQuoted(state: ListState, text: string, index: number): number {
+    const character = text[index];
+    if (character !== '"') {
+        state.entry += character;
+        return index + 1;
+    }
+    if (text[index + 1] === '"') {
+        state.entry += '"';
+        return index + 2;
+    }
+    state.quoted = false;
+    return index + 1;
+}
+
+/**
+ * Reads a character outside double quotes.
+ * @returns the index of the next character to read
+ */
+function readUnquoted(state: ListState, text: string, index: number): number {
+    const character = text[index];
+    if (character === ',') {
+        finishEntry(state);
+    } else if (/\s/.test(character)) {
+        state.pendingSpace += character;
+    } else {
+        state.entry += (state.entry.length > 0 ? state.pendingSpace : '') + (character === '"' ? '' : character);
+        state.pendingSpace = '';
+        state.quoted = character === '"';
+    }
+    return index + 1;
 }
 
 /** Writes entries into a field that {@link splitList} reads back as the same entries, quoting those with a comma, a double quote or surrounding spaces. */
@@ -415,5 +444,5 @@ function isWholeNumberWithin(value: number | undefined, min: number, max: number
 
 /** Joins words like "read, create or delete". */
 function joinWithOr(words: string[], or: string): string {
-    return words.length <= 1 ? words.join('') : `${words.slice(0, -1).join(', ')} ${or} ${words[words.length - 1]}`;
+    return words.length <= 1 ? words.join('') : `${words.slice(0, -1).join(', ')} ${or} ${words.at(-1)}`;
 }

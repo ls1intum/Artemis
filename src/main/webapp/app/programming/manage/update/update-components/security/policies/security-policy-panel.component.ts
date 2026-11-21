@@ -114,7 +114,7 @@ export class SecurityPolicyPanelComponent {
         const names = values.filter((value): value is string => typeof value === 'string');
         const working = this.working();
         if (working) {
-            this.updateWorking(cloneWith(working, { preset: names[names.length - 1] }));
+            this.updateWorking(cloneWith(working, { preset: names.at(-1) }));
         }
     }
 

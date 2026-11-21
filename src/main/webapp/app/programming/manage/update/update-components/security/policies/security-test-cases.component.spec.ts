@@ -61,10 +61,18 @@ describe('SecurityTestCasesComponent', () => {
         expect(comp.declaredCount()).toBe(2);
     });
 
+    it('asks about the whole class when the assignment of a class is removed', () => {
+        handlers.askRemove('test', 'de.a.SortingTest');
+
+        expect(comp.removeHeader().key).toBe(PREFIX + 'wholeClassTitle');
+        expect(comp.removeQuestion()).toEqual({ key: PREFIX + 'wholeClassQuestion', params: { policy: comp.policy().name } });
+    });
+
     it('removes a test case after confirming and warns that its class is no longer declared', () => {
         handlers.askRemove('test', 'de.b.StressTest#run');
 
         expect(comp.removeHeader().key).toBe(PREFIX + 'caseTitle');
+        expect(comp.removeQuestion().key).toBe(PREFIX + 'caseQuestion');
         expect(comp.removeWarning()).toEqual({ key: PREFIX + 'caseWarningUndeclared', params: { testClass: 'StressTest' } });
         handlers.onRemoveConfirmed();
         expect(changes.at(-1)).toEqual({ tests: ['de.a.SortingTest'], extraClasses: [] });
@@ -74,6 +82,7 @@ describe('SecurityTestCasesComponent', () => {
         fixture.componentRef.setInput('policy', policy(['de.a.SortingTest'], ['de.a.Helper']));
         handlers.askRemove('class', 'de.a.Helper');
         expect(comp.removeHeader().key).toBe(PREFIX + 'classTitle');
+        expect(comp.removeQuestion().key).toBe(PREFIX + 'classQuestion');
         expect(comp.removeWarning()).toEqual({ key: PREFIX + 'classWarning', params: { testClass: 'Helper' } });
         handlers.onRemoveConfirmed();
         expect(changes.at(-1)).toEqual({ tests: ['de.a.SortingTest'], extraClasses: [] });

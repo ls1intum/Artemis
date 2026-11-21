@@ -81,6 +81,9 @@ const PREFIX = 'artemisApp.programmingExercise.security.advanced';
 /** How long the editor waits after the last change before it checks the policies against the pinned Ares version. */
 const VERSION_CHECK_DELAY_MS = 600;
 
+/** Separates the parts of a file's description in the review. */
+const REVIEW_SEPARATOR = ' · ';
+
 /** The language configuration that also scans the libraries of the student code, and the one that does not. */
 const SCANNING = '_WALA_AND_INSTRUMENTATION';
 const NOT_SCANNING = '_ARCHUNIT_AND_ASPECTJ';
@@ -413,15 +416,14 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             const path = this.paths().get(policy.id) ?? '';
             let description = policy.name;
             if (isNewPolicy(policy)) {
-                description += ` · ${this.translateService.instant(`${PREFIX}.review.newFile`)}`;
+                description += REVIEW_SEPARATOR + this.translateService.instant(`${PREFIX}.review.newFile`);
             } else if (policy.file?.policyPath !== path) {
-                description += ` · ${this.translateService.instant(`${PREFIX}.review.renamedFrom`, { file: fileNameOf(policy.file?.policyPath ?? '') })}`;
+                description += REVIEW_SEPARATOR + this.translateService.instant(`${PREFIX}.review.renamedFrom`, { file: fileNameOf(policy.file?.policyPath ?? '') });
             }
             descriptions.set(path, description);
         }
-        this.deletedPolicies().forEach((policy) =>
-            descriptions.set(policy.file?.policyPath ?? '', `${committedName(policy)} · ${this.translateService.instant(`${PREFIX}.review.deleted`)}`),
-        );
+        const deleted = this.translateService.instant(`${PREFIX}.review.deleted`);
+        this.deletedPolicies().forEach((policy) => descriptions.set(policy.file?.policyPath ?? '', `${committedName(policy)}${REVIEW_SEPARATOR}${deleted}`));
         const buildSettings = this.translateService.instant(`${PREFIX}.review.buildSettings`);
         descriptions.set('build.gradle', buildSettings);
         descriptions.set('pom.xml', buildSettings);
@@ -840,8 +842,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private asNewPolicy(policy: EditorPolicy, takenNames: readonly string[], committedLanguageConfiguration: string | undefined): EditorPolicy {
         this.newPolicyCounter++;
         let name = policy.name;
-        for (let number = 2; takenNames.includes(name); number++) {
+        let number = 2;
+        while (takenNames.includes(name)) {
             name = `${policy.name} ${number}`;
+            number++;
         }
         // Whether the configuration was chosen is decided against the policy's own committed state, not against the reloaded policies: a commit that deleted
         // the policy may have switched the others to the same value. A chosen configuration, e.g. an imported one, is kept through later reloads; one the

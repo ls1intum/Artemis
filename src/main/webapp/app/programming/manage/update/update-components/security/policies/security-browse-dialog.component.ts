@@ -37,12 +37,12 @@ interface VisibleNode {
 
 /** File names and extensions that are run as programs. */
 const SCRIPT_EXTENSIONS = ['.sh', '.bash', '.py', '.rb', '.pl', '.js', '.mjs', '.bat', '.cmd', '.ps1', '.jar'];
-const SCRIPT_NAMES = ['gradlew', 'mvnw', 'Makefile'];
+const SCRIPT_NAMES = new Set(['gradlew', 'mvnw', 'Makefile']);
 
 /** @returns whether a file is a script a test may run */
 export function isScript(path: string): boolean {
     const name = path.substring(path.lastIndexOf('/') + 1);
-    return SCRIPT_NAMES.includes(name) || SCRIPT_EXTENSIONS.some((extension) => name.endsWith(extension));
+    return SCRIPT_NAMES.has(name) || SCRIPT_EXTENSIONS.some((extension) => name.endsWith(extension));
 }
 
 /**
@@ -226,8 +226,14 @@ export class SecurityBrowseDialogComponent {
     }
 }
 
+/** Sorts the folders before the files, each by name. */
 function sortNodes(node: BrowseNode): void {
-    node.children.sort((first, second) => (first.folder === second.folder ? first.name.localeCompare(second.name) : first.folder ? -1 : 1));
+    node.children.sort((first, second) => {
+        if (first.folder !== second.folder) {
+            return first.folder ? -1 : 1;
+        }
+        return first.name.localeCompare(second.name);
+    });
     node.children.forEach(sortNodes);
 }
 

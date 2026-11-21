@@ -144,12 +144,15 @@ const POLICY_EXTENSION = '.yaml';
 /** An argument that is written without quotes. */
 const PLAIN_ARGUMENT = /^[^\s"\\]+$/;
 
+/** Puts a backslash before the quote or backslash that the expression matched. */
+const ESCAPED_CHARACTER = String.raw`\$1`;
+
 /**
  * Writes the arguments of a command for the field: separated by spaces, and in double quotes if an argument is empty or contains a space, a quote or a
  * backslash, which a backslash escapes. {@link splitArguments} reads it back to the same arguments.
  */
 export function joinArguments(argumentList: readonly string[]): string {
-    return argumentList.map((argument) => (PLAIN_ARGUMENT.test(argument) ? argument : `"${argument.replace(/(["\\])/g, '\\$1')}"`)).join(' ');
+    return argumentList.map((argument) => (PLAIN_ARGUMENT.test(argument) ? argument : `"${argument.replace(/(["\\])/g, ESCAPED_CHARACTER)}"`)).join(' ');
 }
 
 /** A character that a backslash in the arguments field escapes: a quote, a backslash or a space. */
@@ -293,14 +296,20 @@ export function sourcedRows<K extends ResourceKind>(
     const presetKeys = new Set(presetRows.map((row) => row.key));
     const ownRows: SourcedRow<K>[] = workingRows.map((row) => {
         const key = rowKey(kind, row);
-        const before = committed.get(key);
-        const source = before === undefined ? RowSource.NEW : isSameValue(before, row) ? RowSource.COMMITTED : RowSource.CHANGED;
-        return { key, row, source };
+        return { key, row, source: rowSource(committed.get(key), row) };
     });
     const removedRows: SourcedRow<K>[] = [...committed.entries()]
         .filter(([key]) => !workingKeys.has(key) && !presetKeys.has(key))
         .map(([key, row]) => ({ key, row, source: RowSource.REMOVED }));
     return [...presetRows, ...ownRows, ...removedRows];
+}
+
+/** @returns whether a row of the working document is new, changed or as committed */
+function rowSource(committedRow: unknown, row: unknown): RowSource {
+    if (committedRow === undefined) {
+        return RowSource.NEW;
+    }
+    return isSameValue(committedRow, row) ? RowSource.COMMITTED : RowSource.CHANGED;
 }
 
 /** @returns how many rows of a category were added, changed or removed */
@@ -394,9 +403,7 @@ export function summarizeChanges(policy: EditorPolicy): PolicyChangeSummary {
     const behaviours = changedBehaviours(policy.base, working).length;
     const tests = listChanges(policy.baseTests, policy.tests);
     const testClasses = listChanges(policy.baseExtraClasses, policy.extraClasses);
-    const settings = isNew
-        ? 0
-        : (policy.name !== committedName(policy) ? 1 : 0) + (isSameValue(policy.base?.preset, working.preset) ? 0 : 1) + changedFileSettings(policy.base, working).length;
+    const settings = isNew ? 0 : changedSettings(policy, working);
     const testCases = tests.added.length + tests.removed.length;
     const classChanges = testClasses.added.length + testClasses.removed.length + changedDeclarations(policy, tests, testClasses);
     return {
@@ -409,6 +416,13 @@ export function summarizeChanges(policy: EditorPolicy): PolicyChangeSummary {
         isNew,
         total: restrictions + behaviours + testCases + classChanges + settings + (isNew ? 1 : 0),
     };
+}
+
+/** Counts the changed settings of a committed policy: its name, its preset and the settings of its file permissions. */
+function changedSettings(policy: EditorPolicy, working: SecurityPolicyDocument): number {
+    const renamed = policy.name === committedName(policy) ? 0 : 1;
+    const presetChanged = isSameValue(policy.base?.preset, working.preset) ? 0 : 1;
+    return renamed + presetChanged + changedFileSettings(policy.base, working).length;
 }
 
 /**
@@ -692,7 +706,7 @@ function splitLines(text: string): string[] {
         return [];
     }
     const lines = text.split('\n');
-    return lines[lines.length - 1] === '' ? lines.slice(0, -1) : lines;
+    return lines.at(-1) === '' ? lines.slice(0, -1) : lines;
 }
 
 /** Pairs the removed and the added lines of each run of changes, line by line, so a changed line shows in one row. */

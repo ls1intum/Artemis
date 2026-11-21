@@ -7,7 +7,7 @@
 >
     <div class="sp-stack-3">
         <tumaet-ui-search-field [(value)]="search" [placeholder]="mode() === 'paths' ? prefix + 'searchPaths' : prefix + 'searchScripts'" data-testid="security-browse-search" />
-        <div class="sp-tree" role="group" [attr.aria-label]="(mode() === 'paths' ? prefix + 'inTemplate' : prefix + 'scriptsInTemplate') | artemisTranslate">
+        <fieldset class="sp-tree" [attr.aria-label]="(mode() === 'paths' ? prefix + 'inTemplate' : prefix + 'scriptsInTemplate') | artemisTranslate">
             <div class="sp-tree-group" aria-hidden="true" [jhiTranslate]="mode() === 'paths' ? prefix + 'inTemplate' : prefix + 'scriptsInTemplate'"></div>
             @if (failed() && files() === undefined) {
                 <div class="sp-row p-2" role="alert" data-testid="security-browse-failed">
@@ -55,7 +55,7 @@
                     }
                 </div>
             }
-        </div>
+        </fieldset>
         <p class="sp-mut m-0 text-xs" [jhiTranslate]="mode() === 'paths' ? prefix + 'pathsHint' : prefix + 'scriptsHint'"></p>
         @if (truncated()) {
             <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'truncated'"></p>

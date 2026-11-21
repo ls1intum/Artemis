@@ -491,12 +491,14 @@
     gap: calc(var(--tumaet-ui-spacing) * 3);
 }
 
-// Visibility timeline
+// Visibility timeline; both are figures, which have a margin of their own
 .sp-timeline-wrap {
     position: relative;
+    margin: 0;
 }
 
 .sp-timeline {
+    margin: 0;
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) minmax(0, 2fr);
     min-height: calc(var(--tumaet-ui-spacing) * 10);

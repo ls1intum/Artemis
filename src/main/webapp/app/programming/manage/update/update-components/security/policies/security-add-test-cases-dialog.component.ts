@@ -401,7 +401,10 @@ export class SecurityAddTestCasesDialogComponent {
     changeOf(key: string): 'added' | 'removed' | undefined {
         const was = this.initial().has(key);
         const is = this.selection().has(key);
-        return was && !is ? 'removed' : !was && is ? 'added' : undefined;
+        if (was === is) {
+            return undefined;
+        }
+        return was ? 'removed' : 'added';
     }
 
     /** A fully selected class is assigned as a whole; otherwise its selected cases are. Entries the tree does not show stay. */

@@ -105,7 +105,7 @@ export class SecurityYamlDialogComponent {
         }
         const highlighted = this.view() === 'unsaved' ? changedLineNumbers(this.committedContent(), content) : new Set<number>();
         const lines = content.split('\n');
-        if (lines[lines.length - 1] === '') {
+        if (lines.at(-1) === '') {
             lines.pop();
         }
         return lines.map((text, index) => {

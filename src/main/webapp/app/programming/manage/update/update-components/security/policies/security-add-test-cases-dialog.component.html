@@ -3,7 +3,7 @@
     <div class="sp-stack-3">
         <p class="sp-mut m-0 text-sm">{{ prefix + 'description' | artemisTranslate: { file: policyFile() } }}</p>
         <tumaet-ui-search-field [(value)]="search" [placeholder]="prefix + 'search'" data-testid="security-add-test-cases-search" />
-        <div class="sp-tree" role="group" [attr.aria-label]="prefix + 'inRepository' | artemisTranslate">
+        <fieldset class="sp-tree" [attr.aria-label]="prefix + 'inRepository' | artemisTranslate">
             <div class="sp-tree-group" aria-hidden="true" [jhiTranslate]="prefix + 'inRepository'"></div>
             @if (structure() === undefined) {
                 <div class="sp-row p-2">
@@ -125,7 +125,7 @@
                     }
                 }
             }
-        </div>
+        </fieldset>
         <p class="sp-mut m-0 text-xs" [jhiTranslate]="prefix + 'hint'"></p>
     </div>
     <ng-template #footer>

@@ -59,6 +59,8 @@ describe('SecurityAddTestCasesDialogComponent', () => {
         expect(comp.removedCount()).toBe(1);
         expect(comp.changeOf('de.a.MathTest#add')).toBe('added');
         expect(comp.changeOf('de.a.SortingTest#merge')).toBe('removed');
+        expect(comp.changeOf('de.a.SortingTest#bubble')).toBeUndefined();
+        expect(comp.changeOf('de.a.UnknownTest#case')).toBeUndefined();
         handlers.apply();
 
         expect(applied).toEqual([['de.gone.OldTest', 'de.a.SortingTest#bubble', 'de.a.MathTest#add']]);

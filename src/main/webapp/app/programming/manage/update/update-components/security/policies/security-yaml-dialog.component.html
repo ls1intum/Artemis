@@ -18,7 +18,7 @@
             </span>
         </tumaet-ui-message>
         <div class="sp-row-between">
-            <div class="inline-flex" role="group" [attr.aria-label]="prefix + 'viewLabel' | artemisTranslate" data-testid="security-yaml-view">
+            <fieldset class="inline-flex" [attr.aria-label]="prefix + 'viewLabel' | artemisTranslate" data-testid="security-yaml-view">
                 @for (option of viewOptions(); track option.value) {
                     <button
                         type="button"
@@ -38,7 +38,7 @@
                         }
                     </button>
                 }
-            </div>
+            </fieldset>
             <span class="sp-mut sp-row text-xs">
                 @if (view() === 'unsaved') {
                     <span class="sp-legend-swatch" aria-hidden="true"></span>
@@ -70,7 +70,7 @@
                 </div>
             }
         } @else {
-            <div class="sp-code" role="region" [tabindex]="scrollableRegionTabIndex" [attr.aria-label]="prefix + 'source' | artemisTranslate" data-testid="security-yaml-code">
+            <section class="sp-code" [tabindex]="scrollableRegionTabIndex" [attr.aria-label]="prefix + 'source' | artemisTranslate" data-testid="security-yaml-code">
                 @for (line of lines(); track line.number) {
                     <div class="sp-code-line" [class.sp-code-new]="line.highlighted">
                         <span>{{ line.number }}</span>
@@ -81,7 +81,7 @@
                         >
                     </div>
                 }
-            </div>
+            </section>
         }
         @if (importError(); as error) {
             <tumaet-ui-message severity="error" [icon]="faCircleXmark" data-testid="security-yaml-import-error">
