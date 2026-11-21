@@ -6,6 +6,17 @@
             "assessmentNote": "Internal Note",
             "testRunAssessment": "Test Run Assessment",
             "additionalFeedback": "Additional feedback",
+            "featureBonus": {
+                "mode": "Bonus points mode",
+                "countIn": "Count in",
+                "countOut": "Count out",
+                "modeHelp": "Count in raises the maximum exercise score. Count out adds a separate feature bonus card to the assessment. The course export includes feature bonus points up to the current limit. These points are excluded from exercise scores, course scores, and grading keys.",
+                "title": "Feature bonus",
+                "add": "Add feature bonus",
+                "summary": "{{points}} separate feature bonus points available",
+                "justification": "Explain what the student built and why it earns a bonus",
+                "name": "Feature name"
+            },
             "feedback": "Feedback",
             "feedbackHint": "This feedback is associated with an assessment instruction. You can provide additional feedback for this submission element. The student will see the combined feedback during the review.",
             "feedbackCommentPlaceholder": "You can enter feedback here...",

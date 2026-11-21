@@ -211,8 +211,8 @@ public class ExerciseSharingService {
     private static ImportProgrammingExerciseRequestDTO withoutId(ImportProgrammingExerciseRequestDTO details) {
         return new ImportProgrammingExerciseRequestDTO(null, details.title(), details.shortName(), details.channelName(), details.packageName(), details.problemStatement(),
                 details.gradingInstructions(), details.categories(), details.difficulty(), details.mode(), details.teamAssignmentConfig(), details.maxPoints(),
-                details.bonusPoints(), details.includedInOverallScore(), details.releaseDate(), details.startDate(), details.dueDate(), details.assessmentDueDate(),
-                details.exampleSolutionPublicationDate(), details.buildAndTestStudentSubmissionsAfterDueDate(), details.assessmentType(),
+                details.bonusPoints(), details.featureBonusPoints(), details.includedInOverallScore(), details.releaseDate(), details.startDate(), details.dueDate(),
+                details.assessmentDueDate(), details.exampleSolutionPublicationDate(), details.buildAndTestStudentSubmissionsAfterDueDate(), details.assessmentType(),
                 details.allowComplaintsForAutomaticAssessments(), details.presentationScoreEnabled(), details.secondCorrectionEnabled(), details.allowOnlineEditor(),
                 details.allowOfflineIde(), details.allowOnlineIde(), details.staticCodeAnalysisEnabled(), details.maxStaticCodeAnalysisPenalty(), details.showTestNamesToStudents(),
                 details.releaseTestsWithExampleSolution(), details.programmingLanguage(), details.projectType(), details.projectKey(), details.testRepositoryUri(),

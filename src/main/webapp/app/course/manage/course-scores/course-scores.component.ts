@@ -66,6 +66,8 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
+const FEATURE_BONUS_POINTS_KEY = 'Feature Bonus Points';
+
 export enum HighlightType {
     AVERAGE = 'average',
     MEDIAN = 'median',
@@ -116,6 +118,7 @@ export class CourseScoresComponent implements OnInit {
     readonly includedExercises = signal<Exercise[]>([]);
     readonly studentStatistics = signal<CourseScoresStudentStatistics[]>([]);
     readonly exportReady = signal(false);
+    private featureBonusPoints: Record<number, number> = {};
     readonly predicate = signal('id');
     readonly reverse = signal(false);
 
@@ -298,6 +301,7 @@ export class CourseScoresComponent implements OnInit {
 
         forkJoin([findGradeScoresObservable, gradingScaleObservable, plagiarismCasesObservable]).subscribe(([courseGradeInformation, gradingScaleResponse, plagiarismCases]) => {
             this.gradeScores.set(courseGradeInformation.gradeScores ?? []);
+            this.featureBonusPoints = courseGradeInformation.featureBonusPoints ?? {};
             this.students.set(courseGradeInformation.students ?? []);
             if (gradingScaleResponse.body) {
                 this.setUpGradingScale(gradingScaleResponse.body);
@@ -493,6 +497,11 @@ export class CourseScoresComponent implements OnInit {
             studentStatistic.gradeScores.push(gradeScore);
             if (gradeScore.presentationScore) {
                 studentStatistic.presentationScore += gradeScore.presentationScore;
+            }
+        }
+        for (const student of students) {
+            if (this.featureBonusPoints[student.id] !== undefined && !studentsMap.has(student.id)) {
+                studentsMap.set(student.id, new CourseScoresStudentStatistics(student));
             }
         }
         return studentsMap;
@@ -807,7 +816,7 @@ export class CourseScoresComponent implements OnInit {
         if (this.variantCapReducesPoints()) {
             keys.push(UNCAPPED_COURSE_POINTS_KEY, EXCESS_VARIANT_POINTS_KEY);
         }
-        keys.push(COURSE_OVERALL_POINTS_KEY, COURSE_OVERALL_SCORE_KEY);
+        keys.push(COURSE_OVERALL_POINTS_KEY, COURSE_OVERALL_SCORE_KEY, FEATURE_BONUS_POINTS_KEY);
 
         if (course.presentationScore) {
             keys.push(PRESENTATION_SCORE_KEY);
@@ -833,6 +842,7 @@ export class CourseScoresComponent implements OnInit {
         const course = this.course()!;
 
         rowData.setUserInformation(studentStatistics.student.name, studentStatistics.student.login, studentStatistics.student.email, studentStatistics.student.registrationNumber);
+        rowData.setPoints(FEATURE_BONUS_POINTS_KEY, roundValueSpecifiedByCourseSettings(this.featureBonusPoints[studentStatistics.student.id] ?? 0, course));
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisePointsPerType = studentStatistics.sumPointsPerExerciseType.get(exerciseType)!;

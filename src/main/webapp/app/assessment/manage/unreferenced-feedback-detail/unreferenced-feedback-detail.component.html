@@ -6,10 +6,10 @@
         [highlightDifferences]="highlightDifferences()"
         [(feedbackTitle)]="feedback().text"
         [(feedbackDetail)]="feedback().detailText"
-        [(feedbackCredits)]="feedback().credits!"
+        [feedbackCredits]="feedback().featureBonusPoints ?? feedback().credits"
         (feedbackTitleChange)="emitChanges()"
         (feedbackDetailChange)="emitChanges()"
-        (feedbackCreditsChange)="emitChanges()"
+        (feedbackCreditsChange)="updatePoints($event)"
         (onDelete)="delete()"
     />
     <jhi-grading-instruction-usage-warning

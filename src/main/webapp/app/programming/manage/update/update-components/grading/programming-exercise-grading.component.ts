@@ -17,10 +17,19 @@ import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiInputDirective, TumAetUiInputGroupAddonComponent, TumAetUiInputGroupComponent, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiButtonGroupComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputGroupAddonComponent,
+    TumAetUiInputGroupComponent,
+    TumAetUiMessageComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 @Component({
@@ -32,6 +41,9 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
         IncludedInOverallScorePickerComponent,
         FormsModule,
         FaIconComponent,
+        HelpIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
         TumAetUiInputDirective,
         TumAetUiInputGroupAddonComponent,
         TumAetUiInputGroupComponent,
@@ -80,6 +92,14 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit {
     readonly editPolicyUrl = signal<string | undefined>(undefined);
 
     constructor() {
+        // Exercises saved before this restriction may still have a Count out limit with manual assessment off.
+        effect(() => {
+            const exercise = this.programmingExercise();
+            if (exercise.assessmentType !== AssessmentType.SEMI_AUTOMATIC && exercise.featureBonusPoints !== undefined) {
+                untracked(() => this.setCountOut(false));
+            }
+        });
+
         // A field only exists while its part of the form is shown: the max penalty once static code analysis is on, the policy
         // with its edit field. That can begin after the first render, and a subscription made once after that render would
         // never see such a field, leaving the form status stale. Each subscription therefore follows its field.
@@ -125,9 +145,10 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit {
 
     calculateFormStatus() {
         const programmingExercise = this.programmingExercise();
-        // Bonus points are only entered (and the field only rendered) when the exercise is INCLUDED_COMPLETELY,
-        // so its validity must not block the form in the other modes (the field is hidden via [hidden]).
-        const bonusPointsValidOrHidden = this.bonusPointsField()?.valid || programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
+        // Count out is available regardless of whether the exercise contributes to the course score.
+        const bonusPointsValidOrHidden =
+            this.bonusPointsField()?.valid ||
+            (programmingExercise.featureBonusPoints == undefined && programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY);
         const maxPenaltyValidOrDisabled = this.maxPenaltyField()?.valid || !programmingExercise.staticCodeAnalysisEnabled;
         const scoreFieldsValid = this.maxScoreField()?.valid && bonusPointsValidOrHidden && maxPenaltyValidOrDisabled;
         const timelineStatus = this.timelineStatus();
@@ -143,6 +164,37 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit {
     onTimelineStatusChange(timelineStatus: TimelineStatus): void {
         this.timelineStatus.set(timelineStatus);
         this.calculateFormStatus();
+    }
+
+    onAssessmentTypeChange(assessmentType: AssessmentType | undefined): void {
+        this.programmingExercise().assessmentType = assessmentType;
+        if (assessmentType !== AssessmentType.SEMI_AUTOMATIC) {
+            this.setCountOut(false);
+        }
+    }
+
+    setCountOut(countOut: boolean): void {
+        const exercise = this.programmingExercise();
+        if (countOut === (exercise.featureBonusPoints !== undefined)) {
+            return;
+        }
+        if (countOut) {
+            exercise.featureBonusPoints = exercise.bonusPoints ?? 0;
+            exercise.bonusPoints = 0;
+        } else {
+            exercise.bonusPoints = exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY ? (exercise.featureBonusPoints ?? 0) : 0;
+            exercise.featureBonusPoints = undefined;
+        }
+        this.calculateFormStatus();
+    }
+
+    setBonusPoints(points: number | undefined): void {
+        const exercise = this.programmingExercise();
+        if (exercise.featureBonusPoints != undefined) {
+            exercise.featureBonusPoints = points ?? 0;
+        } else {
+            exercise.bonusPoints = points;
+        }
     }
 
     onIncludedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore): void {
@@ -179,7 +231,9 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit {
 
         summary.push(this.translateService.instant(this.translationBasePath + 'points'));
 
-        if (programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+        if (programmingExercise.featureBonusPoints != undefined) {
+            summary.push(this.translateService.instant('artemisApp.assessment.featureBonus.summary', { points: programmingExercise.featureBonusPoints }));
+        } else if (programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
             summary.push(this.translateService.instant(this.translationBasePath + 'noBonus'));
         } else if (programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
             summary.push(this.translateService.instant(this.translationBasePath + 'bonus'));

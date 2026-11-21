@@ -29,6 +29,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.assessment.config.FeedbackConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -99,6 +100,9 @@ public class Feedback extends DomainObject {
      */
     @Column(name = "credits")
     private Double credits;
+
+    @Column(name = "feature_bonus_points")
+    private Double featureBonusPoints;
 
     @Column(name = "positive")
     private Boolean positive;
@@ -298,6 +302,15 @@ public class Feedback extends DomainObject {
     public Feedback testCase(ProgrammingExerciseTestCase testCase) {
         setTestCase(testCase);
         return this;
+    }
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public Double getFeatureBonusPoints() {
+        return featureBonusPoints;
+    }
+
+    public void setFeatureBonusPoints(Double featureBonusPoints) {
+        this.featureBonusPoints = featureBonusPoints;
     }
 
     public Double getCredits() {

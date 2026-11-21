@@ -45,6 +45,7 @@ export enum ProjectType {
 }
 
 export class ProgrammingExercise extends Exercise {
+    featureBonusPoints?: number;
     public projectKey?: string;
     public templateParticipation?: TemplateProgrammingExerciseParticipation;
     public solutionParticipation?: SolutionProgrammingExerciseParticipation;

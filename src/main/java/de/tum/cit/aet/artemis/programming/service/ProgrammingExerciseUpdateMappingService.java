@@ -255,6 +255,7 @@ public class ProgrammingExerciseUpdateMappingService {
         }
 
         dto.applyMetadataTo(exercise);
+        exercise.setFeatureBonusPoints(dto.featureBonusPoints());
         exercise.setAssessmentType(dto.assessmentType());
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
 

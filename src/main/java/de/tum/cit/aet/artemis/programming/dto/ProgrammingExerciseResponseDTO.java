@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * @param teamAssignmentConfig                       the team assignment configuration
  * @param maxPoints                                  the achievable points
  * @param bonusPoints                                the achievable bonus points
+ * @param featureBonusPoints                         the separate feature bonus limit, or null in Count in mode
  * @param includedInOverallScore                     how the exercise counts towards the course score
  * @param releaseDate                                when the exercise is released
  * @param startDate                                  when the exercise starts
@@ -108,8 +109,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingExerciseResponseDTO(Long id, String type, String title, String shortName, String channelName, String problemStatement, Set<String> categories,
         DifficultyLevel difficulty, ExerciseMode mode, Boolean teamMode, TeamAssignmentConfigDTO teamAssignmentConfig, Double maxPoints, Double bonusPoints,
-        IncludedInOverallScore includedInOverallScore, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
-        ZonedDateTime exampleSolutionPublicationDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, AssessmentType assessmentType,
+        Double featureBonusPoints, IncludedInOverallScore includedInOverallScore, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
+        ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, AssessmentType assessmentType,
         Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String gradingInstructions,
         List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
         ProgrammingLanguage programmingLanguage, String packageName, ProjectType projectType, String projectKey, String testRepositoryUri, Boolean staticCodeAnalysisEnabled,
@@ -281,9 +282,9 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
 
         return new ProgrammingExerciseResponseDTO(exercise.getId(), TYPE, exercise.getTitle(), exercise.getShortName(), exercise.getChannelName(), exercise.getProblemStatement(),
                 categories, exercise.getDifficulty(), exercise.getMode(), exercise.isTeamMode(), teamAssignmentConfig, exercise.getMaxPoints(), exercise.getBonusPoints(),
-                exercise.getIncludedInOverallScore(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(),
-                exercise.getExampleSolutionPublicationDate(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getAssessmentType(),
-                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
+                exercise.getFeatureBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(),
+                exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate(),
+                exercise.getAssessmentType(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
                 exercise.getGradingInstructions(), gradingCriteria, competencyLinks, plagiarismDetectionConfig, exercise.getProgrammingLanguage(), exercise.getPackageName(),
                 exercise.getProjectType(), exercise.getProjectKey(), exercise.getTestRepositoryUri(), exercise.isStaticCodeAnalysisEnabled(),
                 exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(), exercise.isReleaseTestsWithExampleSolution(), exercise.getTestCasesChanged(),

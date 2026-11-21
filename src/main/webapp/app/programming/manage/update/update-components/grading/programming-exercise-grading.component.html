@@ -1,21 +1,52 @@
 <section class="mb-12">
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepMessage"></p>
-    @if (isEditFieldDisplayedRecord().includeExerciseInCourseScoreCalculation) {
-        <div class="mb-4!">
-            <label jhiTranslate="artemisApp.exercise.includedInOverallScore{{ programmingExercise().course ? 'Course' : 'Exam' }}Label"></label>
-            <div>
+    @let manualAssessmentEnabled = programmingExercise().assessmentType === AssessmentType.SEMI_AUTOMATIC;
+    @let countOut = programmingExercise().featureBonusPoints !== undefined;
+    @let showBonusPoints = countOut || programmingExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY;
+    <div class="flex flex-col gap-x-4! sm:flex-row">
+        @if (isEditFieldDisplayedRecord().includeExerciseInCourseScoreCalculation) {
+            <div class="mb-4! min-w-0 flex-1">
+                <span class="block" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ programmingExercise().course ? 'Course' : 'Exam' }}Label"></span>
                 <jhi-included-in-overall-score-picker
                     [includedInOverallScore]="programmingExercise().includedInOverallScore"
                     (includedInOverallScoreChange)="onIncludedInOverallScoreChange($event)"
                     [allowNotIncluded]="true"
                 />
             </div>
-        </div>
-    }
-    <div class="flex flex-wrap -mx-2">
+        }
+        @if (isEditFieldDisplayedRecord().bonusPoints && manualAssessmentEnabled && !programmingExerciseCreationConfig().isExamMode) {
+            <div class="mb-4! min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                    <span id="feature-bonus-mode-label" jhiTranslate="artemisApp.assessment.featureBonus.mode"></span>
+                    <jhi-help-icon text="artemisApp.assessment.featureBonus.modeHelp" />
+                </div>
+                <tumaet-ui-button-group aria-labelledby="feature-bonus-mode-label">
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        [severity]="countOut ? 'secondary' : 'primary'"
+                        [attr.aria-pressed]="!countOut"
+                        (click)="setCountOut(false)"
+                        data-testid="feature-bonus-count-in"
+                        jhiTranslate="artemisApp.assessment.featureBonus.countIn"
+                    ></button>
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        [severity]="countOut ? 'primary' : 'secondary'"
+                        [attr.aria-pressed]="countOut"
+                        (click)="setCountOut(true)"
+                        data-testid="feature-bonus-count-out"
+                        jhiTranslate="artemisApp.assessment.featureBonus.countOut"
+                    ></button>
+                </tumaet-ui-button-group>
+            </div>
+        }
+    </div>
+    <div class="flex flex-col gap-x-4! sm:flex-row">
         @if (isEditFieldDisplayedRecord().points) {
-            <div class="min-w-0 flex-1 px-2">
+            <div class="min-w-0 flex-1">
                 <div class="mb-4!" data-testid="points-field">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
                     <span class="text-state-danger" aria-hidden="true">*</span>
@@ -36,28 +67,25 @@
             </div>
         }
         @if (isEditFieldDisplayedRecord().bonusPoints) {
-            <div class="min-w-0 flex-1 px-2">
-                <div class="mb-4!" [hidden]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
+            <div class="min-w-0 flex-1">
+                <div class="mb-4!" [hidden]="!showBonusPoints">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
-                    @if (programmingExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                    @if (showBonusPoints) {
                         <span class="text-state-danger" aria-hidden="true">*</span>
                     }
                     <jhi-points-input
-                        [required]="programmingExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
+                        [required]="showBonusPoints"
                         fluid
                         [min]="0"
                         [max]="9999"
                         name="bonusPoints"
                         inputId="field_bonusPoints"
-                        [(ngModel)]="programmingExercise().bonusPoints"
+                        [ngModel]="programmingExercise().featureBonusPoints ?? programmingExercise().bonusPoints"
+                        (ngModelChange)="setBonusPoints($event)"
                         #bonusPoints="ngModel"
                     />
                     @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
-                        <tumaet-ui-message
-                            severity="error"
-                            class="mt-1 block"
-                            [hidden]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                        >
+                        <tumaet-ui-message severity="error" class="mt-1 block" [hidden]="!showBonusPoints">
                             <span jhiTranslate="artemisApp.exercise.bonusPointsError"></span>
                         </tumaet-ui-message>
                     }
@@ -137,7 +165,8 @@
                 [(buildAndTestStudentSubmissionsAfterDueDate)]="programmingExerciseValue.buildAndTestStudentSubmissionsAfterDueDate"
                 [(assessmentDueDate)]="programmingExerciseValue.assessmentDueDate"
                 [(exampleSolutionPublicationDate)]="programmingExerciseValue.exampleSolutionPublicationDate"
-                [(assessmentType)]="programmingExerciseValue.assessmentType"
+                [assessmentType]="programmingExerciseValue.assessmentType"
+                (assessmentTypeChange)="onAssessmentTypeChange($event)"
                 [(setTestCaseVisibilityToAfterDueDate)]="importOptions().setTestCaseVisibilityToAfterDueDate"
                 [(allowComplaintsForAutomaticAssessments)]="programmingExerciseValue.allowComplaintsForAutomaticAssessments"
                 [(releaseTestsWithExampleSolution)]="programmingExerciseValue.releaseTestsWithExampleSolution"

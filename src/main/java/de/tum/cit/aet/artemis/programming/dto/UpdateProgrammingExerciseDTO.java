@@ -39,8 +39,8 @@ public record UpdateProgrammingExerciseDTO(
 
         // Exercise base fields
         String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty, Double maxPoints, Double bonusPoints,
-        IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled,
-        String gradingInstructions,
+        Double featureBonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled,
+        Boolean secondCorrectionEnabled, String gradingInstructions,
 
         // Timeline fields
         ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate,
@@ -110,14 +110,14 @@ public record UpdateProgrammingExerciseDTO(
         SubmissionPolicyDTO submissionPolicyDTO = submissionPolicy != null && Hibernate.isInitialized(submissionPolicy) ? SubmissionPolicyDTO.of(submissionPolicy) : null;
 
         return new UpdateProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
-                exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
-                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
-                exercise.getGradingInstructions(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(),
-                exercise.getExampleSolutionPublicationDate(), courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs, exercise.getTestRepositoryUri(),
-                exercise.getSolutionRepositoryUri(), auxiliaryRepositoryDTOs, exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(), exercise.isAllowOnlineIde(),
-                exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(), exercise.getPackageName(),
-                exercise.getShowTestNamesToStudents(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getTestCasesChanged(), exercise.getProjectKey(),
-                submissionPolicyDTO, exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), exercise.getAssessmentType(),
+                exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getFeatureBonusPoints(),
+                exercise.getIncludedInOverallScore(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(),
+                exercise.getSecondCorrectionEnabled(), exercise.getGradingInstructions(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(),
+                exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs,
+                exercise.getTestRepositoryUri(), exercise.getSolutionRepositoryUri(), auxiliaryRepositoryDTOs, exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
+                exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(),
+                exercise.getPackageName(), exercise.getShowTestNamesToStudents(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getTestCasesChanged(),
+                exercise.getProjectKey(), submissionPolicyDTO, exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), exercise.getAssessmentType(),
                 UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig), plagiarismDetectionConfigDTO);
     }
 }

@@ -6,6 +6,17 @@
             "assessmentNote": "Interne Notiz",
             "testRunAssessment": "Bewertungstestlauf",
             "additionalFeedback": "Zusätzliches Feedback",
+            "featureBonus": {
+                "mode": "Modus für Bonuspunkte",
+                "countIn": "Einrechnen",
+                "countOut": "Separat erfassen",
+                "modeHelp": "Einrechnen erhöht die maximal erreichbare Punktzahl der Aufgabe. Separat erfassen fügt der Bewertung einen eigenen Bereich für Feature-Boni hinzu. Der Kursexport berücksichtigt Feature-Bonuspunkte bis zur aktuellen Obergrenze. Diese Punkte fließen nicht in Aufgabenpunkte, Kurspunkte oder Notenschlüssel ein.",
+                "title": "Feature-Bonus",
+                "add": "Feature-Bonus hinzufügen",
+                "summary": "{{points}} separate Feature-Bonuspunkte verfügbar",
+                "justification": "Beschreibe das Feature und begründe den Bonus",
+                "name": "Name des Features"
+            },
             "feedback": "Feedback",
             "feedbackHint": "Dieses Feedback ist mit einer Bewertungsanweisung verbunden. Du kannst zusätzliches Feedback für dieses Abgabeelement geben. Der/Die Studierende sieht das kombinierte Feedback während der Überprüfung.",
             "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",

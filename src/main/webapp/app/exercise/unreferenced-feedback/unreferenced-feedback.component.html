@@ -1,5 +1,13 @@
 <div class="unreferenced-feedback" (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
-    <button type="button" tumAetUiButton severity="success" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
+    <button
+        type="button"
+        tumAetUiButton
+        severity="success"
+        size="small"
+        class="add-unreferenced-feedback unreferenced-feedback__add-button"
+        (click)="addUnreferencedFeedback()"
+        [disabled]="readOnly()"
+    >
         <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
     </button>
 
@@ -68,3 +76,40 @@
         </section>
     }
 </div>
+@if (featureBonusLimit() !== undefined || featureBonusFeedbacks().length > 0) {
+    <section class="unreferenced-feedback mt-4!">
+        @if (!readOnly() && (featureBonusLimit() ?? 0) > 0) {
+            <button
+                type="button"
+                tumAetUiButton
+                severity="success"
+                size="small"
+                class="unreferenced-feedback__add-button"
+                (click)="addFeatureBonus()"
+                data-testid="add-feature-bonus"
+            >
+                <span jhiTranslate="artemisApp.assessment.featureBonus.add"></span>
+            </button>
+        }
+        <div class="unreferenced-feedback__header">
+            <h4 class="unreferenced-feedback__title" jhiTranslate="artemisApp.assessment.featureBonus.title"></h4>
+            @if (featureBonusLimit() !== undefined) {
+                <tumaet-ui-tag
+                    severity="secondary"
+                    [value]="'artemisApp.assessment.detail.pointsOfShort' | artemisTranslate: { points: featureBonusTotal(), maxPoints: featureBonusLimit() }"
+                />
+            }
+        </div>
+        <div class="unreferenced-feedback__cards">
+            @for (feedback of featureBonusFeedbacks(); track feedback) {
+                <jhi-unreferenced-feedback-detail
+                    [feedback]="feedback"
+                    [resultId]="resultId()"
+                    [readOnly]="readOnly()"
+                    (onFeedbackChange)="updateFeedback($event)"
+                    (onFeedbackDelete)="deleteFeedback(feedback)"
+                />
+            }
+        </div>
+    </section>
+}

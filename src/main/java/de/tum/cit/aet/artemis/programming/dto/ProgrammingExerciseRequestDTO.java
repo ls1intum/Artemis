@@ -56,6 +56,8 @@ public interface ProgrammingExerciseRequestDTO {
 
     Double bonusPoints();
 
+    Double featureBonusPoints();
+
     IncludedInOverallScore includedInOverallScore();
 
     ZonedDateTime releaseDate();
@@ -143,6 +145,7 @@ public interface ProgrammingExerciseRequestDTO {
         if (request.maxPoints() != null) {
             exercise.setMaxPoints(request.maxPoints());
         }
+        exercise.setFeatureBonusPoints(request.featureBonusPoints());
         if (request.bonusPoints() != null) {
             exercise.setBonusPoints(request.bonusPoints());
         }

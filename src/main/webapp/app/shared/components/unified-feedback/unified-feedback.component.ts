@@ -225,7 +225,10 @@ export class UnifiedFeedbackComponent {
 
     readonly displayTitle = computed(() => Feedback.stripSuggestionPrefix(this.feedbackTitle() ?? ''));
 
-    readonly defaultTitlePlaceholder = computed(() => this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]));
+    protected readonly isFeatureBonus = computed(() => this.feedback()?.featureBonusPoints != undefined);
+    readonly defaultTitlePlaceholder = computed(() =>
+        this.artemisTranslatePipe.transform(this.isFeatureBonus() ? 'artemisApp.assessment.featureBonus.name' : this.feedbackTypeTitleKeys[this.inferredType()]),
+    );
 
     /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
     canDismissWithoutConfirm(): boolean {
@@ -238,7 +241,9 @@ export class UnifiedFeedbackComponent {
         );
     }
 
-    readonly detailPlaceholder = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackCommentPlaceholder'));
+    readonly detailPlaceholder = computed(() =>
+        this.artemisTranslatePipe.transform(this.isFeatureBonus() ? 'artemisApp.assessment.featureBonus.justification' : 'artemisApp.assessment.feedbackCommentPlaceholder'),
+    );
 
     /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
     isDetailMissing(): boolean {
@@ -249,7 +254,7 @@ export class UnifiedFeedbackComponent {
     readonly dismissTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedback'));
     readonly dismissConfirmTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation'));
     readonly pointsAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.exercise.score'));
-    readonly feedbackDetailAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedback'));
+    readonly feedbackDetailAriaLabel = computed(() => (this.isFeatureBonus() ? this.detailPlaceholder() : this.artemisTranslatePipe.transform('artemisApp.assessment.feedback')));
     /**
      * A plain method, not a computed: consumers (drag-and-drop rubric assignment, the rubric dropdown) mutate
      * `feedback().gradingInstruction` in place rather than replacing the feedback object, so a computed signal
@@ -357,6 +362,9 @@ export class UnifiedFeedbackComponent {
      * The points input shows the snapped value again because {@link feedbackCredits} is bound to it with `[ngModel]`.
      */
     onCreditsCommit(): void {
+        if (this.isFeatureBonus()) {
+            return;
+        }
         const normalized = this.normalizedCredits(this.feedbackCredits());
         if (normalized !== this.feedbackCredits()) {
             this.feedbackCredits.set(normalized);

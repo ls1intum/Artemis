@@ -78,7 +78,7 @@ public record ProgrammingAssessmentResultDTO(Long id, ZonedDateTime completionDa
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ProgrammingAssessmentFeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive,
-            FeedbackType type, Visibility visibility, GradingInstructionDTO gradingInstruction, ResultDTO.TestCaseDTO testCase) implements Serializable {
+            FeedbackType type, Visibility visibility, GradingInstructionDTO gradingInstruction, ResultDTO.TestCaseDTO testCase, Double featureBonusPoints) implements Serializable {
 
         /**
          * Converts a feedback item. The lazy {@code testCase} and {@code gradingInstruction} slots are mapped only
@@ -94,7 +94,8 @@ public record ProgrammingAssessmentResultDTO(Long id, ZonedDateTime completionDa
             var testCase = feedback.getTestCase();
             ResultDTO.TestCaseDTO testCaseDTO = testCase != null && Hibernate.isInitialized(testCase) ? ResultDTO.TestCaseDTO.of(testCase) : null;
             return new ProgrammingAssessmentFeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(),
-                    feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), gradingInstructionDTO, testCaseDTO);
+                    feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), gradingInstructionDTO, testCaseDTO,
+                    feedback.getFeatureBonusPoints());
         }
     }
 

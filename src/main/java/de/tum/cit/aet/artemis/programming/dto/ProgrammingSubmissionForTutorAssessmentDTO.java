@@ -84,6 +84,7 @@ public record ProgrammingSubmissionForTutorAssessmentDTO(Long id, String submiss
      * @param gradingCriteria                            the structured grading criteria
      * @param maxPoints                                  the achievable points
      * @param bonusPoints                                the achievable bonus points
+     * @param featureBonusPoints                         the separate feature bonus limit, or null in Count in mode
      * @param includedInOverallScore                     how the exercise counts towards the course score
      * @param teamMode                                   whether the exercise is a team exercise
      * @param assessmentType                             automatic, semi-automatic or manual assessment
@@ -102,8 +103,8 @@ public record ProgrammingSubmissionForTutorAssessmentDTO(Long id, String submiss
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExerciseDTO(Long id, String type, String title, String problemStatement, String gradingInstructions, List<GradingCriterionDTO> gradingCriteria, Double maxPoints,
-            Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean teamMode, AssessmentType assessmentType, ZonedDateTime assessmentDueDate,
-            ZonedDateTime dueDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, Boolean allowComplaintsForAutomaticAssessments,
+            Double bonusPoints, Double featureBonusPoints, IncludedInOverallScore includedInOverallScore, Boolean teamMode, AssessmentType assessmentType,
+            ZonedDateTime assessmentDueDate, ZonedDateTime dueDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, Boolean allowComplaintsForAutomaticAssessments,
             ProgrammingLanguage programmingLanguage, ProjectType projectType, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty,
             Boolean showTestNamesToStudents, SolutionParticipationDTO solutionParticipation, CourseDTO course, ExerciseGroupDTO exerciseGroup) implements Serializable {
 
@@ -141,10 +142,11 @@ public record ProgrammingSubmissionForTutorAssessmentDTO(Long id, String submiss
             }
 
             return new ExerciseDTO(exercise.getId(), ProgrammingExerciseResponseDTO.TYPE, exercise.getTitle(), exercise.getProblemStatement(), exercise.getGradingInstructions(),
-                    gradingCriteria, exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.isTeamMode(), exercise.getAssessmentType(),
-                    exercise.getAssessmentDueDate(), exercise.getDueDate(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate(),
-                    exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getProgrammingLanguage(), exercise.getProjectType(), exercise.isStaticCodeAnalysisEnabled(),
-                    exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(), solutionParticipation, course, exerciseGroup);
+                    gradingCriteria, exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getFeatureBonusPoints(), exercise.getIncludedInOverallScore(),
+                    exercise.isTeamMode(), exercise.getAssessmentType(), exercise.getAssessmentDueDate(), exercise.getDueDate(),
+                    exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getProgrammingLanguage(),
+                    exercise.getProjectType(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(),
+                    solutionParticipation, course, exerciseGroup);
         }
     }
 

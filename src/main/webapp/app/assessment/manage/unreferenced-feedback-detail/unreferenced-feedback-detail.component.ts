@@ -54,6 +54,16 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
         this.onFeedbackChange.emit(feedback);
     }
 
+    updatePoints(points: number | undefined): void {
+        const feedback = this.feedback();
+        if (feedback.featureBonusPoints != undefined) {
+            feedback.featureBonusPoints = points ?? 0;
+        } else {
+            feedback.credits = points;
+        }
+        this.emitChanges();
+    }
+
     /**
      * Emits the deletion of a feedback
      */
@@ -64,6 +74,9 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     updateFeedbackOnDrop(event: Event) {
         event.stopPropagation();
         const feedback = this.feedback();
+        if (feedback.featureBonusPoints != undefined) {
+            return;
+        }
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
         if (feedback.text) {
             feedback.text = Feedback.markAdaptedIfAcceptedSuggestion(feedback.text);

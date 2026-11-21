@@ -35,7 +35,7 @@
                             data-testid="unified-feedback-points-input"
                             fluid
                             showButtons
-                            snapToStep
+                            [snapToStep]="!isFeatureBonus()"
                             [min]="CREDITS_MIN"
                             [max]="CREDITS_MAX"
                             [step]="CREDITS_STEP"

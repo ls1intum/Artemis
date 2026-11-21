@@ -706,7 +706,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         // Simulate a caller that does not send the field: rebuild the same DTO but with a null plagiarism config.
         UpdateProgrammingExerciseDTO base = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
         UpdateProgrammingExerciseDTO withoutConfig = new UpdateProgrammingExerciseDTO(base.id(), base.title(), base.channelName(), base.shortName(), base.problemStatement(),
-                base.categories(), base.difficulty(), base.maxPoints(), base.bonusPoints(), base.includedInOverallScore(), base.allowComplaintsForAutomaticAssessments(),
+                base.categories(), base.difficulty(), base.maxPoints(), base.bonusPoints(), null, base.includedInOverallScore(), base.allowComplaintsForAutomaticAssessments(),
                 base.presentationScoreEnabled(), base.secondCorrectionEnabled(), base.gradingInstructions(), base.releaseDate(), base.startDate(), base.dueDate(),
                 base.assessmentDueDate(), base.exampleSolutionPublicationDate(), base.courseId(), base.exerciseGroupId(), base.gradingCriteria(), base.competencyLinks(),
                 base.testRepositoryUri(), base.solutionRepositoryUri(), base.auxiliaryRepositories(), base.allowOnlineEditor(), base.allowOfflineIde(), base.allowOnlineIde(),
@@ -1299,7 +1299,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     private static UpdateProgrammingExerciseDTO withSubmissionPolicy(UpdateProgrammingExerciseDTO dto, SubmissionPolicyDTO submissionPolicy) {
         return new UpdateProgrammingExerciseDTO(dto.id(), dto.title(), dto.channelName(), dto.shortName(), dto.problemStatement(), dto.categories(), dto.difficulty(),
-                dto.maxPoints(), dto.bonusPoints(), dto.includedInOverallScore(), dto.allowComplaintsForAutomaticAssessments(), dto.presentationScoreEnabled(),
+                dto.maxPoints(), dto.bonusPoints(), null, dto.includedInOverallScore(), dto.allowComplaintsForAutomaticAssessments(), dto.presentationScoreEnabled(),
                 dto.secondCorrectionEnabled(), dto.gradingInstructions(), dto.releaseDate(), dto.startDate(), dto.dueDate(), dto.assessmentDueDate(),
                 dto.exampleSolutionPublicationDate(), dto.courseId(), dto.exerciseGroupId(), dto.gradingCriteria(), dto.competencyLinks(), dto.testRepositoryUri(),
                 dto.solutionRepositoryUri(), dto.auxiliaryRepositories(), dto.allowOnlineEditor(), dto.allowOfflineIde(), dto.allowOnlineIde(), dto.staticCodeAnalysisEnabled(),
@@ -1456,7 +1456,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         Long courseId = exerciseGroupId != null ? null : (response.course() != null ? response.course().id() : null);
         List<GradingCriterionDTO> gradingCriteria = response.gradingCriteria();
         return new UpdateProgrammingExerciseDTO(response.id(), response.title(), response.channelName(), response.shortName(), response.problemStatement(), response.categories(),
-                response.difficulty(), response.maxPoints(), response.bonusPoints(), response.includedInOverallScore(), response.allowComplaintsForAutomaticAssessments(),
+                response.difficulty(), response.maxPoints(), response.bonusPoints(), null, response.includedInOverallScore(), response.allowComplaintsForAutomaticAssessments(),
                 response.presentationScoreEnabled(), response.secondCorrectionEnabled(), response.gradingInstructions(), response.releaseDate(), response.startDate(),
                 response.dueDate(), response.assessmentDueDate(), response.exampleSolutionPublicationDate(), courseId, exerciseGroupId, gradingCriteria, response.competencyLinks(),
                 response.testRepositoryUri(), null, response.auxiliaryRepositories(), response.allowOnlineEditor(), response.allowOfflineIde(),
@@ -1481,7 +1481,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     private static UpdateProgrammingExerciseDTO withGradingCriteria(UpdateProgrammingExerciseDTO dto, Set<GradingCriterionDTO> gradingCriteria) {
         return new UpdateProgrammingExerciseDTO(dto.id(), dto.title(), dto.channelName(), dto.shortName(), dto.problemStatement(), dto.categories(), dto.difficulty(),
-                dto.maxPoints(), dto.bonusPoints(), dto.includedInOverallScore(), dto.allowComplaintsForAutomaticAssessments(), dto.presentationScoreEnabled(),
+                dto.maxPoints(), dto.bonusPoints(), null, dto.includedInOverallScore(), dto.allowComplaintsForAutomaticAssessments(), dto.presentationScoreEnabled(),
                 dto.secondCorrectionEnabled(), dto.gradingInstructions(), dto.releaseDate(), dto.startDate(), dto.dueDate(), dto.assessmentDueDate(),
                 dto.exampleSolutionPublicationDate(), dto.courseId(), dto.exerciseGroupId(), gradingCriteria == null ? null : List.copyOf(gradingCriteria), dto.competencyLinks(),
                 dto.testRepositoryUri(), dto.solutionRepositoryUri(), dto.auxiliaryRepositories(), dto.allowOnlineEditor(), dto.allowOfflineIde(), dto.allowOnlineIde(),

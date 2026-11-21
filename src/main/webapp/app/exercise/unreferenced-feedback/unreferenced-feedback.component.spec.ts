@@ -73,6 +73,21 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(comp.unreferencedFeedback[1].reference).toBeDefined();
     });
 
+    it('adds feature bonus feedback below scoring feedback and keeps its points separate', () => {
+        fixture.componentRef.setInput('featureBonusLimit', 5);
+        comp.unreferencedFeedback = [{ credits: 7, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback];
+        fixture.detectChanges();
+
+        fixture.debugElement.query(By.css('[data-testid="add-feature-bonus"]')).nativeElement.click();
+        const feature = comp.unreferencedFeedback[1];
+        feature.featureBonusPoints = 7;
+        comp.updateFeedback(feature);
+
+        expect(comp.feedbackGroups()[0].feedbacks).toHaveLength(1);
+        expect(comp.pointsSummary().total).toBe(7);
+        expect(comp.featureBonusTotal()).toBe(5);
+    });
+
     it('should update unreferenced feedback', () => {
         const feedback = { text: 'NewFeedback', credits: 3 } as Feedback;
         comp.unreferencedFeedback = [feedback];

@@ -63,6 +63,12 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     readonly addReferenceIdForExampleSubmission = input(false);
 
     readonly feedbacks = model<Feedback[]>([]);
+    readonly featureBonusLimit = input<number>();
+    readonly featureBonusFeedbacks = computed(() => this.feedbacks().filter((feedback) => feedback.featureBonusPoints != undefined));
+    readonly featureBonusTotal = computed(() => {
+        const awarded = this.featureBonusFeedbacks().reduce((sum, feedback) => sum + (feedback.featureBonusPoints ?? 0), 0);
+        return Math.min(awarded, this.featureBonusLimit() ?? 0);
+    });
 
     /** Feedback used for scoring: full assessment when the parent supplies it, otherwise this list only. */
     readonly scoringFeedbacks = computed(() => {
@@ -104,7 +110,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
      * feedback that belongs to no criterion collected in a trailing block.
      */
     readonly feedbackGroups = computed<FeedbackGroup[]>(() => {
-        const feedbacks = this.feedbacks();
+        const feedbacks = this.feedbacks().filter((feedback) => feedback.featureBonusPoints == undefined);
         const contributingCredits = this.assessmentScore().contributions;
         const groups: FeedbackGroup[] = [];
         const alreadyGrouped = new Set<Feedback>();
@@ -209,6 +215,13 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
 
     public addUnreferencedFeedback(): void {
         this.appendFeedback(this.createFeedback());
+    }
+
+    addFeatureBonus(): void {
+        const feedback = this.createFeedback();
+        feedback.credits = 0;
+        feedback.featureBonusPoints = 0;
+        this.appendFeedback(feedback);
     }
 
     applyInstruction(instruction: GradingInstruction): void {

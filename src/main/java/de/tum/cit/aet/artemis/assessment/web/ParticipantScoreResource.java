@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.assessment.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.dto.CourseGradeInformationDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository.FeatureBonusSum;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -143,9 +145,12 @@ public class ParticipantScoreResource {
         Set<CourseGradeScoreDTO> gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId).stream()
                 .filter(gradeScore -> !teachingStaffIds.contains(gradeScore.userId())).collect(Collectors.toSet());
         Set<Long> userIds = gradeScores.stream().map(CourseGradeScoreDTO::userId).collect(Collectors.toSet());
+        Map<Long, Double> featureBonusPoints = studentParticipationRepository.findFeatureBonusSumsByCourseId(courseId).stream()
+                .filter(bonus -> !teachingStaffIds.contains(bonus.studentId())).collect(Collectors.toMap(FeatureBonusSum::studentId, FeatureBonusSum::points));
+        userIds.addAll(featureBonusPoints.keySet());
         List<StudentDTO> students = userIds.isEmpty() ? List.of() : userRepository.findAllStudentsByIdIn(userIds);
         log.info("Found {} grade scores, {} students, in {}", gradeScores.size(), students.size(), TimeLogUtil.formatDurationFrom(start));
 
-        return ResponseEntity.ok().body(new CourseGradeInformationDTO(gradeScores, students));
+        return ResponseEntity.ok().body(new CourseGradeInformationDTO(gradeScores, students, featureBonusPoints));
     }
 }

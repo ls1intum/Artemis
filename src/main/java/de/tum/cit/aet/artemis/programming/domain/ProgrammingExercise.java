@@ -80,6 +80,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "test_repository_url")
     private String testRepositoryUri;
 
+    @Column(name = "feature_bonus_points", table = "programming_exercise_details")
+    private Double featureBonusPoints;
+
     /**
      * The auxiliary repositories of this exercise, oldest first.
      * <p>
@@ -402,6 +405,24 @@ public class ProgrammingExercise extends Exercise {
         this.projectKey = WHITESPACE_RUN.matcher((course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT)).replaceAll("");
     }
 
+    public Double getFeatureBonusPoints() {
+        return featureBonusPoints;
+    }
+
+    public void setFeatureBonusPoints(Double featureBonusPoints) {
+        this.featureBonusPoints = featureBonusPoints;
+    }
+
+    @Override
+    public void validateGeneralSettings() {
+        super.validateGeneralSettings();
+        if (featureBonusPoints != null && (isExamExercise() || !Double.isFinite(featureBonusPoints) || featureBonusPoints < 0 || featureBonusPoints > 9999
+                || getBonusPoints() != null && getBonusPoints() != 0)) {
+            throw new BadRequestAlertException("Count out requires a course exercise and a separate bonus limit between 0 and 9999.", "programmingExercise",
+                    "invalidFeatureBonusPoints");
+        }
+    }
+
     /**
      * Copies the settings that an import caller has to carry itself from the exercise being imported onto this skeleton.
      * <p>
@@ -415,6 +436,9 @@ public class ProgrammingExercise extends Exercise {
      * @param source the exercise being imported
      */
     public void copyImportSettingsFrom(ProgrammingExercise source) {
+        if (!isExamExercise()) {
+            setFeatureBonusPoints(source.getFeatureBonusPoints());
+        }
         setProgrammingLanguage(source.getProgrammingLanguage());
         setProjectType(source.getProjectType());
         setPackageName(source.getPackageName());

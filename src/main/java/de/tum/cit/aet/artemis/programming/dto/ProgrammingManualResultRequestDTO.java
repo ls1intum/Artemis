@@ -81,11 +81,12 @@ public record ProgrammingManualResultRequestDTO(Long id, Double score, Boolean s
      * @param visibility          when the feedback becomes visible to the student
      * @param gradingInstruction  the referenced grading instruction
      * @param testCase            the referenced test case
+     * @param featureBonusPoints  separately awarded feature points
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude()
     public record ProgrammingManualFeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive,
-            FeedbackType type, Visibility visibility, GradingInstructionRefDTO gradingInstruction, TestCaseRefDTO testCase) {
+            FeedbackType type, Visibility visibility, GradingInstructionRefDTO gradingInstruction, TestCaseRefDTO testCase, Double featureBonusPoints) {
 
         /**
          * Builds the feedback entity this item describes.
@@ -119,6 +120,7 @@ public record ProgrammingManualResultRequestDTO(Long id, Double score, Boolean s
             }
             feedback.setReference(reference);
             feedback.setCredits(credits);
+            feedback.setFeatureBonusPoints(featureBonusPoints);
             feedback.setPositive(positive);
             feedback.setType(type);
             feedback.setVisibility(visibility);

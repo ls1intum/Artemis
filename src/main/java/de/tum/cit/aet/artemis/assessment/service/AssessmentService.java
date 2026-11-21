@@ -145,6 +145,7 @@ public class AssessmentService {
             throw new BadRequestAlertException("Complaint response must not be null.", "AssessmentUpdate", "notnull");
         }
         checkManualFeedbackCreditsWithinBoundsElseThrow(assessmentUpdate.feedbacks());
+        validateFeatureBonus(exercise, assessmentUpdate.feedbacks());
         // the update is copied onto a new result below, but the feedback ids are still read while the request is mapped
         checkFeedbackBelongsToResultElseThrow(assessmentUpdate.feedbacks(), originalResult);
         complaintResponseService.checkComplaintResponseBelongsToResultElseThrow(assessmentUpdate.complaintResponse().getId(), originalResult.getId());
@@ -379,6 +380,24 @@ public class AssessmentService {
         result = resultRepository.save(result);
         result.setAssessor(assessor);
         return result;
+    }
+
+    protected void validateFeatureBonus(Exercise exercise, Collection<Feedback> feedbacks) {
+        if (feedbacks == null) {
+            return;
+        }
+        for (Feedback feedback : feedbacks) {
+            Double points = feedback.getFeatureBonusPoints();
+            if (points == null) {
+                continue;
+            }
+            if (!(exercise instanceof ProgrammingExercise) || exercise.isExamExercise() || feedback.getType() != FeedbackType.MANUAL_UNREFERENCED
+                    || feedback.getGradingInstruction() != null || feedback.getTestCase() != null || feedback.getReference() != null || feedback.getCredits() == null
+                    || feedback.getCredits() != 0 || !Double.isFinite(points) || points <= 0 || points > 9999 || feedback.getText() == null || feedback.getText().isBlank()
+                    || feedback.getDetailText() == null || feedback.getDetailText().isBlank()) {
+                throw new BadRequestAlertException("Feature bonus requires a name, justification and a positive amount of at most 9999 points.", "Feedback", "invalidFeatureBonus");
+            }
+        }
     }
 
     /**

@@ -766,6 +766,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     validateFeedback(): void {
         this.calculateTotalScore();
+        const featureBonuses = this.unreferencedFeedback().filter((feedback) => feedback.featureBonusPoints != undefined);
+        if (featureBonuses.some((feedback) => !feedback.text?.trim() || !feedback.detailText?.trim() || !(feedback.featureBonusPoints! > 0))) {
+            this.assessmentsAreValid.set(false);
+            return;
+        }
         if (this.exercise().allowComplaintsForAutomaticAssessments) {
             // We don't need manual feedback here
             this.assessmentsAreValid.set(true);

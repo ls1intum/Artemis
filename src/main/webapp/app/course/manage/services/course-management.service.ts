@@ -69,6 +69,7 @@ export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
 /** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class CourseGradeInformationDTO {
     gradeScores!: GradeScoreDTO[];
+    featureBonusPoints?: Record<number, number>;
     students!: StudentGradeDTO[];
 }
 

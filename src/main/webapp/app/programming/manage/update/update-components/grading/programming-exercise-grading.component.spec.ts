@@ -109,6 +109,51 @@ describe('ProgrammingExerciseGradingComponent', () => {
         expect(editGroupDatesSpy).toHaveBeenCalledOnce();
     });
 
+    it('keeps the bonus limit when selecting the active mode again', () => {
+        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        exercise.bonusPoints = 5;
+        fixture.detectChanges();
+
+        const countOut = fixture.debugElement.query(By.css('[data-testid="feature-bonus-count-out"]')).nativeElement as HTMLButtonElement;
+        const countIn = fixture.debugElement.query(By.css('[data-testid="feature-bonus-count-in"]')).nativeElement as HTMLButtonElement;
+        countOut.click();
+        countOut.click();
+        fixture.detectChanges();
+
+        expect(countOut.getAttribute('aria-pressed')).toBe('true');
+        expect(exercise.featureBonusPoints).toBe(5);
+        expect(exercise.bonusPoints).toBe(0);
+
+        countIn.click();
+        fixture.detectChanges();
+
+        expect(countIn.getAttribute('aria-pressed')).toBe('true');
+        expect(exercise.featureBonusPoints).toBeUndefined();
+        expect(exercise.bonusPoints).toBe(5);
+    });
+
+    it('shows the mode picker only with manual assessment enabled and restores Count in when disabled', () => {
+        exercise.featureBonusPoints = 5;
+        exercise.bonusPoints = 0;
+        const countOut = () => fixture.debugElement.query(By.css('[data-testid="feature-bonus-count-out"]'));
+        fixture.detectChanges();
+        expect(countOut()).toBeNull();
+        expect(exercise.featureBonusPoints).toBeUndefined();
+        expect(exercise.bonusPoints).toBe(5);
+
+        const timeline = fixture.debugElement.query(By.css('jhi-programming-exercise-timeline'));
+        timeline.triggerEventHandler('assessmentTypeChange', AssessmentType.SEMI_AUTOMATIC);
+        fixture.detectChanges();
+        countOut().nativeElement.click();
+        expect(exercise.featureBonusPoints).toBe(5);
+
+        timeline.triggerEventHandler('assessmentTypeChange', AssessmentType.AUTOMATIC);
+        fixture.detectChanges();
+        expect(countOut()).toBeNull();
+        expect(exercise.featureBonusPoints).toBeUndefined();
+        expect(exercise.bonusPoints).toBe(5);
+    });
+
     it('should create a grading summary', () => {
         fixture.detectChanges();
 

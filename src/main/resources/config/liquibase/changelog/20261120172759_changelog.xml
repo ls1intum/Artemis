@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261120172759-01-programming-feature-bonus-limit" author="sultan.imanov">
+        <addColumn tableName="programming_exercise_details">
+            <column name="feature_bonus_points" type="double"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="20261120172759-02-feedback-feature-bonus" author="sultan.imanov">
+        <addColumn tableName="feedback">
+            <column name="feature_bonus_points" type="double"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

@@ -6,7 +6,7 @@
 
     /* A flex column item stretches to the parent's full width by default; without this the button became a
        full-width bar instead of the compact, content-sized button it was before. */
-    .add-unreferenced-feedback {
+    &__add-button {
         align-self: flex-start;
     }
 

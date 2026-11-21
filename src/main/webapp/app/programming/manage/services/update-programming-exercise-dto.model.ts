@@ -85,6 +85,7 @@ export interface UpdateProgrammingExerciseDTO {
     difficulty?: DifficultyLevel;
     maxPoints?: number;
     bonusPoints?: number;
+    featureBonusPoints?: number;
     includedInOverallScore?: IncludedInOverallScore;
     allowComplaintsForAutomaticAssessments?: boolean;
     presentationScoreEnabled?: boolean;
@@ -211,6 +212,7 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
         difficulty: exercise.difficulty,
         maxPoints: exercise.maxPoints,
         bonusPoints,
+        featureBonusPoints: exercise.featureBonusPoints,
         includedInOverallScore: exercise.includedInOverallScore,
         allowComplaintsForAutomaticAssessments: exercise.allowComplaintsForAutomaticAssessments,
         presentationScoreEnabled: exercise.presentationScoreEnabled,

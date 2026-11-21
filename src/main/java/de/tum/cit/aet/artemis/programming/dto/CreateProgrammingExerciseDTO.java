@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * @param teamAssignmentConfig                       the team assignment configuration
  * @param maxPoints                                  the achievable points
  * @param bonusPoints                                the achievable bonus points
+ * @param featureBonusPoints                         the separate feature bonus limit, or null in Count in mode
  * @param includedInOverallScore                     how the exercise counts towards the course score
  * @param releaseDate                                when the exercise is released
  * @param startDate                                  when the exercise starts
@@ -93,7 +94,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 @JsonInclude()
 public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, String shortName, String channelName, String packageName, String problemStatement,
         String gradingInstructions, Set<String> categories, DifficultyLevel difficulty, ExerciseMode mode, TeamAssignmentConfigDTO teamAssignmentConfig, Double maxPoints,
-        Double bonusPoints, IncludedInOverallScore includedInOverallScore, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
+        Double bonusPoints, Double featureBonusPoints, IncludedInOverallScore includedInOverallScore, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, AssessmentType assessmentType,
         Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, Boolean allowOnlineEditor, Boolean allowOfflineIde,
         Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution,
@@ -129,13 +130,13 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         return new CreateProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getChannelName(), exercise.getPackageName(),
                 exercise.getProblemStatement(), exercise.getGradingInstructions(), exercise.getCategories(), exercise.getDifficulty(), exercise.getMode(),
-                TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig()), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
-                exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(),
-                exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getAssessmentType(), exercise.getAllowComplaintsForAutomaticAssessments(),
-                exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
-                exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(),
-                exercise.isReleaseTestsWithExampleSolution(), exercise.getProgrammingLanguage(), exercise.getProjectType(), UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig),
-                gradingCriteria, competencyLinks, auxiliaryRepositories, submissionPolicy, plagiarismDetectionConfig,
+                TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig()), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getFeatureBonusPoints(),
+                exercise.getIncludedInOverallScore(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(),
+                exercise.getExampleSolutionPublicationDate(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getAssessmentType(),
+                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.isAllowOnlineEditor(),
+                exercise.isAllowOfflineIde(), exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(),
+                exercise.getShowTestNamesToStudents(), exercise.isReleaseTestsWithExampleSolution(), exercise.getProgrammingLanguage(), exercise.getProjectType(),
+                UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig), gradingCriteria, competencyLinks, auxiliaryRepositories, submissionPolicy, plagiarismDetectionConfig,
                 exercise.isCourseExercise() && course != null ? new CourseRefDTO(course.getId(), null, null, null) : null,
                 exercise.getExerciseGroup() == null ? null : new ExerciseGroupIdDTO(exercise.getExerciseGroup().getId()));
     }

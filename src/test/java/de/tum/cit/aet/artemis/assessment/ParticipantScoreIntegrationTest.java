@@ -19,6 +19,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
@@ -33,6 +36,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -370,6 +374,63 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
             assertThat(userId).isEqualTo(expectedValuesForParticipation.studentId());
             assertThat(score).isEqualTo(expectedValuesForParticipation.score());
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void gradeScoresExportSumsLatestSubmittedFeatureBonusesForEachTeamMember() throws Exception {
+        User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        programmingExercise.setMode(ExerciseMode.TEAM);
+        programmingExercise.setDueDate(null);
+        programmingExercise.setFeatureBonusPoints(10.0);
+        programmingExercise = exerciseRepository.save(programmingExercise);
+        User tutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        Team team = teamUtilService.createTeam(Set.of(student1, student2), tutor, programmingExercise, TEST_PREFIX + "feature-team");
+        var teamParticipation = participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, team);
+        Result teamResult = participationUtilService.createSubmissionAndResult(teamParticipation, 70, true);
+        teamResult.setAssessor(tutor);
+        teamResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        teamResult.addFeedback(featureBonus(9));
+        resultRepository.save(teamResult);
+        saveFeatureAssessment(teamResult.getSubmission(), 4, ZonedDateTime.now());
+        saveFeatureAssessment(teamResult.getSubmission(), 8, null);
+
+        ProgrammingExercise individualExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(10), null, course);
+        individualExercise.setShortName("FeatureInd");
+        individualExercise.forceNewProjectKey();
+        individualExercise.setFeatureBonusPoints(10.0);
+        individualExercise = exerciseRepository.save(individualExercise);
+        var individualParticipation = participationUtilService.createAndSaveParticipationForExercise(individualExercise, TEST_PREFIX + "student1");
+        Result individualResult = participationUtilService.createSubmissionAndResult(individualParticipation, 70, true);
+        individualResult.setAssessor(tutor);
+        individualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        individualResult.addFeedback(featureBonus(2));
+        resultRepository.save(individualResult);
+
+        CourseGradeInformationDTO information = request.get("/api/assessment/courses/" + course.getId() + "/grade-scores", HttpStatus.OK, CourseGradeInformationDTO.class);
+        assertThat(information.featureBonusPoints()).containsExactlyInAnyOrderEntriesOf(Map.of(student1.getId(), 6.0, student2.getId(), 4.0));
+        assertThat(information.gradeScores()).filteredOn(score -> score.exerciseId() == programmingExercise.getId()).hasSize(2).allMatch(score -> score.score() == 70);
+
+        programmingExercise.setFeatureBonusPoints(3.0);
+        exerciseRepository.save(programmingExercise);
+        var afterCapReduction = request.get("/api/assessment/courses/" + course.getId() + "/grade-scores", HttpStatus.OK, CourseGradeInformationDTO.class);
+        assertThat(afterCapReduction.featureBonusPoints()).containsExactlyInAnyOrderEntriesOf(Map.of(student1.getId(), 5.0, student2.getId(), 3.0));
+    }
+
+    private void saveFeatureAssessment(Submission submission, double points, ZonedDateTime completionDate) {
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, completionDate, submission, TEST_PREFIX + "tutor1",
+                List.of(featureBonus(points / 2), featureBonus(points / 2)));
+        result.setRated(true);
+        result.setScore(70.0);
+        resultRepository.save(result);
+    }
+
+    private static Feedback featureBonus(double points) {
+        Feedback feedback = new Feedback().type(FeedbackType.MANUAL_UNREFERENCED).credits(0.0);
+        feedback.setText("Search");
+        feedback.setDetailText("Implemented search across submissions.");
+        feedback.setFeatureBonusPoints(points);
+        return feedback;
     }
 
     private record IdsMapValue(long exerciseId, long studentId, double score) {

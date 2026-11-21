@@ -170,6 +170,7 @@ describe('CourseScoresComponent', () => {
         presentationScore,
     });
     const courseGradeInformation: CourseGradeInformationDTO = {
+        featureBonusPoints: { [user1.id!]: 4.5 },
         gradeScores: [
             createGradeScore(1, 1, 1, 200, 100),
             createGradeScore(2, 1, 4, 100, 0),
@@ -660,6 +661,8 @@ describe('CourseScoresComponent', () => {
         component.exportResults();
         const generatedRows = exportAsExcelStub.mock.calls[0][1];
         const user1Row = generatedRows[0];
+        expect(exportAsExcelStub.mock.calls[0][0]).toContain('Feature Bonus Points');
+        expect(user1Row['Feature Bonus Points']).toEqual({ t: 'n', v: 4.5 });
         validateUserExportRow(
             user1Row,
             user1.name!,

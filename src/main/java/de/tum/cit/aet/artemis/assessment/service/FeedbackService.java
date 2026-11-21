@@ -95,6 +95,7 @@ public class FeedbackService {
         feedback.setType(originalFeedback.getType());
         // For manual result each feedback needs to have a credit. If no credit is set, we set it to 0.0
         feedback.setCredits(Objects.requireNonNullElse(originalFeedback.getCredits(), 0.0));
+        feedback.setFeatureBonusPoints(originalFeedback.getFeatureBonusPoints());
         feedback.setText(originalFeedback.getText());
 
         if (originalFeedback.isPositive() == null) {

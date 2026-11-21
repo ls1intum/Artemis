@@ -2164,6 +2164,44 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailTexts") List<String> detailTexts,
             @Param("testCaseName") String testCaseName);
 
+    record FeatureBonusSum(long studentId, double points) {
+    }
+
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository$FeatureBonusSum(
+                awards.studentId, SUM(awards.points))
+            FROM (
+                SELECT COALESCE(student.id, teamStudent.id) AS studentId, LEAST(SUM(feedback.featureBonusPoints), ex.featureBonusPoints) AS points
+                FROM StudentParticipation p
+                    JOIN TREAT(p.exercise AS ProgrammingExercise) ex
+                    LEFT JOIN p.student student
+                    LEFT JOIN p.team team
+                    LEFT JOIN team.students teamStudent
+                    JOIN p.submissions submission
+                    JOIN submission.results result
+                    JOIN result.feedbacks feedback
+                WHERE ex.course.id = :courseId
+                    AND ex.featureBonusPoints > 0
+                    AND p.testRun = FALSE
+                    AND feedback.featureBonusPoints IS NOT NULL
+                    AND COALESCE(student.id, teamStudent.id) IS NOT NULL
+                    AND result.id = (
+                        SELECT assessment.id
+                        FROM Submission candidate JOIN candidate.results assessment
+                        WHERE candidate.participation = p
+                            AND assessment.rated = TRUE
+                            AND assessment.completionDate IS NOT NULL
+                            AND assessment.assessor IS NOT NULL
+                            AND COALESCE(assessment.exampleResult, FALSE) = FALSE
+                        ORDER BY assessment.completionDate DESC, assessment.id DESC
+                        LIMIT 1
+                    )
+                GROUP BY p.id, COALESCE(student.id, teamStudent.id), ex.featureBonusPoints
+            ) awards
+            GROUP BY awards.studentId
+            """)
+    List<FeatureBonusSum> findFeatureBonusSumsByCourseId(@Param("courseId") long courseId);
+
     /**
      * Finds all grade scores for all exercises in a course, including individual and team exercises.
      * Need special handling for quiz exercises, as the submission date is stored in reverse order compared to all other exercise types.

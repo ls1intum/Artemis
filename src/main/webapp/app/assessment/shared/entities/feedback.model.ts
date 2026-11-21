@@ -78,6 +78,7 @@ export class Feedback implements BaseEntity {
     public hasLongFeedbackText?: boolean;
     public reference?: string;
     public credits?: number;
+    public featureBonusPoints?: number;
     public type?: FeedbackType;
     public result?: Result;
     public positive?: boolean;
