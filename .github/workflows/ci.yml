@@ -1105,10 +1105,13 @@ jobs:
 
   # Advisory. Runs on a self-hosted runner and executes the checked-out code, so never for a fork pull request,
   # and like the other test suites not for a draft. A merge group has already passed it on its pull request.
+  # Off unless the repository variable ANDROID_E2E is `true`: the Android runner pool takes no jobs at the moment, and
+  # a job waiting for it would keep the whole run open, so that no failed job could be re-run.
   android:
     name: Android E2E
     needs: detect-changes
     if: >-
+      vars.ANDROID_E2E == 'true' &&
       needs.detect-changes.outputs.current == 'true' &&
       needs.detect-changes.outputs.build_relevant == 'true' &&
       needs.detect-changes.outputs.tests_deferred != 'true' &&
