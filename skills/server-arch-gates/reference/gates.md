@@ -155,12 +155,14 @@ or the methods that return endpoints. Request options, response, usage and excep
 stay allowed. The test cannot see a module that adds its own URL and key properties and calls a model
 with a plain HTTP client; that is forbidden too, and reviews have to catch it.
 
-**Why it matters.** The core applies the preset's options, the timeouts and retries, the custom
-headers, Microsoft Foundry authentication and observations, and it tags every chat response with its
-preset for cost tracking. The startup validation checks every assignment. A module with its own client skips all of that, and every deployment has to
+**Why it matters.** The core applies the preset's options, the timeouts, the custom headers,
+Microsoft Foundry authentication and observations; chat calls also get the preset's retries, and every
+chat response is tagged with its preset for cost tracking. `embed` makes no SDK retries, whatever the
+endpoint configures, so the caller decides whether and when to retry. The startup validation checks
+every assignment. A module with its own client skips all of that, and every deployment has to
 configure the same provider a second time.
 
-Full guidance: `documentation/docs/developer/ai-pipelines.mdx#connect-a-feature-to-a-language-model`.
+Full guidance: section "Connect a feature to a language model" in `documentation/docs/developer/ai-pipelines.mdx`.
 
 ## Caching
 
