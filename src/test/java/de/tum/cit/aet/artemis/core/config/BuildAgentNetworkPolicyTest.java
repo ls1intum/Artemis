@@ -131,7 +131,7 @@ class BuildAgentNetworkPolicyTest {
 
     /**
      * The allowlist is read from an address Tomcat may have taken out of {@code X-Forwarded-For}: Artemis runs with
-     * {@code forward-headers-strategy: native}, and {@code server.tomcat.remoteip.internal-proxies} defaults to the
+     * {@code server.request.header.forwarded.strategy: web-server}, and {@code server.tomcat.remoteip.internal-proxies} defaults to the
      * private ranges, so a caller reaching the node from any private address can name whichever address it likes.
      * <p>
      * That leaves an operator who configured an allowlist believing in a restriction that is not effective, with

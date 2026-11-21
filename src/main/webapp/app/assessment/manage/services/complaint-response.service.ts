@@ -1,22 +1,17 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { convertDateFromServer } from 'app/foundation/util/date.utils';
-import { ComplaintResponseDTO, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
+import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import type { ComplaintResponse as ComplaintResponseDTO } from 'app/openapi/model/complaint-response';
 import { User } from 'app/account/user/user.model';
 
-type EntityResponseType = HttpResponse<ComplaintResponseDTO>;
-
+/**
+ * Keeps the complaint response lock rules and the mapping of the generated complaint response to the client entity (dayjs dates, user instance).
+ */
 @Service()
 export class ComplaintResponseService {
-    private http = inject(HttpClient);
     private accountService = inject(AccountService);
-
-    private resourceUrl = 'api/assessment/complaints';
 
     /**
      * Checks if a complaint response is locked for the currently logged-in user
@@ -54,41 +49,13 @@ export class ComplaintResponseService {
         );
     }
 
-    removeLock(complaintId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${complaintId}/response`, { observe: 'response' });
-    }
-
-    createLock(complaintId: number): Observable<HttpResponse<ComplaintResponse>> {
-        return this.http
-            .post<ComplaintResponseDTO>(`${this.resourceUrl}/${complaintId}/response`, {}, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
-    }
-
-    refreshLockOrResolveComplaint(complaintResponseUpdate: ComplaintResponseUpdateDTO, complaintId: number | undefined): Observable<HttpResponse<ComplaintResponse>> {
-        return this.http
-            .patch<ComplaintResponseDTO>(`${this.resourceUrl}/${complaintId}/response`, complaintResponseUpdate, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
-    }
-
-    public convertComplaintResponseEntityResponseDatesFromServer(res: EntityResponseType): HttpResponse<ComplaintResponse> {
-        return res.clone({ body: res.body ? this.convertComplaintResponseFromServer(res.body) : undefined });
-    }
-
-    public convertComplaintResponseDatesFromServer(complaintResponse: ComplaintResponse): ComplaintResponse {
-        if (complaintResponse) {
-            complaintResponse.submittedTime = convertDateFromServer(complaintResponse.submittedTime);
-            complaintResponse.lockEndDate = convertDateFromServer(complaintResponse.lockEndDate);
-        }
-        return complaintResponse;
-    }
-
     public convertComplaintResponseFromServer(dto: ComplaintResponseDTO): ComplaintResponse {
         const complaintResponse = new ComplaintResponse();
         complaintResponse.id = dto.id;
         complaintResponse.responseText = dto.responseText ?? '';
-        complaintResponse.submittedTime = convertDateFromServer(dto.submittedTime);
+        complaintResponse.submittedTime = convertDateStringFromServer(dto.submittedTime);
         complaintResponse.isCurrentlyLocked = dto.isCurrentlyLocked;
-        complaintResponse.lockEndDate = convertDateFromServer(dto.lockEndDate);
+        complaintResponse.lockEndDate = convertDateStringFromServer(dto.lockEndDate);
         if (dto.reviewer) {
             const reviewer = new User(dto.reviewer.id, dto.reviewer.login, dto.reviewer.firstName, dto.reviewer.lastName);
             reviewer.name = dto.reviewer.name;

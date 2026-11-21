@@ -149,7 +149,7 @@ class HyperionExerciseGenerationResourceTest {
     private ProgrammingExercise testExercise;
 
     /** A real resolver over the shipped defaults: the profile feature is inert unless a deployment configures profiles. */
-    private final HyperionEffortProfileService effortProfileService = new HyperionEffortProfileService(new HyperionAgentProperties(), List.of());
+    private final HyperionEffortProfileService effortProfileService = new HyperionEffortProfileService(new HyperionAgentProperties());
 
     @BeforeEach
     void setUp() {
@@ -810,7 +810,7 @@ class HyperionExerciseGenerationResourceTest {
         LinkedHashMap<String, HyperionAgentProperties.EffortProfileProperties> profiles = new LinkedHashMap<>();
         HyperionAgentProperties.EffortProfileProperties draft = new HyperionAgentProperties.EffortProfileProperties();
         draft.setLabel("Quick draft");
-        draft.setModel("draft-model");
+        draft.setLlmPreset("draft");
         draft.setMaxTokensPerJob(600_000L);
         draft.setMaxJobDuration(Duration.ofMinutes(12));
         profiles.put("draft", draft);
@@ -818,7 +818,7 @@ class HyperionExerciseGenerationResourceTest {
         standard.setLabel("Standard");
         profiles.put("standard", standard);
         properties.setProfiles(profiles);
-        return createResource(new HyperionEffortProfileService(properties, List.of()));
+        return createResource(new HyperionEffortProfileService(properties));
     }
 
     private void stubHappyPath(ExerciseGenerationRequestDTO request) {

@@ -1,6 +1,6 @@
 <tumaet-ui-dialog [(visible)]="dialogVisible" [header]="'artemisApp.exam.examUsers.rooms.dialogTitle' | artemisTranslate" size="large">
-    <form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate class="flex flex-col gap-4" (keydown.enter)="$event.preventDefault()">
-        <p class="my-0!" jhiTranslate="artemisApp.exam.examUsers.rooms.introText"></p>
+    <form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate class="flex flex-col gap-6" (keydown.enter)="$event.preventDefault()">
+        <p class="my-0" jhiTranslate="artemisApp.exam.examUsers.rooms.introText"></p>
         <div class="flex flex-col items-end gap-2">
             <div class="flex items-center gap-2">
                 <label for="reserveFactor" class="m-0 text-sm" jhiTranslate="artemisApp.exam.examUsers.rooms.reserveFactor"></label>
@@ -108,8 +108,8 @@
         }
     </form>
     <ng-template #footer>
-        <div class="flex w-full items-center justify-between gap-4">
-            <p class="my-0!">
+        <div class="flex w-full items-center justify-between gap-6">
+            <p class="my-0">
                 <span jhiTranslate="artemisApp.exam.examUsers.rooms.cantFindRoom"></span>
                 <a
                     id="examRoomManagementLink"
@@ -117,7 +117,7 @@
                     [queryParams]="{ courseId: courseId(), examId: exam().id }"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="text-primary underline"
+                    class="text-primary"
                     jhiTranslate="artemisApp.examRooms.management.openButtonTitle"
                 ></a>
             </p>

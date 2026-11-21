@@ -30,7 +30,7 @@
                         <th class="col-group" jhiTranslate="artemisApp.exerciseManagement.table.group"></th>
                     }
                     <th jhiTranslate="artemisApp.exercise.categories"></th>
-                    <th class="text-end col-actions" jhiTranslate="artemisApp.exercise.actions"></th>
+                    <th class="text-right! col-actions" jhiTranslate="artemisApp.exercise.actions"></th>
                 </tr>
             </thead>
             <tbody>
@@ -38,9 +38,9 @@
                     <tr [attr.id]="'exercise-card-' + row.exercise.id" cdkDrag [cdkDragData]="row.exercise" [cdkDragDisabled]="!showDragHandle()">
                         <div *cdkDragPreview class="exercise-drag-preview">
                             @if (showTypeIcon()) {
-                                <fa-icon [icon]="row.icon" [fixedWidth]="true" class="text-muted me-1" />
+                                <fa-icon [icon]="row.icon" [fixedWidth]="true" class="text-muted-color me-1" />
                             }
-                            <span class="fw-semibold">{{ row.exercise.title }}</span>
+                            <span class="font-semibold">{{ row.exercise.title }}</span>
                         </div>
                         @if (showCheckbox()) {
                             <td>
@@ -64,9 +64,9 @@
                         }
                         <td class="col-title" data-testid="exercise-row-title">
                             @if (showTypeIcon()) {
-                                <fa-icon [icon]="row.icon" [fixedWidth]="true" class="text-muted me-1" />
+                                <fa-icon [icon]="row.icon" [fixedWidth]="true" class="text-muted-color me-1" />
                             }
-                            <a class="fw-semibold" [routerLink]="row.titleLink">{{ row.exercise.title }}</a>
+                            <a class="font-semibold" [routerLink]="row.titleLink">{{ row.exercise.title }}</a>
                             @if (row.programmingBuildWarning) {
                                 <span
                                     class="inline-flex ms-2"
@@ -81,44 +81,47 @@
                             }
                         </td>
                         <td class="col-dates">
-                            <div class="d-flex flex-column small">
+                            <div class="flex flex-col text-[0.875em]">
                                 @if (row.releaseDate) {
                                     <div>
-                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.release"></span>:
+                                        <span class="text-muted-color" jhiTranslate="artemisApp.exercise.release"></span>:
                                         {{ row.releaseDate | artemisDate }}
                                     </div>
                                 }
                                 @if (row.dueDate) {
                                     <div>
-                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.due"></span>:
+                                        <span class="text-muted-color" jhiTranslate="artemisApp.exercise.due"></span>:
                                         {{ row.dueDate | artemisDate }}
                                     </div>
                                 }
                                 @if (row.assessmentDueDate) {
                                     <div>
-                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.assessmentDue"></span>:
+                                        <span class="text-muted-color" jhiTranslate="artemisApp.exercise.assessmentDue"></span>:
                                         {{ row.assessmentDueDate | artemisDate }}
                                     </div>
                                 }
                             </div>
                         </td>
                         <td class="text-nowrap col-points" data-testid="exercise-row-points">
-                            <div class="d-flex flex-column">
+                            <div class="flex flex-col">
                                 <span>
                                     {{ row.exercise.maxPoints }}pts
                                     @if (row.exercise.bonusPoints) {
-                                        <span class="text-muted small">(+{{ row.exercise.bonusPoints }})</span>
+                                        <span class="text-muted-color text-[0.875em]">(+{{ row.exercise.bonusPoints }})</span>
                                     }
                                 </span>
                                 @switch (row.exercise.includedInOverallScore) {
                                     @case (IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                                        <span class="small text-success fw-semibold" jhiTranslate="artemisApp.exercise.includedCompletely"></span>
+                                        <span class="text-[0.875em] text-state-success font-semibold" jhiTranslate="artemisApp.exercise.includedCompletely"></span>
                                     }
                                     @case (IncludedInOverallScore.INCLUDED_AS_BONUS) {
-                                        <span class="small text-warning-emphasis fw-semibold" jhiTranslate="artemisApp.exercise.includedAsBonus"></span>
+                                        <span
+                                            class="text-[0.875em] text-(--tumaet-ui-state-warning-foreground) font-semibold"
+                                            jhiTranslate="artemisApp.exercise.includedAsBonus"
+                                        ></span>
                                     }
                                     @case (IncludedInOverallScore.NOT_INCLUDED) {
-                                        <span class="small text-secondary fw-semibold" jhiTranslate="artemisApp.exercise.notIncluded"></span>
+                                        <span class="text-[0.875em] text-muted-color font-semibold" jhiTranslate="artemisApp.exercise.notIncluded"></span>
                                     }
                                     @default {}
                                 }
@@ -129,7 +132,7 @@
                                 @if (row.exercise.difficulty) {
                                     <tumaet-ui-tag [severity]="row.difficultySeverity" [value]="row.exercise.difficulty" />
                                 } @else {
-                                    <span class="text-muted fst-italic small" jhiTranslate="artemisApp.exerciseManagement.table.none"></span>
+                                    <span class="text-muted-color italic text-[0.875em]" jhiTranslate="artemisApp.exerciseManagement.table.none"></span>
                                 }
                             </td>
                         }
@@ -161,7 +164,7 @@
                                 @if (row.hasCategories) {
                                     <jhi-exercise-categories class="contents" [exercise]="row.exercise" />
                                 } @else if (row.showNoCategoriesPlaceholder) {
-                                    <span class="text-muted fst-italic small" jhiTranslate="artemisApp.exerciseManagement.table.none"></span>
+                                    <span class="text-muted-color italic text-[0.875em]" jhiTranslate="artemisApp.exerciseManagement.table.none"></span>
                                 }
                             </div>
                         </td>
@@ -182,7 +185,7 @@
                     <tr>
                         <td
                             [attr.colspan]="6 + (showDragHandle() ? 1 : 0) + (showCheckbox() ? 1 : 0)"
-                            class="text-center text-muted py-3"
+                            class="text-center text-muted-color py-4!"
                             jhiTranslate="artemisApp.exerciseManagement.table.empty"
                         ></td>
                     </tr>

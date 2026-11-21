@@ -25,30 +25,31 @@
             [buttonLoading]="loading()"
             [smallButton]="smallButtons()"
             [hideLabelMobile]="hideLabelMobile()"
-            [ngbPopover]="popContent"
-            [autoClose]="'outside'"
-            placement="right auto"
+            [tumAetUiPopoverTrigger]="codeEditorPopover"
         ></button>
     }
-    <ng-template #popContent style="max-width: 660px">
-        @if (participations() && participations().length > 1) {
-            <div class="form-check form-switch">
-                <input id="switchPracticeMode" mdbCheckbox class="form-check-input" type="checkbox" [checked]="isPracticeMode()" (click)="switchPracticeMode()" />
-                <label for="switchPracticeMode" class="form-check-label" jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></label>
-            </div>
+    <tumaet-ui-popover #codeEditorPopover placement="right" [ariaLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate">
+        <!-- Rendered only while open, so a closed popover adds no second button to the page. -->
+        @if (codeEditorPopover.isOpen()) {
+            @if (participations() && participations().length > 1) {
+                <div class="mb-2 flex items-center gap-2">
+                    <tumaet-ui-toggle-switch inputId="switchPracticeMode" [ngModel]="isPracticeMode()" (changed)="switchPracticeMode()" />
+                    <label for="switchPracticeMode" class="mb-0" jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></label>
+                </div>
+            }
+            <button
+                type="button"
+                jhi-exercise-action-button
+                [id]="'open-exercise-popover-' + exercise().id!"
+                [buttonIcon]="faFolderOpen"
+                class="open-code-editor"
+                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                [buttonLabel]="'artemisApp.exerciseActions.' + (isPracticeMode() ? 'openPracticeCodeEditor' : 'openGradedCodeEditor') | artemisTranslate"
+                [buttonLoading]="loading()"
+                [smallButton]="smallButtons()"
+                [hideLabelMobile]="hideLabelMobile()"
+                [routerLink]="[courseAndExerciseNavigationUrl(), activeParticipation()?.id]"
+            ></button>
         }
-        <button
-            type="button"
-            jhi-exercise-action-button
-            [id]="'open-exercise-popover-' + exercise().id!"
-            [buttonIcon]="faFolderOpen"
-            class="open-code-editor"
-            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-            [buttonLabel]="'artemisApp.exerciseActions.' + (isPracticeMode() ? 'openPracticeCodeEditor' : 'openGradedCodeEditor') | artemisTranslate"
-            [buttonLoading]="loading()"
-            [smallButton]="smallButtons()"
-            [hideLabelMobile]="hideLabelMobile()"
-            [routerLink]="[courseAndExerciseNavigationUrl(), activeParticipation()?.id]"
-        ></button>
-    </ng-template>
+    </tumaet-ui-popover>
 </ng-container>

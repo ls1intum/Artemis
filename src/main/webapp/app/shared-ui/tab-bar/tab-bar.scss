@@ -31,7 +31,7 @@
             position: absolute;
             content: '';
             border-radius: 50%;
-            background-color: var(--bs-danger);
+            background-color: var(--tumaet-ui-state-danger);
             padding: 0.5rem;
             top: 0;
             right: 0;
@@ -44,7 +44,7 @@
             }
 
             fa-icon:first-child {
-                font-size: calc(var(--bs-body-font-size) * 1.6);
+                font-size: 1.44rem;
             }
         }
     }

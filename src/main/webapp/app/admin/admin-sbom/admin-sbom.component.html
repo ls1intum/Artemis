@@ -44,14 +44,14 @@
 </div>
 
 @if (loading()) {
-    <div class="flex justify-center my-5">
+    <div class="flex justify-center my-12">
         <fa-icon [icon]="faSpinner" animation="spin" size="3x" />
     </div>
 } @else if (combinedSbom()) {
     <!-- Upgrade Recommendation Banner -->
     @if (versionInfo()?.updateAvailable) {
-        <tumaet-ui-message class="mb-4 block" [severity]="upgradeUrgency() === 'critical' ? 'error' : upgradeUrgency() === 'high' ? 'warn' : 'info'" data-testid="upgrade-banner">
-            <div class="flex items-center gap-3">
+        <tumaet-ui-message class="mb-6 block" [severity]="upgradeUrgency() === 'critical' ? 'error' : upgradeUrgency() === 'high' ? 'warn' : 'info'" data-testid="upgrade-banner">
+            <div class="flex items-center gap-4">
                 <fa-icon [icon]="faArrowUp" size="lg" />
                 <div class="grow">
                     @if (upgradeUrgency() === 'critical') {
@@ -86,8 +86,8 @@
     }
 
     <!-- Explanation Section -->
-    <div class="rounded-lg border p-4 mb-4 bg-surface-0 dark:bg-surface-900" data-testid="explanation-section">
-        <h6 class="mb-2 font-semibold flex items-center gap-2">
+    <div class="rounded-lg border border-(--border-color) p-6 mb-6 bg-surface-0 dark:bg-surface-900" data-testid="explanation-section">
+        <h6 class="mb-2 flex items-center gap-2">
             <fa-icon [icon]="faInfoCircle" />
             <span jhiTranslate="artemisApp.dependencies.infoTitle"></span>
         </h6>
@@ -114,12 +114,12 @@
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4" data-testid="summary-cards">
-        <div class="rounded-lg border p-4 text-center transition-shadow hover:shadow-lg">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6" data-testid="summary-cards">
+        <div class="rounded-lg border border-(--border-color) p-6 text-center transition-shadow hover:shadow-lg">
             <h3 class="mb-0">{{ totalComponentCount() }}</h3>
             <p class="text-muted-color" jhiTranslate="artemisApp.dependencies.totalComponents"></p>
         </div>
-        <div class="rounded-lg border p-4 text-center transition-shadow hover:shadow-lg">
+        <div class="rounded-lg border border-(--border-color) p-6 text-center transition-shadow hover:shadow-lg">
             <fa-icon [icon]="faServer" class="text-primary me-2" />
             <h3 class="mb-0 inline">{{ serverComponentCount() }}</h3>
             <p class="text-muted-color" jhiTranslate="artemisApp.dependencies.serverComponents"></p>
@@ -127,7 +127,7 @@
                 <small class="text-muted-color">v{{ serverMetadata()?.version }}</small>
             }
         </div>
-        <div class="rounded-lg border p-4 text-center transition-shadow hover:shadow-lg">
+        <div class="rounded-lg border border-(--border-color) p-6 text-center transition-shadow hover:shadow-lg">
             <fa-icon [icon]="faDesktop" class="text-state-danger me-2" />
             <h3 class="mb-0 inline">{{ clientComponentCount() }}</h3>
             <p class="text-muted-color" jhiTranslate="artemisApp.dependencies.clientComponents"></p>
@@ -136,7 +136,7 @@
             }
         </div>
         <div
-            class="rounded-lg border p-4 text-center transition-shadow hover:shadow-lg"
+            class="rounded-lg border border-(--border-color)! p-6 text-center transition-shadow hover:shadow-lg"
             [style.border-color]="vulnerabilities()?.totalVulnerabilities ? 'var(--danger)' : undefined"
         >
             @if (loadingVulnerabilities()) {
@@ -173,7 +173,7 @@
 
     <!-- Filters -->
     <tumaet-ui-table-layout [empty]="filteredComponents().length === 0" emptyTitle="artemisApp.dependencies.noComponents">
-        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2" data-testid="filters-section">
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!" data-testid="filters-section">
             <div class="min-w-24 max-w-lg flex-1">
                 <tumaet-ui-icon-field [icon]="faSearch">
                     <input
@@ -192,7 +192,7 @@
             <tumaet-ui-button-group>
                 <tumaet-ui-button size="small" [severity]="selectedSource() === 'all' ? 'primary' : 'secondary'" (clicked)="updateSource('all')" data-testid="source-filter-all">
                     <span jhiTranslate="artemisApp.dependencies.sourceAll"></span>
-                    <tumaet-ui-tag class="ms-1" severity="secondary" [value]="'' + totalComponentCount()" />
+                    <tumaet-ui-tag class="ms-1!" severity="secondary" [value]="'' + totalComponentCount()" />
                 </tumaet-ui-button>
                 <tumaet-ui-button
                     [ariaLabel]="'artemisApp.dependencies.sourceServer' | artemisTranslate"
@@ -203,7 +203,7 @@
                 >
                     <fa-icon [icon]="faServer" class="me-1" />
                     <span class="hidden md:inline" jhiTranslate="artemisApp.dependencies.sourceServer"></span>
-                    <tumaet-ui-tag class="ms-1" severity="secondary" [value]="'' + serverComponentCount()" />
+                    <tumaet-ui-tag class="ms-1!" severity="secondary" [value]="'' + serverComponentCount()" />
                 </tumaet-ui-button>
                 <tumaet-ui-button
                     [ariaLabel]="'artemisApp.dependencies.sourceClient' | artemisTranslate"
@@ -214,7 +214,7 @@
                 >
                     <fa-icon [icon]="faDesktop" class="me-1" />
                     <span class="hidden md:inline" jhiTranslate="artemisApp.dependencies.sourceClient"></span>
-                    <tumaet-ui-tag class="ms-1" severity="secondary" [value]="'' + clientComponentCount()" />
+                    <tumaet-ui-tag class="ms-1!" severity="secondary" [value]="'' + clientComponentCount()" />
                 </tumaet-ui-button>
             </tumaet-ui-button-group>
             @if (vulnerabilities()?.totalVulnerabilities) {
@@ -302,7 +302,7 @@
                                 </tumaet-ui-tag>
                                 <div class="mt-1 flex flex-wrap gap-1">
                                     @for (vuln of component.componentVulnerabilities!.slice(0, 3); track vuln.id) {
-                                        <a [href]="'https://osv.dev/vulnerability/' + vuln.id" target="_blank" rel="noopener noreferrer" class="no-underline">
+                                        <a [href]="'https://osv.dev/vulnerability/' + vuln.id" target="_blank" rel="noopener noreferrer">
                                             <tumaet-ui-tag severity="secondary" [value]="vuln.id" />
                                         </a>
                                     }
@@ -348,7 +348,7 @@
     </tumaet-ui-table-layout>
 } @else if (sbomUnavailable()) {
     <tumaet-ui-message severity="info" class="block" data-testid="sbom-unavailable-message">
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-4">
             <fa-icon [icon]="faInfoCircle" size="lg" />
             <div>
                 <strong jhiTranslate="artemisApp.dependencies.notAvailableTitle"></strong>

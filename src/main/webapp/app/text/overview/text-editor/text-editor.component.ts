@@ -1,3 +1,4 @@
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -65,6 +66,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         UpperCasePipe,
         ArtemisTranslatePipe,
         MarkdownDirective,
+        TumAetUiTagComponent,
     ],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate, ExerciseSubmission {

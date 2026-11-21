@@ -1,8 +1,8 @@
-<div class="container">
+<div class="mx-auto w-full px-2 min-[576px]:max-w-[540px] min-[768px]:max-w-[720px] min-[992px]:max-w-[960px] min-[1200px]:max-w-[1140px] min-[1400px]:max-w-[1320px]">
     <h5 *adminTitleBarTitle id="import-standardized-competencies-heading" class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.import.title"></h5>
-    <div class="mt-3 rounded-lg border">
+    <div class="mt-4 rounded-lg border border-(--border-color)">
         <div
-            class="clickable flex max-w-full items-center p-3"
+            class="cursor-pointer flex max-w-full items-center p-4"
             (click)="toggleCollapse()"
             data-testid="format-toggle"
             [attr.aria-expanded]="!isCollapsed()"
@@ -14,12 +14,12 @@
             (keyup.space)="$event.target === $event.currentTarget ? keyboardAction1.click() : undefined"
         >
             <div class="me-2">
-                <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed()" />
+                <fa-icon [icon]="faChevronRight" class="rotate-icon inline-block align-middle" [class.rotated]="!isCollapsed()" />
             </div>
             <h5 class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.title"></h5>
         </div>
         @if (!isCollapsed()) {
-            <div class="p-3 pt-0" data-testid="format-body">
+            <div class="p-4 pt-0" data-testid="format-body">
                 <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text1"></p>
                 <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text2"></p>
                 <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text3"></p>
@@ -29,13 +29,13 @@
     </div>
     <input
         [attr.aria-label]="'artemisApp.standardizedCompetency.manage.import.title' | artemisTranslate"
-        class="mt-3"
+        class="mt-4"
         type="file"
         accept="application/json"
         (change)="onFileChange($event)"
         data-testid="file-input"
     />
-    <h4 class="mt-3" jhiTranslate="artemisApp.standardizedCompetency.manage.import.preview.title"></h4>
+    <h4 class="mt-4" jhiTranslate="artemisApp.standardizedCompetency.manage.import.preview.title"></h4>
     @if (importCount(); as count) {
         @if (count.knowledgeAreas) {
             <div
@@ -47,7 +47,7 @@
                 <jhi-knowledge-area-tree class="flex h-full w-1/2 grow" [dataSource]="dataSource()">
                     <ng-template let-competency="competency" let-knowledgeArea="knowledgeArea" #competencyTemplate>
                         <div
-                            class="clickable flex items-center"
+                            class="cursor-pointer flex items-center"
                             (click)="openCompetencyDetails(competency, knowledgeArea.title)"
                             #keyboardAction31
                             role="button"
@@ -67,7 +67,7 @@
                     </ng-template>
                 </jhi-knowledge-area-tree>
                 @if (selectedCompetency(); as competency) {
-                    <div class="ms-1 flex h-full w-full grow rounded-lg border bg-surface-0 dark:bg-surface-900 p-3" data-testid="competency-detail">
+                    <div class="ms-1 flex h-full w-full grow rounded-lg border border-(--border-color) bg-surface-0 dark:bg-surface-900 p-4" data-testid="competency-detail">
                         <jhi-standardized-competency-detail
                             [competency]="competency"
                             [knowledgeAreaTitle]="knowledgeAreaTitle()"
@@ -99,7 +99,7 @@
             </div>
         </tumaet-ui-message>
     }
-    <div class="mt-3 flex items-center justify-end gap-2">
+    <div class="mt-4 flex items-center justify-end gap-2">
         <tumaet-ui-button severity="secondary" size="small" (clicked)="cancel()">
             <fa-icon [icon]="faBan" />
             <span jhiTranslate="entity.action.cancel"></span>

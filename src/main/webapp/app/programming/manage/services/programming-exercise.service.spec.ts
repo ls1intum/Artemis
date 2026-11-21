@@ -19,7 +19,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
@@ -543,6 +543,33 @@ describe('ProgrammingExercise Service', () => {
         const url = `${resourceUrl}/repository-checkout-directories?programmingLanguage=JAVA&checkoutSolution=true`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(expectedDirectories);
+    });
+
+    it('should convert the build time window dates of a response to dayjs objects', () => {
+        const returnedFromService = new ProgrammingExercise(undefined, undefined);
+        returnedFromService.buildConfig!.advancedSettings = {
+            buildTimeWindow: { start: '2026-10-01T10:00:00Z' as unknown as dayjs.Dayjs, end: '2026-10-01T12:00:00Z' as unknown as dayjs.Dayjs },
+        };
+        const response = new HttpResponse<ProgrammingExercise>({ body: returnedFromService });
+
+        const converted = ProgrammingExerciseService.convertProgrammingExerciseResponseDatesFromServer(response);
+
+        const window = converted.body!.buildConfig!.advancedSettings!.buildTimeWindow!;
+        expect(dayjs.isDayjs(window.start)).toBe(true);
+        expect(window.start!.isSame(dayjs('2026-10-01T10:00:00Z'))).toBe(true);
+        expect(window.end!.isSame(dayjs('2026-10-01T12:00:00Z'))).toBe(true);
+    });
+
+    it('should send the build time window of an update nested in the build config', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 7;
+        exercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: dayjs('2026-10-01T10:00:00Z') } };
+
+        service.update(exercise).subscribe();
+
+        const req = httpMock.expectOne({ method: 'PUT' });
+        expect(req.request.body.buildConfig.advancedSettings).toEqual({ buildTimeWindow: { start: '2026-10-01T10:00:00.000Z' } });
+        req.flush(exercise);
     });
 
     it('should test convertDataFromClient method', () => {

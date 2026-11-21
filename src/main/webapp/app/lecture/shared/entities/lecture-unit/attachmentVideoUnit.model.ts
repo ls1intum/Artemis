@@ -17,7 +17,6 @@ export class AttachmentVideoUnit extends LectureUnit {
     public videoSource?: string;
     public videoSourceType?: 'TUM_LIVE' | 'YOUTUBE' | null;
     public youtubeVideoId?: string | null;
-    public transcriptionProperties?: LectureTranscriptionDTO;
     public attachmentUpdateIntent?: AttachmentUpdateIntent;
     /** Sent with an update: the video link the editor was loaded with. The server changes the link only if the editor changed it, and only if the unit still has this one. */
     public loadedVideoSource?: string;
@@ -31,17 +30,4 @@ export enum TranscriptionStatus {
     PENDING = 'PENDING',
     COMPLETED = 'COMPLETED',
     FAILED = 'FAILED',
-}
-
-export interface LectureTranscriptionDTO {
-    lectureUnitId: number;
-    language: string;
-    segments: TranscriptionSegment[];
-}
-
-export interface TranscriptionSegment {
-    text?: string;
-    startTime?: number;
-    endTime?: number;
-    slideNumber?: number;
 }

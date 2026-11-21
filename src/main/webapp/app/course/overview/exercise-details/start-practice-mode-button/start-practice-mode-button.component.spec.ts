@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApplicationRef, TemplateRef } from '@angular/core';
+import { ApplicationRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -16,7 +15,6 @@ import { InitializationState } from 'app/exercise/shared/entities/participation/
 import { Subject, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -36,7 +34,6 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 StartPracticeModeButtonComponent,
-                MockDirective(NgbPopover),
                 MockComponent(ExerciseActionButtonComponent),
                 MockPipe(ArtemisTranslatePipe, (key: string) => key),
                 MockDirective(FeatureToggleDirective),
@@ -167,7 +164,7 @@ describe('JhiStartPracticeModeButtonComponent', () => {
     describe('popover of a programming exercise', () => {
         const gradedPart = { id: 1, initializationState: InitializationState.FINISHED, testRun: false } as StudentParticipation;
 
-        /** Renders the content of the popover, which the button opens on click, into a detached view. */
+        /** Opens the popover with a click on its button and returns the rendered content. */
         const renderPopover = async (teamMode: boolean): Promise<HTMLElement> => {
             const exercise = {
                 id: 45,
@@ -182,10 +179,10 @@ describe('JhiStartPracticeModeButtonComponent', () => {
             await fixture.whenStable();
             fixture.changeDetectorRef.detectChanges();
 
-            const popover = fixture.debugElement.query(By.css('button[jhi-exercise-action-button]')).injector.get(NgbPopover);
-            const view = (popover.ngbPopover as TemplateRef<unknown>).createEmbeddedView({});
-            view.detectChanges();
-            return view.rootNodes.find((node: Node) => node.nodeType === Node.ELEMENT_NODE) as HTMLElement;
+            fixture.nativeElement.querySelector('button[jhi-exercise-action-button]').click();
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+            return document.querySelector<HTMLElement>('.start-practice-popover')!;
         };
 
         const translationKeys = (popover: HTMLElement) => Array.from(popover.querySelectorAll('[jhiTranslate]')).map((element) => element.getAttribute('jhiTranslate'));
@@ -319,26 +316,27 @@ describe('JhiStartPracticeModeButtonComponent', () => {
             expect(fixture.nativeElement.textContent).not.toContain(TEAM_HINT);
         });
 
-        it('should keep the description of a team programming exercise after the popover closed, because it removes aria-describedby of its trigger', async () => {
+        it('should keep the description of a team programming exercise while its popover is open and after it closed', async () => {
             await render(ExerciseType.PROGRAMMING, true);
-            const popover = fixture.debugElement.query(By.css('button[jhi-exercise-action-button]')).injector.get(NgbPopover);
 
-            // the popover points the trigger to itself while it is open and removes the attribute on close, before it reports hidden
-            startButton().setAttribute('aria-describedby', 'ngb-popover-0');
-            expect(startButton().getAttribute('aria-describedby')).toBe('ngb-popover-0');
-            startButton().removeAttribute('aria-describedby');
-            popover.hidden.emit();
-
-            expect(startButton().getAttribute('aria-describedby')).toBe(comp.teamHintId);
+            startButton().click();
+            fixture.changeDetectorRef.detectChanges();
+            expect(startButton().getAttribute('aria-expanded')).toBe('true');
             expect(startButton().getAttribute('aria-describedby')).toBe(description()!.id);
+
+            startButton().click();
+            fixture.changeDetectorRef.detectChanges();
+            expect(startButton().getAttribute('aria-expanded')).toBe('false');
+            expect(startButton().getAttribute('aria-describedby')).toBe(comp.teamHintId);
         });
 
         it('should not describe the trigger of an individual programming exercise after the popover closed', async () => {
             await render(ExerciseType.PROGRAMMING, false);
-            const popover = fixture.debugElement.query(By.css('button[jhi-exercise-action-button]')).injector.get(NgbPopover);
 
-            startButton().removeAttribute('aria-describedby');
-            popover.hidden.emit();
+            startButton().click();
+            fixture.changeDetectorRef.detectChanges();
+            startButton().click();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(startButton().hasAttribute('aria-describedby')).toBe(false);
             expect(description()).toBeNull();

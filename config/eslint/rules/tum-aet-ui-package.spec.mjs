@@ -13,9 +13,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const packageJson = JSON.parse(readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/package.json'), 'utf8'));
 const rootPackageJson = JSON.parse(readFileSync(resolve(repoRoot, 'package.json'), 'utf8'));
 const angularWorkspace = JSON.parse(readFileSync(resolve(repoRoot, 'angular.json'), 'utf8'));
-const productionBuild = JSON.parse(readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/ng-package.json'), 'utf8'));
-const developmentBuild = JSON.parse(readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/ng-package.dev.json'), 'utf8'));
-const packBuild = JSON.parse(readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/ng-package.pack.json'), 'utf8'));
+const libraryBuild = angularWorkspace.projects['tum-aet-ui'].architect.build;
 const serveTsconfig = JSON.parse(readFileSync(resolve(repoRoot, 'config/client/tsconfig.serve.json'), 'utf8'));
 const rootTsconfigPath = resolve(repoRoot, 'tsconfig.json');
 const { config: rootTsconfig, error: rootTsconfigError } = ts.readConfigFile(rootTsconfigPath, ts.sys.readFile);
@@ -53,7 +51,6 @@ const packageStyles = globSync(
 const storybookTheme = readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/themes.css'), 'utf8');
 const hostTailwind = readFileSync(resolve(repoRoot, 'src/main/webapp/tailwind.css'), 'utf8');
 const hostGlobalStyles = readFileSync(resolve(repoRoot, 'src/main/webapp/content/scss/global.scss'), 'utf8');
-const artemisPrimeTheme = readFileSync(resolve(repoRoot, 'src/main/webapp/app/primeng-artemis-theme.ts'), 'utf8');
 const workspace = parse(readFileSync(resolve(repoRoot, 'pnpm-workspace.yaml'), 'utf8'));
 const catalog = workspace.catalog ?? {};
 const namedCatalogs = workspace.catalogs ?? {};
@@ -302,7 +299,7 @@ describe('@tumaet/ui-angular integration contract', () => {
         for (const [name, version] of Object.entries(packageJson.dependencies)) {
             expect(catalog[name], `${name} must have one canonical workspace version`).toBe(version);
             expect(rootDependencies[name], `${name} must be shared with Artemis through the catalog`).toBe('catalog:');
-            expect(version, `${name} must be valid in the ng-packagr output`).not.toMatch(/^(?:catalog|workspace):/);
+            expect(version, `${name} must be valid in the built package manifest`).not.toMatch(/^(?:catalog|workspace):/);
         }
         for (const [name, version] of Object.entries(packageJson.peerDependencies)) {
             expect(semver.validRange(version), `${name} must declare a consumer compatibility range`).not.toBeNull();
@@ -327,15 +324,21 @@ describe('@tumaet/ui-angular integration contract', () => {
     });
 
     it('keeps development and production artifacts identical except for preserving watch output', () => {
-        const { deleteDestPath, ...developmentArtifact } = developmentBuild;
-        const { dest: productionDestination, ...productionArtifact } = productionBuild;
-        const { dest: packDestination, ...packArtifact } = packBuild;
+        const { production, development, pack } = libraryBuild.configurations;
 
-        expect(deleteDestPath).toBe(false);
-        expect(developmentArtifact).toEqual(productionBuild);
-        expect(packArtifact).toEqual(productionArtifact);
-        expect(packDestination).not.toBe(productionDestination);
-        expect(angularWorkspace.projects['tum-aet-ui'].architect.build.configurations.pack.project).toBe('packages/tum-aet-ui/ng-package.pack.json');
+        expect(libraryBuild.builder).toBe('@angular/build:library');
+        expect(libraryBuild.defaultConfiguration).toBe('production');
+        expect(libraryBuild.options.tsConfig).toBe('packages/tum-aet-ui/tsconfig.lib.prod.json');
+        // The Artemis tsconfig, the Vitest aliases and the style check all read the package from this directory.
+        expect(libraryBuild.options.outputPath).toBe('packages/tum-aet-ui/dist');
+        expect(packageJson.scripts['pack:check']).toContain('--configuration pack');
+        expect(production).toEqual({});
+        // The development build only differs in what a watching consumer needs: full compilation and an output
+        // directory that is not wiped between rebuilds.
+        expect(development).toEqual({ tsConfig: 'packages/tum-aet-ui/tsconfig.lib.json', deleteOutputPath: false });
+        expect(pack).toEqual({ outputPath: 'packages/tum-aet-ui/dist-pack' });
+        expect(pack.outputPath).not.toBe(libraryBuild.options.outputPath);
+        expect(packageJson.exports['.']).toBe('./src/public-api.ts');
     });
 
     it('declares a public package and one complete stylesheet subpath', () => {
@@ -350,9 +353,9 @@ describe('@tumaet/ui-angular integration contract', () => {
         });
         expect(packageJson.exports).not.toHaveProperty('./themes.css');
         expect(packageJson.exports).not.toHaveProperty('./tailwind-theme.css');
-        expect(productionBuild.assets).toContain('styles.css');
-        expect(productionBuild.assets).not.toContain('themes.css');
-        expect(productionBuild.assets).not.toContain('tailwind-theme.css');
+        expect(libraryBuild.options.assets).toContain('packages/tum-aet-ui/styles.css');
+        expect(libraryBuild.options.assets).not.toContain('packages/tum-aet-ui/themes.css');
+        expect(libraryBuild.options.assets).not.toContain('packages/tum-aet-ui/tailwind-theme.css');
     });
 
     it('keeps production on the built entry point and development on the public source entry point', () => {
@@ -471,6 +474,8 @@ describe('@tumaet/ui-angular integration contract', () => {
                 '--tumaet-ui-accent-color',
                 '--tumaet-ui-button-contrast-foreground',
                 '--tumaet-ui-button-focus-color',
+                '--tumaet-ui-button-success-background',
+                '--tumaet-ui-button-success-contrast',
                 '--tumaet-ui-content-background',
                 '--tumaet-ui-control-background',
                 '--tumaet-ui-control-border-color',
@@ -519,7 +524,6 @@ describe('@tumaet/ui-angular integration contract', () => {
             ['disabled-color', 'control-disabled-color'],
         ]) {
             expect(hostTailwind).toMatch(new RegExp(`:root\\s*\\{[^}]*--tumaet-ui-${packageToken}:\\s*var\\(--artemis-${artemisToken}\\)`, 's'));
-            expect(artemisPrimeTheme).toContain(`var(--artemis-${artemisToken})`);
         }
         for (const state of ['success', 'warning', 'info']) {
             expect(hostTailwind).toMatch(new RegExp(`:root\\s*\\{[^}]*--tumaet-ui-state-${state}:\\s*var\\(--${state}\\)`, 's'));

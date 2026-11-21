@@ -48,10 +48,10 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '26'
 
       - name: Enable pnpm
-        run: corepack enable
+        run: npm install --global corepack && corepack enable
 
       - name: Install client dependencies
         run: pnpm install --frozen-lockfile
@@ -84,7 +84,7 @@ jobs:
 
       - name: Run the Hyperion variant e2e against the mock LLM
         # RUN_HYPERION=true makes the runner start the mock LLM, wait for it, enable Hyperion on the server pointed at
-        # it through spring.ai.openai.*, and only then start the tests. The suite is selected by path rather than by a
+        # it through an artemis.llm endpoint and preset, and only then start the tests. The suite is selected by path rather than by a
         # title filter, so a renamed test cannot silently turn the run into "no tests found". The suite additionally
         # skips itself unless /management/info reports the hyperion module feature.
         env:

@@ -9,7 +9,7 @@
 
 // Lighter than the header rule. Alpha on the same token rather than a lighter surface step, so both themes work.
 tbody td {
-    border-bottom-color: color-mix(in srgb, var(--p-content-border-color) 55%, transparent);
+    border-bottom-color: color-mix(in srgb, var(--tumaet-ui-border-color) 55%, transparent);
 }
 
 .col-icon {
@@ -78,7 +78,7 @@ td.col-actions {
     padding: 0.4rem 0.75rem;
     background-color: var(--body-bg);
     border: 1px solid var(--border-color);
-    border-radius: var(--p-border-radius);
+    border-radius: var(--tumaet-ui-radius-md);
     box-shadow: 0 5px 12px color-mix(in srgb, var(--black) 20%, transparent);
 }
 

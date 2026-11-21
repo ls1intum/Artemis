@@ -1,0 +1,13 @@
+<div class="tumaet-ui-accordion-heading" role="heading" [attr.aria-level]="headingLevel()">
+    <button type="button" class="tumaet-ui-accordion-header" ngAccordionTrigger [panel]="panel" [disabled]="disabled()" [(expanded)]="expanded">
+        <span class="tumaet-ui-accordion-header-label">{{ header() }}<ng-content select="[tumAetUiAccordionHeader]" /></span>
+        <fa-icon class="tumaet-ui-accordion-icon" [icon]="faChevronDown" aria-hidden="true" />
+    </button>
+</div>
+<div class="tumaet-ui-accordion-region" ngAccordionPanel #panel="ngAccordionPanel">
+    <div class="tumaet-ui-accordion-region-inner">
+        <div class="tumaet-ui-accordion-content">
+            <ng-content />
+        </div>
+    </div>
+</div>

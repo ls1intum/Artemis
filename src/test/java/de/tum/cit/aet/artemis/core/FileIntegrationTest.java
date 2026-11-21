@@ -49,9 +49,11 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.util.ResourceUtils;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -63,7 +65,10 @@ import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
@@ -80,6 +85,7 @@ import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -124,6 +130,15 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
+    private QuizExerciseTestRepository quizExerciseTestRepository;
+
+    @Autowired
+    private ExamTestRepository examTestRepository;
+
+    @Autowired
+    private StudentExamTestRepository studentExamTestRepository;
+
+    @Autowired
     private ConversationUtilService conversationUtilService;
 
     @Autowired
@@ -160,6 +175,29 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         byte[] getUserSignatureResponse = request.get(requestUrl, HttpStatus.OK, byte[].class);
 
         assertThat(getUserSignatureResponse).isEqualTo(file.getBytes());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamUserSignatureForbiddenForStudentOfTheExamCourse() throws Exception {
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        var exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course, 1);
+        var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null, null, null, null, null, null, null, null);
+        var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+        ExamUser examUser = request.postWithMultipartFile("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
+                ExamUser.class, HttpStatus.OK);
+
+        // the registered student only is a student of the course of the exam, so neither the signature nor the image of any exam user is theirs to read
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        request.get("%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, examUser.getSigningImagePath()), HttpStatus.FORBIDDEN, byte[].class);
+        request.get("/api/core/files/exam-users/" + examUser.getId() + "/image.png", HttpStatus.FORBIDDEN, byte[].class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetExamUserFilesNotFoundForUnknownExamUser() throws Exception {
+        request.get("/api/core/files/exam-users/999999/signatures/signature.png", HttpStatus.NOT_FOUND, byte[].class);
+        request.get("/api/core/files/exam-users/999999/image.png", HttpStatus.NOT_FOUND, byte[].class);
     }
 
     @Test
@@ -920,6 +958,37 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         byte[] retrievedContent = request.get(responsePath, HttpStatus.OK, byte[].class);
         assertThat(retrievedContent).isEqualTo(file.getBytes());
+
+        // The response depends on the access of the user and must not be stored by shared caches
+        var fileResponse = mockMvc.perform(get(responsePath)).andExpect(status().isOk()).andReturn().getResponse();
+        assertThat(fileResponse.getHeader(HttpHeaders.CACHE_CONTROL)).contains("private").doesNotContain("public");
+        assertThat(fileResponse.getHeaders(HttpHeaders.VARY)).anySatisfy(value -> assertThat(value).containsIgnoringCase("Cookie"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void studentCannotUploadOrReadFilesOfGroupChatTheyDoNotBelongTo() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
+        var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        var groupChat = conversationUtilService.createGroupChat(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "image/png", new byte[] { 1, 2, 3 });
+
+        mockMvc.perform(multipart("/api/core/files/courses/" + course.getId() + "/conversations/" + groupChat.getId()).file(file).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+        request.get("/api/core/files/courses/" + course.getId() + "/conversations/" + groupChat.getId() + "/someFile.png", HttpStatus.FORBIDDEN, byte[].class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void studentCannotUseConversationFilesThroughAnotherCourse() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
+        var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        var otherCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        var groupChat = conversationUtilService.createGroupChat(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "image/png", new byte[] { 1, 2, 3 });
+
+        mockMvc.perform(multipart("/api/core/files/courses/" + otherCourse.getId() + "/conversations/" + groupChat.getId()).file(file).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -1455,5 +1524,108 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // teaching assistants pass the release check; the question has no background, so the file is missing
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
         request.get(backgroundUrl, HttpStatus.NOT_FOUND, byte[].class);
+    }
+
+    private DragAndDropQuestion createExamDragAndDropQuestion(ZonedDateTime examStart, ZonedDateTime examEnd) throws IOException {
+        var quiz = quizExerciseUtilService.createAndSaveEnrolledExamQuiz(TEST_PREFIX, examStart, examEnd);
+        var question = quiz.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast).findFirst().orElseThrow();
+        FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"),
+                FilePathConverter.getDragAndDropBackgroundFilePath().resolve("exam-background.jpg").toFile());
+        question.setBackgroundFilePath("exam-background.jpg");
+        quizExerciseTestRepository.save(quiz);
+        return question;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetDragAndDropPicturesOfExamQuizBeforeExamStart() throws Exception {
+        var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
+        addStudentExamWithExercise(dndQuestion);
+        String backgroundUrl = "/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/backgrounds/background.png";
+        String dragItemUrl = "/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/drag-items/1/item.png";
+
+        request.get(backgroundUrl, HttpStatus.FORBIDDEN, byte[].class);
+        request.get(dragItemUrl, HttpStatus.FORBIDDEN, byte[].class);
+
+        // teaching assistants can read the picture
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        assertThat(request.get(backgroundUrl, HttpStatus.OK, byte[].class)).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetDragAndDropPicturesOfExamQuizWithoutStudentExam() throws Exception {
+        var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(2));
+        String backgroundUrl = "/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/backgrounds/background.png";
+
+        request.get(backgroundUrl, HttpStatus.FORBIDDEN, byte[].class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetDragAndDropPicturesOfExamQuizDuringExam() throws Exception {
+        var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(2));
+        addStudentExamWithExercise(dndQuestion);
+
+        assertThat(request.get(examBackgroundUrl(dndQuestion), HttpStatus.OK, byte[].class)).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetDragAndDropPicturesOfExamQuizNotInOwnStudentExam() throws Exception {
+        var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(2));
+        // the student has an attempt of this exam, but it does not contain the exercise (another variant of the exercise group)
+        examUtilService.addStudentExamWithUser(dndQuestion.getExercise().getExerciseGroup().getExam(), TEST_PREFIX + "student1");
+
+        request.get(examBackgroundUrl(dndQuestion), HttpStatus.FORBIDDEN, byte[].class);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        assertThat(request.get(examBackgroundUrl(dndQuestion), HttpStatus.OK, byte[].class)).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetDragAndDropPicturesOfExamQuizAfterHandInUntilSummaryIsPublished() throws Exception {
+        var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(1));
+        var exam = dndQuestion.getExercise().getExerciseGroup().getExam();
+        exam.setExamSummaryPublicationDate(ZonedDateTime.now().plusDays(1));
+        exam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        examTestRepository.save(exam);
+        var studentExam = addStudentExamWithExercise(dndQuestion);
+        studentExamTestRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now().minusMinutes(90));
+
+        request.get(examBackgroundUrl(dndQuestion), HttpStatus.FORBIDDEN, byte[].class);
+
+        // staff is not affected
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        assertThat(request.get(examBackgroundUrl(dndQuestion), HttpStatus.OK, byte[].class)).isNotEmpty();
+
+        // once the summary is published, the summary page can load the pictures again
+        exam.setExamSummaryPublicationDate(ZonedDateTime.now().minusMinutes(1));
+        examTestRepository.save(exam);
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        assertThat(request.get(examBackgroundUrl(dndQuestion), HttpStatus.OK, byte[].class)).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetDragAndDropPicturesOfExamQuizWithUnsetTestRunFlag() throws Exception {
+        var dndQuestion = createExamDragAndDropQuestion(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(2));
+        var studentExam = examUtilService.addStudentExamWithUser(dndQuestion.getExercise().getExerciseGroup().getExam(), TEST_PREFIX + "student1");
+        // the flag is nullable and a null counts as a regular attempt
+        ReflectionTestUtils.setField(studentExam, "testRun", null);
+        examUtilService.addExerciseToStudentExam(studentExam, dndQuestion.getExercise());
+
+        assertThat(request.get(examBackgroundUrl(dndQuestion), HttpStatus.OK, byte[].class)).isNotEmpty();
+    }
+
+    private StudentExam addStudentExamWithExercise(DragAndDropQuestion question) {
+        var studentExam = examUtilService.addStudentExamWithUser(question.getExercise().getExerciseGroup().getExam(), TEST_PREFIX + "student1");
+        examUtilService.addExerciseToStudentExam(studentExam, question.getExercise());
+        return studentExam;
+    }
+
+    private static String examBackgroundUrl(DragAndDropQuestion question) {
+        return "/api/core/files/drag-and-drop/questions/" + question.getId() + "/backgrounds/exam-background.jpg";
     }
 }

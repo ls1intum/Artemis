@@ -1,9 +1,9 @@
-<h2 [jhiTranslate]="'artemisApp.' + competencyType() + '.title'" class="mt-4 mb-2"></h2>
+<h2 [jhiTranslate]="'artemisApp.' + competencyType() + '.title'" class="mt-6 mb-2"></h2>
 <tumaet-ui-table-layout
     [empty]="filteredAndSortedCompetencies().length === 0"
     [emptyTitle]="'artemisApp.' + competencyType() + (courseCompetencies().length ? '.manage.noSearchResults' : '.manage.empty')"
 >
-    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
         @if (courseCompetencies().length) {
             <input
                 #searchInput
@@ -19,36 +19,36 @@
             />
         }
         <span class="flex-1"></span>
-        <div ngbDropdown container="body" class="inline-block">
-            <button
-                [attr.aria-label]="'artemisApp.' + competencyType() + '.manage.importButton' | artemisTranslate"
-                tumAetUiButton
-                size="small"
-                severity="secondary"
-                type="button"
-                id="importCompetenciesDropdown"
-                ngbDropdownToggle
-            >
-                <fa-icon [icon]="faFileImport" />
-                <span class="hidden md:inline">{{ 'artemisApp.' + competencyType() + '.manage.importButton' | artemisTranslate }}</span>
-            </button>
-            <div ngbDropdownMenu aria-labelledby="importCompetenciesDropdown">
-                <button type="button" class="btn" id="competencyImportAllButton" (click)="openImportAllModal()" ngbDropdownItem>
+        <button
+            [attr.aria-label]="'artemisApp.' + competencyType() + '.manage.importButton' | artemisTranslate"
+            tumAetUiButton
+            size="small"
+            severity="secondary"
+            type="button"
+            id="importCompetenciesDropdown"
+            [tumAetUiMenuTrigger]="importMenu"
+        >
+            <fa-icon [icon]="faFileImport" />
+            <span class="hidden md:inline">{{ 'artemisApp.' + competencyType() + '.manage.importButton' | artemisTranslate }}</span>
+        </button>
+        <ng-template #importMenu>
+            <tumaet-ui-menu aria-labelledby="importCompetenciesDropdown">
+                <button type="button" tumAetUiMenuItem id="competencyImportAllButton" (triggered)="openImportAllModal()">
                     <fa-icon [icon]="faFileImport" />
                     <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.importAllButton'"></span>
                 </button>
-                <a class="btn" [routerLink]="['/course-management', courseId(), competencyType() + '-management', 'import']" ngbDropdownItem>
+                <a tumAetUiMenuItem [routerLink]="['/course-management', courseId(), competencyType() + '-management', 'import']">
                     <fa-icon [icon]="faFileImport" />
                     <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.importFromCoursesButton'"></span>
                 </a>
                 @if (standardizedCompetenciesEnabled()) {
-                    <a class="btn" [routerLink]="['/course-management', courseId(), competencyType() + '-management', 'import-standardized']" ngbDropdownItem>
+                    <a tumAetUiMenuItem [routerLink]="['/course-management', courseId(), competencyType() + '-management', 'import-standardized']">
                         <fa-icon [icon]="faFileImport" />
                         <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.importStandardizedButton'"></span>
                     </a>
                 }
-            </div>
-        </div>
+            </tumaet-ui-menu>
+        </ng-template>
         <a
             tumAetUiButton
             size="small"

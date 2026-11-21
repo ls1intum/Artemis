@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -53,9 +53,9 @@ public class AthenaSubmissionSelectionService {
      * Create a new AthenaSubmissionSelectionService
      * Responses should be fast, and it's not too bad if it fails. Therefore, we use a very short timeout for requests.
      */
-    public AthenaSubmissionSelectionService(@Qualifier("veryShortTimeoutAthenaRestTemplate") RestTemplate veryShortTimeoutAthenaRestTemplate,
-            AthenaModuleService athenaModuleService, AthenaDTOConverterService athenaDTOConverterService) {
-        connector = new AthenaConnector<>(veryShortTimeoutAthenaRestTemplate, ResponseDTO.class);
+    public AthenaSubmissionSelectionService(@Qualifier("veryShortTimeoutAthenaRestClient") RestClient veryShortTimeoutAthenaRestClient, AthenaModuleService athenaModuleService,
+            AthenaDTOConverterService athenaDTOConverterService) {
+        connector = new AthenaConnector<>(veryShortTimeoutAthenaRestClient, ResponseDTO.class);
         this.athenaModuleService = athenaModuleService;
         this.athenaDTOConverterService = athenaDTOConverterService;
     }

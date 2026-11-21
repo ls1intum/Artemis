@@ -1,8 +1,8 @@
 <div *titleBarTitle class="flex items-center">
-    <h5 class="my-0!" jhiTranslate="artemisApp.examManagement.examStudents.verifyAttendanceBtn"></h5>
+    <h5 class="my-0" jhiTranslate="artemisApp.examManagement.examStudents.verifyAttendanceBtn"></h5>
 </div>
 
-<div class="flex flex-col gap-4 p-4">
+<div class="flex flex-col gap-6 p-6">
     @if (isLoading()) {
         <div class="flex justify-center">
             <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
@@ -31,7 +31,7 @@
                 @if (uncheckedCount() > 0) {
                     <div>
                         <span [jhiTranslate]="'artemisApp.examManagement.examStudents.notCheckedStudents'">Students who did not sign</span>:
-                        <tumaet-ui-tag severity="danger" class="ms-1" id="#registered-users" data-testid="not-checked-count"> {{ uncheckedCount() }}</tumaet-ui-tag>
+                        <tumaet-ui-tag severity="danger" class="ms-1!" id="#registered-users" data-testid="not-checked-count"> {{ uncheckedCount() }}</tumaet-ui-tag>
                     </div>
                 }
                 @if (uncheckedCount() === 0) {

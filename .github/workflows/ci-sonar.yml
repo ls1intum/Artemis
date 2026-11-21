@@ -38,7 +38,7 @@ permissions: {}  # default-deny; each job grants only what it needs
 # Workflow-level node/java pins are drift-checked by ci-workflows.yml.
 env:
   CI: true
-  node: 24
+  node: 26
   java: 25
 
 jobs:
@@ -141,8 +141,9 @@ jobs:
 
       # And this is required for the same reason again. `tsconfig.json` maps `@tumaet/ui-angular` to
       # `packages/tum-aet-ui/dist`, which is a build output: it is not tracked and `pnpm install` does not
-      # create it. Without it every one of the ~240 application imports of the alias is unresolved,
-      # which is the same silent degradation as the missing `node_modules`. Only the library build is
+      # create it. Without it the ~240 application imports of the alias fall back to the package
+      # sources through its `.` export, so the scan would not analyze the declarations the client
+      # is built against. Only the library build is
       # run, not the full `prebuild`: the rest of that script writes an angular.json file replacement
       # no source imports and runs a vite version check that would fail this job for a reason
       # unrelated to the scan.
@@ -279,3 +280,18 @@ jobs:
           SONAR_SELECTED_SERVER: ${{ steps.reports.outputs.server_selected }}
           SONAR_REVISION: ${{ steps.source.outputs.sha }}
         run: bash ../.sonar-tools/.github/scripts/run-sonar.sh
+
+      - name: Enforce zero newly duplicated lines
+        if: steps.analysis.outputs.pull_request != '0'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SOURCE_SHA: ${{ steps.analysis.outputs.sha }}
+          PULL_REQUEST: ${{ steps.analysis.outputs.pull_request }}
+          SOURCE_BRANCH: ${{ steps.analysis.outputs.branch }}
+          TARGET_BRANCH: ${{ steps.analysis.outputs.base }}
+        with:
+          script: |
+            await require('./.sonar-tools/.github/scripts/sonar-duplication.js').checkPullRequestDuplication({
+              github, context, sha: process.env.SOURCE_SHA, pullRequest: process.env.PULL_REQUEST,
+              branch: process.env.SOURCE_BRANCH, base: process.env.TARGET_BRANCH, summary: core.summary,
+            });

@@ -1,12 +1,10 @@
 import { Component, DestroyRef, WritableSignal, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { DecimalPipe, NgClass } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { Tag } from 'primeng/tag';
-import { ButtonDirective } from 'primeng/button';
-import { Badge } from 'primeng/badge';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPanelComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import {
     faArrowDown,
     faArrowUp,
@@ -25,7 +23,6 @@ import {
     faTrashCan,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { Panel } from 'primeng/panel';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
 import { ChecklistAnalysisResponse } from 'app/openapi/model/checklist-analysis-response';
@@ -48,7 +45,6 @@ import { EMPTY, Observable, from, of } from 'rxjs';
 import { catchError, concatMap, map, pairwise, switchMap, tap, toArray } from 'rxjs/operators';
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { FormsModule } from '@angular/forms';
-import { Checkbox } from 'primeng/checkbox';
 import { MAX_PROBLEM_STATEMENT_LENGTH } from 'app/hyperion/problem-statement/problem-statement.utils';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -91,9 +87,18 @@ const PENALTY_LOW = 0.1;
 @Component({
     selector: 'jhi-checklist-panel',
     templateUrl: './checklist-panel.component.html',
-    styleUrls: ['./checklist-panel.component.scss'],
     standalone: true,
-    imports: [NgClass, DecimalPipe, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge, Checkbox, Panel],
+    imports: [
+        DecimalPipe,
+        FontAwesomeModule,
+        FormsModule,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiPanelComponent,
+        TumAetUiTagComponent,
+    ],
 })
 export class ChecklistPanelComponent {
     private hyperionApiService = inject(HyperionProblemStatementApi);
@@ -300,9 +305,15 @@ export class ChecklistPanelComponent {
     }
 
     private static readonly SEVERITY_TAG_MAP: Record<string, 'danger' | 'warn' | 'info'> = { HIGH: 'danger', MEDIUM: 'warn', LOW: 'info' };
-    private static readonly CATEGORY_COLOR_MAP: Record<string, string> = { CLARITY: 'category-clarity', COHERENCE: 'category-coherence', COMPLETENESS: 'category-completeness' };
+    /** The category chips use the colours of the matching radar axis. */
+    private static readonly CATEGORY_COLOR_MAP: Record<string, string> = {
+        CLARITY: 'bg-(--primary) text-white',
+        COHERENCE: 'bg-state-info text-white',
+        COMPLETENESS: 'bg-state-success text-white',
+    };
+    private static readonly CATEGORY_DEFAULT_COLOR = 'bg-(--tumaet-ui-muted-color) text-white';
     private static readonly DIFFICULTY_SEVERITY_MAP: Record<string, 'success' | 'warn' | 'danger'> = { EASY: 'success', MEDIUM: 'warn', HARD: 'danger' };
-    private static readonly DELTA_CLASS_MAP: Record<string, string> = { HIGHER: 'text-danger', LOWER: 'text-warning', MATCH: 'text-success' };
+    private static readonly DELTA_CLASS_MAP: Record<string, string> = { HIGHER: 'text-state-danger', LOWER: 'text-state-warning', MATCH: 'text-state-success' };
     private static readonly DELTA_LABEL_KEYS: Record<string, string> = {
         HIGHER: 'artemisApp.programmingExercise.instructorChecklist.difficulty.harderThanDeclared',
         LOWER: 'artemisApp.programmingExercise.instructorChecklist.difficulty.easierThanDeclared',
@@ -314,7 +325,20 @@ export class ChecklistPanelComponent {
     }
 
     getCategoryColorClass(category: string | undefined): string {
-        return ChecklistPanelComponent.CATEGORY_COLOR_MAP[category?.toUpperCase() ?? ''] ?? 'category-default';
+        return ChecklistPanelComponent.CATEGORY_COLOR_MAP[category?.toUpperCase() ?? ''] ?? ChecklistPanelComponent.CATEGORY_DEFAULT_COLOR;
+    }
+
+    /**
+     * Classes of one "Adapt to" chip: the declared level is shown as the current one with a ring, the level the analysis
+     * suggested is fully opaque, and the others dim until hovered.
+     */
+    difficultyChipClass(level: string): string {
+        const base = 'rounded-2xl!';
+        if (this.localDeclaredDifficulty() === level) {
+            return `${base} cursor-default opacity-100! shadow-[0_0_0_0.125rem_var(--module-bg),0_0_0_0.25rem_currentcolor]`;
+        }
+        const suggested = this.analysisResult()?.difficultyAssessment?.suggested === level;
+        return `${base} focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${suggested ? 'opacity-100' : 'opacity-75 hover:enabled:opacity-100'}`;
     }
 
     getDifficultySeverity(level: string | undefined): 'success' | 'warn' | 'danger' {
@@ -331,7 +355,7 @@ export class ChecklistPanelComponent {
     }
 
     getDeltaClass(delta: string | undefined): string {
-        return ChecklistPanelComponent.DELTA_CLASS_MAP[delta ?? ''] ?? 'text-secondary';
+        return ChecklistPanelComponent.DELTA_CLASS_MAP[delta ?? ''] ?? 'text-muted-color';
     }
 
     // Quality radar chart for Clarity, Coherence, Completeness

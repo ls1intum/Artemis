@@ -36,7 +36,6 @@ import {
     communicationPostTechSupport,
     messagesBetweenUser1User2,
 } from 'test/helpers/sample/communication-sample-data';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostContextFilter, SortDirection } from 'app/communication/communication.util';
@@ -53,7 +52,6 @@ import { MessageInlineInputComponent } from 'app/communication/message/message-i
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { DialogService } from 'primeng/dynamicdialog';
 
 @Directive({
     selector: '[infinite-scroll]',
@@ -76,14 +74,7 @@ describe('DiscussionSectionComponent', () => {
     beforeEach(async () => {
         vi.useFakeTimers();
         await TestBed.configureTestingModule({
-            imports: [
-                MockModule(FormsModule),
-                MockModule(ReactiveFormsModule),
-                MockModule(NgbTooltipModule),
-                DiscussionSectionComponent,
-                FaIconComponent,
-                InfiniteScrollStubDirective,
-            ],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), DiscussionSectionComponent, FaIconComponent, InfiniteScrollStubDirective],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -103,7 +94,6 @@ describe('DiscussionSectionComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: CourseStorageService, useClass: CourseStorageService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
-                MockProvider(DialogService),
                 {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ postId: communicationPostTechSupport.id, courseId: communicationCourse.id }),
@@ -265,19 +255,13 @@ describe('DiscussionSectionComponent', () => {
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
         component.currentUser = { id: 99, login: 'admin' } as User;
-        component.formGroup.patchValue({
-            filterToUnresolved: true,
-            filterToOwn: true,
-            filterToAnsweredOrReacted: true,
-        });
 
-        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
-        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
-        const filterToAnsweredOrReacted = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
-
-        filterResolvedCheckbox.dispatchEvent(new Event('change'));
-        filterOwnCheckbox.dispatchEvent(new Event('change'));
-        filterToAnsweredOrReacted.dispatchEvent(new Event('change'));
+        // toggle the filters the way a user does: the native input changes and reports it
+        for (const name of ['filterToUnresolved', 'filterToOwn', 'filterToAnsweredOrReacted']) {
+            const checkbox = getElement(fixture.debugElement, `input[name=${name}]`) as HTMLInputElement;
+            checkbox.checked = true;
+            checkbox.dispatchEvent(new Event('change'));
+        }
 
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();

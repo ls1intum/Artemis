@@ -15,7 +15,7 @@
             </div>
         } @else if (categorizedEntitySummary() && categorizedEntitySummary()!.length > 0) {
             @if (hasLargeCount()) {
-                <p class="mb-2! font-semibold text-state-danger" role="alert" data-testid="delete-dialog-large-count-warning">
+                <p class="mb-2 font-semibold text-state-danger" role="alert" data-testid="delete-dialog-large-count-warning">
                     <fa-icon [icon]="faExclamationTriangle" class="me-1" />
                     <span jhiTranslate="entity.delete.summary.largeCountWarning"></span>
                 </p>
@@ -25,7 +25,7 @@
                     <tbody>
                         @for (category of categorizedEntitySummary()!; track category.titleKey; let categoryIndex = $index) {
                             <tr class="category-header-row">
-                                <th [id]="summaryId + '-category-' + categoryIndex" colspan="4" class="category-header-cell">
+                                <th [id]="summaryId + '-category-' + categoryIndex" [attr.colspan]="summaryColumnCount()" class="category-header-cell">
                                     <span [jhiTranslate]="category.titleKey"></span>
                                 </th>
                             </tr>
@@ -54,9 +54,6 @@
                                         >
                                             {{ pair[1].value }}
                                         </td>
-                                    } @else {
-                                        <td class="item-label-cell"></td>
-                                        <td class="item-value-cell"></td>
                                     }
                                 </tr>
                             }

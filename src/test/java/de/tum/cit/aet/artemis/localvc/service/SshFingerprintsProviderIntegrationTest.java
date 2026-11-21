@@ -6,8 +6,11 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.localvc.dto.SshHostKeyFingerprintDTO;
+import de.tum.cit.aet.artemis.localvc.dto.SshHostKeyFingerprintsDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class SshFingerprintsProviderIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -19,5 +22,16 @@ class SshFingerprintsProviderIntegrationTest extends AbstractSpringIntegrationLo
     void shouldReturnFingerprints() throws Exception {
         var response = request.get("/api/localvc/ssh-fingerprints", HttpStatus.OK, Map.class);
         assertThat(response.get("EC")).isNotNull();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void shouldPublishTheFingerprintsWithoutALogin() throws Exception {
+        var response = request.get("/api/localvc/public/ssh-fingerprints", HttpStatus.OK, SshHostKeyFingerprintsDTO.class);
+        assertThat(response.hostKeys()).isNotEmpty().allSatisfy(hostKey -> {
+            assertThat(hostKey.algorithm()).isNotBlank();
+            assertThat(hostKey.fingerprint()).startsWith("SHA256:");
+        });
+        assertThat(response.hostKeys()).extracting(SshHostKeyFingerprintDTO::algorithm).contains("EC");
     }
 }
