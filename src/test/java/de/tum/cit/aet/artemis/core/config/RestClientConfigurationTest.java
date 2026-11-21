@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,9 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationHandler;
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Checks the settings of {@link RestClientConfiguration} that the services depend on and that no other test sees, because the mock servers of the
@@ -66,5 +71,39 @@ class RestClientConfigurationTest {
         builder.build().get().uri("https://osv.test/a%20b?x=%2F").retrieve().toBodilessEntity();
 
         server.verify();
+    }
+
+    @Test
+    void theSharingClientRecordsNoObservationBecauseItsUrlsCarryTheApiKey() {
+        List<String> observed = new ArrayList<>();
+        var registry = ObservationRegistry.create();
+        registry.observationConfig().observationHandler(new ObservationHandler<>() {
+
+            @Override
+            public void onStart(Observation.Context context) {
+                observed.add(context.getName());
+            }
+
+            @Override
+            public boolean supportsContext(Observation.Context context) {
+                return true;
+            }
+        });
+
+        RestClient.Builder sharingBuilder = configuration.sharingRestClient(RestClient.builder().observationRegistry(registry)).mutate();
+        var sharingServer = MockRestServiceServer.bindTo(sharingBuilder).build();
+        sharingServer.expect(requestTo("https://sharing.test/api/pluginIF/v0.1/reInitialize?apiKey=secret-key")).andRespond(withSuccess());
+        sharingBuilder.build().get().uri("https://sharing.test/api/pluginIF/v0.1/reInitialize?apiKey=secret-key").retrieve().toBodilessEntity();
+        sharingServer.verify();
+
+        assertThat(observed).isEmpty();
+
+        // The counterpart: another client does record its requests with the same registry, so the absence above means something.
+        RestClient.Builder osvBuilder = configuration.osvRestClient(RestClient.builder().observationRegistry(registry)).mutate();
+        var osvServer = MockRestServiceServer.bindTo(osvBuilder).build();
+        osvServer.expect(requestTo("https://osv.test/v1/querybatch")).andRespond(withSuccess());
+        osvBuilder.build().get().uri("https://osv.test/v1/querybatch").retrieve().toBodilessEntity();
+
+        assertThat(observed).isNotEmpty();
     }
 }

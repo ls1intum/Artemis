@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * The {@link RestClient} beans for the remote services that Artemis calls, one per service and timeout. They replace the deprecated
@@ -193,6 +194,9 @@ public class RestClientConfiguration {
     /**
      * The client for the Sharing Platform, with short timeouts. It is a client of its own so that a test can mock the platform without
      * affecting the other services.
+     * <p>
+     * It records no observations. The observation of a request is tagged with its URL, and the URLs of the Sharing Platform carry the
+     * shared API key as a query parameter and basket tokens in the path, so the metrics of this client would publish both.
      *
      * @param restClientBuilder the builder of Spring Boot, which is a new instance for every injection
      * @return the client with short timeouts for the Sharing Platform
@@ -200,7 +204,7 @@ public class RestClientConfiguration {
     @Bean
     @Conditional(SharingEnabled.class)
     public RestClient sharingRestClient(RestClient.Builder restClientBuilder) {
-        return configured(restClientBuilder, SHORT_CONNECTION_TIMEOUT, SHORT_READ_TIMEOUT).build();
+        return configured(restClientBuilder, SHORT_CONNECTION_TIMEOUT, SHORT_READ_TIMEOUT).observationRegistry(ObservationRegistry.NOOP).build();
     }
 
     // ---- Athena
