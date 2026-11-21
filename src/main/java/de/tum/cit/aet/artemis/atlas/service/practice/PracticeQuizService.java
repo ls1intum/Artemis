@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.atlas.service.practice;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +84,7 @@ public class PracticeQuizService {
     }
 
     /**
-     * Starts an on-demand practice quiz session with a 50/50 split between adaptive and control questions from the AI question pool.
+     * Starts an on-demand practice quiz session with questions allocated from the AI question pool.
      *
      * @param user   the student requesting practice
      * @param course the course for which practice is requested
@@ -102,19 +101,9 @@ public class PracticeQuizService {
         }
 
         int totalCount = Math.min(DEFAULT_PRACTICE_QUIZ_SIZE, availableItems.size());
-        int adaptiveCount = totalCount / 2;
-        int controlCount = totalCount - adaptiveCount;
-
         Set<CourseCompetency> competencies = courseCompetencyRepository.findAllForCourse(course.getId());
 
-        // Allocate adaptive items via the pluggable policy
-        List<QuizQuestionPoolItem> allocatedAdaptive = practiceAllocationPolicy.allocateQuestions(user, competencies, adaptiveCount, availableItems);
-
-        // Select control items uniformly from the remaining pool
-        Set<Long> adaptiveIds = allocatedAdaptive.stream().map(QuizQuestionPoolItem::getId).collect(Collectors.toSet());
-        List<QuizQuestionPoolItem> remainingForControl = availableItems.stream().filter(q -> !adaptiveIds.contains(q.getId())).collect(Collectors.toCollection(ArrayList::new));
-        Collections.shuffle(remainingForControl);
-        List<QuizQuestionPoolItem> allocatedControl = remainingForControl.stream().limit(controlCount).toList();
+        List<QuizQuestionPoolItem> allocatedQuestions = practiceAllocationPolicy.allocateQuestions(user, competencies, totalCount, availableItems);
 
         PracticeSession session = new PracticeSession();
         session.setUser(user);
@@ -123,16 +112,7 @@ public class PracticeQuizService {
         PracticeSession savedSession = practiceSessionRepository.save(session);
 
         List<PracticeLog> logs = new ArrayList<>();
-        for (QuizQuestionPoolItem item : allocatedAdaptive) {
-            PracticeLog logEntry = new PracticeLog();
-            logEntry.setPracticeSession(savedSession);
-            logEntry.setPoolItemId(item.getId());
-            logEntry.setCompetencyId(item.getCompetencyId());
-            logEntry.setDifficulty(item.getDifficulty() != null ? item.getDifficulty().name() : null);
-            logEntry.setAdaptive(true);
-            logs.add(logEntry);
-        }
-        for (QuizQuestionPoolItem item : allocatedControl) {
+        for (QuizQuestionPoolItem item : allocatedQuestions) {
             PracticeLog logEntry = new PracticeLog();
             logEntry.setPracticeSession(savedSession);
             logEntry.setPoolItemId(item.getId());
@@ -142,8 +122,6 @@ public class PracticeQuizService {
             logs.add(logEntry);
         }
 
-        // Interleave / shuffle logs so the student experience is seamless and does not reveal question conditions
-        Collections.shuffle(logs);
         practiceLogRepository.saveAll(logs);
 
         Map<Long, QuizQuestionPoolItem> itemsById = availableItems.stream().collect(Collectors.toMap(QuizQuestionPoolItem::getId, Function.identity(), (a, b) -> a));

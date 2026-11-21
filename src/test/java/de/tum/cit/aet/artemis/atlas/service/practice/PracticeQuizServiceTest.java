@@ -103,7 +103,7 @@ class PracticeQuizServiceTest {
     }
 
     @Test
-    void testStartPracticeSessionEnforces5050ConditionSplit() {
+    void testStartPracticeSessionAllocatesQuestionsFromPool() {
         when(quizQuestionPoolApi.getPracticeEligibleQuestions(course.getId())).thenReturn(poolItems);
         when(courseCompetencyRepository.findAllForCourse(course.getId())).thenReturn(Set.of());
         when(practiceSessionRepository.save(any(PracticeSession.class))).thenAnswer(invocation -> {
@@ -124,12 +124,6 @@ class PracticeQuizServiceTest {
         List<PracticeLog> savedLogs = logsCaptor.getValue();
 
         assertThat(savedLogs).hasSize(10);
-        long adaptiveCount = savedLogs.stream().filter(PracticeLog::isAdaptive).count();
-        long controlCount = savedLogs.stream().filter(log -> !log.isAdaptive()).count();
-
-        // 50/50 equal split verification
-        assertThat(adaptiveCount).isEqualTo(5);
-        assertThat(controlCount).isEqualTo(5);
     }
 
     @Test
