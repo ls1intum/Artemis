@@ -74,6 +74,12 @@ final class BuildFileSyntax {
     private static final Pattern MAVEN_ARES_AGENT = Pattern
             .compile("<artifactId>\\s*ares\\s*</artifactId>\\s*(<version>[^<]*</version>\\s*)?(<type>[^<]*</type>\\s*)?<classifier>\\s*agent\\s*</classifier>");
 
+    /**
+     * A {@code forkCount} of 0 in the configuration of Surefire or as its property, e.g. {@code <forkCount>0</forkCount>}, also as {@code 0C}, a multiple of the
+     * number of cores. Surefire then runs the tests in the Maven JVM and ignores its {@code argLine}.
+     */
+    private static final Pattern MAVEN_TESTS_IN_PROCESS = Pattern.compile("<forkCount>\\s*+0++(?:\\.0*+)?C?\\s*+</forkCount>");
+
     private static final String ARES_1_ARTIFACT = "artemis-java-test-sandbox";
 
     /** The Ares 1 library in a Gradle dependency, e.g. {@code 'de.tum.in.ase:artemis-java-test-sandbox:1.13.0'} or {@code name: 'artemis-java-test-sandbox'}. */
@@ -131,7 +137,8 @@ final class BuildFileSyntax {
      * {@code ares-agent.jar}, or, in Gradle, takes its file from the configuration that declares the Ares agent, like the templates do with
      * {@code configurations.aresAgent}. Another agent, such as JaCoCo, and text in comments do not count. Only the build file of the build tool that pins
      * the Ares version counts, see {@link SecurityPolicyRepositoryFiles#detectBuildTool(String, String)}, since another build file the repository keeps,
-     * e.g. a {@code pom.xml} next to the {@code build.gradle}, does not run; without a pin, the Gradle build counts if there is one.
+     * e.g. a {@code pom.xml} next to the {@code build.gradle}, does not run; without a pin, the Gradle build counts if there is one. A Maven build that runs the
+     * tests in its own JVM, with a {@code forkCount} of 0, attaches no agent, since Surefire then ignores the {@code argLine} that names it.
      *
      * @param buildFiles the build files at the root of a repository
      * @return whether the build file of the repository's build tool attaches the Ares agent
@@ -140,8 +147,8 @@ final class BuildFileSyntax {
         Optional<SecurityPolicyRepositoryFiles.BuildTool> buildTool = SecurityPolicyRepositoryFiles.detectBuildTool(buildFiles.gradleBuild(), buildFiles.mavenPom());
         boolean maven = buildTool.map(SecurityPolicyRepositoryFiles.BuildTool.MAVEN::equals).orElse(buildFiles.gradleBuild() == null);
         if (maven) {
-            return Stream.ofNullable(buildFiles.mavenPom()).map(content -> withoutMarked(content, mavenComments(content)))
-                    .anyMatch(code -> MAVEN_ARES_AGENT.matcher(code).find() && javaAgents(code).anyMatch(BuildFileSyntax::namesAres));
+            return Stream.ofNullable(buildFiles.mavenPom()).map(content -> withoutMarked(content, mavenComments(content))).anyMatch(
+                    code -> MAVEN_ARES_AGENT.matcher(code).find() && !MAVEN_TESTS_IN_PROCESS.matcher(code).find() && javaAgents(code).anyMatch(BuildFileSyntax::namesAres));
         }
         return gradleAttachesAresAgent(withoutMarked(buildFiles.gradleBuild(), gradleComments(buildFiles.gradleBuild())));
     }

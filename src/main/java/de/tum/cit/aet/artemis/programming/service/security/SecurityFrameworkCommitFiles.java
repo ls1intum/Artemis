@@ -45,6 +45,14 @@ final class SecurityFrameworkCommitFiles {
     }
 
     /**
+     * @return the path of the build file that pins the Ares version in the commit, e.g. {@code build.gradle}; empty if none pins one
+     */
+    static Optional<String> aresBuildFile(Repository repository, RevTree tree) throws IOException {
+        return SecurityPolicyRepositoryFiles.detectBuildTool(readFile(repository, tree, GRADLE_BUILD_FILE).orElse(null), readFile(repository, tree, MAVEN_BUILD_FILE).orElse(null))
+                .map(buildTool -> buildTool == SecurityPolicyRepositoryFiles.BuildTool.GRADLE ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE);
+    }
+
+    /**
      * Applies {@link SecurityPolicyRepositoryFiles#evaluate(Map, SecurityPolicyRepositoryFiles.PolicyFileReader, SecurityPolicyRepositoryFiles.BuildFiles)}
      * to a commit of the repository. Like the scan of a checkout, it only considers regular files, never symbolic links, and selects the Java sources with
      * {@link SecurityPolicyRepositoryFiles#isJavaSourcePath}, so build output is skipped in the same way.

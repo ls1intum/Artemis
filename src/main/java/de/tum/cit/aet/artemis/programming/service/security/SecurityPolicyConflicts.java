@@ -74,8 +74,9 @@ final class SecurityPolicyConflicts {
             if (!policyReferences(baseState).equals(policyReferences(headState)) || !assignmentState(repository, baseTree).equals(assignmentState(repository, headTree))) {
                 throw policiesChanged();
             }
-            // The review checked the policies against the version of the loaded commit and showed its build file, so neither may have changed since.
-            if (!SecurityFrameworkCommitFiles.aresVersion(repository, baseTree).equals(SecurityFrameworkCommitFiles.aresVersion(repository, headTree))) {
+            // The review checked the policies against the version of the loaded commit and showed the build file that pins it, so neither may have changed since.
+            if (!SecurityFrameworkCommitFiles.aresVersion(repository, baseTree).equals(SecurityFrameworkCommitFiles.aresVersion(repository, headTree))
+                    || !SecurityFrameworkCommitFiles.aresBuildFile(repository, baseTree).equals(SecurityFrameworkCommitFiles.aresBuildFile(repository, headTree))) {
                 throw policiesChanged();
             }
             for (SecurityFrameworkState.PolicyFile policyFile : headState.policyFiles()) {

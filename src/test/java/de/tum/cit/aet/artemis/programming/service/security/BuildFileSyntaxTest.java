@@ -29,6 +29,18 @@ class BuildFileSyntaxTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = { "<forkCount>0</forkCount>", "<forkCount> 0C </forkCount>" })
+    void theAgentOfTheArgLineDoesNotCountIfSurefireRunsTheTestsInTheMavenJvm(String forkCount) throws IOException {
+        String maven = Files.readString(TEMPLATES.resolve("test/maven/projectTemplate/pom.xml"), StandardCharsets.UTF_8);
+
+        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, maven.replace("<argLine>", forkCount + "<argLine>")))).isFalse();
+        // A forked test JVM gets the argLine, and a forkCount in a comment has no effect.
+        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, maven.replace("<argLine>", "<forkCount>1</forkCount><argLine>")))).isTrue();
+        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, maven.replace("<argLine>", "<!-- " + forkCount + " --><argLine>"))))
+                .isTrue();
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = { "add('aresAgent', \"de.tum.cit.ase:ares:${aresVersion}:agent\")", "dependencies.add(\"aresAgent\", \"de.tum.cit.ase:ares:${aresVersion}:agent\")" })
     void recognizesTheAgentOfTheTemplatesDeclaredWithAdd(String declaration) throws IOException {
         String gradle = Files.readString(TEMPLATES.resolve("test/gradle/projectTemplate/build.gradle"), StandardCharsets.UTF_8);

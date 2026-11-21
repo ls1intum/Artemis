@@ -516,6 +516,17 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void editsAPolicyThatTheAnnotationsNameWithADotSegment() throws Exception {
+        pushToTests(SORTING_TEST_PATH, SORTING_TEST.replace("value = \"SecurityPolicy.yaml\"", "value = \"./SecurityPolicy.yaml\""));
+        pushToTests(STRESS_TEST_PATH, STRESS_TEST.replace("value = \"SecurityPolicy.yaml\"", "value = \"./SecurityPolicy.yaml\""));
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+
+        editorService.commit(exercise(), change(editor, edited(withFiles(loadedPolicy(editor), List.of(LOGS)), BOTH_CLASSES)), user);
+
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).hasValueSatisfying(content -> assertThat(content).contains("logs/"));
+    }
+
+    @Test
     void previewShowsTheTestClassesWhoseAnnotationsTheChangeRewrites() throws Exception {
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
 
@@ -1012,6 +1023,21 @@ class SecurityPolicyEditorServiceTest {
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> editorService.commit(exercise(), split, user))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyOverloadsLosePolicy"));
+    }
+
+    @Test
+    void refusesToPinAVersionIfAnotherBuildFilePinsItSinceThePoliciesWereLoaded() throws Exception {
+        pushToTests("build.gradle", "ext {\n    aresVersion = '2.1.0'\n}\n");
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        SecurityPolicyChangeDTO pin = new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, "2.2.1", List.of(), List.of());
+        String pom = "<project><properties><ares.version>2.1.0</ares.version></properties></project>\n";
+        pushToTests("pom.xml", pom);
+        pushToTests("build.gradle", "plugins {}\n");
+
+        // The same version is pinned, but the review showed the change of build.gradle, not of pom.xml.
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> editorService.commit(exercise(), pin, user))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("securityPolicyChanged"));
+        assertThat(readPushed("pom.xml")).contains(pom);
     }
 
     @Test
