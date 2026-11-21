@@ -31,6 +31,12 @@ public class RestClientConfiguration {
 
     private static final int SHORT_READ_TIMEOUT = 10 * 1000;
 
+    // The Hermes health check pings /api/health, which must fail fast: it blocks the Actuator /health endpoint
+    // and every metrics scrape, so a hung relay must not tie up those threads for the full short timeout.
+    private static final int HERMES_HEALTH_CONNECTION_TIMEOUT = 3 * 1000;
+
+    private static final int HERMES_HEALTH_READ_TIMEOUT = 3 * 1000;
+
     /**
      * The client for the conversion calls to Apollon, without a timeout like the template it replaces.
      *
@@ -55,6 +61,32 @@ public class RestClientConfiguration {
         var requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setReadTimeout(SHORT_READ_TIMEOUT);
         requestFactory.setConnectTimeout(SHORT_CONNECTION_TIMEOUT);
+        return restClientBuilder.requestFactory(requestFactory).build();
+    }
+
+    /**
+     * The client for the push notification requests to the Hermes relay, without a timeout like the template it replaces. The relay
+     * request retries with a backoff, see {@code PushNotificationService}.
+     *
+     * @param restClientBuilder the builder of Spring Boot, which is a new instance for every injection
+     * @return the client for the push notification relay
+     */
+    @Bean
+    public RestClient hermesRestClient(RestClient.Builder restClientBuilder) {
+        return restClientBuilder.requestFactory(new SimpleClientHttpRequestFactory()).build();
+    }
+
+    /**
+     * The client for the health check of Hermes, which must fail fast because it blocks the actuator health endpoint.
+     *
+     * @param restClientBuilder the builder of Spring Boot, which is a new instance for every injection
+     * @return the client with short timeouts for the Hermes health check
+     */
+    @Bean
+    public RestClient shortTimeoutHermesRestClient(RestClient.Builder restClientBuilder) {
+        var requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setReadTimeout(HERMES_HEALTH_READ_TIMEOUT);
+        requestFactory.setConnectTimeout(HERMES_HEALTH_CONNECTION_TIMEOUT);
         return restClientBuilder.requestFactory(requestFactory).build();
     }
 }
