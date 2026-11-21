@@ -14,6 +14,7 @@ import { TextFeedback } from 'app/openapi/model/text-feedback';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 
 describe('AthenaService', () => {
     let service: AthenaService;
@@ -68,7 +69,10 @@ describe('AthenaService', () => {
 
     it('propagates an Athena error', async () => {
         const result = lastValueFrom(service.getProgrammingFeedbackSuggestions(exerciseBase, 9));
-        httpMock.expectOne('/api/athena/programming-exercises/10/submissions/9/feedback-suggestions').flush(null, { status: 503, statusText: 'Service Unavailable' });
+        const request = httpMock.expectOne('/api/athena/programming-exercises/10/submissions/9/feedback-suggestions');
+        // The assessment shows its own error, so the global HTTP alert stays silent.
+        expect(request.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+        request.flush(null, { status: 503, statusText: 'Service Unavailable' });
         await expect(result).rejects.toMatchObject({ status: 503 });
     });
 
