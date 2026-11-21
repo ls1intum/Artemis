@@ -12,7 +12,6 @@ import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.validateUser
 
 import java.util.Map;
 
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -28,6 +27,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementTargetedRefinementRequestDTO;
 import io.micrometer.observation.annotation.Observed;
@@ -68,7 +68,6 @@ public class HyperionProblemStatementRefinementService {
      */
     private static final int ONE_INDEXED_TO_ZERO_INDEXED_OFFSET = 1;
 
-    @Nullable
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templateService;
@@ -80,14 +79,14 @@ public class HyperionProblemStatementRefinementService {
     /**
      * Creates a new HyperionProblemStatementRefinementService.
      *
-     * @param chatClient           the AI chat client for refining problem statements, may be null if AI is not configured
+     * @param chatClients          the chat clients of the Hyperion LLM presets
      * @param templateService      the prompt template service for rendering AI prompts
      * @param llmTokenUsageService service for tracking LLM token usage
      * @param userRepository       repository for resolving current user
      */
-    public HyperionProblemStatementRefinementService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService,
-            UserRepository userRepository) {
-        this.chatClient = chatClient;
+    public HyperionProblemStatementRefinementService(HyperionChatClientService chatClients, HyperionPromptTemplateService templateService,
+            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.PROBLEM_STATEMENT);
         this.templateService = templateService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
@@ -106,10 +105,6 @@ public class HyperionProblemStatementRefinementService {
     @Observed(name = "hyperion.refine_global", contextualName = "problem statement refinement", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementRefinementResponseDTO refineProblemStatement(Course course, String originalProblemStatementText, String userPrompt) {
         log.debug("Refining problem statement for course [{}]", course.getId());
-
-        if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "ProblemStatement", "ProblemStatementRefinement.chatClientNotConfigured");
-        }
 
         // Sanitize inputs first, then validate the sanitized versions to prevent
         // edge cases where raw input passes validation but becomes empty after sanitization
@@ -165,10 +160,6 @@ public class HyperionProblemStatementRefinementService {
     @Observed(name = "hyperion.refine_targeted", contextualName = "problem statement targeted refinement", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementRefinementResponseDTO refineProblemStatementTargeted(Course course, ProblemStatementTargetedRefinementRequestDTO request) {
         log.debug("Refining problem statement with targeted instruction for course [{}]", course.getId());
-
-        if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "ProblemStatement", "ProblemStatementRefinement.chatClientNotConfigured");
-        }
 
         String sanitizedInstruction = sanitizeInput(request.instruction());
         validateInstruction(sanitizedInstruction, "ProblemStatementRefinement");

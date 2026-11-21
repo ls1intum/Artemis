@@ -19,6 +19,7 @@ import com.sun.net.httpserver.HttpServer;
 
 import tools.jackson.databind.JsonNode;
 
+import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEmbeddingProperties;
@@ -67,10 +68,10 @@ class SearchableEntityEmbeddingClientTest {
         });
         server.start();
         // A trailing slash on the base URL must not lead to a double slash in the path.
-        String baseUrl = "http://127.0.0.1:" + server.getAddress().getPort() + "/";
-        var properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", "", "text2vec-openai", MODEL, baseUrl, "secret-key", null, INSTRUCTION);
+        String baseUrl = "http://127.0.0.1:" + server.getAddress().getPort() + "/v1/";
+        var properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", "", "text2vec-openai", "embedding", null, INSTRUCTION);
         var embeddingProperties = new WeaviateEmbeddingProperties(600, 30, maxInputs, queryTimeout, Duration.ofSeconds(10));
-        return new SearchableEntityEmbeddingClient(RestClient.builder(), properties, embeddingProperties);
+        return new SearchableEntityEmbeddingClient(RestClient.builder(), properties, embeddingProperties, LlmTestCatalog.embedding(MODEL, baseUrl, "secret-key"));
     }
 
     /**

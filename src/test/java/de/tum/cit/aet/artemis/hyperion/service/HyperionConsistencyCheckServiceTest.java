@@ -46,7 +46,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
+import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -112,8 +113,8 @@ class HyperionConsistencyCheckServiceTest {
         var llmTokenUsageService = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, costConfiguration);
         var observationRegistry = ObservationRegistry.create();
         var reviewCommentContextRenderer = new HyperionReviewCommentContextRendererService(commentThreadRepository, JsonObjectMapper.get());
-        this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
-                reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository, JsonObjectMapper.get());
+        this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, HyperionTestChatClients.returning(chatClient), templateService,
+                exerciseContextRenderer, reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository, JsonObjectMapper.get());
     }
 
     @Test
@@ -209,7 +210,7 @@ class HyperionConsistencyCheckServiceTest {
             AssistantMessage msg = new AssistantMessage(json);
             var usage = new DefaultUsage(100, 50, 150);
             var metadata = ChatResponseMetadata.builder().model("gpt-5-mini-2024-07-18").usage(usage).build();
-            return new ChatResponse(List.of(new Generation(msg)), metadata);
+            return LlmTestCatalog.tagged(new ChatResponse(List.of(new Generation(msg)), metadata), LlmTestCatalog.PRESET);
         });
 
         ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
@@ -226,7 +227,7 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(resp.tokens().total()).isEqualTo(450L);
 
         assertThat(resp.costs()).isNotNull();
-        // Costs use explicitly USD configured rates.
+        // Without a provider amount, the cost comes from the price list entry of the preset that made the call.
         assertThat(resp.costs().totalUsd()).isGreaterThan(0);
     }
 
@@ -503,19 +504,8 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(promptText).contains("[UNKNOWN/UNKNOWN] Missing metadata but keep text");
     }
 
-    private static LLMModelCostConfiguration createTestConfiguration() {
-        var config = new LLMModelCostConfiguration();
-        var modelCosts = Map.of("gpt-5-mini", createModelCostProperties());
-        config.setModelCosts(new java.util.HashMap<>(modelCosts));
-        return config;
-    }
-
-    private static LLMModelCostConfiguration.ModelCostProperties createModelCostProperties() {
-        var props = new LLMModelCostConfiguration.ModelCostProperties();
-        props.setInputCostPerMillionUsd(0.25f);
-        props.setOutputCostPerMillionUsd(2f);
-        props.setCachedInputCostPerMillionUsd(0.025f);
-        return props;
+    private static LlmProperties createTestConfiguration() {
+        return LlmTestCatalog.priced("gpt-5-mini", LlmTestCatalog.price("gpt-5-mini", 0.25, 0.025, null, 2.0));
     }
 
     private static @NonNull ProgrammingExercise getProgrammingExercise() {

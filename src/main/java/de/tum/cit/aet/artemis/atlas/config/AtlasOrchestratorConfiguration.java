@@ -8,6 +8,6 @@ import org.springframework.context.annotation.Lazy;
 @Conditional(AtlasLLMEnabled.class)
 @Lazy
 @Configuration
-@EnableConfigurationProperties({ AtlasAgentProperties.class, AtlasOrchestratorProperties.class })
+@EnableConfigurationProperties({ AtlasLlmPresets.class, AtlasOrchestratorProperties.class })
 public class AtlasOrchestratorConfiguration {
 }
