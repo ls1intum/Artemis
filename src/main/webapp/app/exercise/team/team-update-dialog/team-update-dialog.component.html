@@ -1,7 +1,7 @@
 <form id="teamUpdateDialogForm" name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-    <div class="p-4!">
-        <div class="mb-4!">
-            <label class="label-narrow" jhiTranslate="artemisApp.team.name.label" for="teamName"></label>
+    <div class="p-4">
+        <div class="mb-4">
+            <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.team.name.label" for="teamName"></label>
             <input
                 tumAetUiInput
                 type="text"
@@ -22,9 +22,9 @@
                 }
             }
         </div>
-        <div class="mb-4!">
+        <div class="mb-4">
             <div>
-                <label class="label-narrow" jhiTranslate="artemisApp.team.shortName.label" for="teamShortName"></label>
+                <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.team.shortName.label" for="teamShortName"></label>
                 <jhi-help-icon text="artemisApp.team.shortName.tooltip" />
             </div>
             <input
@@ -50,10 +50,10 @@
                 }
             }
         </div>
-        <div class="mb-4!">
+        <div class="mb-4">
             <div class="flex items-end">
                 <div>
-                    <label class="label-narrow" for="teamOwnerInput" jhiTranslate="artemisApp.team.owner.label"></label>
+                    <label class="inline-block mb-[0.1rem]" for="teamOwnerInput" jhiTranslate="artemisApp.team.owner.label"></label>
                     <jhi-help-icon text="artemisApp.team.owner.tooltip" class="me-1" />
                 </div>
                 @if (searchingOwner) {
@@ -90,9 +90,9 @@
                 (searchFailed)="searchingOwnerFailed = $event"
             />
         </div>
-        <div class="mb-4!">
+        <div class="mb-4">
             <div class="flex items-end">
-                <label for="teamStudentsInput" class="label-narrow me-1" jhiTranslate="artemisApp.team.students"></label>
+                <label for="teamStudentsInput" class="inline-block mb-[0.1rem] me-1" jhiTranslate="artemisApp.team.students"></label>
                 @if (searchingStudents) {
                     <fa-icon class="search-searching" [icon]="faSpinner" animation="spin" />
                 }
@@ -121,13 +121,13 @@
                 (searchNoResults)="searchingStudentsNoResultsForQuery = $event"
                 (searchFailed)="searchingStudentsFailed = $event"
             />
-            <ul class="flex flex-col list-none p-0 team-list--students my-4!">
+            <ul class="flex flex-col list-none p-0 team-list--students my-4">
                 @for (student of pendingTeam.students; track student; let i = $index) {
                     <li class="team-list-item-container flex items-center">
                         <div class="team-list-item-index">
                             {{ i + 1 }}
                         </div>
-                        <div class="team-list-item border border-border px-3! py-2 flex items-center" [class.has-error]="hasConflictingTeam(student)">
+                        <div class="team-list-item border border-(--border-color) px-3 py-2 flex items-center" [class.has-error]="hasConflictingTeam(student)">
                             <div class="student-name">{{ student.name }} ({{ student.login }})</div>
                             <button
                                 tumAetUiButton
@@ -135,7 +135,7 @@
                                 severity="danger"
                                 variant="text"
                                 [attr.aria-label]="('entity.action.delete' | artemisTranslate) + ' ' + student.name"
-                                class="student-remove-link ms-6!"
+                                class="student-remove-link ms-6"
                                 (click)="onRemoveStudent(student)"
                             >
                                 <fa-icon [icon]="faTrashAlt" />
@@ -152,14 +152,14 @@
                 @if (pendingTeam.students && pendingTeam.students.length === 0) {
                     <li class="team-list-item-container flex items-center">
                         <div class="team-list-item-index text-muted-color">1</div>
-                        <div class="team-list-item border border-border px-3! py-2 flex items-center">
+                        <div class="team-list-item border border-(--border-color) px-3 py-2 flex items-center">
                             <div class="text-muted-color" jhiTranslate="artemisApp.team.noStudentsAddedYet"></div>
                         </div>
                     </li>
                 }
             </ul>
             <div
-                class="rounded-md border border-border p-4! mt-4!"
+                class="rounded-md border p-4 mt-4"
                 [class.border-state-info]="!showIgnoreTeamSizeRecommendationOption"
                 [class.border-state-warning]="showIgnoreTeamSizeRecommendationOption"
                 role="alert"
@@ -188,11 +188,11 @@
             </div>
         </div>
     </div>
-    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4!">
+    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4">
         <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="cancel" (click)="clear()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button tumAetUiButton type="submit" [disabled]="editForm.invalid || isSaving() || teamSizeViolationUnconfirmed" class="">
+        <button tumAetUiButton type="submit" [disabled]="editForm.invalid || isSaving() || teamSizeViolationUnconfirmed">
             <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
         </button>
     </div>

@@ -38,6 +38,10 @@ jobs:
       # 167 rather than 166 since the explicit LLM configuration: LlmConfigurationValidator checks the artemis.llm catalog
       # and the preset assignments before the server accepts requests, so it and LlmProperties start eagerly.
       # Measured: 166 startup beans on #14725 (the base of this change) and 167 with it.
+      # 168 rather than 167 since the Hermes RestClient migration: the tracer records a configuration class only for the first bean
+      # that creates it. The push notification services used to create RestTemplateConfiguration, now they create RestClientConfiguration
+      # and the LTI token retriever becomes the first to create RestTemplateConfiguration. The extra edge disappears when the LTI classes
+      # move to RestClient, because then nothing creates RestTemplateConfiguration at startup.
       MAX_INSTANTIATED_BEANS: 167
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
