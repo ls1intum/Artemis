@@ -315,38 +315,82 @@ final class AresPolicyAnnotations {
         AresTestSources.TypeDeclaration type = AresTestSources.relevantType(AresTestSources.analyze(path, source)).filter(declaration -> declaration.policies().size() == 1)
                 .orElseThrow(() -> new IllegalArgumentException("The file " + path + " has no test class with one @Policy annotation"));
         Annotation classAnnotation = type.policies().getFirst();
-        // Each edit replaces the range [start, end) of the original source; they are applied from the end so the offsets of the others stay valid.
-        List<int[]> ranges = new ArrayList<>();
-        List<String> replacements = new ArrayList<>();
+        Edits edits = new Edits();
         if (!classAnnotation.policyPath().equals(Optional.ofNullable(classPolicyPath))) {
-            ranges.add(new int[] { classAnnotation.start(), classAnnotation.end() });
-            replacements.add(withPolicyPath(classAnnotation, classPolicyPath));
+            edits.replace(classAnnotation.start(), classAnnotation.end(), withPolicyPath(classAnnotation, classPolicyPath));
         }
         type.methodPolicies().forEach((method, annotation) -> {
+            boolean kept = keptMethods.contains(method);
             // A method annotation with arguments of its own, e.g. another withinPath, is not redundant under a class annotation with a policy file: it points
             // to that policy instead of being removed, so its arguments stay.
-            String target = methodPolicyPaths.getOrDefault(method,
-                    classPolicyPath != null && !keptMethods.contains(method) && hasOwnArguments(annotation, classAnnotation) ? classPolicyPath : null);
-            if (target == null && keptMethods.contains(method)) {
-                return;
-            }
-            if (target == null && hasOwnArguments(annotation, classAnnotation)) {
-                // Released to the strict default policy, the annotation keeps its own arguments, e.g. another withinPath, but no longer names a policy file.
-                if (annotation.policyPath().isPresent()) {
-                    ranges.add(new int[] { annotation.start(), annotation.end() });
-                    replacements.add(withPolicyPath(annotation, null));
-                }
-                return;
-            }
-            if (target == null) {
-                ranges.add(lineRange(source, annotation.start(), annotation.end()));
-                replacements.add("");
-            }
-            else if (!annotation.policyPath().equals(Optional.of(target))) {
-                ranges.add(new int[] { annotation.start(), annotation.end() });
-                replacements.add(withPolicyPath(annotation, target));
-            }
+            String target = methodPolicyPaths.getOrDefault(method, classPolicyPath != null && !kept && hasOwnArguments(annotation, classAnnotation) ? classPolicyPath : null);
+            rewriteMethodAnnotation(edits, source, classAnnotation, annotation, target, kept);
         });
+        addMethodAnnotations(edits, path, source, type, classAnnotation, methodPolicyPaths);
+        return edits.applyTo(source);
+    }
+
+    /**
+     * Edits of a source, each replacing the range [start, end) of the original source. They are applied from the end, so the offsets of the others stay
+     * valid.
+     */
+    private static final class Edits {
+
+        private final List<int[]> ranges = new ArrayList<>();
+
+        private final List<String> replacements = new ArrayList<>();
+
+        void replace(int start, int end, String replacement) {
+            ranges.add(new int[] { start, end });
+            replacements.add(replacement);
+        }
+
+        String applyTo(String source) {
+            List<Integer> order = new ArrayList<>();
+            for (int index = 0; index < ranges.size(); index++) {
+                order.add(index);
+            }
+            order.sort((first, second) -> Integer.compare(ranges.get(second)[0], ranges.get(first)[0]));
+            StringBuilder result = new StringBuilder(source);
+            for (int index : order) {
+                result.replace(ranges.get(index)[0], ranges.get(index)[1], replacements.get(index));
+            }
+            return result.toString();
+        }
+    }
+
+    /**
+     * Points an existing method annotation to its target, keeps it, or removes it.
+     *
+     * @param target the policy path the annotation points to after the change; null if it uses no policy file of its own
+     * @param kept   whether the annotation overrides the class without a policy file and stays, such as a switched-off one
+     */
+    private static void rewriteMethodAnnotation(Edits edits, String source, Annotation classAnnotation, Annotation annotation, @Nullable String target, boolean kept) {
+        if (target == null && kept) {
+            return;
+        }
+        if (target == null && hasOwnArguments(annotation, classAnnotation)) {
+            // Released to the strict default policy, the annotation keeps its own arguments, e.g. another withinPath, but no longer names a policy file.
+            if (annotation.policyPath().isPresent()) {
+                edits.replace(annotation.start(), annotation.end(), withPolicyPath(annotation, null));
+            }
+            return;
+        }
+        if (target == null) {
+            int[] line = lineRange(source, annotation.start(), annotation.end());
+            edits.replace(line[0], line[1], "");
+        }
+        else if (!annotation.policyPath().equals(Optional.of(target))) {
+            edits.replace(annotation.start(), annotation.end(), withPolicyPath(annotation, target));
+        }
+    }
+
+    /**
+     * Adds an annotation to every test method that uses another policy than the class and has none yet, on its own line above the method's first test
+     * annotation, indented like it.
+     */
+    private static void addMethodAnnotations(Edits edits, String path, String source, AresTestSources.TypeDeclaration type, Annotation classAnnotation,
+            Map<String, String> methodPolicyPaths) {
         Map<String, Integer> testAnnotations = AresTestCases.testAnnotationOffsets(source);
         String lineSeparator = lineSeparatorOf(source);
         methodPolicyPaths.forEach((method, target) -> {
@@ -359,20 +403,13 @@ final class AresPolicyAnnotations {
             }
             int lineStart = lineStart(source, offset);
             String indentation = source.substring(lineStart, offset);
-            boolean ownLine = indentation.isBlank();
-            ranges.add(new int[] { ownLine ? lineStart : offset, ownLine ? lineStart : offset });
-            replacements.add(ownLine ? indentation + methodAnnotation(classAnnotation, target) + lineSeparator : methodAnnotation(classAnnotation, target) + " ");
+            if (indentation.isBlank()) {
+                edits.replace(lineStart, lineStart, indentation + methodAnnotation(classAnnotation, target) + lineSeparator);
+            }
+            else {
+                edits.replace(offset, offset, methodAnnotation(classAnnotation, target) + " ");
+            }
         });
-        List<Integer> order = new ArrayList<>();
-        for (int index = 0; index < ranges.size(); index++) {
-            order.add(index);
-        }
-        order.sort((first, second) -> Integer.compare(ranges.get(second)[0], ranges.get(first)[0]));
-        StringBuilder result = new StringBuilder(source);
-        for (int index : order) {
-            result.replace(ranges.get(index)[0], ranges.get(index)[1], replacements.get(index));
-        }
-        return result.toString();
     }
 
     /**
