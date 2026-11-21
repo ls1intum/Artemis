@@ -123,6 +123,36 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         expect(comp.isPackageNameValid()).toBe(true);
     });
 
+    it('should not block the language section when the package name field is hidden in simple mode', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', Object.assign({}, programmingExerciseCreationConfigMock, { packageNameRequired: true }));
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', { programmingLanguage: true, packageName: false });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#field_packageName')).toBeNull();
+        expect(comp.isPackageNameValid()).toBe(true);
+    });
+
+    it('should report a package name typed by the instructor, so it is no longer generated', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        const onPackageNameEdited = vi.fn();
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput(
+            'programmingExerciseCreationConfig',
+            Object.assign({}, programmingExerciseCreationConfigMock, { packageNameRequired: true, onPackageNameEdited }),
+        );
+        fixture.detectChanges();
+
+        const packageNameInput: HTMLInputElement = fixture.nativeElement.querySelector('#field_packageName');
+        packageNameInput.value = 'com.example.sorting';
+        packageNameInput.dispatchEvent(new Event('input'));
+
+        expect(onPackageNameEdited).toHaveBeenCalledOnce();
+        expect(exercise.packageName).toBe('com.example.sorting');
+    });
+
     describe('sequential test runs checkbox', () => {
         const getSequentialTestRunsCheckbox = (): HTMLInputElement => fixture.nativeElement.querySelector('#field_sequentialTestRuns');
 

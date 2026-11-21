@@ -5,6 +5,7 @@ import {
     PACKAGE_NAME_PATTERN_FOR_GO,
     PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX,
     PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
+    PACKAGE_NAME_PATTERN_FOR_KOTLIN,
 } from 'app/foundation/constants/input.constants';
 import { ProblemStatementGlobalRefinementRequest } from 'app/openapi/model/problem-statement-global-refinement-request';
 import { ProblemStatementTargetedRefinementRequest } from 'app/openapi/model/problem-statement-targeted-refinement-request';
@@ -156,7 +157,7 @@ const MAX_PROPOSED_PACKAGE_NAME_LENGTH = 32;
  * Institutional package prefix for dotted-package languages (Java/Kotlin), so AI-derived packages read like real course exercises (de.tum.cit.aet.bubblesort) instead of a bare
  * slug. Deliberately a constant for now; if deployments need their own prefix this belongs in a server-provided configuration value, not per-user input.
  */
-const PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES = 'de.tum.cit.aet';
+export const PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES = 'de.tum.cit.aet';
 
 /** Extracts a title from the first level-one Markdown heading. */
 export function extractProblemStatementTitle(problemStatement: string | undefined): string | undefined {
@@ -215,8 +216,9 @@ export function deriveProposedPackageName(title: string, language: ProgrammingLa
 function packageNamePatternFor(language: ProgrammingLanguage, projectType?: ProjectType): string | undefined {
     switch (language) {
         case ProgrammingLanguage.JAVA:
-        case ProgrammingLanguage.KOTLIN:
             return projectType === ProjectType.MAVEN_BLACKBOX ? PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX : PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN;
+        case ProgrammingLanguage.KOTLIN:
+            return PACKAGE_NAME_PATTERN_FOR_KOTLIN;
         case ProgrammingLanguage.SWIFT:
             return APP_NAME_PATTERN_FOR_SWIFT;
         case ProgrammingLanguage.GO:
