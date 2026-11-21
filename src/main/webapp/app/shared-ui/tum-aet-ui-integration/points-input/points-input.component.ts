@@ -34,6 +34,9 @@ export class PointsInputComponent implements ControlValueAccessor, Validator {
     readonly step = input(1, { transform: numberAttribute });
     /** Steps a value that is not a multiple of the step to the next multiple in the direction of travel instead of adding the step to it. */
     readonly snapToStep = input(false, { transform: booleanAttribute });
+    readonly horizontalButtons = input(false, { transform: booleanAttribute });
+    readonly incrementLabel = input<string>();
+    readonly decrementLabel = input<string>();
     readonly showButtons = input(false, { transform: booleanAttribute });
     readonly fluid = input(false, { transform: booleanAttribute });
     readonly invalid = input(false, { transform: booleanAttribute });

@@ -30,6 +30,7 @@ describe('Unreferenced Feedback Detail Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(UnreferencedFeedbackDetailComponent);
                 comp = fixture.componentInstance;
+                fixture.componentRef.setInput('readOnly', false);
                 feedbackService = TestBed.inject(FeedbackService);
                 sgiService = TestBed.inject(StructuredGradingCriterionService);
             });
@@ -75,6 +76,15 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(getLongFeedbackTextSpy).toHaveBeenCalledOnce();
     });
 
+    it('does not apply an armed grading instruction to feature bonus feedback', () => {
+        fixture.componentRef.setInput('feedback', { featureBonusPoints: 5, credits: 0 } as Feedback);
+        const applyInstruction = vi.spyOn(sgiService, 'applyArmedInstructionToFeedback');
+
+        comp.applyArmedInstruction();
+
+        expect(applyInstruction).not.toHaveBeenCalled();
+    });
+
     it('should update feedback with SGI and emit to parent', () => {
         const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
         const feedback = {
@@ -100,6 +110,25 @@ describe('Unreferenced Feedback Detail Component', () => {
 
         // Verify the component emitted the feedback change
         expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('stops read-only drops without changing feedback or emitting events', () => {
+        const feedback = { id: 1, detailText: 'Original', credits: 1.5 } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.componentRef.setInput('readOnly', true);
+        const update = vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent');
+        const change = vi.spyOn(comp.onFeedbackChange, 'emit');
+        const deletion = vi.spyOn(comp.onFeedbackDelete, 'emit');
+        const event = new Event('drop', { bubbles: true });
+        const stop = vi.spyOn(event, 'stopPropagation');
+
+        comp.updateFeedbackOnDrop(event);
+
+        expect(stop).toHaveBeenCalledOnce();
+        expect(update).not.toHaveBeenCalled();
+        expect(comp.feedback()).toEqual({ id: 1, detailText: 'Original', credits: 1.5 });
+        expect(change).not.toHaveBeenCalled();
+        expect(deletion).not.toHaveBeenCalled();
     });
 
     it('should mark an accepted suggestion as adapted when a grading instruction is dropped onto it', () => {

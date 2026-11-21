@@ -71,8 +71,21 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
         this.onFeedbackDelete.emit(this.feedback());
     }
 
+    applyArmedInstruction(): void {
+        const feedback = this.feedback();
+        if (!this.readOnly() && feedback.featureBonusPoints === undefined && this.structuredGradingCriterionService.applyArmedInstructionToFeedback(feedback)) {
+            if (feedback.text) {
+                feedback.text = Feedback.markAdaptedIfAcceptedSuggestion(feedback.text);
+            }
+            this.emitChanges();
+        }
+    }
+
     updateFeedbackOnDrop(event: Event) {
         event.stopPropagation();
+        if (this.readOnly()) {
+            return;
+        }
         const feedback = this.feedback();
         if (feedback.featureBonusPoints != undefined) {
             return;

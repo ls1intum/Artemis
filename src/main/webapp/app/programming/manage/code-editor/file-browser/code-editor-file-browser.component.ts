@@ -136,6 +136,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy {
     participation = input<Participation>();
     showEditorInstructions = input(true);
     selectedFile = input<string | undefined>();
+    canSelectFile = input<() => boolean>();
     disableActions = input<boolean>(false);
     displayOnly = input<boolean>(false);
     unsavedFiles = input<string[]>([]);
@@ -383,6 +384,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy {
      */
     handleNodeSelected(item: TreeViewItem<string>) {
         if (item && item.value !== this.selectedFile()) {
+            if (this.canSelectFile()?.() === false) {
+                return;
+            }
             item.checked = true;
             // If we had selected a file prior to this, we 'uncheck' it
             if (this.selectedFile()) {

@@ -12,3 +12,11 @@
     display: flex;
     align-items: center;
 }
+
+.assessment-submit-control {
+    display: inline-flex;
+
+    button:disabled {
+        pointer-events: none;
+    }
+}
