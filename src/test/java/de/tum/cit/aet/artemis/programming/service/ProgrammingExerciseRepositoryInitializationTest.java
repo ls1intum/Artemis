@@ -77,7 +77,7 @@ class ProgrammingExerciseRepositoryInitializationTest {
         creator.setLastName("Creator");
         creator.setEmail("creator@example.com");
 
-        service.setupExerciseTemplate(exercise, new ProgrammingExerciseBuildConfig(), creator, false);
+        service.setupExerciseTemplate(exercise, new ProgrammingExerciseBuildConfig(), creator, false, null);
 
         for (LocalVCRepositoryUri uri : uris) {
             try (Git remote = Git.open(uri.getLocalRepositoryPath(bareBase).toFile())) {

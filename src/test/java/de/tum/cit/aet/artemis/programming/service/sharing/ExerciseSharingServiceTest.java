@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 import org.codeability.sharing.plugins.api.ShoppingBasket;
@@ -19,6 +20,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -31,10 +34,16 @@ import org.springframework.test.web.client.response.MockRestResponseCreators;
 import de.tum.cit.aet.artemis.account.authentication.AuthenticationFactory;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.security.SecurityActivationStatus;
+import de.tum.cit.aet.artemis.programming.domain.security.SecurityFrameworkAction;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkChoiceDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
+import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -67,6 +76,9 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Autowired
     private VersionControlService versionControlService;
+
+    @Autowired
+    private SecurityFrameworkService securityFrameworkService;
 
     @BeforeEach
     void startUp() throws Exception {
@@ -240,15 +252,20 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
     @WithMockUser(username = INSTRUCTOR1, roles = "USER")
-    void testImportProgrammingExerciseFromSharing() throws URISyntaxException, IOException, GitAPIException, SharingException {
+    void testImportProgrammingExerciseFromSharing(boolean withSecurityFrameworkChoice) throws URISyntaxException, IOException, GitAPIException, SharingException {
         userUtilService.addInstructor(INSTRUCTOR1);
         mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN);
 
         SecurityContextHolder.getContext().setAuthentication(AuthenticationFactory.createUsernamePasswordAuthentication(INSTRUCTOR1.toLowerCase(Locale.ENGLISH)));
 
         ImportProgrammingExerciseRequestDTO exercise = getExerciseInfoFromBasket();
+        if (withSecurityFrameworkChoice) {
+            // An instructor may change the sandbox of the imported tests repository; the choice is validated before anything is imported.
+            exercise = withSecurityFramework(exercise, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null));
+        }
         Course course1 = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         SharingInfoDTO sharingInfo = new SharingInfoDTO(SAMPLE_BASKET_TOKEN, TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN,
                 SharingPlatformMockProvider.calculateCorrectChecksum(sharingPlatformMockProvider.getTestSharingApiKey(), "returnURL", TEST_RETURN_URL, "apiBaseURL",
@@ -264,6 +281,13 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
             assertThat(importedExercise.getId()).isNotNull();
             assertThat(importedExercise.getPackageName()).isEqualTo(exercise.packageName());
+            if (withSecurityFrameworkChoice) {
+                // The sample exercise uses Ares 1, which the Security Framework cannot change: the import still completes with the tests as shared, and the
+                // client compares this state with the choice to warn the instructor.
+                var config = securityFrameworkService.getConfig(importedExercise);
+                assertThat(config.status()).isEqualTo(SecurityActivationStatus.UNSUPPORTED.name());
+                assertThat(config.unsupportedReasons()).extracting(SecurityFrameworkConfigDTO.UnsupportedReasonDTO::type).contains("ARES_1");
+            }
         }
         finally {
             // we have to explicitly clean up the repository, otherwise repeated tests will fail, because the repository already exists.
@@ -271,6 +295,17 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
             // The project key is derived from the target course, not taken from the exported details.
             versionControlService.deleteProject(importedExercise != null ? importedExercise.getProjectKey() : exercise.projectKey());
         }
+    }
+
+    /**
+     * @return a copy of the request that carries the Security Framework choice
+     */
+    private static ImportProgrammingExerciseRequestDTO withSecurityFramework(ImportProgrammingExerciseRequestDTO request, SecurityFrameworkChoiceDTO choice) {
+        var mapper = JsonObjectMapper.get();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> fields = mapper.convertValue(request, Map.class);
+        fields.put("securityFramework", choice);
+        return mapper.convertValue(fields, ImportProgrammingExerciseRequestDTO.class);
     }
 
     @Test

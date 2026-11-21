@@ -97,7 +97,7 @@ class ProgrammingExerciseImportLiveSaveTest {
         doCallRealMethod().when(basic).importRepositories(any(), any());
         service = new ProgrammingExerciseImportService(Optional.empty(), Optional.empty(), mock(ProgrammingExerciseValidationService.class),
                 mock(ProgrammingExerciseBuildPlanService.class), mock(ProgrammingExerciseCreationScheduleService.class), mock(ProgrammingExerciseTaskService.class), basic,
-                mock(ProgrammingExerciseTestCaseTestRepository.class), exercises, Optional.empty(), configs, Optional.of(new HyperionExerciseMutationApi(live)), tasks);
+                mock(ProgrammingExerciseTestCaseTestRepository.class), exercises, Optional.empty(), configs, Optional.of(new HyperionExerciseMutationApi(live)), tasks, null);
     }
 
     @Test

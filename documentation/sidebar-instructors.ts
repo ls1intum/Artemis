@@ -37,6 +37,7 @@ const sidebars: SidebarsConfig = {
                         'exercises/programming-exercise/create-an-exercise',
                         'exercises/programming-exercise/write-code-and-tests',
                         'exercises/programming-exercise/configure-the-build',
+                        'exercises/programming-exercise/security-framework',
                         'exercises/programming-exercise/grade-and-verify',
                         'exercises/programming-exercise/ai-assisted-authoring',
                         'exercises/hyperion-generation',

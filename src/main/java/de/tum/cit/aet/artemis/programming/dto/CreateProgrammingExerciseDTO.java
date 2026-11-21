@@ -86,6 +86,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * @param plagiarismDetectionConfig                  the plagiarism detection configuration
  * @param course                                     the target course; mutually exclusive with {@code exerciseGroup}
  * @param exerciseGroup                              the target exam exercise group; mutually exclusive with the course
+ * @param securityFramework                          the Security Framework setting to apply before the first builds; absent to keep the template's
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 // bare @JsonInclude(): request bodies must keep nulls and empty collections on the wire, and the shared
@@ -99,7 +100,7 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
         Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution,
         ProgrammingLanguage programmingLanguage, ProjectType projectType, UpdateProgrammingExerciseBuildConfigDTO buildConfig, List<GradingCriterionDTO> gradingCriteria,
         Set<CompetencyLinkDTO> competencyLinks, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy,
-        PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course, ExerciseGroupIdDTO exerciseGroup)
+        PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course, ExerciseGroupIdDTO exerciseGroup, @Nullable SecurityFrameworkChoiceDTO securityFramework)
         implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
 
     /**
@@ -137,7 +138,7 @@ public record CreateProgrammingExerciseDTO(@Nullable Long id, String title, Stri
                 exercise.isReleaseTestsWithExampleSolution(), exercise.getProgrammingLanguage(), exercise.getProjectType(), UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig),
                 gradingCriteria, competencyLinks, auxiliaryRepositories, submissionPolicy, plagiarismDetectionConfig,
                 exercise.isCourseExercise() && course != null ? new CourseRefDTO(course.getId(), null, null, null) : null,
-                exercise.getExerciseGroup() == null ? null : new ExerciseGroupIdDTO(exercise.getExerciseGroup().getId()));
+                exercise.getExerciseGroup() == null ? null : new ExerciseGroupIdDTO(exercise.getExerciseGroup().getId()), null);
     }
 
     /**

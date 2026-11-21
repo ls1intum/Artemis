@@ -1,0 +1,63 @@
+# Compatibility manifest of the Ares security policy (decision B10 of https://github.com/ls1intum/Ares2/issues/386).
+#
+# For every Ares release, it lists which policy-format versions (thisPolicyFileCompliesToThePolicyVersion) and which
+# policy fields that release accepts. Artemis refuses to pin a release for an exercise whose policy uses a field or a
+# format version the release does not accept, because Ares then fails every test (decision A3).
+#
+# The Ares version and the policy-format version are different numbers: a release can accept several format versions,
+# and a format version alone does not prove that a release understands a field.
+#
+# Field paths:
+#   - Keys are separated by dots, starting at the root of the policy file.
+#   - "[]" stands for every entry of a list whose entries are mappings, e.g.
+#     regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingFileSystemInteractions[].readAllFiles
+#   - A list of plain values, e.g. theFollowingClassesAreTestClasses, is listed by its own path only.
+#   - A path is accepted only if it is listed; listing a mapping does not accept the keys below it.
+#
+# How to update it:
+#   1. When Ares is released, the Ares maintainers state the accepted format versions and fields of the release in its
+#      release notes, in the same form as below.
+#   2. Add a new entry for the release here; never change the entry of a release that is already published.
+#   3. A release that is not listed here can still be configured in artemis.programming.security-framework.supported-versions,
+#      but Artemis cannot check it and marks it as "compatibility not verified".
+#
+# An instance can extend this file by placing a copy with the same path in its resources folder.
+manifestVersion: 1
+releases:
+  - aresVersion: "2.2.1"
+    policyFormatVersions:
+      minimum: 1
+      maximum: 1
+    fields:
+      - thisPolicyFileCompliesToThePolicyVersion
+      - regardingTheSupervisedCode
+      - regardingTheSupervisedCode.theFollowingProgrammingLanguageConfigurationIsUsed
+      - regardingTheSupervisedCode.theSupervisedCodeUsesTheFollowingPackage
+      - regardingTheSupervisedCode.theMainClassInsideThisPackageIs
+      - regardingTheSupervisedCode.theFollowingClassesAreTestClasses
+      # Only the empty section: its categories are not released yet (Ares #236, #303, #304, #307).
+      - regardingTheSupervisedCode.theFollowingTestBehaviorIsConfigured
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingFileSystemInteractions
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingFileSystemInteractions[].onThisPathAndAllPathsBelow
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingFileSystemInteractions[].readAllFiles
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingFileSystemInteractions[].overwriteAllFiles
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingFileSystemInteractions[].createAllFiles
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingFileSystemInteractions[].executeAllFiles
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingFileSystemInteractions[].deleteAllFiles
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingNetworkConnections
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingNetworkConnections[].onTheHost
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingNetworkConnections[].onThePort
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingNetworkConnections[].openConnections
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingNetworkConnections[].sendData
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingNetworkConnections[].receiveData
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingCommandExecutions
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingCommandExecutions[].executeTheCommand
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingCommandExecutions[].withTheseArguments
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingThreadCreations
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingThreadCreations[].createTheFollowingNumberOfThreads
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingThreadCreations[].ofThisClass
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingPackageImports
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingPackageImports[].importTheFollowingPackage
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingTimeouts
+      - regardingTheSupervisedCode.theFollowingResourceAccessesArePermitted.regardingTimeouts[].timeout

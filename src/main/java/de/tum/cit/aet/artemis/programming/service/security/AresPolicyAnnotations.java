@@ -1,0 +1,607 @@
+package de.tum.cit.aet.artemis.programming.service.security;
+
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.StringJoiner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Finds and rewrites the Ares {@code @Policy} annotations of a Java source file.
+ * <p>
+ * The source is first masked: comments and the contents of string, character and text block literals are replaced by spaces, keeping every offset. All
+ * searches run on the masked source, so an annotation or import that only appears in a comment or a string is never touched, and the parentheses and commas
+ * of a literal never end an annotation or split its arguments. Argument names are read from the masked source as well, so a comment before a name is no
+ * obstacle. The rewritten text is taken from the original source, so every argument keeps its comments; the values that are evaluated, like the
+ * {@code activated} flag and the policy path, are read from the source without its comments.
+ * <p>
+ * The fully qualified {@code @de.tum.cit.ase.ares.api.Policy} always refers to Ares. The simple {@code @Policy} refers to Ares if the file imports it, either
+ * directly or with {@code import de.tum.cit.ase.ares.api.*;} while no other {@code Policy} type is imported by name.
+ */
+final class AresPolicyAnnotations {
+
+    private static final String ARES_POLICY = "de.tum.cit.ase.ares.api.Policy";
+
+    /**
+     * The end of a Java identifier: unlike {@code \b}, it also rejects {@code $} and non-ASCII letters, so {@code @Policy$Tag} or {@code @PolicyÜ} is no
+     * {@code @Policy}.
+     */
+    static final String END_OF_IDENTIFIER = "(?!\\p{javaJavaIdentifierPart})";
+
+    /** The {@code @} of an annotation; Java allows whitespace and comments, which the masked source shows as whitespace, before its name. */
+    static final String ANNOTATION_START = "@\\s*+";
+
+    private static final Pattern POLICY_ANNOTATION_NAME = Pattern.compile(ANNOTATION_START + "(" + packagePrefix("de.tum.cit.ase.ares.api") + ")?Policy" + END_OF_IDENTIFIER);
+
+    /** A Java identifier; it may contain any Unicode letter, e.g. {@code SortingÜTest}, so it uses the identifier classes of {@link Character}. */
+    private static final String JAVA_IDENTIFIER = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*+";
+
+    /** A qualified name; Java allows whitespace and comments, which the masked source shows as whitespace, around each dot, e.g. {@code java.util . List}. */
+    private static final String QUALIFIED_NAME = JAVA_IDENTIFIER + "(?:\\s*+\\.\\s*+" + JAVA_IDENTIFIER + ")*+";
+
+    /**
+     * A single-type import or a single-static import, whose first group is the imported name, see {@link #singleTypeImports(String)}. A single-static import
+     * may import a member type, e.g. {@code import static example.Markers.Test;}, which binds the simple name like a single-type import.
+     */
+    private static final Pattern SINGLE_TYPE_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s++(?:static\\s++)?(" + QUALIFIED_NAME + ")\\s*+;");
+
+    /** A type-import-on-demand such as {@code import java.util.*;}, whose first group is the package, see {@link #wildcardImports(String)}. */
+    private static final Pattern WILDCARD_IMPORT = Pattern.compile("(?<![\\p{javaJavaIdentifierPart}.])import\\s++(" + QUALIFIED_NAME + ")\\s*+\\.\\s*+\\*\\s*+;");
+
+    private static final Pattern WHITESPACE = Pattern.compile("\\s++");
+
+    /** A declaration of a type, of any kind and at any depth; the second group is its simple name. */
+    static final Pattern TYPE_DECLARATION = Pattern.compile("(@\\s*interface|(?<![\\p{javaJavaIdentifierPart}.])(?:class|interface|enum|record))\\s+(" + JAVA_IDENTIFIER + ")");
+
+    /** A named annotation argument such as {@code activated = false}, matched on the masked source. */
+    private static final Pattern NAMED_ARGUMENT = Pattern.compile("^\\s*([A-Za-z_]\\w*)\\s*=(?!=)\\s*(.*?)\\s*$", Pattern.DOTALL);
+
+    private static final String ACTIVATED_ARGUMENT = "activated";
+
+    private static final String VALUE_ARGUMENT = "value";
+
+    private static final String FALSE_LITERAL = "false";
+
+    private static final String TEXT_BLOCK_DELIMITER = "\"\"\"";
+
+    private static final Set<String> BOOLEAN_LITERALS = Set.of("true", FALSE_LITERAL);
+
+    /**
+     * One argument of an annotation.
+     *
+     * @param named      whether the argument is written with its name; a single unnamed argument is the {@code value}
+     * @param text       the argument as written, including its comments
+     * @param expression the value expression without comments, for evaluating it
+     */
+    record Argument(boolean named, String text, String expression) {
+
+        private String render() {
+            return named ? text : VALUE_ARGUMENT + " = " + text;
+        }
+    }
+
+    /**
+     * One Ares {@code @Policy} annotation in a source file.
+     *
+     * @param start           offset of the {@code @}
+     * @param end             offset after the annotation, including its argument list
+     * @param name            the annotation as written, e.g. {@code @Policy}
+     * @param beforeArguments the text between the name and the argument list as written, e.g. a comment; empty if there is no argument list
+     * @param arguments       the arguments by name, in their order
+     */
+    record Annotation(int start, int end, String name, String beforeArguments, Map<String, Argument> arguments) {
+
+        /**
+         * Whether the arguments that decide the enforcement are written in a form this class evaluates. Only then do {@link #isActivated()} and
+         * {@link #policyPath()} describe what Ares does: {@code value} must be absent or a plain string literal, and {@code activated} must be absent or the
+         * literal {@code true} or {@code false}, each optionally in parentheses and with comments. Any other expression, such as
+         * {@code "Security" + "Policy.yaml"}, {@code !true} or a constant, is valid Java that this class does not evaluate.
+         *
+         * @return whether the annotation can be evaluated
+         */
+        boolean isEvaluable() {
+            Argument value = arguments.get(VALUE_ARGUMENT);
+            Argument activated = arguments.get(ACTIVATED_ARGUMENT);
+            return (value == null || plainStringContent(value).isPresent()) && (activated == null || BOOLEAN_LITERALS.contains(withoutOuterParentheses(activated.expression())));
+        }
+
+        /**
+         * Requires {@link #isEvaluable()}.
+         *
+         * @return whether the annotation enforces its policy, i.e. its {@code activated} argument is absent or {@code true}
+         */
+        boolean isActivated() {
+            Argument activated = arguments.get(ACTIVATED_ARGUMENT);
+            return activated == null || !FALSE_LITERAL.equals(withoutOuterParentheses(activated.expression()));
+        }
+
+        /**
+         * Requires {@link #isEvaluable()}. Ares resolves the policy path relative to the root of the tests repository, so the path is returned in its
+         * normalized form relative to that root: {@code ./SecurityPolicy.yaml} and {@code test/../SecurityPolicy.yaml} both are {@code SecurityPolicy.yaml}.
+         *
+         * @return the policy file the annotation points to; empty if it has no {@code value}, in which case Ares applies its strict default policy
+         */
+        Optional<String> policyPath() {
+            Argument value = arguments.get(VALUE_ARGUMENT);
+            return value == null ? Optional.empty() : plainStringContent(value).map(AresPolicyAnnotations::normalizePath);
+        }
+
+        /**
+         * @return the content of the argument if it is a plain string literal, i.e. one without escape sequences and not a text block, optionally in
+         *         parentheses; empty for any other expression
+         */
+        private static Optional<String> plainStringContent(Argument argument) {
+            String literal = withoutOuterParentheses(argument.expression());
+            boolean plainString = literal.length() >= 2 && literal.startsWith("\"") && literal.endsWith("\"") && !literal.startsWith(TEXT_BLOCK_DELIMITER)
+                    && literal.indexOf('\\') < 0 && literal.indexOf('"', 1) == literal.length() - 1;
+            return plainString ? Optional.of(literal.substring(1, literal.length() - 1)) : Optional.empty();
+        }
+
+        /**
+         * Removes the parentheses that enclose a whole expression, like {@code ((false))}, but not those of {@code (a) + (b)}.
+         */
+        private static String withoutOuterParentheses(String expression) {
+            String result = expression.strip();
+            while (result.startsWith("(") && matchingParenthesis(mask(result), 0) == result.length() - 1) {
+                result = result.substring(1, result.length() - 1).strip();
+            }
+            return result;
+        }
+    }
+
+    /**
+     * @param packageName a package name
+     * @return a pattern of the package and the dot after it as Java allows them to be written in the masked source: whitespace may surround each dot
+     */
+    static String packagePrefix(String packageName) {
+        StringJoiner pattern = new StringJoiner("\\s*+\\.\\s*+", "", "\\s*+\\.\\s*+");
+        for (String segment : packageName.split("\\.")) {
+            pattern.add(Pattern.quote(segment));
+        }
+        return pattern.toString();
+    }
+
+    /**
+     * @return the path in normalized form with forward slashes, e.g. {@code SecurityPolicy.yaml} for {@code ./SecurityPolicy.yaml}; the path as written
+     *         if it is not a valid path
+     */
+    private static String normalizePath(String path) {
+        try {
+            String normalized = Path.of(path).normalize().toString().replace('\\', '/');
+            return normalized.isEmpty() ? path : normalized;
+        }
+        catch (InvalidPathException _) {
+            return path;
+        }
+    }
+
+    private AresPolicyAnnotations() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
+    /**
+     * Switches every Ares {@code @Policy} annotation of the source on or off. Only the {@code activated} argument changes; the policy path and every other
+     * argument are kept, so switching an annotation off and on again restores its policy and its activation. Its spelling may change: an implicit
+     * {@code value} becomes a named one, e.g. {@code @Policy(value = "custom.yaml")} for {@code @Policy("custom.yaml")}, and an explicit
+     * {@code activated = true} is left out. An annotation that already has the requested state is not touched.
+     *
+     * @param source the content of a Java file
+     * @param active whether the annotations should enforce their policy
+     * @return the rewritten source
+     */
+    static String setActive(String source, boolean active) {
+        StringBuilder result = new StringBuilder(source);
+        List<Annotation> annotations = find(source);
+        // Replace from the end, so the offsets of the annotations before stay valid.
+        for (int i = annotations.size() - 1; i >= 0; i--) {
+            Annotation annotation = annotations.get(i);
+            if (annotation.isActivated() != active) {
+                result.replace(annotation.start(), annotation.end(), render(annotation, active));
+            }
+        }
+        return result.toString();
+    }
+
+    private static String render(Annotation annotation, boolean active) {
+        Map<String, Argument> arguments = new LinkedHashMap<>(annotation.arguments());
+        if (active) {
+            arguments.remove(ACTIVATED_ARGUMENT);
+        }
+        else {
+            arguments.put(ACTIVATED_ARGUMENT, new Argument(true, ACTIVATED_ARGUMENT + " = " + FALSE_LITERAL, FALSE_LITERAL));
+        }
+        if (arguments.isEmpty()) {
+            // A comment before the argument list stays, and so do its parentheses, because a line comment would otherwise swallow the code after them.
+            return annotation.beforeArguments().isBlank() ? annotation.name() : annotation.name() + annotation.beforeArguments() + "()";
+        }
+        StringJoiner rendered = new StringJoiner(", ", annotation.name() + annotation.beforeArguments() + "(", ")");
+        arguments.values().forEach(argument -> rendered.add(argument.render()));
+        return rendered.toString();
+    }
+
+    /**
+     * @param source the content of a Java file
+     * @return the Ares {@code @Policy} annotations of the source, in their order
+     */
+    static List<Annotation> find(String source) {
+        String masked = mask(source);
+        String withoutComments = maskComments(source);
+        boolean simpleNameIsAres = simpleNameRefersToAres(masked);
+        Sources sources = new Sources(source, withoutComments, masked);
+        List<Annotation> annotations = new ArrayList<>();
+        Matcher names = POLICY_ANNOTATION_NAME.matcher(masked);
+        while (names.find()) {
+            boolean qualified = names.group(1) != null;
+            if (qualified || (simpleNameIsAres && !followsADot(masked, names.start()) && !isShadowedAt(masked, "Policy", names.start()))) {
+                annotation(sources, names.start(), names.end()).ifPresent(annotations::add);
+            }
+        }
+        return annotations;
+    }
+
+    /**
+     * @param nameStart the offset of the {@code @} of an Ares {@code @Policy} annotation
+     * @param nameEnd   the offset after its name
+     * @return the annotation with its arguments; empty if it is incomplete, e.g. in a file that does not compile, so that it is left alone
+     */
+    private static Optional<Annotation> annotation(Sources sources, int nameStart, int nameEnd) {
+        String masked = sources.masked();
+        int end = nameEnd;
+        int open = skipWhitespace(masked, end);
+        Map<String, Argument> arguments = new LinkedHashMap<>();
+        String beforeArguments = "";
+        if (open < masked.length() && masked.charAt(open) == '(') {
+            int close = matchingParenthesis(masked, open);
+            if (close < 0) {
+                return Optional.empty();
+            }
+            arguments = parseArguments(sources, open + 1, close);
+            beforeArguments = sources.original().substring(nameEnd, open);
+            end = close + 1;
+        }
+        return Optional.of(new Annotation(nameStart, end, sources.original().substring(nameStart, nameEnd), beforeArguments, arguments));
+    }
+
+    /**
+     * An {@code @} starts a new token, so a modifier or another annotation right before it, e.g. {@code public@Policy} or {@code @Public@Policy}, does not
+     * make it part of a longer name. Only a dot before it does, as in the qualified type {@code Outer. @Policy Inner}, whose annotation is no Ares marker.
+     *
+     * @return whether the last character before the {@code @}, apart from whitespace, is a dot
+     */
+    static boolean followsADot(String masked, int at) {
+        int before = at - 1;
+        while (before >= 0 && Character.isWhitespace(masked.charAt(before))) {
+            before--;
+        }
+        return before >= 0 && masked.charAt(before) == '.';
+    }
+
+    /**
+     * A type that the file declares itself, e.g. {@code @interface Policy}, shadows a type of the same name that an import provides (JLS 6.4.1): a
+     * top-level type in the whole file, a member or local type only within the body that declares it. Where it is shadowed, the simple name does not
+     * refer to Ares.
+     *
+     * @param masked     the source with comments and literals masked
+     * @param simpleName the simple name of a type
+     * @param offset     where the simple name is used
+     * @return whether a type that the file declares shadows the simple name at the offset
+     */
+    static boolean isShadowedAt(String masked, String simpleName, int offset) {
+        Matcher declarations = TYPE_DECLARATION.matcher(masked);
+        while (declarations.find()) {
+            if (declarations.group(2).equals(simpleName) && isInScopeOf(masked, declarations.start(), offset)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return whether the offset lies in the scope of the declaration that starts at {@code declarationStart}: the whole file for a top-level declaration,
+     *         otherwise the body that contains it
+     */
+    private static boolean isInScopeOf(String masked, int declarationStart, int offset) {
+        int scopeStart = enclosingOpeningBrace(masked, declarationStart);
+        if (scopeStart < 0) {
+            return true;
+        }
+        int scopeEnd = matchingBrace(masked, scopeStart);
+        return offset > scopeStart && (scopeEnd < 0 || offset < scopeEnd);
+    }
+
+    /**
+     * @return the offset of the innermost brace that is open at the offset; -1 at the top level of the file
+     */
+    private static int enclosingOpeningBrace(String masked, int offset) {
+        int depth = 0;
+        for (int index = offset - 1; index >= 0; index--) {
+            char character = masked.charAt(index);
+            if (character == '}') {
+                depth++;
+            }
+            else if (character == '{') {
+                if (depth == 0) {
+                    return index;
+                }
+                depth--;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * @return the offset of the brace that closes the one at {@code open}, or -1 if there is none
+     */
+    static int matchingBrace(String masked, int open) {
+        return matchingBracket(masked, open, '{', '}');
+    }
+
+    private static boolean simpleNameRefersToAres(String masked) {
+        boolean importsAresPolicy = false;
+        boolean importsOtherPolicy = false;
+        for (String imported : singleTypeImports(masked)) {
+            if (ARES_POLICY.equals(imported)) {
+                importsAresPolicy = true;
+            }
+            else if (imported.endsWith(".Policy")) {
+                importsOtherPolicy = true;
+            }
+        }
+        return importsAresPolicy || (!importsOtherPolicy && wildcardImports(masked).contains(ARES_POLICY.substring(0, ARES_POLICY.lastIndexOf('.'))));
+    }
+
+    /**
+     * @param masked the masked content of a Java file
+     * @return the types its single-type imports import and the members its single-static imports import, which may be member types, without the
+     *         whitespace Java allows around their dots
+     */
+    static List<String> singleTypeImports(String masked) {
+        return SINGLE_TYPE_IMPORT.matcher(masked).results().map(imported -> WHITESPACE.matcher(imported.group(1)).replaceAll("")).toList();
+    }
+
+    /**
+     * @param masked the masked content of a Java file
+     * @return the packages and types whose members its type-imports-on-demand import, without the whitespace Java allows around their dots
+     */
+    static List<String> wildcardImports(String masked) {
+        return WILDCARD_IMPORT.matcher(masked).results().map(imported -> WHITESPACE.matcher(imported.group(1)).replaceAll("")).toList();
+    }
+
+    private static int skipWhitespace(String text, int from) {
+        int index = from;
+        while (index < text.length() && Character.isWhitespace(text.charAt(index))) {
+            index++;
+        }
+        return index;
+    }
+
+    /**
+     * @return the offset of the parenthesis that closes the one at {@code open}, or -1 if there is none
+     */
+    static int matchingParenthesis(String masked, int open) {
+        return matchingBracket(masked, open, '(', ')');
+    }
+
+    /**
+     * @return the offset of the {@code closing} bracket that closes the {@code opening} one at {@code open}, counting nested pairs, or -1 if there is none
+     */
+    private static int matchingBracket(String masked, int open, char opening, char closing) {
+        int depth = 0;
+        for (int index = open; index < masked.length(); index++) {
+            char character = masked.charAt(index);
+            if (character == opening) {
+                depth++;
+            }
+            else if (character == closing) {
+                depth--;
+                if (depth == 0) {
+                    return index;
+                }
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * The same source three times, with equal offsets: as written, without comments, and with comments and literal contents masked.
+     */
+    private record Sources(String original, String withoutComments, String masked) {
+    }
+
+    /**
+     * Splits the argument list between {@code from} and {@code to} at its top-level commas and returns each argument by name. A single unnamed argument is
+     * the {@code value}, as in Java.
+     */
+    private static Map<String, Argument> parseArguments(Sources sources, int from, int to) {
+        String masked = sources.masked();
+        Map<String, Argument> arguments = new LinkedHashMap<>();
+        int depth = 0;
+        int argumentStart = from;
+        for (int index = from; index <= to; index++) {
+            char character = index < to ? masked.charAt(index) : ',';
+            if (character == '(' || character == '{' || character == '[') {
+                depth++;
+            }
+            else if (character == ')' || character == '}' || character == ']') {
+                depth--;
+            }
+            else if (character == ',' && depth == 0) {
+                addArgument(arguments, sources, argumentStart, index);
+                argumentStart = index + 1;
+            }
+        }
+        return arguments;
+    }
+
+    /**
+     * Adds the argument between {@code from} and {@code to}. Its name is read from the masked source, so a comment before it does not hide it. Its text
+     * keeps every comment, except a line comment at its end and what follows it, which would comment out an argument that is appended behind it.
+     */
+    private static void addArgument(Map<String, Argument> arguments, Sources sources, int from, int to) {
+        String original = sources.original();
+        String withoutComments = sources.withoutComments();
+        int codeEnd = lastNonWhitespace(withoutComments, from, to);
+        if (codeEnd == from) {
+            // Only whitespace and comments, e.g. after a trailing comma.
+            return;
+        }
+        int textEnd = lastNonWhitespace(original, from, to);
+        int lineComment = lineCommentStart(original.substring(codeEnd, textEnd));
+        if (lineComment >= 0) {
+            textEnd = lastNonWhitespace(original, from, codeEnd + lineComment);
+        }
+        String text = original.substring(skipWhitespace(original, from), textEnd);
+        Matcher named = NAMED_ARGUMENT.matcher(sources.masked().substring(from, to));
+        if (named.matches()) {
+            String expression = withoutComments.substring(from + named.start(2), from + named.end(2)).strip();
+            arguments.put(named.group(1), new Argument(true, text, expression));
+        }
+        else {
+            arguments.put(VALUE_ARGUMENT, new Argument(false, text, withoutComments.substring(from, to).strip()));
+        }
+    }
+
+    /**
+     * @param commentsOnly text that consists of whitespace and comments only, e.g. the end of an argument after its code
+     * @return the offset of its first line comment, or -1 if it has none; a {@code //} inside a block comment, e.g. in a URL, starts no line comment
+     */
+    private static int lineCommentStart(String commentsOnly) {
+        int index = 0;
+        while (index < commentsOnly.length() - 1) {
+            if (commentsOnly.startsWith("//", index)) {
+                return index;
+            }
+            if (commentsOnly.startsWith("/*", index)) {
+                int end = commentsOnly.indexOf("*/", index + 2);
+                if (end < 0) {
+                    return -1;
+                }
+                index = end + 2;
+            }
+            else {
+                index++;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * @return the offset after the last character between {@code from} and {@code to} that is not whitespace, or {@code from} if there is none
+     */
+    private static int lastNonWhitespace(String text, int from, int to) {
+        int end = to;
+        while (end > from && Character.isWhitespace(text.charAt(end - 1))) {
+            end--;
+        }
+        return end;
+    }
+
+    /**
+     * Replaces comments and the contents of string, character and text block literals by spaces. Line breaks and the quotes of literals are kept, so
+     * every offset and line of the result matches the source.
+     *
+     * @param source the content of a Java file
+     * @return the masked source
+     */
+    static String mask(String source) {
+        return mask(source, true);
+    }
+
+    /**
+     * Replaces only the comments by spaces, keeping every offset, so the values of literals can still be read.
+     */
+    private static String maskComments(String source) {
+        return mask(source, false);
+    }
+
+    private static String mask(String source, boolean maskLiterals) {
+        StringBuilder masked = new StringBuilder(source.length());
+        int index = 0;
+        while (index < source.length()) {
+            char character = source.charAt(index);
+            if (source.startsWith("//", index)) {
+                index = maskUntil(source, masked, index, lineEnd(source, index), 0);
+            }
+            else if (source.startsWith("/*", index)) {
+                int close = source.indexOf("*/", index + 2);
+                index = maskUntil(source, masked, index, close < 0 ? -1 : close + 2, 0);
+            }
+            else if (source.startsWith(TEXT_BLOCK_DELIMITER, index)) {
+                masked.append(TEXT_BLOCK_DELIMITER);
+                index = maskLiteral(source, masked, index + 3, TEXT_BLOCK_DELIMITER, maskLiterals);
+            }
+            else if (character == '"' || character == '\'') {
+                masked.append(character);
+                index = maskLiteral(source, masked, index + 1, String.valueOf(character), maskLiterals);
+            }
+            else {
+                masked.append(character);
+                index++;
+            }
+        }
+        return masked.toString();
+    }
+
+    /**
+     * @return the offset of the line terminator that ends the line at the offset, a carriage return or a line feed (JLS 3.4); -1 if it is the last line
+     */
+    private static int lineEnd(String source, int from) {
+        for (int index = from; index < source.length(); index++) {
+            if (isLineTerminator(source.charAt(index))) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    private static boolean isLineTerminator(char character) {
+        return character == '\n' || character == '\r';
+    }
+
+    /**
+     * Masks the source from {@code from} up to {@code to} (exclusive, or the end of the source if negative) and appends {@code keep} characters unmasked.
+     */
+    private static int maskUntil(String source, StringBuilder masked, int from, int to, int keep) {
+        int end = to < 0 ? source.length() : to;
+        for (int index = from; index < end; index++) {
+            char character = source.charAt(index);
+            masked.append(isLineTerminator(character) ? character : ' ');
+        }
+        return end + keep;
+    }
+
+    /**
+     * Appends the content of a literal that started before {@code from}, masked or as written, and its closing delimiter.
+     *
+     * @return the offset after the closing delimiter
+     */
+    private static int maskLiteral(String source, StringBuilder masked, int from, String delimiter, boolean maskContent) {
+        int index = from;
+        while (index < source.length()) {
+            if (source.charAt(index) == '\\' && index + 1 < source.length()) {
+                appendLiteralCharacter(masked, source.charAt(index), maskContent);
+                appendLiteralCharacter(masked, source.charAt(index + 1), maskContent);
+                index += 2;
+            }
+            else if (source.startsWith(delimiter, index)) {
+                masked.append(delimiter);
+                return index + delimiter.length();
+            }
+            else {
+                appendLiteralCharacter(masked, source.charAt(index), maskContent);
+                index++;
+            }
+        }
+        return index;
+    }
+
+    private static void appendLiteralCharacter(StringBuilder masked, char character, boolean maskContent) {
+        masked.append(!maskContent || isLineTerminator(character) ? character : ' ');
+    }
+}
