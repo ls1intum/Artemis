@@ -15,7 +15,7 @@
                             <span jhiTranslate="artemisApp.learningPath.navigation.previousButton"></span>
                         </button>
                     </div>
-                    <span class="min-w-0 flex-1 truncate ps-4! text-(--text-body-secondary)">
+                    <span class="min-w-0 flex-1 truncate ps-4 text-(--text-body-secondary)">
                         {{
                             (predecessorLearningObject.repeatedTest ? ('artemisApp.learningPath.navigation.repeatedTest' | artemisTranslate) + ' ' : '') +
                                 predecessorLearningObject.name
@@ -27,7 +27,7 @@
         <div class="w-1/3 px-2">
             <button
                 type="button"
-                class="flex h-full w-full cursor-pointer flex-wrap items-center justify-center border-0 bg-transparent"
+                class="flex h-full w-full cursor-pointer flex-wrap items-center justify-center border-0! bg-transparent!"
                 id="navigation-overview"
                 [tumAetUiPopoverTrigger]="navOverviewPopover"
             >
@@ -64,7 +64,7 @@
         <div class="w-1/3 px-2">
             <div class="-mx-2 flex flex-wrap items-center justify-end">
                 @if (successorLearningObject(); as successorLearningObject) {
-                    <span class="min-w-0 flex-1 truncate pe-4! text-end text-(--text-body-secondary)">
+                    <span class="min-w-0 flex-1 truncate pe-4 text-right text-(--text-body-secondary)">
                         {{
                             (successorLearningObject.repeatedTest ? ('artemisApp.learningPath.navigation.repeatedTest' | artemisTranslate) + ' ' : '') +
                                 successorLearningObject.name
@@ -93,7 +93,7 @@
             </div>
         </div>
     </div>
-    <div class="-mx-4! my-4! h-0.5 bg-(--border-color)" role="progressbar" [attr.aria-valuenow]="learningPathProgress()" aria-valuemin="0" aria-valuemax="100">
+    <div class="-mx-4 my-4 h-0.5 bg-(--border-color)" role="progressbar" [attr.aria-valuenow]="learningPathProgress()" aria-valuemin="0" aria-valuemax="100">
         <div class="h-full bg-(--primary)" data-testid="learning-path-progress-bar" [style.width.%]="learningPathProgress()"></div>
     </div>
 </div>

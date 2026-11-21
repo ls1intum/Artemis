@@ -1,6 +1,6 @@
 <tumaet-ui-popover #addExercisePopover padding="none" [ariaLabel]="'entity.action.addExercise' | artemisTranslate">
-    <div class="w-[min(25rem,calc(100vw-4rem))] p-4!">
-        <div class="flex justify-between items-center mb-6!">
+    <div class="w-[min(25rem,calc(100vw-4rem))] p-4">
+        <div class="flex justify-between items-center mb-6">
             <h5 class="mb-0" jhiTranslate="entity.action.addExercise"></h5>
             <button
                 tumAetUiButton
@@ -15,7 +15,7 @@
             </button>
         </div>
 
-        <div class="flex flex-col gap-4!">
+        <div class="flex flex-col gap-4">
             @for (exercise of exerciseTypes(); track exercise.type) {
                 <div class="grid grid-cols-3 items-center gap-2">
                     <strong jhiTranslate="{{ exercise.translationKey }}">{{ exercise.type }}</strong>

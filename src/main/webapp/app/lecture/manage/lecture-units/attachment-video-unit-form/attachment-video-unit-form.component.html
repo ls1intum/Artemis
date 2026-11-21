@@ -47,7 +47,7 @@
                 variant="text"
                 size="small"
                 type="button"
-                class="inline-flex cursor-help border-0 p-0"
+                class="inline-flex cursor-help border-0! p-0!"
                 [attr.aria-label]="supportedTypes"
                 [tumAetUiTooltip]="supportedTypes"
                 tumAetUiTooltipDescribesHost="false"
@@ -254,13 +254,13 @@
         </tumaet-ui-form-field>
     }
     @if (!isEditMode() && recordingAvailable()) {
-        <fieldset class="flex flex-wrap gap-4!">
+        <fieldset class="flex flex-wrap gap-4">
             <legend>{{ 'artemisApp.tumLiveUpload.videoSource' | artemisTranslate }}</legend>
-            <label class="flex items-center gap-2">
+            <label class="items-center gap-2">
                 <input type="radio" name="video-source-choice" [checked]="!uploadSelected()" [disabled]="recordingSaveLocked()" (change)="selectRecording(false)" />
                 {{ 'artemisApp.tumLiveUpload.videoLink' | artemisTranslate }}
             </label>
-            <label class="flex items-center gap-2">
+            <label class="items-center gap-2">
                 <input type="radio" name="video-source-choice" [checked]="uploadSelected()" [disabled]="recordingSaveLocked()" (change)="selectRecording(true)" />
                 {{ 'artemisApp.tumLiveUpload.uploadSource' | artemisTranslate }}
             </label>

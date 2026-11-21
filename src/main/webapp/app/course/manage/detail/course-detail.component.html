@@ -43,7 +43,7 @@
                     <div class="w-full px-2 min-[1400px]:w-1/3">
                         <div class="flex flex-wrap -mx-2">
                             <jhi-course-detail-doughnut-chart
-                                class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4!"
+                                class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4"
                                 [course]="course()!"
                                 [contentType]="DoughnutChartType.ASSESSMENT"
                                 [currentPercentage]="courseDTO()?.currentPercentageAssessments"
@@ -52,7 +52,7 @@
                             />
                             @if (course()!.complaintsEnabled) {
                                 <jhi-course-detail-doughnut-chart
-                                    class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4!"
+                                    class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4"
                                     [course]="course()!"
                                     [contentType]="DoughnutChartType.COMPLAINTS"
                                     [currentPercentage]="courseDTO()?.currentPercentageComplaints"
@@ -62,7 +62,7 @@
                             }
                             @if (course()!.requestMoreFeedbackEnabled) {
                                 <jhi-course-detail-doughnut-chart
-                                    class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4!"
+                                    class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4"
                                     [course]="course()!"
                                     [contentType]="DoughnutChartType.FEEDBACK"
                                     [currentPercentage]="courseDTO()?.currentPercentageMoreFeedbacks"
@@ -71,7 +71,7 @@
                                 />
                             }
                             <jhi-course-detail-doughnut-chart
-                                class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4!"
+                                class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4"
                                 [course]="course()!"
                                 [contentType]="DoughnutChartType.AVERAGE_COURSE_SCORE"
                                 [currentPercentage]="courseDTO()?.currentPercentageAverageScore"
@@ -81,7 +81,7 @@
                             @if (irisChatEnabled() || isAthenaEnabled() || isHyperionEnabled() || isAtlasEnabled()) {
                                 @let llmStats = courseDTO();
                                 <jhi-course-detail-doughnut-chart
-                                    class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4!"
+                                    class="doughnut-container w-full px-2 min-[576px]:w-1/2 my-4"
                                     data-testid="course-llm-cost"
                                     [course]="course()!"
                                     [contentType]="DoughnutChartType.CURRENT_LLM_COST"

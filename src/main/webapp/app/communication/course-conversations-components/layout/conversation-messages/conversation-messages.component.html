@@ -80,7 +80,7 @@
                     }
                     @if (_activeConversation(); as activeConversation) {
                         @if (newPost() && canCreateNewMessageInConversation(activeConversation) && isMobile()) {
-                            <div class="px-4!">
+                            <div class="px-4">
                                 @if (getAsChannel(activeConversation)?.isAnnouncementChannel) {
                                     <div class="pt-2">
                                         <button tumAetUiButton type="button" (click)="createEditModal()?.open()" jhiTranslate="artemisApp.communication.newAnnouncement"></button>
@@ -101,7 +101,7 @@
             </div>
             @if (_activeConversation(); as activeConversation) {
                 @if (newPost() && canCreateNewMessageInConversation(activeConversation) && !isMobile()) {
-                    <div class="hidden px-4! py-2 min-[576px]:block">
+                    <div class="hidden px-4 py-2 min-[576px]:block">
                         @if (getAsChannel(activeConversation)?.isAnnouncementChannel) {
                             <button tumAetUiButton type="button" (click)="createEditModal()?.open()" jhiTranslate="artemisApp.communication.newAnnouncement"></button>
                         } @else {

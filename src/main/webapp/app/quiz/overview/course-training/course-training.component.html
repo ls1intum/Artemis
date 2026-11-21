@@ -16,7 +16,7 @@
             </div>
 
             <div class="main-body-section">
-                <div class="legend-section p-4!">
+                <div class="legend-section p-4">
                     <h5 jhiTranslate="artemisApp.quizTraining.scorecard"></h5>
                     <div class="league-display">
                         <jhi-league-badge
@@ -28,7 +28,7 @@
                             [pointsDiamondLeague]="pointsDiamondLeague"
                         />
                     </div>
-                    <div class="due-date-container mt-12!">
+                    <div class="due-date-container mt-12">
                         <fa-icon [icon]="faClock" />
                         @if (!dueIn().isValid) {
                             <span jhiTranslate="artemisApp.quizTraining.noData"></span>
@@ -56,7 +56,7 @@
                     <div>
                         <span> <fa-icon [icon]="faXmark" /> {{ wrongQuestions() }} <span jhiTranslate="artemisApp.quizTraining.wrongQuestions"></span> </span>
                     </div>
-                    <div class="mt-4!">
+                    <div class="mt-4">
                         <button tumAetUiButton type="button" severity="secondary" (click)="showInfoDialog()">
                             <span jhiTranslate="artemisApp.quizTraining.infoButton"></span>
                         </button>

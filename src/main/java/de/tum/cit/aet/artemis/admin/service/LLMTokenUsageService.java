@@ -3,12 +3,10 @@ package de.tum.cit.aet.artemis.admin.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -27,7 +25,8 @@ import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.aiworker.api.LLMResponseCost;
-import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 
 /**
  * Service for managing the LLMTokenUsage by all LLMs in Artemis.
@@ -39,26 +38,17 @@ public class LLMTokenUsageService {
 
     private static final Logger log = LoggerFactory.getLogger(LLMTokenUsageService.class);
 
-    private static final Pattern DATE_SUFFIX_PATTERN = Pattern.compile("-?\\d{4}-\\d{2}-\\d{2}$");
-
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
     private final LLMTokenUsageRequestRepository llmTokenUsageRequestRepository;
 
-    private final Map<String, ModelCost> costs;
-
-    private final Map<String, ModelCost> costsByStrippedKey;
+    private final LlmProperties llmProperties;
 
     public LLMTokenUsageService(LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository,
-            LLMModelCostConfiguration costConfiguration) {
+            LlmProperties llmProperties) {
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
         this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
-        this.costs = costConfiguration.getModelCosts().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> modelCost(e.getValue())));
-        this.costsByStrippedKey = costConfiguration.getModelCosts().entrySet().stream()
-                .collect(Collectors.toMap(entry -> LLMModelCostConfiguration.stripToAlphanumeric(entry.getKey()),
-                        entry -> new StrippedModelCost(entry.getKey(), LLMModelCostConfiguration.stripToAlphanumeric(entry.getKey()), modelCost(entry.getValue())),
-                        LLMTokenUsageService::throwOnStrippedCostCollision))
-                .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().cost()));
+        this.llmProperties = llmProperties;
     }
 
     /**
@@ -86,30 +76,30 @@ public class LLMTokenUsageService {
         int cached = safeCacheCount(usage.getCacheReadInputTokens(), input);
         int written = safeCacheCount(usage.getCacheWriteInputTokens(), Math.max(0, input - cached));
         if (usd == null) {
-            ModelCost cost = modelCost(model, input, output, pipelineId);
+            ModelCost cost = modelCost(LlmClientService.presetOf(response.getMetadata()), model, input, output, pipelineId);
             usd = estimateUsd(cost, input, output, cached, written);
         }
         return new LLMRequest(model, input, output, pipelineId, cached, written, usd);
     }
 
-    private ModelCost modelCost(String model, int inputTokens, int outputTokens, String pipelineId) {
-        String normalized = model != null ? DATE_SUFFIX_PATTERN.matcher(model).replaceAll("") : "";
-        String stripped = LLMModelCostConfiguration.stripToAlphanumeric(normalized);
-        ModelCost cost = costs.getOrDefault(normalized, costsByStrippedKey.getOrDefault(stripped, ModelCost.UNKNOWN));
-        if (cost == ModelCost.UNKNOWN && (long) inputTokens + outputTokens > 0) {
-            log.warn("No LLM cost configured for model '{}' (normalized '{}', stripped '{}') on pipeline [{}]; recording an unknown cost. Known cost keys: {}", model, normalized,
-                    stripped, pipelineId, costs.keySet());
+    /**
+     * The fallback price of a call is the price list entry of the preset that made it: the entry on the preset's endpoint for the preset's configured
+     * model. A call without a preset (for example from a test double) or a preset without a price stays unpriced.
+     */
+    private ModelCost modelCost(@Nullable String presetName, String model, int inputTokens, int outputTokens, String pipelineId) {
+        LlmProperties.Preset preset = presetName == null ? null : llmProperties.preset(presetName);
+        LlmProperties.Price price = preset == null ? null : llmProperties.priceOf(preset);
+        if (price == null) {
+            if ((long) inputTokens + outputTokens > 0) {
+                log.debug("No fallback price for the call of model '{}' on pipeline [{}] (preset {}); recording an unknown cost", model, pipelineId, presetName);
+            }
+            return ModelCost.UNKNOWN;
         }
-        return cost;
+        return new ModelCost(price.input(), price.output(), price.cachedInput(), price.cacheWrite());
     }
 
     private static int safeCacheCount(@Nullable Long count, int input) {
         return count != null && count >= 0 && count <= input ? count.intValue() : 0;
-    }
-
-    private static ModelCost modelCost(LLMModelCostConfiguration.ModelCostProperties properties) {
-        return new ModelCost(properties.getInputCostPerMillionUsd(), properties.getOutputCostPerMillionUsd(), properties.getCachedInputCostPerMillionUsd(),
-                properties.getCacheWriteInputCostPerMillionUsd());
     }
 
     @Nullable
@@ -128,15 +118,15 @@ public class LLMTokenUsageService {
         return Double.isFinite(amount) && amount >= 0 ? amount : null;
     }
 
-    private static boolean validRate(@Nullable Float rate) {
-        return rate != null && Float.isFinite(rate) && rate >= 0;
+    private static boolean validRate(@Nullable Double rate) {
+        return rate != null && Double.isFinite(rate) && rate >= 0;
     }
 
     private static boolean requiresRegularInputRate(ModelCost cost, int input, int cached, int written) {
         return input > cached + written || cached > 0 && cost.cachedUsd() == null || written > 0 && cost.writeUsd() == null;
     }
 
-    private static boolean invalidCacheRate(int tokens, @Nullable Float rate) {
+    private static boolean invalidCacheRate(int tokens, @Nullable Double rate) {
         return tokens > 0 && rate != null && !validRate(rate);
     }
 
@@ -148,18 +138,9 @@ public class LLMTokenUsageService {
         }
     }
 
-    private record ModelCost(@Nullable Float inputUsd, @Nullable Float outputUsd, @Nullable Float cachedUsd, @Nullable Float writeUsd) {
+    private record ModelCost(@Nullable Double inputUsd, @Nullable Double outputUsd, @Nullable Double cachedUsd, @Nullable Double writeUsd) {
 
         static final ModelCost UNKNOWN = new ModelCost(null, null, null, null);
-    }
-
-    private record StrippedModelCost(String originalKey, String strippedKey, ModelCost cost) {
-    }
-
-    private static StrippedModelCost throwOnStrippedCostCollision(StrippedModelCost existing, StrippedModelCost replacement) {
-        String message = new StringBuilder("Conflicting LLM model cost keys '").append(existing.originalKey()).append("' and '").append(replacement.originalKey())
-                .append("' normalize to identical stripped key '").append(existing.strippedKey()).append("'").toString();
-        throw new IllegalStateException(message);
     }
 
     /**

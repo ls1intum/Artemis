@@ -8,11 +8,11 @@
         <jhi-programming-exercise-difficulty [programmingExercise]="programmingExercise()" />
     }
     @if (isEditFieldDisplayedRecord().participationMode) {
-        <div class="mb-4!">
+        <div class="mb-4">
             <jhi-team-config-form-group class="form-element" [exercise]="programmingExercise()" [isImport]="programmingExerciseCreationConfig().isImportFromExistingExercise" />
         </div>
     }
-    <div class="mb-4!">
+    <div class="mb-4">
         @if (isEditFieldDisplayedRecord().allowOfflineIde) {
             <div class="flex items-center gap-2 mb-1">
                 <tumaet-ui-checkbox
