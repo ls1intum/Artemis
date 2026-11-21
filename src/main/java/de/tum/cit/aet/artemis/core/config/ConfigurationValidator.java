@@ -17,10 +17,6 @@ import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_PARTICIPATIO
 import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_PAYLOAD_BYTES_PROPERTY;
 import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_WINDOW_DAYS_PROPERTY;
 import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MIN_BYTE_LIMIT;
-import static de.tum.cit.aet.artemis.deimos.config.DeimosLlmConfiguration.CHAT_COMPLETIONS_SUFFIX;
-import static de.tum.cit.aet.artemis.deimos.config.DeimosLlmConfiguration.DEFAULT_COMPLETIONS_PATH;
-import static de.tum.cit.aet.artemis.deimos.config.DeimosLlmConfiguration.isValidCompletionsPath;
-import static de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer.TEXT2VEC_OPENAI;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -172,23 +168,9 @@ public class ConfigurationValidator {
 
     private final String weaviateVectorizerModule;
 
-    private final String weaviateOpenAiBaseUrl;
-
-    private final String weaviateGpuApiKey;
-
     private final String serverUrl;
 
     private final boolean isOpenApiDocsGeneration;
-
-    private final String deimosLlmBaseUrl;
-
-    private final String deimosLlmModel;
-
-    private final String deimosLlmCompletionsPath;
-
-    private final long deimosLlmTimeoutSeconds;
-
-    private final int deimosLlmMaxRetries;
 
     public ConfigurationValidator(Environment environment,
             @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
@@ -198,19 +180,10 @@ public class ConfigurationValidator {
             @Value("${artemis.weaviate.http-port:" + WeaviateConfigurationProperties.DEFAULT_HTTP_PORT + "}") int weaviatePort,
             @Value("${artemis.weaviate.grpc-port:" + WeaviateConfigurationProperties.DEFAULT_GRPC_PORT + "}") int weaviateGrpcPort,
             @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme, @Value("${artemis.weaviate.vectorizer-module:#{null}}") String weaviateVectorizerModule,
-            @Value("${artemis.weaviate.open-ai-base-url:#{null}}") String weaviateOpenAiBaseUrl, @Value("${artemis.weaviate.gpu-api-key:#{null}}") String weaviateGpuApiKey,
-            @Value("${artemis.openapi-docs-generation:false}") boolean isOpenApiDocsGeneration, @Value("${server.url:}") String serverUrl,
-            @Value("${artemis.deimos.llm.base-url:}") String deimosLlmBaseUrl, @Value("${artemis.deimos.llm.model:}") String deimosLlmModel,
-            @Value("${artemis.deimos.llm.completions-path:" + DEFAULT_COMPLETIONS_PATH + "}") String deimosLlmCompletionsPath,
-            @Value("${artemis.deimos.llm.timeout-seconds:90}") long deimosLlmTimeoutSeconds, @Value("${artemis.deimos.llm.max-retries:3}") int deimosLlmMaxRetries) {
+            @Value("${artemis.openapi-docs-generation:false}") boolean isOpenApiDocsGeneration, @Value("${server.url:}") String serverUrl) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
-        this.deimosLlmBaseUrl = deimosLlmBaseUrl;
-        this.deimosLlmModel = deimosLlmModel;
-        this.deimosLlmCompletionsPath = deimosLlmCompletionsPath;
-        this.deimosLlmTimeoutSeconds = deimosLlmTimeoutSeconds;
-        this.deimosLlmMaxRetries = deimosLlmMaxRetries;
 
         this.internalAdminUsername = internalAdminUsername;
         this.internalAdminPassword = internalAdminPassword;
@@ -221,8 +194,6 @@ public class ConfigurationValidator {
         this.weaviateGrpcPort = weaviateGrpcPort;
         this.weaviateScheme = weaviateScheme;
         this.weaviateVectorizerModule = weaviateVectorizerModule;
-        this.weaviateOpenAiBaseUrl = weaviateOpenAiBaseUrl;
-        this.weaviateGpuApiKey = weaviateGpuApiKey;
         this.isOpenApiDocsGeneration = isOpenApiDocsGeneration;
         this.serverUrl = serverUrl;
     }
@@ -245,11 +216,11 @@ public class ConfigurationValidator {
     /**
      * Validates the Deimos configuration at startup.
      * <p>
-     * Deimos sends student source code to the configured LLM endpoint, so it deliberately ships without a usable default
-     * endpoint. Failing fast here prevents an instance from silently sending student data to whichever endpoint happens
-     * to be left in the configuration. Validation is skipped entirely when the module is disabled.
+     * Only the payload and batch limits are checked here. The LLM preset that receives the student source code is checked
+     * by {@code LlmConfigurationValidator}, which refuses to start without an explicit assignment under
+     * {@code artemis.deimos.llm-preset}. Validation is skipped entirely when the module is disabled.
      *
-     * @throws DeimosConfigurationException if Deimos is enabled but its LLM configuration is missing or invalid
+     * @throws DeimosConfigurationException if Deimos is enabled but one of its limits is invalid
      */
     private void validateDeimosConfiguration() {
         if (!artemisConfigHelper.isDeimosEnabled(environment)) {
@@ -257,50 +228,6 @@ public class ConfigurationValidator {
         }
 
         List<String> missingOrInvalidProperties = new ArrayList<>();
-
-        if (!StringUtils.hasText(deimosLlmBaseUrl)) {
-            missingOrInvalidProperties.add("artemis.deimos.llm.base-url (must be set; there is no default endpoint)");
-        }
-        else {
-            try {
-                URI uri = URI.create(deimosLlmBaseUrl);
-                String scheme = uri.getScheme();
-                // A query or fragment is rejected because toOpenAiCompatibleBaseUrl appends the completions-path prefix
-                // directly to this value: https://llm.example.com?x=1 would become https://llm.example.com?x=1/api,
-                // silently sending student source code to a malformed or unintended endpoint.
-                if (uri.isOpaque() || !uri.isAbsolute() || !HTTPS_SCHEME.equals(scheme) || uri.getHost() == null || uri.getRawQuery() != null || uri.getRawFragment() != null) {
-                    // Deliberately stricter than the Weaviate check above, which also accepts http: Weaviate receives
-                    // course content the installation already hosts, whereas Deimos sends student source code and the
-                    // API key to a third party. Over http both are readable to anyone on the path, so an operator has
-                    // to terminate TLS in front of the endpoint even when it only listens on the local network.
-                    missingOrInvalidProperties.add(
-                            "artemis.deimos.llm.base-url (must be an absolute HTTPS URL with a host and no query or fragment, since the completions path is appended to it; http is rejected because student source code and the API key would travel in cleartext, got '%s')"
-                                    .formatted(deimosLlmBaseUrl));
-                }
-            }
-            catch (IllegalArgumentException e) {
-                missingOrInvalidProperties.add("artemis.deimos.llm.base-url (not a valid URL: %s)".formatted(e.getMessage()));
-            }
-        }
-
-        if (!StringUtils.hasText(deimosLlmModel)) {
-            missingOrInvalidProperties.add("artemis.deimos.llm.model (must be set)");
-        }
-
-        // The OpenAI SDK appends /chat/completions itself, so only an absolute path ending in that suffix can be mapped to a base URL prefix.
-        // A relative value (no leading slash) would be concatenated straight onto the host, e.g. https://llm.example.com + api -> https://llm.example.comapi.
-        if (!isValidCompletionsPath(deimosLlmCompletionsPath)) {
-            missingOrInvalidProperties.add("artemis.deimos.llm.completions-path (must be an absolute path starting with '/' and ending with '%s', got '%s')"
-                    .formatted(CHAT_COMPLETIONS_SUFFIX, deimosLlmCompletionsPath));
-        }
-
-        if (deimosLlmTimeoutSeconds <= 0) {
-            missingOrInvalidProperties.add("artemis.deimos.llm.timeout-seconds (must be positive, got %d)".formatted(deimosLlmTimeoutSeconds));
-        }
-
-        if (deimosLlmMaxRetries < 0) {
-            missingOrInvalidProperties.add("artemis.deimos.llm.max-retries (must not be negative, got %d)".formatted(deimosLlmMaxRetries));
-        }
 
         validateDeimosLimits(missingOrInvalidProperties);
 
@@ -735,35 +662,7 @@ public class ConfigurationValidator {
                     .add("artemis.weaviate.vectorizer-module (must be one of " + Arrays.stream(SupportedVectorizer.values()).map(SupportedVectorizer::configValue).toList() + ")");
         }
 
-        boolean shouldValidateOpenAiSpecificProperties = TEXT2VEC_OPENAI.configValue().equals(weaviateVectorizerModule);
-        if (shouldValidateOpenAiSpecificProperties) {
-            if (!StringUtils.hasText(weaviateOpenAiBaseUrl)) {
-                invalidProperties.add("artemis.weaviate.open-ai-base-url (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
-            }
-            else {
-                try {
-                    URI uri = URI.create(weaviateOpenAiBaseUrl);
-                    String scheme = uri.getScheme();
-                    boolean isInvalidUrl = !uri.isAbsolute() || (!"http".equals(scheme) && !"https".equals(scheme));
-                    if (isInvalidUrl) {
-                        invalidProperties.add("artemis.weaviate.open-ai-base-url (must be a valid absolute URL with http or https scheme when using "
-                                + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
-                    }
-                }
-                catch (IllegalArgumentException e) {
-                    invalidProperties.add("artemis.weaviate.open-ai-base-url (must be a valid absolute URL with http or https scheme when using " + TEXT2VEC_OPENAI.configValue()
-                            + " vectorizer)");
-                }
-            }
-            if (!StringUtils.hasText(weaviateGpuApiKey)) {
-                invalidProperties
-                        .add("artemis.weaviate.gpu-api-key (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer, use a dummy value for Ollama)");
-            }
-            if (!StringUtils.hasText(environment.getProperty("artemis.weaviate.open-ai-embedding-model"))) {
-                invalidProperties.add("artemis.weaviate.open-ai-embedding-model (must be configured when using " + TEXT2VEC_OPENAI.configValue()
-                        + " vectorizer: Artemis computes the embeddings and sends the model name with every request)");
-            }
-        }
+        // The embedding endpoint and model of hybrid search come from artemis.weaviate.embedding-llm-preset, which LlmConfigurationValidator checks.
 
         if (!invalidProperties.isEmpty()) {
             String errorMessage = "Invalid Weaviate configuration: Weaviate is enabled but the following properties are missing or invalid: "

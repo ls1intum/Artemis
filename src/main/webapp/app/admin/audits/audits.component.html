@@ -2,7 +2,7 @@
     <h5 *adminTitleBarTitle id="audits-page-heading" class="mb-0" jhiTranslate="audits.title"></h5>
     <!-- One tab per audit log. Each log is a separate table with its own retention period, so switching tabs queries a
          different, much smaller table instead of filtering one large one. -->
-    <tumaet-ui-tabs class="mb-6!" [value]="logType()" (valueChange)="onLogTypeChange($event)" data-testid="audits-log-type-tabs">
+    <tumaet-ui-tabs class="mb-6" [value]="logType()" (valueChange)="onLogTypeChange($event)" data-testid="audits-log-type-tabs">
         <tumaet-ui-tab-list>
             @for (tab of logTypeTabs; track tab.value) {
                 <tumaet-ui-tab [value]="tab.value" [attr.data-testid]="'audits-log-type-tab-' + tab.value">
@@ -11,8 +11,8 @@
             }
         </tumaet-ui-tab-list>
     </tumaet-ui-tabs>
-    <h4 class="mb-4!" jhiTranslate="audits.filter.title"></h4>
-    <div class="mb-6! flex flex-wrap items-start gap-6!" data-testid="audits-date-filter">
+    <h4 class="mb-4" jhiTranslate="audits.filter.title"></h4>
+    <div class="mb-6 flex flex-wrap items-start gap-6" data-testid="audits-date-filter">
         <div class="flex flex-col gap-2">
             <label for="audits-from-date" jhiTranslate="audits.filter.from"></label>
             <tumaet-ui-date-picker

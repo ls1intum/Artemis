@@ -41,15 +41,15 @@ module starts leaking into instances that did not enable it.
 
 ### Startup validation
 
-Configuration is validated eagerly. `base-url` and `model` have no default: `application.yml` ships them blank, and
-enabling the module without setting them stops the boot with `DeimosConfigurationException`, rendered by
-`DeimosConfigurationFailureAnalyzer` into an actionable message. `base-url` must be an absolute https URI with a host
-and without query or fragment, `completions-path` must start with `/` and end with `/chat/completions`,
-`timeout-seconds` must be greater than `0` and `max-retries` at least `0`. The limits under `artemis.deimos.payload.*`
-and `artemis.deimos.batch.*` are validated in the same pass, see [Evidence construction](#evidence-construction).
+Configuration is validated eagerly. Deimos calls the LLM preset assigned under `artemis.deimos.llm-preset`, which has
+no default: `DeimosLlmConfiguration` reports the assignment to `LlmConfigurationValidator`, which stops the boot when
+it is missing, names an unknown preset or an embeddings preset, or when the preset's endpoint is invalid. The limits
+under `artemis.deimos.payload.*` and `artemis.deimos.batch.*` are checked by `ConfigurationValidator`; a violation
+stops the boot with `DeimosConfigurationException`, rendered by `DeimosConfigurationFailureAnalyzer` into an
+actionable message, see [Evidence construction](#evidence-construction).
 
-The `api-key` is not validated at startup, because an empty key is a valid setup for an unauthenticated endpoint
-(Spring AI then sends no `Authorization` header). A missing or wrong key surfaces at the first request as HTTP `401`
+Whether the provider accepts the `api-key` of the preset's endpoint is not checked at startup, because an empty key
+is a valid setup for an unauthenticated OpenAI-compatible endpoint (the SDK then sends no `Authorization` header). A missing or wrong key surfaces at the first request as HTTP `401`
 or `403`, which `DefaultDeimosLlmClient` reports as `LLM_AUTHENTICATION_FAILED`.
 
 <Callout variant={CalloutVariant.warning}>
@@ -57,8 +57,8 @@ or `403`, which `DefaultDeimosLlmClient` reports as `LLM_AUTHENTICATION_FAILED`.
     student source code somewhere nobody chose. The fail-fast behaviour is the feature, not an inconvenience.
 </Callout>
 
-The chat client is declared against Spring AI's `ChatModel` rather than `OpenAiChatModel`, so the bean stays
-resolvable in integration tests.
+`DefaultDeimosLlmClient` obtains its chat client from `LlmClientService`, so integration tests route it through the
+mocked chat model like every other preset.
 
 ## Package layout
 

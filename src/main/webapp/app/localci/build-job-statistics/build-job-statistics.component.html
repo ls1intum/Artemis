@@ -1,5 +1,5 @@
-<div class="mb-6!">
-    <div class="flex items-center gap-2 mb-4!">
+<div class="mb-6">
+    <div class="flex items-center gap-2 mb-4">
         <h5 id="build-queue-overview" class="mb-0" jhiTranslate="artemisApp.buildQueue.statistics.title"></h5>
         @if (displaySpanSelector()) {
             <jhi-help-icon class="ps-1" text="artemisApp.buildQueue.statistics.titleTooltip" />
@@ -16,7 +16,7 @@
             <ng-template #spanItem let-option>{{ option.label | artemisTranslate }}</ng-template>
         }
     </div>
-    <div class="flex items-center flex-wrap gap-4!">
+    <div class="flex items-center flex-wrap gap-4">
         <div class="chart-container">
             <tumaet-ui-doughnut-chart
                 class="h-20 w-20"

@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
@@ -37,22 +37,25 @@ import tools.jackson.databind.cfg.CoercionInputShape;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.type.LogicalType;
 
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.deimos.config.DeimosEnabled;
+import de.tum.cit.aet.artemis.deimos.config.DeimosLlmConfiguration;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosFailureType;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmRequest;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmResponse;
 import de.tum.cit.aet.artemis.deimos.exception.DeimosLlmException;
 
 /**
- * Calls the dedicated Deimos {@link ChatClient} and turns its answer into a {@link DeimosLlmResponse}.
+ * Calls the {@link ChatClient} of the Deimos LLM preset and turns its answer into a {@link DeimosLlmResponse}.
  * <p>
  * The raw assistant text is parsed here rather than through Spring AI's {@code responseEntity(...)} converter. Reasoning
  * models routinely wrap their answer in a preamble or a fenced block, and the strict converter throws on anything that
  * is not bare JSON, which turns a cosmetic formatting difference into a failed participation. Parsing the text directly
  * lets those responses be recovered while still rejecting genuinely unusable ones.
  * <p>
- * No retry is implemented here. Transport retries are configured once via {@code artemis.deimos.llm.max-retries} and
- * performed by the OpenAI SDK; layering a second retry on top would multiply attempts and stall a large batch.
+ * No retry is implemented here. Transport retries are configured once via {@code max-retries} of the preset or its
+ * endpoint and performed by the OpenAI SDK; layering a second retry on top would multiply attempts and stall a large
+ * batch.
  */
 @Conditional(DeimosEnabled.class)
 @Lazy
@@ -101,8 +104,8 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
 
     private final ChatClient chatClient;
 
-    public DefaultDeimosLlmClient(@Qualifier("deimosChatClient") ChatClient chatClient) {
-        this.chatClient = chatClient;
+    public DefaultDeimosLlmClient(LlmClientService llmClientService, @Value("${" + DeimosLlmConfiguration.KEY + "}") String preset) {
+        this.chatClient = llmClientService.chatClient(preset.strip());
     }
 
     @Override

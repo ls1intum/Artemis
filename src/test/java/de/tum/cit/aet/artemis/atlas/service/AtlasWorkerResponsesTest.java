@@ -49,9 +49,6 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.atlas.config.AtlasAgentProperties;
-import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
-import de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasResponsesChatClient;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesChatModel;
@@ -79,9 +76,12 @@ class AtlasWorkerResponsesTest {
         var templates = mock(AtlasPromptTemplateService.class);
         when(templates.render(anyString(), anyMap())).thenReturn("Worker instructions");
         var usage = mock(LLMTokenUsageService.class);
-        var properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L);
-        var harness = new AtlasAgentDelegationService(null, templates, null, new AtlasAgentProperties("interactive", 1.0), properties,
-                new AtlasResponsesChatClient(ChatClient.create(new OpenAiResponsesChatModel(client, new JsonMapper(), "gpt-5.6-luna"))));
+        // the orchestrator and worker presets differ only in their reasoning effort, which each role's model carries as its default
+        var orchestratorClient = ChatClient
+                .create(new OpenAiResponsesChatModel(client, new JsonMapper(), OpenAiChatOptions.builder().model("gpt-5.6-luna").reasoningEffort("xhigh").build()));
+        var workerClient = ChatClient
+                .create(new OpenAiResponsesChatModel(client, new JsonMapper(), OpenAiChatOptions.builder().model("gpt-5.6-luna").reasoningEffort("high").build()));
+        var harness = new AtlasAgentDelegationService(orchestratorClient, orchestratorClient, workerClient, templates, null);
         Map<String, Object> context = new HashMap<>();
         context.put(OrchestratorToolContextKeys.COURSE_ID_KEY, 42L);
         context.put(OrchestratorToolContextKeys.LEARNING_OBJECT_ID_KEY, 7L);
@@ -106,12 +106,11 @@ class AtlasWorkerResponsesTest {
         var empty = new AtlasToolSurface(ToolCallbackProvider.from(List.of()));
         var workers = new OrchestratorDelegationToolsService(templates, harness, new AtlasToolSurface(ToolCallbackProvider.from(read)), role.equals("Creator") ? roleTools : empty,
                 role.equals("Assigner") ? roleTools : empty, role.equals("Editor") ? roleTools : empty,
-                new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(new AtlasWorkerTerminalToolService(new JsonMapper())).build()), properties, usage,
+                new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(new AtlasWorkerTerminalToolService(new JsonMapper())).build()), usage,
                 mock(UserRepository.class));
         var index = FunctionToolCallback.<Map<String, Object>, String>builder("listCompetencyIndex", input -> "{\"competencies\":[]}").inputType(Map.class).build();
-        ChatResponse mainResponse = harness.delegateOrchestratorRound("Main instructions", "Process exercise 7",
-                OpenAiChatOptions.builder().deploymentName("gpt-5.6-luna").reasoningEffort("xhigh"), context, ignored -> {
-                }, ToolCallbackProvider.from(index), MethodToolCallbackProvider.builder().toolObjects(workers, new AtlasOrchestratorTerminalToolService()).build());
+        ChatResponse mainResponse = harness.delegateOrchestratorRound("Main instructions", "Process exercise 7", context, ignored -> {
+        }, ToolCallbackProvider.from(index), MethodToolCallbackProvider.builder().toolObjects(workers, new AtlasOrchestratorTerminalToolService()).build());
 
         AtlasToolCallBudget.checkResponse(mainResponse, context);
         assertThat(budget.completion().verified()).isTrue();

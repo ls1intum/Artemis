@@ -166,10 +166,7 @@ artemis:
             default-limit: -1
             default-timeframe-hours: -1
 
-    # Deimos uses its own LLM config (not spring.ai.openai.*) to isolate student code from the shared Atlas/Hyperion endpoint.
-    # Deimos sends student source code to this endpoint, so there is deliberately NO default endpoint: base-url and model
-    # must be set explicitly to an endpoint you operate and are permitted to send student data to. Enabling Deimos without
-    # them fails fast at startup (see ConfigurationValidator).
+    # Deimos sends student code to the LLM preset assigned under artemis.deimos.llm-preset (see artemis.llm)
     deimos:
         enabled: false
         executor:
@@ -186,17 +183,6 @@ artemis:
         batch:
             max-participations-per-run: 5000
             max-window-days: 31
-        llm:
-            # Must be https: student source code and the api-key below travel to this endpoint on every analysis.
-            base-url: # required when enabled, e.g. https://llm.example.com
-            api-key: # optional; leave empty for an unauthenticated self-hosted endpoint
-            model: # required when enabled, e.g. openai/gpt-oss-120b
-            # The SDK appends /chat/completions itself; this path is stripped down to the prefix (e.g. /api)
-            completions-path: /api/chat/completions
-            temperature: 0
-            timeout-seconds: 90
-            # Transport-level retries performed by the OpenAI SDK (timeouts, 408, 409, 429, 5xx). This is the only retry layer.
-            max-retries: 3
 
     weaviate:
         enabled: false
@@ -296,8 +282,9 @@ spring: #disabled by default, you must enable it
             mail.smtp.timeout: 30000
             mail.smtp.writetimeout: 30000
     ai:
+        # Artemis configures every LLM under artemis.llm and builds its clients itself; Spring AI creates no model of its own.
         model:
-            chat: none # possible values: openai, none (since Spring AI 2.0 the openai module also serves Azure OpenAI / Microsoft Foundry)
+            chat: none
             audio.speech: none
             audio.transcription: none
             embedding: none

@@ -57,7 +57,7 @@
     <jhi-table-view [cols]="studentsColumns" [vals]="team()?.students ?? []" [loading]="isLoading() || isTransitioning()" [options]="studentsTableOptions" />
 
     @if (exercise() && team()) {
-        <h4 class="mt-6! flex items-baseline">
+        <h4 class="mt-6 flex items-baseline">
             {{ 'artemisApp.team.detail.participationsTable.title' | artemisTranslate: { courseTitle: exercise()!.course!.title } }}
             <code class="ms-2 team-short-name">{{ team()!.shortName }}</code>
         </h4>

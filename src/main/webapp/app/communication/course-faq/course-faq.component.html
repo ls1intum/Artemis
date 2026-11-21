@@ -23,7 +23,7 @@
                             [checked]="activeFilters().has(category.category!)"
                             (changed)="toggleFilters(category.category!)"
                         />
-                        <label class="flex cursor-pointer items-center" [for]="'filter-' + category.category">
+                        <label class="cursor-pointer items-center" [for]="'filter-' + category.category">
                             <jhi-custom-exercise-category-badge [category]="category" />
                         </label>
                     </div>

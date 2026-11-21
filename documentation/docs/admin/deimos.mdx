@@ -2,7 +2,7 @@
 id: deimos
 title: Deimos Malicious Participation Analysis
 sidebar_label: Deimos Setup
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-20
 ---
 
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
@@ -81,14 +81,7 @@ artemis:
       core-pool-size: 2
       max-pool-size: 4
       queue-capacity: 25
-    llm:
-      base-url: https://llm.example.com
-      api-key: "${DEIMOS_LLM_API_KEY:}"
-      model: openai/gpt-oss-120b
-      completions-path: /api/chat/completions
-      temperature: 0
-      timeout-seconds: 90
-      max-retries: 3
+    llm-preset: deimos
     payload:
       max-file-input-bytes: 262144
       max-file-diff-bytes: 32768
@@ -97,18 +90,24 @@ artemis:
     batch:
       max-participations-per-run: 5000
       max-window-days: 31
+  llm:
+    endpoints:
+      selfhosted:
+        base-url: https://llm.example.com/api   # the SDK appends /chat/completions
+        api-key: "${DEIMOS_LLM_API_KEY:}"        # leave empty for an endpoint without authentication
+    presets:
+      deimos:
+        endpoint: selfhosted
+        model: openai/gpt-oss-120b
+        api: chat-completions
+        temperature: 0
+        timeout: 90s
 ```
 
 | Property | Required | Description |
 | --- | --- | --- |
 | `artemis.deimos.enabled` | yes | Loads the Deimos beans. When `false`, no Deimos endpoint or bean exists. |
-| `artemis.deimos.llm.base-url` | yes | Absolute **HTTPS** URL of the endpoint, including a host, without a query (`?`) or fragment (`#`), since the completions path is appended to it. No default. Plain `http` is rejected at startup, on the loopback interface as well: the request carries student source code and the API key. |
-| `artemis.deimos.llm.model` | yes | Model identifier sent with each request. No default. |
-| `artemis.deimos.llm.api-key` | no | Leave empty for an unauthenticated self-hosted endpoint; no `Authorization` header is sent then. |
-| `artemis.deimos.llm.completions-path` | no | Must start with `/` and end with `/chat/completions`, without query or fragment. Defaults to `/api/chat/completions`. |
-| `artemis.deimos.llm.temperature` | no | Sampling temperature. Defaults to `0`. |
-| `artemis.deimos.llm.timeout-seconds` | no | Per-request timeout, greater than `0`. Defaults to `90`. |
-| `artemis.deimos.llm.max-retries` | no | Transport retries performed by the OpenAI SDK, at least `0`. Defaults to `3`. |
+| `artemis.deimos.llm-preset` | yes | The LLM preset that classifies participations. Endpoint, model, temperature and timeout are set on the preset, see [LLM configuration](./llm-configuration). |
 | `artemis.deimos.executor.*` | no | Sizing of the dedicated batch executor. |
 | `artemis.deimos.payload.max-file-input-bytes` | no | Files larger than this are not diffed at all. Defaults to `262144` (256 KiB). |
 | `artemis.deimos.payload.max-file-diff-bytes` | no | Larger per-file diffs are truncated. Must not exceed `max-payload-bytes`. Defaults to `32768` (32 KiB). |
@@ -118,14 +117,19 @@ artemis:
 | `artemis.deimos.batch.max-window-days` | no | Longest analysis window an instructor may select, in days. Defaults to `31`. |
 
 Every byte limit must be at least `1024`, and both batch limits must be greater than `0`. If the module is enabled
-with a missing or invalid `base-url` or `model`, or with any of the other values outside these bounds, Artemis
-refuses to start and reports which property is wrong. This is deliberate: a misconfigured endpoint would mean student
-code being sent somewhere you did not intend, and a misconfigured limit would let a payload or a run grow unbounded.
+without a valid preset, or with any of these limits outside its bounds, Artemis refuses to start and reports which key
+is wrong. This is deliberate: a misconfigured endpoint would mean student code being sent somewhere you did not intend,
+and a misconfigured limit would let a payload or a run grow unbounded.
 
-The API key is not validated at startup: an empty key is a valid choice for an endpoint without authentication. If
-the key is missing or wrong, the endpoint answers the first analysis request with HTTP `401` or `403`. Deimos then
-stops the run at that participation instead of sending one doomed request per participation, and the instructor's
-email reports the participations as *Analysis model rejected the API key (missing or wrong)*.
+Whether the provider accepts the API key of the preset's endpoint is not checked at startup: an empty key is a valid
+choice for an OpenAI-compatible endpoint without authentication. If the key is missing or wrong, the endpoint answers the first analysis request with HTTP
+`401` or `403`. Deimos then stops the run at that participation instead of sending one doomed request per
+participation, and the instructor's email reports the participations as *Analysis model rejected the API key (missing
+or wrong)*.
+
+Earlier releases configured Deimos under `artemis.deimos.llm` with a separate `completions-path`. The OpenAI SDK
+appends `/chat/completions` to the endpoint's `base-url`, so an endpoint that served `/api/chat/completions` now has
+the `base-url` `https://<host>/api`.
 
 ### Runtime feature toggle
 
@@ -165,8 +169,8 @@ opposite failure and just as misleading if nobody says so.
 
 Practical guidance:
 
-- **Keep `temperature` at `0`.** Running the same configuration at the model's default temperature measurably degraded
-  classification quality in the benchmark. The shipped default is `0`; there is no good reason to raise it.
+- **Set `temperature: 0` on the Deimos preset.** Running the same configuration at the model's default temperature
+  measurably degraded classification quality in the benchmark. Artemis ships no default, so the preset must say it.
 - **Prefer a model in the shape of the first row**: an instruction-following mid-size model at deterministic settings.
 - **Re-check after a model upgrade.** These numbers describe specific model versions. Swapping the model out silently
   changes the behaviour instructors were told to expect.
@@ -232,11 +236,11 @@ from what they report to what you should check:
 | --- | --- |
 | *Nothing to analyze* | Nothing. This is a normal outcome for participations without observable changes. |
 | *Repository could not be read* | Server log for the run id. Points at version control or repository access, not at the model. |
-| *Analysis model did not respond in time* | `timeout-seconds` versus what your endpoint actually needs for a full payload (`max-payload-bytes`, 128 KiB by default), and the endpoint's own load. |
+| *Analysis model did not respond in time* | The preset's `timeout` versus what your endpoint actually needs for a full payload (`max-payload-bytes`, 128 KiB by default), and the endpoint's own load. |
 | *Analysis model rate limit reached* | Endpoint concurrency limits against `max-pool-size`. This is usually an executor sizing problem, not a model problem. |
-| *Analysis model rejected the API key (missing or wrong)* | `api-key`. The endpoint answered `401` or `403`, so the key is missing, wrong, or not authorised for the configured model. The run stopped at the first such answer. |
+| *Analysis model rejected the API key (missing or wrong)* | The `api-key` of the preset's endpoint. The endpoint answered `401` or `403`, so the key is missing, wrong, or not authorised for the configured model. The run stopped at the first such answer. |
 | *Analysis model returned an unusable answer* | The model itself. A model that will not emit a plain JSON object with `malicious` and `rationale` is the wrong model for this feature. |
-| *Analysis model could not be reached* | Endpoint address and network path. Also check `completions-path`. |
+| *Analysis model could not be reached* | Endpoint address and network path. Also check that the endpoint `base-url` ends where the SDK can append `/chat/completions`. |
 | *Other failure* | Server log. The instructor's email carries the technical reason per participation. |
 
 Ask the instructor for the technical reason lines in the *Failure details* block; they carry the exception type and

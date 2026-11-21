@@ -243,7 +243,7 @@ describe('CourseLectureDetailsComponent', () => {
         await fixture.whenStable();
 
         const downloadButton = debugElement.query(By.css('#downloadButton')).nativeElement as HTMLElement;
-        expect(downloadButton.parentElement!.classList).toContain('gap-4!');
+        expect(downloadButton.parentElement!.classList).toContain('gap-4');
     });
 
     it('should not display download PDF button', async () => {

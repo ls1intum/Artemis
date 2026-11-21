@@ -16,13 +16,14 @@ import org.springframework.ai.openai.OpenAiChatOptions;
  * @param stagedGeneration        whether the staged specification/tests/statement workflow applies
  * @param stagedContext           {@code CONTINUOUS} or {@code FRESH}; validated at startup
  * @param contextWindowTokens     the model's usable context window
+ * @param llmPreset               the LLM preset of the run, resolved by core and sent to the worker by name
  * @param chatOptions             prebuilt runtime provider options, or {@code null} when the profile changes neither model nor decoding parameters and the configured
  *                                    {@code ChatModel}'s own options apply unchanged
  * @param engineDefaults          whether every engine-affecting value equals the deployment default, so the run can reuse the shared singletons rather than deriving its own
  * @param providerOptionsOverride whether {@link #chatOptions()} was authored by this profile rather than inherited, which the checkpoint provider contract must reflect
  */
 public record HyperionGenerationSettings(String name, @Nullable String label, int maxTurns, Duration maxJobDuration, long maxTokensPerJob, boolean stagedGeneration,
-        String stagedContext, int contextWindowTokens, @Nullable OpenAiChatOptions chatOptions, boolean engineDefaults, boolean providerOptionsOverride) {
+        String stagedContext, int contextWindowTokens, String llmPreset, @Nullable OpenAiChatOptions chatOptions, boolean engineDefaults, boolean providerOptionsOverride) {
 
     public HyperionGenerationSettings {
         if (maxTurns <= 0) {
@@ -55,7 +56,7 @@ public record HyperionGenerationSettings(String name, @Nullable String label, in
         // Only the wall-clock bound reaches the engine (it sizes the staged authoring budget); a narrower token bound is enforced by the run's usage sink, which the shared
         // singletons already read per run.
         boolean stillEngineDefaults = engineDefaults && duration.equals(maxJobDuration);
-        return new HyperionGenerationSettings(name, label, maxTurns, duration, tokens, stagedGeneration, stagedContext, contextWindowTokens, chatOptions, stillEngineDefaults,
-                providerOptionsOverride);
+        return new HyperionGenerationSettings(name, label, maxTurns, duration, tokens, stagedGeneration, stagedContext, contextWindowTokens, llmPreset, chatOptions,
+                stillEngineDefaults, providerOptionsOverride);
     }
 }

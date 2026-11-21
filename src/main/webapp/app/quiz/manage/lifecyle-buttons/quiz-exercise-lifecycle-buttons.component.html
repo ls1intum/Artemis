@@ -40,9 +40,9 @@
                         />
                     }
                     @if (batch.ended) {
-                        <tumaet-ui-tag class="ms-auto" severity="secondary" [value]="'artemisApp.exerciseManagement.batch.done' | artemisTranslate" />
+                        <tumaet-ui-tag class="ms-auto!" severity="secondary" [value]="'artemisApp.exerciseManagement.batch.done' | artemisTranslate" />
                     } @else if (batch.started) {
-                        <tumaet-ui-tag class="ms-auto" severity="success" [value]="'artemisApp.exerciseManagement.batch.running' | artemisTranslate" />
+                        <tumaet-ui-tag class="ms-auto!" severity="success" [value]="'artemisApp.exerciseManagement.batch.running' | artemisTranslate" />
                     } @else {
                         <button
                             id="instructor-quiz-start-{{ quizExercise().id }}-{{ batch.id }}"

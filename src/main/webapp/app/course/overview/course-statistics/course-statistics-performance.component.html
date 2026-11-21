@@ -1,10 +1,10 @@
-<section class="h-full overflow-hidden rounded-xl border border-(--tumaet-ui-border-color) bg-(--tumaet-ui-content-background) p-5!" aria-labelledby="statistics-performance-title">
-    <div class="flex flex-wrap items-start justify-between gap-3!">
+<section class="h-full overflow-hidden rounded-xl border border-(--border-color) bg-(--tumaet-ui-content-background) p-5" aria-labelledby="statistics-performance-title">
+    <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
-            <h2 id="statistics-performance-title" class="m-0! text-lg! font-semibold!" jhiTranslate="artemisApp.exercise-scores-chart.title"></h2>
-            <p class="mt-1! text-sm text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.performanceScope"></p>
+            <h2 id="statistics-performance-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.exercise-scores-chart.title"></h2>
+            <p class="mt-1 text-sm text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.performanceScope"></p>
         </div>
-        <label class="flex! items-center gap-2! text-sm font-normal!"
+        <label class="flex items-center gap-2 text-sm font-normal"
             ><tumaet-ui-checkbox
                 [checked]="showComparison()"
                 (checkedChange)="showComparison.set($event)"
@@ -14,7 +14,7 @@
         ></label>
     </div>
     @if (loading()) {
-        <p class="py-12! text-center text-muted-color" role="status" jhiTranslate="artemisApp.courseOverview.statistics.redesign.loading"></p>
+        <p class="py-12 text-center text-muted-color" role="status" jhiTranslate="artemisApp.courseOverview.statistics.redesign.loading"></p>
     } @else if (failed()) {
         <tumaet-ui-message severity="warn"
             ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.comparisonError"></span
@@ -36,13 +36,13 @@
         </div>
         @if (showComparison()) {
             <p
-                class="mt-3! mb-0! text-xs text-muted-color"
+                class="mt-3 mb-0 text-xs text-muted-color"
                 [jhiTranslate]="
                     hasComparison() ? 'artemisApp.courseOverview.statistics.redesign.comparisonExplanation' : 'artemisApp.courseOverview.statistics.redesign.comparisonUnavailable'
                 "
             ></p>
         }
     } @else {
-        <p class="py-12! text-center text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.noGradedResults"></p>
+        <p class="py-12 text-center text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.redesign.noGradedResults"></p>
     }
 </section>

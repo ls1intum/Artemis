@@ -33,8 +33,7 @@ public class DeimosConfigurationFailureAnalyzer extends AbstractFailureAnalyzer<
     private String buildAction(DeimosConfigurationException cause) {
         String propertyList = formatPropertyList(cause);
         return """
-                Deimos sends student source code to the configured LLM endpoint, so it has no default endpoint.
-                You must point it at an endpoint you operate and are permitted to send student data to.
+                Deimos bounds the evidence it sends to its LLM preset and the size of a batch run, and every limit has to lie within its documented bounds.
 
                 Update your application configuration (e.g., environment variables, application-prod.yml or application-local.yml):
 

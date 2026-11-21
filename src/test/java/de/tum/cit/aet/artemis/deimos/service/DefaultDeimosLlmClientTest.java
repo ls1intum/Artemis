@@ -25,6 +25,7 @@ import com.openai.errors.PermissionDeniedException;
 import com.openai.errors.RateLimitException;
 import com.openai.errors.UnauthorizedException;
 
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosFailureType;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmRequest;
 import de.tum.cit.aet.artemis.deimos.exception.DeimosLlmException;
@@ -37,6 +38,8 @@ import de.tum.cit.aet.artemis.deimos.exception.DeimosLlmException;
  * and, just as importantly, what is still rejected.
  */
 class DefaultDeimosLlmClientTest {
+
+    private static final String PRESET = "deimos";
 
     @Test
     void shouldParseBareJson() {
@@ -325,7 +328,7 @@ class DefaultDeimosLlmClientTest {
 
     @Test
     void shouldReturnTheVerdictOfASuccessfulCall() {
-        var client = new DefaultDeimosLlmClient(chatClientAnswering("{\"malicious\": true, \"rationale\": \"probes the grader\"}"));
+        var client = clientOver(chatClientAnswering("{\"malicious\": true, \"rationale\": \"probes the grader\"}"));
 
         var verdict = client.analyze(new DeimosLlmRequest(7L, "system", "user"));
 
@@ -337,7 +340,7 @@ class DefaultDeimosLlmClientTest {
     @NullAndEmptySource
     @ValueSource(strings = { "   ", "\n\t" })
     void shouldReportAnEmptyAnswerAsUnparseable(String content) {
-        var client = new DefaultDeimosLlmClient(chatClientAnswering(content));
+        var client = clientOver(chatClientAnswering(content));
 
         Throwable thrown = catchThrowable(() -> client.analyze(new DeimosLlmRequest(7L, "system", "user")));
 
@@ -347,7 +350,7 @@ class DefaultDeimosLlmClientTest {
 
     @Test
     void shouldReportAnAnswerWithoutVerdictAsUnparseable() {
-        var client = new DefaultDeimosLlmClient(chatClientAnswering("I cannot decide."));
+        var client = clientOver(chatClientAnswering("I cannot decide."));
 
         Throwable thrown = catchThrowable(() -> client.analyze(new DeimosLlmRequest(7L, "system", "user")));
 
@@ -480,6 +483,15 @@ class DefaultDeimosLlmClientTest {
         assertThat(DefaultDeimosLlmClient.parseVerdict(content)).hasValueSatisfying(response -> assertThat(response.rationale()).isEqualTo("fine"));
     }
 
+    /**
+     * The client over the given chat client, which the mocked {@link LlmClientService} hands out for the Deimos preset.
+     */
+    private static DefaultDeimosLlmClient clientOver(ChatClient chatClient) {
+        LlmClientService llmClientService = mock(LlmClientService.class);
+        when(llmClientService.chatClient(PRESET)).thenReturn(chatClient);
+        return new DefaultDeimosLlmClient(llmClientService, PRESET);
+    }
+
     private static ChatClient chatClientAnswering(String content) {
         ChatClient chatClient = mock(ChatClient.class, RETURNS_DEEP_STUBS);
         when(chatClient.prompt().system(anyString()).user(anyString()).call().content()).thenReturn(content);
@@ -489,7 +501,7 @@ class DefaultDeimosLlmClientTest {
     private static DeimosLlmException callFailingWith(RuntimeException failure) {
         ChatClient chatClient = mock(ChatClient.class, RETURNS_DEEP_STUBS);
         when(chatClient.prompt().system(anyString()).user(anyString()).call().content()).thenThrow(failure);
-        var client = new DefaultDeimosLlmClient(chatClient);
+        var client = clientOver(chatClient);
 
         Throwable thrown = catchThrowable(() -> client.analyze(new DeimosLlmRequest(7L, "system", "user")));
 

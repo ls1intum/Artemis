@@ -6,63 +6,33 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import com.sun.net.httpserver.HttpServer;
 
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Api;
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Endpoint;
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.EndpointType;
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Preset;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosFailureType;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmRequest;
-import de.tum.cit.aet.artemis.deimos.exception.DeimosConfigurationException;
 import de.tum.cit.aet.artemis.deimos.exception.DeimosLlmException;
 import de.tum.cit.aet.artemis.deimos.service.DefaultDeimosLlmClient;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.observation.ObservationRegistry;
 
 class DeimosLlmConfigurationTest {
 
-    @Test
-    void mapsBaseUrlAndAbsoluteCompletionsPathToThePrefix() {
-        assertThat(DeimosLlmConfiguration.toOpenAiCompatibleBaseUrl("https://llm.example.com", "/api/chat/completions")).isEqualTo("https://llm.example.com/api");
-    }
-
-    @Test
-    void preservesAnExistingBasePathWhenMappingTheCompletionsPath() {
-        // Plain concatenation rather than URI.resolve, so a base URL that already carries a path keeps it.
-        assertThat(DeimosLlmConfiguration.toOpenAiCompatibleBaseUrl("https://llm.example.com/v1", "/api/chat/completions")).isEqualTo("https://llm.example.com/v1/api");
-    }
-
-    @Test
-    void stripsATrailingSlashFromTheBaseUrlBeforeConcatenating() {
-        assertThat(DeimosLlmConfiguration.toOpenAiCompatibleBaseUrl("https://llm.example.com/", "/chat/completions")).isEqualTo("https://llm.example.com");
-    }
-
-    @Test
-    void rejectsARelativeCompletionsPathThatWouldCorruptTheHost() {
-        // Without the absolute-path check this produced "https://llm.example.comapi", silently targeting a wrong host.
-        assertThatExceptionOfType(DeimosConfigurationException.class)
-                .isThrownBy(() -> DeimosLlmConfiguration.toOpenAiCompatibleBaseUrl("https://llm.example.com", "api/chat/completions"));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "/api/chat/completions", "/chat/completions", "/deep/nested/api/chat/completions" })
-    void acceptsAbsolutePathsEndingWithTheChatCompletionsSuffix(String completionsPath) {
-        assertThat(DeimosLlmConfiguration.isValidCompletionsPath(completionsPath)).isTrue();
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "api/chat/completions", "/api/completions", "/api/chat/completions/", "http://x/api/chat/completions", "//host/api/chat/completions",
-            "/api/chat/completions?x=1", "/api/chat/completions#frag", "", "/a b/chat/completions" })
-    void rejectsRelativeSchemedOrOtherwiseUnmappablePaths(String completionsPath) {
-        assertThat(DeimosLlmConfiguration.isValidCompletionsPath(completionsPath)).isFalse();
-    }
-
-    @Test
-    void rejectsANullCompletionsPath() {
-        assertThat(DeimosLlmConfiguration.isValidCompletionsPath(null)).isFalse();
-    }
+    private static final String PRESET = "deimos";
 
     @Test
     void reportsAnEmptyApiKeyRejectedByTheEndpointAsRejectedCredentials() throws Exception {
@@ -80,8 +50,8 @@ class DeimosLlmConfigurationTest {
     }
 
     /**
-     * Sends one analysis request through the real Deimos chat model to a loopback endpoint that answers every request
-     * with 401, and asserts that the failure is reported as rejected credentials.
+     * Sends one analysis request through the real chat model of the Deimos preset to a loopback endpoint that answers
+     * every request with 401, and asserts that the failure is reported as rejected credentials.
      *
      * @param apiKey the configured API key
      * @return the Authorization header of every request the endpoint received, {@code <none>} when absent
@@ -101,10 +71,12 @@ class DeimosLlmConfigurationTest {
         });
         server.start();
         try {
-            var configuration = new DeimosLlmConfiguration();
             String baseUrl = "http://" + server.getAddress().getHostString() + ":" + server.getAddress().getPort();
-            var chatModel = configuration.deimosChatModel(baseUrl, apiKey, "/api/chat/completions", "test-model", 0, 10, 0);
-            var client = new DefaultDeimosLlmClient(configuration.deimosChatClient(chatModel));
+            var endpoint = new Endpoint(EndpointType.OPENAI, baseUrl, apiKey, Duration.ofSeconds(10), 0, null, null, Map.of(), List.of());
+            var preset = new Preset(PRESET, "test-model", Api.CHAT_COMPLETIONS, null, 0.0, null, null, null, null, null, null);
+            var llmClientService = new LlmClientService(new LlmProperties(Map.of(PRESET, endpoint), Map.of(PRESET, preset), null), new JsonMapper(), ObservationRegistry.NOOP,
+                    new SimpleMeterRegistry(), List.of());
+            var client = new DefaultDeimosLlmClient(llmClientService, PRESET);
 
             assertThatExceptionOfType(DeimosLlmException.class).isThrownBy(() -> client.analyze(new DeimosLlmRequest(1L, "system", "user")))
                     .satisfies(exception -> assertThat(exception.getFailureType()).isEqualTo(DeimosFailureType.LLM_AUTHENTICATION_FAILED)).withMessageContaining("HTTP 401")

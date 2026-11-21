@@ -1,6 +1,6 @@
 @let actionColumn = removeActionColumnInfo();
 <tumaet-ui-table-layout [empty]="sortedStudents().length === 0" [emptyTitle]="emptyTitle() ?? 'tumAetUi.table.empty'">
-    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2" [hidden]="!hasToolbar()">
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!" [hidden]="!hasToolbar()">
         <ng-content select="[studentsTableToolbar]" />
     </div>
     <table tumAetUiTable size="small" [sortField]="sortField()" [sortOrder]="sortOrder()" (sortChange)="onSort($event)">
@@ -13,7 +13,7 @@
                     <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationNumber"></span>
                 </th>
                 @if (actionColumn) {
-                    <th scope="col" class="action-column text-end" [jhiTranslate]="actionColumn.headerStringKey"></th>
+                    <th scope="col" class="action-column text-right!" [jhiTranslate]="actionColumn.headerStringKey"></th>
                 }
             </tr>
         </thead>
@@ -31,7 +31,7 @@
                     <td>{{ student.email }}</td>
                     <td>{{ student.registrationNumber }}</td>
                     @if (actionColumn) {
-                        <td class="action-column text-end">
+                        <td class="action-column text-right">
                             <button
                                 type="button"
                                 tumAetUiButton

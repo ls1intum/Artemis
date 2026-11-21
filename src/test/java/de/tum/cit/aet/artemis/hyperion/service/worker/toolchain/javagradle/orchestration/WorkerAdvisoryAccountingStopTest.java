@@ -16,8 +16,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
@@ -53,8 +52,8 @@ class WorkerAdvisoryAccountingStopTest {
     }
 
     @ParameterizedTest
-    @CsvSource({ "MISSING_USAGE, true", "MISSING_USAGE, false", "INDETERMINATE, true", "INDETERMINATE, false", "DELIVERY, true", "DELIVERY, false" })
-    void fatalAccountingFailurePropagatesAndStopsWitness(Failure failure, boolean retriesDisabled) {
+    @EnumSource(Failure.class)
+    void fatalAccountingFailurePropagatesAndStopsWitness(Failure failure) {
         ChatModel model = model();
         var firstCall = when(model.call(any(Prompt.class)));
         switch (failure) {
@@ -65,7 +64,7 @@ class WorkerAdvisoryAccountingStopTest {
             case DELIVERY -> firstCall.thenReturn(accounted("{\"mutants\":[]}"), accounted("{\"witnesses\":[]}"));
         }
         var events = new ArrayList<ProviderUsageUpdate>();
-        var recorder = new WorkerUsageRecorder(1_000, 1, retriesDisabled, event -> {
+        var recorder = new WorkerUsageRecorder(1_000, 1, event -> {
             events.add(event);
             if (failure == Failure.DELIVERY && event.kind() == Kind.RESPONSE) {
                 throw new IllegalStateException("usage delivery failed");
@@ -91,12 +90,11 @@ class WorkerAdvisoryAccountingStopTest {
         assertThat(events).anyMatch(event -> event.kind() == Kind.UNCERTAIN || event.kind() == Kind.RESPONSE);
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    void knownRejectedMutantRequestPropagatesWithoutAccountingStop(boolean retriesDisabled) {
+    @Test
+    void knownRejectedMutantRequestPropagatesWithoutAccountingStop() {
         ChatModel model = model();
         when(model.call(any(Prompt.class))).thenThrow(BadRequestException.builder().headers(Headers.builder().build()).build()).thenReturn(accounted("{\"witnesses\":[]}"));
-        var recorder = new WorkerUsageRecorder(1_000, 1, retriesDisabled, ignored -> {
+        var recorder = new WorkerUsageRecorder(1_000, 1, ignored -> {
         });
         var stop = JavaGradleGenerationAdapterService.stopAuthoring(() -> false, recorder, Instant.MAX);
         var critic = critic(model);
@@ -108,31 +106,13 @@ class WorkerAdvisoryAccountingStopTest {
 
         verify(model, times(2)).call(any(Prompt.class));
         assertThat(recorder.snapshot().modelCalls()).isEqualTo(1);
-        assertThat(recorder.accountingState()).isEqualTo(retriesDisabled ? AccountingState.COMPLETE : AccountingState.INCOMPLETE);
-        assertThat(stop.getAsBoolean()).isFalse();
-    }
-
-    @Test
-    void retryEnabledValidMutantAndWitnessResponsesRemainAllowed() {
-        ChatModel model = model();
-        when(model.call(any(Prompt.class))).thenReturn(accounted("{\"mutants\":[]}"), accounted("{\"witnesses\":[]}"));
-        var recorder = new WorkerUsageRecorder(1_000, 1, false, ignored -> {
-        });
-        var stop = JavaGradleGenerationAdapterService.stopAuthoring(() -> false, recorder, Instant.MAX);
-        var critic = critic(model);
-
-        assertThat(critic.authorSemanticMutants(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(), recorder, stop)).isEmpty();
-        assertThat(critic.authorContractWitnesses(SPEC, "class SchedulerTest {}", SOURCE, recorder, stop)).isEmpty();
-
-        verify(model, times(2)).call(any(Prompt.class));
-        assertThat(recorder.snapshot().modelCalls()).isEqualTo(2);
-        assertThat(recorder.accountingState()).isEqualTo(AccountingState.INCOMPLETE);
+        assertThat(recorder.accountingState()).isEqualTo(AccountingState.COMPLETE);
         assertThat(stop.getAsBoolean()).isFalse();
     }
 
     @Test
     void adapterGuardStillHonorsCancellationAndDeadline() {
-        var recorder = new WorkerUsageRecorder(1_000, 1, true, ignored -> {
+        var recorder = new WorkerUsageRecorder(1_000, 1, ignored -> {
         });
 
         assertThat(JavaGradleGenerationAdapterService.stopAuthoring(() -> false, recorder, Instant.MAX).getAsBoolean()).isFalse();
@@ -153,7 +133,7 @@ class WorkerAdvisoryAccountingStopTest {
     }
 
     private static ChatResponse accounted(String text) {
-        var metadata = ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("reviewer", "request", 10, 2, 0L, null)).getMetadata();
+        var metadata = ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("reviewer", "request", 10, 2, 0L, null), null).getMetadata();
         return new ChatResponse(List.of(new Generation(new AssistantMessage(text))), metadata);
     }
 }

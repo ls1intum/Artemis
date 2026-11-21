@@ -97,7 +97,6 @@ class ConfigurationValidatorBoundaryTest {
         if (!environment.containsProperty(Constants.DEIMOS_ENABLED_PROPERTY_NAME)) {
             environment.setProperty(Constants.DEIMOS_ENABLED_PROPERTY_NAME, "false");
         }
-        return new ConfigurationValidator(environment, requirePasskey, username, password, false, null, 8080, 50051, null, null, null, null, false, serverUrl, "", "",
-                "/api/chat/completions", 90, 3);
+        return new ConfigurationValidator(environment, requirePasskey, username, password, false, null, 8080, 50051, null, null, false, serverUrl);
     }
 }

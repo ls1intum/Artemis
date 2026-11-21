@@ -715,7 +715,7 @@ describe('TextEditorComponent', () => {
             const label: HTMLElement = fixture.nativeElement.querySelector('[data-testid="assessed-submission-label"]');
             expect(label).toBeTruthy();
             expect(label.classList).toContain('text-base');
-            expect(label.classList).toContain('font-semibold!');
+            expect(label.classList).toContain('font-semibold');
         });
     });
 

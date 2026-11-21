@@ -1,4 +1,4 @@
-<div class="apollon-diagram-list__header flex shrink-0 items-center gap-4! px-6! pt-6! pb-4!">
+<div class="apollon-diagram-list__header flex shrink-0 items-center gap-4 px-6 pt-6 pb-4">
     <h4 class="apollon-diagram-list__title mb-0 grow" jhiTranslate="artemisApp.apollonDiagram.home.title"></h4>
     <button
         type="button"
@@ -14,9 +14,9 @@
     </button>
 </div>
 
-<div class="apollon-diagram-list__body flex min-h-0 grow flex-col gap-4! px-6!">
+<div class="apollon-diagram-list__body flex min-h-0 grow flex-col gap-4 px-6">
     <tumaet-ui-table-layout fill [loading]="isLoading()" [empty]="apollonDiagrams().length === 0 && !isLoading()" emptyTitle="artemisApp.apollonDiagram.home.empty">
-        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
             <button
                 [attr.aria-label]="'artemisApp.apollonDiagram.home.createLabel' | artemisTranslate"
                 type="button"
@@ -96,7 +96,7 @@
     </tumaet-ui-table-layout>
 </div>
 
-<div class="apollon-diagram-list__footer flex shrink-0 items-center justify-end gap-2 px-6! pt-4! pb-6!">
+<div class="apollon-diagram-list__footer flex shrink-0 items-center justify-end gap-2 px-6 pt-4 pb-6">
     <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="handleCloseDiagramClick()">
         <span jhiTranslate="entity.action.close"></span>
     </button>
