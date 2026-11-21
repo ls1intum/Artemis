@@ -297,25 +297,27 @@ public final class SecurityPolicyRepositoryFiles {
         Map<String, AresTestSources.TypeDeclaration> typesByName = new HashMap<>();
         summaries.forEach(summary -> summary.topLevelTypes().forEach(type -> typesByName.putIfAbsent(type.qualifiedName(), type)));
         for (AresTestSources.TypeDeclaration testClass : testClasses) {
-            if (testClass.policies().size() != 1) {
-                reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(),
-                        testClass.policies().isEmpty() ? SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY
-                                : SecurityFrameworkState.UnsupportedReasonType.UNEVALUABLE_ARGUMENTS));
-            }
-            if (!testClass.registersSandbox()) {
-                reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES));
-            }
-            List<MethodPolicyInEffect> methodPolicies = methodPoliciesInEffect(testClass, testClassesByName, typesByName);
-            boolean switchedOff = testClass.policies().size() == 1 && testClass.policies().getFirst().isEvaluable() && !testClass.policies().getFirst().isActivated();
-            if (switchedOff && methodPolicies.stream().anyMatch(policy -> policy.annotation().isEvaluable() && policy.annotation().isActivated())) {
-                reasons.add(
-                        new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS));
-            }
-            else if (methodPolicies.stream().anyMatch(MethodPolicyInEffect::inherited)) {
-                reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.INHERITED_METHOD_POLICY));
-            }
+            addReasons(reasons, testClass, methodPoliciesInEffect(testClass, testClassesByName, typesByName));
         }
         return reasons;
+    }
+
+    private static void addReasons(List<SecurityFrameworkState.UnsupportedReason> reasons, AresTestSources.TypeDeclaration testClass, List<MethodPolicyInEffect> methodPolicies) {
+        if (testClass.policies().size() != 1) {
+            reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(),
+                    testClass.policies().isEmpty() ? SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_POLICY
+                            : SecurityFrameworkState.UnsupportedReasonType.UNEVALUABLE_ARGUMENTS));
+        }
+        if (!testClass.registersSandbox()) {
+            reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES));
+        }
+        boolean switchedOff = testClass.policies().size() == 1 && testClass.policies().getFirst().isEvaluable() && !testClass.policies().getFirst().isActivated();
+        if (switchedOff && methodPolicies.stream().anyMatch(policy -> policy.annotation().isEvaluable() && policy.annotation().isActivated())) {
+            reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS));
+        }
+        else if (methodPolicies.stream().anyMatch(MethodPolicyInEffect::inherited)) {
+            reasons.add(new SecurityFrameworkState.UnsupportedReason(testClass.qualifiedName(), SecurityFrameworkState.UnsupportedReasonType.INHERITED_METHOD_POLICY));
+        }
     }
 
     /**
