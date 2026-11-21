@@ -753,21 +753,10 @@ public class SecurityFrameworkService {
             if (changed) {
                 String allTrailers = "\n\n" + trailers + ACTION_TRAILER + action + (process ? "\n" + COMMIT_TRAILER : "");
                 String commitHash = gitService.commitStagedChanges(repository, commitMessage + allTrailers, user);
-                if (process && localVCPushProcessingService.isPresent()) {
-                    pendingProcessing().put(pendingProcessingKey(exercise, commitHash), commitHash);
-                }
-                pushWithLease(exercise, repository, commitHash, branch, checkedOutHead);
-                if (process) {
-                    processPushToTestRepository(exercise, testRepositoryUri, branch, commitHash, user);
-                }
+                pushAndProcess(exercise, user, repository, branch, commitHash, checkedOutHead, process);
             }
             else if (process && checkedOutHead != null) {
-                // A retry after the processing of an earlier change failed: the change is already pushed, so resume the processing at the head, which contains it.
-                Optional<String> unprocessed = unprocessedSecurityFrameworkCommit(exercise, repository, checkedOutHead);
-                if (unprocessed.isPresent()) {
-                    processPushToTestRepository(exercise, testRepositoryUri, branch, checkedOutHead, user);
-                    pendingProcessing().remove(pendingProcessingKey(exercise, unprocessed.get()));
-                }
+                resumeProcessing(exercise, user, repository, branch, checkedOutHead);
             }
             return readConfig(repository);
         }
@@ -783,6 +772,32 @@ public class SecurityFrameworkService {
             if (temporaryCheckout != null && !FileUtils.deleteQuietly(temporaryCheckout.toFile())) {
                 log.warn("Could not delete the temporary Security Framework checkout {}", temporaryCheckout);
             }
+        }
+    }
+
+    /**
+     * Pushes the commit and, if requested, runs the push processing. A processed change is recorded as pending first, so a retry can tell that its processing
+     * has not completed if the push succeeds but the processing fails.
+     */
+    private void pushAndProcess(ProgrammingExercise exercise, User user, Repository repository, String branch, String commitHash, String checkedOutHead, boolean process)
+            throws GitAPIException, IOException {
+        if (process && localVCPushProcessingService.isPresent()) {
+            pendingProcessing().put(pendingProcessingKey(exercise, commitHash), commitHash);
+        }
+        pushWithLease(exercise, repository, commitHash, branch, checkedOutHead);
+        if (process) {
+            processPushToTestRepository(exercise, testRepositoryUri(exercise), branch, commitHash, user);
+        }
+    }
+
+    /**
+     * A retry after the processing of an earlier change failed: the change is already pushed, so the processing is resumed at the head, which contains it.
+     */
+    private void resumeProcessing(ProgrammingExercise exercise, User user, Repository repository, String branch, String head) throws IOException {
+        Optional<String> unprocessed = unprocessedSecurityFrameworkCommit(exercise, repository, head);
+        if (unprocessed.isPresent()) {
+            processPushToTestRepository(exercise, testRepositoryUri(exercise), branch, head, user);
+            pendingProcessing().remove(pendingProcessingKey(exercise, unprocessed.get()));
         }
     }
 
