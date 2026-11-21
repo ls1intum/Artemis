@@ -133,14 +133,20 @@ final class BuildFileSyntax {
     /** The properties of a POM; group 1 is their content. */
     private static final Pattern MAVEN_PROPERTIES = Pattern.compile("<properties\\s*+>(.*?)</properties\\s*+>", Pattern.DOTALL);
 
+    /** The attributes of an element, e.g. {@code combine.self="override"}, which do not change what it is. */
+    private static final String MAVEN_ATTRIBUTES = "(?:\\s[^<>/]*+)?";
+
     /** A property with a plain value, e.g. {@code <aresAgentArgument>-javaagent:ares-agent.jar</aresAgentArgument>}; group 1 is its name, group 2 its value. */
-    private static final Pattern MAVEN_PROPERTY = Pattern.compile("<([A-Za-z_][\\w.\\-]*+)\\s*+>([^<]*+)</\\1\\s*+>");
+    private static final Pattern MAVEN_PROPERTY = Pattern.compile("<([A-Za-z_][\\w.\\-]*+)" + MAVEN_ATTRIBUTES + ">([^<]*+)</\\1\\s*+>");
+
+    /** An empty element, e.g. the property {@code <aresAgentArgument/>}, which Maven reads as an empty value; group 1 is its name. */
+    private static final Pattern MAVEN_EMPTY_ELEMENT = Pattern.compile("<([A-Za-z_][\\w.\\-]*+)" + MAVEN_ATTRIBUTES + "/>");
 
     /** A reference to a property, e.g. {@code ${aresAgentArgument}} or the late one of Surefire, {@code @{argLine}}; group 1 is the name. */
     private static final Pattern MAVEN_PROPERTY_REFERENCE = Pattern.compile("[$@]\\{([A-Za-z_][\\w.\\-]*+)}");
 
     /** The arguments Surefire passes to the test JVM, in its configuration or as its property; group 1 is their text. */
-    private static final Pattern MAVEN_ARG_LINE = Pattern.compile("<argLine\\s*+>([^<]*+)</argLine\\s*+>");
+    private static final Pattern MAVEN_ARG_LINE = Pattern.compile("<argLine" + MAVEN_ATTRIBUTES + ">([^<]*+)</argLine\\s*+>");
 
     /** How often a property reference is replaced by its value at most, so that properties that refer to each other end. */
     private static final int MAVEN_PROPERTY_DEPTH = 8;
@@ -208,7 +214,9 @@ final class BuildFileSyntax {
      */
     private static Stream<String> surefireJavaAgents(String code) {
         boolean[] profiles = mavenProfiles(code, new boolean[code.length()]);
-        if (MAVEN_ARG_LINE.matcher(code).results().anyMatch(argLine -> profiles[argLine.start()] && inProfileWithActivation(code, argLine))) {
+        Stream<MatchResult> profileArgLines = Stream.concat(MAVEN_ARG_LINE.matcher(code).results(),
+                MAVEN_EMPTY_ELEMENT.matcher(code).results().filter(element -> "argLine".equals(element.group(1))));
+        if (profileArgLines.anyMatch(argLine -> profiles[argLine.start()] && inProfileWithActivation(code, argLine))) {
             return Stream.empty();
         }
         boolean[] surefire = new boolean[code.length()];
@@ -221,9 +229,11 @@ final class BuildFileSyntax {
             if (!profiles[section.start()]) {
                 Arrays.fill(properties, section.start(), section.end(), true);
                 MAVEN_PROPERTY.matcher(section.group(1)).results().forEach(property -> values.put(property.group(1), property.group(2)));
+                MAVEN_EMPTY_ELEMENT.matcher(section.group(1)).results().forEach(property -> values.put(property.group(1), ""));
             }
             else if (inProfileWithActivation(code, section)) {
-                MAVEN_PROPERTY.matcher(section.group(1)).results().forEach(property -> replaceable.add(property.group(1)));
+                Stream.concat(MAVEN_PROPERTY.matcher(section.group(1)).results(), MAVEN_EMPTY_ELEMENT.matcher(section.group(1)).results())
+                        .forEach(property -> replaceable.add(property.group(1)));
             }
         });
         List<MatchResult> argLines = MAVEN_ARG_LINE.matcher(code).results().filter(argLine -> !profiles[argLine.start()]).toList();

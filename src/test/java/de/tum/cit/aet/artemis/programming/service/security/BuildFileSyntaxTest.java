@@ -142,6 +142,8 @@ class BuildFileSyntaxTest {
         // A profile the build does not name changes nothing, but one that can apply on its own may replace the argLine of the POM.
         assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", optIn)))).isTrue();
         assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault)))).isFalse();
+        // An empty argLine of such a profile replaces the one of the POM as well.
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault.replace(argLine, "<argLine/>"))))).isFalse();
     }
 
     @Test
@@ -159,6 +161,11 @@ class BuildFileSyntaxTest {
         assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault)))).isFalse();
         // A property that the argLine does not read changes nothing.
         assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault.replace("aresAgent>", "otherAgent>"))))).isTrue();
+        // Maven reads an empty element as an empty value, which replaces the agent as well, also with attributes like combine.self.
+        String emptied = byDefault.replace("<aresAgent>-javaagent:other-agent.jar</aresAgent>", "<aresAgent/>");
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", emptied)))).isFalse();
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault.replace("<aresAgent>", "<aresAgent combine.self=\"override\">"))))).isFalse();
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("<aresAgent>" + agent + "</aresAgent>", "<aresAgent/>")))).isFalse();
     }
 
     @Test
