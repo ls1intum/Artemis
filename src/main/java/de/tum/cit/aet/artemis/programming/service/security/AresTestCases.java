@@ -204,8 +204,21 @@ final class AresTestCases {
     static Map<Integer, TestSignature> testSignatures(String masked) {
         Map<Integer, TestSignature> signatures = new HashMap<>();
         Map<String, String> imported = importedTypes(masked);
-        // The type variables of a type the file declares are in scope in its body only, e.g. not in the methods of the class that declares a generic member
-        // type; a type argument elsewhere, e.g. of a field, declares none.
+        List<TypeVariableScope> typeVariableScopes = typeVariableScopes(masked);
+        for (MatchResult annotation : testAnnotations(masked)) {
+            MatchResult method = methodAfter(masked, annotation.end());
+            if (method != null && !signatures.containsKey(method.start(1))) {
+                signatures.put(method.start(1), testSignature(masked, annotation, method, imported, typeVariableScopes));
+            }
+        }
+        return signatures;
+    }
+
+    /**
+     * The type variables of a type the file declares are in scope in its body only, e.g. not in the methods of the class that declares a generic member type;
+     * a type argument elsewhere, e.g. of a field, declares none.
+     */
+    private static List<TypeVariableScope> typeVariableScopes(String masked) {
         List<TypeVariableScope> typeVariableScopes = new ArrayList<>();
         Matcher type = AresPolicyAnnotations.TYPE_DECLARATION.matcher(masked);
         while (type.find()) {
@@ -216,31 +229,34 @@ final class AresTestCases {
                 typeVariableScopes.add(new TypeVariableScope(body, bodyEnd < 0 ? masked.length() : bodyEnd, names));
             }
         }
-        for (MatchResult annotation : testAnnotations(masked)) {
-            MatchResult method = methodAfter(masked, annotation.end());
-            if (method != null && !signatures.containsKey(method.start(1))) {
-                int close = AresPolicyAnnotations.matchingParenthesis(masked, method.end() - 1);
-                String parameters = masked.substring(method.end(), close < 0 ? masked.length() : close);
-                // The modifiers precede the name, also before the annotations; the previous member ends with a semicolon or a brace outside them.
-                int memberStart = memberStart(masked, annotation.start());
-                boolean visible = VISIBLE_IN_OTHER_PACKAGES.matcher(masked.substring(memberStart, method.start(1))).find();
-                int declaration = method.start(1);
-                // The type parameters of the method itself precede its return type.
-                Set<String> typeVariables = typeVariables(masked.substring(memberStart, declaration));
-                typeVariableScopes.stream().filter(scope -> scope.bodyStart() < declaration && declaration < scope.bodyEnd()).forEach(scope -> typeVariables.addAll(scope.names()));
-                Set<String> importedNames = new HashSet<>();
-                UnaryOperator<String> resolve = simpleName -> {
-                    String resolved = importedType(masked, simpleName, declaration, imported, typeVariables);
-                    if (resolved != null) {
-                        importedNames.add(simpleName);
-                    }
-                    return resolved;
-                };
-                String text = method.group(1) + "(" + parameterTypes(parameters, resolve) + ")";
-                signatures.put(method.start(1), new TestSignature(method.group(1), text, visible, Set.copyOf(importedNames)));
+        return typeVariableScopes;
+    }
+
+    /**
+     * @param annotation the test annotation of the method
+     * @param method     the name of the method and its opening parenthesis, see {@link #methodAfter(String, int)}
+     */
+    private static TestSignature testSignature(String masked, MatchResult annotation, MatchResult method, Map<String, String> imported,
+            List<TypeVariableScope> typeVariableScopes) {
+        int close = AresPolicyAnnotations.matchingParenthesis(masked, method.end() - 1);
+        String parameters = masked.substring(method.end(), close < 0 ? masked.length() : close);
+        // The modifiers precede the name, also before the annotations; the previous member ends with a semicolon or a brace outside them.
+        int memberStart = memberStart(masked, annotation.start());
+        boolean visible = VISIBLE_IN_OTHER_PACKAGES.matcher(masked.substring(memberStart, method.start(1))).find();
+        int declaration = method.start(1);
+        // The type parameters of the method itself precede its return type.
+        Set<String> typeVariables = typeVariables(masked.substring(memberStart, declaration));
+        typeVariableScopes.stream().filter(scope -> scope.bodyStart() < declaration && declaration < scope.bodyEnd()).forEach(scope -> typeVariables.addAll(scope.names()));
+        Set<String> importedNames = new HashSet<>();
+        UnaryOperator<String> resolve = simpleName -> {
+            String resolved = importedType(masked, simpleName, declaration, imported, typeVariables);
+            if (resolved != null) {
+                importedNames.add(simpleName);
             }
-        }
-        return signatures;
+            return resolved;
+        };
+        String text = method.group(1) + "(" + parameterTypes(parameters, resolve) + ")";
+        return new TestSignature(method.group(1), text, visible, Set.copyOf(importedNames));
     }
 
     /**
@@ -507,7 +523,7 @@ final class AresTestCases {
         int position = skipArguments(masked, skipWhitespace(masked, offset));
         while (position < masked.length()) {
             char character = masked.charAt(position);
-            if (character == '{' || character == ';' || character == '}' || character == '=') {
+            if (endsTheMember(character)) {
                 return null;
             }
             if (character == '@') {
@@ -525,11 +541,23 @@ final class AresTestCases {
             }
             Matcher method = IDENTIFIER_BEFORE_PARENTHESIS.matcher(masked).region(position, masked.length()).useTransparentBounds(true);
             if (method.lookingAt()) {
-                return NOT_METHOD_NAMES.contains(method.group(1)) ? null : method.toMatchResult();
+                return asMethodName(method);
             }
             position++;
         }
         return null;
+    }
+
+    private static boolean endsTheMember(char character) {
+        return character == '{' || character == ';' || character == '}' || character == '=';
+    }
+
+    /**
+     * @param identifier an identifier before a parenthesis
+     * @return its match, unless it is a keyword such as {@code if} or {@code new} that precedes a parenthesis without naming a method
+     */
+    private static @Nullable MatchResult asMethodName(Matcher identifier) {
+        return NOT_METHOD_NAMES.contains(identifier.group(1)) ? null : identifier.toMatchResult();
     }
 
     /**
