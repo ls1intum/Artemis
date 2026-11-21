@@ -155,6 +155,9 @@
                 }
                 @default {}
             }
+            @if (browseProblem(); as browseProblemKey) {
+                <p class="m-0 text-sm text-state-danger" role="alert" data-testid="security-permission-browse-problem">{{ browseProblemKey | artemisTranslate }}</p>
+            }
             @if (submitted() && problem(); as problemKey) {
                 <p id="securityPermissionProblem" class="m-0 text-sm text-state-danger" role="alert" data-testid="security-permission-problem">
                     {{ problemKey | artemisTranslate: { entry: problemEntry() } }}

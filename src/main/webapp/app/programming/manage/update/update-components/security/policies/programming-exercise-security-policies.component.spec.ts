@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, Subject, forkJoin, of, throwError } from 'rxjs';
+import { Observable, Subject, map, of, throwError, zip } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 import { SecurityActivationStatus, SecurityFrameworkConfig, SecurityVersionCompatibilityVerdict } from 'app/programming/shared/entities/security-framework-config.model';
@@ -55,10 +55,11 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
             getTemplateFiles: vi.fn().mockReturnValue(of({ paths: [] })),
             getConfig: vi.fn().mockReturnValue(of(configured())),
         };
-        // The server reads both parts of the pushed state from one commit; the tests stub the parts, and the read fails as a whole if one part fails.
+        // The server reads both parts of the pushed state from one commit and answers them together; the tests stub the parts, and the read fails as a whole
+        // if one part fails.
         const policiesOf = service.getPolicies as unknown as (exerciseId: number) => Observable<SecurityPolicyEditor>;
         const configOf = service.getConfig as unknown as (exerciseId: number) => Observable<SecurityFrameworkConfig>;
-        service.getPoliciesWithConfig = vi.fn((exerciseId: number) => forkJoin({ editor: policiesOf(exerciseId), config: configOf(exerciseId) }));
+        service.getPoliciesWithConfig = vi.fn((exerciseId: number) => zip(policiesOf(exerciseId), configOf(exerciseId)).pipe(map(([editor, config]) => ({ editor, config }))));
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
@@ -237,6 +238,32 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'committed', hash: 'bbbbbbb' }));
     });
 
+    it('reads the saved policies again instead of reporting a failed save when only reading them back after the commit failed', () => {
+        create(configured(), false);
+        const pending: boolean[] = [];
+        comp.committingChange.subscribe((committing) => pending.push(committing));
+        const configs: SecurityFrameworkConfig[] = [];
+        comp.configChange.subscribe((config) => configs.push(config));
+        const policy = comp.policies()[0];
+        const granted = withRows(policy.working!, 'packages', [{ packageName: 'org.apache.commons' }]);
+        comp['onPolicyChange']({ ...policy, working: granted });
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'error.securityPolicySavedButNotRead' } })));
+        service.getPolicies.mockReturnValue(of(editor('b'.repeat(40), granted)));
+
+        comp['commit']('Grant commons');
+
+        expect(comp.banner()).toEqual({ kind: 'info', text: 'artemisApp.programmingExercise.security.advanced.banner.savedButNotRead' });
+        expect(pending).toEqual([true, false]);
+        expect(configs).toEqual([configured()]);
+        expect(comp.editor()?.baseCommitHash).toBe('b'.repeat(40));
+        expect(comp.totalChanges()).toBe(0);
+        // The saved change is the committed state now, so Discard keeps it and nothing offers to write it again.
+        comp['discard'](false);
+        expect(comp.policies()[0].working?.packages).toEqual([{ packageName: 'org.apache.commons' }]);
+        comp['retryCommit']();
+        expect(service.commitPolicies).toHaveBeenCalledOnce();
+    });
+
     it('keeps editing and switching the sandbox paused until the policies and the config of a pushed but unprocessed commit are read', () => {
         create(configured(), false);
         const pending: boolean[] = [];
@@ -308,12 +335,23 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.loadFailed()).toBe(true);
         expect(comp.editingDisabled()).toBe(true);
         expect(comp.banner()?.kind).toBe('processingFailed');
+        // Neither a version nor a scanning commit is based on the outdated policies: the read of the pushed ones would replace the version, and the
+        // scanning commit would rewrite the outdated policies.
+        comp['onVersionChange']('2.3.0');
+        expect(comp.stagedVersion()).toBeUndefined();
+        comp['onScanRequested'](true);
+        expect(comp.dialogOpen()).toBe(false);
+        comp['commitScanning'](true);
+        expect(service.commitPolicies).toHaveBeenCalledOnce();
 
         service.getPolicies.mockReturnValueOnce(of(editor('b'.repeat(40), granted)));
         comp['retryLoad']();
 
         expect(comp.loadFailed()).toBe(false);
         expect(comp.editor()?.baseCommitHash).toBe('b'.repeat(40));
+        comp['onVersionChange']('2.3.0');
+        expect(comp.stagedVersion()).toBe('2.3.0');
+        comp['onVersionChange']('2.2.1');
         comp['discard']();
         expect(comp.policies()[0].working?.packages).toEqual([{ packageName: 'org.apache.commons' }]);
 
@@ -384,6 +422,27 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(service.previewPolicies).not.toHaveBeenCalled();
     });
 
+    it('requires tests only of the policies the commit writes', () => {
+        // A test of the class may override the policy of its class, so the committed policy of the class is used by no test.
+        const second = { ...DOCUMENT, policyPath: 'Second.yaml' };
+        service.getPolicies.mockReturnValue(
+            of({
+                ...editor(),
+                policies: [
+                    { policyPath: 'SecurityPolicy.yaml', document: DOCUMENT, assignedTests: [] },
+                    { policyPath: 'Second.yaml', document: second, assignedTests: ['de.example.SortingTest#testBubbleSort'] },
+                ],
+            }),
+        );
+        create(configured(), false);
+        comp['onPolicyChange'](withAssignment(comp.policies()[1], ['de.example.SortingTest#testBubbleSort', 'de.example.StressTest'], []));
+
+        expect(comp.problems()).toEqual([]);
+        const unused = comp.policies()[0];
+        comp['onPolicyChange']({ ...unused, working: withRows(unused.working!, 'packages', [{ packageName: 'org.apache.commons' }]) });
+        expect(comp.problems()).toEqual(['artemisApp.programmingExercise.security.advanced.problem.noTests']);
+    });
+
     it('keeps the unsaved changes when the policies changed in the repository meanwhile', () => {
         create(configured(), false);
         comp['onPolicyChange'](withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
@@ -404,8 +463,35 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.banner()?.kind).toBe('info');
     });
 
+    it('reloads the config with the policies after a conflict and rebases the changes only while the sandbox is configured', () => {
+        create(configured(), false);
+        const configs: SecurityFrameworkConfig[] = [];
+        comp.configChange.subscribe((config) => configs.push(config));
+        comp['onPolicyChange'](withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
+        service.commitPolicies.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
+        service.getPolicies.mockReturnValue(of(editor('c'.repeat(40))));
+        comp['commit']('Update');
+
+        // Another instructor turned the sandbox off meanwhile, so the card shows that, and the editor follows it instead of rebasing onto the policies.
+        service.getConfig.mockReturnValueOnce(of({ status: SecurityActivationStatus.INACTIVE }));
+        comp['reload'](true);
+        expect(configs).toEqual([{ status: SecurityActivationStatus.INACTIVE }]);
+        expect(comp.editor()?.baseCommitHash).toBe('a'.repeat(40));
+
+        service.getConfig.mockReturnValueOnce(of({ ...configured(), frameworkVersion: '2.3.0' }));
+        comp['reload'](true);
+        expect(configs.at(-1)).toEqual({ ...configured(), frameworkVersion: '2.3.0' });
+        expect(comp.editor()?.baseCommitHash).toBe('c'.repeat(40));
+        expect(comp.policies()[0].tests).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
+    });
+
     it('shows the translated reason of a refused commit', () => {
         create(configured(), false);
+        const translateService = TestBed.inject(TranslateService);
+        const instant = translateService.instant.bind(translateService);
+        vi.spyOn(translateService, 'instant').mockImplementation((key: string | string[], params?: object) =>
+            key === 'error.securityPolicyUnused' ? `No test uses the policy ${(params as { path: string }).path}.` : instant(key, params),
+        );
         comp['onPolicyChange'](withAssignment(comp.policies()[0], ['de.example.SortingTest', 'de.example.StressTest'], []));
         service.commitPolicies.mockReturnValue(
             throwError(() => new HttpErrorResponse({ status: 400, error: { message: 'error.securityPolicyUnused', params: { path: 'Stress.yaml' } } })),
@@ -413,7 +499,7 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
 
         comp['commit']('Update');
 
-        expect(comp.banner()).toEqual({ kind: 'failed', message: 'error.securityPolicyUnused', commitMessage: 'Update' });
+        expect(comp.banner()).toEqual({ kind: 'failed', message: 'No test uses the policy Stress.yaml.', commitMessage: 'Update' });
     });
 
     it('turns dependency scanning on with a commit of only the language configuration', () => {
@@ -1194,6 +1280,42 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         service.importPolicy.mockReturnValue(of({ policyPath: 'SecurityPolicy.yaml', readOnlyReason: SecurityPolicyReadOnlyReason.YAML_ERROR, errorLine: 3 }));
         comp['importYaml']({ content: 'broken: [', policyPath: 'SecurityPolicy.yaml' });
         expect(comp.importNotice()).toEqual({ severity: 'error', text: 'artemisApp.programmingExercise.security.advanced.policy.readOnlyReason.YAML_ERROR' });
+    });
+
+    it('lets no rendering from before an import hide the outcome of the import', () => {
+        create(configured(), false);
+        comp['openYaml'](comp.policies()[0]);
+        const pending = new Subject<SecurityPolicyPreview>();
+        service.previewPolicies.mockReturnValueOnce(pending);
+        comp['renderYamlUnsaved']();
+        service.importPolicy.mockReturnValue(of({ policyPath: 'SecurityPolicy.yaml', readOnlyReason: SecurityPolicyReadOnlyReason.YAML_ERROR, errorLine: 3 }));
+
+        comp['importYaml']({ content: 'broken: [', policyPath: 'SecurityPolicy.yaml' });
+        pending.error(new HttpErrorResponse({ status: 500 }));
+
+        expect(comp.yamlNotice()).toEqual({ severity: 'error', text: 'artemisApp.programmingExercise.security.advanced.policy.readOnlyReason.YAML_ERROR' });
+    });
+
+    it('says why an import is not applied when a reload removed its policy meanwhile', () => {
+        const second = { ...DOCUMENT, policyPath: 'Second.yaml' };
+        service.getPolicies.mockReturnValue(
+            of({ ...editor(), policies: [...editor().policies!, { policyPath: 'Second.yaml', document: second, assignedTests: ['de.example.StressTest'] }] }),
+        );
+        create(configured(), false);
+        const target = comp.policies()[1];
+        comp['openYaml'](target);
+        const imported = new Subject<{ policyPath: string; document: SecurityPolicyDocument }>();
+        service.importPolicy.mockReturnValueOnce(imported);
+        comp['importYaml']({ content: 'content', policyPath: 'Second.yaml' });
+
+        // Someone deleted Second.yaml, which had no unsaved changes, so the reload drops it.
+        service.getPolicies.mockReturnValue(of(editor('c'.repeat(40))));
+        comp['reload']();
+        expect(comp.policies().map((policy) => policy.file?.policyPath)).toEqual(['SecurityPolicy.yaml']);
+        imported.next({ policyPath: 'Second.yaml', document: { ...second, supervisedPackage: 'de.imported' } });
+
+        expect(comp.banner()).toEqual({ kind: 'info', text: 'artemisApp.programmingExercise.security.advanced.yaml.importTargetGone' });
+        expect(comp.policies().map((policy) => policy.working?.supervisedPackage)).toEqual(['de.example']);
     });
 
     it('shows only the latest rendering of the unsaved YAML', () => {

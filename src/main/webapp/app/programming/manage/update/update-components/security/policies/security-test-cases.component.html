@@ -164,13 +164,19 @@
             severity="primary"
             variant="text"
             size="small"
-            [disabled]="disabled()"
+            [disabled]="disabled() || undoOwners().has(entry)"
             [attr.aria-label]="(prefix + 'undoLabel' | artemisTranslate) + ' ' + label"
+            [attr.aria-describedby]="undoOwners().has(entry) ? 'security-undo-owner-' + entry : null"
             (click)="undoTest(entry)"
             data-testid="security-test-cases-undo"
         >
             {{ prefix + 'undo' | artemisTranslate }}
         </button>
+        @if (undoOwners().get(entry); as owner) {
+            <span class="sp-mut text-xs" [id]="'security-undo-owner-' + entry" data-testid="security-test-cases-undo-owner">{{
+                prefix + 'undoBlocked' | artemisTranslate: { policy: owner }
+            }}</span>
+        }
     } @else {
         @if (state === 'new') {
             <tumaet-ui-tag severity="warn" size="sm" [tumAetUiTooltip]="prefix + 'testNewHelp' | artemisTranslate" tabindex="0">

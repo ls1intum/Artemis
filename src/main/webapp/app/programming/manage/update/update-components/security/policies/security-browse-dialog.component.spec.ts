@@ -107,6 +107,10 @@ describe('SecurityBrowseDialogComponent', () => {
 
         // A command typed into the field has no checkbox, so only the summary can drop it.
         expect(comp.unlistedSelection()).toEqual(['python3']);
+        // Neither has a command that equals a folder of scripts, whose checkbox stands for the scripts in it.
+        comp.selection.set(new Set(['python3', 'scripts/', 'scripts/run.sh']));
+        expect(comp.unlistedSelection()).toEqual(['python3', 'scripts/']);
+        comp.selection.set(new Set(['python3', 'scripts/run.sh']));
         root.querySelector<HTMLButtonElement>('[data-testid="security-browse-remove"]')!.click();
         handlers.confirm();
         expect(selected).toEqual([['scripts/run.sh']]);

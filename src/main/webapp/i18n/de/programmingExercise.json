@@ -922,6 +922,7 @@
                         "classNewHelp": "Seit dem letzten Speichern deklariert. Wirkt, sobald du speicherst.",
                         "undo": "Rückgängig",
                         "undoLabel": "Entfernen rückgängig machen für",
+                        "undoBlocked": "Jetzt {{ policy }} zugeordnet. Entferne es dort, um dies rückgängig zu machen.",
                         "removeLabel": "Entfernen",
                         "remove": {
                             "caseTitle": "Testfall entfernen",
@@ -998,7 +999,8 @@
                         "imported": {
                             "one": "Importiert. 1 ungespeicherte Änderung in {{ policy }} — prüfe sie vor dem Speichern.",
                             "other": "Importiert. {{ count }} ungespeicherte Änderungen in {{ policy }} — prüfe sie vor dem Speichern."
-                        }
+                        },
+                        "importTargetGone": "Die importierte Datei wurde nicht übernommen, weil es {{ policy }} im Repository nicht mehr gibt. Öffne das YAML einer anderen Richtlinie, um sie dort zu importieren."
                     },
                     "review": {
                         "title": "Änderungen prüfen und speichern",
@@ -1097,6 +1099,7 @@
                         "failedGeneric": "Das Test-Repository konnte nicht geändert werden.",
                         "processingFailed": "Gespeichert, aber die Builds wurden nicht gestartet",
                         "processingFailedText": "Gespeichert und die Richtlinien zeigen die Änderung, aber Artemis konnte die Builds der Vorlage und der Lösung nicht starten. Versuche es erneut, um sie zu starten.",
+                        "savedButNotRead": "Gespeichert, aber die gespeicherten Richtlinien konnten nicht zurückgelesen werden, daher lädt der Editor sie erneut.",
                         "retry": "Erneut versuchen",
                         "tooOld": "Festgelegte Version zu alt für diese Richtlinie",
                         "tooOldText": "Ares2 {{ version }} unterstützt diese Einstellungen der Richtlinien nicht, daher würde jeder Test fehlschlagen. Wähle ein neueres Release.",

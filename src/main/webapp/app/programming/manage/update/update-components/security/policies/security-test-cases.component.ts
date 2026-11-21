@@ -140,6 +140,21 @@ export class SecurityTestCasesComponent {
         });
     });
 
+    /** The label of another policy that now uses each removed entry, its class or, for a whole class, one of its test cases; restoring it would assign it twice. */
+    readonly undoOwners = computed(() => {
+        const policy = this.policy();
+        const others = this.otherTests();
+        const owners = new Map<string, string>();
+        for (const entry of policy.baseTests.filter((committed) => !policy.tests.includes(committed))) {
+            const testClass = testClassOf(entry);
+            const owner = others.get(entry) ?? others.get(testClass) ?? (entry === testClass ? [...others].find(([other]) => testClassOf(other) === testClass)?.[1] : undefined);
+            if (owner !== undefined) {
+                owners.set(entry, owner);
+            }
+        }
+        return owners;
+    });
+
     readonly declaredCount = computed(() => this.declaredClasses().filter((declared) => declared.state !== 'removed').length);
     readonly classesOfAssignedTests = computed(() => classesOfTests(this.policy().tests));
 
@@ -178,6 +193,9 @@ export class SecurityTestCasesComponent {
     }
 
     protected undoTest(entry: string): void {
+        if (this.undoOwners().has(entry)) {
+            return;
+        }
         this.assignmentChange.emit({ tests: withRestoredEntry(this.policy().tests, entry), extraClasses: this.policy().extraClasses });
     }
 

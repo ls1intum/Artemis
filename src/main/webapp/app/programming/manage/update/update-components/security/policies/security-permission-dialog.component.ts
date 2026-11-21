@@ -165,6 +165,9 @@ export class SecurityPermissionDialogComponent {
         }
     });
 
+    /** Why the entries selected in Browse were not put into the field; undefined if they were. */
+    readonly browseProblem = signal<string | undefined>(undefined);
+
     /** The translation key of the first problem of the fields, or undefined if the rows can be saved. */
     readonly problem = computed<string | undefined>(() => {
         const problem = this.fieldProblem() ?? this.duplicateProblem();
@@ -312,6 +315,7 @@ export class SecurityPermissionDialogComponent {
 
     private reset(row: ResourceRow | undefined): void {
         this.submitted.set(false);
+        this.browseProblem.set(undefined);
         const file = row as SecurityFilePermission | undefined;
         const endpoint = row as SecurityNetworkPermission | undefined;
         const command = row as SecurityCommandPermission | undefined;
@@ -350,7 +354,14 @@ export class SecurityPermissionDialogComponent {
 
     /** The picked paths or scripts replace the entries of the field; each becomes its own row, also one whose name contains a comma. */
     protected onBrowsed(paths: string[]): void {
-        if (this.kind() === 'commands') {
+        const commands = this.kind() === 'commands';
+        // A single-line field drops a line break from what it shows, so a later edit would save another path than the one selected; it is refused instead.
+        if (paths.some((path) => UNSUPPORTED_CHARACTERS.test(path))) {
+            this.browseProblem.set(`${ROW_PREFIX}problem.${commands ? 'commandCharacters' : 'pathCharacters'}`);
+            return;
+        }
+        this.browseProblem.set(undefined);
+        if (commands) {
             this.command.set(joinList(paths));
         } else {
             this.path.set(joinList(paths));

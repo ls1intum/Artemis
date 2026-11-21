@@ -412,6 +412,7 @@
         "securityPolicyNoBaseCommit": "The change does not name the commit the security policies were loaded from. Reload the policies and try again.",
         "securityPolicyEmptyRepository": "The tests repository has no commit yet.",
         "securityPolicyNotConfigured": "The security policies can only be edited while the Security Framework is active and configured.",
+        "securityPolicySavedButNotRead": "The security policies were saved, but they could not be read back. Reload the policies.",
         "securityPolicyChanged": "The security policies changed in the tests repository after you opened the editor. Reload them; your unsaved changes are kept.",
         "securityPolicyReadOnly": "The policy {{ path }} can only be changed in the repository, because the editor cannot keep all of its content.",
         "securityPolicyFileExists": "The file {{ path }} already exists in the tests repository. Choose another name for the policy.",

@@ -106,6 +106,33 @@ describe('SecurityTestCasesComponent', () => {
         expect(changes.at(-1)?.tests).toEqual(['de.a.MathTest', 'de.a.SortingTest']);
     });
 
+    it('keeps the undo of an entry that another policy now uses disabled and names that policy', () => {
+        fixture.componentRef.setInput('policy', { ...policy(['de.a.SortingTest']), baseTests: ['de.a.SortingTest', 'de.a.MathTest#add', 'de.c.WholeTest', 'de.d.FreeTest#run'] });
+        fixture.componentRef.setInput(
+            'otherTests',
+            new Map([
+                ['de.a.MathTest', 'Other Policy'],
+                ['de.c.WholeTest#one', 'Third Policy'],
+            ]),
+        );
+        fixture.detectChanges();
+
+        expect([...comp.undoOwners()]).toEqual([
+            ['de.a.MathTest#add', 'Other Policy'],
+            ['de.c.WholeTest', 'Third Policy'],
+        ]);
+        const buttons: HTMLButtonElement[] = [...fixture.nativeElement.querySelectorAll('[data-testid="security-test-cases-undo"]')];
+        expect(buttons.map((button) => button.disabled)).toEqual([true, true, false]);
+        expect(buttons[0].getAttribute('aria-describedby')).toBe('security-undo-owner-de.a.MathTest#add');
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="security-test-cases-undo-owner"]')).toHaveLength(2);
+
+        handlers.undoTest('de.a.MathTest#add');
+        handlers.undoTest('de.c.WholeTest');
+        expect(changes).toEqual([]);
+        handlers.undoTest('de.d.FreeTest#run');
+        expect(changes).toEqual([{ tests: ['de.a.SortingTest', 'de.d.FreeTest#run'], extraClasses: [] }]);
+    });
+
     it('shows that no test uses a policy without assigned tests', () => {
         fixture.componentRef.setInput('policy', { ...policy([]), baseTests: [] });
         fixture.detectChanges();

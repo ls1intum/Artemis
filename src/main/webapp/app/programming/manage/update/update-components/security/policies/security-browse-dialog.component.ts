@@ -154,9 +154,13 @@ export class SecurityBrowseDialogComponent {
     /** The selected entries the tree has no row for, e.g. a command typed into the field, which only the summary can remove. */
     readonly unlistedSelection = computed(() => {
         const listed = new Set<string>();
+        // For scripts, the checkbox of a folder stands for its scripts, so a selected entry equal to a folder path, e.g. a typed command scripts/, has none.
+        const scripts = this.mode() === 'scripts';
         const collect = (nodes: BrowseNode[]) =>
             nodes.forEach((node) => {
-                listed.add(node.path);
+                if (!scripts || !node.folder) {
+                    listed.add(node.path);
+                }
                 collect(node.children);
             });
         collect(this.tree());

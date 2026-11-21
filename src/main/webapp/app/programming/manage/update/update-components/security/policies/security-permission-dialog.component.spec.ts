@@ -252,11 +252,17 @@ describe('SecurityPermissionDialogComponent', () => {
 
     it('refuses a line break or a NUL character in a browsed path, a command or an argument', () => {
         open('files');
+        comp.path.set('kept.txt');
         handlers.onBrowsed(['data/a\nb.txt']);
         handlers.setFileAction('read', true);
+        // The single-line field could not show the line break, so the selection is refused and the field keeps what it had.
+        expect(comp.browseProblem()).toBe(PROBLEM + 'pathCharacters');
+        expect(comp.path()).toBe('kept.txt');
+        comp.path.set('data/a\nb.txt');
         expect(comp.problem()).toBe(PROBLEM + 'pathCharacters');
         // A comma or spaces around a name stay valid.
         handlers.onBrowsed([' data/a,b.txt ']);
+        expect(comp.browseProblem()).toBeUndefined();
         expect(comp.problem()).toBeUndefined();
 
         open('commands');

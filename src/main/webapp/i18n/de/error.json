@@ -412,6 +412,7 @@
         "securityPolicyNoBaseCommit": "Die Änderung nennt nicht den Commit, aus dem die Sicherheitsrichtlinien geladen wurden. Lade die Richtlinien neu und versuche es erneut.",
         "securityPolicyEmptyRepository": "Das Test-Repository hat noch keinen Commit.",
         "securityPolicyNotConfigured": "Die Sicherheitsrichtlinien können nur bearbeitet werden, solange das Security Framework aktiv und konfiguriert ist.",
+        "securityPolicySavedButNotRead": "Die Sicherheitsrichtlinien wurden gespeichert, konnten aber nicht zurückgelesen werden. Lade die Richtlinien neu.",
         "securityPolicyChanged": "Die Sicherheitsrichtlinien wurden im Test-Repository geändert, nachdem du den Editor geöffnet hast. Lade sie neu; deine ungespeicherten Änderungen bleiben erhalten.",
         "securityPolicyReadOnly": "Die Richtlinie {{ path }} kann nur im Repository geändert werden, weil der Editor nicht ihren gesamten Inhalt erhalten kann.",
         "securityPolicyFileExists": "Die Datei {{ path }} existiert bereits im Test-Repository. Wähle einen anderen Namen für die Richtlinie.",

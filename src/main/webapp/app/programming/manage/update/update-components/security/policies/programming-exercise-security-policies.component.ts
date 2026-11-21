@@ -398,7 +398,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             if (from && until && !until.isAfter(from)) {
                 problems.push(this.translateService.instant(`${PREFIX}.problem.hiddenPeriod`, { policy: policy.name }));
             }
-            if (!policy.tests.length) {
+            // Like the server, only a policy the commit writes must be used by a test; an unchanged one may be used by no test of the class.
+            if (!policy.tests.length && (this.summaries().get(policy.id)?.total ?? 0) > 0) {
                 problems.push(this.translateService.instant(`${PREFIX}.problem.noTests`, { policy: policy.name }));
             }
         }
@@ -665,17 +666,24 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         this.stagedVersion.set(undefined);
     }
 
-    /** Loads the policies again and keeps the unsaved changes: each changed policy is rebased onto its new committed version; new policies stay. */
+    /**
+     * Loads the policies and the config again and keeps the unsaved changes: each changed policy is rebased onto its new committed version; new policies stay.
+     * Someone may have switched the sandbox meanwhile, so the card follows the config read with the policies, and the changes are rebased only while the
+     * sandbox is still configured; otherwise the editor follows the new state of the sandbox.
+     */
     protected reload(announce = false): void {
         // Only the latest load applies, so an earlier one answering after it, or after a commit that followed it, never brings back an older state.
         const request = ++this.loadRequests;
         this.conflictLookups++;
         this.loading.set(true);
-        this.securityService.getPolicies(this.exerciseId()).subscribe({
+        this.securityService.getPoliciesWithConfig(this.exerciseId()).subscribe({
             // The requested scanning state stays: its dialog may still be open, and its commit sets the state when it is done.
-            next: (editor) => {
+            next: ({ editor, config }) => {
                 if (request === this.loadRequests) {
-                    this.rebaseOnto(editor, announce);
+                    this.configChange.emit(config);
+                    if (config.status === SecurityActivationStatus.CONFIGURED) {
+                        this.rebaseOnto(editor, announce);
+                    }
                     this.loading.set(false);
                 }
             },
@@ -762,6 +770,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     protected onScanRequested(on: boolean): void {
+        // After a failed read, the committed policies a scanning commit rewrites may be older than the pushed ones; it waits for a successful read.
+        if (this.loadFailed()) {
+            return;
+        }
         this.pendingScan.set(on);
         this.dialogMode.set(on ? 'scanOn' : 'scanOff');
         this.dialogOpen.set(true);
@@ -801,8 +813,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     protected onVersionChange(version: string): void {
-        // The first load of the policies replaces every unsaved change, so a version staged before it would be dropped without notice.
-        if (!this.editor()) {
+        // The first load of the policies replaces every unsaved change, and so does the read of a pushed change that failed before, so a version staged
+        // before either would be dropped without notice.
+        if (!this.editor() || this.loadFailed()) {
             return;
         }
         this.stagedVersion.set(version === this.pinnedVersion() ? undefined : version);
@@ -810,6 +823,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
 
     /** Commits only the language configuration of the committed policies, so the unsaved changes stay unsaved. */
     private commitScanning(on: boolean): void {
+        if (this.loadFailed()) {
+            this.pendingScan.set(undefined);
+            return;
+        }
         const policies: SecurityPolicyChangeEntry[] = this.policiesWithDeleted().flatMap((policy) =>
             policy.base && policy.file
                 ? [
@@ -938,10 +955,6 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     protected readonly noOtherTests = new Map<string, string>();
 
     /**
-     * Ignores the answers of YAML imports and renderings that are still pending, because the unsaved changes they belong to were replaced, e.g. discarded or
-     * committed; an import answering later would bring them back.
-     */
-    /**
      * The rendering of the unsaved YAML belongs to the working copies it was made from; once they are rebased, it is dropped and, while the dialog is open,
      * rendered again.
      */
@@ -953,6 +966,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         }
     }
 
+    /**
+     * Ignores the answers of YAML imports and renderings that are still pending, because the unsaved changes they belong to were replaced, e.g. discarded or
+     * committed; an import answering later would bring them back.
+     */
     private dropPendingYamlRequests(): void {
         this.importGenerations.clear();
         this.pendingImportGenerations.set(new Set());
@@ -1146,7 +1163,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             error: (error: HttpErrorResponse) => {
                 // A pushed change whose processing failed stays pending until its policies and config are read again, see loadPushed.
                 const processingFailed = isProcessingFailure(error);
-                if (!processingFailed) {
+                const savedButNotRead = isSavedButNotRead(error);
+                if (!processingFailed && !savedButNotRead) {
                     this.setCommitPending(false);
                 }
                 this.reviewOpen.set(false);
@@ -1168,6 +1186,13 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                         },
                         error: () => undefined,
                     });
+                } else if (savedButNotRead) {
+                    // The change is pushed and processed; only reading it back failed. So it is not reported as a failed save whose Retry writes again, and
+                    // Discard does not return to the policies before it: the editor reads the pushed state, like after a failed processing.
+                    this.unprocessed = undefined;
+                    this.versionCheck.set(undefined);
+                    this.banner.set({ kind: 'info', text: this.translateService.instant(`${PREFIX}.banner.savedButNotRead`) });
+                    this.loadPushed(this.pendingRecovery?.keepUnsaved ?? keepUnsaved);
                 } else if (processingFailed) {
                     // The push succeeded, so the committed policies are the pushed ones, and Discard must return to them. Retry sends the same request again,
                     // whose processing the server resumes instead of applying the change twice; it keeps what was edited meanwhile.
@@ -1283,8 +1308,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         if (!policy || !working || !path || path !== selected.policyPath) {
             return;
         }
-        // The outcome of the import replaces the error of an earlier rendering, which no longer describes what the dialog shows.
+        // The outcome of the import replaces the error of an earlier rendering, which no longer describes what the dialog shows; a rendering that is still
+        // pending shows the policy before the import, so its answer no longer applies either. A successful import renders the policy again.
         this.yamlRenderError.set(undefined);
+        this.yamlPreviewCount++;
         // Only the latest import of a policy applies, so an earlier one that answers later does not replace it.
         // The numbers keep increasing across discards, so an import from before one never matches the latest import of the policy.
         const generation = ++this.importSequence;
@@ -1302,6 +1329,10 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 settle();
                 // The policy may have changed while the file was read, so the import goes into its current state.
                 const current = this.policies().find((candidate) => candidate.id === policy.id);
+                if (isLatest() && !current) {
+                    // A reload removed the policy, e.g. because someone deleted its file, so the dialog is gone and the banner says why the file is not applied.
+                    this.banner.set({ kind: 'info', text: this.translateService.instant(`${PREFIX}.yaml.importTargetGone`, { policy: policy.name }) });
+                }
                 if (!isLatest() || !current?.working) {
                     return;
                 }
@@ -1402,5 +1433,14 @@ function releasedEntries(entry: string, tests: readonly string[], structure: Sec
 
 /** Whether the server pushed the change but could not process it, e.g. start the builds; repeating the request resumes the processing. */
 function isProcessingFailure(error: HttpErrorResponse): boolean {
-    return (error.error as { message?: string } | null | undefined)?.message === 'error.securityFrameworkProcessingFailed';
+    return errorKeyOf(error) === 'error.securityFrameworkProcessingFailed';
+}
+
+/** Whether the server pushed and processed the change but could not read the policies it saved for its answer. */
+function isSavedButNotRead(error: HttpErrorResponse): boolean {
+    return errorKeyOf(error) === 'error.securityPolicySavedButNotRead';
+}
+
+function errorKeyOf(error: HttpErrorResponse): string | undefined {
+    return (error.error as { message?: string } | null | undefined)?.message;
 }

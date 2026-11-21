@@ -922,6 +922,7 @@
                         "classNewHelp": "Declared since the last save. Takes effect once you save.",
                         "undo": "Undo",
                         "undoLabel": "Undo the removal of",
+                        "undoBlocked": "Now assigned to {{ policy }}. Remove it there to undo this.",
                         "removeLabel": "Remove",
                         "remove": {
                             "caseTitle": "Remove Test Case",
@@ -998,7 +999,8 @@
                         "imported": {
                             "one": "Imported. 1 unsaved change in {{ policy }} — review it before you save.",
                             "other": "Imported. {{ count }} unsaved changes in {{ policy }} — review them before you save."
-                        }
+                        },
+                        "importTargetGone": "The imported file was not applied, because {{ policy }} no longer exists in the repository. Open the YAML of another policy to import it there."
                     },
                     "review": {
                         "title": "Review and Save Changes",
@@ -1097,6 +1099,7 @@
                         "failedGeneric": "The tests repository could not be changed.",
                         "processingFailed": "Saved, but the builds did not start",
                         "processingFailedText": "Saved, so the policies show the change, but Artemis could not start the builds of the template and solution. Retry to start them.",
+                        "savedButNotRead": "Saved, but the saved policies could not be read back, so the editor loads them again.",
                         "retry": "Retry",
                         "tooOld": "Pinned version too old for this policy",
                         "tooOldText": "Ares2 {{ version }} does not support these settings of the policies, so every test would fail. Choose a newer release.",

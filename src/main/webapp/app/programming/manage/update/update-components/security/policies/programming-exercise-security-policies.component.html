@@ -11,7 +11,7 @@
         [versionOptions]="versionOptions()"
         [version]="shownVersion()"
         [versionUncommitted]="!!stagedVersion()"
-        [versionLocked]="!editor()"
+        [versionLocked]="!editor() || loadFailed()"
         (toggleRequested)="onToggleRequested($event)"
         (scanRequested)="onScanRequested($event)"
         (versionChange)="onVersionChange($event)"
