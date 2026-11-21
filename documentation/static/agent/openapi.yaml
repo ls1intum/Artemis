@@ -86,11 +86,11 @@ paths:
         access token can change only an exercise that students cannot see yet (its
         releaseDate is in the future) and that has no student participations, and
         the change must keep releaseDate in the future. Anything else can be changed
-        only in the Artemis web interface. The submissionPolicy of the request is ignored:
-        the submission policy of an exercise is changed only through the submission-policy
-        endpoints of the exercise (POST, PATCH, PUT to activate or deactivate, and
-        DELETE on programming-exercises/{exerciseId}/submission-policy). The response
-        contains the stored policy.'
+        only in the Artemis web interface. The submissionPolicy of the request is
+        ignored: the submission policy of an exercise is changed only through the
+        submission-policy endpoints of the exercise (POST, PATCH, PUT to activate
+        or deactivate, and DELETE on programming-exercises/{exerciseId}/submission-policy).
+        The response contains the stored policy.'
       operationId: updateProgrammingExercise
       parameters:
       - name: notificationText

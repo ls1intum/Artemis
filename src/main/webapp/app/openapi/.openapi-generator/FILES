@@ -12,6 +12,7 @@ api/complaint-response-api.ts
 api/example-submission-api.ts
 api/exercise-unit-api.ts
 api/global-search-api.ts
+api/gocast-integration-api.ts
 api/grade-step-api.ts
 api/grading-scale-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
@@ -184,6 +185,8 @@ model/get-complaint-by-submission-id200response.ts
 model/get-lecture-unit-by-id200response.ts
 model/get-lectures.ts
 model/global-search-result.ts
+model/gocast-approval-start.ts
+model/gocast-binding.ts
 model/grade-step.ts
 model/grade-steps.ts
 model/grade.ts
