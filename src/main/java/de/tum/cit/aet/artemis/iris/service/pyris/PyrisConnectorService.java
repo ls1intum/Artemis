@@ -15,10 +15,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import tools.jackson.core.JacksonException;
@@ -67,9 +68,9 @@ public class PyrisConnectorService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisConnectorService.class);
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
-    private final RestTemplate censusRestTemplate;
+    private final RestClient censusRestClient;
 
     private final JsonMapper objectMapper;
 
@@ -81,10 +82,10 @@ public class PyrisConnectorService {
     @Value("${artemis.iris.url}")
     private String pyrisUrl;
 
-    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, @Qualifier("censusPyrisRestTemplate") RestTemplate censusRestTemplate,
-            JsonMapper objectMapper, PyrisCallbackTokenService callbackTokenService) {
-        this.restTemplate = restTemplate;
-        this.censusRestTemplate = censusRestTemplate;
+    public PyrisConnectorService(@Qualifier("pyrisRestClient") RestClient restClient, @Qualifier("censusPyrisRestClient") RestClient censusRestClient, JsonMapper objectMapper,
+            PyrisCallbackTokenService callbackTokenService) {
+        this.restClient = restClient;
+        this.censusRestClient = censusRestClient;
         this.objectMapper = objectMapper;
         this.callbackTokenService = callbackTokenService;
     }
@@ -107,7 +108,7 @@ public class PyrisConnectorService {
             // treats its argument as a template and encodes an already encoded value a second time.
             URI url = UriComponentsBuilder.fromUriString(pyrisUrl).path("/api/v1/courses/{courseId}/ingestion-census").queryParam("base_url", "{baseUrl}").encode()
                     .buildAndExpand(courseId, artemisBaseUrl).toUri();
-            var response = censusRestTemplate.getForEntity(url, IngestionCensusDTO.class);
+            var response = censusRestClient.get().uri(url).retrieve().toEntity(IngestionCensusDTO.class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
                 log.warn("Ingestion census for course {} returned status {} without a usable body", courseId, response.getStatusCode());
                 return null;
@@ -145,7 +146,8 @@ public class PyrisConnectorService {
         var endpoint = "/api/v1/search/lectures";
         try {
             var requestDTO = new PyrisLectureSearchRequestDTO(query, limit, artemisBaseUrl, courseIds, excludeCourseIds, accessContext);
-            var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, PyrisLectureSearchResultDTO[].class);
+            var response = restClient.post().uri(pyrisUrl + endpoint).contentType(MediaType.APPLICATION_JSON).body(requestDTO).retrieve()
+                    .toEntity(PyrisLectureSearchResultDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
                 return List.of();
             }
@@ -192,7 +194,7 @@ public class PyrisConnectorService {
             var settings = new PyrisPipelineExecutionSettingsDTO(job.jobId(), callbackToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue(),
                     Boolean.TRUE);
             var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext, entityCandidates, courseIds, excludeCourseIds, searchesNothing);
-            var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
+            var response = restClient.post().uri(pyrisUrl + endpoint).contentType(MediaType.APPLICATION_JSON).body(requestDTO).retrieve().toBodilessEntity();
             if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {
                 log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());
                 throw new PyrisConnectorException("Unexpected status from Pyris global-search pipeline: " + response.getStatusCode().value());
@@ -219,7 +221,7 @@ public class PyrisConnectorService {
         // Add event query parameter if present
         endpoint += event.map(e -> "?event=" + e).orElse("");
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
+            restClient.post().uri(pyrisUrl + endpoint).contentType(MediaType.APPLICATION_JSON).body(executionDTO).retrieve().toBodilessEntity();
         }
         catch (HttpStatusCodeException e) {
             throw toIrisException(e);
@@ -253,7 +255,7 @@ public class PyrisConnectorService {
     /** Metadata and visibility updates have the same not-ingested outcome and transport failure semantics. */
     private boolean executeLectureUpdateWebhook(String operation, Long lectureUnitId, Object dto) {
         try {
-            restTemplate.postForEntity(pyrisUrl + "/api/v1/webhooks/lectures/" + operation, dto, Void.class);
+            restClient.post().uri(pyrisUrl + "/api/v1/webhooks/lectures/" + operation).contentType(MediaType.APPLICATION_JSON).body(dto).retrieve().toBodilessEntity();
             return true;
         }
         catch (HttpStatusCodeException e) {
@@ -278,7 +280,7 @@ public class PyrisConnectorService {
     public void executeLectureDeletionWebhook(PyrisWebhookLectureDeletionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/lectures/delete";
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
+            restClient.post().uri(pyrisUrl + endpoint).contentType(MediaType.APPLICATION_JSON).body(executionDTO).retrieve().toBodilessEntity();
         }
         catch (HttpStatusCodeException e) {
             // Status only: the exception message quotes the response body, which may echo the request and its callback token.
@@ -346,7 +348,7 @@ public class PyrisConnectorService {
         try {
             // Built as a URI and passed as one, so the base URL is encoded exactly once (see getIngestionCensus)
             URI url = UriComponentsBuilder.fromUriString(pyrisUrl).path("/api/v1/faq-census").queryParam("base_url", "{baseUrl}").encode().buildAndExpand(artemisBaseUrl).toUri();
-            var response = censusRestTemplate.getForEntity(url, FaqCensusDTO.class);
+            var response = censusRestClient.get().uri(url).retrieve().toEntity(FaqCensusDTO.class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
                 log.warn("FAQ census returned status {} without a usable body", response.getStatusCode());
                 return null;
@@ -377,7 +379,7 @@ public class PyrisConnectorService {
     public void executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, PyrisWebhookFaqIngestionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/faqs/ingest";
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
+            restClient.post().uri(pyrisUrl + endpoint).contentType(MediaType.APPLICATION_JSON).body(executionDTO).retrieve().toBodilessEntity();
         }
         catch (HttpStatusCodeException e) {
             // Status only: the exception message quotes the response body, which may echo the request and its callback token.
@@ -398,7 +400,7 @@ public class PyrisConnectorService {
     public void executeFaqDeletionWebhook(PyrisWebhookFaqDeletionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/faqs/delete";
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
+            restClient.post().uri(pyrisUrl + endpoint).contentType(MediaType.APPLICATION_JSON).body(executionDTO).retrieve().toBodilessEntity();
         }
         catch (HttpStatusCodeException e) {
             // Status only: the exception message quotes the response body, which may echo the request and its callback token.
@@ -422,7 +424,7 @@ public class PyrisConnectorService {
         try {
             String encodedBaseUrl = URLEncoder.encode(artemisBaseUrl, StandardCharsets.UTF_8);
             String url = pyrisUrl + "/api/v1/courses/" + courseId + "/faqs/" + faqId + "/ingestion-state?base_url=" + encodedBaseUrl;
-            IngestionStateResponseDTO response = restTemplate.getForObject(url, IngestionStateResponseDTO.class);
+            IngestionStateResponseDTO response = restClient.get().uri(url).retrieve().body(IngestionStateResponseDTO.class);
             return response.state();
         }
         catch (RestClientException | IllegalArgumentException e) {

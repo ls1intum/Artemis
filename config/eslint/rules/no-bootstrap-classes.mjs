@@ -6,7 +6,7 @@
  * Only classes that are UNAMBIGUOUSLY Bootstrap-only are banned, that is they do not collide with a valid
  * Tailwind v4 utility of the same name. In particular the spacing scale (`mb-3`, `me-1`, `p-3`, `gap-2`)
  * and logical-margin utilities (`ms-*`, `me-*`) are NOT banned: they are legitimate Tailwind utilities.
- * Bootstrap gave the steps 3 to 5 other values, though, so `no-ambiguous-spacing-utility` handles those.
+ * Bootstrap gave the steps 3 to 5 other values (16, 24 and 48px against Tailwind's 12, 16 and 20px).
  * Color application is governed separately by `no-raw-tailwind-color-palette` (templates) and the stylelint
  * hex/`--bs-` ban (SCSS).
  *

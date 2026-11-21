@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-3.5">
     <div class="flex flex-col gap-3.5">
-        <div class="flex flex-col gap-4! sm:flex-row sm:items-center sm:justify-between">
-            <h2 class="m-0! text-xl! leading-none! font-bold!" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.title"></h2>
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="m-0 text-xl leading-none font-bold" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.title"></h2>
             <tumaet-ui-select
                 size="small"
                 class="w-auto min-w-56"
@@ -24,11 +24,11 @@
 
     <!-- Profile settings section - only visible when a course is selected -->
     @if (!disabled()) {
-        <div class="grid grid-cols-1 gap-4! md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <!-- Aim for Grade/Bonus setting -->
             <tumaet-ui-panel>
                 <span tumAetUiPanelHeader id="aim-for-grade-or-bonus-label" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.label"></span>
-                <div class="flex flex-col items-start gap-4! sm:flex-row md:flex-col lg:flex-row">
+                <div class="flex flex-col items-start gap-4 sm:flex-row md:flex-col lg:flex-row">
                     <div class="min-w-0 flex-1 text-sm" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus.description"></div>
                     <tumaet-ui-select
                         size="small"
@@ -47,7 +47,7 @@
             <!-- Time Investment setting -->
             <tumaet-ui-panel>
                 <span tumAetUiPanelHeader id="time-investment-label" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.label"></span>
-                <div class="flex flex-col items-start gap-4! sm:flex-row md:flex-col lg:flex-row">
+                <div class="flex flex-col items-start gap-4 sm:flex-row md:flex-col lg:flex-row">
                     <div class="min-w-0 flex-1 text-sm" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.timeInvestment.description"></div>
                     <tumaet-ui-select
                         size="small"
@@ -66,7 +66,7 @@
             <!-- Repetition Intensity setting -->
             <tumaet-ui-panel>
                 <span tumAetUiPanelHeader id="repetition-intensity-label" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.label"></span>
-                <div class="flex flex-col items-start gap-4! sm:flex-row md:flex-col lg:flex-row">
+                <div class="flex flex-col items-start gap-4 sm:flex-row md:flex-col lg:flex-row">
                     <div class="min-w-0 flex-1 text-sm" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity.description"></div>
                     <tumaet-ui-select
                         size="small"

@@ -1,6 +1,6 @@
 <div>
     <div class="flex items-center justify-between">
-        <h5 class="m-0!" jhiTranslate="artemisApp.learningPathManagement.learningPathsState.title"></h5>
+        <h5 class="m-0" jhiTranslate="artemisApp.learningPathManagement.learningPathsState.title"></h5>
         <button tumAetUiButton type="button" severity="secondary" size="small" (click)="loadLearningPathHealthState(courseId())">
             @if (isLoading()) {
                 <fa-icon [icon]="faSpinner" animation="spin" />
@@ -8,7 +8,7 @@
             <span jhiTranslate="artemisApp.learningPathManagement.learningPathsState.refreshButtonLabel"></span>
         </button>
     </div>
-    <hr class="my-2!" />
+    <hr class="my-2" />
     <div class="max-h-[220px] overflow-y-auto">
         @if (isLoading()) {
             <div class="flex justify-center p-2">
@@ -18,7 +18,7 @@
             @for (healthState of learningPathHealthState(); let first = $first; track healthState) {
                 <div class="learning-paths-state-container border-s-2 px-2 py-1" [class.mt-4!]="!first" [class]="stateBorderClasses[healthState]">
                     <span><strong [jhiTranslate]="translationKeys[healthState] + '.title'"></strong></span>
-                    <p class="m-0!"><small [jhiTranslate]="translationKeys[healthState] + '.description'"></small></p>
+                    <p class="m-0"><small [jhiTranslate]="translationKeys[healthState] + '.description'"></small></p>
                     <button
                         tumAetUiButton
                         type="button"

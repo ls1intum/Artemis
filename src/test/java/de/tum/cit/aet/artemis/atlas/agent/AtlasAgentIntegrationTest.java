@@ -20,7 +20,6 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepositoryDialect;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -63,9 +62,6 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     void setupTestScenario() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
-
-        // Set up chatClient.mutate() to return a real builder backed by the mock ChatModel
-        when(chatClient.mutate()).thenAnswer(inv -> ChatClient.builder(chatModel));
 
         // Set up stateful mock for ChatMemory to actually store and retrieve messages
         chatMemoryStorage = new HashMap<>();

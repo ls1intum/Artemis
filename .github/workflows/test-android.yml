@@ -52,6 +52,14 @@ jobs:
       - name: Remove mysql volume
         run: docker volume rm artemis-mysql-data || exit 0
 
+      # Docker Hub limits anonymous pulls per IP address, so the database image comes through the registry proxy
+      # and `docker compose up` below finds it locally instead of pulling it from Docker Hub.
+      - name: Fetch the mysql image through the registry proxy
+        run: |
+          images=$(docker compose -f main-repo/deployment/docker/mysql.yml config --images mysql)
+          # shellcheck disable=SC2086
+          bash main-repo/supporting_scripts/ci/pull-through-registry-proxy.sh $images
+
       - name: Launch mysql docker container
         run: docker compose -f main-repo/deployment/docker/mysql.yml up -d mysql
 
