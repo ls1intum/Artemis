@@ -20,6 +20,8 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionChatClientService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 
 /**
@@ -54,15 +56,14 @@ public class VariantAgentLoopService {
 
     private final UserRepository userRepository;
 
-    @Nullable
     private final ChatClient chatClient;
 
     public VariantAgentLoopService(HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository,
-            @Nullable ChatClient chatClient) {
+            HyperionChatClientService chatClients) {
         this.templateService = templateService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
-        this.chatClient = chatClient;
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.VARIANTS);
     }
 
     /**
@@ -105,9 +106,6 @@ public class VariantAgentLoopService {
      */
     public AgentResult runLoop(ChangePlan plan, VariantToolset toolset, AgentBudgets budgets, VariantJob job, @Nullable VerificationReport repairFeedback,
             @Nullable String escalationNote, String promptTemplate) {
-        if (chatClient == null) {
-            throw new IllegalStateException("AI chat client is not configured");
-        }
         List<ToolCallback> tools = toolset.toolCallbacks();
         // The tool catalog is rendered from the actual ToolCallbacks, so a tool added to a toolset is
         // automatically part of the prompt's "these are the ONLY tools" contract — no manual prompt upkeep.

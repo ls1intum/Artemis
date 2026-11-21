@@ -1,5 +1,5 @@
 <div class="course-detail-parent-container">
-    <div class="flex flex-nowrap justify-center gap-2 mt-4!">
+    <div class="flex flex-nowrap justify-center gap-2 mt-4">
         <a [routerLink]="['/course-management', course().id, 'course-statistics']" class="text-center">
             <h5 jhiTranslate="artemisApp.courseStatistics.activeStudents"></h5>
         </a>
@@ -8,7 +8,7 @@
     @if (startDateAlreadyPassed) {
         <ng-container>
             <div>
-                <div class="flex gap-4! justify-end me-4!">
+                <div class="flex gap-4 justify-end me-4">
                     @if (course().startDate) {
                         <div class="flex">
                             <button
@@ -89,7 +89,7 @@
         </ng-container>
     } @else {
         <ng-container>
-            <h4 class="text-center mt-4!" jhiTranslate="artemisApp.course.notStartedYet"></h4>
+            <h4 class="text-center mt-4" jhiTranslate="artemisApp.course.notStartedYet"></h4>
             <h3 class="text-center">{{ course().startDate | artemisDate }}</h3>
         </ng-container>
     }

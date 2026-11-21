@@ -14,7 +14,7 @@
             <fa-icon [icon]="faTerminal" />
             <span jhiTranslate="artemisApp.editor.buildOutput"></span>
         </h3>
-        <fa-icon class="ms-auto clickable" [icon]="faChevronDown" />
+        <fa-icon class="ms-auto cursor-pointer" [icon]="faChevronDown" />
     </div>
     @if (!isBuilding() && !rawBuildLogs().length) {
         <div class="editor-panel-body">

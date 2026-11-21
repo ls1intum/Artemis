@@ -15,10 +15,11 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { UserService } from 'app/account/user/shared/user.service';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
@@ -28,6 +29,7 @@ describe('AiExperienceSettingsComponent', () => {
     let irisChatHttpService: IrisChatHttpService;
     let irisChatService: IrisChatService;
     let alertService: AlertService;
+    let accountService: AccountService;
 
     const createComponent = () => {
         fixture = TestBed.createComponent(AiExperienceSettingsComponent);
@@ -42,7 +44,8 @@ describe('AiExperienceSettingsComponent', () => {
                 MockProvider(IrisChatService, { isSavingLLMUsageConsent: signal(false) }),
                 MockProvider(TranslateService),
                 MockProvider(AlertService),
-                MockProvider(ProfileService, { isLLMDeploymentEnabled: () => false }),
+                MockProvider(ProfileService, { isLLMDeploymentEnabled: () => false, isModuleFeatureActive: () => true }),
+                MockProvider(UserService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
@@ -62,6 +65,7 @@ describe('AiExperienceSettingsComponent', () => {
         irisChatHttpService = TestBed.inject(IrisChatHttpService);
         irisChatService = TestBed.inject(IrisChatService);
         alertService = TestBed.inject(AlertService);
+        accountService = TestBed.inject(AccountService);
     });
 
     afterEach(() => {
@@ -167,5 +171,103 @@ describe('AiExperienceSettingsComponent', () => {
 
         const deleteButton = fixture.debugElement.query(By.directive(DeleteButtonDirective));
         expect(deleteButton).toBeNull();
+    });
+
+    describe('without the Iris module', () => {
+        let userService: UserService;
+
+        const settled = () => vi.waitFor(() => expect(component.selectionPending()).toBe(false));
+
+        beforeEach(() => {
+            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(false);
+            userService = TestBed.inject(UserService);
+            accountService.userIdentity.set({ id: 1, internal: true, selectedLLMUsage: LLMSelectionDecision.NO_AI });
+        });
+
+        it('requests nothing of Iris and does not show its data', () => {
+            const counts = vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount');
+            createComponent();
+            fixture.detectChanges();
+
+            expect(counts).not.toHaveBeenCalled();
+            expect(fixture.debugElement.query(By.directive(DeleteButtonDirective))).toBeNull();
+        });
+
+        it('saves the preference without creating or requesting Iris', async () => {
+            const save = vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+            const iris = vi.spyOn(irisChatService, 'updateLLMUsageConsent');
+            createComponent();
+            fixture.detectChanges();
+
+            component.selectMode(LLMSelectionDecision.LOCAL_AI);
+            await settled();
+
+            expect(save).toHaveBeenCalledExactlyOnceWith(LLMSelectionDecision.LOCAL_AI);
+            expect(iris).not.toHaveBeenCalled();
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.LOCAL_AI);
+        });
+
+        it('keeps the previous preference and reports a failed save', async () => {
+            vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(throwError(() => new Error('offline')));
+            const error = vi.spyOn(alertService, 'error');
+            createComponent();
+            fixture.detectChanges();
+
+            component.selectMode(LLMSelectionDecision.CLOUD_AI);
+            await settled();
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+            expect(error).toHaveBeenCalledExactlyOnceWith('artemisApp.userSettings.aiExperienceSettingsPage.updateFailure');
+        });
+
+        it('does not start a second save while one is pending', async () => {
+            const response = new Subject<HttpResponse<void>>();
+            const save = vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(response);
+            createComponent();
+            fixture.detectChanges();
+
+            component.selectMode(LLMSelectionDecision.CLOUD_AI);
+            component.selectMode(LLMSelectionDecision.LOCAL_AI);
+            expect(component.isSavingConsent()).toBe(true);
+            response.next(new HttpResponse({ status: 200 }));
+            response.complete();
+            await settled();
+
+            expect(save).toHaveBeenCalledExactlyOnceWith(LLMSelectionDecision.CLOUD_AI);
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        it('does not apply a pending save to a different account', async () => {
+            const response = new Subject<HttpResponse<void>>();
+            vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(response);
+            const error = vi.spyOn(alertService, 'error');
+            createComponent();
+            fixture.detectChanges();
+
+            component.selectMode(LLMSelectionDecision.CLOUD_AI);
+            accountService.userIdentity.set({ id: 2, internal: true, selectedLLMUsage: LLMSelectionDecision.NO_AI });
+            response.next(new HttpResponse({ status: 200 }));
+            response.complete();
+            await settled();
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+            expect(error).not.toHaveBeenCalled();
+        });
+
+        it('cancels a pending save when the settings page is destroyed', async () => {
+            const response = new Subject<HttpResponse<void>>();
+            vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(response);
+            const error = vi.spyOn(alertService, 'error');
+            createComponent();
+            fixture.detectChanges();
+
+            component.selectMode(LLMSelectionDecision.CLOUD_AI);
+            fixture.destroy();
+            response.next(new HttpResponse({ status: 200 }));
+            await settled();
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+            expect(error).not.toHaveBeenCalled();
+        });
     });
 });

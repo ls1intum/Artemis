@@ -1,6 +1,6 @@
-<div class="stepwizard-container p-4!" [hidden]="!steps().length">
+<div class="stepwizard-container p-4" [hidden]="!steps().length">
     <div class="stepwizard">
-        <div class="stepwizard-title pe-4!" data-testid="programming-tasks-label" jhiTranslate="artemisApp.programmingExercise.problemStatement.tasksOfExercise"></div>
+        <div class="stepwizard-title pe-4" data-testid="programming-tasks-label" jhiTranslate="artemisApp.programmingExercise.problemStatement.tasksOfExercise"></div>
         <div class="stepwizard-row relative">
             <hr class="stepwizard-row-line" />
             @for (step of steps(); let i = $index; track i) {

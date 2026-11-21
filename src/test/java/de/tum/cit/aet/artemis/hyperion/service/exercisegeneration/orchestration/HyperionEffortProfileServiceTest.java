@@ -8,15 +8,9 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.ai.openai.OpenAiChatOptions;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -27,7 +21,7 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 /** The admin-defined half of "admins define, users select": each rule here decides what a run is allowed to cost. */
 class HyperionEffortProfileServiceTest {
 
-    private static final OpenAiChatOptions MODEL_DEFAULTS = OpenAiChatOptions.builder().model("deployment-model").temperature(1.0).maxCompletionTokens(8_192).build();
+    private static final String AGENT_PRESET = "generation";
 
     private static HyperionAgentProperties.EffortProfileProperties profile(String label) {
         HyperionAgentProperties.EffortProfileProperties profile = new HyperionAgentProperties.EffortProfileProperties();
@@ -36,18 +30,24 @@ class HyperionEffortProfileServiceTest {
     }
 
     private static HyperionAgentProperties propertiesWith(Map<String, HyperionAgentProperties.EffortProfileProperties> profiles) {
-        HyperionAgentProperties properties = new HyperionAgentProperties();
+        HyperionAgentProperties properties = agentProperties();
         properties.setProfiles(new LinkedHashMap<>(profiles));
+        return properties;
+    }
+
+    private static HyperionAgentProperties agentProperties() {
+        HyperionAgentProperties properties = new HyperionAgentProperties();
+        properties.setLlmPreset(AGENT_PRESET);
         return properties;
     }
 
     @Test
     void withoutConfiguredProfiles_everyRunUsesTheDeploymentDefaultAndNoneIsSelectable() {
-        HyperionAgentProperties properties = new HyperionAgentProperties();
+        HyperionAgentProperties properties = agentProperties();
         properties.setMaxTurns(60);
         properties.setMaxJobDuration(Duration.ofMinutes(45));
 
-        HyperionEffortProfileService service = new HyperionEffortProfileService(properties, MODEL_DEFAULTS);
+        HyperionEffortProfileService service = new HyperionEffortProfileService(properties);
 
         assertThat(service.selectableProfiles()).isEmpty();
         HyperionGenerationSettings resolved = service.resolve(null);
@@ -57,11 +57,12 @@ class HyperionEffortProfileServiceTest {
         // The engine reuses the shared singletons rather than deriving per-run objects for a deployment that configured nothing.
         assertThat(resolved.engineDefaults()).isTrue();
         assertThat(resolved.chatOptions()).isNull();
+        assertThat(resolved.llmPreset()).isEqualTo(AGENT_PRESET);
     }
 
     @Test
     void unknownProfileName_isRejectedRatherThanSilentlyDefaulted() {
-        HyperionEffortProfileService service = new HyperionEffortProfileService(propertiesWith(Map.of("standard", profile("Standard"))), MODEL_DEFAULTS);
+        HyperionEffortProfileService service = new HyperionEffortProfileService(propertiesWith(Map.of("standard", profile("Standard"))));
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> service.resolve("thorough"))
                 .satisfies(exception -> assertThat(exception.getBody().getProperties()).containsEntry("message", "error.unknownEffortProfile"));
@@ -70,7 +71,7 @@ class HyperionEffortProfileServiceTest {
     @Test
     void profileWithNoConfiguredName_isRejectedEvenWhenAnotherProfileExists() {
         // The accepted set must equal the published set, so a name outside it is rejected even after trimming.
-        HyperionEffortProfileService service = new HyperionEffortProfileService(propertiesWith(Map.of("draft", profile("Quick draft"))), MODEL_DEFAULTS);
+        HyperionEffortProfileService service = new HyperionEffortProfileService(propertiesWith(Map.of("draft", profile("Quick draft"))));
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> service.resolve("   draft-typo "));
         assertThat(service.resolve(" draft ").name()).isEqualTo("draft");
@@ -78,14 +79,14 @@ class HyperionEffortProfileServiceTest {
 
     @Test
     void unsetProfileValues_inheritTheDeploymentDefault() {
-        HyperionAgentProperties properties = new HyperionAgentProperties();
+        HyperionAgentProperties properties = agentProperties();
         properties.setMaxTurns(60);
         properties.setMaxJobDuration(Duration.ofMinutes(45));
         properties.setMaxTokensPerJob(3_000_000L);
         properties.setContextWindowTokens(128_000);
         properties.setProfiles(new LinkedHashMap<>(Map.of("standard", profile("Standard"))));
 
-        HyperionGenerationSettings standard = new HyperionEffortProfileService(properties, MODEL_DEFAULTS).resolve("standard");
+        HyperionGenerationSettings standard = new HyperionEffortProfileService(properties).resolve("standard");
 
         assertThat(standard.maxTurns()).isEqualTo(60);
         assertThat(standard.maxJobDuration()).isEqualTo(Duration.ofMinutes(45));
@@ -96,48 +97,31 @@ class HyperionEffortProfileServiceTest {
     }
 
     @Test
-    void profileWithAModel_prebuildsOpenAiOptionsThatOverlayTheModelBeanDefaults() {
-        HyperionAgentProperties.EffortProfileProperties draft = profile("Quick draft");
-        draft.setModel("draft-model");
-        draft.setReasoningEffort("low");
-        draft.setMaxTurns(20);
-        draft.setMaxJobDuration(Duration.ofMinutes(12));
-        draft.setMaxTokensPerJob(600_000L);
+    void profileWithItsOwnPreset_runsThatPresetAndLeavesTheDeploymentSingletons() {
+        HyperionAgentProperties.EffortProfileProperties thorough = profile("Thorough");
+        thorough.setLlmPreset(" generationthorough ");
+        thorough.setMaxTurns(90);
 
-        HyperionGenerationSettings settings = new HyperionEffortProfileService(propertiesWith(Map.of("draft", draft)), MODEL_DEFAULTS).resolve("draft");
+        HyperionGenerationSettings settings = new HyperionEffortProfileService(propertiesWith(Map.of("thorough", thorough))).resolve("thorough");
 
-        // Must be OpenAiChatOptions and not a generic ChatOptions: OpenAiChatModel#buildRequestPrompt casts the runtime options.
-        assertThat(settings.chatOptions()).isInstanceOf(OpenAiChatOptions.class);
-        assertThat(settings.chatOptions().getModel()).isEqualTo("draft-model");
-        assertThat(settings.chatOptions().getReasoningEffort()).isEqualTo("low");
-        // Unstated decoding parameters are inherited from the model bean, not reset.
-        assertThat(settings.chatOptions().getTemperature()).isEqualTo(1.0);
-        assertThat(settings.chatOptions().getMaxCompletionTokens()).isEqualTo(8_192);
+        assertThat(settings.llmPreset()).isEqualTo("generationthorough");
         assertThat(settings.providerOptionsOverride()).isTrue();
         assertThat(settings.engineDefaults()).isFalse();
-        assertThat(settings.maxTurns()).isEqualTo(20);
-        assertThat(settings.maxTokensPerJob()).isEqualTo(600_000L);
+        // Core only names the preset; the worker builds the model options from its own catalog.
+        assertThat(settings.chatOptions()).isNull();
+        assertThat(settings.maxTurns()).isEqualTo(90);
     }
 
     @Test
-    void withoutAConfiguredChatModel_aProfileStillBuildsUsableOptions() {
-        HyperionAgentProperties.EffortProfileProperties draft = profile("Quick draft");
-        draft.setModel("draft-model");
+    void profileNamingTheAgentPreset_isNoProviderOverride() {
+        HyperionAgentProperties.EffortProfileProperties standard = profile("Standard");
+        standard.setLlmPreset(AGENT_PRESET);
 
-        HyperionGenerationSettings settings = new HyperionEffortProfileService(propertiesWith(Map.of("draft", draft)), (ChatOptions) null).resolve("draft");
+        HyperionGenerationSettings settings = new HyperionEffortProfileService(propertiesWith(Map.of("standard", standard))).resolve("standard");
 
-        assertThat(settings.chatOptions()).isNotNull();
-        assertThat(settings.chatOptions().getModel()).isEqualTo("draft-model");
-    }
-
-    @Test
-    void reasoningEffortNone_isAcceptedByTheOpenAiOptionsBuilder() {
-        HyperionAgentProperties.EffortProfileProperties draft = profile("Quick draft");
-        draft.setReasoningEffort("none");
-
-        HyperionGenerationSettings settings = new HyperionEffortProfileService(propertiesWith(Map.of("draft", draft)), MODEL_DEFAULTS).resolve("draft");
-
-        assertThat(((OpenAiChatOptions) settings.chatOptions()).getReasoningEffort()).isEqualTo("none");
+        assertThat(settings.llmPreset()).isEqualTo(AGENT_PRESET);
+        assertThat(settings.providerOptionsOverride()).isFalse();
+        assertThat(settings.engineDefaults()).isTrue();
     }
 
     @Test
@@ -145,7 +129,7 @@ class HyperionEffortProfileServiceTest {
         // Six entries rather than three: Map.copyOf randomizes iteration order per JVM via ImmutableCollections' salt, so a short list can match the configured order by chance.
         LinkedHashMap<String, HyperionAgentProperties.EffortProfileProperties> profiles = new LinkedHashMap<>();
         HyperionAgentProperties.EffortProfileProperties draft = profile("Quick draft");
-        draft.setModel("secret-procurement-model");
+        draft.setLlmPreset("secretprocurementpreset");
         profiles.put("draft", draft);
         profiles.put("standard", profile("Standard"));
         profiles.put("thorough", profile("Thorough"));
@@ -153,12 +137,12 @@ class HyperionEffortProfileServiceTest {
         profiles.put("experimental", profile("Experimental"));
         profiles.put("unlabelled", new HyperionAgentProperties.EffortProfileProperties());
 
-        List<ExerciseGenerationEffortProfileDTO> selectable = new HyperionEffortProfileService(propertiesWith(profiles), MODEL_DEFAULTS).selectableProfiles();
+        List<ExerciseGenerationEffortProfileDTO> selectable = new HyperionEffortProfileService(propertiesWith(profiles)).selectableProfiles();
 
         assertThat(selectable).extracting(ExerciseGenerationEffortProfileDTO::name).containsExactlyElementsOf(profiles.keySet());
-        // No model id may reach an instructor through this endpoint, and an unlabelled profile falls back to its key rather than to null.
-        assertThat(selectable).extracting(ExerciseGenerationEffortProfileDTO::label).contains("Quick draft", "unlabelled").doesNotContain("secret-procurement-model");
-        assertThat(JsonObjectMapper.get().valueToTree(selectable).toString()).doesNotContain("model", "reasoning", "maxTokens", "maxTurns");
+        // No preset or model may reach an instructor through this endpoint, and an unlabelled profile falls back to its key rather than to null.
+        assertThat(selectable).extracting(ExerciseGenerationEffortProfileDTO::label).contains("Quick draft", "unlabelled").doesNotContain("secretprocurementpreset");
+        assertThat(JsonObjectMapper.get().valueToTree(selectable).toString()).doesNotContain("preset", "model", "reasoning", "maxTokens", "maxTurns");
     }
 
     @Test
@@ -168,7 +152,7 @@ class HyperionEffortProfileServiceTest {
         HyperionAgentProperties properties = propertiesWith(Map.of("thorough", thorough));
         properties.setDefaultProfile("thorough");
 
-        assertThat(new HyperionEffortProfileService(properties, MODEL_DEFAULTS).resolve(null).maxTurns()).isEqualTo(90);
+        assertThat(new HyperionEffortProfileService(properties).resolve(null).maxTurns()).isEqualTo(90);
     }
 
     @Test
@@ -176,7 +160,7 @@ class HyperionEffortProfileServiceTest {
         HyperionAgentProperties properties = propertiesWith(Map.of("draft", profile("Quick draft")));
         properties.setDefaultProfile("thorough");
 
-        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(properties, MODEL_DEFAULTS)).withMessageContaining("default-profile");
+        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(properties)).withMessageContaining("default-profile");
     }
 
     @Test
@@ -184,8 +168,7 @@ class HyperionEffortProfileServiceTest {
         HyperionAgentProperties.EffortProfileProperties draft = profile("Quick draft");
         draft.setStagedContext("SOMETIMES");
 
-        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("draft", draft)), MODEL_DEFAULTS))
-                .withMessageContaining("staged-context");
+        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("draft", draft)))).withMessageContaining("staged-context");
     }
 
     @Test
@@ -193,28 +176,7 @@ class HyperionEffortProfileServiceTest {
         HyperionAgentProperties.EffortProfileProperties broken = profile("Broken");
         broken.setMaxTurns(0);
 
-        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("broken", broken)), MODEL_DEFAULTS))
-                .withMessageContaining("max-turns");
-    }
-
-    static Stream<Arguments> invalidProviderOptions() {
-        return Stream.of(Arguments.of("blank model", (Consumer<HyperionAgentProperties.EffortProfileProperties>) profile -> profile.setModel(" "), "model"),
-                Arguments.of("completion tokens", (Consumer<HyperionAgentProperties.EffortProfileProperties>) profile -> profile.setMaxCompletionTokens(0),
-                        "max-completion-tokens"),
-                Arguments.of("temperature", (Consumer<HyperionAgentProperties.EffortProfileProperties>) profile -> profile.setTemperature(Double.NaN), "temperature"),
-                Arguments.of("top-p", (Consumer<HyperionAgentProperties.EffortProfileProperties>) profile -> profile.setTopP(1.1), "top-p"),
-                Arguments.of("reasoning", (Consumer<HyperionAgentProperties.EffortProfileProperties>) profile -> profile.setReasoningEffort("unbounded"), "reasoning-effort"),
-                Arguments.of("verbosity", (Consumer<HyperionAgentProperties.EffortProfileProperties>) profile -> profile.setVerbosity("verbose"), "verbosity"));
-    }
-
-    @ParameterizedTest(name = "{0}")
-    @MethodSource("invalidProviderOptions")
-    void invalidProviderOptionsFailAtStartup(String scenario, Consumer<HyperionAgentProperties.EffortProfileProperties> configure, String expectedMessage) {
-        HyperionAgentProperties.EffortProfileProperties broken = profile("Broken");
-        configure.accept(broken);
-
-        assertThatIllegalArgumentException().as(scenario).isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("broken", broken)), MODEL_DEFAULTS))
-                .withMessageContaining(expectedMessage);
+        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("broken", broken)))).withMessageContaining("max-turns");
     }
 
     @Test
@@ -226,7 +188,7 @@ class HyperionEffortProfileServiceTest {
         HyperionAgentProperties properties = propertiesWith(Map.of("draft", draft, "thorough", thorough));
         properties.setMaxTokensPerJob(3_000_000L);
 
-        assertThat(new HyperionEffortProfileService(properties, MODEL_DEFAULTS).largestMaxTokensPerJob()).isEqualTo(6_000_000L);
+        assertThat(new HyperionEffortProfileService(properties).largestMaxTokensPerJob()).isEqualTo(6_000_000L);
     }
 
     @Test
@@ -236,15 +198,15 @@ class HyperionEffortProfileServiceTest {
         HyperionAgentProperties properties = propertiesWith(Map.of("draft", draft));
         properties.setMaxTokensPerJob(3_000_000L);
 
-        assertThat(new HyperionEffortProfileService(properties, MODEL_DEFAULTS).largestMaxTokensPerJob()).isEqualTo(3_000_000L);
+        assertThat(new HyperionEffortProfileService(properties).largestMaxTokensPerJob()).isEqualTo(3_000_000L);
     }
 
     @Test
     void longestMaxJobDuration_withoutConfiguredProfiles_isTheDeploymentDefault() {
-        HyperionAgentProperties properties = new HyperionAgentProperties();
+        HyperionAgentProperties properties = agentProperties();
         properties.setMaxJobDuration(Duration.ofMinutes(45));
 
-        assertThat(new HyperionEffortProfileService(properties, MODEL_DEFAULTS).longestMaxJobDuration()).isEqualTo(Duration.ofMinutes(45));
+        assertThat(new HyperionEffortProfileService(properties).longestMaxJobDuration()).isEqualTo(Duration.ofMinutes(45));
     }
 
     @Test
@@ -258,7 +220,7 @@ class HyperionEffortProfileServiceTest {
         HyperionAgentProperties properties = propertiesWith(Map.of("draft", draft, "thorough", thorough));
         properties.setMaxJobDuration(Duration.ofMinutes(45));
 
-        assertThat(new HyperionEffortProfileService(properties, MODEL_DEFAULTS).longestMaxJobDuration()).isEqualTo(Duration.ofMinutes(48));
+        assertThat(new HyperionEffortProfileService(properties).longestMaxJobDuration()).isEqualTo(Duration.ofMinutes(48));
     }
 
     @Test
@@ -269,7 +231,7 @@ class HyperionEffortProfileServiceTest {
         HyperionAgentProperties properties = propertiesWith(Map.of("draft", draft));
         properties.setMaxJobDuration(Duration.ofMinutes(45));
 
-        assertThat(new HyperionEffortProfileService(properties, MODEL_DEFAULTS).longestMaxJobDuration()).isEqualTo(Duration.ofMinutes(45));
+        assertThat(new HyperionEffortProfileService(properties).longestMaxJobDuration()).isEqualTo(Duration.ofMinutes(45));
     }
 
     @Test
@@ -279,9 +241,8 @@ class HyperionEffortProfileServiceTest {
         HyperionAgentProperties.EffortProfileProperties negative = profile("Negative");
         negative.setMaxJobDuration(Duration.ofMinutes(-5));
 
-        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("zero", zero)), MODEL_DEFAULTS))
-                .withMessageContaining("max-job-duration");
-        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("negative", negative)), MODEL_DEFAULTS))
+        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("zero", zero)))).withMessageContaining("max-job-duration");
+        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("negative", negative))))
                 .withMessageContaining("max-job-duration");
     }
 
@@ -296,7 +257,7 @@ class HyperionEffortProfileServiceTest {
             case "duration" -> custom.setMaxJobDuration(Duration.ofMinutes(20));
             default -> throw new AssertionError(field);
         }
-        var settings = new HyperionEffortProfileService(propertiesWith(Map.of("custom", custom)), MODEL_DEFAULTS).resolve("custom");
+        var settings = new HyperionEffortProfileService(propertiesWith(Map.of("custom", custom))).resolve("custom");
         assertThat(settings.engineDefaults()).isFalse();
         assertThat(settings.providerOptionsOverride()).isFalse();
         assertThat(settings.chatOptions()).isNull();
@@ -309,52 +270,25 @@ class HyperionEffortProfileServiceTest {
         }
     }
 
-    @ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(doubles = { -0.01, 2.01, Double.POSITIVE_INFINITY })
-    void rejectsTemperatureOutsideProviderRange(double temperature) {
-        var custom = profile("Custom");
-        custom.setTemperature(temperature);
-        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("custom", custom)), MODEL_DEFAULTS))
-                .withMessageContaining("temperature must be finite and between 0 and 2");
-    }
-
-    @ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(doubles = { -0.01, Double.NaN, Double.POSITIVE_INFINITY })
-    void rejectsTopPOutsideProviderRange(double topP) {
-        var custom = profile("Custom");
-        custom.setTopP(topP);
-        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("custom", custom)), MODEL_DEFAULTS))
-                .withMessageContaining("top-p must be finite and between 0 and 1");
-    }
-
     @Test
-    void providerOptionsIncludeExplicitBoundaryValuesAndVerbosity() {
+    void trimmedLabel_isPublished() {
         var custom = profile("  Detailed  ");
-        custom.setTemperature(0.0);
-        custom.setTopP(0.0);
-        custom.setVerbosity("low");
-        var service = new HyperionEffortProfileService(propertiesWith(Map.of("custom", custom)), MODEL_DEFAULTS);
-        var settings = service.resolve("custom");
-        assertThat(settings.chatOptions().getTemperature()).isZero();
-        assertThat(settings.chatOptions().getTopP()).isZero();
-        assertThat(settings.chatOptions().getVerbosity()).isEqualTo("low");
-        assertThat(settings.label()).isEqualTo("Detailed");
-        assertThat(settings.providerOptionsOverride()).isTrue();
+        assertThat(new HyperionEffortProfileService(propertiesWith(Map.of("custom", custom))).resolve("custom").label()).isEqualTo("Detailed");
     }
 
     @Test
-    void publicConstructorHandlesAbsentModelAndDefaultNameAndReportsShortestProfileDeadline() {
+    void blankDefaultNameUsesTheDeploymentDefaultAndShortestProfileDeadlineIsReported() {
         var shortProfile = profile(null);
         shortProfile.setMaxJobDuration(Duration.ofMinutes(5));
         var properties = propertiesWith(Map.of("quick", shortProfile));
         properties.setDefaultProfile(null);
-        var service = new HyperionEffortProfileService(properties, List.<org.springframework.ai.chat.model.ChatModel>of());
+        var service = new HyperionEffortProfileService(properties);
         assertThat(service.resolve(" ").name()).isEmpty();
         assertThat(service.shortestMaxJobDuration()).isEqualTo(Duration.ofMinutes(5));
         assertThat(service.selectableProfiles()).containsExactly(new ExerciseGenerationEffortProfileDTO("quick", "quick"));
         shortProfile.setMaxJobDuration(Duration.ofHours(2));
-        assertThat(new HyperionEffortProfileService(properties, MODEL_DEFAULTS).shortestMaxJobDuration()).isEqualTo(properties.getMaxJobDuration());
-        assertThat(new HyperionEffortProfileService(new HyperionAgentProperties(), MODEL_DEFAULTS).shortestMaxJobDuration()).isEqualTo(Duration.ofMinutes(45));
+        assertThat(new HyperionEffortProfileService(properties).shortestMaxJobDuration()).isEqualTo(properties.getMaxJobDuration());
+        assertThat(new HyperionEffortProfileService(agentProperties()).shortestMaxJobDuration()).isEqualTo(Duration.ofMinutes(45));
     }
 
 }

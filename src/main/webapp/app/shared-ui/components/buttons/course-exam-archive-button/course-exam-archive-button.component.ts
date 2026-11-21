@@ -38,7 +38,6 @@ export type CourseExamArchiveState = {
 @Component({
     selector: 'jhi-course-exam-archive-button',
     templateUrl: './course-exam-archive-button.component.html',
-    styleUrls: ['./course-exam-archive-button.component.scss'],
     styles: [':host {display: contents}'],
     imports: [ArtemisTranslatePipe, TranslateDirective, FeatureToggleDirective, FaIconComponent, DeleteButtonDirective, TumAetUiButtonDirective],
 })

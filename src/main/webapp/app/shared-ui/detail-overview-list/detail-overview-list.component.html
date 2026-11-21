@@ -23,7 +23,7 @@
                     @case (DetailType.ProgrammingProblemStatement) {
                         @if (detail.data.exercise?.templateParticipation) {
                             @defer (on idle) {
-                                <dd class="p-4! border border-(--tumaet-ui-border-color)!" id="detail-value-{{ detail.title }}">
+                                <dd class="p-4 border border-(--tumaet-ui-border-color)" id="detail-value-{{ detail.title }}">
                                     <jhi-programming-exercise-instructions
                                         [exercise]="detail.data.exercise"
                                         [participation]="detail.data.exercise.templateParticipation!"
@@ -31,7 +31,7 @@
                                     />
                                 </dd>
                             } @placeholder {
-                                <dd class="p-4! border border-(--tumaet-ui-border-color)! detail-defer-placeholder"></dd>
+                                <dd class="p-4 border border-(--tumaet-ui-border-color) detail-defer-placeholder"></dd>
                             }
                         }
                     }
@@ -54,7 +54,7 @@
                     @case (DetailType.Markdown) {
                         <dd id="detail-value-{{ detail.title }}">
                             @if (detail.data.innerHtml) {
-                                <div class="p-4! border border-(--tumaet-ui-border-color)! markdown-preview" [innerHTML]="detail.data.innerHtml"></div>
+                                <div class="p-4 border border-(--tumaet-ui-border-color) markdown-preview" [innerHTML]="detail.data.innerHtml"></div>
                             } @else {
                                 <ng-container *ngTemplateOutlet="noData" />
                             }
@@ -62,15 +62,15 @@
                     }
                     @case (DetailType.GradingCriteria) {
                         @defer (on idle) {
-                            <dd class="md:w-1/2 mt-6!" id="detail-value-{{ detail.title }}">
+                            <dd class="md:w-1/2 mt-6" id="detail-value-{{ detail.title }}">
                                 <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="detail.data.gradingCriteria || []" />
                             </dd>
                         } @placeholder {
-                            <dd class="md:w-1/2 mt-6! detail-defer-placeholder"></dd>
+                            <dd class="md:w-1/2 mt-6 detail-defer-placeholder"></dd>
                         }
                     }
                     @case (DetailType.ModelingEditor) {
-                        <dd class="p-4! border border-(--tumaet-ui-border-color)!" id="detail-value-{{ detail.title }}">
+                        <dd class="p-4 border border-(--tumaet-ui-border-color)" id="detail-value-{{ detail.title }}">
                             @if (!isEmpty(detail.data.umlModel?.nodes) && detail.data.diagramType && detail.data.umlModel) {
                                 @defer (on idle) {
                                     @if (detail.data.isApollonEnabled) {
@@ -84,7 +84,7 @@
                                         ></button>
                                     }
                                     <jhi-modeling-editor
-                                        class="editor-outline-background"
+                                        class="max-w-max bg-(--editor-outline-background)"
                                         [readOnly]="true"
                                         [diagramType]="detail.data.diagramType"
                                         [umlModel]="detail.data.umlModel"

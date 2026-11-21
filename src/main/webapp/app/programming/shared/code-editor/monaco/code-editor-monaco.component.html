@@ -43,15 +43,15 @@
         />
 
         @if (!selectedFile() && !loadingCount()) {
-            <p id="no-file-selected" class="text-center text-lg font-light text-text-secondary pt-12!" jhiTranslate="artemisApp.editor.selectFile"></p>
+            <p id="no-file-selected" class="text-center text-lg font-light text-muted-color pt-12" jhiTranslate="artemisApp.editor.selectFile"></p>
         } @else if (imagePreviewUrl(); as url) {
             <div id="image-file-preview" class="image-file-preview">
                 <img [src]="url" [alt]="selectedFile()!" decoding="async" />
             </div>
         } @else if (imagePreviewError()) {
-            <p id="image-file-preview-error" class="text-center text-lg font-light pt-12!" jhiTranslate="artemisApp.editor.imageFileLoadingFailed"></p>
+            <p id="image-file-preview-error" class="text-center text-lg font-light pt-12" jhiTranslate="artemisApp.editor.imageFileLoadingFailed"></p>
         } @else if (binaryFileSelected()) {
-            <p id="binary-file-selected" class="text-center text-lg font-light pt-12!" jhiTranslate="artemisApp.editor.binaryFileSelected"></p>
+            <p id="binary-file-selected" class="text-center text-lg font-light pt-12" jhiTranslate="artemisApp.editor.binaryFileSelected"></p>
         }
     </div>
 </div>

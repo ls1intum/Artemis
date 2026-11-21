@@ -29,7 +29,7 @@
                     <tumaet-ui-select
                         inputId="searchFilter"
                         [ariaLabel]="'artemisApp.dialogs.conversationDetail.memberTab.filter' | artemisTranslate"
-                        class="flex! w-full!"
+                        class="flex! w-full"
                         size="small"
                         optionLabel="label"
                         optionValue="value"
@@ -40,7 +40,7 @@
                 </div>
             </div>
             @if (isSearching()) {
-                <small class="text-sm text-muted-color" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.searching"></small>
+                <small class="leading-[calc(1.25/0.875)] text-muted-color" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.searching"></small>
             }
         </div>
         @if (members().length > 0) {
