@@ -35,7 +35,7 @@
             </a>
         </div>
     } @else {
-        <div class="flex h-full items-center justify-between gap-1 px-4!">
+        <div class="flex h-full items-center justify-between gap-1 px-4">
             <ng-container *ngTemplateOutlet="courseIdentity" />
             <a class="cover-link" [routerLink]="['/courses', courseId()]" [title]="courseTitle()"></a>
         </div>

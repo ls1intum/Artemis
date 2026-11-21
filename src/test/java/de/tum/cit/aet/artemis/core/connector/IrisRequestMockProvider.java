@@ -14,7 +14,6 @@ import java.util.function.Consumer;
 
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -27,7 +26,6 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -53,9 +51,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInter
 @Lazy
 public class IrisRequestMockProvider {
 
-    private final RestTemplate restTemplate;
-
-    private final RestTemplate shortTimeoutRestTemplate;
+    private final MockRestClientServers mockRestClientServers;
 
     private MockRestServiceServer mockServer;
 
@@ -90,16 +86,18 @@ public class IrisRequestMockProvider {
 
     private AutoCloseable closeable;
 
-    public IrisRequestMockProvider(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate shortTimeoutRestTemplate) {
-        this.restTemplate = restTemplate;
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+    public IrisRequestMockProvider(MockRestClientServers mockRestClientServers) {
+        this.mockRestClientServers = mockRestClientServers;
     }
 
     public void enableMockingOfRequests() {
-        // Use unordered mode so tests don't fail due to request ordering
+        // The servers of MockRestClientServers are unordered, so tests don't fail due to request ordering
         // (e.g., when cleanup sends DELETE before processing sends INGEST)
-        mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).build();
-        shortTimeoutMockServer = MockRestServiceServer.bindTo(shortTimeoutRestTemplate).ignoreExpectOrder(true).build();
+        mockServer = mockRestClientServers.serverOf("pyrisRestClient");
+        shortTimeoutMockServer = mockRestClientServers.serverOf("shortTimeoutPyrisRestClient");
+        // The servers live as long as the context, so a test starts from a clean one, like the fresh server that it replaces.
+        mockServer.reset();
+        shortTimeoutMockServer.reset();
         closeable = MockitoAnnotations.openMocks(this);
     }
 

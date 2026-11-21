@@ -1,6 +1,6 @@
 <div class="h-[calc(min(90dvh,700px)_-_6rem)]">
     @if (isLoading()) {
-        <div class="m-6! flex justify-center">
+        <div class="m-6 flex justify-center">
             <tumaet-ui-progress-spinner data-testid="loading-spinner" [ariaLabel]="'loading' | artemisTranslate" />
         </div>
     } @else if (competencyGraph()) {

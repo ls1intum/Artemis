@@ -79,9 +79,8 @@ public class AgentLoopRunner {
     private static final int SUMMARY_MAX_OUTPUT_TOKENS = 4_096;
 
     /**
-     * Fallback per-turn completion cap for the main agent call, bounding a single tool-calling step's cost/latency. A deployment can override it with
-     * {@code spring.ai.openai.chat.options.max-tokens} or {@code spring.ai.openai.chat.options.max-completion-tokens} (see
-     * {@link #configuredTurnTokenLimit()}).
+     * Fallback per-turn completion cap for the main agent call, bounding a single tool-calling step's cost/latency. The LLM preset of the run can override it
+     * with {@code max-tokens} or {@code max-completion-tokens} (see {@link #configuredTurnTokenLimit()}).
      */
     private static final int TURN_MAX_OUTPUT_TOKENS = 16_384;
 

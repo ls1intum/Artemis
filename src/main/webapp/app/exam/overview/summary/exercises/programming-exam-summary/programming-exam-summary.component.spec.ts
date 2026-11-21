@@ -222,11 +222,11 @@ describe('ProgrammingExamSummaryComponent', () => {
             // 'Your Submission', 'Assessment' and 'Problem Statement'
             expect(headings).toHaveLength(3);
             headings.forEach((heading) => {
-                expect(heading.classList).toContain('text-base!');
-                expect(heading.classList).toContain('font-semibold!');
+                expect(heading.classList).toContain('text-base');
+                expect(heading.classList).toContain('font-semibold');
             });
             // the first heading sits in a flex column that already provides the gap to the code button
-            expect(headings[0].classList).toContain('m-0!');
+            expect(headings[0].classList).toContain('m-0');
             expect(headings[0].parentElement!.classList).toContain('flex-col');
             expect(headings[0].parentElement!.classList).toContain('gap-2');
         });

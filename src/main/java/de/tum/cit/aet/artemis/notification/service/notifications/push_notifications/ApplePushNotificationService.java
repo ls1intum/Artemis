@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.notification.repository.PushNotificationDeviceConfigurationRepository;
@@ -32,8 +32,9 @@ public class ApplePushNotificationService extends PushNotificationService {
     @Value("${artemis.push-notification-relay:https://hermes-staging.artemis.cit.tum.de}")
     private String relayServerBaseUrl;
 
-    public ApplePushNotificationService(PushNotificationDeviceConfigurationRepository repository, RestTemplate restTemplate, @Qualifier("taskExecutor") Executor taskExecutor) {
-        super(restTemplate, taskExecutor);
+    public ApplePushNotificationService(PushNotificationDeviceConfigurationRepository repository, @Qualifier("hermesRestClient") RestClient restClient,
+            @Qualifier("taskExecutor") Executor taskExecutor) {
+        super(restClient, taskExecutor);
         this.repository = repository;
     }
 

@@ -5,12 +5,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ResponseEntity;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.deimos.config.DeimosEnabled;
+import de.tum.cit.aet.artemis.deimos.config.DeimosLlmConfiguration;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmRequest;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmResponse;
 
@@ -23,8 +25,8 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
 
     private final ChatClient chatClient;
 
-    public DefaultDeimosLlmClient(@Qualifier("deimosChatClient") ChatClient chatClient) {
-        this.chatClient = chatClient;
+    public DefaultDeimosLlmClient(LlmClientService llmClientService, @Value("${" + DeimosLlmConfiguration.KEY + "}") String preset) {
+        this.chatClient = llmClientService.chatClient(preset.strip());
     }
 
     @Override

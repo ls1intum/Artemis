@@ -3015,6 +3015,7 @@ class SpecFidelityCriticTest {
         SpecFidelityCritic critic = new SpecFidelityCritic(ChatClient.create(model), objectMapper, new PromptTemplates(), "deployment-model", Duration.ZERO,
                 ProviderFailureCooldown.disabled(), 128_000, defaults);
         HyperionGenerationSettings settings = new HyperionGenerationSettings("thorough", "Thorough", 90, Duration.ofMinutes(60), 6_000_000L, true, "CONTINUOUS", 96_000,
+                "testpreset",
                 OpenAiChatOptions.builder().model("thorough-model").reasoningEffort("low").temperature(0.2).topP(0.7).verbosity("low").maxCompletionTokens(20_000).build(), false,
                 true);
 
@@ -3037,8 +3038,8 @@ class SpecFidelityCriticTest {
     @Test
     void forSettings_withDeploymentDefaultSettings_reusesTheSharedCritic() {
         SpecFidelityCritic critic = criticReturning(jsonResponse("{\"complete\": true, \"findings\": []}"));
-        HyperionGenerationSettings deploymentDefault = new HyperionGenerationSettings("", null, 60, Duration.ofMinutes(45), 3_000_000L, true, "CONTINUOUS", 128_000, null, true,
-                false);
+        HyperionGenerationSettings deploymentDefault = new HyperionGenerationSettings("", null, 60, Duration.ofMinutes(45), 3_000_000L, true, "CONTINUOUS", 128_000, "testpreset",
+                null, true, false);
 
         assertThat(critic.forSettings(deploymentDefault)).isSameAs(critic);
         assertThat(critic.forSettings(null)).isSameAs(critic);

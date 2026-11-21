@@ -7,7 +7,7 @@
     (hidden)="onClose()"
 >
     <div data-testid="course-operation-progress" [attr.data-status]="bufferedProgress()?.status">
-        <div class="flex items-center mb-4!">
+        <div class="flex items-center mb-4">
             @if (isInProgress()) {
                 <fa-icon [icon]="faSpinner" animation="spin" class="me-2 status-icon text-primary" />
             } @else if (isCompleted()) {
@@ -18,7 +18,7 @@
             <span class="font-medium">{{ bufferedProgress()?.currentStep || (isCompleted() ? completedMessage() : failedMessage()) }}</span>
         </div>
 
-        <div class="mb-4!">
+        <div class="mb-4">
             <tumaet-ui-progress-bar [value]="progressPercentage()" [severity]="progressSeverity()" [ariaLabel]="operationTitle()" />
         </div>
 
@@ -38,11 +38,11 @@
         }
 
         @if (bufferedProgress()?.errorMessage) {
-            <tumaet-ui-message severity="error" class="mt-4!" [text]="bufferedProgress()?.errorMessage" />
+            <tumaet-ui-message severity="error" class="mt-4" [text]="bufferedProgress()?.errorMessage" />
         }
 
         @if (isCompleted() || isFailed()) {
-            <div class="mt-4! flex justify-end">
+            <div class="mt-4 flex justify-end">
                 <button tumAetUiButton severity="secondary" type="button" data-testid="course-operation-close" (click)="onClose()">
                     {{ 'artemisApp.deletionProgress.dismiss' | artemisTranslate }}
                 </button>
