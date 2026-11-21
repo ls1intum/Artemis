@@ -1,8 +1,12 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntPredicate;
@@ -121,6 +125,39 @@ final class BuildFileSyntax {
     /** The activation of a profile, e.g. through {@code activeByDefault} or a property, which can make the profile apply without being named in the build. */
     private static final Pattern MAVEN_ACTIVATION = Pattern.compile("<activation\\s*+>");
 
+    /** A plugin of a POM, from its start tag to its end tag. */
+    private static final Pattern MAVEN_PLUGIN = Pattern.compile("<plugin\\s*+>.*?</plugin\\s*+>", Pattern.DOTALL);
+
+    private static final Pattern MAVEN_SUREFIRE = Pattern.compile("<artifactId>\\s*+maven-surefire-plugin\\s*+</artifactId>");
+
+    /** The properties of a POM; group 1 is their content. */
+    private static final Pattern MAVEN_PROPERTIES = Pattern.compile("<properties\\s*+>(.*?)</properties\\s*+>", Pattern.DOTALL);
+
+    /** A property with a plain value, e.g. {@code <aresAgentArgument>-javaagent:ares-agent.jar</aresAgentArgument>}; group 1 is its name, group 2 its value. */
+    private static final Pattern MAVEN_PROPERTY = Pattern.compile("<([A-Za-z_][\\w.\\-]*+)\\s*+>([^<]*+)</\\1\\s*+>");
+
+    /** A reference to a property, e.g. {@code ${aresAgentArgument}} or the late one of Surefire, {@code @{argLine}}; group 1 is the name. */
+    private static final Pattern MAVEN_PROPERTY_REFERENCE = Pattern.compile("[$@]\\{([A-Za-z_][\\w.\\-]*+)}");
+
+    /** The arguments Surefire passes to the test JVM, in its configuration or as its property; group 1 is their text. */
+    private static final Pattern MAVEN_ARG_LINE = Pattern.compile("<argLine\\s*+>([^<]*+)</argLine\\s*+>");
+
+    /** How often a property reference is replaced by its value at most, so that properties that refer to each other end. */
+    private static final int MAVEN_PROPERTY_DEPTH = 8;
+
+    /** A call that passes arguments to a JVM that Gradle starts, e.g. {@code jvmArgs "-javaagent:..."} or {@code jvmArgs += [...]}. */
+    private static final Pattern GRADLE_JVM_ARGS = Pattern.compile("(?<![\\w$])(?:jvmArgs|setJvmArgs|allJvmArgs|setAllJvmArgs)(?![\\w$])");
+
+    /** A class whose instances provide JVM arguments, like {@code AresJvmArguments} of the templates; group 1 is its name. */
+    private static final Pattern GRADLE_ARGUMENT_PROVIDER = Pattern
+            .compile("(?<![\\w$])class\\s++([A-Za-z_$][\\w$]*+)[^{]*?(?<![\\w$])CommandLineArgumentProvider(?![\\w$])[^{]*+\\{");
+
+    /** The registration of an argument provider with a task, e.g. {@code jvmArgumentProviders.add(aresJvmArguments)}. */
+    private static final Pattern GRADLE_PROVIDER_REGISTRATION = Pattern.compile("(?<![\\w$])jvmArgumentProviders\\s*+(?:\\.\\s*+(?:add|addAll)\\s*+\\(|<<|\\+=)");
+
+    /** An assignment to a variable or property, e.g. {@code def aresJvmArguments = objects.newInstance(AresJvmArguments)}; group 1 is its name. */
+    private static final Pattern GRADLE_ASSIGNMENT = Pattern.compile("(?<![\\w$])([A-Za-z_$][\\w$]*+)\\s*+=(?![=~])");
+
     private BuildFileSyntax() {
         throw new UnsupportedOperationException("Utility class");
     }
@@ -143,8 +180,9 @@ final class BuildFileSyntax {
      * {@code ares-agent.jar}, or, in Gradle, takes its file from the configuration that declares the Ares agent, like the templates do with
      * {@code configurations.aresAgent}. Another agent, such as JaCoCo, and text in comments do not count. Only the build file of the build tool that pins
      * the Ares version counts, see {@link SecurityPolicyRepositoryFiles#detectBuildTool(String, String)}, since another build file the repository keeps,
-     * e.g. a {@code pom.xml} next to the {@code build.gradle}, does not run; without a pin, the Gradle build counts if there is one. A Maven build that runs the
-     * tests in its own JVM attaches no agent, see {@link #runsTestsInMavenJvm(String)}.
+     * e.g. a {@code pom.xml} next to the {@code build.gradle}, does not run; without a pin, the Gradle build counts if there is one. Only an option that
+     * reaches the test JVM counts, see {@link #surefireJavaAgents(String)} and {@link #passedJavaAgents(String)}, and a Maven build that runs the tests in its
+     * own JVM attaches no agent, see {@link #runsTestsInMavenJvm(String)}.
      *
      * @param buildFiles the build files at the root of a repository
      * @return whether the build file of the repository's build tool attaches the Ares agent
@@ -154,9 +192,111 @@ final class BuildFileSyntax {
         boolean maven = buildTool.map(SecurityPolicyRepositoryFiles.BuildTool.MAVEN::equals).orElse(buildFiles.gradleBuild() == null);
         if (maven) {
             return Stream.ofNullable(buildFiles.mavenPom()).map(content -> withoutMarked(content, mavenComments(content)))
-                    .anyMatch(code -> MAVEN_ARES_AGENT.matcher(code).find() && !runsTestsInMavenJvm(code) && javaAgents(code).anyMatch(BuildFileSyntax::namesAres));
+                    .anyMatch(code -> MAVEN_ARES_AGENT.matcher(code).find() && !runsTestsInMavenJvm(code) && surefireJavaAgents(code).anyMatch(BuildFileSyntax::namesAres));
         }
         return gradleAttachesAresAgent(withoutMarked(buildFiles.gradleBuild(), gradleComments(buildFiles.gradleBuild())));
+    }
+
+    /**
+     * The {@code -javaagent} options Surefire passes to the test JVM: those of the {@code argLine} in its configuration or, if it has none, of its
+     * {@code argLine} property, with the properties they refer to replaced by their values, e.g. {@code @{argLine}} or {@code ${aresAgentArgument}}. An
+     * option in a property that no such {@code argLine} reads, in the configuration of another plugin, e.g. Failsafe, or in a profile does not count.
+     *
+     * @param code the POM without comments
+     */
+    private static Stream<String> surefireJavaAgents(String code) {
+        boolean[] ignored = mavenProfiles(code, new boolean[code.length()]);
+        MAVEN_PLUGIN.matcher(code).results().filter(plugin -> !MAVEN_SUREFIRE.matcher(plugin.group()).find())
+                .forEach(plugin -> Arrays.fill(ignored, plugin.start(), plugin.end(), true));
+        boolean[] properties = new boolean[code.length()];
+        Map<String, String> values = new HashMap<>();
+        MAVEN_PROPERTIES.matcher(code).results().filter(section -> !ignored[section.start()]).forEach(section -> {
+            Arrays.fill(properties, section.start(), section.end(), true);
+            MAVEN_PROPERTY.matcher(section.group(1)).results().forEach(property -> values.put(property.group(1), property.group(2)));
+        });
+        List<MatchResult> argLines = MAVEN_ARG_LINE.matcher(code).results().filter(argLine -> !ignored[argLine.start()]).toList();
+        // The argLine of the configuration replaces the property, which then only counts where @{argLine} or ${argLine} refers to it.
+        List<MatchResult> used = argLines.stream().anyMatch(argLine -> !properties[argLine.start()]) ? argLines.stream().filter(argLine -> !properties[argLine.start()]).toList()
+                : argLines;
+        return used.stream().map(argLine -> withPropertyValues(argLine.group(1), values)).flatMap(BuildFileSyntax::javaAgents);
+    }
+
+    private static String withPropertyValues(String text, Map<String, String> values) {
+        String replaced = text;
+        for (int round = 0; round < MAVEN_PROPERTY_DEPTH; round++) {
+            String next = MAVEN_PROPERTY_REFERENCE.matcher(replaced).replaceAll(reference -> Matcher.quoteReplacement(values.getOrDefault(reference.group(1), reference.group())));
+            if (next.equals(replaced)) {
+                break;
+            }
+            replaced = next;
+        }
+        return replaced;
+    }
+
+    /**
+     * The {@code -javaagent} options the Gradle build passes to a JVM it starts: in the arguments of {@code jvmArgs}, e.g. {@code test { jvmArgs "-javaagent:..." }},
+     * or in a {@code CommandLineArgumentProvider} whose instance {@code jvmArgumentProviders} receives, like the templates register {@code AresJvmArguments}.
+     * An option in a variable, a method or a provider that no task receives does not count.
+     *
+     * @param code the build file without comments
+     */
+    private static Stream<String> passedJavaAgents(String code) {
+        List<int[]> passed = new ArrayList<>();
+        GRADLE_JVM_ARGS.matcher(code).results().forEach(call -> passed.add(new int[] { call.start(), endOfArguments(code, call.end()) }));
+        GRADLE_ARGUMENT_PROVIDER.matcher(code).results().filter(provider -> receivesProvider(code, provider.group(1)))
+                .forEach(provider -> passed.add(new int[] { provider.end(), endOfBlock(code, provider.end()) }));
+        return JAVA_AGENT.matcher(code).results().filter(agent -> passed.stream().anyMatch(range -> range[0] <= agent.start() && agent.start() < range[1]))
+                .map(agent -> agent.group(1));
+    }
+
+    /** Whether {@code jvmArgumentProviders} receives an instance of the provider class, directly or through a variable that holds one. */
+    private static boolean receivesProvider(String code, String providerClass) {
+        Set<String> holders = new HashSet<>(Set.of(providerClass));
+        GRADLE_ASSIGNMENT.matcher(code).results().filter(assignment -> mentions(statementAfter(code, assignment.end()), Set.of(providerClass)))
+                .forEach(assignment -> holders.add(assignment.group(1)));
+        return GRADLE_PROVIDER_REGISTRATION.matcher(code).results()
+                .anyMatch(registration -> mentions(code.substring(registration.end(), endOfArguments(code, registration.end())), holders));
+    }
+
+    private static boolean mentions(String text, Set<String> names) {
+        return IDENTIFIER.matcher(text).results().map(MatchResult::group).anyMatch(names::contains);
+    }
+
+    /** The end of the statement that starts at the offset, extended to the line on which every bracket that it opens is closed again. */
+    private static int endOfArguments(String code, int offset) {
+        int end = offset + statementAfter(code, offset).length();
+        int open = openBrackets(code, offset, end);
+        while (open > 0 && end < code.length()) {
+            int next = code.indexOf('\n', end + 1);
+            next = next < 0 ? code.length() : next;
+            open += openBrackets(code, end, next);
+            end = next;
+        }
+        return end;
+    }
+
+    /** The offset of the brace that closes the block whose content starts at the offset. */
+    private static int endOfBlock(String code, int offset) {
+        int open = 1;
+        for (int index = offset; index < code.length(); index++) {
+            open += bracketChange(code.charAt(index));
+            if (open == 0) {
+                return index;
+            }
+        }
+        return code.length();
+    }
+
+    private static int openBrackets(String code, int from, int to) {
+        return code.substring(from, to).chars().map(character -> bracketChange((char) character)).sum();
+    }
+
+    private static int bracketChange(char character) {
+        return switch (character) {
+            case '(', '[', '{' -> 1;
+            case ')', ']', '}' -> -1;
+            default -> 0;
+        };
     }
 
     /**
@@ -189,7 +329,7 @@ final class BuildFileSyntax {
             // A configuration with more dependencies than the Ares agent leaves open which file an agent takes from it, e.g. JaCoCo, so the agent then has
             // to name Ares itself.
             boolean onlyTheAresAgent = DEPENDENCY_DECLARATION.matcher(code).results().filter(declaration -> configurationOf(declaration).equals(configuration)).count() == 1;
-            return javaAgents(code).anyMatch(agent -> namesAres(agent) || (onlyTheAresAgent && takesFileFrom(code, agent, configuration)));
+            return passedJavaAgents(code).anyMatch(agent -> namesAres(agent) || (onlyTheAresAgent && takesFileFrom(code, agent, configuration)));
         });
     }
 

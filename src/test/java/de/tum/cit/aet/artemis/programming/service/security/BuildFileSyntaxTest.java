@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.regex.Matcher;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -103,6 +104,42 @@ class BuildFileSyntaxTest {
         // The declaration may follow the brace that opens the block of dependencies on the same line.
         assertThat(BuildFileSyntax.attachesAresAgent(gradle(direct.replace("dependencies {\n    agent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}",
                 "dependencies { agent(\"de.tum.cit.ase:ares:${aresVersion}:agent\") }")))).isTrue();
+    }
+
+    @Test
+    void aJavaAgentInAPropertyCountsOnlyIfTheArgLineOfSurefireReadsIt() throws IOException {
+        String maven = Files.readString(TEMPLATES.resolve(MAVEN_TEMPLATE), StandardCharsets.UTF_8);
+        String agent = "\"-javaagent:${project.build.directory}/ares/ares-agent.jar\"";
+        String withoutAgent = maven.replace(agent, "");
+        assertThat(withoutAgent).isNotEqualTo(maven);
+        String unusedProperty = withoutAgent.replaceFirst("<properties>", "<properties><aresAgentArgument>" + Matcher.quoteReplacement(agent) + "</aresAgentArgument>");
+        String readProperty = unusedProperty.replace("@{argLine}", "@{argLine} ${aresAgentArgument}");
+
+        // A property that no argLine reads does not reach the test JVM.
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(unusedProperty))).isFalse();
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(readProperty))).isTrue();
+        // The argLine property reaches the test JVM through @{argLine} in the configuration, and not without it.
+        String argLineProperty = withoutAgent.replace("<argLine></argLine>", "<argLine>" + agent + "</argLine>");
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(argLineProperty))).isTrue();
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(argLineProperty.replace("@{argLine}", "")))).isFalse();
+        // The argLine of another plugin, e.g. Failsafe, does not reach the tests Surefire runs.
+        String failsafe = "<artifactId>maven-failsafe-plugin</artifactId><configuration><argLine>" + agent + "</argLine></configuration></plugin><plugin>";
+        String failsafeAgent = withoutAgent.replace("<artifactId>maven-surefire-plugin</artifactId>", failsafe + "<artifactId>maven-surefire-plugin</artifactId>");
+        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(failsafeAgent))).isFalse();
+    }
+
+    @Test
+    void aGradleAgentCountsOnlyIfATaskReceivesIt() throws IOException {
+        String gradle = Files.readString(TEMPLATES.resolve("test/gradle/projectTemplate/build.gradle"), StandardCharsets.UTF_8);
+        String notRegistered = gradle.replace("jvmArgumentProviders.add(aresJvmArguments)", "");
+        String direct = "dependencies {\n    agent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\n";
+        String listed = direct + "test {\n    jvmArgs += [\n        '--enable-preview',\n        \"-javaagent:${configurations.agent.singleFile}\"\n    ]\n}\n";
+
+        assertThat(notRegistered).isNotEqualTo(gradle);
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(notRegistered))).isFalse();
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(direct + "def agentArgument = \"-javaagent:${configurations.agent.singleFile}\"\n"))).isFalse();
+        // The arguments of jvmArgs may continue on the following lines.
+        assertThat(BuildFileSyntax.attachesAresAgent(gradle(listed))).isTrue();
     }
 
     @Test
