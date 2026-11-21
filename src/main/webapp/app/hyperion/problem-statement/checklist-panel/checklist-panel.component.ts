@@ -27,7 +27,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
 import { ChecklistAnalysisResponse } from 'app/openapi/model/checklist-analysis-response';
 import { ChecklistActionRequest } from 'app/openapi/model/checklist-action-request';
-import { DifficultyAssessmentDeltaEnum, DifficultyAssessmentSuggestedEnum } from 'app/openapi/model/difficulty-assessment';
+import { SuggestedDifficulty } from 'app/openapi/model/suggested-difficulty';
+import { DifficultyDelta } from 'app/openapi/model/difficulty-delta';
 import { QualityIssue } from 'app/openapi/model/quality-issue';
 import { InferredCompetency } from 'app/openapi/model/inferred-competency';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -207,7 +208,7 @@ export class ChecklistPanelComponent {
      * and the AI-suggested difficulty. Reacts immediately when the instructor adapts difficulty
      * via the checklist panel or when the exercise input changes reference.
      */
-    readonly effectiveDelta = computed((): DifficultyAssessmentDeltaEnum => {
+    readonly effectiveDelta = computed((): DifficultyDelta => {
         const suggested = this.analysisResult()?.difficultyAssessment?.suggested;
         const declared = this.localDeclaredDifficulty();
         const RANKS: Record<string, number> = { EASY: 1, MEDIUM: 2, HARD: 3 };
@@ -816,7 +817,7 @@ export class ChecklistPanelComponent {
         this.applyCompetenciesFromList(selectedInferred);
     }
 
-    adaptDifficulty(targetDifficulty: DifficultyAssessmentSuggestedEnum) {
+    adaptDifficulty(targetDifficulty: SuggestedDifficulty) {
         const current = this.exercise()?.difficulty || 'unknown';
         const assessment = this.analysisResult()?.difficultyAssessment;
         const reasoning = assessment?.reasoning || '';

@@ -1,12 +1,12 @@
 import { Dayjs } from 'dayjs/esm';
-import { CalendarEventTypeEnum } from 'app/openapi/model/calendar-event';
+import { CalendarEventType } from 'app/openapi/model/calendar-event-type';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 export class IdentifiableCalendarEvent {
     public id: string;
 
     constructor(
-        public type: CalendarEventTypeEnum,
+        public type: CalendarEventType,
         public title: string,
         public startDate: Dayjs,
         public endDate?: Dayjs,
@@ -16,7 +16,7 @@ export class IdentifiableCalendarEvent {
         this.id = generateUuid();
     }
 
-    isOfType(type: CalendarEventTypeEnum): boolean {
+    isOfType(type: CalendarEventType): boolean {
         return this.type === type;
     }
 

@@ -8,20 +8,12 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { TextBlockType } from './text-block-type';
 
 export interface TextBlock {
     id?: string;
     text?: string;
     startIndex?: number;
     endIndex?: number;
-    type?: TextBlockTypeEnum;
+    type?: TextBlockType;
 }
-
-export type TextBlockTypeEnum = 'AUTOMATIC' | 'MANUAL';
-
-export const TextBlockTypeEnum = {
-    Automatic: 'AUTOMATIC' as const,
-    Manual: 'MANUAL' as const,
-} as const;
-
-export const TextBlockTypeEnumValues = ['AUTOMATIC', 'MANUAL'] as const;

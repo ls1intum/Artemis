@@ -1,5 +1,5 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
-import { CalendarEventTypeEnum } from 'app/openapi/model/calendar-event';
+import { CalendarEventType } from 'app/openapi/model/calendar-event-type';
 import { TumAetUiButtonDirective, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -24,7 +24,7 @@ interface EventData {
     templateUrl: './calendar-event-detail-popover.component.html',
 })
 export class CalendarEventDetailPopoverComponent {
-    private static EVENT_TYPE_NAME_KEY_MAP: Record<CalendarEventTypeEnum, string> = {
+    private static EVENT_TYPE_NAME_KEY_MAP: Record<CalendarEventType, string> = {
         ['LECTURE']: 'artemisApp.calendar.eventTypeName.lecture',
         ['TUTORIAL']: 'artemisApp.calendar.eventTypeName.tutorial',
         ['EXAM']: 'artemisApp.calendar.eventTypeName.exam',

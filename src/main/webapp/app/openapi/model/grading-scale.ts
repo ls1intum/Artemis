@@ -9,21 +9,12 @@
  */
 
 import type { Bonus } from './bonus';
+import type { BonusStrategy } from './bonus-strategy';
 import type { GradeSteps } from './grade-steps';
 
 export interface GradingScale {
     id?: number;
     gradeSteps: GradeSteps;
-    bonusStrategy?: GradingScaleBonusStrategyEnum;
+    bonusStrategy?: BonusStrategy;
     bonusFrom?: Array<Bonus>;
 }
-
-export type GradingScaleBonusStrategyEnum = 'GRADES_DISCRETE' | 'GRADES_CONTINUOUS' | 'POINTS';
-
-export const GradingScaleBonusStrategyEnum = {
-    GradesDiscrete: 'GRADES_DISCRETE' as const,
-    GradesContinuous: 'GRADES_CONTINUOUS' as const,
-    Points: 'POINTS' as const,
-} as const;
-
-export const GradingScaleBonusStrategyEnumValues = ['GRADES_DISCRETE', 'GRADES_CONTINUOUS', 'POINTS'] as const;

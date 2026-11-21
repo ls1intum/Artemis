@@ -8,28 +8,14 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { InitializationState } from './initialization-state';
 import type { ParticipationExercise } from './participation-exercise';
 
 export interface Participation {
     id?: number;
     testRun?: boolean;
     type?: string;
-    initializationState?: ParticipationInitializationStateEnum;
+    initializationState?: InitializationState;
     submissionCount?: number;
     exercise?: ParticipationExercise;
 }
-
-export type ParticipationInitializationStateEnum = 'UNINITIALIZED' | 'REPO_COPIED' | 'REPO_CONFIGURED' | 'INACTIVE' | 'BUILD_PLAN_COPIED' | 'BUILD_PLAN_CONFIGURED' | 'INITIALIZED' | 'FINISHED';
-
-export const ParticipationInitializationStateEnum = {
-    Uninitialized: 'UNINITIALIZED' as const,
-    RepoCopied: 'REPO_COPIED' as const,
-    RepoConfigured: 'REPO_CONFIGURED' as const,
-    Inactive: 'INACTIVE' as const,
-    BuildPlanCopied: 'BUILD_PLAN_COPIED' as const,
-    BuildPlanConfigured: 'BUILD_PLAN_CONFIGURED' as const,
-    Initialized: 'INITIALIZED' as const,
-    Finished: 'FINISHED' as const,
-} as const;
-
-export const ParticipationInitializationStateEnumValues = ['UNINITIALIZED', 'REPO_COPIED', 'REPO_CONFIGURED', 'INACTIVE', 'BUILD_PLAN_COPIED', 'BUILD_PLAN_CONFIGURED', 'INITIALIZED', 'FINISHED'] as const;

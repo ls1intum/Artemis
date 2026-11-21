@@ -224,6 +224,46 @@ describe('AttachmentVideoUnitService', () => {
         });
     });
 
+    describe('createAttachmentVideoUnitsFromFiles', () => {
+        const url = '/api/lecture/lectures/42/attachment-video-units?keepFilename=true';
+
+        it('creates the units one after the other and emits only the last one', () => {
+            const files = ['a.pdf', 'b.pdf'].map((name) => new File(['content'], name, { type: 'application/pdf' }));
+            const emitted: (AttachmentVideoUnit | undefined)[] = [];
+            let completed = false;
+            service.createAttachmentVideoUnitsFromFiles(42, files).subscribe({ next: (u) => emitted.push(u), complete: () => (completed = true) });
+
+            // The second request starts only once the first has answered.
+            const first = httpMock.expectOne({ method: 'POST', url });
+            expect((first.request.body as FormData).get('file')).toBe(files[0]);
+            first.flush({ id: 1, type: 'attachment' });
+            const second = httpMock.expectOne({ method: 'POST', url });
+            expect((second.request.body as FormData).get('file')).toBe(files[1]);
+            second.flush({ id: 2, type: 'attachment' });
+
+            expect(emitted.map((u) => u?.id)).toEqual([2]);
+            expect(completed).toBe(true);
+        });
+
+        it('emits undefined without a request when no file is given', () => {
+            const emitted: (AttachmentVideoUnit | undefined)[] = [];
+            service.createAttachmentVideoUnitsFromFiles(42, []).subscribe((u) => emitted.push(u));
+
+            expect(emitted).toEqual([undefined]);
+        });
+
+        it('stops at the first failed upload', () => {
+            const files = ['a.pdf', 'b.pdf'].map((name) => new File(['content'], name, { type: 'application/pdf' }));
+            let error: unknown;
+            service.createAttachmentVideoUnitsFromFiles(42, files).subscribe({ error: (e) => (error = e) });
+
+            httpMock.expectOne({ method: 'POST', url }).flush(null, { status: 400, statusText: 'Bad Request' });
+
+            expect(error).toBeDefined();
+            httpMock.expectNone({ method: 'POST', url });
+        });
+    });
+
     describe('withFileName', () => {
         it('keeps a file that has the wanted name or no wanted name', () => {
             const file = new File(['a'], 'a.pdf', { type: 'application/pdf' });

@@ -3,7 +3,7 @@ import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/en
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
+import { Severity } from 'app/openapi/model/severity';
 import { TranslateService } from '@ngx-translate/core';
 
 /** Sorts comments by creation timestamp and then by id for deterministic ordering. */
@@ -142,9 +142,9 @@ type AdaptFindingTagSeverity = 'danger' | 'warn' | 'info';
 /** Maps a finding severity to its {@code tumaet-ui-tag} severity. Called once at build time so the template binds a plain field, not a per-change-detection method. */
 export function adaptFindingTagSeverity(severity: ConsistencyIssueCommentContent['severity']): AdaptFindingTagSeverity {
     switch (severity) {
-        case ConsistencyIssueSeverityEnum.High:
+        case Severity.High:
             return 'danger';
-        case ConsistencyIssueSeverityEnum.Medium:
+        case Severity.Medium:
             return 'warn';
         default:
             return 'info';

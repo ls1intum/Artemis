@@ -8,11 +8,13 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { AssessmentType } from './assessment-type';
+import type { ExerciseType } from './exercise-type';
 
 export interface RatingListItem {
     id?: number;
     rating?: number;
-    assessmentType?: RatingListItemAssessmentTypeEnum;
+    assessmentType?: AssessmentType;
     assessorLogin?: string;
     assessorName?: string;
     resultId?: number;
@@ -20,28 +22,5 @@ export interface RatingListItem {
     participationId?: number;
     exerciseId?: number;
     exerciseTitle?: string;
-    exerciseType?: RatingListItemExerciseTypeEnum;
+    exerciseType?: ExerciseType;
 }
-
-export type RatingListItemAssessmentTypeEnum = 'AUTOMATIC' | 'SEMI_AUTOMATIC' | 'MANUAL' | 'AUTOMATIC_ATHENA';
-
-export const RatingListItemAssessmentTypeEnum = {
-    Automatic: 'AUTOMATIC' as const,
-    SemiAutomatic: 'SEMI_AUTOMATIC' as const,
-    Manual: 'MANUAL' as const,
-    AutomaticAthena: 'AUTOMATIC_ATHENA' as const,
-} as const;
-
-export const RatingListItemAssessmentTypeEnumValues = ['AUTOMATIC', 'SEMI_AUTOMATIC', 'MANUAL', 'AUTOMATIC_ATHENA'] as const;
-
-export type RatingListItemExerciseTypeEnum = 'text' | 'programming' | 'modeling' | 'file-upload' | 'quiz';
-
-export const RatingListItemExerciseTypeEnum = {
-    Text: 'text' as const,
-    Programming: 'programming' as const,
-    Modeling: 'modeling' as const,
-    FileUpload: 'file-upload' as const,
-    Quiz: 'quiz' as const,
-} as const;
-
-export const RatingListItemExerciseTypeEnumValues = ['text', 'programming', 'modeling', 'file-upload', 'quiz'] as const;

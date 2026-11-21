@@ -8,7 +8,9 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { FeedbackType } from './feedback-type';
 import type { TestCase } from './test-case';
+import type { Visibility } from './visibility';
 import type { GradingInstruction } from './grading-instruction';
 
 export interface Feedback {
@@ -19,29 +21,8 @@ export interface Feedback {
     reference?: string;
     credits?: number;
     positive?: boolean;
-    type?: FeedbackTypeEnum;
-    visibility?: FeedbackVisibilityEnum;
+    type?: FeedbackType;
+    visibility?: Visibility;
     gradingInstruction?: GradingInstruction;
     testCase?: TestCase;
 }
-
-export type FeedbackTypeEnum = 'MANUAL' | 'MANUAL_UNREFERENCED' | 'AUTOMATIC_ADAPTED' | 'AUTOMATIC';
-
-export const FeedbackTypeEnum = {
-    Manual: 'MANUAL' as const,
-    ManualUnreferenced: 'MANUAL_UNREFERENCED' as const,
-    AutomaticAdapted: 'AUTOMATIC_ADAPTED' as const,
-    Automatic: 'AUTOMATIC' as const,
-} as const;
-
-export const FeedbackTypeEnumValues = ['MANUAL', 'MANUAL_UNREFERENCED', 'AUTOMATIC_ADAPTED', 'AUTOMATIC'] as const;
-
-export type FeedbackVisibilityEnum = 'ALWAYS' | 'AFTER_DUE_DATE' | 'NEVER';
-
-export const FeedbackVisibilityEnum = {
-    Always: 'ALWAYS' as const,
-    AfterDueDate: 'AFTER_DUE_DATE' as const,
-    Never: 'NEVER' as const,
-} as const;
-
-export const FeedbackVisibilityEnumValues = ['ALWAYS', 'AFTER_DUE_DATE', 'NEVER'] as const;

@@ -1,19 +1,22 @@
-import { ConsistencyIssue, ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
+import { ConsistencyIssue } from 'app/openapi/model/consistency-issue';
+import { ConsistencyIssueCategory } from 'app/openapi/model/consistency-issue-category';
+import { Severity } from 'app/openapi/model/severity';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
-import { ArtifactLocation, ArtifactLocationTypeEnum } from 'app/openapi/model/artifact-location';
+import { ArtifactLocation } from 'app/openapi/model/artifact-location';
+import { ArtifactType } from 'app/openapi/model/artifact-type';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { TranslateService } from '@ngx-translate/core';
 
 export type InlineConsistencyIssue = {
     filePath: string;
-    type: ArtifactLocationTypeEnum;
+    type: ArtifactType;
     startLine: number;
     endLine: number;
     description: string;
     suggestedFix: string;
-    category: ConsistencyIssueCategoryEnum;
-    severity: ConsistencyIssueSeverityEnum;
+    category: ConsistencyIssueCategory;
+    severity: Severity;
 };
 
 /**
@@ -135,7 +138,7 @@ export function getRepoPath(loc: ArtifactLocation): string {
  * @param repo2 Selected repository scope.
  * @returns True if both represent the same repo domain.
  */
-export function isMatchingRepository(repo1: ArtifactLocationTypeEnum, repo2: RepositoryType | 'PROBLEM_STATEMENT') {
+export function isMatchingRepository(repo1: ArtifactType, repo2: RepositoryType | 'PROBLEM_STATEMENT') {
     if (repo1 === 'TEMPLATE_REPOSITORY' && repo2 === RepositoryType.TEMPLATE) {
         return true;
     } else if (repo1 === 'SOLUTION_REPOSITORY' && repo2 === RepositoryType.SOLUTION) {
@@ -199,7 +202,7 @@ export function humanizeCategory(category: string): string {
  * @param severity Severity enum.
  * @returns Display label for severity.
  */
-export function severityToString(severity: ConsistencyIssueSeverityEnum) {
+export function severityToString(severity: Severity) {
     // Does not need to be localized, as the LLM output is english. Only and it
     // is planed to store the content on the server in the future.
     switch (severity) {
@@ -219,7 +222,7 @@ export function severityToString(severity: ConsistencyIssueSeverityEnum) {
  * @param type Artifact location type.
  * @returns Display label for artifact domain.
  */
-export function formatArtifactType(type: ArtifactLocationTypeEnum): string {
+export function formatArtifactType(type: ArtifactType): string {
     // Does not need to be localized, as the LLM output is english. Only and it
     // is planed to store the content on the server in the future.
     switch (type) {

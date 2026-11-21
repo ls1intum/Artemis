@@ -9,6 +9,7 @@
  */
 
 import type { ComplaintResponse } from './complaint-response';
+import type { ComplaintType } from './complaint-type';
 import type { Participant } from './participant';
 import type { ResultSimple } from './result-simple';
 
@@ -16,7 +17,7 @@ export interface Complaint {
     id?: number;
     complaintText?: string;
     submittedTime?: string;
-    complaintType?: ComplaintComplaintTypeEnum;
+    complaintType?: ComplaintType;
     complaintIsAccepted?: boolean;
     complaintResponse?: ComplaintResponse;
     result?: ResultSimple;
@@ -24,12 +25,3 @@ export interface Complaint {
     assessorKey?: string;
     assessorLabel?: string;
 }
-
-export type ComplaintComplaintTypeEnum = 'COMPLAINT' | 'MORE_FEEDBACK';
-
-export const ComplaintComplaintTypeEnum = {
-    Complaint: 'COMPLAINT' as const,
-    MoreFeedback: 'MORE_FEEDBACK' as const,
-} as const;
-
-export const ComplaintComplaintTypeEnumValues = ['COMPLAINT', 'MORE_FEEDBACK'] as const;

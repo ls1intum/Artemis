@@ -8,20 +8,9 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { ExerciseType } from './exercise-type';
 
 export interface Exercise {
     id?: number;
-    type?: ExerciseTypeEnum;
+    type?: ExerciseType;
 }
-
-export type ExerciseTypeEnum = 'text' | 'programming' | 'modeling' | 'file-upload' | 'quiz';
-
-export const ExerciseTypeEnum = {
-    Text: 'text' as const,
-    Programming: 'programming' as const,
-    Modeling: 'modeling' as const,
-    FileUpload: 'file-upload' as const,
-    Quiz: 'quiz' as const,
-} as const;
-
-export const ExerciseTypeEnumValues = ['text', 'programming', 'modeling', 'file-upload', 'quiz'] as const;
