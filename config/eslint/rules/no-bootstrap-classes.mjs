@@ -6,7 +6,7 @@
  * Only classes that are UNAMBIGUOUSLY Bootstrap-only are banned, that is they do not collide with a valid
  * Tailwind v4 utility of the same name. In particular the spacing scale (`mb-3`, `me-1`, `p-3`, `gap-2`)
  * and logical-margin utilities (`ms-*`, `me-*`) are NOT banned: they are legitimate Tailwind utilities.
- * Bootstrap gave the steps 3 to 5 other values, though, so `no-ambiguous-spacing-utility` handles those.
+ * Bootstrap gave the steps 3 to 5 other values (16, 24 and 48px against Tailwind's 12, 16 and 20px).
  * Color application is governed separately by `no-raw-tailwind-color-palette` (templates) and the stylelint
  * hex/`--bs-` ban (SCSS).
  *
@@ -55,7 +55,7 @@ const BANNED = [
     // Bootstrap semantic text colors with no brand-bound Tailwind equivalent -> text-muted-color / tokens
     /^text-muted$/,
     /^text-body(-secondary|-tertiary|-emphasis)?$/,
-    // Bootstrap greyscale text colors -> text-text-secondary / semantic token. `text-primary`/`text-white`/
+    // Bootstrap greyscale text colors -> text-muted-color / semantic token. `text-primary`/`text-white`/
     // `text-black` are NOT listed: they are also Tailwind utilities (`text-primary` is defined in tailwind.css).
     /^text-(secondary|light|dark)$/,
     // Bootstrap semantic state colors (text/border/bg) -> named state tokens, e.g. text-state-danger,

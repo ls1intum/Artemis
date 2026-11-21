@@ -150,7 +150,7 @@ describe('ComplaintResponseComponent', () => {
             const card = fixture.nativeElement.querySelector('[data-testid="complaint-response-card"]') as HTMLElement;
             expect(card).toBeTruthy();
             // The same card language as the complaint next to it and the feedback cards on the page.
-            for (const utility of ['rounded-lg', 'border', 'border-(--border-color)', 'bg-(--module-bg)', 'p-4!']) {
+            for (const utility of ['rounded-lg', 'border', 'border-(--border-color)', 'bg-(--module-bg)', 'p-4']) {
                 expect(card.classList.contains(utility), utility).toBe(true);
             }
         });

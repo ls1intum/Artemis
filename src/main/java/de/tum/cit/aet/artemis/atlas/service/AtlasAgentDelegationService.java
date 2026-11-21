@@ -12,19 +12,15 @@ import org.springframework.ai.chat.client.advisor.ToolCallingAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.model.tool.DefaultToolCallingManager;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasAgentProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
-import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
-import de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration;
-import de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasResponsesChatClient;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLlmPresets;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 
 /**
  * Shared LLM delegation harness for every Atlas agent flow.
@@ -39,10 +35,10 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasR
  * <li>the chat flow renders its system prompt from a template, appends a course-id breadcrumb, and
  * — when a {@link ChatMemory} bean is configured and {@code saveToMemory} is {@code true} — wires in
  * a {@link MessageChatMemoryAdvisor} so the conversation history replays on every round, using the
- * chat-model deployment / temperature from {@link AtlasAgentProperties};</li>
- * <li>the orchestrator flow supplies an already-assembled system prompt and its own
- * {@link OpenAiChatOptions} (orchestrator deployment / temperature / reasoning effort), runs with
- * memory OFF so each round is a fresh call, and records each provider response before usage is combined.</li>
+ * {@code chat} preset;</li>
+ * <li>the orchestrator and worker flows supply an already-assembled system prompt, use the {@code orchestrator}
+ * and {@code worker} presets, run with memory OFF so each round is a fresh call, and record each provider
+ * response before usage is combined.</li>
  * </ul>
  * Extracted from {@code AtlasAgentService} to break a circular dependency with
  * {@code AtlasAgentToolsService}.
@@ -52,65 +48,49 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasR
 @Conditional(AtlasLLMEnabled.class)
 public class AtlasAgentDelegationService {
 
-    @Nullable
     private final ChatClient chatClient;
+
+    private final ChatClient orchestratorClient;
+
+    private final ChatClient workerClient;
 
     private final AtlasPromptTemplateService templateService;
 
     @Nullable
     private final ChatMemory chatMemory;
 
-    private final String deploymentName;
-
-    private final double temperature;
-
-    @Nullable
-    private final ChatClient responsesChatClient;
-
-    private final boolean responsesApiEnabled;
-
     private final ToolCallingAdvisor autonomousToolCallingAdvisor;
 
     /**
-     * Creates the delegation harness.
+     * Creates the delegation harness with the chat clients of the Atlas presets.
      *
-     * @param chatClient      the configured chat client, or {@code null} when no AI model is available
-     * @param templateService renders system-prompt templates from the classpath
-     * @param chatMemory      the conversation memory store, or {@code null} when memory is disabled
-     * @param properties      chat-agent model configuration (deployment name and temperature)
+     * @param llmClientService builds the chat clients of the presets
+     * @param presets          the Atlas preset assignments
+     * @param templateService  renders system-prompt templates from the classpath
+     * @param chatMemory       the conversation memory store, or {@code null} when memory is disabled
      */
-    public AtlasAgentDelegationService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ChatMemory chatMemory,
-            AtlasAgentProperties properties) {
-        this(chatClient, templateService, chatMemory, properties, null, false);
+    @Autowired
+    public AtlasAgentDelegationService(LlmClientService llmClientService, AtlasLlmPresets presets, AtlasPromptTemplateService templateService, @Nullable ChatMemory chatMemory) {
+        this(llmClientService.chatClient(presets.chatPreset()), llmClientService.chatClient(presets.orchestratorPreset()), llmClientService.chatClient(presets.workerPreset()),
+                templateService, chatMemory);
     }
 
     /**
-     * Creates the Spring-managed delegation harness with the optional autonomous Responses client.
+     * Creates the delegation harness with explicit chat clients.
      *
-     * @param chatClient             shared ChatClient used by interactive Atlas flows
-     * @param templateService        classpath prompt renderer
-     * @param chatMemory             optional interactive conversation memory
-     * @param properties             interactive chat model configuration
-     * @param orchestratorProperties autonomous model and feature-switch configuration
-     * @param responsesChatClient    optional holder for the isolated Responses ChatClient
+     * @param chatClient         client of the interactive chat agent
+     * @param orchestratorClient client of the autonomous orchestrator
+     * @param workerClient       client of the stateless workers
+     * @param templateService    renders system-prompt templates from the classpath
+     * @param chatMemory         the conversation memory store, or {@code null} when memory is disabled
      */
-    @Autowired
-    public AtlasAgentDelegationService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ChatMemory chatMemory,
-            AtlasAgentProperties properties, AtlasOrchestratorProperties orchestratorProperties,
-            @Qualifier(AtlasResponsesApiConfiguration.ATLAS_RESPONSES_CHAT_CLIENT) @Nullable AtlasResponsesChatClient responsesChatClient) {
-        this(chatClient, templateService, chatMemory, properties, responsesChatClient == null ? null : responsesChatClient.chatClient(),
-                orchestratorProperties.responsesApiEnabled());
-    }
-
-    private AtlasAgentDelegationService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ChatMemory chatMemory,
-            AtlasAgentProperties properties, @Nullable ChatClient responsesChatClient, boolean responsesApiEnabled) {
+    public AtlasAgentDelegationService(ChatClient chatClient, ChatClient orchestratorClient, ChatClient workerClient, AtlasPromptTemplateService templateService,
+            @Nullable ChatMemory chatMemory) {
         this.chatClient = chatClient;
+        this.orchestratorClient = orchestratorClient;
+        this.workerClient = workerClient;
         this.templateService = templateService;
         this.chatMemory = chatMemory;
-        this.deploymentName = properties.chatModel();
-        this.temperature = properties.temperature();
-        this.responsesChatClient = responsesChatClient;
-        this.responsesApiEnabled = responsesApiEnabled;
         this.autonomousToolCallingAdvisor = ToolCallingAdvisor.builder()
                 .toolCallingManager(DefaultToolCallingManager.builder().unlimitedCallsPerTool().unlimitedTotalToolCalls().resolutionFallbackEnabled(false).build()).build();
     }
@@ -129,55 +109,55 @@ public class AtlasAgentDelegationService {
      * @return the assistant's text response (never {@code null}; empty string when the model returned no content)
      */
     String delegateToAgent(String promptResourcePath, String message, Long courseId, String sessionId, boolean saveToMemory, @Nullable ToolCallbackProvider toolCallbackProvider) {
-        if (chatClient == null) {
-            throw new IllegalStateException("ChatClient is not configured. Atlas Agent delegation is unavailable.");
-        }
-
         String systemPrompt = templateService.render(promptResourcePath, Map.of());
         String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
 
-        OpenAiChatOptions.Builder options = OpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature);
         // The model cannot supply or override this course scope when using shared content read tools.
         Map<String, Object> toolContext = Map.of(OrchestratorToolContextKeys.COURSE_ID_KEY, courseId);
-        ChatResponse chatResponse = invoke(chatClient, systemPromptWithContext, message, options, saveToMemory, sessionId, toolContext, null, toolCallbackProvider);
+        ChatResponse chatResponse = invoke(chatClient, systemPromptWithContext, message, saveToMemory, sessionId, toolContext, null, toolCallbackProvider);
         return extractContent(chatResponse);
     }
 
     /**
-     * Delegate an autonomous orchestrator round: invoke the LLM with an already-assembled system
-     * prompt, the orchestrator's own {@link OpenAiChatOptions}, the mutable tool context, and the
-     * supplied tool providers, with chat memory OFF (each round is a fresh call). Returns the raw
-     * {@link ChatResponse} for completion checks. Individual responses are recorded through the callback.
+     * Delegate an autonomous orchestrator round: invoke the {@code orchestrator} preset with an already-assembled
+     * system prompt, the mutable tool context, and the supplied tool providers, with chat memory OFF (each round is a
+     * fresh call). Returns the raw {@link ChatResponse} for completion checks. Individual responses are recorded through
+     * the callback.
      *
      * @param systemPrompt          the fully-assembled system prompt (no breadcrumb is appended here)
      * @param userMessage           the user-role message
-     * @param options               the orchestrator chat options (deployment / temperature / reasoning effort)
      * @param toolContextMap        mutable map stashed into the request's tool context; mutations performed
      *                                  inside tool bodies are visible to the caller after this method returns
      * @param usageRecorder         records each model response before tool execution and usage accumulation
      * @param toolCallbackProviders the tool providers to expose to the model (read + planning)
      * @return the raw {@link ChatResponse} (never {@code null})
      */
-    ChatResponse delegateOrchestratorRound(String systemPrompt, String userMessage, OpenAiChatOptions.Builder options, Map<String, Object> toolContextMap,
-            Consumer<ChatResponse> usageRecorder, ToolCallbackProvider... toolCallbackProviders) {
-        ChatClient selectedClient = responsesApiEnabled ? responsesChatClient : chatClient;
-        if (selectedClient == null) {
-            String clientName = responsesApiEnabled ? "Atlas Responses ChatClient" : "ChatClient";
-            throw new IllegalStateException(clientName + " is not configured. Atlas Agent delegation is unavailable.");
-        }
-        return invoke(selectedClient, systemPrompt, userMessage, options, false, null, toolContextMap, usageRecorder, toolCallbackProviders);
+    ChatResponse delegateOrchestratorRound(String systemPrompt, String userMessage, Map<String, Object> toolContextMap, Consumer<ChatResponse> usageRecorder,
+            ToolCallbackProvider... toolCallbackProviders) {
+        return invoke(orchestratorClient, systemPrompt, userMessage, false, null, toolContextMap, usageRecorder, toolCallbackProviders);
     }
 
-    /** @return whether the configured autonomous transport is available */
-    public boolean isOrchestratorAvailable() {
-        return (responsesApiEnabled ? responsesChatClient : chatClient) != null;
+    /**
+     * Delegate one stateless worker round with the {@code worker} preset; otherwise like
+     * {@link #delegateOrchestratorRound}.
+     *
+     * @param systemPrompt          the fully-assembled system prompt
+     * @param userMessage           the user-role message
+     * @param toolContextMap        mutable tool context of the worker
+     * @param usageRecorder         records each model response before tool execution and usage accumulation
+     * @param toolCallbackProviders the tool providers to expose to the worker
+     * @return the raw {@link ChatResponse} (never {@code null})
+     */
+    ChatResponse delegateWorkerRound(String systemPrompt, String userMessage, Map<String, Object> toolContextMap, Consumer<ChatResponse> usageRecorder,
+            ToolCallbackProvider... toolCallbackProviders) {
+        return invoke(workerClient, systemPrompt, userMessage, false, null, toolContextMap, usageRecorder, toolCallbackProviders);
     }
 
     /**
      * Single shared invocation path: builds the (optionally memory-advised) client, assembles the
      * request spec with options / tool context / tool callbacks, and returns the {@link ChatResponse}.
      */
-    private ChatResponse invoke(ChatClient baseClient, String systemPrompt, String userMessage, OpenAiChatOptions.Builder options, boolean saveToMemory, @Nullable String sessionId,
+    private ChatResponse invoke(ChatClient baseClient, String systemPrompt, String userMessage, boolean saveToMemory, @Nullable String sessionId,
             @Nullable Map<String, Object> toolContextMap, @Nullable Consumer<ChatResponse> usageRecorder, @Nullable ToolCallbackProvider... toolCallbackProviders) {
         boolean autonomous = usageRecorder != null;
         ChatClient.Builder clientBuilder = baseClient.mutate();
@@ -187,7 +167,7 @@ public class AtlasAgentDelegationService {
         }
         ChatClient sessionClient = clientBuilder.build();
 
-        ChatClientRequestSpec promptSpec = sessionClient.prompt().system(systemPrompt).user(userMessage).options(options);
+        ChatClientRequestSpec promptSpec = sessionClient.prompt().system(systemPrompt).user(userMessage);
 
         AtlasToolCallBudget budget = null;
         if (autonomous) {

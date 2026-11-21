@@ -226,9 +226,9 @@ containers:
     image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
     imagePullPolicy: {{ $.Values.image.pullPolicy }}
     command: ["sh", "-c"]
-    # The image ships the WAR exploded at /opt/artemis/app (thin war + app/lib), see deployment/docker/artemis/Dockerfile.
+    # The image ships the WAR exploded at /opt/artemis/app (thin jar + app/lib), see deployment/docker/artemis/Dockerfile.
     # The command is overridden only to give each role its own heap; keep the module flags in javaOpts in sync with that CMD.
-    args: ["exec java $ARTEMIS_JAVA_OPTS -jar /opt/artemis/app/Artemis.war"]
+    args: ["exec java $ARTEMIS_JAVA_OPTS -jar /opt/artemis/app/Artemis.jar"]
     securityContext:
       {{- toYaml $.Values.artemis.containerSecurityContext | nindent 6 }}
     env:

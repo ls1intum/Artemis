@@ -11,7 +11,7 @@
             "linksNotAllowed": "Symbolic links and submodules are not allowed: {{ path }}",
             "fileTooLarge": "The file exceeds the limit of {{ limit }} bytes: {{ path }}"
         },
-        "quizQuestionPoolModelNotConfigured": "Smart Quizzes is not set up on this server. Ask your administrator to configure a local language model.",
+        "quizQuestionPoolModelNotConfigured": "Smart Quizzes is not set up on this server. Ask your administrator to assign its language models.",
         "tumLiveUploadInProgress": "This video is already being uploaded or converted by TUM.Live.",
         "tumLiveUploadNoLongerPending": "This upload is no longer pending.",
         "courseRequestTooManyPending": "You already have the maximum number of course requests that wait for a decision. Please wait for a decision before you send another one.",
@@ -315,8 +315,6 @@
         },
         "ProblemStatementGeneration": {
             "generatedProblemStatementTooLong": "The generated problem statement is too long. Please try again with a different prompt.",
-            "chatClientNotConfigured": "AI generation is currently unavailable. Please contact your administrator.",
-            "chatClientNotConfigured_detail": "AI chat client is not configured.",
             "problemStatementGenerationFailed": "Failed to generate problem statement. Please try again later.",
             "problemStatementGenerationNull": "The AI returned an empty response. Please try again.",
             "userPromptEmpty": "The user prompt cannot be empty.",
@@ -326,8 +324,6 @@
             "problemStatementEmpty": "The problem statement cannot be empty.",
             "userPromptEmpty": "The user prompt cannot be empty.",
             "userPromptTooLong": "The user prompt is too long. Please shorten your instructions and try again.",
-            "chatClientNotConfigured": "AI refinement is currently unavailable. Please contact your administrator.",
-            "chatClientNotConfigured_detail": "AI chat client is not configured.",
             "problemStatementTooLong": "The problem statement is too long. Please reduce the content and try again.",
             "problemStatementRefinementNull": "The AI returned an empty response. Please try again.",
             "refinedProblemStatementTooLong": "The refined problem statement is too long. Please adjust the refinement instructions and try again.",
@@ -340,8 +336,6 @@
             "instructionTooLong": "The refinement instruction is too long. Please shorten it and try again."
         },
         "ProblemStatementRewrite": {
-            "chatClientNotConfigured": "AI rewrite is currently unavailable. Please contact your administrator.",
-            "chatClientNotConfigured_detail": "AI chat client is not configured.",
             "problemStatementEmpty": "The problem statement cannot be empty.",
             "problemStatementRewriteFailed": "Failed to rewrite problem statement. Please try again later.",
             "problemStatementRewriteNull": "The AI returned an empty response. Please try again.",

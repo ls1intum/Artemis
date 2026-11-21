@@ -209,7 +209,7 @@
             "yourSolution": "Your Solution",
             "cleanup": {
                 "title": "Cleanup",
-                "question": "Are you sure you want to clean up the exam <strong>{{ title }}</strong>? This will delete all student programming exercise repositories in the exam. This action can <strong class='text-danger'>NOT</strong> be undone!"
+                "question": "Are you sure you want to clean up the exam <strong>{{ title }}</strong>? This will delete all student programming exercise repositories in the exam. This action can <strong class='text-state-danger'>NOT</strong> be undone!"
             },
             "validation": {
                 "startAndEndMustBeSet": "The start and end date must be set for the exam",
@@ -483,7 +483,7 @@
             "setWorkingTimeRelative": "Addition relative to regular working time:",
             "removeAllStudents": {
                 "title": "Remove all students",
-                "question": "Are you sure you want to remove <strong class='text-danger'>all students</strong> from the exam?",
+                "question": "Are you sure you want to remove <strong class='text-state-danger'>all students</strong> from the exam?",
                 "confirmationText": "Please enter the name of the exam to confirm removing all students from the exam!"
             },
             "confirmDialog": {
@@ -492,7 +492,7 @@
                 "question": "Are you sure you want to change the submission state?",
                 "submitText": "This will set the submission date of the exam to this moment, and the submission state to 'submitted'. You will be allowed to un-submit the exam later.\n",
                 "unSubmitText": "This will delete the submission date and set the submission state to 'unsubmitted'.",
-                "warningRemove": "<strong class='text-danger'>Recovering the original submission date will not be possible after deletion!</strong>",
+                "warningRemove": "<strong class='text-state-danger'>Recovering the original submission date will not be possible after deletion!</strong>",
                 "submit": "Submit",
                 "unsubmit": "Unsubmit"
             },
@@ -759,7 +759,7 @@
                 "titleTooLong": "The title is too long. Please enter at most 255 characters.",
                 "delete": {
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will also be deleted.",
-                    "questionLocalVC": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will be deleted.<br>All student, template, solution, test, and auxiliary repositories and build plans will also be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first! ",
+                    "questionLocalVC": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will be deleted.<br>All student, template, solution, test, and auxiliary repositories and build plans will also be deleted.<br>Be careful: this can <strong class='text-state-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first! ",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm.",
                     "summary": {
                         "title": "What will be deleted"
@@ -979,7 +979,7 @@
                     "sameIpAddressDifferentStudentExams": "Different student exams with the same IP address",
                     "differentIpAddressesSameStudentExam": "Different IP addresses for the same student exam",
                     "differentBrowserFingerprintsSameStudentExam": "Different browser fingerprints for the same student exam",
-                    "ipOutsideOfRange": "IP address outside of range <span class=\"text-info\">{{ range }}</span>"
+                    "ipOutsideOfRange": "IP address outside of range <span class=\"text-state-info\">{{ range }}</span>"
                 }
             },
             "plagiarismCasesOverview": {

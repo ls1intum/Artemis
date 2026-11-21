@@ -11,7 +11,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/foundation/types/sidebar';
 @Component({
     selector: 'jhi-small-sidebar-card',
     templateUrl: './sidebar-card-small.component.html',
-    styleUrls: ['./sidebar-card-small.component.scss'],
+    styleUrls: ['../sidebar-card.scss'],
     imports: [NgClass, RouterLink, RouterLinkActive, SidebarCardItemComponent, ConversationOptionsComponent],
 })
 export class SidebarCardSmallComponent {

@@ -66,8 +66,8 @@ describe('ExamGeneralInformationComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const title = (fixture.nativeElement as HTMLElement).querySelector('#general-information-title')!;
-        expect(title.classList).toContain('text-base!');
-        expect(title.classList).toContain('font-semibold!');
+        expect(title.classList).toContain('text-base');
+        expect(title.classList).toContain('font-semibold');
         expect(title.getAttribute('data-testid')).toBe('exam-summary-heading');
     });
 

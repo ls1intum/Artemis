@@ -33,7 +33,6 @@ import org.springframework.ai.tool.ToolCallbackProvider;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasAgentProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphEdgeDTO;
@@ -75,12 +74,6 @@ class AtlasAgentServiceTest {
     @Mock
     private ToolCallbackProvider exerciseMapperToolCallbackProvider;
 
-    private static final String TEST_DEPLOYMENT_NAME = "gpt-4o";
-
-    private static final double TEST_TEMPERATURE = 0.2;
-
-    private static final AtlasAgentProperties TEST_PROPERTIES = new AtlasAgentProperties(TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE);
-
     private AtlasAgentPreviewService previewService;
 
     private AtlasAgentService atlasAgentService;
@@ -92,8 +85,8 @@ class AtlasAgentServiceTest {
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         previewService = new AtlasAgentPreviewService(chatMemory);
-        AtlasAgentDelegationService delegationService = new AtlasAgentDelegationService(chatClient, templateService, chatMemory, TEST_PROPERTIES);
-        atlasAgentService = new AtlasAgentService(chatClient, chatMemory, delegationService, new AtlasToolSurface(mainAgentToolCallbackProvider),
+        AtlasAgentDelegationService delegationService = new AtlasAgentDelegationService(chatClient, chatClient, chatClient, templateService, chatMemory);
+        atlasAgentService = new AtlasAgentService(chatMemory, delegationService, new AtlasToolSurface(mainAgentToolCallbackProvider),
                 new AtlasToolSurface(competencyExpertToolCallbackProvider), new AtlasToolSurface(competencyMapperToolCallbackProvider),
                 new AtlasToolSurface(exerciseMapperToolCallbackProvider), executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
     }
@@ -199,10 +192,11 @@ class AtlasAgentServiceTest {
     @Test
     void testGetConversationHistoryAsDTO_NullChatMemory() {
         String sessionId = "course_456_user_789";
-        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), null,
-                new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, null, TEST_PROPERTIES), new AtlasToolSurface(mainAgentToolCallbackProvider),
-                new AtlasToolSurface(competencyExpertToolCallbackProvider), new AtlasToolSurface(competencyMapperToolCallbackProvider),
-                new AtlasToolSurface(exerciseMapperToolCallbackProvider), executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(null,
+                new AtlasAgentDelegationService(ChatClient.create(chatModel), ChatClient.create(chatModel), ChatClient.create(chatModel), templateService, null),
+                new AtlasToolSurface(mainAgentToolCallbackProvider), new AtlasToolSurface(competencyExpertToolCallbackProvider),
+                new AtlasToolSurface(competencyMapperToolCallbackProvider), new AtlasToolSurface(exerciseMapperToolCallbackProvider), executionPlanStateManagerService,
+                atlasAgentSessionCacheService, previewService);
 
         List<AtlasAgentHistoryMessageDTO> result = serviceWithNullMemory.getConversationHistoryAsDTO(sessionId);
 
@@ -304,10 +298,11 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldHandleCompetencyExpertToolsServiceNull() {
-            AtlasAgentService serviceWithoutTools = new AtlasAgentService(ChatClient.create(chatModel), null,
-                    new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, null, TEST_PROPERTIES), new AtlasToolSurface(mainAgentToolCallbackProvider),
-                    new AtlasToolSurface(competencyExpertToolCallbackProvider), new AtlasToolSurface(competencyMapperToolCallbackProvider),
-                    new AtlasToolSurface(exerciseMapperToolCallbackProvider), executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
+            AtlasAgentService serviceWithoutTools = new AtlasAgentService(null,
+                    new AtlasAgentDelegationService(ChatClient.create(chatModel), ChatClient.create(chatModel), ChatClient.create(chatModel), templateService, null),
+                    new AtlasToolSurface(mainAgentToolCallbackProvider), new AtlasToolSurface(competencyExpertToolCallbackProvider),
+                    new AtlasToolSurface(competencyMapperToolCallbackProvider), new AtlasToolSurface(exerciseMapperToolCallbackProvider), executionPlanStateManagerService,
+                    atlasAgentSessionCacheService, previewService);
 
             String testMessage = "Test message";
             Long courseId = 123L;
@@ -699,24 +694,6 @@ class AtlasAgentServiceTest {
     }
 
     @Nested
-    class ProcessChatMessageWithNullChatClient {
-
-        @Test
-        void shouldReturnUnavailableMessageWhenChatClientIsNull() {
-            AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, chatMemory, new AtlasAgentDelegationService(null, templateService, chatMemory, TEST_PROPERTIES),
-                    new AtlasToolSurface(mainAgentToolCallbackProvider), new AtlasToolSurface(competencyExpertToolCallbackProvider),
-                    new AtlasToolSurface(competencyMapperToolCallbackProvider), new AtlasToolSurface(exerciseMapperToolCallbackProvider), executionPlanStateManagerService,
-                    atlasAgentSessionCacheService, previewService);
-
-            AtlasAgentChatResponseDTO result = serviceWithNullClient.processChatMessage("Test message", 123L, "test_session");
-
-            assertThat(result).isNotNull();
-            assertThat(result.message()).contains("Atlas Agent is not available");
-            assertThat(result.competenciesModified()).isFalse();
-        }
-    }
-
-    @Nested
     class UtilityMethods {
 
         @Test
@@ -725,20 +702,12 @@ class AtlasAgentServiceTest {
         }
 
         @Test
-        void shouldReturnFalseWhenChatClientNull() {
-            AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, chatMemory, new AtlasAgentDelegationService(null, templateService, chatMemory, TEST_PROPERTIES),
+        void shouldReturnFalseWhenChatMemoryNull() {
+            AtlasAgentService serviceWithNullMemory = new AtlasAgentService(null,
+                    new AtlasAgentDelegationService(ChatClient.create(chatModel), ChatClient.create(chatModel), ChatClient.create(chatModel), templateService, null),
                     new AtlasToolSurface(mainAgentToolCallbackProvider), new AtlasToolSurface(competencyExpertToolCallbackProvider),
                     new AtlasToolSurface(competencyMapperToolCallbackProvider), new AtlasToolSurface(exerciseMapperToolCallbackProvider), executionPlanStateManagerService,
                     atlasAgentSessionCacheService, previewService);
-            assertThat(serviceWithNullClient.isAvailable()).isFalse();
-        }
-
-        @Test
-        void shouldReturnFalseWhenChatMemoryNull() {
-            AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), null,
-                    new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, null, TEST_PROPERTIES), new AtlasToolSurface(mainAgentToolCallbackProvider),
-                    new AtlasToolSurface(competencyExpertToolCallbackProvider), new AtlasToolSurface(competencyMapperToolCallbackProvider),
-                    new AtlasToolSurface(exerciseMapperToolCallbackProvider), executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
             assertThat(serviceWithNullMemory.isAvailable()).isFalse();
         }
 
