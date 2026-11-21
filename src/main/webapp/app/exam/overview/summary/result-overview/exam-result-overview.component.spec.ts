@@ -583,9 +583,8 @@ describe('ExamResultOverviewComponent', () => {
             render();
 
             const heading: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-summary-heading"]');
-            // the important modifiers are needed because the unlayered global heading rules would win otherwise
-            expect(heading.classList).toContain('text-base!');
-            expect(heading.classList).toContain('font-semibold!');
+            expect(heading.classList).toContain('text-base');
+            expect(heading.classList).toContain('font-semibold');
         });
 
         describe('points and grade summary', () => {
@@ -688,9 +687,9 @@ describe('ExamResultOverviewComponent', () => {
                     expect(table().classList).toContain(`[&_${cell}]:px-2`);
                     expect(table().classList).toContain(`[&_${cell}]:py-1.5`);
                 }
-                // the reboot resets the borders of th and tfoot in an unlayered rule, so the utilities have to be important
+                // the utility targets cells of a kit table, whose own cell styles are outside a cascade layer, so it has to be important
                 expect(table().classList).toContain('[&_tbody_th]:border-b!');
-                expect(table().querySelector('tfoot')!.classList).toContain('border-t-2!');
+                expect(table().querySelector('tfoot')!.classList).toContain('border-t-2');
             });
 
             it('should centre the numeric headers over their centred values and keep the text columns start aligned', () => {

@@ -185,7 +185,7 @@ class OpenAiResponsesChatModelTest {
 
     @Test
     void rejectsIncompatibleOptionsAndMissingModelBeforeDispatch() {
-        var adapter = new OpenAiResponsesChatModel(openAIClient, new JsonMapper(), null);
+        var adapter = new OpenAiResponsesChatModel(openAIClient, new JsonMapper(), (String) null);
         assertThatThrownBy(() -> adapter.call(new Prompt("work", org.springframework.ai.chat.prompt.ChatOptions.builder().model("luna").build())))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("requires OpenAiChatOptions");
         assertThatThrownBy(() -> adapter.call(new Prompt("work", OpenAiChatOptions.builder().model("").build()))).isInstanceOf(IllegalArgumentException.class)

@@ -186,15 +186,14 @@ For a component, prefer the TUM AET UI variant over a utility class on plain mar
 
 ## A Tailwind utility that has no effect
 
-Tailwind utilities live in a CSS layer, so unlayered CSS wins over them. Three cases turn a
+Tailwind utilities live in a CSS layer, so unlayered CSS wins over them. The element defaults of
+`_base.scss` are in an earlier layer and lose to a utility; the cases below still turn a
 correct-looking utility into a no-op. Lint and unit tests
 do not catch them; open the screen and read the computed style.
 
-| Case                                                                                                                                      | Symptom                                                                                                      | Fix                                                                                          |
-| ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| Bare utility that `src/main/webapp/content/scss/_utilities.scss` defines as important, e.g. `opacity-0`, `visible`, `invisible`, `border` | `opacity-0 group-hover:opacity-100` never reveals the element, because the bare `.opacity-0` is `!important` | Write the important form of every utility in the pair: `opacity-0! group-hover:opacity-100!` |
-| Element default of `src/main/webapp/content/scss/_base.scss`, e.g. `a { color }` or `h1`-`h6`                                             | `text-text` on an anchor stays link blue                                                                     | `text-text!`                                                                                 |
-| Class of a TUM AET UI component, which is unlayered, e.g. `tumAetUiMenuItem`                                                              | `text-state-danger` on a menu item stays the default text colour                                             | `text-state-danger!`                                                                         |
+| Case                                                                         | Symptom                                                          | Fix                  |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------- |
+| Class of a TUM AET UI component, which is unlayered, e.g. `tumAetUiMenuItem` | `text-state-danger` on a menu item stays the default text colour | `text-state-danger!` |
 
 A hover-only control also needs a way to appear without a pointer. `group-hover:` only applies
 where `(hover: hover)` matches, so add `[@media(hover:none)]:opacity-100!` or the control stays

@@ -11,13 +11,13 @@
         (click)="onNodeSelect.emit(item())"
         [attr.aria-label]="item().text"
         [attr.aria-pressed]="item().checked"
-        class="flex min-w-0 items-center border-0 bg-transparent p-0 text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+        class="flex min-w-0 items-center border-0 bg-transparent p-0 text-left text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
         [class.flex-1]="!isBeingRenamed()"
     >
         <fa-icon aria-hidden="true" [icon]="faFile" [fixedWidth]="true" />
         @if (!isBeingRenamed()) {
             <span class="file-label-group">
-                <span class="ms-1 file-tree-item__fileName" [ngClass]="item().checked ? 'text-white' : 'primary'">{{ item().text }}</span>
+                <span class="ms-1 file-tree-item__fileName" [ngClass]="item().checked ? 'text-white!' : 'primary'">{{ item().text }}</span>
                 @for (badge of badges(); track badges().indexOf(badge)) {
                     <jhi-file-browser-badge [badge]="badge" [onColoredBackground]="item().checked || hasError() || hasChanges()" />
                 }

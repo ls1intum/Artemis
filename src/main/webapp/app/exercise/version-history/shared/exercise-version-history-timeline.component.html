@@ -1,17 +1,17 @@
 <div class="flex h-full min-h-0 flex-col">
-    <header class="border-b border-border p-3!">
-        <h3 class="m-0 text-lg font-semibold">
+    <header class="border-b border-border p-3">
+        <h3 class="m-0">
             <span jhiTranslate="artemisApp.exercise.versionHistory.timeline.title"></span>
             <span class="text-sm text-muted-color">({{ totalItems() }})</span>
         </h3>
     </header>
-    <div class="min-h-0 overflow-auto p-3!">
+    <div class="min-h-0 overflow-auto p-3">
         @if (loading()) {
             <tumaet-ui-progress-spinner />
         } @else if (timelineEntries().length === 0) {
             <tumaet-ui-message severity="info"><span jhiTranslate="artemisApp.exercise.versionHistory.timeline.empty"></span></tumaet-ui-message>
         } @else {
-            <ol class="m-0 flex list-none flex-col gap-3! p-0">
+            <ol class="m-0 flex list-none flex-col gap-3 p-0">
                 @for (entry of timelineEntries(); track entry.id) {
                     <li class="flex items-start gap-2">
                         <jhi-profile-picture

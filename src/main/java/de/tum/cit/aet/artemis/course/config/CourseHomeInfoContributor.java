@@ -29,8 +29,7 @@ public class CourseHomeInfoContributor implements InfoContributor {
      */
     @Override
     public void contribute(Info.Builder builder) {
-        var configuration = Binder.get(environment).bind("artemis.course-home.ai", CourseHomeAiProperties.class)
-                .orElseGet(() -> new CourseHomeAiProperties(false, null, null, null, null));
+        var configuration = Binder.get(environment).bind("artemis.course-home.ai", CourseHomeAiProperties.class).orElseGet(() -> new CourseHomeAiProperties(false, null, null));
         boolean available = configuration.isConfigured();
         builder.withDetail("courseHomeAiAvailable", available);
         if (available) {

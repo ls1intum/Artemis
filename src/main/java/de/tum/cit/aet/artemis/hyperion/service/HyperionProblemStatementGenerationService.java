@@ -10,7 +10,6 @@ import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.validateUser
 
 import java.util.Map;
 
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -25,6 +24,7 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
 import io.micrometer.observation.annotation.Observed;
 
@@ -40,7 +40,6 @@ public class HyperionProblemStatementGenerationService {
 
     private static final String GENERATION_PIPELINE_ID = "HYPERION_PROBLEM_GENERATION";
 
-    @Nullable
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templateService;
@@ -53,14 +52,14 @@ public class HyperionProblemStatementGenerationService {
      * Creates a new HyperionProblemStatementGenerationService.
      *
      *
-     * @param chatClient           the AI chat client (optional)
+     * @param chatClients          the chat clients of the Hyperion LLM presets
      * @param templateService      prompt template service
      * @param llmTokenUsageService service for tracking LLM token usage
      * @param userRepository       repository for resolving current user
      */
-    public HyperionProblemStatementGenerationService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService,
-            UserRepository userRepository) {
-        this.chatClient = chatClient;
+    public HyperionProblemStatementGenerationService(HyperionChatClientService chatClients, HyperionPromptTemplateService templateService,
+            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.PROBLEM_STATEMENT);
         this.templateService = templateService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
@@ -77,10 +76,6 @@ public class HyperionProblemStatementGenerationService {
     @Observed(name = "hyperion.generate", contextualName = "problem statement generation", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementGenerationResponseDTO generateProblemStatement(Course course, String userPrompt) {
         log.debug("Generating problem statement for course [{}]", course.getId());
-
-        if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "ProblemStatement", "ProblemStatementGeneration.chatClientNotConfigured");
-        }
 
         String sanitizedPrompt = sanitizeInput(userPrompt);
         validateUserPrompt(sanitizedPrompt, "ProblemStatementGeneration");

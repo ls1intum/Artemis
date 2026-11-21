@@ -51,7 +51,7 @@
                 (onClick)="allowSplitView.set(!allowSplitView())"
             />
             <jhi-git-diff-line-stat
-                class="mt-1 font-bold"
+                class="mt-1! font-bold"
                 [hidden]="!initialDiffsReady()"
                 [addedLineCount]="repositoryDiffInformation().totalLineChange.addedLineCount"
                 [removedLineCount]="repositoryDiffInformation().totalLineChange.removedLineCount"
@@ -64,7 +64,7 @@
     @for (diffInformation of repositoryDiffInformation().diffInformations; track diffInformation) {
         <div class="mt-2" #diffPanelContainer [attr.data-title]="diffInformation.title">
             @let collapsed = collapsedTitles().has(diffInformation.title);
-            <div class="git-diff-file-panel rounded-sm border border-solid border-(--border-color) bg-(--card-bg)">
+            <div class="git-diff-file-panel rounded-sm border border-(--border-color) bg-(--card-bg)">
                 <div class="flex items-center justify-between">
                     <jhi-git-diff-file-panel-title [diffInformation]="diffInformation" />
                     <div class="flex items-center">
@@ -90,7 +90,7 @@
                     </div>
                 </div>
                 <!-- Only hidden while collapsed, so a loaded diff editor keeps its state. -->
-                <div class="px-5! py-4!" [id]="'git-diff-file-panel-body-' + $index" [hidden]="collapsed">
+                <div class="px-5 py-4" [id]="'git-diff-file-panel-body-' + $index" [hidden]="collapsed">
                     <jhi-git-diff-file
                         [allowSplitView]="allowSplitView()"
                         [diffInformation]="diffInformation"
@@ -104,7 +104,7 @@
 </div>
 <div class="flex w-full items-center justify-center text-2xl">
     @if (nothingToDisplay()) {
-        <div class="mt-4! text-(--secondary)" jhiTranslate="artemisApp.repository.commitHistory.commitDetails.empty"></div>
+        <div class="mt-4 text-(--secondary)" jhiTranslate="artemisApp.repository.commitHistory.commitDetails.empty"></div>
     } @else if (!initialDiffsReady()) {
         <div>
             <fa-icon [icon]="faSpinner" animation="spin" />
