@@ -61,6 +61,8 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { ProgrammingExerciseBuildTimeWindowComponent } from 'app/programming/manage/update/update-components/build-time-window/programming-exercise-build-time-window.component';
+import { BUILD_TIME_WINDOW_ERROR_TRANSLATION_KEYS, BuildTimeWindowError, getBuildTimeWindowError } from 'app/programming/shared/utils/build-time-window.utils';
 import { ProgrammingExerciseVersionControlComponent } from 'app/programming/manage/update/update-components/version-control/programming-exercise-version-control.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
@@ -111,6 +113,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
         ProgrammingExerciseLanguageComponent,
         ProgrammingExerciseProblemComponent,
         ProgrammingExerciseVersionControlComponent,
+        ProgrammingExerciseBuildTimeWindowComponent,
         ProgrammingExerciseGradingComponent,
         ExerciseGroupTimelineLockComponent,
         ExerciseUpdatePlagiarismComponent,
@@ -160,9 +163,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     exerciseLanguageComponent = viewChild(ProgrammingExerciseLanguageComponent);
     exerciseGradingComponent = viewChild(ProgrammingExerciseGradingComponent);
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
+    buildTimeWindowComponent = viewChild(ProgrammingExerciseBuildTimeWindowComponent);
 
     packageNamePattern = '';
     isSimpleMode = signal<boolean>(true);
+    private buildTimeWindowKeptVisible = false;
     isAuxiliaryRepositoryInputValid = signal<boolean>(true);
 
     isEditFieldDisplayedRecord = computed(() => {
@@ -453,7 +458,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.modePickerOptions = this.projectTypes?.map((projectType) => ({
             value: projectType,
             labelKey: 'artemisApp.programmingExercise.projectTypes.' + projectType.toString(),
-            btnClass: 'btn-secondary',
         }));
 
         if (languageChanged) {
@@ -1104,7 +1108,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         let errorMessage;
         let disableTranslation;
         // Workaround for conflict error, since conflict errors do not have the 'X-artemisApp-alert' header
-        if (error.status === 409 && error.error && error.error['X-artemisApp-error'] === 'error.sourceExerciseInconsistent') {
+        if (error.error?.errorKey === 'branchRegexNotSupported') {
+            if (this.alertService.showsHttpErrorAlert(error)) {
+                // The global HTTP error handler already shows this rejection, so it is not shown a second time.
+                this.isSaving.set(false);
+                window.scrollTo(0, 0);
+                return;
+            }
+            errorMessage = this.translationBasePath + 'buildConfig.branchRegexNotSupported';
+            disableTranslation = false;
+        } else if (error.status === 409 && error.error && error.error['X-artemisApp-error'] === 'error.sourceExerciseInconsistent') {
             errorMessage = 'artemisApp.consistencyCheck.error.programmingExerciseImportFailed';
             disableTranslation = false;
         } else {
@@ -1128,6 +1141,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param language to switch to.
      */
     onProgrammingLanguageChange(language: ProgrammingLanguage) {
+        // Choosing the language that is already selected changes nothing. Running the setter again would reset the
+        // options that depend on the language and reload the problem statement template.
+        if (language === this.selectedProgrammingLanguage) {
+            return language;
+        }
         // If there are unsaved changes and the user does not confirm, the language doesn't get changed
         if (this.hasUnsavedChanges) {
             const confirmLanguageChangeText = this.translateService.instant(this.translationBasePath + 'unsavedChangesLanguageChange');
@@ -1299,6 +1317,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateTimeout(validationErrorReasons);
         this.validateCheckoutPaths(validationErrorReasons);
         this.validateExercisePlagiarism(validationErrorReasons);
+        this.validateBuildTimeWindow(validationErrorReasons);
         // Must stay after the points, bonus-point, penalty and submission-limit checks: it defers to them.
         this.validateGradingSection(validationErrorReasons);
 
@@ -1328,6 +1347,45 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason',
             translateValues: {},
         });
+    }
+
+    /**
+     * Whether the build time window is edited in the form. It is a setting of the advanced mode, because it is needed rarely, and the simple mode does not show it. The only
+     * exception is a window that a date change in the simple mode invalidates: that blocks saving, so the fields have to be reachable to fix it. Once shown for that reason,
+     * they stay visible for the rest of the editing session, so that clearing the last date to replace it does not remove them.
+     */
+    isBuildTimeWindowDisplayed(): boolean {
+        if (this.isExamMode()) {
+            return false;
+        }
+        if (this.programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow && this.getBuildTimeWindowError() !== undefined) {
+            this.buildTimeWindowKeptVisible = true;
+        }
+        return this.isEditFieldDisplayedRecord().buildTimeWindow || this.buildTimeWindowKeptVisible;
+    }
+
+    /**
+     * The problem with the build time window, which depends on the dates of the exercise. Exam exercises have no window.
+     * The form passes this to the build time window component, which cannot observe the dates edited elsewhere in the form.
+     */
+    getBuildTimeWindowError(): BuildTimeWindowError | undefined {
+        return this.isExamMode() ? undefined : getBuildTimeWindowError(this.programmingExercise);
+    }
+
+    private validateBuildTimeWindow(validationErrorReasons: ValidationReason[]): void {
+        const error = this.getBuildTimeWindowError();
+        if (error) {
+            validationErrorReasons.push({
+                translateKey: BUILD_TIME_WINDOW_ERROR_TRANSLATION_KEYS[error],
+                translateValues: {},
+            });
+        }
+        if (this.buildTimeWindowComponent()?.isInputValid() === false) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.buildTimeWindow.invalidInput',
+                translateValues: {},
+            });
+        }
     }
 
     private validateExercisePlagiarism(validationErrorReasons: ValidationReason[]) {
@@ -1480,6 +1538,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateExercisePackageName(validationErrorReasons: ValidationReason[]): void {
+        // The package name of a saved exercise is read-only. Do not let a name that was valid when the exercise was created, but is not any more, block saving other changes.
+        if (this.isEdit && !this.isImportFromExistingExercise && !this.isImportFromFile && !this.isImportFromSharing && this.programmingExercise.id !== undefined) {
+            return;
+        }
         let regex;
         switch (this.programmingExercise.programmingLanguage) {
             case ProgrammingLanguage.JAVA:

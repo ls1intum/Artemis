@@ -17,7 +17,7 @@ import { RepositoryAuthenticationMethod } from './code-button.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { DomSanitizer } from '@angular/platform-browser';
-import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
+import { Ide } from 'app/account/user/settings/exercises/ide-preferences/ide.model';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -64,7 +64,7 @@ export class CodeButtonPopoverContentComponent {
     protected readonly faLaptopCode = faLaptopCode;
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly RepositoryAuthenticationMethod = RepositoryAuthenticationMethod;
-    protected readonly sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
+    protected readonly sshSettingsUrl = `${window.location.origin}/user-settings/credentials`;
 
     readonly repositoryViewLink = input.required<(string | number)[]>();
     readonly authenticationMethodData = input.required<NonEmptyArray<AuthenticationMethodData>>();

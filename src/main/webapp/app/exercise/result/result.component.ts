@@ -10,6 +10,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import dayjs from 'dayjs/esm';
 import { Participation, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { CourseScoreAccuracy } from 'app/foundation/util/utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -71,6 +72,11 @@ export class ResultComponent {
     readonly participation = input<Participation>();
     readonly result = input<Result>();
     readonly exercise = input<Exercise>();
+    /**
+     * The course of the exercise, for an exercise that carries no course, such as the exercises of the course overview. The accuracy of the score comes from it. A course that the
+     * exercise carries takes precedence.
+     */
+    readonly course = input<CourseScoreAccuracy>();
     readonly isBuilding = input(false);
     readonly isQueued = input(false);
     readonly short = input(true);
@@ -153,7 +159,7 @@ export class ResultComponent {
         this.currentLang(); // Recompute the translated text when the language changes.
         const status = this.templateStatus();
         return status === ResultTemplateStatus.LATE || this.displayableResult()
-            ? this.resultService.getResultString(this.result(), this.resolvedExercise(), this.resolvedParticipation(), this.short())
+            ? this.resultService.getResultString(this.result(), this.resolvedExercise(), this.resolvedParticipation(), this.short(), this.course())
             : '';
     });
 

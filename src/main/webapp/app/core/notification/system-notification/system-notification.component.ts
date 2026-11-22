@@ -11,6 +11,8 @@ import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { updateHeaderHeight } from 'app/foundation/util/navbar.util';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 export const WEBSOCKET_CHANNEL = '/topic/notification/system-notification';
@@ -18,9 +20,10 @@ export const CLOSED_NOTIFICATION_IDS_STORAGE_KEY = 'system-notification.closedId
 
 @Component({
     selector: 'jhi-system-notification',
+    preserveWhitespaces: false,
     templateUrl: './system-notification.component.html',
     styleUrls: ['system-notification.scss'],
-    imports: [NgClass, FaIconComponent],
+    imports: [NgClass, FaIconComponent, TumAetUiTooltipDirective, ArtemisTranslatePipe, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective],
 })
 export class SystemNotificationComponent implements OnInit, OnDestroy, AfterViewChecked {
     private accountService = inject(AccountService);

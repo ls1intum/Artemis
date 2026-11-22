@@ -210,7 +210,7 @@ class CourseRequestServiceTest {
         when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
 
         // save() returns a new entity without requester (simulates merge behavior for defensive testing)
-        when(courseRequestRepository.save(any(CourseRequest.class))).thenAnswer(invocation -> {
+        when(courseRequestRepository.saveWithPendingLimit(any(CourseRequest.class), eq(5))).thenAnswer(invocation -> {
             CourseRequest original = invocation.getArgument(0);
             CourseRequest saved = new CourseRequest();
             saved.setId(42L);

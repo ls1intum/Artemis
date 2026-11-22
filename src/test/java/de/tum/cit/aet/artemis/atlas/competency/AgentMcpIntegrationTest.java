@@ -52,10 +52,6 @@ class AgentMcpIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @BeforeEach
     void setup() {
-        atlasMLRequestMockProvider.ifPresent(provider -> {
-            provider.enableMockingOfRequests();
-            provider.mockSaveCompetenciesAny();
-        });
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         competency = competencyUtilService.createCompetency(course);
@@ -218,7 +214,7 @@ class AgentMcpIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @Test
     // Set up after @BeforeEach, which clears the security context so that the other tests authenticate with their token alone.
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR", setupBefore = TestExecutionEvent.TEST_EXECUTION)
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     void aRequestWithoutATokenIsForbidden() throws Exception {
         var message = JsonObjectMapper.get().writeValueAsString(Map.of("jsonrpc", "2.0", "id", 1, "method", "tools/list"));
 

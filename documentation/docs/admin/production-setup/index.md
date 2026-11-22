@@ -2,6 +2,7 @@
 id: index
 title: Production Setup
 sidebar_label: Production Setup
+last_reviewed: 2026-11-03
 ---
 
 The general setup steps are described in the [development setup steps](/developer/setup).

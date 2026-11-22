@@ -108,6 +108,47 @@ def problems_of(*findings, static_findings=()):
     return report.build_problems(groups)
 
 
+class InlineCommentTest(unittest.TestCase):
+
+    LOCATION = {"sourceFile": "src/main/java/de/tum/CourseService.java", "line": 121}
+
+    def comments(self, findings, static=(), baseline_findings=()):
+        baseline = report.collect_keys(report.group_repeated_queries(list(baseline_findings)), [])
+        groups = report.group_repeated_queries(findings)
+        static = [dict(f) for f in static]
+        report.link_static_confirmations(groups, static)
+        report.mark_new(groups, static, baseline)
+        return report.build_inline_comments({}, groups, static, baseline, "https://example/run")
+
+    def test_a_new_problem_is_anchored_to_the_line_that_issues_it(self):
+        [comment] = self.comments([repeated(**self.LOCATION)])
+        self.assertEqual((comment["path"], comment["line"]), ("src/main/java/de/tum/CourseService.java", 121))
+        self.assertIn("N+1", comment["body"])
+        self.assertIn(report.INLINE_MARKER.format(key=comment["key"]), comment["body"])
+
+    def test_existing_problems_and_problems_without_a_line_get_no_comment(self):
+        self.assertEqual(self.comments([repeated(**self.LOCATION)], baseline_findings=[repeated(**self.LOCATION)]), [])
+        self.assertEqual(self.comments([repeated()]), [])
+
+    def test_the_line_does_not_change_the_key(self):
+        first = self.comments([repeated(**self.LOCATION)])[0]["key"]
+        moved = self.comments([repeated(sourceFile=self.LOCATION["sourceFile"], line=130)])[0]["key"]
+        self.assertEqual(first, moved)
+
+    def test_without_a_baseline_nothing_is_new(self):
+        groups = report.group_repeated_queries([repeated(**self.LOCATION)])
+        self.assertEqual(report.build_inline_comments({}, groups, [], None), [])
+
+    def test_a_new_static_finding_with_a_line_is_commented_and_a_dot_slash_path_is_normalized(self):
+        static = {"type": "repository_call_in_loop", "key": "k", "file": "./src/main/java/A.java", "line": 7, "member": "A.m", "repositoryMethod": "R.f", "detail": "called once per iteration"}
+        [comment] = self.comments([], static=[static], baseline_findings=[])
+        self.assertEqual((comment["path"], comment["line"]), ("src/main/java/A.java", 7))
+
+    def test_inserts_have_no_single_line_and_stay_in_the_summary(self):
+        insert = repeated(normalizedSql="insert into result (id) values (?)", **self.LOCATION)
+        self.assertEqual(self.comments([insert]), [])
+
+
 class ProblemTest(unittest.TestCase):
 
     def test_queries_of_one_caller_form_one_problem_at_the_caller(self):

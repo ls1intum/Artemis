@@ -47,7 +47,7 @@ class RemovedContentCleanupIntegrationTest extends AbstractIrisIntegrationTest {
         // The unit had a video that was removed; its state still records the video and the confirmed index content
         AttachmentVideoUnit created = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture);
         created.setVideoSource(null);
-        attachmentVideoUnitRepository.save(created);
+        attachmentVideoUnitRepository.saveWithVideoSource(created);
         unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(created.getId()).orElseThrow();
         state = new LectureUnitProcessingState(unit);
         state.setPhase(ProcessingPhase.DONE);

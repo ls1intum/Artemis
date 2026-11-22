@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.localvc.service;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.apache.sshd.server.session.ServerSession;
 import org.eclipse.jgit.lib.Repository;
@@ -14,9 +16,10 @@ import org.jspecify.annotations.NonNull;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
+import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.exception.BuildOutsideTimeWindowException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 
 /**
@@ -26,29 +29,56 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
     private final LocalVCServletService localVCServletService;
 
+    private final LocalVCPushProcessingService pushProcessingService;
+
+    private final PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
+
     private final ProgrammingExerciseParticipation participation;
 
     private final ProgrammingExercise exercise;
 
-    private final VcsAccessLog vcsAccessLog;
-
     private final User user;
 
-    public LocalVCPostPushHook(LocalVCServletService localVCServletService, ServerSession serverSession, @NonNull User user) {
+    private final Supplier<AuthenticationMechanism> authenticationMechanism;
+
+    private final Consumer<String> pushedCommitRecorder;
+
+    /**
+     * Creates the hook of a push over SSH, which reads what the command cached in the session when it was authorized.
+     *
+     * @param audit collects the commit of the push for the access log entry of the command
+     */
+    public LocalVCPostPushHook(LocalVCServletService localVCServletService, LocalVCPushProcessingService pushProcessingService,
+            PasswordAuthenticationNoticeService passwordAuthenticationNoticeService, ServerSession serverSession, @NonNull User user, GitOperationAudit audit) {
         this.localVCServletService = localVCServletService;
+        this.pushProcessingService = pushProcessingService;
+        this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
         this.participation = serverSession.getAttribute(SshConstants.PARTICIPATION_KEY);
         this.exercise = serverSession.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
-        this.vcsAccessLog = serverSession.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
         this.user = user;
+        this.authenticationMechanism = () -> AuthenticationMechanism.SSH;
+        this.pushedCommitRecorder = audit::onPushAccepted;
     }
 
-    public LocalVCPostPushHook(LocalVCServletService localVCServletService, @NonNull User user) {
+    /**
+     * Creates the hook of a push over HTTPS.
+     *
+     * @param authenticationMechanism reads how the push authenticated. JGit creates the hook before the push filter authorizes the request, so the value is only read when the hook
+     *                                    runs.
+     * @param pushedCommitRecorder    passes the commit hash of the accepted push to the audit of the request
+     */
+    public LocalVCPostPushHook(LocalVCServletService localVCServletService, LocalVCPushProcessingService pushProcessingService,
+            PasswordAuthenticationNoticeService passwordAuthenticationNoticeService, @NonNull User user, Supplier<AuthenticationMechanism> authenticationMechanism,
+            Consumer<String> pushedCommitRecorder) {
         this.localVCServletService = localVCServletService;
+        this.pushProcessingService = pushProcessingService;
+        this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
         this.user = user;
-        // For HTTPs we are unable to store the attributes in the session or request unfortunately
+        this.authenticationMechanism = authenticationMechanism;
+        this.pushedCommitRecorder = pushedCommitRecorder;
+        // JGit constructs this hook before HTTPS authorization. Resolve the participation and exercise when processing the accepted push.
         this.participation = null;
         this.exercise = null;
-        this.vcsAccessLog = null;
     }
 
     /**
@@ -60,6 +90,11 @@ public class LocalVCPostPushHook implements PostReceiveHook {
     @Override
     public void onPostReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
 
+        // Said before anything else, so that a push that updates nothing or is rejected below still tells the user.
+        if (authenticationMechanism.get() == AuthenticationMechanism.PASSWORD) {
+            receivePack.sendMessage(passwordAuthenticationNoticeService.getPasswordAuthenticationPushNotice());
+        }
+
         // The PreReceiveHook already checked that there is exactly one command and rejects the push otherwise.
         Iterator<ReceiveCommand> iterator = commands.iterator();
         if (!iterator.hasNext()) {
@@ -69,6 +104,13 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         }
 
         ReceiveCommand command = iterator.next();
+
+        // If there are multiple commits in the push, this will always retrieve the commit hash of the latest commit.
+        String commitHash = command.getNewId().name();
+
+        // The push is part of the repository now, so it is part of the access log, whatever becomes of it below: a push to another branch is no submission, and the processing of
+        // a push can fail after the push itself went through.
+        pushedCommitRecorder.accept(commitHash);
 
         String wrongBranchMessage = "Only pushes to the default branch will be graded. Your changes were saved nonetheless.";
 
@@ -80,19 +122,19 @@ public class LocalVCPostPushHook implements PostReceiveHook {
             return;
         }
 
-        // If there are multiple commits in the push, this will always retrieve the commit hash of the latest commit.
-        String commitHash = command.getNewId().name();
-
         Repository repository = receivePack.getRepository();
 
         try {
-            localVCServletService.processNewPush(commitHash, repository, user, Optional.ofNullable(exercise), Optional.ofNullable(participation),
-                    Optional.ofNullable(vcsAccessLog));
+            pushProcessingService.processNewPush(commitHash, repository, user, Optional.ofNullable(exercise), Optional.ofNullable(participation));
         }
         catch (LocalCIException e) {
             // Return an error message to the user.
             receivePack.sendError(
                     "Something went wrong while processing your push. Your changes were saved, but we could not test your submission. Please try again and if this issue persists, contact the course administrators.");
+        }
+        catch (BuildOutsideTimeWindowException e) {
+            // The push is valid and kept, it is just not built, so this is a message and no error.
+            receivePack.sendMessage(e.getUserMessage());
         }
         catch (VersionControlException e) {
             boolean isBranchingAllowed = localVCServletService.isBranchingAllowedForRepository(repository);

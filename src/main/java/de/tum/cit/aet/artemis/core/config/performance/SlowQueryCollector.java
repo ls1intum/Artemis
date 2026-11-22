@@ -234,8 +234,8 @@ public class SlowQueryCollector {
             }
             int distinct = stats.parameterSignatures.size();
             RepeatedQueryFinding.Type type = distinct >= 2 ? RepeatedQueryFinding.Type.N_PLUS_ONE : RepeatedQueryFinding.Type.DUPLICATE;
-            addRepeatedQueryFinding(new RepeatedQueryFinding(type, sql, stats.executions, distinct, site.repositoryMethod(), site.callerMethod(), httpMethod, httpEndpoint,
-                    testName, phase, List.of()));
+            addRepeatedQueryFinding(new RepeatedQueryFinding(type, sql, stats.executions, distinct, site.repositoryMethod(), site.callerMethod(), site.sourceFile(), site.line(),
+                    httpMethod, httpEndpoint, testName, phase, List.of()));
         }
         for (Map.Entry<String, Map<QueryCallSite, TemplateStats>> e : callSitesBySql.entrySet()) {
             if (e.getValue().size() >= 2) {
@@ -267,8 +267,8 @@ public class SlowQueryCollector {
         }
         if (distinct > 0) {
             List<QueryCallSite> sorted = involved.stream().sorted(CALL_SITE_ORDER).toList();
-            addRepeatedQueryFinding(
-                    new RepeatedQueryFinding(RepeatedQueryFinding.Type.DUPLICATE, sql, executions, distinct, null, null, httpMethod, httpEndpoint, testName, phase, sorted));
+            addRepeatedQueryFinding(new RepeatedQueryFinding(RepeatedQueryFinding.Type.DUPLICATE, sql, executions, distinct, null, null, null, null, httpMethod, httpEndpoint,
+                    testName, phase, sorted));
         }
     }
 

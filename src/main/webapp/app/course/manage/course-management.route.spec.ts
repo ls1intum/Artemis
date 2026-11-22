@@ -17,6 +17,8 @@ import { IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/consta
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { GocastGuard } from 'app/videosource/gocast/gocast-guard.service';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { HyperionGuard } from 'app/hyperion/shared/hyperion-guard.service';
 
 function presentationRoutes(routes: Routes): Routes {
     return routes.flatMap((route) => (route.matcher === presentationAssessmentUrlMatcher ? [route] : presentationRoutes(route.children ?? [])));
@@ -188,6 +190,25 @@ describe('courseManagementRoutes', () => {
 
     it('provides team pages inside the management container', () => {
         expect(containerRoute!.children?.some((route) => route.path === ':courseId/exercises/:exerciseId/teams')).toBe(true);
+    });
+
+    it('redirects direct Smart Quizzes navigation when the feature is disabled', async () => {
+        const route = containerRoute!.children!.find((candidate) => candidate.path === ':courseId/smart-quizzes')!;
+        const getFeatureToggleActive = vi.fn(() => of(false));
+        TestBed.configureTestingModule({
+            providers: [
+                provideRouter([{ path: 'course-management', children: [route] }]),
+                { provide: UserRouteAccessService, useValue: { canActivate: () => true } },
+                { provide: HyperionGuard, useValue: { canActivate: () => true } },
+                { provide: FeatureToggleService, useValue: { getFeatureToggleActive } },
+            ],
+        });
+
+        const harness = await RouterTestingHarness.create();
+        await harness.navigateByUrl('/course-management/1/smart-quizzes');
+
+        expect(TestBed.inject(Router).url).toBe('/');
+        expect(getFeatureToggleActive).toHaveBeenCalledWith(FeatureToggle.SmartQuizzes);
     });
 
     it('provides instructor-only TUM.Live course connection management', () => {

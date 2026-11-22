@@ -99,14 +99,14 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationLocalCI
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(exampleCourseId, null, conversationIds, null, null, false, false, false, null, null);
         var requestingUser = userRepository.getUser();
 
-        var numberBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).stream().toList().size();
+        var numberBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId(), false).stream().toList().size();
         Post postToSave = createPostWithConversation(conversationId, authorLoginWithoutPrefix);
         CreatePostDTO postToCreate = new CreatePostDTO(postToSave.getContent(), postToSave.getTitle(), false, new CreatePostConversationDTO(conversationId));
 
         PostResponseDTO createdPost = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", postToCreate, PostResponseDTO.class,
                 HttpStatus.CREATED);
         assertThat(createdPost.conversation().id()).isEqualTo(conversationId);
-        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberBefore + 1);
+        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId(), false)).hasSize(numberBefore + 1);
         return createdPost;
     }
 

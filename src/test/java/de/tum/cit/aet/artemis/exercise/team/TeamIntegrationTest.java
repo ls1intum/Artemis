@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.dto.CourseWithTeamExercisesDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
 import de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamMemberDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamParticipationDTO;
@@ -200,6 +201,145 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         team.setExercise(exercise);
         team.setStudents(students);
         request.postWithResponseBody(resourceUrl(), TeamInputDTO.of(team), TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateTeam_UserWithoutCourseRole_BadRequest() throws Exception {
+        User userWithoutCourseRole = userUtilService.createAndSaveUser(TEST_PREFIX + "noncourseuser1");
+        var dto = new TeamInputDTO(null, "Team", "team", null, Set.of(userWithoutCourseRole.getId()), null);
+        request.postWithResponseBody(resourceUrl(), dto, TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateTeam_NonStudentOfCourse_BadRequest() throws Exception {
+        // the referenced users have to be students of the course
+        var dto = new TeamInputDTO(null, "Team", "team", null, Set.of(tutor.getId()), null);
+        request.postWithResponseBody(resourceUrl(), dto, TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreateTeam_OwnerWithoutCourseRole_BadRequest() throws Exception {
+        User userWithoutCourseRole = userUtilService.createAndSaveUser(TEST_PREFIX + "noncourseuser1");
+        var dto = new TeamInputDTO(null, "Team", "team", null, Set.of(), userWithoutCourseRole.getId());
+        request.postWithResponseBody(resourceUrl(), dto, TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testUpdateTeam_UserWithoutCourseRole_BadRequest() throws Exception {
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
+        User userWithoutCourseRole = userUtilService.createAndSaveUser(TEST_PREFIX + "noncourseuser1");
+        var dto = new TeamInputDTO(team.getId(), team.getName(), team.getShortName(), null, Set.of(userWithoutCourseRole.getId()), tutor.getId());
+        request.putWithResponseBody(resourceUrl() + "/" + team.getId(), dto, TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateTeam_OwnerWithoutCourseRole_BadRequest() throws Exception {
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
+        User userWithoutCourseRole = userUtilService.createAndSaveUser(TEST_PREFIX + "noncourseuser1");
+        var dto = new TeamInputDTO(team.getId(), team.getName(), team.getShortName(), null, Set.of(), userWithoutCourseRole.getId());
+        request.putWithResponseBody(resourceUrl() + "/" + team.getId(), dto, TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreateTeam_InstructorChoosesAnyMemberOfTheCourseAsOwner() throws Exception {
+        User instructor = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        User student = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        int index = 0;
+        for (User owner : List.of(tutor, instructor, student)) {
+            index++;
+            var dto = new TeamInputDTO(null, TEST_PREFIX + "Owner team " + index, TEST_PREFIX + "ownerteam" + index, null, Set.of(), owner.getId());
+            TeamResponseDTO serverTeam = request.postWithResponseBody(resourceUrl(), dto, TeamResponseDTO.class, HttpStatus.CREATED);
+            assertThat(serverTeam.owner().login()).as("the chosen member of the course is the owner").isEqualTo(owner.getLogin());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateTeam_TutorBecomesTheOwnerRegardlessOfTheRequest() throws Exception {
+        User userWithoutCourseRole = userUtilService.createAndSaveUser(TEST_PREFIX + "noncourseuser1");
+        // only instructors choose the owner, so the owner of the request is not resolved for a tutor
+        var dto = new TeamInputDTO(null, TEST_PREFIX + "Team", TEST_PREFIX + "team", null, Set.of(), userWithoutCourseRole.getId());
+        TeamResponseDTO serverTeam = request.postWithResponseBody(resourceUrl(), dto, TeamResponseDTO.class, HttpStatus.CREATED);
+        assertThat(serverTeam.owner().login()).isEqualTo(tutor.getLogin());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateTeam_InstructorChangesTheOwnerToAnotherMemberOfTheCourse() throws Exception {
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
+        User otherTutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
+        var dto = new TeamInputDTO(team.getId(), team.getName(), team.getShortName(), null, Set.of(), otherTutor.getId());
+
+        TeamResponseDTO serverTeam = request.putWithResponseBody(resourceUrl() + "/" + team.getId(), dto, TeamResponseDTO.class, HttpStatus.OK);
+
+        assertThat(serverTeam.owner().login()).isEqualTo(otherTutor.getLogin());
+        // the change of the owner is carried over to the instances of the team in other exercises of the course
+        assertThat(teamRepo.findAllByExerciseCourseIdAndShortName(course.getId(), team.getShortName()))
+                .allSatisfy(instance -> assertThat(instance.getOwner().getId()).isEqualTo(otherTutor.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateTeam_InstructorRemovesTheOwner() throws Exception {
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
+        var dto = new TeamInputDTO(team.getId(), team.getName(), team.getShortName(), null, Set.of(), null);
+
+        TeamResponseDTO serverTeam = request.putWithResponseBody(resourceUrl() + "/" + team.getId(), dto, TeamResponseDTO.class, HttpStatus.OK);
+
+        assertThat(serverTeam.owner()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testUpdateTeam_MembersWhoAreNoLongerPartOfTheCourseStayInTheTeam() throws Exception {
+        User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User formerMember = userUtilService.createAndSaveUser(TEST_PREFIX + "formermember1");
+        Team team = new Team().name(TEST_PREFIX + "Team 1").shortName(TEST_PREFIX + "team1").exercise(exercise).students(Set.of(student1, formerMember));
+        team.setOwner(tutor);
+        team = teamRepo.save(team);
+
+        // the team is renamed and still lists the member who is not part of the course any more
+        var dto = new TeamInputDTO(team.getId(), TEST_PREFIX + "Renamed team", team.getShortName(), null, Set.of(student1.getId(), formerMember.getId()), tutor.getId());
+        TeamResponseDTO serverTeam = request.putWithResponseBody(resourceUrl() + "/" + team.getId(), dto, TeamResponseDTO.class, HttpStatus.OK);
+
+        assertThat(serverTeam.name()).isEqualTo(TEST_PREFIX + "Renamed team");
+        assertThat(loginsOf(serverTeam)).containsExactlyInAnyOrder(student1.getLogin(), formerMember.getLogin());
+
+        // the member can be removed again, which also does not need a role in the course
+        var withoutFormerMember = new TeamInputDTO(team.getId(), TEST_PREFIX + "Renamed team", team.getShortName(), null, Set.of(student1.getId()), tutor.getId());
+        serverTeam = request.putWithResponseBody(resourceUrl() + "/" + team.getId(), withoutFormerMember, TeamResponseDTO.class, HttpStatus.OK);
+        assertThat(loginsOf(serverTeam)).containsExactly(student1.getLogin());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateTeam_OwnerWhoIsNoLongerPartOfTheCourseStaysOwner() throws Exception {
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
+        userUtilService.unenrollUserFromCourseByRole(tutor, course, CourseRole.TEACHING_ASSISTANT);
+
+        var dto = new TeamInputDTO(team.getId(), TEST_PREFIX + "Renamed team", team.getShortName(), null, Set.of(), tutor.getId());
+        TeamResponseDTO serverTeam = request.putWithResponseBody(resourceUrl() + "/" + team.getId(), dto, TeamResponseDTO.class, HttpStatus.OK);
+
+        assertThat(serverTeam.name()).isEqualTo(TEST_PREFIX + "Renamed team");
+        assertThat(serverTeam.owner().login()).isEqualTo(tutor.getLogin());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testUpdateTeam_NewMemberHasToBeAStudentOfTheCourse() throws Exception {
+        Team team = teamUtilService.addTeamForExercise(exercise, tutor);
+        User otherTutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
+        Set<Long> memberIds = team.getStudents().stream().map(User::getId).collect(Collectors.toCollection(HashSet::new));
+        memberIds.add(otherTutor.getId());
+
+        var dto = new TeamInputDTO(team.getId(), team.getName(), team.getShortName(), null, memberIds, tutor.getId());
+        request.putWithResponseBody(resourceUrl() + "/" + team.getId(), dto, TeamResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -715,6 +855,26 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         request.performMvcRequest(
                 get("/api/exercise/courses/" + course.getId() + "/exercises/" + foreignExercise.getId() + "/team-search-users").param("loginOrName", TEST_PREFIX + "student"))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("exerciseCourseMismatch")).andExpect(jsonPath("$.entityName").value("team"));
+    }
+
+    /**
+     * The teams of the source exercise are copied together with their students, so the source exercise has to belong to the course of the destination exercise, even if the
+     * user is allowed to see the teams of both courses.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportTeamsFromExerciseOfAnotherCourse_BadRequest() throws Exception {
+        Course otherCourse = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
+        Exercise otherExercise = otherCourse.getExercises().iterator().next();
+        otherExercise.setMode(ExerciseMode.TEAM);
+        otherExercise = exerciseRepository.save(otherExercise);
+        teamUtilService.addTeamForExercise(otherExercise, tutor);
+        String url = "/api/exercise/exercises/" + exercise.getId() + "/teams/import-from-exercise?sourceExerciseId=" + otherExercise.getId() + "&importStrategyType="
+                + TeamImportStrategyType.CREATE_ONLY;
+
+        request.putAndExpectError(url, null, HttpStatus.BAD_REQUEST, "sourceDestinationCourseMismatch");
+
+        assertThat(teamRepo.findAllByExerciseId(exercise.getId())).as("nothing was copied into the destination exercise").isEmpty();
     }
 
 }

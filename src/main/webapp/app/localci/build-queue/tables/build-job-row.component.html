@@ -49,6 +49,8 @@
 </td>
 <td class="build-jobs-column-tiny">
     <tumaet-ui-button
+        data-button-intent="destructive"
+        data-button-intent-reason="Cancels this build execution"
         severity="danger"
         size="small"
         (clicked)="onCancelJob(buildJob.id!, $event)"

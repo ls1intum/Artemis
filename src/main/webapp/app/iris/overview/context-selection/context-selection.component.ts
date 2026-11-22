@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { faChalkboardUser, faComments, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faComments, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -13,10 +13,7 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { SelectModule } from 'primeng/select';
-import { ChipModule } from 'primeng/chip';
-import { TooltipModule } from 'primeng/tooltip';
-import { FormsModule } from '@angular/forms';
+import { TumAetUiChipComponent, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiSearchFieldComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { forkJoin } from 'rxjs';
 
@@ -49,10 +46,20 @@ function iconForMode(mode: ChatServiceMode): IconDefinition {
 @Component({
     selector: 'jhi-context-selection',
     templateUrl: './context-selection.component.html',
-    styleUrls: ['./context-selection.component.scss'],
-    imports: [SelectModule, ChipModule, TooltipModule, FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
+    // Let the component shrink inside the textarea-controls flex row (min-width on a flex item defaults to auto, which would
+    // keep the chip at its content width and push the send button out of a narrow Iris window).
+    host: { class: 'block max-w-full min-w-0' },
+    imports: [
+        TumAetUiChipComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiSearchFieldComponent,
+        TumAetUiTooltipDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FaIconComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    encapsulation: ViewEncapsulation.None,
 })
 export class ContextSelectionComponent {
     private readonly chatService = inject(IrisChatService);
@@ -63,7 +70,6 @@ export class ContextSelectionComponent {
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faPlus = faPlus;
-    protected readonly faXmark = faXmark;
 
     readonly disabled = input<boolean>(false);
     readonly contextChanged = output<void>();
@@ -79,6 +85,8 @@ export class ContextSelectionComponent {
     private readonly lecturesSignal = signal<LectureForOverview[]>([]);
     private readonly exercisesSignal = signal<ExerciseTitle[]>([]);
     private optionsLoadedForCourseId?: number;
+    /** True while the options are being loaded, so the open picker says so instead of claiming that nothing matches. */
+    protected readonly optionsLoading = signal(false);
 
     readonly lectures = this.lecturesSignal.asReadonly();
     readonly exercises = this.exercisesSignal.asReadonly();
@@ -115,6 +123,39 @@ export class ContextSelectionComponent {
     }
 
     /**
+     * Hides the "add context" hint while the dropdown is open: the hint follows hover, so after the opening click it would
+     * otherwise stay over the dropdown, which opens below or above the trigger depending on the space left.
+     */
+    protected readonly isPickerOpen = signal(false);
+
+    /** The term typed into the picker's search field; the list narrows to the options whose label contains it. */
+    protected readonly filterTerm = signal('');
+
+    protected readonly filteredGroups = computed<ContextGroup[]>(() => {
+        const term = this.filterTerm().trim().toLowerCase();
+        if (!term) {
+            return this.allGroups();
+        }
+        return this.allGroups()
+            .map((group) => ({ label: group.label, items: group.items.filter((item) => item.label.toLowerCase().includes(term)) }))
+            .filter((group) => group.items.length > 0);
+    });
+
+    protected onPickerOpenChange(open: boolean): void {
+        this.isPickerOpen.set(open);
+        if (open) {
+            this.loadContextOptions();
+        } else {
+            this.filterTerm.set('');
+        }
+    }
+
+    protected selectOption(option: ContextOption, picker: TumAetUiPopoverComponent): void {
+        this.onSelectionChange(option.value);
+        picker.close();
+    }
+
+    /**
      * Loads the pickable lectures and exercises for the course, once per course. Called when the dropdown opens.
      */
     loadContextOptions(): void {
@@ -123,6 +164,7 @@ export class ContextSelectionComponent {
             return;
         }
         this.optionsLoadedForCourseId = courseId;
+        this.optionsLoading.set(true);
         forkJoin({
             lectures: this.lectureService.findAllByCourseIdForOverview(courseId),
             exercises: this.exerciseService.getTitlesForAccessibleCourse(courseId),
@@ -132,10 +174,12 @@ export class ContextSelectionComponent {
                 next: ({ lectures, exercises }) => {
                     this.lecturesSignal.set(lectures);
                     this.exercisesSignal.set(exercises);
+                    this.optionsLoading.set(false);
                 },
                 error: () => {
                     this.lecturesSignal.set([]);
                     this.exercisesSignal.set([]);
+                    this.optionsLoading.set(false);
                     if (this.optionsLoadedForCourseId === courseId) {
                         this.optionsLoadedForCourseId = undefined;
                     }

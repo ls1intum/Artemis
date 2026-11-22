@@ -1,0 +1,16 @@
+{
+    "confirmEmailChange": {
+        "title": "Confirm email change",
+        "explanation": "Someone asked to change the email address of an Artemis account. The change is applied only after it was confirmed from the current and from the new address. If you did not request this change, do not confirm it. You can cancel it in your account settings.",
+        "button": "Confirm email change",
+        "keyMissing": "<strong>This link is incomplete.</strong> Please open the link from the email again.",
+        "messages": {
+            "completed": "<strong>Done.</strong> Both addresses are confirmed and the email address of the account was changed.",
+            "waitingForOther": "<strong>This address is confirmed.</strong> The email address changes after the other address is confirmed as well, using the link in the email we sent there.",
+            "invalid": "<strong>This link is invalid or expired.</strong> Request the email change again in your account settings.",
+            "emailAlreadyUsed": "<strong>This email address is already in use.</strong> The change was cancelled. Please choose another address in your account settings.",
+            "error": "<strong>The email change could not be confirmed.</strong> Please try again later."
+        },
+        "toSettings": "Go to your account settings"
+    }
+}

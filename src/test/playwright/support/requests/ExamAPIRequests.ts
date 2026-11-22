@@ -1,7 +1,10 @@
 import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from '../constants';
 import { annotateRecovery, dayjsToString, generateUUID, titleLowercase } from '../utils';
+import { awaitDeletion, awaitNoRunningExamDeletion } from '../deletion';
+import { DELETION_COMPLETION_TIMEOUT } from '../timeouts';
 import examTemplate from '../../fixtures/exam/template.json';
 import { APIRequestContext, APIResponse, Page, expect } from '@playwright/test';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -42,7 +45,7 @@ export class ExamAPIRequests {
      * @param options - An object containing the options for creating the exam.
      *   - course: The course to which the exam belongs (optional, default: undefined).
      *   - title: The title of the exam (optional, default: auto-generated).
-     *   - testExam: Set to true to create a test exam (optional, default: false).
+     *   - examMode: Set to a non-REAL type to create a test exam (optional, default: REAL).
      *   - visibleDate: The date when the exam becomes visible (optional, default: current date).
      *   - startDate: The start date of the exam (optional, default: current date + 1 day).
      *   - endDate: The end date of the exam (optional, default: current date + 2 days).
@@ -60,7 +63,7 @@ export class ExamAPIRequests {
     async createExam(options: {
         course?: Course;
         title?: string;
-        testExam?: boolean;
+        examMode?: ExamMode;
         visibleDate?: dayjs.Dayjs;
         startDate?: dayjs.Dayjs;
         endDate?: dayjs.Dayjs;
@@ -81,7 +84,7 @@ export class ExamAPIRequests {
         const {
             course,
             title = tempTitle,
-            testExam = false,
+            examMode = ExamMode.REAL,
             visibleDate = dayjsToString(dayjs().subtract(1, 'day')),
             startDate = dayjsToString(dayjs().add(1, 'day')),
             endDate = dayjsToString(dayjs().add(2, 'day')),
@@ -100,13 +103,13 @@ export class ExamAPIRequests {
         // A real exam's working time is its duration: the server derives every student's working time from the dates and
         // rescales the exam's own working time by the same delta when the end changes, so a stale value (the old fixed
         // one day) would make shortening the exam fail once the change exceeds it. A test exam's working time is per attempt.
-        const workingTime = requestedWorkingTime ?? (testExam ? 86400 : dayjs(endDate as any).diff(dayjs(startDate as any), 'seconds'));
+        const workingTime = requestedWorkingTime ?? (examMode !== ExamMode.REAL ? 86400 : dayjs(endDate as any).diff(dayjs(startDate as any), 'seconds'));
 
         const exam = {
             ...examTemplate,
             course,
             title,
-            testExam,
+            examMode,
             visibleDate,
             startDate,
             endDate,
@@ -123,7 +126,7 @@ export class ExamAPIRequests {
             channelName: titleLowercase(title),
         } as Exam;
 
-        if (testExam) {
+        if (examMode !== ExamMode.REAL) {
             exam.numberOfCorrectionRoundsInExam = 0;
         }
 
@@ -148,7 +151,7 @@ export class ExamAPIRequests {
     }
 
     /**
-     * Deletes the exam with the given parameters
+     * Deletes the exam with the given parameters and waits until the server finished the deletion in the background.
      * @param exam the exam object
      * */
     async deleteExam(exam: Exam) {
@@ -156,38 +159,55 @@ export class ExamAPIRequests {
         if (!exam?.id || !exam.course?.id) {
             return;
         }
-        // Deleting an exam whose programming exercises still have builds in flight fails with a server error, because the build results
-        // are written while the exercise is being removed. Such builds finish within seconds, so the delete is repeated for a bounded time;
-        // a retry is recorded in the report and anything that still fails afterwards is a real failure.
-        let response: APIResponse;
-        let attempts = 0;
-        try {
-            await expect
-                .poll(
-                    async () => {
-                        response = await this.request.delete(`api/exam/courses/${exam.course!.id}/exams/${exam.id}`);
-                        // Authorization and validation errors are permanent: retry only server failures caused by active builds.
-                        if (response.status() < 500) {
-                            return true;
-                        }
-                        attempts++;
-                        if (attempts === 1) {
-                            annotateRecovery(`deleteExam: exam ${exam.id} could not be deleted at first (${response.status()}), retrying while its builds finish`);
-                        }
-                        return false;
-                    },
-                    { message: `delete exam ${exam.id}`, intervals: [2000], timeout: 30_000 },
-                )
-                .toBe(true);
-        } catch (error) {
-            if (response!) {
-                throw new Error(`Failed to delete exam ${exam.id}: ${response.status()} ${await response.text()}`, { cause: error });
+        const courseId = exam.course.id;
+        // Deleting an exam whose programming exercises still have builds in flight fails, because the build results are written while the
+        // exercise is being removed. The server now reports that as a failed background deletion (or a 5xx when it cannot even start one).
+        // Such builds finish within seconds, so the delete is repeated for a bounded time; a retry is recorded in the report and anything
+        // that still fails afterwards is a real failure.
+        let retryDeadline = Date.now() + 30_000;
+        // A conflict can also come from the deletion of a single exercise of the exam, which the exam progress does not report. It is retried until
+        // the same bounded deadline a deletion may take, instead of a fixed number of attempts that a slow deletion would exhaust.
+        const conflictDeadline = Date.now() + DELETION_COMPLETION_TIMEOUT;
+        for (let attempt = 1; ; attempt++) {
+            const response = await this.request.delete(`api/exam/courses/${courseId}/exams/${exam.id}`);
+            const status = response.status();
+            // A missing exam is fine (a test may already have deleted it); anything else would leak the exam into later tests.
+            if (status === 404) {
+                return;
             }
-            throw error;
-        }
-        // A missing exam is fine (a test may already have deleted it); anything else would leak the exam into later tests.
-        if (response!.status() !== 404) {
-            await this.expectOk(response!, `delete exam ${exam.id}`);
+            if (status === 409) {
+                // A deletion that holds the exam or one of its exercise groups is running, so this request was refused and its own progress will
+                // never show up. Wait for the conflicting job to end, then send the request again. The wait is not a retry caused by builds,
+                // so it does not use up the retry budget.
+                if (Date.now() > conflictDeadline) {
+                    throw new Error(`Failed to delete exam ${exam.id}: it keeps conflicting with other deletions (${await response.text()})`);
+                }
+                const waited = await awaitNoRunningExamDeletion(this.request, courseId, exam.id);
+                retryDeadline += waited;
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                continue;
+            }
+            let failure: string;
+            if (status >= 500) {
+                failure = `${status} ${await response.text()}`;
+            } else if (response.ok()) {
+                // 202: the deletion runs in the background.
+                const outcome = await awaitDeletion(this.request, { entityType: 'EXAM', entityId: exam.id, courseId });
+                if (!outcome.failed) {
+                    return;
+                }
+                failure = outcome.errorMessage;
+            } else {
+                // Authorization and validation errors are permanent: retry only failures caused by active builds.
+                throw new Error(`Failed to delete exam ${exam.id}: ${status} ${await response.text()}`);
+            }
+            if (Date.now() > retryDeadline) {
+                throw new Error(`Failed to delete exam ${exam.id}: ${failure}`);
+            }
+            if (attempt === 1) {
+                annotateRecovery(`deleteExam: exam ${exam.id} could not be deleted at first (${failure}), retrying while its builds finish`);
+            }
+            await new Promise((resolve) => setTimeout(resolve, 2000));
         }
     }
 
@@ -235,11 +255,35 @@ export class ExamAPIRequests {
         return response.json();
     }
 
+    /**
+     * Deletes the exercise group and waits until the server finished the deletion of the group and its exercises in the background.
+     */
     async deleteExerciseGroupForExam(exam: Exam, exerciseGroup: ExerciseGroup) {
-        const response = await this.request.delete(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/exercise-groups/${exerciseGroup.id}`);
-        // A test may already have deleted the group through the UI.
-        if (response.status() !== 404) {
+        const courseId = exam.course!.id!;
+        // Conflicts are retried until the bounded deadline a deletion may take, also when they come from the deletion of a single exercise.
+        const conflictDeadline = Date.now() + DELETION_COMPLETION_TIMEOUT;
+        while (true) {
+            const response = await this.request.delete(`api/exam/courses/${courseId}/exams/${exam.id}/exercise-groups/${exerciseGroup.id}`);
+            // A test may already have deleted the group through the UI.
+            if (response.status() === 404) {
+                return;
+            }
+            if (response.status() === 409) {
+                if (Date.now() > conflictDeadline) {
+                    throw new Error(`Failed to delete exercise group ${exerciseGroup.id} of exam ${exam.id}: it keeps conflicting with other deletions`);
+                }
+                // A deletion that holds the exam or one of its groups is running, so this request was refused and its own progress will never
+                // show up. Wait for that job to end, then send the request again (the group is gone if that job deleted it, which is a 404).
+                await awaitNoRunningExamDeletion(this.request, courseId, exam.id!);
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                continue;
+            }
             await this.expectOk(response, `delete exercise group ${exerciseGroup.id} of exam ${exam.id}`);
+            const outcome = await awaitDeletion(this.request, { entityType: 'EXERCISE_GROUP', entityId: exerciseGroup.id!, courseId, examId: exam.id! });
+            if (outcome.failed) {
+                throw new Error(`Failed to delete exercise group ${exerciseGroup.id} of exam ${exam.id}: ${outcome.errorMessage}`);
+            }
+            return;
         }
     }
 
@@ -352,7 +396,7 @@ export class ExamAPIRequests {
      */
     async getOwnStudentExamSummary(exam: Exam): Promise<StudentExam> {
         let studentExamId: number;
-        if (exam.testExam) {
+        if (exam.examMode !== ExamMode.REAL) {
             // Asking a test exam for "the" student exam of the student would start a new attempt, so pick the latest attempt that was handed in.
             const attempts = await this.getOwnTestExamAttempts(exam);
             const submitted = attempts.filter((attempt) => attempt.submitted);
@@ -670,7 +714,7 @@ export class ExamAPIRequests {
         const resultDate = end.add(1, 'second');
         const concluded = await this.updateExam(exam, {
             endDate: dayjsToString(end),
-            workingTime: current.testExam ? current.workingTime : end.diff(dayjs(current.startDate as any), 'seconds'),
+            workingTime: current.examMode !== ExamMode.REAL ? current.workingTime : end.diff(dayjs(current.startDate as any), 'seconds'),
             publishResultsDate: publishResults ? dayjsToString(resultDate) : null,
             examStudentReviewStart: publishResults ? dayjsToString(resultDate) : null,
             examStudentReviewEnd: publishResults ? dayjsToString(resultDate.add(5, 'minutes')) : null,

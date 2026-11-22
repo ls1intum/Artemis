@@ -89,6 +89,24 @@ class QueryCallSiteTest {
     }
 
     @Test
+    void recordsTheSourceFileAndLineOfTheCaller() {
+        QueryCallSite site = QueryCallSite.resolve();
+        int expectedLine = new Throwable().getStackTrace()[0].getLineNumber() - 1;
+
+        assertThat(site.sourceFile()).isEqualTo("src/main/java/de/tum/cit/aet/artemis/core/config/performance/QueryCallSiteTest.java");
+        assertThat(site.line()).isEqualTo(expectedLine);
+    }
+
+    @Test
+    void theSourceLocationDoesNotMakeCallSitesDiffer() {
+        QueryCallSite first = new QueryCallSite("ExampleRepository.find", "CourseService.load", "a/CourseService.java", 10);
+        QueryCallSite second = new QueryCallSite("ExampleRepository.find", "CourseService.load", "a/CourseService.java", 20);
+
+        assertThat(first).isEqualTo(second).hasSameHashCodeAs(second);
+        assertThat(first).isNotEqualTo(new QueryCallSite("ExampleRepository.find", "CourseService.other", "a/CourseService.java", 10));
+    }
+
+    @Test
     void classesOutsideTheApplicationAreNoRepository() {
         assertThat(QueryCallSite.repositoryName(String.class)).isNull();
         assertThat(QueryCallSite.repositoryName(ExampleRepository.class)).isEqualTo("ExampleRepository");

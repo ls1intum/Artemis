@@ -1,9 +1,15 @@
+import { importFromFileNavigation } from 'app/exercise/import/import-from-file-navigation';
 import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiPanelComponent } from '@tumaet/ui-angular';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseGroupDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { EntityDeletionProgress, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/entities/exam-deleted-event.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -13,7 +19,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { EventManager } from 'app/foundation/service/event-manager.service';
+import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
 import { faAngleDown, faAngleUp, faFileImport, faLayerGroup, faPen, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExamExerciseImportDialogComponent } from 'app/exam/manage/exercise-groups/exercise-import-dialog/exam-exercise-import-dialog.component';
@@ -54,12 +60,15 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 })
 export class ExerciseGroupsComponent implements OnInit {
     private route = inject(ActivatedRoute);
+    private destroyRef = inject(DestroyRef);
     private exerciseGroupService = inject(ExerciseGroupService);
+    private entityDeletionService = inject(EntityDeletionService);
     private examManagementService = inject(ExamManagementService);
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
     private router = inject(Router);
     private profileService = inject(ProfileService);
+    private readonly isAlive = trackAlive(this.destroyRef);
 
     readonly courseId = signal<number>(undefined!);
     course = signal<Course | undefined>(undefined);
@@ -98,6 +107,11 @@ export class ExerciseGroupsComponent implements OnInit {
     private readonly exerciseImportGroup = signal<ExerciseGroup | undefined>(undefined);
 
     protected readonly deleteGroupVisible = signal(false);
+    /** One observable per dialog opening, so that the delete dialog does not get a new input on every change detection pass. */
+    protected readonly deleteGroupSummary = computed(() => {
+        const exerciseGroup = this.groupToDelete();
+        return exerciseGroup?.id === undefined ? undefined : this.exerciseGroupService.getDeletionSummary(this.courseId(), this.examId(), exerciseGroup.id);
+    });
     protected readonly groupToDelete = signal<ExerciseGroup | undefined>(undefined);
     protected readonly deleteGroupQuestion = computed(() =>
         this.groupToDelete() && this.containsProgrammingExercise(this.groupToDelete()!)
@@ -140,6 +154,7 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.exerciseGroups.set(this.exam()!.exerciseGroups);
                 this.course.set(this.exam()!.course);
                 this.latestIndividualEndDate.set(examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined);
+                this.resumeRunningDeletion();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -177,6 +192,15 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     /**
+     * Reads the exercise groups of the exam from the server again, e.g. when it is not known how a deletion ended.
+     */
+    reloadExerciseGroups() {
+        this.loadExerciseGroups()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({ next: (res) => this.exerciseGroups.set(res.body?.exerciseGroups) });
+    }
+
+    /**
      * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId.
      * @param exerciseId
      * @param exerciseGroupId
@@ -205,17 +229,70 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param event representation of users choices to delete the student repositories and base repositories
      */
     deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {
-        this.exerciseGroupService.delete(this.courseId(), this.examId(), exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'exerciseGroupOverviewModification',
-                    content: 'Deleted an exercise group',
-                });
+        const courseId = this.courseId();
+        const examId = this.examId();
+        const title = this.exerciseGroups()?.find((exerciseGroup) => exerciseGroup.id === exerciseGroupId)?.title;
+        const request$ = this.exerciseGroupService.delete(courseId, examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans);
+        this.entityDeletionService.delete(exerciseGroupDeletionTarget(courseId, examId, exerciseGroupId, title), request$).subscribe({
+            next: (progress) => {
+                this.onGroupDeletionEnded(progress, exerciseGroupId);
+                // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');
-                this.exerciseGroups.set(this.exerciseGroups()!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId));
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
+    }
+
+    /**
+     * Shows the progress of a deletion in this exam that is already running, e.g. after the page was reloaded or another instructor started it:
+     * of an exercise group, or of the exam itself.
+     */
+    private resumeRunningDeletion(): void {
+        const exam = this.exam();
+        if (!exam?.course?.isAtLeastInstructor) {
+            return;
+        }
+        this.entityDeletionService
+            .resumeInExam(
+                this.courseId(),
+                this.examId(),
+                (entityType, entityId) => (entityType === EntityDeletionType.EXAM ? exam.title : this.exerciseGroups()?.find((group) => group.id === entityId)?.title),
+                this.destroyRef,
+            )
+            .subscribe((progress) =>
+                progress.entityType === EntityDeletionType.EXAM ? this.onExamDeletionEnded(progress) : this.onGroupDeletionEnded(progress, progress.entityId),
+            );
+    }
+
+    private onGroupDeletionEnded(progress: EntityDeletionProgress, exerciseGroupId: number): void {
+        if (isDeletionCompleted(progress)) {
+            this.eventManager.broadcast({
+                name: 'exerciseGroupOverviewModification',
+                content: 'Deleted an exercise group',
+            });
+            this.exerciseGroups.set(this.exerciseGroups()?.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId));
+        }
+        if (isDeletionCompleted(progress) || isDeletionOutcomeUnknown(progress)) {
+            // The exam only reports its latest operation. When another operation replaced ours before the end was seen, the outcome is
+            // unknown: nothing is announced and the groups are read from the server, which tells how it really ended.
+            this.reloadExerciseGroups();
+        }
+    }
+
+    /** The exam that this page belongs to is being deleted: handled like the exam detail page does, and the page is left once the exam is gone. */
+    private onExamDeletionEnded(progress: EntityDeletionProgress): void {
+        if (isDeletionCompleted(progress)) {
+            // Drop the exam from the shared exam list first, then read it again, then leave: the overview must not show a deleted exam.
+            this.eventManager.broadcast(new EventWithContent<ExamDeletedEventContent>(EXAM_DELETED_EVENT, { examId: progress.entityId }));
+            this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
+            if (this.isAlive() && this.examId() === progress.entityId) {
+                void this.router.navigate(['/course-management', this.courseId(), 'exams']);
+            }
+        } else if (isDeletionOutcomeUnknown(progress)) {
+            // Not known how it ended: only refresh what is shown, which tells whether the exam still exists.
+            this.eventManager.broadcast({ name: 'examListModification', content: 'Refresh after an unknown deletion outcome' });
+            this.reloadExerciseGroups();
+        }
     }
 
     /**
@@ -241,18 +318,13 @@ export class ExerciseGroupsComponent implements OnInit {
         if (!exerciseGroup || !exerciseType) {
             return;
         }
-        const importBaseRoute = ['/course-management', this.courseId(), 'exams', this.examId(), 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
+        const groupRoute = ['/course-management', this.courseId(), 'exams', this.examId(), 'exercise-groups', exerciseGroup.id];
         if (result.id) {
-            importBaseRoute.push('import', result.id);
-            void this.router.navigate(importBaseRoute, { queryParams: { sourceIsExamExercise: !!result.exerciseGroup } });
+            void this.router.navigate([...groupRoute, `${exerciseType}-exercises`, 'import', result.id], { queryParams: { sourceIsExamExercise: !!result.exerciseGroup } });
         } else {
-            // we know it must be a programming exercise, because only programming exercises can be imported from a file
-            importBaseRoute.push('import-from-file');
-            void this.router.navigate(importBaseRoute, {
-                state: {
-                    programmingExerciseForImportFromFile: result,
-                },
-            });
+            // An exercise read from a file has no id.
+            const { segments, extras } = importFromFileNavigation(result);
+            void this.router.navigate([...groupRoute, ...segments], extras);
         }
     }
 

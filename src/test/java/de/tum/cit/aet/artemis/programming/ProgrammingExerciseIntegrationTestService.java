@@ -51,6 +51,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -86,6 +87,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
@@ -98,6 +100,7 @@ import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -174,6 +177,9 @@ public class ProgrammingExerciseIntegrationTestService {
     private CourseTestRepository courseRepository;
 
     @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
+
+    @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Autowired
@@ -215,6 +221,9 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private PlagiarismUtilService plagiarismUtilService;
+
+    @Autowired
+    private PlagiarismSubmissionRepository plagiarismSubmissionRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -615,7 +624,8 @@ public class ProgrammingExerciseIntegrationTestService {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     void testProgrammingExerciseDelete_failToDeleteBuildPlan() throws Exception {
@@ -630,7 +640,9 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+        // the deletion is accepted and fails in the background
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletionFailure(programmingExercise.getId());
     }
 
     void testProgrammingExerciseDelete_buildPlanDoesntExist() throws Exception {
@@ -645,7 +657,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     void testProgrammingExerciseDelete_failToDeleteCiProject() throws Exception {
@@ -660,7 +673,9 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, true);
 
-        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+        // the deletion is accepted and fails in the background
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletionFailure(programmingExercise.getId());
     }
 
     // VCS project deletion uses local VCS in the test environment, so no external call fails.
@@ -677,7 +692,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     // VCS repository deletion uses local VCS in the test environment, so no external call fails.
@@ -694,7 +710,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     void testProgrammingExerciseDelete_invalidId_forbidden() throws Exception {
@@ -1753,6 +1770,13 @@ public class ProgrammingExerciseIntegrationTestService {
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/check-plagiarism";
         var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
         assertPlagiarismResult(programmingExercise, result, 100.0);
+
+        // the compared commit of each side is stored, the compared ids of a programming comparison are participation ids
+        var comparison = result.plagiarismResult().comparisons().getFirst();
+        for (var submission : List.of(comparison.submissionA(), comparison.submissionB())) {
+            assertThat(plagiarismSubmissionRepository.findComparedCommitHashes(programmingExercise.getId(), submission.submissionId(), Pageable.ofSize(10))).hasSize(1)
+                    .allSatisfy(hash -> assertThat(hash).matches("[0-9a-f]{40}"));
+        }
     }
 
     void testCheckPlagiarismForTeamExercise() throws Exception {
@@ -2278,6 +2302,18 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate",
                 UpdateProgrammingExerciseDTO.of(programmingExerciseToBeConflicted, programmingExerciseUtilService.buildConfigOf(programmingExerciseToBeConflicted)),
                 HttpStatus.CONFLICT);
+    }
+
+    void testReEvaluateAndUpdateProgrammingExercise_changedShortName_badRequest() throws Exception {
+        ProgrammingExercise programmingExercise = createCourseWithProgrammingExerciseForReEvaluation();
+        String originalShortName = programmingExercise.getShortName();
+        // the DTO is built from the changed values of the entity, which is not saved
+        programmingExercise.setShortName(originalShortName + "x");
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
+
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", updateDTO, HttpStatus.BAD_REQUEST);
+
+        assertThat(programmingExerciseTestRepository.findById(programmingExercise.getId()).orElseThrow().getShortName()).isEqualTo(originalShortName);
     }
 
     /**

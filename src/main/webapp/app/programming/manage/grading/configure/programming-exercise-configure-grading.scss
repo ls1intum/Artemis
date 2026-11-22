@@ -24,6 +24,10 @@
     }
 }
 
+.grading-body-container {
+    container: grading-body / inline-size;
+}
+
 .grading-table-layout {
     display: flex;
     flex-wrap: wrap;
@@ -33,7 +37,7 @@
     }
 
     & > div:last-child {
-        border-left: 1px solid #ddd;
+        border-left: 1px solid var(--border-color);
     }
 }
 
@@ -48,7 +52,8 @@
     }
 }
 
-@media screen and (max-width: 1200px) {
+// The task table needs about 850px for its columns. Stack the charts below it as soon as the page content, not the window, is too narrow for both side by side.
+@container grading-body (max-width: 1400px) {
     .grading-table-layout {
         flex-flow: column;
 
@@ -58,7 +63,7 @@
 
         & > div:last-child {
             border-left: hidden;
-            border-top: 1px solid #ddd;
+            border-top: 1px solid var(--border-color);
         }
     }
 }

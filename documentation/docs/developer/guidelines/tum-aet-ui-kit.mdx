@@ -4,6 +4,7 @@ title: TUM AET UI package
 sidebar_label: TUM AET UI package
 slug: /guidelines/tum-aet-ui-kit
 description: Architecture, integration, contribution, testing, and publishing for the TUM AET UI component library.
+last_reviewed: 2026-11-10
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -14,13 +15,16 @@ research group at the Technical University of Munich](https://aet.cit.tum.de/). 
 as `@tumaet/ui-angular`. Artemis production builds consume its compiled public entry point and stylesheet.
 
 <Callout variant={CalloutVariant.info}>
-    TUM AET UI is the target component system for Artemis. Bootstrap, ng-bootstrap, and PrimeNG are migration-only dependencies. Use an existing TUM AET UI component whenever it
-    covers the requirement.
+    TUM AET UI is the component system of Artemis. Bootstrap, ng-bootstrap, and PrimeNG are removed from the client. Use an existing TUM AET UI component whenever it covers the
+    requirement, and add a missing capability to the kit.
 </Callout>
 
 Use the [TUM AET UI component reference](/developer/tum-aet-ui-reference) to inspect
 supported states, controls, accessibility results, and APIs. This guide covers package architecture
 and contribution rules.
+
+For button colours, emphasis, and toolbar sizing, follow
+[Button intent and hierarchy](/developer/guidelines/client-theming#button-intent-and-hierarchy).
 
 ## Ownership boundary
 
@@ -58,14 +62,15 @@ details or static class maps.
 Composite widgets build on [Angular Aria](https://angular.dev/guide/aria/overview) (`@angular/aria`),
 Angular's headless accessibility directives. Aria owns the roles, the ARIA state, roving focus,
 keyboard navigation, and typeahead; the package adds the styling and the TUM AET UI API on top. The
-menu and the tabs are built this way. Aria ships the same widgets for accordions, comboboxes, grids,
+menu, the tabs, and the accordion are built this way. Aria ships the same widgets for comboboxes, grids,
 listboxes, toolbars, and trees, so reach for it before writing keyboard handling for one of those.
 The CDK still provides what aria leaves to the host, such as the overlay that positions an open
 menu.
 
 A package component composes an aria directive in one of two ways. It applies the directive as a
 host directive when the component never has to set one of the directive's inputs itself: the tab
-list, the tabs container, the menu surface, and the menu item work this way. Angular cannot bind a
+list, the tabs container, the menu surface, the menu item, and the accordion work this way; the accordion panel applies aria's
+trigger and panel in its own template, where it binds their inputs like any other directive. Angular cannot bind a
 host directive's input from the host, so when the component must supply or reshape an input, it
 extends the aria class instead and overrides that input. The menu trigger extends the aria trigger
 because the menu it opens only exists once its template has been rendered, and because a disabled
@@ -90,9 +95,15 @@ Aria opens a menu from Enter and Space on keydown and cancels the key, so a keyb
 no `click` on the trigger. React to a menu with the trigger's `menuOpened` output and to a chosen
 entry with its `triggered` output, never with a `(click)` handler on the trigger.
 
+Aria has no primitive for dividing a menu. `tumaet-ui-menu-separator` and `tumaet-ui-menu-group` are
+plain elements with the `separator` and `group` roles; a group is named by its visible `label`. They
+are not entries, so the arrow keys, Home, End and typeahead pass over them. Use them instead of
+hand-written dividers and headings inside a menu.
+
 Each host carries the attribute aria's test harnesses look for, so tests in the package and in
-Artemis can drive TUM AET UI menus and tabs with `MenuHarness` from `@angular/aria/menu/testing` and
-`TabsHarness` from `@angular/aria/tabs/testing`. A closed TUM AET UI menu is not in the document, and
+Artemis can drive TUM AET UI menus, tabs and accordions with `MenuHarness` from
+`@angular/aria/menu/testing`, `TabsHarness` from `@angular/aria/tabs/testing`, and `AccordionHarness`
+from `@angular/aria/accordion/testing`. A closed TUM AET UI menu is not in the document, and
 `MenuHarness` finds a trigger through the rendered menu, so `MenuHarness.open()` and the
 `triggerText` filter only work once the menu is open: click the trigger first, then load the
 harness. Prefer the harness over hand-written DOM queries when it covers the interaction.
@@ -129,6 +140,68 @@ but its final state is not a useful reference; do not create hidden duplicates o
 by accessible role and name. Do not assert CSS classes, duplicate unit-test matrices, add snapshots,
 or disable accessibility rules to make a story pass.
 
+## Data table design template
+
+Every data table in Artemis follows one design, built by `tumaet-ui-table-layout` together with `table[tumAetUiTable]`
+and `tumaet-ui-paginator`. User management is the reference page. The Storybook story **Data Display / Table Layout**
+shows it live: resize it, switch the theme and sort the columns. Pages assemble the frame as described in
+[Data tables](/developer/guidelines/client-development#data-tables).
+
+### Anatomy
+
+```text
+┌──────────────────────────────────────────────────────────────────────────┐
+│ [⌕ Search users]  0 selected                  Delete  Filter  [+ Create]  │ toolbar    40px, sticky
+├──────────────────────────────────────────────────────────────────────────┤
+│ ☐  ID ▲   Login ⇅   Name ⇅   Email ⇅   Language   Created ⇅   Actions     │ header     30px, sticky
+│ ☐  1037   aturing37  Alan Turing  …                                      │ rows       36px
+│ ☐  1038   ghopper38  Grace Hopper …                    only this part ↕  │ body       scrolls, also sideways
+├──────────────────────────────────────────────────────────────────────────┤
+│ 1–50 of 1,284 users                  Rows [50]   «  ‹  [1] 2 3  ›  »     │ footer     40px, sticky
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+| Part    | Size               | Rules                                                                                                                     |
+| ------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Toolbar | at most 40px       | One line, never wraps. Search on the left, bulk and page actions on the right. Absent when there is nothing to put in it. |
+| Header  | 30px               | Sticks to the top of the body. One line of text; a long label widens its column. Sortable columns show an arrow.          |
+| Body    | rows of about 36px | The only part that scrolls, vertically and horizontally. Striping and row hover are optional.                             |
+| Footer  | at most 40px       | One line. Range and total on the left, page size and pager on the right. Omit it for lists shown completely.              |
+
+The frame is as tall as its rows, but never taller than the space left below it in its scroll container. A short table
+leaves no empty area, and a long one keeps toolbar and footer in view whatever sits above it.
+
+### Responsive behaviour
+
+The toolbar and the footer never wrap. They give up detail instead:
+
+| Width of the table | Footer                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------ |
+| from 42rem         | range and total, page size with its label, first, previous, three page numbers, next, last |
+| from 36rem         | the same, with the page size select but without its label                                  |
+| from 28rem         | range and total, first, previous, "page / pages", next, last                               |
+| below 28rem        | only the total, first, previous, "page / pages", next, last                                |
+
+The footer follows the width of the table, not the screen, so dialogs behave the same.
+
+The toolbar shows button labels from the `md` breakpoint of the viewport and icons only below it. A toolbar that is still
+too wide scrolls sideways instead of breaking into a second line.
+
+### States and details
+
+- **Loading:** the body is dimmed with a spinner and the frame is announced as busy; the pager is disabled so that
+  overlapping requests cannot show the wrong page.
+- **Empty:** bind `empty` of the frame to "no rows and not loading". The body then shows a centered empty state
+  (`tumaet-ui-empty-state`) under the column header, by default "No entries yet". Set `emptyTitle` and `emptyDescription`
+  to the wording of the page and project a call to action such as "Create" with `[tumAetUiTableEmptyActions]`. Do not
+  write a "no results" row into the table.
+- **Sorting:** the active column shows its direction and exposes `aria-sort`. Sorting resets the pager to the first page.
+- **Accessibility:** an icon-only button needs an accessible name, the pager is a labelled `nav`, and the selected page is
+  marked with `aria-current`.
+- **Theming:** use semantic colour tokens only, so the table looks the same in the light and the dark theme.
+- **Not for every table:** key/value tables and tables with a few fixed rows stay a plain `<table tumAetUiTable>`. They
+  keep the 30px header but have no toolbar or footer.
+
 ## Consuming the package
 
 Import only from the package root:
@@ -155,6 +228,11 @@ Artemis loads `@tumaet/ui-angular/styles.css` after application styles. Its unla
 overrides the package's font family, brand, application surfaces, and status roles. Its Tailwind
 configuration owns application utilities. Set `data-theme="dark"` on the document element for dark
 mode; the package theme also sets the matching CSS `color-scheme` for browser controls.
+
+Button-only colors are centralized in the light/dark **Button palette** blocks of
+`packages/tum-aet-ui/themes.css`. The `--tumaet-ui-button-<severity>-{background,contrast,foreground}`
+properties let a host adjust buttons independently of status feedback. See [changing the global button palette](/developer/guidelines/client-theming#change-the-global-button-palette)
+for the property contract, overrides, and verification commands.
 
 Treat package token names and responsive thresholds as public styling contracts. Add a token only when a host needs a supported customization
 axis; do not expose Tailwind's full primitive theme.
@@ -229,7 +307,7 @@ Consumer failures retain the npm manifest, resolved lockfile, and browser diagno
 
 TUM AET UI versions independently from Artemis. Tags use the npm package identity:
 `@tumaet/ui-angular@<version>`. This follows the
-[package-name@version convention](https://github.com/changesets/changesets/blob/main/docs/command-line-options.md)
+[package-name@version convention](https://github.com/changesets/changesets/blob/main/docs/guide/cli.md#publish)
 and keeps package releases separate from Artemis's numeric application tags.
 
 Run **Release TUM AET UI** (`release-tum-aet-ui.yml`) explicitly:

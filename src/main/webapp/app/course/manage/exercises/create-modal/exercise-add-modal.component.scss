@@ -87,7 +87,7 @@
     }
 }
 
-.card-icon-wrapper {
+.option-icon-wrapper {
     width: 44px;
     height: 44px;
     border-radius: 12px;
@@ -102,10 +102,32 @@
 }
 
 // Uses the accessible brand foreground (light: --primary-dark); plain --primary would miss WCAG AA at this size.
-.card-cta {
+.option-cta {
     font-weight: 600;
     font-size: 0.8rem;
     color: var(--tumaet-ui-accent-color);
     display: inline-flex;
     align-items: center;
+}
+
+.back-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.85rem;
+    color: var(--tumaet-ui-accent-color);
+    cursor: pointer;
+}
+
+.export-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.export-title {
+    overflow-wrap: anywhere;
 }

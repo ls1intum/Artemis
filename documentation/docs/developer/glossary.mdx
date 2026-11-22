@@ -1,0 +1,147 @@
+---
+id: glossary
+title: Glossary
+sidebar_label: Glossary
+last_reviewed: 2026-11-05
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+Artemis has a vocabulary of its own. Some words, such as *participation* or *result*, mean something narrower in Artemis
+than in everyday speech, and a few components are known by names that do not describe them. This page defines the terms
+that appear in the code, the user interface, and the documentation, so that one word means one thing everywhere.
+
+<Callout variant={CalloutVariant.info}>
+  This is a first draft. It lists the most common terms and is meant to grow: when a pull request introduces a term,
+  or when a review discussion shows that two people understood one word differently, add a row here.
+</Callout>
+
+## How the glossary is used
+
+* **Writing.** Use the term in the first column. If the **Avoid** column lists a word, use the term instead, in the
+  documentation, in code comments, in commit messages, and in pull request text.
+* **Checking.** `supporting_scripts/check_docs_consistency.py` reads the **Avoid** column and fails when a page uses an
+  avoided word. The check scans the prose of the pages, not the code blocks. To retire a word, add it to the column; to
+  allow it again, remove it, and give the reason in the pull request.
+* **Related rules.** The vague names for the two layers of a system are covered by [Terminology](guidelines/terminology.mdx),
+  the wording about people by the [language guideline](guidelines/language.mdx).
+
+## Roles and course structure
+
+| Term | Meaning | Avoid |
+| --- | --- | --- |
+| Course | The unit in which a group of users learns together. It holds exercises, lectures, exams, communication channels, and the course roles of its participants. | |
+| Student | A course role that takes part in the course and sees released content. | |
+| Teaching Assistant | A course role that assesses submissions and sees course content before its release date. The user interface and the code call this role **tutor** (`tutors` group). | |
+| Editor | A course role that creates and edits course content but cannot delete it. | |
+| Instructor | A course role that manages the course: content, participants, deletion, scores. | |
+| Admin | A global authority that administers the server. A **Super Admin** has additional privileges for security critical operations, such as managing other administrators. | |
+| Course role | The role of a user within one course. It grants access only in that course and never makes a user an administrator. See [Access Rights](/admin/access-rights). | |
+| Team | A group of students that work on a team exercise together and share one participation. | |
+| Tutorial group | A group of students of a course that meets regularly with a tutor. It is managed in the course. | |
+| Competency | A skill or knowledge area that a course aims to teach. Lectures, lecture units, and exercises are linked to it, and a student's progress is measured against it. | |
+| Learning path | The personalized sequence through the competencies of a course that Artemis suggests to a student. | |
+
+## Exercises, participations, and results
+
+| Term | Meaning | Avoid |
+| --- | --- | --- |
+| Exercise | A task of a course that students solve and that Artemis can grade. There are five types: programming, quiz, modeling, text, and file upload. | |
+| Programming exercise | An exercise that students solve by pushing code to a git repository. Artemis builds and tests the code and creates a result. | `coding exercise` |
+| Quiz exercise | An exercise made of multiple choice, short answer, or drag and drop questions. Artemis assesses it automatically. | |
+| Modeling exercise | An exercise in which students draw a diagram in the Apollon editor, for example a UML class diagram, an activity diagram or a BPMN process. It is assessed manually or with automatic feedback. | |
+| Text exercise | An exercise that students answer in free text. It is assessed manually or with suggestions from Athena. | |
+| File upload exercise | An exercise that students answer by uploading a file. It is assessed manually. | |
+| Participation | The connection between a student (or a team) and one exercise. It is created when the student starts the exercise and holds the submissions and results of that student. For a programming exercise it also points to the student's repository. | |
+| Submission | One answer of a participation. For a programming exercise, every push that creates a build is a submission. | |
+| Result | The outcome of assessing one submission: a score, the feedback, and whether the submission passed. A participation can have many results. | |
+| Feedback | One item of a result: the output of a test case, a finding of static code analysis, or a comment of an assessor. | |
+| Score | The percentage of the points of an exercise that a result earned. | |
+| Assessment | The act of grading a submission. It is **automatic** (tests, quizzes) or **manual** (a Teaching Assistant, optionally supported by Athena). | |
+| Grading instruction | A reusable comment with a fixed number of points that an assessor applies while assessing manually. Grading instructions are grouped in grading criteria. | |
+| Complaint | A student's objection to an assessed result, either a manual one or an automatic one of a programming exercise when the instructor enables complaints on automatic assessment. Another assessor reviews it and answers with a complaint response. | |
+| Grading scale | The mapping from the overall score of a course or exam to a grade. | |
+| Plagiarism check | The comparison of the submissions of an exercise with each other (JPlag for programming exercises). A match that an instructor investigates becomes a **plagiarism case**. | |
+
+## Programming exercise infrastructure
+
+| Term | Meaning | Avoid |
+| --- | --- | --- |
+| Template repository | The repository with the code that every student starts from. A student's repository is copied from it. | |
+| Solution repository | The repository with the reference solution. It also checks that the tests pass. | |
+| Tests repository | The repository with the test cases of the exercise. | |
+| Auxiliary repository | An additional repository of the exercise, for example for files that students must not change. | |
+| Student repository | The repository of one participation, where a student or team works. | |
+| Test case | One automated check of a programming exercise. Its output becomes feedback. | |
+| Static code analysis | The check of the student code for style and quality problems with tools such as Checkstyle or PMD. Its findings become feedback grouped in categories. | |
+| LocalVC | The version control system that is built into Artemis: a git server that students and the build agents clone from and push to. | |
+| LocalCI | The continuous integration system that is built into Artemis: the server queues a build job and a build agent runs it in a Docker container. | |
+| Integrated Code Lifecycle | The combination of LocalVC and LocalCI. It is the supported setup for programming exercises. | |
+| Build job | One run of the tests for one submission, together with its status, logs, and result. | |
+| Build agent | A process that takes build jobs from the queue and runs them in Docker containers. It can run inside the core node or as a separate service on its own machine. | |
+| Build queue | The queue of build jobs that waits for a free build agent. It lives in the distributed data provider. | |
+| Jenkins | A deprecated external CI system for programming exercises. Its support is removed in Artemis 11. | |
+| Ares | The test framework for Java exercises that restricts what student code is allowed to do and stops it when it runs too long. | |
+
+## Exams
+
+| Term | Meaning | Avoid |
+| --- | --- | --- |
+| Exam | A timed, supervised assessment of a course that consists of exercise groups. | |
+| Exercise group | A set of alternative exercises of an exam. Each student gets one of them. | |
+| Student exam | The individual instance of an exam that one student receives: the chosen exercises in the student's order. | |
+| Working time | The time that a student has to work on a student exam. | |
+| Test run | A trial run of an exam that an instructor does to check it before it is released. | |
+
+## Lectures and communication
+
+| Term | Meaning | Avoid |
+| --- | --- | --- |
+| Lecture | A teaching unit of a course. It is made of lecture units. | |
+| Lecture unit | One part of a lecture: an attachment, a video, a text, an online link, or an exercise. | |
+| Channel | A communication space of a course that users join, for example one per lecture or exercise. | |
+| Conversation | The general name for a channel, a group chat, and a direct message. | |
+| Post | A message in a conversation. A reply to it is an **answer post**. | |
+| Notification | A message that Artemis sends to a user about an event of a course, in the client or as a push notification. | |
+| Hermes | The service through which Artemis delivers encrypted push notifications to the mobile apps. | |
+
+## Architecture and operation
+
+| Term | Meaning | Avoid |
+| --- | --- | --- |
+| Client | The Angular application in `src/main/webapp`. Say *web client* when the difference to the mobile apps matters. | |
+| Server | The Spring Boot application in `src/main/java`. | |
+| Core node | A server instance that serves the client and the REST API and runs the scheduled tasks. A cluster has one or more core nodes. | |
+| Module | A package of the server below `de.tum.cit.aet.artemis`, such as `exercise`, `exam`, or `localci`, with its own API for the other modules. | |
+| Distributed data provider | The abstraction `DistributedDataProvider` that holds the state that nodes share (caches, queues, locks, maps). Hazelcast, Redis, and a local implementation are its **providers**. See [Distributed Data](guidelines/distributed-data.mdx). | `distributed cache provider` |
+| Provider | A swappable implementation of the distributed data provider. Its glue code is an **adapter**. | |
+| Websocket topic | A declared destination that the server sends messages to and that the client subscribes to. Every topic is a constant: a broadcast topic has an access rule for its subscribers, a per-user topic reaches only the user that the server addresses. See [Websocket](guidelines/websocket.mdx). | `web socket` |
+| Spring profile | A switch that enables parts of the server, such as `core`, `buildagent`, `localvc`, `localci`, `scheduling`, or `dev`. | |
+| Feature toggle | A switch that an administrator turns on or off at run time to enable a feature without a deployment. | |
+| Liquibase changeset | One step of the database migration. A changed schema always needs a new changeset. | |
+| DTO | A data transfer object: a Java record (or TypeScript interface) that carries data across the REST API, so that entities never leave the server. | |
+| TUM AET UI | The component library of the client in `packages/tum-aet-ui`. | |
+| Telemetry | The report about the configuration of an installation that Artemis sends to the maintainers. An administrator disables it with `artemis.telemetry.enabled: false`. See [Telemetry](/admin/telemetry). | |
+
+## Artificial intelligence and external services
+
+| Term | Meaning | Avoid |
+| --- | --- | --- |
+| Iris | The virtual tutor in Artemis that students ask about exercises and lectures. It is backed by Pyris. | |
+| Pyris | The service of the EduTelligence suite behind Iris. | |
+| EduTelligence | The suite of AI services that extend Artemis, among them Pyris and Athena. | |
+| Athena | The service that suggests feedback for manual assessment. | |
+| Hyperion | The AI assisted authoring of exercises: consistency checks, rewriting, and variant generation. It runs inside Artemis and Spring AI. | |
+| Atlas | The module for competencies and learning paths. | |
+| Deimos | The instructor tool that screens programming exercise participations for malicious code. | |
+| AI worker | A process outside the server that runs long AI workloads, such as the generation of a whole exercise, and talks to Artemis through the distributed data provider. | |
+| Weaviate | The vector database that stores the search index of the global search. | |
+| Apollon | The UML editor that modeling exercises and quiz questions use. | |
+
+## Writing words
+
+| Term | Meaning | Avoid |
+| --- | --- | --- |
+| Allowlist | A list of exceptions that a check accepts. Every entry says why it is allowed. | `whitelist` |
+| Denylist | A list of values that a check or filter rejects. | `blacklist` |

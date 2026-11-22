@@ -12,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-teams-import-button',
     template: `
-        <button tumAetUiButton severity="primary" size="small" (click)="openTeamsImportDialog($event)">
+        <button tumAetUiButton severity="secondary" size="small" (click)="openTeamsImportDialog($event)">
             <fa-icon [icon]="faUpload" />
             <span>{{ 'artemisApp.team.importTeams.buttonLabel' | artemisTranslate }}</span>
         </button>

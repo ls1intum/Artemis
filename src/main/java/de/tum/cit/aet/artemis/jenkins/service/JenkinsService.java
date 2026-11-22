@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import tools.jackson.core.JacksonException;
 
@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): Jenkins support is removed in Artemis 11, delete with the whole jenkins module
 @Profile(PROFILE_JENKINS)
 @Lazy
 @Service
@@ -44,15 +45,15 @@ public class JenkinsService implements ContinuousIntegrationService {
 
     private final JenkinsJobService jenkinsJobService;
 
-    private final RestTemplate shortTimeoutRestTemplate;
+    private final RestClient shortTimeoutRestClient;
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
-    public JenkinsService(@Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, JenkinsBuildPlanService jenkinsBuildPlanService,
+    public JenkinsService(@Qualifier("shortTimeoutJenkinsRestClient") RestClient shortTimeoutRestClient, JenkinsBuildPlanService jenkinsBuildPlanService,
             JenkinsJobService jenkinsJobService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+        this.shortTimeoutRestClient = shortTimeoutRestClient;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
@@ -166,7 +167,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         try {
             URI uri = JenkinsEndpoints.HEALTH.buildEndpoint(jenkinsServerUri).build(true).toUri();
             // Note: we simply check if the login page is reachable
-            shortTimeoutRestTemplate.getForObject(uri, String.class);
+            shortTimeoutRestClient.get().uri(uri).retrieve().body(String.class);
             return new ConnectorHealth(true, additionalInfo);
         }
         catch (Exception emAll) {

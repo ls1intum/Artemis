@@ -2,6 +2,7 @@
 id: global-search-weaviate
 title: 'Global Search & Weaviate Setup'
 sidebar_label: Global Search (Weaviate)
+last_reviewed: 2026-11-20
 ---
 
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
@@ -50,7 +51,7 @@ If the embedding API cannot be reached within 3 seconds or does not answer withi
 
 ## Provision Weaviate
 
-Use **Weaviate 1.37 or newer** (tested with 1.37.2 and 1.38.20). Artemis connects over REST and gRPC.
+Use **Weaviate 1.37 or newer** (tested with 1.37.2 and 1.40.5). Artemis connects over REST and gRPC.
 
 ### Docker Compose
 
@@ -60,7 +61,7 @@ The repository ships `deployment/docker/weaviate.yml`. It works for both modes. 
 docker compose --env-file .env -f deployment/docker/weaviate.yml up -d
 ```
 
-The image is pinned to **Weaviate 1.38.20**. REST is on port **8001**, gRPC on port **50051**. Data is stored in the
+The image is pinned to **Weaviate 1.40.5**. REST is on port **8001**, gRPC on port **50051**. Data is stored in the
 Docker volume `artemis-weaviate`.
 
 #### Production: disable anonymous access
@@ -106,8 +107,9 @@ Skip this section for keyword search.
 
 ### Requirements for the embedding API
 
-Artemis calls `POST {open-ai-base-url}/v1/embeddings` in the OpenAI format, with a bearer token. Every server that
-offers this endpoint works, for example vLLM, Ollama, Logos or the OpenAI API. The model must:
+The model comes from an LLM preset with `api: embeddings` (see [LLM configuration](./llm-configuration)). Artemis calls
+`POST {base-url}/embeddings` of the preset's endpoint in the OpenAI format, with the endpoint's key as bearer token when
+it has one. The endpoint's `base-url` therefore ends with `/v1`. Every server that offers this endpoint works, for example vLLM, Ollama, Logos or the OpenAI API. The model must:
 
 - accept at least 512 tokens per input (Artemis sends at most about 470);
 - accept up to 32 inputs in one request (`artemis.weaviate.embedding.max-inputs-per-request`).
@@ -120,9 +122,7 @@ the check counts as a failed request.
 | Property (`artemis.weaviate.…`) | Required | Default | Meaning |
 |---|---|---|---|
 | `vectorizer-module` | yes | `none` | `none` for keyword search, `text2vec-openai` for hybrid search |
-| `open-ai-base-url` | hybrid | — | Base URL of the embedding API **as Artemis reaches it**, without `/v1` |
-| `open-ai-embedding-model` | hybrid | — | Model name sent with every request. Changing it rebuilds the index |
-| `gpu-api-key` | hybrid | — | Bearer token for the embedding API. Use any non-empty value if the server needs none |
+| `embedding-llm-preset` | hybrid | — | The embeddings preset. Its endpoint is the embedding API **as Artemis reaches it**; a change of its model rebuilds the index |
 | `open-ai-query-instruction` | no | empty | Text put in front of every search query before it is embedded. See below |
 | `embedding.query-timeout` | no | `3s` | Time limit for connecting and for the answer when a search query is embedded; after it, the search uses keywords. A search waits at most about twice this time |
 | `embedding.write-timeout` | no | `60s` | The same limit for embedding the pieces of an index write |
@@ -130,7 +130,7 @@ the check counts as a failed request.
 | `embedding.background-max-rows-per-minute` | no | `600` | Background index writes per minute (see [Load](#load-on-the-embedding-api)) |
 | `embedding.background-max-requests-per-minute` | no | `30` | Background embedding requests per minute |
 
-Artemis checks the required settings at startup and refuses to start if one is missing. The former value
+Artemis checks the required settings and the preset at startup and refuses to start if one is missing. The former value
 `text2vec-transformers` is no longer accepted; use `text2vec-openai` with a local server instead (see
 [Local CPU embeddings](#local-cpu-embeddings)).
 
@@ -154,6 +154,16 @@ how queries are embedded.
 
 ```yaml
 artemis:
+  llm:
+    endpoints:
+      embeddings:
+        base-url: https://your-embedding-endpoint/v1          # OpenAI: https://api.openai.com/v1
+        api-key: your-embedding-api-key
+    presets:
+      embed:
+        endpoint: embeddings
+        model: Qwen/Qwen3-Embedding-8B                         # OpenAI: text-embedding-3-small
+        api: embeddings
   weaviate:
     enabled: true
     http-host: your-weaviate-host
@@ -163,31 +173,9 @@ artemis:
     api-key: your-weaviate-api-key
     collection-prefix: Artemis_
     vectorizer-module: text2vec-openai
-    open-ai-base-url: https://your-embedding-endpoint        # OpenAI: https://api.openai.com
-    open-ai-embedding-model: Qwen/Qwen3-Embedding-8B          # OpenAI: text-embedding-3-small
-    gpu-api-key: your-embedding-api-key
+    embedding-llm-preset: embed
     open-ai-query-instruction: "Instruct: Given a student's search on a university learning platform, retrieve the course item (exercise, lecture, lecture unit, exam, FAQ, channel) it refers to\nQuery: "
 ```
-
-<Callout variant={CalloutVariant.info}>
-
-  **TUM-internal deployment — not applicable to external deployments**
-
-  TUM-internal Artemis production deployments use Qwen3-Embedding-8B through the OpenAI-compatible endpoint of the TUM
-  GPU cluster, with the query instruction shown above. Example values for TUM-internal use only:
-
-  ```yaml
-  artemis:
-    weaviate:
-      vectorizer-module: text2vec-openai
-      open-ai-embedding-model: Qwen/Qwen3-Embedding-8B
-      open-ai-base-url: https://gpu.aet.cit.tum.de
-      gpu-api-key: your-tum-gpu-api-key
-  ```
-
-  Do not use these hostnames or model identifiers in any other deployment.
-
-</Callout>
 
 ### Local CPU embeddings
 
@@ -209,6 +197,12 @@ Then configure Artemis:
 
 ```yaml
 artemis:
+  llm:
+    endpoints:
+      ollama:
+        base-url: http://localhost:11434/v1       # the host where Ollama runs, as Artemis reaches it; Ollama needs no key
+    presets:
+      embed: { endpoint: ollama, model: qwen3-embedding:0.6b, api: embeddings }
   weaviate:
     enabled: true
     http-host: your-weaviate-host
@@ -218,14 +212,12 @@ artemis:
     api-key: your-weaviate-api-key                # if Weaviate requires a key
     collection-prefix: Artemis_
     vectorizer-module: text2vec-openai
-    open-ai-base-url: http://localhost:11434     # the host where Ollama runs, as Artemis reaches it
-    open-ai-embedding-model: qwen3-embedding:0.6b
-    gpu-api-key: ollama                           # Ollama ignores the key, but it must not be empty
+    embedding-llm-preset: embed
     open-ai-query-instruction: "Instruct: Given a student's search on a university learning platform, retrieve the course item (exercise, lecture, lecture unit, exam, FAQ, channel) it refers to\nQuery: "
 ```
 
-To use another Ollama model, set `OLLAMA_EMBEDDING_MODEL` before `docker compose up` and use the same name in
-`open-ai-embedding-model`. The Compose file keeps the model in memory (`OLLAMA_KEEP_ALIVE=-1`), so no search waits for
+To use another Ollama model, set `OLLAMA_EMBEDDING_MODEL` before `docker compose up` and use the same name as the
+preset's `model`. The Compose file keeps the model in memory (`OLLAMA_KEEP_ALIVE=-1`), so no search waits for
 the model to load.
 
 On a CPU, embedding is much slower than on a GPU, and the speed depends on the server. Measure one query on your
@@ -278,10 +270,10 @@ match the configuration, it **rebuilds the index automatically**. This happens:
 
 - on the first start after an upgrade to a version with a new index layout;
 - after a change of `vectorizer-module`;
-- after a change of `open-ai-embedding-model`.
+- after a change of the `model` of the embeddings preset.
 
-A change of `open-ai-base-url`, `gpu-api-key` or `open-ai-query-instruction` does not trigger a rebuild. If you
-point `open-ai-base-url` to a server that runs a **different** model under the **same** name, change the model name
+A change of the preset's endpoint, its key, the preset name or `open-ai-query-instruction` does not trigger a rebuild.
+If you point the endpoint to a server that runs a **different** model under the **same** name, change the model name
 too, or the index mixes two models.
 
 ### What happens during a rebuild
@@ -305,7 +297,7 @@ is written to the index until it has succeeded; all changes stay queued in the d
 <Callout variant={CalloutVariant.warning}>
 
   The background repair runs only while the feature toggle **Global Search Reconcile** is on
-  (**Server Administration → Feature Toggles**). It is on by default. If it is off, a rebuilt index contains only the
+  (**Administration → Configuration → Features**). It is on by default. If it is off, a rebuilt index contains only the
   items edited after the rebuild.
 
 </Callout>
@@ -405,9 +397,9 @@ upgrade, check the health indicator. A Weaviate upgrade does not trigger a rebui
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Startup fails with `artemis.weaviate.open-ai-embedding-model (must be configured …)` | Hybrid mode without a model name | Set `open-ai-embedding-model` |
+| Startup fails with `Missing preset assignments … artemis.weaviate.embedding-llm-preset` | Hybrid mode without an embeddings preset | Set `embedding-llm-preset`, see [LLM configuration](./llm-configuration) |
 | Startup fails with `artemis.weaviate.vectorizer-module ('text2vec-transformers' is no longer supported …)` | The removed local sidecar mode is still configured | Use `text2vec-openai` with a [local server](#local-cpu-embeddings) |
-| Startup fails with `open-ai-base-url` or `gpu-api-key` | Hybrid mode with a missing value | Add the value |
+| Startup fails with `… needs a preset with api embeddings` | The assigned preset is a chat preset | Assign a preset with `api: embeddings` |
 | Log: `Global search uses keyword search because the query could not be embedded` | The embedding API is down, slow, or rejects the request | Check the API with the `curl` command above; raise `embedding.query-timeout` only if the server is healthy but slow |
 | Log: `Embedding request for … chunks failed` | Background requests fail | Same check; the affected items are retried with growing delays and are indexed once the API works again |
 | Log: `Global search index check attempt … failed` | Weaviate went down after Artemis started | Check Weaviate; Artemis repeats the check until it succeeds |

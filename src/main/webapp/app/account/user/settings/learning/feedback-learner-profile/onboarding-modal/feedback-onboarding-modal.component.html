@@ -1,0 +1,84 @@
+<tumaet-ui-dialog [(visible)]="visible" [dismissableMask]="true" size="large" [header]="'artemisApp.learnerProfile.onboardingModal.title' | artemisTranslate">
+    <div class="flex flex-col gap-6">
+        <div class="onboarding-progress">
+            <span class="progress-circle" [class.active]="step() >= 0"></span>
+            <span class="progress-line"></span>
+            <span class="progress-circle" [class.active]="step() >= 1"></span>
+        </div>
+        <div class="text-center">
+            <div class="onboarding-subtitle" jhiTranslate="artemisApp.learnerProfile.onboardingModal.subtitle"></div>
+        </div>
+        @switch (step()) {
+            @case (0) {
+                <fieldset class="feedback-choice-row">
+                    <legend class="sr-only" jhiTranslate="artemisApp.learnerProfile.onboardingModal.subtitle"></legend>
+                    <label class="feedback-choice-box" [class.selected]="selected()[0] === 0">
+                        <div class="feedback-choice-header">
+                            <input type="radio" name="q1" [checked]="selected()[0] === 0" (click)="select(0, 0)" />
+                            <span class="feedback-choice-title" jhiTranslate="artemisApp.learnerProfile.onboardingModal.briefFeedback.title"></span>
+                        </div>
+                        <div class="feedback-choice-subtitle" jhiTranslate="artemisApp.learnerProfile.onboardingModal.briefFeedback.subtitle"></div>
+                        <jhi-text-result [result]="feedbackExamples[0][0]" />
+                    </label>
+                    <label class="feedback-choice-box" [class.selected]="selected()[0] === 1">
+                        <div class="feedback-choice-header">
+                            <input type="radio" name="q1" [checked]="selected()[0] === 1" (click)="select(0, 1)" />
+                            <span class="feedback-choice-title" jhiTranslate="artemisApp.learnerProfile.onboardingModal.detailedFeedback.title"></span>
+                        </div>
+                        <div class="feedback-choice-subtitle" jhiTranslate="artemisApp.learnerProfile.onboardingModal.detailedFeedback.subtitle"></div>
+                        <jhi-text-result [result]="feedbackExamples[0][1]" />
+                    </label>
+                </fieldset>
+            }
+            @case (1) {
+                <fieldset class="feedback-choice-row">
+                    <legend class="sr-only" jhiTranslate="artemisApp.learnerProfile.onboardingModal.subtitle"></legend>
+                    <label class="feedback-choice-box" [class.selected]="selected()[1] === 0">
+                        <div class="feedback-choice-header">
+                            <input type="radio" name="q2" [checked]="selected()[1] === 0" (click)="select(1, 0)" />
+                            <span class="feedback-choice-title" jhiTranslate="artemisApp.learnerProfile.onboardingModal.formalToneFeedback.title"></span>
+                        </div>
+                        <div class="feedback-choice-subtitle" jhiTranslate="artemisApp.learnerProfile.onboardingModal.formalToneFeedback.subtitle"></div>
+                        <jhi-text-result [result]="feedbackExamples[1][0]" />
+                    </label>
+                    <label class="feedback-choice-box" [class.selected]="selected()[1] === 1">
+                        <div class="feedback-choice-header">
+                            <input type="radio" name="q2" [checked]="selected()[1] === 1" (click)="select(1, 1)" />
+                            <span class="feedback-choice-title" jhiTranslate="artemisApp.learnerProfile.onboardingModal.friendlyToneFeedback.title"></span>
+                        </div>
+                        <div class="feedback-choice-subtitle" jhiTranslate="artemisApp.learnerProfile.onboardingModal.friendlyToneFeedback.subtitle"></div>
+                        <jhi-text-result [result]="feedbackExamples[1][1]" />
+                    </label>
+                </fieldset>
+            }
+            @default {}
+        }
+    </div>
+    <ng-template #footer>
+        <div class="flex w-full items-center justify-between">
+            @if (step() > 0) {
+                <tumaet-ui-button severity="secondary" (clicked)="back()">
+                    <span jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.back"></span>
+                </tumaet-ui-button>
+            }
+            <div class="flex flex-1 justify-end gap-2">
+                @if (step() < totalSteps - 1) {
+                    @if (selected()[step()] === undefined) {
+                        <tumaet-ui-button severity="secondary" (clicked)="next()">
+                            <span jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.skip"></span>
+                        </tumaet-ui-button>
+                    } @else {
+                        <tumaet-ui-button (clicked)="next()">
+                            <span jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.next"></span>
+                        </tumaet-ui-button>
+                    }
+                }
+                @if (step() === totalSteps - 1) {
+                    <tumaet-ui-button severity="success" (clicked)="finish()">
+                        <span jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.finish"></span>
+                    </tumaet-ui-button>
+                }
+            </div>
+        </div>
+    </ng-template>
+</tumaet-ui-dialog>

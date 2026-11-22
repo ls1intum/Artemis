@@ -2,6 +2,7 @@
 id: programming-exercise
 title: Programming Exercise
 sidebar_label: Programming Exercise
+last_reviewed: 2026-11-07
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -10,6 +11,10 @@ import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 import exerciseWorkflow from './assets/programming/ExerciseWorkflow.png';
 import onlineEditor from './assets/programming/OnlineEditor.png';
+import buildNotificationsLight from './assets/programming/build-notifications-light.png';
+import buildNotificationsDark from './assets/programming/build-notifications-dark.png';
+import buildWindowNotice from './assets/programming/build-window-notice.png';
+import testClassSetupError from './assets/programming/test-class-setup-error.png';
 
 ## Overview
 
@@ -34,6 +39,14 @@ Participating in a programming exercise involves the following steps:
   The results from practice mode submissions after the due date are not graded and do not affect your score.
 
 </Callout>
+
+### Exercises with a Build Window
+
+Some exercises only build your pushes during a limited period, for example because the tests are switched on a week after the exercise is released. The exercise page and the online editor then show a notice with the period in which builds run.
+
+<Image src={buildWindowNotice} alt="Exercise header with a notice that builds start on 22 November" size={ImageSize.large} caption="The notice on the exercise page before the build window starts" />
+
+A push outside this period is saved in your repository, but Artemis does not build it and does not grade it. The output of `git push` tells you so, and the online editor shows that your changes were committed but not built. The **Trigger build** button is not available outside the period either. Pushes inside the period are built as usual. The build window does not apply in practice mode, so you can still build practice submissions after the due date.
 
 ## Online Code Editor
 
@@ -149,6 +162,29 @@ After submitting your solution, you will see test results that indicate which pa
 - **Hidden tests**: Some tests may only be visible after the due date to prevent hardcoding solutions
 
 The test results also show your current score based on the weight of the passed tests.
+
+If the setup of a whole test class fails, for example because your code throws an exception while the tests are prepared, all tests of that class fail together. Their feedback then shows the error of the setup, so you can see what to fix.
+
+<Image src={testClassSetupError} alt="Feedback dialog of a task whose test class failed during its setup, showing the exception and its cause" size={ImageSize.large} caption="Feedback of a task whose test class failed during its setup" />
+
+### Build Notifications
+
+While you keep a programming exercise open, the browser tab icon shows a clock badge when your submission is queued or building.
+If a result arrives while you are in another tab or application, the icon shows an envelope badge.
+The envelope means a result is available, including when tests fail or your code does not compile.
+Returning to the tab restores the normal Artemis icon once the result has arrived; while a build is still running, the clock stays.
+
+To receive system notifications as well, select the bell button in the exercise header and allow notifications when your browser asks.
+Select the button again to turn them off. This preference applies to your account in this browser.
+If notifications are blocked, allow them in your browser's site settings.
+System notification availability and sound depend on your browser, operating system and notification settings.
+On iOS and iPadOS, system notifications require Artemis to be added to the Home Screen.
+
+<Image src={buildNotificationsLight} alt="Programming exercise header with browser build notifications enabled, in the light theme" size={ImageSize.large} />
+<Image src={buildNotificationsDark} alt="Programming exercise header with browser build notifications enabled, in the dark theme" size={ImageSize.large} />
+
+Build notifications stop when you leave the exercise or close its tab. You can read more about other notification types on the
+[Notifications](../communication-support/notifications.mdx) page.
 
 ### Build Failures
 

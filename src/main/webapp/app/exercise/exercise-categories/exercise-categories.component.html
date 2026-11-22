@@ -22,9 +22,12 @@
         @for (category of exercise.categories; track category) {
             @if (category.category) {
                 <span [ngClass]="isSmall() ? 'text-sm' : 'font-medium text-lg'">
-                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold" [style.background-color]="category.color">{{
-                        category.category | truncate: 30
-                    }}</span>
+                    <span
+                        class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold"
+                        [style.background-color]="category.color"
+                        [style.color]="categoryTextColor(category.color)"
+                        >{{ category.category | truncate: 30 }}</span
+                    >
                 </span>
             }
         }

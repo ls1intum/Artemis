@@ -71,7 +71,7 @@ test.describe('Passkey', () => {
         await page.waitForURL('**/courses**');
 
         // Navigate to passkey settings and verify the passkey is listed
-        await page.goto('/user-settings/passkeys');
+        await page.goto('/user-settings/credentials');
         await expect(page.getByText('Your passkeys')).toBeVisible();
         await expect(page.getByText(user.email)).toBeVisible();
     });
@@ -82,7 +82,7 @@ test.describe('Passkey', () => {
         await registerPasskeyViaApi(page, user);
 
         // Login and navigate to passkey settings
-        await login(user, '/user-settings/passkeys');
+        await login(user, '/user-settings/credentials');
         await expect(page.getByText('Your passkeys')).toBeVisible();
 
         // Click Edit on the first passkey
@@ -100,12 +100,13 @@ test.describe('Passkey', () => {
         const user = passkeyTestUser(test.info().title);
         await registerPasskeyViaApi(page, user);
 
-        await login(user, '/user-settings/passkeys');
+        await login(user, '/user-settings/credentials');
         await expect(page.getByText('Your passkeys')).toBeVisible();
         await expect(page.getByText(user.email).first()).toBeVisible();
 
-        // Delete the passkey
-        await page.getByRole('button', { name: 'Delete' }).first().click();
+        // Delete the passkey. The name is matched exactly: the account menu button in the navbar shows the login of
+        // this user, which contains "deletes".
+        await page.getByRole('button', { name: 'Delete', exact: true }).first().click();
         await page.getByTestId('delete-dialog-confirm-button').click();
 
         // Verify passkey is removed

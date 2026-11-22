@@ -3,21 +3,24 @@ package de.tum.cit.aet.artemis.buildagent.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -26,13 +29,20 @@ import java.util.stream.Stream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.archivers.tar.TarConstants;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
@@ -50,6 +60,8 @@ import com.github.dockerjava.api.model.HostConfig;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.localci.exception.ContainerNetworkNotAllowedException;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.RepositoryCheckoutPath;
@@ -93,7 +105,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.Repo
 @Service
 @Profile(PROFILE_BUILDAGENT)
 @ConditionalOnProperty(prefix = "artemis.continuous-integration", name = "build-runner", havingValue = "docker", matchIfMissing = true)
-public class BuildJobContainerService {
+public class BuildJobContainerService implements EnvironmentAware {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
 
@@ -135,6 +147,8 @@ public class BuildJobContainerService {
 
     private final BuildLogsMap buildLogsMap;
 
+    private final TempFileUtilService tempFileUtilService;
+
     @Value("${artemis.continuous-integration.proxies.use-system-proxy:false}")
     private boolean useSystemProxy;
 
@@ -156,9 +170,37 @@ public class BuildJobContainerService {
     @Value("${artemis.continuous-integration.container-flags-limit.max-memory-swap:0}")
     private int maxMemorySwap;
 
-    public BuildJobContainerService(BuildAgentConfiguration buildAgentConfiguration, BuildLogsMap buildLogsMap) {
+    /** The network that Docker uses for a container that requests none. */
+    private static final String DEFAULT_DOCKER_NETWORK = "bridge";
+
+    private static final String ALLOWED_NETWORKS_PROPERTY = "artemis.continuous-integration.container-flags-limit.allowed-custom-networks";
+
+    /**
+     * The networks that a build on this agent may use, as configured on the agent. Empty if the agent does not configure the list, in which case the agent does not check the
+     * network and relies on the check of the core node.
+     */
+    private List<String> allowedCustomNetworks = List.of();
+
+    @Override
+    public void setEnvironment(@NonNull Environment environment) {
+        List<String> configured = Binder.get(environment).bind(ALLOWED_NETWORKS_PROPERTY, Bindable.listOf(String.class)).orElse(List.of());
+        allowedCustomNetworks = configured.stream().filter(Objects::nonNull).map(String::trim).filter(entry -> !entry.isEmpty()).toList();
+        if (!configured.isEmpty() && allowedCustomNetworks.isEmpty()) {
+            // a list that is set, but names no network, is a mistake: it must neither switch the check off nor refuse every network without a hint
+            throw new LocalCIException("The property " + ALLOWED_NETWORKS_PROPERTY + " is set but names no network. Remove it or list at least one network.");
+        }
+        if (allowedCustomNetworks.isEmpty()) {
+            log.info("The build agent does not configure the allowed container networks and does not check the network of a build");
+        }
+        else {
+            log.info("The build agent only runs builds on the container networks {} (and none)", allowedCustomNetworks);
+        }
+    }
+
+    public BuildJobContainerService(BuildAgentConfiguration buildAgentConfiguration, BuildLogsMap buildLogsMap, TempFileUtilService tempFileUtilService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildLogsMap = buildLogsMap;
+        this.tempFileUtilService = tempFileUtilService;
     }
 
     /**
@@ -185,10 +227,19 @@ public class BuildJobContainerService {
         removeExistingContainer(containerName);
         // get all record fields here because we need them more than once
         List<String> exerciseEnvVars = runConfig.env();
-        String network = runConfig.network();
+        String network = StringUtils.trimToNull(runConfig.network());
+        String effectiveNetwork = network == null ? DEFAULT_DOCKER_NETWORK : network;
         int cpuCount = runConfig.cpuCount();
         int memory = runConfig.memory();
         int memorySwap = runConfig.memorySwap();
+        // The named networks are limited to the allowed list when the exercise is saved and when the job is created on the server. The agent additionally refuses the values
+        // that do not give the build a network of its own.
+        if (DockerRunConfig.sharesNetworkNamespace(network)) {
+            throw new ContainerNetworkNotAllowedException("The container network '" + effectiveNetwork + "' is not allowed");
+        }
+        if (!isNetworkAllowedOnThisAgent(network)) {
+            throw new ContainerNetworkNotAllowedException("The container network '" + effectiveNetwork + "' is not allowed on this build agent");
+        }
 
         List<String> envVars = new ArrayList<>();
         if (useSystemProxy) {
@@ -236,6 +287,19 @@ public class BuildJobContainerService {
         }
     }
 
+    /**
+     * Whether the network of a build is in the list of allowed networks of this agent. Nothing is refused if the agent does not configure the list. A build without a network
+     * (none) is always allowed. A build that requests no network runs on the default network of Docker, which is named bridge, so it is allowed only if the list names that
+     * network.
+     */
+    private boolean isNetworkAllowedOnThisAgent(String network) {
+        if (allowedCustomNetworks.isEmpty()) {
+            return true;
+        }
+        String effectiveNetwork = network == null || network.isBlank() ? DEFAULT_DOCKER_NETWORK : network.trim();
+        return "none".equals(effectiveNetwork) || allowedCustomNetworks.contains(effectiveNetwork);
+    }
+
     private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, String network, long cpuCount, long memory, long memorySwap) {
         long cpuPeriod = defaultHostConfig.getCpuPeriod();
         HostConfig host = HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
@@ -243,7 +307,7 @@ public class BuildJobContainerService {
         if (network != null && !network.trim().isBlank()) {
             host.withNetworkMode(network);
         }
-        return host;
+        return buildAgentConfiguration.applyStorageLimit(BuildAgentConfiguration.restrictPrivileges(host, buildAgentConfiguration.isPrivilegeEscalationAllowed()));
     }
 
     private long convertMemoryFromMBToBytes(long memory) {
@@ -422,7 +486,9 @@ public class BuildJobContainerService {
      * @param containerId The ID of the container to stop or kill.
      */
     public void stopUnresponsiveContainer(String containerId) {
-        try (final var executor = Executors.newSingleThreadExecutor()) {
+        boolean interrupted = Thread.interrupted();
+        try {
+            final var executor = Executors.newSingleThreadExecutor();
             try {
                 // Attempt to stop the container. It should stop the container and auto-remove it.
                 // {@link DockerClient#stopContainerCmd(String)} first sends a SIGTERM command to the container to gracefully stop it,
@@ -430,27 +496,20 @@ public class BuildJobContainerService {
                 log.warn("Stopping unresponsive container with id {}", containerId);
 
                 // Submit Docker stop command to executor service
-                Future<Void> future = executor.submit(() -> {
+                CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                     try (final var stopCommand = buildAgentConfiguration.getDockerClient().stopContainerCmd(containerId)) {
                         stopCommand.withTimeout(15).exec();
-                        return null;  // Return type to match Future<Void>
                     }
-                });
+                }, executor);
 
-                // Await the future with a timeout
-                future.get(20, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
+                // join preserves interruption while cleanup finishes. Time out a copy so queued cleanup still runs.
+                future.copy().orTimeout(20, TimeUnit.SECONDS).join();
             }
             catch (Exception e) {
-                // The interrupt status is deliberately left cleared here, which is what java:S2142 would ask to
-                // restore. This method is reached during cancellation from callers that have already restored the flag
-                // themselves - BuildJobManagementService.awaitTermination and the pause grace period in
-                // SharedQueueProcessingService both do - and every Docker call below waits on a Future, which fails
-                // immediately while the flag is set. Restoring it would abandon a running container per cancelled job
-                // and leave the students' build scripts burning CPU until the hourly container cleanup reaps them.
                 Throwable cause = e.getCause();
-                // e will be ExecutionException if thrown in executor service by submitted task
+                // CompletionException wraps failures from the submitted Docker command.
                 // We are interested in the underlying cause in this case
-                if (e instanceof ExecutionException && (cause instanceof NotFoundException || cause instanceof NotModifiedException)) {
+                if (e instanceof CompletionException && (cause instanceof NotFoundException || cause instanceof NotModifiedException)) {
                     log.warn("Container with id {} is already stopped. Attempting to remove container.", containerId, cause);
                     // this can also happen for containers that are stuck in "Ready" state so they can not be stopped or killed
                     // try to remove the container so it won't show up in the next cleanup again
@@ -462,6 +521,24 @@ public class BuildJobContainerService {
                     // Attempt to kill the container if stop fails
                     killContainer(containerId, executor);
                 }
+            }
+            finally {
+                // Keep queued fallback commands even when cancellation interrupts the caller while the executor drains.
+                executor.shutdown();
+                boolean terminated = false;
+                while (!terminated) {
+                    try {
+                        terminated = executor.awaitTermination(1, TimeUnit.DAYS);
+                    }
+                    catch (InterruptedException e) {
+                        interrupted = true;
+                    }
+                }
+            }
+        }
+        finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -491,19 +568,15 @@ public class BuildJobContainerService {
      * @param executor    The ExecutorService for running the command.
      */
     private void killContainer(String containerId, ExecutorService executor) {
-        try (final var killCommand = buildAgentConfiguration.getDockerClient().killContainerCmd(containerId)) {
-            Future<Void> killFuture = executor.submit(() -> {
-                killCommand.exec();
-                return null;
-            });
-
-            killFuture.get(10, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
+        try {
+            CompletableFuture<Void> killFuture = CompletableFuture.runAsync(() -> {
+                try (final var killCommand = buildAgentConfiguration.getDockerClient().killContainerCmd(containerId)) {
+                    killCommand.exec();
+                }
+            }, executor);
+            killFuture.copy().orTimeout(10, TimeUnit.SECONDS).join();
         }
         catch (Exception e) {
-            // Not restoring the interrupt status is deliberate; see stopUnresponsiveContainer. Restoring it here would
-            // additionally make the enclosing try-with-resources close the executor with shutdownNow() instead of
-            // shutdown(), which drains the work queue and so drops a kill or remove task still queued behind a
-            // wedged stop.
             log.error("Failed to kill container with id {}.", containerId, e);
         }
     }
@@ -516,15 +589,15 @@ public class BuildJobContainerService {
      * @param executor    The ExecutorService for running the command.
      */
     private void removeContainer(String containerId, ExecutorService executor) {
-        try (final var removeCommand = buildAgentConfiguration.getDockerClient().removeContainerCmd(containerId)) {
-            Future<Void> removeFuture = executor.submit(() -> {
-                removeCommand.exec();
-                return null;
-            });
-            removeFuture.get(10, TimeUnit.SECONDS); // Wait for the remove command to complete with a timeout
+        try {
+            CompletableFuture<Void> removeFuture = CompletableFuture.runAsync(() -> {
+                try (final var removeCommand = buildAgentConfiguration.getDockerClient().removeContainerCmd(containerId)) {
+                    removeCommand.exec();
+                }
+            }, executor);
+            removeFuture.copy().orTimeout(10, TimeUnit.SECONDS).join();
         }
         catch (Exception e) {
-            // Not restoring the interrupt status is deliberate; see killContainer.
             log.error("Failed to remove container with id {}", containerId, e);
         }
     }
@@ -741,19 +814,25 @@ public class BuildJobContainerService {
         try {
             // Use retry mechanism for the entire copy operation (tar creation + upload)
             executeWithRetry(() -> {
-                ByteArrayOutputStream tarArchive = createTarArchiveWithRetry(sourcePath);
-                int tarArchiveSize = tarArchive.size();
-                log.debug("Created tar archive of size {} bytes for source path {} to upload to container {}", tarArchiveSize, sourcePath.toAbsolutePath(), containerId);
+                // The archive is written to a temporary file instead of being held in memory, as the repository was changed by the code of the student and can be large
+                Path tarArchive = createTarArchiveWithRetry(sourcePath);
+                try {
+                    log.debug("Created tar archive of size {} bytes for source path {} to upload to container {}", Files.size(tarArchive), sourcePath.toAbsolutePath(),
+                            containerId);
 
-                try (final var uploadStream = new ByteArrayInputStream(tarArchive.toByteArray());
-                        final var copyToContainerCommand = buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId)
-                                .withRemotePath(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).withTarInputStream(uploadStream)) {
-                    copyToContainerCommand.exec();
-                    log.debug("Successfully copied tar archive to container {}", containerId);
+                    try (final var uploadStream = new BufferedInputStream(Files.newInputStream(tarArchive));
+                            final var copyToContainerCommand = buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId)
+                                    .withRemotePath(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).withTarInputStream(uploadStream)) {
+                        copyToContainerCommand.exec();
+                        log.debug("Successfully copied tar archive to container {}", containerId);
+                    }
+                    catch (RuntimeException e) {
+                        // Wrap runtime exceptions (e.g., Docker connectivity issues) for retry handling
+                        throw new IOException("Failed to copy archive to container: " + e.getMessage(), e);
+                    }
                 }
-                catch (RuntimeException e) {
-                    // Wrap runtime exceptions (e.g., Docker connectivity issues) for retry handling
-                    throw new IOException("Failed to copy archive to container: " + e.getMessage(), e);
+                finally {
+                    FileUtils.deleteQuietly(tarArchive.toFile());
                 }
                 return null;
             }, "Copy to container " + containerId, buildJobId);
@@ -782,10 +861,10 @@ public class BuildJobContainerService {
      * to {@link IOException} to enable the retry mechanism in {@link #executeWithRetry}.
      *
      * @param sourcePath the path to archive
-     * @return a ByteArrayOutputStream containing the tar archive data
+     * @return the temporary file containing the tar archive, which the caller has to delete
      * @throws IOException if archive creation fails (enables retry handling)
      */
-    private ByteArrayOutputStream createTarArchiveWithRetry(Path sourcePath) throws IOException {
+    private Path createTarArchiveWithRetry(Path sourcePath) throws IOException {
         try {
             return createTarArchive(sourcePath);
         }
@@ -799,25 +878,35 @@ public class BuildJobContainerService {
     }
 
     /**
-     * Creates an in-memory tar archive from a filesystem path.
+     * Creates a tar archive from a filesystem path in a temporary file.
      * <p>
-     * The archive is created in memory (ByteArrayOutputStream) to allow for easy upload to Docker.
+     * The archive is written to disk so that the size of the repository does not determine the memory the build agent needs.
      * Uses POSIX long file mode to support files with long names.
      *
      * @param sourcePath the path to archive (can be a file or directory)
-     * @return a ByteArrayOutputStream containing the complete tar archive
+     * @return the temporary file containing the complete tar archive, which the caller has to delete
      * @throws LocalCIException if any IO error occurs during archive creation
      */
-    private ByteArrayOutputStream createTarArchive(Path sourcePath) {
+    private Path createTarArchive(Path sourcePath) {
 
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        Path tarFile;
+        try {
+            tarFile = tempFileUtilService.createTempFile("artemis-build-copy-", ".tar");
+        }
+        catch (IOException e) {
+            throw new LocalCIException("Could not create a temporary file for the tar archive of source path: " + sourcePath.toAbsolutePath(), e);
+        }
 
-        try (TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(byteArrayOutputStream)) {
-            // Enable POSIX long file mode to support files with names > 100 characters
-            tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+        boolean created = false;
+        try {
+            try (TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(new BufferedOutputStream(Files.newOutputStream(tarFile)))) {
+                // Enable POSIX long file mode to support files with names > 100 characters
+                tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
 
-            addFileToTar(tarArchiveOutputStream, sourcePath, "");
-            tarArchiveOutputStream.finish();
+                addFileToTar(tarArchiveOutputStream, sourcePath.toAbsolutePath().normalize(), sourcePath, "");
+                tarArchiveOutputStream.finish();
+            }
+            created = true;
         }
         catch (IOException e) {
             // Only log to application logs here - user-facing messages are logged by the caller after all retries fail
@@ -826,7 +915,13 @@ public class BuildJobContainerService {
             log.warn(errorMessage, e);
             throw new LocalCIException(errorMessage, e);
         }
-        return byteArrayOutputStream;
+        finally {
+            if (!created) {
+                // Also covers unchecked failures while listing directories and a failing close, so that failed attempts do not accumulate partial archives
+                FileUtils.deleteQuietly(tarFile.toFile());
+            }
+        }
+        return tarFile;
     }
 
     /**
@@ -834,24 +929,32 @@ public class BuildJobContainerService {
      * <p>
      * For regular files: reads the file content and writes it to the archive.
      * For directories: creates a directory entry and recursively processes all children.
+     * Symbolic links are never followed: a link whose target lies inside the source root is added as a link entry, any other link is skipped.
      * <p>
      * <b>Note:</b> This method can fail with {@link java.nio.file.NoSuchFileException} if files
      * are deleted during traversal (e.g., by concurrent cleanup operations). The caller should
      * handle such failures with retry logic.
      *
      * @param tarArchiveOutputStream the tar output stream to write to
+     * @param sourceRoot             the normalized absolute root of the archived source, which links must not leave
      * @param path                   the file or directory to add
      * @param parent                 the parent path prefix for the archive entry name
      * @throws IOException if reading files or listing directories fails
      */
-    private void addFileToTar(TarArchiveOutputStream tarArchiveOutputStream, Path path, String parent) throws IOException {
+    private void addFileToTar(TarArchiveOutputStream tarArchiveOutputStream, Path sourceRoot, Path path, String parent) throws IOException {
         try {
-            TarArchiveEntry tarEntry = new TarArchiveEntry(path, parent + path.getFileName());
+            BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+            String entryName = parent + path.getFileName();
+            if (attributes.isSymbolicLink()) {
+                addSymbolicLinkToTar(tarArchiveOutputStream, sourceRoot, path, entryName);
+                return;
+            }
+            TarArchiveEntry tarEntry = new TarArchiveEntry(path, entryName, LinkOption.NOFOLLOW_LINKS);
             tarArchiveOutputStream.putArchiveEntry(tarEntry);
 
-            if (Files.isRegularFile(path)) {
+            if (attributes.isRegularFile()) {
                 // For regular files: read content and write to archive
-                try (InputStream is = Files.newInputStream(path)) {
+                try (InputStream is = Files.newInputStream(path, LinkOption.NOFOLLOW_LINKS)) {
                     byte[] buffer = new byte[8192];
                     int count;
                     while ((count = is.read(buffer)) != -1) {
@@ -863,17 +966,37 @@ public class BuildJobContainerService {
             else {
                 // For directories: close the directory entry and recursively process children
                 tarArchiveOutputStream.closeArchiveEntry();
-                try (Stream<Path> children = Files.list(path)) {
-                    for (Path child : children.toList()) {
-                        addFileToTar(tarArchiveOutputStream, child, parent + path.getFileName() + "/");
+                if (attributes.isDirectory()) {
+                    try (Stream<Path> children = Files.list(path)) {
+                        for (Path child : children.toList()) {
+                            addFileToTar(tarArchiveOutputStream, sourceRoot, child, parent + path.getFileName() + "/");
+                        }
                     }
                 }
             }
         }
         catch (IOException e) {
-            String operation = Files.isRegularFile(path) ? "reading file" : "listing directory";
+            String operation = Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) ? "reading file" : "listing directory";
             throw new IOException("Failed " + operation + " while adding to tar archive: " + path.toAbsolutePath(), e);
         }
+    }
+
+    private void addSymbolicLinkToTar(TarArchiveOutputStream tarArchiveOutputStream, Path sourceRoot, Path link, String entryName) throws IOException {
+        Path linkTarget = Files.readSymbolicLink(link);
+        Path parentDirectory = link.toAbsolutePath().getParent();
+        Path resolvedTarget = (parentDirectory == null ? linkTarget.toAbsolutePath() : parentDirectory.resolve(linkTarget)).normalize();
+        if (!resolvedTarget.startsWith(sourceRoot)) {
+            log.warn("Skipping symbolic link {} because its target {} points outside the repository", link, linkTarget);
+            return;
+        }
+        TarArchiveEntry entry = new TarArchiveEntry(entryName, TarConstants.LF_SYMLINK);
+        // An absolute target is a path on this host. It is written relative to the directory of the link, so that it still leads to the copied file in the container.
+        Path archivedTarget = linkTarget.isAbsolute() && parentDirectory != null ? parentDirectory.relativize(resolvedTarget) : linkTarget;
+        String linkName = archivedTarget.toString().replace(link.getFileSystem().getSeparator(), "/");
+        entry.setLinkName(linkName.isEmpty() ? "." : linkName);
+        entry.setMode(0777);
+        tarArchiveOutputStream.putArchiveEntry(entry);
+        tarArchiveOutputStream.closeArchiveEntry();
     }
 
     /**

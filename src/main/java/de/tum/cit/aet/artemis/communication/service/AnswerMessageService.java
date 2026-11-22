@@ -137,7 +137,15 @@ public class AnswerMessageService extends PostingService {
         newAnswerMessage.setAuthor(author);
         // on creation of an answer message, we set the resolves_post field to false per default since this feature is not used for messages
         newAnswerMessage.setResolvesPost(false);
-        AnswerPost savedAnswerMessage = answerPostRepository.save(newAnswerMessage);
+        // Capture the same eligible audience before persisting. The new reply only adds its own author to the
+        // replier query, and that author is excluded from both unread counters and notifications.
+        var usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
+        usersInvolved.add(post.getAuthor());
+
+        boolean visibleToStudents = !(conversation instanceof Channel channel) || channel.isVisibleToStudents();
+        var notificationRecipientsList = getNotificationRecipients(conversation).filter(recipient -> visibleToStudents || recipient.isAtLeastTutorInCourse()).toList();
+        var unreadRecipients = replyRecipients(usersInvolved, notificationRecipientsList, author.getId());
+        AnswerPost savedAnswerMessage = answerPostRepository.saveWithUnreadMessages(newAnswerMessage, unreadRecipients.stream().map(User::getId).collect(Collectors.toSet()));
         savedAnswerMessage.getPost().setConversation(conversation);
         setAuthorRoleForPosting(savedAnswerMessage, course);
 
@@ -145,12 +153,6 @@ public class AnswerMessageService extends PostingService {
                 post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), newAnswerMessage.getContent(), newAnswerMessage.getCreationDate().toString(),
                 newAnswerMessage.getAuthor().getName(), newAnswerMessage.getAuthor().getId(), newAnswerMessage.getAuthor().getImageUrl(), newAnswerMessage.getId(),
                 conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId, newAnswerMessage.getAuthor().isBot());
-
-        var usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
-        usersInvolved.add(post.getAuthor());
-
-        boolean visibleToStudents = !(conversation instanceof Channel channel) || channel.isVisibleToStudents();
-        var notificationRecipientsList = getNotificationRecipients(conversation).filter(recipient -> visibleToStudents || recipient.isAtLeastTutorInCourse()).toList();
 
         var explicitMentionRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(mentionedUsers, conversation)
                 .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), newAnswerMessage.getAuthor().getId())).toList();
@@ -168,7 +170,9 @@ public class AnswerMessageService extends PostingService {
 
         this.courseNotificationService.sendCourseNotification(newAnswerNotification, filteredUsersInvolved);
 
-        markReplyAsUnreadForThreadParticipants(course, conversation, usersInvolved, notificationRecipientsList, newAnswerMessage.getAuthor().getId());
+        if (!unreadRecipients.isEmpty()) {
+            conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.NEW_MESSAGE, conversation, unreadRecipients);
+        }
 
         var mentionCourseNotification = new NewMentionNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(),
                 newAnswerMessage.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), newAnswerMessage.getContent(),
@@ -195,31 +199,18 @@ public class AnswerMessageService extends PostingService {
     }
 
     /**
-     * A reply is unread for the people in its thread: the author of the message and everyone who replied to it. The other
-     * members of the conversation did not take part in the discussion, so it would only add noise to their unread counter.
-     * <p>
-     * Like for a new message, the counter is raised here, in the request, rather than asynchronously: the read side resets it
-     * and nothing orders the two. The participants it was raised for are told on the conversation membership channel, so that
-     * the sidebar of their open clients shows it without reloading. Users who muted the conversation are left out of both.
-     * The counter is not lowered again when the reply is deleted, in contrast to a message: it cannot tell which replies a user
-     * has already seen, and a counter too low would hide that something unread is left. It is reset when the conversation is opened.
+     * Select the thread author and earlier repliers who can receive the reply, excluding its author and muted users.
+     * The caller persists their unread counters with the reply, then broadcasts the membership update after commit.
      *
-     * @param course                    the course of the conversation
-     * @param conversation              the conversation the reply was written in
-     * @param usersInvolved             the author of the message and the users who replied to it, which includes the author of the reply
-     * @param notificationRecipientList the members of the conversation with their mute state
-     * @param replyAuthorId             the id of the author of the reply, who has read it
+     * @param usersInvolved             the thread author and earlier repliers
+     * @param notificationRecipientList conversation members eligible to see the reply
+     * @param replyAuthorId             the author of the new reply
+     * @return recipients whose unread counters should be raised
      */
-    private void markReplyAsUnreadForThreadParticipants(Course course, Conversation conversation, Set<User> usersInvolved,
-            List<ConversationNotificationRecipientSummary> notificationRecipientList, Long replyAuthorId) {
+    private static Set<User> replyRecipients(Set<User> usersInvolved, List<ConversationNotificationRecipientSummary> notificationRecipientList, Long replyAuthorId) {
         var involvedUserIds = usersInvolved.stream().map(User::getId).collect(Collectors.toSet());
-        var recipients = notificationRecipientList.stream().filter(recipient -> involvedUserIds.contains(recipient.userId()) && recipient.userId() != replyAuthorId)
+        return notificationRecipientList.stream().filter(recipient -> involvedUserIds.contains(recipient.userId()) && recipient.userId() != replyAuthorId)
                 .filter(recipient -> !recipient.isConversationMuted()).map(ConversationNotificationRecipientSummary::toUser).collect(Collectors.toSet());
-        if (recipients.isEmpty()) {
-            return;
-        }
-        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipantsIn(conversation.getId(), recipients.stream().map(User::getId).collect(Collectors.toSet()));
-        conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.NEW_MESSAGE, conversation, recipients);
     }
 
     /**
@@ -263,7 +254,7 @@ public class AnswerMessageService extends PostingService {
         // checked like an ordinary edit.
         if (existingAnswerMessage.doesResolvePost() != answerMessage.resolvesPost()) {
             // check if requesting user is allowed to mark this answer message as resolving, i.e. if user is author or original message or at least tutor
-            mayMarkAnswerMessageAsResolvingElseThrow(existingAnswerMessage, user, course);
+            mayMarkAnswerMessageAsResolvingElseThrow(existingAnswerMessage, user, course, conversation);
             if (!Objects.equals(existingAnswerMessage.getContent(), answerMessage.content())) {
                 // check if requesting user is allowed to update the content, i.e. if user is author of answer message or at least tutor
                 mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
@@ -411,8 +402,16 @@ public class AnswerMessageService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         AnswerPost existingAnswerMessage = answerPostRepository.findAnswerMessageWithPostConversationAndVerifierByIdElseThrow(answerMessageId);
-        if (!existingAnswerMessage.getPost().getConversation().getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("Answer message does not belong to the specified course", ANSWER_POST_ENTITY_NAME, "invalidCourse");
+        Conversation targetConversation = existingAnswerMessage.getPost().getConversation();
+        try {
+            ensureConversationBelongsToCourseElseThrow(targetConversation, courseId);
+        }
+        catch (BadRequestAlertException exception) {
+            // Keep the verification endpoint's existing error response when the shared check rejects the course.
+            if ("conversationCourseMismatch".equals(exception.getErrorKey())) {
+                throw new BadRequestAlertException("Answer message does not belong to the specified course", ANSWER_POST_ENTITY_NAME, "invalidCourse");
+            }
+            throw exception;
         }
         if (!existingAnswerMessage.getAuthor().isBot()) {
             throw new BadRequestAlertException("Only Iris-generated answers can be verified", ANSWER_POST_ENTITY_NAME, "notIrisAnswer");
@@ -468,15 +467,22 @@ public class AnswerMessageService extends PostingService {
     }
 
     /**
-     * Checks if the requesting user is authorized in the course context,
-     * i.e. user has to be the author of original message associated with the answer message or at least teaching assistant
+     * Checks if the requesting user is authorized to mark the answer message as resolving, i.e. the user has to be the author of the original message associated with the
+     * answer message, or at least a teaching assistant who takes part in the conversation. Instructors and members of course-wide channels count as taking part.
      *
      * @param answerMessage answer message that should be marked as resolving
      * @param user          requesting user
+     * @param course        the course of the conversation
+     * @param conversation  the conversation the answer message belongs to
      */
-    void mayMarkAnswerMessageAsResolvingElseThrow(AnswerPost answerMessage, User user, Course course) {
-        if (!answerMessage.getPost().getAuthor().equals(user)) {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+    void mayMarkAnswerMessageAsResolvingElseThrow(AnswerPost answerMessage, User user, Course course, Conversation conversation) {
+        if (answerMessage.getPost().getAuthor().equals(user)) {
+            return;
+        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+        boolean courseWideChannel = conversation instanceof Channel channel && channel.getIsCourseWide();
+        if (!courseWideChannel && !authorizationCheckService.isAtLeastInstructorInCourse(course, user) && !conversationService.isMember(conversation.getId(), user.getId())) {
+            throw new AccessForbiddenException("Only members of the conversation can mark an answer as resolving");
         }
     }
 

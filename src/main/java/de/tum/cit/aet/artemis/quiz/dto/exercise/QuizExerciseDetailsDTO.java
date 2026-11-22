@@ -56,6 +56,21 @@ public record QuizExerciseDetailsDTO(@JsonUnwrapped QuizExerciseWithoutQuestions
                 quizExercise.getChannelName(), quizExercise.getTestRunParticipationsExist(), null, null, exerciseGroup);
     }
 
+    /**
+     * Creates the record written into the exercise details file of an archive or an export: the details without the ids of the grading
+     * criteria and their instructions, which are rows of this instance and mean nothing in a file read back elsewhere. The question ids
+     * stay, because the export names the image folders of the drag and drop questions after them.
+     *
+     * @param quizExercise the quiz exercise to export
+     * @return the details of the quiz for the export
+     */
+    public static QuizExerciseDetailsDTO forExport(QuizExercise quizExercise) {
+        QuizExerciseDetailsDTO dto = of(quizExercise);
+        List<GradingCriterionDTO> gradingCriteria = dto.gradingCriteria == null ? null : dto.gradingCriteria.stream().map(GradingCriterionDTO::withoutIds).toList();
+        return new QuizExerciseDetailsDTO(dto.quizExercise, dto.quizQuestions, dto.categories, dto.competencyLinks, gradingCriteria, dto.channelName,
+                dto.testRunParticipationsExist, dto.isEditable, dto.canBeEvaluated, dto.exerciseGroup);
+    }
+
     public static QuizExerciseDetailsDTO of(QuizExercise quizExercise, Boolean isEditable) {
         QuizExerciseDetailsDTO dto = of(quizExercise);
         return new QuizExerciseDetailsDTO(dto.quizExercise, dto.quizQuestions, dto.categories, dto.competencyLinks, dto.gradingCriteria, dto.channelName,

@@ -1,10 +1,13 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subject, map } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionProgress } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { examDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -16,17 +19,16 @@ import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamDeleteDialogComponent } from 'app/exam/shared/delete-dialog/exam-delete-dialog.component';
 import { CourseExamArchiveButtonComponent } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { ExamChecklistComponent } from '../exam-checklist-component/exam-checklist.component';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
-import { EventManager } from 'app/foundation/service/event-manager.service';
+import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
+import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/entities/exam-deleted-event.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -57,6 +59,9 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private gradingService = inject(GradingService);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private eventManager = inject(EventManager);
+    private entityDeletionService = inject(EntityDeletionService);
+    private destroyRef = inject(DestroyRef);
+    private readonly isAlive = trackAlive(this.destroyRef);
 
     readonly exam = signal<Exam>(undefined!);
     /** One observable per exam, so that the delete dialog does not get a new input on every change detection pass. */
@@ -104,6 +109,9 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             this.isExamOver.set(!!this.exam().endDate?.isBefore(dayjs()));
             this.isAdmin = this.accountService.isAdmin();
             this.getExamDetailSections();
+            if (this.exam().course?.isAtLeastInstructor) {
+                this.resumeRunningDeletion(this.exam());
+            }
 
             this.gradingService.findGradingScaleForExam(this.exam().course!.id!, this.exam().id!).subscribe((gradingSystemResponse) => {
                 if (gradingSystemResponse.body) {
@@ -180,71 +188,55 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
      * @param examId Id to be deleted
      */
     deleteExam(examId: number): void {
-        this.examManagementService.delete(this.exam().course!.id!, examId).subscribe({
-            next: () => {
-                this.dialogErrorSource.next('');
-                this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
-                void this.router.navigate(['/course-management', this.exam().course!.id!, 'exams']);
+        const exam = this.exam();
+        const courseId = exam.course!.id!;
+        this.entityDeletionService.delete(examDeletionTarget(courseId, examId, exam.title), this.examManagementService.delete(courseId, examId)).subscribe({
+            next: (progress) => {
+                this.onDeletionEnded(progress, courseId, examId);
+                // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
+                // The subject is closed with the component, and the deletion can end after the user left the page.
+                if (this.isAlive()) {
+                    this.dialogErrorSource.next('');
+                }
             },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            error: (error: HttpErrorResponse) => {
+                // The request can fail after the user left the page, when the subject is already closed.
+                if (this.isAlive()) {
+                    this.dialogErrorSource.next(error.message);
+                }
+            },
         });
     }
 
-    private getExistingSummaryEntries(): EntitySummary {
-        const numberOfProgrammingExerciseParticipations =
-            this.exam()
-                .exerciseGroups?.flatMap((exerciseGroup) => exerciseGroup.exercises)
-                .filter((exercise) => exercise?.type === ExerciseType.PROGRAMMING)
-                .map((exercise) => exercise?.numberOfParticipations ?? 0)
-                .reduce((repositorySum, numberOfParticipationsForRepository) => repositorySum + numberOfParticipationsForRepository, 0) ?? 0;
-
-        const numberOfExercisesPerType = new Map<ExerciseType, number>();
-        this.exam().exerciseGroups?.forEach((exerciseGroup) => {
-            exerciseGroup.exercises?.forEach((exercise) => {
-                if (exercise.type === undefined) {
-                    return;
-                }
-                const oldValue = numberOfExercisesPerType.get(exercise.type) ?? 0;
-                numberOfExercisesPerType.set(exercise.type, oldValue + 1);
-            });
-        });
-
-        const numberOfExerciseGroups = this.exam().exerciseGroups?.length ?? 0;
-        const isTestExam = this.exam().testExam ?? false;
-        const isTestCourse = this.exam().course?.testCourse ?? false;
-
-        return {
-            'artemisApp.examManagement.delete.summary.numberExerciseGroups': numberOfExerciseGroups,
-            'artemisApp.examManagement.delete.summary.numberProgrammingExercises': numberOfExercisesPerType.get(ExerciseType.PROGRAMMING),
-            'artemisApp.examManagement.delete.summary.numberModelingExercises': numberOfExercisesPerType.get(ExerciseType.MODELING),
-            'artemisApp.examManagement.delete.summary.numberTextExercises': numberOfExercisesPerType.get(ExerciseType.TEXT),
-            'artemisApp.examManagement.delete.summary.numberFileUploadExercises': numberOfExercisesPerType.get(ExerciseType.FILE_UPLOAD),
-            'artemisApp.examManagement.delete.summary.numberQuizExercises': numberOfExercisesPerType.get(ExerciseType.QUIZ),
-            'artemisApp.examManagement.delete.summary.numberRepositories': numberOfProgrammingExerciseParticipations,
-            'artemisApp.examManagement.delete.summary.isTestExam': isTestExam,
-            'artemisApp.examManagement.delete.summary.isTestCourse': isTestCourse,
-        };
+    /**
+     * Shows the progress of an exam deletion that is already running, e.g. after the page was reloaded or another instructor started it.
+     */
+    private resumeRunningDeletion(exam: Exam): void {
+        const courseId = exam.course!.id!;
+        this.entityDeletionService
+            .resume(examDeletionTarget(courseId, exam.id!, exam.title), this.destroyRef)
+            .subscribe((progress) => this.onDeletionEnded(progress, courseId, exam.id));
     }
 
-    private fetchExamDeletionSummary(): Observable<EntitySummary> {
-        return this.examManagementService.getDeletionSummary(this.exam().course!.id!, this.exam().id!).pipe(
-            map((response) => {
-                const summary = response.body;
+    private onDeletionEnded(progress: EntityDeletionProgress, courseId: number, deletedExamId: number | undefined): void {
+        if (isDeletionCompleted(progress)) {
+            // The exam list is shared with the overview this page navigates to: drop the exam from it first, so the overview never shows (and asks for
+            // the statistics of) an exam that is gone, then read the list from the server again.
+            if (deletedExamId !== undefined) {
+                this.eventManager.broadcast(new EventWithContent<ExamDeletedEventContent>(EXAM_DELETED_EVENT, { examId: deletedExamId }));
+            }
+            this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
+            // Only leave the page while it still shows the deleted exam.
+            if (this.isAlive() && this.exam().id === deletedExamId) {
+                void this.router.navigate(['/course-management', courseId, 'exams']);
+            }
+        } else if (isDeletionOutcomeUnknown(progress)) {
+            // Not known how it ended (another operation replaced the status): only refresh the exam list, which shows the real state, and stay here.
+            this.eventManager.broadcast({ name: 'examListModification', content: 'Refresh after an unknown deletion outcome' });
+        }
+    }
 
-                if (summary === null) {
-                    return {};
-                }
-
-                return cloneWith(this.getExistingSummaryEntries(), {
-                    'artemisApp.examManagement.delete.summary.numberBuilds': summary.numberOfBuilds,
-                    'artemisApp.examManagement.delete.summary.numberRegisteredStudents': summary.numberRegisteredStudents,
-                    'artemisApp.examManagement.delete.summary.numberNotStartedExams': summary.numberNotStartedExams,
-                    'artemisApp.examManagement.delete.summary.numberStartedExams': summary.numberStartedExams,
-                    'artemisApp.examManagement.delete.summary.numberSubmittedExams': summary.numberSubmittedExams,
-                    'artemisApp.examManagement.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
-                    'artemisApp.examManagement.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,
-                });
-            }),
-        );
+    private fetchExamDeletionSummary(): Observable<EntitySummaryCategory[]> {
+        return this.examManagementService.getDeletionSummary(this.exam().course!.id!, this.exam().id!);
     }
 }

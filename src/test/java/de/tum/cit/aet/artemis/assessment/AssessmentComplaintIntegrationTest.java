@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
@@ -74,6 +75,9 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "assessmentcomplaintintegration";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private ComplaintRepository complaintRepo;
@@ -166,7 +170,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         // participant_score -> result foreign keys are ON DELETE SET NULL and ParticipationDeletionService bulk
         // deletes any re-created scores after the results are gone), so the delete must succeed without draining
         // the scheduler first. This test deliberately does not drain, to keep exercising that race path.
-        request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
+        request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(modelingExercise.getId());
     }
 
     @Test

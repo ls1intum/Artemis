@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintsDTO
 import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequestsDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -51,8 +53,6 @@ public class TutorLeaderboardService {
      * @return list of tutor leaderboard objects
      */
     public List<TutorLeaderboardDTO> getCourseLeaderboard(Course course, Set<Long> exerciseIdsOfCourse) {
-        var tutors = userRepository.getTutors(course);
-
         List<TutorLeaderboardAssessmentsDTO> tutorLeaderboardAssessmentDTOS = List.of();
         List<TutorLeaderboardComplaintsDTO> tutorLeaderboardComplaints = List.of();
         List<TutorLeaderboardComplaintResponsesDTO> tutorLeaderboardComplaintResponses = List.of();
@@ -67,7 +67,7 @@ public class TutorLeaderboardService {
             tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(exerciseIdsOfCourse);
         }
 
-        return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessmentDTOS, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
+        return aggregateTutorLeaderboardData(course, tutorLeaderboardAssessmentDTOS, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
                 tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests, false);
     }
 
@@ -79,11 +79,10 @@ public class TutorLeaderboardService {
      * @return list of tutor leaderboard objects
      */
     public List<TutorLeaderboardDTO> getExamLeaderboard(Course course, Collection<Long> exerciseIds) {
-        var tutors = userRepository.getTutors(course);
         var tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExerciseIds(exerciseIds);
         var tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByExerciseIds(exerciseIds);
         var tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByExerciseIds(exerciseIds);
-        return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, new ArrayList<>(), tutorLeaderboardComplaintResponses,
+        return aggregateTutorLeaderboardData(course, tutorLeaderboardAssessments, tutorLeaderboardComplaints, new ArrayList<>(), tutorLeaderboardComplaintResponses,
                 new ArrayList<>(), true);
     }
 
@@ -94,20 +93,23 @@ public class TutorLeaderboardService {
      * @return list of tutor leaderboard objects
      */
     public List<TutorLeaderboardDTO> getExerciseLeaderboard(Exercise exercise) {
-        var tutors = userRepository.getTutors(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
         var tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExerciseId(exercise.getId());
         var tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByExerciseId(exercise.getId());
         var tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByExerciseId(exercise.getId());
         var tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByExerciseId(exercise.getId());
         var tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(exercise.getId());
-        return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
-                tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests, exercise.isExamExercise());
+        return aggregateTutorLeaderboardData(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), tutorLeaderboardAssessments, tutorLeaderboardComplaints,
+                tutorLeaderboardMoreFeedbackRequests, tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests, exercise.isExamExercise());
     }
 
     @NonNull
-    private List<TutorLeaderboardDTO> aggregateTutorLeaderboardData(Set<User> tutors, List<TutorLeaderboardAssessmentsDTO> assessments,
-            List<TutorLeaderboardComplaintsDTO> complaints, List<TutorLeaderboardMoreFeedbackRequestsDTO> feedbackRequests,
-            List<TutorLeaderboardComplaintResponsesDTO> complaintResponses, List<TutorLeaderboardAnsweredMoreFeedbackRequestsDTO> answeredFeedbackRequests, boolean isExam) {
+    private List<TutorLeaderboardDTO> aggregateTutorLeaderboardData(Course course, List<TutorLeaderboardAssessmentsDTO> assessments, List<TutorLeaderboardComplaintsDTO> complaints,
+            List<TutorLeaderboardMoreFeedbackRequestsDTO> feedbackRequests, List<TutorLeaderboardComplaintResponsesDTO> complaintResponses,
+            List<TutorLeaderboardAnsweredMoreFeedbackRequestsDTO> answeredFeedbackRequests, boolean isExam) {
+
+        var tutors = userRepository.getTutors(course);
+        var staff = new HashSet<>(tutors);
+        staff.addAll(userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR)));
 
         var assessmentsMap = assessments.stream().collect(Collectors.toMap(TutorLeaderboardAssessmentsDTO::userId, value -> value));
         var complaintsMap = complaints.stream().collect(Collectors.toMap(TutorLeaderboardComplaintsDTO::userId, value -> value));
@@ -117,7 +119,7 @@ public class TutorLeaderboardService {
 
         List<TutorLeaderboardDTO> tutorLeaderBoardEntries = new ArrayList<>();
 
-        for (User tutor : tutors) {
+        for (User tutor : staff) {
             long numberOfAssessments = 0L;
             long numberOfAcceptedComplaints = 0L;
             long numberOfTutorComplaints = 0L;
@@ -152,6 +154,12 @@ public class TutorLeaderboardService {
                 var answeredFeedbackRequestsOfTutor = answeredFeedbackRequestsMap.getOrDefault(tutor.getId(), new TutorLeaderboardAnsweredMoreFeedbackRequestsDTO());
                 numberOfAnsweredMoreFeedbackRequests += answeredFeedbackRequestsOfTutor.answeredRequests();
                 // answered requests doesn't count, because it only means that the tutor repaired the negative points
+            }
+
+            // Keep every tutor, including those who have not assessed yet. Higher staff only appear when
+            // their work contributes points to this leaderboard's exercise, course or exam scope.
+            if (!tutors.contains(tutor) && points == 0.0) {
+                continue;
             }
 
             var leaderboardEntry = new TutorLeaderboardDTO(tutor.getId(), tutor.getName(), numberOfAssessments, numberOfAcceptedComplaints, numberOfTutorComplaints,

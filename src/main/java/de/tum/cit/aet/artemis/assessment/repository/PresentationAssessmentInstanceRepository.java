@@ -32,8 +32,8 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepository<PresentationAssessmentInstance, Long>,
-        JpaSpecificationExecutor<PresentationAssessmentInstance>, PresentationAssessmentInstanceWriteRepository {
+public interface PresentationAssessmentInstanceRepository
+        extends ArtemisJpaRepository<PresentationAssessmentInstance, Long>, JpaSpecificationExecutor<PresentationAssessmentInstance> {
 
     /**
      * Finds an instance within the given presentation assessment and course.
@@ -65,7 +65,7 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
      *
      * @param courseId         the owning course id
      * @param assessmentId     the presentation assessment id, or null for no filter
-     * @param assessed         whether result points are assigned, or null for no filter
+     * @param assessed         whether a result is assigned, or null for no filter
      * @param linkedToExercise whether the presentation is linked to an exercise, or null for no filter
      * @param searchPattern    the prepared lower-case LIKE pattern, or null for no filter
      * @param pageable         pagination and sorting information
@@ -88,9 +88,9 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO(
-                assessment.id, assessment.title, assessment.description, assessment.maxPoints,
+                assessment.id, assessment.title, assessment.description, assessment.gradingMethod, assessment.maxPoints,
                 assessment.course.id, exercise.id, exercise.title,
-                instance.id, instance.presentationDate, instance.resultPoints,
+                instance.id, instance.presentationDate, instance.resultPoints, instance.passed, instance.rubricScore,
                 instance.language, instance.mode, instance.location, instance.meetingLink, instance.remark,
                 student.login, student.firstName, student.lastName, student.email)
             FROM PresentationAssessmentInstance instance
@@ -109,13 +109,31 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO(
-                COUNT(instance), COUNT(instance.resultPoints))
+                COUNT(instance),
+                COALESCE(SUM(CASE WHEN instance.resultPoints IS NOT NULL OR instance.passed IS NOT NULL OR instance.rubricScore IS NOT NULL THEN 1L ELSE 0L END), 0L))
             FROM PresentationAssessmentInstance instance
             WHERE instance.presentationAssessment.course.id = :courseId
             """)
     PresentationAssessmentStatisticsDTO findStatisticsByCourseId(@Param("courseId") long courseId);
 
     long countByPresentationAssessmentCourseId(long courseId);
+
+    long countByPresentationAssessmentIdAndRubricScoreIsNotNull(long presentationAssessmentId);
+
+    /**
+     * Sets the same recalculated rubric score on several instances in one statement.
+     *
+     * @param instanceIds the ids of the instances that get this score
+     * @param rubricScore the new rubric score
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE PresentationAssessmentInstance instance
+            SET instance.rubricScore = :rubricScore
+            WHERE instance.id IN :instanceIds
+            """)
+    void updateRubricScores(@Param("instanceIds") Collection<Long> instanceIds, @Param("rubricScore") double rubricScore);
 
     /**
      * Returns the logins of those of the given students that already have an instance of the presentation assessment.
@@ -151,8 +169,8 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentExportDTO(
-                course.title, assessment.title, assessment.maxPoints, instance.presentationDate, instance.resultPoints,
-                instance.language, instance.mode, instance.location, instance.meetingLink, instance.remark)
+                course.title, assessment.title, assessment.gradingMethod, assessment.maxPoints, instance.presentationDate, instance.resultPoints,
+                instance.passed, instance.rubricScore, instance.language, instance.mode, instance.location, instance.meetingLink, instance.remark)
             FROM PresentationAssessmentInstance instance
             JOIN instance.presentationAssessment assessment
             JOIN assessment.course course
@@ -163,6 +181,7 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
 
     /**
      * Deletes all presentation assessment instances of the course with a single statement, keeping the presentation assessments themselves.
+     * Their rubric ratings are removed by the database ({@code ON DELETE CASCADE}).
      *
      * @param courseId the id of the course
      * @return the number of deleted instances

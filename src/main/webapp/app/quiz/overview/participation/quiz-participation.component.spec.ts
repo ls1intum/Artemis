@@ -291,6 +291,19 @@ describe('QuizParticipationComponent - live mode', () => {
         expect(alerts).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('Wrong password'), disableTranslation: true }));
     });
 
+    it('falls back to the error message when a rejected join carries no server message', () => {
+        fixture.detectChanges();
+        const alerts = vi.spyOn(TestBed.inject(AlertService), 'addAlert');
+        component.password = 'wrong';
+        component.joinBatch();
+        const req = httpMock.expectOne((r) => r.url.includes('/join'));
+        req.flush({}, { status: 429, statusText: 'Too Many Requests' });
+        const message = alerts.mock.calls.at(-1)?.[0].message as string;
+        expect(message).toContain('Joining the quiz was not possible: ');
+        expect(message).not.toContain('null');
+        expect(message).toContain('429');
+    });
+
     it('should initialize', () => {
         fixture.detectChanges();
         expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
@@ -301,7 +314,7 @@ describe('QuizParticipationComponent - live mode', () => {
         component.submission.set({ submitted: true });
         fixture.detectChanges();
 
-        const confirmation = () => fixture.nativeElement.querySelector('.quiz-submitted-overlay');
+        const confirmation = () => fixture.nativeElement.querySelector('[data-testid="quiz-submission-confirmation"]');
         expect(confirmation()?.textContent).toContain('artemisApp.quizExercise.successfullySubmittedText');
         const dismissButton = fixture.nativeElement.querySelector('[data-testid="dismiss-quiz-submission-confirmation"]') as HTMLButtonElement;
         expect(dismissButton).not.toBeNull();

@@ -105,16 +105,19 @@ public final class Constants {
     // Keep in sync with MAX_PRESENTATION_COUNT in input.constants.ts.
     public static final int MAX_PRESENTATION_COUNT = 100;
 
+    // Upper bound for the number of criteria of a presentation rubric, and with that for the ratings of one assessment. A domain limit.
+    // Keep in sync with MAX_RUBRIC_CRITERIA in presentation-rubric.util.ts.
+    public static final int MAX_RUBRIC_CRITERIA = 20;
+
     public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
 
-    // Allowed characters for exercise titles: Unicode letters (\p{L}, e.g. umlauts like "Lärche"), combining marks
-    // (\p{M}, for decomposed accented characters), numbers (\p{N}), underscore, hyphen and whitespace. Titles are
-    // display-only and never used to derive VCS/CI artifacts (those come from the ASCII-validated short name), so
-    // allowing international letters here is safe. Previously this was ASCII-only, which rejected legitimate titles such
-    // as "Lärche" on edit while create/import accepted them.
+    // Keep existing programming exercise title restrictions separate from non-programming display titles.
     public static final Pattern TITLE_NAME_PATTERN = Pattern.compile("^[\\p{L}\\p{M}\\p{N}_\\-\\s]*");
+
+    // Non-programming exercise display titles additionally allow periods, e.g. "Strategy vs. bridge pattern".
+    public static final Pattern EXERCISE_DISPLAY_TITLE_PATTERN = Pattern.compile("^[\\p{L}\\p{M}\\p{N}_\\-\\s.]*");
 
     public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
 
@@ -172,6 +175,12 @@ public final class Constants {
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
 
     public static final int MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH = 255; // Keep in sync with MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH in input.constants.ts
+
+    /**
+     * Maximum length of the explanation of a quiz question and of an answer option. Must match the quiz_question.explanation column and
+     * MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD in input.constants.ts.
+     */
+    public static final int MAX_QUIZ_EXPLANATION_LENGTH = 2000;
 
     // Note: Must be consistent with EXAM_TEXT_MAX_LENGTH in input.constants.ts
     public static final int EXAM_TEXT_MAX_LENGTH = 10_000; // Applies to the exam start/end and confirmation start/end texts
@@ -242,6 +251,8 @@ public final class Constants {
 
     public static final String UPDATE_EXAM = "UPDATE_EXAM";
 
+    public static final String UPDATE_EXAM_ATTENDANCE = "UPDATE_EXAM_ATTENDANCE";
+
     public static final String ADD_USER_TO_EXAM = "ADD_USER_TO_EXAM";
 
     public static final String REMOVE_USER_FROM_EXAM = "REMOVE_USER_FROM_EXAM";
@@ -308,6 +319,8 @@ public final class Constants {
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
 
     public static final String NEEDS_TO_ACCEPT_TERMS = "needsToAcceptTerms";
+
+    public static final String MAIL_CONFIGURED = "mailConfigured";
 
     public static final String ALLOWED_EMAIL_PATTERN = "allowedEmailPattern";
 
@@ -403,6 +416,7 @@ public final class Constants {
     /**
      * The name of the Spring profile used to process build jobs in a Jenkins setup.
      */
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): remove the jenkins profile constant with Jenkins support
     public static final String PROFILE_JENKINS = "jenkins";
 
     /**
@@ -480,11 +494,6 @@ public final class Constants {
      * The name of the module feature used for Atlas functionality.
      */
     public static final String MODULE_FEATURE_ATLAS = "atlas";
-
-    /**
-     * The name of the module feature used for AtlasML functionality.
-     */
-    public static final String MODULE_FEATURE_ATLASML = "atlasml";
 
     /**
      * The name of the module feature used for the LLM-backed part of Atlas.
@@ -602,11 +611,6 @@ public final class Constants {
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
-
-    /**
-     * The name of the property used to enable or disable AtlasML functionality.
-     */
-    public static final String ATLASML_ENABLED_PROPERTY_NAME = "artemis.atlas.atlasml.enabled";
 
     /**
      * The name of the property used to enable or disable the LLM-backed part of Atlas: the chat agent, the autonomous

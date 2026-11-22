@@ -1,13 +1,5 @@
 @import '../../../../content/scss/artemis-mixins';
 
-.duration-input {
-    width: 5.5rem;
-
-    .p-inputnumber-input {
-        width: 100%;
-    }
-}
-
 jhi-quiz-question-list-edit {
     display: block;
     margin-bottom: 1rem;
@@ -19,7 +11,7 @@ jhi-quiz-question-list-edit {
 }
 
 .subsection-divider {
-    border-top: 1px solid var(--bs-border-color);
+    border-top: 1px solid var(--border-color);
     margin: 1.75rem 0 1.25rem;
 }
 
@@ -39,15 +31,15 @@ jhi-quiz-question-list-edit {
     align-items: center;
     justify-content: center;
     font-size: 0.85rem;
-    color: var(--bs-white);
-    background: var(--subsection-color, var(--bs-secondary));
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    color: var(--white);
+    background: var(--subsection-color, var(--secondary));
+    box-shadow: 0 2px 6px color-mix(in srgb, black 12%, transparent);
 }
 
 .subsection-header-title {
     font-size: 0.95rem;
     font-weight: 600;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 }
 
 .subsection-header--general {
@@ -79,22 +71,22 @@ jhi-quiz-question-list-edit {
     }
 
     &--pending {
-        border-color: var(--bs-border-color);
-        color: var(--bs-secondary-color);
+        border-color: var(--border-color);
+        color: var(--text-body-secondary);
         background: transparent;
     }
 
     &--invalid {
-        border-color: var(--bs-danger);
-        color: var(--bs-danger);
-        background: rgba(var(--bs-danger-rgb), 0.06);
+        border-color: var(--danger);
+        color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 6%, transparent);
         cursor: pointer;
     }
 
     &--warning {
-        border-color: var(--bs-warning);
-        color: var(--bs-warning);
-        background: rgba(var(--bs-warning-rgb), 0.06);
+        border-color: var(--warning);
+        color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 6%, transparent);
         cursor: pointer;
     }
 }
@@ -129,47 +121,16 @@ jhi-quiz-question-list-edit {
     padding: 0.25rem 0.6rem;
 }
 
-.footer-save-btn {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.4rem 0.9rem;
-    border: none;
-    border-radius: 0.5rem;
-    background: var(--success);
-    color: white;
-    font-weight: 500;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition:
-        background 0.2s,
-        box-shadow 0.2s;
-
-    // aria-disabled, not disabled, so the button stays focusable and can explain why it is blocked
-    &:disabled,
-    &[aria-disabled='true'] {
-        opacity: 0.55;
-        cursor: not-allowed;
-    }
-
-    &:hover:not(:disabled):not([aria-disabled='true']) {
-        background: color-mix(in srgb, var(--success) 80%, black);
-    }
-}
-
-.section-header-action.danger {
-    border-color: var(--bs-danger);
-    color: var(--bs-danger);
-
-    &:hover {
-        background: var(--bs-danger);
-        color: var(--bs-white);
-    }
-}
-
 .quiz-max-score-badge {
+    display: inline-block;
     border-radius: 0.5rem;
     padding: 0.35rem 0.75rem;
+    background: var(--info);
+    color: var(--white);
     font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
 
     .max-score {
         background: var(--quiz-exercise-detail-max-score-background);
@@ -177,6 +138,7 @@ jhi-quiz-question-list-edit {
         border-radius: 0.35rem;
         font-size: 0.8rem;
         padding: 0.2em 0.45em;
+        font-weight: 700;
     }
 }
 
@@ -194,63 +156,36 @@ jhi-quiz-question-list-edit {
     }
 }
 
-button.global-refinement-fab.p-button {
-    background: var(--blue);
+button.global-refinement-fab {
     border-radius: 50%;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-    color: white !important;
+    box-shadow: 0 4px 16px color-mix(in srgb, black 20%, transparent);
     height: 3rem;
     width: 3rem;
-
-    &:hover {
-        background: color-mix(in srgb, var(--blue) 80%, black);
-        border-color: color-mix(in srgb, var(--blue) 80%, black);
-    }
 }
 
 .global-refinement-fab-expanded {
     align-items: center;
-    background: var(--bs-body-bg);
-    border: 1px solid var(--bs-border-color);
+    background: var(--body-bg);
+    border: 1px solid var(--border-color);
     border-radius: 2rem;
     box-shadow:
-        0 4px 24px rgba(0, 0, 0, 0.35),
-        0 1px 6px rgba(0, 0, 0, 0.2);
+        0 4px 24px color-mix(in srgb, black 35%, transparent),
+        0 1px 6px color-mix(in srgb, black 20%, transparent);
     display: flex;
     gap: 0.4rem;
     padding: 0.4rem;
 }
 
-button.global-refinement-fab-action-button.p-button {
+button.global-refinement-fab-action-button {
     border-radius: 50%;
     flex-shrink: 0;
     height: 2.75rem;
     width: 2.75rem;
 }
 
-button.global-refinement-fab-action-button.p-button:not(.global-refinement-fab-close-button) {
-    background: var(--blue);
-    color: white !important;
-
-    &:hover:not(:disabled) {
-        background: color-mix(in srgb, var(--blue) 80%, black);
-        border-color: color-mix(in srgb, var(--blue) 80%, black);
-    }
-}
-
-button.global-refinement-fab-close-button.p-button {
-    background: var(--p-surface-0) !important;
-    border-color: var(--bs-border-color) !important;
-    color: var(--bs-body-color) !important;
-}
-
-:root[prime-ng-use-dark-theme='true'] button.global-refinement-fab-close-button.p-button {
-    background: var(--p-surface-900) !important;
-}
-
 .global-refinement-fab-textarea {
     flex: 1;
-    font-size: var(--bs-body-font-size);
+    font-size: 0.9rem;
     height: 2.75rem;
     min-width: 32rem;
     padding-bottom: calc((2.75rem - 1.5em) / 2);
@@ -261,7 +196,7 @@ button.global-refinement-fab-close-button.p-button {
 .quiz-is-active-background {
     @include position-style(fixed, 0, 0, 0, 0, 6);
 
-    background: rgba(0, 0, 0, 0.4);
+    background: color-mix(in srgb, black 40%, transparent);
 }
 
 .label--truncate {
@@ -273,7 +208,7 @@ button.global-refinement-fab-close-button.p-button {
 
 .quiz-toggle-group {
     display: flex;
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--border-color);
     border-radius: 0.375rem;
     overflow: hidden;
     width: 100%;
@@ -281,11 +216,11 @@ button.global-refinement-fab-close-button.p-button {
 
 .quiz-toggle-btn {
     flex: 1;
-    padding: var(--p-form-field-padding-y, 0.5rem) 0.25rem;
+    padding: 0.5rem 0.25rem;
     border: none;
-    border-right: 1px solid var(--bs-border-color);
-    background: var(--bs-body-bg);
-    color: var(--bs-secondary-color);
+    border-right: 1px solid var(--border-color);
+    background: var(--body-bg);
+    color: var(--text-body-secondary);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -299,26 +234,26 @@ button.global-refinement-fab-close-button.p-button {
 
     &--active {
         background: var(--blue);
-        color: var(--bs-white);
+        color: var(--white);
         font-weight: 600;
     }
 
     &:hover:not(.quiz-toggle-btn--active) {
-        background: color-mix(in srgb, var(--bs-body-color) 8%, transparent);
-        color: var(--bs-body-color);
+        background: color-mix(in srgb, var(--body-color) 8%, transparent);
+        color: var(--body-color);
     }
 
     &--easy.quiz-toggle-btn--active {
-        background: var(--bs-success);
+        background: var(--success);
     }
 
     &--medium.quiz-toggle-btn--active {
-        background: var(--bs-warning);
-        color: var(--bs-dark);
+        background: var(--warning);
+        color: var(--black);
     }
 
     &--hard.quiz-toggle-btn--active {
-        background: var(--bs-danger);
+        background: var(--danger);
     }
 }
 

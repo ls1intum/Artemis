@@ -8,6 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -43,6 +44,7 @@ import {
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -115,6 +117,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 
     private originalEndDate?: dayjs.Dayjs;
 
+    private originalWorkingTime?: number;
+
     private componentActive = true;
 
     confirmEntityNameValue = signal('');
@@ -145,7 +149,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
                 }
 
                 // test exam only feature automatic assessment
-                if (exam.testExam) {
+                if (!isRealExam(exam)) {
                     exam.numberOfCorrectionRoundsInExam = 0;
                 } else if (!exam.numberOfCorrectionRoundsInExam) {
                     exam.numberOfCorrectionRoundsInExam = 1;
@@ -156,6 +160,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
                 this.isImportInSameCourse.set(isImport && exam.course?.id === data.course.id);
                 this.originalStartDate = exam.startDate?.clone();
                 this.originalEndDate = exam.endDate?.clone();
+                this.originalWorkingTime = exam.workingTime;
 
                 this.course = data.course;
                 this.exam.course = data.course;
@@ -200,7 +205,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     get oldWorkingTime(): number | undefined {
-        return normalWorkingTime(this.originalStartDate, this.originalEndDate);
+        return isRealExam(this.exam) ? normalWorkingTime(this.originalStartDate, this.originalEndDate) : this.originalWorkingTime;
     }
 
     get newWorkingTime(): number | undefined {
@@ -223,13 +228,13 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * Updates the working time for real exams based on the start and end dates.
      */
     updateExamWorkingTime() {
-        if (this.exam.testExam) return;
+        if (!isRealExam(this.exam)) return;
 
         this.exam.workingTime = examWorkingTime(this.exam) ?? 0;
     }
 
     onExamModeChange() {
-        if (this.exam.testExam) {
+        if (!isRealExam(this.exam)) {
             // Preserve the rounded value
             this.exam.examWithAttendanceCheck = false;
             this.roundWorkingTime();
@@ -250,7 +255,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * Returns the maximum working time in minutes for test exams.
      */
     get maxWorkingTimeInMinutes(): number {
-        if (!this.exam.testExam) return 0;
+        if (isRealExam(this.exam)) return 0;
 
         if (this.exam.startDate && this.exam.endDate) {
             // This considers decimal places as well.
@@ -271,8 +276,11 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             return;
         }
         const datesChanged = !(this.exam.startDate?.isSame(this.originalStartDate) && this.exam.endDate?.isSame(this.originalEndDate));
+        const workingTimeChanged = this.exam.workingTime !== this.originalWorkingTime;
 
-        if (datesChanged && this.isOngoingExam) {
+        const triggersPopup = this.isRealExam(this.exam) ? datesChanged : workingTimeChanged;
+
+        if (triggersPopup && this.isOngoingExam) {
             this.confirmEntityNameValue.set('');
             this.confirmDateChangeVisible.set(true);
         } else {
@@ -470,7 +478,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
-        if (this.exam.testExam) {
+        if (!isRealExam(this.exam)) {
             return this.exam.numberOfCorrectionRoundsInExam === 0;
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
@@ -536,7 +544,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * and must not exceed 30 days (2592000 seconds).
      */
     get validateWorkingTime(): boolean {
-        if (this.exam.testExam) {
+        if (!isRealExam(this.exam)) {
             if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
                 return false;
             }
@@ -677,21 +685,21 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      */
     get examDefaultStartText(): string {
         const warningForInstructionsText = '<!-- Please adapt this text for your exam -->\n\n';
-        const readCarefullyText = "<span class='fw-bold'>Please read the following information carefully!</span>\n\n";
+        const readCarefullyText = "<span class='font-bold'>Please read the following information carefully!</span>\n\n";
         const workOnYourOwnText =
-            "You must work on the exam on your own. You <span class='fw-bold text-primary'>must not</span>, in any way, get support from someone else (in person, chat, forum, discussion group, artificial intelligence, etc.) Doing so is classified as <span class='fw-bold text-primary'>cheating</span> (\"Unterschleif\") and leads to consequences as mentioned in the APSO (\"Allgemeine Prüfungs- und Studienordnung\"). In particular, the corresponding module in TUMonline will be marked as <span class='fw-bold text-primary'>failed (w. cheating)</span>, and you will only be allowed to try to pass the module in one final attempt (cf. APSO §24).\n\n";
+            "You must work on the exam on your own. You <span class='font-bold text-primary'>must not</span>, in any way, get support from someone else (in person, chat, forum, discussion group, artificial intelligence, etc.) Doing so is classified as <span class='font-bold text-primary'>cheating</span> (\"Unterschleif\") and leads to consequences as mentioned in the APSO (\"Allgemeine Prüfungs- und Studienordnung\"). In particular, the corresponding module in TUMonline will be marked as <span class='font-bold text-primary'>failed (w. cheating)</span>, and you will only be allowed to try to pass the module in one final attempt (cf. APSO §24).\n\n";
         const checkForPlagiarismText =
-            "All your submissions will be checked for plagiarism. You are <span class='fw-bold text-primary'>not allowed</span> to copy code from any external sources, including books, websites, or other students. Any instance of copying will be classified as plagiarism.\n\n";
+            "All your submissions will be checked for plagiarism. You are <span class='font-bold text-primary'>not allowed</span> to copy code from any external sources, including books, websites, or other students. Any instance of copying will be classified as plagiarism.\n\n";
         const programmingSubmissionText =
-            "Note that results in programming exercises only indicate whether your submission compiles or not. No actual tests will be run against your submission. All actual tests will be executed after the exam is over. You can only get points for programming exercises if your submission compiles. <span class='fw-bold text-primary'>Compile errors will result in 0 points</span>.\n\n";
-        const submissionPeriodText = `The submission period will close <span><!--Enter your grace period here--> seconds</span> following the official end of the exam to compensate for potential technical problems. We encourage you to upload your submissions regularly and early. <span class='fw-bold text-primary'>Only your final submission will be graded and late submission will not be accepted</span>.\n\n`;
+            "Note that results in programming exercises only indicate whether your submission compiles or not. No actual tests will be run against your submission. All actual tests will be executed after the exam is over. You can only get points for programming exercises if your submission compiles. <span class='font-bold text-primary'>Compile errors will result in 0 points</span>.\n\n";
+        const submissionPeriodText = `The submission period will close <span><!--Enter your grace period here--> seconds</span> following the official end of the exam to compensate for potential technical problems. We encourage you to upload your submissions regularly and early. <span class='font-bold text-primary'>Only your final submission will be graded and late submission will not be accepted</span>.\n\n`;
 
         const workingInstructionText =
-            `<div class="fw-bold">Working instructions:</div>\n` +
+            `<div class="font-bold">Working instructions:</div>\n` +
             `<ul>\n` +
-            `  <li><span class='fw-bold text-primary'>Important</span>: Before you start solving an exercise, read the problem statement carefully.</li>\n` +
-            `  <li>The exam consists of <span class='fw-bold text-primary'><!--Enter your number of points here--> points</span> and is <span class='fw-bold text-primary'><!--Enter your working time here--> minutes</span> long. Use the amount of points to determine the appropriate working time for one exercise.</li>\n` +
-            `  <li>It is <span class='fw-bold text-primary'>not</span> allowed to use any artificial intelligence to solve exercises of the exam. In particular the use of OpenAI, ChatGPT, GitHub Copilot, or any similar systems is <span class='fw-bold text-primary'>forbidden</span>!</li>\n` +
+            `  <li><span class='font-bold text-primary'>Important</span>: Before you start solving an exercise, read the problem statement carefully.</li>\n` +
+            `  <li>The exam consists of <span class='font-bold text-primary'><!--Enter your number of points here--> points</span> and is <span class='font-bold text-primary'><!--Enter your working time here--> minutes</span> long. Use the amount of points to determine the appropriate working time for one exercise.</li>\n` +
+            `  <li>It is <span class='font-bold text-primary'>not</span> allowed to use any artificial intelligence to solve exercises of the exam. In particular the use of OpenAI, ChatGPT, GitHub Copilot, or any similar systems is <span class='font-bold text-primary'>forbidden</span>!</li>\n` +
             `</ul>\n`;
 
         return (
@@ -710,6 +718,9 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     get saveTitle(): string {
         return this.isImport() ? 'entity.action.import' : 'entity.action.save';
     }
+
+    protected readonly ExamMode = ExamMode;
+    protected readonly isRealExam = isRealExam;
 }
 
 /**

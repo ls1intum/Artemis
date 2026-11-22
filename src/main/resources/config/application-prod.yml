@@ -40,6 +40,7 @@ spring:
             enabled: false
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
+        # REMOVE_IN_ARTEMIS_11 (MySQL): switch the default datasource to PostgreSQL before MySQL support is removed
         url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
         username: root
         password:
@@ -55,6 +56,7 @@ spring:
         show-sql: false
         # Tell Hibernate the dialect explicitly so it does not probe JDBC DatabaseMetaData while bootstrapping the EntityManagerFactory. For a schema with ~200 tables that
         # metadata access means repeated database round-trips on every startup (slower the further the DB is), so skipping it shortens production startup. Default to PostgreSQL
+        # REMOVE_IN_ARTEMIS_11 (MySQL): the MYSQL override described below disappears with MySQL support
         # (the production database going forward); MySQL deployments must override this with `spring.jpa.database: MYSQL` until MySQL support is removed.
         database: POSTGRESQL
         properties:

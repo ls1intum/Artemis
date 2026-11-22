@@ -1,0 +1,10 @@
+- name: build
+  script: 'dotnet build "${testWorkingDirectory}"'
+- name: structural_tests
+  script: 'dotnet test --filter "FullyQualifiedName~StructuralTest" --logger "junit;LogFilePath=TestResults/structural-results.xml" "${testWorkingDirectory}"'
+  resultPaths:
+    - '${testWorkingDirectory}/TestResults/structural-results.xml'
+- name: behavior_tests
+  script: 'dotnet test --filter "FullyQualifiedName~BehaviorTest" --logger "junit;LogFilePath=TestResults/behavior-results.xml" "${testWorkingDirectory}"'
+  resultPaths:
+    - '${testWorkingDirectory}/TestResults/behavior-results.xml'

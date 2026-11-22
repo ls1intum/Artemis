@@ -39,6 +39,7 @@ class StubCourseNotificationOverviewComponent {
     courseId = input.required<number>();
 }
 import { of } from 'rxjs';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/connection-warning.component';
@@ -128,6 +129,7 @@ describe('NavbarComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: BreakpointObserver, useValue: { observe: () => of({ matches: true, breakpoints: {} }) } },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -180,6 +182,32 @@ describe('NavbarComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('keeps course enrollment reachable through mobile account navigation', () => {
+        vi.spyOn(TestBed.inject(AccountService), 'isAuthenticated').mockReturnValue(true);
+        fixture.detectChanges();
+        component.currAccount.set({ login: 'student' } as User);
+        component.iconsMovedToMenu.set(true);
+        component.isNavbarCollapsed.set(false);
+        fixture.detectChanges();
+
+        // The account menu renders its entries in an overlay once it is opened.
+        fixture.nativeElement.querySelector('#account-menu').click();
+        fixture.detectChanges();
+        const enrollmentLink = document.querySelector<HTMLAnchorElement>('[data-testid="mobile-course-enrollment"]');
+        expect(enrollmentLink).toBeTruthy();
+        enrollmentLink!.click();
+        expect(router.createUrlTree).toHaveBeenCalledWith(['/courses/enroll'], expect.any(Object));
+        expect(router.navigateByUrl).toHaveBeenCalled();
+        expect(component.isNavbarCollapsed()).toBe(true);
+
+        component.isExamActive.set(true);
+        fixture.detectChanges();
+        fixture.nativeElement.querySelector('#account-menu').click();
+        fixture.detectChanges();
+        expect(document.querySelector('[data-testid="logout"]')).not.toBeNull();
+        expect(document.querySelector('[data-testid="mobile-course-enrollment"]')).toBeNull();
+    });
+
     it('should initialize component', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
@@ -208,6 +236,12 @@ describe('NavbarComponent', () => {
         const titleElement = fixture.debugElement.query(By.css('#test-course-title'));
         expect(titleElement).toBeTruthy();
         expect(titleElement.nativeElement.textContent).toBe('Course1');
+        expect(component.navigationContextIndicatorData()).toEqual({
+            type: 'course',
+            routerLink: ['/courses', 1],
+            title: 'Course1',
+            imagePath: 'path/to/icon.png',
+        });
         expect(fixture.nativeElement.querySelector('jhi-image')).not.toBeNull();
     });
 
@@ -218,6 +252,28 @@ describe('NavbarComponent', () => {
 
         expect(fixture.nativeElement.querySelector('jhi-image')).toBeNull();
         expect(fixture.nativeElement.querySelector('.course-circle')?.textContent.trim()).toBe('C');
+    });
+
+    it.each([
+        ['/admin/user-management', 'administration', '/admin', 'global.menu.admin.main'],
+        ['/user-settings/credentials', 'userSettings', '/user-settings', 'artemisApp.userSettings.userSettings'],
+    ] as const)('should display the navbar context without an image on %s', (url, type, routerLink, translationKey) => {
+        router.setUrl(url);
+
+        fixture.detectChanges();
+
+        expect(component.navigationContextIndicatorData()).toEqual({ type, routerLink, translationKey });
+        expect(fixture.nativeElement.querySelector('#test-navbar-context-title')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-image')).toBeNull();
+    });
+
+    it('should not display a navbar context outside administration and user settings', () => {
+        router.setUrl('/courses');
+
+        fixture.detectChanges();
+
+        expect(component.navigationContextIndicatorData()).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('#test-navbar-context-title')).toBeNull();
     });
 
     it('should link the current course to the management overview when in a management route', () => {
@@ -504,7 +560,7 @@ describe('NavbarComponent', () => {
         fixture.detectChanges();
 
         expect(component.breadcrumbs()).toHaveLength(0);
-        expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.jh-breadcrumb-container')).toBeNull();
     });
 
     it('should not build breadcrumbs when creating a course', () => {
@@ -513,7 +569,7 @@ describe('NavbarComponent', () => {
         fixture.detectChanges();
 
         expect(component.breadcrumbs()).toHaveLength(0);
-        expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.jh-breadcrumb-container')).toBeNull();
     });
 
     it('should not build breadcrumbs for administration routes', () => {
@@ -523,7 +579,7 @@ describe('NavbarComponent', () => {
         fixture.detectChanges();
 
         expect(component.breadcrumbs()).toHaveLength(0);
-        expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.jh-breadcrumb-container')).toBeNull();
     });
 
     it('should have correct git info', () => {
@@ -571,6 +627,15 @@ describe('NavbarComponent', () => {
                 translate: true,
                 uri: '/course-management/1/presentations/',
             });
+        });
+
+        it('ignores the URL fragment when building the breadcrumbs', () => {
+            router.setUrl('/course-management/1/programming-exercises/45#artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle');
+            fixture.detectChanges();
+
+            const uris = component.breadcrumbs().map((crumb) => crumb.uri);
+            expect(uris.every((uri) => !uri.includes('#'))).toBe(true);
+            expect(component.breadcrumbs().some((crumb) => crumb.label.includes('difficultyStepTitle') || crumb.label.includes('45#'))).toBe(false);
         });
 
         it.each(['/17', '/17/exercises/42'])('ends the breadcrumbs at the presentations overview for the selected presentation route %s', (suffix) => {
@@ -738,6 +803,21 @@ describe('NavbarComponent', () => {
                 label: 'Test Exercise',
                 translate: false,
                 uri: '/course-management/1/assessment-dashboard/2/',
+            } as MockBreadcrumb);
+        });
+
+        it('should translate the Athena settings breadcrumb', () => {
+            router.setUrl('/course-management/1/athena-settings');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs()).toHaveLength(3);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual({
+                label: 'artemisApp.course.athenaConfig.settingsPage.title',
+                translate: true,
+                uri: '/course-management/1/athena-settings/',
             } as MockBreadcrumb);
         });
 

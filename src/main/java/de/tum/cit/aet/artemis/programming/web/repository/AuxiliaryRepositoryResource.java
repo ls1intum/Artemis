@@ -41,8 +41,8 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -68,9 +68,10 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     public AuxiliaryRepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
-        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService,
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            Optional<LocalVCPushProcessingService> localVCPushProcessingService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCPushProcessingService,
                 programmingExerciseMutationGuard);
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
@@ -79,7 +80,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     Repository getRepository(Long auxiliaryRepositoryId, RepositoryActionType repositoryActionType, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
         final var auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
         User user = userRepository.getUserWithAuthorities();
-        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, auxiliaryRepository.getExercise(), user, "auxiliary");
+        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryActionType != RepositoryActionType.READ, auxiliaryRepository.getExercise(), user, "auxiliary");
         final var repoUri = auxiliaryRepository.getVcsRepositoryUri();
         return gitService.getOrCheckoutRepository(repoUri, pullOnGet, writeAccess);
     }
@@ -110,7 +111,8 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @Override
     OptionalLong getExerciseIdForMutation(Long auxiliaryRepositoryId, RepositoryActionType repositoryAction) {
         AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
-        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, auxiliaryRepository.getExercise(), userRepository.getUserWithAuthorities(), "auxiliary");
+        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryAction != RepositoryActionType.READ, auxiliaryRepository.getExercise(),
+                userRepository.getUserWithAuthorities(), "auxiliary");
         return OptionalLong.of(auxiliaryRepository.getExercise().getId());
     }
 

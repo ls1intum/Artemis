@@ -4,6 +4,7 @@ import { EmojiSearch } from '@ctrl/ngx-emoji-mart';
 import { EMOTICON_TO_EMOJI } from 'app/editor/monaco-editor/model/emoticon-emoji.util';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -25,6 +26,7 @@ export class MessageEditorSuggestions {
     private readonly emojis = inject(EmojiSearch);
     private readonly members = inject(CourseManagementService);
     private readonly channels = inject(ChannelService);
+    private readonly conversations = inject(ConversationService);
     private readonly exercises = inject(ExerciseService);
     private readonly lectures = inject(LectureService);
 
@@ -45,7 +47,9 @@ export class MessageEditorSuggestions {
                 .map((emoji) => ({ label: `${emoji.native} :${emoji.id}:`, kind: 'emoji', markdown: emoji.native! }));
         }
         if (trigger === '@') {
-            const response = await firstValueFrom(this.members.searchMembersForUserMentions(courseId, query));
+            const response = await firstValueFrom(
+                conversation?.id ? this.conversations.searchMembersForUserMentions(courseId, conversation.id, query) : this.members.searchMembersForUserMentions(courseId, query),
+            );
             const items: MessageSuggestion[] = (response.body ?? [])
                 // The server validates the exact full name; stripping mention delimiters would invalidate the whole message.
                 .filter((user) => sanitizeStringForMarkdownEditor(user.name) === user.name)

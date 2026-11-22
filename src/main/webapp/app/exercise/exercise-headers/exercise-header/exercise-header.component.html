@@ -3,7 +3,7 @@
     page reads like the other student pages. `px-*` rather than `p-*`, so Bootstrap's !important spacing does not
     overrule the class's vertical padding.
 -->
-<div #bar id="exercise-header" class="page-top-bar module-bg rounded-3 px-3 shell-divider-b flex items-center gap-2">
+<div #bar id="exercise-header" class="page-top-bar bg-(--module-bg) rounded-lg px-4 shell-divider-b flex items-center gap-2">
     @if (showSidebarToggle() && isSidebarCollapsed()) {
         <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
     }
@@ -42,6 +42,9 @@
         the pills beside it on the left. Their width is measured as space the title cannot have.
     -->
     <div #controls data-testid="exercise-header-controls" class="flex items-center gap-2 ms-auto shrink-0">
+        @if (exercise().type === ExerciseType.PROGRAMMING && activeParticipation()?.id) {
+            <jhi-programming-build-notifications [exercise]="exercise()" [participation]="activeParticipation()" />
+        }
         <jhi-participation-mode-toggle
             [mode]="participationMode()"
             (modeChange)="participationMode.set($event)"

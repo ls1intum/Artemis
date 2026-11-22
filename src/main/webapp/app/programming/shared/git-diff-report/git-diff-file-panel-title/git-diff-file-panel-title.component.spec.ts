@@ -43,7 +43,7 @@ describe('GitDiffFilePanelTitleComponent', () => {
             title: 'some-deleted-file.java',
             status: FileStatus.DELETED,
             shouldShowBadge: true,
-            badgeClass: 'bg-danger',
+            badgeSeverity: 'danger',
         },
         {
             diffInformation: {
@@ -56,7 +56,7 @@ describe('GitDiffFilePanelTitleComponent', () => {
             title: 'some-created-file.java',
             status: FileStatus.CREATED,
             shouldShowBadge: true,
-            badgeClass: 'bg-success',
+            badgeSeverity: 'success',
         },
         {
             diffInformation: {
@@ -69,19 +69,19 @@ describe('GitDiffFilePanelTitleComponent', () => {
             title: 'some-file.java → some-renamed-file.java',
             status: FileStatus.RENAMED,
             shouldShowBadge: true,
-            badgeClass: 'bg-warning',
+            badgeSeverity: 'warn',
         },
-    ])('should correctly display title and status badge', ({ diffInformation, title, status, shouldShowBadge, badgeClass }) => {
+    ])('should correctly display title and status badge', ({ diffInformation, title, status, shouldShowBadge, badgeSeverity }) => {
         fixture.componentRef.setInput('diffInformation', diffInformation);
         fixture.detectChanges();
 
         const element = fixture.nativeElement;
         const titleElement = element.querySelector('.file-path-with-badge');
-        const badge = element.querySelector('.badge');
+        const badge = element.querySelector('[data-testid="file-status-tag"]');
 
         if (shouldShowBadge) {
             expect(badge).toBeTruthy();
-            expect(badge.classList.contains(badgeClass)).toBe(true);
+            expect(badge.getAttribute('data-severity')).toBe(badgeSeverity);
             const badgeText = `artemisApp.programmingExercise.diffReport.fileChange.${status.toLowerCase()}`;
             expect(titleElement.textContent.trim()).toBe(`${title} ${badgeText}`);
         } else {

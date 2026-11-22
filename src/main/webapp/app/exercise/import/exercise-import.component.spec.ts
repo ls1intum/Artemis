@@ -787,4 +787,9 @@ describe('ExerciseImportComponent template', () => {
             expect(alertErrorStub).not.toHaveBeenCalled();
         });
     });
+    it('should do nothing when importing a preview without an open preview', () => {
+        comp.importPreviewed();
+
+        expect(dialogRefCloseSpy).not.toHaveBeenCalled();
+    });
 });

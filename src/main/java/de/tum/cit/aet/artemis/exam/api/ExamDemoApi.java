@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.service.ExamDemoService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -32,8 +33,9 @@ public class ExamDemoApi extends AbstractExamApi {
      *
      * @param course           the demo course the exam belongs to.
      * @param exerciseCreators the creators of the exam exercises by the title of their exercise group, in the order of the groups.
+     * @return the demo exam, whether it already existed or was created by this call.
      */
-    public void createDemo(Course course, SequencedMap<String, Function<ExerciseGroup, ? extends Exercise>> exerciseCreators) {
-        examDemoService.createDemo(course, exerciseCreators);
+    public Exam createDemo(Course course, SequencedMap<String, Function<ExerciseGroup, ? extends Exercise>> exerciseCreators) {
+        return examDemoService.createDemo(course, exerciseCreators);
     }
 }

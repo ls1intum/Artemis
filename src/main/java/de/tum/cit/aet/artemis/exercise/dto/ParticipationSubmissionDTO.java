@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.dto;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
@@ -44,9 +45,22 @@ public record ParticipationSubmissionDTO(Long id, @Nullable Boolean submitted, @
      * @return the submission response
      */
     public static ParticipationSubmissionDTO of(Submission submission, boolean includeContent) {
+        return of(submission, includeContent, null);
+    }
+
+    /**
+     * Creates a response DTO from a submission, mapping only the results whose id is contained in {@code visibleResultIds}.
+     *
+     * @param submission       the submission to map
+     * @param includeContent   whether subtype-specific submission content should be included
+     * @param visibleResultIds the ids of the results that may be mapped, or {@code null} to map every loaded result
+     * @return the submission response
+     */
+    public static ParticipationSubmissionDTO of(Submission submission, boolean includeContent, @Nullable Set<Long> visibleResultIds) {
         List<ParticipationSubmissionResultDTO> resultDTOs = null;
         if (submission.getResults() != null && Hibernate.isInitialized(submission.getResults())) {
-            resultDTOs = submission.getResults().stream().filter(Objects::nonNull).map(ParticipationSubmissionResultDTO::of).toList();
+            resultDTOs = submission.getResults().stream().filter(Objects::nonNull).filter(result -> visibleResultIds == null || visibleResultIds.contains(result.getId()))
+                    .map(ParticipationSubmissionResultDTO::of).toList();
         }
         String commitHash = submission instanceof ProgrammingSubmission programmingSubmission ? programmingSubmission.getCommitHash() : null;
         String text = null;

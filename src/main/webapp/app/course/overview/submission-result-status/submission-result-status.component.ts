@@ -1,5 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { CourseScoreAccuracy } from 'app/foundation/util/utils';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { LiveQuizParticipationStatus, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -34,6 +35,10 @@ export class SubmissionResultStatusComponent {
      * @property short Flag whether the short version of the result text should be used
      */
     readonly exercise = input.required<Exercise>();
+    /**
+     * @property course The course of the exercise, if the exercise does not carry it. The accuracy of the score in the result comes from it.
+     */
+    readonly course = input<CourseScoreAccuracy>();
     readonly studentParticipation = input<StudentParticipation>();
     readonly result = input<Result>();
     readonly updatingResultClass = input<string>('');

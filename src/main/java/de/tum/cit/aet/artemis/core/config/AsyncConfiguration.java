@@ -215,6 +215,28 @@ public class AsyncConfiguration implements AsyncConfigurer {
     }
 
     /**
+     * Executor for the background deletion of exercises, exams and exercise groups (see {@code EntityDeletionProgressService}).
+     * <p>
+     * A deletion is started by an instructor who then watches a progress dialog, so it must not wait behind a course archive on {@code longRunningJobExecutor}. It also
+     * must not run on the shared {@code taskExecutor}: deleting the participations of a programming exercise removes repositories and build plans and can take minutes.
+     * <p>
+     * Four threads let a few instructors delete at the same time without a bulk delete of many exercises taking every thread of the node for itself. The queue is long
+     * enough that the rejection handler is unreachable in practice. If it were reached, the request would fail with an error instead of the request thread running a
+     * deletion itself.
+     *
+     * @return a dedicated pool for background deletions
+     */
+    @Bean("entityDeletionExecutor")
+    public Executor entityDeletionExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("entity-deletion-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
      * Executor for an instructor's bulk build runs: the build of all participations of an exercise and the rebuild of
      * selected participations (see {@code ProgrammingTriggerService}).
      * <p>
@@ -247,15 +269,15 @@ public class AsyncConfiguration implements AsyncConfigurer {
      * produced 399 failed pushes this way, each one a student's commit lost to a rejected bookkeeping task. Access
      * logging must never be able to do that, so saturation runs the task on the calling thread instead of rejecting it.
      * <p>
-     * Neither may it drop one. A git operation writes its log entry in two steps: {@code /info/refs} creates the entry,
-     * and the data transfer request that follows updates it, locating it as the newest entry for that repository. A
-     * dropped create therefore does not merely lose a record, it points the update at the previous operation's entry and
-     * overwrites that one with this operation's commit hash. Discarding is the wrong answer for a sequence whose later
-     * steps depend on the earlier ones having happened.
+     * Neither may it drop one, which is why a full queue runs the task on the caller and never discards it.
      * <p>
-     * Single threaded for the same reason: with one worker the queue drains in submission order, so the create is
-     * always applied before the update that depends on it. The work is a handful of small inserts per git operation, far
-     * below what one thread sustains, and the bounded queue in front of it is the buffer for a burst.
+     * Only entries that nothing depends on being stored by a certain moment are written here, such as the record of a
+     * rejected request. The entry of a clone, pull or push is stored on the thread of the request, when the operation is
+     * over, so that it exists as soon as the client has its answer. An entry that was written in the background gives
+     * no such guarantee, because a task that falls back to the caller overtakes the queue.
+     * <p>
+     * Single threaded because the work is a handful of small inserts per git operation, far below what one thread
+     * sustains, and the bounded queue in front of it is the buffer for a burst.
      *
      * @return a synchronous executor under the {@code test} profile, otherwise a dedicated single threaded pool that
      *         falls back to the caller when saturated

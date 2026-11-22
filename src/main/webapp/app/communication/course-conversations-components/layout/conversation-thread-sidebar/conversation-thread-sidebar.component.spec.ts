@@ -11,8 +11,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { post } from 'test/helpers/sample/communication-sample-data';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ComponentRef, signal } from '@angular/core';
+import { ComponentRef } from '@angular/core';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
@@ -207,19 +206,19 @@ describe('ConversationThreadSidebarComponent', () => {
         expect(parseFloat(expandedThreadElement.style.width)).toBeLessThanOrEqual(maxWidth);
     });
 
-    it('should toggle isExpanded and call close() on expandTooltip signal when toggleExpand() is called', () => {
-        const closeMock = vi.fn();
-
-        component.expandTooltip = signal<NgbTooltip | undefined>({ close: closeMock } as unknown as NgbTooltip);
-
+    it('should toggle isExpanded and the expanded class when toggleExpand() is called', () => {
+        const threadElement = fixture.debugElement.nativeElement.querySelector('.expanded-thread') as HTMLElement;
         expect(component.isExpanded()).toBe(false);
+        expect(threadElement.classList).not.toContain('expanded');
 
         component.toggleExpand();
+        fixture.detectChanges();
         expect(component.isExpanded()).toBe(true);
-        expect(closeMock).toHaveBeenCalledOnce();
+        expect(threadElement.classList).toContain('expanded');
 
         component.toggleExpand();
+        fixture.detectChanges();
         expect(component.isExpanded()).toBe(false);
-        expect(closeMock).toHaveBeenCalledTimes(2);
+        expect(threadElement.classList).not.toContain('expanded');
     });
 });

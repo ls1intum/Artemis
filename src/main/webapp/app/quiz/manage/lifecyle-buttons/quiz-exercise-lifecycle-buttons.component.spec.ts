@@ -84,12 +84,12 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     it('should end quiz', () => {
-        vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(of({}));
+        vi.spyOn(quizExerciseApi, 'endQuizExercise').mockReturnValue(of({}));
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.endQuiz();
-        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledWith(456, 'end-now');
-        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledOnce();
+        expect(quizExerciseApi.endQuizExercise).toHaveBeenCalledWith(456);
+        expect(quizExerciseApi.endQuizExercise).toHaveBeenCalledOnce();
     });
 
     it('should add quiz batch', () => {
@@ -146,11 +146,18 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     }
 
     describe('button visibility', () => {
-        it('shows the start button only for a not-yet-started synchronized quiz with editor rights', () => {
-            fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.VISIBLE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: true, quizStarted: false }));
+        it('shows the start button only for a synchronized quiz whose batch has not started and with editor rights', () => {
+            fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.INVISIBLE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: true, quizStarted: false }));
             expect(flags().showStartButton()).toBe(true);
 
+            // The server flag quizStarted means "visible to students": a visible quiz in the waiting room can still be started.
             fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.VISIBLE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: true, quizStarted: true }));
+            expect(flags().showStartButton()).toBe(true);
+
+            fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.ACTIVE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: true, quizStarted: true }));
+            expect(flags().showStartButton()).toBe(false);
+
+            fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.VISIBLE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: false, quizStarted: true }));
             expect(flags().showStartButton()).toBe(false);
 
             fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.VISIBLE, quizMode: QuizMode.BATCHED, isAtLeastEditor: true, quizStarted: false }));
@@ -238,7 +245,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('marks the quiz as ended and clears the dialog error on end', () => {
-            vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(of({}));
+            vi.spyOn(quizExerciseApi, 'endQuizExercise').mockReturnValue(of({}));
             fixture.componentRef.setInput('quizExercise', buildQuiz({}));
             const emitted: QuizExercise[] = [];
             comp.handleNewQuizExercise.subscribe((quiz) => emitted.push(quiz));
@@ -252,7 +259,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('routes an end failure into the dialog error stream', () => {
-            vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'boom' })));
+            vi.spyOn(quizExerciseApi, 'endQuizExercise').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'boom' })));
             fixture.componentRef.setInput('quizExercise', buildQuiz({}));
             const errors: string[] = [];
             comp.dialogError$.subscribe((e) => errors.push(e));
@@ -316,5 +323,59 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
             expect(alertService.error).toHaveBeenCalledOnce();
             expect(reloads).toEqual([456]);
         });
+    });
+});
+
+describe('Quiz lifecycle rendered controls', () => {
+    let fixture: ComponentFixture<QuizExerciseLifecycleButtonsComponent>;
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AlertService, useClass: MockAlertService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
+        });
+        fixture = TestBed.createComponent(QuizExerciseLifecycleButtonsComponent);
+    });
+    const mount = (overrides: Partial<QuizExercise>) => {
+        fixture.componentRef.setInput('quizExercise', Object.assign(new QuizExercise({ id: 123 }, undefined), { id: 456 }, overrides));
+        fixture.detectChanges();
+    };
+    it('starts a synchronized quiz through its visible lifecycle control', () => {
+        const perform = vi.spyOn(TestBed.inject(QuizExerciseApi), 'performActionForQuizExercise').mockReturnValue(of({}));
+        mount({ quizMode: QuizMode.SYNCHRONIZED, status: QuizStatus.INVISIBLE, isAtLeastEditor: true });
+        const start = fixture.nativeElement.querySelector('#instructor-quiz-start-456') as HTMLButtonElement;
+        expect(start.hidden).toBe(false);
+        start.click();
+        expect(perform).toHaveBeenCalledWith(456, 'start-now');
+    });
+    it('keeps grouped visibility and end actions disabled', () => {
+        mount({ quizMode: QuizMode.BATCHED, status: QuizStatus.INVISIBLE, isAtLeastEditor: true, exerciseVariantGroup: { id: 7 } });
+        expect(fixture.nativeElement.querySelector('#quiz-set-visible-456').disabled).toBe(true);
+        mount({ quizMode: QuizMode.BATCHED, status: QuizStatus.ACTIVE, isAtLeastInstructor: true, exerciseVariantGroup: { id: 7 } });
+        expect(fixture.nativeElement.querySelector('#quiz-set-end-456').disabled).toBe(true);
+    });
+    it('opens the batch controls with the saved status and starts the selected batch', async () => {
+        const startBatch = vi.spyOn(TestBed.inject(QuizExerciseBatchApi), 'startBatch').mockReturnValue(of({ id: 1 }));
+        mount({
+            quizMode: QuizMode.BATCHED,
+            status: QuizStatus.ACTIVE,
+            quizBatches: [
+                { id: 1, password: 'secret' },
+                { id: 2, started: true },
+                { id: 3, ended: true },
+            ],
+        });
+        fixture.nativeElement.querySelector('#instructor-quiz-batches-456').click();
+        await fixture.whenStable();
+        const popover = document.querySelector('[role="dialog"]');
+        expect(popover?.textContent).toContain('artemisApp.exerciseManagement.batch.running');
+        expect(popover?.textContent).toContain('artemisApp.exerciseManagement.batch.done');
+        expect(popover?.querySelector('#instructor-quiz-start-456-2')).toBeNull();
+        expect(popover?.querySelector('#instructor-quiz-start-456-3')).toBeNull();
+        (popover?.querySelector('#instructor-quiz-start-456-1') as HTMLButtonElement).click();
+        expect(startBatch).toHaveBeenCalledWith(1);
     });
 });

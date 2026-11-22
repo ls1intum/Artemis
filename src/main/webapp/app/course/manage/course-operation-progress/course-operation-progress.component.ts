@@ -5,8 +5,8 @@ import dayjs from 'dayjs/esm';
 import { CourseOperationProgressDTO, CourseOperationStatus, CourseOperationType } from 'app/course/shared/entities/course-operation-progress.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle, faExclamationTriangle, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { DialogModule } from 'primeng/dialog';
-import { ProgressBarModule } from 'primeng/progressbar';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiMessageComponent, TumAetUiProgressBarComponent, TumAetUiProgressBarSeverity } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 // Minimum interval between UI updates to prevent flickering (in milliseconds)
 const UPDATE_BUFFER_MS = 150;
@@ -14,7 +14,7 @@ const UPDATE_BUFFER_MS = 150;
 @Component({
     selector: 'jhi-course-operation-progress',
     standalone: true,
-    imports: [CommonModule, FaIconComponent, DialogModule, ProgressBarModule],
+    imports: [CommonModule, FaIconComponent, TumAetUiDialogComponent, TumAetUiProgressBarComponent, TumAetUiMessageComponent, TumAetUiButtonDirective, ArtemisTranslatePipe],
     templateUrl: './course-operation-progress.component.html',
     styleUrls: ['./course-operation-progress.component.scss'],
 })
@@ -102,12 +102,12 @@ export class CourseOperationProgressComponent {
     });
 
     /**
-     * Returns the CSS class for the PrimeNG progress bar based on status.
+     * Returns the severity of the progress bar based on status.
      */
-    progressStyleClass = computed(() => {
-        if (this.isFailed()) return 'progress-danger';
-        if (this.isCompleted()) return 'progress-success';
-        return '';
+    progressSeverity = computed<TumAetUiProgressBarSeverity>(() => {
+        if (this.isFailed()) return 'danger';
+        if (this.isCompleted()) return 'success';
+        return 'primary';
     });
 
     operationTitle = computed(() => {

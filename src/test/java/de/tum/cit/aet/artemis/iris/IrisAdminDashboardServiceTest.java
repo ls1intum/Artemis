@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
@@ -17,6 +18,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,12 +26,16 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardAiSelection;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardBreakdownDimension;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardMetric;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestChatModeDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestCourseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisAdminDashboardService;
 
@@ -206,9 +212,10 @@ class IrisAdminDashboardServiceTest {
     @Test
     void overview_tokenCost_summedCorrectly() {
         stubAllRepositoryMethods();
-        when(repository.computeTokenCost(any(), any(), any())).thenReturn(List.of(new Object[] { 1, 1.50 }, new Object[] { 0, 0.75 }));
+        when(repository.computeTokenCost(any(), any(), any())).thenReturn(List.of(new Object[] { 1, 1.50, 2L }, new Object[] { 0, 0.75, 1L }));
         var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), IrisDashboardAiSelection.ALL);
-        assertThat(overview.totalTokenCostEur()).isEqualTo(2.25);
+        assertThat(overview.totalTokenCostUsd()).isEqualTo(2.25);
+        assertThat(overview.unpricedTokenCostRequests()).isEqualTo(3);
     }
 
     // -- Percentile tests -------------------------------------------------------
@@ -339,11 +346,12 @@ class IrisAdminDashboardServiceTest {
         Instant from = Instant.parse("2026-05-25T00:00:00Z");
         Instant to = Instant.parse("2026-05-26T00:00:00Z");
         when(repository.findTokenCostWithTimestamps(any(), any(), any()))
-                .thenReturn(List.of(new Object[] { Instant.parse("2026-05-25T10:00:00Z"), 1, 0.50 }, new Object[] { Instant.parse("2026-05-25T11:00:00Z"), 0, 0.25 }));
+                .thenReturn(List.of(new Object[] { Instant.parse("2026-05-25T10:00:00Z"), 1, 0.50, 2L }, new Object[] { Instant.parse("2026-05-25T11:00:00Z"), 0, 0.25, 1L }));
         var result = service.computeTimeSeries(from, to, "DAY", IrisDashboardMetric.TOKEN_COST, IrisDashboardAiSelection.ALL);
         assertThat(result.entries().getFirst().series().get("chat")).isEqualTo(0.50);
         assertThat(result.entries().getFirst().series().get("other")).isEqualTo(0.25);
         assertThat(result.entries().getFirst().series().get("total")).isEqualTo(0.75);
+        assertThat(result.entries().getFirst().series().get("unpricedRequests")).isEqualTo(3);
     }
 
     // -- Breakdown tests --------------------------------------------------------
@@ -385,13 +393,15 @@ class IrisAdminDashboardServiceTest {
     void computeBreakdown_model_returnsCostAndTokens() {
         Instant from = Instant.parse("2026-05-25T00:00:00Z");
         Instant to = Instant.parse("2026-05-27T00:00:00Z");
-        when(repository.computeTokenCostByModel(any(), any(), any())).thenReturn(List.of(new Object[] { "gpt-4o", 100000L, 1.25 }, new Object[] { "claude-sonnet", 50000L, 0.80 }));
+        when(repository.computeTokenCostByModel(any(), any(), any()))
+                .thenReturn(List.of(new Object[] { "gpt-4o", 100000L, 1.25, 2L }, new Object[] { "claude-sonnet", 50000L, 0.80, 0L }));
 
         var result = service.computeBreakdown(from, to, IrisDashboardBreakdownDimension.MODEL, IrisDashboardAiSelection.ALL);
         assertThat(result).hasSize(2);
         assertThat(result.getFirst().label()).isEqualTo("gpt-4o");
         assertThat(result.getFirst().values().get("totalTokens")).isEqualTo(100000.0);
-        assertThat(result.getFirst().values().get("costEur")).isEqualTo(1.25);
+        assertThat(result.getFirst().values().get("costUsd")).isEqualTo(1.25);
+        assertThat(result.getFirst().values().get("unpricedRequests")).isEqualTo(2);
     }
 
     // -- mapResults test --------------------------------------------------------
@@ -451,6 +461,48 @@ class IrisAdminDashboardServiceTest {
         verify(repository).findUserMessagesWithNextMessageFullRange(from, to, "ALL");
         verify(repository).findSessionsWithMode(from, to, "ALL");
         verify(repository).findTopCoursesBySessionCount(from, to, "ALL", 5);
+    }
+
+    @Test
+    void computeDigestDataProducesRankedCoursesAndSerializesUsdCostsWithExcludedRequests() {
+        stubAllRepositoryMethods();
+        Instant from = Instant.parse("2026-05-26T00:00:00Z");
+        Instant to = Instant.parse("2026-05-27T00:00:00Z");
+        when(repository.countTotalSessions(from, to, "ALL")).thenReturn(23L);
+        when(repository.countActiveSessions(from, to, "ALL")).thenReturn(18L);
+        when(repository.countTotalMessages(from, to, "ALL")).thenReturn(70L);
+        when(repository.countUniqueUsers(from, to, "ALL")).thenReturn(14L);
+        when(repository.computeTokenCost(from, to, "ALL")).thenReturn(List.of(new Object[] { 1, 0.75, 2L }, new Object[] { 0, 0.125, 1L }));
+        when(repository.findSessionsWithMode(from, to, "ALL")).thenReturn(IntStream.range(0, 23)
+                .mapToObj(index -> new Object[] { (long) index + 1, from.plusSeconds(60L * index), index < 15 ? "CHAT" : "TUTOR_SUGGESTION", index < 18 ? 1 : 0 }).toList());
+        when(repository.findTopCoursesBySessionCount(from, to, "ALL", 5)).thenReturn(List.of(new Object[] { 42L, 15L }, new Object[] { 99L, 8L }));
+        Course course = new Course();
+        course.setId(42L);
+        course.setTitle("Intro to Programming & AI");
+        when(courseRepository.findAllById(List.of(42L, 99L))).thenReturn(List.of(course));
+
+        var digest = service.computeDigestData(from, to, to);
+
+        assertThat(digest.windowStart()).isEqualTo(from);
+        assertThat(digest.windowEnd()).isEqualTo(to);
+        assertThat(digest.staleBefore()).isEqualTo(to);
+        assertThat(digest.totalSessions()).isEqualTo(23L);
+        assertThat(digest.activeSessions()).isEqualTo(18L);
+        assertThat(digest.totalMessages()).isEqualTo(70L);
+        assertThat(digest.uniqueUsers()).isEqualTo(14L);
+        assertThat(digest.totalTokenCostUsd()).isEqualTo(0.875);
+        assertThat(digest.unpricedTokenCostRequests()).isEqualTo(3L);
+        assertThat(digest.topCourses()).extracting(IrisDashboardDigestCourseDTO::courseName, IrisDashboardDigestCourseDTO::sessions, IrisDashboardDigestCourseDTO::costUsd)
+                .containsExactly(tuple("Intro to Programming & AI", 15L, 0.0), tuple("Course #99", 8L, 0.0));
+        assertThat(digest.chatModeBreakdown()).extracting(IrisDashboardDigestChatModeDTO::mode, IrisDashboardDigestChatModeDTO::sessions)
+                .containsExactlyInAnyOrder(tuple("CHAT", 15L), tuple("TUTOR_SUGGESTION", 8L));
+        assertThat(digest.dashboardPath()).isEqualTo("/admin/iris-dashboard");
+
+        String json = JsonObjectMapper.get().writeValueAsString(digest);
+        assertThat(json).contains("\"costUsd\":0.0", "\"totalTokenCostUsd\":0.875", "\"unpricedTokenCostRequests\":3").doesNotContain("costEur");
+        assertThat(JsonObjectMapper.get().readValue(json, IrisDashboardDigestDTO.class)).isEqualTo(digest);
+        verify(repository).findTopCoursesBySessionCount(from, to, "ALL", 5);
+        verify(courseRepository).findAllById(List.of(42L, 99L));
     }
 
     // -- Helpers ----------------------------------------------------------------

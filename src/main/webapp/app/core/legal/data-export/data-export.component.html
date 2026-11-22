@@ -5,7 +5,7 @@
     <p>
         {{ description() | artemisTranslate }}
     </p>
-    <div class="column d-flex justify-content-center align-content-center">
+    <div class="flex content-center justify-center">
         @if (!downloadMode()) {
             <button
                 type="button"
@@ -22,6 +22,7 @@
         @if (canDownload()) {
             <jhi-button
                 id="download-data-export-btn"
+                [btnType]="ButtonType.SECONDARY"
                 [btnSize]="ButtonSize.LARGE"
                 [disabled]="!canDownload()"
                 [tooltip]="'artemisApp.dataExport.download'"
@@ -30,7 +31,7 @@
             />
         }
     </div>
-    <div class="mt-3 d-flex-column align-content-center">
+    <div class="mt-4 content-center">
         @if (dataExport().createdDate && state() !== DataExportState.FAILED) {
             <p>
                 <span jhiTranslate="artemisApp.dataExport.lastRequestDate"></span>

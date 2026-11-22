@@ -1,5 +1,5 @@
-<div class="import-settings-container p-3">
-    <div class="row m-0">
+<div class="rounded-lg bg-(--body-bg) p-4">
+    <div class="flex">
         @let baseTranslationKey = 'artemisApp.courseCompetency.importSettings';
         <ng-container
             *ngTemplateOutlet="
@@ -35,16 +35,16 @@
             "
         />
     </div>
-    <hr class="my-3" />
-    <div class="row m-0">
-        <div class="col p-0 pe-2">
-            <div class="d-flex align-items-center">
+    <hr class="my-4" />
+    <div class="flex">
+        <div class="min-w-0 flex-1 pe-2">
+            <div class="flex items-center">
                 <label for="reference-date-field" jhiTranslate="artemisApp.courseCompetency.importSettings.referenceDateLabel"></label>
                 <fa-icon
                     [icon]="faQuestionCircle"
                     size="sm"
-                    class="ms-1 text-secondary"
-                    [ngbTooltip]="'artemisApp.courseCompetency.importSettings.referenceDateTooltip' | artemisTranslate"
+                    class="ms-1! text-muted-color"
+                    [tumAetUiTooltip]="'artemisApp.courseCompetency.importSettings.referenceDateTooltip' | artemisTranslate"
                 />
             </div>
             <tumaet-ui-date-picker
@@ -56,37 +56,37 @@
                 (inputValidityChange)="referenceDateTextValidChange.emit($event)"
             />
         </div>
-        <div class="col p-0 ps-2 align-items-center">
-            <div class="d-flex align-items-center">
+        <div class="min-w-0 flex-1 ps-2">
+            <div class="flex items-center">
                 <label for="reference-date-type-select" jhiTranslate="artemisApp.courseCompetency.importSettings.referenceDateTypeLabel"></label>
                 <fa-icon
                     [icon]="faQuestionCircle"
                     size="sm"
-                    class="ms-1 text-secondary"
-                    [ngbTooltip]="'artemisApp.courseCompetency.importSettings.referenceDateTypeTooltip' | artemisTranslate"
+                    class="ms-1! text-muted-color"
+                    [tumAetUiTooltip]="'artemisApp.courseCompetency.importSettings.referenceDateTypeTooltip' | artemisTranslate"
                 />
             </div>
-            <select
-                [required]="referenceDate()"
-                [disabled]="!referenceDate()"
-                [value]="isReleaseDate()"
-                (change)="setReferenceDateType($event)"
-                id="reference-date-type-select"
+            <tumaet-ui-select
+                class="flex! w-full"
+                inputId="reference-date-type-select"
                 name="dateTypes"
-                class="form-select"
-            >
-                <option disabled [selected]="isReleaseDate() === undefined" jhiTranslate="artemisApp.courseCompetency.importSettings.referenceDateType.noSelection"></option>
-                <option value="true" jhiTranslate="artemisApp.courseCompetency.importSettings.referenceDateType.releaseDate"></option>
-                <option value="false" jhiTranslate="artemisApp.courseCompetency.importSettings.referenceDateType.dueDate"></option>
-            </select>
+                [required]="!!referenceDate()"
+                [disabled]="!referenceDate()"
+                [options]="referenceDateTypeOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [placeholder]="'artemisApp.courseCompetency.importSettings.referenceDateType.noSelection' | artemisTranslate"
+                [ngModel]="isReleaseDate()"
+                (ngModelChange)="setReferenceDateType($event)"
+            />
         </div>
     </div>
 </div>
 
 <ng-template #importSettingTemplate let-value="value" let-setting="setting" let-label="label" let-tooltip="tooltip">
-    <div class="col p-0 d-flex align-items-center">
-        <input [id]="setting + '-checkbox'" type="checkbox" [checked]="value" (click)="toggleImportSetting(setting)" />
+    <div class="flex min-w-0 flex-1 items-center">
+        <tumaet-ui-checkbox [inputId]="setting + '-checkbox'" [checked]="value" (changed)="toggleImportSetting(setting)" />
         <label [for]="setting + '-checkbox'" class="ms-2" [jhiTranslate]="label"></label>
-        <fa-icon [icon]="faQuestionCircle" size="sm" class="ms-1 text-secondary" [ngbTooltip]="tooltip | artemisTranslate" />
+        <fa-icon [icon]="faQuestionCircle" size="sm" class="ms-1! text-muted-color" [tumAetUiTooltip]="tooltip | artemisTranslate" />
     </div>
 </ng-template>

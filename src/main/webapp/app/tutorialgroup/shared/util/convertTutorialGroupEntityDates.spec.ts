@@ -1,9 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { describe, expect, it } from 'vitest';
 
-import { convertTutorialGroupFreePeriodDatesFromServer, convertTutorialGroupSummaryArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
-import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
-import { Dayjs } from 'dayjs/esm';
+import { convertTutorialGroupSummaryArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
 
 const START = '2026-03-26T10:00:00.000Z';
@@ -13,25 +11,7 @@ const NEXT_END = '2026-03-27T12:00:00.000Z';
 const VALID_FROM = '2026-03-01T00:00:00.000Z';
 const VALID_TO = '2026-03-31T00:00:00.000Z';
 
-function rawServerDate(value: string): Dayjs {
-    return value as unknown as Dayjs;
-}
-
 describe('convertTutorialGroupEntityDates', () => {
-    it('should convert tutorial group free period dates from the server', () => {
-        const freePeriod = {
-            start: rawServerDate(START),
-            end: rawServerDate(END),
-        } as TutorialGroupFreePeriod;
-
-        const result = convertTutorialGroupFreePeriodDatesFromServer(freePeriod);
-
-        expect(dayjs.isDayjs(result.start)).toBe(true);
-        expect(dayjs.isDayjs(result.end)).toBe(true);
-        expect(result.start?.toISOString()).toBe(START);
-        expect(result.end?.toISOString()).toBe(END);
-    });
-
     it('should preserve the server-derived capacityReached availability flag', () => {
         const summaries: TutorialGroupSummary[] = [{ id: 1, capacityReached: true }, { id: 2, capacityReached: false }, { id: 3 }];
 

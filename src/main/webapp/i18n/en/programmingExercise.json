@@ -1,6 +1,22 @@
 {
     "artemisApp": {
         "programmingExercise": {
+            "instructionTableLabel": "Table in the problem statement",
+            "repositoryBuildOverview": {
+                "title": "Repositories and builds",
+                "template": "Template",
+                "solution": "Solution",
+                "tests": "Tests",
+                "auxiliary": "Auxiliary repository",
+                "templateDescription": "The starting point for students.",
+                "solutionDescription": "The reference implementation.",
+                "templateExpectedScore": "Expected score: 0% before students implement the solution.",
+                "solutionExpectedScore": "Expected score: 100% for the reference implementation.",
+                "result": "Build result",
+                "resultsLoading": "Loading build result…",
+                "checkoutLoading": "Loading checkout directories…",
+                "checkoutUnavailable": "Checkout directories could not be loaded."
+            },
             "home": {
                 "title": "Programming Exercise",
                 "createLabel": "Create Programming Exercise",
@@ -25,10 +41,10 @@
                 "invalidReason": "The grading section contains invalid values."
             },
             "delete": {
-                "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?",
+                "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?",
                 "questionLocalVC": {
-                    "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",
-                    "multiple": "Are you sure you want to delete selected programming exercises of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!"
+                    "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-state-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",
+                    "multiple": "Are you sure you want to delete selected programming exercises of the <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-state-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!"
                 },
                 "studentReposBuildPlans": "Additionally delete all student repositories and student build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
                 "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
@@ -74,11 +90,6 @@
             },
             "importFromFile": {
                 "title": "Import Programming Exercise from File",
-                "description": "The file must be a zip file containing the exercise configuration in JSON format at the root level and a zip file for each of the repositories (template, solution, tests). You can get such a file by exporting a programming exercise.",
-                "uploadForImport": "Upload Programming Exercise for Import",
-                "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 20 MB.",
-                "fileTypeNotSupportedError": "The file type is not supported. Please select a file with the extension .zip.",
-                "noExerciseDetailsJsonAtRootLevel": "The zip file does not contain a JSON file at the root level with the exercise details.",
                 "notSupportedProgrammingLanguage": "The programming language {{ programmingLanguage }} is not yet supported for the import from file.",
                 "GccNotSupportedForC": "The project type is not yet supported for the import from file."
             },
@@ -154,7 +165,10 @@
             "script": "Build script",
             "buildConfig": {
                 "buildPlanConfigurationTooLong": "The build plan configuration is too long. The maximum allowed size is 1 MB.",
-                "dockerFlagsTooLong": "The docker flags are too long. The maximum allowed size is 8 KB."
+                "dockerFlagsTooLong": "The docker flags are too long. The maximum allowed size is 8 KB.",
+                "branchRegexTooLong": "The branch regex is too long. The maximum allowed length is 128 characters.",
+                "branchRegexInvalid": "The branch regex is not a valid regular expression.",
+                "branchRegexNotSupported": "The branch regex uses syntax that is not supported. Use literal characters, classes such as [a-z0-9-], groups with alternatives, the anchors ^ and $, and the quantifiers * + ? and counted repetitions with counts up to 1000. A repeated group may not contain alternatives, quantifiers or anchors. Every alternative inside a group must require at least one character."
             },
             "buildPhasesEditor": {
                 "title": "Build Phases",
@@ -235,6 +249,25 @@
             "branchRegex": {
                 "title": "Regular Expression for the branch name",
                 "description": "Custom branches names must match the regular expression."
+            },
+            "buildTimeWindow": {
+                "title": "Build Time Window",
+                "message": "Optionally limit when pushes to student repositories are built. Pushes outside the window are saved, but not built, and do not create a submission. Leave both fields empty to build every push.",
+                "description": "Pushes of students outside of this window are accepted into the repository, but not built, tested or graded. Either bound can stay empty: with only a start, builds begin at that time, with only an end, builds stop at that time. Both bounds are inclusive. Editors and instructors, the practice mode and builds triggered by instructors are not affected. The window must lie between the start date (or release date) and the due date of the exercise. For a student with an individual due date extension, the end of the window moves by the same extension.",
+                "collapsedMessage": "By default every push is built. Set a window if pushes should only be built during a period, for example from a start date a week after the release.",
+                "addButton": "Set build time window",
+                "removeButton": "Remove build time window",
+                "start": "Build window start",
+                "end": "Build window end",
+                "endNotAfterStart": "The end of the build time window must be after its start.",
+                "outsideExerciseDates": "The build time window must lie between the start date (or release date) and the due date of the exercise.",
+                "invalidInput": "The build time window contains a date that cannot be read.",
+                "triggerDisabled": "Builds cannot be triggered outside of the build time window.",
+                "notice": {
+                    "before": "Builds start on {{ start }}. Pushes before that are saved, but not built or graded.",
+                    "during": "Builds are active until {{ end }}.",
+                    "after": "The build window ended on {{ end }}. Pushes are saved, but not built."
+                }
             },
             "showTestNamesToStudents": "Show Test Names to Students",
             "showTestNamesToStudentsTooltip": "Activate this option to show the names of the automated test cases to the students. Leave the option disabled to make no visual distinction between manual and automated feedback for the students.",
@@ -346,8 +379,8 @@
                 "diffLineStatTooltip": "Lines added and removed by the AI refinement."
             },
             "status": {
-                "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
-                "templateFulfillsTest": "The Template Repository already fulfills one or more test cases. This could indicate an issue with the Template Repository or the test cases."
+                "solutionFailsTest": "The solution should score 100% and pass all tests. Check the solution repository and test cases.",
+                "templateFulfillsTest": "The template should score 0%. Check the template repository and test cases if its score differs."
             },
             "testCaseAnalysis": {
                 "invalidTestCases": "There are {{number}} test cases that were found in the problem statement markdown, but are not valid test cases in the test repository of this exercise:",
@@ -450,7 +483,6 @@
                     "task": "Task",
                     "testcase": "Test Case",
                     "errorCategory": "Error Category",
-                    "totalItems": "In total {{count}} item(s)",
                     "error": "An error occurred while loading the feedback.",
                     "search": "Search ...",
                     "filter": "Filters",
@@ -778,8 +810,8 @@
                     "renamed": "Renamed"
                 },
                 "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it.",
-                "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Lines added/removed between the current submission with commit hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
-                "lineStatBetweenSubmissionsPreviousSubmissionLabel": " and the previous submission with commit hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span>",
+                "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Lines added/removed between the current submission with commit hash <span class=\"font-italic text-state-info\"> {{ currentCommitHash }} </span>",
+                "lineStatBetweenSubmissionsPreviousSubmissionLabel": " and the previous submission with commit hash <span class=\"font-italic text-state-info\"> {{ previousCommitHash }} </span>",
                 "lineStatBetweenSubmissionsTemplateLabel": "and the template",
                 "lineStatTooltipExamTimeline": "Unfiltered lines that were added and removed when comparing the current and the previous submission.",
                 "lineStatTooltipFullReportExamTimeline": "Filtered lines that were added and removed when comparing the current and the previous submission.",
@@ -941,6 +973,13 @@
                 },
                 "outdated": "Outdated",
                 "reanalyze": "Re-analyze"
+            },
+            "buildNotifications": {
+                "enable": "Enable browser notifications for build results",
+                "disable": "Disable browser notifications for build results",
+                "blocked": "Notifications are blocked. Allow them in your browser settings.",
+                "error": "Browser notifications are unavailable. The tab icon still shows build results.",
+                "resultReceived": "Build result received"
             }
         },
         "checklistAnalysisRequest": {

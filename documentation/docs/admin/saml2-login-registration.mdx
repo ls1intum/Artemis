@@ -2,6 +2,7 @@
 id: saml2-login-registration
 title: 'Shibboleth / SAML2 Login & Registration'
 sidebar_label: Shibboleth / SAML2 Login
+last_reviewed: 2026-11-03
 ---
 
 import Image, { ImageSize } from "../../src/components/Image/Image";
@@ -114,6 +115,10 @@ info:
         # If enabled, the user's first and last name will be synced to the internal artemis user on every login.
         syncUserData: false
 ```
+
+## Accounts With a Password of Their Own
+
+An external login only works for accounts that the identity provider manages. If the login name of an external login belongs to an internal account, one with a password of its own, Artemis refuses the login and writes a warning with the login name to the server log. Users of such an account keep signing in with their password. Artemis does not merge the two kinds of accounts. Accounts that an LTI launch created and, for SAML2, accounts that Artemis created before version 9.9 and that were never converted are internal accounts too. See [Accounts Provisioned Through SAML2](./upgrade-guide.mdx#99-accounts-provisioned-through-saml2) for the conversion of the latter.
 
 ## Startup fails while decoding IdP certificates
 

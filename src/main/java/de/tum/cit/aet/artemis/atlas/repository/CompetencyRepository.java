@@ -25,6 +25,12 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface CompetencyRepository extends ArtemisJpaRepository<Competency, Long>, JpaSpecificationExecutor<Competency> {
 
+    /**
+     * @param courseIds the courses
+     * @return the number of competencies of these courses, without prerequisites
+     */
+    long countByCourseIdIn(Set<Long> courseIds);
+
     @Query("""
             SELECT c
             FROM Competency c

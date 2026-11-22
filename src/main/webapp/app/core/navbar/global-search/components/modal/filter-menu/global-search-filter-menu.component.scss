@@ -24,7 +24,7 @@
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--bs-secondary-color);
+    color: var(--text-body-secondary);
 }
 
 // The dead-end statement takes the header slot, so it drops the eyebrow treatment and reads as a
@@ -40,15 +40,15 @@
 }
 
 .filter-menu-message-icon {
-    // Not --bs-warning: that amber reads as caution tape against the palette's greys. This is the same
+    // Not the warning colour: that amber reads as caution tape against the palette's greys. This is the same
     // muted red as the dotted underline marking the same value in the input, so the two read as one signal.
-    color: color-mix(in srgb, var(--bs-danger) 78%, var(--bs-secondary-color));
+    color: color-mix(in srgb, var(--danger) 78%, var(--text-body-secondary));
 }
 
 // The raw text a literal-search row would search for. The quotes already mark it as verbatim, so it stays
 // in the body face: a second typeface inside one short row reads as an accident rather than as a signal.
 .filter-menu-literal {
-    color: var(--bs-body-color);
+    color: var(--body-color);
     font-weight: 600;
 }
 
@@ -74,7 +74,7 @@
     &:hover,
     &:focus-visible {
         background: var(--global-search-item-hover-bg);
-        color: var(--bs-body-color);
+        color: var(--body-color);
     }
 }
 
@@ -142,12 +142,12 @@
 
 // Leading glyph: blue for include actions, red for exclude actions (the −filter: / −type: rows).
 .filter-menu-glyph {
-    color: var(--bs-primary);
+    color: var(--primary);
 }
 
 .filter-menu-glyph--ex {
     // Muted red (danger dialled back toward the neutral text colour) so exclude reads clearly without shouting.
-    color: color-mix(in srgb, var(--bs-danger) 68%, var(--bs-secondary-color));
+    color: color-mix(in srgb, var(--danger) 68%, var(--text-body-secondary));
 }
 
 .filter-menu-content {
@@ -181,15 +181,15 @@
     border: 1px solid var(--global-search-border-color);
     border-radius: 0.35rem;
     background: var(--global-search-modal-bg);
-    color: var(--bs-secondary-color);
-    font-family: var(--bs-font-monospace, monospace);
+    color: var(--text-body-secondary);
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     font-size: 0.8rem;
 }
 
 // Exclude rows tint the syntax pill a muted red (e.g. −filter:, −type:), matching the exclude glyph.
 .filter-menu-syntax--ex {
-    color: color-mix(in srgb, var(--bs-danger) 68%, var(--bs-secondary-color));
-    border-color: color-mix(in srgb, var(--bs-danger) 30%, var(--global-search-border-color));
+    color: color-mix(in srgb, var(--danger) 68%, var(--text-body-secondary));
+    border-color: color-mix(in srgb, var(--danger) 30%, var(--global-search-border-color));
 }
 
 // Faded placeholder inside a hint, e.g. the "filter" in −filter:.
@@ -203,23 +203,23 @@
     border: 1px solid var(--global-search-border-color);
     border-radius: 0.35rem;
     font-size: 0.72rem;
-    color: var(--bs-secondary-color);
+    color: var(--text-body-secondary);
     background: var(--global-search-modal-bg);
 }
 
 .filter-menu-empty {
     padding: 0.75rem 1rem;
-    color: var(--bs-secondary-color);
+    color: var(--text-body-secondary);
     font-size: 0.9rem;
 }
 
 // In dark mode the shared modal surface (--global-search-modal-bg) is a saturated navy and the
 // global-search border is blue-tinted, which makes the pills read as blue. Give the syntax / hint
 // pills a neutral dark elevation + neutral borders in dark mode only; light mode stays white.
-:host-context([prime-ng-use-dark-theme='true']) {
+:host-context([data-theme='dark']) {
     .filter-menu-syntax,
     .filter-menu-hint {
-        background: var(--bs-body-bg);
-        border-color: var(--bs-border-color);
+        background: var(--body-bg);
+        border-color: var(--border-color);
     }
 }

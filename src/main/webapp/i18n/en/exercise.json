@@ -16,23 +16,39 @@
             "addCriterion": "Add a Grading Criterion",
             "resultsPerPage": "{{number}} results per page",
             "showAllResults": "Show all results",
-            "searchForStudents": "Search for students by login or name (comma separated)",
             "searchForTeams": "Search for teams by (short) name or for students by login/name (comma separated)",
             "created": "Created new Exercise with identifier {{ param }}",
             "updated": "Updated Exercise with identifier {{ param }}",
             "deleted": "Deleted Exercise with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to permanently delete the exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>? This action can <strong class=\"text-danger\">NOT</strong> be undone!",
+                "question": "Are you sure you want to permanently delete the exercise <strong>{{ title }}</strong> of the <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>? This action can <strong class=\"text-state-danger\">NOT</strong> be undone!",
                 "typeNameToConfirm": "Please type in the name of the exercise to confirm.",
                 "testCourse": "test course",
                 "realCourse": "real course",
                 "summary": {
-                    "title": "Exercise Summary",
-                    "numberOfStudentParticipations": "Number of Student Participations",
-                    "numberOfAssessments": "Number of Assessments",
-                    "numberOfCommunicationPosts": "Number of Communication Posts",
-                    "numberOfAnswerPosts": "Number of Answer Posts",
-                    "numberOfBuilds": "Number of Builds"
+                    "title": "What will be deleted",
+                    "category": {
+                        "studentWork": "Student work",
+                        "assessment": "Assessment",
+                        "plagiarism": "Plagiarism checks",
+                        "communication": "Communication",
+                        "content": "Exercise content and links",
+                        "infrastructure": "Infrastructure"
+                    },
+                    "numberOfStudentParticipations": "Student participations",
+                    "numberOfTeams": "Teams",
+                    "numberOfSubmissions": "Submissions",
+                    "numberOfStudentExams": "Student exams containing this exercise",
+                    "numberOfResults": "Results",
+                    "numberOfAssessments": "Manual assessments",
+                    "numberOfComplaints": "Complaints and feedback requests",
+                    "numberOfPlagiarismComparisons": "Plagiarism comparisons",
+                    "numberOfCommunicationPosts": "Posts in the exercise channel",
+                    "numberOfAnswerPosts": "Replies in the exercise channel",
+                    "numberOfExampleSubmissions": "Example submissions",
+                    "numberOfCompetencyLinks": "Linked competencies",
+                    "numberOfLectureUnitLinks": "Linked lecture units",
+                    "numberOfBuilds": "Build jobs"
                 }
             },
             "reset": {
@@ -84,7 +100,16 @@
             },
             "importFromFile": {
                 "tabTitle": "From file",
-                "notSupportedExerciseType": "The exercise type {{ exerciseType }} is not supported for importing from file."
+                "description": "Select a zip file that you downloaded with Export in the exercise overview of a course. Artemis then opens the exercise editor filled with the settings from the file, so you can review them before you save.",
+                "uploadForImport": "Import exercise from file",
+                "fileCountError": "Select exactly one file.",
+                "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 20 MB.",
+                "fileTypeNotSupportedError": "The file type is not supported. Select a file with the extension .zip.",
+                "noExerciseDetailsJson": "The zip file does not contain exactly one JSON file with the exercise details.",
+                "exerciseTypeDoesntMatch": "The file does not contain an exercise of the selected type.",
+                "missingImage": "The zip file does not contain the image {{ fileName }}.",
+                "imageUploadFailed": "The image {{ fileName }} could not be uploaded.",
+                "importFailed": "The exercise import could not be prepared. Please try again."
             },
             "exercise": "Exercise",
             "results": "Results",
@@ -183,7 +208,6 @@
             "no": "No",
             "createAction": "Create",
             "importAction": "Import",
-            "exportAction": "Export",
             "difficulty": "Difficulty",
             "noLevel": "No Level",
             "easy": "Easy",
@@ -267,13 +291,16 @@
             "showBuildFailed": "Build Failed",
             "showUnsuccessful": "Unsuccessful",
             "showSuccessful": "Successful",
+            "showSemiAutomatic": "Semi-automatic",
             "showManual": "Manual",
             "showAutomatic": "Automatic",
             "showLocked": "Locked Assessments",
             "showAll": "All",
             "showFailed": "Latest Submission without Result",
+            "showValidSubmissions": "Valid Submissions",
             "showNoSubmissions": "No Submissions",
-            "showNoPracticeMode": "Only graded participations",
+            "showGraded": "Only graded participations",
+            "showNoPracticeMode": "Exclude practice mode",
             "showingOnlyInRange": "Showing only results in range: {{ range }}",
             "showingOfResults": "Showing {{ filtered }} of {{ total }} ({{ percent }}%) scores",
             "tagPlaceholder": "+ Category",
@@ -324,7 +351,9 @@
                         "theiaImage": "Theia image",
                         "onlineIdeExperienceLevel": "Online IDE experience level",
                         "allowBranching": "Allow branching",
-                        "branchRegex": "Branch regex"
+                        "branchRegex": "Branch regex",
+                        "buildTimeWindowStart": "Build window start",
+                        "buildTimeWindowEnd": "Build window end"
                     }
                 }
             },
@@ -357,8 +386,8 @@
                 "packageName": {
                     "undefined": "You need to specify a package name.",
                     "pattern": {
-                        "JAVA": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\".",
-                        "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\".",
+                        "JAVA": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\". The names \"de\", \"de.tum\", \"de.tum.cit\", \"de.tum.cit.ase\", \"com\", \"org\", \"net\", \"com.ibm\" and \"com.tngtech\" are not allowed, nor are names inside a package that is reserved for the tests and their libraries, such as \"java\", \"org.apache\", \"org.junit\" or \"de.tum.cit.ase.ares\" (e.g. \"java.util\").",
+                        "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\". The names \"de\", \"de.tum\", \"de.tum.cit\", \"de.tum.cit.ase\", \"com\", \"org\", \"net\", \"com.ibm\" and \"com.tngtech\" are not allowed, nor are names inside a package that is reserved for the tests and their libraries, such as \"java\", \"org.apache\", \"org.junit\" or \"de.tum.cit.ase.ares\" (e.g. \"java.util\").",
                         "SWIFT": "The package name must consist of one or more valid Swift identifiers without any separator, e.g. \"SwiftEx\".",
                         "JAVA_BLACKBOX": "The package name must be a valid Java identifier. In addition, no dots are allowed in the package name of DejaGnu projects.",
                         "GO": "The package name must be a valid Go identifier, e.g. \"exercise\".",

@@ -2,6 +2,7 @@
 id: consistency-check
 title: Consistency Check
 sidebar_label: Consistency Check
+last_reviewed: 2026-11-20
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -152,7 +153,7 @@ model_effort = medium
 consistency_check_exercises = {"V2": {"ITP2425": ["H01E01-Lectures", ...]}}
 ```
 
-`model_name` and `model_effort` must match `spring.ai.openai.chat.model` in Artemis.
+`model_name` and `model_effort` label the results. Set them to the `model` and `reasoning-effort` of the preset that Artemis assigns to `artemis.hyperion.llm-presets.consistency-check` (or `default`); see [LLM configuration](/admin/llm-configuration).
 
 ### Running the Workflow
 

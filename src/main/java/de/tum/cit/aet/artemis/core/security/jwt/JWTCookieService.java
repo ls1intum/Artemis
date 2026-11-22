@@ -126,6 +126,13 @@ public class JWTCookieService {
     }
 
     /**
+     * @return whether cookies for the login carry the {@code Secure} attribute, so other login cookies can follow the same setting
+     */
+    public boolean isSecureCookie() {
+        return secureCookie;
+    }
+
+    /**
      * Builds the cookie containing the jwt
      *
      * @param jwt      the token that will be used as the cookie's value

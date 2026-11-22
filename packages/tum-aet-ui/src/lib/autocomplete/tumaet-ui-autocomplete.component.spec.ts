@@ -251,6 +251,19 @@ describe('TumAetUiAutoCompleteComponent (multiple mode)', () => {
         expect(emptyOption.getAttribute('aria-selected')).toBe('false');
     });
 
+    it('shows the footer message below the suggestions only when one is set', async () => {
+        await search('ad', ['Ada', 'Adam']);
+        expect(document.querySelector('.tumaet-ui-autocomplete-footer')).toBeNull();
+
+        fixture.componentRef.setInput('footerMessage', 'Showing the first 2 of 5');
+        fixture.detectChanges();
+        const footer = document.querySelector('.tumaet-ui-autocomplete-footer');
+        expect(footer?.textContent?.trim()).toBe('Showing the first 2 of 5');
+        expect(footer?.getAttribute('role')).toBe('status');
+        expect(footer?.closest('[role="listbox"]')).toBeNull();
+        expect(options()).toHaveLength(2);
+    });
+
     it('reads object option labels via optionLabel', async () => {
         fixture.componentRef.setInput('optionLabel', 'name');
         const org = { id: 1, name: 'TUM' };

@@ -30,8 +30,7 @@ describe('QuizStatisticsFooterComponent', () => {
     let comp: QuizStatisticsFooterComponent;
     let fixture: ComponentFixture<QuizStatisticsFooterComponent>;
     let quizService: QuizExerciseService;
-    let accountService: AccountService;
-    let accountSpy: any;
+    let accountService: MockAccountService;
     let routerSpy: any;
     let router: Router;
     let quizServiceFindSpy: any;
@@ -65,10 +64,10 @@ describe('QuizStatisticsFooterComponent', () => {
         fixture = TestBed.createComponent(QuizStatisticsFooterComponent);
         comp = fixture.componentInstance;
         quizService = fixture.debugElement.injector.get(QuizExerciseService);
-        accountService = fixture.debugElement.injector.get(AccountService);
+        accountService = fixture.debugElement.injector.get(AccountService) as unknown as MockAccountService;
         router = fixture.debugElement.injector.get(Router);
         routerSpy = vi.spyOn(router, 'navigateByUrl');
-        accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+        accountService.isAtLeastTutor.set(true);
         quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(quizExercise));
     });
 
@@ -99,12 +98,28 @@ describe('QuizStatisticsFooterComponent', () => {
         vi.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
         // check
-        expect(accountSpy).toHaveBeenCalled();
         expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
         expect(loadSpy).toHaveBeenCalledWith(quizExercise);
         expect(comp.question()).toEqual(question);
         expect(updateDisplayedTimesSpy).toHaveBeenCalled();
         vi.clearAllTimers();
+    });
+
+    it('derives the statistic routes of a course and of an exam quiz', () => {
+        expect(comp.statisticBaseUrl()).toBeUndefined();
+
+        comp.quizExercise.set(quizExercise);
+        expect(comp.statisticBaseUrl()).toBe('/course-management/2/quiz-exercises/42');
+
+        comp.quizExercise.set(examQuizExercise);
+        expect(comp.statisticBaseUrl()).toBe('/course-management/2/exams/10/exercise-groups/11/quiz-exercises/43');
+    });
+
+    it('maps each question type to its statistic route segment', () => {
+        expect(comp.questionStatisticSegment({ type: QuizQuestionType.MULTIPLE_CHOICE } as QuizQuestion)).toBe('mc-question-statistic');
+        expect(comp.questionStatisticSegment({ type: QuizQuestionType.DRAG_AND_DROP } as QuizQuestion)).toBe('dnd-question-statistic');
+        expect(comp.questionStatisticSegment({ type: QuizQuestionType.SHORT_ANSWER } as QuizQuestion)).toBe('sa-question-statistic');
+        expect(comp.questionStatisticSegment({ type: undefined } as unknown as QuizQuestion)).toBeUndefined();
     });
 
     it('should set quiz and update properties', () => {
@@ -115,7 +130,6 @@ describe('QuizStatisticsFooterComponent', () => {
         comp.loadQuiz(quizExercise);
 
         // check
-        expect(accountSpy).toHaveBeenCalledOnce();
         expect(comp.quizExercise()).toEqual(quizExercise);
         expect(comp.question()).toEqual(question);
         expect(comp.waitingForQuizStart()).toBe(false);

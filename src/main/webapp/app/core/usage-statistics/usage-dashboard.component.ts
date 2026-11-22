@@ -1,6 +1,9 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { PublicUsageStatistics, UsageSemester } from 'app/core/usage-statistics/usage-statistics.model';
 import { UsageStatisticsService } from 'app/core/usage-statistics/usage-statistics.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -16,13 +19,14 @@ const EXERCISE_TYPES = ['programming', 'quiz', 'text', 'modeling', 'file-upload'
     selector: 'jhi-usage-dashboard',
     templateUrl: './usage-dashboard.component.html',
     styleUrl: './usage-dashboard.component.scss',
-    imports: [DecimalPipe, TranslateDirective, ArtemisTranslatePipe],
+    imports: [DecimalPipe, NgTemplateOutlet, FaIconComponent, TumAetUiTooltipDirective, TranslateDirective, ArtemisTranslatePipe],
 })
 export class UsageDashboardComponent implements OnInit {
     private readonly usageStatisticsService = inject(UsageStatisticsService);
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly exerciseTypes = EXERCISE_TYPES;
+    protected readonly faCircleInfo = faCircleInfo;
 
     protected readonly statistics = signal<PublicUsageStatistics | undefined>(undefined);
     protected readonly failed = signal(false);

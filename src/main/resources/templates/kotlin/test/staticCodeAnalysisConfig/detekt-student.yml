@@ -1,0 +1,10 @@
+# Configuration of detekt for the static code analysis of the student submissions.
+# It is applied on top of the default configuration of detekt (--build-upon-default-config).
+build:
+  # Do not fail the build because of findings. They are reported as feedback instead.
+  maxIssues: -1
+
+style:
+  ForbiddenComment:
+    # The exercise template contains TODO comments that tell the students what to do.
+    active: false
