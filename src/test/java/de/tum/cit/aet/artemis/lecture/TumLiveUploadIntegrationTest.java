@@ -59,6 +59,9 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
     private static final String YOUTUBE = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
     @Autowired
+    private Optional<GocastBindingApi> gocastBindingApi;
+
+    @Autowired
     private MockMvc mockMvc;
 
     @Autowired
@@ -485,11 +488,32 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void courseEditorCanCheckAvailabilityWhenTheIntegrationIsDisabled() throws Exception {
+        assertThat(gocastBindingApi).isEmpty();
+        mockMvc.perform(get("/api/lecture/courses/" + courseId() + "/tumlive-upload-availability")).andExpect(status().isOk()).andExpect(jsonPath("$.available").value(false));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void studentsCannotCheckUploadAvailability() throws Exception {
+        mockMvc.perform(get("/api/lecture/courses/" + courseId() + "/tumlive-upload-availability")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "othereditor1", roles = "USER")
+    void editorsCannotCheckAvailabilityForAnotherCourse() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX + "other", 0, 0, 1, 0);
+        mockMvc.perform(get("/api/lecture/courses/" + courseId() + "/tumlive-upload-availability")).andExpect(status().isForbidden());
+    }
+
+    @Test
     void reservesAnUploadAndForwardsItsBytes() {
         var goCast = mock(GocastBindingApi.class);
         when(goCast.findUploadConnection(lecture.getCourse().getId())).thenReturn(Optional.of(new GocastUploadConnectionDTO(17, 23, "algo")));
         var uploadService = new TumLiveUploadService(uploadRepository, cleanupRepository, attachmentVideoUnitRepository, Optional.of(goCast), Optional.empty(),
                 new LocalDataProviderService(), Duration.ofHours(6));
+        assertThat(uploadService.isUploadAvailable(courseId())).isTrue();
         String ref = uploadService.start(unit);
         assertThat(ref).isNotBlank();
 

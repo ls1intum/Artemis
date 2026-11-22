@@ -22,24 +22,24 @@
             [isImport]="isImport()"
         />
         @if (!isExamMode()) {
-            <div class="relative mb-4!">
+            <div class="relative mb-4">
                 <label jhiTranslate="artemisApp.exercise.categories"></label>
                 <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
                 <jhi-category-selector [categories]="exerciseCategories()" [existingCategories]="existingCategories()" (selectedCategories)="updateCategories($event)" />
             </div>
         }
-        <hr class="mb-12!" />
+        <hr class="mb-12" />
         <h3 jhiTranslate="artemisApp.exercise.sections.mode" id="artemisApp.exercise.sections.mode"></h3>
-        <div class="mb-4!">
+        <div class="mb-4">
             <label jhiTranslate="artemisApp.exercise.difficulty"></label>
             <div>
                 <jhi-difficulty-picker [exercise]="fileUploadExercise()" />
             </div>
         </div>
         <jhi-team-config-form-group class="form-element" [exercise]="fileUploadExercise()" (exerciseChange)="exerciseState.set($event)" [isImport]="isImport()" />
-        <hr class="mb-12!" />
+        <hr class="mb-12" />
         <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
-        <div class="mb-4!" id="field_problemStatement">
+        <div class="mb-4" id="field_problemStatement">
             <label jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement"></label>
             <jhi-markdown-editor-monaco
                 class="markdown-editor"
@@ -49,7 +49,7 @@
             />
         </div>
         @if (!isExamMode()) {
-            <div class="mb-4!">
+            <div class="mb-4">
                 <jhi-competency-selection
                     id="competencies"
                     [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
@@ -60,10 +60,10 @@
                 />
             </div>
         }
-        <hr class="mb-12!" />
+        <hr class="mb-12" />
         <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution"></h3>
         <!-- TODO we want to have a file upload here and store a PDF, not a text. We could allow to add text in the sample_solution_explanation field -->
-        <div class="mb-4!" id="field_exampleSolution">
+        <div class="mb-4" id="field_exampleSolution">
             <label jhiTranslate="artemisApp.exercise.exampleSolution" for="field_exampleSolution"></label>
             <jhi-markdown-editor-monaco
                 class="markdown-editor"
@@ -72,7 +72,7 @@
                 (markdownChange)="exerciseState.patch('exampleSolution', $event)"
             />
         </div>
-        <hr class="mb-12!" />
+        <hr class="mb-12" />
         <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
         <div class="grading-layout">
             @if (!isExamMode()) {
@@ -102,7 +102,7 @@
                 @if (variantLock.locked()) {
                     <jhi-exercise-group-date-notice class="mb-4!" (editGroupDates)="variantLock.openModal()" />
                 }
-                <div class="mb-4!">
+                <div class="mb-4">
                     <label jhiTranslate="artemisApp.exercise.includedInOverallScore{{ fileUploadExercise().course ? 'Course' : 'Exam' }}Label"></label>
                     <div>
                         <jhi-included-in-overall-score-picker
@@ -113,7 +113,7 @@
                     </div>
                 </div>
                 <div class="score-fields">
-                    <div class="mb-4!">
+                    <div class="mb-4">
                         <label jhiTranslate="artemisApp.exercise.points" for="field_points"></label><span class="text-state-danger" aria-hidden="true">*</span>
                         <jhi-points-input
                             required
@@ -137,7 +137,7 @@
                         longer apply, and the field itself out of reach to correct.
                     -->
                     @if (fileUploadExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                        <div class="mb-4!">
+                        <div class="mb-4">
                             <label jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label><span class="text-state-danger" aria-hidden="true">*</span>
                             <jhi-points-input
                                 required
@@ -156,7 +156,7 @@
                         </div>
                     }
                 </div>
-                <div class="mb-4!">
+                <div class="mb-4">
                     <label jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern"></label><span class="text-state-danger" aria-hidden="true">*</span>
                     <jhi-help-icon text="artemisApp.fileUploadExercise.filePatternInfo" />
                     <input
@@ -174,7 +174,7 @@
                 <jhi-presentation-score-checkbox [exercise]="fileUploadExercise()" />
             </div>
         </div>
-        <div class="mb-4!">
+        <div class="mb-4">
             <label jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
             <jhi-grading-instructions-details
                 id="gradingInstructions"

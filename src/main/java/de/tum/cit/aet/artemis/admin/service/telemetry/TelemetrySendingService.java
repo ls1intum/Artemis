@@ -13,17 +13,16 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -50,7 +49,7 @@ public class TelemetrySendingService {
 
     private final Environment env;
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     private final ProfileService profileService;
 
@@ -58,10 +57,10 @@ public class TelemetrySendingService {
 
     private final Optional<LocalCITelemetryApi> localCITelemetryApi;
 
-    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, NodeRegistryService nodeRegistryService,
+    public TelemetrySendingService(Environment env, @Qualifier("telemetryRestClient") RestClient restClient, ProfileService profileService, NodeRegistryService nodeRegistryService,
             Optional<LocalCITelemetryApi> localCITelemetryApi) {
         this.env = env;
-        this.restTemplate = restTemplate;
+        this.restClient = restClient;
         this.profileService = profileService;
         this.nodeRegistryService = nodeRegistryService;
         this.localCITelemetryApi = localCITelemetryApi;
@@ -115,14 +114,12 @@ public class TelemetrySendingService {
     public void sendTelemetryByPostRequest(boolean sendAdminDetails, String startupId, Instant startedAt) {
 
         try {
-            HttpHeaders headers = new HttpHeaders();
-            // Declared explicitly: the default message converters include XML, which could otherwise be chosen for the record.
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            var requestEntity = new HttpEntity<>(buildTelemetryData(sendAdminDetails, startupId, startedAt), headers);
+            var telemetryData = buildTelemetryData(sendAdminDetails, startupId, startedAt);
 
             log.info("Sending startup telemetry to {}", destination);
             // NOTE: there should be no module in the following URL
-            var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
+            // The content type is declared explicitly: the default message converters include XML, which could otherwise be chosen for the record.
+            var response = restClient.post().uri(destination + "/api/telemetry").contentType(MediaType.APPLICATION_JSON).body(telemetryData).retrieve().toEntity(String.class);
             log.info("Successfully sent telemetry data: {}", response.getStatusCode());
         }
         catch (RestClientResponseException e) {

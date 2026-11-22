@@ -26,7 +26,6 @@ import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock
 import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorConflictStateService } from 'test/helpers/mocks/service/mock-code-editor-conflict-state.service';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -156,13 +155,12 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const item = { value: PROBLEM_STATEMENT_IDENTIFIER, text: PROBLEM_STATEMENT_IDENTIFIER } as TreeViewItem<string>;
-        const openModalSpy = vi.spyOn(comp.modalService, 'open');
-
         // Try to delete PS
         comp.openDeleteFileModal(item);
 
-        // Expect no modal to be opened
-        expect(openModalSpy).not.toHaveBeenCalled();
+        // Expect no dialog to be opened
+        expect(comp.deleteDialogVisible()).toBe(false);
+        expect(comp.fileToDelete()).toBeUndefined();
     });
 
     it('should pass file badges to Problem Statement entry', () => {
@@ -359,20 +357,10 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const item = { value: 'folder', text: 'folder' } as unknown as TreeViewItem<string>;
-        const modalRef = {
-            componentInstance: { setInputs: vi.fn() },
-        } as any;
-
-        const openSpy = vi.spyOn(comp.modalService, 'open').mockReturnValue(modalRef);
-
         comp.openDeleteFileModal(item);
 
-        expect(openSpy).toHaveBeenCalledOnce();
-        expect(modalRef.componentInstance.setInputs).toHaveBeenCalledWith({
-            parent: comp,
-            fileNameToDelete: 'folder',
-            fileType: FileType.FOLDER,
-        });
+        expect(comp.deleteDialogVisible()).toBe(true);
+        expect(comp.fileToDelete()).toEqual({ fileName: 'folder', fileType: FileType.FOLDER });
     });
 
     it('should create treeviewItems if getRepositoryContent returns files', () => {
@@ -1206,15 +1194,9 @@ describe('CodeEditorFileBrowserComponent', () => {
             folder: FileType.FOLDER,
         });
         const item = { value: 'folder/file1', text: 'file1' } as TreeViewItem<string>;
-        const modalRef = { componentInstance: { setInputs: vi.fn() } } as unknown as NgbModalRef;
-        const openModalStub = vi.spyOn(comp.modalService, 'open').mockReturnValue(modalRef);
         comp.openDeleteFileModal(item);
-        expect(openModalStub).toHaveBeenCalledOnce();
-        expect(modalRef.componentInstance.setInputs).toHaveBeenCalledWith({
-            parent: comp,
-            fileNameToDelete: 'folder/file1',
-            fileType: FileType.FILE,
-        });
+        expect(comp.deleteDialogVisible()).toBe(true);
+        expect(comp.fileToDelete()).toEqual({ fileName: 'folder/file1', fileType: FileType.FILE });
     });
 
     describe('getFolderBadges', () => {

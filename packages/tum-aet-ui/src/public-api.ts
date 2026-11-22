@@ -1,6 +1,7 @@
 export { TumAetUiAccordionPanelComponent } from './lib/accordion/tumaet-ui-accordion-panel.component';
 export { TumAetUiAccordionComponent } from './lib/accordion/tumaet-ui-accordion.component';
 export { TumAetUiAutoCompleteComponent, type TumAetUiAutoCompleteOptionEvent, type TumAetUiAutoCompleteSearchEvent } from './lib/autocomplete/tumaet-ui-autocomplete.component';
+export { TumAetUiAvatarComponent } from './lib/avatar/tumaet-ui-avatar.component';
 export { TumAetUiButtonGroupComponent } from './lib/button-group/tumaet-ui-button-group.component';
 export { TumAetUiButtonComponent } from './lib/button/tumaet-ui-button.component';
 export { TumAetUiButtonDirective } from './lib/button/tumaet-ui-button.directive';

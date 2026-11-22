@@ -82,7 +82,6 @@
         "@angular/compiler-cli": "catalog:",
         "@angular/core": "catalog:",
         "@angular/forms": "catalog:",
-        "@angular/localize": "catalog:",
         "@angular/platform-browser": "catalog:",
         "@arethetypeswrong/cli": "catalog:",
         "@fortawesome/angular-fontawesome": "catalog:",

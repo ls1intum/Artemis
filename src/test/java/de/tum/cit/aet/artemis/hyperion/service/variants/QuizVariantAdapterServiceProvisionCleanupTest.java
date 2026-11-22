@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionTestChatClients;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
@@ -62,7 +63,7 @@ class QuizVariantAdapterServiceProvisionCleanupTest {
 
         adapters = new QuizVariantAdapterService(quizExerciseRepository, quizExerciseImportService, mock(QuizExerciseService.class), mock(VariantPlacementService.class),
                 mock(ExerciseVariantJobService.class), JsonObjectMapper.get(), mock(HyperionPromptTemplateService.class), mock(LLMTokenUsageService.class),
-                mock(UserRepository.class), exerciseDeletionService, null);
+                mock(UserRepository.class), exerciseDeletionService, HyperionTestChatClients.returning(null));
 
         QuizExercise original = new QuizExercise();
         original.setId(SOURCE_ID);

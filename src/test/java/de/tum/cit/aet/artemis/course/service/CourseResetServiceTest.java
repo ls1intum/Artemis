@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepos
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.service.home.CourseHomeVisitService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -107,6 +108,9 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
     private PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
 
     @Autowired
+    private CourseHomeVisitService homeVisits;
+
+    @Autowired
     private PresentationRubricCriterionRepository presentationRubricCriterionRepository;
 
     @Autowired
@@ -124,6 +128,16 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void resetRemovesSuccessfulHomeVisits() {
+        var now = java.time.Instant.now();
+        homeVisits.acknowledge(course.getId(), student.getId(), now, 0, now);
+        assertThat(homeVisits.read(course.getId(), student.getId()).lastSeenAt()).isNotNull();
+        courseResetService.resetStudentData(course.getId());
+        assertThat(homeVisits.read(course.getId(), student.getId()).lastSeenAt()).isNull();
     }
 
     @Test

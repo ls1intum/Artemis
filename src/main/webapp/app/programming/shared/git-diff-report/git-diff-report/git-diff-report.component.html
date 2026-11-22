@@ -1,5 +1,5 @@
-<div class="row border-bottom">
-    <div class="col-6">
+<div class="-mx-2 flex flex-wrap border-b border-(--border-color)">
+    <div class="w-1/2 px-2">
         <h4 class="ps-2">
             @if (isRepositoryView() && leftCommit()) {
                 @if (diffForTemplateAndEmptyRepository()) {
@@ -20,7 +20,7 @@
             }
         </h4>
     </div>
-    <div class="col-3">
+    <div class="w-1/4 px-2">
         <h4 class="ps-2">
             @if (isRepositoryView() && rightCommit()) {
                 @if (diffForTemplateAndEmptyRepository()) {
@@ -39,8 +39,8 @@
             }
         </h4>
     </div>
-    <div class="col-3">
-        <div class="d-flex flex-row gap-2 justify-content-end">
+    <div class="w-1/4 px-2">
+        <div class="flex flex-row justify-end gap-2">
             <jhi-button
                 [btnType]="ButtonType.PRIMARY"
                 [btnSize]="ButtonSize.SMALL"
@@ -51,16 +51,11 @@
                 (onClick)="allowSplitView.set(!allowSplitView())"
             />
             <jhi-git-diff-line-stat
-                class="mt-1 fw-bold"
+                class="mt-1! font-bold"
                 [hidden]="!initialDiffsReady()"
                 [addedLineCount]="repositoryDiffInformation().totalLineChange.addedLineCount"
                 [removedLineCount]="repositoryDiffInformation().totalLineChange.removedLineCount"
-                ngbTooltip="{{
-                    (diffForTemplateAndSolution()
-                        ? 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport'
-                        : 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReportExamTimeline'
-                    ) | artemisTranslate
-                }}"
+                [tumAetUiTooltip]="lineStatTooltipKey() | artemisTranslate"
             />
         </div>
     </div>
@@ -68,44 +63,48 @@
 <div [hidden]="!initialDiffsReady()">
     @for (diffInformation of repositoryDiffInformation().diffInformations; track diffInformation) {
         <div class="mt-2" #diffPanelContainer [attr.data-title]="diffInformation.title">
-            <div ngbAccordion [destroyOnHide]="false" class="git-diff-file-panel">
-                <div ngbAccordionItem #fileDiffPanel="ngbAccordionItem" [collapsed]="collapsedTitles().has(diffInformation.title)">
-                    <div ngbAccordionHeader class="d-flex align-items-center justify-content-between">
-                        <jhi-git-diff-file-panel-title [diffInformation]="diffInformation" />
-                        <div>
-                            <jhi-git-diff-line-stat
-                                [addedLineCount]="diffInformation.lineChange?.addedLineCount ?? 0"
-                                [removedLineCount]="diffInformation.lineChange?.removedLineCount ?? 0"
-                                ngbTooltip="{{
-                                    (diffForTemplateAndSolution()
-                                        ? 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport'
-                                        : 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReportExamTimeline'
-                                    ) | artemisTranslate
-                                }}"
-                            />
-                            <button type="button" ngbAccordionToggle class="btn ms-1" (click)="onToggleClick(diffInformation.title, fileDiffPanel.collapsed)">
-                                <fa-icon [icon]="!fileDiffPanel.collapsed ? faAngleUp : faAngleDown" />
-                            </button>
-                        </div>
+            @let collapsed = collapsedTitles().has(diffInformation.title);
+            <div class="git-diff-file-panel rounded-sm border border-(--border-color) bg-(--card-bg)">
+                <div class="flex items-center justify-between">
+                    <jhi-git-diff-file-panel-title [diffInformation]="diffInformation" />
+                    <div class="flex items-center">
+                        <jhi-git-diff-line-stat
+                            [addedLineCount]="diffInformation.lineChange?.addedLineCount ?? 0"
+                            [removedLineCount]="diffInformation.lineChange?.removedLineCount ?? 0"
+                            [tumAetUiTooltip]="lineStatTooltipKey() | artemisTranslate"
+                        />
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            variant="text"
+                            severity="secondary"
+                            class="ms-1"
+                            data-testid="git-diff-file-panel-toggle"
+                            [attr.aria-expanded]="!collapsed"
+                            [attr.aria-controls]="'git-diff-file-panel-body-' + $index"
+                            [attr.aria-label]="(collapsed ? 'global.generic.expand' : 'global.generic.collapse') | artemisTranslate"
+                            (click)="onToggleClick(diffInformation.title, collapsed)"
+                        >
+                            <fa-icon [icon]="collapsed ? faAngleDown : faAngleUp" />
+                        </button>
                     </div>
-                    <div ngbAccordionCollapse>
-                        <div ngbAccordionBody>
-                            <jhi-git-diff-file
-                                [allowSplitView]="allowSplitView()"
-                                [diffInformation]="diffInformation"
-                                [loadContent]="loadedTitles().has(diffInformation.title)"
-                                (onDiffReady)="handleDiffReady(diffInformation.title, $event)"
-                            />
-                        </div>
-                    </div>
+                </div>
+                <!-- Only hidden while collapsed, so a loaded diff editor keeps its state. -->
+                <div class="px-5 py-4" [id]="'git-diff-file-panel-body-' + $index" [hidden]="collapsed">
+                    <jhi-git-diff-file
+                        [allowSplitView]="allowSplitView()"
+                        [diffInformation]="diffInformation"
+                        [loadContent]="loadedTitles().has(diffInformation.title)"
+                        (onDiffReady)="handleDiffReady(diffInformation.title, $event)"
+                    />
                 </div>
             </div>
         </div>
     }
 </div>
-<div class="d-flex w-100 justify-content-center align-items-center fs-4">
+<div class="flex w-full items-center justify-center text-2xl">
     @if (nothingToDisplay()) {
-        <div class="text-secondary mt-3" jhiTranslate="artemisApp.repository.commitHistory.commitDetails.empty"></div>
+        <div class="mt-4 text-(--secondary)" jhiTranslate="artemisApp.repository.commitHistory.commitDetails.empty"></div>
     } @else if (!initialDiffsReady()) {
         <div>
             <fa-icon [icon]="faSpinner" animation="spin" />

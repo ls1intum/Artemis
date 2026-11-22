@@ -26,7 +26,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.match.MockRestRequestMatchers;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -264,7 +263,8 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         course.setAthenaConfig(athenaConfig);
         courseUtilService.saveWithConfigurations(course);
 
-        var server = MockRestServiceServer.createServer(athenaRequestMockProvider.getRestTemplate());
+        var server = athenaRequestMockProvider.getMockServer();
+        server.reset();
         server.expect(requestTo(endsWith("/feedback_suggestions"))).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
 
         request.get("/api/athena/" + exerciseType + "-exercises/" + exercise.getId() + "/submissions/" + submission.getId() + "/feedback-suggestions",

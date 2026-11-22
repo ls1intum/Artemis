@@ -1,4 +1,4 @@
-<h3 class="top-container flex-wrap lg:flex-nowrap">
+<h3 class="top-container flex-wrap">
     <!--back button only used in assessment dashboard-->
     <div class="row-container me-2 flex items-center gap-2">
         @if (isTestRun()) {
@@ -24,7 +24,7 @@
         </tumaet-ui-message>
     }
     @if (!isLoading()) {
-        <div class="row-container flex-wrap lg:flex-nowrap">
+        <div class="row-container flex-wrap">
             @if (!isAssessor() && !hasComplaint()) {
                 <span
                     id="assessmentLocked"
@@ -123,7 +123,7 @@
                 </button>
             }
             <br />
-            <div class="flex flex-wrap lg:flex-nowrap">
+            <div class="flex flex-wrap">
                 @if (!result()?.completionDate) {
                     <button
                         type="button"

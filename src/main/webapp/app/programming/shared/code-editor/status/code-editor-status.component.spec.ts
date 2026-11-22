@@ -4,8 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CodeEditorStatusComponent } from 'app/programming/shared/code-editor/status/code-editor-status.component';
 import { CommitState } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockModule } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -15,7 +13,7 @@ describe('CodeEditorStatusComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), CodeEditorStatusComponent, TranslatePipeMock],
+            imports: [CodeEditorStatusComponent, TranslatePipeMock],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(CodeEditorStatusComponent);

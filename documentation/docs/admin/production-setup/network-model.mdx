@@ -2,7 +2,7 @@
 id: network-model
 title: Network Model
 sidebar_label: Network Model
-last_reviewed: 2026-11-17
+last_reviewed: 2026-11-19
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -35,7 +35,7 @@ The services that hold the state of the installation need special care:
 
 - **Queue store.** The build queue and the results travel through the [distributed data provider](/admin/production-setup/distributed-data). A Valkey or Redis server accepts connections only with a user and a password,
   and listens on the loopback interface or on a private address.
-- **Cluster port.** The Hazelcast provider has no authentication on its cluster port. Bind it to the private interface of the node with `spring.hazelcast.interface`, and let only the other nodes connect.
+- **Cluster port.** The Hazelcast provider, which Artemis uses when neither `artemis.distributed-data.provider` nor its superseded predecessor `artemis.continuous-integration.data-store` is set, has no authentication on its cluster port. Bind it to the private interface of the node with `spring.hazelcast.interface`, and let only the other nodes connect.
 - **Build agents** receive build jobs from the queue and clone repositories from the core nodes. A build agent is trusted by the core nodes, so it must not run on a machine that students or other untrusted parties can reach.
 
 ## Extension Services
@@ -93,6 +93,8 @@ Keep the services above out of the reach of build containers:
 | `artemis.continuous-integration.network-isolation-check.enabled` | see below        | The check is on unless this is `false`. The `dev` profile turns it off, because Docker Desktop forwards connections to the host to its loopback interface.                                                                                                                          |
 | `artemis.continuous-integration.network-isolation-check.image`   | `busybox:1.37.0` | The image of the probe container. It needs `sh`, `sleep`, `awk`, `sort`, `nslookup` and an `nc` that supports `-l`, `-e`, `-w` and `-z` (BusyBox has all of them). Without `nslookup` a target that is given by name is reported as undecided. A mirror of the image works as well. |
 | `artemis.continuous-integration.network-isolation-check.targets` | empty            | Further services as `host:port`, for example the database and the broker. The queue store (`spring.data.redis.host` and `port`) and, on a node with the `core` profile, the cluster port (`spring.hazelcast.interface` and `port`) are added automatically.                         |
+
+The automatic entry for the queue store tests the address that the store is configured with. A target that is given by name is tested through every address that the name resolves to, on the agent and inside the container, and through no other. If the same service is reachable over another address that the name does not resolve to, for example the IPv4 address of a store that is configured by its IPv6 address and whose name has no IPv4 record, list that address as a target as well. Literal IPv4 addresses (`10.0.0.5:6379`) and IPv6 addresses (`[fd00::5]:6379`) are accepted.
 
 A service that is configured with a loopback address, such as `localhost`, is a service of the host. Inside a container the address names the container itself, so it is probed through the name that a container uses for its host. If the agent itself runs in a container, the address names the namespace of the agent and not the host, so a refused connection is reported as undecided, not as isolated.
 A service that listens on every interface of the host, for example a published port of a container, is reachable that way and is reported. A service that listens only on the loopback interface is not reachable from a container on Linux, which is the strongest

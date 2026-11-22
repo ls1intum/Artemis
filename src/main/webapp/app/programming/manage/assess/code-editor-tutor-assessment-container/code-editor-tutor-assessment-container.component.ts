@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
@@ -69,6 +70,8 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
         UnreferencedFeedbackComponent,
         FeedbackSuggestionsBannerComponent,
         ArtemisDatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
     ],
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
