@@ -1,7 +1,7 @@
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
 import { Subscription, forkJoin } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -27,7 +27,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 export class ExamAssessmentButtonsComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private examManagementService = inject(ExamManagementService);
-    private studentExamService = inject(StudentExamService);
+    private studentExamApi = inject(StudentExamApi);
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
@@ -74,7 +74,7 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             - set the longestWorkingTime
             - trigger (re)calculation of whether the exam is over
              */
-            const workingTimeObservable = this.studentExamService.getLongestWorkingTimeForExam(this.courseId(), this.examId()).pipe(
+            const workingTimeObservable = this.studentExamApi.getLongestWorkingTimeForExam(this.courseId(), this.examId()).pipe(
                 tap((value) => {
                     this.longestWorkingTime.set(value);
                     this.calculateIsExamOver();

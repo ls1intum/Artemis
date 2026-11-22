@@ -15,7 +15,7 @@ import dayjs from 'dayjs/esm';
 import * as ErrorReporting from 'app/core/error-reporting/capture-exception';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -200,7 +200,7 @@ describe('ExamChecklistComponent', () => {
             return testedExam;
         };
 
-        const mockLongestWorkingTime = (seconds: number) => vi.spyOn(TestBed.inject(StudentExamService), 'getLongestWorkingTimeForExam').mockReturnValue(of(seconds));
+        const mockLongestWorkingTime = (seconds: number) => vi.spyOn(TestBed.inject(StudentExamApi), 'getLongestWorkingTimeForExam').mockReturnValue(of(seconds));
 
         const actions = [
             { action: 'evaluateQuizExercises', busy: 'isEvaluatingQuizExercises', done: 'existsUnassessedQuizzes', stats: { existsUnassessedQuizzes: true } },

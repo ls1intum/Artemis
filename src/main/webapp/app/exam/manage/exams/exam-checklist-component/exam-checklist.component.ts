@@ -11,7 +11,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
-import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
 import { Subject, Subscription } from 'rxjs';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -55,7 +55,7 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     private websocketService = inject(WebsocketService);
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
-    private studentExamService = inject(StudentExamService);
+    private studentExamApi = inject(StudentExamApi);
     private profileService = inject(ProfileService);
 
     exam = input.required<Exam>();
@@ -114,7 +114,7 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     ngOnInit() {
         const exam = this.exam();
         if (exam?.course?.id && exam?.id) {
-            this.longestWorkingTimeSub = this.studentExamService.getLongestWorkingTimeForExam(exam.course.id, exam.id).subscribe((res) => {
+            this.longestWorkingTimeSub = this.studentExamApi.getLongestWorkingTimeForExam(exam.course.id, exam.id).subscribe((res) => {
                 this.longestWorkingTime = res;
                 this.calculateIsExamOver();
             });

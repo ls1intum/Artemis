@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params, convertToParamMap } from '@angular/router';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { of, throwError } from 'rxjs';
@@ -59,7 +59,7 @@ describe('ExamAssessmentButtons', () => {
                 );
             },
         }),
-        MockProvider(StudentExamService, {
+        MockProvider(StudentExamApi, {
             getLongestWorkingTimeForExam: () => {
                 return of(studentExamOne?.workingTime ?? 0);
             },
