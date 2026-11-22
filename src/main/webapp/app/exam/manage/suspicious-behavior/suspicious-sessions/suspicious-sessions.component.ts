@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, input, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
-import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import type { SuspiciousExamSessions } from 'app/openapi/model/suspicious-exam-sessions';
+import { SuspiciousSessionReason } from 'app/openapi/model/suspicious-session-reason';
+import type { StudentExamWithIdAndExamAndUser } from 'app/openapi/model/student-exam-with-id-and-exam-and-user';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
@@ -17,17 +18,17 @@ export class SuspiciousSessionsComponent implements OnInit {
     suspiciousIpAddress = signal(false);
     ngOnInit(): void {
         this.suspiciousFingerprint.set(
-            this.isSuspiciousFor(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT) ||
-                this.isSuspiciousFor(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS),
+            this.isSuspiciousFor(SuspiciousSessionReason.DifferentStudentExamsSameBrowserFingerprint) ||
+                this.isSuspiciousFor(SuspiciousSessionReason.SameStudentExamDifferentBrowserFingerprints),
         );
         this.suspiciousIpAddress.set(
-            this.isSuspiciousFor(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS) ||
-                this.isSuspiciousFor(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES) ||
-                this.isSuspiciousFor(SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE),
+            this.isSuspiciousFor(SuspiciousSessionReason.DifferentStudentExamsSameIpAddress) ||
+                this.isSuspiciousFor(SuspiciousSessionReason.SameStudentExamDifferentIpAddresses) ||
+                this.isSuspiciousFor(SuspiciousSessionReason.IpAddressOutsideOfRange),
         );
     }
 
-    getStudentExamLink(studentExam: StudentExam) {
+    getStudentExamLink(studentExam: StudentExamWithIdAndExamAndUser) {
         const studentExamId = studentExam.id;
         const courseId = studentExam.exam?.course?.id;
         const examId = studentExam.exam?.id;
@@ -35,6 +36,6 @@ export class SuspiciousSessionsComponent implements OnInit {
     }
 
     private isSuspiciousFor(reason: SuspiciousSessionReason) {
-        return this.suspiciousSessions().examSessions.some((session) => session.suspiciousReasons.includes(reason));
+        return (this.suspiciousSessions().examSessions ?? []).some((session) => session.suspiciousReasons?.includes(reason));
     }
 }

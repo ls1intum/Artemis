@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 
 import { SuspiciousBehaviorComponent } from 'app/exam/manage/suspicious-behavior/suspicious-behavior.component';
-import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
+import { ExamApi } from 'app/openapi/api/exam-api';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { PlagiarismResultsService } from 'app/plagiarism/shared/services/plagiarism-results.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -14,9 +14,10 @@ import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-beh
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
+import type { SuspiciousExamSessions } from 'app/openapi/model/suspicious-exam-sessions';
+import { SuspiciousSessionReason } from 'app/openapi/model/suspicious-session-reason';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,7 +26,8 @@ describe('SuspiciousBehaviorComponent', () => {
     let component: SuspiciousBehaviorComponent;
     let fixture: ComponentFixture<SuspiciousBehaviorComponent>;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, examId: 2 }) } } as unknown as ActivatedRoute;
-    let suspiciousSessionService: SuspiciousSessionsService;
+    let examApi: ExamApi;
+    let httpMock: HttpTestingController;
     let plagiarismCasesService: PlagiarismCasesService;
     let plagiarismResultsService: PlagiarismResultsService;
     let examService: ExamManagementService;
@@ -61,11 +63,11 @@ describe('SuspiciousBehaviorComponent', () => {
                 id: 1,
                 ipAddress: '192.168.0.0',
                 browserFingerprintHash: 'abc',
-                suspiciousReasons: [SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS, SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT],
+                suspiciousReasons: [SuspiciousSessionReason.DifferentStudentExamsSameIpAddress, SuspiciousSessionReason.DifferentStudentExamsSameBrowserFingerprint],
             },
             {
                 id: 2,
-                suspiciousReasons: [SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS, SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT],
+                suspiciousReasons: [SuspiciousSessionReason.DifferentStudentExamsSameIpAddress, SuspiciousSessionReason.DifferentStudentExamsSameBrowserFingerprint],
                 ipAddress: '192.168.0.0',
                 browserFingerprintHash: 'abc',
             },
@@ -86,7 +88,8 @@ describe('SuspiciousBehaviorComponent', () => {
         });
         fixture = TestBed.createComponent(SuspiciousBehaviorComponent);
         component = fixture.componentInstance;
-        suspiciousSessionService = TestBed.inject(SuspiciousSessionsService);
+        examApi = TestBed.inject(ExamApi);
+        httpMock = TestBed.inject(HttpTestingController);
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
         plagiarismResultsService = TestBed.inject(PlagiarismResultsService);
         examService = TestBed.inject(ExamManagementService);
@@ -106,29 +109,47 @@ describe('SuspiciousBehaviorComponent', () => {
     });
 
     it('should not make a request onInit', () => {
-        const suspiciousSessionsServiceSpy = vi.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(of([suspiciousSessions]));
+        const suspiciousSessionsServiceSpy = vi.spyOn(examApi, 'getAllSuspiciousExamSessions').mockReturnValue(of([suspiciousSessions]));
         component.ngOnInit();
         expect(suspiciousSessionsServiceSpy).not.toHaveBeenCalledOnce();
     });
 
     it('should make a request on click', () => {
-        const suspiciousSessionsServiceSpy = vi.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(of([suspiciousSessions]));
+        const suspiciousSessionsServiceSpy = vi.spyOn(examApi, 'getAllSuspiciousExamSessions').mockReturnValue(of([suspiciousSessions]));
         component.checkboxCriterionDifferentStudentExamsSameIPAddressChecked.set(true);
         component.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked.set(true);
         component.analyzeSessions();
         expect(suspiciousSessionsServiceSpy).toHaveBeenCalledOnce();
-        expect(suspiciousSessionsServiceSpy).toHaveBeenCalledWith(1, 2, {
-            sameIpAddressDifferentStudentExams: true,
-            sameBrowserFingerprintDifferentStudentExams: true,
-            differentIpAddressesSameStudentExam: false,
-            differentBrowserFingerprintsSameStudentExam: false,
-            ipAddressOutsideOfRange: false,
-        });
+        expect(suspiciousSessionsServiceSpy).toHaveBeenCalledWith(1, 2, true, true, false, false, false, undefined);
         expect(component.suspiciousSessions()).toEqual([suspiciousSessions]);
     });
 
+    it('should send the criteria as query parameters and omit an empty subnet', () => {
+        component.checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked.set(true);
+        component.ipSubnet.set('');
+        component.analyzeSessions();
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: '/api/exam/courses/1/exams/2/suspicious-sessions?differentStudentExamsSameIPAddress=false&differentStudentExamsSameBrowserFingerprint=false&sameStudentExamDifferentIPAddresses=false&sameStudentExamDifferentBrowserFingerprints=true&ipOutsideOfRange=false',
+        });
+        req.flush([suspiciousSessions]);
+        expect(component.suspiciousSessions()).toEqual([suspiciousSessions]);
+        expect(component.analyzed()).toBe(true);
+    });
+
+    it('should send the subnet when the IP range criterion is used', () => {
+        component.checkboxCriterionIPOutsideOfASpecificRangeChecked.set(true);
+        component.ipSubnet.set('127.0.0.1/28');
+        component.analyzeSessions();
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: '/api/exam/courses/1/exams/2/suspicious-sessions?differentStudentExamsSameIPAddress=false&differentStudentExamsSameBrowserFingerprint=false&sameStudentExamDifferentIPAddresses=false&sameStudentExamDifferentBrowserFingerprints=false&ipOutsideOfRange=true&ipSubnet=127.0.0.1%2F28',
+        });
+        req.flush([]);
+    });
+
     it('should set analyzed to true and analyzing to false if the request fails', () => {
-        vi.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(
+        vi.spyOn(examApi, 'getAllSuspiciousExamSessions').mockReturnValue(
             throwError(
                 () =>
                     new HttpErrorResponse({

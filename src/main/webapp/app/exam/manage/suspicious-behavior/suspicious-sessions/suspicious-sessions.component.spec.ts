@@ -5,7 +5,8 @@ import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
+import type { SuspiciousExamSessions } from 'app/openapi/model/suspicious-exam-sessions';
+import { SuspiciousSessionReason } from 'app/openapi/model/suspicious-session-reason';
 
 describe('SuspiciousSessionsComponent', () => {
     let component: SuspiciousSessionsComponent;
@@ -14,7 +15,7 @@ describe('SuspiciousSessionsComponent', () => {
     const suspiciousSessions1 = {
         examSessions: [
             {
-                suspiciousReasons: [SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES, SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS],
+                suspiciousReasons: [SuspiciousSessionReason.SameStudentExamDifferentIpAddresses, SuspiciousSessionReason.SameStudentExamDifferentBrowserFingerprints],
             },
         ],
     } as SuspiciousExamSessions;
@@ -30,7 +31,7 @@ describe('SuspiciousSessionsComponent', () => {
     const suspiciousSessions3 = {
         examSessions: [
             {
-                suspiciousReasons: [SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE],
+                suspiciousReasons: [SuspiciousSessionReason.IpAddressOutsideOfRange],
             },
         ],
     };

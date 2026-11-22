@@ -3,7 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { SuspiciousSessionsOverviewComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
-import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
+import type { SuspiciousExamSessions } from 'app/openapi/model/suspicious-exam-sessions';
+import { SuspiciousSessionReason } from 'app/openapi/model/suspicious-session-reason';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -18,12 +19,12 @@ describe('SuspiciousSessionsOverviewComponent', () => {
             {
                 id: 1,
                 ipAddress: '192.168.0.0',
-                suspiciousReasons: [SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS, SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT],
+                suspiciousReasons: [SuspiciousSessionReason.DifferentStudentExamsSameIpAddress, SuspiciousSessionReason.DifferentStudentExamsSameBrowserFingerprint],
                 studentExam: stubStudentExam,
             },
             {
                 id: 2,
-                suspiciousReasons: [SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS, SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT],
+                suspiciousReasons: [SuspiciousSessionReason.DifferentStudentExamsSameIpAddress, SuspiciousSessionReason.DifferentStudentExamsSameBrowserFingerprint],
                 ipAddress: '192.168.0.0',
                 studentExam: stubStudentExam,
             },
@@ -36,14 +37,14 @@ describe('SuspiciousSessionsOverviewComponent', () => {
                 id: 1,
                 ipAddress: '127.0.0.1',
                 browserFingerprintHash: 'abc',
-                suspiciousReasons: [SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES, SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS],
+                suspiciousReasons: [SuspiciousSessionReason.SameStudentExamDifferentIpAddresses, SuspiciousSessionReason.SameStudentExamDifferentBrowserFingerprints],
                 studentExam: stubStudentExam,
             },
             {
                 id: 2,
                 ipAddress: '127.0.0.2',
                 browserFingerprintHash: 'def',
-                suspiciousReasons: [SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES, SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS],
+                suspiciousReasons: [SuspiciousSessionReason.SameStudentExamDifferentIpAddresses, SuspiciousSessionReason.SameStudentExamDifferentBrowserFingerprints],
                 studentExam: stubStudentExam,
             },
         ],
@@ -55,7 +56,7 @@ describe('SuspiciousSessionsOverviewComponent', () => {
                 id: 1,
                 ipAddress: '127.0.0.1',
                 browserFingerprintHash: 'abc',
-                suspiciousReasons: [SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE],
+                suspiciousReasons: [SuspiciousSessionReason.IpAddressOutsideOfRange],
                 studentExam: stubStudentExam,
             },
         ],
