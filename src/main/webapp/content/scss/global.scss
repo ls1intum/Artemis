@@ -5,9 +5,6 @@
 // The element defaults (body, headings, links, tables, form controls) that every page builds on.
 @import 'src/main/webapp/content/scss/base';
 
-// The bare utility classes that have to win over those defaults and over component stylesheets.
-@import 'src/main/webapp/content/scss/utilities';
-
 // Needed for mathematical formulas in markdown editor
 
 /*
@@ -95,30 +92,13 @@ html:fullscreen:has(> body > .apollon-fullscreen-frame) > .cdk-overlay-container
 Typography and links
 ===============================================================*/
 
-body,
-h1,
-h2,
-h3,
-h4 {
-    font-weight: 400;
-}
-
-a:not(.tumaet-ui-btn, .tumaet-ui-list-item-action, .tumaet-ui-menu-item, .tab-link) {
-    color: $link-color;
-    cursor: pointer;
-}
-
-/* `_base.scss` underlines links by default */
+/*
+ * Links are not underlined, except on hover. These two rules are important and outside the cascade layers on
+ * purpose: component stylesheets rely on their precedence (see below). All other element defaults are in the
+ * layer `base` of `_base.scss`.
+ */
 a {
     text-decoration: none !important;
-}
-
-.pointer {
-    cursor: pointer;
-}
-
-.cursor-default {
-    cursor: default !important;
 }
 
 /*
@@ -138,66 +118,14 @@ a.disabled {
     cursor: default;
 }
 
-.text-normal {
-    color: $body-color !important;
-}
-
-.clickable {
-    cursor: pointer;
-}
-
-.overflow-ellipsis {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.overflow-parent {
-    min-width: 0;
-}
-
-.border-lightgrey {
-    border-color: $border-lightgrey;
-}
-
-.text-lightgrey {
-    color: $text-lightgrey;
-}
-
-.form-inline {
-    display: flex;
-    flex-flow: row wrap;
-    align-items: center;
-    text-align: left;
-}
-
+/* Important and outside the cascade layers: it also sets the text colour of TUM AET UI text areas, whose own colour would win otherwise. */
 textarea {
-    background-color: $form-control-focus-background;
     color: $form-control-color !important;
-}
-
-/* ==========================================================================
-Browser Upgrade Prompt
-========================================================================== */
-.browserupgrade {
-    margin: 0.2em 0;
-    background: $browserupgrade-color-background;
-    color: $browserupgrade-color;
-    padding: 0.2em 0;
 }
 
 /* ==========================================================================
 Narrow styles
 ========================================================================== */
-
-.form-group-narrow {
-    margin-bottom: 0.2rem;
-}
-
-.label-narrow {
-    display: inline-block;
-    margin-bottom: 0.1rem;
-}
 
 /* ==========================================================================
 Generic styles
@@ -240,7 +168,7 @@ Generic styles
 
 // Host-side compensation for the TUM AET UI package.
 
-// The unlayered `border-width: 0` that `_base.scss` sets on table cells beats the package's layered `tumaet:border-b` utility.
+// `_base.scss` sets `border-width: 0` on table cells. This rule keeps the bottom border of the cells of a kit table.
 .tumaet-ui-table {
     thead th,
     tbody td {
@@ -252,27 +180,6 @@ Generic styles
 // `tumaet:disabled:opacity-60` compiles to `:disabled`, which never matches an `<a>`.
 a[tumAetUiButton].disabled {
     opacity: 0.6;
-}
-
-.pad {
-    padding: 10px;
-}
-
-.w-40 {
-    width: 40% !important;
-}
-
-.w-60 {
-    width: 60% !important;
-}
-
-.max-vw-30 {
-    max-width: 30vw !important;
-}
-
-.break {
-    white-space: normal;
-    word-break: break-all;
 }
 
 .readonly {
@@ -289,30 +196,6 @@ a[tumAetUiButton].disabled {
     background-color: var(--body-bg);
 }
 
-.main-container {
-    @media (max-width: 576px) {
-        padding: 0;
-    }
-}
-
-.no-flex-shrink {
-    flex-shrink: 0;
-}
-
-.flex-basis-50 {
-    flex-basis: 50%;
-}
-
-a:hover {
-    /* make sure browsers use the pointer cursor for anchors, even with no href */
-    cursor: pointer;
-}
-
-.hand,
-[jhisortby] {
-    cursor: pointer;
-}
-
 /* Styles for rotating chevron icons */
 
 .rotate-icon {
@@ -323,84 +206,12 @@ a:hover {
     transform: rotate(90deg);
 }
 
-.chevron-position {
-    display: inline-block;
-    vertical-align: middle;
-}
-
 /* ==========================================================================
 entity tables helpers
 ========================================================================== */
 
-/* Remove the padding from an element */
-$padding-sides: 'left', 'right', 'top', 'bottom', 'all';
-
-@each $side in $padding-sides {
-    @if $side == 'all' {
-        .no-padding {
-            padding: 0 !important;
-        }
-    } @else {
-        .no-padding-#{$side} {
-            padding-#{$side}: 0 !important;
-        }
-    }
-}
-
-.width-min {
-    width: 1% !important;
-}
-
-/* Makes toolbar not wrap on smaller screens
-   http://www.sketchingwithcss.com/samplechapter/cheatsheet.html#right */
-.flex-btn-group-container {
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-direction: row;
-    flex-direction: row;
-    -webkit-justify-content: flex-end;
-    justify-content: flex-end;
-}
-
-.editor-outline-background {
-    background: $editor-outline-background;
-    max-width: max-content;
-}
-
-.thread-dump-modal-lock {
-    max-width: 450px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 .resizable-dragging {
     user-select: none;
-}
-
-.header-container {
-    display: flex;
-    flex-direction: row;
-}
-
-.total-score-wrapper {
-    margin-left: auto;
-    float: right;
-    display: flex;
-    align-items: center;
-    flex-direction: row;
-    margin-right: 10px;
-}
-
-.btn-total-score {
-    color: $btn-total-score-color;
-    border-radius: 6px;
-    border: none;
-}
-
-.span-total-score {
-    margin-right: 5px;
-    font-weight: bold;
 }
 
 .result-orange {
@@ -435,10 +246,6 @@ span.bold {
     font-weight: bold;
 }
 
-b {
-    font-weight: 500;
-}
-
 .negative,
 .positive {
     padding: 2px 4px;
@@ -454,48 +261,6 @@ b {
 .positive {
     color: $positive-color;
     background-color: $positive-background;
-}
-
-pre {
-    display: block;
-    padding: 9.5px;
-    margin: 0 0 10px;
-    font-size: 13px;
-    line-height: 1.4268;
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
-    color: $artemis-pre-color;
-    background-color: $artemis-pre-background;
-    border: 1px solid $artemis-pre-border;
-    border-radius: 4px;
-}
-
-.code-error,
-.code-warning,
-.code-success {
-    padding: 2px 4px;
-    font-size: 90%;
-    border-radius: 4px;
-    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
-}
-
-.code-success {
-    padding: 2px 4px;
-    font-size: 90%;
-    color: $code-success-color;
-    background-color: $code-success-background;
-    border-radius: 4px;
-    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
-}
-
-.code-error {
-    color: $code-error-color;
-    background-color: $code-error-background;
-}
-
-.code-warning {
-    color: $code-warning-color;
-    background-color: $code-warning-background;
 }
 
 code.password {
@@ -516,100 +281,8 @@ code.password:hover {
     margin-bottom: 0;
 }
 
-.tiny-icon-button {
-    padding: 0.25rem 0.5rem !important;
-    font-size: 0.75rem !important;
-    line-height: 1.2 !important;
-}
-
-.assessments {
-    width: calc(100% - 30px);
-    height: 100vh;
-    position: absolute;
-    top: 0;
-    left: 15px;
-    overflow: hidden;
-    pointer-events: none;
-
-    &__container {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: calc(100% + 15px);
-        height: calc(100% + 15px);
-        overflow: scroll;
-    }
-
-    &__canvas {
-        min-width: 3000px;
-        min-height: 3000px;
-
-        > div {
-            position: absolute;
-            z-index: 1;
-            text-align: right;
-            transform: translateX(-100%);
-            min-width: 65px;
-            padding: 5px;
-
-            i {
-                vertical-align: middle;
-
-                &.half {
-                    position: relative;
-
-                    &::before {
-                        display: block;
-                        width: 60%;
-                        overflow: hidden;
-                    }
-
-                    &::after {
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        opacity: 0.3;
-                    }
-                }
-            }
-
-            .fa-check {
-                color: $success;
-
-                &.half {
-                    &::after {
-                        content: '\F00C';
-                    }
-                }
-
-                ~ i {
-                    margin-left: -0.5em;
-                }
-            }
-
-            .fa-times {
-                color: $danger;
-
-                &.half {
-                    &::after {
-                        content: '\f00d';
-                    }
-                }
-
-                ~ i {
-                    margin-left: -0.2em;
-                }
-            }
-        }
-    }
-}
-
 .unreferencedFeedback {
     background-color: $unreferenced-feedback-background;
-}
-
-.displaycolor {
-    background: $displaycolor-background;
 }
 
 // Kit overlays (dialogs, calendars, select panels, tooltips) open in this one container, so they all share one layer.
@@ -621,14 +294,6 @@ code.password:hover {
 // (delete button in the presentation edit dialog) stacks above it.
 .cdk-overlay-container {
     z-index: 1200;
-}
-
-.not-allowed {
-    cursor: not-allowed;
-}
-
-.colon-suffix::after {
-    content: ':';
 }
 
 /* ==========================================================================
@@ -665,6 +330,38 @@ del.diffmod {
 /* ==========================================================================
     Markdown preview
 ========================================================================== */
+// Class names that stored content (problem statements, posts, FAQs) may still carry from the time the global stylesheet
+// defined them for every element. Templates do not use them any more.
+.markdown-preview {
+    .text-danger {
+        color: $danger;
+    }
+
+    .text-info {
+        color: $info;
+    }
+
+    .text-end {
+        text-align: right;
+    }
+
+    .text-start {
+        text-align: left;
+    }
+
+    .text-wrap {
+        white-space: normal;
+    }
+
+    .bg-primary {
+        background-color: $primary;
+    }
+
+    .border-primary {
+        border-color: $primary;
+    }
+}
+
 .markdown-preview {
     .background-editor-color {
         background: $markdown-preview-editor-background;
@@ -892,13 +589,6 @@ body.transparent-background {
 }
 
 /* Course Overview Content Pages with Sidebar */
-.module-bg {
-    background-color: var(--module-bg);
-}
-
-.body-bg {
-    background-color: var(--body-bg);
-}
 
 /*
  * Horizontal grey dividers around a shell's content region — to the sidebar on one side and to the viewport
@@ -970,8 +660,8 @@ body.transparent-background {
  * filters. Same frame as the shell title bars so all three shells read alike: `--title-bar-content-height` of content
  * with `--title-bar-padding-block` above and below, i.e. `--title-bar-height` in total.
  *
- * Pair it with `px-*` for the horizontal padding rather than `p-*`, so the important `p-*` utility does not overrule
- * the vertical padding set here.
+ * Pair it with `px-*` for the horizontal padding. A `p-*` utility would not change the vertical padding set here,
+ * because this rule is outside a cascade layer.
  */
 .page-top-bar {
     box-sizing: border-box;
@@ -1037,8 +727,7 @@ body.transparent-background {
  * therefore tracks `--footer-height`, which follows the footer as it grows — it wraps on narrow viewports and carries
  * an extra git line in dev. The shells reach the same result by subtracting both values in `shell-content-height`.
  *
- * Keep all three margins here rather than mixing in spacing utilities: those are declared `!important`, so a partial
- * override loses and leaves the card tucked behind the footer.
+ * Keep all three margins here rather than mixing in spacing utilities.
  */
 .page-content-card {
     margin: var(--spacing-divider) var(--spacing-divider) calc(var(--footer-height) + var(--spacing-divider));
@@ -1174,22 +863,6 @@ $transition-in-between-delay: 0.05s;
     width: $sidebar-width;
 }
 
-.fs-xx-small {
-    font-size: 0.625rem;
-}
-
-.fs-x-small {
-    font-size: 0.75rem;
-}
-
-.fs-small {
-    font-size: 0.875rem;
-}
-
-.min-h-100 {
-    min-height: 100%;
-}
-
 /*
 Hides the scrollbar, unless the user is currently using the scrollbar
 Note: This class assumes that the scrollbar is already present (e.g. overflow-y and a defined max-height)
@@ -1312,15 +985,6 @@ jhi-iris-base-chatbot .interim-message .bubble-left p:last-child {
     > span {
         display: block;
         overflow-x: auto;
-    }
-}
-
-// Compact metadata layout for the narrow left panel in Iris split view
-.iris-split-left .result-metadata {
-    flex-wrap: wrap;
-
-    > span:not([class]) {
-        display: none;
     }
 }
 

@@ -9,7 +9,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { combineLatest } from 'rxjs';
+import { Observable, combineLatest, of, tap } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { RecordingLeaveComponent, confirmRecordingLeave, confirmReplacingRecording, recordingNavigation } from '../tum-live-upload/tum-live-creation';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 import { TumLiveUploadComponent } from 'app/lecture/manage/lecture-units/tum-live-upload/tum-live-upload.component';
@@ -17,15 +21,20 @@ import { TumLiveUploadComponent } from 'app/lecture/manage/lecture-units/tum-liv
 @Component({
     selector: 'jhi-edit-attachment-video-unit',
     templateUrl: './edit-attachment-video-unit.component.html',
-    imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent, TumLiveUploadComponent],
+    imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent, TumLiveUploadComponent, TumAetUiConfirmDialogComponent, TumAetUiMessageComponent, ArtemisTranslatePipe],
+    providers: [TumAetUiConfirmationService],
+    host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EditAttachmentVideoUnitComponent implements OnInit {
+export class EditAttachmentVideoUnitComponent implements OnInit, RecordingLeaveComponent {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
     private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
     private destroyRef = inject(DestroyRef);
+    private readonly confirmation = inject(TumAetUiConfirmationService);
+    private readonly translate = inject(TranslateService);
+    private readonly navigationInfo = this.router.currentNavigation()?.extras.info;
 
     readonly attachmentVideoUnitForm = viewChild<AttachmentVideoUnitFormComponent>('attachmentVideoUnitForm');
 
@@ -35,6 +44,9 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     readonly formData = signal<AttachmentVideoUnitFormData | undefined>(undefined);
     readonly lectureId = signal<number | undefined>(undefined);
     readonly notificationText = signal<string | undefined>(undefined);
+    protected readonly upload = viewChild(TumLiveUploadComponent);
+    protected readonly initialRecording = signal<File | undefined>(undefined);
+    protected readonly needsReselection = signal(false);
 
     ngOnInit(): void {
         this.isLoading.set(true);
@@ -55,8 +67,19 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                     const attachmentVideoUnitId = Number(params.get('attachmentVideoUnitId'));
                     const lectureId = Number(parentParams.get('lectureId'));
                     this.lectureId.set(lectureId);
+                    const courseId = Number(lectureRoute.parent?.snapshot.paramMap.get('courseId'));
+                    const recording = recordingNavigation(this.navigationInfo, courseId, lectureId);
+                    if (recording?.target.unitId === attachmentVideoUnitId) {
+                        const file = recording.takeFile();
+                        this.initialRecording.set(file);
+                        this.needsReselection.set(!file);
+                        if (recording.unit?.id === attachmentVideoUnitId) {
+                            return of(recording.unit);
+                        }
+                    }
                     return this.attachmentVideoUnitService.findById(attachmentVideoUnitId, lectureId);
                 }),
+                takeUntilDestroyed(this.destroyRef),
                 finalize(() => this.isLoading.set(false)),
             )
             .subscribe({
@@ -86,6 +109,27 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             });
     }
 
+    protected onBeforeUnload(event: BeforeUnloadEvent): void {
+        if (this.upload()?.transferring()) {
+            event.preventDefault();
+        }
+    }
+
+    confirmRecordingLeave(): Observable<boolean> | boolean {
+        const upload = this.upload();
+        if (!upload?.transferring()) {
+            return true;
+        }
+        const phase = upload.transferProgress() === 100 ? 'sent' : 'sending';
+        return confirmRecordingLeave(this.confirmation, this.translate, phase).pipe(
+            tap((leave) => {
+                if (leave && upload.transferring()) {
+                    upload.cancel();
+                }
+            }),
+        );
+    }
+
     /**
      * Shows the video link of a video uploaded to TUM.Live, which Artemis set on the unit, so saving the form keeps it.
      * @param unitId the unit
@@ -111,7 +155,35 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             });
     }
 
-    updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
+    updateAttachmentVideoUnit(data: AttachmentVideoUnitFormData): void {
+        const upload = this.upload();
+        const loadedVideoSource = this.attachmentVideoUnit()?.videoSource || undefined;
+        let decision: Observable<boolean> | undefined;
+        if (upload?.transferring()) {
+            // Saving leaves this editor, which would abort a transfer. Ask before sending any changes.
+            const leave = this.confirmRecordingLeave();
+            if (typeof leave !== 'boolean') {
+                decision = leave;
+            }
+        } else if (upload?.pendingRef() && (data.formProperties.videoSource || undefined) !== loadedVideoSource) {
+            decision = confirmReplacingRecording(this.confirmation, this.translate);
+        }
+
+        if (decision) {
+            decision.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((accepted) => {
+                if (accepted) {
+                    this.saveAttachmentVideoUnit(data, loadedVideoSource);
+                }
+            });
+        } else {
+            this.saveAttachmentVideoUnit(data, loadedVideoSource);
+        }
+    }
+
+    private saveAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData, loadedVideoSource: string | undefined): void {
+        if (this.isLoading()) {
+            return;
+        }
         const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
 
@@ -143,7 +215,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             competencyLinks,
             videoSource,
             // An empty loaded link is sent as '': without the field the server compares with the link the unit has now.
-            loadedVideoSource: currentUnit.videoSource ?? '',
+            loadedVideoSource: loadedVideoSource ?? '',
             attachmentUpdateIntent: hasUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE,
         });
 
@@ -166,7 +238,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                 next: (response: AttachmentVideoUnit) => {
                     const savedVideoSource = response.videoSource || undefined;
                     const sentVideoSource = videoSource || undefined;
-                    if (sentVideoSource !== (currentUnit.videoSource || undefined) && savedVideoSource !== sentVideoSource) {
+                    if (sentVideoSource !== loadedVideoSource && savedVideoSource !== sentVideoSource) {
                         // The link was changed meanwhile, so the server kept that one. The page stays, shows it as the saved link and keeps the entered one to
                         // be saved again; the rest of the change is saved.
                         this.attachmentVideoUnit.set(cloneWith(currentUnit, { name, description, releaseDate, competencyLinks, videoSource: savedVideoSource }));

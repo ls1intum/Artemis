@@ -1,5 +1,5 @@
 @if (exercise()) {
-    <header class="m-0! p-0! text-text" id="exercise-header">
+    <header class="m-0! p-0! text-color" id="exercise-header">
         <div class="flex w-full flex-wrap items-center justify-between gap-2" data-testid="exercise-header-heading">
             <div class="left-col">
                 <div class="title-row">
@@ -11,11 +11,7 @@
                         <ng-content select="[pagetitle]" />
                     </div>
                     @if (isTestRun()) {
-                        <span
-                            class="self-center text-sm font-normal text-text-secondary"
-                            data-testid="exercise-header-test-run"
-                            jhiTranslate="artemisApp.exam.testRun.testRun"
-                        ></span>
+                        <span class="self-center text-sm font-normal text-muted-color" data-testid="exercise-header-test-run" jhiTranslate="artemisApp.exam.testRun.testRun"></span>
                     }
                 </div>
             </div>
@@ -116,7 +112,7 @@
                 <div class="font-medium">
                     {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
                     <span
-                        class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-state-success"
+                        class="inline-flex items-center rounded! px-2 py-0.5 text-xs font-semibold bg-state-success"
                         [tumAetUiTooltip]="
                             'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate: { days: effectiveCourse()?.maxComplaintTimeDays }
                         "

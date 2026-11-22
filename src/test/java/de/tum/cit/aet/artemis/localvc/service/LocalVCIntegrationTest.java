@@ -1072,7 +1072,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
      * Rate limiting is switched off for the shared test context, so a limiting service is swapped into the servlet
      * service for this test only. It exempts loopback, where every other test's git request comes from, and limits
      * the documentation address of this test, so concurrently running tests are unaffected. The requests come from loopback, a proxy that the
-     * servlet container believes (server.forward-headers-strategy: native), so it takes the documentation address from X-Forwarded-For as the address of the peer.
+     * servlet container believes (server.request.header.forwarded.strategy: web-server), so it takes the documentation address from X-Forwarded-For as the address of the peer.
      * The address is fresh on every run: the buckets live in the shared context, and LocalVCSshIntegrationTest runs
      * this test a second time, possibly concurrently: the swap is serialized so that neither run restores the other's
      * limiting service instead of the original.

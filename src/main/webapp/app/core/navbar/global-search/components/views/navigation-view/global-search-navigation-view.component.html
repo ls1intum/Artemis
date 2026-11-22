@@ -5,7 +5,7 @@
 
 <!-- Error state -->
 @if (searchError()) {
-    <div class="search-error-state mt-4! p-4! text-center text-state-danger">
+    <div class="search-error-state mt-4 p-4 text-center text-state-danger">
         <p>{{ searchError()! | artemisTranslate }}</p>
     </div>
 }
@@ -63,7 +63,7 @@
             </button>
         }
     } @else {
-        <div class="no-results-state p-4! text-center" [class.search-results-spaced]="irisOccupiesSpace()">
+        <div class="no-results-state p-4 text-center" [class.search-results-spaced]="irisOccupiesSpace()">
             @if (isContentSearchPrompt()) {
                 <p>{{ 'global.search.contentSearchPrompt' | artemisTranslate }}</p>
             } @else if (isTooShortQuery()) {
@@ -80,8 +80,8 @@
     <!-- Skeleton loading placeholders -->
     <div class="search-results-list" [class.search-results-spaced]="irisOccupiesSpace()">
         @for (_ of skeletonItems; track $index) {
-            <div class="skeleton-result-item p-4!" aria-hidden="true">
-                <div class="flex items-start gap-4!">
+            <div class="skeleton-result-item p-4" aria-hidden="true">
+                <div class="flex items-start gap-4">
                     <!-- Icon placeholder -->
                     <tumaet-ui-skeleton class="size-10 shrink-0 rounded-md!" />
                     <!-- Content placeholder -->

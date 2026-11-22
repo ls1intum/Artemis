@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -41,7 +40,9 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionChatClientService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -123,8 +124,8 @@ public abstract class HyperionCodeGenerationService {
 
     private final LLMTokenUsageService llmTokenUsageService;
 
-    public HyperionCodeGenerationService(@Autowired(required = false) ChatClient chatClient, HyperionPromptTemplateService templates, LLMTokenUsageService llmTokenUsageService) {
-        this.chatClient = chatClient;
+    public HyperionCodeGenerationService(HyperionChatClientService chatClients, HyperionPromptTemplateService templates, LLMTokenUsageService llmTokenUsageService) {
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.CODE_GENERATION);
         this.templates = templates;
         this.llmTokenUsageService = llmTokenUsageService;
     }

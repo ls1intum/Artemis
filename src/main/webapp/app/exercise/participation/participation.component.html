@@ -1,6 +1,6 @@
 @if (exercise()) {
     <ng-template titleBarTitle>
-        <h5 class="mb-0!">
+        <h5 class="mb-0">
             <span jhiTranslate="artemisApp.participation.home.title"></span>
         </h5>
     </ng-template>
@@ -41,7 +41,7 @@
                             (click)="exportNames()"
                         >
                             <fa-icon [icon]="faDownload" />
-                            <span class="flex-1 text-start" jhiTranslate="artemisApp.exercise.export.names"></span>
+                            <span class="flex-1 text-left" jhiTranslate="artemisApp.exercise.export.names"></span>
                         </button>
                         <jhi-exercise-scores-export-button [inDropdown]="true" [exercise]="exercise()!" />
                         @if (exercise()!.type === ExerciseType.PROGRAMMING) {
@@ -68,7 +68,7 @@
 
     <div class="flex h-full min-h-0 flex-col">
         @if (rangeFilter()) {
-            <h4 class="flex flex-wrap items-center gap-4!">
+            <h4 class="flex flex-wrap items-center gap-4">
                 <span>
                     <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
                     <span class="ms-1" jhiTranslate="artemisApp.exercise.showingOnlyInRange" [translateValues]="{ range: rangeFilter()!.toString() }"></span>
@@ -152,7 +152,7 @@
                     [title]="'artemisApp.programmingExercise.resubmitSingleLabel'"
                 />
             } @else {
-                <fa-icon [icon]="faCircleNotch" animation="spin" class="text-text-secondary" />
+                <fa-icon [icon]="faCircleNotch" animation="spin" class="text-muted-color" />
             }
         }
         @if (basicPresentationEnabled() && !dto.testRun && dto.presentationScore !== 1) {
@@ -373,7 +373,7 @@
             @if (cell.data.individualDueDate) {
                 {{ cell.data.individualDueDate | artemisDate }}
             } @else {
-                <span class="italic text-text-secondary" jhiTranslate="artemisApp.participation.noIndividualDueDate"></span>
+                <span class="italic text-muted-color" jhiTranslate="artemisApp.participation.noIndividualDueDate"></span>
             }
             @if (exercise()!.isAtLeastInstructor) {
                 <button

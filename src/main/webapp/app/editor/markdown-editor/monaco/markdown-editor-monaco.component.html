@@ -68,7 +68,7 @@
                                     @for (tagColor of colors; track tagColor) {
                                         <button
                                             type="button"
-                                            class="w-[2.625rem] h-[2.625rem] p-0 cursor-pointer rounded-[3px] border border-[var(--color-selector-border)] hover:outline-2 hover:outline-[var(--color-selector-border)]"
+                                            class="w-[2.625rem] h-[2.625rem] p-0 cursor-pointer border border-(--border-color) hover:outline-2 hover:outline-[var(--color-selector-border)]"
                                             [style.background-color]="tagColor"
                                             (click)="runFromPopover(colorPopover, () => onSelectColor(tagColor))"
                                         ></button>
@@ -143,7 +143,7 @@
 
         <!-- Edit content: always rendered so the Monaco editor is never destroyed; visibility toggled by the active tab. -->
         <div
-            class="markdown-editor markdown-editor-wrapper flex-col border border-[var(--border-color)]"
+            class="markdown-editor markdown-editor-wrapper flex-col border! border-[var(--border-color)]"
             data-testid="markdown-editor"
             [ngClass]="{ flex: inEditMode(), hidden: !inEditMode() }"
             (dragover)="enableFileUpload() ? $event.preventDefault() : undefined"
@@ -189,7 +189,7 @@
                     <input
                         #fileUploadInput
                         [id]="'file-upload ' + uniqueMarkdownEditorId()"
-                        class="absolute -z-[1] w-[0.1px] h-[0.1px] opacity-0 overflow-hidden"
+                        class="absolute -z-[1] w-[0.1px] h-[0.1px] opacity-0! overflow-hidden"
                         type="file"
                         [accept]="allowedFileExtensions()"
                         [multiple]="true"
@@ -197,7 +197,7 @@
                     />
                     <label
                         [for]="'file-upload ' + uniqueMarkdownEditorId()"
-                        class="inline w-full cursor-pointer rounded-r-[0.15em]"
+                        class="w-full cursor-pointer rounded-r-[0.15em]"
                         [style.cursor]="isResizing() ? 'ns-resize !important' : undefined"
                     >
                         <div class="flex mx-0 items-baseline">
@@ -231,13 +231,13 @@
         <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ hidden: !inPreviewMode() }">
             <ng-content class="overflow-auto p-1" select="#previewMonaco">
                 @if (showDefaultPreview()) {
-                    <div class="p-0 m-0 overflow-auto markdown-preview" [innerHTML]="defaultPreviewHtml()"></div>
+                    <div class="p-0 m-0 overflow-auto! markdown-preview" [innerHTML]="defaultPreviewHtml()"></div>
                 }
             </ng-content>
         </div>
     </div>
     @if (enableResize() && inEditMode()) {
-        <div #resizePlaceholder [style.cursor]="isResizing() ? 'ns-resize' : undefined" class="flex justify-center border border-[var(--border-color)]">
+        <div #resizePlaceholder [style.cursor]="isResizing() ? 'ns-resize' : undefined" class="flex justify-center border border-(--border-color)">
             <fa-icon
                 cdkDrag
                 cdkDragLockAxis="y"

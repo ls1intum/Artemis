@@ -1,6 +1,6 @@
-<div class="mb-4! flex flex-wrap items-baseline gap-2">
-    <span class="text-4xl font-bold leading-none text-text">{{ completed() }} / {{ total() }}</span>
-    <span class="text-base text-text-secondary">
+<div class="mb-4 flex flex-wrap items-baseline gap-2">
+    <span class="text-4xl font-bold leading-none text-color">{{ completed() }} / {{ total() }}</span>
+    <span class="text-base text-muted-color">
         <span jhiTranslate="artemisApp.assessmentDashboard.assessmentsCompleted"></span>
         ({{ assessedPercentage() }}%)
     </span>
@@ -32,7 +32,7 @@
         ></span>
     }
 </div>
-<div class="flex flex-wrap gap-x-6! gap-y-4! text-sm text-text-secondary">
+<div class="flex flex-wrap gap-x-6 gap-y-4 text-sm text-muted-color">
     <span class="inline-flex items-center gap-1.5">
         <span class="h-3 w-3 rounded-sm bg-state-success"></span>
         <span jhiTranslate="artemisApp.assessmentDashboard.assessed"></span>

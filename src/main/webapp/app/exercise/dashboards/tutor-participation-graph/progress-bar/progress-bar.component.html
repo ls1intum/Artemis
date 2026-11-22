@@ -7,7 +7,7 @@
         [showValue]="false"
         [severity]="normalizedPercentage() < 50 ? 'danger' : normalizedPercentage() < 100 ? 'warn' : 'success'"
     />
-    <span class="absolute inset-0 flex items-center justify-center text-xs leading-4 font-medium text-text" data-testid="tutor-progress-label">
+    <span class="absolute inset-0 flex items-center justify-center text-xs leading-4 font-medium text-color" data-testid="tutor-progress-label">
         {{ numerator() }} / {{ denominator() }} ({{ normalizedPercentage() + '%' }})
     </span>
     <span
