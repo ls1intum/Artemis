@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Service, inject, signal } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from 'app/core/error-reporting/capture-exception';
@@ -7,6 +7,9 @@ import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import { ExamApi } from 'app/openapi/api/exam-api';
 import { StudentExamApi } from 'app/openapi/api/student-exam-api';
+import { StudentExamConductionApi } from 'app/openapi/api/student-exam-conduction-api';
+import type { StudentExamForConduction } from 'app/openapi/model/student-exam-for-conduction';
+import type { StudentExamForSummary } from 'app/openapi/model/student-exam-for-summary';
 import { toExamsForOverview, toSidebarExam, toStudentExamDTOs } from 'app/exam/overview/util/generated-exam-participation.util';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -29,9 +32,9 @@ export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' 
 
 @Service()
 export class ExamParticipationService {
-    private httpClient = inject(HttpClient);
     private examApi = inject(ExamApi);
     private studentExamApi = inject(StudentExamApi);
+    private studentExamConductionApi = inject(StudentExamConductionApi);
     private localStorageService = inject(LocalStorageService);
     private sessionStorageService = inject(SessionStorageService);
 
@@ -113,9 +116,11 @@ export class ExamParticipationService {
         studentExamId: number,
         purpose: 'student' | 'instructor-owner' = 'student',
     ): Observable<StudentExam | undefined> {
-        const suffix = purpose === 'instructor-owner' ? '/for-instructor' : '';
-        const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/conduction' + suffix;
-        return this.getStudentExamFromServer(url).pipe(
+        const request =
+            purpose === 'instructor-owner'
+                ? this.studentExamConductionApi.getStudentExamForInstructorConduction(courseId, examId, studentExamId)
+                : this.studentExamConductionApi.getStudentExamForConduction(courseId, examId, studentExamId);
+        return this.getStudentExamFromServer(request).pipe(
             // During the conduction, blocking the student on a failed request would be worse than letting them work on
             // the copy cached on this device, which is a faithful snapshot of the exam they were handed.
             catchError(() => of(this.getStudentExamFromLocalStorage(courseId, examId))),
@@ -145,16 +150,16 @@ export class ExamParticipationService {
      * @returns a studentExam with Exercises for the summary-phase
      */
     public loadStudentExamWithExercisesForSummary(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/summary';
-        return this.getStudentExamFromServer(url);
+        return this.getStudentExamFromServer(this.studentExamApi.getStudentExamForSummary(courseId, examId, studentExamId));
     }
 
     /**
      * Retrieves a {@link StudentExam} from the server.
      */
-    private getStudentExamFromServer(url: string): Observable<StudentExam> {
-        return this.httpClient.get<StudentExam>(url).pipe(
-            map((studentExam: StudentExam) => {
+    private getStudentExamFromServer(request: Observable<StudentExamForConduction | StudentExamForSummary>): Observable<StudentExam> {
+        return request.pipe(
+            map((response) => {
+                const studentExam = hydrate(new StudentExam(), response);
                 if (studentExam.examSessions && studentExam.examSessions.length > 0 && studentExam.examSessions[0].sessionToken) {
                     this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
                 }
@@ -191,10 +196,9 @@ export class ExamParticipationService {
      * @param examId the id of the exam
      */
     public getOwnStudentExam(courseId: number, examId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/own-student-exam';
-        return this.httpClient.get<StudentExam>(url).pipe(
-            map((studentExam: StudentExam) => {
-                const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
+        return this.examApi.getOwnStudentExam(courseId, examId).pipe(
+            map((response) => {
+                const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(hydrate(new StudentExam(), response));
                 this.currentlyLoadedStudentExam.next(convertedStudentExam);
                 return convertedStudentExam;
             }),
@@ -214,10 +218,9 @@ export class ExamParticipationService {
     }
 
     public loadTestRunWithExercisesForConduction(courseId: number, examId: number, testRunId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/test-runs/' + testRunId + '/conduction';
-        return this.httpClient.get<StudentExam>(url).pipe(
-            map((studentExam: StudentExam) => {
-                const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
+        return this.studentExamConductionApi.getTestRunForConduction(courseId, examId, testRunId).pipe(
+            map((response) => {
+                const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(hydrate(new StudentExam(), response));
                 this.currentlyLoadedStudentExam.next(convertedStudentExam);
                 return convertedStudentExam;
             }),
