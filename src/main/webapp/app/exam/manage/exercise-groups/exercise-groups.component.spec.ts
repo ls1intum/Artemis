@@ -623,6 +623,26 @@ describe('Exercise Groups Component', () => {
         expect(comp.exerciseGroups()!.find((g) => g.id === 1)?.title).toBe('Renamed');
     });
 
+    it('sends a mandatory group when the edited group carries no flag', async () => {
+        comp.exerciseGroups.set(groups);
+        vi.spyOn(exerciseGroupApi, 'updateExerciseGroup').mockReturnValue(of({ id: 1, title: 'Renamed', isMandatory: true }));
+
+        comp.openGroupEditModal(1);
+        comp.onGroupEditSaved({ id: 1, title: 'Renamed' });
+
+        expect(exerciseGroupApi.updateExerciseGroup).toHaveBeenCalledWith(course.id, exam.id, { id: 1, title: 'Renamed', isMandatory: true });
+    });
+
+    it('reports a bad request instead of sending an update without an id', () => {
+        const errorSpy = vi.spyOn(alertService, 'error');
+        vi.spyOn(exerciseGroupApi, 'updateExerciseGroup');
+
+        comp.onGroupEditSaved({ title: 'No id', isMandatory: true });
+
+        expect(exerciseGroupApi.updateExerciseGroup).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith('error.http.400');
+    });
+
     it('creates a new group via the create-group modal', async () => {
         comp.exerciseGroups.set(groups);
         const created = { id: 99, title: 'New group', isMandatory: true, exam: { id: exam.id } };

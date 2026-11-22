@@ -391,9 +391,13 @@ export class ExerciseGroupsComponent implements OnInit {
         // Only these three fields are read server-side (ExerciseGroupUpdateDTO); `edited` still carries the group's
         // whole exercise list, which would otherwise be shipped on every rename.
         if (edited.id === undefined) {
+            // The group-edit dialog only opens for a listed group, so this is unreachable. The old client sent the
+            // request anyway and the server answered 400 (idMissing); the generated method cannot send it without an id.
+            this.alertService.error('error.http.400');
             return;
         }
-        this.exerciseGroupApi.updateExerciseGroup(this.courseId(), this.examId(), { id: edited.id, title: edited.title, isMandatory: edited.isMandatory ?? false }).subscribe({
+        // An absent flag means mandatory: the edit dialog shows it that way and the entity defaults to true.
+        this.exerciseGroupApi.updateExerciseGroup(this.courseId(), this.examId(), { id: edited.id, title: edited.title, isMandatory: edited.isMandatory ?? true }).subscribe({
             next: (saved) => {
                 // The response carries the group without its exercises, so copy the two edited fields onto a clone of
                 // the local group rather than replacing it wholesale.
