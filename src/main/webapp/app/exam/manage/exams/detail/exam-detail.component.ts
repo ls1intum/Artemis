@@ -30,7 +30,6 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
 import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/entities/exam-deleted-event.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ExamScoresComponent } from 'app/exam/manage/exam-scores/exam-scores.component';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -62,7 +61,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);
     private entityDeletionService = inject(EntityDeletionService);
     private destroyRef = inject(DestroyRef);
-    protected readonly scoresView = ExamScoresComponent;
     private readonly isAlive = trackAlive(this.destroyRef);
 
     readonly exam = signal<Exam>(undefined!);

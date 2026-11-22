@@ -53,7 +53,6 @@ import { Subscription } from 'rxjs';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
 import { MODULE_FEATURE_ATLASLLM } from 'app/app.constants';
-import { CourseManagementExercisesComponent } from 'app/course/manage/exercises/course-management-exercises.component';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -84,7 +83,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private readonly websocketService = inject(WebsocketService);
     private readonly accountService = inject(AccountService);
     private readonly autoOrchestrationNotificationService = inject(AutoOrchestrationNotificationService);
-    protected readonly exercisesTab = CourseManagementExercisesComponent;
 
     private autoOrchestrationCourseId?: number;
     private autoOrchestrationActive = false;
