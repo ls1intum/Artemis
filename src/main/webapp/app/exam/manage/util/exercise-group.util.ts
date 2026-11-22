@@ -13,7 +13,7 @@ function toExam(dto: ExamForExerciseGroup): Exam {
         id: dto.course.id,
         defaultProgrammingLanguage: Object.values(ProgrammingLanguage).find((language) => language === dto.course?.defaultProgrammingLanguage),
     };
-    const exam: Exam = { id: dto.id, examMode: dto.examMode === undefined ? undefined : ExamMode[dto.examMode], course };
+    const exam: Exam = { id: dto.id, examMode: ExamMode[dto.examMode], course };
     // The old client left the date string in place; hydrate copies it without the type of the Exam field getting in the way.
     return hydrate(exam, { exampleSolutionPublicationDate: dto.exampleSolutionPublicationDate });
 }

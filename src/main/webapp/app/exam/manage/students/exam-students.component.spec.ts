@@ -655,7 +655,12 @@ describe('ExamStudentsComponent', () => {
     describe('generateMissingStudentExams', () => {
         it('should call generateMissingStudentExams, show success alert, and reload', () => {
             fixture.detectChanges();
-            const generateSpy = vi.spyOn(examApi, 'generateMissingStudentExams').mockReturnValue(of([{}, {}]));
+            const generateSpy = vi.spyOn(examApi, 'generateMissingStudentExams').mockReturnValue(
+                of([
+                    { id: 1, testRun: false },
+                    { id: 2, testRun: false },
+                ]),
+            );
             const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
             const successSpy = vi.spyOn(alertService, 'success');
 

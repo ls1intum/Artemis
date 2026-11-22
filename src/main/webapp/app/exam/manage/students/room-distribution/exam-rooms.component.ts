@@ -79,7 +79,7 @@ export class ExamRoomsComponent implements OnInit {
     private readonly numberOfUniqueExamSeats: Signal<number> = computed(
         () =>
             this.overview()
-                ?.newestUniqueExamRooms?.map((examRoomDTO) => examRoomDTO.numberOfSeats ?? 0)
+                ?.newestUniqueExamRooms?.map((examRoomDTO) => examRoomDTO.numberOfSeats)
                 .reduce((acc, val) => acc + val, 0) ?? 0,
     );
     readonly numberOfAvailable: Signal<ExamRoomOverviewNumberOfAvailable | undefined> = computed(() => {
@@ -224,7 +224,7 @@ export class ExamRoomsComponent implements OnInit {
     }
 
     private getMaxCapacityOfExamRoom(examRoom: ExamRoom): number {
-        return examRoom.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity ?? 0).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
+        return examRoom.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
     }
 
     private getDefaultCapacityOfExamRoom(examRoom: ExamRoom): number {

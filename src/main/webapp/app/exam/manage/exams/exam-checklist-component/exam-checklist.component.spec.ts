@@ -77,7 +77,7 @@ describe('ExamChecklistComponent', () => {
     let getProfileInfoSub: ReturnType<typeof vi.spyOn>;
 
     const exam = new Exam();
-    const examChecklist: ExamChecklist = {};
+    const examChecklist: ExamChecklist = { existsUnassessedQuizzes: false, existsUnsubmittedExercises: false };
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
 
     beforeEach(async () => {
@@ -194,7 +194,17 @@ describe('ExamChecklistComponent', () => {
         const setUp = (examOverrides: Partial<Exam> = {}, stats: Partial<ExamChecklist> = {}) => {
             alertService = TestBed.inject(AlertService);
             apis = { examApi: TestBed.inject(ExamApi), studentExamApi: TestBed.inject(StudentExamApi) };
-            const checklist = Object.assign({}, { numberOfExamsStarted: 3, numberOfExamsSubmitted: 2, numberOfTotalParticipationsForAssessment: 3 }, stats);
+            const checklist = Object.assign(
+                {},
+                {
+                    numberOfExamsStarted: 3,
+                    numberOfExamsSubmitted: 2,
+                    numberOfTotalParticipationsForAssessment: 3,
+                    existsUnassessedQuizzes: false,
+                    existsUnsubmittedExercises: false,
+                },
+                stats,
+            );
             vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(checklist));
             const testedExam = Object.assign(new Exam(), { id: 1, examMode: ExamMode.REAL, course: { id: 1, isAtLeastInstructor: true } }, examOverrides);
             examChecklistComponentFixture.componentRef.setInput('exam', testedExam);
@@ -268,7 +278,9 @@ describe('ExamChecklistComponent', () => {
             const initial = new Subject<ExamChecklist>();
             const refreshedCounts = new Subject<ExamConductionCounts>();
             const fetchCounts = vi.spyOn(examChecklistService, 'getExamConductionCounts').mockReturnValue(refreshedCounts);
-            vi.mocked(examChecklistService.getExamStatistics).mockReturnValueOnce(initial).mockReturnValue(of({}));
+            vi.mocked(examChecklistService.getExamStatistics)
+                .mockReturnValueOnce(initial)
+                .mockReturnValue(of({ existsUnassessedQuizzes: false, existsUnsubmittedExercises: false }));
             examChecklistComponentFixture.detectChanges();
             const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
 
@@ -276,7 +288,12 @@ describe('ExamChecklistComponent', () => {
             websocketService.emit('/topic/exam/1/started', undefined);
             expect(initial.observed).toBe(true);
             expect(examChecklistService.getExamStatistics).toHaveBeenCalledTimes(1);
-            initial.next(Object.assign({}, { numberOfGeneratedStudentExams: 8, numberOfExamsStarted: 5, numberOfExamsSubmitted: 2 }));
+            initial.next(
+                Object.assign(
+                    {},
+                    { numberOfGeneratedStudentExams: 8, numberOfExamsStarted: 5, numberOfExamsSubmitted: 2, existsUnassessedQuizzes: false, existsUnsubmittedExercises: false },
+                ),
+            );
             initial.complete();
 
             expect(component.numberOfGeneratedStudentExams()).toBe(8);
@@ -317,7 +334,10 @@ describe('ExamChecklistComponent', () => {
             vi.useFakeTimers();
             try {
                 setUp({ examMode: ExamMode.TEST }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
-                const baseline = Object.assign({}, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0 });
+                const baseline = Object.assign(
+                    {},
+                    { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0, existsUnassessedQuizzes: false, existsUnsubmittedExercises: false },
+                );
                 vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(baseline));
                 const first = new Subject<ExamConductionCounts>();
                 const fetchCounts = vi

@@ -151,7 +151,7 @@ describe('ExamStatusComponent', () => {
     });
 
     it('should set flags for exam preparation steps correctly', () => {
-        const examChecklist: ExamChecklist = {};
+        const examChecklist: ExamChecklist = { existsUnassessedQuizzes: false, existsUnsubmittedExercises: false };
         examChecklist.allExamExercisesAllStudentsPrepared = true;
         examChecklist.numberOfGeneratedStudentExams = 42;
         getExamStatisticsStub = vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
@@ -182,7 +182,16 @@ describe('ExamStatusComponent', () => {
         { description: 'already generated on the coverpage', initialGenerated: 1, generatedAfterStart: 1 },
         { description: 'created after the initial statistics', initialGenerated: 0, generatedAfterStart: 2 },
     ])('should use the authoritative total for a test exam $description', ({ initialGenerated, generatedAfterStart }) => {
-        const initialStats = Object.assign({}, { numberOfGeneratedStudentExams: initialGenerated, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0 });
+        const initialStats = Object.assign(
+            {},
+            {
+                numberOfGeneratedStudentExams: initialGenerated,
+                numberOfExamsStarted: 0,
+                numberOfExamsSubmitted: 0,
+                existsUnassessedQuizzes: false,
+                existsUnsubmittedExercises: false,
+            },
+        );
         vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(initialStats));
         vi.spyOn(examChecklistService, 'getExamConductionCounts').mockReturnValue(
             of({ numberOfGeneratedStudentExams: generatedAfterStart, numberOfExamsStarted: 1, numberOfExamsSubmitted: 0 }),
@@ -204,7 +213,9 @@ describe('ExamStatusComponent', () => {
         const initial = new Subject<ExamChecklist>();
         const refreshedCounts = new Subject<ExamConductionCounts>();
         const fetchCounts = vi.spyOn(examChecklistService, 'getExamConductionCounts').mockReturnValue(refreshedCounts);
-        vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValueOnce(initial).mockReturnValue(of({}));
+        vi.spyOn(examChecklistService, 'getExamStatistics')
+            .mockReturnValueOnce(initial)
+            .mockReturnValue(of({ existsUnassessedQuizzes: false, existsUnsubmittedExercises: false }));
         prepareForTestExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
         testExam.id = 7;
         fixture.detectChanges();
@@ -214,7 +225,12 @@ describe('ExamStatusComponent', () => {
         websocketService.emit('/topic/exam/7/started', undefined);
         expect(initial.observed).toBe(true);
         expect(examChecklistService.getExamStatistics).toHaveBeenCalledTimes(1);
-        initial.next(Object.assign({}, { numberOfGeneratedStudentExams: 8, numberOfExamsStarted: 5, numberOfExamsSubmitted: 2 }));
+        initial.next(
+            Object.assign(
+                {},
+                { numberOfGeneratedStudentExams: 8, numberOfExamsStarted: 5, numberOfExamsSubmitted: 2, existsUnassessedQuizzes: false, existsUnsubmittedExercises: false },
+            ),
+        );
         initial.complete();
 
         expect(component.numberOfGeneratedStudentExams()).toBe(8);
@@ -227,7 +243,10 @@ describe('ExamStatusComponent', () => {
     });
 
     it.each(['exam', 'course'])('should cancel stale counts and unsubscribe on a %s change and destroy', (changedInput) => {
-        const initialStats = Object.assign({}, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0 });
+        const initialStats = Object.assign(
+            {},
+            { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0, existsUnassessedQuizzes: false, existsUnsubmittedExercises: false },
+        );
         vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(initialStats));
         const previous = new Subject<ExamConductionCounts>();
         const current = new Subject<ExamConductionCounts>();
@@ -261,7 +280,10 @@ describe('ExamStatusComponent', () => {
         try {
             prepareForTestExamConductionStateTest(dayjs().subtract(1, 'hour'), 1, DateOffsetType.DAYS);
             testExam.id = 7;
-            const baseline = Object.assign({}, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0 });
+            const baseline = Object.assign(
+                {},
+                { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0, existsUnassessedQuizzes: false, existsUnsubmittedExercises: false },
+            );
             vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(baseline));
             const first = new Subject<ExamConductionCounts>();
             const fetchCounts = vi
@@ -291,7 +313,10 @@ describe('ExamStatusComponent', () => {
     });
 
     it('should keep the number of generated student exams of a regular exam when a student starts', () => {
-        const examChecklist = Object.assign({}, { numberOfGeneratedStudentExams: 12, numberOfExamsStarted: 3, numberOfExamsSubmitted: 0 });
+        const examChecklist = Object.assign(
+            {},
+            { numberOfGeneratedStudentExams: 12, numberOfExamsStarted: 3, numberOfExamsSubmitted: 0, existsUnassessedQuizzes: false, existsUnsubmittedExercises: false },
+        );
         vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
         prepareForExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
         exam.id = 7;
@@ -330,7 +355,7 @@ describe('ExamStatusComponent', () => {
     });
 
     it('should set flags for TestExam preparation steps correctly', () => {
-        const examChecklist: ExamChecklist = {};
+        const examChecklist: ExamChecklist = { existsUnassessedQuizzes: false, existsUnsubmittedExercises: false };
         examChecklist.allExamExercisesAllStudentsPrepared = undefined;
         examChecklist.numberOfGeneratedStudentExams = undefined;
         getExamStatisticsStub = vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));

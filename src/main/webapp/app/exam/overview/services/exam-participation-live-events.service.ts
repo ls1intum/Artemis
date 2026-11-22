@@ -326,13 +326,13 @@ export class ExamParticipationLiveEventsService {
     }
 
     /**
-     * Converts an event of the REST response into the event the client works with, with dayjs dates. An event without
-     * its id, creation date or a known type is skipped; the server always sends all three.
+     * Converts an event of the REST response into the event the client works with, with dayjs dates. An event of an unknown
+     * type is skipped: the generated model types the event type as a string, not as the known types.
      */
     private toExamLiveEvent(event: GetExamLiveEvents200ResponseInner): ExamLiveEvent[] {
         const { id, createdDate, eventType, ...fields } = event;
         const type = Object.values(ExamLiveEventType).find((known) => known === eventType);
-        if (id === undefined || createdDate === undefined || type === undefined) {
+        if (type === undefined) {
             return [];
         }
         const converted = hydrate({ id, createdDate: dayjs(createdDate), eventType: type }, fields);

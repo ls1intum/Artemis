@@ -34,7 +34,7 @@ export class ExamConductionCountsState {
         this.numberOfGeneratedStudentExams.set(0);
     }
 
-    initialize(checklist?: ExamChecklist): void {
+    initialize(checklist?: Pick<ExamChecklist, 'numberOfGeneratedStudentExams' | 'numberOfExamsStarted' | 'numberOfExamsSubmitted'>): void {
         if (checklist) {
             // A response can already include an event received while the request was in flight. Do not add its delta twice.
             this.numberOfStarted.update((count) => Math.max(count, checklist.numberOfExamsStarted ?? 0));
@@ -108,9 +108,9 @@ export class ExamConductionCountsState {
                     this.retriesRemaining = 2;
                     // Events published after this request began may not be in its snapshot. A retained trailing refresh reconciles them.
                     const reconcile = (current: number, authoritative: number) => (revision === this.revision ? authoritative : Math.max(current, authoritative));
-                    this.numberOfGeneratedStudentExams.update((count) => reconcile(count, counts.numberOfGeneratedStudentExams ?? 0));
-                    this.numberOfStarted.update((count) => reconcile(count, counts.numberOfExamsStarted ?? 0));
-                    this.numberOfSubmitted.update((count) => reconcile(count, counts.numberOfExamsSubmitted ?? 0));
+                    this.numberOfGeneratedStudentExams.update((count) => reconcile(count, counts.numberOfGeneratedStudentExams));
+                    this.numberOfStarted.update((count) => reconcile(count, counts.numberOfExamsStarted));
+                    this.numberOfSubmitted.update((count) => reconcile(count, counts.numberOfExamsSubmitted));
                     this.keepCountsConsistent();
                 },
                 error: () => {

@@ -264,8 +264,8 @@ export class ExamRequestAiFeedbackButtonComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (usage) => {
-                    this.athenaFeedbackUsed.set(usage.used ?? 0);
-                    this.athenaFeedbackLimit.set(usage.limit ?? 0);
+                    this.athenaFeedbackUsed.set(usage.used);
+                    this.athenaFeedbackLimit.set(usage.limit);
                 },
                 error: () => onError?.(),
             });

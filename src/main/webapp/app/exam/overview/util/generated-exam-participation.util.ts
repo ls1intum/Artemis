@@ -4,7 +4,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import { CourseForStudentExamDTO, ExamForStudentExamDTO, StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
-import type { ExamMode as GeneratedExamMode } from 'app/openapi/model/exam-mode';
 import type { ExamForOverview as GeneratedExamForOverview } from 'app/openapi/model/exam-for-overview';
 import type { ExamSidebarData } from 'app/openapi/model/exam-sidebar-data';
 import type { StudentExam as GeneratedStudentExam } from 'app/openapi/model/student-exam';
@@ -17,50 +16,23 @@ import type { CourseForStudentExam } from 'app/openapi/model/course-for-student-
  */
 
 /**
- * Maps the generated exam mode to the exam mode enum of the client.
- *
- * @param mode the mode the server sent
- * @returns the enum value, or undefined if the server sent none
- */
-export function toExamMode(mode: GeneratedExamMode | undefined): ExamMode | undefined {
-    switch (mode) {
-        case 'REAL':
-            return ExamMode.REAL;
-        case 'TEST':
-            return ExamMode.TEST;
-        case 'TEST_WITH_SUPERVISED_SESSION':
-            return ExamMode.TEST_WITH_SUPERVISED_SESSION;
-        default:
-            return undefined;
-    }
-}
-
-/**
- * Converts the exams of the course overview. An entry without an id cannot be linked from the sidebar and is skipped;
- * the server always sends the id.
+ * Converts the exams of the course overview.
  *
  * @param exams the generated overview exams
  * @returns the exams with dayjs dates
  */
 export function toExamsForOverview(exams: GeneratedExamForOverview[]): ExamForOverview[] {
-    return exams.flatMap((exam) => {
-        if (exam.id === undefined) {
-            return [];
-        }
-        return [
-            {
-                id: exam.id,
-                title: exam.title,
-                moduleNumber: exam.moduleNumber,
-                visibleDate: convertDateStringFromServer(exam.visibleDate),
-                startDate: convertDateStringFromServer(exam.startDate),
-                endDate: convertDateStringFromServer(exam.endDate),
-                workingTime: exam.workingTime,
-                examMaxPoints: exam.examMaxPoints,
-                examMode: toExamMode(exam.examMode),
-            },
-        ];
-    });
+    return exams.map((exam) => ({
+        id: exam.id,
+        title: exam.title,
+        moduleNumber: exam.moduleNumber,
+        visibleDate: convertDateStringFromServer(exam.visibleDate),
+        startDate: convertDateStringFromServer(exam.startDate),
+        endDate: convertDateStringFromServer(exam.endDate),
+        workingTime: exam.workingTime,
+        examMaxPoints: exam.examMaxPoints,
+        examMode: ExamMode[exam.examMode],
+    }));
 }
 
 /**
@@ -80,48 +52,37 @@ export function toSidebarExam(data: ExamSidebarData): Exam {
     };
 }
 
-function toCourseForStudentExam(course: CourseForStudentExam): CourseForStudentExamDTO | undefined {
+function toCourseForStudentExam(course: CourseForStudentExam): CourseForStudentExamDTO {
     const { id, ...fields } = course;
-    return id === undefined ? undefined : hydrate({ id }, fields);
+    return hydrate({ id }, fields);
 }
 
-function toExamForStudentExam(exam: ExamForStudentExam | undefined): ExamForStudentExamDTO | undefined {
-    const examMode = toExamMode(exam?.examMode);
-    if (!exam || exam.id === undefined || examMode === undefined || exam.workingTime === undefined) {
-        return undefined;
-    }
+function toExamForStudentExam(exam: ExamForStudentExam): ExamForStudentExamDTO {
     return {
         id: exam.id,
         title: exam.title,
-        examMode,
+        examMode: ExamMode[exam.examMode],
         workingTime: exam.workingTime,
         course: exam.course && toCourseForStudentExam(exam.course),
     };
 }
 
 /**
- * Converts the test exams of a user. An entry without its id or test run flag is skipped; the server always sends both.
+ * Converts the test exams of a user.
  *
  * @param studentExams the generated student exams
  * @returns the student exams with dayjs dates
  */
 export function toStudentExamDTOs(studentExams: GeneratedStudentExam[]): StudentExamDTO[] {
-    return studentExams.flatMap((studentExam) => {
-        if (studentExam.id === undefined || studentExam.testRun === undefined) {
-            return [];
-        }
-        return [
-            {
-                id: studentExam.id,
-                workingTime: studentExam.workingTime,
-                started: studentExam.started,
-                startedDate: convertDateStringFromServer(studentExam.startedDate),
-                submitted: studentExam.submitted,
-                submissionDate: convertDateStringFromServer(studentExam.submissionDate),
-                testRun: studentExam.testRun,
-                user: studentExam.user,
-                exam: toExamForStudentExam(studentExam.exam),
-            },
-        ];
-    });
+    return studentExams.map((studentExam) => ({
+        id: studentExam.id,
+        workingTime: studentExam.workingTime,
+        started: studentExam.started,
+        startedDate: convertDateStringFromServer(studentExam.startedDate),
+        submitted: studentExam.submitted,
+        submissionDate: convertDateStringFromServer(studentExam.submissionDate),
+        testRun: studentExam.testRun,
+        user: studentExam.user,
+        exam: studentExam.exam && toExamForStudentExam(studentExam.exam),
+    }));
 }

@@ -158,8 +158,8 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
                         this.existsUnfinishedAssessments.set(lastAssessmentFinished !== examStats.numberOfTotalParticipationsForAssessment);
                     }
                 }
-                this.existsUnassessedQuizzes.set(examStats.existsUnassessedQuizzes ?? false);
-                this.existsUnsubmittedExercises.set(examStats.existsUnsubmittedExercises ?? false);
+                this.existsUnassessedQuizzes.set(examStats.existsUnassessedQuizzes);
+                this.existsUnsubmittedExercises.set(examStats.existsUnsubmittedExercises);
             },
             error: () => this.conductionCounts.initialize(),
         });

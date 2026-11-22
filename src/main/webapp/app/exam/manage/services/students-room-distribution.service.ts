@@ -59,8 +59,8 @@ export class StudentsRoomDistributionService {
             .pipe(
                 map((capacityData) => {
                     this.capacityDataInternal.set({
-                        combinedDefaultCapacity: capacityData.combinedDefaultCapacity ?? 0,
-                        combinedMaximumCapacity: capacityData.combinedMaximumCapacity ?? 0,
+                        combinedDefaultCapacity: capacityData.combinedDefaultCapacity,
+                        combinedMaximumCapacity: capacityData.combinedMaximumCapacity,
                     });
                 }),
                 catchError(() => {

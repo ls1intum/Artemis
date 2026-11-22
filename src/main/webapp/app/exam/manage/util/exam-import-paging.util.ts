@@ -13,5 +13,5 @@ import type { ExamForImportList } from 'app/openapi/model/exam-for-import-list';
  */
 export function toExamForImport(dto: ExamForImportList): Exam {
     const course: Course | undefined = dto.course && { id: dto.course.id, title: dto.course.title, testCourse: dto.course.testCourse };
-    return { id: dto.id, title: dto.title, examMode: dto.examMode === undefined ? undefined : ExamMode[dto.examMode], course };
+    return { id: dto.id, title: dto.title, examMode: ExamMode[dto.examMode], course };
 }

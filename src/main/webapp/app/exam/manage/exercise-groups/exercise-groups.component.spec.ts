@@ -639,7 +639,7 @@ describe('Exercise Groups Component', () => {
 
     it('creates a new group via the create-group modal', async () => {
         comp.exerciseGroups.set(groups);
-        const created = { id: 99, title: 'New group', isMandatory: true, exam: { id: exam.id } };
+        const created = { id: 99, title: 'New group', isMandatory: true, exam: { id: exam.id, examMode: 'REAL' as const } };
         vi.spyOn(exerciseGroupApi, 'createExerciseGroup').mockReturnValue(of(created));
 
         comp.openCreateGroupModal();
