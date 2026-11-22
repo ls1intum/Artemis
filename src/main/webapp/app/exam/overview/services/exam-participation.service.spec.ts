@@ -353,7 +353,7 @@ describe('ExamParticipationService', () => {
             });
 
         const req = httpMock.expectOne({ method: 'POST' });
-        expect(req.request.url).toBe('api/exam/courses/1/exams/1/student-exams/submit');
+        expect(req.request.url).toBe('/api/exam/courses/1/exams/1/student-exams/submit');
         req.flush(null);
         expect(received).toBeNull();
     });
@@ -691,7 +691,7 @@ describe('ExamParticipationService', () => {
             httpMock.expectOne({ method: 'GET' }).flush(conductionResponse());
 
             service.submitStudentExam(1, 2, loaded!).subscribe();
-            const req = httpMock.expectOne({ method: 'POST', url: 'api/exam/courses/1/exams/2/student-exams/submit' });
+            const req = httpMock.expectOne({ method: 'POST', url: '/api/exam/courses/1/exams/2/student-exams/submit' });
             expect(JSON.parse(JSON.stringify(req.request.body))).toStrictEqual({
                 id: 3,
                 exercises: [

@@ -243,10 +243,7 @@ export class ExamParticipationService {
      * @param studentExam the student exam to submit
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<void> {
-        const url = this.getResourceURL(courseId, examId) + '/student-exams/submit';
-        const submitStudentExamDTO = toSubmitStudentExamDTO(studentExam);
-
-        return this.httpClient.post<void>(url, submitStudentExamDTO).pipe(
+        return this.studentExamApi.submitStudentExam(courseId, examId, toSubmitStudentExamDTO(studentExam)).pipe(
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
                     return throwError(() => new Error('artemisApp.studentExam.submissionNotInTime'));
