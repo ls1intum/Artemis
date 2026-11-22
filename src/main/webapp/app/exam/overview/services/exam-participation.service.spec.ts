@@ -208,15 +208,15 @@ describe('ExamParticipationService', () => {
         ['summary', () => service.loadStudentExamWithExercisesForSummary(1, 2, 3), '/api/exam/courses/1/exams/2/student-exams/3/summary'],
         ['test run', () => service.loadTestRunWithExercisesForConduction(1, 2, 3), '/api/exam/courses/1/exams/2/test-runs/3/conduction'],
     ])('should keep an omitted ended flag undefined and keep a sent one for %s', (_name, load, url) => {
-        const results: StudentExam[] = [];
+        const results: (StudentExam | undefined)[] = [];
         load().subscribe((value) => results.push(value));
         httpMock.expectOne({ method: 'GET', url }).flush({ id: 3, exercises: [] });
         load().subscribe((value) => results.push(value));
         httpMock.expectOne({ method: 'GET', url }).flush({ id: 3, ended: false, exercises: [] });
 
-        expect(results[0].ended).toBeUndefined();
-        expect(results[0].numberOfExamSessions).toBeUndefined();
-        expect(results[1].ended).toBe(false);
+        expect(results[0]?.ended).toBeUndefined();
+        expect(results[0]?.numberOfExamSessions).toBeUndefined();
+        expect(results[1]?.ended).toBe(false);
     });
 
     it('should load only the exam overview fields and convert all sidebar dates', () => {
