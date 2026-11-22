@@ -15,7 +15,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ExamRoomsComponent } from 'app/exam/manage/students/room-distribution/exam-rooms.component';
 import { AdminExamRoomManagementApi } from 'app/openapi/api/admin-exam-room-management-api';
 import { ExamRoomManagementApi } from 'app/openapi/api/exam-room-management-api';
-import type { ExamRoomLayoutStrategy } from 'app/openapi/model/exam-room-layout-strategy';
 import type { ExamRoom } from 'app/openapi/model/exam-room';
 import type { ExamRoomDeletionSummary } from 'app/openapi/model/exam-room-deletion-summary';
 import type { ExamRoomOverview } from 'app/openapi/model/exam-room-overview';
@@ -78,9 +77,9 @@ describe('ExamRoomsComponent', () => {
             layoutStrategies: [
                 {
                     name: 'default',
-                    type: 'certainType',
+                    type: 'FIXED_SELECTION',
                     capacity: 30,
-                } as ExamRoomLayoutStrategy,
+                },
             ],
         } as ExamRoom;
 
