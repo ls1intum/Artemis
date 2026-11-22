@@ -181,6 +181,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly complaintsEnabled = signal(false);
     readonly feedbackRequestEnabled = signal(false);
     readonly tutorParticipationStatus = signal<TutorParticipationStatus>(undefined!);
+    protected readonly instructionsReviewed = computed(() => {
+        const status = this.tutorParticipationStatus();
+        return status === TutorParticipationStatus.REVIEWED_INSTRUCTIONS || status === TutorParticipationStatus.TRAINED || status === TutorParticipationStatus.COMPLETED;
+    });
     readonly assessmentInstructionsCollapsed = signal(true);
     // Indexed by correction round (0, 1) — readonly so any in-place mutation is a compile error and updates go through .update() with a new array.
     readonly assessedSubmissionsByRound = signal<readonly (readonly Submission[])[]>([]);

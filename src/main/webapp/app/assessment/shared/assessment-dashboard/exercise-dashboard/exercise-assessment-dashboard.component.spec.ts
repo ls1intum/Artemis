@@ -1,3 +1,4 @@
+import { By } from '@angular/platform-browser';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -334,6 +335,21 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.openAssessments()).toBe(8);
         expect(comp.assessedPercentage()).toBe(20);
     });
+
+    it.each([TutorParticipationStatus.REVIEWED_INSTRUCTIONS, TutorParticipationStatus.TRAINED, TutorParticipationStatus.COMPLETED])(
+        'should keep the instructions checkmark visible when expanded with status %s',
+        (status) => {
+            fixture.detectChanges();
+            comp.tutorParticipationStatus.set(status);
+            fixture.detectChanges();
+            const instructions = fixture.debugElement.query(By.directive(CollapsableAssessmentInstructionsComponent)).componentInstance;
+            expect(instructions.showReadCheckmark()).toBe(true);
+
+            comp.assessmentInstructionsCollapsed.set(false);
+            fixture.detectChanges();
+            expect(instructions.showReadCheckmark()).toBe(true);
+        },
+    );
 
     it.each([TutorParticipationStatus.NOT_PARTICIPATED, TutorParticipationStatus.TRAINED])('should keep test-run instructions available with participation status %s', (status) => {
         fixture.detectChanges();
