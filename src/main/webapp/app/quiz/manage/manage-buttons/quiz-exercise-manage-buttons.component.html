@@ -24,6 +24,9 @@
                     <jhi-create-variant-with-ai-button [exercise]="quizExercise()" styleClass="min-w-0 flex-1 [&>tumaet-ui-button]:w-full" />
                 }
             </ng-container>
+            <ng-container detailLifecycleActions>
+                <ng-content select="[lifecycleActions]" />
+            </ng-container>
             <ng-container detailMoreActions>
                 @if (quizExercise().isAtLeastEditor) {
                     <button
@@ -47,7 +50,7 @@
             </ng-container>
         </jhi-exercise-detail-actions>
         @if (evaluationError(); as error) {
-            <p class="mt-2! text-state-danger" role="alert">{{ error }}</p>
+            <p class="mt-2 text-state-danger" role="alert">{{ error }}</p>
         }
     }
     @if (detailPageSection() === 'administration' && quizExercise().isAtLeastInstructor) {

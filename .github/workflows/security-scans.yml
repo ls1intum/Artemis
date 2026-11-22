@@ -1,0 +1,171 @@
+name: Security Scans
+
+# Scans that complement CodeQL and Sonar:
+#   - semgrep: the rules of supporting_scripts/security/semgrep, which encode the checklist of the security guideline.
+#              On a pull request only findings that the change introduces are reported.
+#   - secrets: gitleaks over the commits of the change, or over the whole history in the weekly run.
+#   - osv:     known vulnerabilities in the locked dependencies of the client and of the sbom of the server.
+#   - config:  Trivy over the Dockerfiles and the Kubernetes manifests.
+#
+# Only the rules of the highest severity and the secret scan fail the run. Everything else is reported as an artifact of the
+# run and is reviewed, so that a new scan does not stop development before its findings have been triaged.
+
+on:
+  pull_request:
+    branches: [develop]
+    paths-ignore:
+      - 'documentation/**'
+  push:
+    branches: [develop]
+  schedule:
+    - cron: '17 4 * * 2'
+  workflow_dispatch:
+
+concurrency:
+  group: security-scans-${{ github.event_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  semgrep:
+    name: Semgrep rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      SEMGREP_VERSION: 1.185.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install Semgrep
+        run: python3 -m pip install --quiet "semgrep==${SEMGREP_VERSION}"
+      - name: Test the rules
+        run: semgrep --test --metrics=off supporting_scripts/security/semgrep
+      - name: Report findings
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -Eeuo pipefail
+          BASELINE=()
+          if [ -n "${BASE_SHA}" ]; then
+            BASELINE=(--baseline-commit "${BASE_SHA}")
+          fi
+          semgrep scan --metrics=off --config supporting_scripts/security/semgrep/artemis-security.yml \
+            --exclude supporting_scripts "${BASELINE[@]}" --sarif-output semgrep.sarif src/main/java src/main/webapp/app
+      - name: Fail on findings of the highest severity
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -Eeuo pipefail
+          BASELINE=()
+          if [ -n "${BASE_SHA}" ]; then
+            BASELINE=(--baseline-commit "${BASE_SHA}")
+          fi
+          semgrep scan --metrics=off --config supporting_scripts/security/semgrep/artemis-security.yml --severity ERROR --error \
+            --exclude supporting_scripts "${BASELINE[@]}" src/main/java src/main/webapp/app
+      - name: Upload findings
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: semgrep-findings
+          path: semgrep.sarif
+          if-no-files-found: ignore
+          retention-days: 30
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      GITLEAKS_IMAGE: ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f # v8.30.1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Scan
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          PUSHED_SHA: ${{ github.sha }}
+        run: |
+          set -Eeuo pipefail
+          # A pull request and a push are judged on the commits they bring. The whole history holds findings from before the scan existed, so the weekly scan of the history
+          # only reports them and does not fail.
+          LOG_OPTS=()
+          EXIT_CODE=1
+          if [ "${EVENT_NAME}" = "pull_request" ]; then
+            LOG_OPTS=(--log-opts "${BASE_SHA}..${HEAD_SHA}")
+          elif [ "${EVENT_NAME}" = "push" ] && [ -n "${BEFORE_SHA}" ] && [ "${BEFORE_SHA}" != "0000000000000000000000000000000000000000" ]; then
+            LOG_OPTS=(--log-opts "${BEFORE_SHA}..${PUSHED_SHA}")
+          else
+            EXIT_CODE=0
+          fi
+          docker run --rm -v "${PWD}:/repo" "${GITLEAKS_IMAGE}" git /repo --config /repo/.gitleaks.toml --redact --no-banner --exit-code "${EXIT_CODE}" ${LOG_OPTS[@]+"${LOG_OPTS[@]}"}
+
+  osv:
+    name: Known vulnerabilities in dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      OSV_SCANNER_IMAGE: ghcr.io/google/osv-scanner@sha256:a70ffffc2bfd33482953e5d6b64c6fcdb30239717a07b0f0d3ab2859ce3e4cde # v2.7.1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Scan the lockfile of the client
+        # Advisory: the findings are in the artifact. Dependency updates have their own process (see the dependency update gates).
+        run: |
+          set -Eeuo pipefail
+          docker run --rm -v "${PWD}:/src:ro" "${OSV_SCANNER_IMAGE}" scan source --lockfile /src/pnpm-lock.yaml --format table | tee osv-client.txt || true
+      - name: Upload findings
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: osv-findings
+          path: osv-client.txt
+          if-no-files-found: ignore
+          retention-days: 30
+
+  config:
+    name: Dockerfile and Kubernetes configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Scan the configuration
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          format: table
+          output: trivy-config.txt
+          exit-code: '0'
+          skip-dirs: node_modules,build,documentation
+      - name: Upload findings
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: trivy-config-findings
+          path: trivy-config.txt
+          if-no-files-found: ignore
+          retention-days: 30

@@ -4,7 +4,6 @@ import java.net.URI;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -48,9 +47,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTest extends A
 
     @Value("${artemis.continuous-integration.url}")
     protected URI jenkinsServerUri;
-
-    @Autowired
-    protected RestTemplate restTemplate;
 
     @Autowired
     protected JsonMapper objectMapper;

@@ -18,7 +18,8 @@ export interface IrisDashboardOverview {
     avgResponseTimeSeconds: number;
     p50ResponseTimeSeconds: number;
     p95ResponseTimeSeconds: number;
-    totalTokenCostEur: number;
+    totalTokenCostUsd: number;
+    unpricedTokenCostRequests: number;
 }
 
 export interface IrisDashboardTimeSeriesEntry {

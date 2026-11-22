@@ -1,7 +1,12 @@
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
 import { By } from '@angular/platform-browser';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { DiffReviewBannerComponent } from 'app/programming/shared/diff-review-banner/diff-review-banner.component';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
@@ -26,7 +31,6 @@ import { FileSyncState } from 'app/exercise/synchronization/services/code-editor
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -172,7 +176,6 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: Location, useValue: { replaceState: vi.fn() } },
         { provide: ParticipationService, useClass: MockParticipationService },
         { provide: ActivatedRoute, useValue: { params: of({}) } },
-        { provide: NgbModal, useValue: { open: vi.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
         { provide: TumAetUiConfirmationService, useValue: { confirm: vi.fn(), close: vi.fn() } },
         { provide: CodeEditorRepositoryService, useValue: { pull: vi.fn(() => of(void 0)) } },
         { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: vi.fn(() => of({})) } },
@@ -200,7 +203,7 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
     ];
 }
 
-async function configureTestBed(additionalProviders: Provider[] = []): Promise<void> {
+async function configureTestBed(additionalProviders: Provider[] = [], renderTemplate = false): Promise<void> {
     const reviewCommentProvider = additionalProviders.find((p: any) => p.provide === ExerciseReviewCommentService);
     const componentProviders = reviewCommentProvider ? [reviewCommentProvider] : [];
 
@@ -213,7 +216,13 @@ async function configureTestBed(additionalProviders: Provider[] = []): Promise<v
             add: { imports: [MockComponent(ProgrammingExerciseEditableInstructionComponent)] },
         })
         .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
-            set: { template: '', imports: [], providers: componentProviders },
+            set: renderTemplate
+                ? {
+                      imports: [DiffReviewBannerComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), FaIconComponent],
+                      schemas: [NO_ERRORS_SCHEMA],
+                      providers: componentProviders,
+                  }
+                : { template: '', imports: [], providers: componentProviders },
         })
         .compileComponents();
 }
@@ -1036,6 +1045,46 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         expect(onSave).toHaveBeenCalledOnce();
         expect(setDomain).toHaveBeenCalledExactlyOnceWith(domain);
+    });
+});
+
+describe('CodeEditorInstructorAndEditorContainerComponent - shared diff banner bindings', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it('retains the instructor generation lock and its distinct diff callbacks', async () => {
+        await configureTestBed([], true);
+        // Keep the real page template and isolate unrelated editor/network lifecycle work.
+        vi.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'ngOnInit').mockImplementation(() => {});
+        const fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        const comp = fixture.componentInstance;
+        comp.exercise.set(createMockExercise({ problemStatement: 'Original' }));
+        comp.showDiff.set(true);
+        comp.aiOps.allowSplitView.set(true);
+        comp.aiOps.addedLineCount.set(5);
+        comp.aiOps.removedLineCount.set(3);
+        const revert = vi.spyOn(comp, 'revertAllRefinement').mockImplementation(() => {});
+        const done = vi.spyOn(comp, 'closeDiff').mockImplementation(() => {});
+        fixture.detectChanges();
+        const banner = fixture.debugElement.query(By.directive(DiffReviewBannerComponent)).componentInstance as DiffReviewBannerComponent;
+        expect(banner.actionsDisabled()).toBe(false);
+        expect(banner.addedLineCount()).toBe(5);
+        expect(banner.removedLineCount()).toBe(3);
+        banner.allowSplitView.set(false);
+        expect(comp.aiOps.allowSplitView()).toBe(false);
+        banner.revertRequested.emit();
+        banner.doneRequested.emit();
+        expect(revert).toHaveBeenCalledOnce();
+        expect(done).toHaveBeenCalledOnce();
+        comp.generationRefreshFailed.set(true);
+        fixture.detectChanges();
+        expect(banner.actionsDisabled()).toBe(true);
+        comp.generationRefreshFailed.set(false);
+        comp.aiOps.isGeneratingOrRefining.set(true);
+        fixture.detectChanges();
+        expect(banner.actionsDisabled()).toBe(true);
+        comp.aiOps.isGeneratingOrRefining.set(false);
+        fixture.detectChanges();
+        expect(banner.actionsDisabled()).toBe(false);
     });
 });
 

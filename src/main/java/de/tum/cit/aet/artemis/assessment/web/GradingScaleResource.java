@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -124,7 +125,7 @@ public class GradingScaleResource {
     @GetMapping("grading-scales")
     @EnforceAtLeastStudent
     @ManualConfig // the search only returns the grading scales of courses in which the user is an instructor (admins see all)
-    public ResponseEntity<SearchResultPageDTO<GradingScaleDTO>> getAllGradingScalesInInstructorGroupOnPage(SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<GradingScaleDTO>> getAllGradingScalesInInstructorGroupOnPage(@ParameterObject SearchTermPageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithAuthorities();
         return ResponseEntity.ok(gradingScaleService.getAllOnPageWithSize(search, user));
     }

@@ -1,65 +1,71 @@
 <div
     [id]="'competency-card-' + competency()?.id"
-    class="course-exercise-row row align-items-center justify-content-between mb-2 mt-2 position-relative"
-    [class.border-secondary]="isPrerequisite()"
-    [class.border-success]="isMastered"
-    [class.text-secondary]="isMastered"
+    class="relative -mx-2 my-2 flex cursor-pointer flex-wrap items-center justify-between rounded-lg bg-(--overview-light-background-color) px-4 py-2 hover:bg-(--hover-slightly-darker-body-bg)"
+    [class]="isMastered ? 'text-(--text-body-secondary)' : ''"
 >
     @if (courseId() && !isPrerequisite() && competency()?.id) {
-        <a class="stretched-link" [routerLink]="['/courses', courseId(), 'competencies', competency()?.id!]"></a>
+        <a
+            class="absolute inset-0 z-1 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2"
+            [attr.aria-label]="competency()?.title"
+            [routerLink]="['/courses', courseId(), 'competencies', competency()?.id!]"
+        ></a>
     }
-    <div class="col-auto d-none d-sm-block">
-        <a class="exercise-row-icon">
+    <div class="hidden w-auto px-2 sm:block">
+        <div class="flex min-w-10 items-center justify-center text-(--body-color)">
             <fa-icon
+                class="z-1!"
                 [icon]="getIcon(competency()?.taxonomy)"
                 size="2x"
-                [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency()?.taxonomy ?? 'none') | artemisTranslate"
-                container="body"
+                [tumAetUiTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency()?.taxonomy ?? 'none') | artemisTranslate"
             />
-        </a>
+        </div>
     </div>
-    <div class="col">
-        <div class="row">
-            <div class="col-auto d-sm-none">
-                <h4 class="fw-medium">
+    <div class="min-w-0 flex-1 px-2">
+        <div class="-mx-2 flex min-h-[35px] flex-wrap items-center">
+            <div class="w-auto px-2 sm:hidden">
+                <h4 class="m-0">
                     <fa-icon [icon]="getIcon(competency()?.taxonomy)" />
                 </h4>
             </div>
-            <div class="col-sm col py-2">
+            <div class="min-w-0 flex-1 px-2 py-2">
                 <h4 class="m-0">
                     {{ competency()?.title }}
                     @if (isMastered) {
-                        <span class="badge text-white text-bg-success" data-testid="competency-mastered-badge" jhiTranslate="artemisApp.competency.mastered"></span>
+                        <tumaet-ui-tag class="align-middle" severity="success" data-testid="competency-mastered-badge">
+                            {{ 'artemisApp.competency.mastered' | artemisTranslate }}
+                        </tumaet-ui-tag>
                     }
                     @if (competency()?.optional) {
-                        <span id="optional-badge" class="badge text-white bg-warning" jhiTranslate="artemisApp.competency.optional"></span>
+                        <tumaet-ui-tag id="optional-badge" class="align-middle" severity="warn">
+                            {{ 'artemisApp.competency.optional' | artemisTranslate }}
+                        </tumaet-ui-tag>
                     }
                 </h4>
                 @if (competency()?.description) {
-                    <p class="m-0 markdown-preview" [jhiMarkdown]="competency()?.description"></p>
+                    <p class="markdown-preview m-0" [jhiMarkdown]="competency()?.description"></p>
                 }
                 @if (isPrerequisite() && competency()?.linkedCourseCompetency?.course) {
                     <div>
                         @if (competency()!.linkedCourseCompetency!.course!.title) {
-                            <span class="badge bg-primary">{{ competency()!.linkedCourseCompetency!.course!.title! }}</span>
+                            <tumaet-ui-tag severity="info" size="sm">{{ competency()!.linkedCourseCompetency!.course!.title! }}</tumaet-ui-tag>
                         }
                         @if (competency()!.linkedCourseCompetency!.course!.semester) {
-                            <span class="badge bg-secondary">{{ competency()!.linkedCourseCompetency!.course!.semester! }}</span>
+                            <tumaet-ui-tag severity="secondary" size="sm">{{ competency()!.linkedCourseCompetency!.course!.semester! }}</tumaet-ui-tag>
                         }
                     </div>
                 }
                 <ng-content />
             </div>
             @if (competency()?.softDueDate) {
-                <div class="col-sm col py-2" style="max-width: fit-content">
-                    <span style="vertical-align: middle" jhiTranslate="artemisApp.competency.competencyCard.softDueDate"></span>
-                    <span class="badge" [ngClass]="softDueDatePassed && !isMastered ? 'bg-danger' : 'bg-success'" id="date-badge">
+                <div class="max-w-fit flex-1 px-2 py-2">
+                    <span class="align-middle" jhiTranslate="artemisApp.competency.competencyCard.softDueDate"></span>
+                    <tumaet-ui-tag id="date-badge" class="align-middle" size="sm" [severity]="softDueDatePassed && !isMastered ? 'danger' : 'success'">
                         {{ competency()!.softDueDate! | artemisTimeAgo }}
-                    </span>
+                    </tumaet-ui-tag>
                 </div>
             }
             @if (!noProgressRings()) {
-                <div class="col-sm col text-end py-1 px-2" style="max-width: 95px">
+                <div class="max-w-[95px] flex-1 px-2 py-1 text-right">
                     <jhi-competency-rings [progress]="progress" [mastery]="mastery" />
                 </div>
             }

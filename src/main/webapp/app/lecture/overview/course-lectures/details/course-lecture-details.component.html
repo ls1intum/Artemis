@@ -8,9 +8,9 @@
         <!--
             The page's own title bar. `page-top-bar` holds it to the same height as the shell's title bars, so the
             lecture page reads like the other student pages; the start and end dates sit with the description instead.
-            `px-*` rather than `p-*`, so Bootstrap's !important spacing does not overrule the class's vertical padding.
+            `px-*` rather than `p-*`, so the !important spacing of `p-*` does not overrule the class's vertical padding.
         -->
-        <div class="page-top-bar module-bg rounded-lg px-4! shell-divider-b flex items-center gap-4!">
+        <div class="page-top-bar bg-(--module-bg) rounded-lg px-4 shell-divider-b flex items-center gap-4">
             @if (isSidebarCollapsed()) {
                 <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
             }
@@ -25,7 +25,7 @@
             right that collapse to an icon rail. The panels component supplies the card and its scrolling, so the
             content below carries neither.
         -->
-        <jhi-resizable-panels class="flex-1 overflow-hidden" [useViewportWidthForCollapse]="true" storageKey="lecture-details-split">
+        <jhi-resizable-panels class="flex-1 overflow-hidden!" [useViewportWidthForCollapse]="true" storageKey="lecture-details-split">
             <ng-template jhiPanel [label]="'artemisApp.courseOverview.lectureDetails.lectureContent'" [icon]="faChalkboardTeacher">
                 <!-- Above the description rather than inside it, so the dates still show for a lecture without one. -->
                 <div class="flex flex-row flex-wrap gap-2 mb-2">
@@ -42,7 +42,7 @@
                 @if (lecture.description) {
                     <div class="flex flex-wrap mb-2 mt-2 items-baseline">
                         <div class="w-auto">
-                            <h3 jhiTranslate="artemisApp.courseOverview.lectureDetails.description"></h3>
+                            <h3 class="text-lg!" jhiTranslate="artemisApp.courseOverview.lectureDetails.description"></h3>
                         </div>
                     </div>
                     <div class="flex flex-wrap mb-2 markdown-preview">
@@ -51,9 +51,9 @@
                 }
                 <!-- LECTURE UNITS START-->
                 @if (lecture.lectureUnits) {
-                    <div class="flex flex-wrap mb-2 mt-2 items-center gap-3">
+                    <div class="flex flex-wrap mb-2 mt-2 items-center gap-4">
                         <div class="w-auto">
-                            <h3 class="mb-0" jhiTranslate="artemisApp.courseOverview.lectureDetails.lectureUnits"></h3>
+                            <h3 class="mb-0 text-lg!" jhiTranslate="artemisApp.courseOverview.lectureDetails.lectureUnits"></h3>
                         </div>
                         @if (hasPdfLectureUnit()) {
                             <button
@@ -63,7 +63,7 @@
                                 size="small"
                                 type="button"
                                 id="downloadButton"
-                                class="w-auto rounded-full"
+                                class="w-auto!"
                                 (click)="downloadMergedFiles()"
                                 jhiTranslate="artemisApp.courseOverview.lectureDetails.downloadMergedPdf"
                             ></button>

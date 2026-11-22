@@ -1,3 +1,4 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -45,6 +46,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView {
     private alertService = inject(AlertService);
     private router = inject(Router);
     public courseTitleBarService = inject(CourseTitleBarService);
+
+    protected readonly ExamMode = ExamMode;
 
     private routerSubscription?: Subscription;
     private eventSubscriber?: Subscription;

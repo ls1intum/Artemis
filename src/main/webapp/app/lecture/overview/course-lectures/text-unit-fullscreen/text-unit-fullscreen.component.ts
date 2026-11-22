@@ -77,15 +77,14 @@ export class TextUnitFullscreenComponent implements OnInit {
                     this.isTutorialLecture.set(false);
                     this.lectureId.set(Number(params.get('lectureId')));
                     return this.lectureService.findWithDetails(Number(params.get('lectureId'))).pipe(
-                        tap((response) => {
-                            const lecture = response.body;
+                        tap((lecture) => {
                             const unitId = Number(params.get('unitId'));
-                            const unit = lecture?.lectureUnits?.find((lectureUnit) => lectureUnit.id === unitId && lectureUnit.type === LectureUnitType.TEXT);
-                            this.lectureTitle.set(lecture?.title);
-                            this.isTutorialLecture.set(!!lecture?.isTutorialLecture);
+                            const unit = lecture.lectureUnits?.find((lectureUnit) => lectureUnit.id === unitId && lectureUnit.type === LectureUnitType.TEXT);
+                            this.lectureTitle.set(lecture.title);
+                            this.isTutorialLecture.set(!!lecture.isTutorialLecture);
                             this.textUnit.set(unit);
                             if (unit) {
-                                this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, unit.id);
+                                this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, unit.id, this.courseId());
                             }
                         }),
                         catchError((errorResponse: HttpErrorResponse) => {

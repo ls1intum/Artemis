@@ -3,6 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { LoadingNotificationService } from 'app/core/loading-notification/loading-notification.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('LoadingNotificationComponent', () => {
     let component: LoadingNotificationComponent;
@@ -19,7 +21,10 @@ describe('LoadingNotificationComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [LoadingNotificationComponent],
-            providers: [{ provide: LoadingNotificationService, useValue: loadingNotificationServiceMock }],
+            providers: [
+                { provide: LoadingNotificationService, useValue: loadingNotificationServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         });
         await TestBed.compileComponents();
     });
@@ -117,7 +122,7 @@ describe('LoadingNotificationComponent', () => {
         it('should not display spinner when isLoading is false', () => {
             fixture.detectChanges();
 
-            const spinner = fixture.debugElement.nativeElement.querySelector('.spinner-border');
+            const spinner = fixture.debugElement.nativeElement.querySelector('tumaet-ui-progress-spinner');
             expect(spinner).toBeNull();
         });
 
@@ -125,7 +130,7 @@ describe('LoadingNotificationComponent', () => {
             component.isLoading.set(true);
             fixture.detectChanges();
 
-            const spinner = fixture.debugElement.nativeElement.querySelector('.spinner-border');
+            const spinner = fixture.debugElement.nativeElement.querySelector('tumaet-ui-progress-spinner');
             expect(spinner).not.toBeNull();
         });
 
@@ -135,7 +140,7 @@ describe('LoadingNotificationComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            let spinner = fixture.debugElement.nativeElement.querySelector('.spinner-border');
+            let spinner = fixture.debugElement.nativeElement.querySelector('tumaet-ui-progress-spinner');
             expect(spinner).not.toBeNull();
 
             // Set to false - recreate the fixture to avoid change detection issues
@@ -145,7 +150,7 @@ describe('LoadingNotificationComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            spinner = fixture.debugElement.nativeElement.querySelector('.spinner-border');
+            spinner = fixture.debugElement.nativeElement.querySelector('tumaet-ui-progress-spinner');
             expect(spinner).toBeNull();
         });
 
@@ -153,7 +158,7 @@ describe('LoadingNotificationComponent', () => {
             component.isLoading.set(true);
             fixture.detectChanges();
 
-            const spinner = fixture.debugElement.nativeElement.querySelector('.spinner-border');
+            const spinner = fixture.debugElement.nativeElement.querySelector('tumaet-ui-progress-spinner');
             expect(spinner).not.toBeNull();
             expect(spinner.getAttribute('role')).toBe('status');
         });

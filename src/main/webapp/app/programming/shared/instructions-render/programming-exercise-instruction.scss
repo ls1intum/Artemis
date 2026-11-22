@@ -16,7 +16,7 @@ Instructions wrapper styles
 
         &__markdown {
             width: 100%;
-            max-width: 75ch;
+            max-width: 90ch; // keep in sync with .stepwizard-container
             min-width: 0;
             margin-inline: auto;
             height: inherit;
@@ -34,7 +34,7 @@ Instructions wrapper styles
     height: 100%;
     min-height: 300px;
     padding: 2rem;
-    background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.02) 0%, rgba(var(--bs-info-rgb), 0.02) 100%);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 2%, transparent) 0%, color-mix(in srgb, var(--info) 2%, transparent) 100%);
     border-radius: 8px;
     margin: 1rem;
 }
@@ -46,21 +46,21 @@ Instructions wrapper styles
 }
 
 .empty-state-icon {
-    color: var(--bs-secondary);
+    color: var(--secondary);
     opacity: 0.5;
     margin-bottom: 1.5rem;
     animation: pulse 2s ease-in-out infinite;
 }
 
 .empty-state-title {
-    color: var(--bs-body-color);
+    color: var(--body-color);
     font-weight: 600;
     margin-bottom: 0.75rem;
     font-size: 1.25rem;
 }
 
 .empty-state-description {
-    color: var(--bs-secondary);
+    color: var(--secondary);
     font-size: 0.95rem;
     line-height: 1.6;
     margin-bottom: 0;

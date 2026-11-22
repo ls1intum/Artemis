@@ -121,6 +121,6 @@ class IrisUsageDigestScheduleServiceTest {
 
     private static IrisDashboardDigestDTO dummyDigest() {
         return new IrisDashboardDigestDTO(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), Instant.parse("2026-05-26T23:55:00Z"), 0L, 0L, 0.0, 0L, 0L,
-                0.0, 0L, 0L, 0.0, 0.0, 0.0, 0.0, 0L, 0L, 0L, 0L, 0.0, 0.0, 0.0, 0.0, List.of(), List.of(), "/admin/iris-dashboard");
+                0.0, 0L, 0L, 0.0, 0.0, 0.0, 0.0, 0L, 0L, 0L, 0L, 0.0, 0.0, 0.0, 0.0, 0L, List.of(), List.of(), "/admin/iris-dashboard");
     }
 }

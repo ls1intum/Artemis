@@ -8,7 +8,7 @@ import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-expor
 @Component({
     selector: '[jhiDataExportRequestButton]',
     template: `
-        <span class="d-xl-inline">{{ buttonText() }}</span>
+        <span>{{ buttonText() }}</span>
         <jhi-data-export-confirmation-dialog
             [(visible)]="dialogVisible"
             [expectedLogin]="expectedLogin() ?? ''"

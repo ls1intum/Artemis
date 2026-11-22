@@ -18,8 +18,8 @@
     <div class="build-queue-main-content">
         <jhi-build-job-statistics #statisticsComponent />
 
-        <div class="mb-5">
-            <div class="flex items-center gap-3 mb-3">
+        <div class="mb-12">
+            <div class="flex items-center gap-4 mb-4">
                 <h5 id="build-queue-running-heading" class="mb-0 flex items-center gap-2">
                     <span jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></span>
                     <tumaet-ui-tag severity="info" [value]="runningBuildJobs().length.toString()" />
@@ -46,8 +46,8 @@
                 (jobClick)="navigateToJobDetail($event)"
             />
         </div>
-        <div class="mb-5">
-            <div class="flex items-center gap-3 mb-3">
+        <div class="mb-12">
+            <div class="flex items-center gap-4 mb-4">
                 <h5 id="build-queue-queued-heading" class="mb-0 flex items-center gap-2">
                     <span jhiTranslate="artemisApp.buildQueue.queuedBuildJobs"></span>
                     <tumaet-ui-tag severity="secondary" [value]="queuedBuildJobs().length.toString()" />
@@ -74,49 +74,41 @@
             />
         </div>
         <div>
-            <div class="flex justify-between">
-                <div class="flex items-center gap-2">
-                    <h5 id="build-queue-finished-heading" class="mb-0 flex items-center gap-2">
-                        <span jhiTranslate="artemisApp.buildQueue.finishedBuildJobs"></span>
-                        <tumaet-ui-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
-                    </h5>
-                    <div jhi-build-job-search class="flex items-center gap-2" [(searchTerm)]="searchTerm" (searchRequested)="triggerLoadFinishedJobs()"></div>
-                    <tumaet-ui-button size="small" severity="secondary" (clicked)="loadFinishedBuildJobs()">
-                        <fa-icon [icon]="faSync" />
-                        <span jhiTranslate="metrics.refresh.button"></span>
-                    </tumaet-ui-button>
-                    @if (isLoading()) {
-                        <span class="text-muted-color text-sm" jhiTranslate="artemisApp.buildQueue.filter.search.loading"></span>
-                    }
+            <h5 id="build-queue-finished-heading" class="mb-4 flex items-center gap-2">
+                <span jhiTranslate="artemisApp.buildQueue.finishedBuildJobs"></span>
+                <tumaet-ui-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
+            </h5>
+            <tumaet-ui-table-layout
+                [empty]="finishedBuildJobs().length === 0 && !isLoading()"
+                emptyTitle="artemisApp.buildQueue.noFinishedBuilds"
+                style="--table-layout-offset: 24rem"
+            >
+                <jhi-finished-builds-toolbar
+                    tumAetUiTableToolbar
+                    [(searchTerm)]="searchTerm"
+                    [loading]="isLoading()"
+                    [appliedFilterCount]="appliedFilterCount()"
+                    (searchRequested)="triggerLoadFinishedJobs()"
+                    (refreshRequested)="loadFinishedBuildJobs()"
+                    (filterRequested)="openFilterModal()"
+                />
+                <jhi-finished-jobs-table
+                    class="block"
+                    [buildJobs]="finishedBuildJobs()"
+                    [showCourseId]="isAdministrationView()"
+                    [isAdminView]="isAdministrationView()"
+                    [courseId]="courseId()"
+                    [buildAgents]="buildAgents()"
+                    [(predicate)]="predicate"
+                    [(ascending)]="ascending"
+                    (sortChange)="loadFinishedBuildJobs()"
+                    (jobClick)="navigateToJobDetail($event)"
+                    (viewLogs)="viewBuildLogs($event)"
+                />
+                <div tumAetUiTableFooter class="flex h-10 items-center justify-end border-t border-border px-2" [hidden]="finishedBuildJobs().length === 0 && currentPage() <= 1">
+                    <jhi-slice-navigator [config]="paginationConfig" [hasMoreItems]="hasMore()" [isLoading]="isLoading()" (pageChange)="onPageChange($event)" />
                 </div>
-                <div>
-                    <tumaet-ui-button size="small" [severity]="finishedBuildJobFilter()?.numberOfAppliedFilters ? 'success' : 'secondary'" (clicked)="this.openFilterModal()">
-                        <fa-icon [icon]="faFilter" />
-                        <span class="hidden md:inline">
-                            <span jhiTranslate="artemisApp.buildQueue.filter.open" [translateValues]="{ num: appliedFilterCount() }"></span>
-                        </span>
-                    </tumaet-ui-button>
-                </div>
-            </div>
-            <jhi-finished-jobs-table
-                [buildJobs]="finishedBuildJobs()"
-                [showCourseId]="isAdministrationView()"
-                [isAdminView]="isAdministrationView()"
-                [courseId]="courseId()"
-                [buildAgents]="buildAgents()"
-                [(predicate)]="predicate"
-                [(ascending)]="ascending"
-                (sortChange)="loadFinishedBuildJobs()"
-                (jobClick)="navigateToJobDetail($event)"
-                (viewLogs)="viewBuildLogs($event)"
-            />
-            @if (finishedBuildJobs()) {
-                <div>
-                    <div class="flex justify-center">
-                        <jhi-slice-navigator [config]="paginationConfig" [hasMoreItems]="hasMore()" [isLoading]="isLoading()" (pageChange)="onPageChange($event)" />
-                    </div>
-                </div>
-            }
+            </tumaet-ui-table-layout>
         </div>
     </div>
 
@@ -146,7 +138,7 @@
     <jhi-finished-builds-filter-modal
         [(visible)]="filterModalVisible"
         [finishedBuildJobFilterInput]="finishedBuildJobFilter()"
-        [buildAgentFilterable]="true"
+        [buildAgentFilterable]="courseId() === 0"
         [finishedBuildJobsInput]="finishedBuildJobs()"
         (confirmed)="onFilterConfirmed($event)"
     />
@@ -157,15 +149,15 @@
     <tumaet-ui-button-group>
         <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-running-heading')">
             <span jhiTranslate="artemisApp.buildQueue.running"></span>
-            <tumaet-ui-tag severity="info" class="ms-1" [value]="(runningBuildJobs()?.length || 0).toString()" />
+            <tumaet-ui-tag severity="info" class="ms-1!" [value]="(runningBuildJobs()?.length || 0).toString()" />
         </tumaet-ui-button>
         <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-queued-heading')">
             <span jhiTranslate="artemisApp.buildQueue.queued"></span>
-            <tumaet-ui-tag severity="info" class="ms-1" [value]="(queuedBuildJobs()?.length || 0).toString()" />
+            <tumaet-ui-tag severity="info" class="ms-1!" [value]="(queuedBuildJobs()?.length || 0).toString()" />
         </tumaet-ui-button>
         <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-finished-heading')">
             <span jhiTranslate="artemisApp.buildQueue.finished"></span>
-            <tumaet-ui-tag severity="info" class="ms-1" [value]="(finishedBuildJobs()?.length || 0).toString()" />
+            <tumaet-ui-tag severity="info" class="ms-1!" [value]="(finishedBuildJobs()?.length || 0).toString()" />
         </tumaet-ui-button>
     </tumaet-ui-button-group>
     <span

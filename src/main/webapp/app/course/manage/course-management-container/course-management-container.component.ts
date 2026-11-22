@@ -121,6 +121,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private learningPathsActive = signal(false);
     gocastEnabled = false;
     private presentationAssessmentsActive = signal(false);
+    private smartQuizzesActive = signal(false);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
 
@@ -177,6 +178,14 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((isActive) => {
                 this.presentationAssessmentsActive.set(isActive);
+                this.sidebarItems.set(this.getSidebarItems());
+            });
+
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.SmartQuizzes)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((isActive) => {
+                this.smartQuizzesActive.set(isActive);
                 this.sidebarItems.set(this.getSidebarItems());
             });
 
@@ -405,6 +414,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         sidebarItems.push(this.sidebarItemService.getFaqManagementItem(courseId));
 
         // 8+. Other management items
+        if (this.atlasEnabled && this.hyperionEnabled && isEditor && this.smartQuizzesActive()) {
+            sidebarItems.push(this.sidebarItemService.getQuizQuestionPoolItem(courseId));
+        }
         sidebarItems.push(...this.addCommunicationItem(currentCourse));
         if (isInstructor) {
             sidebarItems.push(...this.getIrisSettingsItem(), ...this.getAthenaSettingsItem());

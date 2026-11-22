@@ -1,5 +1,6 @@
 import { OnDestroy, Service, inject } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
@@ -15,6 +16,7 @@ import { DomainChange, DomainType } from 'app/programming/shared/code-editor/mod
 export class CodeEditorSubmissionService extends DomainDependentService implements OnDestroy {
     private submissionService = inject(ProgrammingSubmissionService);
     private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
 
     private participationId?: number;
     private exerciseId?: number;
@@ -60,7 +62,7 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
             this.exerciseId = (domainValue as StudentParticipation).exercise
                 ? (domainValue as StudentParticipation).exercise?.id
                 : (domainValue as SolutionProgrammingExerciseParticipation).programmingExercise?.id;
-            const personalParticipation = !!(domainValue as StudentParticipation).exercise;
+            const personalParticipation = !!(domainValue as StudentParticipation).exercise && this.isOwnParticipation(domainValue);
             if (this.participationId && this.exerciseId) {
                 this.submissionSubscription = this.submissionService
                     .getLatestPendingSubmissionByParticipationId(this.participationId, this.exerciseId, personalParticipation)
@@ -75,6 +77,16 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
             // There are no submissions for the test repository, so it is never building.
             this.isBuildingSubject.next(false);
         }
+    }
+
+    /**
+     * Whether the participation belongs to the current user, which decides whether the results and submissions come on the topics of the user or on the ones of the
+     * instructors. An instructor who edits the code of a student does not own it. A participation that does not say whom it belongs to counts as the own one.
+     */
+    private isOwnParticipation(participation: StudentParticipation): boolean {
+        const login = this.accountService.userIdentity()?.login;
+        const owners = [participation.student, ...(participation.team?.students ?? [])].filter((user) => !!user?.login);
+        return !login || owners.length === 0 || owners.some((user) => user!.login === login);
     }
 
     /**

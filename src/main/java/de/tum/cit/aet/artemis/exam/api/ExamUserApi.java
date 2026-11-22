@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.exam.api;
 
-import java.util.Optional;
-
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -25,7 +25,25 @@ public class ExamUserApi extends AbstractExamApi {
         this.examUserService = examUserService;
     }
 
-    public Optional<ExamUser> findWithExamById(long examUserId) {
-        return examUserRepository.findWithExamById(examUserId);
+    /**
+     * Loads an exam user.
+     *
+     * @param examUserId the id of the exam user
+     * @return the exam user
+     * @throws EntityNotFoundException if the exam user does not exist
+     */
+    public ExamUser findByIdElseThrow(long examUserId) {
+        return examUserRepository.findByIdElseThrow(examUserId);
+    }
+
+    /**
+     * Loads the course of the exam an exam user is registered for.
+     *
+     * @param examUserId the id of the exam user
+     * @return the course of the exam
+     * @throws EntityNotFoundException if the exam user does not exist
+     */
+    public Course findCourseByExamUserIdElseThrow(long examUserId) {
+        return examUserRepository.findCourseByExamUserId(examUserId).orElseThrow(() -> new EntityNotFoundException("ExamUser", examUserId));
     }
 }

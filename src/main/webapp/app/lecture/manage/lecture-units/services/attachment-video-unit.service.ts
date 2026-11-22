@@ -1,84 +1,88 @@
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
-import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
-import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import dayjs from 'dayjs/esm';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
+import { AttachmentVideoUnitApi } from 'app/openapi/api/attachment-video-unit-api';
+import { AttachmentVideoUnitPlaylistApi } from 'app/openapi/api/attachment-video-unit-playlist-api';
+import type { AttachmentVideoUnit as GeneratedAttachmentVideoUnit } from 'app/openapi/model/attachment-video-unit';
+import type { HiddenPageInfo } from 'app/openapi/model/hidden-page-info';
+import type { SlideOrder } from 'app/openapi/model/slide-order';
+import { toAttachmentRequest, toLectureUnit, toLectureUnitRequest } from 'app/lecture/shared/util/generated-lecture.util';
 
-type EntityResponseType = HttpResponse<AttachmentVideoUnit>;
+/**
+ * Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
+ * See: https://issues.chromium.org/issues/374550348
+ */
+const NGSW_BYPASS = { 'ngsw-bypass': 'true' };
+
+/** What an update of an attachment video unit sends besides the unit itself. */
+export interface AttachmentVideoUnitUpdate {
+    attachment?: Attachment;
+    file?: File;
+    studentVersion?: File;
+    hiddenPages?: HiddenPageInfo[];
+    pageOrder?: SlideOrder[];
+    /** Sent when students are to be notified about a new file; the server notifies whenever it is present, also when it is empty. */
+    notificationText?: string;
+}
+
+/** Names a file for upload; the file itself is kept when it already has the wanted name or none is wanted. */
+export function withFileName(file: File, fileName?: string): File {
+    return fileName === undefined || file.name === fileName ? file : new File([file], fileName, { type: file.type });
+}
 
 @Service()
 export class AttachmentVideoUnitService {
     private httpClient = inject(HttpClient);
-    private lectureUnitService = inject(LectureUnitService);
+    private attachmentVideoUnitApi = inject(AttachmentVideoUnitApi);
+    private attachmentVideoUnitPlaylistApi = inject(AttachmentVideoUnitPlaylistApi);
 
-    private resourceURL = 'api/lecture';
-
-    findById(attachmentVideoUnitId: number, lectureId: number) {
-        return this.httpClient
-            .get<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units/${attachmentVideoUnitId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
+    findById(attachmentVideoUnitId: number, lectureId: number): Observable<AttachmentVideoUnit> {
+        return this.attachmentVideoUnitApi.getAttachmentVideoUnit(attachmentVideoUnitId, lectureId).pipe(map((unit) => toLectureUnit<AttachmentVideoUnit>(unit)));
     }
 
-    create(formData: FormData, lectureId: number): Observable<EntityResponseType> {
-        /** Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
-         * See: https://issues.chromium.org/issues/374550348
-         **/
-        return this.httpClient
-            .post<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units?keepFilename=true`, formData, {
-                headers: { 'ngsw-bypass': 'true' },
-                observe: 'response',
+    create(lectureId: number, unit: AttachmentVideoUnit, attachment?: Attachment, file?: File): Observable<AttachmentVideoUnit> {
+        return this.attachmentVideoUnitApi
+            .createAttachmentVideoUnit(lectureId, toLectureUnitRequest<GeneratedAttachmentVideoUnit>(unit), true, attachment && toAttachmentRequest(attachment), file, {
+                headers: NGSW_BYPASS,
             })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
+            .pipe(map((created) => toLectureUnit<AttachmentVideoUnit>(created)));
     }
 
     /**
      * Updates an attachment video unit.
      * @param lectureId the id of the lecture
      * @param attachmentVideoUnitId the id of the unit
-     * @param formData the unit, and a new file with its attachment if one is uploaded
-     * @param notificationText sent when students are to be notified about a new file; the server notifies whenever it is present, also when it is empty
+     * @param unit the unit
+     * @param update a new file with its attachment if one is uploaded, and what else the update changes
      * @param context the context of the request, for example to show a failure in place instead of an alert
      */
-    update(lectureId: number, attachmentVideoUnitId: number, formData: FormData, notificationText?: string, context?: HttpContext): Observable<EntityResponseType> {
-        let params = new HttpParams().set('keepFilename', 'true');
-        if (notificationText !== undefined) {
-            params = params.set('notificationText', notificationText);
-        }
-        /** Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
-         * See: https://issues.chromium.org/issues/374550348
-         **/
-        return this.httpClient
-            .put<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units/${attachmentVideoUnitId}`, formData, {
-                headers: { 'ngsw-bypass': 'true' },
-                observe: 'response',
-                context,
-                params,
-            })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
-    }
-
-    getSplitUnitsData(lectureId: number, filename: string) {
-        return this.httpClient.get<LectureUnitInformationDTO>(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units/data/${filename}`, { observe: 'response' });
-    }
-
-    createUnits(lectureId: number, filename: string, lectureUnitInformation: LectureUnitInformationDTO) {
-        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units/split/${filename}`, lectureUnitInformation, { observe: 'response' });
-    }
-
-    uploadSlidesForProcessing(lectureId: number, file: File) {
-        const formData: FormData = new FormData();
-        formData.append('file', file);
-        return this.httpClient.post<string>(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units/upload`, formData, { observe: 'response' });
-    }
-
-    getSlidesToRemove(lectureId: number, filename: string, keyPhrases: string) {
-        const params = new HttpParams().set('commaSeparatedKeyPhrases', keyPhrases);
-        return this.httpClient.get<Array<number>>(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units/slides-to-remove/${filename}`, { params, observe: 'response' });
+    update(
+        lectureId: number,
+        attachmentVideoUnitId: number,
+        unit: AttachmentVideoUnit,
+        update: AttachmentVideoUnitUpdate = {},
+        context?: HttpContext,
+    ): Observable<AttachmentVideoUnit> {
+        const { attachment, file, studentVersion, hiddenPages, pageOrder, notificationText } = update;
+        return this.attachmentVideoUnitApi
+            .updateAttachmentVideoUnit(
+                lectureId,
+                attachmentVideoUnitId,
+                toLectureUnitRequest<GeneratedAttachmentVideoUnit>(unit),
+                true,
+                notificationText,
+                attachment && toAttachmentRequest(attachment),
+                file,
+                studentVersion,
+                hiddenPages,
+                pageOrder,
+                { headers: NGSW_BYPASS, context },
+            )
+            .pipe(map((updated) => toLectureUnit<AttachmentVideoUnit>(updated)));
     }
 
     /**
@@ -93,22 +97,6 @@ export class AttachmentVideoUnitService {
     }
 
     /**
-     * Update only the student version of an attachment video unit's attachment
-     * This compatibility endpoint remains available for API clients that upload an independently generated student PDF; the current PDF editor sends both files in update().
-     * @param lectureId the id of the lecture
-     * @param attachmentVideoUnitId the id of the attachment video unit
-     * @param formData the FormData containing only the student version file
-     */
-    updateStudentVersion(lectureId: number, attachmentVideoUnitId: number, formData: FormData): Observable<EntityResponseType> {
-        return this.httpClient
-            .put<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units/${attachmentVideoUnitId}/student-version`, formData, {
-                headers: { 'ngsw-bypass': 'true' },
-                observe: 'response',
-            })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
-    }
-
-    /**
      * Resolves the TUM Live video of a unit to its HLS playlist URL (.m3u8). The URL is signed and valid for seven hours, so
      * it is requested again whenever the unit is opened.
      *
@@ -116,7 +104,7 @@ export class AttachmentVideoUnitService {
      * @returns Observable<string | undefined> - The playlist URL if found, undefined otherwise
      */
     getPlaylistUrl(lectureUnitId: number): Observable<string | undefined> {
-        return this.httpClient.get(`api/lecture/lecture-units/${lectureUnitId}/playlist`, { responseType: 'text' }).pipe(catchError(() => of(undefined)));
+        return this.attachmentVideoUnitPlaylistApi.getPlaylist(lectureUnitId).pipe(catchError(() => of(undefined)));
     }
 
     /**
@@ -125,9 +113,9 @@ export class AttachmentVideoUnitService {
      *
      * @param lectureId - The ID of the lecture to add the unit to
      * @param file - The PDF file to create the attachment unit from
-     * @returns Observable of the HTTP response containing the created AttachmentVideoUnit
+     * @returns Observable of the created AttachmentVideoUnit
      */
-    createAttachmentVideoUnitFromFile(lectureId: number, file: File): Observable<EntityResponseType> {
+    createAttachmentVideoUnitFromFile(lectureId: number, file: File): Observable<AttachmentVideoUnit> {
         const unitName = file.name
             .replace(/\.pdf$/i, '')
             .replace(/[_-]/g, ' ')
@@ -143,11 +131,6 @@ export class AttachmentVideoUnitService {
         attachment.releaseDate = releaseDate;
         attachment.attachmentType = AttachmentType.FILE;
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
-        formData.append('attachment', objectToJsonBlob(attachment));
-
-        return this.create(formData, lectureId);
+        return this.create(lectureId, attachmentVideoUnit, attachment, file);
     }
 }

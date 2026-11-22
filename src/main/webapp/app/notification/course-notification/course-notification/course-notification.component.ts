@@ -10,7 +10,6 @@ import { CommonModule } from '@angular/common';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { renderPostingMarkdownToHtml } from 'app/foundation/util/markdown-render.util';
-import { escapeString } from 'app/foundation/util/text.utils';
 import { RouterLink } from '@angular/router';
 
 // Each preview translation interpolates one specific field; thread answers use the reply, not the parent post.
@@ -101,27 +100,21 @@ export class CourseNotificationComponent {
         let hasNotificationText = false;
         for (const [key, value] of Object.entries(notification.payload ?? {})) {
             if (key === CourseNotificationService.NOTIFICATION_TEXT_PARAMETER && typeof value === 'string') {
-                // The translation is assigned as HTML, so the editor's plain text is escaped to show up exactly as written.
-                notificationParameters[key] = escapeString(value);
+                // The translation directive escapes interpolation values when rendering HTML.
+                notificationParameters[key] = value;
                 hasNotificationText = value.trim() !== '';
             } else if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
                 notificationParameters[key] = value;
             } else {
-                // Render markdown, then iteratively strip HTML tags to plain text (handles nested tags like
-                // <scr<script>ipt>). The conversion util already sanitizes the HTML via DOMPurify. If the lazy
-                // markdown chunk fails to load, fall back to the raw value rather than leak an unhandled rejection.
-                let sanitized: string;
+                // The markdown pipeline sanitizes HTML via DOMPurify. Extract decoded text so entities are not
+                // escaped twice when the translation directive renders it. If the lazy chunk fails, pass the raw
+                // value to the directive, which also escapes it as text.
                 try {
-                    sanitized = await renderPostingMarkdownToHtml(value.toString());
+                    const sanitized = await renderPostingMarkdownToHtml(value.toString());
+                    notificationParameters[key] = new DOMParser().parseFromString(sanitized, 'text/html').body.textContent ?? '';
                 } catch {
-                    sanitized = value.toString();
+                    notificationParameters[key] = value.toString();
                 }
-                let previous: string;
-                do {
-                    previous = sanitized;
-                    sanitized = sanitized.replace(/<[^>]*>/g, '');
-                } while (sanitized !== previous);
-                notificationParameters[key] = sanitized;
             }
         }
         // A newer notification may have arrived while awaiting the lazy markdown render; discard this stale run.

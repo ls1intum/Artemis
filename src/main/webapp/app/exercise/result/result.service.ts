@@ -1,14 +1,8 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import dayjs from 'dayjs/esm';
+import { HttpResponse } from '@angular/common/http';
 import { Result, isPracticeResult } from 'app/exercise/shared/entities/result/result.model';
-import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
-import { createRequestOption } from 'app/foundation/util/request.util';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
-import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,7 +27,6 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
-export type ResultsWithPointsArrayResponseType = HttpResponse<ResultWithPointsPerGradingCriterion[]>;
 
 export interface Badge {
     severity: 'success' | 'info' | 'secondary';
@@ -41,28 +34,14 @@ export interface Badge {
     tooltip: string;
 }
 
-/**
- * Request options that are appended as query parameters when fetching results with points per grading criterion.
- */
-export interface ResultsWithPointsRequestOptions {
-    withSubmissions?: boolean;
-}
-
 export interface IResultService {
-    getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: ResultsWithPointsRequestOptions) => Observable<ResultsWithPointsArrayResponseType>;
-    getFeedbackDetailsForResult: (participationId: number, result: Result) => Observable<HttpResponse<Feedback[]>>;
-    getResultsWithPointsPerGradingCriterion: (exercise: Exercise) => Observable<ResultsWithPointsArrayResponseType>;
     triggerDownloadCSV: (rows: string[], csvFileName: string) => void;
 }
 
 @Service()
 export class ResultService implements IResultService {
-    private http = inject(HttpClient);
     private translateService = inject(TranslateService);
     private csvDownloadService = inject(CsvDownloadService);
-
-    private exerciseResourceUrl = 'api/assessment/exercises';
-    private participationResourceUrl = 'api/assessment/participations';
 
     private readonly MAX_VALUE_PROGRAMMING_RESULT_INTS = 255;
     // Size of tinyInt in SQL, that is used to store these values
@@ -248,26 +227,6 @@ export class ResultService implements IResultService {
         }
     }
 
-    getResultsForExerciseWithPointsPerGradingCriterion(exerciseId: number, req?: ResultsWithPointsRequestOptions): Observable<ResultsWithPointsArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<ResultWithPointsPerGradingCriterion[]>(`${this.exerciseResourceUrl}/${exerciseId}/results-with-points-per-criterion`, {
-                params: options,
-                observe: 'response',
-            })
-            .pipe(map((res: ResultsWithPointsArrayResponseType) => this.convertResultsWithPointsResponse(res)));
-    }
-
-    getFeedbackDetailsForResult(participationId: number | undefined, result: Result): Observable<HttpResponse<Feedback[]>> {
-        return this.http.get<Feedback[]>(`${this.participationResourceUrl}/${participationId}/results/${result.id!}/details`, { observe: 'response' }).pipe(
-            map((res) => {
-                const feedbacks = res.body ?? [];
-                feedbacks.forEach((feedback) => (feedback.result = result));
-                return res;
-            }),
-        );
-    }
-
     public convertResultDatesFromClient(result: Result): Result {
         return cloneWith(result, {
             completionDate: convertDateFromClient(result.completionDate),
@@ -278,22 +237,6 @@ export class ResultService implements IResultService {
     protected convertArrayResponse(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((result: Result) => this.convertResultDatesFromServer(result));
-        }
-        return res;
-    }
-
-    protected convertResultsWithPointsResponse(res: ResultsWithPointsArrayResponseType): ResultsWithPointsArrayResponseType {
-        if (res.body) {
-            res.body.forEach((resultWithPoints: ResultWithPointsPerGradingCriterion) => {
-                this.convertResultDatesFromServer(resultWithPoints.result);
-                const pointsMap = new Map<number, number>();
-                if (resultWithPoints.pointsPerCriterion) {
-                    Object.entries(resultWithPoints.pointsPerCriterion).forEach(([key, value]) => {
-                        pointsMap.set(+key, value);
-                    });
-                }
-                resultWithPoints.pointsPerCriterion = pointsMap;
-            });
         }
         return res;
     }
@@ -309,36 +252,6 @@ export class ResultService implements IResultService {
             this.convertResultDatesFromServer(res.body);
         }
         return res;
-    }
-
-    /**
-     * Fetches all results together with the total points and points per grading criterion for each of the given exercise.
-     * @param exercise of which the results with points should be fetched.
-     */
-    getResultsWithPointsPerGradingCriterion(exercise: Exercise): Observable<ResultsWithPointsArrayResponseType> {
-        return this.getResultsForExerciseWithPointsPerGradingCriterion(exercise.id!, {
-            withSubmissions: exercise.type === ExerciseType.MODELING,
-        }).pipe(
-            tap((res: HttpResponse<ResultWithPointsPerGradingCriterion[]>) => {
-                return res.body!.map((resultWithScores) => {
-                    const result = resultWithScores.result;
-                    resultWithScores.result = ResultService.processReceivedResult(exercise, result);
-                    return resultWithScores;
-                });
-            }),
-        );
-    }
-
-    public static processReceivedResult(exercise: Exercise, result: Result): Result {
-        if (result.submission?.participation) {
-            (result.submission.participation as StudentParticipation).exercise = exercise;
-        }
-        result.durationInMinutes = ResultService.durationInMinutes(result.completionDate!, result.submission?.participation?.initializationDate ?? exercise.releaseDate!);
-        return result;
-    }
-
-    private static durationInMinutes(completionDate: dayjs.Dayjs, initializationDate: dayjs.Dayjs) {
-        return dayjs(completionDate).diff(initializationDate, 'minutes');
     }
 
     public triggerDownloadCSV(rows: string[], csvFileName: string) {

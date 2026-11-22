@@ -999,12 +999,14 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(updatedAttachmentVideoUnit.getAttachment().getStudentVersion()).isNull();
         assertThat(reloadedAttachment.getVersion()).isEqualTo(originalVersion + 1);
         assertThat(reloadedAttachment.getStudentVersion()).isNull();
-        assertThat(request.get("/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnitId + "/student/dummy.pdf", HttpStatus.OK, byte[].class)).isNotEmpty();
+        // A partially written replacement deck deliberately blocks student downloads until the split stamps its file revision.
         await().untilAsserted(() -> {
             List<Slide> replacementSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId);
-            assertThat(replacementSlides).hasSize(SLIDE_COUNT).allMatch(slide -> slide.getHidden() == null);
+            assertThat(replacementSlides).hasSize(SLIDE_COUNT).allMatch(slide -> slide.getHidden() == null)
+                    .allMatch(slide -> slide.belongsToRevision(reloadedAttachment.getVersion(), reloadedAttachment.getSha256Hash()));
             assertThat(replacementSlides).extracting(Slide::getId).doesNotContainAnyElementsOf(originalSlideIds);
         });
+        assertThat(request.get("/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnitId + "/student/dummy.pdf", HttpStatus.OK, byte[].class)).isNotEmpty();
         await().untilAsserted(() -> assertThat(oldStudentVersionPath).doesNotExist());
     }
 

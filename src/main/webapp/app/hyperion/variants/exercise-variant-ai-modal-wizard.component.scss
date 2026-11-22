@@ -1,4 +1,5 @@
 // ── Step indicator ────────────────────────────────────────────────────────────
+
 // Colour rule for this dialog: anything clickable carries `--primary`, anything that only reports state
 // (step indicator, generation progress, section labels, the source → variant flow) carries `--secondary`.
 
@@ -22,21 +23,21 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    border: 2px solid var(--p-content-border-color);
+    border: 2px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--p-text-muted-color);
-    background: var(--p-content-background);
+    color: var(--text-body-secondary);
+    background: var(--module-bg);
     transition: all 0.3s ease;
 }
 
 .wiz-step-label {
     margin-top: 0.45rem;
     font-size: 0.7rem;
-    color: var(--p-text-muted-color);
+    color: var(--text-body-secondary);
     text-align: center;
     transition: color 0.3s ease;
 }
@@ -45,7 +46,7 @@
     .wiz-step-circle {
         border-color: var(--secondary);
         background: var(--secondary);
-        color: var(--p-surface-0);
+        color: var(--white);
         box-shadow: 0 0 0 4px color-mix(in srgb, var(--secondary) 15%, transparent);
     }
 
@@ -71,7 +72,7 @@
 .wiz-step-line {
     flex: 1;
     height: 2px;
-    background: var(--p-content-border-color);
+    background: var(--border-color);
     margin-top: 17px;
     min-width: 20px;
     border-radius: 2px;
@@ -105,8 +106,8 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: var(--p-content-hover-background);
-    border: 1px solid var(--p-content-border-color);
+    background: var(--hover-slightly-darker-body-bg);
+    border: 1px solid var(--border-color);
     border-radius: 0.5rem;
     padding: 0.6rem 0.9rem;
     font-size: 0.875rem;
@@ -135,8 +136,8 @@
     border-radius: 999px;
     font-size: 0.7rem;
     font-weight: 500;
-    background: var(--p-content-hover-background);
-    color: var(--p-text-muted-color);
+    background: var(--hover-slightly-darker-body-bg);
+    color: var(--text-body-secondary);
     flex-shrink: 0;
 }
 
@@ -165,12 +166,12 @@
     margin: 0;
     font: inherit;
     color: inherit;
-    border: 1px solid var(--p-content-border-color);
+    border: 1px solid var(--border-color);
     border-radius: 0.75rem;
     padding: 1.25rem 1rem;
     text-align: center;
     cursor: pointer;
-    background: var(--p-content-background);
+    background: var(--module-bg);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
     overflow: hidden;
@@ -229,7 +230,7 @@
     &__hint {
         display: block;
         font-size: 0.75rem;
-        color: var(--p-text-muted-color);
+        color: var(--text-body-secondary);
         line-height: 1.35;
         margin: 0 0 0.75rem;
         flex: 1;
@@ -264,7 +265,7 @@
 
     &--selected &__icon {
         background: var(--primary);
-        color: var(--p-surface-0);
+        color: var(--white);
     }
 
     &__check {
@@ -275,7 +276,7 @@
         height: 18px;
         border-radius: 50%;
         background: var(--primary);
-        color: var(--p-surface-0);
+        color: var(--white);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -399,9 +400,9 @@
     padding: 0.6rem 0.75rem;
     font-size: 0.75rem;
     line-height: 1.45;
-    color: var(--p-text-muted-color);
-    background: var(--p-content-hover-background);
-    border: 1px solid var(--p-content-border-color);
+    color: var(--text-body-secondary);
+    background: var(--hover-slightly-darker-body-bg);
+    border: 1px solid var(--border-color);
     border-radius: 0.5rem;
     white-space: pre-wrap;
     overflow-wrap: break-word;
@@ -409,10 +410,10 @@
 
 // "What the AI did" summary on the result step.
 .step-summary {
-    border: 1px solid var(--p-content-border-color);
+    border: 1px solid var(--border-color);
     border-radius: 0.75rem;
     padding: 0.85rem 1rem;
-    background: var(--p-content-background);
+    background: var(--module-bg);
     font-size: 0.8rem;
 
     &__title {
@@ -428,7 +429,7 @@
         padding: 0.35rem 0;
 
         &:not(:last-child) {
-            border-bottom: 1px solid var(--p-content-border-color);
+            border-bottom: 1px solid var(--border-color);
         }
     }
 }
@@ -447,7 +448,7 @@
     gap: 0.75rem;
     padding: 0.45rem 0;
     font-size: 0.875rem;
-    color: var(--p-text-muted-color);
+    color: var(--text-body-secondary);
     transition: color 0.3s ease;
 
     &__icon {
@@ -464,7 +465,7 @@
     }
 
     &--active {
-        color: var(--p-text-color);
+        color: var(--body-color);
         font-weight: 500;
     }
 
@@ -493,7 +494,7 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--p-content-border-color);
+    background: var(--border-color);
 }
 
 @keyframes spin {
@@ -509,10 +510,10 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    border: 1px solid var(--p-content-border-color);
+    border: 1px solid var(--border-color);
     border-radius: 0.75rem;
     padding: 0.7rem 1rem;
-    background: var(--p-content-hover-background);
+    background: var(--hover-slightly-darker-body-bg);
     font-size: 0.9rem;
 
     &__icon {
@@ -535,7 +536,7 @@
     }
 
     &__pending {
-        color: var(--p-text-muted-color);
+        color: var(--text-body-secondary);
         letter-spacing: 2px;
         animation: pulse-icon 1.4s ease-in-out infinite;
     }
@@ -552,7 +553,7 @@
     align-items: flex-start;
     gap: 0.65rem;
     padding: 0.7rem 0.85rem;
-    border: 1px solid var(--p-content-border-color);
+    border: 1px solid var(--border-color);
     border-radius: 0.6rem;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -580,7 +581,7 @@
 
     &__hint {
         font-size: 0.75rem;
-        color: var(--p-text-muted-color);
+        color: var(--text-body-secondary);
     }
 }
 
@@ -591,7 +592,7 @@
         // A <label for> rather than a <div>, so the control has an accessible name; labels are inline by default.
         display: block;
         font-size: 0.7rem;
-        color: var(--p-text-muted-color);
+        color: var(--text-body-secondary);
         margin-bottom: 0.2rem;
     }
 
@@ -618,7 +619,7 @@
     border-radius: 0.5rem;
     padding: 0.6rem 0.75rem;
     font-size: 0.8rem;
-    color: var(--p-text-color);
+    color: var(--body-color);
     line-height: 1.4;
 
     &__icon {

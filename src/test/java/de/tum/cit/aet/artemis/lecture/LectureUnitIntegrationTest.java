@@ -246,6 +246,44 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureUnitById_unitNotReleasedYet_shouldBeForbiddenForStudentsAndAvailableForStaff() throws Exception {
+        textUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        textUnitRepository.save(textUnit);
+        String url = "/api/lecture/lecture-units/" + textUnit.getId();
+
+        request.get(url, HttpStatus.FORBIDDEN, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        request.get(url, HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.get(url, HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureUnitById_unitReleased_shouldBeAvailableForStudents() throws Exception {
+        textUnit.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        textUnitRepository.save(textUnit);
+
+        request.get("/api/lecture/lecture-units/" + textUnit.getId(), HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureUnitById_attachmentNotReleasedYet_unitStaysAvailableLikeInTheLectureDetails() throws Exception {
+        // The availability of the unit follows its own release date, as on the lecture details page. The attachment content is served by the file endpoints, which check the
+        // attachment's own release date.
+        attachmentVideoUnit.setReleaseDate(null);
+        attachmentVideoUnit.getAttachment().setReleaseDate(ZonedDateTime.now().plusDays(1));
+        attachmentRepository.save(attachmentVideoUnit.getAttachment());
+        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+        String url = "/api/lecture/lecture-units/" + attachmentVideoUnit.getId();
+
+        request.get(url, HttpStatus.OK, LectureDetailsDTO.LectureUnitDetailsDTO.class);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteLectureUnit_shouldUnlinkCompetency() throws Exception {
         var lectureUnit = lecture1.getLectureUnits().getFirst();
@@ -411,6 +449,25 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         final var result = request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.OK,
                 LectureUnitForLearningPathNodeDetailsDTO.class);
         assertThat(result).isEqualTo(LectureUnitForLearningPathNodeDetailsDTO.of(textUnit));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLectureUnitForLearningPathNodeDetailsAndMaterialVersionsOfUnreleasedUnitAsStudent_forbidden() throws Exception {
+        textUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        textUnitRepository.save(textUnit);
+
+        request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.FORBIDDEN, LectureUnitForLearningPathNodeDetailsDTO.class);
+        request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/material-versions", HttpStatus.FORBIDDEN, LectureUnitMaterialVersionsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetLectureUnitForLearningPathNodeDetailsOfUnreleasedUnitAsTutor() throws Exception {
+        textUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        textUnitRepository.save(textUnit);
+
+        request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.OK, LectureUnitForLearningPathNodeDetailsDTO.class);
     }
 
     @Test

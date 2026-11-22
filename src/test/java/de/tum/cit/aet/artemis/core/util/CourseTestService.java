@@ -836,8 +836,6 @@ public class CourseTestService {
         request1.setModel("gpt-4");
         request1.setNumInputTokens(100);
         request1.setNumOutputTokens(50);
-        request1.setCostPerMillionInputTokens(30.0f);
-        request1.setCostPerMillionOutputTokens(60.0f);
         request1.setServicePipelineId("test-pipeline");
         request1.setTrace(trace);
         llmTokenUsageRequestRepository.save(request1);
@@ -846,8 +844,6 @@ public class CourseTestService {
         request2.setModel("gpt-3.5-turbo");
         request2.setNumInputTokens(200);
         request2.setNumOutputTokens(100);
-        request2.setCostPerMillionInputTokens(0.5f);
-        request2.setCostPerMillionOutputTokens(1.5f);
         request2.setServicePipelineId("test-pipeline");
         request2.setTrace(trace);
         llmTokenUsageRequestRepository.save(request2);
@@ -2315,6 +2311,9 @@ public class CourseTestService {
         parameters.set("nameOfUser", "student2");
         List<CourseMemberDTO> student2 = request.getList("/api/course/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, CourseMemberDTO.class, parameters);
         assertThat(student2).as("Another student in course found").hasSize(1);
+        // the search result only carries the data needed to pick a user
+        assertThat(student2.getFirst().login()).isNotNull();
+        assertThat(student2.getFirst().email()).isNull();
 
         // find a tutor for course
         parameters.set("nameOfUser", "tutor1");
@@ -3029,12 +3028,22 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseTitle() throws Exception {
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
         course.setTitle("Test Course");
-        course = courseRepo.saveWithDefaultConfigurations(course);
+        course = courseRepo.save(course);
 
         final var title = request.get("/api/course/courses/" + course.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(course.getTitle());
+    }
+
+    // Test
+    public void testGetCourseTitleAndAllowedComplaintsForUserOutsideTheCourse(String outsiderLogin) throws Exception {
+        userUtilService.createAndSaveUser(outsiderLogin);
+        Course course = courseUtilService.createCourse();
+        course = courseRepo.saveWithDefaultConfigurations(course);
+
+        request.get("/api/course/courses/" + course.getId() + "/title", HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/course/courses/" + course.getId() + "/allowed-complaints", HttpStatus.FORBIDDEN, Long.class);
     }
 
     // Test
@@ -3545,7 +3554,7 @@ public class CourseTestService {
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getLearningPathsEnabled(),
                 course.getPresentationAssessmentsEnabled(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getTimeZone(),
                 course.getCourseInformationSharingConfiguration(), course.isGradeRelevant(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(),
-                course.getMaxDailyOrchestrationOverride());
+                course.getMaxDailyOrchestrationOverride(), course.getCourseConfiguration() == null ? null : course.getCourseConfiguration().getStudentWelcomeContext());
     }
 
     public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JacksonException {

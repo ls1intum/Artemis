@@ -477,8 +477,7 @@ public class CourseStudentDataExportService {
             }
 
             List<String> lines = new ArrayList<>();
-            lines.add("TraceId,ServiceType,UserId,ExerciseId,Time,Model,Pipeline,NumInputTokens,NumOutputTokens,CostPerMillionInputTokens,CostPerMillionOutputTokens,"
-                    + "NumCachedInputTokens,CostPerMillionCachedInputTokens,NumCacheWriteInputTokens,CostPerMillionCacheWriteInputTokens");
+            lines.add("TraceId,ServiceType,UserId,ExerciseId,Time,Model,Pipeline,NumInputTokens,NumOutputTokens,NumCachedInputTokens,NumCacheWriteInputTokens,TotalCostUsd");
 
             for (var trace : traces) {
                 String traceId = String.valueOf(trace.getId());
@@ -493,15 +492,12 @@ public class CourseStudentDataExportService {
                     String pipeline = request.getServicePipelineId() != null ? request.getServicePipelineId() : "";
                     String numInputTokens = String.valueOf(request.getNumInputTokens());
                     String numOutputTokens = String.valueOf(request.getNumOutputTokens());
-                    String costPerMillionInputTokens = String.valueOf(request.getCostPerMillionInputTokens());
-                    String costPerMillionOutputTokens = String.valueOf(request.getCostPerMillionOutputTokens());
                     String numCachedInputTokens = String.valueOf(request.getNumCachedInputTokens());
-                    String costPerMillionCachedInputTokens = String.valueOf(request.getCostPerMillionCachedInputTokens());
                     String numCacheWriteInputTokens = String.valueOf(request.getNumCacheWriteInputTokens());
-                    String costPerMillionCacheWriteInputTokens = String.valueOf(request.getCostPerMillionCacheWriteInputTokens());
+                    String totalCostUsd = request.getTotalCostUsd() == null ? "" : String.valueOf(request.getTotalCostUsd());
 
-                    lines.add(String.join(",", traceId, serviceType, userId, exerciseId, time, model, pipeline, numInputTokens, numOutputTokens, costPerMillionInputTokens,
-                            costPerMillionOutputTokens, numCachedInputTokens, costPerMillionCachedInputTokens, numCacheWriteInputTokens, costPerMillionCacheWriteInputTokens));
+                    lines.add(String.join(",", traceId, serviceType, userId, exerciseId, time, model, pipeline, numInputTokens, numOutputTokens, numCachedInputTokens,
+                            numCacheWriteInputTokens, totalCostUsd));
                 }
             }
 

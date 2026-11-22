@@ -26,7 +26,7 @@
     </div>
 } @else if (isTestRun() && studentExam()) {
     <!-- The instructor test run summary has its own title bar, so only the AI feedback button is repeated here. -->
-    <div class="mb-2 flex justify-end">
+    <div class="mb-2! flex justify-end">
         <jhi-exam-request-ai-feedback-button [courseId]="courseId()" [studentExam]="studentExam()" />
     </div>
 }
@@ -57,12 +57,12 @@
     </div>
 }
 @if (!resultsArePublished) {
-    <div class="mb-6!">
+    <div class="mb-6!" data-testid="exam-summary-results-unpublished">
         <fa-icon [icon]="faInfoCircle" class="info-icon" />
         {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
     </div>
 }
-<h3 class="mb-3! text-base! font-semibold!" data-testid="exam-summary-heading" jhiTranslate="artemisApp.exam.exercises"></h3>
+<h3 class="mb-3! text-base font-semibold" data-testid="exam-summary-heading" jhiTranslate="artemisApp.exam.exercises"></h3>
 @for (exercise of studentExam()?.exercises; track exercise; let i = $index) {
     <div [id]="'exercise-' + exercise.id">
         <jhi-collapsible-card [isCardContentCollapsed]="exerciseInfos()[exercise.id!].isCollapsed" [toggleCollapse]="toggleCollapseExercise(exerciseInfos()[exercise.id!])">

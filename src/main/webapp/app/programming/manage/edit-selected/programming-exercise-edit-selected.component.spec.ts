@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -7,6 +7,8 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { of, throwError } from 'rxjs';
 
 import dayjs from 'dayjs/esm';
+import { MockComponent } from 'ng-mocks';
+import { ProgrammingExerciseTimelineComponent } from 'app/programming/shared/programming-exercise-update-timeline/programming-exercise-timeline.component';
 
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -112,5 +114,58 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             expect(comp.isSaving()).toBe(false);
             expect(comp.closeModal).not.toHaveBeenCalled();
         });
+    });
+});
+
+describe('ProgrammingExercise Edit Selected Component template', () => {
+    let comp: ProgrammingExerciseEditSelectedComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseEditSelectedComponent>;
+
+    const exerciseWithTitle = (title: string) => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.title = title;
+        return exercise;
+    };
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                LocalStorageService,
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                provideHttpClient(),
+            ],
+        }).overrideComponent(ProgrammingExerciseEditSelectedComponent, {
+            remove: { imports: [ProgrammingExerciseTimelineComponent] },
+            add: { imports: [MockComponent(ProgrammingExerciseTimelineComponent)] },
+        });
+        fixture = TestBed.createComponent(ProgrammingExerciseEditSelectedComponent);
+        comp = fixture.componentInstance;
+        fixture.componentRef.setInput('selectedProgrammingExercises', [exerciseWithTitle('Sorting'), exerciseWithTitle('Graphs')]);
+        fixture.componentRef.setInput('visible', true);
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+    });
+
+    it('should list the selected exercises inside the table layout before saving', () => {
+        fixture.detectChanges();
+
+        const layout = document.querySelector('tumaet-ui-table-layout')!;
+        const titles = Array.from(layout.querySelectorAll('tbody td')).map((cell) => cell.textContent!.trim());
+        expect(titles).toEqual(['Sorting', 'Graphs']);
+    });
+
+    it('should list the failed exercises instead of the selection after a failed save', () => {
+        fixture.detectChanges(); // opening the dialog resets the result state
+        comp.failureOccurred.set(true);
+        comp.failedExercises.set(['Graphs']);
+        fixture.detectChanges();
+
+        const layout = document.querySelector('tumaet-ui-table-layout')!;
+        expect(Array.from(layout.querySelectorAll('tbody td')).map((cell) => cell.textContent!.trim())).toEqual(['Graphs']);
+        expect(document.querySelectorAll('tumaet-ui-table-layout')).toHaveLength(1);
     });
 });

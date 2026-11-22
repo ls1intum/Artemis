@@ -1,25 +1,13 @@
-<p-dialog
-    [(visible)]="visible"
-    [modal]="true"
-    [closable]="false"
-    [closeOnEscape]="false"
-    [dismissableMask]="false"
-    [draggable]="false"
-    [appendTo]="'body'"
-    [style]="{ width: '50dvw' }"
->
-    <ng-template #header>
-        <h4><span jhiTranslate="artemisApp.lti.initialization.header"></span></h4>
-    </ng-template>
+<tumaet-ui-dialog [(visible)]="visible" [closable]="false" [closeOnEscape]="false" size="medium" [header]="'artemisApp.lti.initialization.header' | artemisTranslate">
     <span jhiTranslate="artemisApp.lti.initialization.body.welcome"></span>
-    <div class="d-flex mb-3 mt-3">
-        <label class="col-sm-2 col-form-label" for="userLoginName"> <span jhiTranslate="artemisApp.lti.initialization.body.loginLabel"></span>: </label>
-        <input id="userLoginName" type="text" class="form-control" disabled [ngModel]="loginName()" />
+    <div class="mt-4 mb-4 flex items-center gap-2">
+        <label class="mb-0 flex-none min-[576px]:w-1/6" for="userLoginName"> <span jhiTranslate="artemisApp.lti.initialization.body.loginLabel"></span>: </label>
+        <input id="userLoginName" type="text" tumAetUiInput class="min-w-0 flex-auto" disabled [ngModel]="loginName()" />
         <jhi-copy-to-clipboard-button [copyText]="loginName()" />
     </div>
-    <div class="d-flex mb-3 mt-3">
-        <label class="col-sm-2 col-form-label" for="userPassword"> <span jhiTranslate="artemisApp.lti.initialization.body.passwordLabel"></span>: </label>
-        <input id="userPassword" type="text" class="form-control" disabled [ngModel]="password()" />
+    <div class="mt-4 mb-4 flex items-center gap-2">
+        <label class="mb-0 flex-none min-[576px]:w-1/6" for="userPassword"> <span jhiTranslate="artemisApp.lti.initialization.body.passwordLabel"></span>: </label>
+        <input id="userPassword" type="text" tumAetUiInput class="min-w-0 flex-auto" disabled [ngModel]="password()" />
         <jhi-copy-to-clipboard-button [copyText]="password()" />
     </div>
     <p>
@@ -29,15 +17,9 @@
         </span>
         <a target="_blank" [routerLink]="this.passwordResetLocation" jhiTranslate="artemisApp.lti.initialization.body.passwordChange"></a>
     </p>
-    <p>
-        <input
-            [attr.aria-label]="'artemisApp.lti.initialization.body.readAndUnderstood' | artemisTranslate"
-            type="checkbox"
-            class="form-check-input"
-            (change)="readAndUnderstood = !readAndUnderstood"
-            [checked]="readAndUnderstood"
-        />
-        <strong jhiTranslate="artemisApp.lti.initialization.body.readAndUnderstood"></strong>
+    <p class="flex items-center gap-2">
+        <tumaet-ui-checkbox inputId="lti-read-and-understood" [(ngModel)]="readAndUnderstood" />
+        <label class="mb-0 font-bold" for="lti-read-and-understood" jhiTranslate="artemisApp.lti.initialization.body.readAndUnderstood"></label>
     </p>
-    <button type="button" class="btn btn-primary" [disabled]="!readAndUnderstood" (click)="clear()" jhiTranslate="artemisApp.lti.initialization.body.confirm"></button>
-</p-dialog>
+    <button type="button" tumAetUiButton [disabled]="!readAndUnderstood" (click)="clear()" jhiTranslate="artemisApp.lti.initialization.body.confirm"></button>
+</tumaet-ui-dialog>

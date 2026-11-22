@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { DebugElement } from '@angular/core';
 import { Location } from '@angular/common';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -207,14 +207,14 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
-                { provide: DialogService, useValue: { open: vi.fn() } },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn() } },
                 SessionStorageService,
                 LocalStorageService,
                 { provide: AthenaService, useClass: MockAthenaService },
                 { provide: ActivatedRoute, useValue: route() },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -804,6 +804,36 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             expect(errorSpy).toHaveBeenCalledOnce();
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.assessment.messages.updateAfterComplaintFailed');
         }
+    });
+
+    it('should refuse to update points outside the bounds after a complaint and name the bounds', async () => {
+        comp.ngOnInit();
+        await flushMicrotasks();
+        const tooManyPoints: Feedback = { detailText: 'too many points', credits: -100.5, type: FeedbackType.MANUAL_UNREFERENCED };
+        comp.unreferencedFeedback.set([tooManyPoints]);
+        vi.spyOn(comp, 'validateFeedback').mockImplementation(() => comp.assessmentsAreValid.set(true));
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        let onErrorCalled = false;
+
+        comp.onUpdateAssessmentAfterComplaint({ complaintResponse: new ComplaintResponse(), onSuccess: () => {}, onError: () => (onErrorCalled = true) });
+
+        expect(updateAfterComplaintStub).not.toHaveBeenCalled();
+        expect(onErrorCalled).toBe(true);
+        expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+    });
+
+    it('should name the bounds when the server refuses the points after a complaint', async () => {
+        comp.ngOnInit();
+        await flushMicrotasks();
+        updateAfterComplaintStub.mockReturnValue(
+            throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+        );
+        vi.spyOn(comp, 'validateFeedback').mockImplementation(() => comp.assessmentsAreValid.set(true));
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        comp.onUpdateAssessmentAfterComplaint({ complaintResponse: new ComplaintResponse(), onSuccess: () => {}, onError: () => {} });
+
+        expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
     });
 
     it('should send the reassembled feedbacks (not a stale snapshot) when resolving a complaint', async () => {

@@ -1,4 +1,4 @@
-.table {
+.effort-summary {
     tr {
         text-align: start;
     }
@@ -10,14 +10,12 @@
     }
 
     th {
-        font-size: small;
-        font-weight: normal;
         text-align: center;
 
         .color-legend {
             width: 5px;
             height: 5px;
-            background: rgba(93, 138, 201, 1);
+            background: var(--graph-blue);
             border-radius: 3px;
         }
     }

@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseDateValidator;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
@@ -349,6 +350,8 @@ public class ExerciseVariantGroupService {
                     ENTITY_NAME, "automaticTestRunAfterAssessmentDueDate");
         }
         programmingExercise.validateDates();
+        // part of the preflight: the timeline update flow checks it too, but only after the group and its other members were saved
+        programmingExerciseCreationUpdateService.validateBuildTimeWindowFitsDates(programmingExercise);
     }
 
     /**
@@ -508,12 +511,12 @@ public class ExerciseVariantGroupService {
     }
 
     /**
-     * Validates via {@link Exercise#validateBaseDates()} rather than the polymorphic {@link Exercise#validateDates()}, which
+     * Validates via {@link ExerciseDateValidator#validate(Exercise)} rather than the polymorphic {@link Exercise#validateDates()}, which
      * for a {@link QuizExercise} would iterate the uninitialized lazy {@code quizBatches} and throw. Group quizzes are always
      * individual-mode, so the skipped batch check is irrelevant here.
      */
     private void validateDates(Exercise exercise) {
-        exercise.validateBaseDates();
+        ExerciseDateValidator.validate(exercise);
     }
 
     /**

@@ -1,16 +1,18 @@
 <form [formGroup]="form()">
     @if (!isInConnectMode()) {
-        <div class="form-group">
+        <div class="mb-4">
             <label for="title" [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.title'"></label>
             <input
                 type="text"
-                class="form-control"
+                tumAetUiInput
+                class="block w-full"
                 id="title"
                 formControlName="title"
+                [tumAetUiInputInvalid]="!!titleControl?.invalid && (!!titleControl?.dirty || !!titleControl?.touched)"
                 [placeholder]="'artemisApp.' + courseCompetency()?.type + '.create.titlePlaceholder' | artemisTranslate"
             />
             @if (titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)) {
-                <div class="alert alert-danger">
+                <tumaet-ui-message severity="error" class="mt-2">
                     @if (titleControl?.errors?.required) {
                         <div [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.create.titleRequiredValidationError'"></div>
                     }
@@ -23,12 +25,12 @@
                     @if (titleControl?.errors?.titleUnique) {
                         <div jhiTranslate="artemisApp.courseCompetency.create.titleUniqueValidationError"></div>
                     }
-                </div>
+                </tumaet-ui-message>
             }
         </div>
     }
     @if (!isInConnectMode()) {
-        <div class="form-group">
+        <div class="mb-4">
             <label for="description" jhiTranslate="artemisApp.courseCompetency.description"></label>
             <jhi-markdown-editor-monaco
                 [markdown]="descriptionControl?.value"
@@ -38,18 +40,18 @@
                 [enableFileUpload]="false"
             />
             @if (descriptionControl?.invalid && descriptionControl?.dirty) {
-                <div class="alert alert-danger">
+                <tumaet-ui-message severity="error" class="mt-2">
                     @if (descriptionControl?.errors?.maxlength) {
                         <div
                             [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.create.descriptionMaxLengthValidationError'"
                             [translateValues]="{ max: competencyValidators.DESCRIPTION_MAX }"
                         ></div>
                     }
-                </div>
+                </tumaet-ui-message>
             }
         </div>
     }
-    <div class="form-group">
+    <div class="mb-4">
         <tumaet-ui-date-picker
             id="softDueDate"
             inputId="softDueDate-input"
@@ -61,7 +63,7 @@
         <small id="softDueDate-hint" class="text-muted-color" [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.create.softDueDateHint'"></small>
     </div>
     @if (!isInConnectMode()) {
-        <div class="form-group">
+        <div class="mb-4">
             <label for="taxonomy">
                 {{ 'artemisApp.courseCompetency.taxonomy' | artemisTranslate }}
                 @if (suggestedTaxonomies().length) {
@@ -72,19 +74,19 @@
         </div>
     }
     @if (!isInConnectMode()) {
-        <div class="form-group">
+        <div class="mb-4">
             <label for="masteryThreshold">
                 {{ 'artemisApp.courseCompetency.masteryThreshold' | artemisTranslate }}: {{ masteryThresholdControl!.value ?? DEFAULT_MASTERY_THRESHOLD }}%
                 @if (averageStudentScore() !== null && averageStudentScore() !== undefined) {
                     <small> ({{ 'artemisApp.courseCompetency.create.averageMastery' | artemisTranslate }}: {{ averageStudentScore() }}%) </small>
                 }
             </label>
-            <input required type="number" class="form-control" name="masteryThreshold" id="masteryThreshold" min="1" max="100" formControlName="masteryThreshold" />
+            <input required type="number" tumAetUiInput class="block w-full" name="masteryThreshold" id="masteryThreshold" min="1" max="100" formControlName="masteryThreshold" />
         </div>
     }
-    <div class="form-group">
-        <input type="checkbox" class="form-check-input" id="optional" formControlName="optional" />
-        <label class="form-control-label" [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.optional'" for="optional"></label>
+    <div class="mb-4 flex items-center gap-1">
+        <tumaet-ui-checkbox inputId="optional" formControlName="optional" />
+        <label [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.optional'" for="optional"></label>
         <jhi-help-icon [text]="'artemisApp.' + courseCompetency()?.type + '.optionalDescription'" />
     </div>
 </form>

@@ -18,7 +18,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 
 function createFaq(id: number, category: string, color: string): Faq {
@@ -107,7 +106,6 @@ describe('FaqComponent', () => {
                     },
                 }),
                 provideHttpClient(),
-                DialogService,
             ],
         });
 
@@ -213,6 +211,22 @@ describe('FaqComponent', () => {
         expect(sortService.sortByProperty).toHaveBeenCalledOnce();
     });
 
+    it('should apply the column header sort and re-sort the filtered faqs', () => {
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty').mockImplementation((array) => array);
+
+        faqComponent.onSort({ field: 'questionTitle', order: 1 });
+
+        expect(faqComponent.predicate()).toBe('questionTitle');
+        expect(faqComponent.ascending()).toBe(true);
+        expect(sortSpy).toHaveBeenCalledWith(faqComponent.filteredFaqs(), 'questionTitle', true);
+
+        faqComponent.onSort({ field: 'faqState', order: -1 });
+
+        expect(faqComponent.predicate()).toBe('faqState');
+        expect(faqComponent.ascending()).toBe(false);
+        expect(sortSpy).toHaveBeenLastCalledWith(faqComponent.filteredFaqs(), 'faqState', false);
+    });
+
     it('should reject faq properly', () => {
         vi.spyOn(faqService, 'update').mockReturnValue(of(new HttpResponse({ body: faq1 })));
         faqComponentFixture.detectChanges();
@@ -304,6 +318,51 @@ describe('FaqComponent', () => {
         expect(faqComponent.searchInput.getValue()).toBe('matching');
         faqsResponse.complete();
         categoriesResponse.complete();
+    });
+
+    it('keeps the edit and delete actions of an FAQ row inline in one group', () => {
+        faqComponentFixture.detectChanges();
+        faqComponent.isAtLeastInstructor.set(true);
+        faqComponentFixture.detectChanges();
+
+        const row = faqComponentFixture.nativeElement.querySelector('#faq-2') as HTMLElement;
+        const actions = row.querySelector('[data-testid="faq-row-actions"]') as HTMLElement;
+        const edit = actions.querySelector('a[tumAetUiButton]') as HTMLElement;
+        const deleteButton = actions.querySelector('#delete-faq-2') as HTMLElement;
+
+        expect(edit).not.toBeNull();
+        expect(deleteButton).not.toBeNull();
+        // Both buttons are direct children of the same wrapping row, so they share a line when there is room.
+        expect(edit.parentElement).toBe(actions);
+        expect(deleteButton.parentElement).toBe(actions);
+        expect(actions.classList).toContain('flex-wrap');
+        expect(actions.querySelector('.flex-col')).toBeNull();
+    });
+
+    it('lists the categories in a popover that is only available when categories exist', () => {
+        faqComponentFixture.detectChanges();
+        faqComponent.existingCategories.set([new FaqCategory('category1', '#94a11c'), new FaqCategory('category2', '#0ab84f')]);
+        faqComponent.hasCategories.set(false);
+        faqComponentFixture.detectChanges();
+        const view = TestBed.inject(CourseTitleBarService).actionsTemplate()!.createEmbeddedView({});
+        view.detectChanges();
+        const trigger = (view.rootNodes[0] as HTMLElement).querySelector('#filter-dropdown-button') as HTMLButtonElement;
+        expect(trigger.disabled).toBe(true);
+
+        faqComponent.hasCategories.set(true);
+        faqComponentFixture.detectChanges();
+        view.detectChanges();
+        expect(trigger.disabled).toBe(false);
+        const toggleFilters = vi.spyOn(faqComponent, 'toggleFilters').mockImplementation(() => {});
+        trigger.click();
+        view.detectChanges();
+
+        const checkboxes = document.querySelectorAll<HTMLInputElement>('.cdk-overlay-container input[type="checkbox"]');
+        expect(Array.from(checkboxes).map((checkbox) => checkbox.id)).toEqual(['category-category1', 'category-category2']);
+        checkboxes[1].click();
+        expect(toggleFilters).toHaveBeenCalledExactlyOnceWith('category2');
+        view.destroy();
+        document.querySelectorAll('.cdk-overlay-container').forEach((element) => element.remove());
     });
 
     it('offers FAQ import to instructors and hides it from tutors', () => {

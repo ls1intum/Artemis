@@ -137,4 +137,17 @@ class HyperionProgrammingLanguageContextFilterServiceTest {
         assertThat(filterService.filter(new LinkedHashMap<>(), ProgrammingLanguage.JAVA)).isEmpty();
         assertThat(filterService.filter(null, ProgrammingLanguage.JAVA)).isEmpty();
     }
+
+    @Test
+    void pathFilterFor_acceptsExactlyThePathsThatTheFilterKeeps() {
+        var accepts = filterService.pathFilterFor(ProgrammingLanguage.JAVA);
+
+        assertThat(accepts.test("src/Main.java")).isTrue();
+        assertThat(accepts.test("README.md")).isTrue();
+        assertThat(accepts.test("build/classes/Main.class")).isFalse();
+        assertThat(accepts.test("build/generated/data.txt")).isFalse();
+        assertThat(accepts.test("data/archive.bin")).isFalse();
+        assertThat(accepts.test("gradlew")).isFalse();
+        assertThat(filterService.pathFilterFor(null).test("node_modules/pkg.json")).isFalse();
+    }
 }

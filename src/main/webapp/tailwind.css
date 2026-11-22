@@ -1,12 +1,10 @@
-/* Bootstrap Reboot remains the reset while legacy Bootstrap coexists with TUM AET UI. */
+/* Preflight is not imported: content/scss/_base.scss holds the element defaults of the application. */
 @layer theme, base, utilities;
 
 @import 'tailwindcss/theme.css' layer(theme);
 
-/* Limit scanning because Bootstrap classes such as `collapse` and `table` are also valid Tailwind utilities. */
+/* Scanning is limited to the folders listed with `@source` below. */
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
-
-@plugin 'tailwindcss-primeui';
 
 /*
  * Width of the grey dividers between the app shell's regions (sidebar / title bar / content / footer). Under the
@@ -56,131 +54,11 @@
     --color-state-info: var(--info);
 }
 
-/* Scanning may precede a module becoming fully Bootstrap-free; the migration rule checks locked paths are covered. */
-@source './app/admin';
-@source './app/shared-ui/components/buttons/button';
-@source './app/shared-ui/table-view';
-@source './app/assessment';
-@source './app/exercise';
-@source './app/presentation';
-@source './app/atlas/shared/standardized-competencies';
-@source './app/atlas/shared/competency-selection';
-@source './app/shared-ui/form/title-channel-name';
-@source './app/exercise/exercise-title-channel-name';
-@source './app/atlas/manage/import-standardized-competencies';
-@source './app/exercise/feedback';
-@source './app/exercise/result';
-@source './app/exercise/participation-submission';
-@source './app/exercise/import';
-@source './app/exercise/review';
-@source './app/programming/manage/code-editor/instructor-and-editor-container';
-@source './app/programming/manage/detail';
-@source './app/programming/manage/vcs-repository-access-log-view';
-@source './app/programming/manage/status';
-@source './app/programming/shared/instructions-render/step-wizard';
-@source './app/localvc/repository-view';
-@source './app/quiz/manage/detail';
-@source './app/quiz/manage/manage-buttons';
-@source './app/quiz/manage/lifecyle-buttons';
-@source './app/text/manage/detail';
-@source './app/modeling/manage/detail';
-@source './app/fileupload/manage/exercise-details';
-@source './app/iris/manage/settings';
-@source './app/course/manage/athena-settings-update';
-@source './app/course/manage/control-center/about-athena-modal';
-@source './app/hyperion';
-@source './app/editor/markdown-editor';
-@source './app/communication/message-editor';
-@source './app/communication/posting-markdown-editor';
-
-/* The whole exam mode, and the example solution that only its summary shows. */
-@source './app/exam';
-@source './app/exercise/example-solution';
-@source './app/localci/build-queue';
-@source './app/course/request';
-@source './app/course/overview/course-statistics';
-@source './app/shared-ui/user-import';
-@source './app/shared-ui/user-registration-modal';
-@source './app/shared-ui/confirm-entity-name';
-@source './app/shared-ui/delete-dialog';
-@source './app/core/alert';
-@source './app/core/about-us';
-@source './app/core/usage-statistics';
-
-/* Lecture and tutorial-group modules, including their reading views and shared UI compositions. */
-@source './app/lecture';
-@source './app/tutorialgroup';
-@source './app/shared-ui/components/resizable-panels';
-@source './app/shared-ui/components/buttons/confirm-autofocus-button';
-@source './app/shared-ui/loading-indicator-overlay';
-@source './app/shared-ui/loading-indicator-container';
-@source './app/shared-ui/components/checklist-check';
-@source './app/shared-ui/information-box';
-@source './app/shared-ui/detail-overview-list';
-@source './app/course/shared/course-sidebar-toggle-button';
-@source './app/atlas/shared/competency-contribution';
-@source './app/atlas/manage/orchestration-trigger';
-@source './app/atlas/shared/orchestration-result-dialog';
-@source './app/core/feature-overview';
-@source './app/core/layouts/footer';
-@source './app/core/navbar/global-search/components/modal/global-search-modal.component.html';
-@source './app/course/overview/setup-passkey-modal';
-@source './app/course/overview/courses';
-@source './app/course/overview/course-registration';
-@source './app/course/sidebar';
-@source './app/notification';
-@source './app/communication/faq';
-@source './app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component.html';
-@source './app/communication/posting-create-edit-modal/post-create-edit-modal';
-@source './app/calendar';
-@source './app/shared-ui/profile-picture';
-@source './app/localci/build-agent-summary';
-@source './app/localci/build-agent-details';
-@source './app/localci/build-job-statistics';
-@source './app/shared-ui/components/buttons/copy-to-clipboard-button';
-@source './app/shared-ui/components/buttons/code-button';
-@source './app/quiz/manage/apollon-diagrams';
-@source './app/exercise/participation/programming-exercise-participation-actions';
-@source './app/quiz/manage/question-reevaluation-actions';
-@source './app/exercise/statistics/statistics-span-selector';
-@source './app/plagiarism/shared/case-header';
-@source './app/communication/saved-posting-banner';
-@source './app/quiz/manage/statistics/question-statistics-chart';
-@source './app/account';
-@source './app/course/manage/update';
-@source './app/assessment/shared/assessment-dashboard';
-@source './app/assessment/overview';
-@source './app/assessment/manage/complaints-for-tutor';
-@source './app/assessment/manage/complaint-response';
-@source './app/text/overview/text-editor';
-@source './app/fileupload/overview/file-upload-submission';
-@source './app/exercise/dashboards/tutor-leaderboard';
-@source './app/exercise/dashboards/tutor-participation-graph';
-@source './app/exercise/exercise-action-bar';
-@source './app/exercise/exam-exercise-row-buttons';
-@source './app/exercise/structured-grading-criterion/grading-instructions-details';
-@source './app/exercise/unreferenced-feedback';
-@source './app/programming/shared/programming-exercise-update-timeline';
-@source './app/course/manage/user-management-dropdown';
-@source './app/videosource/gocast';
-
-/* The submit-button forms describe why they are blocked, and dim the blocked button, with these utilities. They are
-   still Bootstrap-heavy, so scanning them would also emit .col-11/.col-12/.bg-primary as Tailwind utilities on top of
-   Bootstrap's own. Emit just the ones they use instead. A blocked button is aria-disabled rather than disabled, so it
-   stays focusable and keeps the pointer events its tooltip needs; that also means :disabled cannot style it. */
-@source inline("sr-only");
-@source inline("hidden");
-@source inline("sm:inline");
-@source inline("aria-disabled:opacity-60");
-@source inline("aria-disabled:cursor-not-allowed");
-
-/* The Bootstrap-heavy drag-and-drop question editor uses these utilities for its text length hint and live counter. */
-@source inline("max-w-[150px] pointer-events-none absolute bottom-2 right-3 z-[4] text-xs leading-none text-muted-color text-state-danger");
-
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';
 
-/* Prevent bare Bootstrap component names from becoming Tailwind utilities in scanned modules. */
+/* `localRules/no-bootstrap-classes` bans the class names `collapse` and `table` in templates, so a stray use must not
+   start to render as the Tailwind utility of the same name either. */
 @source not inline("collapse");
 @source not inline("table");
 
@@ -190,7 +68,7 @@
 :root {
     color-scheme: light;
 
-    --tumaet-ui-font-family: var(--bs-body-font-family);
+    --tumaet-ui-font-family: var(--font-family-sans-serif);
     --tumaet-ui-primary-color: color-mix(in srgb, var(--primary) 88%, black);
     --tumaet-ui-primary-contrast-color: var(--colored-btn-font);
     --tumaet-ui-accent-color: var(--primary-dark);
@@ -217,6 +95,11 @@
     --tumaet-ui-state-info: var(--info);
     --tumaet-ui-state-info-contrast: var(--black);
     --tumaet-ui-state-info-foreground: var(--artemis-alert-info-color);
+
+    /* A solid success button shows a white label on a slightly darker green: black text on the plain green was hard to read, and white on the plain green would fall
+       below AA. Only the button roles change, so the success status colour that messages, tags and badges use stays as it is. */
+    --tumaet-ui-button-success-background: color-mix(in srgb, var(--success) 80%, black);
+    --tumaet-ui-button-success-contrast: var(--white);
     --tumaet-ui-tooltip-background: var(--artemis-dark);
     --tumaet-ui-tooltip-color: var(--tooltip-color);
 }
@@ -224,7 +107,7 @@
 [data-theme='dark'] {
     color-scheme: dark;
 
-    /* A solid blue with a white label, matching the legacy Bootstrap primary button (and light mode), rather than a
+    /* A solid blue with a white label, matching the primary button of the light theme, rather than a
        pale tint with near-black text that reads as washed-out on a dark page. */
     --tumaet-ui-primary-color: var(--primary);
     --tumaet-ui-primary-contrast-color: var(--colored-btn-font);
@@ -239,6 +122,10 @@
     --tumaet-ui-state-warning-contrast: var(--artemis-alert-warning-background);
     --tumaet-ui-state-info: var(--artemis-alert-info-color);
     --tumaet-ui-state-info-contrast: var(--artemis-alert-info-background);
+
+    /* The dark theme keeps the success button of the kit, which follows the status colour. The light override above must not reach it. */
+    --tumaet-ui-button-success-background: var(--tumaet-ui-state-success);
+    --tumaet-ui-button-success-contrast: var(--tumaet-ui-state-success-contrast);
 }
 
 /* Keep navbar trigger colors local; portalled content retains the body theme. */
@@ -253,8 +140,70 @@
     *,
     ::before,
     ::after {
-        border-color: var(--p-content-border-color);
+        border-color: var(--ui-border-color);
     }
+}
+
+/*
+ * The brand colour and the neutral surface ramp as Tailwind colours (`text-primary`, `bg-primary/10`,
+ * `border-surface-200`). Their values are theme variables, see "Tailwind colour utilities" in
+ * content/scss/themes/_default-variables.scss and _dark-variables.scss.
+ */
+@theme inline {
+    --color-primary: var(--ui-primary);
+    --color-primary-contrast: var(--ui-primary-contrast);
+    --color-surface-0: var(--ui-surface-0);
+    --color-surface-50: var(--ui-surface-50);
+    --color-surface-100: var(--ui-surface-100);
+    --color-surface-200: var(--ui-surface-200);
+    --color-surface-300: var(--ui-surface-300);
+    --color-surface-400: var(--ui-surface-400);
+    --color-surface-500: var(--ui-surface-500);
+    --color-surface-600: var(--ui-surface-600);
+    --color-surface-700: var(--ui-surface-700);
+    --color-surface-800: var(--ui-surface-800);
+    --color-surface-900: var(--ui-surface-900);
+    --color-surface-950: var(--ui-surface-950);
+}
+
+@utility border-surface {
+    border-color: var(--ui-border-color);
+}
+
+@utility bg-emphasis {
+    background: var(--ui-emphasis-background);
+    color: var(--ui-emphasis-color);
+}
+
+@utility bg-highlight {
+    background: var(--ui-highlight-background);
+    color: var(--ui-highlight-color);
+}
+
+@utility text-color {
+    color: var(--ui-text-color);
+}
+
+/* A colon after a label, for example in front of a value in the same line. */
+@layer utilities {
+    .colon-suffix::after {
+        content: ':';
+    }
+}
+
+@utility text-muted-color {
+    color: var(--ui-text-muted-color);
+}
+
+/*
+ * The radius of `rounded` and the three shadows the application uses have the values Artemis has always rendered,
+ * not Tailwind's defaults.
+ */
+@theme {
+    --radius: 0.15rem;
+    --shadow-sm: 0 0.125rem 0.25rem rgb(0 0 0 / 0.075);
+    --shadow: 0 0.5rem 1rem rgb(0 0 0 / 0.15);
+    --shadow-lg: 0 1rem 3rem rgb(0 0 0 / 0.175);
 }
 
 @theme inline {
@@ -262,48 +211,42 @@
     --color-surface-sunken: var(--tumaet-ui-control-background);
     --color-surface-raised: var(--tumaet-ui-content-background);
     --color-surface-hover: var(--tumaet-ui-hover-background);
-    --color-text: var(--tumaet-ui-text-color);
-    --color-text-secondary: var(--tumaet-ui-muted-color);
 }
 
-/* Button action groups migrated to TUM AET UI; keep their layout utilities explicit. */
-@source './app/atlas/manage/competency-management/competency-management-table.component.html';
-@source './app/atlas/manage/competency-management/competency-management.component.html';
-@source './app/atlas/manage/competency-management/import-all-competencies.component.html';
-@source './app/atlas/manage/generate-competencies/competency-recommendation-detail.component.html';
-@source './app/atlas/manage/import/import-course-competencies.component.html';
-@source './app/atlas/manage/learning-paths-configuration/learning-paths-configuration.component.html';
-@source './app/communication/answer-post/answer-post.component.html';
-@source './app/communication/posting-reactions-bar/posting-reactions-bar.component.html';
-@source './app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component.html';
-@source './app/core/legal/data-export/data-export.component.html';
-@source './app/course/manage/control-center/athena-enabled/athena-enabled.component.html';
-@source './app/course/manage/course-material-import/course-material-import-dialog.component.html';
-@source './app/course/manage/course-scores/course-scores.component.html';
-@source './app/course/manage/exercises/course-management-exercises.component.html';
-@source './app/fileupload/manage/assess/file-upload-assessment.component.html';
-@source './app/plagiarism/manage/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component.html';
-@source './app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component.html';
-@source './app/programming/manage/code-editor/file-browser/file/code-editor-file-browser-file.component.html';
-@source './app/programming/manage/code-editor/file-browser/folder/code-editor-file-browser-folder.component.html';
-@source './app/programming/manage/grading/charts/test-case-distribution-chart.component.html';
-@source './app/programming/manage/grading/table-actions/programming-exercise-grading-table-actions.component.html';
-@source './app/programming/manage/grading/tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component.html';
-@source './app/programming/manage/version-history/programming-exercise-version-programming-metadata.component.html';
-@source './app/programming/shared/actions/trigger-build-button/programming-exercise-trigger-build-button.component.html';
-@source './app/programming/shared/code-editor/actions/code-editor-actions.component.html';
-@source './app/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component.html';
-@source './app/quiz/manage/export/quiz-exercise-export.component.html';
-@source './app/quiz/manage/list-edit-existing/quiz-question-list-edit-existing.component.html';
-@source './app/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component.html';
-@source './app/quiz/manage/re-evaluate/quiz-re-evaluate.component.html';
-@source './app/quiz/manage/re-evaluate/warning/quiz-re-evaluate-warning.component.html';
-@source './app/quiz/manage/short-answer-question/short-answer-question-edit.component.html';
-@source './app/quiz/manage/statistics/quiz-statistics-footer/quiz-statistics-footer.component.html';
-@source './app/quiz/manage/update/quiz-exercise-update.component.html';
-@source './app/quiz/overview/participation/quiz-participation.component.html';
-@source './app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component.html';
-@source './app/shared-ui/export/modal/export-modal.component.html';
-@source './app/shared-ui/form/form-footer/form-footer.component.html';
-@source './app/sharing/sharing.component.html';
-@source './app/text/manage/example-text-submission/example-text-submission.component.html';
+/* The migrated modules and components: Tailwind scans every template and component in them. eslint.config.mjs and stylelint.config.json lock the same list. */
+@source './app/account';
+@source './app/admin';
+@source './app/aiworker';
+@source './app/assessment';
+@source './app/atlas';
+@source './app/calendar';
+@source './app/communication';
+@source './app/app.component.html';
+@source './app/core';
+@source './app/course';
+@source './app/editor';
+@source './app/exam';
+@source './app/exercise';
+@source './app/fileupload';
+@source './app/foundation';
+@source './app/hyperion';
+@source './app/iris';
+@source './app/lecture';
+@source './app/localci';
+@source './app/localvc';
+@source './app/logos';
+@source './app/lti';
+@source './app/modeling';
+@source './app/notification';
+@source './app/plagiarism';
+@source './app/presentation';
+@source './app/programming';
+@source './app/quiz';
+@source './app/shared';
+@source './app/shared-ui';
+@source './app/sharing';
+@source './app/text';
+@source './app/tutorialgroup';
+@source './app/videosource';
+
+/* Participation build and repository export controls live outside the migrated exercise module. */

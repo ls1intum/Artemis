@@ -175,9 +175,14 @@ public class ProgrammingExerciseBuildConfigService {
             log.error("Failed to parse DockerRunConfig from JSON string: {}. Using default settings.", buildConfig.getDockerFlags());
             throw new IllegalArgumentException("Failed to parse DockerRunConfig from JSON string: " + buildConfig.getDockerFlags(), e);
         }
+        if (dockerFlagsDTO == null) {
+            // The text "null" is valid JSON that reads as no object at all
+            throw new IllegalArgumentException("The docker flags are not a JSON object: " + buildConfig.getDockerFlags());
+        }
 
         boolean customDockerNetwork = dockerFlagsDTO.network() != null && !dockerFlagsDTO.network().isBlank();
-        if (customDockerNetwork && !allowedNetworks.contains(dockerFlagsDTO.network())) {
+        // Attaching a build to the network of the host or of another container is never accepted, whatever the configured list contains.
+        if (customDockerNetwork && (DockerRunConfig.sharesNetworkNamespace(dockerFlagsDTO.network()) || !allowedNetworks.contains(dockerFlagsDTO.network()))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid network: " + dockerFlagsDTO.network());
         }
 

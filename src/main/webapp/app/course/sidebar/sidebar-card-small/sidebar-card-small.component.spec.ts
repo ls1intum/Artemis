@@ -111,7 +111,7 @@ describe('SidebarCardSmallComponent', () => {
         });
         fixture.changeDetectorRef.detectChanges();
         const card = fixture.nativeElement.querySelector('#test-sidebar-card-small');
-        expect(card.classList.contains('border-primary')).toBe(false);
+        expect(card.classList.contains('border-(--primary)')).toBe(false);
     });
 
     it('should have border-primary for non-muted conversations with unread', () => {
@@ -123,6 +123,6 @@ describe('SidebarCardSmallComponent', () => {
         });
         fixture.changeDetectorRef.detectChanges();
         const card = fixture.nativeElement.querySelector('#test-sidebar-card-small');
-        expect(card.classList.contains('border-primary')).toBe(true);
+        expect(card.classList.contains('border-(--primary)')).toBe(true);
     });
 });

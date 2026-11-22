@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.Isolated;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 // else, and AbstractArtemisIntegrationTest re-asserts the real path for every integration test afterwards.
 @Isolated
 @ExtendWith(MockitoExtension.class)
+@ResourceLock("FilePathConverter")
 class AttachmentVideoUnitServiceTest {
 
     private static final long LECTURE_UNIT_ID = 42L;
