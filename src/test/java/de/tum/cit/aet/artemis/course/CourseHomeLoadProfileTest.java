@@ -3,17 +3,10 @@ package de.tum.cit.aet.artemis.course;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 
 import jakarta.persistence.EntityManagerFactory;
 
-import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.event.spi.EventType;
-import org.hibernate.event.spi.PostLoadEventListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
@@ -85,6 +78,7 @@ class CourseHomeLoadProfileTest extends AbstractSpringIntegrationIndependentTest
         try (var entityLoads = new RequestEntityLoads(emf); var worker = Executors.newSingleThreadExecutor()) {
             var backgroundCourse = worker.submit(() -> courseRepository.findByIdElseThrow(course.getId())).get();
             assertThat(backgroundCourse.getId()).isEqualTo(course.getId());
+            assertThat(entityLoads.countAll()).isZero();
             get();
             assertThat(entityLoads.count(Course.class)).as("Home request Course loads").isZero();
         }
@@ -96,6 +90,7 @@ class CourseHomeLoadProfileTest extends AbstractSpringIntegrationIndependentTest
         try (entityLoads) {
             courseRepository.findByIdElseThrow(course.getId());
             assertThat(entityLoads.count(Course.class)).isEqualTo(1);
+            assertThat(entityLoads.countAll()).isPositive();
         }
         courseRepository.findByIdElseThrow(course.getId());
         assertThat(entityLoads.count(Course.class)).as("closed measurement must not keep counting").isEqualTo(1);
@@ -115,43 +110,6 @@ class CourseHomeLoadProfileTest extends AbstractSpringIntegrationIndependentTest
         var e = exercises.createIndividualTextExercise(course, base.minusDays(1), base.plusDays(5), base.plusDays(6));
         e.setProblemStatement("secret solution " + "x".repeat(1000));
         return exerciseRepository.saveAndFlush(e);
-    }
-
-    /** Counts real hydration only within the request thread's measurement scope. */
-    private static final class RequestEntityLoads implements AutoCloseable {
-
-        private static final ThreadLocal<RequestEntityLoads> ACTIVE = new ThreadLocal<>();
-
-        private static final PostLoadEventListener OBSERVER = event -> {
-            var measurement = ACTIVE.get();
-            if (measurement != null) {
-                measurement.loadedTypes.merge(event.getEntity().getClass(), 1L, Long::sum);
-            }
-        };
-
-        private final Map<Class<?>, Long> loadedTypes = new HashMap<>();
-
-        private RequestEntityLoads(EntityManagerFactory emf) {
-            var listeners = emf.unwrap(SessionFactoryImplementor.class).getEventEngine().getListenerRegistry().getEventListenerGroup(EventType.POST_LOAD);
-            synchronized (OBSERVER) {
-                List<PostLoadEventListener> registered = new ArrayList<>();
-                listeners.fireEventOnEachListener(registered, (listener, existing) -> existing.add(listener));
-                if (!registered.contains(OBSERVER)) {
-                    listeners.appendListener(OBSERVER);
-                }
-            }
-            ACTIVE.set(this);
-        }
-
-        private long count(Class<?> entityType) {
-            return loadedTypes.entrySet().stream().filter(entry -> entityType.isAssignableFrom(entry.getKey())).mapToLong(Map.Entry::getValue).sum();
-        }
-
-        @Override
-        public void close() {
-            // Keep the inert shared observer installed: replacing listener groups could interrupt background callbacks.
-            ACTIVE.remove();
-        }
     }
 
     private CourseHomeDTO get() throws Exception {
