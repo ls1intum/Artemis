@@ -40,7 +40,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -49,6 +48,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
 import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
 import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamExerciseStartPreparationStatusDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
@@ -660,10 +660,10 @@ public class StudentExamResource {
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/start-exercises/status")
     @EnforceAtLeastStudent
     @ManualConfig
-    public ResponseEntity<ExamExerciseStartPreparationStatus> getExerciseStartStatus(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<ExamExerciseStartPreparationStatusDTO> getExerciseStartStatus(@PathVariable Long courseId, @PathVariable Long examId) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        return ResponseEntity.ok(studentExamService.getExerciseStartStatusOfExam(examId).orElse(null));
+        return ResponseEntity.ok(studentExamService.getExerciseStartStatusOfExam(examId).map(ExamExerciseStartPreparationStatusDTO::of).orElse(null));
     }
 
     /**
@@ -679,7 +679,7 @@ public class StudentExamResource {
     @PutMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-submitted")
     @EnforceAtLeastStudent
     @ManualConfig
-    public ResponseEntity<StudentExamDTO> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+    public ResponseEntity<StudentExamDTO> toggleStudentExamToSubmitted(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         // Only the login is used, for the audit event and the log line, and the login is already in the security
         // context. Loading the user read a row of roughly sixty columns to obtain a value we were holding already.
         String instructorLogin = userRepository.getCurrentUserLogin();

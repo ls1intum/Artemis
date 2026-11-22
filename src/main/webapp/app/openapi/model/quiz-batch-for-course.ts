@@ -11,8 +11,8 @@
 
 export interface QuizBatchForCourse {
     id?: number;
-    startTime?: string;
+    password?: string;
     started?: boolean;
     ended?: boolean;
-    password?: string;
+    startTime?: string;
 }
