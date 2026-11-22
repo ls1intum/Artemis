@@ -39,7 +39,7 @@ class GenerationOutputCaptureTest {
     private static GenerationAssignment assignment(ExerciseBrief.Mode mode) {
         var identity = new ExecutionIdentity("job", 1, UUID.randomUUID(), "worker", UUID.randomUUID());
         var brief = new ExerciseBrief("Stack", "stack", "de.example", null, "Create a stack", mode);
-        var parameters = new GenerationParameters("standard", 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS");
+        var parameters = new GenerationParameters("standard", 10, 100_000, Duration.ofMinutes(5), 128_000, "testpreset", true, "CONTINUOUS", 0.5);
         var seed = new WorkspaceSnapshot(List.of(new WorkspaceFile("tests/gradlew", "old".getBytes(StandardCharsets.UTF_8), true),
                 new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { 0, 1, 2 }, false),
                 new WorkspaceFile("tests/deleted.java", "removed".getBytes(StandardCharsets.UTF_8), false), new WorkspaceFile("solution/src/old.class", new byte[] { 0, 3 }, false),
@@ -50,7 +50,7 @@ class GenerationOutputCaptureTest {
     }
 
     private static WorkerUsageRecorder usage() {
-        return new WorkerUsageRecorder(100_000, 1, true, ignored -> {
+        return new WorkerUsageRecorder(100_000, 1, ignored -> {
         });
     }
 

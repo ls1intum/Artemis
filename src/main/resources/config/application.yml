@@ -166,20 +166,13 @@ artemis:
             default-limit: -1
             default-timeframe-hours: -1
 
-    # Deimos uses its own LLM config (not spring.ai.openai.*) to isolate student code from the shared Atlas/Hyperion endpoint
+    # Deimos sends student code to the LLM preset assigned under artemis.deimos.llm-preset (see artemis.llm)
     deimos:
         enabled: false
         executor:
             core-pool-size: 2
             max-pool-size: 4
             queue-capacity: 25
-        llm:
-            base-url: https://gpu.aet.cit.tum.de
-            api-key: dummy
-            model: openai/gpt-oss-120b
-            # The SDK appends /chat/completions itself; this path is stripped down to the prefix (e.g. /api)
-            completions-path: /api/chat/completions
-            temperature: 0
 
     weaviate:
         enabled: false
@@ -279,8 +272,9 @@ spring: #disabled by default, you must enable it
             mail.smtp.timeout: 30000
             mail.smtp.writetimeout: 30000
     ai:
+        # Artemis configures every LLM under artemis.llm and builds its clients itself; Spring AI creates no model of its own.
         model:
-            chat: none # possible values: openai, none (since Spring AI 2.0 the openai module also serves Azure OpenAI / Microsoft Foundry)
+            chat: none
             audio.speech: none
             audio.transcription: none
             embedding: none

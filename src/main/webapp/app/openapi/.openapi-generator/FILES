@@ -29,6 +29,7 @@ api/lecture-api.ts
 api/lecture-transcription-api.ts
 api/lecture-unit-api.ts
 api/long-feedback-text-api.ts
+api/multipart.ts
 api/online-unit-api.ts
 api/participant-score-api.ts
 api/presentation-assessment-api.ts

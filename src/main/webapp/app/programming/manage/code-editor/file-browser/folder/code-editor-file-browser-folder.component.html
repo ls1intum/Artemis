@@ -5,7 +5,7 @@
         (click)="onCollapseExpand()()"
         [attr.aria-label]="item().text"
         [attr.aria-expanded]="!item().collapsed"
-        class="flex min-w-0 items-center border-0 bg-transparent p-0 text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+        class="flex min-w-0 items-center border-0 bg-transparent p-0 text-left text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
         [class.flex-1]="!isBeingRenamed()"
     >
         <fa-icon aria-hidden="true" [icon]="item().collapsed ? faChevronRight : faChevronDown" [fixedWidth]="true" class="me-1" size="xs" />

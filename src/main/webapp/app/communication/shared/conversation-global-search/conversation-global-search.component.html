@@ -1,5 +1,5 @@
 <div class="search-block" [class.active]="isSearchActive()">
-    <div class="search-bar page-top-bar shell-divider-b module-bg me-2 flex w-full flex-wrap items-stretch rounded-lg px-2">
+    <div class="search-bar page-top-bar shell-divider-b bg-(--module-bg) me-2 flex w-full flex-wrap items-stretch rounded-lg px-2">
         @if (isSidebarCollapsed()) {
             <div class="me-2 hidden items-center min-[576px]:flex">
                 <jhi-course-sidebar-toggle-button [isCollapsed]="true" [isCommunicationModule]="true" (toggleSidebar)="toggleSidebar.emit()" />
@@ -8,7 +8,7 @@
         <!-- search bar with selected channel -->
         <div class="tag-input-container">
             @for (conversation of selectedConversations(); track conversation) {
-                <tumaet-ui-tag class="me-1" severity="info" size="sm" rounded>
+                <tumaet-ui-tag class="me-1!" severity="info" size="sm" rounded>
                     <span>{{ CONVERSATION_FILTER.value }}#{{ getConversationName(conversation) }}</span>
                     <button type="button" class="tag-remove" aria-label="Remove" (click)="removeSelectedChannel(conversation)">
                         <fa-icon [icon]="faTimes" />
@@ -16,7 +16,7 @@
                 </tumaet-ui-tag>
             }
             @for (author of selectedAuthors(); track author) {
-                <tumaet-ui-tag class="me-1" severity="secondary" size="sm" rounded>
+                <tumaet-ui-tag class="me-1!" severity="secondary" size="sm" rounded>
                     <span>{{ USER_FILTER.value }}&#64;{{ author.name }}</span>
                     <button type="button" class="tag-remove" aria-label="Remove" (click)="removeSelectedAuthor(author)">
                         <fa-icon [icon]="faTimes" />

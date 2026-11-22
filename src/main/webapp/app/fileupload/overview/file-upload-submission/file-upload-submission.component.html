@@ -5,7 +5,7 @@
             <div>
                 @if ((isActive() || isLate()) && !result() && fileUploadExercise() && submission() && isOwnerOfParticipation()) {
                     <div class="w-full md:w-1/2">
-                        <div class="mb-4!">
+                        <div class="mb-4">
                             <label for="fileUploadInput" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
                             <div class="flex w-full flex-wrap items-stretch">
                                 <div class="truncate">
@@ -16,7 +16,7 @@
                             @if (fileUploadExercise()?.filePattern; as filePattern) {
                                 @for (extension of filePattern.split(','); track extension) {
                                     <div class="inline-block">
-                                        <tumaet-ui-tag class="ms-1" severity="info" size="sm" [value]="extension | uppercase" />
+                                        <tumaet-ui-tag class="ms-1!" severity="info" size="sm" [value]="extension | uppercase" />
                                     </div>
                                 }
                             }
@@ -34,7 +34,7 @@
                             }
                         </h6>
                     } @else {
-                        <h5 class="text-base! font-semibold!" jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
+                        <h5 class="text-base font-semibold" jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
                         <span jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName() }"></span>
                     }
                     <br />
@@ -51,7 +51,7 @@
                             ></button>
                         }
                         @if (submittedFileExtension()) {
-                            <tumaet-ui-tag class="ms-2" severity="info" size="sm" [value]="submittedFileExtension() | uppercase" />
+                            <tumaet-ui-tag class="ms-2!" severity="info" size="sm" [value]="submittedFileExtension() | uppercase" />
                         }
                     </div>
                 </div>
@@ -59,7 +59,7 @@
             @if (result()?.feedbacks?.length) {
                 <div>
                     <br />
-                    <h5 class="text-base! font-semibold!"><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission"></span>:</h5>
+                    <h5 class="text-base font-semibold"><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission"></span>:</h5>
                     <div>
                         @if (unreferencedFeedback(); as feedback) {
                             @if (feedback.length) {
@@ -98,7 +98,7 @@
         <!--region Right Panel-->
         <fa-icon right-header [icon]="farListAlt" />&nbsp;
         <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
-        <p right-body class="mb-4! markdown-preview">
+        <p right-body class="mb-4 markdown-preview">
             @if (fileUploadExercise()?.problemStatement; as problemStatement) {
                 <span [jhiMarkdown]="problemStatement"></span>
             }

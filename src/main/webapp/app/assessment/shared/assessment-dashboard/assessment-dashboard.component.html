@@ -83,7 +83,7 @@
     </div>
 </div>
 @if (examNotFinished()) {
-    <div class="mt-6!">
+    <div class="mt-6">
         <tumaet-ui-message severity="info" id="assessment-not-possible-yet">
             <span jhiTranslate="error.assessmentNotPossibleExamRunning" [translateValues]="{ date: exam()?.latestIndividualEndDate | artemisDate }"></span>
         </tumaet-ui-message>
@@ -116,7 +116,7 @@
         </div>
     }
     @if (isTestRun() && exam()?.numberOfCorrectionRoundsInExam && exam()!.numberOfCorrectionRoundsInExam! > 1) {
-        <tumaet-ui-message class="mt-6! block" severity="warn" jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint" />
+        <tumaet-ui-message class="mt-6 block" severity="warn" jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint" />
     }
     @if (course()) {
         <div class="space-y-6 pb-6">
@@ -140,11 +140,11 @@
                 />
             </div>
             <tumaet-ui-panel class="min-w-0 overflow-hidden">
-                <div tumAetUiPanelHeader class="flex w-full min-w-0 flex-wrap items-center justify-between gap-6!">
+                <div tumAetUiPanelHeader class="flex w-full min-w-0 flex-wrap! items-center justify-between gap-6!">
                     <span class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></span>
                     @if (!isTestRun() && allExercises().length > 0) {
-                        <div class="flex flex-wrap justify-end gap-x-12! gap-y-4!">
-                            <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-muted-color" for="field_hideFinishedExercise">
+                        <div class="flex flex-wrap justify-end gap-x-12 gap-y-4">
+                            <label class="cursor-pointer items-center gap-2 text-sm text-muted-color" for="field_hideFinishedExercise">
                                 <tumaet-ui-checkbox
                                     inputId="field_hideFinishedExercise"
                                     name="hideFinishedExercise"
@@ -153,7 +153,7 @@
                                 />
                                 <span jhiTranslate="artemisApp.assessmentDashboard.hideFinishedExercises"></span>
                             </label>
-                            <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-muted-color" for="field_hideOptional">
+                            <label class="cursor-pointer items-center gap-2 text-sm text-muted-color" for="field_hideOptional">
                                 <tumaet-ui-checkbox inputId="field_hideOptional" name="hideOptional" [ngModel]="hideOptional()" (ngModelChange)="triggerOptionalExercises()" />
                                 <span jhiTranslate="artemisApp.assessmentDashboard.hideOptional"></span>
                             </label>
@@ -204,7 +204,7 @@
                                         <span class="block whitespace-nowrap break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.dueDates"></span>
                                     </th>
                                 }
-                                <th class="w-10 min-w-10 text-end xl:w-[8%] 2xl:w-[16%]">
+                                <th class="w-10 min-w-10 text-right! xl:w-[8%] 2xl:w-[16%]">
                                     <span class="sr-only xl:not-sr-only" jhiTranslate="artemisApp.assessmentDashboard.actions"></span>
                                 </th>
                             </tr>

@@ -15,8 +15,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -57,13 +57,13 @@ public class HermesHealthIndicator implements HealthIndicator {
 
     private final JsonMapper objectMapper = JsonObjectMapper.get();
 
-    private final RestTemplate shortTimeoutRestTemplate;
+    private final RestClient shortTimeoutRestClient;
 
     @Value("${artemis.push-notification-relay:https://hermes-staging.artemis.cit.tum.de}")
     private String hermesUrl;
 
-    public HermesHealthIndicator(@Qualifier("shortTimeoutHermesRestTemplate") RestTemplate shortTimeoutRestTemplate) {
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+    public HermesHealthIndicator(@Qualifier("shortTimeoutHermesRestClient") RestClient shortTimeoutRestClient) {
+        this.shortTimeoutRestClient = shortTimeoutRestClient;
     }
 
     /**
@@ -77,7 +77,7 @@ public class HermesHealthIndicator implements HealthIndicator {
         var additionalInfo = new HashMap<String, Object>();
         additionalInfo.put(URL_KEY, hermesUrl);
         try {
-            ResponseEntity<String> response = shortTimeoutRestTemplate.getForEntity(hermesUrl + "/api/health", String.class);
+            ResponseEntity<String> response = shortTimeoutRestClient.get().uri(hermesUrl + "/api/health").retrieve().toEntity(String.class);
             boolean up = response.getStatusCode().is2xxSuccessful();
             HermesHealthReport report = parseReport(response.getBody());
             if (report != null) {

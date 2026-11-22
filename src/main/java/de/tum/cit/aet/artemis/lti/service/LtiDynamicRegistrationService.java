@@ -4,21 +4,21 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -62,14 +62,14 @@ public class LtiDynamicRegistrationService {
 
     private final OAuth2JWKSService oAuth2JWKSService;
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     private final ProfileService profileService;
 
-    public LtiDynamicRegistrationService(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository, OAuth2JWKSService oAuth2JWKSService, RestTemplate restTemplate,
-            ProfileService profileService) {
+    public LtiDynamicRegistrationService(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository, OAuth2JWKSService oAuth2JWKSService,
+            @Qualifier("ltiRestClient") RestClient restClient, ProfileService profileService) {
         this.oAuth2JWKSService = oAuth2JWKSService;
-        this.restTemplate = restTemplate;
+        this.restClient = restClient;
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
         this.profileService = profileService;
     }
@@ -300,7 +300,7 @@ public class LtiDynamicRegistrationService {
 
         Lti13PlatformConfiguration platformConfiguration = null;
         try {
-            ResponseEntity<Lti13PlatformConfiguration> responseEntity = restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class);
+            ResponseEntity<Lti13PlatformConfiguration> responseEntity = restClient.get().uri(openIdConfigurationUrl).retrieve().toEntity(Lti13PlatformConfiguration.class);
             log.info("Got LTI13 configuration from {}", openIdConfigurationUrl);
             platformConfiguration = responseEntity.getBody();
         }
@@ -329,17 +329,12 @@ public class LtiDynamicRegistrationService {
     private Lti13ClientRegistration postClientRegistrationToPlatform(String registrationEndpoint, String clientRegistrationId, String registrationToken) {
         validateExternalUrl(registrationEndpoint);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        if (registrationToken != null) {
-            headers.setBearerAuth(registrationToken);
-        }
-
         Lti13ClientRegistration lti13ClientRegistration = Lti13ClientRegistrationFactory.createRegistration(artemisServerUrl, clientRegistrationId);
         Lti13ClientRegistration registrationResponse = null;
         try {
-            ResponseEntity<Lti13ClientRegistration> response = restTemplate.postForEntity(registrationEndpoint, new HttpEntity<>(lti13ClientRegistration, headers),
-                    Lti13ClientRegistration.class);
+            ResponseEntity<Lti13ClientRegistration> response = restClient.post().uri(registrationEndpoint).contentType(MediaType.APPLICATION_JSON)
+                    .headers(headers -> Optional.ofNullable(registrationToken).ifPresent(headers::setBearerAuth)).body(lti13ClientRegistration).retrieve()
+                    .toEntity(Lti13ClientRegistration.class);
             log.info("Registered {} as LTI1.3 tool at {}", artemisServerUrl, registrationEndpoint);
             registrationResponse = response.getBody();
         }

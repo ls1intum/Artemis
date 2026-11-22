@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEmbeddingProperties;
@@ -36,7 +37,8 @@ import de.tum.cit.aet.artemis.globalsearch.exception.EmbeddingFailedException;
 @Conditional(WeaviateEnabled.class)
 public class SearchableEntityEmbeddingClient {
 
-    private static final String EMBEDDINGS_PATH = "/v1/embeddings";
+    /** Appended to the endpoint base URL, which includes the version prefix (for example {@code /v1}). */
+    private static final String EMBEDDINGS_PATH = "/embeddings";
 
     private static final Duration MAX_CONNECT_TIMEOUT = Duration.ofSeconds(5);
 
@@ -46,24 +48,56 @@ public class SearchableEntityEmbeddingClient {
 
     private final WeaviateEmbeddingProperties embeddingProperties;
 
+    @Nullable
+    private final String model;
+
     private final RestClient queryClient;
 
     private final RestClient writeClient;
 
-    public SearchableEntityEmbeddingClient(RestClient.Builder restClientBuilder, WeaviateConfigurationProperties properties, WeaviateEmbeddingProperties embeddingProperties) {
+    public SearchableEntityEmbeddingClient(RestClient.Builder restClientBuilder, WeaviateConfigurationProperties properties, WeaviateEmbeddingProperties embeddingProperties,
+            LlmProperties llmProperties) {
         this.properties = properties;
         this.embeddingProperties = embeddingProperties;
-        this.queryClient = buildClient(restClientBuilder.clone(), embeddingProperties.queryTimeout());
-        this.writeClient = buildClient(restClientBuilder.clone(), embeddingProperties.writeTimeout());
+        LlmProperties.Preset preset = embeddingPreset(properties, llmProperties);
+        LlmProperties.Endpoint endpoint = preset == null ? null : llmProperties.endpointOf(preset);
+        this.model = preset == null ? null : preset.model();
+        this.queryClient = buildClient(restClientBuilder.clone(), embeddingProperties.queryTimeout(), endpoint);
+        this.writeClient = buildClient(restClientBuilder.clone(), embeddingProperties.writeTimeout(), endpoint);
     }
 
-    private RestClient buildClient(RestClient.Builder builder, Duration readTimeout) {
+    /**
+     * Resolves the embedding model of hybrid search.
+     *
+     * @param properties    the Weaviate configuration
+     * @param llmProperties the LLM catalog
+     * @return the configured model of the {@code embedding-llm-preset}, or null when none is assigned
+     */
+    public static @Nullable String embeddingModel(WeaviateConfigurationProperties properties, LlmProperties llmProperties) {
+        LlmProperties.Preset preset = embeddingPreset(properties, llmProperties);
+        return preset == null ? null : preset.model();
+    }
+
+    private static LlmProperties.@Nullable Preset embeddingPreset(WeaviateConfigurationProperties properties, LlmProperties llmProperties) {
+        String presetName = properties.embeddingLlmPreset();
+        return presetName == null || presetName.isBlank() ? null : llmProperties.preset(presetName.strip());
+    }
+
+    private RestClient buildClient(RestClient.Builder builder, Duration readTimeout, LlmProperties.@Nullable Endpoint endpoint) {
         var requestFactory = new SimpleClientHttpRequestFactory();
         // The connection may not use more time than the response, so an unreachable endpoint fails a search as fast as a slow one.
         requestFactory.setConnectTimeout(readTimeout.compareTo(MAX_CONNECT_TIMEOUT) < 0 ? readTimeout : MAX_CONNECT_TIMEOUT);
         requestFactory.setReadTimeout(readTimeout);
-        String baseUrl = properties.openAiBaseUrl() == null ? "" : TRAILING_SLASHES.matcher(properties.openAiBaseUrl()).replaceAll("");
-        return builder.requestFactory(requestFactory).baseUrl(baseUrl).defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + properties.gpuApiKey()).build();
+        String baseUrl = endpoint == null || endpoint.baseUrl() == null ? "" : TRAILING_SLASHES.matcher(endpoint.baseUrl()).replaceAll("");
+        builder.requestFactory(requestFactory).baseUrl(baseUrl);
+        // An endpoint without a key (for example a local server) receives no Authorization header.
+        if (endpoint != null && endpoint.hasApiKey()) {
+            builder.defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + endpoint.apiKey());
+        }
+        if (endpoint != null) {
+            endpoint.customHeaders().forEach(builder::defaultHeader);
+        }
+        return builder.build();
     }
 
     /**
@@ -117,7 +151,7 @@ public class SearchableEntityEmbeddingClient {
     private List<float[]> embed(RestClient client, List<String> texts) {
         EmbeddingResponseDTO response;
         try {
-            response = client.post().uri(EMBEDDINGS_PATH).contentType(MediaType.APPLICATION_JSON).body(new EmbeddingRequestDTO(properties.openAiEmbeddingModel(), texts)).retrieve()
+            response = client.post().uri(EMBEDDINGS_PATH).contentType(MediaType.APPLICATION_JSON).body(new EmbeddingRequestDTO(model, texts)).retrieve()
                     .body(EmbeddingResponseDTO.class);
         }
         catch (RestClientException e) {

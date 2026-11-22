@@ -12,7 +12,7 @@ import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -36,15 +36,15 @@ public class AthenaHealthIndicator implements HealthIndicator {
 
     private static final String ATHENA_ASSESSMENT_MODULE_MANAGER_KEY = "assessment module manager";
 
-    private final RestTemplate shortTimeoutRestTemplate;
+    private final RestClient shortTimeoutRestClient;
 
     private final JsonMapper objectMapper;
 
     @Value("${artemis.athena.url}")
     private String athenaUrl;
 
-    public AthenaHealthIndicator(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, JsonMapper objectMapper) {
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+    public AthenaHealthIndicator(@Qualifier("shortTimeoutAthenaRestClient") RestClient shortTimeoutRestClient, JsonMapper objectMapper) {
+        this.shortTimeoutRestClient = shortTimeoutRestClient;
         this.objectMapper = objectMapper;
     }
 
@@ -66,10 +66,8 @@ public class AthenaHealthIndicator implements HealthIndicator {
         additionalInfo.put(ATHENA_URL_KEY, athenaUrl);
         ConnectorHealth health;
         try {
-            // Read the response as a String and deserialize it here rather than letting RestTemplate bind it: this
-            // template is a plain new RestTemplate, so its Jackson converter holds a default mapper rather than the
-            // application one, and only the application mapper carries the Artemis defaults.
-            final var responseBody = shortTimeoutRestTemplate.getForObject(athenaUrl + "/health", String.class);
+            // The response is read as a String and deserialized here with the injected mapper, which does not depend on the converters of the client.
+            final var responseBody = shortTimeoutRestClient.get().uri(athenaUrl + "/health").retrieve().body(String.class);
             final var healthResponse = responseBody != null ? objectMapper.readValue(responseBody, AthenaHealthResponse.class) : null;
             final var athenaStatus = healthResponse != null ? healthResponse.status() : null;
 

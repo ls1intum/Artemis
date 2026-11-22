@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
-import static de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer.TEXT2VEC_OPENAI;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -153,10 +152,6 @@ public class ConfigurationValidator {
 
     private final String weaviateVectorizerModule;
 
-    private final String weaviateOpenAiBaseUrl;
-
-    private final String weaviateGpuApiKey;
-
     private final String serverUrl;
 
     private final boolean isOpenApiDocsGeneration;
@@ -169,7 +164,6 @@ public class ConfigurationValidator {
             @Value("${artemis.weaviate.http-port:" + WeaviateConfigurationProperties.DEFAULT_HTTP_PORT + "}") int weaviatePort,
             @Value("${artemis.weaviate.grpc-port:" + WeaviateConfigurationProperties.DEFAULT_GRPC_PORT + "}") int weaviateGrpcPort,
             @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme, @Value("${artemis.weaviate.vectorizer-module:#{null}}") String weaviateVectorizerModule,
-            @Value("${artemis.weaviate.open-ai-base-url:#{null}}") String weaviateOpenAiBaseUrl, @Value("${artemis.weaviate.gpu-api-key:#{null}}") String weaviateGpuApiKey,
             @Value("${artemis.openapi-docs-generation:false}") boolean isOpenApiDocsGeneration, @Value("${server.url:}") String serverUrl) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
@@ -184,8 +178,6 @@ public class ConfigurationValidator {
         this.weaviateGrpcPort = weaviateGrpcPort;
         this.weaviateScheme = weaviateScheme;
         this.weaviateVectorizerModule = weaviateVectorizerModule;
-        this.weaviateOpenAiBaseUrl = weaviateOpenAiBaseUrl;
-        this.weaviateGpuApiKey = weaviateGpuApiKey;
         this.isOpenApiDocsGeneration = isOpenApiDocsGeneration;
         this.serverUrl = serverUrl;
     }
@@ -584,35 +576,7 @@ public class ConfigurationValidator {
                     .add("artemis.weaviate.vectorizer-module (must be one of " + Arrays.stream(SupportedVectorizer.values()).map(SupportedVectorizer::configValue).toList() + ")");
         }
 
-        boolean shouldValidateOpenAiSpecificProperties = TEXT2VEC_OPENAI.configValue().equals(weaviateVectorizerModule);
-        if (shouldValidateOpenAiSpecificProperties) {
-            if (!StringUtils.hasText(weaviateOpenAiBaseUrl)) {
-                invalidProperties.add("artemis.weaviate.open-ai-base-url (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
-            }
-            else {
-                try {
-                    URI uri = URI.create(weaviateOpenAiBaseUrl);
-                    String scheme = uri.getScheme();
-                    boolean isInvalidUrl = !uri.isAbsolute() || (!"http".equals(scheme) && !"https".equals(scheme));
-                    if (isInvalidUrl) {
-                        invalidProperties.add("artemis.weaviate.open-ai-base-url (must be a valid absolute URL with http or https scheme when using "
-                                + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
-                    }
-                }
-                catch (IllegalArgumentException e) {
-                    invalidProperties.add("artemis.weaviate.open-ai-base-url (must be a valid absolute URL with http or https scheme when using " + TEXT2VEC_OPENAI.configValue()
-                            + " vectorizer)");
-                }
-            }
-            if (!StringUtils.hasText(weaviateGpuApiKey)) {
-                invalidProperties
-                        .add("artemis.weaviate.gpu-api-key (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer, use a dummy value for Ollama)");
-            }
-            if (!StringUtils.hasText(environment.getProperty("artemis.weaviate.open-ai-embedding-model"))) {
-                invalidProperties.add("artemis.weaviate.open-ai-embedding-model (must be configured when using " + TEXT2VEC_OPENAI.configValue()
-                        + " vectorizer: Artemis computes the embeddings and sends the model name with every request)");
-            }
-        }
+        // The embedding endpoint and model of hybrid search come from artemis.weaviate.embedding-llm-preset, which LlmConfigurationValidator checks.
 
         if (!invalidProperties.isEmpty()) {
             String errorMessage = "Invalid Weaviate configuration: Weaviate is enabled but the following properties are missing or invalid: "
