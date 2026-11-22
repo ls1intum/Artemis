@@ -14,7 +14,7 @@ are marked new, and the PR comment lists only those (a single line when there ar
 
 Usage:
     python3 format_slow_query_report.py slow-query-report.json [run_url] [html_output_path] [static_findings.json]
-        [--baseline baseline-keys.json] [--keys-out keys.json] [--phase phase1|phase2|all]
+        [--baseline baseline-keys.json] [--keys-out keys.json] [--inline-out inline-comments.json] [--phase phase1|phase2|all]
 """
 
 import argparse
@@ -115,9 +115,12 @@ def group_repeated_queries(findings: list) -> list:
         g = groups.setdefault(key, {
             "key": key, "type": f.get("type"), "method": f.get("httpMethod"), "endpoint": f.get("httpEndpoint"), "sql": f.get("normalizedSql") or "",
             "repositoryMethod": f.get("repositoryMethod"), "callerMethod": f.get("callerMethod"), "max_executions": 0, "requests": 0, "tests": set(),
-            "occurrences": [], "call_sites": set(),
+            "occurrences": [], "call_sites": set(), "sourceFile": None, "line": None,
         })
         g["requests"] += 1
+        # the line is not part of the key: it only says where the code was seen, and moves with every edit
+        if not g["sourceFile"] and f.get("sourceFile") and f.get("line"):
+            g["sourceFile"], g["line"] = f["sourceFile"], f["line"]
         # a duplicate across several pieces of code lists them; which ones can differ per request
         g["call_sites"].update(source_label(site) for site in f.get("callSites") or [])
         g["max_executions"] = max(g["max_executions"], f.get("executions", 0))
@@ -313,7 +316,9 @@ def summarize_problem(problem: dict, indexes: dict = None) -> dict:
         q["requests"] = sorted(({**o, "endpoint": endpoint_label(g["method"], g["endpoint"]), "avoidable": avoidable_executions(g["type"], o["executions"], o["distinct"])}
                                 for g in q["groups"] for o in g["occurrences"]), key=lambda r: (-r["avoidable"], -r["executions"]))
         worst = q["requests"][0]
-        q.update(executions=worst["executions"], distinct=worst["distinct"], avoidable=worst["avoidable"], summary=summarize_sql(q["sql"]),
+        located = next((g for g in q["groups"] if g.get("sourceFile")), None)
+        q.update(sourceFile=located["sourceFile"] if located else None, line=located["line"] if located else None,
+                 executions=worst["executions"], distinct=worst["distinct"], avoidable=worst["avoidable"], summary=summarize_sql(q["sql"]),
                  index=index_lookup(q["sql"], indexes) if indexes else None)
         queries.append(q)
     # the query that decides the rank also decides the label; among equal ones, the N+1
@@ -442,6 +447,56 @@ def capped(items: list, lines_for, run_url: str, what: str) -> list:
     if len(items) > len(shown):
         lines += ["", f"_{len(items) - len(shown)} more {what} not shown — see the {artifact_link(run_url)}._"]
     return lines
+
+
+# ---------------------------------------------------------------------------
+# Inline comments (the new findings that can be anchored to a line of code)
+# ---------------------------------------------------------------------------
+
+INLINE_MARKER = "<!-- query-inline:{key} -->"
+
+
+def inline_key(*parts: str) -> str:
+    return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()[:16]
+
+
+def build_inline_comments(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "") -> list:
+    """What the PR adds, as comments for the line of code that issues it: {path, line, key, body}.
+    Without a baseline nothing is new, so there are none. A problem is anchored to the line of its
+    worst query that issues it; a duplicate across several places and a row-by-row insert have no
+    single such line and stay in the summary comment."""
+    if baseline is None:
+        return []
+    comments = []
+    new_problems = build_problems([g for g in groups if g.get("is_new")], report.get("indexes") or {})
+    for p in new_problems:
+        if p["category"] not in ("n_plus_one", "duplicate_one_place"):
+            continue
+        q = next((q for q in p["queries"] if q.get("sourceFile") and q.get("line")), None)
+        if q is None:
+            continue
+        confirmed = " · 🔍 a static rule agrees" if p["static_matches"] else ""
+        confirmed += " · ⚠️ no index serves the query" if p["index_state"] == "scan" else ""
+        endpoint = p["endpoints"][0] + (f" (+{len(p['endpoints']) - 1} more)" if len(p["endpoints"]) > 1 else "")
+        body = "\n".join([
+            f"**{CATEGORY_LABELS[p['category']]}{confirmed}** — a query issued here is repeated on `{endpoint}`",
+            "",
+            f"`{trunc(q['summary'], 120)}` runs {query_counts_label(q)} in one request. "
+            f"A fix would save {p['avoidable']} {'query' if p['avoidable'] == 1 else 'queries'} per request.",
+            "",
+            f"_Found by the E2E query report; new compared to develop. {('[Full report](' + run_url + ')') if run_url else ''}_",
+        ])
+        key = inline_key("repeated", q["groups"][0]["key"])
+        comments.append({"path": q["sourceFile"], "line": q["line"], "key": key, "body": body + "\n" + INLINE_MARKER.format(key=key)})
+    for f in static_findings:
+        path = (f.get("file") or "").replace("\\", "/").removeprefix("./")
+        if not f.get("is_new") or not path or not f.get("line"):
+            continue
+        key = inline_key("static", static_key(f))
+        body = "\n".join([f"**{STATIC_RULE_LABELS.get(f['type'], f['type'])}** — {trunc(f.get('detail') or '', 300)}", "",
+                          "_Found by the static query check; new compared to develop._"])
+        comments.append({"path": path, "line": f["line"], "key": key, "body": body + "\n" + INLINE_MARKER.format(key=key)})
+    return comments
 
 
 PHASE_LABELS = {"phase1": "Phase 1", "phase2": "Phase 2", "all": "all tests"}
@@ -1220,6 +1275,7 @@ def main():
     parser.add_argument("static_findings", nargs="?", default="")
     parser.add_argument("--baseline", help="keys of a baseline run (written by --keys-out of that run)")
     parser.add_argument("--keys-out", help="write this run's finding keys here, for use as a later baseline")
+    parser.add_argument("--inline-out", help="write the new findings that have a line of code, as inline PR comments, here")
     parser.add_argument("--phase", default="", help="the E2E job's phase (phase1, phase2 or all), named in the report's title")
     args = parser.parse_args()
 
@@ -1251,6 +1307,9 @@ def main():
     if args.html_output_path:
         with open(args.html_output_path, "w", encoding="utf-8") as f:
             f.write(build_html_report(report, groups, static_findings, baseline, args.run_url, args.phase))
+    if args.inline_out:
+        with open(args.inline_out, "w", encoding="utf-8") as f:
+            json.dump(build_inline_comments(report, groups, static_findings, baseline, args.run_url), f, indent=1)
     if args.keys_out:
         keys = collect_keys(groups, static_findings)
         keys["generatedAt"] = report.get("generatedAt")

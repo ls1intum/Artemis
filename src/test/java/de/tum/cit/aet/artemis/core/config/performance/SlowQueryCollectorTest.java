@@ -65,6 +65,19 @@ class SlowQueryCollectorTest {
     }
 
     @Test
+    void findingCarriesTheSourceLocationOfItsCallSite() {
+        QueryCallSite located = new QueryCallSite("ParticipationRepository.findByExerciseId", "CourseStatsService.calculate", "src/main/java/CourseStatsService.java", 121);
+        for (long id = 1; id <= 3; id++) {
+            query(SQL, id, () -> located);
+        }
+
+        assertThat(finishRequest()).singleElement().satisfies(finding -> {
+            assertThat(finding.sourceFile()).isEqualTo("src/main/java/CourseStatsService.java");
+            assertThat(finding.line()).isEqualTo(121);
+        });
+    }
+
+    @Test
     void sameStatementWithSameParametersIsDuplicate() {
         query(SQL, 42);
         query(SQL, 42);

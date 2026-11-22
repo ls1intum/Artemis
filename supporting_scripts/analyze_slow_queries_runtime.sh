@@ -38,6 +38,7 @@ REPORT_HTML="slow-query-report.html"
 REPORT_MD="slow-query-summary.md"
 STATIC_FINDINGS="static-findings.json"
 KEYS_FILE="slow-query-keys.json"
+INLINE_COMMENTS="slow-query-inline-comments.json"
 BASELINE_ZIP="slow-query-baseline.zip"
 BASELINE_DIR="slow-query-baseline"
 BASELINE_KEYS="${BASELINE_DIR}/${KEYS_FILE}"
@@ -75,7 +76,7 @@ python3 supporting_scripts/find_slow_queries.py --json "${STATIC_FINDINGS}" > /d
 # Develop baseline: the finding keys of the latest develop run, downloaded by the preceding CI step
 # when one exists. With it, the report marks what this run adds; without it, nothing is marked new.
 BASELINE_ARGS=()
-rm -f "${BASELINE_KEYS}"
+rm -f "${BASELINE_KEYS}" "${INLINE_COMMENTS}"
 if [ -s "${BASELINE_ZIP}" ]; then
     if python3 -c "import sys, zipfile; zipfile.ZipFile(sys.argv[1]).extract('${KEYS_FILE}', sys.argv[2])" "${BASELINE_ZIP}" "${BASELINE_DIR}" 2>/dev/null; then
         BASELINE_ARGS=(--baseline "${BASELINE_KEYS}")
@@ -91,11 +92,11 @@ fi
 # (uploaded by develop runs as the next baseline).
 # ------------------------------------------------------------------
 if ! python3 supporting_scripts/format_slow_query_report.py \
-    "${REPORT_SOURCE}" "${RUN_URL}" "${REPORT_HTML}" "${STATIC_FINDINGS}" ${BASELINE_ARGS[@]+"${BASELINE_ARGS[@]}"} --keys-out "${KEYS_FILE}" \
+    "${REPORT_SOURCE}" "${RUN_URL}" "${REPORT_HTML}" "${STATIC_FINDINGS}" ${BASELINE_ARGS[@]+"${BASELINE_ARGS[@]}"} --keys-out "${KEYS_FILE}" --inline-out "${INLINE_COMMENTS}" \
     --phase "${PLAYWRIGHT_REPORT_PHASE:-}" > "${REPORT_MD}"; then
     # never upload partial keys as a baseline or post a partial summary
     echo "⚠️  Formatting the slow-query report failed."
-    rm -f "${KEYS_FILE}"
+    rm -f "${KEYS_FILE}" "${INLINE_COMMENTS}"
     echo "## ⚠️ Slow Query Report Unavailable" > "${REPORT_MD}"
     echo "" >> "${REPORT_MD}"
     echo "Formatting the slow-query report failed; see the job log." >> "${REPORT_MD}"

@@ -359,6 +359,26 @@ jobs:
               });
             }
 
+      - name: Post inline query comments (Phase 1)
+        if: (success() || failure()) && inputs.is_pr
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        # Convenience on top of the summary comment; a GitHub API blip must not fail the job.
+        continue-on-error: true
+        env:
+          INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
+        with:
+          script: |
+            const prNumber = Number(process.env.INPUT_PR_NUMBER);
+            if (!prNumber) return;
+            const { postInlineQueryComments } = require('./.github/scripts/post-inline-query-comments.js');
+            const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
+            const result = await postInlineQueryComments({
+              github, context, prNumber, headSha: pr.head.sha,
+              commentsPath: 'slow-query-inline-comments.json',
+              removeStale: false,
+            });
+            core.info(`Inline query comments: ${JSON.stringify(result)}`);
+
   run-e2e-remaining:
     name: 'Phase 2: Remaining E2E Tests'
     needs: [determine-tests, run-e2e-relevant]
@@ -617,6 +637,26 @@ jobs:
               });
             }
 
+      - name: Post inline query comments (Phase 2)
+        if: (success() || failure()) && inputs.is_pr
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        # Convenience on top of the summary comment; a GitHub API blip must not fail the job.
+        continue-on-error: true
+        env:
+          INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
+        with:
+          script: |
+            const prNumber = Number(process.env.INPUT_PR_NUMBER);
+            if (!prNumber) return;
+            const { postInlineQueryComments } = require('./.github/scripts/post-inline-query-comments.js');
+            const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
+            const result = await postInlineQueryComments({
+              github, context, prNumber, headSha: pr.head.sha,
+              commentsPath: 'slow-query-inline-comments.json',
+              removeStale: false,
+            });
+            core.info(`Inline query comments: ${JSON.stringify(result)}`);
+
   run-e2e-all-pr:
     name: Run All E2E Tests (PR)
     needs: determine-tests
@@ -862,6 +902,26 @@ jobs:
 
   # The caller has acquired the develop concurrency slot before this job runs. Compare the
   # immutable build SHA before requesting a self-hosted runner for the full suite.
+      - name: Post inline query comments (All Tests)
+        if: (success() || failure()) && inputs.is_pr
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        # Convenience on top of the summary comment; a GitHub API blip must not fail the job.
+        continue-on-error: true
+        env:
+          INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
+        with:
+          script: |
+            const prNumber = Number(process.env.INPUT_PR_NUMBER);
+            if (!prNumber) return;
+            const { postInlineQueryComments } = require('./.github/scripts/post-inline-query-comments.js');
+            const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
+            const result = await postInlineQueryComments({
+              github, context, prNumber, headSha: pr.head.sha,
+              commentsPath: 'slow-query-inline-comments.json',
+              removeStale: true,
+            });
+            core.info(`Inline query comments: ${JSON.stringify(result)}`);
+
   develop-e2e-tip:
     name: Check develop tip for E2E
     if: ${{ !inputs.is_pr && github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
