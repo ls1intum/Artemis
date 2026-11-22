@@ -1,7 +1,7 @@
 <div class="flex flex-wrap justify-center">
     <div class="w-full">
         <div class="flex justify-between items-center">
-            <div class="flex text-start">
+            <div class="flex text-left">
                 <h4>
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.title"></span>
                     @if (attachmentVideoUnit()) {
@@ -9,7 +9,7 @@
                     }
                 </h4>
             </div>
-            <div class="flex flex-wrap items-center justify-end gap-2 text-end">
+            <div class="flex flex-wrap items-center justify-end gap-2 text-right">
                 @if (attachmentVideoUnit()) {
                     @if (hasHiddenPages()) {
                         <button
@@ -48,7 +48,7 @@
                                 <h5>
                                     <span jhiTranslate="artemisApp.attachment.pdfPreview.showPagesTitle" [translateValues]="{ param: selectedPages().size }"> </span>
                                 </h5>
-                                <div class="mt-4! mb-4!">
+                                <div class="mt-4 mb-4">
                                     @for (page of sortedHiddenSelectedPages(); track page.slideId) {
                                         <div class="page-info mb-2">
                                             <strong>Page {{ page.order }}:</strong>
@@ -70,7 +70,7 @@
                                         </div>
                                     }
                                 </div>
-                                <div class="submit-container mt-4! flex justify-between">
+                                <div class="submit-container mt-4 flex justify-between">
                                     <button tumAetUiButton severity="secondary" variant="solid" size="default" type="button" (click)="showPopover().close()">
                                         <span jhiTranslate="entity.action.cancel"></span>
                                     </button>

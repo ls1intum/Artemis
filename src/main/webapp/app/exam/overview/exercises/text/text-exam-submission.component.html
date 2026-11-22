@@ -43,7 +43,7 @@
                 <jhi-exam-exercise-update-highlighter [exercise]="exercise()" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
             }
             @if (problemStatementHtml()) {
-                <p class="markdown-preview mb-4!">
+                <p class="markdown-preview mb-4">
                     <span [innerHTML]="problemStatementHtml()"></span>
                 </p>
             }

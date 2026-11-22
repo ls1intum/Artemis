@@ -60,6 +60,7 @@ export class TumAetUiDialogService implements OnDestroy {
             this.applicationRef.attachView(content.hostView);
             this.applicationRef.attachView(host.hostView);
             this.openDialogs.add(ref);
+            content.changeDetectorRef.detectChanges();
             host.changeDetectorRef.detectChanges();
             return ref;
         } catch (error) {

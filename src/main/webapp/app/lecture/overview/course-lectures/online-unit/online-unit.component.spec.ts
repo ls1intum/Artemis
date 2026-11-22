@@ -73,6 +73,27 @@ describe('OnlineUnitComponent', () => {
         expect(windowSpy).toHaveBeenCalledWith(onlineUnit.source, '_blank');
     });
 
+    it.each(['mailto:a@b.de', 'data:text/html,<p>x</p>', 'ftp://example.com/a', 'not a url', '//example.com/page', 'www.example.com'])(
+        'should not open the source %s',
+        (source) => {
+            fixture.componentRef.setInput('lectureUnit', { ...onlineUnit, source });
+            const completionSpy = vi.spyOn(component.onCompletion, 'emit');
+
+            component.handleIsolatedView();
+
+            expect(windowSpy).not.toHaveBeenCalled();
+            expect(completionSpy).not.toHaveBeenCalled();
+        },
+    );
+
+    it.each(['http://example.com/page', 'https://example.com/page?x=1#top', 'HTTPS://EXAMPLE.COM'])('should open the web address %s', (source) => {
+        fixture.componentRef.setInput('lectureUnit', { ...onlineUnit, source });
+
+        component.handleIsolatedView();
+
+        expect(windowSpy).toHaveBeenCalledWith(source, '_blank');
+    });
+
     it('should log event on isolated view', () => {
         const logEventSpy = vi.spyOn(scienceService, 'logEvent');
 

@@ -3,3 +3,5 @@ export const EMAIL_ALREADY_USED_TYPE = `${PROBLEM_BASE_URL}/email-already-used`;
 export const LOGIN_ALREADY_USED_TYPE = `${PROBLEM_BASE_URL}/login-already-used`;
 export const EMAIL_NOT_FOUND_TYPE = `${PROBLEM_BASE_URL}/email-not-found`;
 export const ACCOUNT_REGISTRATION_BLOCKED = `${PROBLEM_BASE_URL}/account-registration-blocked`;
+/** The error key of the server when an email address does not match the allowed addresses of the instance */
+export const EMAIL_NOT_ALLOWED_ERROR_KEY = 'emailInvalid';

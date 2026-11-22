@@ -1,7 +1,7 @@
 @if (course()) {
     <div>
-        <div class="d-flex align-items-center justify-content-between flex-wrap mb-2">
-            <div class="d-flex align-items-center gap-1">
+        <div class="mb-2 flex flex-wrap items-center justify-between">
+            <div class="flex items-center gap-1">
                 <h4>
                     <small
                         jhiTranslate="artemisApp.instructorDashboard.exerciseResultSummery"
@@ -23,8 +23,8 @@
                 <span jhiTranslate="artemisApp.instructorDashboard.loadingStudents"> Loading the results of all students... </span>
             </span>
         }
-        <div class="row d-flex align-items-center">
-            <div class="col-lg-9">
+        <div class="-mx-2 flex flex-wrap items-center">
+            <div class="w-full shrink-0 px-2 min-[992px]:w-3/4">
                 <div class="text-center">
                     <h4 jhiTranslate="artemisApp.instructorDashboard.courseScoreChart.scoreDistribution"></h4>
                 </div>
@@ -32,9 +32,9 @@
                     <jhi-participant-scores-distribution [gradingScale]="gradingScale()" [scores]="scoresToDisplay()" [scoreToHighlight]="valueToHighlight()" />
                 }
             </div>
-            <div class="col-lg-3 mt-3">
-                <table class="table table-bordered table-sm table-striped">
-                    <thead class="table-dark">
+            <div class="mt-4 w-full shrink-0 px-2 min-[992px]:w-1/4">
+                <table tumAetUiTable size="small" striped>
+                    <thead>
                         <tr>
                             <th scope="col"></th>
                             <th scope="col">
@@ -55,16 +55,14 @@
                         </tr>
                         <tr>
                             <th scope="row">
-                                <div class="form-check">
-                                    <input
-                                        id="highlightBarAvergage"
-                                        type="checkbox"
-                                        class="form-check-input"
+                                <div class="flex items-center gap-2">
+                                    <tumaet-ui-checkbox
+                                        inputId="highlightBarAvergage"
                                         [checked]="highlightedType() === highlightType.AVERAGE"
-                                        (click)="highlightBar(highlightType.AVERAGE)"
-                                        ngbTooltip="{{ 'artemisApp.instructorDashboard.statisticsTable.highlightInChart' | artemisTranslate }}"
+                                        (changed)="highlightBar(highlightType.AVERAGE)"
+                                        [tumAetUiTooltip]="'artemisApp.instructorDashboard.statisticsTable.highlightInChart' | artemisTranslate"
                                     />
-                                    <label for="highlightBarAvergage" class="form-check-label" jhiTranslate="artemisApp.instructorDashboard.statisticsTable.averagePoints"
+                                    <label for="highlightBarAvergage" class="mb-0" jhiTranslate="artemisApp.instructorDashboard.statisticsTable.averagePoints"
                                         >Average points (score)</label
                                     >
                                 </div>
@@ -76,16 +74,14 @@
                         </tr>
                         <tr>
                             <th scope="row">
-                                <div class="form-check">
-                                    <input
-                                        id="highlightBarMedian"
-                                        type="checkbox"
-                                        class="form-check-input"
+                                <div class="flex items-center gap-2">
+                                    <tumaet-ui-checkbox
+                                        inputId="highlightBarMedian"
                                         [checked]="highlightedType() === highlightType.MEDIAN"
-                                        (click)="highlightBar(highlightType.MEDIAN)"
-                                        ngbTooltip="{{ 'artemisApp.instructorDashboard.statisticsTable.highlightInChart' | artemisTranslate }}"
+                                        (changed)="highlightBar(highlightType.MEDIAN)"
+                                        [tumAetUiTooltip]="'artemisApp.instructorDashboard.statisticsTable.highlightInChart' | artemisTranslate"
                                     />
-                                    <label for="highlightBarMedian" class="form-check-label" jhiTranslate="artemisApp.instructorDashboard.statisticsTable.medianPoints"
+                                    <label for="highlightBarMedian" class="mb-0" jhiTranslate="artemisApp.instructorDashboard.statisticsTable.medianPoints"
                                         >Median points (score)</label
                                     >
                                 </div>
@@ -105,75 +101,68 @@
             </div>
         </div>
         <div class="separator"></div>
-        <div class="d-flex justify-content-end">
-            @if (exportReady()) {
-                <jhi-csv-export-button
-                    title="entity.action.export"
-                    [icon]="faDownload"
-                    [disabled]="!(studentStatistics().length > 0)"
-                    [buttonSize]="ButtonSize.SMALL"
-                    (onExport)="exportResults($event)"
-                />
-            }
-        </div>
         @if (exportReady()) {
-            <div class="table-responsive">
-                <table class="table table-striped">
+            <tumaet-ui-table-layout [empty]="studentStatistics().length === 0">
+                <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
+                    <span class="flex-1"></span>
+                    <jhi-csv-export-button
+                        title="entity.action.export"
+                        [icon]="faDownload"
+                        [disabled]="!(studentStatistics().length > 0)"
+                        [buttonSize]="ButtonSize.SMALL"
+                        (onExport)="exportResults($event)"
+                    />
+                </div>
+                <table tumAetUiTable size="small" striped [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
                     <thead>
-                        <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                            <th scope="col" jhiSortBy="user.name">
+                        <tr>
+                            <th scope="col" tumAetUiSortableColumn="student.name">
                                 <span jhiTranslate="artemisApp.instructorDashboard.name"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
-                            <th scope="col" jhiSortBy="user.login">
+                            <th scope="col" tumAetUiSortableColumn="student.login">
                                 <span jhiTranslate="artemisApp.instructorDashboard.username"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
-                            <th scope="col" jhiSortBy="numberOfParticipatedExercises">
+                            <th scope="col" tumAetUiSortableColumn="numberOfParticipatedExercises">
                                 <span jhiTranslate="artemisApp.instructorDashboard.participated"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
-                            <th scope="col" jhiSortBy="numberOfSuccessfulExercises">
+                            <th scope="col" tumAetUiSortableColumn="numberOfSuccessfulExercises">
                                 <span jhiTranslate="artemisApp.instructorDashboard.successful"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
                             @for (exerciseType of exerciseTypes; track exerciseType) {
                                 @if (maxNumberOfPointsPerExerciseType().get(exerciseType)! > 0) {
-                                    <th scope="col" jhiSortBy="sumPointsPerExerciseType.{{ exerciseType }}">
+                                    <th scope="col" [tumAetUiSortableColumn]="'sumPointsPerExerciseType.' + exerciseType">
                                         <span jhiTranslate="artemisApp.instructorDashboard.{{ exerciseType }}Points"></span>
-                                        <fa-icon [icon]="faSort" />
                                     </th>
                                 }
                             }
                             @if (maxNumberOfPresentationPoints() > 0) {
-                                <th scope="col" jhiSortBy="presentationPoints">
-                                    <span jhiTranslate="artemisApp.instructorDashboard.presentationPoints"></span> <fa-icon [icon]="faSort" />
+                                <th scope="col" tumAetUiSortableColumn="presentationPoints">
+                                    <span jhiTranslate="artemisApp.instructorDashboard.presentationPoints"></span>
                                 </th>
                             }
                             @if (variantCapReducesPoints()) {
-                                <th scope="col" jhiSortBy="overallPointsUncapped">
+                                <th scope="col" tumAetUiSortableColumn="overallPointsUncapped">
                                     <span jhiTranslate="artemisApp.instructorDashboard.uncappedPoints"></span>
                                     <jhi-help-icon text="artemisApp.instructorDashboard.uncappedPointsTooltip" />
-                                    <fa-icon [icon]="faSort" />
                                 </th>
-                                <th scope="col" jhiSortBy="excessVariantPoints">
+                                <th scope="col" tumAetUiSortableColumn="excessVariantPoints">
                                     <span jhiTranslate="artemisApp.instructorDashboard.excessVariantPoints"></span>
                                     <jhi-help-icon text="artemisApp.instructorDashboard.excessVariantPointsTooltip" />
-                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
-                            <th scope="col" jhiSortBy="overallPoints"><span jhiTranslate="artemisApp.instructorDashboard.overallScore"></span> <fa-icon [icon]="faSort" /></th>
+                            <th scope="col" tumAetUiSortableColumn="overallPoints"><span jhiTranslate="artemisApp.instructorDashboard.overallScore"></span></th>
                             @if (gradingScaleExists()) {
-                                <th scope="col" jhiSortBy="overallPoints">
+                                <th scope="col" tumAetUiSortableColumn="overallPoints">
                                     <span
                                         jhiTranslate="{{
                                             isBonus() ? 'artemisApp.courseScoreCalculation.gradingSystemBonus' : 'artemisApp.courseScoreCalculation.gradingSystemGrade'
                                         }}"
                                     ></span>
-                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
                         </tr>
+                    </thead>
+                    <tbody>
                         <tr>
                             <th scope="row"><span jhiTranslate="artemisApp.instructorDashboard.max"></span></th>
                             <td class="font-bold"></td>
@@ -242,8 +231,6 @@
                                 </td>
                             }
                         </tr>
-                    </thead>
-                    <tbody>
                         @for (studentStat of studentStatistics(); track studentStat) {
                             <tr>
                                 <td>{{ studentStat.student.name }}</td>
@@ -294,7 +281,7 @@
                         }
                     </tbody>
                 </table>
-            </div>
+            </tumaet-ui-table-layout>
         }
     </div>
 }

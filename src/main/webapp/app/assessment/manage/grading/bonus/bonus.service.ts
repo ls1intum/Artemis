@@ -1,66 +1,16 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-export type EntityResponseType = HttpResponse<Bonus>;
-
+/**
+ * Calculates the bonus examples and the final grade of a bonus in the client; the bonus endpoints are called through the generated BonusApi.
+ */
 @Service()
 export class BonusService {
-    private http = inject(HttpClient);
     private gradingService = inject(GradingService);
-
-    public resourceUrl = 'api/assessment';
-
-    /**
-     * Deletes the bonus.
-     *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam for which the bonus will be deleted
-     * @param bonusId the id of the bonus which will be deleted
-     */
-    deleteBonus(courseId: number, examId: number, bonusId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonuses/${bonusId}`, { observe: 'response' });
-    }
-
-    /**
-     * Store a new bonus for exam on the server
-     *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam for which the bonus will be created
-     * @param bonus the bonus to be created
-     */
-    createBonusForExam(courseId: number, examId: number, bonus: Bonus): Observable<EntityResponseType> {
-        return this.http.post<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonuses`, this.filterBonusForRequest(bonus), { observe: 'response' });
-    }
-
-    /**
-     * Update a bonus on the server
-     *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam for which the bonus will be updated
-     * @param bonus the bonus to be updated
-     */
-    updateBonus(courseId: number, examId: number, bonus: Bonus): Observable<EntityResponseType> {
-        return this.http.put<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonuses/${bonus.id}`, this.filterBonusForRequest(bonus), { observe: 'response' });
-    }
-
-    /**
-     * Retrieves the bonus for exam
-     *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam for which the bonus will be retrieved
-     * @param includeSourceGradeSteps optional, specifies whether the returned result should include the grade steps of sourceGradingScale. By default, they are excluded
-     */
-    findBonusForExam(courseId: number, examId: number, includeSourceGradeSteps?: boolean): Observable<EntityResponseType> {
-        const params = includeSourceGradeSteps != undefined ? new HttpParams().set('includeSourceGradeSteps', includeSourceGradeSteps.toString()) : undefined;
-        return this.http.get<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonuses`, { observe: 'response', params });
-    }
 
     /**
      * Generates calculation examples to give users an idea how the bonus will contribute to the final grade.
@@ -76,16 +26,6 @@ export class BonusService {
         const bonusExamples = this.generateExampleExamAndBonusPoints(bonusTo, bonus.sourceGradingScale);
         bonusExamples.forEach((bonusExample) => this.calculateFinalGrade(bonusExample, bonus, bonusTo));
         return bonusExamples;
-    }
-
-    /**
-     * Creates a filtered bonus to send in the request body to reduce payload size and make tracking the changes easier for
-     * diagnosis purposes by filtering out irrelevant parts.
-     *
-     * @param bonus to be sent to the server
-     */
-    private filterBonusForRequest(bonus: Bonus) {
-        return cloneWith(bonus, { sourceGradingScale: bonus.sourceGradingScale ? { id: bonus.sourceGradingScale.id } : undefined, bonusToGradingScale: undefined });
     }
 
     /**

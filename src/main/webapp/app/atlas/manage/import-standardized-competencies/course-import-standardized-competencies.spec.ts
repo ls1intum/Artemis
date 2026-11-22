@@ -3,7 +3,6 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseImportStandardizedCompetenciesComponent } from 'app/atlas/manage/import-standardized-competencies/course-import-standardized-competencies.component';
 import { StandardizedCompetencyFilterStubComponent } from 'test/helpers/stubs/atlas/standardized-competency-filter-stub.component';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { StandardizedCompetencyDetailStubComponent } from 'test/helpers/stubs/atlas/standardized-competency-detail-stub.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
@@ -39,7 +38,6 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
                 KnowledgeAreaTreeStubComponent,
                 FaIconComponent,
                 MockComponent(ButtonComponent),
-                MockDirective(SortDirective),
                 MockDirective(MarkdownDirective),
                 MockComponent(DocumentationButtonComponent),
             ],
@@ -161,6 +159,36 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
         component['sortSelected']({ predicate: 'title', ascending: true });
 
         expect(sortSpy).toHaveBeenCalledWith([], 'title', true);
+    });
+
+    it('should remember the sort state and convert the table sort event', () => {
+        const sortService = TestBed.inject(SortService);
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
+
+        component['onSelectedSortChange']({ field: 'title', order: -1 });
+
+        expect(sortSpy).toHaveBeenCalledWith([], 'title', false);
+        expect(component['selectedSortField']).toBe('title');
+        expect(component['selectedSortAscending']).toBe(false);
+
+        component['onSelectedSortChange']({ field: 'description', order: 1 });
+
+        expect(sortSpy).toHaveBeenLastCalledWith([], 'description', true);
+        expect(component['selectedSortField']).toBe('description');
+        expect(component['selectedSortAscending']).toBe(true);
+    });
+
+    it('should warn before unloading the page only while competencies are selected', () => {
+        component['isLoading'].set(false);
+        const event = { preventDefault: vi.fn() } as unknown as BeforeUnloadEvent;
+
+        expect(component.unloadNotification(event)).toBe(true);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+
+        component['selectedCompetencies'] = [{ id: 1, isVisible: true }];
+
+        expect(component.unloadNotification(event)).toBe('pendingChanges');
+        expect(event.preventDefault).toHaveBeenCalledOnce();
     });
 
     it('should navigate after importing competencies', () => {

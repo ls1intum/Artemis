@@ -8,16 +8,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HexFormat;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
@@ -39,6 +36,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.WebUtils;
 
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import io.jsonwebtoken.Claims;
 
@@ -48,6 +46,9 @@ import io.jsonwebtoken.Claims;
 public class JWTFilter extends GenericFilterBean {
 
     private static final Logger log = LoggerFactory.getLogger(JWTFilter.class);
+
+    /** The endpoint of the native websocket connection. */
+    private static final String WEBSOCKET_ENDPOINT = "/websocket/websocket";
 
     private final TokenProvider tokenProvider;
 
@@ -287,11 +288,24 @@ public class JWTFilter extends GenericFilterBean {
         }
 
         if (jwtToken != null) {
+            Claims claims = this.tokenProvider.parseClaims(jwtToken);
+            ToolTokenType tool = this.tokenProvider.getTools(claims);
+            // The container dispatches an error that ToolsInterceptor reports, such as 403, to /error and runs this filter again. That dispatch must keep the tool token, as the
+            // answer would otherwise become 401 instead of the original error.
+            boolean errorDispatch = httpServletRequest.getDispatcherType() == DispatcherType.ERROR;
+            String requestPath = httpServletRequest.getRequestURI().substring(httpServletRequest.getContextPath().length());
+            if (tool != null && !errorDispatch && !isReachableWithToolToken(requestPath)) {
+                // A token issued for a tool is meant for the REST endpoints that opt in with @AllowedTools, which ToolsInterceptor checks, and for the native websocket endpoint.
+                // On every other path the token does not authenticate the request, which then continues like a request without credentials.
+                filterChain.doFilter(servletRequest, servletResponse);
+                return;
+            }
+
             // Resolve the Spring Security authentication from the JWT
-            Authentication authentication = this.tokenProvider.getAuthentication(jwtToken);
+            Authentication authentication = this.tokenProvider.getAuthentication(jwtToken, claims);
 
             // Only consider rotating secure, cookie-based tokens without tool-specific data
-            boolean tokenIsConsideredSecure = "cookie".equals(source) && this.tokenProvider.getTools(jwtToken) == null;
+            boolean tokenIsConsideredSecure = "cookie".equals(source) && tool == null;
             if (tokenIsConsideredSecure && authentication != null) {
                 rotateTokenSilently(jwtToken, authentication, httpServletResponse);
             }
@@ -324,8 +338,7 @@ public class JWTFilter extends GenericFilterBean {
         var authHeader = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (isPersonalAccessToken(authHeader)) {
-            // Authenticated by the personal access token filter. It is not a JWT, so it is neither validated nor logged here:
-            // the debug log below prints the request headers, which would write the secret to the log.
+            // Authenticated by the personal access token filter. It is not a JWT, so it is neither validated nor logged here.
             return null;
         }
 
@@ -346,9 +359,10 @@ public class JWTFilter extends GenericFilterBean {
             if ("/websocket/websocket".equals(requestUri) && "cookie".equals(source)) {
                 return null;
             }
-            // Log the invalid JWT token details to find out how it was created in case of accidental issues
-            log.debug("Invalid JWT token detected. Details: { source: {}, remote_ip: {}, user_agent: {}, request_uri: {}, headers: {} }", source,
-                    httpServletRequest.getRemoteAddr(), httpServletRequest.getHeader(HttpHeaders.USER_AGENT), requestUri, compactHeaders(httpServletRequest));
+            // Only a few request values are logged, never the headers of the request, to keep the entry short
+            log.debug("Invalid JWT token detected. Details: { source: {}, remote_ip: {}, method: {}, request_uri: {}, host: {}, user_agent: {} }", source,
+                    httpServletRequest.getRemoteAddr(), httpServletRequest.getMethod(), requestUri, httpServletRequest.getHeader(HttpHeaders.HOST),
+                    httpServletRequest.getHeader(HttpHeaders.USER_AGENT));
             return null;
         }
 
@@ -359,25 +373,6 @@ public class JWTFilter extends GenericFilterBean {
         // The scheme of an Authorization header is case-insensitive; a token sent as "bearer art_pat_..." must not reach the JWT check, which logs the headers.
         return authorizationHeader != null && authorizationHeader.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())
                 && authorizationHeader.substring(BEARER_PREFIX.length()).trim().startsWith(PERSONAL_ACCESS_TOKEN_PREFIX);
-    }
-
-    private static String compactHeaders(HttpServletRequest request) {
-        if (request.getHeaderNames() == null) {
-            return "{}";
-        }
-        return Collections.list(request.getHeaderNames()).stream().map(name -> name + "=" + request.getHeader(name)).collect(Collectors.joining(", ", "{", "}"));
-    }
-
-    /**
-     * Collects the headers of the request and formats them as a JSON-like string
-     *
-     * @param request the http request
-     * @return the formatted headers
-     */
-    private static String collectHeaders(HttpServletRequest request) {
-        List<String> headerEntries = new ArrayList<>();
-        request.getHeaderNames().asIterator().forEachRemaining(headerName -> headerEntries.add("\"%s\": \"%s\"".formatted(headerName, request.getHeader(headerName))));
-        return "[\n" + String.join(",\n", headerEntries) + "\n]";
     }
 
     /**
@@ -420,6 +415,18 @@ public class JWTFilter extends GenericFilterBean {
      */
     private static boolean isJwtValid(@NonNull TokenProvider tokenProvider, @Nullable String jwtToken, @Nullable String source) {
         return StringUtils.hasText(jwtToken) && tokenProvider.validateTokenForAuthority(jwtToken, source);
+    }
+
+    /**
+     * Whether a tool token authenticates a request to the given path. These are the REST endpoints below {@code /api/}, which {@code ToolsInterceptor} restricts to the
+     * endpoints annotated with {@code @AllowedTools}, and the native websocket endpoint that the tools use for live updates. The SockJS fallback paths below {@code /websocket} are
+     * not included.
+     *
+     * @param uri the path of the request
+     * @return true if a tool token may be used for the path
+     */
+    private static boolean isReachableWithToolToken(final String uri) {
+        return uri.startsWith("/api/") || WEBSOCKET_ENDPOINT.equals(uri);
     }
 
     /**

@@ -16,11 +16,11 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     // science, TutorSuggestions, AtlasAgent, RateLimit, GlobalSearch, AutonomousTutor, Deimos,
-    // GlobalSearchReconcileOrphan disabled by default
-    private static final int FEATURES_DISABLED_DEFAULT = 8;
+    // GlobalSearchReconcileOrphan, SmartQuizzes disabled by default
+    private static final int FEATURES_DISABLED_DEFAULT = 9;
 
-    // Memiris, which is never reported as enabled or disabled
-    private static final int FEATURES_RETIRED = 1;
+    // Retired features are never reported as enabled or disabled
+    private static final int FEATURES_RETIRED = 2;
 
     @Autowired
     private FeatureToggleService featureToggleService;
@@ -46,6 +46,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.Deimos)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.GlobalSearchReconcile)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.GlobalSearchReconcileOrphan)).isFalse();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.SmartQuizzes)).isFalse();
     }
 
     private void resetToDefaultState() {
@@ -67,6 +68,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         featureToggleService.disableFeature(Feature.GlobalSearch);
         featureToggleService.disableFeature(Feature.Deimos);
         featureToggleService.disableFeature(Feature.GlobalSearchReconcileOrphan);
+        featureToggleService.disableFeature(Feature.SmartQuizzes);
     }
 
     @Test

@@ -3,6 +3,7 @@ import { OnDestroy, Service, inject } from '@angular/core';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EMPTY, Observable, ReplaySubject, Subject, Subscription, map } from 'rxjs';
+import { LectureApi } from 'app/openapi/api/lecture-api';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { AccountService } from 'app/core/auth/account.service';
 
@@ -27,6 +28,7 @@ const FETCH_FALLBACK_TIMEOUT = 3000;
 export class EntityTitleService implements OnDestroy {
     private http = inject(HttpClient);
     private readonly tutorialGroupApi = inject(TutorialGroupApi);
+    private readonly lectureApi = inject(LectureApi);
     private readonly accountService = inject(AccountService);
 
     private readonly titleSubjects = new Map<string, { subject: Subject<string>; revision: number; timeout?: ReturnType<typeof setTimeout> }>();
@@ -153,6 +155,17 @@ export class EntityTitleService implements OnDestroy {
      * @param type the type of the entity
      * @param ids the ids that identify the entity. Mostly one ID, for exercise hints provide the exercise id as second item in the array.
      */
+    private requestTitle(type: EntityType, id: number, resourceUrl: string): Observable<string | null> {
+        switch (type) {
+            case EntityType.TUTORIAL_GROUP:
+                return this.tutorialGroupApi.getTitle(id);
+            case EntityType.LECTURE:
+                return this.lectureApi.getLectureTitle(id);
+            default:
+                return this.http.get(`${resourceUrl}/${id}/title`, { observe: 'response', responseType: 'text' }).pipe(map((response: HttpResponse<string>) => response.body));
+        }
+    }
+
     private fetchTitle(type: EntityType, ids: number[]): void {
         if (type === EntityType.EXERCISE_VARIANT_GROUP) {
             return;
@@ -164,9 +177,6 @@ export class EntityTitleService implements OnDestroy {
                 break;
             case EntityType.EXERCISE:
                 resourceUrl += 'exercise/exercises';
-                break;
-            case EntityType.LECTURE:
-                resourceUrl += 'lecture/lectures';
                 break;
             case EntityType.COMPETENCY:
                 resourceUrl += 'atlas/competencies';
@@ -185,10 +195,7 @@ export class EntityTitleService implements OnDestroy {
         const generation = this.stateGeneration;
         const mapKey = EntityTitleService.createMapKey(type, ids);
         const revision = this.titleSubjects.get(mapKey)?.revision;
-        const title$ =
-            type === EntityType.TUTORIAL_GROUP
-                ? this.tutorialGroupApi.getTitle(ids[0])
-                : this.http.get(`${resourceUrl}/${ids[0]}/title`, { observe: 'response', responseType: 'text' }).pipe(map((response: HttpResponse<string>) => response.body));
+        const title$ = this.requestTitle(type, ids[0], resourceUrl);
         title$.subscribe((title) => {
             // Skip the write-back if a logout / user change happened between the request being issued
             // and the response arriving — otherwise we would repopulate the cleared cache (and via

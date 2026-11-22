@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Set;
 
 import jakarta.validation.Valid;
 
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -37,6 +40,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ParticipationFilter;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.DetailedParticipationDTO;
@@ -178,7 +182,7 @@ public class ParticipationRetrievalResource {
     /**
      * GET /exercises/:exerciseId/participations/page : get paginated participations for the participation management view.
      *
-     * @param exerciseId      the exercise to query
+     * @param exerciseId the exercise to query
      * @param search          search parameters including pagination, sorting, search term, and filter
      * @param scoreRangeLower the optional lower bound of the score range in percent
      * @param scoreRangeUpper the optional upper bound of the score range in percent
@@ -194,7 +198,7 @@ public class ParticipationRetrievalResource {
     /**
      * Returns the exam participation management page, which requires an instructor.
      *
-     * @param exerciseId      the exam exercise whose participations to load
+     * @param exerciseId the exam exercise whose participations to load
      * @param search          the filtering, sorting and pagination parameters
      * @param scoreRangeLower the optional lower bound of the score range in percent
      * @param scoreRangeUpper the optional upper bound of the score range in percent
@@ -215,7 +219,14 @@ public class ParticipationRetrievalResource {
         }
 
         boolean hideParticipant = shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
-        Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search, scoreRangeLower, scoreRangeUpper);
+        Set<ParticipationFilter> filters;
+        try {
+            filters = ParticipationFilter.parse(search.filterProp());
+        }
+        catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+        }
+        Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search, filters, scoreRangeLower, scoreRangeUpper);
         if (hideParticipant) {
             page = page.map(ParticipationManagementDTO::withoutParticipantInformation);
         }

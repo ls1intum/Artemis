@@ -1,11 +1,11 @@
 import { HttpResponse } from '@angular/common/http';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -18,7 +18,6 @@ import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,8 +25,6 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 
 describe('Course LTI Configuration Component', () => {
     let comp: CourseLtiConfigurationComponent;
@@ -80,16 +77,17 @@ describe('Course LTI Configuration Component', () => {
             .overrideComponent(CourseLtiConfigurationComponent, {
                 set: {
                     imports: [
-                        NgbNavModule,
-                        MockModule(NgbTooltipModule),
+                        TumAetUiTabsComponent,
+                        TumAetUiTabListComponent,
+                        TumAetUiTabComponent,
+                        TumAetUiTabPanelsComponent,
+                        TumAetUiTabPanelComponent,
                         MockDirective(TranslateDirective),
                         MockPipe(ArtemisTranslatePipe),
                         MockRouterLinkDirective,
                         MockComponent(FaIconComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CopyToClipboardButtonComponent),
-                        MockDirective(SortDirective),
-                        MockDirective(SortByDirective),
                     ],
                 },
             })
@@ -176,5 +174,26 @@ describe('Course LTI Configuration Component', () => {
         comp.sortRows();
 
         expect(sortService.sortByProperty).toHaveBeenCalledOnce();
+    });
+
+    it('should store the sort event and sort both the exercises and the lectures with it', () => {
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty').mockImplementation((array) => array);
+        findWithExercisesStub.mockReturnValue(of(new HttpResponse({ body: courseWithExercisesAndLectures, status: 200 })));
+        fixture.detectChanges();
+        sortSpy.mockClear();
+
+        comp.onSort({ field: 'title', order: -1 });
+
+        expect(comp.predicate()).toBe('title');
+        expect(comp.reverse()).toBe(false);
+        expect(sortSpy).toHaveBeenCalledTimes(2);
+        expect(sortSpy).toHaveBeenNthCalledWith(1, comp.exercises(), 'title', false);
+        expect(sortSpy).toHaveBeenNthCalledWith(2, comp.lectures(), 'title', false);
+
+        comp.onSort({ field: 'dueDate', order: 1 });
+
+        expect(comp.predicate()).toBe('dueDate');
+        expect(comp.reverse()).toBe(true);
+        expect(sortSpy).toHaveBeenLastCalledWith(comp.lectures(), 'dueDate', true);
     });
 });

@@ -25,6 +25,7 @@ import { SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.com
 import {
     MODULE_FEATURE_ATHENA,
     MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_HYPERION,
     MODULE_FEATURE_IRIS,
     MODULE_FEATURE_LECTURE,
     MODULE_FEATURE_LTI,
@@ -83,6 +84,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     atlasEnabled: boolean = false;
     lectureEnabled: boolean = false;
     irisEnabled: boolean = false;
+    hyperionEnabled: boolean = false;
     athenaEnabled: boolean = false;
     ltiEnabled: boolean = false;
     tutorialGroupEnabled: boolean = false;
@@ -162,6 +164,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
         this.lectureEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE);
         this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+        this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
         this.athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
         this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
         this.tutorialGroupEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TUTORIALGROUP);

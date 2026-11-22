@@ -9,21 +9,18 @@ import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { Audit } from './audit.model';
 import { AuditsQuery, AuditsService } from './audits.service';
 import { AuditLogType } from './audit-log-type.model';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import {
     TumAetUiDatePickerComponent,
-    TumAetUiMessageComponent,
     TumAetUiPaginatorComponent,
     TumAetUiTabComponent,
     TumAetUiTabListComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
     TumAetUiTabsComponent,
 } from '@tumaet/ui-angular';
 
@@ -36,15 +33,12 @@ import {
     templateUrl: './audits.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiTableLayoutComponent,
         TranslateDirective,
-        SortDirective,
-        SortByDirective,
-        FaIconComponent,
-        ItemCountComponent,
         TumAetUiPaginatorComponent,
         ArtemisDatePipe,
         AdminTitleBarTitleDirective,
-        TumAetUiMessageComponent,
         TumAetUiTableDirective,
         TumAetUiDatePickerComponent,
         TumAetUiTabsComponent,
@@ -146,8 +140,6 @@ export class AuditsComponent implements OnInit {
     protected readonly isToTextValid = signal(true);
 
     private readonly dateFormat = 'yyyy-MM-dd';
-
-    protected readonly faSort = faSort;
 
     ngOnInit(): void {
         this.toDate.set(this.today());
@@ -276,6 +268,13 @@ export class AuditsComponent implements OnInit {
         }
         this.logType.set(selected);
         this.page.set(1);
+        this.transition();
+    }
+
+    /** Applies the sort of a clicked column header and reloads. */
+    onSort(event: TumAetUiTableSortEvent): void {
+        this.predicate.set(event.field);
+        this.ascending.set(event.order === 1);
         this.transition();
     }
 

@@ -8,12 +8,14 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.InputStream;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -27,6 +29,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -59,7 +62,7 @@ class TumLiveUploadServiceTest {
     private final LectureContentProcessingService contentProcessingService = mock(LectureContentProcessingService.class);
 
     private final TumLiveUploadService service = new TumLiveUploadService(uploadRepository, cleanupRepository, unitRepository, Optional.of(api),
-            Optional.of(contentProcessingService), Duration.ofHours(6));
+            Optional.of(contentProcessingService), new LocalDataProviderService(), Duration.ofHours(6));
 
     private static AttachmentVideoUnit unit() {
         var course = new Course();
@@ -85,16 +88,29 @@ class TumLiveUploadServiceTest {
     }
 
     @Test
-    void startCreatesTheLectureThroughTheCoursesGrantAndRecordsIt() {
+    void startReservesAReferenceThroughTheCoursesGrant() {
+        when(api.findUploadConnection(7L)).thenReturn(Optional.of(new GocastUploadConnectionDTO(17, 23, "algo")));
+        when(uploadRepository.startPending(eq(UNIT_ID), eq(17L), eq(23L), eq("algo"), anyString(), any())).thenAnswer(invocation -> {
+            ZonedDateTime now = invocation.getArgument(5);
+            var upload = pending(now, null);
+            upload.startPending(invocation.getArgument(4), 23, "algo", null, now);
+            return upload;
+        });
+
+        String ref = service.start(unit());
+
+        assertThat(ref).isNotBlank();
+        verify(uploadRepository).startPending(eq(UNIT_ID), eq(17L), eq(23L), eq("algo"), eq(ref), any());
+        verify(api, never()).createUpload(anyLong(), anyString(), anyString());
+    }
+
+    @Test
+    void aSecondEditorCannotAcquireTheExistingReservation() {
         when(api.findUploadConnection(7L)).thenReturn(Optional.of(new GocastUploadConnectionDTO(17, 23, "algo")));
         when(uploadRepository.startPending(eq(UNIT_ID), eq(17L), eq(23L), eq("algo"), anyString(), any())).thenReturn(pending(ZonedDateTime.now(), null));
-        when(api.createUpload(23, REF, "Algorithms: Lecture 3")).thenReturn(new GocastUploadTargetDTO(55, "https://tum.live/api/v2/integration/uploads/ticket"));
 
-        var started = service.start(unit());
-
-        assertThat(started.ref()).isEqualTo(REF);
-        assertThat(started.uploadUrl()).isEqualTo("https://tum.live/api/v2/integration/uploads/ticket");
-        verify(uploadRepository).recordPendingStream(UNIT_ID, REF, 55);
+        assertThatThrownBy(() -> service.start(unit())).isInstanceOf(ConflictException.class);
+        verify(uploadRepository, never()).discardPending(anyLong(), anyString(), any(), any());
     }
 
     @Test
@@ -106,13 +122,111 @@ class TumLiveUploadServiceTest {
     }
 
     @Test
-    void startReportsAnUploadThatIsAlreadyBeingTransferred() {
+    void transferCreatesTheLectureRecordsItAndStreamsTheFile() {
+        var target = new GocastUploadTargetDTO(55, "https://tum.live/api/v2/integration/uploads/ticket");
+        var file = InputStream.nullInputStream();
+        when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(pending(ZonedDateTime.now(), null)));
+        when(api.createUpload(23, REF, "Algorithms: Lecture 3")).thenReturn(target);
+        when(uploadRepository.recordPendingStream(UNIT_ID, REF, 55)).thenReturn(true);
+
+        service.transfer(unit(), REF, file);
+
+        verify(api).transferUpload(target, file);
+    }
+
+    @Test
+    void failedTransferDiscardsTheReferenceWhileItStillOwnsTheTransfer() {
+        var target = new GocastUploadTargetDTO(55, "https://tum.live/upload");
+        var file = InputStream.nullInputStream();
+        var failure = new GocastIntegrationException("transfer interrupted", HttpStatus.BAD_GATEWAY);
+        var upload = pending(ZonedDateTime.now(), null);
+        when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(upload));
+        when(api.createUpload(eq(23L), eq(REF), anyString())).thenReturn(target);
+        when(uploadRepository.recordPendingStream(UNIT_ID, REF, 55)).thenReturn(true);
+        doThrow(failure).when(api).transferUpload(target, file);
+        doAnswer(_ -> {
+            // Model a competing transfer that read the pending row before the first transfer recorded its stream.
+            assertThatThrownBy(() -> service.transfer(unit(), REF, InputStream.nullInputStream())).isInstanceOf(ConflictException.class)
+                    .hasMessageContaining("already being transferred");
+            upload.clearPending();
+            return true;
+        }).when(uploadRepository).discardPending(eq(UNIT_ID), eq(REF), anyString(), any());
+
+        assertThatThrownBy(() -> service.transfer(unit(), REF, file)).isSameAs(failure);
+
+        verify(uploadRepository).discardPending(eq(UNIT_ID), eq(REF), eq("The video transfer to TUM.Live failed."), any());
+        assertThatThrownBy(() -> service.transfer(unit(), REF, file)).isInstanceOf(ConflictException.class).hasMessageContaining("no longer pending");
+        verify(api).createUpload(eq(23L), eq(REF), anyString());
+
         when(api.findUploadConnection(7L)).thenReturn(Optional.of(new GocastUploadConnectionDTO(17, 23, "algo")));
-        when(uploadRepository.startPending(eq(UNIT_ID), eq(17L), eq(23L), eq("algo"), anyString(), any())).thenReturn(pending(ZonedDateTime.now(), 55L));
+        when(uploadRepository.startPending(eq(UNIT_ID), eq(17L), eq(23L), eq("algo"), anyString(), any())).thenAnswer(invocation -> {
+            upload.startPending(invocation.getArgument(4), 23, "algo", null, invocation.getArgument(5));
+            return upload;
+        });
+        String retryRef = service.start(unit());
+        assertThat(retryRef).isNotEqualTo(REF);
+        var retryTarget = new GocastUploadTargetDTO(56, "https://tum.live/retry-upload");
+        var retryFile = InputStream.nullInputStream();
+        when(api.createUpload(eq(23L), eq(retryRef), anyString())).thenReturn(retryTarget);
+        when(uploadRepository.recordPendingStream(UNIT_ID, retryRef, 56)).thenReturn(true);
+
+        service.transfer(unit(), retryRef, retryFile);
+
+        verify(api).transferUpload(retryTarget, retryFile);
+    }
+
+    @Test
+    void aCleanupFailurePreservesTheOriginalTransferFailure() {
+        var target = new GocastUploadTargetDTO(55, "https://tum.live/upload");
+        var video = InputStream.nullInputStream();
+        var transferFailure = new GocastIntegrationException("transfer interrupted", HttpStatus.BAD_GATEWAY);
+        var cleanupFailure = new IllegalStateException("upload repository unavailable");
+        when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(pending(ZonedDateTime.now(), null)));
+        when(api.createUpload(eq(23L), eq(REF), anyString())).thenReturn(target);
+        when(uploadRepository.recordPendingStream(UNIT_ID, REF, 55)).thenReturn(true);
+        when(uploadRepository.discardPending(eq(UNIT_ID), eq(REF), anyString(), any())).thenThrow(cleanupFailure);
+        doThrow(transferFailure).when(api).transferUpload(target, video);
+
+        assertThatThrownBy(() -> service.transfer(unit(), REF, video)).isSameAs(transferFailure);
+
+        assertThat(transferFailure.getSuppressed()).containsExactly(cleanupFailure);
+    }
+
+    @Test
+    void transferRejectsAReferenceFromAnotherUpload() {
+        when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(pending(ZonedDateTime.now(), null)));
+
+        assertThatThrownBy(() -> service.transfer(unit(), "another-reference", InputStream.nullInputStream())).isInstanceOf(ConflictException.class);
+        verify(api, never()).createUpload(anyLong(), anyString(), anyString());
+    }
+
+    @Test
+    void transferStopsIfTheReferenceWasDiscardedWhileCreatingTheLecture() {
+        when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(pending(ZonedDateTime.now(), null)));
+        when(api.createUpload(eq(23L), eq(REF), anyString())).thenReturn(new GocastUploadTargetDTO(55, "https://tum.live/upload"));
+
+        assertThatThrownBy(() -> service.transfer(unit(), REF, InputStream.nullInputStream())).isInstanceOf(ConflictException.class);
+        verify(api, never()).transferUpload(any(), any());
+    }
+
+    @Test
+    void aReferenceWithARecordedStreamCannotBeTransferredAgain() {
+        when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(pending(ZonedDateTime.now(), 55L)));
+
+        assertThatThrownBy(() -> service.transfer(unit(), REF, InputStream.nullInputStream())).isInstanceOf(ConflictException.class);
+        verify(api, never()).createUpload(anyLong(), anyString(), anyString());
+        verify(uploadRepository, never()).discardPending(anyLong(), anyString(), any(), any());
+    }
+
+    @Test
+    void transferReportsAnUploadThatIsAlreadyBeingTransferred() {
+        when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(pending(ZonedDateTime.now(), null)));
         when(api.createUpload(eq(23L), eq(REF), anyString())).thenThrow(new GocastIntegrationException("refused", HttpStatus.CONFLICT));
 
-        assertThatThrownBy(() -> service.start(unit())).isInstanceOf(ConflictException.class).hasMessageContaining("already being transferred");
+        assertThatThrownBy(() -> service.transfer(unit(), REF, InputStream.nullInputStream())).isInstanceOf(ConflictException.class)
+                .hasMessageContaining("already being transferred");
         verify(uploadRepository, never()).recordPendingStream(anyLong(), anyString(), anyLong());
+        verify(uploadRepository, never()).discardPending(anyLong(), anyString(), any(), any());
     }
 
     @Test
@@ -385,7 +499,7 @@ class TumLiveUploadServiceTest {
     @Test
     void withoutTheTumLiveConnectionAnUploadIsForgottenWhenTheLinkChanges() {
         var withoutConnection = new TumLiveUploadService(uploadRepository, cleanupRepository, unitRepository, Optional.empty(), Optional.of(contentProcessingService),
-                Duration.ofHours(6));
+                new LocalDataProviderService(), Duration.ofHours(6));
 
         withoutConnection.forgetUploadUnlessShown(UNIT_ID, "https://tum.live/w/algo/56");
 

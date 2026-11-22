@@ -145,7 +145,7 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
             await page.emulateMedia({ colorScheme: 'light' });
             await page.setViewportSize({ width: 1280, height: 800 });
             await page.goto(`/course-management/${course.id}/members/students`);
-            const viewport = page.getByTestId('table-viewport');
+            const viewport = page.getByTestId('table-scroll-body');
             const table = viewport.getByRole('table');
             const rows = table.getByRole('rowgroup').last().getByRole('row');
             await expect(table).toBeVisible();

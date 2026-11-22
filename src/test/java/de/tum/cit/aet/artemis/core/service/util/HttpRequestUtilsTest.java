@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpHeaders;
 
 import de.tum.cit.aet.artemis.core.util.ArtemisApp;
@@ -90,9 +91,23 @@ class HttpRequestUtilsTest {
 
         @Test
         void testIpInRemoteAddr() {
-            HttpServletRequest request = httpRequestMockWithIp("REMOTE_ADDR", "224.14.7.42");
+            HttpServletRequest request = httpRequestMockWithIp("224.14.7.42");
             final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElseThrow();
             assertThat(ipAddress.toFullString()).isEqualTo("224.014.007.042");
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = { "X-Forwarded-For", "Proxy-Client-IP", "WL-Proxy-Client-IP", "HTTP_X_FORWARDED_FOR", "HTTP_CLIENT_IP", "HTTP_FORWARDED", "REMOTE_ADDR" })
+        void testAddressHeadersOfTheRequestAreNotUsed(String header) {
+            HttpServletRequest request = httpRequestMockWithHeader(header, "10.1.2.3", "203.0.113.9");
+            assertThat(HttpRequestUtils.getIpStringFromRequest(request)).isEqualTo("203.0.113.9");
+        }
+
+        @Test
+        void testNoAddressYieldsEmptyString() {
+            HttpServletRequest request = mock(HttpServletRequest.class);
+            assertThat(HttpRequestUtils.getIpStringFromRequest(request)).isEmpty();
+            assertThat(HttpRequestUtils.getIpAddressFromRequest(request)).isEmpty();
         }
 
     }
@@ -280,13 +295,16 @@ class HttpRequestUtilsTest {
     }
 
     private HttpServletRequest httpRequestMockWithIp(String ipAddress) {
-        return httpRequestMockWithIp("X-Forwarded-For", ipAddress);
+        final HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRemoteAddr()).thenReturn(ipAddress);
+        return request;
     }
 
-    private HttpServletRequest httpRequestMockWithIp(String headerName, String ipAddress) {
+    private HttpServletRequest httpRequestMockWithHeader(String headerName, String value, String remoteAddress) {
         final HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getHeader(anyString())).thenReturn(null);
-        when(request.getHeader(headerName)).thenReturn(ipAddress);
+        when(request.getHeader(headerName)).thenReturn(value);
+        when(request.getRemoteAddr()).thenReturn(remoteAddress);
         return request;
     }
 }

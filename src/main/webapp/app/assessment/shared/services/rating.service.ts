@@ -5,37 +5,12 @@ import { map } from 'rxjs/operators';
 import { RatingListItem } from 'app/assessment/shared/entities/rating-list-item.model';
 import { PageableResult, toPageableResult } from 'app/foundation/pagination/pageable-table';
 
+/**
+ * Kept only for the instructor dashboard list: the generated client does not expose the `X-Total-Count` header that carries the page count.
+ */
 @Service()
 export class RatingService {
     private http = inject(HttpClient);
-
-    private ratingResourceUrl = 'api/assessment/results/';
-
-    /**
-     * Create the student rating for feedback on the server.
-     * @param rating - star rating for the result
-     * @param resultId - id of the linked result
-     */
-    createRating(rating: number, resultId: number): Observable<number> {
-        return this.http.post<number>(this.ratingResourceUrl + `${resultId}/rating/${rating}`, null);
-    }
-
-    /**
-     * Get rating for "resultId" Result
-     * @param resultId - id of result who's rating is received
-     */
-    getRating(resultId: number): Observable<number | undefined> {
-        return this.http.get<number | undefined>(this.ratingResourceUrl + `${resultId}/rating`);
-    }
-
-    /**
-     * Update rating for "resultId" Result
-     * @param rating - star rating for the result
-     * @param resultId - id of the linked result
-     */
-    updateRating(rating: number, resultId: number): Observable<number> {
-        return this.http.put<number>(this.ratingResourceUrl + `${resultId}/rating/${rating}`, undefined);
-    }
 
     /**
      * Get paginated ratings for the "courseId" course.

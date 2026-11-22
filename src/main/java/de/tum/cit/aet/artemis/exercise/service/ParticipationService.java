@@ -37,11 +37,11 @@ import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
-import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.ParticipationFilter;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -1215,24 +1215,24 @@ public class ParticipationService {
      *
      * @param exercise        the exercise to query
      * @param search          search parameters including pagination, sorting, search term, and filter
+     * @param filters         validated filter selections
      * @param scoreRangeLower the optional lower bound of the score range in percent
      * @param scoreRangeUpper the optional upper bound of the score range in percent
      * @return a page of ParticipationManagementDTO
      */
-    public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, PagedSearchDTO search, @Nullable Integer scoreRangeLower,
-            @Nullable Integer scoreRangeUpper) {
-        SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
+    public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, PagedSearchDTO search, Set<ParticipationFilter> filters,
+            @Nullable Integer scoreRangeLower, @Nullable Integer scoreRangeUpper) {
         Pageable pageable = PageRequest.of(search.page(), search.pageSize());
         boolean teamMode = exercise.isTeamMode();
 
         ZonedDateTime stuckBuildCutoff = null;
-        if ("Failed".equals(search.filterProp()) && exercise instanceof ProgrammingExercise) {
+        if (filters.contains(ParticipationFilter.FAILED) && exercise instanceof ProgrammingExercise) {
             int timeoutSeconds = programmingExerciseRepository.findBuildTimeoutSecondsByExerciseId(exercise.getId()).filter(t -> t > 0).orElse(120);
             stuckBuildCutoff = ZonedDateTime.now().minusSeconds(timeoutSeconds);
         }
 
-        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(), stuckBuildCutoff,
-                scoreRangeLower, scoreRangeUpper, pageable, sortOrder, search.sortedColumn());
+        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search, filters, scoreRangeLower,
+                scoreRangeUpper, stuckBuildCutoff, pageable);
 
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {

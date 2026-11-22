@@ -1,11 +1,10 @@
-import { Component, DestroyRef, TemplateRef, ViewEncapsulation, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, TemplateRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { Observable } from 'rxjs';
-import { SharedModule } from 'primeng/api';
-import { Dialog } from 'primeng/dialog';
-import { ButtonDirective } from 'primeng/button';
-import { Message } from 'primeng/message';
-import { TableLazyLoadEvent } from 'primeng/table';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCircleCheck, faEye, faSearch, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
+import { TableViewLazyLoadEvent } from 'app/shared-ui/table-view/table-view-query';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -19,10 +18,10 @@ import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-regist
 @Component({
     selector: 'jhi-user-registration-modal',
     imports: [
-        SharedModule,
-        Dialog,
-        ButtonDirective,
-        Message,
+        FaIconComponent,
+        TumAetUiDialogComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
         TableViewComponent,
@@ -31,19 +30,27 @@ import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-regist
         ProfilePictureComponent,
     ],
     templateUrl: './user-registration-modal.component.html',
-    styleUrl: './user-registration-modal.component.scss',
-    encapsulation: ViewEncapsulation.None,
 })
 export class UserRegistrationModalComponent {
     private static readonly SEARCH_DEBOUNCE_MS = 300;
     private readonly alertService = inject(AlertService);
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
+    protected readonly faUsers = faUsers;
+    protected readonly faSearch = faSearch;
+    protected readonly faEye = faEye;
+    protected readonly faCircleCheck = faCircleCheck;
 
     private debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
     constructor() {
         inject(DestroyRef).onDestroy(() => clearTimeout(this.debounceTimer));
+        // The kit dialog focuses its first tabbable element, which is the close button of the header, but the reason to open this dialog is the
+        // search field, as it was with the PrimeNG dialog. The CDK focus trap prefers an element marked cdkFocusInitial. The search field of the
+        // kit has no input for that, so the native input is marked once the dialog has rendered it.
+        effect(() => {
+            this.searchFilterElement()?.nativeElement.querySelector('input')?.setAttribute('cdkFocusInitial', '');
+        });
     }
 
     readonly titleKey = input.required<string>();
@@ -54,6 +61,7 @@ export class UserRegistrationModalComponent {
 
     readonly tableViewRef = viewChild(TableViewComponent);
     readonly searchFilterRef = viewChild(SearchFilterComponent);
+    private readonly searchFilterElement = viewChild(SearchFilterComponent, { read: ElementRef<HTMLElement> });
 
     readonly profilePicTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<UserForRegistration> }>>('profilePicTemplate');
     readonly nameLoginTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<UserForRegistration> }>>('nameLoginTemplate');
@@ -93,8 +101,7 @@ export class UserRegistrationModalComponent {
         paginated: !this.isViewingSelected(),
         showSearch: false,
         selectionMode: 'multiple',
-        scrollable: true,
-        scrollHeight: 'flex',
+        fill: true,
         pageSize: 10,
         hidePageSizeOptions: true,
         tableStyle: { 'min-width': '40rem' },
@@ -152,7 +159,7 @@ export class UserRegistrationModalComponent {
         }, UserRegistrationModalComponent.SEARCH_DEBOUNCE_MS);
     }
 
-    onTableLazyLoad(event: TableLazyLoadEvent): void {
+    onTableLazyLoad(event: TableViewLazyLoadEvent): void {
         const searchTerm = this.searchTerm();
         // A table that mounts while the debounce is pending loads on init; the debounce loads the term once it fires.
         if (!searchTerm || this.debounceTimer !== undefined) return;

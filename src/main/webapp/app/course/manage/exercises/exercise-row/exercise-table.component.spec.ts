@@ -443,10 +443,10 @@ describe('ExerciseTableComponent', () => {
             const text = { id: 3, title: 'Text exercise', type: ExerciseType.TEXT, maxPoints: 5, difficulty: DifficultyLevel.EASY } as Exercise;
             const element = renderRows([text]);
 
-            const link = element.querySelector('.col-title a') as HTMLAnchorElement;
+            const link = element.querySelector('td.col-title a') as HTMLAnchorElement;
             expect(link.textContent).toContain('Text exercise');
             expect(link.getAttribute('href')).toBe('/course-management/1/text-exercises/3');
-            expect(element.querySelector('.col-points')?.textContent).toContain('5pts');
+            expect(element.querySelector('td.col-points')?.textContent).toContain('5pts');
 
             const difficultyTag = element.querySelector('tumaet-ui-tag');
             expect(difficultyTag?.textContent).toContain(DifficultyLevel.EASY);

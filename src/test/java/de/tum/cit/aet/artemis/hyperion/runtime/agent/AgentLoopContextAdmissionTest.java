@@ -51,7 +51,7 @@ class AgentLoopContextAdmissionTest {
             return textResponse("done", 179_100);
         });
         var runner = runner(model, 128_000)
-                .forSettings(new HyperionGenerationSettings("profile", null, 2, Duration.ofMinutes(5), 300_000, false, "fresh", 200_000, options, false, true));
+                .forSettings(new HyperionGenerationSettings("profile", null, 2, Duration.ofMinutes(5), 300_000, false, "fresh", 200_000, "testpreset", options, false, true));
         List<Message> prior = List.of(new UserMessage("data ".repeat(150_000)));
         var result = runner.runSession("system", prior, "continue", new AgentLoopRunnerTest.RecordingTools(), 2, () -> false, null, null);
 

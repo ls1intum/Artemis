@@ -1,0 +1,1 @@
+# Endpoints that bind an entity from the request body. The list is to shrink: new code uses a DTO. See SecurityInventoryArchitectureTest.

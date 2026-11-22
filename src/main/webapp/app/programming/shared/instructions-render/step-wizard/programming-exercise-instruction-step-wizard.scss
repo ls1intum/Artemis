@@ -1,9 +1,12 @@
-@import '../../../../../../../../node_modules/bootstrap/scss/functions';
-@import '../../../../../../../../node_modules/bootstrap/scss/variables';
-@import '../../../../../../../../node_modules/bootstrap/scss/mixins';
-
 $step-font-size: 0.6rem;
 $step-button-size: 21px; // Make sure to keep it uneven so that centering works
+
+// Same column as the rendered problem statement (see programming-exercise-instruction.scss), so the task list lines up with the text below it.
+.stepwizard-container {
+    width: 100%;
+    max-width: 90ch;
+    margin-inline: auto;
+}
 
 .stepwizard {
     display: table;
@@ -38,8 +41,13 @@ $step-button-size: 21px; // Make sure to keep it uneven so that centering works
         cursor: default;
     }
 
-    .btn {
+    .stepwizard-button {
         cursor: default;
+        color: var(--body-color);
+        font-weight: 400;
+        vertical-align: middle;
+        user-select: none;
+        border-style: solid;
         background-color: var(--module-bg);
         width: $step-button-size;
         height: $step-button-size;
@@ -49,32 +57,32 @@ $step-button-size: 21px; // Make sure to keep it uneven so that centering works
         line-height: 1;
         border-radius: 15px;
         border-width: 2px;
-        border-color: $gray-600;
+        border-color: var(--gray-600);
         display: inline-flex;
         align-items: center;
         justify-content: center;
     }
 
-    &--no-result.btn {
+    &--no-result.stepwizard-button {
         cursor: default;
     }
 
-    & &--failed.btn {
+    & &--failed.stepwizard-button {
         cursor: pointer;
-        color: $danger;
-        border-color: $danger;
+        color: var(--danger);
+        border-color: var(--danger);
     }
 
-    & &--success.btn {
+    & &--success.stepwizard-button {
         cursor: pointer;
-        color: $success;
-        border-color: $success;
+        color: var(--success);
+        border-color: var(--success);
     }
 
-    & &--no-result.btn,
-    .btn.not-done,
-    & &--not-executed.btn {
-        color: $gray-600;
+    & &--no-result.stepwizard-button,
+    .stepwizard-button.not-done,
+    & &--not-executed.stepwizard-button {
+        color: var(--gray-600);
         font-size: 0.4rem;
     }
 }
@@ -93,5 +101,5 @@ $step-button-size: 21px; // Make sure to keep it uneven so that centering works
     left: 0;
     right: 0;
     margin: 0;
-    border-top: 3px solid $gray-500;
+    border-top: 3px solid var(--gray-500);
 }

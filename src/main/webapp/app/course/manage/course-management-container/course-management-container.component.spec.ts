@@ -6,7 +6,6 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 
@@ -25,13 +24,21 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 
 import { AlertService } from 'app/foundation/service/alert.service';
 
-import { MockModule, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { AfterViewInit, Component, EventEmitter, TemplateRef, signal, viewChild } from '@angular/core';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { CourseManagementContainerComponent } from 'app/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
+import {
+    MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_ATLASLLM,
+    MODULE_FEATURE_HYPERION,
+    MODULE_FEATURE_IRIS,
+    MODULE_FEATURE_LECTURE,
+    MODULE_FEATURE_LTI,
+    PROFILE_PROD,
+} from 'app/app.constants';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
 import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
@@ -144,7 +151,7 @@ describe('CourseManagementContainerComponent', () => {
         } as unknown as ActivatedRoute;
 
         await TestBed.configureTestingModule({
-            imports: [CourseManagementContainerComponent, MockModule(NgbTooltipModule)],
+            imports: [CourseManagementContainerComponent],
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(CourseStorageService),
@@ -236,7 +243,7 @@ describe('CourseManagementContainerComponent', () => {
         vi.spyOn(courseAdminService, 'getOperationProgress').mockReturnValue(of(new HttpResponse<CourseOperationProgressDTO | null>({ body: null, status: 204 })));
 
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
+            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
             activeProfiles: [PROFILE_PROD],
             gocastEnabled: true,
         } as unknown as ProfileInfo);
@@ -262,7 +269,7 @@ describe('CourseManagementContainerComponent', () => {
         await component['initializeCourseManagementContainerComponent']();
 
         expect(getCourseStub).toHaveBeenCalledWith(1);
-        expect(getSidebarItems).toHaveBeenCalledTimes(2);
+        expect(getSidebarItems).toHaveBeenCalledTimes(3);
         expect(subscribeToCourseUpdates).toHaveBeenCalledWith(1);
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
             1,
@@ -307,6 +314,20 @@ describe('CourseManagementContainerComponent', () => {
         expect(sidebarItems.some((item) => item.title === 'Presentations')).toBe(shown);
     });
 
+    it('should update the Smart Quizzes sidebar item when the feature is toggled', async () => {
+        const smartQuizzesToggle = new Subject<boolean>();
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockImplementation((feature) => (feature === FeatureToggle.SmartQuizzes ? smartQuizzesToggle : of(true)));
+        vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: { ...course1, isAtLeastEditor: true } })));
+
+        await component['initializeCourseManagementContainerComponent']();
+
+        expect(component.sidebarItems().some((item) => item.testId === 'smart-quizzes')).toBe(false);
+        smartQuizzesToggle.next(true);
+        expect(component.sidebarItems().some((item) => item.testId === 'smart-quizzes')).toBe(true);
+        smartQuizzesToggle.next(false);
+        expect(component.sidebarItems().some((item) => item.testId === 'smart-quizzes')).toBe(false);
+    });
+
     it('should keep the transparent presentation layout for a selected exercise-linked presentation', () => {
         route.snapshot.firstChild!.data = { transparentCourseBody: true };
         (router as unknown as MockRouter).setUrl('/course-management/1/presentations/17/exercises/7');
@@ -321,6 +342,7 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.isTestServer).toBe(false);
         expect(component.atlasEnabled).toBe(true);
         expect(component.irisEnabled).toBe(true);
+        expect(component.hyperionEnabled).toBe(true);
         expect(component.ltiEnabled).toBe(true);
         expect(component.localCIActive).toBe(false);
     });
@@ -355,6 +377,7 @@ describe('CourseManagementContainerComponent', () => {
         component.atlasEnabled = true;
         component.ltiEnabled = true;
         component.irisEnabled = true;
+        component.hyperionEnabled = true;
         component.athenaEnabled = true;
         component.tutorialGroupEnabled = true;
         component.gocastEnabled = true;

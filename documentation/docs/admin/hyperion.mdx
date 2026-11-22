@@ -2,7 +2,7 @@
 id: hyperion
 title: Hyperion Service
 sidebar_label: Hyperion Setup
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-20
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -17,8 +17,8 @@ Hyperion extends Artemis with AI-assisted authoring features. For programming ex
 ## Prerequisites
 
 - A running Artemis instance that loads the `core` profile.
-- Network access to an LLM provider that is supported by Spring AI (for example OpenAI or Azure OpenAI).
-- A valid API key for the chosen provider.
+- Network access to an LLM provider: OpenAI, Microsoft Foundry, or an OpenAI-compatible server or gateway.
+- An endpoint and presets under `artemis.llm`, see [LLM configuration](./llm-configuration).
 
 ## Enable the Hyperion module
 
@@ -30,98 +30,49 @@ artemis:
         enabled: true
 ```
 
-## Configure Spring AI
+## Configure the language models
 
-Hyperion delegates all model interactions to Spring AI. Artemis ships the single OpenAI module (backed by the official OpenAI Java SDK), which serves OpenAI, Azure OpenAI / Microsoft Foundry, and OpenAI-compatible local servers from one configuration tree.
-
-### OpenAI
-
-```yaml
-spring:
-    ai:
-        model:
-            chat: openai
-        openai:
-            api-key: <openai-api-key>
-            timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
-            chat:
-                model: gpt-5-mini # Or another (reasonably capable) model
-                temperature: 1.0 # Required to be 1.0 for gpt-5
-        # Retry/response handling tuning for AI providers
-        retry:
-            # Treat HTTP 429 as transient to allow auto-retry by Spring AI
-            on-http-codes: [429]
-            # Conservative defaults; adjust if needed
-            max-attempts: 5
-            backoff:
-                initial-interval: 1000ms
-                multiplier: 2.0
-                max-interval: 30000ms
-```
-
-### Azure OpenAI / Microsoft Foundry
+Hyperion reads its models from the presets under `artemis.llm`, described in [LLM configuration](./llm-configuration).
+Assign them under `artemis.hyperion.llm-presets`. A task without its own key uses `default`:
 
 ```yaml
-spring:
-    ai:
-        model:
-            chat: openai
-        openai:
-            api-key: <azure-openai-api-key>
-            base-url: https://<your-resource-name>.openai.azure.com
-            microsoft-foundry: true # routes auth as an Azure api-key header; keep false/omitted for plain OpenAI or OpenAI-compatible endpoints
-            timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
-            chat:
-                model: <azure-deployment> # the Azure deployment name; used as the request model. gpt-5-mini deployment recommended
-                temperature: 1.0 # Required to be 1.0 for gpt-5
-        # Retry/response handling tuning for AI providers
-        retry:
-            # Treat HTTP 429 as transient to allow auto-retry by Spring AI
-            on-http-codes: [429]
-            # Conservative defaults; adjust if needed
-            max-attempts: 5
-            backoff:
-                initial-interval: 1000ms
-                multiplier: 2.0
-                max-interval: 30000ms
+artemis:
+    hyperion:
+        enabled: true
+        llm-presets:
+            default: large                  # problem-statement, consistency-check, checklist, assessment-criteria, quiz-generation, code-generation, variants
+            problem-statement-rewrite: small
+            faq-rewrite: small
+            metadata-suggestion: small
+            competency-context: small
 ```
+
+The tasks are `problem-statement`, `problem-statement-rewrite`, `consistency-check`, `checklist`,
+`assessment-criteria`, `quiz-generation`, `code-generation`, `variants`, `faq-rewrite`, `metadata-suggestion` and
+`competency-context`. With Hyperion enabled, every task needs a preset, either its own key or `default`. The
+[LLM configuration](./llm-configuration#endpoints) page shows endpoints for OpenAI, Microsoft Foundry and
+OpenAI-compatible servers.
 
 ### Token Usage Tracking
 
-Artemis tracks LLM token usage and costs per request. Configure model pricing under `artemis.llm.model-costs` to enable operator-configured EUR cost estimates in admin dashboards.
+Artemis displays LLM costs in **USD**. When a compatible API such as Logos returns a complete per-request amount in `usage.cost` with `cost_currency: "USD"`, Artemis uses that amount. This includes the gateway's cache pricing. A reported zero is a valid cost.
 
-```yaml
-artemis:
-    llm:
-        model-costs:
-            gpt-5-mini:
-                input-cost-per-million-eur: 0.23
-                output-cost-per-million-eur: 1.84
-```
+When the response has no usable USD amount, Artemis estimates it from the price list of the preset's endpoint, see
+[Costs](./llm-configuration#costs). Configure the cache-read rate as well when cache reads occur. A missing cache count
+is unknown, not zero; a complete estimate without a reported split is possible only if cached and uncached rates are
+equal. Missing prices keep the cost of a whole-exercise generation run incomplete. For other LLM services the estimate
+uses the regular input rate when no separate cache rate is configured.
 
-Add entries for each model you use. The key must match the model name returned by your provider (without date suffixes like `-2024-07-18`). For whole-exercise generation, missing rates make the estimate incomplete; they do not establish zero cost. Token counts remain available.
+Course statistics, the Iris dashboard and its email digest show the sum of known USD amounts. They identify requests with no USD price and mark partial totals.
+For historical requests, the migration estimates a USD amount from the stored rates using the former EUR convention and a single [ECB reference rate](https://data.ecb.europa.eu/data/datasets/EXR/EXR.D.USD.EUR.SP00.A) of 1.0968 USD per EUR from 18 November 2026.
+It keeps existing USD amounts and leaves usage without valid token counts and usable prices unpriced. A zero tariff among positive tariffs remains free for its token type, while all-zero tariffs may indicate missing configuration.
+The course data export contains token counts and the USD total. Update scripts that read the old tariff columns of `llm-token-usage.csv` to use `TotalCostUsd`.
 
-Cache pricing and cache usage are separate inputs. When the provider explicitly reports **zero cache-read tokens**, configured input and output rates suffice for a complete estimate. When cache reads are positive, also configure `cached-input-cost-per-million-eur`. An omitted cache count means **unknown**, not zero: without a reported split, a complete estimate is possible only when the configured cached and uncached input rates are equal. Artemis does not silently substitute the uncached rate for a missing cache price.
+Atlas orchestration records each model response before combining tool rounds, including responses from delegated tasks. Each provider amount is counted once. Responses without usable usage remain unpriced, and costs already recorded survive a later failed round. Other accumulated tool-calling responses may have combined token counts without a matching combined API cost; Artemis uses the price list estimate in that case rather than treating the final call's cost as the cost of the whole exchange.
 
-For whole-exercise generation, the shared usage ledger stores the configured uncached input and cache-read rates separately, together with the reported cache-read token count. `cost_per_million_input_tokens` is the uncached input rate, not a blended rate. To reproduce the estimate, subtract cache-read tokens from total input tokens, multiply the uncached and cached counts by their own stored rates, add the output cost, and divide by 1,000,000. A missing cache-read count contributes zero to this numeric calculation, but does not prove that cache usage was zero.
+Upgrade Pyris and Athena before or alongside Artemis so their new requests can carry USD amounts. Requests received from older versions after the Artemis upgrade stay unpriced because Artemis no longer stores the old rates for new calls. API responses with malformed cost metadata still deliver their content and token counts; unusable amounts are ignored. For whole-exercise generation, upgrade Artemis core and its workers together: worker protocol version 6 carries the name of the LLM preset, and workers with another version are rejected.
 
-Other LLM services keep their existing accounting rules and default prices. Hyperion reads explicitly configured prices from the same `artemis.llm.model-costs` keys, without inheriting those defaults. Generation activity reports estimate completeness; the existing ledger does not persist that flag. A numeric ledger entry alone does not prove that all prices or the cache split were known.
-
-When using catalogue prices as a reference for another provider, retain the catalogue retrieval date and currency conversion with the deployment configuration. A reference estimate is not an invoice or evidence of provider billing.
-
-For example, the [OpenRouter model catalogue](https://openrouter.ai/api/v1/models) retrieved on 11 September 2026 lists `qwen/qwen3.8-27b` at USD 0.42 per million input tokens, USD 0.085 per million cached input tokens, and USD 3.00 per million output tokens. At the [ECB reference rate](https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml) dated 10 September 2026 (EUR 1 = USD 1.1616), a deployment whose provider returns `Qwen/Qwen3.8-27B` can configure:
-
-```yaml
-artemis:
-    llm:
-        model-costs:
-            '[Qwen/Qwen3.8-27B]':
-                input-cost-per-million-eur: 0.361570248
-                cached-input-cost-per-million-eur: 0.073174931
-                output-cost-per-million-eur: 2.582644628
-```
-
-Refresh the rates deliberately rather than treating this dated example as a permanent default. Re-register evaluation campaigns when their effective pricing configuration changes.
+Drain active generation runs and stop all writers before upgrading. Retained generation transcripts and usage records remain readable: their JDK-serialized map values match fields by name, so previous EUR amounts are not reused as USD amounts. Their token counts remain available, while the renamed USD fields are unpriced until new USD evidence is recorded. The reverse direction also leaves the previous EUR fields unpriced rather than relabelling USD amounts. These two maps have used JDK map-value serialization since their introduction and have no map-notification consumers; their field rename does not require resetting the global distributed-data namespace. This does not make changed Kryo payloads generally compatible or permit mixed-version generation writers.
 
 ### Observability (Optional)
 
@@ -219,23 +170,44 @@ management:
 
 ## Configure the quiz question pool
 
-Hyperion can pre-generate a pool of multiple-choice questions per course, competency and linked lecture unit, each grounded in that unit's slides, transcript or text and judged by a second model call before an instructor reviews them. The pool uses the default chat model configured above unless you name other models here. Instructors do not choose models; they only decide how many questions the pool holds per lecture unit.
+Hyperion can pre-generate a pool of multiple-choice questions per course, competency and linked lecture unit, each grounded in that unit's slides, transcript or text and judged by a second model call before an instructor reviews them. Instructors do not choose models; on the pool page they choose the question types, how many questions each lecture unit receives and the mix of difficulties.
+
+Smart Quizzes requires Hyperion and Atlas and is off by default. Enable **Smart Quizzes** under **Administration → Configuration → Features**. The switch takes effect without restarting Artemis. Turning it off removes the course sidebar link, blocks access to the pool, and prevents new manual and scheduled builds. Builds already underway can finish. Stored questions and course settings are available again when the switch is turned back on.
 
 ```yaml
 artemis:
   hyperion:
     quiz-pool:
-      generator-model: # model (Azure: deployment name) that generates pool questions; blank uses the default chat model
-      judge-model: # model (Azure: deployment name) that judges generated questions; blank uses the default chat model
-      question-types: single-choice,multiple-choice # cells of the pool per competency, lecture unit and difficulty
-      difficulties: easy,medium,hard
+      generator-llm-preset: selfhosted # preset that generates pool questions
+      judge-llm-preset: selfhosted # preset that judges generated questions
       generation-batch-size: 8 # questions requested per generation call
       stale-claim-minutes: 30 # a claim older than this counts as abandoned by a dead node and is released at the next build
       max-material-characters: 60000 # characters of a lecture unit's text that a generation prompt receives at most
+      schedule-cron: "0 0 0 * * *" # when the overnight run over the courses that enabled overnight generation starts, on the node with the scheduling profile
+      schedule-window-hours: 7 # how long the overnight run lasts at most (1-23); a build still running at the end stops after its current unit of work
       build-lease-minutes: 10 # a build that stops renewing its lease for this long counts as dead and frees the course for the next build; keep it longer than the longest model call
 ```
 
-Both models must be reachable through the configured Spring AI endpoint. On Azure OpenAI / Microsoft Foundry a model name is the deployment name. Every generation and filter call is recorded in the LLM token usage tracking, so add the two models to `artemis.llm.model-costs` if you want their cost reported.
+<Callout variant={CalloutVariant.warning}>
+    The pool sends lecture material to the endpoints of its presets. Choose presets on an endpoint that your institution allows for this data, for example a self-hosted model. Artemis does not check where an endpoint or a gateway routes the requests.
+</Callout>
+
+Set both presets or neither; they are defined under `artemis.llm.presets` like every other preset (see
+[LLM configuration](./llm-configuration)). Without them the pool is off: the pool page tells instructors that no
+language models are assigned, and builds are refused. If only one of the two is set, the server does not start and
+names the missing key.
+
+An institution without its own model gateway can host a model on an OpenAI-compatible server and point an endpoint at
+it. With [vLLM](https://docs.vllm.ai/), `vllm serve Qwen/Qwen3.8-27B` serves the model under the name
+`Qwen/Qwen3.8-27B` at `http://<host>:8000/v1`; at 16-bit precision it needs a GPU with about 80 GB of memory. Use
+`api: chat-completions` for such servers and set `max-tokens` if the server needs an output limit.
+
+Every generation and filter call is recorded in the LLM token usage tracking. Add the models to the price list of
+their endpoint if the endpoint does not report the cost itself.
+
+Overnight generation runs only for courses whose instructors enabled it on the pool page, and only while the course has not ended. The run starts at `schedule-cron` (default midnight) on the node that carries the `scheduling` profile and builds one course after another on the pool's own build executor, so manual builds keep a thread of their own. It ends after `schedule-window-hours` (default 7, so at seven in the morning): it then starts no further course, and the build still running stops after its current unit of work and keeps its remaining questions for the next night. Courses whose last completed build is oldest come first, and courses that never completed a build before them, so a course the window cut off continues early the next night. Expect a few minutes per course with new or changed lecture material; filling the pools of many courses for the first time can take several nights. One build per course runs at a time across the cluster.
+
+Every server log line of the pool starts with `Quiz question pool`, so `grep "Quiz question pool"` shows its activity. A build logs one line when it starts (course, user, new questions, settings and models) and one when it ends (duration, and how many questions were generated, accepted, rejected, regenerated after a rejection, and failed, with the failure reasons such as `CALL_FAILED` or `NO_MATERIAL`). Refused builds, cancel requests, deletions and settings changes are logged with the user who made them; failed model calls and lecture units without usable material are logged as warnings.
 
 ## Verifying the integration
 
@@ -281,7 +253,7 @@ Maven black-box (`MAVEN_BLACKBOX`) exercises are not supported. The worker runs
 the exercise's own build tool: one offline sandbox image contains the canonical
 Java 25 / Ares 2 Gradle and Maven harnesses and their dependencies. Ares 1 harnesses are not supported by generation or adaptation. Migrate an older
 exercise to the current Artemis harness separately; Hyperion does not rewrite its build files.
-Rebuild and qualify `deployment/docker/hyperion/gradle-sandbox.Dockerfile` when its
+Rebuild and qualify `deployment/docker/hyperion/Dockerfile` when its
 canonical toolchain or dependencies change; an older Java 17 sandbox cannot grade
 this harness. Keep `SecurityPolicy.yaml` explicit. Generation may update only its
 instructor-test class list, not its supervised package or resource permissions.
@@ -424,7 +396,7 @@ JVM: a single-host installation can run a separate isolated worker, while a
 multi-host installation uses the same selected provider. The worker requires
 neither database access nor Hazelcast cluster membership; it connects as a client.
 Deploy matching core and worker protocol versions together after draining runs.
-Protocol version 4 uses the shared AI Worker envelope and explicit workload schema/profile;
+Protocol version 6 uses the shared AI Worker envelope, explicit workload schema/profile and the name of the LLM preset;
 core and worker must be upgraded together after draining.
 
 ### Toolchains and deployment placement
@@ -435,7 +407,7 @@ bounded assignment, selects a qualified toolchain and returns typed generation e
 The generic transport does not interpret briefs, tests, quality findings or exercise IDs.
 
 The worker selects workload `hyperion-generation`, schema `1`, profile `java-gradle` by default;
-configure only the qualified offline sandbox image. The profile name predates Maven support:
+the shipped versioned offline sandbox image is pulled only if missing locally, as with build-agent images. The profile name predates Maven support:
 the same profile and image serve Java exercises built with Gradle or Maven, and the brief names
 the build tool. Only Java is qualified; naming another profile does not add a language implementation. Core admission
 and returned evidence must agree on the workload schema, profile, image and execution.
@@ -455,7 +427,7 @@ Deny access to databases, repository/NFS services, core management interfaces an
 cloud metadata. Generated-code containers retain network isolation and receive
 neither provider credentials nor the Docker socket.
 
-Before enabling admission, preload the immutable sandbox image, configure
+Before enabling admission, configure
 distributed-data access and per-worker permissions, and confirm the administrator view
 reports the intended toolchain and capacity. Then run a controlled generation,
 verify solution/starter grading and persistence, cancel a second run, and verify
@@ -570,24 +542,19 @@ not as zero usage.
 
 A rate-limit rejection (HTTP 429) or a request that never left the worker can be
 retried with a bounded backoff of up to five retries over about five minutes.
-For exact accounting, set both `spring.ai.openai.max-retries=0` and
-`spring.ai.openai.chat.max-retries=0` on each worker node. The chat setting
-can override the common retry count. Spring AI treats its default chat retry count
-as a fallback to the common setting; Hyperion uses the same rule when it reports
-accounting completeness. These settings change SDK retry behavior, not Hyperion's
-bounded retries for requests that provably produced no completion.
-Accounting completeness follows the worker's effective retry policy and delivered
-usage evidence. Core model settings do not affect generation accounting: core does
-not send these model requests. Leave retries for unrelated core AI features unchanged.
+Presets of exercise generation (`artemis.hyperion.agent.llm-preset` and
+`artemis.hyperion.agent.profiles.<name>.llm-preset`) must have `max-retries: 0`, on
+the preset or on its endpoint. The server refuses another value at startup, and the
+worker refuses it when a run starts, because an SDK retry sends a request that
+Hyperion cannot count. This setting changes SDK retries, not Hyperion's bounded
+retries for requests that provably produced no completion. Core does not send these
+model requests, so retries of other core AI features stay unaffected.
 
 A server or gateway
 failure (HTTP 5xx), HTTP 408, or a read timeout after sending the request leaves
 usage unknown: the model may have run before the error was returned. Hyperion
 does not automatically replay these calls and marks accounting incomplete.
-Hyperion follows the
-[SDK's effective retry setting](https://github.com/spring-projects/spring-ai/blob/v2.0.1/auto-configurations/models/spring-ai-autoconfigure-model-openai/src/main/java/org/springframework/ai/model/openai/autoconfigure/OpenAiAutoConfigurationUtil.java#L60-L61).
-A positive effective limit makes accounting incomplete, even when the final
-response has token counts. Missing or invalid usage stops further authoring and
+Missing or invalid usage stops further authoring and
 review calls locally; it does not depend on a stop message from core.
 A previously verified candidate can still be saved with incomplete accounting;
 an error response must never be treated as proof of zero usage.

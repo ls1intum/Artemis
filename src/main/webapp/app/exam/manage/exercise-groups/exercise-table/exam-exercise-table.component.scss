@@ -19,13 +19,14 @@ tbody td {
     min-width: 14rem;
 }
 
-// Actions column takes the table's leftover width (capped by max-width), so it widens/narrows responsively and the
-// buttons collapse into the ellipsis as it shrinks. min-width floors that shrinking: the 4rem default lets it collapse
-// to just the ellipsis, but rows with reserved content (the test-run warning, which never folds in) set
-// --actions-min-width to the widest such row's reserved width + ellipsis, so the table scrolls rather than clip it.
+// Actions column is as wide as the widest row's buttons (--actions-width, measured by the rows; the leftover width
+// until then), so the other columns get the rest, and the buttons collapse into the ellipsis as it shrinks. min-width
+// floors that shrinking: the 4rem default lets it collapse to just the ellipsis, but rows with reserved content (the
+// test-run warning, which never folds in) set --actions-min-width to the widest such row's reserved width + ellipsis,
+// so the table scrolls rather than clip it.
 th.col-actions,
 td.col-actions {
-    width: 100%;
+    width: var(--actions-width, 100%);
     max-width: 60rem;
     min-width: var(--actions-min-width, 4rem);
     position: relative;

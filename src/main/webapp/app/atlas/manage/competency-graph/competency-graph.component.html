@@ -1,7 +1,7 @@
 @if (nodes().length === 0 || edges().length === 0) {
     <h5 class="m-0" jhiTranslate="artemisApp.learningPathManagement.noGraphAvailable"></h5>
 } @else {
-    <div class="competency-graph-container h-100" xmlns:svg="http://www.w3.org/2000/svg">
+    <div class="competency-graph-container h-full" xmlns:svg="http://www.w3.org/2000/svg">
         <jhi-dag-graph [nodes]="nodes()" [edges]="edges()" [enableZoom]="false">
             <ng-template #defsTemplate>
                 <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">

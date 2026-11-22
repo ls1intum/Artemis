@@ -13,7 +13,7 @@ import { finalize, switchMap, tap } from 'rxjs/operators';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SIZE, SORT } from 'app/foundation/constants/pagination.constants';
-import { faEye, faFileImport, faFilter, faPencil, faPlus, faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faFileImport, faFilter, faPencil, faPlus, faSearch, faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
 import {
     TumAetUiButtonComponent,
     TumAetUiButtonDirective,
@@ -24,6 +24,7 @@ import {
     TumAetUiPaginatorComponent,
     TumAetUiRadioButtonComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
     TumAetUiTooltipDirective,
@@ -36,7 +37,6 @@ import { UsersImportDialogComponent } from 'app/shared-ui/user-import/dialog/use
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteUsersButtonComponent } from './delete-users-button/delete-users-button.component';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
-import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -132,9 +132,9 @@ const MAX_LISTED_DELETION_ACCOUNTS = 10;
         DeleteUsersButtonComponent,
         ProfilePictureComponent,
         SearchHighlightComponent,
-        ItemCountComponent,
         TumAetUiPaginatorComponent,
         TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
         TumAetUiTableSortableColumnComponent,
         TumAetUiButtonComponent,
         TumAetUiButtonDirective,
@@ -224,6 +224,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     /** Filter storage keys */
     protected readonly faFilter = faFilter;
+    protected readonly faSearch = faSearch;
     protected readonly authorityKey = UserStorageKey.AUTHORITY;
     protected readonly statusKey = UserStorageKey.STATUS;
     protected readonly originKey = UserStorageKey.ORIGIN;

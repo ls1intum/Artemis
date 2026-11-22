@@ -11,7 +11,7 @@
             "updated": "Updated Course with title {{ param }}",
             "deleted": "Deleted Course with title {{ param }}",
             "delete": {
-                "question": "Are you sure you want to permanently delete the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong>? All associated elements will be deleted, including exams, exercises, repositories and build plans. <strong class=\"text-danger\">This action can NOT be undone!</strong>",
+                "question": "Are you sure you want to permanently delete the <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong>? All associated elements will be deleted, including exams, exercises, repositories and build plans. <strong class=\"text-state-danger\">This action can NOT be undone!</strong>",
                 "testCourse": "test course",
                 "realCourse": "real course",
                 "typeNameToConfirm": "Please type in the name of the course to confirm.",
@@ -58,7 +58,7 @@
                 }
             },
             "reset": {
-                "question": "Are you sure you want to reset the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong>? This will remove all student data including participations, submissions, posts, and enrollments. Students, tutors, and editors will be removed from the course - only instructors will remain. The course structure (exercises, lectures, exams, competencies, tutorial group configuration) will be preserved for later reuse. <strong class=\"text-danger\">This action can NOT be undone!</strong>",
+                "question": "Are you sure you want to reset the <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong>? This will remove all student data including participations, submissions, posts, and enrollments. Students, tutors, and editors will be removed from the course - only instructors will remain. The course structure (exercises, lectures, exams, competencies, tutorial group configuration) will be preserved for later reuse. <strong class=\"text-state-danger\">This action can NOT be undone!</strong>",
                 "testCourse": "test course",
                 "realCourse": "real course",
                 "typeNameToConfirm": "Please type in the name of the course to confirm.",
@@ -466,7 +466,7 @@
             "assessmentDueDate": "Assessment Due",
             "cleanup": {
                 "title": "Cleanup",
-                "question": "Are you sure you want to clean up the course <strong>{{ title }}</strong>? This will delete all student programming exercise repositories for course <strong>exercises</strong> and <strong>exams</strong>. This action can <strong class='text-danger'>NOT</strong> be undone!"
+                "question": "Are you sure you want to clean up the course <strong>{{ title }}</strong>? This will delete all student programming exercise repositories for course <strong>exercises</strong> and <strong>exams</strong>. This action can <strong class='text-state-danger'>NOT</strong> be undone!"
             },
             "detail": {
                 "title": "Course Details:",
@@ -480,7 +480,9 @@
                 "complaintsTitle": "Total Complaints",
                 "moreFeedbackTitle": "More Feedback Requests",
                 "averageStudentScoreTitle": "Average Student Score",
-                "currentTotalLLMCostTitle": "Total LLM Cost"
+                "currentTotalLLMCostTitle": "LLM Cost (USD)",
+                "llmCostNotPriced": "No USD cost available",
+                "llmCostUnpricedRequests": "Requests without USD pricing: {{ count }}. Excluded from the total."
             },
             "activeStudents": "Active students: {{ students }}",
             "notStartedYet": "The course has not officially started yet. Official course start:",
@@ -591,6 +593,11 @@
                     }
                 },
                 "replayWizard": "Replay Setup Wizard"
+            },
+            "studentWelcomeContext": {
+                "label": "Student Home: learning approach",
+                "hint": "Optional guidance on how to learn in this course (up to 2,000 characters). Shown on the first Home visit and used for optional AI welcomes.",
+                "tooLong": "Use at most 2,000 characters."
             }
         },
         "courseStatistics": {

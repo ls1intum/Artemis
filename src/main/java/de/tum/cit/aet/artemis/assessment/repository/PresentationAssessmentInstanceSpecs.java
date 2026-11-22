@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.repository;
 
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Predicate;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.jpa.domain.Specification;
@@ -45,7 +46,7 @@ public final class PresentationAssessmentInstanceSpecs {
     }
 
     /**
-     * Filters instances by whether result points have been assigned.
+     * Filters instances by whether a result has been assigned, whichever grading method it belongs to.
      *
      * @param assessed true for assessed instances, false for pending instances, or null for no filter
      * @return specification applying the assessment status filter
@@ -55,8 +56,11 @@ public final class PresentationAssessmentInstanceSpecs {
             return Specification.unrestricted();
         }
 
-        return (root, query, builder) -> assessed ? builder.isNotNull(root.get(PresentationAssessmentInstance_.RESULT_POINTS))
-                : builder.isNull(root.get(PresentationAssessmentInstance_.RESULT_POINTS));
+        return (root, query, builder) -> {
+            Predicate hasResult = builder.or(builder.isNotNull(root.get(PresentationAssessmentInstance_.RESULT_POINTS)),
+                    builder.isNotNull(root.get(PresentationAssessmentInstance_.PASSED)), builder.isNotNull(root.get(PresentationAssessmentInstance_.RUBRIC_SCORE)));
+            return assessed ? hasResult : builder.not(hasResult);
+        };
     }
 
     /**

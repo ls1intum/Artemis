@@ -1,4 +1,4 @@
-import { EMPTY, Subscription, catchError, defer, expand, map, of, retry, switchMap, throwError, timer } from 'rxjs';
+import { EMPTY, Subscription, catchError, defer, expand, filter, interval, map, of, retry, switchMap, take, takeWhile, throwError, timer } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -9,6 +9,7 @@ import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -166,11 +167,12 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly managementGradeInfo = input<StudentExamWithGradeDTO>();
     readonly isSidebarCollapsed = input(false);
     readonly toggleSidebar = output<void>();
+    readonly refreshSummary = output<void>();
 
     readonly courseId = signal<number>(undefined!);
 
     readonly isTestRun = signal(false);
-    isTestExam = false;
+    readonly isRealExam = signal(true);
 
     testRunConduction = false;
     readonly testExamConduction = signal(false);
@@ -205,9 +207,9 @@ export class ExamResultSummaryComponent implements OnInit {
         const studentExam = this.studentExam();
         // flags required to display test runs correctly
         this.isTestRun.set(this.route.snapshot.url[1]?.toString() === 'test-runs');
-        this.isTestExam = studentExam.exam!.testExam!;
+        this.isRealExam.set(isRealExam(studentExam.exam));
         this.testRunConduction = this.isTestRun() && this.route.snapshot.url[3]?.toString() === 'conduction';
-        this.testExamConduction.set(this.isTestExam && !studentExam.submitted);
+        this.testExamConduction.set(!this.isRealExam() && !studentExam.submitted);
         this.courseId.set(Number(this.route.snapshot?.paramMap?.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId')));
         if (!studentExam?.id) {
             throw new Error('studentExam.id should be present to fetch grade info');
@@ -221,7 +223,7 @@ export class ExamResultSummaryComponent implements OnInit {
 
         this.exerciseInfos.set(this.getExerciseInfos());
 
-        if (this.instructorView() || (this.isTestExam ? studentExam.submitted : isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService))) {
+        if (this.instructorView() || (!this.isRealExam() ? studentExam.submitted : isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService))) {
             const suppliedGrades = this.managementGradeInfo();
             const grades = this.instructorView()
                 ? suppliedGrades
@@ -248,7 +250,7 @@ export class ExamResultSummaryComponent implements OnInit {
             const subscription = grades
                 .pipe(
                     expand((gradeInfo) => {
-                        const pendingAutomaticResults = this.isTestExam && !!gradeInfo.pendingExerciseIds?.length;
+                        const pendingAutomaticResults = !this.isRealExam() && !!gradeInfo.pendingExerciseIds?.length;
                         if (this.studentExam().id !== studentExam.id || (!pendingAutomaticResults && !gradeInfo.studentResult?.gradeWithBonus?.pending)) {
                             return EMPTY;
                         }
@@ -287,10 +289,33 @@ export class ExamResultSummaryComponent implements OnInit {
 
         this.isBeforeStudentReviewEnd.set(this.getIsBeforeStudentReviewEnd());
         this.isAfterStudentReviewStart.set(this.getIsAfterStudentReviewStart());
+        this.watchPublicationAndReviewDates();
+    }
+
+    private watchPublicationAndReviewDates(): void {
+        if (this.instructorView() || this.isTestRun() || !this.isRealExam()) {
+            return;
+        }
+        const studentExamId = this.studentExam().id;
+        const published = this.resultsArePublished;
+        const reviewStarted = this.getIsAfterStudentReviewStart();
+        const beforeReviewEnd = this.getIsBeforeStudentReviewEnd();
+        // The server withholds exercise results before publication. Reload the full authorized
+        // summary at each deadline instead of only fetching totals or re-rendering cached data.
+        interval(1000)
+            .pipe(
+                takeWhile(() => this.studentExam().id === studentExamId),
+                filter(
+                    () => this.resultsArePublished !== published || this.getIsAfterStudentReviewStart() !== reviewStarted || this.getIsBeforeStudentReviewEnd() !== beforeReviewEnd,
+                ),
+                take(1),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(() => this.refreshSummary.emit());
     }
 
     get resultsArePublished(): boolean {
-        if (this.isTestRun() || this.isTestExam) {
+        if (this.isTestRun() || !this.isRealExam()) {
             return true;
         }
 
@@ -300,7 +325,7 @@ export class ExamResultSummaryComponent implements OnInit {
 
         const studentExam = this.studentExam();
         if (studentExam?.exam?.publishResultsDate) {
-            return dayjs(studentExam.exam.publishResultsDate).isBefore(dayjs());
+            return dayjs(studentExam.exam.publishResultsDate).isBefore(this.serverDateService.now());
         }
 
         return false;
@@ -420,7 +445,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private getIsAfterStudentReviewStart() {
-        if (this.isTestRun() || this.isTestExam) {
+        if (this.isTestRun() || !this.isRealExam()) {
             return true;
         }
         const studentExam = this.studentExam();
@@ -431,7 +456,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private getIsBeforeStudentReviewEnd() {
-        if (this.isTestRun() || this.isTestExam) {
+        if (this.isTestRun() || !this.isRealExam()) {
             return true;
         }
         const studentExam = this.studentExam();

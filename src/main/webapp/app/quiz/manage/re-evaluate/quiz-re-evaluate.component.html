@@ -8,88 +8,82 @@
         </h1>
         @if (!quizExercise().course) {
             <h5>
-                <fa-icon class="text-warning" [icon]="faExclamationTriangle" />
+                <fa-icon class="text-state-warning" [icon]="faExclamationTriangle" />
                 <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.exam"></span>
             </h5>
         }
         <hr />
         <div class="edit-quiz-re-evaluate">
             <div class="quiz-options">
-                <div class="row form-group" style="width: 100%">
-                    <div class="row">
-                        <!--
-                            The marker the shared title field carries on every other exercise form, which this page
-                            hand-rolls its own title input instead of using. Hidden from assistive technology because
-                            `required` on the input already conveys it.
-
-                            Label and marker share one child of the row: Bootstrap gives every direct child of a `.row`
-                            `width: 100%`, so as two children they took a line each and the star sat under the label.
-                        -->
-                        <div><label for="quiz-title" jhiTranslate="artemisApp.exercise.title"></label><span class="text-state-danger" aria-hidden="true">*</span></div>
+                <div class="mb-6 flex w-full flex-col">
+                    <!--
+                        The marker the shared title field carries on every other exercise form, which this page
+                        hand-rolls its own title input instead of using. Hidden from assistive technology because
+                        `required` on the input already conveys it.
+                    -->
+                    <div>
+                        <label class="text-base font-bold" for="quiz-title" jhiTranslate="artemisApp.exercise.title"></label
+                        ><span class="text-state-danger" aria-hidden="true">*</span>
                     </div>
-                    <div class="row">
-                        <div class="col-11">
-                            <input
-                                required
-                                id="quiz-title"
-                                type="text"
-                                class="form-control"
-                                [(ngModel)]="quizExercise().title"
-                                (ngModelChange)="cacheValidation()"
-                                placeholder="{{ 'artemisApp.quizExercise.placeholder.title' | artemisTranslate }}"
-                            />
-                        </div>
-                        <div class="col-1">
-                            <span class="input-group-btn">
-                                <button
-                                    tumAetUiButton
-                                    severity="secondary"
-                                    variant="outlined"
-                                    size="small"
-                                    type="button"
-                                    (click)="resetQuizTitle()"
-                                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuizTitle' | artemisTranslate"
-                                >
-                                    <fa-icon [icon]="faUndo" />
-                                </button>
-                            </span>
-                        </div>
+                    <div class="flex items-center gap-2">
+                        <input
+                            required
+                            id="quiz-title"
+                            type="text"
+                            tumAetUiInput
+                            class="min-w-0 grow"
+                            [(ngModel)]="quizExercise().title"
+                            (ngModelChange)="cacheValidation()"
+                            placeholder="{{ 'artemisApp.quizExercise.placeholder.title' | artemisTranslate }}"
+                        />
+                        <button
+                            tumAetUiButton
+                            severity="secondary"
+                            variant="outlined"
+                            size="small"
+                            type="button"
+                            (click)="resetQuizTitle()"
+                            [attr.aria-label]="'artemisApp.quizExercise.re-evaluate.resetQuizTitle' | artemisTranslate"
+                            [tumAetUiTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuizTitle' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faUndo" />
+                        </button>
                     </div>
                 </div>
-                <div class="row" style="width: 100%">
-                    <div class="col-12 col-lg-7">
-                        <div class="row">
-                            <div class="form-group">
-                                <tumaet-ui-date-picker
-                                    class="start-time"
-                                    inputId="quiz-re-evaluate-start-time"
-                                    labelName="artemisApp.quizExercise.startTime"
-                                    [value]="quizExercise().releaseDate"
-                                    [disabled]="true"
-                                />
-                            </div>
+                <div class="grid w-full grid-cols-12 gap-x-6">
+                    <div class="col-span-12 flex flex-col lg:col-span-7">
+                        <div class="mb-6">
+                            <tumaet-ui-date-picker
+                                class="start-time w-4/5"
+                                inputId="quiz-re-evaluate-start-time"
+                                labelName="artemisApp.quizExercise.startTime"
+                                [value]="quizExercise().releaseDate"
+                                [disabled]="true"
+                            />
                         </div>
-                        <div class="row">
-                            <div class="form-group quiz-duration">
-                                <label jhiTranslate="artemisApp.quizExercise.duration"></label>
-                                <div class="d-flex align-items-center">
-                                    <label for="quiz-duration-hours" class="visually-hidden" jhiTranslate="artemisApp.quizExercise.hours"></label>
-                                    <input id="quiz-duration-hours" class="form-control me-2" title="Duration" [value]="duration().hours" type="number" disabled />
-                                    <span jhiTranslate="artemisApp.quizExercise.hours"></span>
-                                    <label for="quiz-duration-minutes" class="visually-hidden" jhiTranslate="artemisApp.quizExercise.minutes"></label>
-                                    <input id="quiz-duration-minutes" class="form-control me-2" title="Duration" [value]="duration().minutes" type="number" disabled />
-                                    <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
-                                    <label for="quiz-duration-seconds" class="visually-hidden" jhiTranslate="artemisApp.quizExercise.seconds"></label>
-                                    <input id="quiz-duration-seconds" class="form-control me-2 ms-2" title="Duration" type="number" [value]="duration().seconds" disabled />
-                                    <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
-                                </div>
+                        <div class="quiz-duration mb-6 flex flex-col">
+                            <span id="quiz-re-evaluate-duration-label" class="text-base font-bold" jhiTranslate="artemisApp.quizExercise.duration"></span>
+                            <div class="flex items-center" role="group" aria-labelledby="quiz-re-evaluate-duration-label">
+                                <label for="quiz-duration-hours" class="sr-only" jhiTranslate="artemisApp.quizExercise.hours"></label>
+                                <input id="quiz-duration-hours" tumAetUiInput class="me-2! w-16" title="Duration" [value]="duration().hours" type="number" disabled />
+                                <span jhiTranslate="artemisApp.quizExercise.hours"></span>
+                                <label for="quiz-duration-minutes" class="sr-only" jhiTranslate="artemisApp.quizExercise.minutes"></label>
+                                <input id="quiz-duration-minutes" tumAetUiInput class="me-2! ms-2! w-16" title="Duration" [value]="duration().minutes" type="number" disabled />
+                                <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
+                                <label for="quiz-duration-seconds" class="sr-only" jhiTranslate="artemisApp.quizExercise.seconds"></label>
+                                <input id="quiz-duration-seconds" tumAetUiInput class="me-2! ms-2! w-16" title="Duration" type="number" [value]="duration().seconds" disabled />
+                                <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
                             </div>
                         </div>
                     </div>
-                    <div class="col-12 col-lg-5">
-                        <div class="row form-group">
-                            <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ quizExercise().course ? 'Course' : 'Exam' }}Label"></label>
-                            <div>
+                    <div class="col-span-12 flex flex-col lg:col-span-5">
+                        <div class="mb-6 flex flex-col">
+                            <span
+                                id="quiz-re-evaluate-included-label"
+                                class="text-base font-bold"
+                                jhiTranslate="artemisApp.exercise.includedInOverallScore{{ quizExercise().course ? 'Course' : 'Exam' }}Label"
+                            ></span>
+                            <div role="group" aria-labelledby="quiz-re-evaluate-included-label">
                                 @if (quizExercise().includedInOverallScore) {
                                     <jhi-included-in-overall-score-picker
                                         [includedInOverallScore]="quizExercise().includedInOverallScore!"
@@ -99,28 +93,20 @@
                                 }
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="form-group custom-control custom-checkbox">
-                                <input
-                                    type="checkbox"
-                                    id="cbRandomizeOrder"
-                                    class="form-check-input custom-control-input"
-                                    [(ngModel)]="quizExercise().randomizeQuestionOrder"
-                                    (ngModelChange)="cacheValidation()"
-                                />
-                                <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
-                            </div>
+                        <div class="mb-6 flex items-center gap-2">
+                            <tumaet-ui-checkbox inputId="cbRandomizeOrder" [(ngModel)]="quizExercise().randomizeQuestionOrder" (ngModelChange)="cacheValidation()" />
+                            <label class="m-0" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="text-start mt-1 mb-1" style="width: 100%">
+            <div class="mt-1 mb-1 w-full text-left!">
                 <h4>
                     <span jhiTranslate="artemisApp.quizExercise.questions"></span>
                 </h4>
             </div>
             @for (question of quizExercise().quizQuestions; track question.id; let i = $index) {
-                <div class="card mb-3" style="width: 100%">
+                <div class="mb-4 w-full overflow-hidden rounded-md border border-(--border-color) bg-surface-raised">
                     @if (question.type === MULTIPLE_CHOICE) {
                         <div>
                             <jhi-multiple-choice
@@ -161,18 +147,18 @@
             }
         </div>
         <div class="edit-quiz-footer">
-            <div class="container">
+            <div class="mx-auto h-full w-full px-3 sm:max-w-[540px] md:max-w-[720px] lg:max-w-[960px] xl:max-w-[1140px] 2xl:max-w-[1320px]">
                 <div class="edit-quiz-footer-content">
                     <div></div>
-                    <div class="form-group">
+                    <div class="flex flex-wrap items-center gap-2">
                         @if (!pendingChanges() && !isSaving()) {
-                            <span jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge bg-success"></span>
+                            <tumaet-ui-tag severity="success"><span jhiTranslate="artemisApp.quizExercise.edit.saved"></span></tumaet-ui-tag>
                         }
                         @if (pendingChanges() && isValidQuiz() && !isSaving()) {
-                            <span jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge bg-primary"></span>
+                            <tumaet-ui-tag severity="info"><span jhiTranslate="artemisApp.quizExercise.edit.pendingChanges"></span></tumaet-ui-tag>
                         }
                         @if (isSaving()) {
-                            <span jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-primary"></span>
+                            <tumaet-ui-tag severity="info"><span jhiTranslate="artemisApp.quizExercise.edit.saving"></span></tumaet-ui-tag>
                         }
                         <ng-template #warningTranslate>
                             @for (warning of invalidWarnings(); track warning) {
@@ -187,10 +173,10 @@
                             }
                         </ng-template>
                         @if (warningQuizCache()) {
-                            <span class="badge bg-warning" [ngbTooltip]="warningTranslate" tooltip-placement="top-right auto">
+                            <tumaet-ui-tag severity="warn" [tumAetUiTooltip]="warningTranslate" tumAetUiTooltipPlacement="top">
                                 <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
                                 <span>({{ invalidWarnings().length }})</span>
-                            </span>
+                            </tumaet-ui-tag>
                         }
                         <button
                             type="button"

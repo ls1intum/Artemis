@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
@@ -43,6 +44,7 @@ import de.tum.cit.aet.artemis.admin.repository.ApplicationAuditEventRepository;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -444,7 +446,6 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         final HttpHeaders headers = new HttpHeaders();
         headers.set("User-Agent", "foo");
         headers.set("X-Artemis-Client-Fingerprint", "bar");
-        headers.set("X-Forwarded-For", "10.0.28.1");
 
         for (var studentExam : studentExams) {
             var user = studentExam.getUser();
@@ -615,10 +616,17 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void testGetExamStudentsPaged_allowedForTutor() throws Exception {
+    void testGetExamStudentsPaged_forbiddenForTutor() throws Exception {
         var paginationExam = createPaginationTestExam();
-        List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, pageParams(""));
-        assertThat(result).isNotNull();
+        request.getList(pagedUrl(paginationExam), HttpStatus.FORBIDDEN, ExamStudentDTO.class, pageParams(""));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamStudentsPaged_doesNotContainEmailAddresses() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        List<Map> rows = request.getList(pagedUrl(paginationExam), HttpStatus.OK, Map.class, pageParams(""));
+        assertThat(rows).isNotEmpty().allSatisfy(row -> assertThat(row).doesNotContainKey("email").containsKey("login"));
     }
 
     @Test
@@ -991,7 +999,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
         exam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        exam.setTestExam(false);
+        exam.setExamMode(ExamMode.REAL);
         exam = examRepository.save(exam);
 
         // Register all 4 students

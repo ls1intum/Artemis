@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 /**
  * DTO answering a request to build a course's quiz question pool.
  *
- * @param started  whether a build was started; {@code false} when one was already running on this node
+ * @param started  whether a build was started; {@code false} when one was already running anywhere in the cluster
  * @param enqueued intended questions newly added to the pool before the build started
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

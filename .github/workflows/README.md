@@ -39,6 +39,7 @@ ci.yml                                                            (single entry 
 ├── version-consistency ─ uses ci-version-consistency.yml (if has_version; build.gradle/openapi/README in sync)
 ├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_beans; boots the app, checks startup bean metrics)
 ├── skills          ── uses ci-skills.yml         (if has_skills; every path an agent skill cites still resolves)
+├── exercise-images ── uses ci-exercise-images.yml (if has_exercise_images; the Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart, C#, Go and Haskell templates pin only versions their default image holds, compared without Docker or downloads)
 ├── helm            ── uses ci-helm.yml           (if has_helm; deployment/helm/artemis lints, renders in its variants and validates against the Kubernetes schemas, without a cluster)
 ├── docs-checks     ── uses ci-docs-checks.yml    (always; sidebars, paths, class names, properties and labels in the docs exist, review dates, diagrams match their generator; advises which pages a PR may have made wrong)
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
@@ -161,6 +162,11 @@ The umbrella workflow groups runs by PR number and sets `cancel-in-progress` for
 A new push cancels the previous revision so its E2E jobs release their self-hosted runners and the
 new revision can start.
 
+The `Cancel Closed PR CI` workflow also cancels active umbrella runs when the PR is closed or
+merged. It looks up the exact `ci-pr-{N}` concurrency group and confirms the PR is still closed
+before requesting cancellation. The closure workflow uses trusted base code and leaves the CI
+run for the resulting `develop` push in its own group.
+
 Before reserving build or self-hosted test capacity, a step in the existing `detect-changes` job
 checks that the PR is open and the run's head is current. It calls `.github/scripts/pr-ready.js`
 immediately, reusing that job's runner and checkout. There is no deliberate delay or separate
@@ -255,8 +261,6 @@ artifact. Coverage reporters show the validation scope and only publish tables f
   API, which stops at 3000, so the filters may not have seen all of them. That covers the server
   suite, the client suite, E2E, the PR image and the Liquibase checks (`has_liquibase`). Draft test/E2E
   deferral still applies; the image remains available and promotion enables normal test execution.
-- Codacy coverage is uploaded by the server report job only, so an internal pull request that skips
-  the server suite uploads none.
 
 ### Selecting tests within a pull request
 
@@ -291,7 +295,9 @@ relative to the merge base with the actual PR target; missing history falls back
   An audited exact-file client surface can replace its broad module for that file only; for example,
   exam-management UI fixes do not inherit the shared student-course container's exam dependency.
   A mixed change still unions the broader files' consumers.
-  Java/client unit tests and documentation accompanying a bugfix do not force full E2E. Shared runtime,
+  Java/client unit tests and documentation accompanying a bugfix do not force full E2E. Neither do the
+  exact ESLint and Stylelint entrypoints or TUM AET UI stories excluded from the production build.
+  In mixed changes the selector still evaluates the runtime changes and their consumers. Shared runtime,
   configuration, Playwright helpers and unknown dependencies do. The selector resolves exact spec paths
   and computes a disjoint remaining set. Ordinary eligible PRs intentionally omit Phase 2; full callers
   retain it. Missing expected results fail, and non-PR events keep complete validation.
@@ -368,8 +374,10 @@ These workflows are intentionally NOT folded into the umbrella:
 |---|---|
 | `codeql-analysis.yml` | Holds only the weekly `schedule:` cron (cron cannot live in a `workflow_call` child). The PR/push CodeQL signal is folded into the umbrella as the advisory `codeql` job (→ `ci-codeql.yml`), which the scheduled remnant also reuses. |
 | `test-android.yml` | Different self-hosted runner pool, clones a separate repo, 60-minute job. |
+| `publish-hyperion-sandbox-image.yml` | Manual publication of independently versioned Hyperion toolchain images; separate from Artemis application releases. |
 | `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
 | `nightly-lti-interop.yml` | Scheduled default-branch interop check; not part of PR/push CI. |
+| `nightly-exercise-images.yml` | Scheduled (daily, 05:00 UTC) and manually dispatchable offline build of the Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart, C#, Python, R, C, C++, Go, OCaml, Bash, VHDL, Assembler and Haskell exercise templates in their configured images, including the project type image of C (no network, so a missing dependency fails); opens a tracking issue on failure; not part of PR/push CI. |
 | `nightly-iris-e2e.yml`, `nightly-hyperion-e2e.yml` | Scheduled (daily, 02:00 and 04:00 UTC) and manually dispatchable E2E checks of the latest `develop` with a mocked LLM (Iris against the real Pyris service, Hyperion with a local mock); non-blocking monitoring, not part of PR/push CI. |
 | `dependency-submission.yml` | Submits the Gradle dependency graph on `develop` pushes that change a build file, weekly, and on demand (`workflow_dispatch`). Replaces the repository setting "Automatic dependency submission", which ran on every branch and pull request although GitHub discards a snapshot of any non-default branch. Keep that setting off. |
 | `docs-maintenance.yml` | Weekly `schedule:` cron (cannot live in a `workflow_call` child). Keeps one issue open for the pages that were not reviewed for a year and one for external links that no longer work, and closes them when the problem is gone. |
@@ -377,6 +385,10 @@ These workflows are intentionally NOT folded into the umbrella:
 | `testserver-deployment.yml`, `prod-like-deployment.yml` | Manual deploy workflows. |
 | `pullrequest-coverage-reporter.yml` | **Fork PRs only.** Posts the coverage table for fork PRs (where an in-run token can't write); hardened against a `workflow_run` pwn-request. Internal PRs use `ci.yml`'s in-run `coverage-report` job instead, so the table appears at ~test time rather than after the run. |
 | All `pull_request_target` / `issues` / `schedule` workflows | Need elevated tokens or run on different trigger surfaces. |
+
+The documentation maintenance link check resolves root-relative site URLs against the checked-out documentation
+root before filtering to external HTTP(S) links. Maintenance issue bodies stay below GitHub's limit; oversized
+reports link to the full workflow logs, which retain every finding. Transient external outages remain report findings.
 
 ## E2E image identity and readiness
 
@@ -387,6 +399,22 @@ The same image version carries both `pr-<number>` and `sha-<commit>` tags; delet
 can break CI still pulling it after a merge and remove images needed for later reproduction or
 redeployment.
 Registry deletion also does not reclaim Docker disk space on self-hosted runners.
+
+After stopping the dedicated E2E runner's containers, setup prunes unused images older
+than 24 hours carrying this repository's OCI source label. Exercise, browser and database
+images remain cached. Setup then checks the Docker data filesystem for the broker's
+10% free-space requirement plus 10 GiB for image pulls, builds and artifacts. If space is
+low, it evicts unused default-builder cache until the reserve is met, retaining a
+512 MB cache floor. It then reads the filesystem statistics again against the same reserve.
+If space remains low, setup removes the age restriction for unused Artemis images carrying
+the same source label and checks space again. Images referenced by containers and the
+exercise, browser and database image caches remain protected. Recent application images
+are kept whenever the reserve is already met; a busy runner can otherwise accumulate
+more than a day's available space before the normal retention window expires.
+Persistent insufficient space or failed cleanup is a setup failure: reclaim space or expand the runner disk rather than
+raising the broker's disk limit or retrying websocket-dependent tests. Setup failures
+still run teardown, but do not require or classify reports from tests that never started;
+missing reports after test execution starts remain fatal.
 
 There is no PR-close image-cleanup workflow. Automatic deletion would require package **Admin**
 access, expanding the capabilities of repository jobs with package-write tokens across the shared
@@ -412,6 +440,56 @@ permission to the jobs that create report check runs.
 Regression tests for delayed readiness, unavailable nodes and image revision mismatches run
 with `pnpm run test:rules` (or select `supporting_scripts/ci/E2E-tests/setup.spec.mjs`).
 
+## Docker Hub images on the self-hosted runners
+
+The jobs on the self-hosted runners never pull from Docker Hub. Docker Hub limits anonymous pulls per IP address,
+and the runners share few addresses, so when the allowance is used up a pull stalls without an error: Testcontainers
+reports `Docker image pull has not made progress` and the E2E setup cannot provision the exercise images. The AET
+Harbor instance runs a proxy cache for Docker Hub, `harbor.aet.cit.tum.de/dockerhub-ghr-proxy`, and every Docker Hub
+image comes through it:
+
+- `supporting_scripts/ci/pull-through-registry-proxy.sh` pulls a Docker Hub image from the cache and tags it with
+  its original name, so compose files and the Artemis build agent find it under the name they ask for. Images of other
+  registries (`ghcr.io`, `quay.io`, ...) are pulled directly. The E2E jobs use it for the exercise images and for all
+  images of the compose stack (with `--refresh`, in place of `docker compose pull`); the Android job uses it for the
+  MySQL image.
+- `.github/actions/testcontainers-registry-proxy` pulls the Ryuk image and sets `TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX`
+  for the server test jobs, so Testcontainers sends all its Docker Hub pulls to the cache. It also provisions the two
+  exercise images that `LocalCIDockerImageIntegrationTest` preloads, under their original names: with the prefix set,
+  Testcontainers would cache them under the proxy name, and the build agent, which asks for the original name, would
+  pull them from Docker Hub on a cold runner.
+- The small Alpine container that returns the ownership of leftover files before a checkout is pulled through the
+  cache as well.
+
+There is deliberately no fallback to Docker Hub: it would hide a broken cache until Docker Hub throttles the runners
+again. When the cache cannot be reached, the helper fails after a ten second probe with `Registry proxy unreachable`.
+The runners must therefore be able to connect to `harbor.aet.cit.tum.de:443`. Check it from a runner with
+`curl -sS -o /dev/null -w '%{http_code}\n' https://harbor.aet.cit.tum.de/v2/`, which prints `401` when the cache
+answers.
+
+The runners also have a Docker registry mirror in `/etc/docker/daemon.json`, `docker-mirror.aet.cit.tum.de:8765`, which
+serves Docker Hub images at the registry root. It is a transparent path for every project that shares the runners,
+but it only applies to images with a Docker Hub name, and the Docker daemon falls back to Docker Hub when the
+mirror does not answer, after a connect timeout on every pull. That is why the Artemis jobs name Harbor explicitly
+instead of relying on it: the helper pulls from `harbor.aet.cit.tum.de/dockerhub-ghr-proxy`, which the mirror does not
+touch, and fails visibly.
+
+The Harbor check above says nothing about the mirror, because they are separate endpoints. Check the mirror on its own
+from a runner when pulls stall. `docker info --format '{{json .RegistryConfig.Mirrors}}'` prints the mirrors the Docker
+daemon actually uses; a change to `/etc/docker/daemon.json` only counts after `systemctl reload docker`. Then
+`curl -sS -o /dev/null -w '%{http_code}\n' https://docker-mirror.aet.cit.tum.de:8765/v2/` prints `200` when each
+mirror answers. A mirror entry that points at a host the runners cannot reach makes every pull slow.
+
+Images that Docker pulls by itself during a job are not covered by the helper or the action. Adding such an image to
+the helper does not help when a command pulls it again: `docker pull`, `docker run --pull=always` and
+`docker compose pull` contact Docker Hub for a Docker Hub name whatever the helper provisioned, and the Testcontainers
+prefix does not affect Docker CLI commands. Replace those pulls with the helper (`--refresh` forces a fresh pull) or
+name the Harbor image directly (`harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/postgres:18` instead of
+`postgres:18`). The images of a job `container:` or of `services:` are pulled by the runner before the first step runs,
+so neither the helper nor the action can route them; name the Harbor image in the declaration. No workflow declares
+either today. A Docker Hub image in a workflow of a GitHub-hosted runner needs no change, because those runners have
+their own allowance.
+
 ## Concurrency model
 
 | Event | Group key | Cancel in progress? |
@@ -421,7 +499,7 @@ with `pnpm run test:rules` (or select `supporting_scripts/ci/E2E-tests/setup.spe
 | `release` | `ci-release-{tag}` | no |
 | `push` / `workflow_dispatch` | `ci-{github.ref}-{github.sha}` | no |
 
-Concurrency lives only on the umbrella. Reusables share the umbrella's `run_id`, so the
+Concurrency is configured on the umbrella and its calling jobs. Reusables share the umbrella's `run_id`, so the
 parent's concurrency lock applies transitively. **Never** add a `concurrency:` block to a
 `ci-*.yml` reusable — it creates a second lock that can deadlock the parent
 ([actions/runner#3205](https://github.com/actions/runner/issues/3205)).
@@ -429,7 +507,19 @@ parent's concurrency lock applies transitively. **Never** add a `concurrency:` b
 Distinct push commits run independently so a long E2E phase cannot hold back the next commit's
 WAR or image build. Their mutable publishing aliases can therefore move while an earlier run
 is still active, which is why E2E consumes the exact commit tag and checks its revision.
-GitHub keeps only one pending run per concurrency group; repeated runs for the same ref and
+
+Within the umbrella, E2E calls for `develop` pushes share a separate job concurrency group.
+The running suite finishes. GitHub queues the other calls so out-of-order builds cannot
+displace the tip. When a call starts, a hosted job compares its build SHA with the current
+`develop` tip. Superseded calls finish without using an E2E runner and report their skip
+in CI. A failed tip check fails CI. Release, merge-queue, manual and PR suites keep their
+individual validation. Per-commit builds still produce the WAR and image.
+
+E2E jobs use the `e2e-test` label. A runner with only this custom label supplies dedicated E2E
+capacity. A runner that also has `aet-large-ubuntu` accepts general build/test jobs as well.
+The infrastructure inventory owns these labels so that re-registration preserves the reservation.
+
+The umbrella keeps one pending run per workflow-level concurrency group. Repeated runs for the same ref and
 commit can still replace a pending run. Documentation builds on every `develop` push so any
 replacement run deploys the complete documentation tree. Pull requests use `has_docs`.
 
@@ -499,7 +589,7 @@ The version comes from the highest stable numeric Artemis release returned by Gi
 releases API, accepting tags such as `10.3` and `v10.3.1`. Drafts, prereleases, scoped `@tumaet/*`
 package releases and development version files are excluded. A late maintenance release therefore
 cannot make the badge move backwards. The license is the repository's static MIT license. Source
-or publishing failures preserve the previous SVGs and are advisory. Codacy, Sonar and OpenSSF
+or publishing failures preserve the previous SVGs and are advisory. Sonar and OpenSSF
 badges continue to come directly from their authoritative services.
 
 The trusted tooling is checked out from the default branch even for a release event referencing
@@ -519,17 +609,28 @@ then dispatch the workflow. For local rendering and tests, see
 
 **SonarQube Cloud is a required pre-merge quality gate** for relevant ready PRs. The scanner waits
 for the server verdict; scanner, upload, timeout and quality-gate failures fail **All required CI
-Passed**. No additional branch-protection check or repository permission is needed. Codacy remains
-a separate external service.
+Passed**. The Codacy integration is disabled for Artemis.
 
 PR analysis uses the PR number, exact head SHA, original source branch and actual target branch.
 All configured **new-code** conditions apply: reliability, security, maintainability, coverage,
-duplication and reviewed security hotspots. Existing findings are fixed in source; neither the
-quality gate nor the source/exclusion contract with Codacy is weakened.
+duplication and reviewed security hotspots. Fix existing findings in source and preserve the quality
+gate and scan scope.
+
+The existing Sonar job also requires **zero newly duplicated lines** on PRs. It reads the absolute
+`new_duplicated_lines` count from the completed analysis: a rounded **0.0%** does not pass if even
+one newly duplicated line remains. The job summary records new duplicated lines, blocks and total
+new lines. This verification performs only metadata/measure reads; it does not start another scan
+or repeat tests. It applies to scanned PRs and secretless verification of maintainer-published
+fork analyses. A valid Sonar response with `component.measures: []` can pass for a PR with fewer
+than 3,000 changed files when GitHub confirms that the complete diff is outside Sonar's source
+roots. The comparison must still match after the final Sonar request. Missing or invalid response
+bodies, partial metrics, unavailable APIs, changed analyses, and source or target mismatches fail
+verification. Sonar tracks the existing default-branch duplication while the PR guard checks
+additions within the configured analysis scope.
 
 ### Scope, coverage and runner cost
 
-Analysis runs on GitHub-hosted `ubuntu-latest` with Java 25, Node 24, client dependencies, the TUM
+Analysis runs on GitHub-hosted `ubuntu-latest` with Java 25, Node 26, client dependencies, the TUM
 AET UI package build and compiled Java bytecode. It skips the Angular application bundle and never
 reruns tests. Drafts, superseded revisions and changes entirely outside Sonar's source/configuration
 scope skip analysis. Unknown scope and the 3,000-file API limit expand validation. Draft promotion
@@ -544,10 +645,10 @@ upload existing execution data as **Sonar Server Coverage**. A trusted XML-only 
 task generates the selected Java report on the Sonar runner after compilation, without rerunning
 tests or generating the full module/HTML/coverage-verification graph.
 
-Only reports with successful matching test producers are imported. Selected reports remain partial:
-they are never used for full-project badges or Codacy coverage, and unexecuted changed lines count
-as uncovered. The configured Sonar coverage conditions still apply. There are no old-revision
-substitutions, PR coverage exclusions or forced complete suites solely for Sonar.
+Sonar imports reports with successful matching test producers. Full-project badges use full-suite
+reports. In Sonar's selected reports, unexecuted changed lines count as uncovered. The configured
+Sonar coverage conditions still apply. There are no old-revision substitutions, PR coverage
+exclusions or forced complete suites solely for Sonar.
 
 ### Fork and token-restricted PRs
 
@@ -611,3 +712,10 @@ server-side verdict directly.
      branch-protection change is needed; the gate's `name:` field is what's required.
    - Add `<name>` to `ci-summary`'s `needs:` so it appears in the Summary table. For an
      **advisory** check, add it to `ci-summary`'s `ADVISORY` env **instead of** the gate's `needs:`.
+
+### Hyperion sandbox image
+
+`publish-hyperion-sandbox-image.yml` publishes independently versioned toolchain images on manual dispatch.
+It is separate from Artemis release CI, like the build agents' build-image lifecycle.
+See [the sandbox operations guide](../../deployment/docker/hyperion/README.md#offline-java-build-image-gradle-and-maven)
+for publication, version updates and the first-publication check.

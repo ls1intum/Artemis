@@ -3,25 +3,25 @@
         <span jhiTranslate="artemisApp.organizationManagement.detail.title"></span> [<b>{{ organization().name }}</b
         >]
     </h5>
-    <div class="p-4">
+    <div class="p-6">
         <dl class="grid grid-cols-1 md:grid-cols-[12rem_1fr] gap-x-4 gap-y-1">
-            <dt class="font-semibold"><span jhiTranslate="global.field.id"></span></dt>
+            <dt><span jhiTranslate="global.field.id"></span></dt>
             <dd>{{ organization().id ?? '-' }}</dd>
-            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.name"></span></dt>
+            <dt><span jhiTranslate="artemisApp.organizationManagement.name"></span></dt>
             <dd>{{ organization().name ?? '-' }}</dd>
-            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.shortName"></span></dt>
+            <dt><span jhiTranslate="artemisApp.organizationManagement.shortName"></span></dt>
             <dd>{{ organization().shortName ?? '-' }}</dd>
-            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.url"></span></dt>
+            <dt><span jhiTranslate="artemisApp.organizationManagement.url"></span></dt>
             <dd>{{ organization().url ?? '-' }}</dd>
-            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.logoUrl"></span></dt>
+            <dt><span jhiTranslate="artemisApp.organizationManagement.logoUrl"></span></dt>
             <dd>{{ organization().logoUrl ?? '-' }}</dd>
-            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.description"></span></dt>
+            <dt><span jhiTranslate="artemisApp.organizationManagement.description"></span></dt>
             <dd>{{ organization().description ?? '-' }}</dd>
-            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.emailPattern"></span></dt>
+            <dt><span jhiTranslate="artemisApp.organizationManagement.emailPattern"></span></dt>
             <dd>{{ organization().emailPattern ?? '-' }}</dd>
         </dl>
 
-        <h3 class="mt-4">
+        <h3 class="mt-6">
             <span jhiTranslate="artemisApp.organizationManagement.courses"></span>
         </h3>
         <tumaet-ui-table
@@ -32,11 +32,9 @@
             [loading]="coursesLoading()"
             (dataRequest)="loadCourses($event)"
             [striped]="true"
-            [scrollable]="true"
-            scrollHeight="60vh"
         />
 
-        <div class="mt-4 flex items-center justify-between">
+        <div class="mt-6 flex items-center justify-between">
             <h3 class="mb-0">
                 <span jhiTranslate="artemisApp.organizationManagement.users"></span>
             </h3>
@@ -55,8 +53,6 @@
             searchPlaceholder="artemisApp.organizationManagement.userSearch.searchForUsers"
             (dataRequest)="loadUsers($event)"
             [striped]="true"
-            [scrollable]="true"
-            scrollHeight="60vh"
         />
     </div>
 </div>
