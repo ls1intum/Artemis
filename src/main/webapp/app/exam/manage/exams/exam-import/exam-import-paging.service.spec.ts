@@ -51,7 +51,13 @@ describe('Exam Import Paging Service', () => {
         expect(result?.numberOfPages).toBe(5);
         expect(result?.resultsOnPage).toHaveLength(1);
         const exam = result!.resultsOnPage[0];
-        expect(exam).toBeInstanceOf(Exam);
+        // a plain object: the Exam constructor would add defaults the server never sent
+        expect(
+            Object.entries(exam)
+                .filter(([, value]) => value !== undefined)
+                .map(([key]) => key)
+                .sort(),
+        ).toEqual(['course', 'examMode', 'id', 'title']);
         expect(exam.id).toBe(1);
         expect(exam.title).toBe('RealExam For Testing');
         expect(exam.examMode).toBe(ExamMode.REAL);

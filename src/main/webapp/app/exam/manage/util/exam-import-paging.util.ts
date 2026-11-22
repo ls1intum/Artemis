@@ -6,20 +6,12 @@ import type { ExamForImportList } from 'app/openapi/model/exam-for-import-list';
 /**
  * Converts an exam of the import table, as the server sends it, into an {@link Exam} with its course.
  *
+ * The result holds plain objects, not new Exam() / new Course(): the constructors add defaults the server never sent.
+ *
  * @param dto the generated exam of the import list
  * @returns the exam carrying only the fields the endpoint sends
  */
 export function toExamForImport(dto: ExamForImportList): Exam {
-    const exam = new Exam();
-    exam.id = dto.id;
-    exam.title = dto.title;
-    exam.examMode = dto.examMode === undefined ? undefined : ExamMode[dto.examMode];
-    if (dto.course) {
-        const course = new Course();
-        course.id = dto.course.id;
-        course.title = dto.course.title;
-        course.testCourse = dto.course.testCourse;
-        exam.course = course;
-    }
-    return exam;
+    const course: Course | undefined = dto.course && { id: dto.course.id, title: dto.course.title, testCourse: dto.course.testCourse };
+    return { id: dto.id, title: dto.title, examMode: dto.examMode === undefined ? undefined : ExamMode[dto.examMode], course };
 }

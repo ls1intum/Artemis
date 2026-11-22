@@ -263,7 +263,8 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
             toggled$.subscribe({
                 next: (res) => {
                     if (res) {
-                        const updated = cloneWith(studentExam, { submissionDate: res.submissionDate ? dayjs(res.submissionDate) : undefined, submitted: res.submitted });
+                        // The submission date stays the string the server sent, as the old client left it; the template pipe reads it either way.
+                        const updated = cloneWith(studentExam, { submissionDate: res.submissionDate, submitted: res.submitted });
                         this.studentExam.set(updated);
                     }
                     this.alertService.success('artemisApp.studentExamDetail.toggleSuccessful');

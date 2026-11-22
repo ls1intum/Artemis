@@ -21,7 +21,7 @@ describe('Exercise Group Service', () => {
         httpMock.verify();
     });
 
-    it('should GET the group and convert it into the domain classes', () => {
+    it('should GET the group with the enums of the domain classes', () => {
         let group: ExerciseGroup | undefined;
         service.find(1, 2, 3).subscribe((result) => (group = result));
 
@@ -41,7 +41,8 @@ describe('Exercise Group Service', () => {
         expect(group?.isMandatory).toBe(true);
         expect(group?.exam?.id).toBe(2);
         expect(group?.exam?.examMode).toBe(ExamMode.TEST);
-        expect(group?.exam?.exampleSolutionPublicationDate?.toISOString()).toBe('2026-01-02T03:04:05.000Z');
+        // as the server sent it: the old client left the string in place
+        expect(group?.exam?.exampleSolutionPublicationDate).toBe('2026-01-02T03:04:05Z');
         expect(group?.exam?.course?.id).toBe(1);
         expect(group?.exam?.course?.defaultProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
         expect(group?.exercises).toBeUndefined();

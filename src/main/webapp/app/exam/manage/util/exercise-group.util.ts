@@ -3,7 +3,7 @@ import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 import type { ExerciseGroup as GeneratedExerciseGroup } from 'app/openapi/model/exercise-group';
 import type { ExamForExerciseGroup } from 'app/openapi/model/exam-for-exercise-group';
 
@@ -13,23 +13,20 @@ function toExam(dto: ExamForExerciseGroup): Exam {
         id: dto.course.id,
         defaultProgrammingLanguage: Object.values(ProgrammingLanguage).find((language) => language === dto.course?.defaultProgrammingLanguage),
     };
-    return {
-        id: dto.id,
-        examMode: dto.examMode === undefined ? undefined : ExamMode[dto.examMode],
-        exampleSolutionPublicationDate: convertDateStringFromServer(dto.exampleSolutionPublicationDate),
-        course,
-    };
+    const exam: Exam = { id: dto.id, examMode: dto.examMode === undefined ? undefined : ExamMode[dto.examMode], course };
+    // The old client left the date string in place; hydrate copies it without the type of the Exam field getting in the way.
+    return hydrate(exam, { exampleSolutionPublicationDate: dto.exampleSolutionPublicationDate });
 }
 
 /**
  * Converts an exercise group of the single-group endpoints (get, create, update) into an {@link ExerciseGroup}.
  *
  * These endpoints send the exam as a slim projection and leave out the exercises, so the group carries only what they send.
- * The example solution publication date becomes a dayjs date; the old client left the string in place, and every reader
- * wraps it in dayjs() or only tests it for presence.
+ * The example solution publication date stays the string the server sent, as the old client left it; every reader wraps it
+ * in dayjs() or only tests it for presence.
  *
  * @param dto the generated exercise group
- * @returns the exercise group with a dayjs example solution publication date
+ * @returns the exercise group carrying only the fields the server sent
  */
 export function toExerciseGroup(dto: GeneratedExerciseGroup): ExerciseGroup {
     return {

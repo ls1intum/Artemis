@@ -227,7 +227,7 @@ const scoresDto = () => ({
     ],
 });
 
-/** Normalizes a client value for comparison: dayjs dates compare by their ISO string; the class defaults the Exercise type declares as mandatory are ignored. */
+/** Normalizes a client value for comparison: dayjs dates compare by their ISO string. */
 function plain(value: unknown): unknown {
     const copy = JSON.parse(JSON.stringify(value));
     const strip = (node: unknown): void => {
@@ -235,9 +235,6 @@ function plain(value: unknown): unknown {
             node.forEach(strip);
         } else if (node && typeof node === 'object') {
             const record = node as Record<string, unknown>;
-            if (record['studentAssignedTeamIdComputed'] === false) delete record['studentAssignedTeamIdComputed'];
-            if (record['secondCorrectionEnabled'] === false) delete record['secondCorrectionEnabled'];
-            if (JSON.stringify(record['numberOfAssessmentsOfCorrectionRounds']) === '[{"inTime":0,"late":0}]') delete record['numberOfAssessmentsOfCorrectionRounds'];
             Object.values(record).forEach(strip);
         }
     };

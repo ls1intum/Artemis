@@ -63,7 +63,7 @@ describe('StudentExamDetailComponent wire contract', () => {
         workingTime: 7200,
         started: true,
         exam: { id: 5, course: { id: 1 }, startDate: dayjs('2026-03-04T10:00:00.000Z'), endDate: dayjs('2026-03-04T12:00:00.000Z'), gracePeriod: 180 },
-        user: { id: 7, login: 'student', name: 'Student' },
+        user: { id: 7, login: 'student', name: 'Student', internal: true },
         exercises: [],
         numberOfExamSessions: 2,
     });
