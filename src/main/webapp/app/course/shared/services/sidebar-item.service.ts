@@ -12,7 +12,6 @@ import {
     faDumbbell,
     faFileAlt,
     faHouse,
-    faLightbulb,
     faList,
     faListCheck,
     faNetworkWired,
@@ -188,8 +187,7 @@ export class CourseSidebarItemService {
     getSmartQuizzesItem(): SidebarItem {
         return {
             routerLink: 'smart-quizzes',
-            icon: faLightbulb,
-            iconColor: '#f59e0b',
+            icon: faListCheck,
             title: 'Smart Quizzes',
             translation: 'artemisApp.courseOverview.menu.smartQuizzes',
             hidden: false,

@@ -176,4 +176,25 @@ describe('PracticeQuizComponent', () => {
         expect(component.state()).toBe('OVERVIEW');
         expect(component.reviewSession()).toBeNull();
     });
+
+    it('should determine whether an option was selected by the user', () => {
+        const reviewItem = {
+            question: { id: 101 } as any,
+            isAdaptive: false,
+            submittedAnswer: JSON.stringify({
+                type: 'multiple-choice',
+                quizQuestion: { id: 101 },
+                selectedOptions: [{ id: 201 }],
+            }),
+        };
+
+        expect(component.isUserSelected(reviewItem, 201)).toBe(true);
+        expect(component.isUserSelected(reviewItem, 202)).toBe(false);
+
+        // Fallback when no submittedAnswer JSON exists
+        const fallbackItem = { question: { id: 101 } as any, isAdaptive: false };
+        component.toggleOption(101, 202, false);
+        expect(component.isUserSelected(fallbackItem, 202)).toBe(true);
+        expect(component.isUserSelected(fallbackItem, 201)).toBe(false);
+    });
 });

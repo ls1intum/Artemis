@@ -30,12 +30,17 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.HyperionCourseSettings;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolBuildTrigger;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolLectureUnit;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
+import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.HyperionCourseSettingsDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolBuildDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolBuildStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCompetencyDTO;
@@ -469,5 +474,157 @@ public class HyperionQuizQuestionPoolService {
             return item.getFlagged();
         }
         return item.getAccepted() && QuizQuestionReviewFlags.isFlagged(item.getDecision());
+    }
+
+    /**
+     * Seeds sample quiz question pool items for testing and local development.
+     *
+     * @param courseId the course ID
+     * @return the number of seeded items
+     */
+    public int seedSampleQuestions(long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Long competencyId = 1L;
+        if (courseCompetencyApi.isPresent()) {
+            Set<CourseCompetency> competencies = courseCompetencyApi.get().findAllForCourse(courseId);
+            if (!competencies.isEmpty()) {
+                competencyId = competencies.iterator().next().getId();
+            }
+        }
+        Long lectureUnitId = 1L;
+
+        List<QuizQuestionPoolItem> existing = itemRepository.findAllPracticeEligibleByCourseId(courseId);
+        if (existing.size() >= 5) {
+            return existing.size();
+        }
+
+        List<QuizQuestionPoolItem> items = new ArrayList<>();
+        items.add(createSampleItem(course, competencyId, lectureUnitId, QuizQuestionDifficulty.EASY, 0, "Single Responsibility Principle",
+                "What is the core definition of the Single Responsibility Principle (SRP) in software engineering?",
+                List.of(new GeneratedQuizAnswerOptionDTO("A class or module should have one, and only one, reason to change.", true, "Think about actors and requirements.",
+                        "SRP states that a module should be responsible to one, and only one, actor or reason to change."),
+                        new GeneratedQuizAnswerOptionDTO("A class must contain only a single public method.", false, "Consider class cohesion.",
+                                "SRP is about cohesive responsibility, not limiting the method count."),
+                        new GeneratedQuizAnswerOptionDTO("A component should be authored by only one software developer.", false, null,
+                                "Developer assignment has nothing to do with architectural responsibilities."),
+                        new GeneratedQuizAnswerOptionDTO("A class must handle both business logic and persistence.", false, null,
+                                "Combining business logic with persistence violates SRP.")),
+                "Think about reasons to change and cohesive actors.",
+                "The Single Responsibility Principle (SRP) states that each module or class should have one reason to change."));
+
+        items.add(createSampleItem(course, competencyId, lectureUnitId, QuizQuestionDifficulty.EASY, 1, "Model-View-Controller Roles",
+                "In the Model-View-Controller (MVC) architectural pattern, what is the primary role of the Model?",
+                List.of(new GeneratedQuizAnswerOptionDTO("Managing domain data, application state, and business rules.", true, "Focus on the core domain layer.",
+                        "The Model encapsulates the business logic, domain entities, and data access."),
+                        new GeneratedQuizAnswerOptionDTO("Capturing user UI gestures and painting pixels on the screen.", false, null, "That is the responsibility of the View."),
+                        new GeneratedQuizAnswerOptionDTO("Dispatching network packets across distributed servers.", false, null,
+                                "Networking and transport are infrastructure concerns."),
+                        new GeneratedQuizAnswerOptionDTO("Compiling stylesheets and HTML templates.", false, null, "Template rendering belongs to the presentation/view layer.")),
+                "Consider which MVC component owns business rules and state.", "The Model is responsible for managing data, state, and business logic."));
+
+        items.add(createSampleItem(course, competencyId, lectureUnitId, QuizQuestionDifficulty.MEDIUM, 0, "Layered Architecture Invariants",
+                "In a classic 3-tier Layered Architecture, what is the primary invariant regarding communication between layers?",
+                List.of(new GeneratedQuizAnswerOptionDTO("Layers depend unidirectionally from top to bottom (presentation -> domain -> data).", true,
+                        "Consider dependency hierarchy.", "Lower layers should remain decoupled from upper layers."),
+                        new GeneratedQuizAnswerOptionDTO("The presentation tier communicates directly with the database layer to optimize speed.", false, null,
+                                "Bypassing intermediate tiers violates layering encapsulation."),
+                        new GeneratedQuizAnswerOptionDTO("All layers must maintain cyclic bidirectional dependencies.", false, null,
+                                "Cyclic dependencies undermine modularity and maintainability."),
+                        new GeneratedQuizAnswerOptionDTO("The database layer invokes view components directly.", false, null,
+                                "Database layers must not depend on presentation layers.")),
+                "Think about unidirectional dependencies and separation of concerns.",
+                "In layered architectures, dependencies strictly point downward from upper to lower layers."));
+
+        items.add(createSampleItem(course, competencyId, lectureUnitId, QuizQuestionDifficulty.MEDIUM, 1, "Dependency Inversion Principle",
+                "What does the Dependency Inversion Principle (DIP) state regarding high-level and low-level modules?",
+                List.of(new GeneratedQuizAnswerOptionDTO("High-level modules should not depend on low-level modules; both should depend on abstractions.", true,
+                        "Focus on abstraction boundaries.", "DIP states that high-level policies should depend on abstractions (interfaces), not concrete implementations."),
+                        new GeneratedQuizAnswerOptionDTO("High-level modules should directly instantiate concrete low-level classes.", false, null,
+                                "Direct instantiation creates tight coupling to concrete classes."),
+                        new GeneratedQuizAnswerOptionDTO("Abstractions should depend on implementation details.", false, null,
+                                "DIP explicitly states details should depend on abstractions, not vice versa."),
+                        new GeneratedQuizAnswerOptionDTO("Low-level modules must dictate the design of high-level interfaces.", false, null,
+                                "Interfaces should be client-oriented, not driven by low-level details.")),
+                "Think about interfaces and dependency direction.", "DIP decouples high-level policy from low-level details by introducing abstraction boundaries."));
+
+        items.add(createSampleItem(course, competencyId, lectureUnitId, QuizQuestionDifficulty.MEDIUM, 2, "Benefits of Loose Coupling",
+                "Why is loose coupling an essential goal in software architecture?",
+                List.of(new GeneratedQuizAnswerOptionDTO("It minimizes ripple effects, enabling components to be tested and evolved independently.", true,
+                        "Consider change propagation and isolation.", "Loose coupling isolates changes to individual modules, reducing maintenance cost and testing friction."),
+                        new GeneratedQuizAnswerOptionDTO("It eliminates the need for software design patterns entirely.", false, null,
+                                "Patterns frequently aim to achieve loose coupling."),
+                        new GeneratedQuizAnswerOptionDTO("It guarantees double the execution speed by skipping function calls.", false, null,
+                                "Coupling affects maintainability and modularity, not raw CPU execution speed."),
+                        new GeneratedQuizAnswerOptionDTO("It ensures all modules share the same global variables.", false, null,
+                                "Global mutable state actually creates tight coupling.")),
+                "Think about maintainability and independence of modules.", "Loose coupling allows modules to be changed, tested, and maintained independently."));
+
+        items.add(createSampleItem(course, competencyId, lectureUnitId, QuizQuestionDifficulty.HARD, 0, "Microservices vs Modular Monolith",
+                "Which fundamental trade-off is introduced when migrating from a modular monolith to distributed microservices?",
+                List.of(new GeneratedQuizAnswerOptionDTO("Increased operational complexity and the need for eventual consistency across services.", true,
+                        "Consider distribution, networks, and transactions.",
+                        "Microservices exchange in-process calls for network calls, introducing partial failures, latency, and distributed state coordination."),
+                        new GeneratedQuizAnswerOptionDTO("Inability to deploy or scale services independently.", false, null,
+                                "Independent deployment is the primary motivation for microservices."),
+                        new GeneratedQuizAnswerOptionDTO("Elimination of network communication overhead.", false, null,
+                                "Microservices increase network communication significantly."),
+                        new GeneratedQuizAnswerOptionDTO("Free distributed ACID transactions without two-phase commit overhead.", false, null,
+                                "Distributed transactions are notoriously complex and often replaced with Sagas and eventual consistency.")),
+                "Consider network boundaries and data consistency challenges.", "Microservices introduce distributed system fallacies, latency, and data consistency challenges."));
+
+        items.add(createSampleItem(course, competencyId, lectureUnitId, QuizQuestionDifficulty.HARD, 1, "Hexagonal Architecture Ports",
+                "In Hexagonal Architecture (Ports and Adapters), what is the purpose of an Inbound (Driving) Port?",
+                List.of(new GeneratedQuizAnswerOptionDTO("An interface declared by the application core that driving adapters (e.g. controllers) invoke.", true,
+                        "Think about who defines the port vs who implements it.", "Inbound ports expose use cases that external entry points call to drive the domain logic."),
+                        new GeneratedQuizAnswerOptionDTO("A JDBC driver implementation that communicates with a relational database.", false, null,
+                                "Database interactions use Outbound (Driven) ports and adapters."),
+                        new GeneratedQuizAnswerOptionDTO("A physical network firewall port.", false, null,
+                                "Inbound ports are logical software abstractions, not network hardware."),
+                        new GeneratedQuizAnswerOptionDTO("A queue listener that is private to the storage engine.", false, null,
+                                "Storage mechanisms act as driven/secondary adapters.")),
+                "Remember: the core defines the port, external driving adapters call it.",
+                "Inbound ports define the use-case interface offered by the domain to driving adapters."));
+
+        items.add(createSampleItem(course, competencyId, lectureUnitId, QuizQuestionDifficulty.HARD, 2, "CAP Theorem Consistency Trade-offs",
+                "According to the CAP theorem, what does a system choose when it favors Availability and Partition Tolerance (AP)?",
+                List.of(new GeneratedQuizAnswerOptionDTO("It continues processing requests during a network split, accepting eventual consistency rather than strict consistency.",
+                        true, "Consider what AP sacrifices.",
+                        "In an AP system, replicas remain available during partitions but their data may temporarily diverge until the network heals."),
+                        new GeneratedQuizAnswerOptionDTO("It rejects all write operations until the partition is fully resolved.", false, null,
+                                "Rejecting writes to maintain consistency is characteristic of CP systems."),
+                        new GeneratedQuizAnswerOptionDTO("It achieves instant strict serializability across all nodes with zero latency.", false, null,
+                                "Strict serializability cannot be maintained across disconnected nodes without blocking."),
+                        new GeneratedQuizAnswerOptionDTO("It avoids the need for network communication entirely.", false, null,
+                                "Partition tolerance deals specifically with network communication failures.")),
+                "Think about what AP systems guarantee when partitions occur.",
+                "AP systems prioritize availability by allowing reads and writes to succeed despite partitions, sacrificing immediate consistency."));
+
+        itemRepository.saveAll(items);
+        log.info("Seeded {} quiz question pool items for course [{}]", items.size(), courseId);
+        return items.size();
+    }
+
+    private QuizQuestionPoolItem createSampleItem(Course course, Long competencyId, Long lectureUnitId, QuizQuestionDifficulty difficulty, int itemIndex, String title,
+            String questionText, List<GeneratedQuizAnswerOptionDTO> options, String hint, String explanation) {
+        QuizQuestionPoolItem item = new QuizQuestionPoolItem();
+        item.setCourse(course);
+        item.setCompetencyId(competencyId);
+        item.setLectureUnitId(lectureUnitId);
+        item.setLanguage(QuizQuestionGenerationLanguage.EN);
+        item.setQuestionType(QuizQuestionGenerationType.MULTIPLE_CHOICE);
+        item.setDifficulty(difficulty);
+        item.setItemIndex(itemIndex);
+        item.setState(QuizQuestionPoolItemState.FILTERED);
+        item.setReviewState(QuizQuestionReviewState.APPROVED);
+        item.setAccepted(true);
+        item.setGenerationAttempts(1);
+        item.setFilterAttempts(1);
+        item.setGeneratorModel("seeded");
+        item.setJudgeModel("seeded");
+        item.setUpdatedAt(ZonedDateTime.now());
+
+        GeneratedQuizQuestionDTO questionDto = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.MULTIPLE_CHOICE, title, questionText, options, hint, explanation);
+        item.setQuestion(questionDto);
+        return item;
     }
 }

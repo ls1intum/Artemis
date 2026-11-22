@@ -10,7 +10,7 @@ export interface AnswerOptionDTO {
     explanation?: string;
 }
 
-export interface QuizQuestionWithoutSolutionDTO {
+export interface QuizQuestionDTO {
     id: number;
     title?: string;
     text?: string;
@@ -19,18 +19,12 @@ export interface QuizQuestionWithoutSolutionDTO {
     type: 'multiple-choice' | 'drag-and-drop' | 'short-answer' | string;
     answerOptions?: AnswerOptionDTO[];
     singleChoice?: boolean;
+    competencyId?: number;
+    difficulty?: string;
 }
 
-export interface QuizQuestionWithSolutionDTO {
-    id: number;
-    title?: string;
-    text?: string;
-    points?: number;
-    scoringType?: string;
-    type: 'multiple-choice' | 'drag-and-drop' | 'short-answer' | string;
-    answerOptions?: AnswerOptionDTO[];
-    singleChoice?: boolean;
-}
+export type QuizQuestionWithoutSolutionDTO = QuizQuestionDTO;
+export type QuizQuestionWithSolutionDTO = QuizQuestionDTO;
 
 export interface PracticeSessionDTO {
     id: number;

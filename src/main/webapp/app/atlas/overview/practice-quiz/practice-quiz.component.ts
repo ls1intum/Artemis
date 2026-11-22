@@ -3,12 +3,15 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowLeft, faAward, faCheck, faCheckCircle, faClock, faHistory, faLightbulb, faPlay, faRedo, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faAward, faCheck, faCheckCircle, faHistory, faListCheck, faPlay, faRedo, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { parseJson } from 'app/foundation/util/json.util';
 import { PracticeQuizService } from 'app/atlas/overview/practice-quiz/practice-quiz.service';
 import {
+    PracticeQuestionReviewDTO,
     PracticeSessionDTO,
     PracticeSessionReviewDTO,
     PracticeSessionSummaryDTO,
@@ -19,8 +22,7 @@ import {
 @Component({
     selector: 'jhi-practice-quiz',
     templateUrl: './practice-quiz.component.html',
-    styleUrls: ['./practice-quiz.component.scss'],
-    imports: [CommonModule, FaIconComponent, ArtemisDatePipe, DecimalPipe],
+    imports: [CommonModule, FaIconComponent, ArtemisDatePipe, DecimalPipe, TumAetUiButtonDirective],
 })
 export class PracticeQuizComponent implements OnInit, OnDestroy {
     // 1. All inject() calls strictly before any other class members
@@ -48,15 +50,13 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
     // FontAwesome icons
     readonly faPlay = faPlay;
     readonly faCheck = faCheck;
-    readonly faTimes = faTimes;
     readonly faCheckCircle = faCheckCircle;
     readonly faTimesCircle = faTimesCircle;
     readonly faArrowLeft = faArrowLeft;
     readonly faRedo = faRedo;
-    readonly faLightbulb = faLightbulb;
+    readonly faListCheck = faListCheck;
     readonly faHistory = faHistory;
     readonly faAward = faAward;
-    readonly faClock = faClock;
 
     private paramSub?: Subscription;
 
@@ -166,6 +166,20 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
 
     isOptionSelected(questionId: number, optionId: number): boolean {
         return (this.selectedOptions()[questionId] ?? []).includes(optionId);
+    }
+
+    isUserSelected(item: PracticeQuestionReviewDTO, optionId: number): boolean {
+        if (item.submittedAnswer) {
+            try {
+                const parsed = parseJson<{ selectedOptions?: { id: number }[] }>(item.submittedAnswer);
+                if (Array.isArray(parsed?.selectedOptions)) {
+                    return parsed.selectedOptions.some((o) => o.id === optionId);
+                }
+            } catch {
+                return false;
+            }
+        }
+        return (this.selectedOptions()[item.question?.id] ?? []).includes(optionId);
     }
 
     /**

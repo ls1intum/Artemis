@@ -1,17 +1,17 @@
-<div class="practice-quiz-container p-4 max-w-4xl mx-auto">
+<div class="p-4 max-w-4xl mx-auto min-h-[70vh]">
     <!-- Header -->
     <div class="flex items-center justify-between border-b pb-4 mb-6">
         <div>
             <h2 class="text-2xl font-bold flex items-center gap-2.5">
-                <fa-icon [icon]="faLightbulb" class="text-state-warning" />
+                <fa-icon [icon]="faListCheck" class="text-primary" />
                 <span>Smart Quiz</span>
-                <span class="text-xs font-normal px-2.5 py-0.5 rounded-full bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle"> exploratory </span>
+                <span class="text-xs font-normal px-2.5 py-0.5 rounded-full bg-surface-100 text-muted-color border border-surface-200"> exploratory </span>
             </h2>
             <p class="text-sm text-muted-color mt-1">Practice course concepts on-demand. These quizzes do not affect your grade.</p>
         </div>
         @if (state() !== 'OVERVIEW') {
-            <button type="button" class="btn btn-outline-secondary btn-sm flex items-center gap-2" (click)="backToOverview()">
-                <fa-icon [icon]="faArrowLeft" />
+            <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="backToOverview()">
+                <fa-icon [icon]="faArrowLeft" class="me-1" />
                 <span>Back to Overview</span>
             </button>
         }
@@ -19,9 +19,9 @@
 
     <!-- Error Banner -->
     @if (errorMessage()) {
-        <div class="alert alert-danger mb-4 flex items-center justify-between">
+        <div class="mb-4 p-3 rounded-lg border border-state-danger text-state-danger bg-surface-50 flex items-center justify-between">
             <span>{{ errorMessage() }}</span>
-            <button type="button" class="btn-close" (click)="errorMessage.set(null)"></button>
+            <button type="button" class="text-state-danger hover:opacity-75 font-bold px-2" (click)="errorMessage.set(null)">✕</button>
         </div>
     }
 
@@ -31,17 +31,17 @@
         @case ('OVERVIEW') {
             <!-- Minimalist Action Card -->
             <div class="bg-surface-card border border-surface-200 rounded-xl p-6 shadow-sm mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div>
-                    <h3 class="text-lg font-bold text-color mb-1">Generate a Practice Quiz</h3>
-                    <p class="text-sm text-muted-color mb-0">Questions are dynamically sampled from the course question pool.</p>
+                <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <fa-icon [icon]="faListCheck" class="text-lg" />
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-color mb-1">Generate a Practice Quiz</h3>
+                        <p class="text-sm text-muted-color mb-0">Questions are dynamically sampled from the course question pool.</p>
+                    </div>
                 </div>
-                <button
-                    type="button"
-                    class="btn btn-primary px-5 py-2.5 rounded-lg flex items-center gap-2 font-semibold shadow-sm hover:shadow transition shrink-0"
-                    [disabled]="isLoading()"
-                    (click)="startNewQuiz()"
-                >
-                    <fa-icon [icon]="faPlay" />
+                <button tumAetUiButton type="button" [disabled]="isLoading()" (click)="startNewQuiz()">
+                    <fa-icon [icon]="faPlay" class="me-1" />
                     <span>{{ isLoading() ? 'Generating...' : 'Generate Quiz' }}</span>
                 </button>
             </div>
@@ -55,7 +55,7 @@
 
                 @if (isLoading()) {
                     <div class="text-center py-8 text-muted-color">
-                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        <span class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin me-2"></span>
                         Loading...
                     </div>
                 } @else if (pastSessions().length === 0) {
@@ -64,30 +64,34 @@
                     </div>
                 } @else {
                     <div class="overflow-x-auto">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-surface-50 text-muted-color text-xs uppercase font-semibold border-b border-surface-200">
                                 <tr>
-                                    <th>#</th>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Score</th>
-                                    <th>Percentage</th>
-                                    <th class="text-end">Action</th>
+                                    <th class="px-4 py-3">#</th>
+                                    <th class="px-4 py-3">Date</th>
+                                    <th class="px-4 py-3">Status</th>
+                                    <th class="px-4 py-3">Score</th>
+                                    <th class="px-4 py-3">Percentage</th>
+                                    <th class="px-4 py-3 text-end">Action</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="divide-y divide-surface-200">
                                 @for (s of pastSessions(); track s.id) {
-                                    <tr>
-                                        <td class="font-mono text-xs text-muted-color">#{{ s.id }}</td>
-                                        <td>{{ s.startTime | artemisDate: 'short' }}</td>
-                                        <td>
+                                    <tr class="hover:bg-surface-50 transition">
+                                        <td class="px-4 py-3 font-mono text-xs text-muted-color">#{{ s.id }}</td>
+                                        <td class="px-4 py-3">{{ s.startTime | artemisDate: 'short' }}</td>
+                                        <td class="px-4 py-3">
                                             @if (s.completed) {
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle">Completed</span>
+                                                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-surface-100 text-state-success border border-state-success"
+                                                    >Completed</span
+                                                >
                                             } @else {
-                                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle">In Progress</span>
+                                                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-surface-100 text-state-warning border border-state-warning"
+                                                    >In Progress</span
+                                                >
                                             }
                                         </td>
-                                        <td>
+                                        <td class="px-4 py-3">
                                             @if (s.completed && s.score !== undefined && s.score !== null && s.maxPoints !== undefined && s.maxPoints !== null) {
                                                 <span class="font-semibold">{{ s.score | number: '1.0-1' }}</span>
                                                 / {{ s.maxPoints | number: '1.0-1' }}
@@ -95,18 +99,18 @@
                                                 <span class="text-muted-color">-</span>
                                             }
                                         </td>
-                                        <td>
+                                        <td class="px-4 py-3">
                                             @if (s.completed && s.score !== undefined && s.score !== null && s.maxPoints !== undefined && s.maxPoints !== null && s.maxPoints > 0) {
                                                 <span class="font-medium">{{ (s.score / s.maxPoints) * 100 | number: '1.0-0' }}%</span>
                                             } @else {
                                                 <span class="text-muted-color">-</span>
                                             }
                                         </td>
-                                        <td class="text-end">
+                                        <td class="px-4 py-3 text-end">
                                             @if (s.completed) {
-                                                <button type="button" class="btn btn-sm btn-outline-primary" (click)="openReview(s.id)">Review</button>
+                                                <button tumAetUiButton type="button" size="small" variant="outlined" (click)="openReview(s.id)">Review</button>
                                             } @else {
-                                                <button type="button" class="btn btn-sm btn-primary" (click)="loadOverview()">Resume</button>
+                                                <button tumAetUiButton type="button" size="small" (click)="loadOverview()">Resume</button>
                                             }
                                         </td>
                                     </tr>
@@ -124,27 +128,32 @@
                 <div class="space-y-6">
                     <!-- Session Status Bar -->
                     <div class="bg-surface-50 border border-surface-200 rounded-lg p-4 flex items-center justify-between">
-                        <div>
-                            <span class="text-xs uppercase font-bold tracking-wider text-primary">Practice Session Active</span>
-                            <p class="text-sm text-color font-medium mt-0.5">{{ session.questions.length }} Questions to solve.</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                <fa-icon [icon]="faListCheck" />
+                            </div>
+                            <div>
+                                <span class="text-xs uppercase font-bold tracking-wider text-primary">Practice Session Active</span>
+                                <p class="text-sm text-color font-medium mt-0.5">{{ session.questions.length }} Questions to solve.</p>
+                            </div>
                         </div>
-                        <button type="button" class="btn btn-success px-4 py-2 font-semibold flex items-center gap-2" [disabled]="isSubmitting()" (click)="submitQuiz()">
-                            <fa-icon [icon]="faCheck" />
+                        <button tumAetUiButton type="button" [disabled]="isSubmitting()" (click)="submitQuiz()">
+                            <fa-icon [icon]="faCheck" class="me-1" />
                             <span>{{ isSubmitting() ? 'Submitting...' : 'Submit Answers' }}</span>
                         </button>
                     </div>
 
                     <!-- Questions List -->
                     @for (q of session.questions; track q.id; let i = $index) {
-                        <div class="card shadow-sm border border-surface-200 rounded-xl overflow-hidden">
-                            <div class="card-header bg-surface-50 border-b border-surface-200 py-3 px-5 flex items-center justify-between">
+                        <div class="shadow-sm border border-surface-200 rounded-xl overflow-hidden bg-surface-card">
+                            <div class="bg-surface-50 border-b border-surface-200 py-3 px-5 flex items-center justify-between">
                                 <span class="font-bold text-color">Question {{ i + 1 }}: {{ q.title || 'Practice Question' }}</span>
-                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle text-xs">
+                                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-surface-100 text-muted-color border border-surface-200">
                                     {{ q.difficulty || 'MEDIUM' }}
                                 </span>
                             </div>
 
-                            <div class="card-body p-5">
+                            <div class="p-5">
                                 <!-- Question Text -->
                                 @if (q.text) {
                                     <div class="text-base text-color mb-4 whitespace-pre-wrap">{{ q.text }}</div>
@@ -188,9 +197,9 @@
 
                     <!-- Bottom Submit Action -->
                     <div class="flex items-center justify-between pt-4 border-t">
-                        <button type="button" class="btn btn-outline-secondary" (click)="backToOverview()">Cancel</button>
-                        <button type="button" class="btn btn-success px-6 py-2.5 font-bold flex items-center gap-2 shadow" [disabled]="isSubmitting()" (click)="submitQuiz()">
-                            <fa-icon [icon]="faCheck" />
+                        <button tumAetUiButton type="button" severity="secondary" variant="outlined" (click)="backToOverview()">Cancel</button>
+                        <button tumAetUiButton type="button" [disabled]="isSubmitting()" (click)="submitQuiz()">
+                            <fa-icon [icon]="faCheck" class="me-1" />
                             <span>{{ isSubmitting() ? 'Submitting...' : 'Submit Answers' }}</span>
                         </button>
                     </div>
@@ -205,7 +214,9 @@
                     <!-- Results Banner -->
                     <div class="bg-surface-card border border-surface-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
                         <div>
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-success-subtle text-success mb-2">
+                            <span
+                                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-100 text-state-success border border-state-success mb-2"
+                            >
                                 <fa-icon [icon]="faAward" />
                                 Session Completed
                             </span>
@@ -218,9 +229,9 @@
                             <p class="text-xs text-muted-color mt-1">Completed on {{ review.completedAt | artemisDate: 'long' }} • Formative attempt</p>
                         </div>
                         <div class="flex items-center gap-3">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="backToOverview()">Back to Overview</button>
-                            <button type="button" class="btn btn-primary btn-sm flex items-center gap-2" (click)="startNewQuiz()">
-                                <fa-icon [icon]="faRedo" />
+                            <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="backToOverview()">Back to Overview</button>
+                            <button tumAetUiButton type="button" size="small" (click)="startNewQuiz()">
+                                <fa-icon [icon]="faRedo" class="me-1" />
                                 <span>Practice Again</span>
                             </button>
                         </div>
@@ -228,17 +239,21 @@
 
                     <!-- Per-Question Review List -->
                     @for (item of review.questions; track item.question.id; let i = $index) {
-                        <div class="card shadow-sm border border-surface-200 rounded-xl overflow-hidden">
-                            <div class="card-header bg-surface-50 border-b border-surface-200 py-3 px-5 flex items-center justify-between">
+                        <div class="shadow-sm border border-surface-200 rounded-xl overflow-hidden bg-surface-card">
+                            <div class="bg-surface-50 border-b border-surface-200 py-3 px-5 flex items-center justify-between">
                                 <span class="font-bold text-color">Question {{ i + 1 }}: {{ item.question.title || 'Practice Question' }}</span>
                                 <div>
-                                    <span class="badge font-bold px-3 py-1.5" [class.bg-success]="(item.score ?? 0) > 0" [class.bg-danger]="(item.score ?? 0) === 0">
+                                    <span
+                                        class="px-3 py-1.5 rounded text-xs font-bold text-white"
+                                        [class.bg-state-success]="(item.score ?? 0) > 0"
+                                        [class.bg-state-danger]="(item.score ?? 0) === 0"
+                                    >
                                         {{ item.score ?? 0 | number: '1.0-1' }} / {{ item.question.points ?? 1 | number: '1.0-1' }} P
                                     </span>
                                 </div>
                             </div>
 
-                            <div class="card-body p-5">
+                            <div class="p-5">
                                 @if (item.question.text) {
                                     <div class="text-base text-color mb-4 whitespace-pre-wrap">{{ item.question.text }}</div>
                                 }
@@ -247,29 +262,57 @@
                                 @if (item.question.answerOptions && item.question.answerOptions.length > 0) {
                                     <div class="space-y-2">
                                         @for (opt of item.question.answerOptions; track opt.id) {
+                                            @let isChosen = isUserSelected(item, opt.id);
                                             <div
                                                 class="border rounded-lg p-3.5 flex items-start gap-3"
                                                 [class.border-state-success]="opt.isCorrect"
-                                                [class.bg-surface-100]="opt.isCorrect"
-                                                [class.border-surface-200]="!opt.isCorrect"
+                                                [class.bg-surface-100]="opt.isCorrect && isChosen"
+                                                [class.border-state-danger]="isChosen && !opt.isCorrect"
+                                                [class.border-surface-200]="!isChosen && !opt.isCorrect"
                                                 [class.bg-surface-card]="!opt.isCorrect"
                                             >
                                                 <div class="mt-0.5">
                                                     @if (opt.isCorrect) {
                                                         <fa-icon [icon]="faCheckCircle" class="text-state-success text-lg" />
+                                                    } @else if (isChosen) {
+                                                        <fa-icon [icon]="faTimesCircle" class="text-state-danger text-lg" />
                                                     } @else {
                                                         <fa-icon [icon]="faTimesCircle" class="text-muted-color text-lg" />
                                                     }
                                                 </div>
                                                 <div class="flex-1">
-                                                    <div class="text-sm font-medium" [class.text-state-success]="opt.isCorrect" [class.text-color]="!opt.isCorrect">
+                                                    <div
+                                                        class="text-sm font-medium"
+                                                        [class.text-state-success]="opt.isCorrect"
+                                                        [class.text-state-danger]="isChosen && !opt.isCorrect"
+                                                        [class.text-muted-color]="!isChosen && !opt.isCorrect"
+                                                    >
                                                         {{ opt.text }}
+                                                        @if (isChosen) {
+                                                            <span
+                                                                class="px-2 py-0.5 rounded text-xs font-semibold text-white ms-2"
+                                                                [class.bg-state-success]="opt.isCorrect"
+                                                                [class.bg-state-danger]="!opt.isCorrect"
+                                                            >
+                                                                Your Choice
+                                                            </span>
+                                                        }
                                                         @if (opt.isCorrect) {
-                                                            <span class="badge bg-success-subtle text-success text-xs ms-2">Correct Solution</span>
+                                                            <span
+                                                                class="px-2 py-0.5 rounded text-xs font-semibold text-state-success bg-surface-100 border border-state-success ms-1"
+                                                            >
+                                                                Correct Solution
+                                                            </span>
+                                                        } @else if (isChosen) {
+                                                            <span
+                                                                class="px-2 py-0.5 rounded text-xs font-semibold text-state-danger bg-surface-100 border border-state-danger ms-1"
+                                                            >
+                                                                Incorrect
+                                                            </span>
                                                         }
                                                     </div>
                                                     @if (opt.explanation) {
-                                                        <div class="text-xs text-state-success mt-1 font-normal bg-surface-50 p-2 rounded">
+                                                        <div class="text-xs text-color mt-1 font-normal bg-surface-50 p-2 rounded">
                                                             <strong>Explanation:</strong>
                                                             {{ opt.explanation }}
                                                         </div>
@@ -285,7 +328,7 @@
 
                     <!-- Bottom Return Action -->
                     <div class="flex justify-center pt-4">
-                        <button type="button" class="btn btn-outline-secondary px-6 py-2.5 font-semibold" (click)="backToOverview()">Back to Overview</button>
+                        <button tumAetUiButton type="button" severity="secondary" variant="outlined" (click)="backToOverview()">Back to Overview</button>
                     </div>
                 </div>
             }
