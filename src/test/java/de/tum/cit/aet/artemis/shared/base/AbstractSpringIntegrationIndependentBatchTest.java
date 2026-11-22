@@ -16,7 +16,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 
 /**
  * Second independent integration-test bucket. It uses the same Spring profiles as {@link AbstractSpringIntegrationIndependentTest}, but separate filesystem paths so it can
@@ -28,8 +27,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_DEMO })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.user-management.passkey.enabled=true",
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent_batch", "artemis.iris.enabled=true", "artemis.deimos.enabled=true",
-        "artemis.lti.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasllm.enabled=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=true",
-        "artemis.continuous-integration.build-job.retention-period=30",
+        "artemis.lti.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true", "artemis.atlas.atlasllm.enabled=true", "artemis.athena.enabled=true",
+        "artemis.apollon.enabled=true", "artemis.continuous-integration.build-job.retention-period=30",
         // Use separate paths for parallel bucket execution.
         "artemis.course-archives-path=./local/server-integration-test-independent-batch/exports/courses",
         "artemis.legal-path=./local/server-integration-test-independent-batch/legal",
@@ -49,11 +48,8 @@ public abstract class AbstractSpringIntegrationIndependentBatchTest extends Abst
     @MockitoSpyBean
     protected CompetencyOrchestrationService orchestrationService;
 
-    @MockitoSpyBean
-    protected AuthorizationCheckService authCheckService;
-
     @AfterEach
-    void resetBatchSpies() {
-        Mockito.reset(orchestrationService, authCheckService);
+    void resetOrchestrationService() {
+        Mockito.reset(orchestrationService);
     }
 }

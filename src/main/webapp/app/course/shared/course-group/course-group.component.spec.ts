@@ -114,7 +114,9 @@ describe('CourseGroupComponent', () => {
     });
 
     describe('tableOptions', () => {
-        it('should sort by name initially', () => {
+        it('should configure table as scrollable with flex height', () => {
+            expect(comp.tableOptions.scrollable).toBe(true);
+            expect(comp.tableOptions.scrollHeight).toBe('flex');
             expect(comp.tableOptions.initialSortField).toBe('name');
         });
     });

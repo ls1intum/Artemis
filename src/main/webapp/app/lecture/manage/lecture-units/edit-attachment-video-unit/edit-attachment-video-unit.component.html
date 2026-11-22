@@ -1,6 +1,3 @@
 <jhi-lecture-unit-layout [isLoading]="isLoading()">
     <jhi-attachment-video-unit-form #attachmentVideoUnitForm [formData]="formData()" (formSubmitted)="updateAttachmentVideoUnit($event)" [isEditMode]="true" />
-    @if (attachmentVideoUnit()?.id; as unitId) {
-        <jhi-tum-live-upload [lectureUnitId]="unitId" (attached)="onTumLiveVideoAttached(unitId)" />
-    }
 </jhi-lecture-unit-layout>

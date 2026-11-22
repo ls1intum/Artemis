@@ -6,11 +6,9 @@ import { EMPTY, catchError, switchMap, tap } from 'rxjs';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
-    TumAetUiEmptyStateComponent,
     TumAetUiPaginatorComponent,
     TumAetUiSelectButtonComponent,
     TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
     TumAetUiTagComponent,
@@ -54,8 +52,6 @@ import {
     templateUrl: './error-analysis.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        TumAetUiTableLayoutComponent,
-        TumAetUiEmptyStateComponent,
         FormsModule,
         FaIconComponent,
         TranslateDirective,

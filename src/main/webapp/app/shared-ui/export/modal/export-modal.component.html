@@ -3,18 +3,7 @@
         <h4 class="modal-title">
             <span [jhiTranslate]="'export.dialogTitle'"> Export Options </span>
         </h4>
-        <button
-            tumAetUiButton
-            type="button"
-            size="small"
-            severity="secondary"
-            variant="text"
-            data-testid="export-options-close"
-            [attr.aria-label]="'entity.action.close' | artemisTranslate"
-            (click)="cancel()"
-        >
-            <fa-icon [icon]="faXmark" />
-        </button>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="cancel()"></button>
     </div>
     <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs">
         <ng-container ngbNavItem [ngbNavItem]="1">
@@ -34,13 +23,15 @@
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="export.csvFile.fieldSeparator.label"></label>
                     <div>
-                        <div class="inline-flex flex-wrap gap-1">
+                        <div class="btn-group">
                             @for (fieldSeparator of CsvFieldSeparator | keyvalue; track fieldSeparator) {
                                 <button
                                     type="button"
-                                    tumAetUiButton
-                                    size="small"
-                                    [severity]="options().fieldSeparator === fieldSeparator.value ? 'primary' : 'secondary'"
+                                    class="btn"
+                                    [ngClass]="{
+                                        'btn-primary': options().fieldSeparator === fieldSeparator.value,
+                                        'btn-default': options().fieldSeparator !== fieldSeparator.value,
+                                    }"
                                     (click)="setCsvFieldSeparator(fieldSeparator.value)"
                                     [attr.aria-pressed]="options().fieldSeparator === fieldSeparator.value"
                                 >
@@ -53,13 +44,12 @@
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="export.csvFile.quoteStrings.label"></label>
                     <div>
-                        <div class="inline-flex flex-wrap gap-1">
+                        <div class="btn-group">
                             @for (quoteString of CsvQuoteStrings | keyvalue; track quoteString) {
                                 <button
                                     type="button"
-                                    tumAetUiButton
-                                    size="small"
-                                    [severity]="options().quoteCharacter === quoteString.value ? 'primary' : 'secondary'"
+                                    class="btn"
+                                    [ngClass]="{ 'btn-primary': options().quoteCharacter === quoteString.value, 'btn-default': options().quoteCharacter !== quoteString.value }"
                                     (click)="setCsvQuoteString(quoteString.value)"
                                     [attr.aria-pressed]="options().quoteCharacter === quoteString.value"
                                 >
@@ -72,13 +62,12 @@
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="export.csvFile.decimalSeparator.label"></label>
                     <div>
-                        <div class="inline-flex flex-wrap gap-1">
+                        <div class="btn-group">
                             @for (separator of CsvDecimalSeparator | keyvalue; track separator) {
                                 <button
                                     type="button"
-                                    tumAetUiButton
-                                    size="small"
-                                    [severity]="options().decimalSeparator === separator.value ? 'primary' : 'secondary'"
+                                    class="btn"
+                                    [ngClass]="{ 'btn-primary': options().decimalSeparator === separator.value, 'btn-default': options().decimalSeparator !== separator.value }"
                                     (click)="setCsvDecimalSeparator(separator.value)"
                                     [attr.aria-pressed]="options().decimalSeparator === separator.value"
                                 >
@@ -96,10 +85,10 @@
     </div>
     <div class="modal-footer justify-content-between">
         <div class="flex-grow-1 d-flex justify-content-end">
-            <button type="button" tumAetUiButton size="small" severity="secondary" class="cancel me-1" data-dismiss="modal" (click)="cancel()">
+            <button type="button" class="btn btn-secondary cancel me-1" data-dismiss="modal" (click)="cancel()">
                 <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
-            <button type="button" tumAetUiButton size="small" severity="secondary" id="finish-button" (click)="onFinish()">
+            <button type="button" class="btn btn-success" id="finish-button" (click)="onFinish()">
                 <fa-icon [icon]="faDownload" class="me-2" />
                 @if (activeTab === 1) {
                     <span jhiTranslate="export.excelFile.buttonText"></span>

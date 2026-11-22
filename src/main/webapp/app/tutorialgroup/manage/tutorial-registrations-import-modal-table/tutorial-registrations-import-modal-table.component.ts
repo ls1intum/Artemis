@@ -1,4 +1,4 @@
-import { TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { Component, input } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
@@ -9,8 +9,9 @@ export type TutorialRegistrationsImportModalTableRow =
 
 @Component({
     selector: 'jhi-tutorial-registrations-import-modal-table',
-    imports: [TumAetUiTableDirective, TumAetUiTableLayoutComponent, TranslateDirective],
+    imports: [TumAetUiTableDirective, TranslateDirective],
     templateUrl: './tutorial-registrations-import-modal-table.component.html',
+    styleUrl: './tutorial-registrations-import-modal-table.component.scss',
 })
 export class TutorialRegistrationsImportModalTableComponent {
     rows = input.required<TutorialRegistrationsImportModalTableRow[]>();

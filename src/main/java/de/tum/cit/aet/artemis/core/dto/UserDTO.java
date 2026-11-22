@@ -45,7 +45,7 @@ public class UserDTO extends AuditingEntityDTO {
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     private String login;
 
-    @Size(max = 101)
+    @Size(max = 50)
     private String name;
 
     @Size(max = 50)

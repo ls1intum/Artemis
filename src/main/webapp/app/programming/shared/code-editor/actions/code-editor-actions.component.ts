@@ -1,4 +1,3 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -29,7 +28,7 @@ import { CodeEditorResolveConflictModalComponent } from 'app/programming/shared/
     selector: 'jhi-code-editor-actions',
     templateUrl: './code-editor-actions.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumAetUiButtonDirective, FeatureToggleDirective, NgbTooltip, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
+    imports: [FeatureToggleDirective, NgbTooltip, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
 })
 export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     private readonly repositoryService = inject(CodeEditorRepositoryService);

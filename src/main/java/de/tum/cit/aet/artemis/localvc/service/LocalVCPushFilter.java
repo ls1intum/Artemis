@@ -34,13 +34,10 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
 
     private final LocalVCServletService localVCServletService;
 
-    private final LocalVCPushProcessingService pushProcessingService;
-
     private final LocalVCUsageTrackingService usageTrackingService;
 
-    public LocalVCPushFilter(LocalVCServletService localVCServletService, LocalVCPushProcessingService pushProcessingService, LocalVCUsageTrackingService usageTrackingService) {
+    public LocalVCPushFilter(LocalVCServletService localVCServletService, LocalVCUsageTrackingService usageTrackingService) {
         this.localVCServletService = localVCServletService;
-        this.pushProcessingService = pushProcessingService;
         this.usageTrackingService = usageTrackingService;
     }
 
@@ -81,7 +78,7 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         GitRepositoryAccessDTO exercise = (GitRepositoryAccessDTO) servletRequest.getAttribute(LocalVCServletService.AUTHORIZED_EXERCISE_ATTRIBUTE);
         final ProgrammingExerciseMutationGuardService.MutationLease mutationLease;
         try {
-            mutationLease = pushProcessingService.claimProgrammingExerciseMutation(repository, exercise.exerciseId());
+            mutationLease = localVCServletService.claimProgrammingExerciseMutation(repository, exercise.exerciseId());
         }
         catch (HttpStatusException e) {
             servletResponse.sendError(e.getStatusCode().value(), e.getMessage() + " Please retry the push later.");

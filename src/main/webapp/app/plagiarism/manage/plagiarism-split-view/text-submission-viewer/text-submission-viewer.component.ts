@@ -1,4 +1,3 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
 import { Component, ViewEncapsulation, effect, inject, input, signal, untracked } from '@angular/core';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
@@ -29,7 +28,7 @@ type FilesWithType = { [p: string]: FileType };
     styleUrls: ['./text-submission-viewer.component.scss'],
     templateUrl: './text-submission-viewer.component.html',
     encapsulation: ViewEncapsulation.None,
-    imports: [TumAetUiButtonDirective, SplitPaneHeaderComponent, FaIconComponent, TranslateDirective, NgClass],
+    imports: [SplitPaneHeaderComponent, FaIconComponent, TranslateDirective, NgClass],
 })
 export class TextSubmissionViewerComponent {
     private repositoryService = inject(CodeEditorRepositoryFileService);

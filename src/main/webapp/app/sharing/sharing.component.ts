@@ -1,4 +1,3 @@
-import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -9,10 +8,12 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { SharingInfo, ShoppingBasket } from './sharing.model';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
 import { FormsModule } from '@angular/forms';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { combineLatest, take } from 'rxjs';
@@ -25,7 +26,7 @@ import { finalize } from 'rxjs/operators';
     selector: 'jhi-sharing',
     templateUrl: './sharing.component.html',
     styleUrls: ['./sharing.scss'],
-    imports: [TumAetUiButtonDirective, RouterLink, FormsModule, TranslateDirective, FaIconComponent, TumAetUiTableDirective, TumAetUiTableSortableColumnComponent],
+    imports: [RouterLink, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent],
 })
 export class SharingComponent implements OnInit {
     private route = inject(ActivatedRoute);
@@ -38,13 +39,14 @@ export class SharingComponent implements OnInit {
 
     // Icons
     protected readonly faPlus = faPlus;
+    protected readonly faSort = faSort;
 
     readonly courses = signal<Course[]>([]);
     readonly coursesLoading = signal(true);
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    readonly reverseSorting = signal(false);
-    readonly sortColumn = signal('id');
+    reverseSorting: boolean = false;
+    sortColumn = 'id';
 
     readonly shoppingBasket = signal<ShoppingBasket | undefined>(undefined);
     /**
@@ -105,19 +107,12 @@ export class SharingComponent implements OnInit {
         return item.id ?? index;
     }
 
-    /** applies the sort of a clicked column header of the course table */
-    onSort(event: TumAetUiTableSortEvent) {
-        this.sortColumn.set(event.field);
-        this.reverseSorting.set(event.order === 1);
-        this.sortRows();
-    }
-
     /**
      * sorts the course table
      */
     sortRows() {
         const sortedCourses = [...this.courses()];
-        this.sortService.sortByProperty(sortedCourses, this.sortColumn(), this.reverseSorting());
+        this.sortService.sortByProperty(sortedCourses, this.sortColumn, this.reverseSorting);
         this.courses.set(sortedCourses);
     }
 

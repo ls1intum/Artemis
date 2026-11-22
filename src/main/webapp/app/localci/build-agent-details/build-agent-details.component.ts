@@ -1,4 +1,3 @@
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { BuildJobSearchComponent } from 'app/localci/shared/build-job-search.component';
 import { subscribeToFinishedBuildJobSearch, subscribeToFinishedBuildJobs } from 'app/localci/build-queue/finished-build-job-loading';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
@@ -10,7 +9,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTableLayoutComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
@@ -44,8 +43,6 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
     styleUrl: './build-agent-details.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        ArtemisTranslatePipe,
-        TumAetUiTableLayoutComponent,
         BuildJobSearchComponent,
         FontAwesomeModule,
         RouterModule,
@@ -172,7 +169,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     itemsPerPage = ITEMS_PER_PAGE;
 
     /** Current page number for pagination (1-indexed) */
-    currentPage = signal(1);
+    currentPage = 1;
 
     /** Column to sort finished build jobs by */
     predicate = 'buildSubmissionDate';
@@ -527,7 +524,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     fetchFinishedBuildJobs() {
         return this.buildQueueService.getFinishedBuildJobs(
             {
-                page: this.currentPage(),
+                page: this.currentPage,
                 pageSize: this.itemsPerPage,
                 sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
                 sortedColumn: this.predicate,
@@ -556,7 +553,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     onPageChange(event: PageChangeEvent) {
         const newPageNumber = event?.page;
         if (newPageNumber) {
-            this.currentPage.set(newPageNumber);
+            this.currentPage = newPageNumber;
             this.loadFinishedBuildJobs();
         }
     }

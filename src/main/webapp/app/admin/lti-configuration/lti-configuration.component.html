@@ -25,26 +25,17 @@
                     <span>{{ getDynamicRegistrationUrl() }}</span>
                     <jhi-copy-to-clipboard-button [copyText]="getDynamicRegistrationUrl()" />
                 </dd>
-                <tumaet-ui-table-layout class="mt-3" [empty]="platforms().length === 0">
-                    <a tumAetUiTableEmptyActions tumAetUiButton size="small" [routerLink]="['/admin', 'lti-configuration', 'new']" data-testid="add-platform-empty-button">
+                <dt class="flex w-full items-center justify-between">
+                    <div class="flex items-center gap-1">
+                        <h4 class="mb-0" jhiTranslate="artemisApp.lti.configuredPlatforms"></h4>
+                        <jhi-help-icon text="artemisApp.lti.configuredPlatformsTooltip" />
+                    </div>
+                    <a [routerLink]="['/admin', 'lti-configuration', 'new']" tumAetUiButton size="small" data-testid="add-platform-button">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.lti13.addNewPlatform"></span>
                     </a>
-                    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
-                        <h4 class="mb-0 truncate text-base" jhiTranslate="artemisApp.lti.configuredPlatforms"></h4>
-                        <jhi-help-icon text="artemisApp.lti.configuredPlatformsTooltip" />
-                        <span class="flex-1"></span>
-                        <a
-                            [attr.aria-label]="'artemisApp.lti13.addNewPlatform' | artemisTranslate"
-                            [routerLink]="['/admin', 'lti-configuration', 'new']"
-                            tumAetUiButton
-                            size="small"
-                            data-testid="add-platform-button"
-                        >
-                            <fa-icon [icon]="faPlus" />
-                            <span class="hidden md:inline" jhiTranslate="artemisApp.lti13.addNewPlatform"></span>
-                        </a>
-                    </div>
+                </dt>
+                <div class="mt-3 overflow-x-auto">
                     <table
                         tumAetUiTable
                         [sortField]="predicate()"
@@ -127,15 +118,22 @@
                             }
                         </tbody>
                     </table>
-                    <tumaet-ui-paginator
-                        tumAetUiTableFooter
-                        [page]="page() - 1"
-                        [pageSize]="itemsPerPage"
-                        [totalRecords]="totalItems()"
-                        [showRowsPerPage]="false"
-                        (pageChange)="onPageChange($event)"
-                    />
-                </tumaet-ui-table-layout>
+                </div>
+                <div class="mt-3">
+                    <div class="flex justify-center">
+                        <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
+                    </div>
+                    <div class="flex justify-center">
+                        <tumaet-ui-paginator
+                            [page]="page() - 1"
+                            [pageSize]="itemsPerPage"
+                            [totalRecords]="totalItems()"
+                            [showCurrentPageReport]="false"
+                            [showRowsPerPage]="false"
+                            (pageChange)="onPageChange($event)"
+                        />
+                    </div>
+                </div>
             </tumaet-ui-tab-panel>
             <tumaet-ui-tab-panel [value]="2">
                 <dt>

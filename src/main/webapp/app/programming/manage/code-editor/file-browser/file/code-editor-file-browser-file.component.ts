@@ -1,4 +1,3 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, input } from '@angular/core';
 import { faEdit, faFile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -13,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-code-editor-file-browser-file',
     templateUrl: './code-editor-file-browser-file.component.html',
     providers: [NgbModal],
-    imports: [TumAetUiButtonDirective, FaIconComponent, NgClass, CodeEditorFileBrowserBadgeComponent, ArtemisTranslatePipe],
+    imports: [FaIconComponent, NgClass, CodeEditorFileBrowserBadgeComponent, ArtemisTranslatePipe],
 })
 export class CodeEditorFileBrowserFileComponent extends CodeEditorFileBrowserNodeComponent {
     disableActions = input.required<boolean>();

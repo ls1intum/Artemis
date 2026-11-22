@@ -36,7 +36,6 @@ const sidebars: SidebarsConfig = {
                     items: [
                         'guidelines/server-development',
                         'guidelines/rest-api',
-                        'guidelines/security',
                         'guidelines/websocket',
                         'guidelines/server-tests',
                         'guidelines/database',
@@ -60,7 +59,6 @@ const sidebars: SidebarsConfig = {
         'open-source',
         'system-design',
         'security-assurance',
-        'threat-models',
         'best-practices',
         'feature-usage',
         'feature-usage-catalogue',

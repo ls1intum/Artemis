@@ -1,10 +1,9 @@
-import { GradingInstructionUsageWarningComponent } from 'app/assessment/manage/grading-instruction-usage-warning/grading-instruction-usage-warning.component';
 import { Component, Injector, afterNextRender, effect, inject, input, output, viewChild } from '@angular/core';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
@@ -16,7 +15,7 @@ type OptionalTextBlockRef = TextBlockRef | undefined;
     selector: 'jhi-text-block-assessment-card',
     templateUrl: './text-block-assessment-card.component.html',
     styleUrls: ['./text-block-assessment-card.component.scss'],
-    imports: [TextBlockFeedbackEditorComponent, GradingInstructionUsageWarningComponent],
+    imports: [TextBlockFeedbackEditorComponent],
 })
 export class TextBlockAssessmentCardComponent {
     private route = inject(ActivatedRoute);
@@ -25,7 +24,6 @@ export class TextBlockAssessmentCardComponent {
     private injector = inject(Injector);
 
     textBlockRef = input.required<TextBlockRef>();
-    allFeedbacks = input<Feedback[]>([]);
     selected = input<boolean>(false);
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);

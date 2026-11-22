@@ -12,6 +12,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { By } from '@angular/platform-browser';
+import { ScienceService } from 'app/foundation/science/science.service';
 import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { MockComponent } from 'ng-mocks';
 
@@ -62,6 +63,7 @@ describe('CompetencyGraphModalComponent', () => {
                     provide: DynamicDialogConfig,
                     useValue: { data: { learningPathId } },
                 },
+                MockProvider(ScienceService),
             ],
         })
             .overrideComponent(CompetencyGraphModalComponent, {

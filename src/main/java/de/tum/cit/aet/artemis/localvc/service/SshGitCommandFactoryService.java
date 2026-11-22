@@ -17,23 +17,12 @@ public class SshGitCommandFactoryService extends GitPackCommandFactory {
 
     public final LocalVCServletService localVCServletService;
 
-    private final LocalVCAccessLogRecorderService accessLogRecorder;
-
-    private final LocalVCPushProcessingService pushProcessingService;
-
-    private final PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
-
-    public SshGitCommandFactoryService(LocalVCServletService localVCServletService, LocalVCAccessLogRecorderService accessLogRecorder,
-            LocalVCPushProcessingService pushProcessingService, PasswordAuthenticationNoticeService passwordAuthenticationNoticeService) {
+    public SshGitCommandFactoryService(LocalVCServletService localVCServletService) {
         this.localVCServletService = localVCServletService;
-        this.accessLogRecorder = accessLogRecorder;
-        this.pushProcessingService = pushProcessingService;
-        this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
     }
 
     @Override
     public GitPackCommand createGitCommand(String command) {
-        return new SshGitCommand(getGitLocationResolver(), command, resolveExecutorService(command), localVCServletService, accessLogRecorder, pushProcessingService,
-                passwordAuthenticationNoticeService);
+        return new SshGitCommand(getGitLocationResolver(), command, resolveExecutorService(command), localVCServletService);
     }
 }

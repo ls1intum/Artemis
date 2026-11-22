@@ -6,7 +6,9 @@ import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-l
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import dayjs from 'dayjs/esm';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
@@ -26,10 +28,13 @@ export type ShownDetail =
     | MarkdownDetail
     | GradingCriteriaDetail
     | ModelingEditorDetail
-    | ProgrammingRepositoryBuildOverviewDetail
+    | ProgrammingRepositoryButtonsDetail
+    | ProgrammingAuxiliaryRepositoryButtonsDetail
+    | ProgrammingTestStatusDetail
     | ProgrammingDiffReportDetail
     | ProgrammingProblemStatementDetail
     | ProgrammingTimelineDetail
+    | ProgrammingCheckoutDirectoriesDetail
     | ProgrammingBuildPhasesDetail
     | ExerciseCategoriesDetail;
 
@@ -85,15 +90,32 @@ interface ModelingEditorDetail extends DetailBase {
     data: { isApollonEnabled?: boolean; umlModel?: UMLModel; diagramType?: UMLDiagramType; title?: string };
 }
 
-/** Data shared by the two live instructor build panels. */
-export interface ProgrammingBuildStatusData {
-    participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
-    // Results load after the detail sections render. The signal schedules zoneless change detection.
-    loading: Signal<boolean>;
-    exercise: ProgrammingExercise;
-    onParticipationChange: () => void;
-    type: ProgrammingExerciseParticipationType;
-    submissionRouterLink?: (string | number | undefined)[];
+export interface ProgrammingRepositoryButtonsDetail extends DetailBase {
+    type: DetailType.ProgrammingRepositoryButtons;
+    data: {
+        exerciseId?: number;
+        participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
+        type: RepositoryType.TEMPLATE | RepositoryType.SOLUTION | RepositoryType.TESTS;
+    };
+}
+
+export interface ProgrammingAuxiliaryRepositoryButtonsDetail extends DetailBase {
+    type: DetailType.ProgrammingAuxiliaryRepositoryButtons;
+    data: { auxiliaryRepositories: AuxiliaryRepository[]; exerciseId?: number };
+}
+
+export interface ProgrammingTestStatusDetail extends DetailBase {
+    type: DetailType.ProgrammingTestStatus;
+    data: {
+        participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
+        // Signal-backed so that the participation results finishing to load (asynchronously, after the detail
+        // sections render) schedules change detection in the zoneless app instead of leaving the view stale.
+        loading: Signal<boolean>;
+        exercise: ProgrammingExercise;
+        onParticipationChange: () => void;
+        type: ProgrammingExerciseParticipationType;
+        submissionRouterLink?: (string | number | undefined)[];
+    };
 }
 export interface ProgrammingDiffReportDetail extends DetailBase {
     type: DetailType.ProgrammingDiffReport;
@@ -120,6 +142,15 @@ interface ProgrammingTimelineDetail extends DetailBase {
     data: { exercise: ProgrammingExercise; isExamMode?: boolean };
 }
 
+interface ProgrammingCheckoutDirectoriesDetail extends DetailBase {
+    type: DetailType.ProgrammingCheckoutDirectories;
+    data: {
+        exercise: ProgrammingExercise;
+        programmingLanguage?: ProgrammingLanguage;
+        isLocal: boolean;
+    };
+}
+
 interface ProgrammingBuildPhasesDetail extends DetailBase {
     type: DetailType.ProgrammingBuildPhases;
     data: { phases: BuildPhase[]; isExamMode?: boolean };
@@ -128,19 +159,4 @@ interface ProgrammingBuildPhasesDetail extends DetailBase {
 export interface ExerciseCategoriesDetail extends DetailBase {
     type: DetailType.ExerciseCategories;
     data: { categories?: ExerciseCategory[] };
-}
-
-/** Paired repository/build details. Existing signal-backed status and comparison data retain live updates. */
-export interface ProgrammingRepositoryBuildOverviewDetail extends DetailBase {
-    type: DetailType.ProgrammingRepositoryBuildOverview;
-    data: {
-        exercise: ProgrammingExercise;
-        localCIEnabled: boolean;
-        supportsAuxiliaryRepositories: boolean;
-        templateStatus: ProgrammingBuildStatusData;
-        solutionStatus: ProgrammingBuildStatusData;
-        comparison?: ProgrammingDiffReportDetail;
-        editBuildPlanLink?: string[];
-        checkConsistency?: () => void;
-    };
 }

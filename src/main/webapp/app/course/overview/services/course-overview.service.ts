@@ -23,7 +23,6 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
-import { CourseScoreAccuracy } from 'app/foundation/util/utils';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -259,13 +258,7 @@ export class CourseOverviewService {
         return groupedExerciseGroups;
     }
 
-    /**
-     * Builds the cards of the exercise sidebar.
-     *
-     * @param exercises the exercises of the course
-     * @param course what every card needs of the course of the exercises for the accuracy of the score in its result, as the exercises of the course overview have no course
-     */
-    buildGroupedExerciseData(exercises: Exercise[], course?: CourseScoreAccuracy): { groupedData: AccordionGroups; ungroupedData: SidebarCardElement[] } {
+    buildGroupedExerciseData(exercises: Exercise[]): { groupedData: AccordionGroups; ungroupedData: SidebarCardElement[] } {
         const groupByExerciseId = new Map<number, CourseExerciseGroup>();
         for (const group of buildGroupsFromExercises(exercises)) {
             for (const member of group.exercises ?? []) {
@@ -290,7 +283,7 @@ export class CourseOverviewService {
                     ungroupedData.push(card);
                 }
             } else {
-                const card = this.mapExerciseToSidebarCardElement(exercise, course);
+                const card = this.mapExerciseToSidebarCardElement(exercise);
                 groupedData[this.getCorrespondingExerciseGroupByDate(exercise)].entityData.push(card);
                 ungroupedData.push(card);
             }
@@ -568,7 +561,7 @@ export class CourseOverviewService {
         return [undefined, undefined];
     }
 
-    mapExerciseToSidebarCardElement(exercise: Exercise, course?: CourseScoreAccuracy): SidebarCardElement {
+    mapExerciseToSidebarCardElement(exercise: Exercise): SidebarCardElement {
         return {
             title: exercise.title ?? '',
             id: exercise.id ?? '',
@@ -577,7 +570,6 @@ export class CourseOverviewService {
             icon: getIcon(exercise.type),
             difficulty: exercise.difficulty,
             exercise: exercise,
-            course,
             studentParticipation: exercise?.studentParticipations?.length
                 ? this.participationService.getSpecificStudentParticipation(exercise.studentParticipations, false)
                 : undefined,

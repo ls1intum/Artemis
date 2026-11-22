@@ -14,7 +14,6 @@ import {
     TumAetUiDialogComponent,
     TumAetUiEmptyStateComponent,
     TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
 } from '@tumaet/ui-angular';
@@ -43,7 +42,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleDirective,
         ExamModeBadgeComponent,
-        TumAetUiTableLayoutComponent,
     ],
 })
 export class ExamManagementOverviewComponent implements OnDestroy {

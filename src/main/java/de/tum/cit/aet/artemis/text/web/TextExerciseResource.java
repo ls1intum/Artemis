@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,8 @@ import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
+import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -47,6 +50,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -81,6 +85,9 @@ public class TextExerciseResource {
 
     private static final String ENTITY_NAME = "textExercise";
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     private final TextExerciseService textExerciseService;
 
     private final ExerciseService exerciseService;
@@ -111,11 +118,13 @@ public class TextExerciseResource {
 
     private final ChannelRepository channelRepository;
 
+    private final Optional<AtlasMLApi> atlasMLApi;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, UserRepository userRepository, AuthorizationCheckService authCheckService,
             StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, ChannelRepository channelRepository,
-            Optional<ExamAccessApi> examAccessApi, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            Optional<ExamAccessApi> examAccessApi, Optional<AtlasMLApi> atlasMLApi, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
             PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
@@ -132,6 +141,7 @@ public class TextExerciseResource {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.channelRepository = channelRepository;
         this.examAccessApi = examAccessApi;
+        this.atlasMLApi = atlasMLApi;
     }
 
     /**
@@ -215,10 +225,10 @@ public class TextExerciseResource {
     }
 
     /**
-     * DELETE /text-exercises/:exerciseId : delete the "exerciseId" textExercise in the background. The progress is sent over the websocket topic of the exercise.
+     * DELETE /text-exercises/:exerciseId : delete the "exerciseId" textExercise.
      *
      * @param exerciseId the id of the textExercise to delete
-     * @return the ResponseEntity with status 202 (Accepted), or 409 (Conflict) if the exercise is already being deleted
+     * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("text-exercises/{exerciseId}")
     @EnforceAtLeastInstructorInExercise
@@ -226,14 +236,14 @@ public class TextExerciseResource {
         log.info("REST request to delete TextExercise : {}", exerciseId);
         var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithAuthorities();
-        var course = textExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
+
+        // Notify AtlasML about the exercise deletion before actual deletion
+        notifyAtlasML(textExercise, OperationTypeDTO.DELETE, "text exercise deletion");
 
         // NOTE: we use the exerciseDeletionService here, because this one makes sure to clean up all lazy references correctly.
-        // Audit only once the deletion is accepted, so a refused duplicate request is not audited.
-        exerciseDeletionService.startAsyncDeletion(textExercise, false, () -> {
-            exerciseService.logDeletion(textExercise, course, user);
-        });
-        return ResponseEntity.accepted().build();
+        exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
+        exerciseDeletionService.delete(exerciseId, false);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();
     }
 
     /**
@@ -389,5 +399,23 @@ public class TextExerciseResource {
         SearchResultPageDTO<TextExercise> page = textExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user);
         List<TextExerciseListItemDTO> content = page.getResultsOnPage().stream().map(TextExerciseListItemDTO::of).toList();
         return ResponseEntity.ok(new SearchResultPageDTO<>(content, page.getNumberOfPages()));
+    }
+
+    /**
+     * Helper method to notify AtlasML about text exercise changes with consistent error handling.
+     *
+     * @param exercise             the exercise to save
+     * @param operationType        the operation type (UPDATE or DELETE)
+     * @param operationDescription the description of the operation for logging purposes
+     */
+    private void notifyAtlasML(TextExercise exercise, OperationTypeDTO operationType, String operationDescription) {
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(exercise, operationType);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
+            }
+        });
     }
 }

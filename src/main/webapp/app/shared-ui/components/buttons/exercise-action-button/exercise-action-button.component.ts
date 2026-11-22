@@ -2,15 +2,19 @@ import { Component, computed, input, model } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonSeverity, tumAetUiButtonClasses } from '@tumaet/ui-angular';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'button[jhi-exercise-action-button]',
     templateUrl: './exercise-action-button.component.html',
-    imports: [FaIconComponent],
+    styleUrls: ['../../../../course/overview/course-overview/course-overview.scss'],
+    imports: [FaIconComponent, NgClass],
     host: {
-        '[class]': 'buttonClasses()',
-        '[attr.aria-busy]': 'buttonLoading() ? true : null',
+        '[class.btn]': 'true',
+        '[class.btn-outline-primary]': 'outlined()',
+        '[class.btn-sm]': 'smallButton()',
+        '[class.btn-primary]': 'isPrimary()',
+        '[class.btn-secondary]': 'isSecondary()',
         '[disabled]': 'isDisabled()',
     },
 })
@@ -25,19 +29,11 @@ export class ExerciseActionButtonComponent {
     outlined = input(false);
     smallButton = input(false);
 
-    /** Explicit action intent takes precedence over the legacy primary/secondary toggle. */
-    severity = input<TumAetUiButtonSeverity>();
-
     /** Allows parent to override primary/secondary styling programmatically. */
     overrideSecondary = model<boolean | undefined>(undefined);
 
-    protected readonly buttonClasses = computed(() =>
-        tumAetUiButtonClasses({
-            severity: this.severity() ?? (this.overrideSecondary() ? 'secondary' : 'primary'),
-            variant: this.outlined() ? 'outlined' : 'solid',
-            size: this.smallButton() ? 'small' : 'default',
-        }),
-    );
+    protected isPrimary = computed(() => !this.outlined() && !(this.overrideSecondary() ?? false));
+    protected isSecondary = computed(() => !this.outlined() && (this.overrideSecondary() ?? false));
 
     protected isDisabled = computed(() => this.buttonLoading() || this.forceDisabled());
 

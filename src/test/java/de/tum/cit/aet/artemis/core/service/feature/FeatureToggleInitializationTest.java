@@ -16,7 +16,6 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
@@ -74,34 +73,32 @@ class FeatureToggleInitializationTest {
     }
 
     /**
-     * AtlasML and Memiris were removed but keep their enum positions for the Redis key encoding. A value an older node
-     * stored for one of them is dropped at startup, writes for it are ignored, and a value an older node writes later
-     * never makes it look enabled.
+     * Memiris was removed but keeps its enum position for the Redis key encoding. A value an older node stored for it is
+     * dropped at startup, writes for it are ignored, and a value an older node writes later never makes it look enabled.
      */
-    @ParameterizedTest
-    @EnumSource(value = Feature.class, names = { "AtlasML", "Memiris" })
-    void aRetiredFeatureIsRemovedAtStartupAndNeverReportedAsEnabled(Feature retired) {
+    @Test
+    void aRetiredFeatureIsRemovedAtStartupAndNeverReportedAsEnabled() {
         var provider = new LocalDataProviderService();
         DistributedMap<Feature, Boolean> map = provider.getMap("features");
-        map.put(retired, true);
+        map.put(Feature.Memiris, true);
         var service = new FeatureToggleService(mock(WebsocketMessagingService.class), provider, mock(ProfileService.class), mock(RateLimitConfigurationService.class), false, false,
                 false, false);
 
-        assertThat(service.enabledFeatures()).doesNotContain(retired);
-        assertThat(map.containsKey(retired)).isFalse();
+        assertThat(service.enabledFeatures()).doesNotContain(Feature.Memiris);
+        assertThat(map.containsKey(Feature.Memiris)).isFalse();
 
-        service.enableFeature(retired);
-        service.disableFeature(retired);
-        service.updateFeatureToggles(Map.of(retired, true, Feature.Science, true));
-        assertThat(map.containsKey(retired)).isFalse();
+        service.enableFeature(Feature.Memiris);
+        service.disableFeature(Feature.Memiris);
+        service.updateFeatureToggles(Map.of(Feature.Memiris, true, Feature.Science, true));
+        assertThat(map.containsKey(Feature.Memiris)).isFalse();
         assertThat(service.isFeatureEnabled(Feature.Science)).isTrue();
 
         // An older node that still knows the feature can write it directly to the shared map
-        map.put(retired, true);
-        assertThat(service.isFeatureEnabled(retired)).isFalse();
-        assertThat(service.enabledFeatures()).doesNotContain(retired);
-        map.put(retired, false);
-        assertThat(service.disabledFeatures()).doesNotContain(retired);
+        map.put(Feature.Memiris, true);
+        assertThat(service.isFeatureEnabled(Feature.Memiris)).isFalse();
+        assertThat(service.enabledFeatures()).doesNotContain(Feature.Memiris);
+        map.put(Feature.Memiris, false);
+        assertThat(service.disabledFeatures()).doesNotContain(Feature.Memiris);
     }
 
     @Test

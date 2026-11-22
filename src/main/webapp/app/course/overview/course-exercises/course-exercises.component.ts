@@ -286,10 +286,7 @@ export class CourseExercisesComponent implements SidebarView {
     processExercises(exercises: Exercise[]): void {
         const sortedExercises = this.courseOverviewService.sortExercises(this.preserveSidebarParticipationSnapshots(exercises));
         this._sortedExercises.set(sortedExercises);
-        // The exercises of the overview carry no course, so the cards get the accuracy of the scores of the course, which their results are rounded to.
-        // Not the course itself: the sidebar clones its cards, and the course holds all exercises.
-        const accuracyOfScores = this._course()?.accuracyOfScores;
-        const { groupedData, ungroupedData } = this.courseOverviewService.buildGroupedExerciseData(sortedExercises, this._course() ? { accuracyOfScores } : undefined);
+        const { groupedData, ungroupedData } = this.courseOverviewService.buildGroupedExerciseData(sortedExercises);
         this._sidebarExercises.set(ungroupedData);
         this._accordionExerciseGroups.set(groupedData);
         this.updateSidebarData();

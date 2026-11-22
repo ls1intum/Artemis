@@ -11,7 +11,6 @@ import java.util.Optional;
 
 import jakarta.ws.rs.core.UriBuilder;
 
-import org.apache.commons.lang3.StringUtils;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -153,13 +152,12 @@ public class ExerciseSharingResource {
     @EnforceAtLeastStudent
     public ResponseEntity<ShoppingBasket> loadShoppingBasket(@RequestParam String basketToken, @RequestParam String returnURL, @RequestParam String apiBaseURL,
             @RequestParam String checksum) {
-        if (SecretChecksumCalculator.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), sharingConnectorService.getSharingApiKey(), checksum)
-                && sharingConnectorService.matchesConfiguredApiBaseUrl(apiBaseURL)) {
+        if (SecretChecksumCalculator.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), sharingConnectorService.getSharingApiKey(), checksum)) {
             Optional<ShoppingBasket> sharingInfoDTO = exerciseSharingService.getBasketInfo(basketToken, apiBaseURL);
             return ResponseUtil.wrapOrNotFound(sharingInfoDTO);
         }
         else {
-            log.warn("Validation of the sharing information failed for a shopping basket request");
+            log.warn("Checksum validation failed for a shopping basket request");
             return ResponseEntity.badRequest().build();
         }
     }
@@ -173,7 +171,7 @@ public class ExerciseSharingResource {
      *
      * @param sharingSetupInfo details required to import (exercise metadata, templates, etc.)
      * @return {@code 200 OK} with the created exercise; {@code 400 Bad Request} when the basket reference is
-     *         missing or does not validate; {@code 500 Internal Server Error} on import failures (e.g., VCS operations, IO/URI issues)
+     *         missing; {@code 500 Internal Server Error} on import failures (e.g., VCS operations, IO/URI issues)
      */
     @PostMapping("setup-import")
     @EnforceAtLeastStudent
@@ -182,10 +180,6 @@ public class ExerciseSharingResource {
         // The whole import is driven by the basket reference; without it the service would dereference null.
         if (sharingSetupInfo.sharingInfo() == null) {
             throw new BadRequestAlertException("The sharing information is missing", ENTITY_NAME, "sharingInfoMissing");
-        }
-        // The sharing information has to be valid before it is used.
-        if (!isSharingInfoValid(sharingSetupInfo.sharingInfo())) {
-            throw new BadRequestAlertException("The sharing information is invalid", ENTITY_NAME, "sharingInfoInvalid");
         }
         try {
             ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
@@ -215,26 +209,13 @@ public class ExerciseSharingResource {
     @PostMapping("import/basket/exercise-details")
     @EnforceAtLeastStudent
     public ResponseEntity<ImportProgrammingExerciseRequestDTO> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) {
-        if (!isSharingInfoValid(sharingInfo)) {
+        if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKey())) {
             return ResponseEntity.badRequest().build();
         }
         // The details object backs the whole create form and is posted straight back to setup-import, so the response
         // deliberately uses the very same record as that request.
         ImportProgrammingExerciseRequestDTO exerciseDetails = this.exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);
         return ResponseEntity.ok().body(exerciseDetails);
-    }
-
-    /**
-     * Whether the sharing information of a request is complete, signed with the shared secret, and refers to the Sharing Platform this instance is connected to.
-     * The follow-up calls to the platform use the base URL of the request, so each endpoint that makes them applies this one check.
-     *
-     * @param sharingInfo the sharing information of the request, may be null
-     * @return true if the follow-up calls may use it
-     */
-    private boolean isSharingInfoValid(SharingInfoDTO sharingInfo) {
-        return sharingInfo != null && StringUtils.isNotBlank(sharingInfo.returnURL()) && StringUtils.isNotBlank(sharingInfo.apiBaseURL())
-                && StringUtils.isNotBlank(sharingInfo.checksum()) && sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKey())
-                && sharingConnectorService.matchesConfiguredApiBaseUrl(sharingInfo.apiBaseURL());
     }
 
     /**

@@ -14,7 +14,6 @@
                 "suggested": "AI Feedback Suggestion",
                 "adapted": "Adapted AI Feedback Suggestion"
             },
-            "gradingInstructionUsageWarning": "This instruction is used {{count}} times. Only {{limit}} uses count toward the total score. You can keep using it for additional feedback.",
             "subsequentFeedback": "This is subsequent feedback which is not included in the total score.",
             "error": {
                 "assessmentDueDateOver": "The assessment due date of this exercise has passed."
@@ -75,7 +74,7 @@
                 "removeAssessmentInstructionLink": "Do you want to remove the link to the assessment instruction?"
             },
             "dashboard": {
-                "warning": "Warning: The submission period is not over yet and students are still allowed to submit their solutions. Please do not start with the assessment yet!",
+                "warning": "Warning: The submission deadline has not passed and students can still update their work. You can assess now, but you may need to revise your assessment if a student submits an update.",
                 "warningIndividual": "Warning: The general submission period is over, but some students with individual due dates are still allowed to submit their solutions. Please check if that is the case for the participation you want to assess.",
                 "empty": "No Submissions found!",
                 "emptySearch": "Please enter a student name to find submissions.",

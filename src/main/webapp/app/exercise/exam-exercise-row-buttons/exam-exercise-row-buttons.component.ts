@@ -1,9 +1,7 @@
 import { injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Observable, Subject } from 'rxjs';
-import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
-import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { Subject } from 'rxjs';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
 import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -17,20 +15,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { TranslateService } from '@ngx-translate/core';
-import {
-    faBook,
-    faCode,
-    faExclamationTriangle,
-    faEye,
-    faFileSignature,
-    faLightbulb,
-    faPencilAlt,
-    faRedo,
-    faRobot,
-    faSignal,
-    faTrash,
-    faUsers,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBook, faExclamationTriangle, faEye, faFileSignature, faPencilAlt, faRobot, faSignal, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -65,7 +50,6 @@ export class ExamExerciseRowButtonsComponent {
     private quizExerciseService = inject(QuizExerciseService);
     private quizExerciseDeletionApi = inject(QuizExerciseDeletionApi);
     private exerciseService = inject(ExerciseService);
-    private entityDeletionService = inject(EntityDeletionService);
     private eventManager = inject(EventManager);
     private profileService = inject(ProfileService);
     private translateService = inject(TranslateService);
@@ -76,16 +60,12 @@ export class ExamExerciseRowButtonsComponent {
     readonly exerciseGroupId = input.required<number>();
     readonly latestIndividualEndDate = input<dayjs.Dayjs>();
     readonly onDeleteExercise = output<void>();
-    /** Emitted when it is not known how a deletion ended; the table is reloaded from the server instead of removing the exercise. */
-    readonly deletionOutcomeUnknown = output<void>();
     /**
      * Width (px) the actions column must reserve to keep the always-visible test-run warning plus the ellipsis
      * trigger on screen; 0 when there is none. Mirrors `ExerciseActionsComponent.quizActionsMinWidth` so a shared
      * table column can floor its width the same way.
      */
     readonly actionsMinWidth = output<number>();
-    /** Width (px) this row needs to show all its actions inline; the table sizes the shared column to the widest row. */
-    readonly actionsNaturalWidth = output<number>();
 
     private readonly dialogErrorSource = new Subject<string>();
     readonly dialogError$ = this.dialogErrorSource.asObservable();
@@ -194,7 +174,7 @@ export class ExamExerciseRowButtonsComponent {
                 id: 'grading',
                 labelKey: 'artemisApp.programmingExercise.configureGrading.shortTitle',
                 icon: faFileSignature,
-                severity: 'secondary',
+                severity: 'warn',
                 kind: 'link',
                 link: [...groupSeg, 'programming-exercises', ex.id!, 'grading', 'test-cases'],
             });
@@ -204,7 +184,7 @@ export class ExamExerciseRowButtonsComponent {
                 id: 'examples',
                 labelKey: 'entity.action.exampleSubmissions',
                 icon: faBook,
-                severity: 'secondary',
+                severity: 'success',
                 kind: 'link',
                 link: [...typeSeg, 'example-submissions'],
             });
@@ -214,7 +194,7 @@ export class ExamExerciseRowButtonsComponent {
                 id: 'statistics',
                 labelKey: 'artemisApp.quizExercise.statistics',
                 icon: faSignal,
-                severity: 'secondary',
+                severity: 'info',
                 kind: 'link',
                 link: [...groupSeg, 'quiz-exercises', ex.id!, 'quiz-point-statistic'],
             });
@@ -224,7 +204,7 @@ export class ExamExerciseRowButtonsComponent {
                 id: 'teams',
                 labelKey: 'artemisApp.exercise.teams',
                 icon: faUsers,
-                severity: 'secondary',
+                severity: 'primary',
                 kind: 'link',
                 link: ['/course-management', cid, 'exercises', ex.id!, 'teams'],
             });
@@ -241,7 +221,7 @@ export class ExamExerciseRowButtonsComponent {
                 id: 'create-variant-ai',
                 labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
                 icon: faRobot,
-                severity: 'secondary',
+                severity: 'warn',
                 kind: 'button',
                 onClick: () => this.aiVariantModalVisible.set(true),
             });
@@ -250,8 +230,8 @@ export class ExamExerciseRowButtonsComponent {
             items.push({
                 id: 'edit-in-editor',
                 labelKey: 'entity.action.editInEditor',
-                icon: faCode,
-                severity: 'secondary',
+                icon: faPencilAlt,
+                severity: 'warn',
                 kind: 'link',
                 link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
             });
@@ -261,15 +241,15 @@ export class ExamExerciseRowButtonsComponent {
                 id: 'preview',
                 labelKey: 'artemisApp.quizExercise.preview',
                 icon: faEye,
-                severity: 'secondary',
+                severity: 'success',
                 kind: 'link',
                 link: [...groupSeg, 'quiz-exercises', ex.id!, 'preview'],
             });
             items.push({
                 id: 'solution',
                 labelKey: 'artemisApp.quizExercise.solution',
-                icon: faLightbulb,
-                severity: 'secondary',
+                icon: faEye,
+                severity: 'success',
                 kind: 'link',
                 link: [...groupSeg, 'quiz-exercises', ex.id!, 'solution'],
             });
@@ -277,8 +257,8 @@ export class ExamExerciseRowButtonsComponent {
                 items.push({
                     id: 're-evaluate',
                     labelKey: 'entity.action.re-evaluate',
-                    icon: faRedo,
-                    severity: 'secondary',
+                    icon: faWrench,
+                    severity: 'warn',
                     kind: 'link',
                     link: [...groupSeg, 'quiz-exercises', ex.id!, 're-evaluate'],
                 });
@@ -287,7 +267,7 @@ export class ExamExerciseRowButtonsComponent {
                 items.push({
                     id: 'edit',
                     labelKey: 'entity.action.edit',
-                    icon: faPencilAlt,
+                    icon: faWrench,
                     severity: 'warn',
                     kind: 'link',
                     link: [...typeSeg, 'edit'],
@@ -296,7 +276,7 @@ export class ExamExerciseRowButtonsComponent {
                 });
             }
         } else if (course.isAtLeastEditor) {
-            items.push({ id: 'edit', labelKey: 'entity.action.edit', icon: faPencilAlt, severity: 'warn', kind: 'link', link: [...typeSeg, 'edit'] });
+            items.push({ id: 'edit', labelKey: 'entity.action.edit', icon: faWrench, severity: 'warn', kind: 'link', link: [...typeSeg, 'edit'] });
         }
         if (course.isAtLeastInstructor) {
             items.push({
@@ -308,7 +288,7 @@ export class ExamExerciseRowButtonsComponent {
                 delete: {
                     entityTitle: ex.title ?? '',
                     entitySummaryTitle: 'artemisApp.exercise.delete.summary.title',
-                    fetchCategorizedEntitySummary: this.deletionSummary(),
+                    fetchEntitySummary: this.deletionSummary(),
                     deleteQuestion: ex.type === ExerciseType.PROGRAMMING ? 'artemisApp.programmingExercise.delete.question' : 'artemisApp.exercise.delete.question',
                     deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
                     translateValues: this.deleteTranslateValues(),
@@ -342,45 +322,55 @@ export class ExamExerciseRowButtonsComponent {
     }
 
     private deleteTextExercise() {
-        this.runDeletion(this.textExerciseService.delete(this.exercise().id!), 'textExerciseListModification', 'Deleted a textExercise');
+        this.textExerciseService.delete(this.exercise().id!).subscribe({
+            next: () => {
+                this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'Deleted a textExercise' });
+                this.dialogErrorSource.next('');
+                this.onDeleteExercise.emit();
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     private deleteModelingExercise() {
-        this.runDeletion(this.modelingExerciseService.delete(this.exercise().id!), 'modelingExerciseListModification', 'Deleted a modelingExercise');
+        this.modelingExerciseService.delete(this.exercise().id!).subscribe({
+            next: () => {
+                this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'Deleted a modelingExercise' });
+                this.dialogErrorSource.next('');
+                this.onDeleteExercise.emit();
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     private deleteFileUploadExercise() {
-        this.runDeletion(this.fileUploadExerciseService.delete(this.exercise().id!), 'fileUploadExerciseListModification', 'Deleted a fileUploadExercise');
+        this.fileUploadExerciseService.delete(this.exercise().id!).subscribe({
+            next: () => {
+                this.eventManager.broadcast({ name: 'fileUploadExerciseListModification', content: 'Deleted a fileUploadExercise' });
+                this.dialogErrorSource.next('');
+                this.onDeleteExercise.emit();
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     private deleteQuizExercise() {
-        this.runDeletion(this.quizExerciseDeletionApi.deleteQuizExercise(this.exercise().id!), 'quizExerciseListModification', 'Deleted a quiz');
+        this.quizExerciseDeletionApi.deleteQuizExercise(this.exercise().id!).subscribe({
+            next: () => {
+                this.eventManager.broadcast({ name: 'quizExerciseListModification', content: 'Deleted a quiz' });
+                this.dialogErrorSource.next('');
+                this.onDeleteExercise.emit();
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     public deleteProgrammingExercise(event: { [key: string]: boolean }) {
-        this.runDeletion(
-            this.programmingExerciseService.delete(this.exercise().id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans),
-            'programmingExerciseListModification',
-            'Deleted a programming exercise',
-        );
-    }
-
-    /**
-     * Starts the background deletion, shows its progress and refreshes the list once the exercise is gone.
-     */
-    private runDeletion(request$: Observable<unknown>, eventName: string, eventContent: string) {
-        this.entityDeletionService.delete(exerciseDeletionTarget(this.exercise()), request$).subscribe({
-            next: (progress) => {
-                if (isDeletionCompleted(progress)) {
-                    this.eventManager.broadcast({ name: eventName, content: eventContent });
-                    this.onDeleteExercise.emit();
-                } else if (isDeletionOutcomeUnknown(progress)) {
-                    // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion.
-                    this.eventManager.broadcast({ name: eventName, content: 'Refresh after an unknown deletion outcome' });
-                    this.deletionOutcomeUnknown.emit();
-                }
-                // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
+        this.programmingExerciseService.delete(this.exercise().id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+            next: () => {
+                this.eventManager.broadcast({ name: 'programmingExerciseListModification', content: 'Deleted a programming exercise' });
                 this.dialogErrorSource.next('');
+                this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

@@ -8,12 +8,16 @@ export interface ImportAllCompetenciesDialogData {
     disabledIds?: number[];
     competencyType?: CourseCompetencyType | 'courseCompetency';
 }
-import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
-import { TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule } from 'primeng/paginator';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { CourseForImportDTOPagingService } from 'app/course/shared/services/course-for-import-dto-paging-service';
 
 const tableColumns: Column<Course>[] = [
@@ -46,21 +50,19 @@ export type ImportAllFromCourseResult = {
     selector: 'jhi-import-all-competencies',
     templateUrl: './import-all-competencies.component.html',
     imports: [
-        TumAetUiPaginatorComponent,
-        TumAetUiTableDirective,
-        TumAetUiTableLayoutComponent,
-        TumAetUiTableSortableColumnComponent,
-        TumAetUiInputDirective,
+        PaginatorModule,
         ButtonComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
+        SortByDirective,
+        SortDirective,
+        FontAwesomeModule,
         FormsModule,
-        SearchHighlightComponent,
+        CommonModule,
+        NgbTypeaheadModule,
     ],
 })
 export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImportDTO> implements OnInit {
-    protected readonly ButtonType = ButtonType;
-
     //import relations by default
     protected importRelations = true;
 

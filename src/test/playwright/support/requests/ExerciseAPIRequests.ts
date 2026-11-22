@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { APIResponse, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 
 import type { Course } from 'app/course/shared/entities/course.model';
 import type { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -30,7 +30,6 @@ import {
 } from '../constants';
 import { asModelDate, dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { BUILD_FINISH_TIMEOUT } from '../timeouts';
-import { awaitDeletion } from '../deletion';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { UpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -208,30 +207,10 @@ export class ExerciseAPIRequests {
         return this.withKnownExerciseGroup(await response.json(), exerciseGroup);
     }
 
-    /**
-     * Deletes a programming exercise and waits until the server finished the deletion in the background.
-     * Cleanup stays best-effort like before: an exercise that is already gone or a refused request is not an error, but a deletion that
-     * the server accepted and then failed is reported, so a leaked exercise does not go unnoticed.
-     */
     async deleteProgrammingExercise(exerciseId: number) {
-        const response = await this.page.request.delete(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}`, {
+        await this.page.request.delete(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}`, {
             params: { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true },
         });
-        await this.awaitAcceptedDeletion(response, exerciseId);
-    }
-
-    /**
-     * Follows a deletion the server accepted (202) until it finished. A conflict means another deletion of the same exercise is running,
-     * which is awaited the same way. Anything else (404, refused requests) is left to the caller's cleanup semantics.
-     */
-    private async awaitAcceptedDeletion(response: APIResponse, exerciseId: number) {
-        if (response.status() !== 202 && response.status() !== 409) {
-            return;
-        }
-        const outcome = await awaitDeletion(this.page.request, { entityType: 'EXERCISE', entityId: exerciseId });
-        if (outcome.failed) {
-            throw new Error(`Failed to delete exercise ${exerciseId}: ${outcome.errorMessage}`);
-        }
     }
 
     /**
@@ -390,7 +369,6 @@ export class ExerciseAPIRequests {
         if (!response.ok()) {
             throw new Error(`Failed to delete text exercise ${exerciseId}: ${response.status()}`);
         }
-        await this.awaitAcceptedDeletion(response, exerciseId);
     }
 
     /**
@@ -439,8 +417,7 @@ export class ExerciseAPIRequests {
      * @param exerciseID - The ID of the file upload exercise to be deleted.
      */
     async deleteFileUploadExercise(exerciseID: number) {
-        const response = await this.page.request.delete(`${UPLOAD_EXERCISE_BASE}/${exerciseID}`);
-        await this.awaitAcceptedDeletion(response, exerciseID);
+        await this.page.request.delete(`${UPLOAD_EXERCISE_BASE}/${exerciseID}`);
     }
 
     /**
@@ -609,9 +586,7 @@ export class ExerciseAPIRequests {
      * @param exerciseID - The ID of the modeling exercise to be deleted.
      */
     async deleteModelingExercise(exerciseID: number) {
-        const response = await this.page.request.delete(`${MODELING_EXERCISE_BASE}/${exerciseID}`);
-        await this.awaitAcceptedDeletion(response, exerciseID);
-        return response;
+        return this.page.request.delete(`${MODELING_EXERCISE_BASE}/${exerciseID}`);
     }
 
     /**
@@ -810,7 +785,6 @@ export class ExerciseAPIRequests {
         if (!response.ok()) {
             throw new Error(`Failed to delete quiz exercise ${exerciseId}: ${response.status()}`);
         }
-        await this.awaitAcceptedDeletion(response, exerciseId);
     }
 
     /**

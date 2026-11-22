@@ -139,8 +139,7 @@
                                             tumAetUiButton
                                             size="small"
                                             class="ml-2!"
-                                            data-testid="retry-exercise-participation"
-                                            (click)="retryParticipationForExercise()"
+                                            (click)="createParticipationForExercise(this.activeExamPage().exercise!).subscribe()"
                                             jhiTranslate="artemisApp.examParticipation.generateParticipationRetry"
                                         ></button>
                                     </div>

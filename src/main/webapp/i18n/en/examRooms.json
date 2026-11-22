@@ -54,8 +54,7 @@
                     "roomName": "Room Name",
                     "building": "Building",
                     "defaultCapacity": "Default Capacity",
-                    "maxCapacity": "Maximum Capacity",
-                    "empty": "No exam rooms available"
+                    "maxCapacity": "Maximum Capacity"
                 }
             }
         }

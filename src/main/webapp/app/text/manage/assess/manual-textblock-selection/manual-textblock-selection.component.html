@@ -2,7 +2,6 @@
     @if (group.singleRef) {
         <jhi-text-block-assessment-card
             [textBlockRef]="group.singleRef"
-            [allFeedbacks]="allFeedbacks()"
             [selected]="selectedRef() === group.singleRef"
             (didSelect)="selectedRef.set($event)"
             (didChange)="textBlockRefsChangeEmit()"

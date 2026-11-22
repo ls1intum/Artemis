@@ -5,16 +5,8 @@ import { Bean, PropertySource } from './configuration.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { JsonPipe, KeyValuePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import {
-    TumAetUiInputDirective,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-    TumAetUiTagComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiInputDirective, TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 /**
  * Component for viewing application configuration.
  * Displays beans and property sources with filtering and sorting.
@@ -24,11 +16,9 @@ import {
     templateUrl: './configuration.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        TumAetUiTableLayoutComponent,
         TranslateDirective,
         FormsModule,
         JsonPipe,
-        ArtemisTranslatePipe,
         KeyValuePipe,
         AdminTitleBarTitleDirective,
         TumAetUiInputDirective,
@@ -62,9 +52,6 @@ export class ConfigurationComponent implements OnInit {
             .sort((a, b) => (a.prefix < b.prefix ? ascendingMultiplier : descendingMultiplier));
     });
 
-    /** True once the beans arrived, so the empty state does not flash while loading. */
-    readonly beansLoaded = signal(false);
-
     /** Property sources from configuration */
     readonly propertySources = signal<PropertySource[]>([]);
 
@@ -74,7 +61,6 @@ export class ConfigurationComponent implements OnInit {
     ngOnInit(): void {
         this.configurationService.getBeans().subscribe((beans) => {
             this.allBeans.set(beans);
-            this.beansLoaded.set(true);
         });
 
         this.configurationService.getPropertySources().subscribe((propertySources) => {

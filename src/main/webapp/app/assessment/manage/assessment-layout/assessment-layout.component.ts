@@ -32,7 +32,6 @@ export class AssessmentLayoutComponent {
     readonly nextSubmissionBusy = input<boolean>(false);
     readonly correctionRound = input<number>(0);
 
-    readonly isTeamMode = input.required<boolean>();
     readonly isAssessor = input.required<boolean>();
     readonly canOverride = input.required<boolean>();
     readonly isTestRun = input(false);

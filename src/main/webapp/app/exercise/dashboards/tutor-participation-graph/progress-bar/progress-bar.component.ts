@@ -6,7 +6,6 @@ import { round } from 'app/foundation/util/utils';
 @Component({
     selector: 'jhi-progress-bar',
     templateUrl: './progress-bar.component.html',
-    styleUrl: './progress-bar.component.scss',
     imports: [TumAetUiProgressBarComponent, TumAetUiTooltipDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

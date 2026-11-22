@@ -25,16 +25,12 @@ import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 
 class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
-
-    @Autowired
-    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private ConversationUtilService conversationUtilService;
@@ -226,8 +222,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         Exercise programmingExercise = course.getExercises().stream().findFirst().orElseThrow();
         Channel exerciseChannel = conversationUtilService.addChannelToExercise(programmingExercise);
 
-        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.ACCEPTED, deleteProgrammingExerciseParamsFalse());
-        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
 
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();
@@ -246,8 +241,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         Exercise programmingExercise = course.getExercises().stream().findFirst().orElseThrow();
         assertThat(programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId())).isPresent();
 
-        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.ACCEPTED, deleteProgrammingExerciseParamsFalse());
-        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
 
         assertThat(programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId())).isEmpty();
     }

@@ -18,6 +18,7 @@ export enum FeatureToggle {
     Science = 'Science',
     StandardizedCompetencies = 'StandardizedCompetencies',
     TutorSuggestions = 'TutorSuggestions',
+    AtlasML = 'AtlasML',
     AtlasAgent = 'AtlasAgent',
     LectureContentProcessing = 'LectureContentProcessing',
     RateLimit = 'RateLimit',

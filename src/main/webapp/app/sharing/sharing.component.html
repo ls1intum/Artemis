@@ -13,11 +13,11 @@
                     <br />
                     <div>
                         @if (shoppingBasket(); as shoppingBasket) {
-                            <table tumAetUiTable size="small" [striped]="true">
+                            <table class="table table-striped">
                                 <thead>
                                     <tr>
                                         <th></th>
-                                        <th class="hidden md:table-cell" jhiTranslate="artemisApp.sharing.exerciseToImport"></th>
+                                        <th class="d-none d-md-table-cell" jhiTranslate="artemisApp.sharing.exerciseToImport"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -58,13 +58,13 @@
                 <td>
                     <div class="scroll-courses">
                         @if (!coursesLoading()) {
-                            <table tumAetUiTable size="small" [striped]="true" [sortField]="sortColumn()" [sortOrder]="reverseSorting() ? 1 : -1" (sortChange)="onSort($event)">
+                            <table class="table table-striped">
                                 <thead>
-                                    <tr>
-                                        <th class="hidden md:table-cell"></th>
-                                        <th class="hidden md:table-cell"></th>
-                                        <th class="hidden md:table-cell" [tumAetUiSortableColumn]="'id'"><span jhiTranslate="global.field.id"></span></th>
-                                        <th [tumAetUiSortableColumn]="'title'"><span jhiTranslate="artemisApp.course.title"></span></th>
+                                    <tr jhiSort [(predicate)]="sortColumn" [(ascending)]="reverseSorting" (sortChange)="sortRows()">
+                                        <th class="d-none d-md-table-cell"></th>
+                                        <th class="d-none d-md-table-cell"></th>
+                                        <th class="d-none d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id"></span><fa-icon [icon]="faSort" /></th>
+                                        <th jhiSortBy="title"><span jhiTranslate="artemisApp.course.title"></span> <fa-icon [icon]="faSort" /></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -83,10 +83,10 @@
                                                     required
                                                 />
                                             </td>
-                                            <td class="hidden md:table-cell">
+                                            <td class="d-none d-md-table-cell">
                                                 <div style="width: 15px; height: 20px" [style.background-color]="course.color || ARTEMIS_DEFAULT_COLOR">&nbsp;</div>
                                             </td>
-                                            <td class="hidden md:table-cell">
+                                            <td class="d-none d-md-table-cell">
                                                 <a [routerLink]="['/course-management', course.id]">{{ course.id }}</a>
                                             </td>
                                             <td>
@@ -108,13 +108,10 @@
                 <td>
                     <br />
                     <button
-                        tumAetUiButton
-                        size="small"
-                        severity="secondary"
                         type="button"
                         [disabled]="!selectedCourse()"
                         id="jh-sharingImport-button"
-                        class="float-end jh-create-entity create-programming-exercise me-1"
+                        class="btn btn-primary float-end jh-create-entity create-programming-exercise me-1"
                         (click)="navigateToImportFromSharing()"
                     >
                         <fa-icon [icon]="faPlus" />

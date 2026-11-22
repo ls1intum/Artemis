@@ -43,11 +43,11 @@ public class ConversationParticipant extends DomainObject {
     @Column(name = "is_moderator")
     private Boolean isModerator;
 
-    @Column(name = "is_favorite", nullable = false)
-    private boolean isFavorite;
+    @Column(name = "is_favorite")
+    private Boolean isFavorite;
 
-    @Column(name = "is_hidden", nullable = false)
-    private boolean isHidden;
+    @Column(name = "is_hidden")
+    private Boolean isHidden;
 
     @Column(name = "is_muted")
     private boolean isMuted;
@@ -125,19 +125,19 @@ public class ConversationParticipant extends DomainObject {
         this.isModerator = isModerator;
     }
 
-    public boolean getIsFavorite() {
+    public Boolean getIsFavorite() {
         return isFavorite;
     }
 
-    public void setIsFavorite(boolean favorite) {
+    public void setIsFavorite(Boolean favorite) {
         isFavorite = favorite;
     }
 
-    public boolean getIsHidden() {
+    public Boolean getIsHidden() {
         return isHidden;
     }
 
-    public void setIsHidden(boolean hidden) {
+    public void setIsHidden(Boolean hidden) {
         isHidden = hidden;
     }
 

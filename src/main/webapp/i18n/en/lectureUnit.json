@@ -41,7 +41,6 @@
                     "file": "File",
                     "video": "Video",
                     "fileAndVideo": "File and video",
-                    "empty": "No file or video yet",
                     "text": "Text",
                     "exercise": "Exercise",
                     "online": "Online resource"

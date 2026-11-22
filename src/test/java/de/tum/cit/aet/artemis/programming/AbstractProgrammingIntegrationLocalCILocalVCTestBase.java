@@ -27,8 +27,6 @@ import de.tum.cit.aet.artemis.localci.service.DockerClientTestService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIMissingJobService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIResultService;
 import de.tum.cit.aet.artemis.localci.service.LocalCITriggerService;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCBuildAgentAuthenticationService;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -106,12 +104,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     @Autowired
     protected LocalVCServletService localVCServletService;
-
-    @Autowired
-    protected LocalVCPushProcessingService localVCPushProcessingService;
-
-    @Autowired
-    protected LocalVCBuildAgentAuthenticationService localVCBuildAgentAuthenticationService;
 
     @Autowired
     protected LocalCITriggerService localCITriggerService;

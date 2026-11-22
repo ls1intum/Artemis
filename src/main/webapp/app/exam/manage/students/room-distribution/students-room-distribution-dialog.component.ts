@@ -19,7 +19,6 @@ import {
     TumAetUiInputNumberComponent,
     TumAetUiMessageComponent,
     TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
     TumAetUiToggleSwitchComponent,
 } from '@tumaet/ui-angular';
 import { RouterLink } from '@angular/router';
@@ -47,7 +46,6 @@ export interface RoomSuggestion {
         TumAetUiMessageComponent,
         TumAetUiTableDirective,
         TumAetUiToggleSwitchComponent,
-        TumAetUiTableLayoutComponent,
     ],
 })
 export class StudentsRoomDistributionDialogComponent implements OnInit {

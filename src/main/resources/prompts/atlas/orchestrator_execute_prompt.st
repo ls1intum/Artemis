@@ -65,3 +65,5 @@ COURSE COMPETENCY INDEX
 <<<USER_DATA>>>
 {{competencyIndex}}
 <<<END_USER_DATA>>>
+
+{{atlasMLShortlist}}

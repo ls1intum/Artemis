@@ -10,7 +10,6 @@ import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, alertUpdateAfterComplaintFailure } from 'app/assessment/shared/util/feedback-credits-bounds.util';
 import { notUndefined } from 'app/foundation/util/string-pure.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -48,7 +47,6 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
 import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
 import { AssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { TextAssessmentRouteData } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -377,10 +375,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         // Update the text on all text block refs
         for (const blockRef of newTextBlockRefs) {
             blockRef.block!.text = this.submission!.text!.substring(blockRef.block!.startIndex!, blockRef.block!.endIndex);
-            // Updating the text recomputes the block ID after any range changes.
-            if (blockRef.feedback) {
-                blockRef.feedback.reference = blockRef.block!.id;
-            }
         }
 
         this.textBlockRefs = newTextBlockRefs;
@@ -495,11 +489,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             assessmentAfterComplaint.onError();
             return;
         }
-        if (!Feedback.haveCreditsInBounds(this.assessments)) {
-            this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
-            assessmentAfterComplaint.onError();
-            return;
-        }
 
         const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.assessments);
         const complaintResponse = this.complaintService.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
@@ -520,13 +509,19 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 },
                 error: (httpErrorResponse: HttpErrorResponse) => {
                     assessmentAfterComplaint.onError();
-                    alertUpdateAfterComplaintFailure(this.alertService, httpErrorResponse, 'artemisApp.textAssessment.updateAfterComplaintFailed');
+                    this.alertService.closeAll();
+                    const error = httpErrorResponse.error;
+                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                        this.alertService.error(error.message, error.params);
+                    } else {
+                        this.alertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
+                    }
                 },
             });
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission, this.isTestRun());
+        assessmentNavigateBack(this.location, this.router, this.exercise, this.isTestRun());
     }
 
     /**
@@ -550,17 +545,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
         const feedbacks = this.result()?.feedbacks || [];
-        const blocks = this.submission?.blocks || [];
-        const blockIds = new Set(blocks.map(({ id }) => id));
-        this.unreferencedFeedback.set(
-            feedbacks.flatMap((feedback) => {
-                // Keep feedback with missing blocks visible without rewriting the original result used for complaints.
-                if (feedback.reference != undefined && !blockIds.has(feedback.reference)) {
-                    return [cloneWith(feedback, { reference: undefined, type: FeedbackType.MANUAL_UNREFERENCED })];
-                }
-                return feedback.reference == undefined && feedback.type === FeedbackType.MANUAL_UNREFERENCED ? [feedback] : [];
-            }),
-        );
+        this.unreferencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED));
 
         // Accepted/adapted suggestions persist as manual feedback with a suggestion-state text marker, so a plain
         // AUTOMATIC type check alone misses them here: loadFeedbackSuggestions() only sees a fresh Athena response
@@ -571,7 +556,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             ),
         );
 
-        const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(blocks, feedbacks);
+        const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
     }
 

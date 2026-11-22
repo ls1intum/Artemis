@@ -26,6 +26,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -252,6 +253,22 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
     @QueryHints(@QueryHint(name = "org.hibernate.flushMode", value = "COMMIT"))
     @Query("SELECT owner FROM Team t LEFT JOIN t.owner owner WHERE t.id = :teamId")
     User findAssessmentOwner(@Param("teamId") long teamId);
+
+    /**
+     * Loads persisted team assessment results across the participation for one round.
+     *
+     * @param participationId the participation ID
+     * @param correctionRound the requested round
+     * @return the persisted assessment results for the round
+     */
+    @Query("""
+            SELECT r FROM Result r LEFT JOIN FETCH r.feedbacks LEFT JOIN FETCH r.assessor LEFT JOIN FETCH r.assessmentNote
+            WHERE r.submission.participation.id = :participationId AND r.correctionRound = :correctionRound
+                AND (r.assessmentType IS NULL OR r.assessmentType IN (
+                    de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
+                    de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC))
+            """)
+    List<Result> findTeamAssessmentResultsForRound(@Param("participationId") long participationId, @Param("correctionRound") int correctionRound);
 
     /**
      * Transfers drafts without changing completed results, feedback, or notes.

@@ -26,7 +26,6 @@ import {
     TumAetUiButtonDirective,
     TumAetUiMessageComponent,
     TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
     TumAetUiTooltipDirective,
@@ -51,7 +50,6 @@ import {
         TumAetUiTableSortableColumnComponent,
         TumAetUiTooltipDirective,
         CreateTestRunModalComponent,
-        TumAetUiTableLayoutComponent,
     ],
 })
 export class TestRunManagementComponent implements OnInit {

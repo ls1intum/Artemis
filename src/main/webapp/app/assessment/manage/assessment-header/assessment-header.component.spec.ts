@@ -48,7 +48,6 @@ describe('AssessmentHeaderComponent', () => {
                 fixture.componentRef.setInput('submitBusy', false);
                 fixture.componentRef.setInput('cancelBusy', false);
                 fixture.componentRef.setInput('nextSubmissionBusy', false);
-                fixture.componentRef.setInput('isTeamMode', false);
                 fixture.componentRef.setInput('isAssessor', true);
                 fixture.componentRef.setInput('exerciseDashboardLink', []);
                 fixture.componentRef.setInput('canOverride', false);
@@ -87,7 +86,19 @@ describe('AssessmentHeaderComponent', () => {
         fixture.componentRef.setInput('result', mockResult);
         fixture.componentRef.setInput('isAssessor', true);
         fixture.componentRef.setInput('hasComplaint', false);
-        fixture.componentRef.setInput('isTeamMode', false);
+        fixture.componentRef.setInput('isTestRun', false);
+        fixture.detectChanges();
+
+        expect(component.assessNextVisible).toBe(true);
+    });
+
+    it('should show assess next for team exercises, where it opens the next team of the tutor', () => {
+        const mockResult = new Result();
+        mockResult.completionDate = dayjs();
+        fixture.componentRef.setInput('exercise', { ...component.exercise(), teamMode: true });
+        fixture.componentRef.setInput('result', mockResult);
+        fixture.componentRef.setInput('isAssessor', true);
+        fixture.componentRef.setInput('hasComplaint', false);
         fixture.componentRef.setInput('isTestRun', false);
         fixture.detectChanges();
 
@@ -205,7 +216,6 @@ describe('AssessmentHeaderComponent', () => {
             fixture.componentRef.setInput('result', mockResult);
             fixture.componentRef.setInput('isAssessor', true);
             fixture.componentRef.setInput('hasComplaint', false);
-            fixture.componentRef.setInput('isTeamMode', false);
             fixture.componentRef.setInput('isTestRun', false);
             fixture.componentRef.setInput('nextSubmissionBusy', false);
             fixture.componentRef.setInput('submitBusy', false);
@@ -258,7 +268,6 @@ describe('AssessmentHeaderComponent', () => {
             fixture.componentRef.setInput('result', mockResult);
             fixture.componentRef.setInput('isAssessor', true);
             fixture.componentRef.setInput('hasComplaint', false);
-            fixture.componentRef.setInput('isTeamMode', false);
             fixture.componentRef.setInput('isTestRun', false);
             fixture.componentRef.setInput('nextSubmissionBusy', false);
             fixture.componentRef.setInput('submitBusy', false);

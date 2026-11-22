@@ -5,35 +5,11 @@
             <div>
                 <div class="mb-3 flex flex-col gap-2">
                     <label for="title" class="font-bold" jhiTranslate="artemisApp.systemNotification.title"></label>
-                    <input
-                        id="title"
-                        type="text"
-                        tumAetUiInput
-                        class="w-full"
-                        name="title"
-                        formControlName="title"
-                        [attr.aria-invalid]="titleControl.errors?.['maxlength'] ? 'true' : null"
-                        [attr.aria-describedby]="titleControl.errors?.['maxlength'] ? 'title-maxlength-error' : null"
-                    />
-                    @if (titleControl.errors?.['maxlength']) {
-                        <small id="title-maxlength-error" class="text-state-danger text-sm" jhiTranslate="artemisApp.systemNotification.titleMaxlength"></small>
-                    }
+                    <input id="title" type="text" tumAetUiInput class="w-full" name="title" formControlName="title" />
                 </div>
                 <div class="mb-3 flex flex-col gap-2">
                     <label for="text" class="font-bold" jhiTranslate="artemisApp.systemNotification.text"></label>
-                    <input
-                        id="text"
-                        type="text"
-                        tumAetUiInput
-                        class="w-full"
-                        name="text"
-                        formControlName="text"
-                        [attr.aria-invalid]="textControl.errors?.['maxlength'] ? 'true' : null"
-                        [attr.aria-describedby]="textControl.errors?.['maxlength'] ? 'text-maxlength-error' : null"
-                    />
-                    @if (textControl.errors?.['maxlength']) {
-                        <small id="text-maxlength-error" class="text-state-danger text-sm" jhiTranslate="artemisApp.systemNotification.textMaxlength"></small>
-                    }
+                    <input id="text" type="text" tumAetUiInput class="w-full" name="text" formControlName="text" />
                 </div>
                 <div class="mb-3 flex flex-col gap-2">
                     <label for="type" class="font-bold" jhiTranslate="artemisApp.systemNotification.type"></label>

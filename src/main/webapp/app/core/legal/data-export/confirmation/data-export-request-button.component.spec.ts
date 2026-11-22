@@ -43,8 +43,8 @@ describe('DataExportRequestButtonComponent', () => {
         fixture.detectChanges();
         expect(translateSpy).toHaveBeenCalledWith('artemisApp.dataExport.request');
 
-        // The native request button remains available to open the confirmation dialog.
-        const confirmButton = debugElement.query(By.css('[jhiDataExportRequestButton]'));
+        // Check that button was assigned with proper classes via host binding.
+        const confirmButton = debugElement.query(By.css('.btn.btn-primary.btn-lg.me-1'));
         expect(confirmButton).not.toBeNull();
 
         // Check that button text span was added to the DOM.

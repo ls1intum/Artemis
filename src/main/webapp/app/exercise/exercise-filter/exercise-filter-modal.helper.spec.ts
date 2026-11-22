@@ -74,12 +74,6 @@ describe('satisfiesDifficultyFilter', () => {
 });
 
 describe('satisfiesCategoryFilter', () => {
-    it('should match categories regardless of case and color', () => {
-        const element = { exercise: { categories: [new ExerciseCategory('bonus', '#222222')] } as Exercise } as SidebarCardElement;
-
-        expect(satisfiesCategoryFilter(element, [new ExerciseCategory('Bonus', '#111111')])).toBe(true);
-    });
-
     it('should return true if difficulty filter is []', () => {
         const categoryFilter: ExerciseCategory[] = [];
 

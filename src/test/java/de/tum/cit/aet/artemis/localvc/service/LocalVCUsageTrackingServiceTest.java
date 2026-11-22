@@ -17,8 +17,6 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -39,19 +37,16 @@ class LocalVCUsageTrackingServiceTest {
 
     private FeatureUsageCollector collector;
 
-    private LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService;
-
-    private LocalVCRepositoryResolverService repositoryResolver;
+    private LocalVCServletService servletService;
 
     private LocalVCUsageTrackingService service;
 
     @BeforeEach
     void init() {
         collector = mock(FeatureUsageCollector.class);
-        buildAgentAuthenticationService = mock(LocalVCBuildAgentAuthenticationService.class);
-        repositoryResolver = mock(LocalVCRepositoryResolverService.class);
+        servletService = mock(LocalVCServletService.class);
         when(collector.isEnabled()).thenReturn(true);
-        service = new LocalVCUsageTrackingService(Optional.of(collector), buildAgentAuthenticationService, repositoryResolver);
+        service = new LocalVCUsageTrackingService(Optional.of(collector), servletService);
     }
 
     @Test
@@ -87,7 +82,7 @@ class LocalVCUsageTrackingServiceTest {
     void shouldRecordACloneForABuildAsASystemCallOfTheBuild() {
         givenRepositoryPath("/git/COURSE1EX1/course1ex1-ge12abc.git");
         MockHttpServletRequest request = postRequest();
-        when(buildAgentAuthenticationService.isBuildAgentClone(request)).thenReturn(true);
+        when(servletService.isBuildAgentClone(request)).thenReturn(true);
 
         service.recordFetch(request, 5, false);
 
@@ -123,7 +118,7 @@ class LocalVCUsageTrackingServiceTest {
 
     @Test
     void shouldReportAnUnparsableUriAsOneBoundedUnknownFeature() {
-        when(repositoryResolver.parseRepositoryUri(any(HttpServletRequest.class))).thenThrow(new IllegalArgumentException("not a repository path"));
+        when(servletService.parseRepositoryUri(any())).thenThrow(new IllegalArgumentException("not a repository path"));
 
         service.recordFetch(postRequest(), 5, false);
 
@@ -165,14 +160,14 @@ class LocalVCUsageTrackingServiceTest {
 
     @Test
     void shouldRecordNothingWhenThereIsNoCollectorAtAll() {
-        var withoutCollector = new LocalVCUsageTrackingService(Optional.empty(), buildAgentAuthenticationService, repositoryResolver);
+        var withoutCollector = new LocalVCUsageTrackingService(Optional.empty(), servletService);
 
         assertThatCode(() -> withoutCollector.recordFetch(postRequest(), 5, false)).doesNotThrowAnyException();
         assertThat(Optional.empty()).isEmpty();
     }
 
     private void givenRepositoryPath(String path) {
-        when(repositoryResolver.parseRepositoryUri(any(HttpServletRequest.class))).thenReturn(new LocalVCRepositoryUri(URI.create("http://localhost:8080"), Path.of(path)));
+        when(servletService.parseRepositoryUri(any())).thenReturn(new LocalVCRepositoryUri(URI.create("http://localhost:8080"), Path.of(path)));
     }
 
     private static MockHttpServletRequest postRequest() {

@@ -28,36 +28,18 @@ import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 @Service
 public class ArtemisGitServletService extends GitServlet {
 
-    private final transient LocalVCServletService localVCServletService;
+    private final LocalVCServletService localVCServletService;
 
-    private final transient LocalVCRepositoryResolverService repositoryResolver;
-
-    private final transient LocalVCAccessLogRecorderService accessLogRecorder;
-
-    private final transient LocalVCPushProcessingService pushProcessingService;
-
-    private final transient PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
-
-    private final transient LocalVCUsageTrackingService usageTrackingService;
+    private final LocalVCUsageTrackingService usageTrackingService;
 
     /**
      * Constructor for ArtemisGitServlet.
      *
-     * @param localVCServletService               the service for authenticating and authorizing users
-     * @param repositoryResolver                  finds the repository on disk
-     * @param accessLogRecorder                   writes the access log of fetch operations
-     * @param pushProcessingService               handles what a push leads to
-     * @param passwordAuthenticationNoticeService tells users who push with a password to switch
-     * @param usageTrackingService                counts completed fetch and push operations for the feature usage analysis
+     * @param localVCServletService the service for authenticating and authorizing users and retrieving the repository from disk
+     * @param usageTrackingService  counts completed fetch and push operations for the feature usage analysis
      */
-    public ArtemisGitServletService(LocalVCServletService localVCServletService, LocalVCRepositoryResolverService repositoryResolver,
-            LocalVCAccessLogRecorderService accessLogRecorder, LocalVCPushProcessingService pushProcessingService,
-            PasswordAuthenticationNoticeService passwordAuthenticationNoticeService, LocalVCUsageTrackingService usageTrackingService) {
+    public ArtemisGitServletService(LocalVCServletService localVCServletService, LocalVCUsageTrackingService usageTrackingService) {
         this.localVCServletService = localVCServletService;
-        this.repositoryResolver = repositoryResolver;
-        this.accessLogRecorder = accessLogRecorder;
-        this.pushProcessingService = pushProcessingService;
-        this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
         this.usageTrackingService = usageTrackingService;
     }
 
@@ -101,12 +83,12 @@ public class ArtemisGitServletService extends GitServlet {
             // name – name of the repository, as parsed out of the URL (everything after /git/).
 
             // Return the opened repository instance.
-            return repositoryResolver.resolveRepository(name);
+            return localVCServletService.resolveRepository(name);
         });
 
         // Add filters that every request to the JGit Servlet goes through, one for each fetch request, and one for each push request.
-        this.addUploadPackFilter(new LocalVCFetchFilter(localVCServletService, accessLogRecorder, usageTrackingService));
-        this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService, pushProcessingService, usageTrackingService));
+        this.addUploadPackFilter(new LocalVCFetchFilter(localVCServletService, usageTrackingService));
+        this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService, usageTrackingService));
 
         this.setReceivePackFactory((request, repository) -> {
             ReceivePack receivePack = new ReceivePack(repository);
@@ -122,8 +104,7 @@ public class ArtemisGitServletService extends GitServlet {
                 // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
                 receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
                 // Add a hook that triggers the creation of a new submission after the push went through successfully.
-                receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService, user,
-                        () -> localVCServletService.getAuthenticationMechanism(request)));
+                receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, user));
             }
             return receivePack;
         });
@@ -133,7 +114,7 @@ public class ArtemisGitServletService extends GitServlet {
             // we only need to set the LocalVCFetchPreUploadHook for authorized POST requests, as only these trigger onBeginNegotiateRound
             if (isAuthorizedPostRequest(request)) {
                 // Add the custom pre-upload hook, to distinguish between clone and pull operations
-                uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(accessLogRecorder, request));
+                uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(localVCServletService, request));
             }
             return uploadPack;
         });

@@ -60,7 +60,6 @@ export class QuizExerciseOverviewPage {
      * @Note Assumes to be on the details page of a quiz.
      */
     async exportQuizExercise() {
-        await this.page.getByTestId('exercise-more-actions').click();
-        await this.page.getByTestId('quiz-export').click();
+        await this.page.locator('button', { hasText: 'Export' }).click();
     }
 }

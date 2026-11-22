@@ -35,15 +35,11 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
-import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "gradingscale";
-
-    @Autowired
-    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
@@ -726,9 +722,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
     void testDeleteCourseDeletesGradingScale() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
 
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
-
-        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByCourseId(course.getId());
         assertThat(foundGradingScale).isEmpty();
@@ -742,8 +736,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
     void testDeleteExamDeletesGradingScale() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
-        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
-        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
 
         Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByExamId(exam.getId());
         assertThat(foundGradingScale).isEmpty();

@@ -293,7 +293,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                         this.loadExercise();
                     }
 
-                    this.scienceService.logEvent(ScienceEventType.EXERCISE__OPEN, this.exerciseId, this.courseId);
+                    this.scienceService.logEvent(ScienceEventType.EXERCISE__OPEN, this.exerciseId);
                 });
         }
     }

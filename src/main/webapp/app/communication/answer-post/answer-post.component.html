@@ -50,32 +50,21 @@
                             [attr.aria-label]="'artemisApp.communication.answerPost.unverifiedIris.editAreaLabel' | artemisTranslate"
                         ></textarea>
                         <div class="flex gap-2">
-                            <button
-                                tumAetUiButton
-                                type="button"
+                            <p-button
                                 severity="success"
                                 size="small"
-                                variant="outlined"
-                                (click)="approveAnswer(editedIrisContent)"
+                                [outlined]="true"
+                                (onClick)="approveAnswer(editedIrisContent)"
                                 [disabled]="isVerifying() || !editedIrisContent.trim()"
                                 data-testid="iris-save-approve-button"
                             >
                                 <fa-icon [icon]="faCheck" />
                                 <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.saveAndApprove"></span>
-                            </button>
-                            <button
-                                tumAetUiButton
-                                type="button"
-                                severity="secondary"
-                                size="small"
-                                variant="text"
-                                (click)="cancelEditAnswer()"
-                                [disabled]="isVerifying()"
-                                data-testid="iris-cancel-button"
-                            >
+                            </p-button>
+                            <p-button severity="secondary" size="small" [text]="true" (onClick)="cancelEditAnswer()" [disabled]="isVerifying()" data-testid="iris-cancel-button">
                                 <fa-icon [icon]="faXmark" />
                                 <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.cancelEdit"></span>
-                            </button>
+                            </p-button>
                         </div>
                     </div>
                 } @else {
@@ -93,45 +82,18 @@
                     />
                     @if (isUnverifiedIris() && mayVerify) {
                         <div class="iris-verify-actions mt-1 flex gap-2">
-                            <button
-                                tumAetUiButton
-                                type="button"
-                                severity="success"
-                                size="small"
-                                variant="outlined"
-                                (click)="approveAnswer()"
-                                [disabled]="isVerifying()"
-                                data-testid="iris-approve-button"
-                            >
+                            <p-button severity="success" size="small" [outlined]="true" (onClick)="approveAnswer()" [disabled]="isVerifying()" data-testid="iris-approve-button">
                                 <fa-icon [icon]="faCheck" />
                                 <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.approve"></span>
-                            </button>
-                            <button
-                                tumAetUiButton
-                                type="button"
-                                severity="warn"
-                                size="small"
-                                variant="outlined"
-                                (click)="editAnswer()"
-                                [disabled]="isVerifying()"
-                                data-testid="iris-edit-button"
-                            >
+                            </p-button>
+                            <p-button severity="secondary" size="small" [outlined]="true" (onClick)="editAnswer()" [disabled]="isVerifying()" data-testid="iris-edit-button">
                                 <fa-icon [icon]="faPencilAlt" />
                                 <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.edit"></span>
-                            </button>
-                            <button
-                                tumAetUiButton
-                                type="button"
-                                severity="danger"
-                                size="small"
-                                variant="outlined"
-                                (click)="rejectAnswer()"
-                                [disabled]="isVerifying()"
-                                data-testid="iris-reject-button"
-                            >
+                            </p-button>
+                            <p-button severity="danger" size="small" [outlined]="true" (onClick)="rejectAnswer()" [disabled]="isVerifying()" data-testid="iris-reject-button">
                                 <fa-icon [icon]="faTrash" />
                                 <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.reject"></span>
-                            </button>
+                            </p-button>
                         </div>
                     }
                 }

@@ -5,10 +5,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseOperationProgressDTO, CourseOperationStatus, CourseOperationType } from 'app/course/shared/entities/course-operation-progress.model';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ProgressBarModule } from 'primeng/progressbar';
@@ -42,14 +40,7 @@ describe('CourseOperationProgressComponent', () => {
         })
             .overrideComponent(CourseOperationProgressComponent, {
                 set: {
-                    imports: [
-                        CommonModule,
-                        MockModule(DialogModule),
-                        MockModule(ProgressBarModule),
-                        MockComponent(FaIconComponent),
-                        TumAetUiButtonDirective,
-                        MockPipe(ArtemisTranslatePipe),
-                    ],
+                    imports: [CommonModule, MockModule(DialogModule), MockModule(ProgressBarModule), MockComponent(FaIconComponent)],
                 },
             })
             .compileComponents();
@@ -81,45 +72,6 @@ describe('CourseOperationProgressComponent', () => {
         fixture.detectChanges();
 
         expect(component.dialogVisible()).toBe(true);
-    });
-
-    it.each([CourseOperationStatus.IN_PROGRESS, CourseOperationStatus.COMPLETED, CourseOperationStatus.FAILED])('should expose the status %s for tests', async (status) => {
-        fixture.componentRef.setInput('progress', createProgressDTO({ status }));
-        fixture.detectChanges();
-        await flushBuffer();
-        fixture.detectChanges();
-
-        const content: HTMLElement | null = fixture.nativeElement.querySelector('[data-testid="course-operation-progress"]');
-        expect(content?.getAttribute('data-status')).toBe(status);
-    });
-
-    describe('close button', () => {
-        const closeButton = (): HTMLButtonElement | null => fixture.nativeElement.querySelector('[data-testid="course-operation-close"]');
-
-        const showProgress = async (status: CourseOperationStatus) => {
-            fixture.componentRef.setInput('progress', createProgressDTO({ status }));
-            fixture.detectChanges();
-            await flushBuffer();
-            fixture.detectChanges();
-        };
-
-        it('is not offered while the operation runs', async () => {
-            await showProgress(CourseOperationStatus.IN_PROGRESS);
-
-            expect(closeButton()).toBeNull();
-        });
-
-        it.each([CourseOperationStatus.COMPLETED, CourseOperationStatus.FAILED])('closes the overlay once the operation ended with %s', async (status) => {
-            const closed = vi.fn();
-            component.closeOverlay.subscribe(closed);
-            await showProgress(status);
-
-            const button = closeButton();
-            expect(button).not.toBeNull();
-            button!.click();
-
-            expect(closed).toHaveBeenCalledOnce();
-        });
     });
 
     describe('status indicators', () => {

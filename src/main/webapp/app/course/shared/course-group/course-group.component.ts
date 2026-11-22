@@ -113,7 +113,8 @@ export class CourseGroupComponent {
     });
 
     readonly tableOptions: TableViewOptions = {
-        fill: true,
+        scrollable: true,
+        scrollHeight: 'flex',
         searchPlaceholder: 'artemisApp.course.courseGroup.searchForUsers',
         initialSortField: 'name',
     };

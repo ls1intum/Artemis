@@ -52,7 +52,7 @@ class AttachmentVideoUnitPlaylistIntegrationTest extends AbstractSpringIntegrati
         userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
         unit = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture);
         unit.setVideoSource(WATCH_PAGE);
-        unit = attachmentVideoUnitRepository.saveWithVideoSource(unit);
+        unit = attachmentVideoUnitRepository.save(unit);
         when(tumLiveService.lookUpPlaylist(WATCH_PAGE)).thenReturn(new TumLivePlaylistLookup(PLAYLIST, TumLivePlaylistLookup.Outcome.RESOLVED));
     }
 
@@ -99,7 +99,7 @@ class AttachmentVideoUnitPlaylistIntegrationTest extends AbstractSpringIntegrati
         mockMvc.perform(get(playlistPath())).andExpect(status().isNotFound());
 
         unit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-        attachmentVideoUnitRepository.saveWithVideoSource(unit);
+        attachmentVideoUnitRepository.save(unit);
         mockMvc.perform(get(playlistPath())).andExpect(status().isNotFound());
     }
 }

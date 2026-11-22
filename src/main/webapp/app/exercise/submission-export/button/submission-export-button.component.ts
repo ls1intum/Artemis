@@ -18,7 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
             type="button"
             [jhiFeatureToggle]="FeatureToggle.Exports"
             [disabled]="!exerciseId()"
-            severity="secondary"
+            severity="info"
             size="small"
             (click)="openSubmissionExportDialog($event)"
         >

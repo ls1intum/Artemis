@@ -110,7 +110,7 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
                 return false;
             }
 
-            rateLimitService.enforcePerMinute(ipAddress, RateLimitType.GIT_AUTHENTICATION);
+            rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
         }
         catch (RuntimeException e) {
             log.warn("Rate limit exceeded for SSH authentication from {}", session.getClientAddress(), e);

@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -457,23 +456,10 @@ public class FileResource {
         // The attachment reaches its lecture through the unit that owns it; the query fetched both with the course.
         Course course = attachment.getAttachmentVideoUnit().getLecture().getCourse();
 
-        // check if the user is authorized to access the requested attachment and the unit it belongs to. The user is loaded once for all checks.
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
-        AttachmentVideoUnit attachmentVideoUnit = attachment.getAttachmentVideoUnit();
-        checkAttachmentAndUnitAvailableOrThrow(attachmentVideoUnit, user);
+        // check if the user is authorized to access the requested attachment
+        checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        Optional<String> downloadFilename = retrieveDownloadFilename(attachment);
-        // Users below teaching assistant receive the version without hidden slides, like on the route of the unit
-        String studentVersion = attachment.getStudentVersion();
-        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            if (studentVersion != null) {
-                return buildAttachmentFileResponse(new FileSystemLocation.StudentVersionSlides(attachmentVideoUnit.getId(), studentVersion).path(), downloadFilename,
-                        AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
-            }
-            api.ensureStudentVersionAvailable(attachmentVideoUnit.getId());
-        }
-
-        return buildAttachmentFileResponse(storedFileLocationElseThrow(attachment), downloadFilename, AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
+        return buildAttachmentFileResponse(storedFileLocationElseThrow(attachment), retrieveDownloadFilename(attachment), AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
     }
 
     /**
@@ -497,11 +483,8 @@ public class FileResource {
 
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
-        // Below teaching assistant, a unit contributes only if its attachment is available as well, as on the routes that serve a single attachment
-        boolean staff = authorizationCheckService.isAtLeastTeachingAssistantInCourse(lecture.getCourse(), user);
-        List<AttachmentVideoUnit> lectureAttachments = attachmentApi.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream()
-                .filter(unit -> authorizationCheckService.isAllowedToSeeLectureUnit(unit, user) && (staff || unit.getAttachment().isVisibleToStudents())
-                        && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
+        List<AttachmentVideoUnit> lectureAttachments = attachmentApi.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream().filter(
+                unit -> authorizationCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
                 // External PDF links contribute no stored file and must not be marked complete by downloading the lecture's own PDFs.
                 .filter(unit -> unit.getAttachment().getStudentVersion() != null || unit.getAttachment().fileLocation().isPresent()).toList();
 
@@ -596,7 +579,10 @@ public class FileResource {
 
         AttachmentVideoUnit attachmentVideoUnit = api.findAttachmentVideoUnitByIdElseThrow(attachmentVideoUnitId);
 
-        checkAttachmentAndUnitAvailableOrThrow(attachmentVideoUnit, userRepository.getUserWithCourseRolesAndAuthorities());
+        Attachment attachment = attachmentVideoUnit.getAttachment();
+        Course course = attachmentVideoUnit.getLecture().getCourse();
+
+        checkAttachmentAuthorizationOrThrow(course, attachment);
 
         int sNumber = Integer.parseInt(slideNumber);
 
@@ -618,11 +604,6 @@ public class FileResource {
         SlideApi api = slideApi.orElseThrow(() -> new LectureApiNotPresentException(SlideApi.class));
 
         Slide slide = api.findSlideByIdElseThrow(slideId);
-
-        // The slide is requested on its own, so the attachment and the unit it belongs to decide whether it is available for this request, as for the lecture attachment
-        LectureAttachmentApi attachmentApi = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
-        AttachmentVideoUnit attachmentVideoUnit = attachmentApi.findAttachmentVideoUnitByIdElseThrow(slide.getAttachmentVideoUnit().getId());
-        checkAttachmentAndUnitAvailableOrThrow(attachmentVideoUnit, userRepository.getUserWithCourseRolesAndAuthorities());
 
         return getSlideResponse(slide, slideId);
     }
@@ -663,7 +644,8 @@ public class FileResource {
 
         AttachmentVideoUnit attachmentVideoUnit = api.findAttachmentVideoUnitByIdElseThrow(attachmentVideoUnitId);
         Attachment attachment = attachmentVideoUnit.getAttachment();
-        checkAttachmentAndUnitAvailableOrThrow(attachmentVideoUnit, userRepository.getUserWithCourseRolesAndAuthorities());
+        Course course = attachmentVideoUnit.getLecture().getCourse();
+        checkAttachmentAuthorizationOrThrow(course, attachment);
 
         Optional<String> downloadFilename = retrieveDownloadFilename(attachment);
         // check if hidden link is available in the attachment
@@ -886,47 +868,12 @@ public class FileResource {
      * @param attachment the attachment for which the authentication should be checked
      */
     private void checkAttachmentAuthorizationOrThrow(Course course, Attachment attachment) {
-        checkAttachmentAuthorizationOrThrow(course, attachment, null);
-    }
-
-    /**
-     * Checks that the user may access the attachment, for a caller that already loaded the user.
-     *
-     * @param course     the course of the attachment
-     * @param attachment the attachment to access
-     * @param user       the user to check, or null for the logged-in user
-     */
-    private void checkAttachmentAuthorizationOrThrow(Course course, Attachment attachment, @Nullable User user) {
         if (attachment.isVisibleToStudents()) {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         }
         else {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         }
-    }
-
-    /**
-     * Checks that the lecture unit is available for the user, i.e. that students only reach the content of a unit that is released.
-     *
-     * @param attachmentVideoUnit the unit that holds the requested content
-     * @param user                the user to check
-     */
-    private void checkLectureUnitAvailableOrThrow(AttachmentVideoUnit attachmentVideoUnit, User user) {
-        if (!authorizationCheckService.isAllowedToSeeLectureUnit(attachmentVideoUnit, user)) {
-            throw new AccessForbiddenException("AttachmentVideoUnit", attachmentVideoUnit.getId());
-        }
-    }
-
-    /**
-     * Checks that the user may access the content of the attachment of a unit: the attachment has to be available for the user, and so does the unit that holds it.
-     * Every route that serves content of a unit to students applies this one check, so that the release dates of the attachment and of the unit decide alike on all of them.
-     *
-     * @param attachmentVideoUnit the unit that holds the requested content, with its attachment and its lecture's course
-     * @param user                the user to check
-     */
-    private void checkAttachmentAndUnitAvailableOrThrow(AttachmentVideoUnit attachmentVideoUnit, User user) {
-        checkAttachmentAuthorizationOrThrow(attachmentVideoUnit.getLecture().getCourse(), attachmentVideoUnit.getAttachment(), user);
-        checkLectureUnitAvailableOrThrow(attachmentVideoUnit, user);
     }
 
     /**

@@ -4,7 +4,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faExclamationTriangle, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SortService } from 'app/foundation/service/sort.service';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -14,7 +14,8 @@ import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOu
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 
 @Component({
@@ -35,9 +36,8 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
         ArtemisTranslatePipe,
         CopyToClipboardButtonComponent,
         HelpIconComponent,
-        TumAetUiTableDirective,
-        TumAetUiTableLayoutComponent,
-        TumAetUiTableSortableColumnComponent,
+        SortDirective,
+        SortByDirective,
     ],
 })
 export class CourseLtiConfigurationComponent implements OnInit {
@@ -59,6 +59,7 @@ export class CourseLtiConfigurationComponent implements OnInit {
     showAdvancedSettings = signal(false);
 
     // Icons
+    faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faWrench = faWrench;
 
@@ -91,15 +92,6 @@ export class CourseLtiConfigurationComponent implements OnInit {
 
     getLectureLti13LaunchUrl(lecture: Lecture): string {
         return `${location.origin}/courses/${this.course()?.id}/lectures/${lecture.id}`;
-    }
-
-    onSort(event: TumAetUiTableSortEvent): void {
-        this.predicate.set(event.field);
-        this.reverse.set(event.order === 1);
-        this.sortRows();
-        const sortedLectures = [...this.lectures()];
-        this.sortService.sortByProperty(sortedLectures, this.predicate(), this.reverse());
-        this.lectures.set(sortedLectures);
     }
 
     sortRows() {

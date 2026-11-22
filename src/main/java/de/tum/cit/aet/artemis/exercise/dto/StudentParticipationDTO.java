@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.dto;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
@@ -118,7 +117,7 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @return the participation response
      */
     public static StudentParticipationDTO ofAfterStart(StudentParticipation participation, Participant participant) {
-        return build(participation, ParticipantViewDTO.of(participant), null, submissionsOf(participation, true, null));
+        return build(participation, ParticipantViewDTO.of(participant), null, submissionsOf(participation, true));
     }
 
     /**
@@ -128,19 +127,7 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
      * @return the polling response
      */
     public static StudentParticipationDTO ofWithLatestResult(StudentParticipation participation) {
-        return build(participation, ParticipantViewDTO.HIDDEN, null, submissionsOf(participation, false, null));
-    }
-
-    /**
-     * Maps a participation for polling, including only the results whose id is contained in {@code visibleResultIds}. Callers use this to withhold a result a student must not see
-     * yet (for example the score of a not-yet-released manual assessment) without mapping it.
-     *
-     * @param participation    the participation loaded with its results
-     * @param visibleResultIds the ids of the results that may be returned to the student
-     * @return the polling response with the visible results only
-     */
-    public static StudentParticipationDTO ofWithLatestResult(StudentParticipation participation, Set<Long> visibleResultIds) {
-        return build(participation, ParticipantViewDTO.HIDDEN, null, submissionsOf(participation, false, visibleResultIds));
+        return build(participation, ParticipantViewDTO.HIDDEN, null, submissionsOf(participation, false));
     }
 
     /**
@@ -186,12 +173,11 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
         return student != null ? student : participation.getTeam().filter(Hibernate::isInitialized).orElse(null);
     }
 
-    private static @Nullable List<ParticipationSubmissionDTO> submissionsOf(StudentParticipation participation, boolean includeContent, @Nullable Set<Long> visibleResultIds) {
+    private static @Nullable List<ParticipationSubmissionDTO> submissionsOf(StudentParticipation participation, boolean includeContent) {
         if (participation.getSubmissions() == null || !Hibernate.isInitialized(participation.getSubmissions())) {
             return null;
         }
-        return participation.getSubmissions().stream().filter(Objects::nonNull).map(submission -> ParticipationSubmissionDTO.of(submission, includeContent, visibleResultIds))
-                .toList();
+        return participation.getSubmissions().stream().filter(Objects::nonNull).map(submission -> ParticipationSubmissionDTO.of(submission, includeContent)).toList();
     }
 
     private static StudentParticipationDTO build(StudentParticipation participation, ParticipantViewDTO participant, @Nullable ParticipationExerciseDTO exercise,

@@ -43,7 +43,7 @@
             (optionSelected)="onRoomSuggestionSelected($event)"
         />
         @if (hasSelectedRooms()) {
-            <tumaet-ui-table-layout class="max-h-[45dvh]!">
+            <div class="max-h-[45dvh] overflow-y-auto">
                 <table tumAetUiTable size="small" [striped]="true">
                     <thead>
                         <tr>
@@ -83,7 +83,7 @@
                         }
                     </tbody>
                 </table>
-            </tumaet-ui-table-layout>
+            </div>
             @let capacities = seatInfo();
             @if (!registeredStudentsKnown()) {
                 <tumaet-ui-message severity="warn" data-testid="registered-students-unknown">

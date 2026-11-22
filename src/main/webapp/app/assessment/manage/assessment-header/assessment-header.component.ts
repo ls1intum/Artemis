@@ -48,7 +48,6 @@ export class AssessmentHeaderComponent {
     readonly nextSubmissionBusy = input.required<boolean>();
     readonly correctionRound = input(0); // correctionRound defaults to 0
 
-    readonly isTeamMode = input.required<boolean>();
     readonly isAssessor = input.required<boolean>();
     readonly isTestRun = input(false);
     readonly exerciseDashboardLink = input.required<string[]>();
@@ -89,7 +88,7 @@ export class AssessmentHeaderComponent {
     }
 
     get assessNextVisible() {
-        return this.result()?.completionDate && (this.isAssessor() || this.exercise()?.isAtLeastInstructor) && !this.hasComplaint() && !this.isTeamMode() && !this.isTestRun();
+        return this.result()?.completionDate && (this.isAssessor() || this.exercise()?.isAtLeastInstructor) && !this.hasComplaint() && !this.isTestRun();
     }
 
     get saveDisabled() {

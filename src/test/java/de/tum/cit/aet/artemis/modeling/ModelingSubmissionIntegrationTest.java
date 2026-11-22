@@ -660,6 +660,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmission() throws Exception {
+        classExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(classExercise);
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
@@ -673,9 +675,29 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         checkDetailsHidden(storedSubmission, false);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void directAssessmentRejectsUnsubmittedWorkOrAnIndividualExtension(boolean submitted) throws Exception {
+        classExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(classExercise);
+        var submission = modelingExerciseUtilService.addModelingSubmission(classExercise, ParticipationFactory.generateModelingSubmission(validModel, submitted),
+                TEST_PREFIX + "student1");
+        if (submitted) {
+            var participation = (StudentParticipation) submission.getParticipation();
+            participation.setIndividualDueDate(ZonedDateTime.now().plusHours(1));
+            studentParticipationRepository.save(participation);
+        }
+        request.get("/api/modeling/modeling-submissions/" + submission.getId() + "/for-assessment", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
+        assertThat(modelingSubmissionRepo.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submission.getId()).getResults())
+                .isEmpty();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmission_queryCount() throws Exception {
+        classExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(classExercise);
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
         final Long submissionId = submission.getId();
@@ -750,6 +772,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmission_lockLimitReached_badRequest() throws Exception {
+        useCaseExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(useCaseExercise);
         createTenLockedSubmissionsForDifferentExercisesAndUsers(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         modelingExerciseUtilService.addModelingSubmission(useCaseExercise, submission, TEST_PREFIX + "student2");

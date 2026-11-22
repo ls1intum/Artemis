@@ -1,4 +1,3 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, PendingTasks, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -38,7 +37,6 @@ import { getErrorMessage } from 'app/foundation/util/global.utils';
     styleUrl: './competency-management.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        TumAetUiButtonDirective,
         CompetencyManagementTableComponent,
         TranslateDirective,
         FontAwesomeModule,

@@ -1,3 +1,7 @@
+import { Observable, of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+
 export class MockScienceService {
-    logEvent = (_type: string, _resourceId?: number, _courseId?: number) => undefined;
+    eventLoggingActive = () => true;
+    logEvent = (type: string, resourceId?: number) => of({}) as Observable<HttpResponse<void>>;
 }

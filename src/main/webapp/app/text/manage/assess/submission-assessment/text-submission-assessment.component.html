@@ -4,7 +4,6 @@
     [submitBusy]="submitBusy()"
     [cancelBusy]="cancelBusy()"
     [nextSubmissionBusy]="nextSubmissionBusy()"
-    [isTeamMode]="!!exercise?.teamMode"
     [isAssessor]="isAssessor()"
     [canOverride]="canOverride"
     [result]="result()"
@@ -41,7 +40,6 @@
                 <jhi-text-assessment-area
                     left-body
                     [submission]="submission!"
-                    [allFeedbacks]="allAssessmentFeedbacks()"
                     [(textBlockRefs)]="textBlockRefs"
                     [readOnly]="readOnly"
                     [highlightDifferences]="highlightDifferences()"

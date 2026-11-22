@@ -51,7 +51,6 @@ describe('AssessmentLayoutComponent', () => {
                 fixture = TestBed.createComponent(AssessmentLayoutComponent);
                 component = fixture.componentInstance;
                 fixture.componentRef.setInput('isLoading', false);
-                fixture.componentRef.setInput('isTeamMode', false);
                 fixture.componentRef.setInput('isAssessor', true);
                 fixture.componentRef.setInput('exerciseDashboardLink', []);
                 fixture.componentRef.setInput('canOverride', false);

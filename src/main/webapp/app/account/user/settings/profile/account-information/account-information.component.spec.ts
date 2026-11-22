@@ -13,14 +13,12 @@ import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
-import { TumAetUiConfirmationService, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
-import { AccountSettingsDialogComponent } from 'app/account/settings/account-settings-dialog.component';
 
 describe('AccountInformationComponent', () => {
     let fixture: ComponentFixture<AccountInformationComponent>;
     let comp: AccountInformationComponent;
-    let confirmationService: TumAetUiConfirmationService;
 
     let accountServiceMock: { userIdentity: ReturnType<typeof signal<User | undefined>>; setImageUrl: ReturnType<typeof vi.fn> };
     let userSettingsServiceMock: { updateProfilePicture: ReturnType<typeof vi.fn>; removeProfilePicture: ReturnType<typeof vi.fn> };
@@ -48,14 +46,10 @@ describe('AccountInformationComponent', () => {
                 provideRouter([]),
             ],
         })
-            .overrideComponent(AccountInformationComponent, {
-                remove: { imports: [ImageCropperModalComponent, AccountSettingsDialogComponent] },
-                add: { imports: [MockComponent(ImageCropperModalComponent), MockComponent(AccountSettingsDialogComponent)] },
-            })
+            .overrideComponent(AccountInformationComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
             .compileComponents();
         fixture = TestBed.createComponent(AccountInformationComponent);
         comp = fixture.componentInstance;
-        confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
     });
 
     afterEach(() => {
@@ -79,15 +73,6 @@ describe('AccountInformationComponent', () => {
         }
     });
 
-    it('should open the account settings dialog from the edit button', () => {
-        fixture.detectChanges();
-
-        const editButton: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="account-settings-edit-button"] button');
-        editButton.click();
-
-        expect(comp.accountSettingsDialogVisible()).toBe(true);
-    });
-
     it('should show the image cropper when setting user image', () => {
         const file = new File([''], 'test.jpg', { type: 'image/jpeg' });
         const event = { currentTarget: { files: [file], value: '' } } as unknown as Event;
@@ -105,16 +90,10 @@ describe('AccountInformationComponent', () => {
         expect(dialog.size()).toBe('small');
     });
 
-    it('should only remove the profile picture after deletion is confirmed', () => {
+    it('should call removeProfilePicture and setImageUrl when deleting user image', () => {
         userSettingsServiceMock.removeProfilePicture.mockReturnValue(of(new HttpResponse({ status: 200 })));
 
-        comp.confirmDeleteUserImage();
-
-        expect(userSettingsServiceMock.removeProfilePicture).not.toHaveBeenCalled();
-
-        const confirmationRequest = confirmationService.request('deleteProfilePictureConfirmation');
-        expect(confirmationRequest).toBeDefined();
-        confirmationRequest!.accept();
+        comp.deleteUserImage();
 
         expect(userSettingsServiceMock.removeProfilePicture).toHaveBeenCalled();
         expect(accountServiceMock.setImageUrl).toHaveBeenCalledWith(undefined);
@@ -160,8 +139,7 @@ describe('AccountInformationComponent', () => {
         const errorResponse = new HttpErrorResponse({ error: { title: 'Removal failed' }, status: 400 });
         userSettingsServiceMock.removeProfilePicture.mockReturnValue(throwError(() => errorResponse));
 
-        comp.confirmDeleteUserImage();
-        confirmationService.request('deleteProfilePictureConfirmation')!.accept();
+        comp.deleteUserImage();
 
         expect(alertServiceMock.addAlert).toHaveBeenCalledWith(
             expect.objectContaining({

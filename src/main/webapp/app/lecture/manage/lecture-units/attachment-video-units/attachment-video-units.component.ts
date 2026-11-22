@@ -25,7 +25,6 @@ import {
     TumAetUiInputDirective,
     TumAetUiMessageComponent,
     TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -71,7 +70,6 @@ interface SplitNavigationState {
         TumAetUiInputDirective,
         TumAetUiMessageComponent,
         TumAetUiTableDirective,
-        TumAetUiTableLayoutComponent,
         TumAetUiTooltipDirective,
         ArtemisTranslatePipe,
     ],

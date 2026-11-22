@@ -7,8 +7,10 @@ import type {
     Detail,
     LinkDetail,
     NotShownDetail,
+    ProgrammingAuxiliaryRepositoryButtonsDetail,
     ProgrammingDiffReportDetail,
-    ProgrammingRepositoryBuildOverviewDetail,
+    ProgrammingRepositoryButtonsDetail,
+    ProgrammingTestStatusDetail,
     ShownDetail,
     TextDetail,
 } from 'app/shared-ui/detail-overview-list/detail.model';
@@ -17,9 +19,11 @@ import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-l
 import { DateDetailComponent } from 'app/shared-ui/detail-overview-list/components/date-detail/date-detail.component';
 import { LinkDetailComponent } from 'app/shared-ui/detail-overview-list/components/link-detail/link-detail.component';
 import { BooleanDetailComponent } from 'app/shared-ui/detail-overview-list/components/boolean-detail/boolean-detail.component';
+import { ProgrammingRepositoryButtonsDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-repository-buttons-detail/programming-repository-buttons-detail.component';
+import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component';
+import { ProgrammingTestStatusDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component';
 import { ProgrammingDiffReportDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
 import { vi } from 'vitest';
-import { ProgrammingRepositoryBuildOverviewComponent } from 'app/programming/manage/detail/repository-build-overview/programming-repository-build-overview.component';
 
 describe('ExerciseDetailDirective', () => {
     let fixture: DirectiveFixture<ExerciseDetailDirective>;
@@ -64,11 +68,22 @@ describe('ExerciseDetailDirective', () => {
             await checkComponentForDetailWasCreated({ type: DetailType.Boolean } as BooleanDetail, BooleanDetailComponent);
         });
 
-        it('should create the paired repository/build overview', async () => {
+        it('should create ProgrammingRepositoryButtonsDetailComponent component', async () => {
             await checkComponentForDetailWasCreated(
-                { type: DetailType.ProgrammingRepositoryBuildOverview } as ProgrammingRepositoryBuildOverviewDetail,
-                ProgrammingRepositoryBuildOverviewComponent,
+                { type: DetailType.ProgrammingRepositoryButtons } as ProgrammingRepositoryButtonsDetail,
+                ProgrammingRepositoryButtonsDetailComponent,
             );
+        });
+
+        it('should create ProgrammingAuxiliaryRepositoryButtonsDetailComponent component', async () => {
+            await checkComponentForDetailWasCreated(
+                { type: DetailType.ProgrammingAuxiliaryRepositoryButtons } as ProgrammingAuxiliaryRepositoryButtonsDetail,
+                ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
+            );
+        });
+
+        it('should create ProgrammingTestStatusDetail component', async () => {
+            await checkComponentForDetailWasCreated({ type: DetailType.ProgrammingTestStatus } as ProgrammingTestStatusDetail, ProgrammingTestStatusDetailComponent);
         });
 
         it('should create ProgrammingDiffReportDetail component', async () => {
@@ -78,7 +93,7 @@ describe('ExerciseDetailDirective', () => {
 
     it('should not create a component when the directive is destroyed while the component is being loaded', async () => {
         const createComponentSpy = vi.spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent');
-        detail.set({ type: DetailType.ProgrammingDiffReport } as ProgrammingDiffReportDetail);
+        detail.set({ type: DetailType.ProgrammingTestStatus } as ProgrammingTestStatusDetail);
         fixture.detectChanges();
 
         const pending = fixture.directiveInstance['initializeExerciseDetailDirective']();

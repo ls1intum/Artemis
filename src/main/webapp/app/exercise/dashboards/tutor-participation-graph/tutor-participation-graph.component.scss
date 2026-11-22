@@ -1,9 +1,5 @@
 jhi-tutor-participation-graph {
     ul {
-        display: flex;
-        align-items: flex-start;
-        width: max-content;
-        margin: 0;
         padding-left: 0;
         z-index: 1;
         position: relative;
@@ -11,29 +7,28 @@ jhi-tutor-participation-graph {
     }
 
     li {
-        width: 2rem;
-        height: 2rem;
+        width: 2em;
+        height: 2em;
         text-align: center;
-        line-height: 2rem;
+        line-height: 2em;
         border-radius: 1rem;
-        background: var(--tumaet-ui-state-success);
+        background: var(--success);
         margin: 0 1rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--tumaet-ui-state-success-contrast);
+        display: inline-block;
+        color: var(--tumaet-ui-primary-contrast-color);
         position: relative;
-        flex-shrink: 0;
+
+        /*z-index: 1;*/
     }
 
     li::before {
         content: '';
         position: absolute;
-        top: calc(1rem - 1px);
-        left: -4rem;
-        width: 4rem;
-        height: 2px;
-        background: var(--tumaet-ui-state-success);
+        top: 0.9em;
+        left: -4em;
+        width: 4em;
+        height: 0.2em;
+        background: var(--success);
         z-index: -1;
     }
 
@@ -42,78 +37,73 @@ jhi-tutor-participation-graph {
     }
 
     .active {
-        background: var(--tumaet-ui-state-success);
+        background: var(--success);
     }
 
     .active + li {
-        background: var(--tumaet-ui-state-danger);
-        color: var(--tumaet-ui-state-danger-contrast);
+        background: var(--danger);
     }
 
     .not_participated {
         display: none;
 
         &.active + li + li::before {
-            background: var(--tumaet-ui-state-danger);
+            background: var(--danger) !important;
         }
     }
 
     .not_participated + li::before {
-        display: none;
+        display: none !important;
     }
 
-    li.opaque {
-        background: var(--tumaet-ui-state-danger);
-        color: var(--tumaet-ui-state-danger-contrast);
+    .opaque {
+        background: var(--danger) !important;
     }
 
     .opaque::before {
-        background: var(--tumaet-ui-state-danger);
+        background: var(--danger);
     }
 
-    li.orange {
-        background: var(--tumaet-ui-state-warning);
-        color: var(--tumaet-ui-state-warning-contrast);
+    .orange {
+        background: var(--warning) !important;
     }
 
     .orange ~ li::before,
     .orange ~ li::after {
-        background: var(--tumaet-ui-state-warning);
+        background: var(--warning) !important;
     }
 
-    li.progress-bar-li {
-        display: block;
-        width: 8rem;
-        height: 1rem;
-        background: transparent;
-        margin-top: 0.5rem;
+    .progress-bar-li {
+        width: 8em;
+        background: transparent !important;
+        top: 0.2em;
     }
 
     .progress-bar-li::before {
-        top: calc(0.5rem - 1px);
+        top: 0.5em;
     }
 
-    li.stacked-li {
+    .stacked-li {
         display: inline-flex;
         flex-flow: column nowrap;
-        align-items: stretch;
         height: auto;
+        margin-bottom: 1rem;
 
         .stacked-item {
-            margin-top: 0.5rem;
+            margin-top: 0.5em;
             position: relative;
 
             &:first-child {
                 margin-top: 0;
 
                 &::before {
-                    width: 4rem;
-                    left: -4rem;
+                    width: 4em;
+                    left: -4em;
                 }
 
                 &::after {
-                    width: 2rem;
-                    right: -2rem;
+                    width: 2em;
+                    right: -2em;
                 }
             }
 
@@ -121,10 +111,10 @@ jhi-tutor-participation-graph {
             &::after {
                 content: '';
                 position: absolute;
-                top: calc(0.5rem - 1px);
+                top: 0.5em;
                 width: 1rem;
-                height: 2px;
-                background: var(--tumaet-ui-state-success);
+                height: 0.2em;
+                background: var(--success);
                 z-index: -1;
             }
 
@@ -139,7 +129,7 @@ jhi-tutor-participation-graph {
     }
 
     .stacked-li::before {
-        width: 2px;
+        width: 0.2em;
         left: -1rem;
         height: calc(100% - 1rem);
     }
@@ -147,24 +137,24 @@ jhi-tutor-participation-graph {
     .stacked-li::after {
         content: '';
         position: absolute;
-        top: calc(0.5rem - 1px);
-        width: 2px;
+        top: 0.5em;
+        width: 0.2em;
         right: -1rem;
         height: calc(100% - 1rem);
-        background: var(--tumaet-ui-state-success);
+        background: var(--success);
         z-index: -1;
     }
 
-    li.opaque::after,
-    li.opaque .stacked-item::before,
-    li.opaque .stacked-item::after {
-        background: var(--tumaet-ui-state-danger);
+    .opaque::after,
+    .opaque .stacked-item::before,
+    .opaque .stacked-item::after {
+        background: var(--danger);
     }
 
     .orange ~ li .stacked-item::before,
     .orange ~ li .stacked-item::after,
-    li.orange::after,
-    li.orange .stacked-item::after {
-        background: var(--tumaet-ui-state-warning);
+    .orange::after,
+    .orange .stacked-item::after {
+        background: var(--warning) !important;
     }
 }

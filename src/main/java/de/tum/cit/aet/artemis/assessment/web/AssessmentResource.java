@@ -249,7 +249,6 @@ public abstract class AssessmentResource {
     }
 
     private ResponseEntity<Void> cancelAssessment(Submission submission, @Nullable Long resultId, Exercise exercise, User user) {
-        authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         // Release the result the caller named. A submission can hold one result per correction round, and the caller is
         // the only one that knows which round its button belongs to: resolving it here always released the newest round,
         // so "cancel assessment of correction round 1" released round 2 instead and round 1 stayed locked (#13396).
@@ -292,7 +291,9 @@ public abstract class AssessmentResource {
         }
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         boolean isAssessorOfResult = resultForAuthorization.getAssessor() != null && user.getId().equals(resultForAuthorization.getAssessor().getId());
-        if (!(isAtLeastInstructor || isAssessorOfResult)) {
+        boolean otherTeamTutor = exercise.isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation && !participation.isTestRun()
+                && participation.getTeam().filter(team -> team.isOwner(user)).isEmpty();
+        if (!(isAtLeastInstructor || isAssessorOfResult && !otherTeamTutor)) {
             // tutors cannot cancel the assessment of other tutors (only instructors can)
             throw new AccessForbiddenException();
         }

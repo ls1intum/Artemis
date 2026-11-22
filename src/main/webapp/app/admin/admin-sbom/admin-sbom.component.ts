@@ -33,7 +33,6 @@ import {
     TumAetUiInputDirective,
     TumAetUiMessageComponent,
     TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
     TumAetUiTagComponent,
@@ -54,7 +53,6 @@ type SbomSource = 'all' | 'server' | 'client';
     templateUrl: './admin-sbom.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        TumAetUiTableLayoutComponent,
         TranslateDirective,
         FormsModule,
         FaIconComponent,

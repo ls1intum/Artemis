@@ -1,11 +1,3 @@
-import {
-    TumAetUiButtonDirective,
-    TumAetUiInputDirective,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-} from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
@@ -16,7 +8,7 @@ import { filter, map } from 'rxjs/operators';
 import { onError } from 'app/foundation/util/global.utils';
 import { Subject } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { faFileImport, faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faFileImport, faMagnifyingGlass, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import {
     ImportAllCompetenciesComponent,
@@ -33,12 +25,17 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { InputTextModule } from 'primeng/inputtext';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 
 @Component({
     selector: 'jhi-competency-management-table',
     templateUrl: './competency-management-table.component.html',
+    styleUrl: './competency-management-table.component.scss',
     imports: [
-        TumAetUiButtonDirective,
         NgbDropdown,
         NgbDropdownMenu,
         NgbDropdownToggle,
@@ -49,10 +46,11 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
         ArtemisTranslatePipe,
         RouterModule,
         ArtemisDatePipe,
-        TumAetUiInputDirective,
-        TumAetUiTableDirective,
-        TumAetUiTableLayoutComponent,
-        TumAetUiTableSortableColumnComponent,
+        InputTextModule,
+        IconFieldModule,
+        InputIconModule,
+        SortDirective,
+        SortByDirective,
     ],
 })
 export class CompetencyManagementTableComponent {
@@ -75,9 +73,11 @@ export class CompetencyManagementTableComponent {
     dialogError = this.dialogErrorSource.asObservable();
 
     readonly faFileImport = faFileImport;
+    readonly faMagnifyingGlass = faMagnifyingGlass;
     readonly faPlus = faPlus;
     readonly faPencilAlt = faPencilAlt;
     readonly faTrash = faTrash;
+    readonly faSort = faSort;
 
     readonly getIcon = getIcon;
 
@@ -86,7 +86,7 @@ export class CompetencyManagementTableComponent {
     private readonly _sortPredicate = signal<string>('title');
     private readonly _sortAscending = signal<boolean>(true);
 
-    // Getter and setter pairs backed by signals
+    // Getter and setter pairs for jhiSort
     get sortPredicate(): string {
         return this._sortPredicate();
     }
@@ -162,10 +162,8 @@ export class CompetencyManagementTableComponent {
         });
     }
 
-    onSortChange(event: TumAetUiTableSortEvent): void {
-        this._sortPredicate.set(event.field);
-        this._sortAscending.set(event.order === 1);
-    }
+    // Required by jhiSort (sortChange) event. Sorting is handled reactively via signals.
+    sortRows(): void {}
 
     /**
      * Opens a modal for selecting a course to import all competencies from.

@@ -32,6 +32,8 @@
             [loading]="coursesLoading()"
             (dataRequest)="loadCourses($event)"
             [striped]="true"
+            [scrollable]="true"
+            scrollHeight="60vh"
         />
 
         <div class="mt-4 flex items-center justify-between">
@@ -52,6 +54,8 @@
             [rowActions]="userActions"
             (dataRequest)="loadUsers($event)"
             [striped]="true"
+            [scrollable]="true"
+            scrollHeight="60vh"
         />
     </div>
 </div>

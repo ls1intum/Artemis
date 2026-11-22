@@ -103,7 +103,8 @@ describe('TableViewComponent', () => {
                 pageSizeOptions: [10],
                 showSearch: false,
                 emptyMessageTranslation: 'custom.message',
-                fill: true,
+                scrollable: true,
+                scrollHeight: '400px',
                 searchPlaceholder: 'custom.placeholder',
             };
             fixture.componentRef.setInput('options', fullOptions);
@@ -119,13 +120,15 @@ describe('TableViewComponent', () => {
             expect(resolved.pageSizeOptions).toEqual([10]);
             expect(resolved.showSearch).toBe(false);
             expect(resolved.emptyMessageTranslation).toBe('custom.message');
-            expect(resolved.fill).toBe(true);
+            expect(resolved.scrollable).toBe(true);
+            expect(resolved.scrollHeight).toBe('400px');
             expect(resolved.searchPlaceholder).toBe('custom.placeholder');
         });
 
-        it('should use default fill, searchPlaceholder', () => {
+        it('should use default scrollable, scrollHeight, searchPlaceholder', () => {
             const resolved = component['resolvedOptions']();
-            expect(resolved.fill).toBe(false);
+            expect(resolved.scrollable).toBe(false);
+            expect(resolved.scrollHeight).toBeUndefined();
             expect(resolved.searchPlaceholder).toBe('artemisApp.course.exercise.search.searchPlaceholder');
         });
 

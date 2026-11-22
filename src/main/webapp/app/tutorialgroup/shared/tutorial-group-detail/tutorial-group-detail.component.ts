@@ -1,4 +1,4 @@
-import { TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
@@ -104,7 +104,6 @@ export enum TutorialGroupDetailAccessLevel {
     selector: 'jhi-tutorial-group-detail',
     imports: [
         TumAetUiTableDirective,
-        TumAetUiTableLayoutComponent,
         ProfilePictureComponent,
         FaIconComponent,
         TranslateDirective,

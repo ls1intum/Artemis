@@ -6,7 +6,6 @@
         confirmationTitle="artemisApp.studentDashboard.enroll.courseEnrollmentConfirmationTitle"
         [confirmationTitleTranslationParams]="{ courseName: course().title! }"
         [disabled]="loading()"
-        size="small"
         [translateText]="false"
         [textIsMarkdown]="true"
     />
@@ -14,8 +13,7 @@
 @if (!course().enrollmentConfirmationMessage!) {
     <button
         type="button"
-        tumAetUiButton
-        size="small"
+        class="btn btn-primary"
         (click)="registerForCourse(course().id!)"
         [disabled]="loading()"
         jhiTranslate="artemisApp.studentDashboard.enroll.enrollInCourse"

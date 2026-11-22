@@ -1,58 +1,90 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpContext } from '@angular/common/http';
-import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
-import { Observable, of } from 'rxjs';
+import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
+import { HttpResponse } from '@angular/common/http';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { Observable, ReplaySubject } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
+import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
+import { ScienceSetting } from 'app/account/user/settings/profile/science-settings/science-settings-structure';
+import { Setting } from 'app/account/user/settings/user-settings.model';
 
-export interface ScienceCourseConsent {
-    courseId: number;
-    courseTitle?: string;
-    courseShortName?: string;
-    active?: boolean;
-    scienceEnabled: boolean;
-}
+export const SCIENCE_SETTING_LOCAL_STORAGE_KEY = 'artemisapp.science.settings';
 
-/**
- * Talks to the science consent endpoints. It keeps no state: every page loads what it shows and owns the result, so
- * nothing outlives the page or the session of the user who loaded it.
- */
 @Service()
 export class ScienceSettingsService {
-    private readonly httpClient = inject(HttpClient);
-    private readonly profileService = inject(ProfileService);
+    private userSettingsService = inject(UserSettingsService);
+    private localStorageService = inject(LocalStorageService);
+    private profileService = inject(ProfileService);
 
-    private readonly resourceURL = 'api/atlas/science';
+    private currentScienceSettingsSubject = new ReplaySubject<ScienceSetting[]>(1);
+
+    constructor() {
+        // we need to handle the subscription here as this service is initialized independently of any component
+        if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
+            this.initialize();
+            this.listenForScienceSettingsChanges();
+        }
+    }
+
+    initialize() {
+        addEventListener('storage', (event) => {
+            if (event.key === 'jhi-' + SCIENCE_SETTING_LOCAL_STORAGE_KEY) {
+                this.currentScienceSettingsSubject.next(this.getStoredScienceSettings());
+            }
+        });
+        this.currentScienceSettingsSubject.next(this.getStoredScienceSettings());
+    }
+
+    private getStoredScienceSettings(): ScienceSetting[] {
+        return this.localStorageService.retrieve<ScienceSetting[]>(SCIENCE_SETTING_LOCAL_STORAGE_KEY) || [];
+    }
+
+    private storeScienceSettings(settings?: ScienceSetting[]): void {
+        if (settings) {
+            this.localStorageService.store(SCIENCE_SETTING_LOCAL_STORAGE_KEY, settings);
+        } else {
+            this.localStorageService.remove(SCIENCE_SETTING_LOCAL_STORAGE_KEY);
+        }
+        this.currentScienceSettingsSubject.next(this.getStoredScienceSettings());
+    }
+
+    public refreshScienceSettings(): void {
+        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
+            return;
+        }
+
+        this.userSettingsService.loadSettings(UserSettingsCategory.SCIENCE_SETTINGS).subscribe({
+            next: (res: HttpResponse<Setting[]>) => {
+                const currentScienceSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(res.body!, UserSettingsCategory.SCIENCE_SETTINGS);
+
+                this.storeScienceSettings(currentScienceSettings);
+                this.currentScienceSettingsSubject.next(currentScienceSettings);
+            },
+        });
+    }
+
+    getScienceSettings(): ScienceSetting[] {
+        return this.getStoredScienceSettings();
+    }
+
+    getScienceSettingsUpdates(): Observable<ScienceSetting[]> {
+        return this.currentScienceSettingsSubject.asObservable();
+    }
 
     /**
-     * Loads the consent history of every course the user may decide for, for the settings page. Each caller handles a
-     * failure itself, so the global error alert is skipped.
+     * Subscribes and listens for changes related to science
      */
-    getConsents(): Observable<ScienceCourseConsent[]> {
-        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
-            return of([]);
-        }
-        const context = new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true);
-        return this.httpClient.get<ScienceCourseConsent[]>(`${this.resourceURL}/consents`, { context });
+    private listenForScienceSettingsChanges(): void {
+        this.userSettingsService.userSettingsChangeEvent.subscribe(() => {
+            this.refreshScienceSettings();
+        });
     }
 
-    /**
-     * Loads the consent state of one course, on course entry. A failure is the caller's to handle, so the global error
-     * alert is skipped: the student cannot act on it.
-     */
-    getConsentForCourse(courseId: number): Observable<ScienceCourseConsent | undefined> {
-        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
-            return of(undefined);
-        }
-        const context = new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true);
-        return this.httpClient.get<ScienceCourseConsent>(`${this.resourceURL}/courses/${courseId}/consent`, { context });
-    }
-
-    saveConsentForCourse(courseId: number, active: boolean): Observable<ScienceCourseConsent> {
-        return this.httpClient.put<ScienceCourseConsent>(`${this.resourceURL}/courses/${courseId}/consent`, { active });
-    }
-
-    deleteScienceDataForCourse(courseId: number): Observable<void> {
-        return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/data`);
+    eventLoggingAllowed(): boolean {
+        const setting = this.getStoredScienceSettings().find((setting) => {
+            return setting.key === 'activity';
+        });
+        return setting?.active ?? true;
     }
 }

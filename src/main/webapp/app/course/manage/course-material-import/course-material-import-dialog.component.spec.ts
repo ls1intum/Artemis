@@ -13,8 +13,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { CourseForImportDTO } from 'app/course/shared/entities/course.model';
 import { DialogModule } from 'primeng/dialog';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
@@ -70,8 +69,7 @@ describe('CourseMaterialImportDialogComponent', () => {
                 CourseMaterialImportDialogComponent,
                 FormsModule,
                 MockModule(DialogModule),
-                TumAetUiButtonDirective,
-                FaIconComponent,
+                MockModule(ButtonModule),
                 MockModule(CheckboxModule),
                 MockModule(TableModule),
                 MockModule(InputTextModule),
@@ -90,8 +88,7 @@ describe('CourseMaterialImportDialogComponent', () => {
                     imports: [
                         FormsModule,
                         MockModule(DialogModule),
-                        TumAetUiButtonDirective,
-                        FaIconComponent,
+                        MockModule(ButtonModule),
                         MockModule(CheckboxModule),
                         MockModule(TableModule),
                         MockModule(InputTextModule),
@@ -404,7 +401,7 @@ describe('CourseMaterialImportDialogComponent', () => {
         });
 
         it('should update pagination on page change', async () => {
-            component.onPageChange(1);
+            component.onPageChange({ first: 10, rows: 10 });
             await fixture.whenStable();
 
             expect(component.first()).toBe(10);

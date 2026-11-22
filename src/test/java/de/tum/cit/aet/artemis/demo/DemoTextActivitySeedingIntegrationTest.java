@@ -51,7 +51,6 @@ import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadDemoApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.modeling.api.ModelingDemoApi;
@@ -75,9 +74,6 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
     private static final String ONGOING_ESSAY_TITLE = "Essay: Monolith or Microservices?";
 
     private static final String GRADED_ESSAY_TITLE = "Essay: The Value of Code Reviews";
-
-    @Autowired
-    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private DemoDataSeedingService demoDataSeedingService;
@@ -233,8 +229,7 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
         await().atMost(Duration.ofSeconds(30)).until(participantScoreScheduleService::isIdle);
         participantScoreScheduleService.shutdown();
         userUtilService.changeUser(UserDemoService.DEMO_INSTRUCTOR_LOGIN);
-        request.delete("/api/text/text-exercises/" + essays.getLast().getId(), HttpStatus.ACCEPTED);
-        asyncDeletionTestUtilService.awaitExerciseDeletion(essays.getLast().getId());
+        request.delete("/api/text/text-exercises/" + essays.getLast().getId(), HttpStatus.OK);
 
         seed();
 

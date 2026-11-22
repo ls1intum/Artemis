@@ -12,9 +12,11 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { Course } from 'app/course/shared/entities/course.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { of } from 'rxjs';
+import dayjs from 'dayjs/esm';
 import { provideRouter } from '@angular/router';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
@@ -118,14 +120,72 @@ describe('ManageAssessmentButtonsComponent', () => {
         expect(fixture.nativeElement.querySelector('button').getAttribute('aria-label')).toBe('artemisApp.assessment.dashboard.actions.examCorrectionRound.cancel:2');
     });
 
-    describe('ngOnInit', () => {
+    it('checks draft ownership separately for each round and preserves instructor access', () => {
+        fixture.componentRef.setInput('correctionRoundsEnabled', 2);
+        fixture.componentRef.setInput('ownedCorrectionRounds', [0]);
+        fixture.componentRef.setInput('participation', {
+            id: 10,
+            submissions: [
+                {
+                    id: 20,
+                    results: [
+                        { id: 30, correctionRound: 0, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() },
+                        { id: 31, correctionRound: 1, assessmentType: AssessmentType.MANUAL },
+                    ],
+                },
+            ],
+        });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="manage-assessment-link"]')).toHaveLength(1);
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-cancel"]')).toBeNull();
+
+        fixture.componentRef.setInput('ownedCorrectionRounds', [1]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-assessment-action="continue"]').getAttribute('data-correction-round')).toBe('1');
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-cancel"]')).not.toBeNull();
+
+        fixture.componentRef.setInput('ownedCorrectionRounds', []);
+        fixture.componentRef.setInput('exercise', { ...exercise, isAtLeastInstructor: true });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-assessment-action="continue"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-cancel"]')).not.toBeNull();
+    });
+
+    describe('assessment link severity', () => {
+        const withResult = (result?: Partial<Result>) =>
+            fixture.componentRef.setInput('participation', {
+                id: 10,
+                submissions: [{ id: 20, results: result ? [{ id: 30, correctionRound: 0, ...result }] : [] }],
+            } as Participation);
+
+        it.each([
+            ['primary', undefined],
+            ['primary', { assessmentType: AssessmentType.AUTOMATIC, completionDate: dayjs() }],
+            ['secondary', { assessmentType: AssessmentType.SEMI_AUTOMATIC }],
+            ['secondary', { assessmentType: AssessmentType.SEMI_AUTOMATIC, completionDate: dayjs() }],
+            ['secondary', { assessmentType: AssessmentType.SEMI_AUTOMATIC, hasComplaint: true }],
+        ])('is %s', (severity, result) => {
+            withResult(result as Partial<Result> | undefined);
+            expect(comp['assessmentLinks']()[0]?.severity).toBe(severity);
+        });
+    });
+
+    it('keeps an older owned draft available when the latest submission changed', () => {
+        fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT } as Exercise);
+        fixture.componentRef.setInput('participation', { id: 10, submissions: [{ id: 21, results: [] }] } as Participation);
+        fixture.componentRef.setInput('olderAssessmentDrafts', [{ submissionId: 20, resultId: 30, correctionRound: 0 }]);
+
+        const draftLink = comp['assessmentLinks']().find((link) => link.result?.id === 30);
+        expect(draftLink).toMatchObject({ action: 'continue', severity: 'secondary', submissionId: 20, canCancel: true });
+        expect(draftLink?.link).toBeDefined();
+    });
+
+    describe('reactive assessment availability', () => {
         it('should set newManualResultAllowed for non-exam exercise', () => {
             fixture.componentRef.setInput('exercise', { ...exercise, assessmentType: 'SEMI_AUTOMATIC' } as any);
 
-            comp.ngOnInit();
-
-            expect(comp.examMode).toBe(false);
-            expect(comp.correctionRoundIndices()).toEqual([0]);
+            expect(comp['examMode']()).toBe(false);
+            expect(comp['correctionRoundIndices']()).toEqual([0]);
         });
 
         it('should set examMode to true for exam exercise', () => {
@@ -137,10 +197,8 @@ describe('ManageAssessmentButtonsComponent', () => {
             } as Exercise;
             fixture.componentRef.setInput('exercise', examExercise);
 
-            comp.ngOnInit();
-
-            expect(comp.examMode).toBe(true);
-            expect(comp.correctionRoundIndices()).toEqual([0, 1]);
+            expect(comp['examMode']()).toBe(true);
+            expect(comp['correctionRoundIndices']()).toEqual([0, 1]);
         });
 
         it('should disable manual results for practice mode (testRun)', () => {
@@ -156,18 +214,89 @@ describe('ManageAssessmentButtonsComponent', () => {
                 assessmentType: 'SEMI_AUTOMATIC',
             } as any);
 
-            comp.ngOnInit();
-
             // Practice mode (testRun) should disable manual results for non-exam mode
-            expect(comp.newManualResultAllowed()).toBe(false);
+            expect(comp['newManualResultAllowed']()).toBe(false);
         });
+    });
+
+    it('updates the assessment link when a row changes and disables it while assessment is unavailable', () => {
+        fixture.detectChanges();
+        let link: HTMLAnchorElement = fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]');
+        expect(link.getAttribute('href')).toBe('/course-management/1/programming-exercises/1/submissions/20/assessment?correction-round=0');
+        fixture.componentRef.setInput('participation', { id: 11, submissions: [{ id: 21, results: [] }] });
+        fixture.detectChanges();
+        link = fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]');
+        expect(link.getAttribute('href')).toBe('/course-management/1/programming-exercises/1/submissions/21/assessment?correction-round=0');
+        fixture.componentRef.setInput('disabled', true);
+        fixture.detectChanges();
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+        link.dispatchEvent(event);
+        expect(event.defaultPrevented).toBe(true);
+        expect(link.getAttribute('aria-disabled')).toBe('true');
+        expect(link.getAttribute('tabindex')).toBe('-1');
+    });
+
+    it('only renders enabled correction rounds and preserves the test-run query parameter', () => {
+        fixture.componentRef.setInput('exercise', { ...exercise, exerciseGroup: { id: 4, exam: { id: 3, numberOfCorrectionRoundsInExam: 2 } } });
+        fixture.componentRef.setInput('participation', {
+            id: 11,
+            submissions: [{ id: 21, results: [{ id: 31, correctionRound: 0, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() }] }],
+        });
+        fixture.componentRef.setInput('correctionRoundsEnabled', 1);
+        fixture.componentRef.setInput('isTestRun', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="manage-assessment-link"]')).toHaveLength(1);
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]').getAttribute('href')).toContain('testRun=true');
+        fixture.componentRef.setInput('correctionRoundsEnabled', 2);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="manage-assessment-link"]')).toHaveLength(2);
+    });
+
+    it.each([ExerciseType.TEXT, ExerciseType.MODELING])('uses submission routes for tutors and named results for instructors in exam %s assessments', (type) => {
+        fixture.componentRef.setInput('participation', { id: 11, submissions: [{ id: 21, results: [{ id: 31, correctionRound: 0, assessmentType: AssessmentType.MANUAL }] }] });
+        const examExercise = { ...exercise, type, exerciseGroup: { id: 4, exam: { id: 3 } }, isAtLeastInstructor: false };
+        fixture.componentRef.setInput('exercise', examExercise);
+        fixture.detectChanges();
+        let link = fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]');
+        expect(link.getAttribute('href')).toContain('/submissions/21/assessment?correction-round=0');
+        expect(link.getAttribute('data-assessment-action')).toBe('continue');
+        fixture.componentRef.setInput('participation', {
+            id: 11,
+            submissions: [{ id: 21, results: [{ id: 31, correctionRound: 0, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() }] }],
+        });
+        fixture.detectChanges();
+        link = fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]');
+        expect(link.getAttribute('href')).toContain('/submissions/21/assessment?correction-round=0');
+        expect(link.getAttribute('data-assessment-action')).toBe('open');
+        fixture.componentRef.setInput('exercise', { ...examExercise, isAtLeastInstructor: true });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]').getAttribute('href')).toContain('/submissions/21/assessments/31?correction-round=0');
+    });
+
+    it('hides ineligible new corrections while allowing existing results to reopen', () => {
+        fixture.componentRef.setInput('exercise', { ...exercise, exerciseGroup: { id: 4, exam: { id: 3, numberOfCorrectionRoundsInExam: 2 } } });
+        fixture.componentRef.setInput('participation', {
+            id: 11,
+            submissions: [{ id: 21, results: [{ id: 31, correctionRound: 0, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() }] }],
+        });
+        fixture.componentRef.setInput('assessableCorrectionRounds', []);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="manage-assessment-link"]')).toHaveLength(1);
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]').getAttribute('data-assessment-action')).toBe('open');
+        fixture.componentRef.setInput('assessableCorrectionRounds', [1]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="manage-assessment-link"]')).toHaveLength(2);
+        fixture.componentRef.setInput('participation', { id: 12, submissions: [{ id: 22, results: [] }] });
+        fixture.componentRef.setInput('assessableCorrectionRounds', []);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]')).toBeNull();
     });
 
     describe('getAssessmentLink', () => {
         it('should return undefined when exercise type is missing', () => {
             fixture.componentRef.setInput('exercise', { id: 1 } as Exercise);
 
-            const result = comp.getAssessmentLink();
+            const result = comp['assessmentLinks']()[0]?.link;
 
             expect(result).toBeUndefined();
         });
@@ -175,7 +304,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         it('should return undefined when submission id is missing', () => {
             fixture.componentRef.setInput('participation', { id: 1, submissions: [] } as Participation);
 
-            const result = comp.getAssessmentLink();
+            const result = comp['assessmentLinks']()[0]?.link;
 
             expect(result).toBeUndefined();
         });
@@ -187,7 +316,7 @@ describe('ManageAssessmentButtonsComponent', () => {
                 submissions: [{ id: 1, results: [{ id: 1, correctionRound: 0 }] } as Submission],
             } as Participation);
 
-            const result = comp.getAssessmentLink();
+            const result = comp['assessmentLinks']()[0]?.link;
 
             expect(result).toBeDefined();
         });
@@ -197,7 +326,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         it('should return correctionRound when no result exists', () => {
             fixture.componentRef.setInput('participation', { id: 1, submissions: [{ id: 1, results: [] } as Submission] } as Participation);
 
-            const result = comp.getCorrectionRoundForAssessmentLink(0);
+            const result = comp['assessmentLinks']()[0]?.targetRound;
 
             expect(result).toBe(0);
         });
@@ -213,7 +342,7 @@ describe('ManageAssessmentButtonsComponent', () => {
                 ],
             } as Participation);
 
-            const result = comp.getCorrectionRoundForAssessmentLink(0);
+            const result = comp['assessmentLinks']()[0]?.targetRound;
 
             expect(result).toBe(1);
         });
@@ -224,7 +353,7 @@ describe('ManageAssessmentButtonsComponent', () => {
                 submissions: [{ id: 1, results: [{ id: 1, correctionRound: 0, hasComplaint: false } as Result] } as Submission],
             } as Participation);
 
-            const result = comp.getCorrectionRoundForAssessmentLink(0);
+            const result = comp['assessmentLinks']()[0]?.targetRound;
 
             expect(result).toBe(0);
         });
@@ -239,13 +368,28 @@ describe('ManageAssessmentButtonsComponent', () => {
             vi.restoreAllMocks();
         });
 
+        it.each([
+            [AssessmentType.MANUAL, false, undefined],
+            [AssessmentType.MANUAL, true, 'open'],
+            [AssessmentType.AUTOMATIC, false, 'assess'],
+        ])('protects other exam assessments while permitting new assessments: %s %s', (assessmentType, isAtLeastInstructor, expectedAction) => {
+            fixture.componentRef.setInput('exercise', { ...exercise, isAtLeastInstructor, exerciseGroup: { id: 2, exam: { numberOfCorrectionRoundsInExam: 1 } } });
+            fixture.componentRef.setInput('participation', {
+                id: 22,
+                submissions: [{ id: 33, results: [{ id: 44, correctionRound: 0, assessmentType, completionDate: dayjs() }] }],
+            });
+            fixture.componentRef.setInput('ownedCorrectionRounds', []);
+            fixture.componentRef.setInput('assessableCorrectionRounds', [0]);
+            expect(comp['assessmentLinks']().map((link) => link.action)).toEqual(expectedAction ? [expectedAction] : []);
+        });
+
         it('should cancel programming assessment', () => {
             const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             const refreshSpy = vi.spyOn(comp.refresh, 'emit');
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.PROGRAMMING } as Exercise);
             const result = { id: 30, submission: { id: 20 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation());
+            comp['cancelAssessment'](result, comp.participation());
 
             expect(cancelSpy).toHaveBeenCalledWith(20, 30);
             expect(refreshSpy).toHaveBeenCalled();
@@ -257,7 +401,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.MODELING } as Exercise);
             const result = { id: 30, submission: { id: 20 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation());
+            comp['cancelAssessment'](result, comp.participation());
 
             expect(cancelSpy).toHaveBeenCalledWith(20, 30);
             expect(refreshSpy).toHaveBeenCalled();
@@ -269,7 +413,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT } as Exercise);
             const result = { id: 30, submission: { id: 20 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation());
+            comp['cancelAssessment'](result, comp.participation());
 
             expect(cancelSpy).toHaveBeenCalledWith(10, 20, 30);
             expect(refreshSpy).toHaveBeenCalled();
@@ -281,7 +425,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.FILE_UPLOAD } as Exercise);
             const result = { id: 30, submission: { id: 20 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation());
+            comp['cancelAssessment'](result, comp.participation());
 
             expect(cancelSpy).toHaveBeenCalledWith(20, 30);
             expect(refreshSpy).toHaveBeenCalled();
@@ -298,7 +442,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             // Exactly the shape ParticipationComponent#toParticipation produces: no `submission` on the result.
             const dtoShapedResult = { id: 30 } as Result;
 
-            comp.cancelAssessment(dtoShapedResult, comp.participation());
+            comp['cancelAssessment'](dtoShapedResult, comp.participation());
 
             expect(cancelSpy).toHaveBeenCalledWith(10, 20, 30);
         });
@@ -308,7 +452,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment');
             const result = { id: 30, submission: { id: 20 } } as Result;
 
-            comp.cancelAssessment(result, comp.participation());
+            comp['cancelAssessment'](result, comp.participation());
 
             expect(cancelSpy).not.toHaveBeenCalled();
         });
@@ -320,7 +464,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             fixture.componentRef.setInput('participation', { id: 10, submissions: [] } as Participation);
             const result = { id: 30 } as Result;
 
-            comp.cancelAssessment(result, comp.participation());
+            comp['cancelAssessment'](result, comp.participation());
 
             expect(cancelSpy).not.toHaveBeenCalled();
         });

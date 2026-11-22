@@ -39,15 +39,12 @@ public class PlagiarismAnswerPostService extends PostingService {
 
     private final PostRepository postRepository;
 
-    private final PlagiarismPostService plagiarismPostService;
-
     protected PlagiarismAnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, WebsocketMessagingService websocketMessagingService,
-            ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository, PlagiarismPostService plagiarismPostService) {
+            ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
-        this.plagiarismPostService = plagiarismPostService;
     }
 
     /**
@@ -64,7 +61,6 @@ public class PlagiarismAnswerPostService extends PostingService {
         final Course course = courseRepository.findByIdElseThrow(courseId);
 
         Post post = postRepository.findPostByIdElseThrow(request.post().id());
-        checkPostBelongsToPlagiarismCaseOfCourseElseThrow(post, user, course);
         parseUserMentions(course, request.content());
 
         AnswerPost answerPost = new AnswerPost();
@@ -105,7 +101,6 @@ public class PlagiarismAnswerPostService extends PostingService {
         AnswerPost existingAnswerPost = this.findById(answerPostId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        checkPostBelongsToPlagiarismCaseOfCourseElseThrow(existingAnswerPost.getPost(), user, course);
         parseUserMentions(course, request.content());
 
         // Authorization model preserves the pre-refactor contract:
@@ -171,7 +166,6 @@ public class PlagiarismAnswerPostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         AnswerPost answerPost = this.findById(answerPostId);
         Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
-        checkPostBelongsToPlagiarismCaseOfCourseElseThrow(post, user, course);
 
         mayUpdateOrDeleteAnswerPostElseThrow(answerPost, user);
 
@@ -187,18 +181,6 @@ public class PlagiarismAnswerPostService extends PostingService {
         answerPostRepository.deleteById(answerPostId);
         preparePostForBroadcast(post);
         broadcastForPost(post, CommunicationCrudAction.UPDATE, course.getId(), null);
-    }
-
-    /**
-     * Validates that the parent post belongs to a plagiarism case of the course from the request path and
-     * that the user is allowed to use the posts of this case.
-     *
-     * @param post   the parent post of the answer post
-     * @param user   the requesting user
-     * @param course the course from the request path
-     */
-    private void checkPostBelongsToPlagiarismCaseOfCourseElseThrow(Post post, User user, Course course) {
-        plagiarismPostService.checkUserMayInteractWithPostElseThrow(user, post, course);
     }
 
     /**

@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
-import de.tum.cit.aet.artemis.exam.domain.event.ExamWideAnnouncementEvent;
 
 /**
  * Spring Data JPA repository for the ExamLiveEvent entity.
@@ -22,13 +21,6 @@ import de.tum.cit.aet.artemis.exam.domain.event.ExamWideAnnouncementEvent;
 @Lazy
 @Repository
 public interface ExamLiveEventRepository extends ArtemisJpaRepository<ExamLiveEvent, Long> {
-
-    @Query("""
-            SELECT COUNT(event)
-            FROM ExamLiveEvent event
-            WHERE event.examId = :examId
-            """)
-    long countByExamId(@Param("examId") long examId);
 
     /**
      * Find all events for the given student exam plus all global events for the exam in reverse creation order.
@@ -45,19 +37,6 @@ public interface ExamLiveEventRepository extends ArtemisJpaRepository<ExamLiveEv
             ORDER BY event.id DESC
             """)
     List<ExamLiveEvent> findAllByStudentExamIdOrGlobalByExamId(@Param("examId") Long examId, @Param("studentExamId") Long studentExamId);
-
-    /**
-     * Returns only exam-wide announcements, newest first, including announcements from past exams.
-     *
-     * @param examId the exam
-     * @return the announcements
-     */
-    @Query("""
-            SELECT event FROM ExamWideAnnouncementEvent event
-            WHERE event.examId = :examId AND event.studentExamId IS NULL
-            ORDER BY event.createdDate DESC, event.id DESC
-            """)
-    List<ExamWideAnnouncementEvent> findAnnouncementsByExamId(@Param("examId") long examId);
 
     /**
      * Delete all events for the given exam.

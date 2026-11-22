@@ -32,8 +32,8 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -75,7 +75,7 @@ class AuxiliaryRepositoryResourceTest {
     private RepositoryAccessService repositoryAccessService;
 
     @Mock
-    private LocalVCPushProcessingService localVCPushProcessingService;
+    private LocalVCServletService localVCServletService;
 
     @Mock
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
@@ -95,7 +95,7 @@ class AuxiliaryRepositoryResourceTest {
     @BeforeEach
     void setUp() {
         auxiliaryRepositoryResource = new AuxiliaryRepositoryResource(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository,
-                repositoryAccessService, Optional.of(localVCPushProcessingService), auxiliaryRepositoryRepository,
+                repositoryAccessService, Optional.of(localVCServletService), auxiliaryRepositoryRepository,
                 org.mockito.Mockito.mock(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService.class));
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setId(7L);
@@ -284,7 +284,7 @@ class AuxiliaryRepositoryResourceTest {
         var response = auxiliaryRepositoryResource.commitChanges(AUXILIARY_REPOSITORY_ID);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(localVCPushProcessingService).processNewPush(eq(null), eq(repository), eq(user), any(), any(), eq(Optional.empty()), eq("commit-hash"));
+        verify(localVCServletService).processNewPush(eq(null), eq(repository), eq(user), any(), any(), eq(Optional.empty()), eq("commit-hash"));
     }
 
     @Test

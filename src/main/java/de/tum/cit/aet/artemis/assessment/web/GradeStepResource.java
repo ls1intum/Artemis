@@ -126,7 +126,7 @@ public class GradeStepResource {
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
-        if (!exam.isTestExam() && !exam.resultsPublished()) {
+        if (!exam.resultsPublished()) {
             throw new AccessForbiddenException();
         }
         GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, exam.getExamMaxPoints(), exam.getTitle());

@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SavedSubmission;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionAssessmentEligibilityService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
@@ -61,10 +62,10 @@ public class ModelingSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository,
             ExerciseDateService exerciseDateService, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
             Optional<AthenaApi> athenaSubmissionSelectionService, TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository,
-            TeamRepository teamRepository) {
+            SubmissionAssessmentEligibilityService assessmentEligibilityService, TeamRepository teamRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
                 exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService, testCaseFeedbackRepository,
-                scaFeedbackRepository, teamRepository);
+                scaFeedbackRepository, assessmentEligibilityService, teamRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
         this.exerciseDateService = exerciseDateService;
@@ -81,11 +82,6 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise, int correctionRound) {
         var submission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
-
-        var latestResult = submission.getLatestResult();
-        if (latestResult == null || latestResult.getAssessor() == null) {
-            checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
-        }
 
         lockSubmission(submission, correctionRound);
         return submission;

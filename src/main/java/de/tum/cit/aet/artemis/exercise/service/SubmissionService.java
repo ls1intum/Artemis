@@ -76,7 +76,9 @@ public class SubmissionService {
 
     private static final String ENTITY_NAME = "submission";
 
-    protected final ExerciseDateService exerciseDateService;
+    private final ExerciseDateService exerciseDateService;
+
+    protected final SubmissionAssessmentEligibilityService assessmentEligibilityService;
 
     private final TeamRepository teamRepository;
 
@@ -110,7 +112,7 @@ public class SubmissionService {
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, ParticipationRepository participationRepository,
             ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository, TeamRepository teamRepository) {
+            ScaFeedbackRepository scaFeedbackRepository, SubmissionAssessmentEligibilityService assessmentEligibilityService, TeamRepository teamRepository) {
         this.teamRepository = teamRepository;
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
@@ -126,6 +128,7 @@ public class SubmissionService {
         this.athenaApi = athenaApi;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
+        this.assessmentEligibilityService = assessmentEligibilityService;
     }
 
     /**
@@ -216,30 +219,20 @@ public class SubmissionService {
         final List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
-            // No manual result means that no tutor has started an assessment for the corresponding submission yet.
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exercise.getId(),
                     correctionRound);
         }
         else {
             // Get all participations of submissions that are submitted and do not already have a manual result.
-            // No manual result means that no user has started an assessment for the corresponding submission yet.
-            // Does not fetch participations for which the due date has not yet passed.
-            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(exercise.getId(),
-                    ZonedDateTime.now());
+            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsIgnoreTestRuns(exercise.getId());
         }
 
-        var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
-
-        if (correctionRound > 0) {
-            // remove submission if user already assessed first correction round
-            // if disabled, please switch tutorAssessUnique within the tests
-            // TODO: we could move this check into the database call of the if clause above (examMode == true) to avoid fetching all results and assessors
-            final var user = userRepository.getUser();
-            submissionsWithoutResult = submissionsWithoutResult.stream().filter(submission -> {
-                final var resultForCorrectionRound = submission.getResultForCorrectionRound(correctionRound - 1);
-                return resultForCorrectionRound != null && !resultForCorrectionRound.getAssessor().equals(user);
-            }).toList();
+        if (participations.isEmpty()) {
+            return List.of();
         }
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .filter(submission -> assessmentEligibilityService.canStartAssessment(submission, exercise, correctionRound, user)).toList();
 
         if (!examMode && exercise.getDueDate() != null) {
             submissionsWithoutResult = selectOnlySubmissionsBeforeDueDate(submissionsWithoutResult);
@@ -248,17 +241,7 @@ public class SubmissionService {
         return submissionsWithoutResult;
     }
 
-    /**
-     * Given an exercise, find the submission to assess using Athena, if enabled.
-     *
-     * @param <S>                 the submission type
-     * @param exercise            the exercise for which we want to retrieve a submission without manual result
-     * @param skipAssessmentQueue skip the Athena assessment queue and return a random submission
-     * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @param correctionRound     the correction round we want our submission to have results for
-     * @param findSubmissionById  method to find a submission by id
-     * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
-     */
+    /** Asks Athena to choose from eligible submissions. */
     public <S extends Submission> Optional<S> getAthenaSubmissionToAssess(Exercise exercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound,
             Function<Long, Optional<S>> findSubmissionById) {
         if (exercise.areFeedbackSuggestionsEnabled() && athenaApi.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
@@ -278,17 +261,7 @@ public class SubmissionService {
         return Optional.empty();
     }
 
-    /**
-     * Given an exercise, find a submission to assess using Athena (or alternatively randomly).
-     *
-     * @param <S>                 the submission type
-     * @param exercise            the exercise for which we want to retrieve a submission without manual result
-     * @param skipAssessmentQueue skip the Athena assessment queue and return a random submission
-     * @param correctionRound     the correction round we want our submission to have results for
-     * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @param findSubmissionById  method to find a submission by id
-     * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
-     */
+    /** Selects an eligible submission randomly. */
     public <S extends Submission> Optional<S> getRandomAssessableSubmission(Exercise exercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound,
             Function<Long, Optional<S>> findSubmissionById) {
         var submissionProposedByAthena = getAthenaSubmissionToAssess(exercise, skipAssessmentQueue, examMode, correctionRound, findSubmissionById);
@@ -300,7 +273,10 @@ public class SubmissionService {
     }
 
     /**
-     * Selects an unclaimed submission, excluding exam test runs and the tutor's own previous-round assessments.
+     * Given an exercise, find a random submission for that exercise which still doesn't have any manual result.
+     * No manual result means that no user has started an assessment for the corresponding submission yet.
+     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
+     * If {@code correctionRound} is bigger than 0, only submissions are shown for which the user has not assessed the first result.
      *
      * @param exercise        the exercise for which we want to retrieve a submission without manual result
      * @param correctionRound the correction round we want our submission to have results for
@@ -313,7 +289,7 @@ public class SubmissionService {
     }
 
     /**
-     * Selects a random submission, if any.
+     * Given a list of submissions, find a random one.
      *
      * @param assessableSubmissions the list of submissions to choose from
      * @return a random submission or an empty Optional if no submission was passed
@@ -323,7 +299,8 @@ public class SubmissionService {
     }
 
     /**
-     * Gets unfinished assessments across the given exercises (used for an exam).
+     * Get all currently locked submissions across the given exercises (used for an exam).
+     * These are all submissions for which users started, but did not yet finish the assessment.
      *
      * @param exerciseIds - the ids of the exam's exercises
      * @param user        - the user trying to access the locked submissions
@@ -338,12 +315,7 @@ public class SubmissionService {
         return submissions;
     }
 
-    /**
-     * Removes sensitive submission details according to the user's role. Call outside a transaction to avoid persisting removals.
-     *
-     * @param submission Submission to be modified.
-     * @param user       the currently logged-in user which is used for hiding specific submission details based on instructor and teaching assistant rights
-     */
+    /** Removes sensitive details outside a transaction to avoid persisting the removals. */
     public void hideDetails(Submission submission, User user) {
         // do not send old submissions or old results to the client
         if (submission.getParticipation() != null) {
@@ -428,12 +400,16 @@ public class SubmissionService {
         if (oldResult == null || oldResult.getId() == null) {
             return;
         }
-        // Fetch messages eagerly so copied feedback can be synthesized without lazy-loading failures.
+        // fetch the shared message rows eagerly: the copies keep the message reference, and the new result
+        // may be synthesized for serialization right away (e.g. exam test-run drafts) - a lazy proxy would
+        // fail there with a LazyInitializationException
         testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyTestCaseFeedback)
                 .forEach(newResult::addTestCaseFeedback);
         scaFeedbackRepository.findWithMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyScaFeedback).forEach(newResult::addScaFeedback);
 
-        // Persist copies now for their synthesized IDs; retain the managed collection wrappers.
+        // Insert the copies right away when the target result already exists: a synthesized legacy view is addressed by the id of the row it comes from, so every caller that
+        // serializes the new result afterwards needs those ids. The rows are new, so this persists them in place - the ids land on these very instances and the eagerly
+        // fetched test cases and messages above survive, both of which a merge copy would lose. A result that is not persisted yet gets its rows through the caller's save.
         if (newResult.getId() != null) {
             var savedTestCases = testCaseFeedbackRepository.saveAll(newResult.getTestCaseFeedbacks());
             newResult.getTestCaseFeedbacks().clear();
@@ -462,7 +438,9 @@ public class SubmissionService {
     }
 
     /**
-     * Copies the previous correction round, retaining its work for editing in the new round.
+     * This method is used to create a copy of a result, used in the exam mode with correctionRound > 1,
+     * because an assessment with current correctionRound > 1 contains all previous work,
+     * which the tutor can then edit. Assigns the newly created Result to the submission
      *
      * @param submission submission to which the new Result is assigned
      * @param oldResult  result to copy from
@@ -536,7 +514,8 @@ public class SubmissionService {
     }
 
     /**
-     * Saves and associates a result; the submission's results must be loaded.
+     * used to assign and save results to submissions
+     * Make sure submission.results is loaded
      *
      * @param submission the parent submission of the result
      * @param result     the result which we want to save and order
@@ -659,14 +638,7 @@ public class SubmissionService {
         }
     }
 
-    /**
-     * Creates or reuses an assessment for the requested round. Completed team results are returned unchanged.
-     *
-     * @param submission      the submission to lock
-     * @param correctionRound the correction round to lock the submission for, must not be negative
-     * @return the locked result
-     * @throws BadRequestAlertException if the correction round is negative
-     */
+    /** Creates or reopens an assessment for the requested correction round. */
     protected Result lockSubmission(Submission submission, int correctionRound) {
         return withTeamAssessmentLock(submission, correctionRound, () -> claimSubmission(submission, correctionRound));
     }
@@ -676,7 +648,7 @@ public class SubmissionService {
         if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation && !participation.isTestRun()
                 && participation.getTeam().isPresent()) {
             return teamRepository.withAssessmentLock(participation.getTeam().get(), () -> {
-                var results = resultRepository.findTeamAssessmentResultsForRound(participation.getId(), correctionRound);
+                var results = teamRepository.findTeamAssessmentResultsForRound(participation.getId(), correctionRound);
                 // Replace detached snapshots, including results deleted while this request waited for the lock.
                 submission.getResults().removeIf(result -> Objects.equals(result.getCorrectionRound(), correctionRound) && !result.isAutomatic() && !result.isAthenaBased());
                 results.stream().filter(result -> result.getSubmission().getId().equals(submission.getId())).forEach(submission::addResult);
@@ -689,16 +661,22 @@ public class SubmissionService {
         return assessment.get();
     }
 
-    /** Creates or reuses the result after authorization, under the team lock when applicable. */
+    /** Checks ownership without applying eligibility rules for new drafts. */
+    public void checkTeamAssessmentAccessElseThrow(Submission submission) {
+        if (submission.getParticipation().getExercise().isTeamMode()) {
+            assessmentEligibilityService.checkTeamAssessmentAccessElseThrow(submission, userRepository.getUserWithAuthorities());
+        }
+    }
+
     private Result claimSubmission(Submission submission, int correctionRound) {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
-        authCheckService.checkTeamAssessmentAccessElseThrow(submission);
+        checkTeamAssessmentAccessElseThrow(submission);
         Result result = submission.getResultForCorrectionRound(correctionRound);
         if (submission.getParticipation().getExercise().isTeamMode() && result != null && result.getCompletionDate() != null) {
             return result;
         }
-        if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
-                && participation.getTeam().isPresent() && (result == null || result.getCompletionDate() == null && result.getAssessor() == null)) {
+        if (result == null || result.getAssessor() == null) {
+            assessmentEligibilityService.checkCanStartAssessmentElseThrow(submission, correctionRound);
             checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
         }
         if (result == null && correctionRound > 0) {
@@ -713,10 +691,15 @@ public class SubmissionService {
             result.setAssessor(userRepository.getUser());
         }
 
-        // The requested correction round takes precedence over the round derived by Submission.addResult.
+        // The round this result belongs to is stored on the result itself. This is the one place where a manual result
+        // for a correction round is created or claimed, and the round the tutor asked for takes precedence over the one
+        // Submission.addResult would derive.
         result.setCorrectionRound(correctionRound);
         result.setAssessmentType(AssessmentType.MANUAL);
-        // Return the instance already held by the submission to avoid stale copies and lazy merge proxies.
+        // Deliberately keep (and return) the object the submission's result set already holds instead of the
+        // merge result: the set ignores re-adding an equal copy, so a caller that adds the returned result back
+        // would keep the stale instance. Returning the original also avoids the assessor (and every other
+        // association) turning into an uninitialized proxy, which the merge result does.
         resultRepository.save(result);
         return result;
     }
@@ -741,7 +724,8 @@ public class SubmissionService {
     }
 
     /**
-     * Prefers on-time submissions when available; otherwise returns the original list.
+     * Filters the submissions to contain only in-time submissions if there are any.
+     * If not, the original list is returned.
      *
      * @param submissions The submissions to filter
      * @param <T>         Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
@@ -769,7 +753,8 @@ public class SubmissionService {
     }
 
     /**
-     * Checks if the exercise due date has passed. For exam exercises it checks if the latest possible exam end date has passed.
+     * Checks if the exercise due date has passed, except for instructors assessing course exercises early.
+     * For exam exercises it checks if the latest possible exam end date has passed.
      *
      * @param exercise course exercise or exam exercise that is checked
      */
@@ -783,13 +768,14 @@ public class SubmissionService {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
             if (exercise instanceof ProgrammingExercise programmingExercise) {
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                        && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
+                        && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())
+                        && !authCheckService.isAtLeastInstructorForExercise(exercise)) {
                     log.debug("The due date to build and test of exercise '{}' has not been reached yet.", exercise.getTitle());
                     throw new AccessForbiddenException("The due date to build and test of exercise '" + exercise.getTitle() + "' has not been reached yet.");
                 }
             }
 
-            if (exerciseDateService.isBeforeEarliestDueDate(exercise).orElse(false)) {
+            if (exerciseDateService.isBeforeEarliestDueDate(exercise).orElse(false) && !authCheckService.isAtLeastInstructorForExercise(exercise)) {
                 log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }
@@ -811,7 +797,9 @@ public class SubmissionService {
     }
 
     /**
-     * Validates the requested round, also allowing existing manual results beyond configured rounds, such as complaint responses.
+     * Like {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}, but for an endpoint that opens one specific submission. Such a
+     * submission may already hold a result for a round beyond the exercise's number of correction rounds: the response to a complaint
+     * is stored as an additional manual result with the next round. Opening that existing result is valid and creates nothing.
      *
      * @param exercise        the exercise the submission belongs to
      * @param submissionId    the id of the submission that is opened
@@ -871,13 +859,14 @@ public class SubmissionService {
     }
 
     /**
-     * Returns each participation's latest submission with results; {@code submittedOnly} skips unsubmitted latest entries.
+     * Given an exerciseId, returns all the submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
+     * submissions
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
      * @param examMode      - set flag to ignore exam test run submissions
      * @param <T>           the submission type
-     * @return the latest submissions for the given exercise
+     * @return a list of modeling submissions for the given exercise id
      */
     public <T extends Submission> List<T> getAllSubmissionsForExercise(Long exerciseId, boolean submittedOnly, boolean examMode) {
         Collection<StudentParticipation> participations;

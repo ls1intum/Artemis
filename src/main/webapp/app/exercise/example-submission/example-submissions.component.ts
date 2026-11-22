@@ -1,12 +1,5 @@
 import { TranslateService } from '@ngx-translate/core';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiDialogRef,
-    TumAetUiDialogService,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiDialogRef, TumAetUiDialogService, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -19,7 +12,7 @@ import { ExampleSubmissionImportComponent } from 'app/exercise/example-submissio
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { faExclamationTriangle, faPlus, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faFont, faPlus, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultComponent } from '../result/result.component';
@@ -33,7 +26,6 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
         TumAetUiTooltipDirective,
         TumAetUiButtonDirective,
         TumAetUiTableDirective,
-        TumAetUiTableLayoutComponent,
         TranslateDirective,
         RouterLink,
         FaIconComponent,
@@ -60,6 +52,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     // Icons
     faPlus = faPlus;
     faTrash = faTrash;
+    faFont = faFont;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
 

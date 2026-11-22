@@ -23,9 +23,9 @@ import {
     TumAetUiCheckboxComponent,
     TumAetUiInputDirective,
     TumAetUiPaginatorComponent,
+    TumAetUiProgressSpinnerComponent,
     TumAetUiRadioButtonComponent,
     TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -53,7 +53,7 @@ export interface ColumnDef<T> {
     sort?: boolean;
     filter?: boolean;
     filterType?: string;
-    /** Pin this column so it stays visible while the table scrolls horizontally. The body of every table scrolls inside its frame. */
+    /** Pin this column so it stays visible while the table scrolls horizontally. Requires `scrollable: true` in the table options. */
     frozen?: boolean;
     /** Which side the frozen column sticks to. Only used when `frozen` is true. Default: 'left'. */
     alignFrozen?: 'left' | 'right';
@@ -108,9 +108,11 @@ export interface TableConfig {
     searchPlaceholder: string;
     /** Translation key for the message shown when the table has no rows. Default: 'artemisApp.dataTable.search.noResults' */
     emptyMessageTranslation: string;
-    /** Take the height of a flex-column parent instead of sizing to the rows (up to the free viewport height). Default: false */
-    fill: boolean;
-    /** Freeze the implicit row-actions column to the right edge. Default: false. */
+    /** Enable scrollable mode with fixed headers. Default: false */
+    scrollable: boolean;
+    /** Height of the scrollable data viewport. Only applies when scrollable is true. Accepts any CSS length value (e.g. '65vh', '400px'). Default: undefined */
+    scrollHeight: string | undefined;
+    /** Freeze the implicit row-actions column to the right edge. Requires `scrollable: true`. Default: false. */
     rowActionsFrozen: boolean;
     /** Logical alignment for the row-action cell. Default: end. */
     rowActionsAlignment: 'start' | 'end';
@@ -148,7 +150,8 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     showSearch: true,
     searchPlaceholder: 'artemisApp.course.exercise.search.searchPlaceholder',
     emptyMessageTranslation: 'artemisApp.dataTable.search.noResults',
-    fill: false,
+    scrollable: false,
+    scrollHeight: undefined,
     rowActionsFrozen: false,
     rowActionsAlignment: 'end',
     globalFilterFields: undefined,
@@ -167,7 +170,7 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
         TumAetUiCheckboxComponent,
         TumAetUiRadioButtonComponent,
         TumAetUiPaginatorComponent,
-        TumAetUiTableLayoutComponent,
+        TumAetUiProgressSpinnerComponent,
         TumAetUiInputDirective,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -175,10 +178,10 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
         TumAetUiTooltipDirective,
         FaIconComponent,
     ],
-    host: { '[class.jhi-table-view-fill]': 'resolvedOptions().fill' },
     templateUrl: './table-view.html',
     styleUrl: './table-view.scss',
     encapsulation: ViewEncapsulation.None,
+    host: { '[class.jhi-table-flex-scroll]': 'isFlexScroll()' },
 })
 export class TableViewComponent<T> {
     private static readonly SEARCH_DEBOUNCE_MS = 300;
@@ -312,7 +315,8 @@ export class TableViewComponent<T> {
             showSearch: opts.showSearch ?? DEFAULT_TABLE_CONFIG.showSearch,
             searchPlaceholder: opts.searchPlaceholder ?? DEFAULT_TABLE_CONFIG.searchPlaceholder,
             emptyMessageTranslation: opts.emptyMessageTranslation ?? DEFAULT_TABLE_CONFIG.emptyMessageTranslation,
-            fill: opts.fill ?? DEFAULT_TABLE_CONFIG.fill,
+            scrollable: opts.scrollable ?? DEFAULT_TABLE_CONFIG.scrollable,
+            scrollHeight: opts.scrollHeight ?? DEFAULT_TABLE_CONFIG.scrollHeight,
             rowActionsFrozen: opts.rowActionsFrozen ?? DEFAULT_TABLE_CONFIG.rowActionsFrozen,
             rowActionsAlignment: opts.rowActionsAlignment ?? DEFAULT_TABLE_CONFIG.rowActionsAlignment,
             globalFilterFields: opts.globalFilterFields ?? DEFAULT_TABLE_CONFIG.globalFilterFields,
@@ -336,6 +340,9 @@ export class TableViewComponent<T> {
     protected readonly effectiveTotalRows = computed(() => (this.resolvedOptions().lazy ? (this.totalRows() ?? this.vals().length) : this.filteredValues().length));
 
     protected readonly showCaption = computed(() => this.resolvedOptions().showSearch || !!this.tableActions());
+    protected readonly isFlexScroll = computed(() => this.resolvedOptions().scrollable && this.resolvedOptions().scrollHeight === 'flex');
+
+    protected readonly emptyMessageColSpan = computed(() => this.cols().length + (this.rowActions() ? 1 : 0) + (this.resolvedOptions().selectionMode ? 1 : 0));
 
     /** Uses the caller-set pageSize until the user changes it via the paginator. */
     protected readonly effectivePageSize = computed(() => this.currentPageSizeOverride() ?? this.resolvedOptions().pageSize);

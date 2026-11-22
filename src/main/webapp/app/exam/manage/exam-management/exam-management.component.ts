@@ -20,7 +20,6 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
-import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/entities/exam-deleted-event.model';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -48,7 +47,6 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView {
 
     private routerSubscription?: Subscription;
     private eventSubscriber?: Subscription;
-    private deletionSubscriber?: Subscription;
 
     readonly documentationType: DocumentationType = 'Exams';
 
@@ -94,9 +92,6 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView {
         if (this.eventSubscriber !== undefined) {
             this.eventManager.destroy(this.eventSubscriber);
         }
-        if (this.deletionSubscriber !== undefined) {
-            this.eventManager.destroy(this.deletionSubscriber);
-        }
         this.routerSubscription?.unsubscribe();
     }
 
@@ -131,27 +126,11 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView {
     }
 
     /**
-     * Subscribes to 'examListModification' events, which read the exams from the server again, and to the event of a deleted exam,
-     * which removes that exam right away.
+     * Subscribes to 'examListModification' events
      */
     registerChangeInExams() {
         this.eventSubscriber = this.eventManager.subscribe('examListModification', () => {
             this.loadAllExamsForCourse();
         });
-        this.deletionSubscriber = this.eventManager.subscribe(EXAM_DELETED_EVENT, (event) => {
-            const content = typeof event === 'string' ? undefined : (event.content as ExamDeletedEventContent | undefined);
-            if (content?.examId !== undefined) {
-                this.removeDeletedExam(content.examId);
-            }
-        });
-    }
-
-    /**
-     * Drops a deleted exam from the list without waiting for the server. The list is shared with the overview, which a deletion navigates to
-     * in the same moment: with the exam still in it, the overview would ask for the statistics of an exam that does not exist any more.
-     */
-    private removeDeletedExam(examId: number): void {
-        this.exams.update((exams) => exams?.filter((exam) => exam.id !== examId));
-        this.updateCurrentExam();
     }
 }

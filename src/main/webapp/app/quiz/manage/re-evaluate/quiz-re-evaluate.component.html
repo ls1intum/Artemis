@@ -42,10 +42,7 @@
                         <div class="col-1">
                             <span class="input-group-btn">
                                 <button
-                                    tumAetUiButton
-                                    severity="secondary"
-                                    variant="outlined"
-                                    size="small"
+                                    class="btn btn-outline-secondary"
                                     type="button"
                                     (click)="resetQuizTitle()"
                                     [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuizTitle' | artemisTranslate"
@@ -194,18 +191,14 @@
                         }
                         <button
                             type="button"
-                            tumAetUiButton
-                            severity="danger"
-                            size="small"
+                            class="btn btn-warning"
                             (click)="resetAll()"
                             [disabled]="!pendingChanges() || isSaving()"
                             jhiTranslate="artemisApp.quizExercise.re-evaluate.resetQuiz"
                         ></button>
                         <button
                             type="button"
-                            tumAetUiButton
-                            severity="secondary"
-                            size="small"
+                            class="btn btn-secondary"
                             (click)="back()"
                             jhiTranslate="{{ pendingChanges() ? 'entity.action.cancel' : 'entity.action.back' }}"
                         ></button>
@@ -222,7 +215,7 @@
                         <button
                             tumAetUiButton
                             type="button"
-                            severity="primary"
+                            severity="success"
                             size="small"
                             class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
                             (click)="onSaveClick()"

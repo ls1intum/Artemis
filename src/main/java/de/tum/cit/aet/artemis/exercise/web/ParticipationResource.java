@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NotImplementedAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
@@ -45,8 +44,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
-import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
-import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -93,7 +91,7 @@ public class ParticipationResource {
 
     private final ParticipationAuthorizationService participationAuthorizationService;
 
-    private final Optional<ExamSubmissionApi> examSubmissionApi;
+    private final Optional<StudentExamApi> studentExamApi;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -117,7 +115,7 @@ public class ParticipationResource {
             AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             FeatureToggleService featureToggleService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService, ParticipationAuthorizationService participationAuthorizationService,
-            Optional<ExamSubmissionApi> examSubmissionApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService,
+            Optional<StudentExamApi> studentExamApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService,
             CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.participationService = participationService;
@@ -131,7 +129,7 @@ public class ParticipationResource {
         this.submissionRepository = submissionRepository;
         this.exerciseDateService = exerciseDateService;
         this.participationAuthorizationService = participationAuthorizationService;
-        this.examSubmissionApi = examSubmissionApi;
+        this.studentExamApi = studentExamApi;
         this.moduleFeatureService = moduleFeatureService;
         this.feedbackRequestService = feedbackRequestService;
     }
@@ -252,9 +250,6 @@ public class ParticipationResource {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var participation = programmingExerciseStudentParticipationRepository.findWithTeamStudentsByIdElseThrow(participationId);
-        if (!participation.getExercise().getId().equals(programmingExercise.getId())) {
-            throw new BadRequestAlertException("Participation does not belong to the exercise", ENTITY_NAME, "participationExerciseMismatch");
-        }
         // explicitly set the exercise here to make sure that the templateParticipation and solutionParticipation are initialized in case they should be used again
         participation.setProgrammingExercise(programmingExercise);
         var participant = participation.getParticipant();
@@ -386,25 +381,14 @@ public class ParticipationResource {
         ZonedDateTime exerciseDueDate = exercise.getDueDate();
         // NOTE: course exercises can only have an individual due date when they already have started
         if (exercise.isExamExercise()) {
-            // NOTE: participations of exam exercises are normally prepared before the exam starts. The exam client calls this endpoint whenever the participation of an
-            // exercise was not prepared in advance (e.g. for a late start or a test exam attempt), so the caller has to be the owner of an open student exam that contains the
-            // exercise.
+            // NOTE: this is an absolute edge case because exam participations are generated before the exam starts and should not be started by the user
             exerciseDueDate = exercise.getExam().getEndDate();
-            // One projection answers all questions: whether the exercise is part of the caller's own student exam, whether that exam
-            // was handed in already and the individual end date.
-            var submissionGate = examSubmissionApi.orElseThrow().findSubmissionGateForUser(user, exercise.getExam(), exercise.getId());
-            if (submissionGate.isPresent()) {
-                var gate = submissionGate.get();
-                if (!gate.containsRequestedExercise() || gate.isHandedIn()) {
-                    throw new AccessForbiddenException("The exercise is not part of your open student exam.");
-                }
-                ZonedDateTime individualEndDate = new StudentExamWorkingTimeDTO(gate.workingTime(), gate.startedDate()).individualEndDate(exercise.getExam());
-                if (individualEndDate != null) {
-                    exerciseDueDate = individualEndDate;
-                }
-            }
-            else if (!isExamTestRunOfInstructor(exercise, user)) {
-                throw new AccessForbiddenException("The exercise is not part of your open student exam.");
+            // Only the individual end date is needed here, so read the two values it is computed from instead of the
+            // whole student exam.
+            var workingTime = studentExamApi.orElseThrow().findWorkingTimeByExamIdAndUserId(exercise.getExam().getId(), user.getId());
+            ZonedDateTime individualEndDate = workingTime.map(time -> time.individualEndDate(exercise.getExam())).orElse(null);
+            if (individualEndDate != null) {
+                exerciseDueDate = individualEndDate;
             }
         }
         boolean isDueDateInPast = exerciseDueDate != null && now().isAfter(exerciseDueDate);
@@ -420,16 +404,6 @@ public class ParticipationResource {
             }
         }
 
-    }
-
-    private boolean isExamTestRunOfInstructor(Exercise exercise, User user) {
-        try {
-            return examSubmissionApi.orElseThrow().isAllowedToSubmitDuringExam(exercise, user, false);
-        }
-        catch (EntityNotFoundException e) {
-            // neither a student exam nor a test run exists for this user
-            return false;
-        }
     }
 
     /**

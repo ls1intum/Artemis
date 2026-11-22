@@ -5,7 +5,6 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { createRequestOption } from 'app/foundation/util/request.util';
 import { stringifyCircular } from 'app/foundation/util/utils';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 
@@ -46,38 +45,6 @@ export class ModelingSubmissionService {
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.submissionService.convertResponse(res)));
-    }
-
-    /**
-     * Lists submissions with participant identities; requires instructor access.
-     * @param exerciseId - Id of the exercise
-     * @param req - Request option
-     * @param correctionRound correctionRound for which to get the Submissions
-     */
-    getSubmissions(exerciseId: number, req?: { submittedOnly?: boolean; assessedByMe?: boolean }, correctionRound = 0): Observable<HttpResponse<ModelingSubmission[]>> {
-        return this.getSubmissionList(`${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions`, req, correctionRound);
-    }
-
-    /** Lists the authenticated assessor's submissions with anonymous participants, including for instructors. */
-    getMyAssessedSubmissions(exerciseId: number, correctionRound = 0): Observable<HttpResponse<ModelingSubmission[]>> {
-        return this.getSubmissionList(`${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions/assessed-by-me`, undefined, correctionRound);
-    }
-
-    private getSubmissionList(
-        url: string,
-        req: { submittedOnly?: boolean; assessedByMe?: boolean } | undefined,
-        correctionRound: number,
-    ): Observable<HttpResponse<ModelingSubmission[]>> {
-        let params = createRequestOption(req);
-        if (correctionRound !== 0) {
-            params = params.set('correction-round', correctionRound.toString());
-        }
-        return this.http
-            .get<ModelingSubmission[]>(url, {
-                params,
-                observe: 'response',
-            })
-            .pipe(map((res: HttpResponse<ModelingSubmission[]>) => this.submissionService.convertArrayResponse(res)));
     }
 
     /**

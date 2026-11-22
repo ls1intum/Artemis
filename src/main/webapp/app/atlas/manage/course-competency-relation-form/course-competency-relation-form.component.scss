@@ -2,3 +2,12 @@
     background-color: var(--bs-body-bg);
     border-radius: var(--bs-border-radius-lg);
 }
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.suggestions-scroll-container {
+    max-height: 15rem;
+    overflow-y: auto;
+}

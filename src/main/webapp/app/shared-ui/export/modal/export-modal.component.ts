@@ -1,12 +1,11 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
-import { faBan, faDownload, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { KeyValuePipe } from '@angular/common';
+import { KeyValuePipe, NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -57,7 +56,7 @@ export const isExportDialogCancelledResult = (result: ExportDialogCloseResult): 
         NgbNavLink,
         NgbNavLinkBase,
         NgbNavContent,
-        TumAetUiButtonDirective,
+        NgClass,
         NgbNavOutlet,
         FaIconComponent,
         KeyValuePipe,
@@ -77,7 +76,6 @@ export class ExportModalComponent implements OnInit {
 
     // Icons
     faBan = faBan;
-    readonly faXmark = faXmark;
     faDownload = faDownload;
 
     ngOnInit(): void {

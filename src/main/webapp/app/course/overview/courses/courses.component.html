@@ -51,14 +51,7 @@
             <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="course-search min-w-0" />
             @if (coursesLoaded()) {
                 <div class="course-secondary-action">
-                    <a
-                        [attr.aria-label]="'artemisApp.studentDashboard.enroll.enrollInCourse' | artemisTranslate"
-                        id="course-enrollment"
-                        tumAetUiButton
-                        [severity]="canRequestCourse() || isAdmin() ? 'secondary' : 'primary'"
-                        [routerLink]="['/courses/enroll']"
-                        size="small"
-                    >
+                    <a id="course-enrollment" tumAetUiButton [severity]="canRequestCourse() || isAdmin() ? 'secondary' : 'primary'" [routerLink]="['/courses/enroll']" size="small">
                         <fa-icon [icon]="faDoorOpen" />
                         <span class="hidden md:inline" jhiTranslate="artemisApp.studentDashboard.enroll.enrollInCourse"></span>
                     </a>
@@ -71,14 +64,7 @@
                 </a>
             }
             @if (isAdmin()) {
-                <a
-                    [attr.aria-label]="'artemisApp.course.home.createLabel' | artemisTranslate"
-                    class="course-secondary-action"
-                    tumAetUiButton
-                    id="create-course"
-                    size="small"
-                    [routerLink]="['/course-management/new']"
-                >
+                <a class="course-secondary-action" tumAetUiButton id="create-course" size="small" [routerLink]="['/course-management/new']">
                     <fa-icon [icon]="faPlus" />
                     <span class="hidden md:inline" jhiTranslate="artemisApp.course.home.createLabel"></span>
                 </a>

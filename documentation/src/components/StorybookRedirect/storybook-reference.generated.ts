@@ -32,8 +32,6 @@ export function storybookStoryFromHash(hash: string): string {
             return 'data-display-panel--docs';
         case 'data-display-table':
             return 'data-display-table--docs';
-        case 'data-display-table-layout':
-            return 'data-display-table-layout--docs';
         case 'data-display-tag':
             return 'data-display-tag--docs';
         case 'data-display-virtual-scroll-table':

@@ -1,4 +1,3 @@
-import { tumAetUiButtonClasses } from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnInit, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,7 +20,7 @@ import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-expor
     imports: [DataExportConfirmationDialogComponent],
     host: {
         '(click)': 'onClick($event)',
-        '[class]': 'buttonClasses',
+        class: 'btn btn-primary btn-lg me-1',
         '[attr.type]': '"submit"',
     },
 })
@@ -35,8 +34,6 @@ export class DataExportRequestButtonComponent implements OnInit {
 
     readonly dataExportRequest = output<void>();
     readonly dataExportRequestForAnotherUser = output<string>();
-
-    protected readonly buttonClasses = tumAetUiButtonClasses({ severity: 'secondary', size: 'large', variant: 'solid' });
 
     readonly dialogVisible = signal(false);
     readonly buttonText = signal('');

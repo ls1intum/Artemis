@@ -86,7 +86,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
@@ -173,9 +172,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private CourseTestRepository courseRepository;
-
-    @Autowired
-    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
@@ -619,8 +615,7 @@ public class ProgrammingExerciseIntegrationTestService {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
-        request.delete(path, HttpStatus.ACCEPTED, params);
-        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
+        request.delete(path, HttpStatus.OK, params);
     }
 
     void testProgrammingExerciseDelete_failToDeleteBuildPlan() throws Exception {
@@ -635,9 +630,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        // the deletion is accepted and fails in the background
-        request.delete(path, HttpStatus.ACCEPTED, params);
-        asyncDeletionTestUtilService.awaitExerciseDeletionFailure(programmingExercise.getId());
+        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
 
     void testProgrammingExerciseDelete_buildPlanDoesntExist() throws Exception {
@@ -652,8 +645,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.ACCEPTED, params);
-        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
+        request.delete(path, HttpStatus.OK, params);
     }
 
     void testProgrammingExerciseDelete_failToDeleteCiProject() throws Exception {
@@ -668,9 +660,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, true);
 
-        // the deletion is accepted and fails in the background
-        request.delete(path, HttpStatus.ACCEPTED, params);
-        asyncDeletionTestUtilService.awaitExerciseDeletionFailure(programmingExercise.getId());
+        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
 
     // VCS project deletion uses local VCS in the test environment, so no external call fails.
@@ -687,8 +677,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.ACCEPTED, params);
-        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
+        request.delete(path, HttpStatus.OK, params);
     }
 
     // VCS repository deletion uses local VCS in the test environment, so no external call fails.
@@ -705,8 +694,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.ACCEPTED, params);
-        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
+        request.delete(path, HttpStatus.OK, params);
     }
 
     void testProgrammingExerciseDelete_invalidId_forbidden() throws Exception {

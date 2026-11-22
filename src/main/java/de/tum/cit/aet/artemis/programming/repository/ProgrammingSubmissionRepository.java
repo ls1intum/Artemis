@@ -368,14 +368,4 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             ORDER BY s.submissionDate ASC, s.id ASC
             """)
     List<ProgrammingSubmission> findByParticipationIdOrderBySubmissionDateAsc(@Param("participationId") long participationId);
-
-    /**
-     * Loads the private note when reopening a team draft.
-     *
-     * @param id the submission id
-     * @return the submission, if present
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote" })
-    Optional<ProgrammingSubmission> findTeamAssessmentById(long id);
-
 }

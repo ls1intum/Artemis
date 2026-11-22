@@ -3,7 +3,6 @@ import { ActivatedRoute, RouterLink, RouterOutlet } from '@angular/router';
 import { faPencil } from '@fortawesome/free-solid-svg-icons';
 import { SystemNotification } from 'app/admin/system-notification-management/system-notification.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -16,7 +15,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-system-notification-management-detail',
     templateUrl: './system-notification-management-detail.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, RouterOutlet, TumAetUiButtonDirective, ArtemisDatePipe, AdminTitleBarTitleDirective, ArtemisTranslatePipe],
+    imports: [TranslateDirective, RouterLink, FaIconComponent, RouterOutlet, TumAetUiButtonDirective, ArtemisDatePipe, AdminTitleBarTitleDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemNotificationManagementDetailComponent implements OnInit {

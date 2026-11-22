@@ -63,7 +63,6 @@ model/course-browser-data.ts
 model/course-competency.ts
 model/course-for-quiz-exercise.ts
 model/course-for-search-filter.ts
-model/course-with-id.ts
 model/create-exercise-variant-group.ts
 model/create-or-update-tutorial-group-request.ts
 model/create-or-update-tutorial-group-session-request.ts
@@ -95,7 +94,6 @@ model/drop-location-re-evaluate.ts
 model/drop-location.ts
 model/entity-id-ref.ts
 model/exam-seat.ts
-model/exam-with-id-and-course.ts
 model/exercise-generation-activity.ts
 model/exercise-generation-capabilities.ts
 model/exercise-generation-effort-profile.ts
@@ -116,12 +114,9 @@ model/exercise-generation-status.ts
 model/exercise-generation-usage.ts
 model/exercise-generation-verdict.ts
 model/exercise-generation-wedged-slot.ts
-model/exercise-group-with-id-and-exam.ts
 model/exercise-variant-group-reference.ts
 model/generated-assessment-criterion.ts
 model/generated-assessment-instruction.ts
-model/generated-quiz-answer-option.ts
-model/generated-quiz-question.ts
 model/global-search-result.ts
 model/grading-criterion.ts
 model/grading-instruction.ts
@@ -188,13 +183,8 @@ model/quiz-question-from-editor.ts
 model/quiz-question-generation-request.ts
 model/quiz-question-generation-response.ts
 model/quiz-question-pool-build-start.ts
-model/quiz-question-pool-competency.ts
-model/quiz-question-pool-deletion.ts
 model/quiz-question-pool-item.ts
-model/quiz-question-pool-page.ts
-model/quiz-question-pool-plan.ts
 model/quiz-question-pool-progress.ts
-model/quiz-question-pool-review.ts
 model/quiz-question-re-evaluate.ts
 model/quiz-question-refinement-failure.ts
 model/quiz-question-refinement-request.ts

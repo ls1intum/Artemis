@@ -995,7 +995,7 @@ export async function startAssessing(
     if (isFirstTimeAssessing) {
         await exerciseAssessment.clickHaveReadInstructionsButton();
     }
-    await exerciseAssessment.clickStartNewAssessment();
+    await exerciseAssessment.clickStartNewAssessment(toggleSecondRound ? 2 : 1);
     exerciseAssessment.getLockedMessage();
 }
 

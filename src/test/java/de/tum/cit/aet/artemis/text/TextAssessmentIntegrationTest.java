@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -362,7 +363,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void retrieveParticipationForSubmission_studentHidden() throws Exception {
-        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
+        textExercise.setDueDate(now().minusHours(1));
+        exerciseRepository.save(textExercise);
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
 
         TextParticipationDTO participationWithoutAssessment = request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK,
@@ -371,6 +374,64 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(participationWithoutAssessment).as("participation with submission was found").isNotNull();
         assertThat(participationWithoutAssessment.submissions().getLast().id()).as("participation with correct text submission was found").isEqualTo(textSubmission.getId());
         assertThat(participationWithoutAssessment.student()).as("student of participation is hidden").isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void directAssessmentRejectsUnsubmittedWorkOrAnIndividualExtension(boolean submitted) throws Exception {
+        textExercise.setDueDate(now().minusHours(1));
+        exerciseRepository.save(textExercise);
+        var submission = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("Draft", Language.ENGLISH, submitted),
+                TEST_PREFIX + "student1");
+        if (submitted) {
+            var participation = (StudentParticipation) submission.getParticipation();
+            participation.setIndividualDueDate(now().plusHours(1));
+            studentParticipationRepository.save(participation);
+        }
+        request.get("/api/text/text-submissions/" + submission.getId() + "/for-assessment", HttpStatus.FORBIDDEN, TextParticipationDTO.class);
+        assertThat(resultRepository.findBySubmissionParticipationIdOrderByCompletionDateDesc(submission.getParticipation().getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void directAssessmentEnforcesTheDraftLimitButAllowsReopening() throws Exception {
+        textExercise.setDueDate(now().minusHours(1));
+        exerciseRepository.save(textExercise);
+        TextSubmission existingDraft = null;
+        for (int index = 0; index < 10; index++) {
+            var submission = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("Submitted", Language.ENGLISH, true),
+                    TEST_PREFIX + "student1");
+            participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submission, TEST_PREFIX + "tutor1", List.of());
+            existingDraft = submission;
+        }
+        var nextSubmission = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("Submitted", Language.ENGLISH, true),
+                TEST_PREFIX + "student2");
+        request.get("/api/text/text-submissions/" + nextSubmission.getId() + "/for-assessment", HttpStatus.BAD_REQUEST, TextParticipationDTO.class);
+        assertThat(resultRepository.findBySubmissionParticipationIdOrderByCompletionDateDesc(nextSubmission.getParticipation().getId())).isEmpty();
+        request.get("/api/text/text-submissions/" + existingDraft.getId() + "/for-assessment", HttpStatus.OK, TextParticipationDTO.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "tutor1", "tutor2" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void directSecondCorrectionRequiresADifferentAssessor(String previousAssessor) throws Exception {
+        var exam = ExamFactory.generateExamWithExerciseGroup(course, false);
+        exam.setNumberOfCorrectionRoundsInExam(2);
+        exam.setStartDate(now().minusHours(3));
+        exam.setEndDate(now().minusHours(2));
+        exam.setWorkingTime(3600);
+        exam = examTestRepository.save(exam);
+        var exercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst()));
+        var submission = textExerciseUtilService.saveTextSubmission(exercise, ParticipationFactory.generateTextSubmission("Submitted", Language.ENGLISH, true),
+                TEST_PREFIX + "student1");
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, now().minusMinutes(10), submission, TEST_PREFIX + previousAssessor, List.of());
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("correction-round", "1");
+        request.get("/api/text/text-submissions/" + submission.getId() + "/for-assessment", "tutor1".equals(previousAssessor) ? HttpStatus.FORBIDDEN : HttpStatus.OK,
+                TextParticipationDTO.class, params);
+        assertThat(resultRepository.findBySubmissionParticipationIdOrderByCompletionDateDesc(submission.getParticipation().getId()))
+                .hasSize("tutor1".equals(previousAssessor) ? 1 : 2);
     }
 
     @Test

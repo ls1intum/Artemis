@@ -58,6 +58,10 @@
 
         .initial-lecture-delete-button {
             flex-shrink: 0;
+
+            &:hover {
+                color: var(--danger);
+            }
         }
     }
 
@@ -82,7 +86,9 @@
         }
 
         .draft-action {
-            flex-shrink: 0;
+            background: none;
+            border: none;
+            cursor: pointer;
         }
     }
 
@@ -101,6 +107,10 @@
         align-items: center;
         animation: delayLoading 0s 0.5s forwards;
         opacity: 0;
+    }
+
+    .primary-on-hover:hover {
+        color: var(--primary);
     }
 }
 

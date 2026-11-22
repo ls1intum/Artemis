@@ -58,8 +58,7 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
         const { file, fileName } = attachmentVideoUnitFormData?.fileProperties || {};
 
         const lectureId = this.lectureId();
-        // A unit may start without a file and a video, so its video can be uploaded to TUM.Live once it exists.
-        if (!name || lectureId === undefined) {
+        if (!name || (!(file && fileName) && !videoSource) || lectureId === undefined) {
             return;
         }
 

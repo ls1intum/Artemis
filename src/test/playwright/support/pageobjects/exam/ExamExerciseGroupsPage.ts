@@ -1,5 +1,4 @@
 import { Page, expect } from '@playwright/test';
-import { finishDeletionProgress } from '../DeletionProgressDialog';
 
 export class ExamExerciseGroupsPage {
     private readonly page: Page;
@@ -68,12 +67,7 @@ export class ExamExerciseGroupsPage {
         await expect(deleteButton).toBeDisabled();
         await this.page.fill('#confirm-entity-name', groupName);
         await expect(deleteButton).toBeEnabled();
-        const responsePromise = this.page.waitForResponse(
-            (response) => response.request().method() === 'DELETE' && new RegExp(`/exercise-groups/${groupID}(\\?.*)?$`).test(response.url()),
-        );
         await deleteButton.click();
-        expect((await responsePromise).status(), 'the server accepts the deletion and runs it in the background').toBe(202);
-        await finishDeletionProgress(this.page);
     }
 
     async shouldShowNumberOfExerciseGroups(numberOfGroups: number) {

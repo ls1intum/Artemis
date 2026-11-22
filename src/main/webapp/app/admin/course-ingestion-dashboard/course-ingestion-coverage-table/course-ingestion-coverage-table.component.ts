@@ -11,11 +11,9 @@ import {
     TumAetUiPanelComponent,
     TumAetUiSelectButtonComponent,
     TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
 } from '@tumaet/ui-angular';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faSort, faSortDown, faSortUp, faSync } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -71,9 +69,8 @@ interface SelectOption {
     selector: 'jhi-course-ingestion-coverage-table',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        TumAetUiTableSortableColumnComponent,
-        TumAetUiTableLayoutComponent,
         FormsModule,
+        FaIconComponent,
         TumAetUiPanelComponent,
         TumAetUiTableDirective,
         TumAetUiInputDirective,
@@ -229,9 +226,23 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
         this.load();
     }
 
-    /** Applies a click on a sortable column header; the direction logic lives in {@link toggleSort}. */
-    protected onSort(event: TumAetUiTableSortEvent): void {
-        this.toggleSort(event.field as SortMode);
+    /**
+     * The sort state of a column for assistive technology. Only the active column carries the attribute; the icons
+     * alone convey the state visually and say nothing to a screen reader.
+     */
+    protected ariaSort(mode: SortMode): 'ascending' | 'descending' | undefined {
+        if (this.sortMode() !== mode) {
+            return undefined;
+        }
+        return this.sortDirection() === 'asc' ? 'ascending' : 'descending';
+    }
+
+    /** The sort arrow for a column header: up/down when it is the active sort, a neutral icon otherwise. */
+    protected sortIcon(mode: SortMode): IconDefinition {
+        if (this.sortMode() !== mode) {
+            return faSort;
+        }
+        return this.sortDirection() === 'asc' ? faSortUp : faSortDown;
     }
 
     protected onStatusChange(value: string | undefined): void {

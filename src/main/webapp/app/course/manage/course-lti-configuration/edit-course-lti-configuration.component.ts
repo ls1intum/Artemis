@@ -15,11 +15,12 @@ import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
+import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
 import { AccountService } from 'app/core/auth/account.service';
@@ -37,11 +38,12 @@ import { AccountService } from 'app/core/auth/account.service';
         NgbDropdownButtonItem,
         NgbDropdownItem,
         NgbTooltip,
-        TumAetUiPaginatorComponent,
+        PaginatorModule,
         FaIconComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
         RemoveKeysPipe,
+        ItemCountComponent,
         HelpIconComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
@@ -127,10 +129,10 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     }
 
     /**
-     * Handles a paginator page change. The paginator page is 0-indexed, so it is converted to the 1-indexed page.
+     * Handles a PrimeNG paginator page change. The event page is 0-indexed, so it is converted to the 1-indexed page.
      */
-    onPageChange(page: number): void {
-        this.page.set(page + 1);
+    onPageChange(event: PaginatorState): void {
+        this.page.set((event.page ?? 0) + 1);
         this.transition();
     }
 

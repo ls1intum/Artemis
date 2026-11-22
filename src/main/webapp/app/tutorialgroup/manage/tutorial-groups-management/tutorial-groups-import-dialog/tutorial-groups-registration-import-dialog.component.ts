@@ -19,7 +19,6 @@ import {
     TumAetUiMessageComponent,
     TumAetUiSelectButtonComponent,
     TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
 } from '@tumaet/ui-angular';
 import { TutorialGroupImportData } from 'app/openapi/model/tutorial-group-import-data';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
@@ -65,7 +64,6 @@ type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
         TumAetUiMessageComponent,
         TumAetUiSelectButtonComponent,
         TumAetUiTableDirective,
-        TumAetUiTableLayoutComponent,
     ],
 })
 export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, OnDestroy {

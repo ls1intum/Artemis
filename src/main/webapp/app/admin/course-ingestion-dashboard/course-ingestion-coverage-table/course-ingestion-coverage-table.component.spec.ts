@@ -5,6 +5,7 @@ import { Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
+import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import { CourseIngestionCoverageTableComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-coverage-table/course-ingestion-coverage-table.component';
@@ -89,9 +90,9 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(component.error()).toBe(false);
         expect(component.lastUpdated()).toBe('2026-08-05T10:00:00Z');
 
-        // The name column sorts ascending by default; EMPTY is the one status not in the rows.
-        expect(component.sortMode()).toBe('name');
-        expect(component.sortDirection()).toBe('asc');
+        // Ascending column shows the up arrow, inactive columns the neutral one; EMPTY is the one status not in the rows.
+        expect(component['sortIcon']('name')).toBe(faSortUp);
+        expect(component['sortIcon']('release')).toBe(faSort);
         expect(component['statusClass']('EMPTY')).toBe('text-muted-color');
 
         await fixture.whenStable();
@@ -129,6 +130,7 @@ describe('CourseIngestionCoverageTableComponent', () => {
         // Re-clicking the active column flips the direction and resets to the first page.
         component['toggleSort']('name');
         expect(component.sortDirection()).toBe('desc');
+        expect(component['sortIcon']('name')).toBe(faSortDown);
         expect(liveSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'title,desc', search: undefined });
 
         // Paging keeps the current (live) view and sort.
@@ -140,27 +142,12 @@ describe('CourseIngestionCoverageTableComponent', () => {
         component['toggleSort']('release');
         expect(component.sortMode()).toBe('release');
         expect(component.sortDirection()).toBe('desc');
+        expect(component['sortIcon']('name')).toBe(faSort);
         expect(liveSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'startDate,desc', search: undefined });
 
         // Worst-first is cross-course, so it is served from the stored projection.
         component['toggleSort']('worstFirst');
         expect(storedSpy).toHaveBeenCalledWith({ page: 0, size: 20, sort: 'coverageGapScore,desc', status: undefined, active: undefined, search: undefined });
-    });
-
-    it('maps a column header sort event onto the sort toggle', () => {
-        fixture.detectChanges();
-        liveSpy.mockClear();
-
-        // The active column (name) flips its direction.
-        component['onSort']({ field: 'name', order: -1 });
-        expect(component.sortMode()).toBe('name');
-        expect(component.sortDirection()).toBe('desc');
-        expect(liveSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'title,desc', search: undefined });
-
-        // Another column adopts its own default direction.
-        component['onSort']({ field: 'release', order: 1 });
-        expect(component.sortMode()).toBe('release');
-        expect(liveSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'startDate,desc', search: undefined });
     });
 
     it('filters by status and active state, and refreshes the projection', () => {
@@ -362,19 +349,18 @@ describe('CourseIngestionCoverageTableComponent', () => {
         // The sort icons carry the state visually only, so the active column has to say it to assistive technology.
         const headers = (): HTMLElement[] => Array.from(fixture.nativeElement.querySelectorAll('thead tr:last-child th'));
         const sorted = () => headers().map((th) => th.getAttribute('aria-sort'));
-        const sortClaims = () => sorted().filter((value) => value && value !== 'none');
 
         // Name sorts ascending by default, and exactly one header may claim the sort at a time.
-        expect(sortClaims()).toEqual(['ascending']);
+        expect(sorted().filter(Boolean)).toEqual(['ascending']);
 
         component['toggleSort']('name');
         fixture.detectChanges();
-        expect(sortClaims()).toEqual(['descending']);
+        expect(sorted().filter(Boolean)).toEqual(['descending']);
 
         component['toggleSort']('release');
         fixture.detectChanges();
-        expect(sortClaims()).toHaveLength(1);
-        expect(headers()[0].getAttribute('aria-sort')).toBe('none');
+        expect(sorted().filter(Boolean)).toHaveLength(1);
+        expect(headers()[0].getAttribute('aria-sort')).toBeNull();
     });
 
     it('should make the sortable column headers real, keyboard-focusable buttons', async () => {

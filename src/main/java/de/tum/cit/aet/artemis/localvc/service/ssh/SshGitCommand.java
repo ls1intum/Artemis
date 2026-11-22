@@ -23,13 +23,10 @@ import org.eclipse.jgit.util.FS;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.HttpStatusException;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCAccessLogRecorderService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCFetchPreUploadHookSSH;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPostPushHook;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPrePushHook;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
-import de.tum.cit.aet.artemis.localvc.service.PasswordAuthenticationNoticeService;
 
 /**
  * Custom Git command handler that integrates Artemis-specific
@@ -39,31 +36,17 @@ public class SshGitCommand extends GitPackCommand {
 
     private final LocalVCServletService localVCServletService;
 
-    private final LocalVCAccessLogRecorderService accessLogRecorder;
-
-    private final LocalVCPushProcessingService pushProcessingService;
-
-    private final PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
-
     /**
      * Constructs a new {@link SshGitCommand}.
      *
-     * @param rootDirResolver                     Resolver for GIT root directory
-     * @param command                             Git command string to execute
-     * @param executorService                     Optional executor service for command execution
-     * @param localVCServletService               LocalVC service providing the push hooks with their checks
-     * @param accessLogRecorder                   writes the access log of fetch operations
-     * @param pushProcessingService               handles what a push leads to
-     * @param passwordAuthenticationNoticeService tells users who push with a password to switch, which an ssh push never is
+     * @param rootDirResolver       Resolver for GIT root directory
+     * @param command               Git command string to execute
+     * @param executorService       Optional executor service for command execution
+     * @param localVCServletService LocalVC service providing pre/post push/fetch hooks
      */
-    public SshGitCommand(GitLocationResolver rootDirResolver, String command, CloseableExecutorService executorService, LocalVCServletService localVCServletService,
-            LocalVCAccessLogRecorderService accessLogRecorder, LocalVCPushProcessingService pushProcessingService,
-            PasswordAuthenticationNoticeService passwordAuthenticationNoticeService) {
+    public SshGitCommand(GitLocationResolver rootDirResolver, String command, CloseableExecutorService executorService, LocalVCServletService localVCServletService) {
         super(rootDirResolver, command, executorService);
         this.localVCServletService = localVCServletService;
-        this.accessLogRecorder = accessLogRecorder;
-        this.pushProcessingService = pushProcessingService;
-        this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
     }
 
     /**
@@ -129,19 +112,18 @@ public class SshGitCommand extends GitPackCommand {
                         }
 
                         // Register pre-upload hook for Artemis-specific logic
-                        uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHookSSH(accessLogRecorder, getServerSession()));
+                        uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHookSSH(localVCServletService, getServerSession()));
 
                         // Begin upload-pack operation
                         uploadPack.upload(getInputStream(), getOutputStream(), getErrorStream());
                     }
                     case RemoteConfig.DEFAULT_RECEIVE_PACK -> {
                         var exercise = getServerSession().getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
-                        try (var _ = pushProcessingService.claimProgrammingExerciseMutation(repository, exercise)) {
+                        try (var ignored = localVCServletService.claimProgrammingExerciseMutation(repository, exercise)) {
                             ReceivePack receivePack = new ReceivePack(repository);
 
                             receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
-                            receivePack.setPostReceiveHook(
-                                    new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService, getServerSession(), user));
+                            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, getServerSession(), user));
 
                             receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
                         }

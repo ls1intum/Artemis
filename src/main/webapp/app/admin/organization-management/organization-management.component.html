@@ -6,7 +6,7 @@
             <span jhiTranslate="artemisApp.organizationManagement.addLabel"></span>
         </button>
     </div>
-    <div class="flex min-h-0 flex-1 flex-col">
+    <div class="flex-1 min-h-0">
         <tumaet-ui-table
             [columns]="columns()"
             [rows]="organizations()"
@@ -16,7 +16,8 @@
             [rowActions]="organizationActions"
             [loading]="isLoading()"
             [striped]="true"
-            fill
+            [scrollable]="true"
+            scrollHeight="flex"
         />
     </div>
 </div>

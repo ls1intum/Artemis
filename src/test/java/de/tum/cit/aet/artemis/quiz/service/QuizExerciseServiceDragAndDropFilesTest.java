@@ -14,7 +14,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.api.parallel.ResourceLock;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,7 +37,6 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 /**
  * Unit tests for the file handling of drag and drop questions in the {@link QuizExerciseService}, in particular for questions or drag items without a stored file.
  */
-@ResourceLock("FilePathConverter")
 class QuizExerciseServiceDragAndDropFilesTest {
 
     @TempDir

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { filter, take } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faExclamationTriangle, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SortService } from 'app/foundation/service/sort.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,9 +12,11 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants';
@@ -26,10 +28,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './lti13-deep-linking.component.html',
     imports: [
         TranslateDirective,
+        FaIconComponent,
         FormsModule,
         HelpIconComponent,
-        TumAetUiTableDirective,
-        TumAetUiTableSortableColumnComponent,
+        SortByDirective,
+        SortDirective,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         ArtemisTranslatePipe,
@@ -47,6 +50,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
 
     protected readonly IS_AT_LEAST_INSTRUCTOR = IS_AT_LEAST_INSTRUCTOR;
 
+    protected readonly faSort = faSort;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faWrench = faWrench;
 
@@ -60,8 +64,8 @@ export class Lti13DeepLinkingComponent implements OnInit {
     readonly isIrisSelected = signal(false);
     readonly course = signal<Course | undefined>(undefined);
 
-    readonly predicate = signal('type');
-    readonly reverse = signal(false);
+    predicate = 'type';
+    reverse = false;
     readonly isLinking = signal(true);
 
     //grouping
@@ -124,19 +128,12 @@ export class Lti13DeepLinkingComponent implements OnInit {
         });
     }
 
-    /** Applies the sort of a clicked column header and re-sorts the exercises. */
-    onSort(event: TumAetUiTableSortEvent) {
-        this.predicate.set(event.field);
-        this.reverse.set(event.order === 1);
-        this.sortRows();
-    }
-
     /**
      * Sorts the list of exercises based on the selected predicate and order.
      */
     sortRows() {
         const sortedExercises = [...this.exercises()];
-        this.sortService.sortByProperty(sortedExercises, this.predicate(), this.reverse());
+        this.sortService.sortByProperty(sortedExercises, this.predicate, this.reverse);
         this.exercises.set(sortedExercises);
     }
 

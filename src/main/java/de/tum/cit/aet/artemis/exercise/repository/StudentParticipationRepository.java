@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -46,12 +47,10 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScoreSum;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.AssessmentPublicationRecipientDTO;
-import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
-import de.tum.cit.aet.artemis.exercise.dto.TeamAssessmentQueueEntryDTO;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 
 /**
@@ -1083,7 +1082,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
             WHERE p.exercise.id = :exerciseId
-                AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
                 AND p.testRun = FALSE
                 AND NOT EXISTS (
                     SELECT prs
@@ -1097,8 +1095,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND s.submitted = TRUE
                 AND s.id = (SELECT MAX(s3.id) FROM p.submissions s3)
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId,
-            @Param("now") ZonedDateTime now);
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT p
@@ -2305,37 +2302,26 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param pageable         pagination information
      * @param sortOrder        ascending or descending
      * @param sortedColumn     the column to sort by
+     * @param teamOwnerId      tutor whose assigned teams to include, or null for all teams
+     * @param assessmentFilter optional assessment eligibility filter; also excludes practice participations
      * @return a page of participation IDs
      */
     default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff,
-            Integer scoreRangeLower, Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn) {
+            Integer scoreRangeLower, Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn, @Nullable Long teamOwnerId,
+            @Nullable Specification<StudentParticipation> assessmentFilter) {
         Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forManagementMode(teamMode))
-                .and(StudentParticipationSpecs.searchForManagement(searchTerm, teamMode)).and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff))
-                .and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper))
-                .and(StudentParticipationSpecs.orderedForManagement(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
+                .and(StudentParticipationSpecs.ownedByTeamTutor(teamOwnerId)).and(StudentParticipationSpecs.searchForManagement(searchTerm, teamMode))
+                .and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff)).and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper));
 
+        if (assessmentFilter != null) {
+            spec = spec.and(StudentParticipationSpecs.isNotPracticeMode()).and(assessmentFilter);
+        }
+
+        spec = spec.and(StudentParticipationSpecs.orderedForManagement(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());
         Page<StudentParticipation> page = findAll(spec, unsortedPageable);
         return page.map(StudentParticipation::getId);
     }
-
-    /**
-     * Checks whether preparation has created any participation for an exercise assigned in this exam, including failed
-     * initialization. Test runs do not establish preparation intent for the registered cohort.
-     *
-     * @param examId the exam whose preparation may have started
-     * @return whether a registered-cohort participation exists
-     */
-    @Query("""
-            SELECT COUNT(p) > 0
-            FROM StudentParticipation p
-            JOIN StudentExam se ON p.student.id = se.user.id
-            JOIN se.exercises e
-            WHERE se.exam.id = :examId
-            AND e.id = p.exercise.id
-            AND p.testRun = FALSE
-            """)
-    boolean existsParticipationByExamIdIgnoreTestRuns(@Param("examId") long examId);
 
     /**
      * Counts the number of unique, active students who have an initialized participation
@@ -2362,74 +2348,5 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             OR p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.FINISHED)
             """)
     long countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("examId") long examId);
-
-    /**
-     * Selects team labels and the latest assessed submission for one correction round without loading histories.
-     *
-     * @param exerciseId      the exercise id
-     * @param teamOwnerId     the team owner, or null for all teams
-     * @param correctionRound the displayed correction round
-     * @return one metadata row per participation
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exercise.dto.TeamAssessmentQueueEntryDTO(p.id, team.id, team.shortName,
-                (SELECT MAX(s.id) FROM Submission s JOIN s.results r WHERE s.participation.id = p.id AND r.correctionRound = :correctionRound
-                    AND r.assessmentType IN (
-                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
-                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
-                    AND (s.submissionDate IS NULL OR s.submissionDate = (
-                        SELECT MAX(newer.submissionDate) FROM Submission newer JOIN newer.results newerResult
-                        WHERE newer.participation.id = p.id AND newerResult.correctionRound = :correctionRound
-                            AND newerResult.assessmentType IN (
-                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
-                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)))))
-            FROM StudentParticipation p JOIN p.team team
-            WHERE p.exercise.id = :exerciseId AND p.testRun = FALSE
-                AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
-            ORDER BY p.id
-            """)
-    List<TeamAssessmentQueueEntryDTO> findTeamAssessmentQueueParticipations(@Param("exerciseId") long exerciseId, @Param("teamOwnerId") Long teamOwnerId,
-            @Param("correctionRound") int correctionRound);
-
-    /**
-     * Selects eligible course team submissions without answer bodies.
-     *
-     * @param exerciseId  the exercise id
-     * @param now         the time used to check individual deadlines
-     * @param teamOwnerId the tutor id, or null for all teams
-     * @return eligible submission metadata
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO(s.id, s.submitted, s.type, s.exampleSubmission, s.submissionDate,
-                TYPE(s), p.id, p.initializationState, p.initializationDate, p.individualDueDate, team.name,
-                programming.buildFailed, programming.commitHash, text.language)
-            FROM StudentParticipation p
-                LEFT JOIN p.team team
-                LEFT JOIN p.submissions s
-                LEFT JOIN ProgrammingSubmission programming ON programming.id = s.id
-                LEFT JOIN TextSubmission text ON text.id = s.id
-            WHERE p.exercise.id = :exerciseId
-                AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
-                AND ((p.individualDueDate IS NULL AND (p.exercise.dueDate IS NULL OR p.exercise.dueDate <= :now))
-                    OR p.individualDueDate <= :now)
-                AND p.testRun = FALSE
-                AND NOT EXISTS (
-                    SELECT prs
-                    FROM Submission s2 JOIN s2.results prs
-                    WHERE s2.participation = p
-                      AND prs.assessmentType IN (
-                          de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
-                          de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
-                      )
-                )
-                AND s.submitted = TRUE
-                AND s.id = (
-                    SELECT MAX(s3.id) FROM p.submissions s3
-                    WHERE s3.submitted = TRUE AND (programming.id IS NULL
-                        OR NOT EXISTS (SELECT dated.id FROM p.submissions dated WHERE dated.submitted = TRUE AND dated.submissionDate IS NOT NULL)
-                        OR s3.submissionDate = (SELECT MAX(dated.submissionDate) FROM p.submissions dated WHERE dated.submitted = TRUE))
-                )
-            """)
-    List<AssessmentQueueSubmissionDTO> findCourseTeamQueueCandidates(@Param("exerciseId") long exerciseId, @Param("now") ZonedDateTime now, @Param("teamOwnerId") Long teamOwnerId);
 
 }

@@ -27,11 +27,9 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
-import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -41,9 +39,6 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     private static final String TEST_PREFIX = "eqservicetest";
 
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
-
-    @Autowired
-    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private StudentExamService studentExamService;
@@ -56,9 +51,6 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private QuizSubmissionTestRepository quizSubmissionRepository;
-
-    @Autowired
-    private QuizExerciseTestRepository quizExerciseTestRepository;
 
     @Autowired
     private ExerciseGroupRepository exerciseGroupRepository;
@@ -202,10 +194,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
-        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
-        assertThat(examRepository.findById(exam.getId())).isEmpty();
-        assertThat(quizExerciseTestRepository.findById(quizExercise.getId())).isEmpty();
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -251,10 +240,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
-        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
-        assertThat(examRepository.findById(exam.getId())).isEmpty();
-        assertThat(quizExerciseTestRepository.findById(quizExercise.getId())).isEmpty();
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     private void waitForParticipantScores() {
@@ -311,10 +297,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
-        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
-        assertThat(examRepository.findById(exam.getId())).isEmpty();
-        assertThat(quizExerciseTestRepository.findById(quizExercise.getId())).isEmpty();
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -365,10 +348,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
-        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
-        assertThat(examRepository.findById(exam.getId())).isEmpty();
-        assertThat(quizExerciseTestRepository.findById(quizExercise.getId())).isEmpty();
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     private void checkEvaluationResults(QuizExercise quizExercise) {

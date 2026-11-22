@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -421,13 +422,19 @@ public class ProgrammingSubmissionResource {
 
         programmingSubmissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
         programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, submissionId, correctionRound);
-        if (!programmingExercise.areManualResultsAllowed()) {
+        if (!programmingExercise.areManualResultsAllowed(authCheckService.isAtLeastInstructorForExercise(programmingExercise, user))) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
 
-        authCheckService.checkTeamAssessmentAccessElseThrow(programmingSubmission);
-
-        programmingSubmission = lockSubmissionIfNeeded(programmingSubmission, participation, programmingExercise, correctionRound, numberOfEnabledCorrectionRounds);
+        programmingSubmissionService.checkTeamAssessmentAccessElseThrow(programmingSubmission);
+        var roundResult = programmingSubmission.getResultForCorrectionRound(correctionRound);
+        if (programmingExercise.isTeamMode() && !programmingExercise.isExamExercise() && participation instanceof StudentParticipation student && !student.isTestRun()
+                && student.getTeam().isPresent() && (correctionRound < numberOfEnabledCorrectionRounds || roundResult != null)) {
+            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(submissionId, correctionRound);
+        }
+        else {
+            programmingSubmission = lockSubmissionIfNeeded(programmingSubmission, programmingExercise, correctionRound, numberOfEnabledCorrectionRounds);
+        }
 
         // prepare programming submission for response (double-blind assessment: removes the participant for tutors)
         programmingSubmissionService.hideDetails(programmingSubmission, user);
@@ -450,29 +457,24 @@ public class ProgrammingSubmissionResource {
         return ResponseEntity.ok(ProgrammingSubmissionForTutorAssessmentDTO.of(programmingSubmission, programmingExercise, resultsForResponse));
     }
 
-    private ProgrammingSubmission lockSubmissionIfNeeded(ProgrammingSubmission programmingSubmission, Participation participation, ProgrammingExercise programmingExercise,
-            int correctionRound, int numberOfEnabledCorrectionRounds) {
+    private ProgrammingSubmission lockSubmissionIfNeeded(ProgrammingSubmission programmingSubmission, ProgrammingExercise programmingExercise, int correctionRound,
+            int numberOfEnabledCorrectionRounds) {
         long numberOfManualResults = programmingSubmission.getResults().stream().filter(Result::isManual).count();
 
         // this makes sure that new results are only created if it is really necessary.
         // At max 1 for course exercises and at max 2 results in exams with 2 correction rounds enabled.
         // The second (or third) result for complaint responses is not created here.
         if (numberOfManualResults < correctionRound + 1 && numberOfManualResults < numberOfEnabledCorrectionRounds) {
-            if (!programmingExercise.isTeamMode()) {
-                programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-            }
+            // Check lock limit
+            programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+
             // As no manual result is present we need to lock the submission for assessment
             Result latestAutomaticResult = programmingSubmission.getLatestResult();
-            if (latestAutomaticResult == null && !programmingExercise.isTeamMode()) {
+            if (latestAutomaticResult == null) {
                 // if the participation does not have a result we want to create a new result for the submission of the participation.
                 // If there isn't a submission either, we should not create any result.
-                programmingSubmission = programmingSubmissionService.getLatestPendingSubmission(participation.getId(), false).orElseThrow();
+                programmingSubmission = programmingSubmissionService.getLatestPendingSubmission(programmingSubmission.getParticipation().getId(), false).orElseThrow();
             }
-            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
-        }
-        else if (programmingExercise.isTeamMode() && programmingSubmission.getResultForCorrectionRound(correctionRound) != null
-                && programmingSubmission.getResultForCorrectionRound(correctionRound).getAssessor() == null
-                && programmingSubmission.getResultForCorrectionRound(correctionRound).getCompletionDate() == null) {
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
         }
         return programmingSubmission;

@@ -6,8 +6,6 @@ import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,7 +32,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionFailureMode;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
@@ -63,7 +61,7 @@ class HyperionQuizQuestionFilterServiceTest {
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        service = new HyperionQuizQuestionFilterService(configuredModels(ChatClient.create(chatModel), "judge-x"), new HyperionPromptTemplateService(), llmTokenUsageService);
+        service = new HyperionQuizQuestionFilterService(ChatClient.create(chatModel), new HyperionPromptTemplateService(), llmTokenUsageService, "");
         course = new Course();
         course.setId(42L);
         course.setTitle("Software Engineering");
@@ -202,14 +200,11 @@ class HyperionQuizQuestionFilterServiceTest {
     }
 
     @Test
-    void evaluate_throwsWithoutAConfiguredModel() {
-        HyperionQuizQuestionPoolModelService models = mock(HyperionQuizQuestionPoolModelService.class);
-        when(models.chatClient()).thenThrow(HyperionQuizQuestionPoolModelService.notConfigured());
-        var serviceWithoutModel = new HyperionQuizQuestionFilterService(models, new HyperionPromptTemplateService(), llmTokenUsageService);
+    void evaluate_throwsWhenChatClientIsNull() {
+        var serviceWithNullClient = new HyperionQuizQuestionFilterService(null, new HyperionPromptTemplateService(), llmTokenUsageService, "");
 
-        assertThatThrownBy(() -> serviceWithoutModel.evaluate(course, 7L, question(), GROUNDING_BLOCK)).isInstanceOf(ServiceUnavailableAlertException.class)
-                .hasMessageContaining("no local model configured");
-        verify(chatModel, never()).call(any(Prompt.class));
+        assertThatThrownBy(() -> serviceWithNullClient.evaluate(course, 7L, question(), GROUNDING_BLOCK)).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("AI chat client is not configured");
     }
 
     @Test
@@ -224,26 +219,20 @@ class HyperionQuizQuestionFilterServiceTest {
                 .orElseThrow();
         assertThat(userMessage).contains("PUT is idempotent.").contains("Question type: single-choice").contains("Which method is idempotent?").contains("- [correct] PUT")
                 .contains("- [wrong] POST").contains("Stated explanation: PUT is idempotent.");
+        assertThat(prompt.getValue().getOptions().getModel()).isNull();
     }
 
     @Test
-    void evaluate_bindsTheJudgeModelOfThePoolEndpointOntoTheRequest() {
+    void evaluate_bindsTheConfiguredJudgeModelOntoTheRequest() {
+        var serviceWithModel = new HyperionQuizQuestionFilterService(ChatClient.create(chatModel), new HyperionPromptTemplateService(), llmTokenUsageService, " judge-x ");
         respondWith(verdict(Map.of()));
 
-        service.evaluate(course, 7L, question(), GROUNDING_BLOCK);
+        serviceWithModel.evaluate(course, 7L, question(), GROUNDING_BLOCK);
 
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel).call(prompt.capture());
         assertThat(prompt.getValue().getOptions().getModel()).isEqualTo("judge-x");
-        assertThat(service.getJudgeModel()).isEqualTo("judge-x");
-    }
-
-    private static HyperionQuizQuestionPoolModelService configuredModels(ChatClient chatClient, String judgeModel) {
-        HyperionQuizQuestionPoolModelService models = mock(HyperionQuizQuestionPoolModelService.class);
-        lenient().when(models.isConfigured()).thenReturn(true);
-        lenient().when(models.chatClient()).thenReturn(chatClient);
-        lenient().when(models.judgeModel()).thenReturn(judgeModel);
-        return models;
+        assertThat(serviceWithModel.getJudgeModel()).isEqualTo("judge-x");
     }
 
     @Test

@@ -1,4 +1,3 @@
-import { TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
 import { vi } from 'vitest';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -58,16 +57,7 @@ describe('UsersImportDialogComponent', () => {
         })
             .overrideComponent(UsersImportDialogComponent, {
                 set: {
-                    imports: [
-                        FormsModule,
-                        MockDirective(TranslateDirective),
-                        MockPipe(ArtemisTranslatePipe),
-                        MockComponent(HelpIconComponent),
-                        FaIconComponent,
-                        DialogModule,
-                        TumAetUiTableDirective,
-                        TumAetUiTableLayoutComponent,
-                    ],
+                    imports: [FormsModule, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent), FaIconComponent, DialogModule],
                 },
             })
             .compileComponents()

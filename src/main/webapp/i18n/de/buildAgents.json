@@ -19,7 +19,6 @@
             "idle": "Inaktiv",
             "paused": "Angehalten",
             "selfPaused": "Selbst Angehalten",
-            "noBuildAgents": "Keine Build-Agenten online",
             "onlineAgents": "online Agent(en)",
             "of": "von",
             "buildJobsRunning": "Build Jobs laufen",

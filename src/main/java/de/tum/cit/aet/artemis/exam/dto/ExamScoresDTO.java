@@ -21,11 +21,11 @@ public record ExamScoresDTO(Long examId, String title, Integer maxPoints, Double
         }
     }
 
-    /** The per-attempt maximum is set for test exams, whose automatic subtotal can differ from the configured exam maximum. */
+    // Inner DTO
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record StudentResultDTO(Long userId, String name, String email, String login, String registrationNumber, Boolean submitted, Double overallPointsAchieved,
             Double overallScoreAchieved, String overallGrade, String overallGradeInFirstCorrection, Boolean hasPassed, Double overallPointsAchievedInFirstCorrection,
-            BonusResultDTO gradeWithBonus, Map<Long, ExerciseResultDTO> exerciseGroupIdToExerciseResult, PlagiarismVerdict mostSeverePlagiarismVerdict, Double maxPoints) {
+            BonusResultDTO gradeWithBonus, Map<Long, ExerciseResultDTO> exerciseGroupIdToExerciseResult, PlagiarismVerdict mostSeverePlagiarismVerdict) {
     }
 
     // Inner DTO

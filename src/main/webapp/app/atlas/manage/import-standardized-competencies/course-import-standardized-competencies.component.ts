@@ -5,7 +5,8 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { CommonModule } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -26,9 +27,8 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
         DocumentationButtonComponent,
         ButtonComponent,
         TranslateDirective,
-        TumAetUiTableDirective,
-        TumAetUiTableLayoutComponent,
-        TumAetUiTableSortableColumnComponent,
+        SortByDirective,
+        SortDirective,
         CommonModule,
         ArtemisTranslatePipe,
         FontAwesomeModule,

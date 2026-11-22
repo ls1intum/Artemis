@@ -42,9 +42,11 @@ import de.tum.cit.aet.artemis.core.dto.DomainObjectDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -55,7 +57,6 @@ import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAdminService;
 import de.tum.cit.aet.artemis.course.service.CourseDeletionService;
-import de.tum.cit.aet.artemis.course.service.CourseOperationClaim;
 import de.tum.cit.aet.artemis.course.service.CourseOperationProgressService;
 import de.tum.cit.aet.artemis.course.service.CourseResetService;
 import de.tum.cit.aet.artemis.course.service.CourseValidator;
@@ -108,6 +109,8 @@ public class AdminCourseResource {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final FileService fileService;
+
     private final CourseDeletionService courseDeletionService;
 
     private final CourseResetService courseResetService;
@@ -117,12 +120,13 @@ public class AdminCourseResource {
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            ChannelService channelService, CourseDeletionService courseDeletionService, CourseResetService courseResetService, CourseOperationProgressService progressService,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            FileService fileService, ChannelService channelService, CourseDeletionService courseDeletionService, CourseResetService courseResetService,
+            CourseOperationProgressService progressService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
         this.userRepository = userRepository;
+        this.fileService = fileService;
         this.channelService = channelService;
         this.courseDeletionService = courseDeletionService;
         this.courseResetService = courseResetService;
@@ -233,8 +237,8 @@ public class AdminCourseResource {
      * This action cannot be undone.
      *
      * @param courseId the ID of the course to delete
-     * @return the ResponseEntity with status 202 (Accepted) when the deletion was started in the background,
-     *         status 404 (Not Found) if the course does not exist, or status 409 (Conflict) if another operation on the course is running
+     * @return the ResponseEntity with status 200 (OK) on success,
+     *         or status 404 (Not Found) if the course does not exist
      */
     @DeleteMapping("courses/{courseId}")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
@@ -248,28 +252,16 @@ public class AdminCourseResource {
         String courseIcon = courseRepository.getCourseIconById(courseId);
 
         User user = userRepository.getUserWithAuthorities();
-        // The claim comes first: another operation on the course is refused with a conflict before anything is audited or deleted.
-        CourseOperationClaim operationClaim = courseDeletionService.startDeletion(courseId);
-        boolean deletionScheduled = false;
-        try {
-            var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + courseTitle);
-            auditEventRepository.add(auditEvent);
-            log.info("User {} has requested to delete the course {}", user.getLogin(), courseTitle);
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + courseTitle);
+        auditEventRepository.add(auditEvent);
+        log.info("User {} has requested to delete the course {}", user.getLogin(), courseTitle);
 
-            courseDeletionService.deleteAsync(courseId, courseIcon, operationClaim, user);
-            deletionScheduled = true;
+        courseDeletionService.delete(courseId);
+
+        if (courseIcon != null) {
+            fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(courseIcon).path(), 0);
         }
-        catch (RuntimeException e) {
-            progressService.failOperation(operationClaim, "Deletion failed", 0, CourseDeletionService.TOTAL_DELETE_STEPS, 0, e.getMessage(), 0);
-            throw e;
-        }
-        finally {
-            if (!deletionScheduled) {
-                progressService.releaseOperationClaim(operationClaim);
-            }
-        }
-        // The course is deleted in the background, the progress is reported over the websocket and the clients show the result when it is done.
-        return ResponseEntity.accepted().build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, courseTitle)).build();
     }
 
     /**

@@ -31,6 +31,7 @@ import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
     ],
     providers: [TumAetUiConfirmationService],
     templateUrl: './tutorial-registrations.component.html',
+    styleUrl: './tutorial-registrations.component.scss',
 })
 export class TutorialRegistrationsComponent {
     private confirmationService = inject(TumAetUiConfirmationService);

@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -33,7 +32,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -44,7 +42,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingConnectionStatus;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
-import de.tum.cit.aet.artemis.videosource.domain.event.GocastGrantRevokingEvent;
 import de.tum.cit.aet.artemis.videosource.dto.GocastVerifiedCourseDTO;
 import de.tum.cit.aet.artemis.videosource.repository.GocastConnectionRepository;
 import de.tum.cit.aet.artemis.videosource.repository.GocastCourseBindingRepository;
@@ -69,8 +66,6 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     private GocastConnectorService connector;
 
-    private ApplicationEventPublisher eventPublisher;
-
     private GocastBindingService service;
 
     private Course course;
@@ -78,8 +73,7 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
     @BeforeEach
     void setUp() {
         connector = mock(GocastConnectorService.class);
-        eventPublisher = mock(ApplicationEventPublisher.class);
-        service = new GocastBindingService(connectionRepository, connector, CALLBACK_URL, Clock.fixed(NOW, ZoneOffset.UTC), new SecureRandom(), eventPublisher);
+        service = new GocastBindingService(connectionRepository, connector, CALLBACK_URL, Clock.fixed(NOW, ZoneOffset.UTC), new SecureRandom());
         course = courseUtilService.addEmptyCourse();
     }
 
@@ -222,19 +216,6 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
     }
 
     @Test
-    void unlinkAnnouncesTheRevocationWhileTheGrantStillWorks() {
-        createBinding();
-        doThrow(new IllegalStateException("listener failed")).when(eventPublisher).publishEvent(new GocastGrantRevokingEvent(course.getId(), 17, 23));
-
-        service.unlink(course.getId());
-
-        var order = inOrder(eventPublisher, connector);
-        order.verify(eventPublisher).publishEvent(new GocastGrantRevokingEvent(course.getId(), 17, 23));
-        order.verify(connector).revokeGrant(23);
-        assertThat(bindingRepository.findByCourseId(course.getId())).as("a failing listener does not stop the revocation").isEmpty();
-    }
-
-    @Test
     void remoteRevokeFailurePreservesBindingForRetry() {
         createBinding();
         doAnswer(invocation -> {
@@ -295,7 +276,7 @@ class GocastBindingServiceTest extends AbstractSpringIntegrationIndependentTest 
         RestClient.Builder builder = RestClient.builder().baseUrl("http://localhost:18081/api/v2").defaultHeader("Authorization", "Bearer fixture-api-key");
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         connector = new GocastConnectorService(builder.build(), URI.create("http://localhost:18081"));
-        service = new GocastBindingService(connectionRepository, connector, CALLBACK_URL, Clock.fixed(NOW, ZoneOffset.UTC), new SecureRandom(), eventPublisher);
+        service = new GocastBindingService(connectionRepository, connector, CALLBACK_URL, Clock.fixed(NOW, ZoneOffset.UTC), new SecureRandom());
         return server;
     }
 

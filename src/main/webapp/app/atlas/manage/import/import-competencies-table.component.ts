@@ -1,24 +1,20 @@
 import { Component, TemplateRef, contentChild, input, model } from '@angular/core';
+import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
-import { TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-import-competencies-table',
     templateUrl: './import-competencies-table.component.html',
-    imports: [
-        TumAetUiTableDirective,
-        TumAetUiTableLayoutComponent,
-        TumAetUiTableSortableColumnComponent,
-        TumAetUiPaginatorComponent,
-        TranslateDirective,
-        NgTemplateOutlet,
-        MarkdownDirective,
-    ],
+    imports: [SortDirective, SortByDirective, FaIconComponent, TranslateDirective, NgTemplateOutlet, PaginatorModule, MarkdownDirective],
 })
 export class ImportCompetenciesTableComponent {
     content = input.required<SearchResult<Competency>>();
@@ -27,7 +23,10 @@ export class ImportCompetenciesTableComponent {
 
     buttonsTemplate = contentChild(TemplateRef<{ competency: Competency }>);
 
-    protected readonly SortingOrder = SortingOrder;
+    ascending = false;
+
+    // Icons
+    readonly faSort = faSort;
 
     /**
      * Callback function for when the user navigates through the page results
@@ -38,11 +37,17 @@ export class ImportCompetenciesTableComponent {
         this.search.update((search) => cloneWith(search, { page: pageNumber }));
     }
 
+    /** PrimeNG paginator page change (0-indexed) converted to the 1-indexed page used here. */
+    onPaginatorPageChange(event: PaginatorState): void {
+        this.onPageChange((event.page ?? 0) + 1);
+    }
+
     /**
      * Callback function for when the user changes the sort
-     * @param change an object containing the column to sort by and the order (1 ascending, -1 descending)
+     * @param change an object containing the column to sort by and boolean if the sort is ascending
      */
-    onSortChange(change: TumAetUiTableSortEvent) {
-        this.search.update((search) => cloneWith(search, { sortedColumn: change.field, sortingOrder: change.order === 1 ? SortingOrder.ASCENDING : SortingOrder.DESCENDING }));
+    onSortChange(change: { predicate: string; ascending: boolean }) {
+        this.search.update((search) => cloneWith(search, { sortedColumn: change.predicate, sortingOrder: change.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING }));
+        this.ascending = change.ascending;
     }
 }

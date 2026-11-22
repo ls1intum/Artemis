@@ -6,9 +6,6 @@ import static de.tum.cit.aet.artemis.core.util.StringUtil.stripIllegalCharacters
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -16,7 +13,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -44,10 +40,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -65,9 +59,6 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueResultDTO;
-import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO;
-import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueTeamDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CourseWithTeamExercisesDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
@@ -76,12 +67,10 @@ import de.tum.cit.aet.artemis.exercise.dto.TeamResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.service.team.TeamService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * REST controller for managing Teams.
@@ -99,11 +88,6 @@ public class TeamResource {
     private static final Pattern NON_SHORT_NAME_CHARACTER = Pattern.compile("[^0-9a-z]");
 
     public static final String ENTITY_NAME = "team";
-
-    private static final Set<CourseRole> STUDENT_ROLES = Set.of(CourseRole.STUDENT);
-
-    // A team owner is usually a tutor, but the deletion of accounts also hands a team over to one of its students, so any member of the course is accepted
-    private static final Set<CourseRole> OWNER_ROLES = Set.of(CourseRole.STUDENT, CourseRole.TEACHING_ASSISTANT, CourseRole.EDITOR, CourseRole.INSTRUCTOR);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -132,17 +116,10 @@ public class TeamResource {
 
     private final TeamScoreRepository teamScoreRepository;
 
-    private final SubmissionRepository submissionRepository;
-
-    private final ResultRepository resultRepository;
-
     public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseRepository courseRepository,
             ExerciseRepository exerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationDeletionService participationDeletionService, SubmissionService submissionService, AuditEventRepository auditEventRepository,
-            StudentParticipationRepository studentParticipationRepository, TeamScoreRepository teamScoreRepository, SubmissionRepository submissionRepository,
-            ResultRepository resultRepository) {
-        this.resultRepository = resultRepository;
-        this.submissionRepository = submissionRepository;
+            StudentParticipationRepository studentParticipationRepository, TeamScoreRepository teamScoreRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.teamWebsocketService = teamWebsocketService;
@@ -193,16 +170,19 @@ public class TeamResource {
         team.setShortName(dto.shortName());
         team.setImage(dto.image());
 
-        // Resolve student IDs to User entities of the course
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        team.setStudents(findCourseUsersByIdElseThrow(course, STUDENT_ROLES, dto.studentsOrEmpty(), "studentNotInCourse"));
+        // Resolve student IDs to User entities
+        Set<User> students = new HashSet<>();
+        for (Long studentId : dto.studentsOrEmpty()) {
+            students.add(userRepository.findByIdElseThrow(studentId));
+        }
+        team.setStudents(students);
 
         // Tutors can only create teams for themselves while instructors can select any tutor as the team owner
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             team.setOwner(user);
         }
         else if (dto.ownerId() != null) {
-            team.setOwner(findTeamOwnerElseThrow(course, dto.ownerId()));
+            team.setOwner(userRepository.findByIdElseThrow(dto.ownerId()));
         }
 
         Team savedTeam = teamRepository.save(exercise, team);
@@ -211,33 +191,6 @@ public class TeamResource {
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam);
         return ResponseEntity.created(new URI("/api/teams/" + savedTeam.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedTeam.getId().toString())).body(TeamResponseDTO.of(savedTeam));
-    }
-
-    /**
-     * Resolves the given user ids to users that hold one of the given roles in the course.
-     *
-     * @param course   the course the users have to belong to
-     * @param roles    the accepted course roles
-     * @param userIds  the user ids to resolve
-     * @param errorKey the error key used if an id does not refer to such a user
-     * @return the resolved users
-     */
-    private Set<User> findCourseUsersByIdElseThrow(Course course, Set<CourseRole> roles, Set<Long> userIds, String errorKey) {
-        if (userIds.isEmpty()) {
-            return new HashSet<>();
-        }
-        Set<User> users = new HashSet<>(userRepository.findAllByCourseIdAndRoleInAndIdIn(course.getId(), roles, userIds));
-        if (users.size() != userIds.size()) {
-            Set<Long> resolvedIds = users.stream().map(User::getId).collect(Collectors.toSet());
-            Set<Long> unresolvedIds = new TreeSet<>(userIds);
-            unresolvedIds.removeAll(resolvedIds);
-            throw new BadRequestAlertException("The users with the ids " + unresolvedIds + " are not members of the course with the expected role.", ENTITY_NAME, errorKey);
-        }
-        return users;
-    }
-
-    private User findTeamOwnerElseThrow(Course course, long ownerId) {
-        return findCourseUsersByIdElseThrow(course, OWNER_ROLES, Set.of(ownerId), "ownerNotInCourse").iterator().next();
     }
 
     /**
@@ -283,19 +236,8 @@ public class TeamResource {
             throw new AccessForbiddenException();
         }
 
-        // Resolve the new owner from DTO. An owner that already owns the team stays valid, only a newly chosen owner has to be a member of the course.
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        User existingOwner = existingTeam.getOwner();
-        User newOwner;
-        if (dto.ownerId() == null) {
-            newOwner = null;
-        }
-        else if (existingOwner != null && dto.ownerId().equals(existingOwner.getId())) {
-            newOwner = existingOwner;
-        }
-        else {
-            newOwner = findTeamOwnerElseThrow(course, dto.ownerId());
-        }
+        // Resolve the new owner from DTO
+        User newOwner = dto.ownerId() != null ? userRepository.findByIdElseThrow(dto.ownerId()) : null;
 
         // The team owner can only be changed by instructors
         final boolean ownerWasChanged = !Objects.equals(existingTeam.getOwner(), newOwner);
@@ -311,12 +253,11 @@ public class TeamResource {
         existingTeam.setName(stripIllegalCharacters(dto.name()));
         existingTeam.setImage(dto.image());
 
-        // Students who are already part of the team stay valid, only newly added students have to be students of the course
-        Set<Long> requestedStudentIds = dto.studentsOrEmpty();
-        Set<User> students = existingTeam.getStudents().stream().filter(student -> requestedStudentIds.contains(student.getId())).collect(Collectors.toCollection(HashSet::new));
-        Set<Long> keptStudentIds = students.stream().map(User::getId).collect(Collectors.toSet());
-        Set<Long> addedStudentIds = requestedStudentIds.stream().filter(studentId -> !keptStudentIds.contains(studentId)).collect(Collectors.toSet());
-        students.addAll(findCourseUsersByIdElseThrow(course, STUDENT_ROLES, addedStudentIds, "studentNotInCourse"));
+        // Resolve student IDs to User entities
+        Set<User> students = new HashSet<>();
+        for (Long studentId : dto.studentsOrEmpty()) {
+            students.add(userRepository.findByIdElseThrow(studentId));
+        }
         existingTeam.setStudents(students);
         existingTeam.setOwner(newOwner);
 
@@ -372,53 +313,6 @@ public class TeamResource {
         teams.forEach(Team::filterSensitiveInformation);
         teams.forEach(team -> team.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
         return ResponseEntity.ok().body(TeamResponseDTO.of(teams));
-    }
-
-    /**
-     * Lists all eligible submissions and existing assessments for the caller's teams, without claiming them.
-     *
-     * @param exerciseId      the exercise whose queue is displayed
-     * @param correctionRound the requested assessment round
-     * @return one queue entry per participating team
-     */
-    @GetMapping("exercises/{exerciseId}/assessment-queue-teams")
-    @EnforceAtLeastTutorInExercise
-    public ResponseEntity<List<AssessmentQueueTeamDTO>> getAssessmentQueueTeams(@PathVariable long exerciseId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
-        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (!exercise.isTeamMode() || exercise.isExamExercise()) {
-            throw new BadRequestAlertException("The exercise is not a course team exercise", "exercise", "notTeamExercise");
-        }
-        submissionService.checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
-        submissionService.checkThatAssessmentIsPossibleElseThrow(exercise, null);
-        var user = userRepository.getUserWithAuthorities();
-        Long teamOwnerId = authCheckService.isAtLeastInstructorForExercise(exercise, user) ? null : user.getId();
-        var participations = studentParticipationRepository.findTeamAssessmentQueueParticipations(exerciseId, teamOwnerId, correctionRound);
-        Map<Long, AssessmentQueueSubmissionDTO> submissions = new HashMap<>();
-        boolean canStartAssessment = true;
-        try {
-            submissionService.checkIfExerciseDueDateIsReached(exercise);
-        }
-        catch (AccessForbiddenException _) {
-            // Existing assessments remain visible while new assessments are blocked by their due date.
-            canStartAssessment = false;
-        }
-        if (canStartAssessment && (!(exercise instanceof ProgrammingExercise programmingExercise) || programmingExercise.areManualResultsAllowed())) {
-            var candidates = studentParticipationRepository.findCourseTeamQueueCandidates(exerciseId, ZonedDateTime.now(ZoneOffset.UTC), teamOwnerId);
-            candidates.forEach(submission -> submissions.put(submission.participationId(), submission));
-        }
-        var existingIds = participations.stream().map(entry -> entry.submissionId()).filter(Objects::nonNull).toList();
-        if (!existingIds.isEmpty()) {
-            submissionRepository.findTeamQueueMetadata(existingIds).forEach(submission -> submissions.putIfAbsent(submission.participationId(), submission));
-        }
-        var selectedIds = submissions.values().stream().map(AssessmentQueueSubmissionDTO::id).toList();
-        var results = selectedIds.isEmpty() ? List.<AssessmentQueueResultDTO>of() : resultRepository.findTeamQueueResults(selectedIds);
-        var resultsBySubmission = results.stream().collect(Collectors.groupingBy(AssessmentQueueResultDTO::submissionId));
-        return ResponseEntity.ok(participations.stream().filter(entry -> submissions.containsKey(entry.participationId())).map(entry -> {
-            var submission = submissions.get(entry.participationId());
-            return new AssessmentQueueTeamDTO(entry.participationId(), entry.teamId(), entry.shortName(),
-                    submission.toResponse(resultsBySubmission.getOrDefault(submission.id(), List.of())));
-        }).toList());
     }
 
     /**
@@ -563,11 +457,6 @@ public class TeamResource {
         Exercise sourceExercise = exerciseRepository.findByIdElseThrow(sourceExerciseId);
         // the teams of the source exercise are copied, so the user must be allowed to see them
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, sourceExercise, user);
-        // the teams are copied together with their students, who have to be members of the course of the destination exercise
-        if (!Objects.equals(sourceExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId(),
-                destinationExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId())) {
-            throw new BadRequestAlertException("The source and destination exercise must belong to the same course.", ENTITY_NAME, "sourceDestinationCourseMismatch");
-        }
         if (!sourceExercise.isTeamMode()) {
             throw new BadRequestAlertException("The source exercise must be a team-based exercise.", ENTITY_NAME, "sourceExerciseNotTeamBased");
         }

@@ -26,20 +26,20 @@
         </div>
     }
 
-    <tumaet-ui-table-layout [empty]="leaderboard().length === 0">
-        <table tumAetUiTable size="small" striped>
+    <div class="table-frame">
+        <table class="leaderboard-table">
             <thead>
                 <tr>
-                    <th class="w-20" jhiTranslate="artemisApp.quizTraining.rank"></th>
+                    <th jhiTranslate="artemisApp.quizTraining.rank"></th>
                     <th jhiTranslate="artemisApp.quizTraining.student"></th>
-                    <th class="w-24 text-center" jhiTranslate="artemisApp.quizTraining.score"></th>
+                    <th jhiTranslate="artemisApp.quizTraining.score"></th>
                 </tr>
             </thead>
             <tbody>
                 @for (entry of leaderboard(); track entry.rank) {
                     <tr>
-                        <td class="whitespace-nowrap">{{ entry.rank }}</td>
-                        <td class="wrap-anywhere">
+                        <td class="not-user-column">{{ entry.rank }}</td>
+                        <td class="user-name">
                             <jhi-profile-picture
                                 class="picture"
                                 [authorName]="entry.userName"
@@ -50,10 +50,10 @@
                             />
                             {{ entry.userName }}
                         </td>
-                        <td class="text-center whitespace-nowrap">{{ entry.score }}</td>
+                        <td class="not-user-column">{{ entry.score }}</td>
                     </tr>
                 }
             </tbody>
         </table>
-    </tumaet-ui-table-layout>
+    </div>
 </div>

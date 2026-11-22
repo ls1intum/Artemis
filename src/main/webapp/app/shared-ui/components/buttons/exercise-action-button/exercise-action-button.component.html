@@ -1,12 +1,15 @@
-<span [hidden]="buttonLoading()" class="inline-flex items-center gap-2">
+<div [hidden]="buttonLoading()">
     @if (buttonIcon()) {
         <fa-icon [icon]="buttonIcon()" [fixedWidth]="true" />
     }
+    &nbsp;
     <span
-        [class.hidden]="hideLabelMobile()"
-        [class.md:inline]="hideLabelMobile() && hideLabelBreakpoint() === 'md'"
-        [class.xl:inline]="hideLabelMobile() && hideLabelBreakpoint() === 'xl'"
+        [ngClass]="{
+            'd-none': hideLabelMobile(),
+            'd-md-inline': hideLabelMobile() && hideLabelBreakpoint() === 'md',
+            'd-xl-inline': hideLabelMobile() && hideLabelBreakpoint() === 'xl',
+        }"
         >{{ buttonLabel() }}</span
     >
-</span>
+</div>
 <fa-icon [hidden]="!buttonLoading()" animation="spin" [icon]="faCircleNotch" />
