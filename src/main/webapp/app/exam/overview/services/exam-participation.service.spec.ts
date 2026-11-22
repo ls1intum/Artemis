@@ -558,4 +558,150 @@ describe('ExamParticipationService', () => {
         });
         expect(TestBed.inject(SessionStorageService).retrieve('ExamSessionToken')).toBe('session-token');
     });
+
+    describe('wire contract pins', () => {
+        const conductionResponse = () => ({
+            id: 3,
+            workingTime: 3600,
+            started: true,
+            startedDate: '2026-01-01T10:05:00Z',
+            submitted: false,
+            submissionDate: '2026-01-01T10:50:00Z',
+            testRun: false,
+            ended: false,
+            user: { id: 5, login: 'student', name: 'Stu Dent' },
+            exam: {
+                id: 2,
+                title: 'Exam',
+                visibleDate: '2026-01-01T09:00:00Z',
+                startDate: '2026-01-01T10:00:00Z',
+                endDate: '2026-01-01T12:00:00Z',
+                examMode: 'REAL',
+                course: { id: 1 },
+            },
+            examSessions: [{ id: 1, sessionToken: 'token-1', createdDate: '2026-01-01T10:01:00Z' }],
+            exercises: [
+                {
+                    id: 7,
+                    type: 'text',
+                    title: 'Text',
+                    exerciseGroup: { id: 8, title: 'Group', isMandatory: true },
+                    studentParticipations: [
+                        {
+                            id: 11,
+                            initializationDate: '2026-01-01T10:02:00Z',
+                            submissions: [
+                                {
+                                    id: 12,
+                                    submissionExerciseType: 'text',
+                                    text: 'answer',
+                                    submissionDate: '2026-01-01T10:03:00Z',
+                                    results: [{ id: 13, completionDate: '2026-01-01T10:04:00Z', score: 50 }],
+                                },
+                            ],
+                        },
+                    ],
+                },
+                {
+                    id: 9,
+                    type: 'quiz',
+                    title: 'Quiz',
+                    releaseDate: '2026-01-01T08:00:00Z',
+                    dueDate: '2026-01-01T11:00:00Z',
+                    quizQuestions: [{ id: 21, type: 'multiple-choice', answerOptions: [{ id: 22, text: 'a' }] }],
+                    studentParticipations: [
+                        {
+                            id: 14,
+                            submissions: [
+                                {
+                                    id: 15,
+                                    submissionExerciseType: 'quiz',
+                                    submittedAnswers: [{ id: 16, type: 'multiple-choice', quizQuestion: { id: 21 }, selectedOptions: [{ id: 22 }] }],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        });
+
+        it('maps a conduction response to the domain object', () => {
+            const emitted: StudentExam[] = [];
+            service.currentlyLoadedStudentExam.subscribe((value) => emitted.push(value));
+            let loaded: StudentExam | undefined;
+            service.loadStudentExamWithExercisesForConduction(1, 2, 3).subscribe((value) => (loaded = value));
+            const req = httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/1/exams/2/student-exams/3/conduction' });
+            req.flush(conductionResponse());
+
+            expect(loaded).toBeDefined();
+            expect(emitted).toHaveLength(1);
+            expect(emitted[0]).toBe(loaded);
+            expect(TestBed.inject(SessionStorageService).retrieve('ExamSessionToken')).toBe('token-1');
+            // the conduction path leaves the student exam's own dates as the strings the server sent
+            expect(loaded!.startedDate).toBe('2026-01-01T10:05:00Z');
+            expect(loaded!.submissionDate).toBe('2026-01-01T10:50:00Z');
+            expect(dayjs.isDayjs(loaded!.exam!.startDate)).toBe(true);
+            expect(dayjs.isDayjs(loaded!.exam!.visibleDate)).toBe(true);
+            expect(dayjs.isDayjs(loaded!.exam!.endDate)).toBe(true);
+            expect(loaded!.exam!.publishResultsDate).toBeUndefined();
+            expect(loaded!.exam!.examMode).toBe('REAL');
+            expect(loaded!.examSessions![0].sessionToken).toBe('token-1');
+            expect(loaded!.user).toStrictEqual({ id: 5, login: 'student', name: 'Stu Dent' });
+
+            const [text, quiz] = loaded!.exercises!;
+            expect(text.exerciseGroup!.exam).toBe(loaded!.exam);
+            expect(text.exerciseGroup).toMatchObject({ id: 8, title: 'Group', isMandatory: true });
+            expect(quiz.exerciseGroup).toBeInstanceOf(Object);
+            expect(quiz.exerciseGroup!.exam).toBe(loaded!.exam);
+            expect(dayjs.isDayjs(quiz.releaseDate)).toBe(true);
+            expect(dayjs.isDayjs(quiz.dueDate)).toBe(true);
+            const textParticipation = text.studentParticipations![0];
+            expect(dayjs.isDayjs(textParticipation.initializationDate)).toBe(true);
+            const textSubmission = textParticipation.submissions![0];
+            expect(textSubmission).toMatchObject({ id: 12, text: 'answer', submissionExerciseType: 'text' });
+            expect(textSubmission.submissionDate).toBe('2026-01-01T10:03:00Z');
+            expect(textSubmission.results![0]).toMatchObject({ id: 13, score: 50 });
+            expect(textSubmission.results![0].completionDate).toBe('2026-01-01T10:04:00Z');
+            const quizSubmission = quiz.studentParticipations![0].submissions![0];
+            expect(JSON.parse(JSON.stringify(quizSubmission))).toStrictEqual({
+                id: 15,
+                submissionExerciseType: 'quiz',
+                submittedAnswers: [{ id: 16, type: 'multiple-choice', quizQuestion: { id: 21 }, selectedOptions: [{ id: 22 }] }],
+            });
+        });
+
+        it('posts the exact hand-in body for a student exam as the conduction response delivers it', () => {
+            let loaded: StudentExam | undefined;
+            service.loadStudentExamWithExercisesForConduction(1, 2, 3).subscribe((value) => (loaded = value));
+            httpMock.expectOne({ method: 'GET' }).flush(conductionResponse());
+
+            service.submitStudentExam(1, 2, loaded!).subscribe();
+            const req = httpMock.expectOne({ method: 'POST', url: 'api/exam/courses/1/exams/2/student-exams/submit' });
+            expect(JSON.parse(JSON.stringify(req.request.body))).toStrictEqual({
+                id: 3,
+                exercises: [
+                    {
+                        id: 7,
+                        studentParticipations: [{ id: 11, submissions: [{ submissionExerciseType: 'text', id: 12, text: 'answer' }] }],
+                    },
+                    {
+                        id: 9,
+                        studentParticipations: [
+                            {
+                                id: 14,
+                                submissions: [
+                                    {
+                                        submissionExerciseType: 'quiz',
+                                        id: 15,
+                                        submittedAnswers: [{ type: 'multiple-choice', quizQuestion: { id: 21 }, selectedOptions: [{ id: 22 }] }],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            });
+            req.flush(null);
+        });
+    });
 });
