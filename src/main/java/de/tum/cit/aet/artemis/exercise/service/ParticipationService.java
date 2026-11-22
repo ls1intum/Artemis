@@ -1231,8 +1231,8 @@ public class ParticipationService {
             stuckBuildCutoff = ZonedDateTime.now().minusSeconds(timeoutSeconds);
         }
 
-        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search, filters, scoreRangeLower,
-                scoreRangeUpper, stuckBuildCutoff, pageable);
+        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search, filters, scoreRangeLower, scoreRangeUpper,
+                stuckBuildCutoff, pageable);
 
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {

@@ -182,7 +182,7 @@ public class ParticipationRetrievalResource {
     /**
      * GET /exercises/:exerciseId/participations/page : get paginated participations for the participation management view.
      *
-     * @param exerciseId the exercise to query
+     * @param exerciseId      the exercise to query
      * @param search          search parameters including pagination, sorting, search term, and filter
      * @param scoreRangeLower the optional lower bound of the score range in percent
      * @param scoreRangeUpper the optional upper bound of the score range in percent
@@ -198,7 +198,7 @@ public class ParticipationRetrievalResource {
     /**
      * Returns the exam participation management page, which requires an instructor.
      *
-     * @param exerciseId the exam exercise whose participations to load
+     * @param exerciseId      the exam exercise whose participations to load
      * @param search          the filtering, sorting and pagination parameters
      * @param scoreRangeLower the optional lower bound of the score range in percent
      * @param scoreRangeUpper the optional upper bound of the score range in percent
