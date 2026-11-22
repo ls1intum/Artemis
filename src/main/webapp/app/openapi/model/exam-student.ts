@@ -10,7 +10,7 @@
 
 
 export interface ExamStudent {
-    id?: number;
+    id: number;
     userId?: number;
     login?: string;
     name?: string;

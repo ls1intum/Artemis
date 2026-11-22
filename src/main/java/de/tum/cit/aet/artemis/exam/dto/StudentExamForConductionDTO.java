@@ -40,8 +40,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @Schema(name = "OwnStudentExamDTO")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record StudentExamForConductionDTO(long id, @Nullable Integer workingTime, @Nullable Boolean started, @Nullable ZonedDateTime startedDate, @Nullable Boolean submitted,
-        @Nullable ZonedDateTime submissionDate, boolean testRun, @Nullable Boolean ended, @Nullable UserNameDTO user, @Nullable ExamForConductionDTO exam) {
+public record StudentExamForConductionDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, @Nullable Integer workingTime, @Nullable Boolean started,
+        @Nullable ZonedDateTime startedDate, @Nullable Boolean submitted, @Nullable ZonedDateTime submissionDate,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean testRun, @Nullable Boolean ended, @Nullable UserNameDTO user, @Nullable ExamForConductionDTO exam) {
 
     /**
      * Converts a StudentExam into a StudentExamForConductionDTO.

@@ -8363,6 +8363,7 @@ components:
         submissionDate: {type: string, format: date-time}
         numberOfExamSessions: {type: integer, format: int64}
         progress: {type: string}
+      required: [id]
     ExerciseUnitExerciseReference:
       type: object
       properties:
@@ -9801,6 +9802,7 @@ components:
         ended: {type: boolean}
         user: {$ref: '#/components/schemas/UserName'}
         exam: {$ref: '#/components/schemas/ExamForOwnStudentExam'}
+      required: [id, testRun]
     SuggestedDifficulty:
       type: string
       enum: [EASY, MEDIUM, HARD, UNKNOWN]
@@ -9939,7 +9941,7 @@ components:
         allExamExercisesAllStudentsPrepared: {type: boolean}
         existsUnassessedQuizzes: {type: boolean}
         existsUnsubmittedExercises: {type: boolean}
-      required: [existsUnassessedQuizzes, existsUnsubmittedExercises]
+      required: [existsUnassessedQuizzes, existsUnsubmittedExercises, numberOfTotalParticipationsForAssessment]
     BonusRequest:
       type: object
       properties:

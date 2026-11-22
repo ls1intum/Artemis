@@ -13,7 +13,7 @@ export interface ExamChecklist {
     numberOfGeneratedStudentExams?: number;
     numberOfTestRuns?: number;
     numberOfTotalExamAssessmentsFinishedByCorrectionRound?: Array<number>;
-    numberOfTotalParticipationsForAssessment?: number;
+    numberOfTotalParticipationsForAssessment: number;
     numberOfExamsSubmitted?: number;
     numberOfExamsStarted?: number;
     numberOfAllComplaints?: number;

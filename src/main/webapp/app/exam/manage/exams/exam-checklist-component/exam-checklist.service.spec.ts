@@ -30,7 +30,7 @@ function getExerciseGroups(equalPoints: boolean) {
 describe('ExamChecklistService', () => {
     let service: ExamChecklistService;
     const exam = new Exam();
-    const examChecklist: ExamChecklist = { existsUnassessedQuizzes: false, existsUnsubmittedExercises: false };
+    const examChecklist: ExamChecklist = { numberOfTotalParticipationsForAssessment: 0, existsUnassessedQuizzes: false, existsUnsubmittedExercises: false };
     let examApi: ExamApi;
 
     let result: boolean;

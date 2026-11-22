@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Represents one row in the exam-students management table.
  * Combines registration and room/seat/attendance data from {@link de.tum.cit.aet.artemis.exam.domain.ExamUser}
@@ -14,9 +16,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamStudentDTO(
         // ExamUser fields
-        Long id, Long userId, String login, String name, String visibleRegistrationNumber, String studentImagePath, String plannedRoom, String actualRoom, String plannedSeat,
-        String actualSeat, Boolean didCheckImage, Boolean didCheckName, Boolean didCheckLogin, Boolean didCheckRegistrationNumber, String signingImagePath,
-        Boolean didExamUserAttendExam,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, Long userId, String login, String name, String visibleRegistrationNumber, String studentImagePath,
+        String plannedRoom, String actualRoom, String plannedSeat, String actualSeat, Boolean didCheckImage, Boolean didCheckName, Boolean didCheckLogin,
+        Boolean didCheckRegistrationNumber, String signingImagePath, Boolean didExamUserAttendExam,
         // StudentExam fields
         Long studentExamId, Integer workingTime, Boolean started, Boolean submitted, ZonedDateTime startedDate, ZonedDateTime submissionDate, Long numberOfExamSessions,
         String progress) {

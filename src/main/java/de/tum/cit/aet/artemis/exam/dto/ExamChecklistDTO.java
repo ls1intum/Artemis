@@ -17,7 +17,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamChecklistDTO(@Nullable Long numberOfGeneratedStudentExams, @Nullable Long numberOfTestRuns,
-        @Nullable List<Long> numberOfTotalExamAssessmentsFinishedByCorrectionRound, Long numberOfTotalParticipationsForAssessment, @Nullable Long numberOfExamsSubmitted,
+        @Nullable List<Long> numberOfTotalExamAssessmentsFinishedByCorrectionRound,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long numberOfTotalParticipationsForAssessment, @Nullable Long numberOfExamsSubmitted,
         @Nullable Long numberOfExamsStarted, Long numberOfAllComplaints, Long numberOfAllComplaintsDone, @Nullable Boolean allExamExercisesAllStudentsPrepared,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Boolean existsUnassessedQuizzes,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Boolean existsUnsubmittedExercises) {

@@ -77,7 +77,7 @@ describe('ExamChecklistComponent', () => {
     let getProfileInfoSub: ReturnType<typeof vi.spyOn>;
 
     const exam = new Exam();
-    const examChecklist: ExamChecklist = { existsUnassessedQuizzes: false, existsUnsubmittedExercises: false };
+    const examChecklist: ExamChecklist = { numberOfTotalParticipationsForAssessment: 0, existsUnassessedQuizzes: false, existsUnsubmittedExercises: false };
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
 
     beforeEach(async () => {
@@ -280,7 +280,7 @@ describe('ExamChecklistComponent', () => {
             const fetchCounts = vi.spyOn(examChecklistService, 'getExamConductionCounts').mockReturnValue(refreshedCounts);
             vi.mocked(examChecklistService.getExamStatistics)
                 .mockReturnValueOnce(initial)
-                .mockReturnValue(of({ existsUnassessedQuizzes: false, existsUnsubmittedExercises: false }));
+                .mockReturnValue(of({ numberOfTotalParticipationsForAssessment: 0, existsUnassessedQuizzes: false, existsUnsubmittedExercises: false }));
             examChecklistComponentFixture.detectChanges();
             const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
 
@@ -291,7 +291,14 @@ describe('ExamChecklistComponent', () => {
             initial.next(
                 Object.assign(
                     {},
-                    { numberOfGeneratedStudentExams: 8, numberOfExamsStarted: 5, numberOfExamsSubmitted: 2, existsUnassessedQuizzes: false, existsUnsubmittedExercises: false },
+                    {
+                        numberOfGeneratedStudentExams: 8,
+                        numberOfExamsStarted: 5,
+                        numberOfExamsSubmitted: 2,
+                        numberOfTotalParticipationsForAssessment: 0,
+                        existsUnassessedQuizzes: false,
+                        existsUnsubmittedExercises: false,
+                    },
                 ),
             );
             initial.complete();
@@ -336,7 +343,14 @@ describe('ExamChecklistComponent', () => {
                 setUp({ examMode: ExamMode.TEST }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
                 const baseline = Object.assign(
                     {},
-                    { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0, existsUnassessedQuizzes: false, existsUnsubmittedExercises: false },
+                    {
+                        numberOfGeneratedStudentExams: 1,
+                        numberOfExamsStarted: 0,
+                        numberOfExamsSubmitted: 0,
+                        numberOfTotalParticipationsForAssessment: 0,
+                        existsUnassessedQuizzes: false,
+                        existsUnsubmittedExercises: false,
+                    },
                 );
                 vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(baseline));
                 const first = new Subject<ExamConductionCounts>();

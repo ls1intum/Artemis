@@ -32,7 +32,7 @@ export class MockExamChecklistService {
     }
 
     getExamStatistics(exam: Exam) {
-        const checklist: ExamChecklist = { existsUnassessedQuizzes: false, existsUnsubmittedExercises: false };
+        const checklist: ExamChecklist = { numberOfTotalParticipationsForAssessment: 0, existsUnassessedQuizzes: false, existsUnsubmittedExercises: false };
         checklist.allExamExercisesAllStudentsPrepared = true;
         return of(checklist);
     }
