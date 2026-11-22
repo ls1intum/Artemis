@@ -320,9 +320,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 this.course = response.body!;
                 // Load exerciseGroup and set exam mode
                 if (this.isExamMode()) {
-                    this.exerciseGroupService.find(this.courseId()!, this.examId!, groupId).subscribe((groupResponse: HttpResponse<ExerciseGroup>) => {
+                    this.exerciseGroupService.find(this.courseId()!, this.examId!, groupId).subscribe((group: ExerciseGroup) => {
                         // Make sure to call init if we didn't receive an id => new quiz-exercise
-                        this.exerciseGroup = groupResponse.body || undefined;
+                        this.exerciseGroup = group;
                         if (!quizId) {
                             this.init();
                         } else if (this.quizExercise()) {

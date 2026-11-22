@@ -203,7 +203,7 @@ describe('QuizExerciseUpdateComponent', () => {
             initStub = vi.spyOn(comp, 'init');
             quizExerciseServiceStub.mockReturnValue(of(quizExercise));
             courseManagementServiceStub.mockReturnValue(of(new HttpResponse<Course>({ body: course })));
-            exerciseGroupServiceStub.mockReturnValue(of(new HttpResponse<ExerciseGroup>({ body: undefined })));
+            exerciseGroupServiceStub.mockReturnValue(of(new ExerciseGroup()));
         };
 
         const configureFreshFixture = async (testRoute?: ActivatedRoute) => {
@@ -228,7 +228,7 @@ describe('QuizExerciseUpdateComponent', () => {
             await configureTestBed({ snapshot, queryParams: of(snapshot.queryParams) } as ActivatedRoute);
             configureFixtureAndServices();
             vi.spyOn(courseManagementService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
-            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: new ExerciseGroup() })));
+            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new ExerciseGroup()));
             vi.spyOn(comp, 'init').mockImplementation(() => {});
             const courseFind = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
             const examFind = vi.spyOn(quizExerciseService, 'findForExam').mockReturnValue(of(quizExercise));
@@ -638,7 +638,7 @@ describe('QuizExerciseUpdateComponent', () => {
 
             const exerciseGroup = new ExerciseGroup();
             exerciseGroup.id = 2;
-            exerciseGroupServiceStub.mockReturnValue(of(new HttpResponse<ExerciseGroup>({ body: exerciseGroup })));
+            exerciseGroupServiceStub.mockReturnValue(of(exerciseGroup));
 
             comp.ngOnInit();
 

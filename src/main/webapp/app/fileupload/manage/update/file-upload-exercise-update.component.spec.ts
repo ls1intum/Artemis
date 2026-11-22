@@ -247,7 +247,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                 {
                     provide: ExerciseGroupService,
                     useValue: {
-                        find: vi.fn().mockReturnValue(of(new HttpResponse({ body: new ExerciseGroup() }))),
+                        find: vi.fn().mockReturnValue(of(new ExerciseGroup())),
                     },
                 },
                 {

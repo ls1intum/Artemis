@@ -36,13 +36,14 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
             );
         } else if (route.params['courseId']) {
             if (route.params['examId'] && route.params['exerciseGroupId']) {
-                return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['exerciseGroupId']).pipe(
-                    filter((res) => !!res.body),
-                    map(
-                        (exerciseGroup: HttpResponse<ExerciseGroup>) =>
-                            exerciseForImportFromFile<TextExercise>(this.router, undefined, exerciseGroup.body!) ?? new TextExercise(undefined, exerciseGroup.body || undefined),
-                    ),
-                );
+                return this.exerciseGroupService
+                    .find(route.params['courseId'], route.params['examId'], route.params['exerciseGroupId'])
+                    .pipe(
+                        map(
+                            (exerciseGroup: ExerciseGroup) =>
+                                exerciseForImportFromFile<TextExercise>(this.router, undefined, exerciseGroup) ?? new TextExercise(undefined, exerciseGroup),
+                        ),
+                    );
             } else {
                 return this.courseService.findForManagement(route.params['courseId']).pipe(
                     filter((res) => !!res.body),

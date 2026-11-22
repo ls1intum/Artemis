@@ -232,7 +232,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                             const exerciseGroupId = params['exerciseGroupId'];
                             const examId = params['examId'];
 
-                            this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => this.exerciseState.patch('exerciseGroup', res.body!));
+                            this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => this.exerciseState.patch('exerciseGroup', res));
                             // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
                             this.exerciseState.patch('course', undefined);
                         } else {

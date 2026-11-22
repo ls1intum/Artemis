@@ -4,8 +4,10 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { catchError, map } from 'rxjs/operators';
+import { ExerciseGroupApi } from 'app/openapi/api/exercise-group-api';
+import { toExerciseGroup } from 'app/exam/manage/util/exercise-group.util';
+import { buildExerciseGroupDeletionSummary } from 'app/exam/manage/services/exam-deletion-summary.util';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
 import { exerciseGroupDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { EntityDeletionProgress, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
@@ -61,7 +63,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 export class ExerciseGroupsComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private destroyRef = inject(DestroyRef);
-    private exerciseGroupService = inject(ExerciseGroupService);
+    private exerciseGroupApi = inject(ExerciseGroupApi);
     private entityDeletionService = inject(EntityDeletionService);
     private examManagementService = inject(ExamManagementService);
     private eventManager = inject(EventManager);
@@ -110,7 +112,9 @@ export class ExerciseGroupsComponent implements OnInit {
     /** One observable per dialog opening, so that the delete dialog does not get a new input on every change detection pass. */
     protected readonly deleteGroupSummary = computed(() => {
         const exerciseGroup = this.groupToDelete();
-        return exerciseGroup?.id === undefined ? undefined : this.exerciseGroupService.getDeletionSummary(this.courseId(), this.examId(), exerciseGroup.id);
+        return exerciseGroup?.id === undefined
+            ? undefined
+            : this.exerciseGroupApi.getDeletionSummary(this.courseId(), this.examId(), exerciseGroup.id).pipe(map((summary) => buildExerciseGroupDeletionSummary(summary)));
     });
     protected readonly groupToDelete = signal<ExerciseGroup | undefined>(undefined);
     protected readonly deleteGroupQuestion = computed(() =>
@@ -232,7 +236,7 @@ export class ExerciseGroupsComponent implements OnInit {
         const courseId = this.courseId();
         const examId = this.examId();
         const title = this.exerciseGroups()?.find((exerciseGroup) => exerciseGroup.id === exerciseGroupId)?.title;
-        const request$ = this.exerciseGroupService.delete(courseId, examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans);
+        const request$ = this.exerciseGroupApi.deleteExerciseGroup(courseId, examId, exerciseGroupId, event.deleteBaseReposBuildPlans);
         this.entityDeletionService.delete(exerciseGroupDeletionTarget(courseId, examId, exerciseGroupId, title), request$).subscribe({
             next: (progress) => {
                 this.onGroupDeletionEnded(progress, exerciseGroupId);
@@ -371,25 +375,26 @@ export class ExerciseGroupsComponent implements OnInit {
     onGroupEditSaved(edited: ExerciseGroup): void {
         if (this.groupEditIsNew()) {
             // Only the exam id is read server-side; sending the loaded exam would ship every group and exercise with it.
-            const exam = new Exam();
-            exam.id = this.examId();
-            const newGroup: ExerciseGroup = { title: edited.title, isMandatory: edited.isMandatory, exam };
-            this.exerciseGroupService.create(this.courseId(), this.examId(), newGroup).subscribe({
-                next: (res) => this.exerciseGroups.set([...(this.exerciseGroups() ?? []), res.body!]),
-                error: (res: HttpErrorResponse) => {
-                    if (!isErrorAlert(res)) {
-                        onError(this.alertService, res);
-                    }
-                },
-            });
+            this.exerciseGroupApi
+                .createExerciseGroup(this.courseId(), this.examId(), { title: edited.title, isMandatory: edited.isMandatory, exam: { id: this.examId() } })
+                .pipe(map(toExerciseGroup))
+                .subscribe({
+                    next: (created) => this.exerciseGroups.set([...(this.exerciseGroups() ?? []), created]),
+                    error: (res: HttpErrorResponse) => {
+                        if (!isErrorAlert(res)) {
+                            onError(this.alertService, res);
+                        }
+                    },
+                });
             return;
         }
         // Only these three fields are read server-side (ExerciseGroupUpdateDTO); `edited` still carries the group's
         // whole exercise list, which would otherwise be shipped on every rename.
-        const update: ExerciseGroup = { id: edited.id, title: edited.title, isMandatory: edited.isMandatory };
-        this.exerciseGroupService.update(this.courseId(), this.examId(), update).subscribe({
-            next: (res) => {
-                const saved = res.body!;
+        if (edited.id === undefined) {
+            return;
+        }
+        this.exerciseGroupApi.updateExerciseGroup(this.courseId(), this.examId(), { id: edited.id, title: edited.title, isMandatory: edited.isMandatory ?? false }).subscribe({
+            next: (saved) => {
                 // The response carries the group without its exercises, so copy the two edited fields onto a clone of
                 // the local group rather than replacing it wholesale.
                 this.exerciseGroups.set(
@@ -470,7 +475,7 @@ export class ExerciseGroupsComponent implements OnInit {
         if (exerciseId === undefined || targetGroupId === undefined) {
             return;
         }
-        this.exerciseGroupService.moveExerciseToGroup(this.courseId(), this.examId(), exerciseId, targetGroupId).subscribe({
+        this.exerciseGroupApi.moveExerciseToGroup(this.courseId(), this.examId(), exerciseId, { exerciseGroupId: targetGroupId }).subscribe({
             next: () => {
                 const exerciseGroups = this.exerciseGroups();
                 if (!exerciseGroups) {
