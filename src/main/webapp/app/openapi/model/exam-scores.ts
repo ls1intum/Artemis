@@ -8,7 +8,7 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import type { ExerciseGroup } from './exercise-group';
+import type { ExamScoresExerciseGroup } from './exam-scores-exercise-group';
 import type { StudentResult } from './student-result';
 
 export interface ExamScores {
@@ -17,6 +17,6 @@ export interface ExamScores {
     maxPoints?: number;
     averagePointsAchieved?: number;
     hasSecondCorrectionAndStarted?: boolean;
-    exerciseGroups?: Array<ExerciseGroup>;
+    exerciseGroups?: Array<ExamScoresExerciseGroup>;
     studentResults?: Array<StudentResult>;
 }

@@ -201,6 +201,7 @@ model/exam-for-conduction.ts
 model/exam-for-exercise-group.ts
 model/exam-for-import-list.ts
 model/exam-for-overview.ts
+model/exam-for-own-student-exam.ts
 model/exam-for-question-pool.ts
 model/exam-for-student-exam.ts
 model/exam-for-summary.ts
@@ -221,6 +222,7 @@ model/exam-room-layout-strategy.ts
 model/exam-room-overview.ts
 model/exam-room-upload-information.ts
 model/exam-room.ts
+model/exam-scores-exercise-group.ts
 model/exam-scores.ts
 model/exam-seat.ts
 model/exam-session-for-conduction.ts
@@ -279,6 +281,7 @@ model/exercise-group-with-exercises.ts
 model/exercise-group-with-id-and-exam.ts
 model/exercise-group.ts
 model/exercise-import.ts
+model/exercise-info.ts
 model/exercise-mode.ts
 model/exercise-overview.ts
 model/exercise-reference.ts
@@ -381,6 +384,7 @@ model/multiple-choice-submitted-answer-from-live-client.ts
 model/multiple-choice-submitted-answer-from-student.ts
 model/online-resource.ts
 model/online-unit.ts
+model/own-student-exam.ts
 model/participant.ts
 model/participation-exercise.ts
 model/participation-for-export.ts

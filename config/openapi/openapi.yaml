@@ -5440,7 +5440,7 @@ paths:
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/StudentExamForConduction'}
+              schema: {$ref: '#/components/schemas/OwnStudentExam'}
   /api/exam/courses/{courseId}/exams/{examId}/longest-working-time:
     get:
       tags: [student-exam]
@@ -8142,6 +8142,16 @@ components:
     ChecklistSection:
       type: string
       enum: [COMPETENCIES, DIFFICULTY, QUALITY]
+    ExamScoresExerciseGroup:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        maxPoints: {type: number, format: double}
+        numberOfParticipants: {type: integer, format: int64}
+        containedExercises:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseInfo'}
     ExamRegistrationResult:
       type: object
       properties:
@@ -8176,7 +8186,7 @@ components:
         hasSecondCorrectionAndStarted: {type: boolean}
         exerciseGroups:
           type: array
-          items: {$ref: '#/components/schemas/ExerciseGroup'}
+          items: {$ref: '#/components/schemas/ExamScoresExerciseGroup'}
         studentResults:
           type: array
           items: {$ref: '#/components/schemas/StudentResult'}
@@ -9607,6 +9617,30 @@ components:
         x: {type: number, format: double, minimum: 0}
         y: {type: number, format: double, minimum: 0}
       required: [condition, name]
+    ExamForOwnStudentExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        examMode: {$ref: '#/components/schemas/ExamMode'}
+        examWithAttendanceCheck: {type: boolean}
+        visibleDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        gracePeriod: {type: integer, format: int32}
+        workingTime: {type: integer, format: int32}
+        startText: {type: string}
+        endText: {type: string}
+        confirmationStartText: {type: string}
+        confirmationEndText: {type: string}
+        examMaxPoints: {type: integer, format: int32}
+        numberOfExercisesInExam: {type: integer, format: int32}
+        examiner: {type: string}
+        moduleNumber: {type: string}
+        courseName: {type: string}
+        examSummaryPublicationDate: {type: string, format: date-time}
+        publishResultsDate: {type: string, format: date-time}
+        course: {$ref: '#/components/schemas/CourseForStudentExam'}
     ExamWideAnnouncementEvent:
       allOf:
       - {$ref: '#/components/schemas/ExamLiveEventBase'}
@@ -9746,6 +9780,19 @@ components:
       properties:
         combinedDefaultCapacity: {type: integer, format: int32}
         combinedMaximumCapacity: {type: integer, format: int32}
+    OwnStudentExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        workingTime: {type: integer, format: int32}
+        started: {type: boolean}
+        startedDate: {type: string, format: date-time}
+        submitted: {type: boolean}
+        submissionDate: {type: string, format: date-time}
+        testRun: {type: boolean}
+        ended: {type: boolean}
+        user: {$ref: '#/components/schemas/UserName'}
+        exam: {$ref: '#/components/schemas/ExamForOwnStudentExam'}
     SuggestedDifficulty:
       type: string
       enum: [EASY, MEDIUM, HARD, UNKNOWN]
@@ -11802,6 +11849,14 @@ components:
         reviewState: {$ref: '#/components/schemas/QuizQuestionReviewState', description: The
             review decision}
       required: [reviewState]
+    ExerciseInfo:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        title: {type: string}
+        maxPoints: {type: number, format: double}
+        numberOfParticipants: {type: integer, format: int64}
+        exerciseType: {type: string}
     PresentationAssessmentInstance:
       type: object
       properties:

@@ -38,7 +38,7 @@ import { ExamForOverview } from '../model/exam-for-overview';
 import { ExamForQuestionPool } from '../model/exam-for-question-pool';
 import { ExamInformation } from '../model/exam-information';
 import { LockedExamSubmission } from '../model/locked-exam-submission';
-import { StudentExamForConduction } from '../model/student-exam-for-conduction';
+import { OwnStudentExam } from '../model/own-student-exam';
 import { ExamSidebarData } from '../model/exam-sidebar-data';
 import { StatsForDashboard } from '../model/stats-for-dashboard';
 import { ExamImport } from '../model/exam-import';
@@ -462,9 +462,9 @@ export class ExamApi {
      * @param examId
      * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getOwnStudentExam(courseId: number, examId: number, options?: import('./request-options').RequestOptions): Observable<StudentExamForConduction> {
+    getOwnStudentExam(courseId: number, examId: number, options?: import('./request-options').RequestOptions): Observable<OwnStudentExam> {
         const url = `${this.basePath}/api/exam/courses/${courseId}/exams/${examId}/own-student-exam`;
-        return this.http.get<StudentExamForConduction>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.get<OwnStudentExam>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**

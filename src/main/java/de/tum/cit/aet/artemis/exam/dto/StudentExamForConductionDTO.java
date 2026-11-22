@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Response projection of the own {@link StudentExam} returned by the exam-conduction entry point
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
  * @param user           the identifying name of the student ({@code name} shown on the cover)
  * @param exam           the rich exam projection read by the conduction cover
  */
+@Schema(name = "OwnStudentExamDTO")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentExamForConductionDTO(long id, @Nullable Integer workingTime, @Nullable Boolean started, @Nullable ZonedDateTime startedDate, @Nullable Boolean submitted,
         @Nullable ZonedDateTime submissionDate, boolean testRun, @Nullable Boolean ended, @Nullable UserNameDTO user, @Nullable ExamForConductionDTO exam) {

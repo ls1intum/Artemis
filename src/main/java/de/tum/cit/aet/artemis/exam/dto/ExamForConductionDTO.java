@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamMode;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Rich exam projection nested inside {@link StudentExamForConductionDTO}, returned by the own-student-exam fetch
@@ -60,6 +61,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamMode;
  * @param publishResultsDate         the date the results are published (the summary gate also opens once results are out)
  * @param course                     the slim student-facing course projection (only {@code id} is read)
  */
+@Schema(name = "ExamForOwnStudentExamDTO")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamForConductionDTO(long id, @Nullable String title, ExamMode examMode, boolean examWithAttendanceCheck, @Nullable ZonedDateTime visibleDate,
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText,
