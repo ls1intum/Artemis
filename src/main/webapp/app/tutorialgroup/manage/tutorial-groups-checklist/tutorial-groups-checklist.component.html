@@ -18,7 +18,7 @@
                     <label for="timeZone" class="checklist-step-title" jhiTranslate="artemisApp.pages.checklist.timeZone"></label>
                     <p class="checklist-step-desc" jhiTranslate="artemisApp.pages.checklist.timeZoneExplanation"></p>
                 </div>
-                <a [routerLink]="['/course-management', course().id!, 'settings']" tumAetUiButton size="small" severity="secondary" variant="outlined">
+                <a [routerLink]="['/course-management', course().id!, 'settings']" tumAetUiButton size="small" severity="warn" variant="outlined">
                     <fa-icon [icon]="faCog" />
                     <span jhiTranslate="artemisApp.courseOverview.menu.settings"></span>
                 </a>
@@ -39,7 +39,7 @@
                         [routerLink]="['/course-management', course().id!, 'tutorial-groups', 'configuration', course().tutorialGroupsConfiguration!.id!, 'edit']"
                         tumAetUiButton
                         size="small"
-                        severity="secondary"
+                        severity="warn"
                         variant="outlined"
                         [disabled]="!isTimeZoneConfigured()"
                     >
@@ -53,7 +53,7 @@
                         [routerLink]="['/course-management', course().id!, 'create-tutorial-groups-configuration']"
                         tumAetUiButton
                         size="small"
-                        severity="secondary"
+                        severity="primary"
                         variant="outlined"
                         [disabled]="!isTimeZoneConfigured()"
                     >

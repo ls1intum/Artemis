@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
 import com.openai.client.OpenAIClient;
+import com.openai.core.JsonField;
 import com.openai.core.JsonValue;
 import com.openai.models.ResponsesModel;
 import com.openai.models.responses.Response;
@@ -47,11 +49,9 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.atlas.config.AtlasAgentProperties;
-import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
-import de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasResponsesChatClient;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
+import de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesChatModel;
 
 /** Exercises real nested delegation and the native tool advisor against a scripted Responses provider. */
 class AtlasWorkerResponsesTest {
@@ -76,9 +76,12 @@ class AtlasWorkerResponsesTest {
         var templates = mock(AtlasPromptTemplateService.class);
         when(templates.render(anyString(), anyMap())).thenReturn("Worker instructions");
         var usage = mock(LLMTokenUsageService.class);
-        var properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L, 10);
-        var harness = new AtlasAgentDelegationService(null, templates, null, new AtlasAgentProperties("interactive", 1.0), properties,
-                new AtlasResponsesChatClient(ChatClient.create(new AtlasResponsesChatModel(client, new JsonMapper(), "gpt-5.6-luna"))));
+        // the orchestrator and worker presets differ only in their reasoning effort, which each role's model carries as its default
+        var orchestratorClient = ChatClient
+                .create(new OpenAiResponsesChatModel(client, new JsonMapper(), OpenAiChatOptions.builder().model("gpt-5.6-luna").reasoningEffort("xhigh").build()));
+        var workerClient = ChatClient
+                .create(new OpenAiResponsesChatModel(client, new JsonMapper(), OpenAiChatOptions.builder().model("gpt-5.6-luna").reasoningEffort("high").build()));
+        var harness = new AtlasAgentDelegationService(orchestratorClient, orchestratorClient, workerClient, templates, null);
         Map<String, Object> context = new HashMap<>();
         context.put(OrchestratorToolContextKeys.COURSE_ID_KEY, 42L);
         context.put(OrchestratorToolContextKeys.LEARNING_OBJECT_ID_KEY, 7L);
@@ -103,12 +106,11 @@ class AtlasWorkerResponsesTest {
         var empty = new AtlasToolSurface(ToolCallbackProvider.from(List.of()));
         var workers = new OrchestratorDelegationToolsService(templates, harness, new AtlasToolSurface(ToolCallbackProvider.from(read)), role.equals("Creator") ? roleTools : empty,
                 role.equals("Assigner") ? roleTools : empty, role.equals("Editor") ? roleTools : empty,
-                new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(new AtlasWorkerTerminalToolService(new JsonMapper())).build()), properties, usage,
+                new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(new AtlasWorkerTerminalToolService(new JsonMapper())).build()), usage,
                 mock(UserRepository.class));
         var index = FunctionToolCallback.<Map<String, Object>, String>builder("listCompetencyIndex", input -> "{\"competencies\":[]}").inputType(Map.class).build();
-        ChatResponse mainResponse = harness.delegateOrchestratorRound("Main instructions", "Process exercise 7",
-                OpenAiChatOptions.builder().deploymentName("gpt-5.6-luna").reasoningEffort("xhigh"), context, ToolCallbackProvider.from(index),
-                MethodToolCallbackProvider.builder().toolObjects(workers, new AtlasOrchestratorTerminalToolService()).build());
+        ChatResponse mainResponse = harness.delegateOrchestratorRound("Main instructions", "Process exercise 7", context, ignored -> {
+        }, ToolCallbackProvider.from(index), MethodToolCallbackProvider.builder().toolObjects(workers, new AtlasOrchestratorTerminalToolService()).build());
 
         AtlasToolCallBudget.checkResponse(mainResponse, context);
         assertThat(budget.completion().verified()).isTrue();
@@ -118,9 +120,20 @@ class AtlasWorkerResponsesTest {
         assertThat(actions.actions()).hasSize(1);
         assertThat(mainResponse.getMetadata().getUsage().getTotalTokens()).isEqualTo(36);
         var tracked = ArgumentCaptor.forClass(ChatResponse.class);
-        verify(usage).trackChatResponseTokenUsage(tracked.capture(), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
-        assertThat(tracked.getValue().getMetadata().getUsage().getTotalTokens()).isEqualTo(completeUsage ? 48 : 36);
-        assertThat(tracked.getValue().getMetadata().<Boolean>get(AtlasResponsesChatModel.USAGE_COMPLETE_METADATA_KEY)).isEqualTo(completeUsage);
+        verify(usage, times(4)).trackModelCallTokenUsage(tracked.capture(), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
+        assertThat(tracked.getAllValues()).hasSize(4);
+        if (completeUsage) {
+            assertThat(tracked.getAllValues().getFirst().getMetadata().getUsage().getPromptTokens()).isEqualTo(10);
+            assertThat(tracked.getAllValues().getFirst().getMetadata().getUsage().getCompletionTokens()).isEqualTo(2);
+        }
+        else {
+            assertThat(tracked.getAllValues().getFirst().getMetadata().getUsage()).isInstanceOf(org.springframework.ai.chat.metadata.EmptyUsage.class);
+        }
+        for (ChatResponse response : tracked.getAllValues().subList(1, tracked.getAllValues().size())) {
+            assertThat(response.getMetadata().getUsage().getPromptTokens()).isEqualTo(10);
+            assertThat(response.getMetadata().getUsage().getCompletionTokens()).isEqualTo(2);
+        }
+        verifyNoMoreInteractions(usage);
         var requests = ArgumentCaptor.forClass(ResponseCreateParams.class);
         verify(provider, times(7)).create(requests.capture());
         for (int i = 0; i < requests.getAllValues().size(); i++) {
@@ -169,6 +182,7 @@ class AtlasWorkerResponsesTest {
         when(response.status()).thenReturn(Optional.of(ResponseStatus.COMPLETED));
         if (knownUsage) {
             var usage = mock(ResponseUsage.class);
+            when(usage._inputTokensDetails()).thenReturn(JsonField.ofNullable(null));
             when(usage.inputTokens()).thenReturn(10L);
             when(usage.outputTokens()).thenReturn(2L);
             when(usage.totalTokens()).thenReturn(12L);

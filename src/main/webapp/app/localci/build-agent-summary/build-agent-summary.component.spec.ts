@@ -16,7 +16,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { Router } from '@angular/router';
 import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
@@ -324,22 +323,16 @@ describe('BuildAgentSummaryComponent', () => {
         expect(mockBuildAgentsService.clearDistributedData).not.toHaveBeenCalled();
     });
 
-    it('should navigate to job detail when jobId is provided', () => {
-        const router = TestBed.inject(Router);
-        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    it('keeps job details available as native links above the agent row link', () => {
+        mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of([{ ...mockBuildAgents[0], runningBuildJobs: mockRunningJobs1 }]));
+        fixture.detectChanges();
 
-        component.navigateToJobDetail('test-job-123');
-
-        expect(navigateSpy).toHaveBeenCalledWith(['/admin/build-overview', 'test-job-123', 'job-details']);
-    });
-
-    it('should not navigate to job detail when jobId is undefined', () => {
-        const router = TestBed.inject(Router);
-        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-
-        component.navigateToJobDetail(undefined);
-
-        expect(navigateSpy).not.toHaveBeenCalled();
+        const jobLinks = fixture.nativeElement.querySelectorAll('a.job-link') as NodeListOf<HTMLAnchorElement>;
+        expect(Array.from(jobLinks, (link) => link.getAttribute('href'))).toEqual(['/admin/build-overview/2/job-details', '/admin/build-overview/4/job-details']);
+        for (const link of jobLinks) {
+            expect(link.tabIndex).toBe(0);
+            expect(link.closest('a.stretched-row-link')).toBeNull();
+        }
     });
 
     it('should exclude PAUSED agents from build capacity calculation', () => {

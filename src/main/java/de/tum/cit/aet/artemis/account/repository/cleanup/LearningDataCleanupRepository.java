@@ -107,6 +107,32 @@ public interface LearningDataCleanupRepository extends ArtemisJpaRepository<Quiz
     int deleteLearningPaths(@Param("userId") long userId);
 
     @Query("""
+            SELECT consent.user.id AS userId, COUNT(consent) AS count
+            FROM ScienceCourseConsent consent
+            WHERE consent.user.id IN :userIds
+            GROUP BY consent.user.id
+            """)
+    List<UserReferenceCount> countScienceCourseConsents(@Param("userIds") Collection<Long> userIds);
+
+    /**
+     * Deletes the account's per-course science consent decisions.
+     *
+     * The collected events are not deleted here: they are keyed by login rather than by a foreign key to the account,
+     * and the anonymization that precedes this rewrites that login. What goes is the record of which courses the
+     * account had agreed to, which has no meaning once the account does not exist.
+     *
+     * @param userId the account being deleted
+     * @return the number of consent rows removed
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM ScienceCourseConsent consent
+            WHERE consent.user.id = :userId
+            """)
+    int deleteScienceCourseConsents(@Param("userId") long userId);
+
+    @Query("""
             SELECT profile.user.id AS userId, COUNT(profile) AS count
             FROM LearnerProfile profile
             WHERE profile.user.id IN :userIds
@@ -161,4 +187,12 @@ public interface LearningDataCleanupRepository extends ArtemisJpaRepository<Quiz
             WHERE event.identity = :oldIdentity
             """)
     int renameScienceEventIdentity(@Param("oldIdentity") String oldIdentity, @Param("newIdentity") String newIdentity);
+
+    @Query("SELECT v.userId AS userId, COUNT(v) AS count FROM CourseHomeVisit v WHERE v.userId IN :userIds GROUP BY v.userId")
+    List<UserReferenceCount> countHomeVisits(@Param("userIds") Collection<Long> userIds);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM CourseHomeVisit v WHERE v.userId = :userId")
+    int deleteHomeVisits(@Param("userId") long userId);
 }

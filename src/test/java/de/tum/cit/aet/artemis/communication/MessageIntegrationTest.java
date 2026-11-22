@@ -21,21 +21,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.mail.internet.MimeMessage;
 
+import org.aopalliance.intercept.MethodInterceptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.springframework.aop.framework.Advised;
+import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -64,6 +71,7 @@ import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
@@ -91,6 +99,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ConversationMessageRepository conversationMessageRepository;
+
+    @Autowired
+    private AnswerPostRepository answerPostRepository;
 
     @Autowired
     private OneToOneChatTestRepository oneToOneChatRepository;
@@ -192,7 +203,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         long[] conversationIds = new long[] { createdPost.conversation().id() };
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, null, null);
-        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(1);
+        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId(), false)).hasSize(1);
 
         // both conversation participants should be notified
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(aCanonicalPostBroadcastTopic(),
@@ -294,8 +305,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // taken once per user and conversation.
         // further database calls are made in async code
         // Note: post via the channel's own course — the path courseId must match the conversation's course (see ensureConversationBelongsToCourseElseThrow)
-        assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED))
-                .hasBeenCalledTimes(12);
+        queryInterceptor.startQueryCount();
+        request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED);
+        List<String> statements = queryInterceptor.getStatements();
+        // The response header may refresh the shared one-minute LTI-origin cache. Account for that bounded read
+        // separately, keeping the message/authentication budget exact even when this request observes a cache miss.
+        long platformOriginReads = statements.stream().filter(sql -> sql.contains(" from lti_platform_configuration ")).count();
+        assertThat(platformOriginReads).as("LTI-origin cache reads").isBetween(0L, 1L);
+        assertThat(statements.size() - platformOriginReads).as("message and authentication queries").isEqualTo(12);
     }
 
     @ParameterizedTest
@@ -392,10 +409,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         long[] conversationIds = new long[] { posts.getFirst().getConversation().getId() };
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(course.getId(), null, conversationIds, null, null, false, false, false, null, null);
         if (pageSize == LOWER_PAGE_SIZE) {
-            assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize), requestingUser.getId())).hasSize(LOWER_PAGE_SIZE);
+            assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize), requestingUser.getId(), false)).hasSize(LOWER_PAGE_SIZE);
         }
         else {
-            assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize), requestingUser.getId())).hasSize(NUMBER_OF_POSTS);
+            assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize), requestingUser.getId(), false)).hasSize(NUMBER_OF_POSTS);
         }
     }
 
@@ -426,7 +443,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         List<Long> pagedMessageIds = new ArrayList<>();
         for (int page = 0; page < 3; page++) {
-            conversationMessageRepository.findMessages(postContextFilter, PageRequest.of(page, 2), requestingUser.getId()).forEach(message -> pagedMessageIds.add(message.getId()));
+            conversationMessageRepository.findMessages(postContextFilter, PageRequest.of(page, 2), requestingUser.getId(), false)
+                    .forEach(message -> pagedMessageIds.add(message.getId()));
         }
 
         // Newest first, and among equal dates the higher id first. Paging through the conversation therefore visits
@@ -450,13 +468,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         long[] conversationIds = new long[] { postToSave.getConversation().getId() };
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, null, null);
-        var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
+        var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId(), false).getSize();
 
         PostResponseDTO notCreatedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class,
                 HttpStatus.BAD_REQUEST);
 
         assertThat(notCreatedPost).isNull();
-        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
+        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId(), false)).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
@@ -480,12 +498,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         long[] conversationIds = new long[] { postToSave.getConversation().getId() };
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, null, null);
-        var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
+        var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId(), false).getSize();
 
         PostResponseDTO notCreatedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class,
                 HttpStatus.FORBIDDEN);
         assertThat(notCreatedPost).isNull();
-        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
+        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId(), false)).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
@@ -645,6 +663,209 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 && post.getAuthor().getLogin().equals(TEST_PREFIX + "student1") && (post.getContent().contains("Content") || answerHasContext(post.getAnswers(), "Content")))
                 .toList().size());
         assertThat(returnedPosts.size()).isLessThan(courseWidePosts.size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "zorbal", "QUUXING", "zorbalina quux", "a Qu" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_SearchTextMatchesTheNameOfTheAuthorOfAMessageOrAnAnswer(String searchText) throws Exception {
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student1.setFirstName("Zorbalina");
+        student1.setLastName("Quuxington");
+        userTestRepository.save(student1);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToCourseWide", "true");
+        params.add("size", "50");
+        params.add("searchText", searchText);
+
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
+
+        // None of the contents contains the name, so every hit comes from the author of the message or of one of its answers.
+        var expectedIds = existingCourseWideMessages.stream().filter(
+                post -> post.getAuthor().getId().equals(student1.getId()) || post.getAnswers().stream().anyMatch(answer -> answer.getAuthor().getId().equals(student1.getId())))
+                .map(Post::getId).toList();
+        assertThat(expectedIds).isNotEmpty();
+        assertThat(returnedPosts).extracting(post -> post.id()).containsExactlyInAnyOrderElementsOf(expectedIds);
+    }
+
+    /**
+     * A post that has several answers by the searched author must be listed once, and the total count must count posts, not answers.
+     * The author of the post itself is somebody else, so the match can only come from the answers.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFindMessages_SearchTextMatchesTheNameOfTheAuthorOfAnswersWithoutRepeatingThePost(boolean filterAuthor) {
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student1.setFirstName("Zorbalina");
+        student1.setLastName("Quuxington");
+        userTestRepository.save(student1);
+        Post postOfSomeoneElse = existingCourseWideMessages.stream().filter(post -> !post.getAuthor().getId().equals(student1.getId())).findFirst().orElseThrow();
+        conversationUtilService.addThreadReplyWithReactionForUserToPost(TEST_PREFIX + "student1", postOfSomeoneElse);
+        conversationUtilService.addThreadReplyWithReactionForUserToPost(TEST_PREFIX + "student1", postOfSomeoneElse);
+        conversationUtilService.addThreadReplyWithReactionForUserToPost(TEST_PREFIX + "student1", postOfSomeoneElse);
+
+        long[] conversationIds = existingCourseWideChannelIds.stream().mapToLong(Long::longValue).toArray();
+        var filter = new PostContextFilterDTO(courseId, null, conversationIds, filterAuthor ? new long[] { student1.getId() } : null, "zorbal", true, false, false,
+                PostSortCriterion.CREATION_DATE, SortingOrder.DESCENDING);
+        // the posts that match: those of the author, those with an answer of the author, and the one that got three answers above
+        Set<Long> expectedIds = existingCourseWideMessages.stream().filter(
+                post -> post.getAuthor().getId().equals(student1.getId()) || post.getAnswers().stream().anyMatch(answer -> answer.getAuthor().getId().equals(student1.getId())))
+                .map(Post::getId).collect(Collectors.toSet());
+        expectedIds.add(postOfSomeoneElse.getId());
+
+        // A page of one post: a join over the answers would fill it with the rows of one post and count three rows for the post with three answers.
+        Page<Post> firstPage = conversationMessageRepository.findMessages(filter, PageRequest.of(0, 1), student1.getId(), false);
+        Page<Post> allPosts = conversationMessageRepository.findMessages(filter, PageRequest.of(0, 50), student1.getId(), false);
+
+        assertThat(firstPage.getTotalElements()).as("the total counts posts and not answers").isEqualTo(expectedIds.size());
+        assertThat(allPosts.getContent()).extracting(Post::getId).containsExactlyInAnyOrderElementsOf(expectedIds);
+        List<Long> pagedIds = new ArrayList<>();
+        for (int page = 0; page < expectedIds.size(); page++) {
+            conversationMessageRepository.findMessages(filter, PageRequest.of(page, 1), student1.getId(), false).forEach(message -> pagedIds.add(message.getId()));
+        }
+        assertThat(pagedIds).containsExactlyInAnyOrderElementsOf(expectedIds).doesNotHaveDuplicates();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false,false", "false,true", "true,false", "true,true" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFindMessages_SearchTextMatchesOnlyVerifiedBotAuthorNames(boolean verified, boolean filterAuthor) {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        Post post = existingCourseWideMessages.getFirst();
+        AnswerPost pendingReply = conversationUtilService.addThreadReplyWithReactionForUserToPost(User.IRIS_BOT_LOGIN, post);
+        pendingReply.setVerified(verified);
+        answerPostRepository.save(pendingReply);
+
+        long[] conversationIds = existingCourseWideChannelIds.stream().mapToLong(Long::longValue).toArray();
+        var filter = new PostContextFilterDTO(courseId, null, conversationIds, filterAuthor ? new long[] { irisBot.getId() } : null, irisBot.getFirstName(), true, false, false,
+                PostSortCriterion.CREATION_DATE, SortingOrder.DESCENDING);
+
+        Page<Post> page = conversationMessageRepository.findMessages(filter, PageRequest.of(0, 50), userTestRepository.getUser().getId(), false);
+
+        // Students do not see the reply until it is verified, so its author must not make the post findable
+        if (verified) {
+            assertThat(page.getContent()).extracting(Post::getId).contains(post.getId());
+        }
+        else {
+            assertThat(page.getContent()).extracting(Post::getId).doesNotContain(post.getId());
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "student1,false,false,false", "student1,false,false,true", "student1,false,true,false", "student1,false,true,true", "student1,true,false,false",
+            "student1,true,false,true", "student1,true,true,false", "student1,true,true,true", "tutor1,false,false,false", "tutor1,false,false,true", "tutor1,false,true,false",
+            "tutor1,false,true,true", "tutor1,true,false,false", "tutor1,true,false,true", "tutor1,true,true,false", "tutor1,true,true,true", "student1,false,true,",
+            "student1,true,true,", "tutor1,false,true,", "tutor1,true,true," })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSearchRespectsIrisReplyVisibility(String requester, boolean verified, boolean filterAuthor, Boolean searchName) throws Exception {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        irisBot.setFirstName("IrisSearchUnique");
+        userTestRepository.save(irisBot);
+        Post post = existingCourseWideMessages.getFirst();
+        AnswerPost reply = conversationUtilService.addThreadReplyWithReactionForUserToPost(User.IRIS_BOT_LOGIN, post);
+        reply.setContent("hiddenirisneedle");
+        reply.setVerified(verified);
+        answerPostRepository.save(reply);
+        userUtilService.changeUser(TEST_PREFIX + requester);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", post.getConversation().getId().toString());
+        if (searchName != null) {
+            params.add("searchText", searchName ? "IrisSearchUnique" : "hiddenirisneedle");
+        }
+        if (filterAuthor) {
+            params.add("authorIds", irisBot.getId().toString());
+        }
+        List<PostResponseDTO> matches = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
+        if (verified || requester.equals("tutor1")) {
+            assertThat(matches).extracting(PostResponseDTO::id).contains(post.getId());
+        }
+        else {
+            assertThat(matches).extracting(PostResponseDTO::id).doesNotContain(post.getId());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_SearchTextDoesNotMatchTheLoginOfTheAuthor() throws Exception {
+        // The generated names contain the login, so give the user a name that does not.
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student1.setFirstName("Zorbalina");
+        student1.setLastName("Quuxington");
+        userTestRepository.save(student1);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToCourseWide", "true");
+        params.add("size", "50");
+        // The login is not displayed next to a message, so a search must not reveal it.
+        params.add("searchText", TEST_PREFIX + "student1");
+
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
+
+        assertThat(returnedPosts).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_SearchDisplayedLoginOfNamelessAuthor(boolean filterByAuthor) throws Exception {
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student1.setFirstName(null);
+        student1.setLastName(" ");
+        userTestRepository.save(student1);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToCourseWide", "true");
+        params.add("size", "50");
+        params.add("searchText", student1.getLogin());
+        if (filterByAuthor) {
+            params.add("authorIds", student1.getId().toString());
+        }
+
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
+
+        var expectedIds = existingCourseWideMessages.stream().filter(
+                post -> post.getAuthor().getId().equals(student1.getId()) || post.getAnswers().stream().anyMatch(answer -> answer.getAuthor().getId().equals(student1.getId())))
+                .map(Post::getId).toList();
+        assertThat(expectedIds).isNotEmpty();
+        assertThat(returnedPosts).extracting(PostResponseDTO::id).containsExactlyInAnyOrderElementsOf(expectedIds);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_SearchNameWithAuthorFilter(boolean matchingAuthor) throws Exception {
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student1.setFirstName("Zorbalina");
+        student1.setLastName("Quuxington");
+        userTestRepository.save(student1);
+        var selectedAuthor = matchingAuthor ? student1 : userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToCourseWide", "true");
+        params.add("size", "50");
+        params.add("searchText", "ZORBALINA QUUX");
+        params.add("authorIds", selectedAuthor.getId().toString());
+
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
+
+        var expectedIds = existingCourseWideMessages.stream().filter(
+                post -> post.getAuthor().getId().equals(student1.getId()) || post.getAnswers().stream().anyMatch(answer -> answer.getAuthor().getId().equals(student1.getId())))
+                .map(Post::getId).toList();
+        assertThat(expectedIds).isNotEmpty();
+        if (matchingAuthor) {
+            assertThat(returnedPosts).extracting(PostResponseDTO::id).containsExactlyInAnyOrderElementsOf(expectedIds);
+        }
+        else {
+            // A name on one author must not satisfy a filter selecting a different author of the same thread.
+            assertThat(returnedPosts).isEmpty();
+        }
     }
 
     private boolean answerHasContext(Set<AnswerPost> answers, String searchText) {
@@ -815,6 +1036,40 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isZero();
         assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student1)).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void messageIsNotVisibleBeforeUnreadCounterIsPersisted() throws Exception {
+        Post post = createPostWithOneToOneChat(TEST_PREFIX);
+        var inspectedSave = new AtomicBoolean();
+        var visibleBeforeIncrement = new AtomicBoolean();
+        var repositoryProxy = (Advised) conversationMessageRepository;
+        var observer = new DefaultPointcutAdvisor((MethodInterceptor) invocation -> {
+            Object result = invocation.proceed();
+            if (invocation.getMethod().getName().equals("save") && result instanceof Post saved && saved.getConversation().getId().equals(post.getConversation().getId())) {
+                // A separate connection must not see the posting before its unread increment can commit.
+                visibleBeforeIncrement.set(CompletableFuture.supplyAsync(() -> conversationMessageRepository.existsById(saved.getId())).get(10, TimeUnit.SECONDS));
+                inspectedSave.set(true);
+            }
+            return result;
+        });
+        repositoryProxy.addAdvisor(0, observer);
+        PostResponseDTO created;
+        try {
+            created = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages",
+                    new CreatePostDTO(post.getContent(), "", false, new CreatePostConversationDTO(post.getConversation().getId())), PostResponseDTO.class, HttpStatus.CREATED);
+        }
+        finally {
+            repositoryProxy.removeAdvisor(observer);
+        }
+
+        assertThat(inspectedSave).isTrue();
+        assertThat(visibleBeforeIncrement).as("a message and its unread counter must become visible together").isFalse();
+        var recipient = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        assertThat(getUnreadMessagesCount(created.conversation().id(), recipient)).isEqualTo(1);
+        conversationParticipantRepository.updateLastRead(recipient.getId(), created.conversation().id(), ZonedDateTime.now());
+        assertThat(getUnreadMessagesCount(created.conversation().id(), recipient)).isZero();
     }
 
     @Test
@@ -1065,7 +1320,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 SortingOrder.DESCENDING);
 
         var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        Page<Post> searchResults = conversationMessageRepository.findMessages(filter, Pageable.unpaged(), student1.getId());
+        Page<Post> searchResults = conversationMessageRepository.findMessages(filter, Pageable.unpaged(), student1.getId(), false);
         List<Post> resultPosts = searchResults.getContent();
 
         assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestDirect");
@@ -1111,7 +1366,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 SortingOrder.DESCENDING);
 
         var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        Page<Post> searchResults = conversationMessageRepository.findMessages(filter, Pageable.unpaged(), student1.getId());
+        Page<Post> searchResults = conversationMessageRepository.findMessages(filter, Pageable.unpaged(), student1.getId(), false);
         List<Post> resultPosts = searchResults.getContent();
 
         assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestGroup");
@@ -1140,7 +1395,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         long authorId = userTestRepository.findOneByLogin(authorLogin).orElseThrow().getId();
         PostContextFilterDTO filter = new PostContextFilterDTO(courseId, null, new long[] { conversationId }, new long[] { authorId }, searchQuery, false, false, false,
                 PostSortCriterion.CREATION_DATE, SortingOrder.DESCENDING);
-        Page<Post> returnedPage = conversationMessageRepository.findMessages(filter, Pageable.unpaged(), 0L /* Not used here */);
+        Page<Post> returnedPage = conversationMessageRepository.findMessages(filter, Pageable.unpaged(), 0L /* Not used here */, false);
         List<Post> returnedPosts = returnedPage.getContent();
 
         if (shouldBeIncluded) {

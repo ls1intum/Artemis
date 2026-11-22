@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20261026002420-01-content-creation-dates" author="krusche">
+        <comment>Track newly created undated content without inventing publication times for existing rows.</comment>
+        <addColumn tableName="exercise"><column name="created_date" type="datetime(3)"/></addColumn>
+        <addColumn tableName="lecture_unit"><column name="created_date" type="datetime(3)"/></addColumn>
+        <rollback>
+            <dropColumn tableName="lecture_unit" columnName="created_date"/>
+            <dropColumn tableName="exercise" columnName="created_date"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

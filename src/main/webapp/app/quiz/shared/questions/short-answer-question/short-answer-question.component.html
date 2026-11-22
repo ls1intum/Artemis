@@ -53,7 +53,7 @@
                             @if (shortAnswerQuestionUtil.isInputField(element)) {
                                 <div
                                     class="short-answer-question-container"
-                                    [ngbTooltip]="classifyInputField(element) === 'invalid' ? ('artemisApp.shortAnswerSpot.invalidSpot' | artemisTranslate) : undefined"
+                                    [tumAetUiTooltip]="classifyInputField(element) === 'invalid' ? ('artemisApp.shortAnswerSpot.invalidSpot' | artemisTranslate) : undefined"
                                 >
                                     <input
                                         [attr.aria-label]="'accessibility.shortAnswer' | artemisTranslate: { number: shortAnswerQuestionUtil.getSpotNr(element) }"
@@ -75,7 +75,7 @@
         </div>
     }
     @if (shortAnswerQuestion().invalid) {
-        <span style="color: red" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
+        <span class="text-state-danger" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
     }
     @if (shortAnswerQuestion().hint || (shortAnswerQuestion().explanation && showResult())) {
         <div class="hint">
@@ -83,7 +83,7 @@
                 <div [innerHTML]="renderedQuestion().hint"></div>
             </ng-template>
             @if (shortAnswerQuestion().hint) {
-                <span class="label label-info" [ngbPopover]="renderedHint" placement="right auto" triggers="mouseenter:mouseleave">
+                <span [tumAetUiTooltip]="renderedHint" tumAetUiTooltipPlacement="right">
                     <fa-icon [icon]="farQuestionCircle" />
                     <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
                 </span>
@@ -93,7 +93,7 @@
                 <div [innerHTML]="renderedQuestion().explanation"></div>
             </ng-template>
             @if (shortAnswerQuestion().explanation && showResult()) {
-                <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right auto" triggers="mouseenter:mouseleave">
+                <span [tumAetUiTooltip]="renderedExplanation" tumAetUiTooltipPlacement="right">
                     <fa-icon [icon]="faExclamationCircle" />
                     <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
                 </span>
@@ -120,10 +120,10 @@
     @if (showResult() && !forceSampleSolution()) {
         <div>
             @if (!showingSampleSolution()) {
-                <button type="button" class="btn btn-outline-primary" (click)="showSampleSolution()" jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></button>
+                <tumaet-ui-button variant="outlined" (clicked)="showSampleSolution()"><span jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></span></tumaet-ui-button>
             }
             @if (showingSampleSolution()) {
-                <button type="button" class="btn btn-outline-primary" (click)="hideSampleSolution()" jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></button>
+                <tumaet-ui-button variant="outlined" (clicked)="hideSampleSolution()"><span jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></span></tumaet-ui-button>
             }
         </div>
     }

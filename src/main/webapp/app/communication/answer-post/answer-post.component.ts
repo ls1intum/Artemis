@@ -24,10 +24,8 @@ import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangle
 import { DOCUMENT, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { TextareaModule } from 'primeng/textarea';
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostingHeaderComponent } from '../posting-header/posting-header.component';
 import { AnswerPostCreateEditModalComponent } from '../posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
@@ -52,11 +50,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
         SavedPostingBannerComponent,
         NgClass,
         FormsModule,
-        ButtonModule,
-        TextareaModule,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
         FaIconComponent,
         TranslateDirective,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         PostingHeaderComponent,
         PostingContentComponent,
         PostingReactionsBarComponent,

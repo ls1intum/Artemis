@@ -4,7 +4,9 @@ import { By } from '@angular/platform-browser';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MenuHarness } from '@angular/aria/menu/testing';
 import { TumAetUiMenuComponent } from './tumaet-ui-menu.component';
+import { TumAetUiMenuGroupComponent } from './tumaet-ui-menu-group.component';
 import { TumAetUiMenuItemDirective } from './tumaet-ui-menu-item.directive';
+import { TumAetUiMenuSeparatorComponent } from './tumaet-ui-menu-separator.component';
 import { TumAetUiMenuTriggerDirective } from './tumaet-ui-menu-trigger.directive';
 
 @Component({
@@ -380,5 +382,102 @@ describe('TumAetUiMenuTriggerDirective (disabled)', () => {
 
         expect(fixture.componentInstance.clicks).toBe(1);
         expect(document.querySelector('[role="menu"]')).not.toBeNull();
+    });
+});
+
+@Component({
+    imports: [TumAetUiMenuComponent, TumAetUiMenuGroupComponent, TumAetUiMenuItemDirective, TumAetUiMenuSeparatorComponent, TumAetUiMenuTriggerDirective],
+    template: `
+        <button id="trigger" [tumAetUiMenuTrigger]="account">Account</button>
+        <ng-template #account>
+            <tumaet-ui-menu>
+                <button tumAetUiMenuItem>Settings</button>
+                <tumaet-ui-menu-separator />
+                <tumaet-ui-menu-group label="Language">
+                    <button tumAetUiMenuItem (triggered)="picked.set('en')">English</button>
+                    <button tumAetUiMenuItem (triggered)="picked.set('de')">Deutsch</button>
+                </tumaet-ui-menu-group>
+                <tumaet-ui-menu-separator />
+                <button tumAetUiMenuItem>Sign out</button>
+            </tumaet-ui-menu>
+        </ng-template>
+    `,
+})
+class StructuredHostComponent {
+    readonly picked = signal<string | undefined>(undefined);
+}
+
+describe('TumAetUiMenuComponent with separators and a group', () => {
+    let fixture: ComponentFixture<StructuredHostComponent>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({ imports: [StructuredHostComponent] }).compileComponents();
+        fixture = TestBed.createComponent(StructuredHostComponent);
+        fixture.detectChanges();
+        (fixture.nativeElement.querySelector('#trigger') as HTMLButtonElement).click();
+        await settle();
+    });
+
+    afterEach(() => fixture.destroy());
+
+    const items = () => Array.from(document.querySelectorAll('[role="menuitem"]')) as HTMLElement[];
+    const focusedLabel = () => document.activeElement?.textContent?.trim();
+
+    async function settle(): Promise<void> {
+        fixture.detectChanges();
+        await fixture.whenStable();
+    }
+
+    async function press(key: string): Promise<void> {
+        document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+        await settle();
+    }
+
+    it('exposes separators and a group named by its visible label', () => {
+        const separators = Array.from(document.querySelectorAll('[role="menu"] [role="separator"]'));
+        expect(separators).toHaveLength(2);
+        expect(separators.every((separator) => !separator.hasAttribute('tabindex') && separator.textContent === '')).toBe(true);
+
+        const group = document.querySelector('[role="menu"] [role="group"]')!;
+        const label = document.getElementById(group.getAttribute('aria-labelledby')!)!;
+        expect(label.textContent!.trim()).toBe('Language');
+        expect(label.hasAttribute('tabindex')).toBe(false);
+        expect(label.getAttribute('role')).toBeNull();
+        expect(Array.from(group.querySelectorAll('[role="menuitem"]')).map((item) => item.textContent!.trim())).toEqual(['English', 'Deutsch']);
+    });
+
+    it('moves through the entries only, across separators and the group label', async () => {
+        expect(focusedLabel()).toBe('Settings');
+        const visited = [focusedLabel()];
+        for (let index = 0; index < 4; index++) {
+            await press('ArrowDown');
+            visited.push(focusedLabel());
+        }
+        expect(visited).toEqual(['Settings', 'English', 'Deutsch', 'Sign out', 'Settings']);
+
+        await press('End');
+        expect(focusedLabel()).toBe('Sign out');
+        await press('ArrowUp');
+        expect(focusedLabel()).toBe('Deutsch');
+        await press('Home');
+        expect(focusedLabel()).toBe('Settings');
+    });
+
+    it('matches typeahead against entries, not against the group label', async () => {
+        // "L" is the first letter of the label "Language" and of no entry, so focus stays where it is.
+        await press('l');
+        expect(focusedLabel()).toBe('Settings');
+    });
+
+    it('reaches an entry inside the group by typeahead', async () => {
+        await press('d');
+        expect(focusedLabel()).toBe('Deutsch');
+    });
+
+    it('triggers an entry inside a group and closes the menu', async () => {
+        items()[2].click();
+        await settle();
+        expect(fixture.componentInstance.picked()).toBe('de');
+        expect(document.querySelector('[role="menu"]')).toBeNull();
     });
 });

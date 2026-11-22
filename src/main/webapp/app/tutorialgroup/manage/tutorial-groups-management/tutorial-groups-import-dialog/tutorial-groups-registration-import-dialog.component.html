@@ -8,7 +8,7 @@
 >
     <div class="tutorial-group-import-dialog">
         <!-- Intro-->
-        <div class="mb-4!">
+        <div class="mb-4">
             <p jhiTranslate="artemisApp.tutorialGroupImportDialog.explanations.description"></p>
             <p jhiTranslate="artemisApp.tutorialGroupImportDialog.explanations.requirements"></p>
             <p jhiTranslate="artemisApp.tutorialGroupImportDialog.supportedHeaderNames.label"></p>
@@ -36,9 +36,9 @@
             </ul>
         </div>
         <!-- Example Tables -->
-        <div class="mb-4!">
+        <div class="mb-4">
             <div class="flex items-center">
-                <h3 class="text-base font-bold">
+                <h3>
                     <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example1"></span>
                 </h3>
                 <button tumAetUiButton size="small" severity="secondary" variant="outlined" class="ms-2" type="button" (click)="generateCSV(CsvExample.Example1)">
@@ -61,9 +61,9 @@
                 </tbody>
             </table>
         </div>
-        <div class="mb-4!">
+        <div class="mb-4">
             <div class="flex items-center">
-                <h3 class="text-base font-bold">
+                <h3>
                     <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example2"></span>
                 </h3>
                 <button tumAetUiButton size="small" severity="secondary" variant="outlined" class="ms-2" type="button" (click)="generateCSV(CsvExample.Example2)">
@@ -101,9 +101,9 @@
                 </tbody>
             </table>
         </div>
-        <div class="mb-4!">
+        <div class="mb-4">
             <div class="flex items-center">
-                <h3 class="text-base font-bold">
+                <h3>
                     <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example3"></span>
                 </h3>
                 <button tumAetUiButton size="small" severity="secondary" variant="outlined" class="ms-2" type="button" (click)="generateCSV(CsvExample.Example3)">
@@ -141,9 +141,9 @@
                 </tbody>
             </table>
         </div>
-        <div class="mb-4!">
+        <div class="mb-4">
             <div class="flex items-center">
-                <h3 class="text-base font-bold">
+                <h3>
                     <span jhiTranslate="artemisApp.tutorialGroupImportDialog.table.example4"></span>
                 </h3>
                 <button tumAetUiButton size="small" severity="secondary" variant="outlined" class="ms-2" type="button" (click)="generateCSV(CsvExample.Example4)">
@@ -204,7 +204,7 @@
             </div>
         </div>
         <!-- File Upload -->
-        <div class="mb-4!">
+        <div class="mb-4">
             <div class="flex items-end">
                 <div>
                     <label for="tutorial-group-registration-csv" class="font-bold" jhiTranslate="artemisApp.tutorialGroupImportDialog.csvFile.label"></label>
@@ -224,7 +224,7 @@
                     (change)="onCSVFileSelected($event)"
                 />
                 @if (validationErrors().length > 0) {
-                    <div class="mt-6! mb-2 text-state-danger">
+                    <div class="mt-6 mb-2 text-state-danger">
                         <div jhiTranslate="artemisApp.tutorialGroupImportDialog.csvFile.validationFailed"></div>
                         <ul class="mt-1">
                             @for (validationError of validationErrors(); track validationError) {
@@ -249,7 +249,7 @@
                     <small jhiTranslate="artemisApp.tutorialGroupImportDialog.fixedPlaceForm.checkbox.explanation"></small>
                 </div>
                 <!-- Status Header -->
-                <div class="mb-4!">
+                <div class="mb-4">
                     <label for="status-header" jhiTranslate="artemisApp.tutorialGroupImportDialog.fixedPlaceForm.statusHeaderInput.label"></label>
                     <input
                         type="text"
@@ -271,7 +271,7 @@
                     }
                 </div>
                 <!-- Fixed Place Value -->
-                <div class="mb-4!">
+                <div class="mb-4">
                     <label for="fixed-place" jhiTranslate="artemisApp.tutorialGroupImportDialog.fixedPlaceForm.fixedPlaceValueInput.label"></label>
                     <input
                         type="text"
@@ -330,10 +330,10 @@
             </div>
         }
         <!-- Overview Table -->
-        @if (registrationsDisplayedInTable() && registrationsDisplayedInTable().length > 0) {
-            <div class="mb-4! mt-6!">
-                <div class="table-wrapper-scroll-y scrollbar">
-                    <table tumAetUiTable size="small" [striped]="true" class="mt-2" data-testid="tutorial-groups-import-preview">
+        @if (isImportDone() || registrationsDisplayedInTable()?.length) {
+            <div class="mb-4 mt-6">
+                <tumaet-ui-table-layout class="[--table-layout-offset:22rem] max-md:[--table-layout-offset:30rem]" [empty]="!registrationsDisplayedInTable()?.length">
+                    <table tumAetUiTable size="small" [striped]="true" data-testid="tutorial-groups-import-preview">
                         <thead>
                             <tr>
                                 <th scope="col">#</th>
@@ -404,7 +404,7 @@
                             }
                         </tbody>
                     </table>
-                </div>
+                </tumaet-ui-table-layout>
             </div>
         }
     </div>
@@ -441,6 +441,7 @@
                 @if (!isImportDone()) {
                     <button
                         tumAetUiButton
+                        severity="secondary"
                         size="small"
                         type="submit"
                         id="import"

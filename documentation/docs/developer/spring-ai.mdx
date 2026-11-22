@@ -2,6 +2,7 @@
 id: spring-ai
 title: Spring AI
 sidebar_label: Spring AI
+last_reviewed: 2026-11-20
 ---
 
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
@@ -11,7 +12,7 @@ This guide explains how to set up a local LLM (Large Language Model) service for
 This allows you to test Hyperion's AI-assisted features locally without requiring cloud API keys.
 
 <Callout variant={CalloutVariant.info}>
-    For production setups with cloud providers (OpenAI, Azure OpenAI), refer to the [Hyperion Admin Setup](/admin/hyperion).
+    For production setups with cloud providers (OpenAI, Microsoft Foundry), refer to [LLM configuration](/admin/llm-configuration).
 </Callout>
 
 ## Prerequisites
@@ -73,27 +74,26 @@ Add the following configuration to your `application-local.yml` file (or adapt y
 
 ```yaml
 artemis:
+  llm:
+    endpoints:
+      lmstudio:
+        # The OpenAI SDK appends /chat/completions itself, so the base URL includes the /v1 prefix.
+        # Without api-key Artemis sends no Authorization header, which LM Studio does not need.
+        base-url: http://localhost:1234/v1
+    presets:
+      local:
+        endpoint: lmstudio
+        model: openai/gpt-oss-20b    # or whatever name your local server expects
+        api: chat-completions
+        temperature: 0.7
   hyperion:
     enabled: true
-spring:
-  ai:
-    model:
-      chat: openai
-    openai:
-      # The official OpenAI SDK appends /chat/completions itself, so the base URL must include the /v1 prefix
-      base-url: http://localhost:1234/v1
-      api-key: dummy-key # not required for local LLM service
-      # Required for local / OpenAI-compatible servers: they use Authorization: Bearer auth. The shipped
-      # default in application-artemis.yml is true (Azure/Foundry), which sends an Azure api-key header
-      # instead and makes auth-enforcing endpoints return 401. Leave false here.
-      microsoft-foundry: false
-      chat:
-        model: openai/gpt-oss-20b    # or whatever name your local server expects
-        temperature: 0.7
+    llm-presets:
+      default: local
 ```
 
 <Callout variant={CalloutVariant.warning}>
-    For production setups with cloud providers (OpenAI, Azure OpenAI), refer to the [Hyperion Admin Setup](/admin/hyperion).
+    For production setups with cloud providers (OpenAI, Microsoft Foundry), refer to [LLM configuration](/admin/llm-configuration).
 </Callout>
 
 ## Testing the Integration
@@ -102,9 +102,9 @@ spring:
 2. Start the Artemis client
 3. Create a programming exercise and open it via the **Edit in Editor** button
 4. Click the **Check Consistency** button
-5. The **Artemis Server logs** should include something along the lines of:
+5. At startup, the **Artemis Server logs** list each assignment, for example:
     ```
-    SpringAIConfiguration      : Found Chat Model: openai/gpt-oss-20b
+    LLM artemis.hyperion.llm-presets.consistency-check -> local (default) | openai/gpt-oss-20b | chat-completions | localhost | timeout PT5M, retries 3, auth none, no fallback price
     ```
 6. View the **LMS Server logs**
     1. Via CLI

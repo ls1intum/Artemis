@@ -116,6 +116,7 @@ export class AdminFeatureToggleComponent implements OnInit {
     }
 
     /** Profiles to display (excluding internal profiles like dev, prod, test) */
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): drop PROFILE_JENKINS here and its docs link below
     private readonly displayedProfiles: ProfileFeature[] = [PROFILE_LOCALCI, PROFILE_BUILDAGENT, PROFILE_JENKINS];
 
     /** Module features to display */
@@ -150,14 +151,15 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.PlagiarismChecks]: 'https://docs.artemis.tum.de/instructor/assessment-grading/plagiarism-check',
         [FeatureToggle.Exports]: 'https://docs.artemis.tum.de/instructor/course-management/exports',
         [FeatureToggle.LearningPaths]: 'https://docs.artemis.tum.de/instructor/analytics/adaptive-learning',
+        [FeatureToggle.Science]: 'https://docs.artemis.tum.de/admin/science-data-collection',
         [FeatureToggle.StandardizedCompetencies]: 'https://docs.artemis.tum.de/admin/adaptive-learning',
         [FeatureToggle.TutorSuggestions]: 'https://docs.artemis.tum.de/instructor/communication-support/communication#tutor-suggestions',
-        [FeatureToggle.AtlasML]: 'https://docs.artemis.tum.de/admin/artemis-intelligence#atlasml-suggestions',
         [FeatureToggle.AtlasAgent]: 'https://docs.artemis.tum.de/admin/artemis-intelligence#enable-the-atlas-agent',
         [FeatureToggle.RateLimit]: 'https://docs.artemis.tum.de/admin/production-setup/security/#rate-limiting',
         [FeatureToggle.Deimos]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [FeatureToggle.GlobalSearchReconcile]: 'https://docs.artemis.tum.de/admin/global-search-weaviate',
         [FeatureToggle.GlobalSearchReconcileOrphan]: 'https://docs.artemis.tum.de/admin/global-search-weaviate',
+        [FeatureToggle.SmartQuizzes]: 'https://docs.artemis.tum.de/admin/hyperion#configure-the-quiz-question-pool',
     };
 
     /** Documentation links for profile-based features */

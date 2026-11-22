@@ -13,13 +13,11 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -28,7 +26,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -38,6 +35,7 @@ import de.tum.cit.aet.artemis.jenkins.service.jobs.JenkinsJobService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): test infrastructure for the Jenkins setup, delete with Jenkins support
 @Component
 @Profile(PROFILE_JENKINS)
 @Lazy
@@ -46,11 +44,9 @@ public class JenkinsRequestMockProvider {
     @Value("${artemis.continuous-integration.url}")
     private URI jenkinsServerUri;
 
-    private final RestTemplate restTemplate;
+    private final MockRestClientServers mockRestClientServers;
 
     private MockRestServiceServer mockServer;
-
-    private final RestTemplate shortTimeoutRestTemplate;
 
     private MockRestServiceServer shortTimeoutMockServer;
 
@@ -59,20 +55,18 @@ public class JenkinsRequestMockProvider {
 
     private AutoCloseable closeable;
 
-    public JenkinsRequestMockProvider(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate,
-            @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate) {
-        this.restTemplate = restTemplate;
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
-        // We remove JenkinsAuthorizationInterceptor because the tests hit the intercept() method
-        // which has its' own instance of RestTemplate (in order to get a crumb(. Since that template
-        // isn't mocked, it will throw an exception.
-        this.restTemplate.setInterceptors(List.of());
-        this.shortTimeoutRestTemplate.setInterceptors(List.of());
+    public JenkinsRequestMockProvider(MockRestClientServers mockRestClientServers) {
+        // MockRestClientServers removes the JenkinsAuthorizationInterceptor from the Jenkins clients, because it fetches a crumb with a client that is not
+        // mocked here, and it buffers the content of the requests.
+        this.mockRestClientServers = mockRestClientServers;
     }
 
     public void enableMockingOfRequests() {
-        mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).bufferContent().build();
-        shortTimeoutMockServer = MockRestServiceServer.bindTo(shortTimeoutRestTemplate).ignoreExpectOrder(true).bufferContent().build();
+        mockServer = mockRestClientServers.serverOf("jenkinsRestClient");
+        shortTimeoutMockServer = mockRestClientServers.serverOf("shortTimeoutJenkinsRestClient");
+        // The servers live as long as the context, so a test starts from a clean one, like the fresh server that it replaces.
+        mockServer.reset();
+        shortTimeoutMockServer.reset();
         closeable = MockitoAnnotations.openMocks(this);
     }
 

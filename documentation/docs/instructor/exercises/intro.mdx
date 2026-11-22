@@ -2,10 +2,12 @@
 id: intro
 title: General Information
 sidebar_label: General Information
+last_reviewed: 2026-11-08
 ---
 
-import Image, {ImageSize} from "../../../src/components/Image/Image";
+import Image, { ImageSize } from '../../../src/components/Image/Image';
 import exerciseSidebar from './assets/general/exercise-sidebar.png';
+import exerciseDetailsProgramming from './assets/general/exercise-details-programming.png';
 
 Artemis has five exercise types — [programming](/instructor/exercises/programming-exercise/),
 [quiz](/instructor/exercises/quiz-exercise), [modeling](/instructor/exercises/modeling-exercise),
@@ -26,6 +28,62 @@ Exercises of the same topic can be bundled into a **variant group**, which gives
 share a points cap, and shows them to students as one entry. Artemis can also generate a variant of an existing
 exercise with AI. See [Exercise Variants](/instructor/exercises/exercise-variants) and
 [Generate Variants with AI](/instructor/exercises/variant-generation).
+
+## Exercise Details for Course Staff
+
+Select an exercise's title on the course management exercise list to see its type, title, statistics and saved
+configuration. Section links scroll to information on the same page; they do not
+hide the other sections, so browser search can find details throughout the page.
+The exercise ID remains in **General**.
+
+The action bar groups participation, statistics and assessment navigation separately
+from editing and grading. **More actions** contains less frequent actions such as
+plagiarism checks, export and exercise download, where supported. Programming
+exercises keep **Version History** as a link beside the heading. Reset and delete
+controls are in **Exercise administration** at the bottom, also reachable through the section navigation;
+their confirmations remain required. Programming exercises offer **Edit in editor** directly in the action bar.
+
+Before you confirm a deletion, the dialog lists what will be removed with the exercise, grouped by topic, for example
+student participations, submissions and results, assessments and complaints, plagiarism comparisons, posts in the
+exercise channel and, for programming exercises, builds. Large amounts are highlighted, so you notice an exercise
+with a lot of student data before you delete it. Deleting an exercise runs in the background: after you confirm, a
+progress dialog shows the current step and how many items are done. **Continue in background** closes the dialog
+without stopping the deletion, and a message tells you when it finished or failed. The server keeps deleting even
+if you close the browser tab. If you reload the page of an exercise of any type, of an exam or of its exercise
+groups while a deletion is still running, the progress dialog opens again. When the deletion fails, the dialog or
+message shows the reason and the exercise stays in the list; try again after fixing the cause. The same applies to
+deleting an exercise group or a whole exam, where the progress also names the exercise that is being deleted.
+
+**Create Variant** is a yellow action for supported programming and quiz exercises.
+Its availability depends on your role and the server's Hyperion configuration; see
+[Generate Variants with AI](/instructor/exercises/variant-generation).
+
+Available actions depend on your role, the exercise's state, whether it belongs to a course or an exam, and the
+server's enabled features. On narrow screens, some action labels collapse to icons with accessible names and
+tooltips. The section links still scroll through the same visible details.
+
+<Image
+    src={exerciseDetailsProgramming}
+    alt="Programming exercise details with the exercise title, grouped actions and section links"
+    size={ImageSize.large}
+    caption="Exercise details group navigation and editing actions above the saved configuration"
+/>
+
+## Moving an Exercise Between Courses
+
+The **Manage Exercises** dialog, which **Import** and **Export** on the course's exercise page open, moves exercises
+of every type the same way:
+
+- **Export**, which instructors see, offers the five exercise types. Pick one, then **Export** next to an exercise of
+  the course to download it as a ZIP file. The file holds the exercise settings, the problem statement with its
+  images, and whatever the type needs on top: the template, solution and test repositories of a programming exercise,
+  or the questions and drag-and-drop images of a quiz. Student submissions are not included. The **Exports** feature
+  toggle switches this off, see [Exports and archives](/instructor/course-management/exports#export-an-exercise).
+- **Import** offers the same five types. Pick one, then either choose an exercise from any course you can edit, or
+  switch to **From file** and upload a ZIP file that **Export** created, on this or another Artemis instance. The
+  exercise editor then opens with the settings from the file, without dates, so you can review them before you save.
+
+The exercise group page of an exam offers the same **Import** for each type.
 
 ## Telling Students About a Change
 

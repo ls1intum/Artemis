@@ -213,7 +213,7 @@ class GitPublickeyAuthenticatorServiceTest {
         assertThat(authenticatorService.authenticate("ge12abc", keyPair.getPublic(), session)).isTrue();
 
         ArgumentCaptor<IPAddress> clientId = ArgumentCaptor.forClass(IPAddress.class);
-        verify(rateLimitService).enforcePerMinute(clientId.capture(), eq(RateLimitType.AUTHENTICATION));
+        verify(rateLimitService).enforcePerMinute(clientId.capture(), eq(RateLimitType.GIT_AUTHENTICATION));
         assertThat(clientId.getValue()).isNotNull();
         assertThat(clientId.getValue().toString()).isEqualTo("192.0.2.10");
     }

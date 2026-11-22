@@ -18,7 +18,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
+import { WebauthnService } from 'app/account/user/settings/credentials/passkey-settings/webauthn.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

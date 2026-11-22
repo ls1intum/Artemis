@@ -99,6 +99,26 @@ class PyrisChatStatusUpdateDTOTest {
             assertThat(activity.durationMillis()).isEqualTo(3100);
         });
         assertThat(dto.activitySeq()).isEqualTo(3);
+        assertThat(dto.messageActivities()).isNull();
+    }
+
+    @Test
+    void deserializesMessageActivities() throws JacksonException {
+        String json = """
+                {
+                    "runState": "RUNNING",
+                    "result": "Let me switch over",
+                    "final": false,
+                    "messageActivities": [
+                        { "id": "act-1", "kind": "TOOL", "name": "list_exercises", "state": "FINISHED" }
+                    ]
+                }
+                """;
+
+        var dto = objectMapper.readValue(json, PyrisChatStatusUpdateDTO.class);
+
+        assertThat(dto.messageActivities()).singleElement().satisfies(activity -> assertThat(activity.id()).isEqualTo("act-1"));
+        assertThat(dto.activities()).isNull();
     }
 
     @Test

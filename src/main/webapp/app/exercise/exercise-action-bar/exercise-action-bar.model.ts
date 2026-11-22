@@ -1,17 +1,19 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Observable } from 'rxjs';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 /** The kit button severities the action buttons use (a subset of `TumAetUiButtonSeverity`). */
-export type ActionSeverity = 'primary' | 'info' | 'success' | 'warn' | 'danger';
+export type ActionSeverity = 'primary' | 'secondary' | 'success' | 'warn' | 'danger';
 
 /** Everything a `[jhiDeleteButton]` action needs, gathered here so the bar can render it from data alone. */
 export interface DeleteActionConfig {
+    /** What the confirmation dialog confirms; deletion unless set, e.g. ending a quiz now. */
+    actionType?: ActionType;
     entityTitle: string;
     deleteQuestion: string;
     deleteConfirmationText: string;
     entitySummaryTitle?: string;
-    fetchEntitySummary?: Observable<EntitySummary>;
+    fetchCategorizedEntitySummary?: Observable<EntitySummaryCategory[]>;
     translateValues?: { [key: string]: unknown };
     additionalChecks?: { [key: string]: string };
     dialogError: Observable<string>;

@@ -4,7 +4,7 @@ import { test } from '../../support/fixtures';
 import { admin, instructor } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
-import { ExerciseType } from '../../support/constants';
+import { ExamMode, ExerciseType } from '../../support/constants';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 
@@ -95,7 +95,7 @@ test.describe('Exam import', { tag: '@slow' }, () => {
         expect(storedCopy.endText).toBe(storedSource.endText);
         expect(storedCopy.confirmationStartText).toBe(storedSource.confirmationStartText);
         expect(storedCopy.confirmationEndText).toBe(storedSource.confirmationEndText);
-        expect(storedCopy.testExam).toBe(false);
+        expect(storedCopy.examMode).toBe(ExamMode.REAL);
         expect(dayjs(storedCopy.endDate as any).diff(dayjs(storedCopy.startDate as any), 'minutes')).toBe(60);
 
         // ... and its own copies of every group and exercise, with the same titles, types and points.

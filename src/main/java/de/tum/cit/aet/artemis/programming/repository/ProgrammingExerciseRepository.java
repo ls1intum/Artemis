@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ExerciseAndCourseTitlesDTO;
 import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyValuesDTO;
@@ -306,6 +307,23 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(@Param("projectKey") String projectKey);
 
     /**
+     * The id of the course of an exercise, taken from the exercise group when there is one, as {@code Exercise#getCourseViaExerciseGroupOrCourseMember()} does.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the id of the course, or empty if the exercise does not exist
+     */
+    @Query("""
+            SELECT CASE WHEN eg.id IS NOT NULL THEN ec.id ELSE c.id END
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.course c
+                LEFT JOIN pe.exerciseGroup eg
+                LEFT JOIN eg.exam e
+                LEFT JOIN e.course ec
+            WHERE pe.id = :exerciseId
+            """)
+    Optional<Long> findCourseIdById(@Param("exerciseId") long exerciseId);
+
+    /**
      * The values the git request path needs to authorize a repository access, for one project key.
      * <p>
      * A projection rather than the exercise: this runs on every clone, fetch and push, twice per git operation, and
@@ -332,7 +350,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 pe.assessmentType,
                 e.id,
                 e.startDate,
-                e.testExam)
+                e.examMode)
             FROM ProgrammingExercise pe
                 LEFT JOIN pe.course c
                 LEFT JOIN pe.exerciseGroup eg
@@ -341,6 +359,26 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE pe.projectKey = :projectKey
             """)
     List<GitRepositoryAccessDTO> findAccessProjectionByProjectKey(@Param("projectKey") String projectKey);
+
+    /**
+     * Reads the titles of an exercise and of its course, for messages that name the exercise a user accessed. As for the access projection, the course is taken from the
+     * exercise group's exam when there is one.
+     *
+     * @param exerciseId the exercise
+     * @return the titles, or empty if the exercise does not exist
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.ExerciseAndCourseTitlesDTO(
+                pe.title,
+                CASE WHEN eg.id IS NOT NULL THEN ec.title ELSE c.title END)
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.course c
+                LEFT JOIN pe.exerciseGroup eg
+                LEFT JOIN eg.exam e
+                LEFT JOIN e.course ec
+            WHERE pe.id = :exerciseId
+            """)
+    Optional<ExerciseAndCourseTitlesDTO> findExerciseAndCourseTitlesById(@Param("exerciseId") long exerciseId);
 
     /**
      * Finds a ProgrammingExercise with all data necessary for exercise versioning.
@@ -843,13 +881,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE p.exercise.id = :exerciseId
             """)
     long countStudentParticipationsByExerciseId(@Param("exerciseId") long exerciseId);
-
-    @Query("""
-            SELECT DISTINCT p.id
-            FROM ProgrammingExercise p
-            WHERE p.exerciseGroup.exam.id = :examId
-            """)
-    Set<Long> findProgrammingExerciseIdsByExamId(@Param("examId") long examId);
 
     /**
      * Defines the default entity graph for loading programming exercises along with related configurations.

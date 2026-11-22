@@ -14,42 +14,26 @@
 
 tr.import-success {
     background-color: color-mix(in srgb, var(--success) 12%, transparent) !important;
+}
+
+tr.import-success > td {
     color: var(--success) !important;
 }
 
 tr.import-not-found {
     background-color: color-mix(in srgb, var(--danger) 12%, transparent) !important;
+}
+
+tr.import-not-found > td {
     color: var(--danger) !important;
 }
 
 tr.import-warning {
     background-color: color-mix(in srgb, var(--warning) 12%, transparent) !important;
+}
+
+tr.import-warning > td {
     color: var(--warning) !important;
-}
-
-.header-fixed {
-    width: 100%;
-
-    .p-datatable-table-container {
-        min-height: 150px;
-    }
-
-    td,
-    th {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-}
-
-.csv-example-table {
-    border-collapse: collapse;
-
-    th,
-    td {
-        border: 1px solid var(--p-content-border-color);
-        padding: 0.4rem 0.75rem;
-    }
 }
 
 button[disabled] {

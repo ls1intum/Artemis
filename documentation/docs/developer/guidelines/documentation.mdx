@@ -2,6 +2,7 @@
 id: documentation
 title: Writing Documentation
 sidebar_label: Documentation
+last_reviewed: 2026-11-07
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -27,6 +28,10 @@ Documentation lives under `documentation/docs/`, split by audience: `admin/`, `i
 `developer/`, `about/`. Write for the audience of the folder. An instructor page explains what an instructor
 configures; a student page explains what a student sees and does. When both need to know about the same feature,
 write two pages and link them, rather than one page that describes the other side's screens.
+
+Document what helps the reader complete a task or understand a decision. A visual refinement does not by itself
+need a documentation change: do not add prose or screenshots merely to describe centered text, responsive widths,
+spacing or theme colours. Explain such details only when users need them to operate the feature.
 
 A new page is only reachable once it is listed in the matching `documentation/sidebar-*.ts`. Add it there and link
 it from the related pages in the same change.
@@ -126,6 +131,18 @@ to every page — see [Terminology](/developer/guidelines/terminology).
 
 ## Screenshots
 
+**Add a screenshot only when it helps explain the feature or workflow.** Do not add images just to satisfy a
+documentation checklist; omit them when the existing explanation is sufficient.
+
+**Capture the running application.** Screenshots in documentation and pull requests must come from a real
+Artemis instance with realistic course, exercise and participant data. Automated browser capture of the real
+application is welcome. Never substitute AI-generated images, drawn mockups, standalone HTML recreations or
+isolated component renders for application screenshots.
+
+**Preserve the actual theme and background.** Capture the application's light or dark theme as rendered. Do not
+override theme colours for the capture, recolour the image or replace its background to imitate the application. A crop
+may focus on the relevant content, but must preserve the captured interface and its colours.
+
 Use the `Image` component rather than a raw `<img>` tag, so that every figure gets the same frame, sizing and
 caption treatment:
 
@@ -159,6 +176,77 @@ is empty — if a recapture would come out emptier than what is already there, l
 
 **Retire what you replace.** When a screenshot stops being referenced, delete the file. Unreferenced assets
 accumulate invisibly; they are never noticed until someone measures.
+
+### Generated screenshots
+
+These are automated browser captures of the running Artemis application with its demo course, not synthetic
+images. A screenshot that can be captured again from the demo course does not have to be recaptured by hand.
+`documentation/screenshots/manifest.json` describes such a screenshot, and `src/test/playwright/docs-screenshots` renders every entry in a
+light theme, in English and with reduced motion. An entry has these fields:
+
+| Field | Meaning |
+| --- | --- |
+| `image`, `pages` | The image below `documentation/docs` and the pages that show it. |
+| `user` | A demo user: `student`, `tutor`, `instructor`, `participant`, or `uploader`. The `participant` and the `uploader` are students whom no other image shows, so that an entry can start an exercise, a quiz or a learning path without changing the pages of the others. The `uploader` never submits anything, for the image of an exercise before the submission. |
+| `route` | The route, with `{courseId}` for the demo course and `{exercise:Title}`, `{exam:Title}`, `{lecture:Title}` or `{competency:Title}` for the id of the item of the demo course with that title. |
+| `viewport`, `deviceScaleFactor` | The size of the browser window and its pixel density. |
+| `selector` or `clip` | A crop of the page: the element that the image shows (a CSS selector), or a box `{x, y, width, height}` in CSS pixels. Without either, the image is the whole window. A page that scrolls inside the window shows only the part that fits, so a `selector` of a tall element needs a `viewport` that is tall enough. |
+| `padding` | With `selector`: CSS pixels around the element, so that the border of a field at its edge is not cut off. |
+| `until` | With `selector`: the image runs from the top of `selector` to the top of this element, for one section of a long form whose sections have no common wrapper. Needs a tall viewport. |
+| `waitFor` | A CSS selector that has to be visible before the image is taken, for content that loads late. |
+| `steps` | What happens before the image is taken, in order: `fill` (`{selector, value}`), `click`, `clickIfPresent` (for an action that exists only the first time, such as starting an exercise), `check`, `select` (`{selector, label}`), `upload` (`{selector, file}`, a file below the repository root, such as one of `documentation/screenshots/fixtures`) and `waitFor`. A selector is a Playwright selector, so `text=Start exercise` works. |
+| `hide` | CSS selectors of elements that cover the content, such as a sticky footer. They become invisible and keep their space. |
+| `mask`, `maskSelector` | The `data-testid` values or CSS selectors of elements with content that changes on every run. They are painted over. |
+| `threshold`, `note` | A share of changed pixels (0 to 1) that is tolerated for this image alone, and the `note` that says why the image varies, such as a graph with a random layout. |
+| `source` | The paths of the components and translations that the image shows. `--stale` lists the image when one of them changed after it. |
+
+Before an image is taken, the renderer postpones the passkey reminder, skips the first-visit introduction of the competency management, hides the
+development ribbon and the footer (they show the instance, not the page), waits for chart animations, and replaces relative time stamps such as
+"Today, 12:10" and "5 minutes ago" by constants. The time of day of an absolute date such as "Oct 28, 2026 15:35" is replaced by 10:00, because it is the
+minute of the seeding. The day stays: it belongs to the demo data, which is created relative to the day of the run, so images with dates and the calendar
+differ a little from one day to the next, which the threshold of the comparison tolerates.
+
+**One command.** `./supporting_scripts/e2e/render-docs-screenshots.sh` starts a PostgreSQL container, a server with the `demo` profile and the client
+on ports of its own (18080, 19000, 17921 and 15432, changeable with `DOCS_SHOTS_*_PORT`; give a second checkout that renders at the same time its own `DOCS_SHOTS_DB_CONTAINER`), renders the entries, compares the images with the
+checked-in ones and stops everything it started. It never stops a process that it did not start, so it can run next to a development environment.
+It needs Docker, Java 25 and Node. Options:
+
+* `--update` replaces the checked-in images with the rendered ones. Look at them with `git status` and the image diff of your tool, and commit what you keep.
+* `--only calendar-month-desktop,student-faq` renders and compares only these entries.
+* `--browser host` uses the Playwright browsers of the machine. The default `container` runs the browser in a pinned Playwright image,
+  so the text of an image is rendered the same way on every machine. Images that you update on another browser differ from the ones that others render.
+* `--keep` leaves the stack running for repeated renderings, and `--stop` stops it.
+  `--stop` stops only the processes of this checkout on the ports of the script and the database container that carries the label of this checkout.
+  Anything else on those ports is reported and left alone.
+
+The server listens on the loopback interface only, and its admin account has a random password for each run. In the default `container` mode the client listens
+on all network interfaces for the duration of the run, because the browser container reaches it through the address of the host, and its proxy reaches a demo
+server with known demo logins; the script prints a warning, and `--browser host` avoids the exposure (the images then differ slightly in the text rendering).
+
+**Comparison.** `python3 supporting_scripts/check_docs_screenshots.py --compare build/docs-screenshots --all` prints the similarity of every image.
+A size that differs by up to two pixels is compared on the area that both images have, and an image counts as different when more than 1 percent of the
+pixels (`--threshold`) differ. `--stale` lists the images whose `source` changed after the image.
+
+To add a screenshot, add an entry with the viewport of the image, render it with `--only <id> --update` (the manifest check needs the image to exist, so it
+cannot run before this step for a new image), look at the image, check the manifest with `python3 supporting_scripts/check_docs_screenshots.py`, and
+commit it. The check requires that every listed page imports the image by its path, so a page that only mentions the file name fails it.
+
+**When to render.** The screenshots are rendered on demand, on your machine, not by a scheduled job. Run the script after a bigger change of the interface
+and before a release, look at the changed images (a changed demo course is not a change of the page), render again with `--update`, and commit the images
+that you keep. The script needs Docker, JDK 25 and Node and takes about eight minutes: three to start the stack and four to render the images. The weekly
+`docs-maintenance.yml` needs no stack and lists the images whose `source` files changed after the image (`--stale`) in an issue of its own, which tells you
+which images to look at first.
+
+The manifest covers 125 images of the student and instructor guides. They show the one demo course, "Introduction to Software Engineering", so
+the same users, exercises, lectures and exam run through the whole documentation. **An image has to show what the text around it says.** A screenshot
+does not have to reproduce the older hand-made image pixel by pixel, but it has to show the same screen and the controls that the text names. When the
+demo course cannot show them (an iPad app, the exercise list during an exam, the test cases of a programming exercise), the image
+stays manual and gets no entry, and when only the description is wrong, such as the type of a grading key or the number of questions in a list, the
+description is corrected in the same change. A page that the demo course cannot fill yet may get a small extension of the demo seeding instead.
+The script keeps the repositories of the demo programming exercise below `build/docs-screenshots-stack`, so a repository of an earlier run cannot
+keep the exercise from being seeded.
+Screens that need data the demo course does not have (a programming exercise with builds, a started exam)
+are not part of the manifest; such screenshots stay manual and keep the rules above.
 
 ## Screencasts
 
@@ -287,8 +375,62 @@ git add documentation/docs/<audience>/<your-page>.mdx
 python3 supporting_scripts/check_terminology.py
 ```
 
+## Keeping the documentation up to date
+
+Documentation goes stale when the code changes and nobody changes the page. Most of what an audit finds is of a few kinds:
+a moved or deleted file, a renamed button or menu entry, a changed default, a removed setup, and a screenshot of an old user interface.
+The following habits prevent them.
+
+* **Change the page in the same pull request as the code.** A pull request that changes a configuration key or its default,
+  a deployment file under `deployment/docker/`, a command or a Gradle task, a user-facing label or the navigation, or the
+  export format of a file has to update the pages that mention it. Search the documentation for the old name before you open the pull request.
+* **Verify before you write.** Take a label from `src/main/webapp/i18n/en/`, a default from the `application-*.yml` file, and a version
+  from `gradle.properties` or `package.json`. Do not copy them from another page.
+* **Do not hard-code what is generated.** Prefer a link to the source of truth, or a generated page, over a copied list or version number.
+  If a page must carry a snapshot, such as a measurement, put the date next to it.
+* **Mark what is going away.** Code that exists only for a feature that is scheduled for removal carries the marker
+  `REMOVE_IN_ARTEMIS_11` followed by the name of the feature. Do the same for a page or a section, so that the removal pull request can find it.
+* **Recapture screenshots in the same change that restyles the screen.** A screenshot of an old interface is worse than none.
+  Name the file after what it shows, so that a search for the screen finds every image of it.
+
+Checks keep these habits honest. They only report what they can prove, so they do not replace reading the page next to the code.
+
+| Check | What it proves | Where it runs |
+| --- | --- | --- |
+| `python3 supporting_scripts/check_docs_references.py` | Every page is in its sidebar. Inline code names an existing repository path, an existing class and, for `Class.method()`, an existing method. Properties (`artemis.*`), environment variables (`ARTEMIS_*`) and the keys of a YAML example are defined in the configuration or the source. A bold label after a verb such as "Click" is a text of the English translation files. | Every pull request (`docs-checks`) |
+| `python3 supporting_scripts/check_docs_consistency.py` | The numbers, commands and examples next to the names are true. **Versions** (Java, Node, Angular, Spring Boot, PostgreSQL, Gradle) match the build files. **Defaults** of `artemis.*` properties match the YAML. **Commands** (`pnpm run`, `./gradlew`, Spring profiles, paths in shell examples) exist. **Routes** of the client pages and `/api/` paths consist of segments that the route definitions and mappings contain. **Images** are referenced, have alt text and stay within the size budget. **Examples** in JSON parse, shell passes `bash -n`, YAML has no tabs. **Removal markers** (`REMOVE_IN_ARTEMIS_<n>`) are gone once that version is reached. **Glossary**: no page uses a word of the Avoid column of the [glossary](/developer/glossary). | Every pull request (`docs-checks`) |
+| `python3 supporting_scripts/check_docs_freshness.py --validate` | Every page has a valid `last_reviewed` date in its front matter. | Every pull request (`docs-checks`) |
+| `python3 supporting_scripts/generate_architecture_diagrams.py --check` | The UML diagrams of the [system design](/developer/system-design) are what their generator draws. | Every pull request (`docs-checks`) |
+| `python3 supporting_scripts/check_docs_freshness.py --impact` | Lists the pages that mention a file or a class that the pull request changes, and the edited pages that kept an old review date. It is advice and never fails. | The summary of the `docs-checks` job |
+| `python3 supporting_scripts/check_docs_screenshots.py` | Every entry of the screenshot manifest names an existing image that its pages show, a known user, a route with a known placeholder, and existing source paths. | Every pull request (`docs-checks`) |
+| `docs-maintenance.yml` | Opens an issue for every page that was not reviewed for a year, with the owner from `.github/CODEOWNERS` of each page, one for external links that no longer work, and one for screenshots whose component or translations changed after the image. | Weekly |
+
+Paths that are expected to be missing in a checkout, such as build output or a file the reader creates, are exempt through git ignore rules.
+Every other exception is an entry of an allowlist at the top of the script, and needs a reason.
+The check reads the whole tree, so a pull request that renames a class or a property fails on the page that still names the old one, although it does not touch the page.
+
+**Review dates.** `last_reviewed: YYYY-MM-DD` in the front matter of a page is the day on which someone compared the page with the code and found it correct.
+Whoever changes a page and checks it updates the date, and a new page starts with the date of its creation.
+Do not update the date for a change that did not involve that comparison, because the weekly list of stale pages relies on it.
+
+**Glossary.** The [glossary](/developer/glossary) defines the terms of Artemis. Use its term, and when a word is a common
+wrong name for a term, add it to the **Avoid** column of that term: the consistency check then fails on every page that uses it.
+The column is the one place where the preferred vocabulary is decided.
+
+**Image format.** Screenshots stay PNG, and the check enforces a size budget instead of a format. Lossy WebP blurs the small
+text of a screenshot, and lossless WebP saves only a moderate share of the size. Converting would also rewrite every
+reference and keep both formats in the history of the repository. Crop a screenshot to the area that matters, and the file stays small.
+
+**Diagrams.** Edit `supporting_scripts/generate_architecture_diagrams.py`, run it, and commit the generated SVG files together with the change.
+A diagram that was edited by hand fails the check.
+
+Audit every area (admin, developer, instructor, student, about) against the code regularly, for example once per major release.
+Compare labels and defaults with the i18n files and the configuration, check that the pages for removed or deprecated features say so,
+and look at the screenshots of the screens that changed. The list of stale pages tells you where to start.
+
 ## Related
 
+* [Glossary](/developer/glossary): the terms of Artemis and the words to avoid for them.
 * [Terminology](/developer/guidelines/terminology) — naming components instead of layers, and the check that
   enforces it.
 * [Language](/developer/guidelines/language) — inclusive, diversity-sensitive and appreciative language.

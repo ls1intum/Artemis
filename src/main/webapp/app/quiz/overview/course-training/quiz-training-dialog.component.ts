@@ -1,9 +1,7 @@
 import { Component, computed, input, model, output } from '@angular/core';
-import { DialogModule } from 'primeng/dialog';
+import { TumAetUiDialogComponent, TumAetUiToggleSwitchComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { TooltipModule } from 'primeng/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LeagueIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/league-icon.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
@@ -14,7 +12,17 @@ import { LEAGUES } from 'app/quiz/overview/course-training/league-resource';
 @Component({
     selector: 'jhi-quiz-training-dialog',
     styleUrl: 'course-training.component.scss',
-    imports: [DialogModule, FormsModule, TranslateDirective, ToggleSwitchModule, TooltipModule, ArtemisTranslatePipe, LeagueIconComponent, ButtonComponent, FontAwesomeModule],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        TumAetUiDialogComponent,
+        TumAetUiToggleSwitchComponent,
+        TumAetUiTooltipDirective,
+        ArtemisTranslatePipe,
+        LeagueIconComponent,
+        ButtonComponent,
+        FontAwesomeModule,
+    ],
     templateUrl: './quiz-training-dialog.component.html',
 })
 export class QuizTrainingDialogComponent {

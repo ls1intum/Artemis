@@ -11,7 +11,7 @@
             "updated": "Kurs aktualisiert mit Titel {{ param }}",
             "deleted": "Kurs gelöscht mit Titel {{ param }}",
             "delete": {
-                "question": "Soll der <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Build-Pläne werden gelöscht. <strong class=\"text-danger\">Diese Aktion kann NICHT rückgängig gemacht werden!</strong>",
+                "question": "Soll der <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Build-Pläne werden gelöscht. <strong class=\"text-state-danger\">Diese Aktion kann NICHT rückgängig gemacht werden!</strong>",
                 "testCourse": "Testkurs",
                 "realCourse": "echte Kurs",
                 "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein.",
@@ -58,7 +58,7 @@
                 }
             },
             "reset": {
-                "question": "Soll der <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Alle Studierenden-Daten werden gelöscht, einschließlich Abgaben, Teilnahmen, Beiträge und Einschreibungen. Studierende, Tutor:innen und Editor:innen werden aus dem Kurs entfernt - nur Lehrende bleiben erhalten. Die Kursstruktur (Aufgaben, Vorlesungen, Klausuren, Kompetenzen, Übungsgruppen-Konfiguration) bleibt zur Wiederverwendung erhalten. <strong class=\"text-danger\">Diese Aktion kann NICHT rückgängig gemacht werden!</strong>",
+                "question": "Soll der <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Alle Studierenden-Daten werden gelöscht, einschließlich Abgaben, Teilnahmen, Beiträge und Einschreibungen. Studierende, Tutor:innen und Editor:innen werden aus dem Kurs entfernt - nur Lehrende bleiben erhalten. Die Kursstruktur (Aufgaben, Vorlesungen, Klausuren, Kompetenzen, Übungsgruppen-Konfiguration) bleibt zur Wiederverwendung erhalten. <strong class=\"text-state-danger\">Diese Aktion kann NICHT rückgängig gemacht werden!</strong>",
                 "testCourse": "Testkurs",
                 "realCourse": "echte Kurs",
                 "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein.",
@@ -244,17 +244,47 @@
             },
             "athenaConfig": {
                 "title": "Athena KI-Feedback",
+                "enabledLabel": "Athena aktivieren",
+                "configure": "Konfigurieren",
+                "learnMore": "Mehr erfahren",
+                "loadFailed": "Die Athena-Konfiguration dieses Kurses konnte nicht geladen werden. Bitte lade die Seite neu, um es erneut zu versuchen.",
                 "formativeFeedbackEnabled": {
                     "label": "Formative Feedbackanfragen",
-                    "tooltip": "Wenn aktiviert, können Studierende vor dem Abgabedatum vorläufiges KI-Feedback von Athena anfordern.",
+                    "enabledLabel": "Formative Feedbackanfragen sind aktiviert",
+                    "disabledLabel": "Formative Feedbackanfragen sind deaktiviert",
                     "enabledHint": "Studierende können vor dem Abgabedatum vorläufiges KI-Feedback zu ihren Abgaben anfordern.",
                     "disabledHint": "Studierende können in diesem Kurs kein vorläufiges KI-Feedback anfordern."
                 },
                 "gradingFeedbackEnabled": {
                     "label": "Feedbackvorschläge zur Bewertung",
-                    "tooltip": "Wenn aktiviert, schlägt Athena Tutor:innen Feedback zu Abgaben von Text-, Programmier- und Modellierungsaufgaben vor.",
+                    "enabledLabel": "Feedbackvorschläge zur Bewertung sind aktiviert",
+                    "disabledLabel": "Feedbackvorschläge zur Bewertung sind deaktiviert",
                     "enabledHint": "Tutor:innen sehen beim Bewerten von Text-, Programmier- und Modellierungsabgaben Feedbackvorschläge von Athena.",
                     "disabledHint": "Tutor:innen bewerten Abgaben in diesem Kurs ohne Feedbackvorschläge von Athena."
+                },
+                "settingsPage": {
+                    "title": "Athena-Einstellungen",
+                    "sidebarTitle": "Athena"
+                },
+                "aboutAthenaModal": {
+                    "close": "Schließen",
+                    "meetAthena": "Athena kennenlernen",
+                    "subtitle": "KI-Feedback für deine Tutor:innen und Studierenden",
+                    "description": "Athena entwirft Feedback für Text-, Programmier- und Modellierungsabgaben, unterstützt Tutor:innen bei der schnelleren Bewertung und gibt Studierenden vor der Abgabefrist eine erste Rückmeldung zu ihrer Arbeit.",
+                    "whatAthenaCanDo": "Was Athena kann",
+                    "gradingFeedbackTitle": "Feedbackvorschläge zur Bewertung",
+                    "gradingFeedbackDesc": "Athena entwirft Feedbackvorschläge, während Tutor:innen Text-, Programmier- und Modellierungsabgaben bewerten.",
+                    "formativeFeedbackTitle": "Formative Feedbackanfragen",
+                    "formativeFeedbackDesc": "Studierende können vor dem Abgabedatum vorläufiges KI-Feedback zu ihrer eigenen Abgabe anfordern.",
+                    "exerciseTypesTitle": "Funktioniert bei allen Aufgabentypen",
+                    "exerciseTypesDesc": "Feedbackvorschläge zur Bewertung gibt es für Text-, Programmier- und Modellierungsaufgaben. Formative Feedbackanfragen ebenfalls, Programmieraufgaben müssen dafür aber halbautomatisch bewertet werden.",
+                    "whatToExpect": "Was dich erwartet",
+                    "suggestionsNotGradesTitle": "Vorschläge, keine endgültigen Bewertungen",
+                    "suggestionsNotGradesDesc": "Tutor:innen übernehmen, bearbeiten oder verwerfen jeden Feedbackvorschlag, bevor sie eine Bewertung abschicken. Formatives Feedback enthält eine vorläufige Punktzahl, die nie in die Note der Studierenden eingeht.",
+                    "requestLimitTitle": "Eine begrenzte Anzahl an Anfragen",
+                    "requestLimitDesc": "Pro Aufgabenteilnahme erhalten Studierende nur eine begrenzte Anzahl an KI-Feedbackergebnissen; fehlgeschlagene Anfragen zählen nicht.",
+                    "configurablePerFeatureTitle": "Pro Funktion konfigurierbar",
+                    "configurablePerFeatureDesc": "Feedbackvorschläge zur Bewertung und formative Feedbackanfragen können auf der Einstellungsseite unabhängig voneinander geschaltet werden."
                 }
             },
             "autoOrchestration": {
@@ -362,6 +392,9 @@
                     "hint": "Zwischen 3 und 24 Buchstaben oder Ziffern, beginnend mit einem Buchstaben. Er erscheint in URLs und Gruppennamen und kann später nicht mehr geändert werden.",
                     "hintReadOnly": "Der Kurzname kann nach dem Erstellen des Kurses nicht mehr geändert werden."
                 },
+                "codeOfConduct": {
+                    "maxlength": "Der Verhaltenskodex darf höchstens {{max}} Zeichen lang sein."
+                },
                 "description": {
                     "maxlength": "Die Beschreibung darf höchstens 2000 Zeichen lang sein."
                 },
@@ -433,7 +466,7 @@
             "assessmentDueDate": "Bewertung",
             "cleanup": {
                 "title": "Aufräumen",
-                "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studierenden-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
+                "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studierenden-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-state-danger'>NICHT</strong> rückgängig gemacht werden!"
             },
             "detail": {
                 "title": "Kurs Details:",
@@ -447,7 +480,9 @@
                 "complaintsTitle": "Insgesamte Beschwerden",
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
                 "averageStudentScoreTitle": "Durchschnittliche Punktzahl der Studierenden",
-                "currentTotalLLMCostTitle": "Insgesamte LLM Kosten"
+                "currentTotalLLMCostTitle": "LLM-Kosten (USD)",
+                "llmCostNotPriced": "Keine USD-Kosten verfügbar",
+                "llmCostUnpricedRequests": "Anfragen ohne USD-Preis: {{ count }}. In der Summe nicht enthalten."
             },
             "activeStudents": "Aktive Studierende: {{ students }}",
             "notStartedYet": "Der Kurs hat noch nicht offiziell begonnen. Offizieller Kursstart:",
@@ -558,6 +593,11 @@
                     }
                 },
                 "replayWizard": "Einrichtungsassistent wiederholen"
+            },
+            "studentWelcomeContext": {
+                "label": "Startseite für Studierende: Lernansatz",
+                "hint": "Optional: Beschreiben Sie, wie Studierende in diesem Kurs lernen sollen (bis zu 2.000 Zeichen). Der Text erscheint beim ersten Besuch der Startseite und wird für optionale KI-Begrüßungen verwendet.",
+                "tooLong": "Verwenden Sie höchstens 2.000 Zeichen."
             }
         },
         "courseStatistics": {

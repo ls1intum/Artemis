@@ -1,0 +1,6 @@
+@import 'src/main/webapp/content/scss/artemis-mixins';
+
+#user-settings-title-bar {
+    @include title-bar-frame;
+    @include title-bar-size-container;
+}

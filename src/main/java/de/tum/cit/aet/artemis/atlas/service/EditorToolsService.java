@@ -34,14 +34,11 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyAtlasMLNotificationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -55,7 +52,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * <p>
  * Both tools are course-scoped through the Spring AI {@link ToolContext}, share the per-run write
  * quota with every other write tool via the {@link OrchestratorToolContextKeys.AppliedActionsBuffer},
- * and append an EDIT / DELETE audit entry on success. Edits and deletions are mirrored to AtlasML.
+ * and append an EDIT / DELETE audit entry on success.
  */
 @Lazy
 @Service
@@ -74,8 +71,6 @@ public class EditorToolsService {
 
     private final CompetencyValidationService competencyValidator;
 
-    private final CompetencyAtlasMLNotificationService atlasMLNotificationService;
-
     /**
      * Creates the editor tools service.
      *
@@ -84,17 +79,14 @@ public class EditorToolsService {
      * @param courseCompetencyService      service performing the cascading delete
      * @param competencyValidator          validator enforcing competency update invariants
      * @param competencyRelationRepository counts the relations removed together with a deleted competency
-     * @param atlasMLNotificationService   notifies the AtlasML service of competency changes
      */
     public EditorToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, CourseCompetencyService courseCompetencyService,
-            CompetencyValidationService competencyValidator, CompetencyAtlasMLNotificationService atlasMLNotificationService,
-            CompetencyRelationRepository competencyRelationRepository) {
+            CompetencyValidationService competencyValidator, CompetencyRelationRepository competencyRelationRepository) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.courseCompetencyService = courseCompetencyService;
         this.competencyValidator = competencyValidator;
-        this.atlasMLNotificationService = atlasMLNotificationService;
     }
 
     /**
@@ -199,9 +191,6 @@ public class EditorToolsService {
         }
         String detail = "Updated " + String.join(", ", changes) + " for competency " + saved.getTitle() + ".";
         appendAction(toolContext, AppliedActionDTO.edit(saved.getId(), saved.getTitle(), detail, justification.trim()));
-        if (saved instanceof Competency persisted) {
-            atlasMLNotificationService.notifyAtlasML(List.of(persisted), OperationTypeDTO.UPDATE, "orchestrator competency update");
-        }
         return toJson(objectMapper, Map.of("id", saved.getId(), "title", saved.getTitle(), "changed", changes));
     }
 
@@ -253,12 +242,6 @@ public class EditorToolsService {
         long removedRelationCount = competencyRelationRepository.countByHeadCompetencyIdOrTailCompetencyId(competencyId, competencyId);
         String title = competency.getTitle();
         Course course = competency.getCourse();
-        // Snapshot the entity for Atlas ML before the cascade wipes it; notification is sent only after the delete commits.
-        Competency competencyForAtlasMl = null;
-        if (competency instanceof Competency competencyToDelete) {
-            competencyForAtlasMl = new Competency(competencyToDelete);
-            competencyForAtlasMl.setId(competencyToDelete.getId());
-        }
         try {
             // Cascades inside CourseCompetencyService: competency relations, progress records,
             // and all CompetencyExerciseLink / CompetencyLectureUnitLink rows for this competency.
@@ -269,17 +252,11 @@ public class EditorToolsService {
             log.warn("deleteCompetency failed for competency {}: {}", competencyId, ex.getMessage());
             return mutationErrorJson(objectMapper, "Failed to delete competency.", toolContext);
         }
-        // Append before the external Atlas ML notification — consistent with the other write
-        // tools and ensures the audit DTO is in the buffer even if the downstream notify call
-        // throws (the DB delete has already committed).
         String detail = "Deleted competency " + title + ".";
         if (removedRelationCount > 0) {
             detail += " Removed " + removedRelationCount + (removedRelationCount == 1 ? " competency relation." : " competency relations.");
         }
         appendAction(toolContext, AppliedActionDTO.delete(competencyId, title, detail, justification.trim()));
-        if (competencyForAtlasMl != null) {
-            atlasMLNotificationService.notifyAtlasML(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE, "orchestrator competency deletion");
-        }
         return toJson(objectMapper, Map.of("status", "ok", "deletedId", competencyId, "removedRelationCount", removedRelationCount));
     }
 }

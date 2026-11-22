@@ -69,6 +69,17 @@ public class UserCourseNotificationStatusService {
     }
 
     /**
+     * Marks notifications displayed by the client as seen without changing notifications already archived by the user.
+     *
+     * @param user                  the user who displayed the notifications
+     * @param courseNotificationIds the IDs of the displayed notifications
+     * @param courseId              the ID of the course whose notifications were displayed
+     */
+    public void markDisplayedNotificationsAsSeen(User user, List<Long> courseNotificationIds, long courseId) {
+        userCourseNotificationStatusRepository.markUnseenNotificationsAsSeen(courseNotificationIds, user.getId(), courseId);
+    }
+
+    /**
      * Archives all user viewing status for a given course.
      *
      * @param courseId The id of the course

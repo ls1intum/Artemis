@@ -94,7 +94,7 @@ class ObjectMethodTest {
         Class<?> domainClass = classNode.getContainedClass();
         ClassInfo info = classNode.getClassInfo();
         // Ignore interfaces, abstract classes, anonymous classes, annotations and generated classes
-        if (info.isInterfaceOrAnnotation() || info.isAnonymousInnerClass() || info.isAbstract() || info.getName().endsWith("_")) {
+        if (info.isInterfaceOrAnnotation() || info.isAnonymousClass() || info.isAbstract() || info.getName().endsWith("_")) {
             return Optional.empty();
         }
         // Ignore classes that are excluded from everything
@@ -146,7 +146,7 @@ class ObjectMethodTest {
             return;
         }
         // try to find a no-args constructor
-        var noArgsConstructors = info.getConstructorInfo().filter(f -> f.getParameterInfo().length == 0);
+        var noArgsConstructors = info.getConstructorInfo().filter(f -> f.getParameterInfo().isEmpty());
         if (noArgsConstructors.size() == 1) {
             try {
                 var noArgsConstructor = domainClass.getDeclaredConstructor();

@@ -50,11 +50,6 @@ class AgentAccessCompetencyIntegrationTest extends AbstractAtlasIntegrationTest 
 
     @BeforeEach
     void setupTestScenario() {
-        // Competency creation notifies AtlasML, which is mocked in the same way as in the other competency tests.
-        atlasMLRequestMockProvider.ifPresent(provider -> {
-            provider.enableMockingOfRequests();
-            provider.mockSaveCompetenciesAny();
-        });
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         courseCompetency = competencyUtilService.createCompetency(course);

@@ -2,6 +2,7 @@
 id: customization
 title: Customization
 sidebar_label: Customization
+last_reviewed: 2026-11-03
 ---
 
 You can define the following custom assets for Artemis to be used

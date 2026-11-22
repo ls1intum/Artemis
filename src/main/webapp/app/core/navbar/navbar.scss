@@ -20,7 +20,7 @@ Navbar
  * the account menu the stray underline is especially visible: the avatar covers the stretch behind it, so all that
  * surfaces is a short blue dash next to the image.
  */
-a:not(.btn, .tumaet-ui-btn, .tab-link):hover {
+a:not(.tumaet-ui-btn, .tab-link):hover {
     text-decoration: none !important;
 }
 
@@ -41,18 +41,18 @@ a:not(.btn, .tumaet-ui-btn, .tab-link):hover {
         gap: 0.5rem;
         font-size: 0.75rem;
         line-height: 1;
-        color: var(--bs-navbar-brand-color);
+        color: var(--white);
 
         a {
             color: var(--navbar-dark-color);
 
             &.accented {
-                color: var(--bs-navbar-brand-color);
+                color: var(--white);
             }
         }
 
         .disabled {
-            color: var(--bs-navbar-brand-color);
+            color: var(--white);
         }
 
         .perspective-switch-divider {
@@ -61,7 +61,7 @@ a:not(.btn, .tumaet-ui-btn, .tab-link):hover {
     }
 
     > *:hover {
-        color: var(--bs-body-color);
+        color: var(--body-color);
     }
 
     &.evenly {
@@ -77,15 +77,78 @@ a:not(.btn, .tumaet-ui-btn, .tab-link):hover {
     }
 }
 
-#account-menu {
+/* The button that opens the language or the account menu, with the caret Bootstrap drew for a dropdown toggle. */
+.jh-menu-toggle {
+    display: block;
     padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-weight: 400;
+    color: var(--navbar-dark-color);
+    cursor: pointer;
+
+    &:hover {
+        color: var(--link-color);
+    }
+
+    &::after {
+        display: inline-block;
+        margin-left: 0.15em;
+        vertical-align: 0.255em;
+        content: '';
+        border-top: 0.3em solid;
+        border-right: 0.3em solid transparent;
+        border-bottom: 0;
+        border-left: 0.3em solid transparent;
+    }
+}
+
+/*
+ * The menus open in an overlay outside the navbar, so these rules cannot be nested in `.jh-navbar`. The entries keep
+ * the size of the rest of the application instead of the larger default of the menu component.
+ */
+.jh-menu {
+    min-width: 10rem;
+    padding: 0.5rem 0;
+}
+
+.jh-menu-item {
+    width: 100%;
+    padding: 0.25rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 400;
+    white-space: nowrap;
+
+    &.active,
+    &.active:hover {
+        color: var(--white);
+        background-color: var(--navbar-bg);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: -2px;
+    }
+}
+
+.jh-menu-separator {
+    margin: 0.5rem 0;
+}
+
+/* Aligns the group label with the entries, which are smaller here than the default of the menu component. */
+.jh-menu-group {
+    --tumaet-ui-menu-group-label-padding: 0.5rem 1rem;
+    --tumaet-ui-menu-group-label-font-size: 0.7875rem;
 }
 
 .jh-navbar {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
     padding: 0.2em 1rem;
-}
-
-.jh-navbar {
     background-color: var(--artemis-dark);
     white-space: nowrap;
     color: var(--navbar-dark-color);
@@ -96,28 +159,6 @@ a:not(.btn, .tumaet-ui-btn, .tab-link):hover {
         width: 30px;
     }
 
-    .dropdown-item.active,
-    .dropdown-item.active:focus,
-    .dropdown-item.active:hover {
-        background-color: var(--navbar-bg);
-    }
-
-    .dropdown-toggle::after {
-        margin-left: 0.15em;
-    }
-
-    .nav-link {
-        color: var(--navbar-dark-color);
-
-        &:hover {
-            color: var(--link-color);
-        }
-    }
-
-    a.nav-link {
-        font-weight: 400;
-    }
-
     .jh-logo-container {
         display: flex;
         flex: 1;
@@ -126,8 +167,11 @@ a:not(.btn, .tumaet-ui-btn, .tab-link):hover {
         gap: 0.5rem;
         height: 2rem;
 
-        .navbar-brand {
+        .jh-brand {
             display: flex;
+            font-size: 1.125rem;
+            color: var(--link-color);
+            text-decoration: none;
             gap: 0.5rem;
             padding: 0.75rem 0;
             align-items: center;
@@ -141,14 +185,14 @@ a:not(.btn, .tumaet-ui-btn, .tab-link):hover {
                 margin-right: 0.5rem;
             }
 
-            .navbar-version {
+            .jh-brand-version {
                 padding-top: 3px;
                 font-size: 10px;
                 font-weight: 700;
                 color: var(--navbar-foreground);
             }
 
-            .navbar-title {
+            .jh-brand-title {
                 font-weight: 700;
             }
 
@@ -157,22 +201,22 @@ a:not(.btn, .tumaet-ui-btn, .tab-link):hover {
             }
         }
 
-        .navbar-course-link {
+        .jh-course-link {
             min-width: 0;
             max-width: min(28rem, 35vw);
-            color: var(--bs-navbar-brand-color);
+            color: var(--white);
 
             &:hover {
                 color: var(--navbar-foreground) !important;
             }
 
-            .navbar-course-title {
+            .jh-course-title {
                 min-width: 0;
                 max-width: 100%;
             }
         }
 
-        .navbar-course-image,
+        .jh-course-image,
         .course-circle {
             flex: 0 0 1.3rem;
             height: 1.3rem;
@@ -182,7 +226,7 @@ a:not(.btn, .tumaet-ui-btn, .tab-link):hover {
         .course-circle {
             background-color: var(--course-image-bg);
             border-radius: 50%;
-            color: var(--bs-body-color);
+            color: var(--body-color);
         }
 
         jhi-image {
@@ -227,22 +271,32 @@ a:not(.btn, .tumaet-ui-btn, .tab-link):hover {
     flex-wrap: nowrap;
     justify-content: flex-start;
 
-    .navbar-collapse {
+    .jh-collapse {
         display: flex !important;
     }
 }
 
-.dropdown-menu-index {
-    z-index: 2000;
+/* The row below the logo that holds the icon menu once the navbar is too narrow to show it inline. */
+.jh-collapse {
+    flex-basis: 100%;
+    flex-grow: 1;
+    align-items: center;
+
+    &.is-collapsed {
+        display: none;
+    }
 }
 
-.breadcrumb-container {
+.jh-breadcrumb-container {
     background-color: var(--navbar-breadcrumb-background);
     overflow: auto;
     margin-left: -15px;
     min-height: 0.5rem;
 
-    .breadcrumb {
+    .jh-breadcrumb {
+        display: flex;
+        flex-wrap: wrap;
+        list-style: none;
         color: var(--navbar-breadcrumb-color);
         background-color: var(--navbar-breadcrumb-background);
         margin-left: 1rem;
@@ -250,21 +304,21 @@ a:not(.btn, .tumaet-ui-btn, .tab-link):hover {
         padding: 0.25rem 1rem;
         font-size: smaller;
 
-        .breadcrumb-link {
+        .jh-breadcrumb-link {
             font-weight: 300;
             display: inline;
         }
     }
 
-    .breadcrumb-divider {
-        color: var(--bs-breadcrumb-divider-color);
+    .jh-breadcrumb-divider {
+        color: var(--tumaet-ui-muted-color);
     }
 }
 
 @media not all and (min-resolution: 0.001dpcm) {
     @supports (-webkit-appearance: none) {
-        .breadcrumb-item:first-of-type {
-            .breadcrumb-link {
+        .jh-breadcrumb-item:first-of-type {
+            .jh-breadcrumb-link {
                 display: block !important;
             }
         }
@@ -272,7 +326,7 @@ a:not(.btn, .tumaet-ui-btn, .tab-link):hover {
 }
 
 @media (max-width: 960px) {
-    .navbar-course-title {
+    .jh-course-title {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -280,11 +334,11 @@ a:not(.btn, .tumaet-ui-btn, .tab-link):hover {
 }
 
 @media (max-width: 576px) {
-    .navbar-title {
+    .jh-brand-title {
         display: none;
     }
 
-    .navbar-version {
+    .jh-brand-version {
         display: none;
     }
 }

@@ -1,0 +1,25 @@
+diff --git a/index.js b/index.js
+index 049e40770738ff8ffa89337157b39621d0d0e0b4..0d63988d4b81e3939af87e226923446a73afc4c9 100644
+--- a/index.js
++++ b/index.js
+@@ -406,16 +406,10 @@ function reduceGlobPatterns(globs, name) {
+   } else if (!globs || !Array.isArray(globs) || globs.length === 0) {
+     return undefined;
+   } else {
+-    // combine globs into one single RegEx
+-    const regex = new RegExp(
+-      globs
+-        .reduce((acc, exclude) => {
+-          return acc + '|' + minimatch.makeRe(exclude).source;
+-        }, '')
+-        .substr(1),
+-    );
+-    log.glob(`Reduced glob patterns to ${name}`, { from: globs, to: regex });
+-    return param => regex.test(param);
++    // minimatch 11 no longer builds regular expressions (makeRe is gone), so match each glob directly
++    const matchers = globs.map(glob => new minimatch.Minimatch(glob));
++    log.glob(`Reduced glob patterns to ${name}`, { from: globs });
++    return param => matchers.some(matcher => matcher.match(param));
+   }
+ }
+ 

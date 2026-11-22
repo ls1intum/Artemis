@@ -5,9 +5,9 @@
     right: 2rem;
     width: 3.5rem;
     height: 3.5rem;
-    z-index: 1050; // Higher than most Bootstrap components
+    z-index: 1050; // Above the page content and the navbar
     border: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px color-mix(in srgb, black 15%, transparent);
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -18,16 +18,7 @@
     // Hover effects
     &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-        background-color: var(--bs-primary-hover, #0056b3) !important;
-    }
-
-    // Focus state for accessibility
-    &:focus {
-        box-shadow:
-            0 0 0 0.2rem rgba(0, 123, 255, 0.25),
-            0 4px 12px rgba(0, 0, 0, 0.15);
-        outline: none;
+        box-shadow: 0 6px 20px color-mix(in srgb, black 20%, transparent);
     }
 
     // Active state
@@ -37,7 +28,6 @@
 
     // Icon styling
     fa-icon {
-        color: white;
         display: flex;
         align-items: center;
         justify-content: center;

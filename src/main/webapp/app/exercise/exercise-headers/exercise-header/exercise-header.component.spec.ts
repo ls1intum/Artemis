@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ProgrammingBuildNotificationsComponent } from 'app/programming/overview/build-notifications/programming-build-notifications.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -13,7 +14,6 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -32,6 +32,7 @@ import { signal } from '@angular/core';
 import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -100,8 +101,14 @@ describe('ExerciseHeaderComponent', () => {
         // than rendered because the real ones reach all the way down to the result history's PrimeNG dialog service;
         // what the header owns is the decision to show them, which the mock still reports.
         TestBed.overrideComponent(ExerciseHeaderComponent, {
-            remove: { imports: [ParticipationModeToggleComponent, ExerciseHeadersInformationComponent] },
-            add: { imports: [MockComponent(ParticipationModeToggleComponent), MockComponent(ExerciseHeadersInformationComponent)] },
+            remove: { imports: [ParticipationModeToggleComponent, ExerciseHeadersInformationComponent, ProgrammingBuildNotificationsComponent] },
+            add: {
+                imports: [
+                    MockComponent(ParticipationModeToggleComponent),
+                    MockComponent(ExerciseHeadersInformationComponent),
+                    MockComponent(ProgrammingBuildNotificationsComponent),
+                ],
+            },
         });
 
         // Mock complex child imports of ExerciseHeaderActionsComponent to avoid deep dependency chains
@@ -126,6 +133,29 @@ describe('ExerciseHeaderComponent', () => {
 
     afterEach(() => {
         globalThis.ResizeObserver = originalResizeObserver;
+    });
+
+    it('binds build notifications to the active graded or practice participation', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 1;
+        const graded = new StudentParticipation();
+        graded.id = 2;
+        const practice = new StudentParticipation();
+        practice.id = 3;
+        practice.testRun = true;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('studentParticipation', graded);
+        fixture.componentRef.setInput('practiceParticipation', practice);
+        fixture.detectChanges();
+        const notifications = fixture.debugElement.query(By.directive(ProgrammingBuildNotificationsComponent)).componentInstance as ProgrammingBuildNotificationsComponent;
+        expect(notifications.participation()).toBe(graded);
+        fixture.componentInstance.participationMode.set('practice');
+        fixture.detectChanges();
+        expect(notifications.participation()).toBe(practice);
+        fixture.componentInstance.participationMode.set('graded');
+        fixture.detectChanges();
+        expect(notifications.participation()).toBe(graded);
     });
 
     it('should hide submit button when the due date has passed', () => {

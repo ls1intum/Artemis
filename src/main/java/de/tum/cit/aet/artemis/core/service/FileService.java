@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOExceptionList;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -142,6 +143,9 @@ public class FileService implements DisposableBean {
      * @param delayInMinutes The delay in minutes after which the path should be deleted
      */
     public void schedulePathForDeletion(@Nullable Path path, long delayInMinutes) {
+        if (path == null) {
+            return;
+        }
         scheduleDeletion(path, delayInMinutes, () -> {
             if (Files.exists(path)) {
                 log.info("Delete file {}", path);
@@ -160,6 +164,13 @@ public class FileService implements DisposableBean {
      * @param delayInMinutes The delay in minutes after which the path should be deleted
      */
     public void scheduleDirectoryPathForRecursiveDeletion(@Nullable Path path, long delayInMinutes) {
+        if (path == null) {
+            return;
+        }
+        scheduleDirectoryDeletion(path, delayInMinutes);
+    }
+
+    private void scheduleDirectoryDeletion(@NonNull Path path, long delayInMinutes) {
         scheduleDeletion(path, delayInMinutes, () -> {
             if (Files.exists(path) && Files.isDirectory(path)) {
                 log.debug("Delete directory {}", path);
@@ -177,10 +188,7 @@ public class FileService implements DisposableBean {
      * minutes after the work that requested them, so another cleanup, an operator or a container restart may legitimately
      * have removed the tree first. Anything else is still logged as an error.
      */
-    private void scheduleDeletion(@Nullable Path path, long delayInMinutes, IoRunnable deletion) {
-        if (path == null) {
-            return;
-        }
+    private void scheduleDeletion(@NonNull Path path, long delayInMinutes, IoRunnable deletion) {
         // Pruned here rather than by the task itself: a zero-minute delay can run the task before its future is even
         // assigned, so a self-removing task has nothing to remove itself from.
         futures.removeIf(ScheduledFuture::isDone);
@@ -266,12 +274,12 @@ public class FileService implements DisposableBean {
      * @return the newly created directory
      * @throws IOException if the directory could not be created
      */
-    public Path createTemporaryDirectory(Path parent, String prefix, long deleteDelayInMinutes) throws IOException {
+    public @NonNull Path createTemporaryDirectory(Path parent, String prefix, long deleteDelayInMinutes) throws IOException {
         if (tempFileUtilService == null) {
             throw new IllegalStateException("Cannot create a temporary directory: this FileService was constructed directly instead of being injected");
         }
         Path temporaryDirectory = tempFileUtilService.createTempDirectory(parent, prefix);
-        scheduleDirectoryPathForRecursiveDeletion(temporaryDirectory, deleteDelayInMinutes);
+        scheduleDirectoryDeletion(temporaryDirectory, deleteDelayInMinutes);
         return temporaryDirectory;
     }
 

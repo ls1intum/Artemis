@@ -14,8 +14,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -38,7 +37,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ProgrammingExerciseInstructorStatusComponent, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe)],
+            imports: [ProgrammingExerciseInstructorStatusComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         });
         fixture = TestBed.createComponent(ProgrammingExerciseInstructorStatusComponent);
@@ -169,5 +168,40 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         latestResultSubject.next(newResult);
 
         expect(internals(comp).latestResult()).toEqual(newResult);
+    });
+
+    it.each([
+        [ProgrammingExerciseParticipationType.TEMPLATE, -1],
+        [ProgrammingExerciseParticipationType.SOLUTION, 99],
+    ])('warns for an unexpected %s score of %s even when the result is marked successful', (participationType, score) => {
+        fixture.componentRef.setInput('participationType', participationType);
+        fixture.componentRef.setInput('participation', { id: 1, submissions: [{ results: [{ id: 3, score, successful: true }] }] });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('fa-icon')).not.toBeNull();
+    });
+    it('refreshes a result snapshot for the same participation without reconnecting', () => {
+        fixture.componentRef.setInput('participationType', ProgrammingExerciseParticipationType.SOLUTION);
+        fixture.componentRef.setInput('participation', { id: 1, submissions: [{ results: [{ id: 3, score: 80 }] }] });
+        fixture.detectChanges();
+        fixture.componentRef.setInput('participation', { id: 1, submissions: [{ results: [{ id: 4, score: 100, successful: true }] }] });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('fa-icon')).toBeNull();
+        expect(subscribeForLatestResultStub).toHaveBeenCalledTimes(1);
+    });
+
+    it('clears a removed participation and stops accepting its live results', () => {
+        fixture.componentRef.setInput('participationType', ProgrammingExerciseParticipationType.SOLUTION);
+        fixture.componentRef.setInput('participation', { id: 1, submissions: [{ results: [{ id: 3, score: 80 }] }] });
+        fixture.detectChanges();
+        fixture.componentRef.setInput('participation', undefined);
+        fixture.detectChanges();
+        latestResultSubject.next({ id: 4, score: 50 });
+        fixture.detectChanges();
+
+        expect(internals(comp).latestResult()).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('fa-icon')).toBeNull();
+        expect(comp.resultSubscription?.closed).toBe(true);
     });
 });

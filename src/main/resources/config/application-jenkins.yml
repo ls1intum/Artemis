@@ -1,4 +1,5 @@
 # ===================================================================
+# REMOVE_IN_ARTEMIS_11 (Jenkins): the whole jenkins profile is removed in Artemis 11, delete this file
 # Jenkins specific properties: this file will only be loaded during startup if the profile jenkins is active
 #
 # This configuration overrides the application.yml file.

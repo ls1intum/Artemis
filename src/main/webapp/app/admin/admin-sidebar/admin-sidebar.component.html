@@ -1,19 +1,7 @@
 <div class="sidebar-container flex h-full min-h-full flex-col justify-between bg-(--module-bg)" [class.collapsed]="isNavbarCollapsed() || !canExpand()" data-testid="admin-sidebar">
     <div class="flex-1 overflow-x-hidden overflow-y-auto">
-        <!-- Admin Header -->
-        <div id="admin-header" class="flex items-center p-3 no-underline">
-            <div class="admin-icon flex h-9 min-w-9 items-center justify-center rounded-full bg-(--course-image-bg) text-color">
-                <fa-icon [icon]="faUserShield" />
-            </div>
-            @if (!isNavbarCollapsed()) {
-                <!-- Short form: the full "Administration" does not fit beside the icon in the rail. -->
-                <div class="auto-collapse mb-0 ms-3 text-base font-bold" jhiTranslate="global.menu.admin.short"></div>
-            }
-        </div>
-
         <!-- NavItems grouped -->
         <div>
-            <hr class="mt-0" />
             <ul class="grow list-none p-0">
                 @for (group of sidebarGroups(); track group.translation; let groupIndex = $index) {
                     <!-- Group Header -->
@@ -23,7 +11,7 @@
                         </li>
                     } @else if (groupIndex > 0) {
                         <li>
-                            <hr class="mx-2 my-2 border-surface opacity-50" />
+                            <hr class="mx-2 my-2 opacity-50" />
                         </li>
                     }
 
@@ -31,7 +19,7 @@
                     @for (item of group.items; track item.routerLink) {
                         <li>
                             <a
-                                class="nav-link-sidebar flex items-center px-2 py-2 whitespace-nowrap no-underline"
+                                class="nav-link-sidebar flex items-center px-2 py-2 whitespace-nowrap"
                                 [attr.id]="item.testId"
                                 [class.collapsed]="isNavbarCollapsed() || !canExpand()"
                                 [routerLink]="item.routerLink"
@@ -54,7 +42,7 @@
         @if (!isNavbarCollapsed() && canExpand()) {
             <button
                 type="button"
-                class="flex w-full justify-end border-none bg-transparent px-2"
+                class="flex w-full justify-end border-none bg-transparent! px-2!"
                 [class.menu-collapsed]="isNavbarCollapsed()"
                 [tumAetUiTooltip]="'global.menu.admin.collapseMenu' | artemisTranslate"
                 tumAetUiTooltipPlacement="right"
@@ -72,7 +60,7 @@
         @if (isNavbarCollapsed() && canExpand()) {
             <button
                 type="button"
-                class="w-full border-none bg-transparent text-center"
+                class="w-full border-none bg-transparent! text-center!"
                 [class.menu-collapsed]="isNavbarCollapsed()"
                 [tumAetUiTooltip]="'global.menu.admin.expandMenu' | artemisTranslate"
                 tumAetUiTooltipPlacement="right"

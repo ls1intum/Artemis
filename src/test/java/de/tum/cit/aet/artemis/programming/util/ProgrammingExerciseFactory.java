@@ -461,11 +461,13 @@ public class ProgrammingExerciseFactory {
             case SPOTBUGS -> "BAD_PRACTICE";
             case PMD -> "Best Practices";
             case CHECKSTYLE -> "coding";
-            case CLANG_TIDY, ESLINT, RUBOCOP, LINTR -> "Lint";
+            case CLANG_TIDY, ESLINT, RUBOCOP, LINTR, GOLANGCI_LINT -> "Lint";
             case CLIPPY -> "Style";
             case DART_ANALYZE -> "LINT";
+            case DETEKT -> "style";
+            case ROSLYN -> "Design";
             case PMD_CPD -> "Copy/Paste Detection";
-            case SWIFTLINT -> "swiftLint"; // TODO: rene: set better value after categories are better defined
+            case SWIFTLINT -> "style";
             case GCC -> "Memory";
             case RUFF -> "Pylint";
             case OTHER -> "Other";

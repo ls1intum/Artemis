@@ -7,14 +7,14 @@
 }
 
 .invalid-question {
-    color: red;
+    color: var(--tumaet-ui-state-danger);
 }
 
 .button-row {
     padding-left: 61px;
 }
 
-@media (max-width: 575px) {
+@media (max-width: 575.98px) {
     .button-row {
         padding-left: 0;
     }

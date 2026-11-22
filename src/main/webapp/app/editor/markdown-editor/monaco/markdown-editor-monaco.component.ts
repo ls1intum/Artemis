@@ -20,12 +20,18 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.types';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
-import { Tab, TabList, Tabs } from 'primeng/tabs';
-import { Popover } from 'primeng/popover';
-import { Tooltip } from 'primeng/tooltip';
 import { TextEditorAction, TextStyleTextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/editor/monaco-editor/model/actions/italic.action';
+import {
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTabsComponent,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { UnderlineAction } from 'app/editor/monaco-editor/model/actions/underline.action';
 import { QuoteAction } from 'app/editor/monaco-editor/model/actions/quote.action';
 import { CodeAction } from 'app/editor/monaco-editor/model/actions/code.action';
@@ -55,7 +61,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { Tag } from 'primeng/tag';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { FileUploadResponse, FileUploaderService } from 'app/foundation/service/file-uploader.service';
@@ -116,7 +121,22 @@ const TAB_VISUAL_ID = 'editor_visual';
     templateUrl: './markdown-editor-monaco.component.html',
     styleUrls: ['./markdown-editor-monaco.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [Tabs, TabList, Tab, TranslateDirective, NgClass, MonacoEditorComponent, FaIconComponent, Tooltip, NgTemplateOutlet, Popover, CdkDrag, ArtemisTranslatePipe, Tag],
+    imports: [
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TranslateDirective,
+        NgClass,
+        MonacoEditorComponent,
+        FaIconComponent,
+        TumAetUiTooltipDirective,
+        NgTemplateOutlet,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        CdkDrag,
+        ArtemisTranslatePipe,
+        TumAetUiTagComponent,
+    ],
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     private readonly alertService = inject(AlertService);
@@ -219,6 +239,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
+
+    /**
+     * The id of an element that describes the editor's content (for example a form validation error),
+     * forwarded to the inner Monaco textarea as `aria-describedby`. Only the textarea is a tab stop
+     * and screen readers announce `aria-describedby` from the focused control, so setting the attribute
+     * on the host wrapper would not reach the editing control.
+     */
+    readonly ariaDescribedBy = input<string | undefined>(undefined);
+
+    /** Forwards `aria-invalid` to the inner Monaco textarea. */
+    readonly ariaInvalid = input<boolean>(false);
 
     readonly isAiLoading = input<boolean>(false);
     readonly showMarkdownInfoText = input<boolean>(true);
@@ -367,6 +398,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.reviewCommentManager?.tryUpdateThreadInputs(threads);
         });
 
+        // Forward `aria-describedby` / `aria-invalid` to the inner Monaco textarea once it exists so screen readers
+        // announce the described content (such as a form validation error) when focus lands on the editing control.
+        effect(() => {
+            // Depend on the signals so the sync re-runs when either input changes; the sync method reads them again
+            // so a direct call from the mode-change callback (where the new diff-mode textarea has just appeared)
+            // picks up the current values too.
+            this.ariaDescribedBy();
+            this.ariaInvalid();
+            this.monacoEditor();
+            this.syncAriaAttributes();
+        });
+
         // Adjust editor dimensions when mode changes (e.g. entering/leaving diff mode).
         // Skip the initial run: the editor is already laid out by ngAfterViewInit, and an
         // extra layout() call in tests triggers Monaco's monospace-font-assumption scheduler.
@@ -379,6 +422,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                         () => {
                             if (this.monacoEditor()) {
                                 this.adjustEditorDimensions();
+                                // Mode changes do not touch the ARIA inputs, so the aria effect does not re-run; a diff
+                                // editor materialised here needs the current values pushed into its new textarea.
+                                this.syncAriaAttributes();
                             }
                         },
                         { injector: this.injector },
@@ -387,6 +433,21 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             }
             lastObservedMode = currentMode;
         });
+    }
+
+    /**
+     * Pushes the current `ariaDescribedBy` / `ariaInvalid` inputs into the active Monaco editor's accessible
+     * editing control (the element that actually receives focus and that screen readers describe). Safe to call
+     * before the editor exists; it just no-ops in that case. Monaco uses an input `<textarea>` on older builds
+     * and a `div.native-edit-context` (role=textbox, backed by the EditContext API) on newer ones; the sync
+     * covers whichever the active editor currently renders so Chromium users get the same wiring as the textarea
+     * path.
+     */
+    private syncAriaAttributes(): void {
+        const target = this.monacoEditor()?.getActiveEditor()?.getDomNode()?.querySelector<HTMLElement>('textarea, .native-edit-context');
+        if (target) {
+            this.applyAriaAttributesToTextarea(target, this.ariaDescribedBy(), this.ariaInvalid());
+        }
     }
 
     /**
@@ -619,6 +680,21 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     private applyMarkdownToEditor(value: string | undefined): void {
         this.monacoEditor()?.setText(value ?? '');
+    }
+
+    /**
+     * Applies the given accessibility attributes to Monaco's accessible editing control (either the inner
+     * `<textarea>` or the newer `div.native-edit-context` role=textbox element) so screen readers reach them
+     * when focus is on that control. The host wrapper would be ignored. Exposed for direct unit testing
+     * because the hosting effect depends on Monaco having been initialized.
+     */
+    applyAriaAttributesToTextarea(target: HTMLElement, describedBy: string | undefined, invalid: boolean): void {
+        if (describedBy) {
+            target.setAttribute('aria-describedby', describedBy);
+        } else {
+            target.removeAttribute('aria-describedby');
+        }
+        target.setAttribute('aria-invalid', invalid ? 'true' : 'false');
     }
 
     /**
@@ -877,6 +953,24 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (colorName) {
             this.colorAction()?.executeInCurrentEditor({ color: colorName });
         }
+    }
+
+    /**
+     * Runs the action that was chosen in a toolbar popover and closes the popover. Once it is gone, the popover hands
+     * focus back to the button that opened it, which would override the focus the action gave the editor, so the
+     * editor takes focus again after that. Dismissing the popover without a choice keeps the focus on the button.
+     * @param popover The popover that contains the chosen item.
+     * @param run Applies the chosen item to the editor.
+     */
+    protected runFromPopover(popover: TumAetUiPopoverComponent, run: () => void): void {
+        if (popover.isOpen()) {
+            const subscription = popover.closed.subscribe(() => {
+                subscription.unsubscribe();
+                this.monacoEditor()?.focus();
+            });
+        }
+        run();
+        popover.close();
     }
 
     /**

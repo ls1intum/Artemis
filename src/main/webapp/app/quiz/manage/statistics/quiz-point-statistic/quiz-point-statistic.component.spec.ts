@@ -44,9 +44,8 @@ describe('QuizExercise Point Statistic Component', () => {
     let comp: QuizPointStatisticComponent;
     let fixture: ComponentFixture<QuizPointStatisticComponent>;
     let quizService: QuizExerciseService;
-    let accountService: AccountService;
+    let accountService: MockAccountService;
     let websocketService: MockWebsocketService;
-    let accountSpy: any;
     let router: Router;
     let quizServiceFindSpy: any;
 
@@ -73,7 +72,7 @@ describe('QuizExercise Point Statistic Component', () => {
         comp = fixture.componentInstance;
         quizService = TestBed.inject(QuizExerciseService);
         websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
-        accountService = TestBed.inject(AccountService);
+        accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
         router = TestBed.inject(Router);
         quizServiceFindSpy = vi.spyOn(quizService, 'findPointStatistic').mockReturnValue(of(quizExercise));
     });
@@ -86,7 +85,7 @@ describe('QuizExercise Point Statistic Component', () => {
     describe('onInit', () => {
         it('should load the point statistic and configure websocket channels on Init', () => {
             // setup
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             const loadQuizSuccessSpy = vi.spyOn(comp, 'loadQuizSuccess');
             comp.quizExerciseChannel = '';
             comp.waitingForQuizStart = true;
@@ -99,14 +98,13 @@ describe('QuizExercise Point Statistic Component', () => {
             comp.ngOnInit();
 
             // check
-            expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
             expect(comp.quizExerciseChannel).toBe('/topic/courses/2/quizExercises');
         });
 
         it('should refresh when a waiting quiz starts', () => {
-            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             const waitingQuizExercise = cloneWith(quizExercise, { quizStarted: false });
             quizServiceFindSpy.mockReturnValueOnce(of(waitingQuizExercise)).mockReturnValueOnce(of(quizExercise));
 
@@ -120,7 +118,7 @@ describe('QuizExercise Point Statistic Component', () => {
         });
 
         it('should ignore a superseded initial point-statistics response', () => {
-            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             const initialRequest = new Subject<QuizPointStatisticsResponse>();
             const refreshRequest = new Subject<QuizPointStatisticsResponse>();
             quizServiceFindSpy.mockReturnValueOnce(initialRequest.asObservable()).mockReturnValueOnce(refreshRequest.asObservable());
@@ -137,7 +135,7 @@ describe('QuizExercise Point Statistic Component', () => {
         });
 
         it('should cancel superseded refresh requests and the active request on destroy', () => {
-            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             let nextRequestId = 0;
             const cancelledRequestIds: number[] = [];
             quizServiceFindSpy.mockImplementation(
@@ -160,12 +158,11 @@ describe('QuizExercise Point Statistic Component', () => {
         });
 
         it('should not load QuizSuccess if not authorised', async () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            accountService.isAtLeastTutor.set(false);
             const loadQuizSuccessSpy = vi.spyOn(comp, 'loadQuizSuccess');
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSuccessSpy).not.toHaveBeenCalled();
         });
@@ -187,7 +184,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
         it('should call router if called by student', () => {
             // setup
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            accountService.isAtLeastTutor.set(false);
             quizExercise.quizPointStatistic = new QuizPointStatistic();
             quizExercise.quizPointStatistic.pointCounters = pointCounters;
 
@@ -200,7 +197,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
         it('should load the quiz', () => {
             // setup
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             quizExercise.quizPointStatistic = new QuizPointStatistic();
             quizExercise.quizPointStatistic.pointCounters = pointCounters;
 
@@ -220,7 +217,7 @@ describe('QuizExercise Point Statistic Component', () => {
         quizExercise.quizQuestions = undefined;
         quizExercise.maxPoints = 42;
         comp.quizExercise.set(quizExercise);
-        accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+        accountService.isAtLeastTutor.set(true);
 
         vi.spyOn(comp, 'loadData').mockImplementation(() => {});
 

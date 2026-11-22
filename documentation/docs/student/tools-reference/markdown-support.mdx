@@ -2,6 +2,7 @@
 id: markdown-support
 title: Markdown Support
 sidebar_label: Markdown Support
+last_reviewed: 2026-11-03
 ---
 
 import Image, {ImageSize} from "../../../src/components/Image/Image";
@@ -23,6 +24,8 @@ This Artemis flavored Markdown is used to format text content across the platfor
 The markdown editor contains a formatting toolbar at the top, allowing users to format text without learning Markdown syntax.
 
 In addition, images can be uploaded and included by either dragging and dropping them into the editor field or by clicking at the footer of the editor, which brings up the file selection dialog.
+
+To turn text into a link, select it and paste a web address (starting with `http://` or `https://`); the editor inserts the link around the selected text. Inside an existing link or in code, the address is pasted as usual.
 
 <Image src={markdownLectureExample} alt={"Markdown Lecture Example"} size={ImageSize.medium} />
 

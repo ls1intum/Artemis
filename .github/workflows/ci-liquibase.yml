@@ -43,6 +43,8 @@ jobs:
           python-version: '3.14'
       - name: Changelog layout check
         run: python3 supporting_scripts/liquibase/verify_schema.py --check layout
+      - name: Unbounded-text guard unit tests
+        run: python3 supporting_scripts/liquibase/test_unbounded_text_guard.py
 
   schema:
     name: Schema (${{ matrix.database }})
@@ -55,6 +57,7 @@ jobs:
       # this runs twice, so a failure on MySQL must not hide the PostgreSQL result or the other way round.
       fail-fast: false
       matrix:
+        # REMOVE_IN_ARTEMIS_11 (MySQL): drop the mysql matrix entry
         database: [postgres, mysql]
     steps:
       - name: Checkout code
@@ -70,7 +73,7 @@ jobs:
         with:
           python-version: '3.14'
       - name: Setup Java
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: 'temurin'
           java-version: ${{ env.java }}

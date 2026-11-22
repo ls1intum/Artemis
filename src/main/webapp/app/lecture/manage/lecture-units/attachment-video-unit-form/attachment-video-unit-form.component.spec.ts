@@ -63,6 +63,23 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(attachmentVideoUnitFormComponent).not.toBeNull();
     });
 
+    it('allows cancelling during save recovery and disables cancellation while the recording save runs', () => {
+        const fixture = attachmentVideoUnitFormComponentFixture;
+        fixture.componentRef.setInput('hasCancelButton', true);
+        fixture.componentRef.setInput('recordingSaveLocked', true);
+        const cancelled = vi.spyOn(fixture.componentInstance.onCancel, 'emit');
+        fixture.detectChanges();
+
+        const cancel: HTMLButtonElement = fixture.debugElement.query(By.css('[jhiTranslate="entity.action.cancel"]')).nativeElement.closest('button');
+        expect(cancel.disabled).toBe(false);
+        cancel.click();
+        expect(cancelled).toHaveBeenCalledOnce();
+
+        fixture.componentRef.setInput('recordingSaving', true);
+        fixture.detectChanges();
+        expect(cancel.disabled).toBe(true);
+    });
+
     it('should correctly set form values in edit mode', () => {
         const fakeFile = new File([''], 'Test-File.pdf', {
             type: 'application/pdf',
@@ -200,7 +217,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(submitButton.disabled).toBe(true);
     });
 
-    it('should not submit a form when file and videoSource is missing', () => {
+    it('should submit a form without file and videoSource, so the video can be uploaded to TUM.Live afterwards', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
         const exampleName = 'test';
         const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
@@ -222,8 +239,8 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).not.toHaveBeenCalled();
-        expect(submitFormEventSpy).not.toHaveBeenCalled();
+        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormEventSpy).toHaveBeenCalledOnce();
 
         submitFormSpy.mockRestore();
         submitFormEventSpy.mockRestore();
@@ -547,6 +564,27 @@ describe('AttachmentVideoUnitFormComponent', () => {
             expect(attachmentVideoUnitFormComponent.isFormValid()).toBe(true);
         });
 
+        it('should not submit while the chosen file has a type the server does not accept, and again once it is replaced', () => {
+            openInEditMode();
+            chooseFile(new File(['content'], 'Slides.exe'));
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            expect(attachmentVideoUnitFormComponent.isFormValid()).toBe(false);
+
+            chooseFile(pdf('Slides.pdf'));
+
+            expect(attachmentVideoUnitFormComponent.isFormValid()).toBe(true);
+        });
+
+        it('should accept the TUM.Live link the server stores for an upload, so the unit can still be saved', () => {
+            openInEditMode();
+
+            attachmentVideoUnitFormComponent.applyServerVideoSource('https://tum.live/w/algo/55?video_only=1');
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(attachmentVideoUnitFormComponent.videoSourceControl!.valid).toBe(true);
+            expect(attachmentVideoUnitFormComponent.isFormValid()).toBe(true);
+        });
+
         it('should take a file dropped onto the file field', () => {
             attachmentVideoUnitFormComponentFixture.detectChanges();
             const dropped = pdf('Observer Pattern.pdf');
@@ -659,6 +697,24 @@ describe('AttachmentVideoUnitFormComponent', () => {
             expect(submitSpy).toHaveBeenLastCalledWith(expect.objectContaining({ fileProperties: { file: undefined, fileName: undefined } }));
         });
 
+        it.each([false, true])('drops a previous recording selection when reusing the form (invalid: %s)', (invalid) => {
+            const fixture = attachmentVideoUnitFormComponentFixture;
+            const component = attachmentVideoUnitFormComponent;
+            fixture.componentRef.setInput('recordingAvailable', true);
+            fixture.detectChanges();
+            component['selectRecording'](true);
+            component['recording'].set(invalid ? undefined : new File(['video'], 'previous.mp4', { type: 'video/mp4' }));
+            component['recordingInvalid'].set(invalid);
+
+            openInEditMode();
+            fixture.componentRef.setInput('isEditMode', false);
+            fixture.detectChanges();
+
+            expect(component['uploadSelected']()).toBe(false);
+            expect(component['recording']()).toBeUndefined();
+            expect(component['recordingInvalid']()).toBe(false);
+        });
+
         it('should not keep the file of a previously edited unit', () => {
             openInEditMode();
             const tooBig = pdf('Replacement.pdf');
@@ -735,6 +791,24 @@ describe('AttachmentVideoUnitFormComponent', () => {
             expect(changes.map((change) => change.immediate)).toEqual([false, true]);
             expect(changes[1].data.formProperties.name).toBe('Slides week 1');
             expect(changes[1].valid).toBe(true);
+        });
+
+        it('should take a video link the server set, such as a TUM.Live upload, as the saved one without reporting a change', () => {
+            attachmentVideoUnitFormComponent.applyServerVideoSource('https://tum.live/w/algo/55?video_only=1');
+
+            expect(attachmentVideoUnitFormComponent.videoSourceControl!.value).toBe('https://tum.live/w/algo/55?video_only=1');
+            expect(attachmentVideoUnitFormComponent.videoSourceControl!.valid).toBe(true);
+            expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(false);
+            expect(changes).toEqual([]);
+        });
+
+        it('should keep a link the user entered but did not confirm when the server sets another one', () => {
+            attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://www.youtube.com/embed/typed');
+
+            attachmentVideoUnitFormComponent.applyServerVideoSource('https://tum.live/w/algo/55?video_only=1');
+
+            expect(attachmentVideoUnitFormComponent.videoSourceControl!.value).toBe('https://www.youtube.com/embed/typed');
+            expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(true);
         });
 
         it('should offer neither Submit nor a notification text, since Enter saves through the page and students are notified on upload', () => {

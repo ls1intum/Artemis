@@ -54,6 +54,15 @@ class ErrorAnalysisBufferTest {
     }
 
     @Test
+    void doesNotKeepTheLoginOfAUserInThePattern() {
+        String first = "Received ERROR {message=[There already is a subscription]} session=6f1c1d9e-5a31-4c1b-9d2e-0a1b2c3d4e5f, user=ge84won";
+        String second = "Received ERROR {message=[There already is a subscription]} session=0a1b2c3d-5a31-4c1b-9d2e-6f1c1d9e4e5f, user=go57ref";
+
+        assertThat(ErrorAnalysisBuffer.toPattern(first)).isEqualTo("Received ERROR {message=[There already is a subscription]} session=<uuid>, user=<user>")
+                .isEqualTo(ErrorAnalysisBuffer.toPattern(second));
+    }
+
+    @Test
     void doesNotGroupErrorsOfDifferentLocationsOrSeverities() {
         buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "same message");
         buffer.count(ErrorLocation.CLIENT, ErrorSeverity.ERROR, null, "same message");

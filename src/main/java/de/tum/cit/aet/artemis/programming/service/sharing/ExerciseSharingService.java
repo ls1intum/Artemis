@@ -39,8 +39,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -91,7 +91,7 @@ public class ExerciseSharingService {
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 
@@ -108,11 +108,11 @@ public class ExerciseSharingService {
     private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     public ExerciseSharingService(ProgrammingExerciseExportService programmingExerciseExportService, SharingConnectorService sharingConnectorService,
-            ProgrammingExerciseRepository programmingExerciseRepository, @Qualifier("sharingRestTemplate") RestTemplate restTemplate) {
+            ProgrammingExerciseRepository programmingExerciseRepository, @Qualifier("sharingRestClient") RestClient restClient) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.sharingConnectorService = sharingConnectorService;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.restTemplate = restTemplate;
+        this.restClient = restClient;
 
         // The two lines that used to sit here reconfigured the shared mapper in place, which was never safe.
         // Neither is needed: JsonObjectMapper already disables FAIL_ON_UNKNOWN_PROPERTIES, and the modules
@@ -135,7 +135,9 @@ public class ExerciseSharingService {
         }
         String basketRequestURL = apiBaseUrl.concat("/basket/").concat(basketToken);
         try {
-            ShoppingBasket shoppingBasket = restTemplate.getForObject(basketRequestURL, ShoppingBasket.class);
+            // Reviewed false positive (Sonar S5144): the only caller, ExerciseSharingResource.loadShoppingBasket, verifies the checksum signed with the shared API key
+            // and the configured Sharing API base URL before it passes the base URL on.
+            ShoppingBasket shoppingBasket = restClient.get().uri(basketRequestURL).retrieve().body(ShoppingBasket.class); // NOSONAR // codeql[java/ssrf]
             return Optional.ofNullable(shoppingBasket);
         }
         catch (HttpClientErrorException.NotFound nf) {
@@ -159,7 +161,8 @@ public class ExerciseSharingService {
         int itemPosition = sharingInfo.exercisePosition();
         try {
             String url = sharingInfo.apiBaseURL() + "/basket/{basketToken}/repository/" + itemPosition + "?format={format}";
-            var resource = restTemplate.getForObject(url, org.springframework.core.io.Resource.class, Map.of("basketToken", sharingInfo.basketToken(), "format", "artemis"));
+            var resource = restClient.get().uri(url, Map.of("basketToken", sharingInfo.basketToken(), "format", "artemis")).retrieve()
+                    .body(org.springframework.core.io.Resource.class);
             if (resource == null) {
                 throw new SharingException("Could not retrieve basket item resource");
             }

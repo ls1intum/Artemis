@@ -1,12 +1,15 @@
-import { map, of } from 'rxjs';
+import { EMPTY, Subscription, catchError, defer, expand, filter, interval, map, of, retry, switchMap, take, takeWhile, throwError, timer } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { Component, OnInit, effect, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -99,12 +102,15 @@ type StateBeforeResetting = {
 })
 export class ExamResultSummaryComponent implements OnInit {
     private route = inject(ActivatedRoute);
+    private destroyRef = inject(DestroyRef);
     private serverDateService = inject(ArtemisServerDateService);
     private themeService = inject(ThemeService);
     private examParticipationService = inject(ExamParticipationService);
     private studentExamService = inject(StudentExamService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private alertService = inject(AlertService);
+
+    private gradeRequest?: { studentExamId: number; subscription: Subscription };
 
     // make constants available to html for comparison
     readonly TEXT = ExerciseType.TEXT;
@@ -135,8 +141,15 @@ export class ExamResultSummaryComponent implements OnInit {
         effect(() => {
             const se = this.studentExam();
             const gradeInfo = this.studentExamGradeInfoDTO();
+            if (this.gradeRequest && this.gradeRequest.studentExamId !== se.id) {
+                this.gradeRequest.subscription.unsubscribe();
+            }
             if (gradeInfo) {
-                gradeInfo.studentExam = se;
+                if (gradeInfo.studentExam?.id !== undefined && gradeInfo.studentExam.id !== se.id) {
+                    this.studentExamGradeInfoDTO.set(undefined);
+                } else {
+                    gradeInfo.studentExam = se;
+                }
             }
             this.tryLoadPlagiarismCaseInfosForStudent();
         });
@@ -154,11 +167,12 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly managementGradeInfo = input<StudentExamWithGradeDTO>();
     readonly isSidebarCollapsed = input(false);
     readonly toggleSidebar = output<void>();
+    readonly refreshSummary = output<void>();
 
     readonly courseId = signal<number>(undefined!);
 
     readonly isTestRun = signal(false);
-    isTestExam = false;
+    readonly isRealExam = signal(true);
 
     testRunConduction = false;
     readonly testExamConduction = signal(false);
@@ -193,9 +207,9 @@ export class ExamResultSummaryComponent implements OnInit {
         const studentExam = this.studentExam();
         // flags required to display test runs correctly
         this.isTestRun.set(this.route.snapshot.url[1]?.toString() === 'test-runs');
-        this.isTestExam = studentExam.exam!.testExam!;
+        this.isRealExam.set(isRealExam(studentExam.exam));
         this.testRunConduction = this.isTestRun() && this.route.snapshot.url[3]?.toString() === 'conduction';
-        this.testExamConduction.set(this.isTestExam && !studentExam.submitted);
+        this.testExamConduction.set(!this.isRealExam() && !studentExam.submitted);
         this.courseId.set(Number(this.route.snapshot?.paramMap?.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId')));
         if (!studentExam?.id) {
             throw new Error('studentExam.id should be present to fetch grade info');
@@ -209,18 +223,64 @@ export class ExamResultSummaryComponent implements OnInit {
 
         this.exerciseInfos.set(this.getExerciseInfos());
 
-        if (this.instructorView() || isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService)) {
+        if (this.instructorView() || (!this.isRealExam() ? studentExam.submitted : isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService))) {
             const suppliedGrades = this.managementGradeInfo();
             const grades = this.instructorView()
                 ? suppliedGrades
                     ? of(suppliedGrades)
                     : this.studentExamService.find(this.courseId(), studentExam.exam.id, studentExam.id).pipe(map((response) => response.body!))
-                : this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam.id, studentExam.id);
-            grades.subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
-                studentExamWithGrade.studentExam = this.studentExam();
-                this.studentExamGradeInfoDTO.set(studentExamWithGrade);
-                this.exerciseInfos.set(this.getExerciseInfos(studentExamWithGrade));
-            });
+                : defer(() =>
+                      this.studentExam().id === studentExam.id
+                          ? this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam!.id!, studentExam.id!)
+                          : EMPTY,
+                  ).pipe(
+                      retry({
+                          delay: (error: unknown, retryCount) => {
+                              if (!(error instanceof HttpErrorResponse) || (error.status !== 0 && (error.status < 500 || error.status >= 600))) {
+                                  return throwError(() => error);
+                              }
+                              return timer(Math.min(2000 * 2 ** Math.max(0, retryCount - 3), 30000));
+                          },
+                      }),
+                      // The HTTP interceptor reports permanent failures; they must not become an endless retry loop.
+                      catchError(() => EMPTY),
+                  );
+            // Poll quickly at first, then back off while results stay pending or refreshes keep failing.
+            let pollCount = 0;
+            const subscription = grades
+                .pipe(
+                    expand((gradeInfo) => {
+                        const pendingAutomaticResults = !this.isRealExam() && !!gradeInfo.pendingExerciseIds?.length;
+                        if (this.studentExam().id !== studentExam.id || (!pendingAutomaticResults && !gradeInfo.studentResult?.gradeWithBonus?.pending)) {
+                            return EMPTY;
+                        }
+                        const pollDelay = Math.min(2000 * 2 ** Math.max(0, pollCount++ - 2), 30000);
+                        return timer(pollDelay).pipe(
+                            switchMap(() => {
+                                if (this.studentExam().id !== studentExam.id) {
+                                    return EMPTY;
+                                }
+                                return this.instructorView()
+                                    ? this.studentExamService.find(this.courseId(), studentExam.exam!.id!, studentExam.id!).pipe(map((response) => response.body!))
+                                    : this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam!.id!, studentExam.id!);
+                            }),
+                            // A transient refresh failure leaves the pending state visible and retries on the next interval.
+                            catchError((error: unknown) =>
+                                error instanceof HttpErrorResponse && error.status !== 0 && (error.status < 500 || error.status >= 600) ? EMPTY : of(gradeInfo),
+                            ),
+                        );
+                    }),
+                    takeUntilDestroyed(this.destroyRef),
+                )
+                .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
+                    if (this.studentExam().id !== studentExam.id) {
+                        return;
+                    }
+                    studentExamWithGrade.studentExam = this.studentExam();
+                    this.studentExamGradeInfoDTO.set(studentExamWithGrade);
+                    this.exerciseInfos.set(this.getExerciseInfos(studentExamWithGrade));
+                });
+            this.gradeRequest = { studentExamId: studentExam.id, subscription };
         }
 
         this.exampleSolutionPublished.set(!!studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(studentExam.exam.exampleSolutionPublicationDate));
@@ -229,10 +289,33 @@ export class ExamResultSummaryComponent implements OnInit {
 
         this.isBeforeStudentReviewEnd.set(this.getIsBeforeStudentReviewEnd());
         this.isAfterStudentReviewStart.set(this.getIsAfterStudentReviewStart());
+        this.watchPublicationAndReviewDates();
+    }
+
+    private watchPublicationAndReviewDates(): void {
+        if (this.instructorView() || this.isTestRun() || !this.isRealExam()) {
+            return;
+        }
+        const studentExamId = this.studentExam().id;
+        const published = this.resultsArePublished;
+        const reviewStarted = this.getIsAfterStudentReviewStart();
+        const beforeReviewEnd = this.getIsBeforeStudentReviewEnd();
+        // The server withholds exercise results before publication. Reload the full authorized
+        // summary at each deadline instead of only fetching totals or re-rendering cached data.
+        interval(1000)
+            .pipe(
+                takeWhile(() => this.studentExam().id === studentExamId),
+                filter(
+                    () => this.resultsArePublished !== published || this.getIsAfterStudentReviewStart() !== reviewStarted || this.getIsBeforeStudentReviewEnd() !== beforeReviewEnd,
+                ),
+                take(1),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(() => this.refreshSummary.emit());
     }
 
     get resultsArePublished(): boolean {
-        if (this.isTestRun() || this.isTestExam) {
+        if (this.isTestRun() || !this.isRealExam()) {
             return true;
         }
 
@@ -242,7 +325,7 @@ export class ExamResultSummaryComponent implements OnInit {
 
         const studentExam = this.studentExam();
         if (studentExam?.exam?.publishResultsDate) {
-            return dayjs(studentExam.exam.publishResultsDate).isBefore(dayjs());
+            return dayjs(studentExam.exam.publishResultsDate).isBefore(this.serverDateService.now());
         }
 
         return false;
@@ -362,7 +445,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private getIsAfterStudentReviewStart() {
-        if (this.isTestRun() || this.isTestExam) {
+        if (this.isTestRun() || !this.isRealExam()) {
             return true;
         }
         const studentExam = this.studentExam();
@@ -373,7 +456,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private getIsBeforeStudentReviewEnd() {
-        if (this.isTestRun() || this.isTestExam) {
+        if (this.isTestRun() || !this.isRealExam()) {
             return true;
         }
         const studentExam = this.studentExam();

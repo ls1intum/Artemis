@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exam.service;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.SequencedMap;
 import java.util.function.Function;
@@ -15,8 +16,10 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
@@ -55,9 +58,15 @@ public class ExamDemoService {
 
     private final ChannelService channelService;
 
-    public ExamDemoService(ExamRepository examRepository, ChannelService channelService) {
+    private final StudentExamRepository studentExamRepository;
+
+    private final StudentExamService studentExamService;
+
+    public ExamDemoService(ExamRepository examRepository, ChannelService channelService, StudentExamRepository studentExamRepository, StudentExamService studentExamService) {
         this.examRepository = examRepository;
         this.channelService = channelService;
+        this.studentExamRepository = studentExamRepository;
+        this.studentExamService = studentExamService;
     }
 
     /**
@@ -73,11 +82,14 @@ public class ExamDemoService {
      * @param course           the demo course the exam belongs to.
      * @param exerciseCreators the creators of the exam exercises by the title of their exercise group, in the order of the groups. Each creates one exercise in the group it
      *                             is given, which the exam module cannot do itself without depending on the modules of the exercises.
+     * @return the demo exam, whether it already existed or was created by this call, with its id and title.
      */
-    public void createDemo(Course course, SequencedMap<String, Function<ExerciseGroup, ? extends Exercise>> exerciseCreators) {
-        if (examRepository.findByCourseId(course.getId()).stream().anyMatch(exam -> TEST_EXAM_TITLE.equals(exam.getTitle()))) {
+    public Exam createDemo(Course course, SequencedMap<String, Function<ExerciseGroup, ? extends Exercise>> exerciseCreators) {
+        Optional<Exam> existingExam = examRepository.findByCourseId(course.getId()).stream().filter(exam -> TEST_EXAM_TITLE.equals(exam.getTitle())).findFirst();
+        if (existingExam.isPresent()) {
             log.debug("Demo test exam '{}' already exists, skipping creation", TEST_EXAM_TITLE);
-            return;
+            createDemoTestRun(existingExam.get());
+            return existingExam.get();
         }
 
         Exam exam = createTestExam(course);
@@ -103,6 +115,31 @@ public class ExamDemoService {
         }
 
         log.info("Created demo test exam '{}' with id {}", TEST_EXAM_TITLE, exam.getId());
+        createDemoTestRun(exam);
+        return exam;
+    }
+
+    /**
+     * Creates the test run of the demo exam if it has none yet, like the instructor does with "Create Test Run" on the test run page of the exam: the test run is the exam as the
+     * instructor sees it as a student, with one exercise per group and a participation in each. The current user, the demo instructor of the seeding, is its author.
+     * <p>
+     * A test run that an instructor deleted is created again on the next startup, like any other part of the demo course that is missing.
+     */
+    private void createDemoTestRun(Exam exam) {
+        if (!studentExamRepository.findAllTestRunsByExamId(exam.getId()).isEmpty()) {
+            log.debug("Demo test exam '{}' has a test run already, skipping creation", TEST_EXAM_TITLE);
+            return;
+        }
+        Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+        // One exercise per group, like every student exam of the exam: the test run is the exam as a student gets it.
+        List<Long> exerciseIds = examWithExercises.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream().limit(1)).map(Exercise::getId)
+                .toList();
+        if (exerciseIds.isEmpty()) {
+            return;
+        }
+        // The working time of the exam as it is now, which an instructor may have changed, like the attempts of the students.
+        studentExamService.createTestRun(examWithExercises, exerciseIds, examWithExercises.getWorkingTime());
+        log.info("Created the test run of demo test exam '{}'", TEST_EXAM_TITLE);
     }
 
     /**
@@ -113,7 +150,7 @@ public class ExamDemoService {
         ZonedDateTime now = ZonedDateTime.now();
         Exam exam = new Exam();
         exam.setTitle(TEST_EXAM_TITLE);
-        exam.setTestExam(true);
+        exam.setExamMode(ExamMode.TEST);
         exam.setVisibleDate(now.minusWeeks(2));
         exam.setStartDate(now.minusWeeks(1));
         exam.setEndDate(now.plusYears(1));

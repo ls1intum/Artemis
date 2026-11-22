@@ -11,6 +11,8 @@
             <div class="ai-body">
                 <jhi-iris-enabled [course]="course()" />
             </div>
+            <!-- Inside the panel, not beside it: an empty element between the panels is still a flex item of the row and would double their gap. -->
+            <jhi-about-iris-modal [(visible)]="aboutIrisModalVisible" [hideTryButton]="true" />
         </div>
     }
     @if (athenaEnabled()) {
@@ -19,11 +21,13 @@
                 <div class="ai-title">
                     <jhi-athena-logo />
                     <span jhiTranslate="artemisApp.course.athenaConfig.title"></span>
+                    <button type="button" class="ai-learn-more" (click)="openAboutAthenaModal()" jhiTranslate="artemisApp.course.athenaConfig.learnMore"></button>
                 </div>
             </div>
             <div class="ai-body">
                 <jhi-athena-enabled [course]="course()" />
             </div>
         </div>
+        <jhi-about-athena-modal [(visible)]="aboutAthenaModalVisible" />
     }
 }

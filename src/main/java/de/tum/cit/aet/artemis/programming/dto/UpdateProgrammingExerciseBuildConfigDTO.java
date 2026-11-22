@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.OnlineIdeExperienceLevel;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 
@@ -16,7 +17,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateProgrammingExerciseBuildConfigDTO(Long id, Boolean sequentialTestRuns, String branch, String buildPlanConfiguration, String buildScript,
         boolean checkoutSolutionRepository, String testCheckoutPath, String assignmentCheckoutPath, String solutionCheckoutPath, int timeoutSeconds, String dockerFlags,
-        @Nullable String theiaImage, @Nullable OnlineIdeExperienceLevel onlineIdeExperienceLevel, boolean allowBranching, @Nullable String branchRegex) {
+        @Nullable String theiaImage, @Nullable OnlineIdeExperienceLevel onlineIdeExperienceLevel, boolean allowBranching, @Nullable String branchRegex,
+        @Nullable BuildConfigAdvancedSettingsDTO advancedSettings) {
 
     /**
      * Creates a DTO from a ProgrammingExerciseBuildConfig entity.
@@ -32,7 +34,25 @@ public record UpdateProgrammingExerciseBuildConfigDTO(Long id, Boolean sequentia
         return new UpdateProgrammingExerciseBuildConfigDTO(buildConfig.getId(), buildConfig.hasSequentialTestRuns(), buildConfig.getBranch(),
                 buildConfig.getBuildPlanConfiguration(), buildConfig.getBuildScript(), buildConfig.getCheckoutSolutionRepository(), buildConfig.getTestCheckoutPath(),
                 buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(), buildConfig.getTimeoutSeconds(), buildConfig.getDockerFlags(),
-                buildConfig.getTheiaImage(), buildConfig.getOnlineIdeExperienceLevel(), buildConfig.isAllowBranching(), buildConfig.getBranchRegex());
+                buildConfig.getTheiaImage(), buildConfig.getOnlineIdeExperienceLevel(), buildConfig.isAllowBranching(), buildConfig.getBranchRegex(),
+                BuildConfigAdvancedSettingsDTO.of(buildConfig.getBuildTimeWindow()));
+    }
+
+    /**
+     * Creates the part of the build configuration that students may read: only the build time window, so the notice about
+     * builds that are not run can be shown. Everything else, such as the build plan or the Docker flags, stays with the
+     * instructors; the other components carry their defaults and are meaningless.
+     *
+     * @param buildTimeWindow the window of the exercise, may be null
+     * @return a build configuration carrying only the window, or null if there is no window to tell students about
+     */
+    @Nullable
+    public static UpdateProgrammingExerciseBuildConfigDTO ofBuildTimeWindow(@Nullable BuildTimeWindow buildTimeWindow) {
+        BuildConfigAdvancedSettingsDTO advancedSettings = BuildConfigAdvancedSettingsDTO.of(buildTimeWindow);
+        if (advancedSettings == null) {
+            return null;
+        }
+        return new UpdateProgrammingExerciseBuildConfigDTO(null, null, null, null, null, false, null, null, null, 0, null, null, null, false, null, advancedSettings);
     }
 
     /**
@@ -43,7 +63,7 @@ public record UpdateProgrammingExerciseBuildConfigDTO(Long id, Boolean sequentia
      */
     public UpdateProgrammingExerciseBuildConfigDTO withoutId() {
         return new UpdateProgrammingExerciseBuildConfigDTO(null, sequentialTestRuns, branch, buildPlanConfiguration, buildScript, checkoutSolutionRepository, testCheckoutPath,
-                assignmentCheckoutPath, solutionCheckoutPath, timeoutSeconds, dockerFlags, theiaImage, onlineIdeExperienceLevel, allowBranching, branchRegex);
+                assignmentCheckoutPath, solutionCheckoutPath, timeoutSeconds, dockerFlags, theiaImage, onlineIdeExperienceLevel, allowBranching, branchRegex, advancedSettings);
     }
 
     /**
@@ -69,6 +89,7 @@ public record UpdateProgrammingExerciseBuildConfigDTO(Long id, Boolean sequentia
         buildConfig.setOnlineIdeExperienceLevel(onlineIdeExperienceLevel);
         buildConfig.setAllowBranching(allowBranching);
         buildConfig.setBranchRegex(branchRegex);
+        buildConfig.setBuildTimeWindow(advancedSettings != null ? advancedSettings.buildTimeWindow() : null);
         return buildConfig;
     }
 }

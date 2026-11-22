@@ -1,5 +1,5 @@
+import { TumAetUiButtonDirective, TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
 import { toQuizExerciseReEvaluate } from 'app/quiz/shared/util/quiz-exercise-reevaluate-request.util';
 import { toNamedFiles } from 'app/quiz/shared/util/quiz-exercise-creation-request.util';
@@ -18,11 +18,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     selector: 'jhi-quiz-re-evaluate-warning',
     templateUrl: './quiz-re-evaluate-warning.component.html',
     styleUrls: ['../../../shared/quiz.scss'],
-    imports: [TranslateDirective, FaIconComponent],
+    imports: [TumAetUiButtonDirective, TranslateDirective, FaIconComponent],
 })
 export class QuizReEvaluateWarningComponent implements OnInit {
-    private dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
+    private dialogRef = inject(TumAetUiDialogRef<boolean>);
+    private dialogConfig = inject(TumAetUiDialogConfig<{ quizExercise: QuizExercise; files: Map<string, File> }>);
     private quizExerciseService = inject(QuizExerciseService);
     private quizExerciseEvaluationApi = inject(QuizExerciseEvaluationApi);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -41,10 +41,10 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     readonly scoringChanged = signal(false);
     readonly solutionAdded = signal(false);
 
-    quizExercise!: QuizExercise; // set in ngOnInit() from the DynamicDialog config data
+    quizExercise!: QuizExercise; // set in ngOnInit() from the dialog config data
     backUpQuiz!: QuizExercise; // set in ngOnInit() from the server response before it is read
 
-    files!: Map<string, File>; // set in ngOnInit() from the DynamicDialog config data
+    files!: Map<string, File>; // set in ngOnInit() from the dialog config data
 
     // Icons
     faBan = faBan;
@@ -57,8 +57,8 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      * Reset saving status, load the quiz by id and back it up.
      */
     ngOnInit(): void {
-        this.quizExercise = this.dialogConfig.data.quizExercise;
-        this.files = this.dialogConfig.data.files;
+        this.quizExercise = this.dialogConfig.data!.quizExercise;
+        this.files = this.dialogConfig.data!.files;
         this.isSaving = false;
         (this.quizExercise.exerciseGroup ? this.quizExerciseService.findForExam(this.quizExercise.id!) : this.quizExerciseService.find(this.quizExercise.id!)).subscribe(
             (quizExercise) => {

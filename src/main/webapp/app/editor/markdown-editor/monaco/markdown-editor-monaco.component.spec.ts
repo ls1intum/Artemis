@@ -26,13 +26,14 @@ import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/c
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { EditorRange } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
+import { TumAetUiPopoverComponent } from '@tumaet/ui-angular';
 
 // Capture the global ResizeObserver provided by the test setup so it can be restored after each test.
 const originalResizeObserver = globalThis.ResizeObserver;
 
 @Component({
     template: `
-        <jhi-markdown-editor-monaco>
+        <jhi-markdown-editor-monaco [showVisualButton]="true">
             <div id="previewMonaco"><span class="preview-probe"></span></div>
         </jhi-markdown-editor-monaco>
     `,
@@ -184,6 +185,54 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture.detectChanges();
         expect(adjustEditorDimensionsSpy).not.toHaveBeenCalled();
         expect(focusSpy).not.toHaveBeenCalled();
+    });
+
+    describe('toolbar popovers', () => {
+        const firstPopover = () => {
+            const popovers = fixture.debugElement.queryAll(By.directive(TumAetUiPopoverComponent));
+            expect(popovers.length).toBeGreaterThan(0);
+            return popovers[0].componentInstance as TumAetUiPopoverComponent;
+        };
+
+        it('should apply the chosen item and give the focus back to the editor once the popover is gone', () => {
+            fixture.detectChanges();
+            const popover = firstPopover();
+            const focusSpy = vi.spyOn(comp.monacoEditor()!, 'focus');
+            const run = vi.fn();
+            popover.open(document.body);
+
+            comp['runFromPopover'](popover, run);
+
+            expect(run).toHaveBeenCalledOnce();
+            expect(popover.isOpen()).toBe(false);
+            // jsdom has no animation API, so the popover is gone at once and hands focus to its button first.
+            expect(focusSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not take the focus when the popover is dismissed without a choice', () => {
+            fixture.detectChanges();
+            const popover = firstPopover();
+            const focusSpy = vi.spyOn(comp.monacoEditor()!, 'focus');
+            popover.open(document.body);
+
+            popover.close();
+
+            expect(focusSpy).not.toHaveBeenCalled();
+        });
+
+        it('should only apply the item when its popover is not open', () => {
+            fixture.detectChanges();
+            const popover = firstPopover();
+            const focusSpy = vi.spyOn(comp.monacoEditor()!, 'focus');
+            const run = vi.fn();
+
+            comp['runFromPopover'](popover, run);
+            popover.open(document.body);
+            popover.close();
+
+            expect(run).toHaveBeenCalledOnce();
+            expect(focusSpy).not.toHaveBeenCalled();
+        });
     });
 
     it('should emit when leaving the visual tab', () => {
@@ -684,6 +733,102 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(result).toBeUndefined();
     });
 
+    describe('applyAriaAttributesToTextarea', () => {
+        it('sets aria-describedby and aria-invalid when given', () => {
+            fixture.detectChanges();
+            const textarea = document.createElement('textarea');
+
+            comp.applyAriaAttributesToTextarea(textarea, 'field_error_id', true);
+
+            expect(textarea.getAttribute('aria-describedby')).toBe('field_error_id');
+            expect(textarea.getAttribute('aria-invalid')).toBe('true');
+        });
+
+        it('removes aria-describedby and clears aria-invalid when the describedBy id is undefined', () => {
+            fixture.detectChanges();
+            const textarea = document.createElement('textarea');
+            textarea.setAttribute('aria-describedby', 'leftover');
+            textarea.setAttribute('aria-invalid', 'true');
+
+            comp.applyAriaAttributesToTextarea(textarea, undefined, false);
+
+            expect(textarea.hasAttribute('aria-describedby')).toBe(false);
+            expect(textarea.getAttribute('aria-invalid')).toBe('false');
+        });
+    });
+
+    it('forwards aria-describedby and aria-invalid to the active Monaco textarea when the inputs change', () => {
+        fixture.detectChanges();
+
+        // Supply a textarea through the mocked active editor so the forwarding effect has a real DOM target. This
+        // covers the effect -> helper wiring end to end; the applyAriaAttributesToTextarea tests only exercise the
+        // helper in isolation and would still pass if the effect were disconnected from it.
+        const textarea = document.createElement('textarea');
+        const domNode = document.createElement('div');
+        domNode.appendChild(textarea);
+        (comp.monacoEditor()! as any).getActiveEditor = vi.fn().mockReturnValue({
+            getDomNode: () => domNode,
+        });
+
+        fixture.componentRef.setInput('ariaDescribedBy', 'field_codeOfConduct_error');
+        fixture.componentRef.setInput('ariaInvalid', true);
+        fixture.detectChanges();
+
+        expect(textarea.getAttribute('aria-describedby')).toBe('field_codeOfConduct_error');
+        expect(textarea.getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('forwards aria-describedby and aria-invalid to the native-edit-context element when Monaco uses the EditContext API', () => {
+        fixture.detectChanges();
+
+        // Newer Monaco builds (Chromium with EditContext API) render a focusable `<div class="native-edit-context" role="textbox">`
+        // instead of a `<textarea>`. Prove the forwarding reaches that element too — regression for a reviewer finding where the
+        // aria attributes landed nowhere on Chromium because the selector only looked for `<textarea>`.
+        const nativeEditContext = document.createElement('div');
+        nativeEditContext.className = 'native-edit-context';
+        nativeEditContext.setAttribute('role', 'textbox');
+        const domNode = document.createElement('div');
+        domNode.appendChild(nativeEditContext);
+        (comp.monacoEditor()! as any).getActiveEditor = vi.fn().mockReturnValue({
+            getDomNode: () => domNode,
+        });
+
+        fixture.componentRef.setInput('ariaDescribedBy', 'field_codeOfConduct_error');
+        fixture.componentRef.setInput('ariaInvalid', true);
+        fixture.detectChanges();
+
+        expect(nativeEditContext.getAttribute('aria-describedby')).toBe('field_codeOfConduct_error');
+        expect(nativeEditContext.getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('re-pushes aria attributes to the new diff-mode textarea even when the inputs did not change', () => {
+        fixture.detectChanges();
+        // Set the aria state with the normal-mode textarea in place first. The effect fires here.
+        const normalTextarea = document.createElement('textarea');
+        const normalDomNode = document.createElement('div');
+        normalDomNode.appendChild(normalTextarea);
+        (comp.monacoEditor()! as any).getActiveEditor = vi.fn().mockReturnValue({ getDomNode: () => normalDomNode });
+        fixture.componentRef.setInput('ariaDescribedBy', 'field_codeOfConduct_error');
+        fixture.componentRef.setInput('ariaInvalid', true);
+        fixture.detectChanges();
+        expect(normalTextarea.getAttribute('aria-describedby')).toBe('field_codeOfConduct_error');
+
+        // Entering diff mode swaps the active editor for a brand-new one with an untouched textarea.
+        // The aria inputs have not changed, so only the mode-change callback must sync the state onto it.
+        const diffTextarea = document.createElement('textarea');
+        const diffDomNode = document.createElement('div');
+        diffDomNode.appendChild(diffTextarea);
+        (comp.monacoEditor()! as any).getActiveEditor = vi.fn().mockReturnValue({ getDomNode: () => diffDomNode });
+
+        fixture.componentRef.setInput('mode', 'diff');
+        // The first pass runs the mode effect, the second one flushes the afterNextRender callback it schedules.
+        fixture.detectChanges();
+        fixture.detectChanges();
+
+        expect(diffTextarea.getAttribute('aria-describedby')).toBe('field_codeOfConduct_error');
+        expect(diffTextarea.getAttribute('aria-invalid')).toBe('true');
+    });
+
     describe('projected preview content', () => {
         let hostFixture: ComponentFixture<PreviewHostComponent>;
         let editor: MarkdownEditorMonacoComponent;
@@ -950,10 +1095,11 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     describe('layout', () => {
         it('should re-layout the editor when an observed element is resized', () => {
-            let resizeCallback: ResizeObserverCallback | undefined;
+            // The tab list of the kit observes its own size, so every observer reports to the same list.
+            const resizeCallbacks: ResizeObserverCallback[] = [];
             globalThis.ResizeObserver = class {
                 constructor(callback: ResizeObserverCallback) {
-                    resizeCallback = callback;
+                    resizeCallbacks.push(callback);
                 }
                 observe() {}
                 unobserve() {}
@@ -962,7 +1108,7 @@ describe('MarkdownEditorMonacoComponent', () => {
             fixture.detectChanges();
             const adjustSpy = vi.spyOn(comp, 'adjustEditorDimensions');
 
-            resizeCallback!([], comp.resizeObserver!);
+            resizeCallbacks.forEach((callback) => callback([], comp.resizeObserver!));
 
             expect(adjustSpy).toHaveBeenCalledOnce();
         });

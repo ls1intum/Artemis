@@ -8,6 +8,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { asModelDate, generateUUID, titleLowercase } from '../utils';
 import lectureTemplate from '../../fixtures/lecture/template.json';
 import { COURSE_ADMIN_BASE, Exercise } from '../constants';
+import { awaitCourseDeletion } from '../deletion';
 import { UserCredentials } from '../users';
 import { Commands } from '../commands';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -170,6 +171,14 @@ export class CourseManagementAPIRequests {
         let lastUrl: string | undefined;
         while (Date.now() - startTime < timeout) {
             const response = await this.page.request.delete(`${COURSE_ADMIN_BASE}/${course.id}`);
+            if (response.status() === 202) {
+                // The server deletes the course in the background: wait until it is really gone, and report a deletion that failed.
+                const outcome = await awaitCourseDeletion(this.page.request, course.id!);
+                if (outcome.failed) {
+                    throw new Error(`Failed to delete course ${course.id}: ${outcome.errorMessage}`);
+                }
+                return;
+            }
             if (response.ok() || response.status() === 404) {
                 return;
             }
@@ -549,7 +558,7 @@ export class CourseManagementAPIRequests {
 }
 
 // Playwright runs this file under Node, which cannot resolve dayjs/esm; toCourseUpdateDTO pulls it in through date.utils, so the mapping stays local.
-function courseUpdateDTOFromManagementDTO(course: CourseManagementDTO): CourseUpdateDTO {
+export function courseUpdateDTOFromManagementDTO(course: CourseManagementDTO): CourseUpdateDTO {
     return {
         id: course.id,
         title: course.title,
@@ -585,6 +594,7 @@ function courseUpdateDTOFromManagementDTO(course: CourseManagementDTO): CourseUp
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
         onboardingDone: course.onboardingDone,
+        studentWelcomeContext: course.courseConfiguration?.studentWelcomeContext,
         gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
         dataRetentionHold: course.courseConfiguration?.dataRetentionHold ?? false,
         autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,

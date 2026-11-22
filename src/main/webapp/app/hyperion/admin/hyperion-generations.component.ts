@@ -19,6 +19,7 @@ import {
     TumAetUiInputDirective,
     TumAetUiMessageComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
     TumAetUiTagComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
@@ -35,6 +36,7 @@ const MAX_CANCELLATION_REASON_LENGTH = 500;
     templateUrl: './hyperion-generations.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableLayoutComponent,
         AiWorkersComponent,
         RouterLink,
         FormsModule,

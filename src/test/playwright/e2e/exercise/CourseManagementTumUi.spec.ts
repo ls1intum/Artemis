@@ -5,7 +5,16 @@ import type { UpdateModelingExerciseDTO } from 'app/modeling/shared/entities/mod
 import { dismissPasskeyReminderIfPresent } from '../../support/dismissPasskeyReminder';
 import { Course } from 'app/course/shared/entities/course.model';
 import { test } from '../../support/fixtures';
-import { expectInside, expectNoOverlap, expectNoHorizontalOverflow, expectNoHorizontalScrollAround, expectWithinViewport, forEachViewport } from '../../support/layout';
+import {
+    expectHeight,
+    expectInside,
+    expectNoOverlap,
+    expectNoHorizontalOverflow,
+    expectNoHorizontalScrollAround,
+    expectWithinViewport,
+    forEachViewport,
+    measure,
+} from '../../support/layout';
 import { admin, studentOne, tutor, UserCredentials, UserRole } from '../../support/users';
 import { dayjsToString, generateUUID } from '../../support/utils';
 
@@ -136,7 +145,7 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
             await page.emulateMedia({ colorScheme: 'light' });
             await page.setViewportSize({ width: 1280, height: 800 });
             await page.goto(`/course-management/${course.id}/members/students`);
-            const viewport = page.getByTestId('table-viewport');
+            const viewport = page.getByTestId('table-scroll-body');
             const table = viewport.getByRole('table');
             const rows = table.getByRole('rowgroup').last().getByRole('row');
             await expect(table).toBeVisible();
@@ -208,6 +217,61 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
         await page.emulateMedia({ colorScheme: 'light' });
         await page.setViewportSize({ width: 1280, height: 800 });
 
+        /** Checks graph geometry and counter contrast against the rendered theme, including the fill's animation contract. */
+        async function expectTutorGraphLayout(): Promise<void> {
+            const graph = page.getByTestId('tutor-participation-graph');
+            const textColor = await graph.evaluate((element) => {
+                const probe = document.createElement('span');
+                probe.style.color = 'var(--tumaet-ui-text-color)';
+                element.append(probe);
+                const color = getComputedStyle(probe).color;
+                probe.remove();
+                return color;
+            });
+            const instructions = await measure(graph.getByTestId('tutor-instructions-step'));
+            const training = await measure(graph.getByTestId('tutor-training-step'));
+            const firstTrack = await measure(graph.getByTestId('tutor-progress-track').first());
+            const trackCenter = firstTrack.top + firstTrack.height / 2;
+            for (const step of [instructions, training]) {
+                expect(Math.abs(step.top + step.height / 2 - trackCenter), 'step icons and the first progress track share a center line').toBeLessThanOrEqual(0.5);
+            }
+            for (const track of await graph.getByTestId('tutor-progress-track').all()) {
+                await expectHeight(track, 16, { name: 'compact tutor progress track' });
+                expect((await measure(track)).width, 'progress counters retain enough width for their labels').toBeGreaterThanOrEqual(128);
+                const animation = await track.evaluate((element) => {
+                    const fill = getComputedStyle(element.firstElementChild!);
+                    return { duration: fill.transitionDuration, timing: fill.transitionTimingFunction };
+                });
+                const filledLabel = track.locator('..').getByTestId('tutor-progress-filled-label');
+                await expect(filledLabel).toHaveCSS('transition-property', 'clip-path');
+                await expect(filledLabel).toHaveCSS('transition-duration', animation.duration);
+                await expect(filledLabel).toHaveCSS('transition-timing-function', animation.timing);
+            }
+            for (const label of await graph.getByTestId('tutor-progress-label').all()) {
+                await expect(label).toBeVisible();
+                await expect(label).toHaveCSS('color', textColor);
+                await expect(label).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+            }
+            for (const branch of await graph.getByTestId('tutor-progress-branch').all()) {
+                const connector = await branch.evaluate((element) => {
+                    const track = element.querySelector('[data-testid="tutor-progress-track"]')!.getBoundingClientRect();
+                    const connector = getComputedStyle(element, '::before');
+                    const center = element.getBoundingClientRect().top + Number.parseFloat(connector.top) + Number.parseFloat(connector.height) / 2;
+                    return {
+                        offset: Math.abs(center - track.top - track.height / 2),
+                        before: connector.backgroundColor,
+                        after: getComputedStyle(element, '::after').backgroundColor,
+                        incoming: getComputedStyle(element.parentElement!, '::before').backgroundColor,
+                        outgoing: getComputedStyle(element.parentElement!, '::after').backgroundColor,
+                    };
+                });
+                expect(connector.offset, 'branch connectors meet the center of the progress track').toBeLessThanOrEqual(0.5);
+                expect(connector.before, 'incoming branches match their vertical rail').toBe(connector.incoming);
+                expect(connector.after, 'outgoing branches match their vertical rail').toBe(connector.outgoing);
+            }
+        }
+
+        /** Runs each layout contract in both themes and attaches representative desktop and phone captures. */
         async function captureLayouts(screen: string, check: (viewport: { width: number; height: number }) => Promise<void>, afterCapture?: () => Promise<void>): Promise<void> {
             for (const theme of ['light', 'dark'] as const) {
                 await page.emulateMedia({ colorScheme: theme });
@@ -282,12 +346,19 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
             const dashboardRoute = `/course-management/${course.id}/assessment-dashboard/${exercise.id}`;
             await login(tutor, dashboardRoute);
             await dismissPasskeyReminderIfPresent(page);
+            await expect(page.getByTestId('tutor-progress-branch').first()).toBeVisible();
+            await expectTutorGraphLayout();
             await exerciseAssessment.clickHaveReadInstructionsButton();
             const startAssessment = page.getByTestId('start-new-assessment').first();
             await expect(startAssessment).toBeVisible();
             await expect(startAssessment).not.toHaveAttribute('aria-disabled', 'true');
 
+            await page.goto(`/course-management/${course.id}/assessment-dashboard`);
+            await captureLayouts('course-assessment-graph', expectTutorGraphLayout);
+            await page.goto(dashboardRoute);
+
             await captureLayouts('exercise-assessment-dashboard', async () => {
+                await expectTutorGraphLayout();
                 // The native submission table may scroll inside its explicit wrapper at narrow widths.
                 await expect(page.getByTestId('correction-round-0').getByRole('table')).toBeVisible();
                 await expectNoHorizontalOverflow(page, [], { name: 'exercise assessment dashboard' });
@@ -295,6 +366,32 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
                 await startAssessment.scrollIntoViewIfNeeded();
                 await expectWithinViewport(startAssessment, ['left', 'right'], { name: 'start assessment action' });
                 await page.evaluate(() => window.scrollTo(0, 0));
+            });
+
+            await test.step('keeps the trailing graph step reachable by user scrolling', async () => {
+                const viewport = page.viewportSize()!;
+                const graph = page.getByTestId('tutor-participation-graph');
+                try {
+                    await page.setViewportSize({ width: 320, height: 800 });
+                    await expect(graph).toHaveCSS('overflow-x', 'auto');
+                    await expect.poll(() => graph.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeGreaterThan(0);
+                    await expect
+                        .poll(async () => {
+                            await graph.hover();
+                            await page.mouse.wheel(1000, 0);
+                            return graph.evaluate((element) => element.scrollWidth - element.clientWidth - element.scrollLeft);
+                        })
+                        .toBeLessThanOrEqual(1);
+                    await expect.poll(() => graph.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+                    await expectInside(graph.getByTestId('tutor-progress-track').last(), graph, ['left', 'right'], { name: 'trailing tutor progress track' });
+                    await page.emulateMedia({ reducedMotion: 'reduce' });
+                    for (const label of await graph.getByTestId('tutor-progress-filled-label').all()) {
+                        await expect(label).toHaveCSS('transition-property', 'none');
+                    }
+                } finally {
+                    await page.emulateMedia({ reducedMotion: 'no-preference' });
+                    await page.setViewportSize(viewport);
+                }
             });
 
             await exerciseAssessment.clickStartNewAssessment();

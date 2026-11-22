@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): only active with the jenkins profile, remove the whole controller
 @Profile(PROFILE_JENKINS)
 @Lazy
 @FeatureUsage(UserFeature.PROGRAMMING_BUILD_CONFIGURATION)

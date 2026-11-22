@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 /**
  * REST controller for receiving build results for external CI systems. At the moment, only Jenkins is supported.
  */
+// REMOVE_IN_ARTEMIS_11 (Jenkins): result webhook for Jenkins, the only external CI provider; remove the controller
 @Profile(PROFILE_JENKINS)
 @Lazy
 @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
@@ -97,7 +98,7 @@ public class PublicProgrammingExerciseResultResource {
     public ResponseEntity<Void> processNewProgrammingExerciseResult(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationToken, @RequestBody Object requestBody) {
         log.debug("Received new programming exercise result from Jenkins");
         if (!matches(authorizationToken)) {
-            log.info("Cancelling request with invalid authorizationToken {}", authorizationToken);
+            log.info("Cancelling request to deliver a new programming exercise result: the authorization token does not match");
             throw new AccessForbiddenException(); // Only allow endpoint when using correct authorizationToken
         }
 

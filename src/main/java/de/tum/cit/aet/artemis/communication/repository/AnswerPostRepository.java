@@ -37,6 +37,52 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, Long> {
 
     /**
+     * Finds the answers in a conversation of the course whose text contains the given reference, for example the path of an uploaded file.
+     *
+     * @param conversationId the id of the conversation
+     * @param courseId       the id of the course the conversation belongs to
+     * @param needle         the text to look for
+     * @return the ids of the answers
+     */
+    @Query("""
+            SELECT answer.id
+            FROM AnswerPost answer
+            WHERE answer.post.conversation.id = :conversationId
+                AND answer.post.conversation.course.id = :courseId
+                AND LOCATE(:needle, answer.content) > 0
+            """)
+    Set<Long> findIdsOfAnswersReferencing(@Param("conversationId") long conversationId, @Param("courseId") long courseId, @Param("needle") String needle);
+
+    /**
+     * Persist a conversation reply and the unread counters of its eligible thread participants as one unit.
+     * Readers cannot acknowledge a visible reply before its unread increment has committed.
+     *
+     * @param answerMessage the new conversation reply
+     * @param recipientIds  eligible thread participants, excluding the reply author
+     * @return the persisted reply
+     */
+    @Transactional // the reply and its unread increments must become visible together
+    default AnswerPost saveWithUnreadMessages(AnswerPost answerMessage, Collection<Long> recipientIds) {
+        AnswerPost saved = save(answerMessage);
+        if (!recipientIds.isEmpty()) {
+            incrementUnreadMessagesCountOfParticipantsIn(saved.getPost().getConversation().getId(), recipientIds);
+        }
+        return saved;
+    }
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ConversationParticipant conversationParticipant
+            SET conversationParticipant.unreadMessagesCount = conversationParticipant.unreadMessagesCount + 1
+            WHERE conversationParticipant.conversation.id = :conversationId
+                AND conversationParticipant.user.id IN :userIds
+                AND conversationParticipant.unreadMessagesCount IS NOT NULL
+                AND conversationParticipant.isMuted = FALSE
+            """)
+    void incrementUnreadMessagesCountOfParticipantsIn(@Param("conversationId") Long conversationId, @Param("userIds") Collection<Long> userIds);
+
+    /**
      * Finds all {@link AnswerPost} entities authored by the given user ID.
      *
      * @param authorId the ID of the author

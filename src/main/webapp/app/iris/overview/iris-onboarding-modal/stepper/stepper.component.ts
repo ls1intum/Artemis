@@ -6,9 +6,13 @@ import { TranslateService } from '@ngx-translate/core';
     selector: 'jhi-stepper',
     standalone: true,
     template: `
-        <div class="stepper" role="img" [attr.aria-label]="ariaLabel()">
+        <div class="flex items-center gap-1" role="img" [attr.aria-label]="ariaLabel()">
             @for (step of steps(); track step) {
-                <div class="step-indicator" [class.active]="step === currentStep()" [class.inactive]="step !== currentStep()"></div>
+                <div
+                    class="iris-tour-stepper__indicator"
+                    [class.iris-tour-stepper__indicator--active]="step === currentStep()"
+                    [class.iris-tour-stepper__indicator--inactive]="step !== currentStep()"
+                ></div>
             }
         </div>
     `,

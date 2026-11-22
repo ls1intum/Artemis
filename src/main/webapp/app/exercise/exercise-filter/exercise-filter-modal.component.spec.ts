@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
-import { TumAetUiDialogRef } from '@tumaet/ui-angular';
-import { NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
-import { ExerciseCategoryFilterOption } from 'app/foundation/types/exercise-filter';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { RangeFilter } from 'app/foundation/types/exercise-filter';
@@ -78,6 +76,7 @@ describe('ExerciseFilterModalComponent', () => {
             imports: [ExerciseFilterModalComponent],
             providers: [
                 MockProvider(TumAetUiDialogRef),
+                { provide: TumAetUiDialogConfig, useValue: new TumAetUiDialogConfig({}) },
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,
@@ -184,7 +183,7 @@ describe('ExerciseFilterModalComponent', () => {
                 item: undefined,
                 preventDefault: vi.fn(),
                 stopPropagation: vi.fn(),
-            } as unknown as NgbTypeaheadSelectItemEvent<ExerciseCategoryFilterOption>;
+            } as unknown as Parameters<typeof component.onSelectItem>[0];
             component.onSelectItem(event);
             fixture.changeDetectorRef.detectChanges();
 

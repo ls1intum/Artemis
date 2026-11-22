@@ -390,7 +390,7 @@
                         "description": "Eine Klausur beginnen, bearbeiten und abgeben."
                     },
                     "EXAM_TEST_EXAMS": {
-                        "name": "Testklausuren",
+                        "name": "Übungsklausuren",
                         "description": "Übungsklausuren mit mehreren Versuchen."
                     },
                     "EXAM_RESULTS": {
@@ -748,6 +748,10 @@
                     "UPCOMING_EXAMS_AND_EXERCISES": {
                         "name": "Anstehende Klausuren und Aufgaben",
                         "description": "Eine Übersicht über das Anstehende in allen Kursen."
+                    },
+                    "SCIENCE_ADMINISTRATION": {
+                        "name": "Verwaltung der Forschungsdatenerhebung",
+                        "description": "Kurse für die Erhebung von Forschungsdaten auswählen und diese Daten exportieren."
                     }
                 }
             }

@@ -9,6 +9,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDatePickerComponent, TumAetUiMessageComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faUsers } from '@fortawesome/free-solid-svg-icons';
+import type { TutorialGroupsConfigurationSettings } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 
 export interface TutorialGroupsConfigurationFormData {
     period?: Date[];
@@ -66,7 +67,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit {
         useTutorialGroupChannels: false,
     });
     readonly isEditMode = input(false);
-    readonly formSubmitted = output<TutorialGroupsConfigurationFormData>();
+    readonly formSubmitted = output<TutorialGroupsConfigurationSettings>();
 
     readonly course = input.required<Course>();
 

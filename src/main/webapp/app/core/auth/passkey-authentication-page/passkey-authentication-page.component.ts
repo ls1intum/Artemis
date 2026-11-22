@@ -1,17 +1,18 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
+import { WebauthnService } from 'app/account/user/settings/credentials/passkey-settings/webauthn.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { faArrowUpRightFromSquare, faKey, faLock } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-passkey-required',
-    imports: [TranslateDirective, FaIconComponent, ButtonComponent, RouterLink],
+    imports: [TranslateDirective, FaIconComponent, ButtonComponent, RouterLink, TumAetUiMessageComponent],
     templateUrl: './passkey-authentication-page.component.html',
 })
 export class PasskeyAuthenticationPageComponent implements OnInit, OnDestroy {

@@ -136,7 +136,7 @@ public class TutorialGroupResource {
      */
     @FeatureUsage(UserFeature.TUTORIAL_GROUPS)
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
-    @GetMapping("tutorial-groups/{tutorialGroupId}/title")
+    @GetMapping(value = "tutorial-groups/{tutorialGroupId}/title", produces = MediaType.TEXT_PLAIN_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<String> getTitle(@PathVariable Long tutorialGroupId) {
         log.debug("REST request to get title of TutorialGroup : {}", tutorialGroupId);
@@ -349,6 +349,10 @@ public class TutorialGroupResource {
         if (titleChanges && tutorialGroupRepository.existsByTitleAndCourse(updatedTitle, course)) {
             throw new BadRequestException("A tutorial group with this title already exists in the course.");
         }
+
+        // Reject a schedule change that would make a retained session overlap an individual session before any group write or side effect,
+        // so the group's title, tutor, notifications and channel stay untouched when the schedule change is rejected.
+        tutorialGroupScheduleService.validateScheduleUpdateDoesNotOverlapIndividualSessions(course, tutorialGroup, tutorialGroupScheduleDTO);
 
         boolean newTutorDoesNotEqualOldTutor = !newTutor.equals(oldTutor);
         if (newTutorDoesNotEqualOldTutor) {

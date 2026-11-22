@@ -1,6 +1,6 @@
 @for (session of suspiciousSessions().examSessions; track session; let i = $index) {
     <tr data-testid="suspicious-session-row">
-        <th scope="row" class="border-b border-(--border-color) px-4 py-3 text-start font-semibold">{{ session.id }}</th>
+        <th scope="row" class="px-6 py-4 text-left font-semibold">{{ session.id }}</th>
         <td class="break-all" [ngClass]="suspiciousFingerprint() ? 'text-state-warning!' : ''">{{ session.browserFingerprintHash }}</td>
         <td data-testid="suspicious-session-ip-address" [ngClass]="suspiciousIpAddress() ? 'text-state-warning!' : ''">{{ session.ipAddress }}</td>
         <td>{{ session.createdDate | artemisDate }}</td>

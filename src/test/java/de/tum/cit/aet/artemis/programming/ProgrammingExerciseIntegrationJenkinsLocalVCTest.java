@@ -18,10 +18,12 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.util.ArgumentSources;
 
@@ -33,6 +35,9 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
 
     /** A user with INSTRUCTOR authority that is intentionally NOT enrolled in the test course (different prefix). */
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -154,7 +159,8 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
         }
 
         jenkinsRequestMockProvider.mockDeleteBuildPlanProject(projectKey, false);
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     // TODO: enable or remove the test
@@ -173,7 +179,9 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
             jenkinsRequestMockProvider.mockDeleteBuildPlanFailWithException(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT));
         }
 
-        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+        // the deletion is accepted and fails in the background
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletionFailure(programmingExercise.getId());
     }
 
     // TODO: enable or remove the test

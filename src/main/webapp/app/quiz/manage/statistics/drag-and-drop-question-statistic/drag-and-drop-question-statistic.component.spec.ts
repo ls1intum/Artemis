@@ -37,8 +37,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
     let comp: DragAndDropQuestionStatisticComponent;
     let fixture: ComponentFixture<DragAndDropQuestionStatisticComponent>;
     let quizService: QuizExerciseService;
-    let accountService: AccountService;
-    let accountSpy: any;
+    let accountService: MockAccountService;
     let quizServiceFindSpy: any;
 
     beforeEach(() => {
@@ -61,7 +60,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
                 fixture = TestBed.createComponent(DragAndDropQuestionStatisticComponent);
                 comp = fixture.componentInstance;
                 quizService = TestBed.inject(QuizExerciseService);
-                accountService = TestBed.inject(AccountService);
+                accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
                 quizServiceFindSpy = vi.spyOn(quizService, 'findQuestionStatistic').mockReturnValue(of(quizExercise));
             });
     });
@@ -72,25 +71,23 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
 
     describe('onInit', () => {
         it('should call functions on Init', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             const loadQuizSpy = vi.spyOn(comp, 'loadQuiz');
             comp.websocketChannelForData = '';
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalledTimes(2);
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42, 1);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
             expect(comp.websocketChannelForData).toBe('/topic/statistic/42');
         });
 
         it('should not load Quiz if not authorised', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            accountService.isAtLeastTutor.set(false);
             const loadQuizSpy = vi.spyOn(comp, 'loadQuiz');
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSpy).not.toHaveBeenCalled();
         });
@@ -98,7 +95,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
 
     describe('loadLayout', () => {
         it('should call functions from loadLayout', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             const orderDropLocationSpy = vi.spyOn(comp, 'orderDropLocationByPos');
             const resetLabelsSpy = vi.spyOn(comp, 'resetLabelsColors');
             const addLastBarSpy = vi.spyOn(comp, 'addLastBarLayout');
@@ -116,7 +113,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
 
     describe('loadData', () => {
         it('should call functions from loadData', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             const resetDataSpy = vi.spyOn(comp, 'resetData');
             const updateDataSpy = vi.spyOn(comp, 'updateData');
 

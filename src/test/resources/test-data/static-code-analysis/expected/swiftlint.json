@@ -1,0 +1,137 @@
+{
+  "tool": "SWIFTLINT",
+  "issues": [
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Sources/Lib/BubbleSort.swift",
+      "startLine": 6,
+      "endLine": 6,
+      "startColumn": 9,
+      "endColumn": 9,
+      "rule": "conditional_returns_on_newline",
+      "category": "style",
+      "message": "Conditional statements should always return on the next line",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Sources/Lib/BubbleSort.swift",
+      "startLine": 6,
+      "endLine": 6,
+      "startColumn": 9,
+      "endColumn": 9,
+      "rule": "control_statement",
+      "category": "style",
+      "message": "`if`, `for`, `guard`, `switch`, `while`, and `catch` statements shouldn't unnecessarily wrap their conditionals or arguments in parentheses",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Sources/Lib/BubbleSort.swift",
+      "startLine": 6,
+      "endLine": 6,
+      "startColumn": 19,
+      "endColumn": 19,
+      "rule": "empty_count",
+      "category": "performance",
+      "message": "Prefer checking `isEmpty` over comparing `count` to zero",
+      "priority": "error"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Sources/Lib/BubbleSort.swift",
+      "startLine": 27,
+      "endLine": 27,
+      "startColumn": 16,
+      "endColumn": 16,
+      "rule": "first_where",
+      "category": "performance",
+      "message": "Prefer using `.first(where:)` over `.filter { }.first` in collections",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Sources/Lib/BubbleSort.swift",
+      "startLine": 11,
+      "endLine": 11,
+      "startColumn": 17,
+      "endColumn": 17,
+      "rule": "for_where",
+      "category": "idiomatic",
+      "message": "`where` clauses are preferred over a single `if` inside a `for`",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Sources/Lib/BubbleSort.swift",
+      "startLine": 22,
+      "endLine": 22,
+      "startColumn": 21,
+      "endColumn": 21,
+      "rule": "force_try",
+      "category": "idiomatic",
+      "message": "Force tries should be avoided",
+      "priority": "error"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Sources/Lib/BubbleSort.swift",
+      "startLine": 22,
+      "endLine": 22,
+      "startColumn": 35,
+      "endColumn": 35,
+      "rule": "force_unwrapping",
+      "category": "idiomatic",
+      "message": "Force unwrapping should be avoided",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Sources/Lib/BubbleSort.swift",
+      "startLine": 31,
+      "endLine": 31,
+      "startColumn": 5,
+      "endColumn": 5,
+      "rule": "function_parameter_count",
+      "category": "metrics",
+      "message": "Function should have 5 parameters or less: it currently has 7",
+      "priority": "error"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Sources/Lib/BubbleSort.swift",
+      "startLine": 31,
+      "endLine": 31,
+      "startColumn": 1,
+      "endColumn": 1,
+      "rule": "line_length",
+      "category": "metrics",
+      "message": "Line should be 120 characters or less; currently it has 127 characters",
+      "priority": "error"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Sources/Lib/BubbleSort.swift",
+      "startLine": 30,
+      "endLine": 30,
+      "startColumn": 5,
+      "endColumn": 5,
+      "rule": "mark",
+      "category": "lint",
+      "message": "MARK comment should be in valid format. e.g. '// MARK: ...' or '// MARK: - ...'",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Sources/Lib/BubbleSort.swift",
+      "startLine": 11,
+      "endLine": 11,
+      "startColumn": 46,
+      "endColumn": 46,
+      "rule": "operator_usage_whitespace",
+      "category": "style",
+      "message": "Operators should be surrounded by a single whitespace when they are being used",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Sources/Lib/BubbleSort.swift",
+      "startLine": 23,
+      "endLine": 23,
+      "startColumn": 22,
+      "endColumn": 22,
+      "rule": "trailing_semicolon",
+      "category": "idiomatic",
+      "message": "Lines should not have trailing semicolons",
+      "priority": "warning"
+    }
+  ]
+}
