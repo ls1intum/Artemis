@@ -95,10 +95,6 @@ export class ExamParticipationService {
         return !!submission && this.savingSubmissions().has(submission);
     }
 
-    public getResourceURL(courseId: number, examId: number): string {
-        return `api/exam/courses/${courseId}/exams/${examId}`;
-    }
-
     private static getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
         const prefix = 'artemis_student_exam';
         return `${prefix}_${courseId}_${examId}`;
