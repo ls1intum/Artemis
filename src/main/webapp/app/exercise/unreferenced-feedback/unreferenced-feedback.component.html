@@ -79,20 +79,22 @@
 </div>
 @if (featureBonusLimit() !== undefined || featureBonusFeedbacks().length > 0) {
     <section class="unreferenced-feedback mt-4!">
-        <div class="unreferenced-feedback__header">
+        <header class="unreferenced-feedback__group-header">
             <h4 class="unreferenced-feedback__title" jhiTranslate="artemisApp.assessment.featureBonus.title"></h4>
-            @if (featureBonusLimit() !== undefined) {
-                <tumaet-ui-tag
-                    severity="secondary"
-                    [value]="'artemisApp.assessment.detail.pointsOfShort' | artemisTranslate: { points: featureBonusTotal(), maxPoints: featureBonusLimit() }"
-                />
-            }
-            @if (!readOnly() && (featureBonusLimit() ?? 0) > 0) {
-                <button type="button" tumAetUiButton severity="success" size="small" (click)="addFeatureBonus()" data-testid="add-feature-bonus">
-                    <span jhiTranslate="artemisApp.assessment.featureBonus.add"></span>
-                </button>
-            }
-        </div>
+            <div class="unreferenced-feedback__group-actions">
+                @if (featureBonusLimit() !== undefined) {
+                    <tumaet-ui-tag
+                        severity="secondary"
+                        [value]="'artemisApp.assessment.detail.pointsOfShort' | artemisTranslate: { points: featureBonusTotal(), maxPoints: featureBonusLimit() }"
+                    />
+                }
+                @if (!readOnly() && (featureBonusLimit() ?? 0) > 0) {
+                    <button type="button" tumAetUiButton severity="primary" size="small" (click)="addFeatureBonus()" data-testid="add-feature-bonus">
+                        <span jhiTranslate="artemisApp.assessment.featureBonus.add"></span>
+                    </button>
+                }
+            </div>
+        </header>
         <div class="unreferenced-feedback__cards">
             @for (feedback of featureBonusFeedbacks(); track feedback) {
                 <jhi-unreferenced-feedback-detail
