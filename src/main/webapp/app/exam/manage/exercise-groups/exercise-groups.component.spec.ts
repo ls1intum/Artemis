@@ -609,8 +609,8 @@ describe('Exercise Groups Component', () => {
 
     it('opens the group-edit modal for an existing group and updates it on save', async () => {
         comp.exerciseGroups.set(groups);
-        const updated = { id: 1, title: 'Renamed', isMandatory: false } as ExerciseGroup;
-        vi.spyOn(exerciseGroupApi, 'updateExerciseGroup').mockReturnValue(of(updated));
+        const updated: ExerciseGroup = { id: 1, title: 'Renamed', isMandatory: false };
+        vi.spyOn(exerciseGroupApi, 'updateExerciseGroup').mockReturnValue(of({ id: 1, title: 'Renamed', isMandatory: false }));
 
         comp.openGroupEditModal(1);
         expect(comp.groupEditIsNew()).toBe(false);
