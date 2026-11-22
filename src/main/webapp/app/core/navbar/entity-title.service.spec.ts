@@ -53,7 +53,6 @@ describe('EntityTitleService', () => {
         { type: EntityType.EXERCISE, ids: [1], url: 'exercise/exercises/1' },
         { type: EntityType.COURSE, ids: [1], url: 'course/courses/1' },
         { type: EntityType.DIAGRAM, ids: [1], url: 'modeling/apollon-diagrams/1' },
-        { type: EntityType.EXAM, ids: [1], url: 'exam/exams/1' },
         { type: EntityType.ORGANIZATION, ids: [1], url: 'core/organizations/1' },
     ])('fires a request to fetch the title after 3 seconds', async ({ type, ids, url }: { type: EntityType; ids: number[]; url: string }) => {
         // Use real timers with actual delay
@@ -90,6 +89,25 @@ describe('EntityTitleService', () => {
             expect(request.request.responseType).toBe('text');
             request.flush('Lecture title');
             expect(titles).toEqual(['Lecture title']);
+            http.verify();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('fetches an exam title as plain text through the generated API', () => {
+        vi.useFakeTimers();
+        try {
+            const titles: string[] = [];
+            service.getTitle(EntityType.EXAM, [17]).subscribe((title) => titles.push(title));
+            vi.advanceTimersByTime(3000);
+
+            const http = TestBed.inject(HttpTestingController);
+            const request = http.expectOne('/api/exam/exams/17/title');
+            expect(request.request.method).toBe('GET');
+            expect(request.request.responseType).toBe('text');
+            request.flush('Exam title');
+            expect(titles).toEqual(['Exam title']);
             http.verify();
         } finally {
             vi.useRealTimers();

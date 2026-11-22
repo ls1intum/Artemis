@@ -395,7 +395,7 @@ export class ExamApi {
      */
     getExamTitle(examId: number, options?: import('./request-options').RequestOptions): Observable<string> {
         const url = `${this.basePath}/api/exam/exams/${examId}/title`;
-        return this.http.get<string>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+        return this.http.get(url, { ...(options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) }), responseType: 'text' });
     }
 
     /**

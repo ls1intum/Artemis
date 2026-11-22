@@ -905,7 +905,7 @@ public class ExamResource {
      * @return the title of the exam wrapped in an ResponseEntity or 404 Not Found if no exam with that id exists
      */
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
-    @GetMapping("exams/{examId}/title")
+    @GetMapping(value = "exams/{examId}/title", produces = MediaType.TEXT_PLAIN_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<String> getExamTitle(@PathVariable Long examId) {
         long courseId = examRepository.findCourseIdById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
