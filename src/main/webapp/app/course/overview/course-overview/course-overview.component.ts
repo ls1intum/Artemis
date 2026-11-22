@@ -29,6 +29,8 @@ import { CourseAvailableTabsService } from 'app/course/overview/services/course-
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+import { CourseExercisesComponent } from 'app/course/overview/course-exercises/course-exercises.component';
+import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -60,6 +62,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private scienceSettingsService = inject(ScienceSettingsService);
     private scienceService = inject(ScienceService);
     private llmSelectionModalService = inject(LLMSelectionModalService);
+    protected readonly lecturesTab = CourseLecturesComponent;
+    protected readonly exercisesTab = CourseExercisesComponent;
 
     /**
      * Every page that does not bring its own sidebar gets the shell title bar, so the student overview matches course
