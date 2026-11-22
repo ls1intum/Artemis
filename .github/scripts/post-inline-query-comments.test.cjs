@@ -23,6 +23,16 @@ test('only comments on a line of the diff can be anchored', () => {
     assert.deepEqual(anchorable(comments, files).map((c) => c.key), ['a']);
 });
 
+test('a comment moves to its fallback line when its own line is not in the diff', () => {
+    const files = [{ filename: 'src/A.java', patch }];
+    const comments = [
+        { path: 'src/A.java', line: 30, key: 'a', body: '', fallback: { path: 'src/A.java', line: 12 } },
+        { path: 'src/A.java', line: 30, key: 'b', body: '', fallback: { path: 'src/A.java', line: 31 } },
+        { path: 'src/A.java', line: 11, key: 'c', body: '', fallback: { path: 'src/A.java', line: 12 } },
+    ];
+    assert.deepEqual(anchorable(comments, files).map((c) => [c.key, c.line]), [['a', 12], ['c', 11]]);
+});
+
 test('a re-run posts new findings, keeps current ones and deletes the ones that are gone', () => {
     const existing = [
         { id: 1, body: 'text\n<!-- query-inline:aaaa -->' },

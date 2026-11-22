@@ -144,6 +144,41 @@ class InlineCommentTest(unittest.TestCase):
         [comment] = self.comments([], static=[static], baseline_findings=[])
         self.assertEqual((comment["path"], comment["line"]), ("src/main/java/A.java", 7))
 
+    LOOP = dict(LOOP_FINDING, file="./src/main/java/de/tum/CourseService.java", line=120)
+
+    def test_a_confirming_static_finding_is_part_of_the_comment_of_its_problem(self):
+        [comment] = self.comments([repeated(**self.LOCATION)], static=[self.LOOP], baseline_findings=[])
+        self.assertEqual((comment["path"], comment["line"]), ("src/main/java/de/tum/CourseService.java", 121))
+        self.assertIn("Static check", comment["body"])
+        self.assertIn("called once per iteration", comment["body"])
+        self.assertEqual(comment["fallback"], {"path": "src/main/java/de/tum/CourseService.java", "line": 120})
+
+    def test_the_comment_keeps_the_key_of_the_problem_whether_or_not_a_static_finding_confirms_it(self):
+        alone = self.comments([repeated(**self.LOCATION)])[0]["key"]
+        merged = self.comments([repeated(**self.LOCATION)], static=[self.LOOP])[0]["key"]
+        self.assertEqual(alone, merged)
+
+    def test_a_confirming_static_finding_that_is_not_new_still_explains_the_problem(self):
+        static = [dict(self.LOOP)]
+        baseline_static = {"repeatedQueries": [], "static": [report.static_key(self.LOOP)]}
+        groups = report.group_repeated_queries([repeated(**self.LOCATION)])
+        report.link_static_confirmations(groups, static)
+        report.mark_new(groups, static, baseline_static)
+        [comment] = report.build_inline_comments({}, groups, static, baseline_static)
+        self.assertIn("Static check", comment["body"])
+
+    def test_a_new_static_finding_on_the_same_line_joins_the_comment_instead_of_stacking(self):
+        other = {"type": "eager_to_many", "key": "eager_to_many:X.y", "file": "src/main/java/de/tum/CourseService.java", "line": 121, "member": "X.y", "detail": "EAGER"}
+        [comment] = self.comments([repeated(**self.LOCATION)], static=[other])
+        self.assertIn("EAGER", comment["body"])
+        self.assertEqual(comment.get("fallback"), None)
+
+    def test_the_problem_and_its_static_finding_on_one_line_are_one_comment_without_fallback(self):
+        loop = dict(self.LOOP, line=121)
+        comments = self.comments([repeated(**self.LOCATION)], static=[loop])
+        self.assertEqual(len(comments), 1)
+        self.assertNotIn("fallback", comments[0])
+
     def test_inserts_have_no_single_line_and_stay_in_the_summary(self):
         insert = repeated(normalizedSql="insert into result (id) values (?)", **self.LOCATION)
         self.assertEqual(self.comments([insert]), [])

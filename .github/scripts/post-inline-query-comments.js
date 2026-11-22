@@ -33,13 +33,23 @@ function visibleLines(patch) {
 }
 
 /**
- * The comments whose line is part of the diff.
- * @param {{path: string, line: number, key: string, body: string}[]} comments
+ * The comments that can be shown on a line of the diff: on their own line, or else on their
+ * fallback line.
+ * @param {{path: string, line: number, key: string, body: string, fallback?: {path: string, line: number}}[]} comments
  * @param {{filename: string, patch?: string}[]} files
  */
 function anchorable(comments, files) {
     const visible = new Map(files.map((f) => [f.filename, visibleLines(f.patch)]));
-    return comments.filter((c) => visible.get(c.path)?.has(c.line));
+    const shown = ({ path, line }) => visible.get(path)?.has(line);
+    const anchored = [];
+    for (const c of comments) {
+        if (shown(c)) {
+            anchored.push(c);
+        } else if (c.fallback && shown(c.fallback)) {
+            anchored.push({ ...c, path: c.fallback.path, line: c.fallback.line });
+        }
+    }
+    return anchored;
 }
 
 /**
