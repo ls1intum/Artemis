@@ -27,30 +27,33 @@ export class ParticipantScoreApi {
      *
      *
      * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getGradeScoresForCourse(courseId: number): Observable<CourseGradeInformation> {
+    getGradeScoresForCourse(courseId: number, options?: import('./request-options').RequestOptions): Observable<CourseGradeInformation> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/grade-scores`;
-        return this.http.get<CourseGradeInformation>(url);
+        return this.http.get<CourseGradeInformation>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getScoresOfCourse(courseId: number): Observable<Array<Score>> {
+    getScoresOfCourse(courseId: number, options?: import('./request-options').RequestOptions): Observable<Array<Score>> {
         const url = `${this.basePath}/api/assessment/courses/${courseId}/course-scores`;
-        return this.http.get<Array<Score>>(url);
+        return this.http.get<Array<Score>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param examId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getScoresOfExam(examId: number): Observable<Array<Score>> {
+    getScoresOfExam(examId: number, options?: import('./request-options').RequestOptions): Observable<Array<Score>> {
         const url = `${this.basePath}/api/assessment/exams/${examId}/exam-scores`;
-        return this.http.get<Array<Score>>(url);
+        return this.http.get<Array<Score>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }
