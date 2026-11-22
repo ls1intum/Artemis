@@ -1,13 +1,11 @@
 import { Service, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { EMPTY, Observable, catchError, map, of, throwError } from 'rxjs';
-import { ExamDistributionCapacityDTO, RoomForDistributionDTO, SeatsOfExamRoomDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
+import { EMPTY, Observable, catchError, map, of } from 'rxjs';
+import { ExamRoomDistributionApi } from 'app/openapi/api/exam-room-distribution-api';
+import { ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 
 @Service()
 export class StudentsRoomDistributionService {
-    private http = inject(HttpClient);
-
-    private readonly BASE_URL = 'api/exam';
+    private examRoomDistributionApi = inject(ExamRoomDistributionApi);
 
     private availableRoomsInternal: WritableSignal<RoomForDistributionDTO[] | undefined> = signal(undefined);
     private capacityDataInternal: WritableSignal<ExamDistributionCapacityDTO | undefined> = signal(undefined);
@@ -28,8 +26,8 @@ export class StudentsRoomDistributionService {
      * @param examId id of the exam
      */
     loadRoomData(courseId: number, examId: number): void {
-        this.http
-            .get<RoomForDistributionDTO[]>(`${this.BASE_URL}/courses/${courseId}/exams/${examId}/rooms/distribution-data`)
+        this.examRoomDistributionApi
+            .getRoomDataForDistribution(courseId, examId)
             .pipe(
                 map((rooms: RoomForDistributionDTO[]) => {
                     this.availableRoomsInternal.set(rooms);
@@ -56,14 +54,14 @@ export class StudentsRoomDistributionService {
             return;
         }
 
-        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/rooms/distribution-capacities`;
-        const params = new HttpParams().appendAll({ examRoomIds: roomIds }).set('reserveFactor', reserveFactor);
-
-        this.http
-            .get<ExamDistributionCapacityDTO>(requestUrl, { params })
+        this.examRoomDistributionApi
+            .getDistributionCapacities(courseId, examId, reserveFactor, roomIds)
             .pipe(
-                map((capacityData: ExamDistributionCapacityDTO) => {
-                    this.capacityDataInternal.set(capacityData);
+                map((capacityData) => {
+                    this.capacityDataInternal.set({
+                        combinedDefaultCapacity: capacityData.combinedDefaultCapacity ?? 0,
+                        combinedMaximumCapacity: capacityData.combinedMaximumCapacity ?? 0,
+                    });
                 }),
                 catchError(() => {
                     this.capacityDataInternal.set(undefined);
@@ -71,22 +69,6 @@ export class StudentsRoomDistributionService {
                 }),
             )
             .subscribe();
-    }
-
-    /**
-     * Sends a POST request that distributes the exam users of the selected exam across the rooms, which are provided by id
-     *
-     * @param courseId id of the course
-     * @param examId id of the exam
-     * @param roomIds ids of the rooms
-     * @param reserveFactor percentage of seats that should be left empty
-     * @param useOnlyDefaultLayouts defines if only default layouts should be used for distribution
-     */
-    distributeStudentsAcrossRooms(courseId: number, examId: number, roomIds: number[], reserveFactor: number, useOnlyDefaultLayouts: boolean): Observable<HttpResponse<void>> {
-        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/distribute-registered-students`;
-        const params = new HttpParams().set('reserveFactor', reserveFactor).set('useOnlyDefaultLayouts', useOnlyDefaultLayouts);
-
-        return this.http.post<void>(requestUrl, roomIds, { params, observe: 'response' });
     }
 
     /**
@@ -100,55 +82,6 @@ export class StudentsRoomDistributionService {
             return of([]);
         }
 
-        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/rooms-used`;
-        return this.http.get<RoomForDistributionDTO[]>(requestUrl).pipe(
-            map((rooms: RoomForDistributionDTO[]) => rooms),
-            catchError((error) => {
-                return throwError(() => error);
-            }),
-        );
-    }
-
-    /**
-     * Sends a GET request to retrieve all seats of a specific exam room
-     *
-     * @param courseId id of the course
-     * @param examId id of the exam
-     * @param examRoomId id of the exam room
-     */
-    loadSeatsOfExamRoom(courseId: number, examId: number, examRoomId: number): Observable<SeatsOfExamRoomDTO> {
-        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/rooms/${examRoomId}/seats`;
-
-        return this.http.get<SeatsOfExamRoomDTO>(requestUrl).pipe(
-            map((seatsOfExamRoom: SeatsOfExamRoomDTO) => seatsOfExamRoom),
-            catchError((error) => {
-                return throwError(() => error);
-            }),
-        );
-    }
-
-    /**
-     * Sends a POST request to reseat a specific student to a new room and seat
-     *
-     * @param courseId id of the course
-     * @param examId id of the exam
-     * @param examUserId id of the exam user/student
-     * @param newRoom name (more specifically the room number) of the room
-     * @param newSeat name of the new seat
-     */
-    reseatStudent(courseId: number, examId: number, examUserId: number, newRoom: string, newSeat?: string): Observable<void> {
-        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/reseat-student`;
-        const requestBody = {
-            examUserId: examUserId,
-            newRoom: newRoom,
-            newSeat: newSeat,
-        };
-
-        return this.http.post<void>(requestUrl, requestBody).pipe(
-            map(() => {}),
-            catchError((error) => {
-                return throwError(() => error);
-            }),
-        );
+        return this.examRoomDistributionApi.getRoomsUsedInExam(courseId, examId);
     }
 }

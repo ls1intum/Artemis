@@ -16,6 +16,7 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
+import { ExamRoomDistributionApi } from 'app/openapi/api/exam-room-distribution-api';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/mock-students-room-distribution.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -27,6 +28,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     let component: StudentsRoomDistributionDialogComponent;
     let fixture: ComponentFixture<StudentsRoomDistributionDialogComponent>;
     let service: StudentsRoomDistributionService;
+    let examRoomDistributionApi: ExamRoomDistributionApi;
     let examManagementService: ExamManagementService;
 
     const course: Course = { id: 1 };
@@ -56,6 +58,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
+                MockProvider(ExamRoomDistributionApi, { distributeRegisteredStudents: vi.fn().mockReturnValue(of(undefined)) }),
                 MockProvider(ExamManagementService, { findExamStudentsPaged: vi.fn().mockReturnValue(of({ content: [], totalElements: 1000 })) }),
             ],
         }).compileComponents();
@@ -65,6 +68,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.componentRef.setInput('courseId', course.id);
         fixture.componentRef.setInput('exam', exam);
         service = TestBed.inject(StudentsRoomDistributionService);
+        examRoomDistributionApi = TestBed.inject(ExamRoomDistributionApi);
         examManagementService = TestBed.inject(ExamManagementService);
 
         component.openDialog();
@@ -125,14 +129,14 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should call distributeStudentsAcrossRooms with default arguments and close modal on finish', () => {
-        const distributeSpy = vi.spyOn(service, 'distributeStudentsAcrossRooms');
+        const distributeSpy = vi.spyOn(examRoomDistributionApi, 'distributeRegisteredStudents');
 
         component.pickSelectedRoom(rooms[0]);
         fixture.changeDetectorRef.detectChanges();
 
         component.attemptDistributeAndCloseDialog();
 
-        expect(distributeSpy).toHaveBeenCalledWith(course.id, exam.id, [rooms[0].id], 0.1, true);
+        expect(distributeSpy).toHaveBeenCalledWith(course.id, exam.id, [rooms[0].id], true, 0.1);
     });
 
     it('should format room name correctly', () => {
@@ -188,14 +192,14 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should distribute with the configured reserve factor and narrow layouts', () => {
-        const distributeSpy = vi.spyOn(service, 'distributeStudentsAcrossRooms');
+        const distributeSpy = vi.spyOn(examRoomDistributionApi, 'distributeRegisteredStudents');
         component.pickSelectedRoom(rooms[0]);
         component.setReservePercentage(25);
         component.allowNarrowLayouts.set(true);
 
         component.attemptDistributeAndCloseDialog();
 
-        expect(distributeSpy).toHaveBeenCalledWith(course.id, exam.id, [rooms[0].id], 0.25, false);
+        expect(distributeSpy).toHaveBeenCalledWith(course.id, exam.id, [rooms[0].id], false, 0.25);
     });
 
     it('should load the number of registered students without search term or filter whenever the dialog opens', () => {

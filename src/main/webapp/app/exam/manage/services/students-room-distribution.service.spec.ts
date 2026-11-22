@@ -5,14 +5,13 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 describe('StudentsRoomDistributionService', () => {
     let service: StudentsRoomDistributionService;
     let httpMock: HttpTestingController;
 
-    const BASE_URL = 'api/exam';
+    const BASE_URL = '/api/exam';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -81,9 +80,7 @@ describe('StudentsRoomDistributionService', () => {
 
             service.updateCapacityData(42, 7, roomIds, reserveFactor);
 
-            const req = httpMock.expectOne((r) => r.url === `${BASE_URL}/courses/42/exams/7/rooms/distribution-capacities` && r.method === 'GET');
-            expect(req.request.params.getAll('examRoomIds')).toEqual(['1', '2']);
-            expect(req.request.params.get('reserveFactor')).toBe(reserveFactor.toString());
+            const req = httpMock.expectOne({ method: 'GET', url: `${BASE_URL}/courses/42/exams/7/rooms/distribution-capacities?reserveFactor=0.1&examRoomIds=1&examRoomIds=2` });
 
             req.flush(mockCapacity);
 
@@ -94,36 +91,13 @@ describe('StudentsRoomDistributionService', () => {
             const roomIds = [1];
             service.updateCapacityData(42, 7, roomIds, 0.1);
 
-            const req = httpMock.expectOne((r) => r.url === `${BASE_URL}/courses/42/exams/7/rooms/distribution-capacities` && r.method === 'GET');
+            const req = httpMock.expectOne(`${BASE_URL}/courses/42/exams/7/rooms/distribution-capacities?reserveFactor=0.1&examRoomIds=1`);
             req.error(new ProgressEvent('error'));
 
             expect(service.capacityData()).toEqual({
                 combinedDefaultCapacity: 0,
                 combinedMaximumCapacity: 0,
             });
-        });
-    });
-
-    describe('distributeStudentsAcrossRooms', () => {
-        it('should send POST request and return HttpResponse<void>', () => {
-            const courseId = 42;
-            const examId = 7;
-            const roomIds = [1, 2];
-            const reserveFactor = 0.15;
-            const useOnlyDefaultLayouts = true;
-
-            let actualResponse: HttpResponse<void> | undefined;
-            service.distributeStudentsAcrossRooms(courseId, examId, roomIds, reserveFactor, useOnlyDefaultLayouts).subscribe((resp) => (actualResponse = resp));
-
-            const req = httpMock.expectOne((r) => r.url === `${BASE_URL}/courses/${courseId}/exams/${examId}/distribute-registered-students` && r.method === 'POST');
-
-            expect(req.request.body).toEqual(roomIds);
-            expect(req.request.params.get('reserveFactor')).toBe(reserveFactor.toString());
-            expect(req.request.params.get('useOnlyDefaultLayouts')).toBe('true');
-
-            req.flush(null, { status: 200, statusText: 'OK' });
-
-            expect(actualResponse?.status).toBe(200);
         });
     });
 
@@ -138,29 +112,21 @@ describe('StudentsRoomDistributionService', () => {
         httpMock.expectNone(() => true);
     });
 
-    it.each(['rooms', 'seats', 'reseat'] as const)('should propagate the %s HTTP error', (operation) => {
-        const requests = {
-            rooms: { response: service.loadRoomsUsedInExam(42, 7), url: `${BASE_URL}/courses/42/exams/7/rooms-used`, method: 'GET' },
-            seats: { response: service.loadSeatsOfExamRoom(42, 7, 123), url: `${BASE_URL}/courses/42/exams/7/rooms/123/seats`, method: 'GET' },
-            reseat: { response: service.reseatStudent(42, 7, 99, 'R1', 'S1'), url: `${BASE_URL}/courses/42/exams/7/reseat-student`, method: 'POST' },
-        };
-        const selected = requests[operation];
+    it('should propagate the HTTP error of the used rooms', () => {
         let actualError: HttpErrorResponse | undefined;
         let emitted = false;
-        const response: Observable<unknown> = selected.response;
-        response.subscribe({
+        service.loadRoomsUsedInExam(42, 7).subscribe({
             next: () => (emitted = true),
             error: (error: HttpErrorResponse) => (actualError = error),
         });
-        const request = httpMock.expectOne(selected.url);
-        expect(request.request.method).toBe(selected.method);
+        const request = httpMock.expectOne(`${BASE_URL}/courses/42/exams/7/rooms-used`);
+        expect(request.request.method).toBe('GET');
         const errorBody = { message: 'distribution unavailable' };
         request.flush(errorBody, { status: 503, statusText: 'Service Unavailable' });
         expect(emitted).toBe(false);
         expect(actualError).toBeInstanceOf(HttpErrorResponse);
         expect(actualError?.status).toBe(503);
         expect(actualError?.error).toEqual(errorBody);
-        expect(actualError?.url).toBe(selected.url);
     });
 
     describe('loadRoomsUsedInExam', () => {
@@ -182,79 +148,6 @@ describe('StudentsRoomDistributionService', () => {
             req.flush(mockRooms);
 
             expect(actualRooms).toEqual(mockRooms);
-        });
-    });
-
-    describe('loadSeatsOfExamRoom', () => {
-        it('should send GET request and return seats', () => {
-            const examRoomId = 123;
-
-            const mockSeats = {
-                roomId: 123,
-                seats: [
-                    { id: 1, name: 'S1' },
-                    { id: 2, name: 'S2' },
-                ],
-            };
-
-            let actualSeats: any;
-
-            service.loadSeatsOfExamRoom(42, 7, examRoomId).subscribe((resp) => (actualSeats = resp));
-
-            const req = httpMock.expectOne(`${BASE_URL}/courses/42/exams/7/rooms/${examRoomId}/seats`);
-
-            expect(req.request.method).toBe('GET');
-            req.flush(mockSeats);
-
-            expect(actualSeats).toEqual(mockSeats);
-        });
-    });
-
-    describe('reseatStudent', () => {
-        it('should POST reseat request with correct body', () => {
-            const courseId = 6;
-            const examId = 12;
-            const examUserId = 99;
-            const newRoom = 'Room 42';
-            const newSeat = 'A15';
-
-            let completed = false;
-
-            service.reseatStudent(courseId, examId, examUserId, newRoom, newSeat).subscribe(() => {
-                completed = true;
-            });
-
-            const req = httpMock.expectOne(`${BASE_URL}/courses/${courseId}/exams/${examId}/reseat-student`);
-            expect(req.request.method).toBe('POST');
-
-            expect(req.request.body).toEqual({
-                examUserId,
-                newRoom,
-                newSeat,
-            });
-
-            req.flush(null);
-
-            expect(completed).toBe(true);
-        });
-
-        it('should send newSeat as undefined when omitted', () => {
-            const courseId = 6;
-            const examId = 12;
-            const examUserId = 99;
-            const newRoom = 'Room 42';
-
-            service.reseatStudent(courseId, examId, examUserId, newRoom).subscribe();
-
-            const req = httpMock.expectOne(`${BASE_URL}/courses/${courseId}/exams/${examId}/reseat-student`);
-
-            expect(req.request.body).toEqual({
-                examUserId,
-                newRoom,
-                newSeat: undefined,
-            });
-
-            req.flush(null);
         });
     });
 });
