@@ -1,4 +1,3 @@
-import dayjs from 'dayjs/esm';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -75,7 +74,7 @@ export function toSidebarExam(data: ExamSidebarData): Exam {
         id: data.id,
         title: data.title,
         moduleNumber: data.moduleNumber,
-        startDate: dayjs(data.startDate),
+        startDate: convertDateStringFromServer(data.startDate),
         workingTime: data.workingTime,
         examMaxPoints: data.examMaxPoints,
     };
