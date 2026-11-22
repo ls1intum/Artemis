@@ -34,7 +34,8 @@ describe('Exercise Group Service', () => {
             exam: { id: 2, examMode: 'TEST', exampleSolutionPublicationDate: '2026-01-02T03:04:05Z', course: { id: 1, defaultProgrammingLanguage: 'JAVA' } },
         });
 
-        expect(group).toBeInstanceOf(ExerciseGroup);
+        expect(Object.keys(group?.exam ?? {}).sort()).toEqual(['course', 'examMode', 'exampleSolutionPublicationDate', 'id']);
+        expect(Object.keys(group?.exam?.course ?? {}).sort()).toEqual(['defaultProgrammingLanguage', 'id']);
         expect(group?.id).toBe(3);
         expect(group?.title).toBe('Group');
         expect(group?.isMandatory).toBe(true);
