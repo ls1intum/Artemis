@@ -1,28 +1,26 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { toExamForImport } from 'app/exam/manage/util/exam-import-paging.util';
 import { PagingService } from 'app/exercise/services/paging.service';
-import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
+import { ExamApi } from 'app/openapi/api/exam-api';
+import { SortingOrder as GeneratedSortingOrder } from 'app/openapi/model/sorting-order';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-type EntityResponseType = SearchResult<Exam>;
-
 @Service()
 export class ExamImportPagingService extends PagingService<Exam> {
-    private http = inject(HttpClient);
-
-    private static readonly RESOURCE_URL = 'api/exam/exams';
+    private examApi = inject(ExamApi);
 
     /**
      * Method to get (possible) exams for import from the server
      * @param pageable object specifying search parameters
      * @param options withExercises if only exams with exercises should be included in the results
      */
-    override search(pageable: SearchTermPageableSearch, options: { withExercises: boolean }): Observable<EntityResponseType> {
-        const params = this.createHttpParams(pageable);
-        return this.http
-            .get<EntityResponseType>(`${ExamImportPagingService.RESOURCE_URL}?withExercises=${options.withExercises}`, { params, observe: 'response' })
-            .pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
+    override search(pageable: SearchTermPageableSearch, options: { withExercises: boolean }): Observable<SearchResult<Exam>> {
+        const sortingOrder = pageable.sortingOrder === SortingOrder.ASCENDING ? GeneratedSortingOrder.Ascending : GeneratedSortingOrder.Descending;
+        return this.examApi
+            .getAllExamsOnPage(pageable.searchTerm, options.withExercises, pageable.page, pageable.pageSize, sortingOrder, pageable.sortedColumn)
+            .pipe(map((result) => ({ resultsOnPage: (result.resultsOnPage ?? []).map(toExamForImport), numberOfPages: result.numberOfPages ?? 0 })));
     }
 }
