@@ -21,7 +21,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
-import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
+import { ExamChecklist } from 'app/openapi/model/exam-checklist';
 import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
 import { TumAetUiConfirmationService, TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';

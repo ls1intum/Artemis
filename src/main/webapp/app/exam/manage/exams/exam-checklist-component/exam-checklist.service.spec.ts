@@ -2,7 +2,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { TestBed } from '@angular/core/testing';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
+import { ExamChecklist } from 'app/openapi/model/exam-checklist';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { MockProvider } from 'ng-mocks';
 import { of, take } from 'rxjs';
@@ -30,7 +30,7 @@ function getExerciseGroups(equalPoints: boolean) {
 describe('ExamChecklistService', () => {
     let service: ExamChecklistService;
     const exam = new Exam();
-    const examChecklist = new ExamChecklist();
+    const examChecklist: ExamChecklist = {};
     let examApi: ExamApi;
 
     let result: boolean;
