@@ -1,11 +1,13 @@
-import { HttpClient } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Observable, Subject, Subscription, distinct, filter, map, tap } from 'rxjs';
-import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { convertDateFromServer, convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
+import type { GetExamLiveEvents200ResponseInner } from 'app/openapi/model/get-exam-live-events200response-inner';
 import { User } from 'app/account/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -83,7 +85,7 @@ export class ExamParticipationLiveEventsService {
     private websocketService = inject(WebsocketService);
     private examParticipationService = inject(ExamParticipationService);
     private localStorageService = inject(LocalStorageService);
-    private httpClient = inject(HttpClient);
+    private studentExamApi = inject(StudentExamApi);
 
     private courseId?: number;
     private examId?: number;
@@ -324,6 +326,24 @@ export class ExamParticipationLiveEventsService {
     }
 
     /**
+     * Converts an event of the REST response into the event the client works with, with dayjs dates. An event without
+     * its id, creation date or a known type is skipped; the server always sends all three.
+     */
+    private toExamLiveEvent(event: GetExamLiveEvents200ResponseInner): ExamLiveEvent[] {
+        const { id, createdDate, eventType, ...fields } = event;
+        const type = Object.values(ExamLiveEventType).find((known) => known === eventType);
+        if (id === undefined || createdDate === undefined || type === undefined) {
+            return [];
+        }
+        const converted = hydrate({ id, createdDate: dayjs(createdDate), eventType: type }, fields);
+        if ('newStartDate' in event) {
+            // The dates are optional (see WorkingTimeUpdateEvent); convert them only when present and keep undefined otherwise.
+            return [hydrate(converted, { newStartDate: convertDateStringFromServer(event.newStartDate), newEndDate: convertDateStringFromServer(event.newEndDate) })];
+        }
+        return [converted];
+    }
+
+    /**
      * Tears down WebSocket subscriptions for the current student exam.
      * Called when switching to a different student exam or during cleanup.
      */
@@ -357,15 +377,17 @@ export class ExamParticipationLiveEventsService {
         // Capture the current student exam ID at request time so we can discard the response
         // if the user has since navigated to a different exam (prevents stale event contamination).
         const requestStudentExamId = this.studentExamId;
-        this.httpClient.get<ExamLiveEvent[]>(`/api/exam/courses/${this.courseId}/exams/${this.examId}/student-exams/live-events`).subscribe((fetchedEvents: ExamLiveEvent[]) => {
+        const { courseId, examId } = this;
+        if (courseId === undefined || examId === undefined) {
+            return;
+        }
+        this.studentExamApi.getExamLiveEvents(courseId, examId).subscribe((events) => {
             // Guard: if the student exam changed while the request was in flight, discard the response
             if (this.studentExamId !== requestStudentExamId) {
                 return;
             }
 
-            fetchedEvents.forEach((event) => {
-                this.convertEventDatesFromServer(event);
-            });
+            const fetchedEvents = events.flatMap((event) => this.toExamLiveEvent(event));
 
             // Build a set of IDs already present in the in-memory array (from WebSocket delivery)
             // and only add events from the REST response that we don't already have.
