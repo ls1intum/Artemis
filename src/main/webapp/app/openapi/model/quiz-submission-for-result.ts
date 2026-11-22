@@ -7,20 +7,9 @@
  *
  * NOTE: This file is auto-generated. Do not edit manually.
  */
-
-import type { ResultAfterEvaluation } from './result-after-evaluation';
-import type { SubmissionType } from './submission-type';
+import type { QuizSubmissionAfterEvaluation } from './quiz-submission-after-evaluation';
 import type { StudentQuizParticipationWithSolutions } from './student-quiz-participation-with-solutions';
-import type { SubmittedAnswerAfterEvaluation } from './submitted-answer-after-evaluation';
 
-export interface QuizSubmissionForResult {
-    id?: number;
-    submissionExerciseType?: string;
-    submitted?: boolean;
-    type?: SubmissionType;
-    submissionDate?: string;
-    scoreInPoints?: number;
-    submittedAnswers?: Array<SubmittedAnswerAfterEvaluation>;
-    results?: Array<ResultAfterEvaluation>;
+export interface QuizSubmissionForResult extends QuizSubmissionAfterEvaluation {
     participation?: StudentQuizParticipationWithSolutions;
 }

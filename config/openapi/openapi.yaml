@@ -4853,13 +4853,11 @@ components:
         generatedByAi: {type: boolean}
         type: {type: string}
     QuizBatchWithPassword:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        startTime: {type: string, format: date-time}
-        started: {type: boolean}
-        ended: {type: boolean}
-        password: {type: string}
+      allOf:
+      - {$ref: '#/components/schemas/QuizBatch'}
+      - type: object
+        properties:
+          password: {type: string}
     ChecklistAnalysisRequest:
       type: object
       description: Request to analyze a problem statement for quality, competencies,
@@ -5154,6 +5152,7 @@ components:
         startTime: {type: string, format: date-time}
         started: {type: boolean}
         ended: {type: boolean}
+      x-parent: true
     BonusExample:
       type: object
       properties:
@@ -5599,43 +5598,15 @@ components:
         submissionCount: {type: integer, format: int32}
         exercise: {$ref: '#/components/schemas/ParticipationExercise'}
     QuizExerciseWithQuestionsForStudent:
+      allOf:
+      - {$ref: '#/components/schemas/QuizExerciseWithQuestions'}
+      - type: object
+        properties:
+          quizQuestionsType:
+            type: string
+            default: live-quiz
+            enum: [live-quiz]
       required: [quizQuestionsType]
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        shortName: {type: string}
-        releaseDate: {type: string, format: date-time}
-        startDate: {type: string, format: date-time}
-        dueDate: {type: string, format: date-time}
-        assessmentDueDate: {type: string, format: date-time}
-        difficulty: {$ref: '#/components/schemas/DifficultyLevel'}
-        visibleToStudents: {type: boolean}
-        course: {$ref: '#/components/schemas/CourseForQuizExercise'}
-        type: {type: string}
-        randomizeQuestionOrder: {type: boolean}
-        allowedNumberOfAttempts: {type: integer, format: int32}
-        remainingNumberOfAttempts: {type: integer, format: int32}
-        quizMode: {$ref: '#/components/schemas/QuizMode'}
-        duration: {type: integer, format: int32}
-        quizBatches:
-          type: array
-          items: {$ref: '#/components/schemas/QuizBatch'}
-          uniqueItems: true
-        quizStarted: {type: boolean}
-        quizEnded: {type: boolean}
-        includedInOverallScore: {$ref: '#/components/schemas/IncludedInOverallScore'}
-        mode: {$ref: '#/components/schemas/ExerciseMode'}
-        maxPoints: {type: number, format: double}
-        bonusPoints: {type: number, format: double}
-        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
-        quizQuestions:
-          type: array
-          items: {$ref: '#/components/schemas/QuizQuestionWithoutSolution'}
-        quizQuestionsType:
-          type: string
-          default: live-quiz
-          enum: [live-quiz]
     QuizQuestionReEvaluate:
       discriminator:
         propertyName: type
@@ -5669,40 +5640,15 @@ components:
         id: {type: integer, format: int64}
         participation: {$ref: '#/components/schemas/ParticipationWithExercise'}
     QuizExerciseWithoutQuestionsForStudent:
+      allOf:
+      - {$ref: '#/components/schemas/QuizExerciseWithoutQuestions'}
+      - type: object
+        properties:
+          quizQuestionsType:
+            type: string
+            default: before-quiz-start
+            enum: [before-quiz-start]
       required: [quizQuestionsType]
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        shortName: {type: string}
-        releaseDate: {type: string, format: date-time}
-        startDate: {type: string, format: date-time}
-        dueDate: {type: string, format: date-time}
-        assessmentDueDate: {type: string, format: date-time}
-        difficulty: {$ref: '#/components/schemas/DifficultyLevel'}
-        visibleToStudents: {type: boolean}
-        course: {$ref: '#/components/schemas/CourseForQuizExercise'}
-        type: {type: string}
-        randomizeQuestionOrder: {type: boolean}
-        allowedNumberOfAttempts: {type: integer, format: int32}
-        remainingNumberOfAttempts: {type: integer, format: int32}
-        quizMode: {$ref: '#/components/schemas/QuizMode'}
-        duration: {type: integer, format: int32}
-        quizBatches:
-          type: array
-          items: {$ref: '#/components/schemas/QuizBatch'}
-          uniqueItems: true
-        quizStarted: {type: boolean}
-        quizEnded: {type: boolean}
-        includedInOverallScore: {$ref: '#/components/schemas/IncludedInOverallScore'}
-        mode: {$ref: '#/components/schemas/ExerciseMode'}
-        maxPoints: {type: number, format: double}
-        bonusPoints: {type: number, format: double}
-        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
-        quizQuestionsType:
-          type: string
-          default: before-quiz-start
-          enum: [before-quiz-start]
     AssessmentCriteriaGenerationResponse:
       type: object
       description: Generated structured assessment criteria
@@ -5758,6 +5704,7 @@ components:
         text: {type: string}
         hint: {type: string}
         invalid: {type: boolean}
+      x-parent: true
     Competency:
       type: object
       properties:
@@ -5962,37 +5909,12 @@ components:
         rationale: {type: string, description: The filter's overall rationale}
       required: [verdicts]
     QuizQuestionStatisticResponse:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        shortName: {type: string}
-        releaseDate: {type: string, format: date-time}
-        startDate: {type: string, format: date-time}
-        dueDate: {type: string, format: date-time}
-        assessmentDueDate: {type: string, format: date-time}
-        difficulty: {$ref: '#/components/schemas/DifficultyLevel'}
-        visibleToStudents: {type: boolean}
-        course: {$ref: '#/components/schemas/CourseForQuizExercise'}
-        type: {type: string}
-        randomizeQuestionOrder: {type: boolean}
-        allowedNumberOfAttempts: {type: integer, format: int32}
-        remainingNumberOfAttempts: {type: integer, format: int32}
-        quizMode: {$ref: '#/components/schemas/QuizMode'}
-        duration: {type: integer, format: int32}
-        quizBatches:
-          type: array
-          items: {$ref: '#/components/schemas/QuizBatch'}
-          uniqueItems: true
-        quizStarted: {type: boolean}
-        quizEnded: {type: boolean}
-        includedInOverallScore: {$ref: '#/components/schemas/IncludedInOverallScore'}
-        mode: {$ref: '#/components/schemas/ExerciseMode'}
-        maxPoints: {type: number, format: double}
-        bonusPoints: {type: number, format: double}
-        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
-        quizQuestion: {$ref: '#/components/schemas/QuizQuestionWithSolution'}
-        quizQuestionStatistic: {$ref: '#/components/schemas/QuizQuestionStatistic'}
+      allOf:
+      - {$ref: '#/components/schemas/QuizExerciseWithoutQuestions'}
+      - type: object
+        properties:
+          quizQuestion: {$ref: '#/components/schemas/QuizQuestionWithSolution'}
+          quizQuestionStatistic: {$ref: '#/components/schemas/QuizQuestionStatistic'}
     Language:
       type: string
       enum: [ENGLISH, GERMAN]
@@ -6074,54 +5996,29 @@ components:
         invalid: {type: boolean}
       required: [id, invalid]
     QuizExerciseDetails:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        shortName: {type: string}
-        releaseDate: {type: string, format: date-time}
-        startDate: {type: string, format: date-time}
-        dueDate: {type: string, format: date-time}
-        assessmentDueDate: {type: string, format: date-time}
-        difficulty: {$ref: '#/components/schemas/DifficultyLevel'}
-        visibleToStudents: {type: boolean}
-        course: {$ref: '#/components/schemas/CourseForQuizExercise'}
-        type: {type: string}
-        randomizeQuestionOrder: {type: boolean}
-        allowedNumberOfAttempts: {type: integer, format: int32}
-        remainingNumberOfAttempts: {type: integer, format: int32}
-        quizMode: {$ref: '#/components/schemas/QuizMode'}
-        duration: {type: integer, format: int32}
-        quizBatches:
-          type: array
-          items: {$ref: '#/components/schemas/QuizBatch'}
-          uniqueItems: true
-        quizStarted: {type: boolean}
-        quizEnded: {type: boolean}
-        includedInOverallScore: {$ref: '#/components/schemas/IncludedInOverallScore'}
-        mode: {$ref: '#/components/schemas/ExerciseMode'}
-        maxPoints: {type: number, format: double}
-        bonusPoints: {type: number, format: double}
-        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
-        quizQuestions:
-          type: array
-          items: {$ref: '#/components/schemas/QuizQuestionWithSolution'}
-        categories:
-          type: array
-          items: {type: string}
-          uniqueItems: true
-        competencyLinks:
-          type: array
-          items: {$ref: '#/components/schemas/CompetencyExerciseLink'}
-          uniqueItems: true
-        gradingCriteria:
-          type: array
-          items: {$ref: '#/components/schemas/GradingCriterion'}
-        channelName: {type: string}
-        testRunParticipationsExist: {type: boolean}
-        isEditable: {type: boolean}
-        canBeEvaluated: {type: boolean}
-        exerciseGroup: {$ref: '#/components/schemas/ExerciseGroupWithIdAndExam'}
+      allOf:
+      - {$ref: '#/components/schemas/QuizExerciseWithoutQuestions'}
+      - type: object
+        properties:
+          quizQuestions:
+            type: array
+            items: {$ref: '#/components/schemas/QuizQuestionWithSolution'}
+          categories:
+            type: array
+            items: {type: string}
+            uniqueItems: true
+          competencyLinks:
+            type: array
+            items: {$ref: '#/components/schemas/CompetencyExerciseLink'}
+            uniqueItems: true
+          gradingCriteria:
+            type: array
+            items: {$ref: '#/components/schemas/GradingCriterion'}
+          channelName: {type: string}
+          testRunParticipationsExist: {type: boolean}
+          isEditable: {type: boolean}
+          canBeEvaluated: {type: boolean}
+          exerciseGroup: {$ref: '#/components/schemas/ExerciseGroupWithIdAndExam'}
     UserRole:
       type: string
       enum: [INSTRUCTOR, TUTOR, USER]
@@ -6293,6 +6190,7 @@ components:
         results:
           type: array
           items: {$ref: '#/components/schemas/ResultAfterEvaluation'}
+      x-parent: true
     QuizBatchOverview:
       type: object
       properties:
@@ -6387,38 +6285,14 @@ components:
         structuredGradingInstructionId: {type: integer, format: int64}
         reference: {type: string}
     QuizExerciseWithQuestions:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        shortName: {type: string}
-        releaseDate: {type: string, format: date-time}
-        startDate: {type: string, format: date-time}
-        dueDate: {type: string, format: date-time}
-        assessmentDueDate: {type: string, format: date-time}
-        difficulty: {$ref: '#/components/schemas/DifficultyLevel'}
-        visibleToStudents: {type: boolean}
-        course: {$ref: '#/components/schemas/CourseForQuizExercise'}
-        type: {type: string}
-        randomizeQuestionOrder: {type: boolean}
-        allowedNumberOfAttempts: {type: integer, format: int32}
-        remainingNumberOfAttempts: {type: integer, format: int32}
-        quizMode: {$ref: '#/components/schemas/QuizMode'}
-        duration: {type: integer, format: int32}
-        quizBatches:
-          type: array
-          items: {$ref: '#/components/schemas/QuizBatch'}
-          uniqueItems: true
-        quizStarted: {type: boolean}
-        quizEnded: {type: boolean}
-        includedInOverallScore: {$ref: '#/components/schemas/IncludedInOverallScore'}
-        mode: {$ref: '#/components/schemas/ExerciseMode'}
-        maxPoints: {type: number, format: double}
-        bonusPoints: {type: number, format: double}
-        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
-        quizQuestions:
-          type: array
-          items: {$ref: '#/components/schemas/QuizQuestionWithoutSolution'}
+      allOf:
+      - {$ref: '#/components/schemas/QuizExerciseWithoutQuestions'}
+      - type: object
+        properties:
+          quizQuestions:
+            type: array
+            items: {$ref: '#/components/schemas/QuizQuestionWithoutSolution'}
+      x-parent: true
     DragAndDropMapping:
       type: object
       properties:
@@ -6722,14 +6596,12 @@ components:
         repositoryUri: {type: string}
         team: {$ref: '#/components/schemas/Team'}
     AnswerOptionWithSolution:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        text: {type: string}
-        hint: {type: string}
-        invalid: {type: boolean}
-        explanation: {type: string}
-        isCorrect: {type: boolean}
+      allOf:
+      - {$ref: '#/components/schemas/AnswerOptionWithoutSolution'}
+      - type: object
+        properties:
+          explanation: {type: string}
+          isCorrect: {type: boolean}
     ExerciseGenerationRevertResult:
       type: object
       description: Result of reverting the last Hyperion generation or adaptation
@@ -7218,43 +7090,15 @@ components:
           uniqueItems: true
       required: [status]
     QuizExerciseWithSolutionForStudent:
+      allOf:
+      - {$ref: '#/components/schemas/QuizExerciseWithSolution'}
+      - type: object
+        properties:
+          quizQuestionsType:
+            type: string
+            default: after-quiz-end
+            enum: [after-quiz-end]
       required: [quizQuestionsType]
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        shortName: {type: string}
-        releaseDate: {type: string, format: date-time}
-        startDate: {type: string, format: date-time}
-        dueDate: {type: string, format: date-time}
-        assessmentDueDate: {type: string, format: date-time}
-        difficulty: {$ref: '#/components/schemas/DifficultyLevel'}
-        visibleToStudents: {type: boolean}
-        course: {$ref: '#/components/schemas/CourseForQuizExercise'}
-        type: {type: string}
-        randomizeQuestionOrder: {type: boolean}
-        allowedNumberOfAttempts: {type: integer, format: int32}
-        remainingNumberOfAttempts: {type: integer, format: int32}
-        quizMode: {$ref: '#/components/schemas/QuizMode'}
-        duration: {type: integer, format: int32}
-        quizBatches:
-          type: array
-          items: {$ref: '#/components/schemas/QuizBatch'}
-          uniqueItems: true
-        quizStarted: {type: boolean}
-        quizEnded: {type: boolean}
-        includedInOverallScore: {$ref: '#/components/schemas/IncludedInOverallScore'}
-        mode: {$ref: '#/components/schemas/ExerciseMode'}
-        maxPoints: {type: number, format: double}
-        bonusPoints: {type: number, format: double}
-        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
-        quizQuestions:
-          type: array
-          items: {$ref: '#/components/schemas/QuizQuestionWithSolution'}
-        quizQuestionsType:
-          type: string
-          default: after-quiz-end
-          enum: [after-quiz-end]
     SeatCondition:
       type: string
       enum: [USABLE, NO_TABLE, DEFECT, WHEELCHAIR]
@@ -7301,22 +7145,11 @@ components:
       type: string
       enum: [MANUAL, TIMEOUT, TEST, OTHER, INSTRUCTOR, EXTERNAL]
     QuizSubmissionForResult:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        submissionExerciseType: {type: string}
-        submitted: {type: boolean}
-        type: {$ref: '#/components/schemas/SubmissionType'}
-        submissionDate: {type: string, format: date-time}
-        scoreInPoints: {type: number, format: double}
-        submittedAnswers:
-          type: array
-          items: {$ref: '#/components/schemas/SubmittedAnswerAfterEvaluation'}
-          uniqueItems: true
-        results:
-          type: array
-          items: {$ref: '#/components/schemas/ResultAfterEvaluation'}
-        participation: {$ref: '#/components/schemas/StudentQuizParticipationWithSolutions'}
+      allOf:
+      - {$ref: '#/components/schemas/QuizSubmissionAfterEvaluation'}
+      - type: object
+        properties:
+          participation: {$ref: '#/components/schemas/StudentQuizParticipationWithSolutions'}
     QuizSubmissionFromLiveClient:
       type: object
       properties:
@@ -7610,38 +7443,14 @@ components:
         login: {type: string}
         isStudent: {type: boolean}
     QuizExerciseWithSolution:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        shortName: {type: string}
-        releaseDate: {type: string, format: date-time}
-        startDate: {type: string, format: date-time}
-        dueDate: {type: string, format: date-time}
-        assessmentDueDate: {type: string, format: date-time}
-        difficulty: {$ref: '#/components/schemas/DifficultyLevel'}
-        visibleToStudents: {type: boolean}
-        course: {$ref: '#/components/schemas/CourseForQuizExercise'}
-        type: {type: string}
-        randomizeQuestionOrder: {type: boolean}
-        allowedNumberOfAttempts: {type: integer, format: int32}
-        remainingNumberOfAttempts: {type: integer, format: int32}
-        quizMode: {$ref: '#/components/schemas/QuizMode'}
-        duration: {type: integer, format: int32}
-        quizBatches:
-          type: array
-          items: {$ref: '#/components/schemas/QuizBatch'}
-          uniqueItems: true
-        quizStarted: {type: boolean}
-        quizEnded: {type: boolean}
-        includedInOverallScore: {$ref: '#/components/schemas/IncludedInOverallScore'}
-        mode: {$ref: '#/components/schemas/ExerciseMode'}
-        maxPoints: {type: number, format: double}
-        bonusPoints: {type: number, format: double}
-        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
-        quizQuestions:
-          type: array
-          items: {$ref: '#/components/schemas/QuizQuestionWithSolution'}
+      allOf:
+      - {$ref: '#/components/schemas/QuizExerciseWithoutQuestions'}
+      - type: object
+        properties:
+          quizQuestions:
+            type: array
+            items: {$ref: '#/components/schemas/QuizQuestionWithSolution'}
+      x-parent: true
     ShortAnswerSolutionCreate:
       type: object
       properties:
@@ -8365,39 +8174,14 @@ components:
           enum: [failure]
           example: failure
     QuizPointStatistics:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        shortName: {type: string}
-        releaseDate: {type: string, format: date-time}
-        startDate: {type: string, format: date-time}
-        dueDate: {type: string, format: date-time}
-        assessmentDueDate: {type: string, format: date-time}
-        difficulty: {$ref: '#/components/schemas/DifficultyLevel'}
-        visibleToStudents: {type: boolean}
-        course: {$ref: '#/components/schemas/CourseForQuizExercise'}
-        type: {type: string}
-        randomizeQuestionOrder: {type: boolean}
-        allowedNumberOfAttempts: {type: integer, format: int32}
-        remainingNumberOfAttempts: {type: integer, format: int32}
-        quizMode: {$ref: '#/components/schemas/QuizMode'}
-        duration: {type: integer, format: int32}
-        quizBatches:
-          type: array
-          items: {$ref: '#/components/schemas/QuizBatch'}
-          uniqueItems: true
-        quizStarted: {type: boolean}
-        quizEnded: {type: boolean}
-        includedInOverallScore: {$ref: '#/components/schemas/IncludedInOverallScore'}
-        mode: {$ref: '#/components/schemas/ExerciseMode'}
-        maxPoints: {type: number, format: double}
-        bonusPoints: {type: number, format: double}
-        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
-        quizQuestions:
-          type: array
-          items: {$ref: '#/components/schemas/QuizQuestionWithSolution'}
-        quizPointStatistic: {$ref: '#/components/schemas/QuizPointStatistic'}
+      allOf:
+      - {$ref: '#/components/schemas/QuizExerciseWithoutQuestions'}
+      - type: object
+        properties:
+          quizQuestions:
+            type: array
+            items: {$ref: '#/components/schemas/QuizQuestionWithSolution'}
+          quizPointStatistic: {$ref: '#/components/schemas/QuizPointStatistic'}
     PresentationAssessmentStatistics:
       type: object
       properties:
@@ -8437,15 +8221,11 @@ components:
           enum: [success]
           example: success
     ResultAfterEvaluationWithSubmission:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        completionDate: {type: string, format: date-time}
-        successful: {type: boolean}
-        score: {type: number, format: double}
-        rated: {type: boolean}
-        assessmentType: {$ref: '#/components/schemas/AssessmentType'}
-        submission: {$ref: '#/components/schemas/QuizSubmissionForResult'}
+      allOf:
+      - {$ref: '#/components/schemas/ResultAfterEvaluation'}
+      - type: object
+        properties:
+          submission: {$ref: '#/components/schemas/QuizSubmissionForResult'}
     TumLiveUploadedUnit:
       type: object
       properties:
@@ -8536,6 +8316,7 @@ components:
         score: {type: number, format: double}
         rated: {type: boolean}
         assessmentType: {$ref: '#/components/schemas/AssessmentType'}
+      x-parent: true
     QuizQuestionRefinementRequest:
       type: object
       description: Request to refine an existing quiz question using a user prompt
@@ -9027,40 +8808,15 @@ components:
           default: multiple-choice
           enum: [multiple-choice]
     QuizStatisticsOverview:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        shortName: {type: string}
-        releaseDate: {type: string, format: date-time}
-        startDate: {type: string, format: date-time}
-        dueDate: {type: string, format: date-time}
-        assessmentDueDate: {type: string, format: date-time}
-        difficulty: {$ref: '#/components/schemas/DifficultyLevel'}
-        visibleToStudents: {type: boolean}
-        course: {$ref: '#/components/schemas/CourseForQuizExercise'}
-        type: {type: string}
-        randomizeQuestionOrder: {type: boolean}
-        allowedNumberOfAttempts: {type: integer, format: int32}
-        remainingNumberOfAttempts: {type: integer, format: int32}
-        quizMode: {$ref: '#/components/schemas/QuizMode'}
-        duration: {type: integer, format: int32}
-        quizBatches:
-          type: array
-          items: {$ref: '#/components/schemas/QuizBatch'}
-          uniqueItems: true
-        quizStarted: {type: boolean}
-        quizEnded: {type: boolean}
-        includedInOverallScore: {$ref: '#/components/schemas/IncludedInOverallScore'}
-        mode: {$ref: '#/components/schemas/ExerciseMode'}
-        maxPoints: {type: number, format: double}
-        bonusPoints: {type: number, format: double}
-        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
-        quizQuestions:
-          type: array
-          items: {$ref: '#/components/schemas/QuestionStatistics'}
-        participantsRated: {type: integer, format: int32}
-        participantsUnrated: {type: integer, format: int32}
+      allOf:
+      - {$ref: '#/components/schemas/QuizExerciseWithoutQuestions'}
+      - type: object
+        properties:
+          quizQuestions:
+            type: array
+            items: {$ref: '#/components/schemas/QuestionStatistics'}
+          participantsRated: {type: integer, format: int32}
+          participantsUnrated: {type: integer, format: int32}
     PlagiarismVerdict:
       type: string
       enum: [PLAGIARISM, POINT_DEDUCTION, WARNING, NO_PLAGIARISM]
@@ -9468,6 +9224,7 @@ components:
         maxPoints: {type: number, format: double}
         bonusPoints: {type: number, format: double}
         exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
+      x-parent: true
     VariantPlacement:
       type: object
       properties:

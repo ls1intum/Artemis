@@ -9,42 +9,12 @@
  */
 
 import type { CompetencyExerciseLink } from './competency-exercise-link';
-import type { CourseForQuizExercise } from './course-for-quiz-exercise';
-import type { ExerciseVariantGroupReference } from './exercise-variant-group-reference';
-import type { IncludedInOverallScore } from './included-in-overall-score';
 import type { QuizQuestionWithSolution } from './quiz-question-with-solution';
-import type { ExerciseMode } from './exercise-mode';
 import type { GradingCriterion } from './grading-criterion';
-import type { QuizMode } from './quiz-mode';
-import type { DifficultyLevel } from './difficulty-level';
 import type { ExerciseGroupWithIdAndExam } from './exercise-group-with-id-and-exam';
-import type { QuizBatch } from './quiz-batch';
+import type { QuizExerciseWithoutQuestions } from './quiz-exercise-without-questions';
 
-export interface QuizExerciseDetails {
-    id?: number;
-    title?: string;
-    shortName?: string;
-    releaseDate?: string;
-    startDate?: string;
-    dueDate?: string;
-    assessmentDueDate?: string;
-    difficulty?: DifficultyLevel;
-    visibleToStudents?: boolean;
-    course?: CourseForQuizExercise;
-    type?: string;
-    randomizeQuestionOrder?: boolean;
-    allowedNumberOfAttempts?: number;
-    remainingNumberOfAttempts?: number;
-    quizMode?: QuizMode;
-    duration?: number;
-    quizBatches?: Array<QuizBatch>;
-    quizStarted?: boolean;
-    quizEnded?: boolean;
-    includedInOverallScore?: IncludedInOverallScore;
-    mode?: ExerciseMode;
-    maxPoints?: number;
-    bonusPoints?: number;
-    exerciseVariantGroup?: ExerciseVariantGroupReference;
+export interface QuizExerciseDetails extends QuizExerciseWithoutQuestions {
     quizQuestions?: Array<QuizQuestionWithSolution>;
     categories?: Array<string>;
     competencyLinks?: Array<CompetencyExerciseLink>;

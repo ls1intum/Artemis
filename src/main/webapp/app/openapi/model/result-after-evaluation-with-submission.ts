@@ -8,15 +8,9 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import type { AssessmentType } from './assessment-type';
+import type { ResultAfterEvaluation } from './result-after-evaluation';
 import type { QuizSubmissionForResult } from './quiz-submission-for-result';
 
-export interface ResultAfterEvaluationWithSubmission {
-    id?: number;
-    completionDate?: string;
-    successful?: boolean;
-    score?: number;
-    rated?: boolean;
-    assessmentType?: AssessmentType;
+export interface ResultAfterEvaluationWithSubmission extends ResultAfterEvaluation {
     submission?: QuizSubmissionForResult;
 }

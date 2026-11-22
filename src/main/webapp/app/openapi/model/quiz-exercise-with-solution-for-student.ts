@@ -7,42 +7,9 @@
  *
  * NOTE: This file is auto-generated. Do not edit manually.
  */
+import type { QuizExerciseWithSolution } from './quiz-exercise-with-solution';
 
-import type { CourseForQuizExercise } from './course-for-quiz-exercise';
-import type { ExerciseVariantGroupReference } from './exercise-variant-group-reference';
-import type { IncludedInOverallScore } from './included-in-overall-score';
-import type { QuizQuestionWithSolution } from './quiz-question-with-solution';
-import type { ExerciseMode } from './exercise-mode';
-import type { QuizMode } from './quiz-mode';
-import type { DifficultyLevel } from './difficulty-level';
-import type { QuizBatch } from './quiz-batch';
-
-export interface QuizExerciseWithSolutionForStudent {
-    id?: number;
-    title?: string;
-    shortName?: string;
-    releaseDate?: string;
-    startDate?: string;
-    dueDate?: string;
-    assessmentDueDate?: string;
-    difficulty?: DifficultyLevel;
-    visibleToStudents?: boolean;
-    course?: CourseForQuizExercise;
-    type?: string;
-    randomizeQuestionOrder?: boolean;
-    allowedNumberOfAttempts?: number;
-    remainingNumberOfAttempts?: number;
-    quizMode?: QuizMode;
-    duration?: number;
-    quizBatches?: Array<QuizBatch>;
-    quizStarted?: boolean;
-    quizEnded?: boolean;
-    includedInOverallScore?: IncludedInOverallScore;
-    mode?: ExerciseMode;
-    maxPoints?: number;
-    bonusPoints?: number;
-    exerciseVariantGroup?: ExerciseVariantGroupReference;
-    quizQuestions?: Array<QuizQuestionWithSolution>;
+export interface QuizExerciseWithSolutionForStudent extends QuizExerciseWithSolution {
     quizQuestionsType: QuizExerciseWithSolutionForStudentQuizQuestionsTypeEnum;
 }
 
