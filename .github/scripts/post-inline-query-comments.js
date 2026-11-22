@@ -53,24 +53,26 @@ function anchorable(comments, files) {
 }
 
 /**
- * Splits the comments into what to post and which of the earlier comments to delete.
- * @param {{key: string}[]} desired the comments that should exist
+ * Splits the comments into what to post, which of the earlier comments to rewrite because their
+ * text changed (an edit does not notify anyone) and which to delete.
+ * @param {{key: string, body: string}[]} desired the comments that should exist
  * @param {{id: number, body: string}[]} existing the review comments already on the pull request
  */
 function plan(desired, existing) {
     const ours = existing
-        .map((c) => ({ id: c.id, key: MARKER.exec(c.body || '')?.[1] }))
+        .map((c) => ({ id: c.id, body: c.body, key: MARKER.exec(c.body || '')?.[1] }))
         .filter((c) => c.key);
-    const wanted = new Set(desired.map((c) => c.key));
-    const present = new Set(ours.map((c) => c.key));
+    const wanted = new Map(desired.map((c) => [c.key, c]));
+    const present = new Map(ours.map((c) => [c.key, c]));
     return {
         post: desired.filter((c) => !present.has(c.key)),
+        update: ours.filter((c) => wanted.has(c.key) && wanted.get(c.key).body !== c.body).map((c) => ({ id: c.id, body: wanted.get(c.key).body })),
         remove: ours.filter((c) => !wanted.has(c.key)).map((c) => c.id),
     };
 }
 
 /**
- * @returns {Promise<{anchored: number, posted: number, removed: number}>}
+ * @returns {Promise<{anchored: number, posted: number, updated: number, removed: number}>}
  */
 async function postInlineQueryComments({ github, context, prNumber, commentsPath, headSha, removeStale = true }) {
     let comments = [];
@@ -83,12 +85,15 @@ async function postInlineQueryComments({ github, context, prNumber, commentsPath
     const files = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number: prNumber, per_page: 100 });
     const existing = await github.paginate(github.rest.pulls.listReviewComments, { owner, repo, pull_number: prNumber, per_page: 100 });
     const desired = anchorable(comments, files);
-    const { post, remove: stale } = plan(desired, existing);
+    const { post, update, remove: stale } = plan(desired, existing);
     // a job that reports only some of the tests must not delete what another job reported
     const remove = removeStale ? stale : [];
 
     for (const id of remove) {
         await github.rest.pulls.deleteReviewComment({ owner, repo, comment_id: id });
+    }
+    for (const { id, body } of update) {
+        await github.rest.pulls.updateReviewComment({ owner, repo, comment_id: id, body });
     }
     let posted = 0;
     if (post.length > 0) {
@@ -108,7 +113,7 @@ async function postInlineQueryComments({ github, context, prNumber, commentsPath
             }
         }
     }
-    return { anchored: desired.length, posted, removed: remove.length };
+    return { anchored: desired.length, posted, updated: update.length, removed: remove.length };
 }
 
 module.exports = { visibleLines, anchorable, plan, postInlineQueryComments };

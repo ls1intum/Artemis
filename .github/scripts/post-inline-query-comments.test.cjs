@@ -35,13 +35,22 @@ test('a comment moves to its fallback line when its own line is not in the diff'
 
 test('a re-run posts new findings, keeps current ones and deletes the ones that are gone', () => {
     const existing = [
-        { id: 1, body: 'text\n<!-- query-inline:aaaa -->' },
-        { id: 2, body: 'text\n<!-- query-inline:bbbb -->' },
+        { id: 1, body: 'text <!-- query-inline:aaaa -->' },
+        { id: 2, body: 'text <!-- query-inline:bbbb -->' },
         { id: 3, body: 'a human comment' },
     ];
-    const result = plan([{ key: 'aaaa' }, { key: 'cccc' }], existing);
+    const result = plan([{ key: 'aaaa', body: 'text <!-- query-inline:aaaa -->' }, { key: 'cccc', body: 'new' }], existing);
     assert.deepEqual(result.post.map((c) => c.key), ['cccc']);
+    assert.deepEqual(result.update, []);
     assert.deepEqual(result.remove, [2]);
+});
+
+test('a current comment whose text changed is rewritten in place', () => {
+    const existing = [{ id: 7, body: 'old <!-- query-inline:aaaa -->' }];
+    const result = plan([{ key: 'aaaa', body: 'new <!-- query-inline:aaaa -->' }], existing);
+    assert.deepEqual(result.post, []);
+    assert.deepEqual(result.update, [{ id: 7, body: 'new <!-- query-inline:aaaa -->' }]);
+    assert.deepEqual(result.remove, []);
 });
 
 test('findings are posted as one review; a rejected review falls back to single comments', async () => {
@@ -56,9 +65,10 @@ test('findings are posted as one review; a rejected review falls back to single 
             createReview: async (r) => { calls.push(['review', r.comments.length]); throw new Error('422'); },
             createReviewComment: async (r) => { calls.push(['single', r.line]); },
             deleteReviewComment: async () => {},
+            updateReviewComment: async () => {},
         } },
     };
     const result = await postInlineQueryComments({ github, context: { repo: { owner: 'o', repo: 'r' } }, prNumber: 1, commentsPath: file, headSha: 'sha' });
-    assert.deepEqual(result, { anchored: 2, posted: 2, removed: 0 });
+    assert.deepEqual(result, { anchored: 2, posted: 2, updated: 0, removed: 0 });
     assert.deepEqual(calls, [['review', 2], ['single', 11], ['single', 12]]);
 });
