@@ -460,14 +460,48 @@ def inline_key(*parts: str) -> str:
     return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()[:16]
 
 
+def static_location_of(f: dict):
+    """(path, line) of a static finding, repository-relative, or None without a line."""
+    path = (f.get("file") or "").replace("\\", "/").removeprefix("./")
+    return (path, f["line"]) if path and f.get("line") else None
+
+
+def static_line(f: dict) -> str:
+    return f"{STATIC_RULE_LABELS.get(f['type'], f['type'])}: {trunc(f.get('detail') or '', 300)}"
+
+
+def inline_comment(comment: dict, statics: list, run_url: str) -> dict:
+    """Renders a comment from its parts. The key is the dynamic finding's when there is one, so the
+    comment stays the same one when a static finding comes or goes."""
+    lines = list(comment["head"])
+    if statics:
+        lines += ["", *(f"🔍 Static check — {static_line(f)}" for f in statics)]
+    source = "the E2E query report and the static query check" if comment["dynamic"] and statics else (
+        "the E2E query report" if comment["dynamic"] else "the static query check")
+    footer = f"_Found by {source}; new compared to develop._"
+    if run_url and comment["dynamic"]:
+        footer += f" [Full report]({run_url})"
+    lines += ["", footer, INLINE_MARKER.format(key=comment["key"])]
+    result = {"path": comment["path"], "line": comment["line"], "key": comment["key"], "body": "\n".join(lines)}
+    if comment.get("fallback"):
+        result["fallback"] = comment["fallback"]
+    return result
+
+
 def build_inline_comments(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "") -> list:
     """What the PR adds, as comments for the line of code that issues it: {path, line, key, body}.
     Without a baseline nothing is new, so there are none. A problem is anchored to the line of its
     worst query that issues it; a duplicate across several places and a row-by-row insert have no
-    single such line and stay in the summary comment."""
+    single such line and stay in the summary comment.
+
+    One line gets one comment: the static findings that confirm a problem (same repository and
+    calling method), new or not, are part of its comment, and so is any new static finding on the
+    same line. Their own line is the comment's fallback anchor, for when the runtime line is not in
+    the diff but theirs is."""
     if baseline is None:
         return []
-    comments = []
+    by_place = {}
+    absorbed = set()
     new_problems = build_problems([g for g in groups if g.get("is_new")], report.get("indexes") or {})
     for p in new_problems:
         if p["category"] not in ("n_plus_one", "duplicate_one_place"):
@@ -478,24 +512,33 @@ def build_inline_comments(report: dict, groups: list, static_findings: list, bas
         confirmed = " · 🔍 a static rule agrees" if p["static_matches"] else ""
         confirmed += " · ⚠️ no index serves the query" if p["index_state"] == "scan" else ""
         endpoint = p["endpoints"][0] + (f" (+{len(p['endpoints']) - 1} more)" if len(p["endpoints"]) > 1 else "")
-        body = "\n".join([
-            f"**{CATEGORY_LABELS[p['category']]}{confirmed}** — a query issued here is repeated on `{endpoint}`",
-            "",
-            f"`{trunc(q['summary'], 120)}` runs {query_counts_label(q)} in one request. "
-            f"A fix would save {p['avoidable']} {'query' if p['avoidable'] == 1 else 'queries'} per request.",
-            "",
-            f"_Found by the E2E query report; new compared to develop. {('[Full report](' + run_url + ')') if run_url else ''}_",
-        ])
-        key = inline_key("repeated", q["groups"][0]["key"])
-        comments.append({"path": q["sourceFile"], "line": q["line"], "key": key, "body": body + "\n" + INLINE_MARKER.format(key=key)})
-    for f in static_findings:
-        path = (f.get("file") or "").replace("\\", "/").removeprefix("./")
-        if not f.get("is_new") or not path or not f.get("line"):
+        head = [f"**{CATEGORY_LABELS[p['category']]}{confirmed}** — a query issued here is repeated on `{endpoint}`", "",
+                f"`{trunc(q['summary'], 120)}` runs {query_counts_label(q)} in one request. "
+                f"A fix would save {p['avoidable']} {'query' if p['avoidable'] == 1 else 'queries'} per request."]
+        matched = [static_findings[i] for i in p["static_matches"]]
+        absorbed.update(p["static_matches"])
+        fallback = next(({"path": loc[0], "line": loc[1]} for loc in map(static_location_of, matched) if loc and loc != (q["sourceFile"], q["line"])), None)
+        place = (q["sourceFile"], q["line"])
+        # two problems on one line: the first (worst) one owns the comment
+        by_place.setdefault(place, {"path": place[0], "line": place[1], "key": inline_key("repeated", q["groups"][0]["key"]), "head": head,
+                                    "dynamic": True, "fallback": fallback, "statics": []})["statics"].extend(matched)
+    for i, f in enumerate(static_findings):
+        loc = static_location_of(f)
+        if i in absorbed or not f.get("is_new") or loc is None:
             continue
-        key = inline_key("static", static_key(f))
-        body = "\n".join([f"**{STATIC_RULE_LABELS.get(f['type'], f['type'])}** — {trunc(f.get('detail') or '', 300)}", "",
-                          "_Found by the static query check; new compared to develop._"])
-        comments.append({"path": path, "line": f["line"], "key": key, "body": body + "\n" + INLINE_MARKER.format(key=key)})
+        if loc in by_place:
+            by_place[loc]["statics"].append(f)
+        else:
+            by_place[loc] = {"path": loc[0], "line": loc[1], "key": inline_key("static", static_key(f)), "head": [f"**{STATIC_RULE_LABELS.get(f['type'], f['type'])}**"],
+                             "dynamic": False, "fallback": None, "statics": [f]}
+    comments = []
+    for c in by_place.values():
+        statics = c["statics"]
+        if not c["dynamic"]:
+            # a static-only comment is its finding's text
+            c["head"] = [f"**{STATIC_RULE_LABELS.get(statics[0]['type'], statics[0]['type'])}** — {trunc(statics[0].get('detail') or '', 300)}"]
+            statics = statics[1:]
+        comments.append(inline_comment(c, statics, run_url))
     return comments
 
 
