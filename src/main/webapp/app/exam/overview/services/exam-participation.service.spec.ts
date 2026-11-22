@@ -16,9 +16,11 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
+import type { AthenaFeedbackUsage } from 'app/openapi/model/athena-feedback-usage';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -117,24 +119,14 @@ describe('ExamParticipationService', () => {
         expect(error).toBeInstanceOf(HttpErrorResponse);
     });
 
-    it('should load a student exam grade info for summary', async () => {
-        const studentExamWithGrade: StudentExamWithGradeDTO = {
-            maxPoints: 100,
-            maxBonusPoints: 10,
-            studentResult: {} as StudentResult,
-            gradeType: GradeType.GRADE,
-            achievedPointsPerExercise: {
-                1: 20,
-                2: 10,
-            },
-        };
-        const returnedFromService = Object.assign({}, studentExamWithGrade);
-        service
-            .loadStudentExamGradeInfoForSummary(1, 1, 1)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
+    it('should load a student exam grade info for summary', () => {
+        let received: StudentExamWithGradeDTO | undefined;
+        service.loadStudentExamGradeInfoForSummary(1, 2, 3).subscribe((value) => (received = value));
+        const req = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/2/student-exams/3/grade-summary' });
+        req.flush({ maxPoints: 100, maxBonusPoints: 10, gradeType: 'GRADE', achievedPointsPerExercise: { '1': 20, '2': 10 }, pendingExerciseIds: [4] });
+
+        expect(received).toBeInstanceOf(StudentExamWithGradeDTO);
+        expect(received).toMatchObject({ maxPoints: 100, maxBonusPoints: 10, gradeType: GradeType.GRADE, achievedPointsPerExercise: { 1: 20, 2: 10 }, pendingExerciseIds: [4] });
     });
 
     it('surfaces an own exam load conflict immediately without an automatic retry', async () => {
@@ -224,7 +216,7 @@ describe('ExamParticipationService', () => {
         let received: ExamForOverview[] | undefined;
 
         service.getExamsForOverview(5).subscribe((exams) => (received = exams));
-        const request = httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/5/exams-for-overview' });
+        const request = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/5/exams-for-overview' });
         expect(request.request.params.keys()).toEqual([]);
         request.flush([serverExam]);
 
@@ -324,16 +316,30 @@ describe('ExamParticipationService', () => {
         });
     });
 
-    it('should load a List of StudentExams for a user and course', async () => {
-        const returnedFromService = [studentExam];
-        service
-            .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(1)
-            .pipe(take(1))
-            .subscribe(() => {
-                expect(service.testStudentExams()).toEqual(returnedFromService);
-            });
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
+    it('should load the test exams of a user and course and convert their dates', () => {
+        let completed = false;
+        service.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(1).subscribe({ complete: () => (completed = true) });
+        const req = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/test-exams-per-user' });
+        req.flush([
+            {
+                id: 4,
+                testRun: false,
+                workingTime: 3600,
+                submitted: true,
+                startedDate: '2026-01-01T10:00:00Z',
+                submissionDate: '2026-01-01T10:30:00Z',
+                exam: { id: 2, title: 'Test exam', examMode: 'TEST', workingTime: 7200, course: { id: 1, accuracyOfScores: 1 } },
+            },
+        ]);
+
+        expect(completed).toBe(true);
+        const loaded = service.testStudentExams();
+        expect(loaded).toHaveLength(1);
+        const loadedExam = loaded[0];
+        expect(loadedExam).toMatchObject({ id: 4, testRun: false, workingTime: 3600, submitted: true });
+        expect(dayjs.isDayjs(loadedExam.startedDate)).toBe(true);
+        expect(dayjs.isDayjs(loadedExam.submissionDate)).toBe(true);
+        expect(loadedExam.exam).toStrictEqual({ id: 2, title: 'Test exam', examMode: ExamMode.TEST, workingTime: 7200, course: { id: 1, accuracyOfScores: 1 } });
     });
 
     it('should submit a StudentExam successfully', async () => {
@@ -351,13 +357,16 @@ describe('ExamParticipationService', () => {
         req.flush(null);
         expect(received).toBeNull();
     });
-    it('should fetch real exam sidebar data successfully', async () => {
-        const returnedFromService = [{ id: 1, title: 'Exam 1' } as Exam];
-        service.getRealExamSidebarData(1).subscribe((resp: Exam[]) => expect(resp).toMatchObject(returnedFromService));
+    it('should fetch real exam sidebar data successfully', () => {
+        let received: Exam[] | undefined;
+        service.getRealExamSidebarData(1).subscribe((exams) => (received = exams));
 
-        const req = httpMock.expectOne({ method: 'GET' });
-        expect(req.request.url).toBe('api/exam/courses/1/real-exams-sidebar-data');
-        req.flush(returnedFromService);
+        const req = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/real-exams-sidebar-data' });
+        req.flush([{ id: 1, title: 'Exam 1', startDate: '2026-01-01T10:00:00Z', workingTime: 3600, examMaxPoints: 10, moduleNumber: 'M1' }]);
+
+        expect(received).toHaveLength(1);
+        expect(received![0]).toMatchObject({ id: 1, title: 'Exam 1', workingTime: 3600, examMaxPoints: 10, moduleNumber: 'M1' });
+        expect(received![0].startDate?.toISOString()).toBe('2026-01-01T10:00:00.000Z');
     });
 
     it('should throw error if submission is not in time', async () => {
@@ -412,15 +421,21 @@ describe('ExamParticipationService', () => {
         req.flush('Hand-in failed', errorResponse);
     });
 
-    describe('Athena feedback for test exams', () => {
+    describe('Athena feedback requests of the generated client', () => {
+        let studentExamApi: StudentExamApi;
+
+        beforeEach(() => {
+            studentExamApi = TestBed.inject(StudentExamApi);
+        });
+
         it('should POST to the request-feedback endpoint with an empty body', () => {
             let nextCalled = false;
-            service
+            studentExamApi
                 .requestAthenaFeedback(7, 8, 9)
                 .pipe(take(1))
                 .subscribe(() => (nextCalled = true));
 
-            const req = httpMock.expectOne({ method: 'POST', url: 'api/exam/courses/7/exams/8/student-exams/9/request-feedback' });
+            const req = httpMock.expectOne({ method: 'POST', url: '/api/exam/courses/7/exams/8/student-exams/9/request-feedback' });
             expect(req.request.body).toBeNull();
             req.flush(null);
 
@@ -429,13 +444,13 @@ describe('ExamParticipationService', () => {
 
         it('should GET the Athena feedback usage and return used/limit', () => {
             const usage = { used: 3, limit: 10 };
-            let received: { used: number; limit: number } | undefined;
-            service
+            let received: AthenaFeedbackUsage | undefined;
+            studentExamApi
                 .getAthenaFeedbackUsage(7, 8, 9)
                 .pipe(take(1))
                 .subscribe((resp) => (received = resp));
 
-            const req = httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/7/exams/8/student-exams/9/athena-feedback-usage' });
+            const req = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/7/exams/8/student-exams/9/athena-feedback-usage' });
             req.flush(usage);
 
             expect(received).toEqual(usage);
@@ -443,14 +458,14 @@ describe('ExamParticipationService', () => {
 
         it('should propagate errors from the request-feedback endpoint', () => {
             let errorStatus: number | undefined;
-            service
+            studentExamApi
                 .requestAthenaFeedback(1, 2, 3)
                 .pipe(take(1))
                 .subscribe({
                     error: (err: HttpErrorResponse) => (errorStatus = err.status),
                 });
 
-            const req = httpMock.expectOne({ method: 'POST', url: 'api/exam/courses/1/exams/2/student-exams/3/request-feedback' });
+            const req = httpMock.expectOne({ method: 'POST', url: '/api/exam/courses/1/exams/2/student-exams/3/request-feedback' });
             req.flush('rate limit reached', new HttpErrorResponse({ status: 400 }));
 
             expect(errorStatus).toBe(400);

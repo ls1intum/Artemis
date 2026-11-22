@@ -6,7 +6,7 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 
 import { ExamRequestAiFeedbackButtonComponent } from 'app/exam/overview/summary/exam-request-ai-feedback-button/exam-request-ai-feedback-button.component';
-import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { UserService } from 'app/account/user/shared/user.service';
@@ -29,7 +29,6 @@ import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 
-import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
@@ -39,7 +38,7 @@ import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 describe('ExamRequestAiFeedbackButtonComponent', () => {
     let fixture: ComponentFixture<ExamRequestAiFeedbackButtonComponent>;
     let component: ExamRequestAiFeedbackButtonComponent;
-    let examParticipationService: ExamParticipationService;
+    let studentExamApi: StudentExamApi;
 
     const user = { id: 1, name: 'Test User' } as User;
     const course = { id: 1, accuracyOfScores: 2, athenaFormativeFeedbackEnabled: true } as Course;
@@ -66,7 +65,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ExamRequestAiFeedbackButtonComponent],
             providers: [
-                { provide: ExamParticipationService, useClass: MockExamParticipationService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useValue: { updateLLMSelectionDecision: vi.fn().mockReturnValue(of(undefined)) } },
@@ -78,7 +76,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
         fixture = TestBed.createComponent(ExamRequestAiFeedbackButtonComponent);
         component = fixture.componentInstance;
-        examParticipationService = TestBed.inject(ExamParticipationService);
+        studentExamApi = TestBed.inject(StudentExamApi);
 
         fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('studentExam', studentExam);
@@ -211,11 +209,11 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             expect(button.nativeElement.disabled).toBe(true);
         });
 
-        it('should call examParticipationService.requestAthenaFeedback on click', () => {
+        it('should call StudentExamApi.requestAthenaFeedback on click', () => {
             enableAthena();
             acceptLLMUsage();
 
-            const requestSpy = vi.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(of(undefined));
+            const requestSpy = vi.spyOn(studentExamApi, 'requestAthenaFeedback').mockReturnValue(of(undefined));
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
@@ -247,7 +245,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             enableAthena();
             acceptLLMUsage();
 
-            vi.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            vi.spyOn(studentExamApi, 'requestAthenaFeedback').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
@@ -262,7 +260,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             enableAthena();
             acceptLLMUsage();
 
-            vi.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            vi.spyOn(studentExamApi, 'requestAthenaFeedback').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
@@ -280,7 +278,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
         it('should fetch usage and populate used/limit for a submitted test exam', () => {
             enableAthena();
-            const usageSpy = vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of(athenaUsage));
+            const usageSpy = vi.spyOn(studentExamApi, 'getAthenaFeedbackUsage').mockReturnValue(of(athenaUsage));
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
@@ -294,7 +292,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
         it('should treat used = 0 as a real value (not undefined) and keep the button enabled', () => {
             enableAthena();
             acceptLLMUsage();
-            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
+            vi.spyOn(studentExamApi, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
@@ -310,7 +308,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
         it('should skip fetching usage for a real (non-test) exam', () => {
             enableAthena();
-            const usageSpy = vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage');
+            const usageSpy = vi.spyOn(studentExamApi, 'getAthenaFeedbackUsage');
 
             setStudentExam(withOverrides(studentExam, { submitted: true }));
             fixture.detectChanges();
@@ -321,7 +319,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
         it('should skip fetching usage when Athena is not active', () => {
             const profileService = TestBed.inject(ProfileService);
             vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
-            const usageSpy = vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage');
+            const usageSpy = vi.spyOn(studentExamApi, 'getAthenaFeedbackUsage');
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
@@ -331,7 +329,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
         it('should skip fetching usage for an unsubmitted test exam (still in conduction)', () => {
             enableAthena();
-            const usageSpy = vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage');
+            const usageSpy = vi.spyOn(studentExamApi, 'getAthenaFeedbackUsage');
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: false }));
             fixture.detectChanges();
@@ -341,7 +339,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
         it('leaves usage as loaded from the server, unaffected by later handleAthenaResult calls', () => {
             enableAthena();
-            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of(athenaUsage));
+            vi.spyOn(studentExamApi, 'getAthenaFeedbackUsage').mockReturnValue(of(athenaUsage));
 
             const athenaTextSubmission = {
                 id: 1,
@@ -370,8 +368,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
     describe('LLM selection modal', () => {
         function setupForModal(): { llmModalService: LLMSelectionModalService; userService: UserService; requestSpy: ReturnType<typeof vi.spyOn> } {
             enableAthena();
-            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
-            const requestSpy = vi.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(of(undefined));
+            vi.spyOn(studentExamApi, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
+            const requestSpy = vi.spyOn(studentExamApi, 'requestAthenaFeedback').mockReturnValue(of(undefined));
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
@@ -487,7 +485,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
     describe('eligibleExerciseIds (empty submission filter)', () => {
         it('excludes text exercises whose latest submission has no text', () => {
             enableAthena();
-            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
+            vi.spyOn(studentExamApi, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [textExercise] }));
             fixture.detectChanges();
@@ -503,7 +501,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
         it('includes a text exercise once its latest submission has text', () => {
             enableAthena();
-            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
+            vi.spyOn(studentExamApi, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
 
             const filledSubmission = { id: 1, submitted: true, text: 'student answer' } as TextSubmission;
             const filledParticipation = { id: 1, student: user, submissions: [filledSubmission] } as StudentParticipation;
@@ -579,8 +577,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
         function configureMultiExercise(): BehaviorSubject<Result | undefined>[] {
             enableAthena();
             acceptLLMUsage();
-            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
-            vi.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(of(undefined));
+            vi.spyOn(studentExamApi, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
+            vi.spyOn(studentExamApi, 'requestAthenaFeedback').mockReturnValue(of(undefined));
 
             const textSubject = new BehaviorSubject<Result | undefined>(undefined);
             const modelingSubject = new BehaviorSubject<Result | undefined>(undefined);
@@ -632,7 +630,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
         it('hydrates the received-set on init from already-present Athena results so no spinner runs, and prunes the stale localStorage flag', () => {
             enableAthena();
-            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 1, limit: 10 }));
+            vi.spyOn(studentExamApi, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 1, limit: 10 }));
 
             const submissionWithAthena = {
                 id: 10,
@@ -666,7 +664,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
     describe('subscribeToAthenaResultsForCurrentAttempt via websocket', () => {
         it('should forward Athena websocket results to handleAthenaResult without bumping usage', () => {
             enableAthena();
-            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
+            vi.spyOn(studentExamApi, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
 
             const resultSubject = new BehaviorSubject<Result | undefined>(undefined);
             const websocketService = TestBed.inject(ParticipationWebsocketService);
@@ -693,10 +691,10 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             enableAthena();
             acceptLLMUsage();
             const usageSpy = vi
-                .spyOn(examParticipationService, 'getAthenaFeedbackUsage')
+                .spyOn(studentExamApi, 'getAthenaFeedbackUsage')
                 .mockReturnValueOnce(of({ used: 0, limit: 10 }))
                 .mockReturnValueOnce(of({ used: 1, limit: 10 }));
-            vi.spyOn(examParticipationService, 'requestAthenaFeedback').mockReturnValue(of(undefined));
+            vi.spyOn(studentExamApi, 'requestAthenaFeedback').mockReturnValue(of(undefined));
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
@@ -714,7 +712,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
         it('should unsubscribe websocket subscriptions on destroy', () => {
             enableAthena();
-            vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
+            vi.spyOn(studentExamApi, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 0, limit: 10 }));
 
             const websocketService = TestBed.inject(ParticipationWebsocketService);
             vi.spyOn(websocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(new BehaviorSubject<Result | undefined>(undefined));

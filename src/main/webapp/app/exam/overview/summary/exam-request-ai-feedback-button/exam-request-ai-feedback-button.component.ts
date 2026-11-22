@@ -12,7 +12,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { UserService } from 'app/account/user/shared/user.service';
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
-import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -33,7 +33,7 @@ const FEEDBACK_REQUESTED_LOCAL_STORAGE_PREFIX = 'artemis_exam_ai_feedback_reques
     imports: [FaIconComponent, TranslateDirective, TumAetUiButtonDirective],
 })
 export class ExamRequestAiFeedbackButtonComponent {
-    private readonly examParticipationService = inject(ExamParticipationService);
+    private readonly studentExamApi = inject(StudentExamApi);
     private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);
     private readonly userService = inject(UserService);
@@ -221,7 +221,7 @@ export class ExamRequestAiFeedbackButtonComponent {
             return;
         }
         this.isRequestingFeedback.set(true);
-        this.examParticipationService
+        this.studentExamApi
             .requestAthenaFeedback(ids.courseId, ids.examId, ids.studentExamId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
@@ -259,13 +259,13 @@ export class ExamRequestAiFeedbackButtonComponent {
         if (!ids) {
             return;
         }
-        this.examParticipationService
+        this.studentExamApi
             .getAthenaFeedbackUsage(ids.courseId, ids.examId, ids.studentExamId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (usage) => {
-                    this.athenaFeedbackUsed.set(usage.used);
-                    this.athenaFeedbackLimit.set(usage.limit);
+                    this.athenaFeedbackUsed.set(usage.used ?? 0);
+                    this.athenaFeedbackLimit.set(usage.limit ?? 0);
                 },
                 error: () => onError?.(),
             });
