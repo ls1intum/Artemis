@@ -1,8 +1,8 @@
 import { signal, untracked } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
-import { ExamConductionCounts } from 'app/exam/shared/entities/exam-conduction-counts.model';
+import type { ExamChecklist } from 'app/openapi/model/exam-checklist';
+import type { ExamConductionCounts } from 'app/openapi/model/exam-conduction-counts';
 
 /** Keeps the initial checklist and live events together while bounding count refreshes to one per second. */
 export class ExamConductionCountsState {
@@ -108,9 +108,9 @@ export class ExamConductionCountsState {
                     this.retriesRemaining = 2;
                     // Events published after this request began may not be in its snapshot. A retained trailing refresh reconciles them.
                     const reconcile = (current: number, authoritative: number) => (revision === this.revision ? authoritative : Math.max(current, authoritative));
-                    this.numberOfGeneratedStudentExams.update((count) => reconcile(count, counts.numberOfGeneratedStudentExams));
-                    this.numberOfStarted.update((count) => reconcile(count, counts.numberOfExamsStarted));
-                    this.numberOfSubmitted.update((count) => reconcile(count, counts.numberOfExamsSubmitted));
+                    this.numberOfGeneratedStudentExams.update((count) => reconcile(count, counts.numberOfGeneratedStudentExams ?? 0));
+                    this.numberOfStarted.update((count) => reconcile(count, counts.numberOfExamsStarted ?? 0));
+                    this.numberOfSubmitted.update((count) => reconcile(count, counts.numberOfExamsSubmitted ?? 0));
                     this.keepCountsConsistent();
                 },
                 error: () => {

@@ -6,7 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamManagementService, ExamRegistrationResultDTO } from 'app/exam/manage/services/exam-management.service';
+import { ExamApi } from 'app/openapi/api/exam-api';
+import { ExamRegistrationResult } from 'app/openapi/model/exam-registration-result';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -30,7 +31,7 @@ import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 describe('UsersImportDialogComponent', () => {
     let fixture: ComponentFixture<UsersImportDialogComponent>;
     let component: UsersImportDialogComponent;
-    let examManagementService: ExamManagementService;
+    let examApi: ExamApi;
     let tutorialGroupApiService: TutorialGroupApi;
     let adminUserService: AdminUserService;
 
@@ -45,7 +46,7 @@ describe('UsersImportDialogComponent', () => {
             imports: [FormsModule, FaIconComponent, UsersImportDialogComponent],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(ExamManagementService),
+                MockProvider(ExamApi),
                 MockProvider(TutorialGroupApi),
                 MockProvider(AdminUserService),
                 MockProvider(HttpClient),
@@ -73,7 +74,7 @@ describe('UsersImportDialogComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(UsersImportDialogComponent);
                 component = fixture.componentInstance;
-                examManagementService = TestBed.inject(ExamManagementService);
+                examApi = TestBed.inject(ExamApi);
                 tutorialGroupApiService = TestBed.inject(TutorialGroupApi);
                 adminUserService = TestBed.inject(AdminUserService);
 
@@ -225,15 +226,13 @@ describe('UsersImportDialogComponent', () => {
         ];
         const studentsNotFound: ExamUserDTO[] = [{ registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: 'test@mail' }];
 
-        const fakeResponse = {
-            body: { notFoundStudents: studentsNotFound, rejectedStaffUsers: [] },
-        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
-        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+        const fakeResponse: ExamRegistrationResult = { notFoundStudents: studentsNotFound, rejectedStaffUsers: [] };
+        vi.spyOn(examApi, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.usersToImport.set(studentsToImport);
         component.importUsers();
 
-        expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
+        expect(examApi.addStudentsToExam).toHaveBeenCalledOnce();
         expect(component.isImporting()).toBe(false);
         expect(component.hasImported()).toBe(true);
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
@@ -364,10 +363,8 @@ describe('UsersImportDialogComponent', () => {
         ];
         const notImportedStudents: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3', email: '' }];
 
-        const fakeResponse = {
-            body: { notFoundStudents: notImportedStudents, rejectedStaffUsers: [] },
-        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
-        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+        const fakeResponse: ExamRegistrationResult = { notFoundStudents: notImportedStudents, rejectedStaffUsers: [] };
+        vi.spyOn(examApi, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.usersToImport.set(importedStudents.concat(notImportedStudents));
         component.importUsers();
@@ -386,10 +383,8 @@ describe('UsersImportDialogComponent', () => {
         ];
         const studentsNotFound: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3', email: '' }];
 
-        const fakeResponse = {
-            body: { notFoundStudents: studentsNotFound, rejectedStaffUsers: [] },
-        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
-        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+        const fakeResponse: ExamRegistrationResult = { notFoundStudents: studentsNotFound, rejectedStaffUsers: [] };
+        vi.spyOn(examApi, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.open();
         // Set usersToImport after open() since open() calls resetDialog() which clears the array
@@ -403,19 +398,19 @@ describe('UsersImportDialogComponent', () => {
         // The "Import" button is wired to importUsers() via its (click) handler.
         component.importUsers();
 
-        expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
+        expect(examApi.addStudentsToExam).toHaveBeenCalledOnce();
         expect(component.isImporting()).toBe(false);
         expect(component.hasImported()).toBe(true);
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
 
-        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+        vi.spyOn(examApi, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.hasImported.set(true);
         fixture.detectChanges();
 
         // The "Finish" button is wired to onFinish() via its (click) handler and must NOT trigger another REST call.
         component.onFinish();
-        expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
+        expect(examApi.addStudentsToExam).toHaveBeenCalledOnce();
     });
 
     it('should expose validationError for invalid exam user csv rows', async () => {
@@ -556,10 +551,8 @@ describe('UsersImportDialogComponent', () => {
             { registrationNumber: '2', firstName: 'Edith', lastName: 'Editor', login: 'editor1', email: '' },
             { registrationNumber: '3', firstName: 'Toni', lastName: 'Tutor', login: 'tutor1', email: '' },
         ];
-        const fakeResponse = {
-            body: { notFoundStudents: [], rejectedStaffUsers: rejectedStaff },
-        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
-        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+        const fakeResponse: ExamRegistrationResult = { notFoundStudents: [], rejectedStaffUsers: rejectedStaff };
+        vi.spyOn(examApi, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.examUsersToImport.set(studentsToImport);
         component.importUsers();
@@ -577,10 +570,8 @@ describe('UsersImportDialogComponent', () => {
     it('should not show staff rejection alert when no staff is rejected', () => {
         fixture.componentRef.setInput('examUserMode', true);
         const studentsToImport: ExamUserDTO[] = [{ registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: '' }];
-        const fakeResponse = {
-            body: { notFoundStudents: [], rejectedStaffUsers: [] },
-        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
-        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+        const fakeResponse: ExamRegistrationResult = { notFoundStudents: [], rejectedStaffUsers: [] };
+        vi.spyOn(examApi, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
         const alertService = TestBed.inject(AlertService);
         const alertSpy = vi.spyOn(alertService, 'error');
 
@@ -599,10 +590,8 @@ describe('UsersImportDialogComponent', () => {
         ];
         const notFoundStudents: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Ghost', lastName: 'User', login: 'ghost1', email: '' }];
         const rejectedStaff: ExamUserDTO[] = [{ registrationNumber: '2', firstName: 'Edith', lastName: 'Editor', login: 'editor1', email: '' }];
-        const fakeResponse = {
-            body: { notFoundStudents, rejectedStaffUsers: rejectedStaff },
-        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
-        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+        const fakeResponse: ExamRegistrationResult = { notFoundStudents, rejectedStaffUsers: rejectedStaff };
+        vi.spyOn(examApi, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.examUsersToImport.set(studentsToImport);
         component.importUsers();

@@ -5,6 +5,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamApi } from 'app/openapi/api/exam-api';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
@@ -44,6 +45,7 @@ export type CourseExamArchiveState = {
 export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private examService = inject(ExamManagementService);
+    private examApi = inject(ExamApi);
     private alertService = inject(AlertService);
     private websocketService = inject(WebsocketService);
     private translateService = inject(TranslateService);
@@ -235,8 +237,8 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         const exam = this.currentExam();
 
         if (this.archiveMode() === 'Exam' && exam?.id) {
-            this.examService.find(course.id, exam.id).subscribe((res) => {
-                this.currentExam.set(res.body ?? undefined);
+            this.examService.find(course.id, exam.id).subscribe((reloadedExam) => {
+                this.currentExam.set(reloadedExam);
             });
         } else {
             this.courseService.findForInstructor(course.id).subscribe((res) => {
@@ -320,7 +322,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
             return;
         }
         if (this.archiveMode() === 'Exam' && exam) {
-            this.examService.archiveExam(course.id, exam.id!).subscribe();
+            this.examApi.archiveExam(course.id, exam.id!).subscribe();
         } else {
             this.courseService.archiveCourse(course.id).subscribe();
         }
@@ -343,7 +345,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         const exam = this.currentExam();
         const course = this.currentCourse();
         if (this.archiveMode() === 'Exam' && exam && course?.id) {
-            this.examService.cleanupExam(course.id, exam.id!).subscribe({
+            this.examApi.cleanup(course.id, exam.id!).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.programmingExercise.cleanup.successMessageCleanup');
                     this.dialogErrorSource.next('');

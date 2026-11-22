@@ -25,7 +25,7 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamUserApi } from 'app/openapi/api/exam-user-api';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ExamBarComponent } from 'app/exam/overview/exam-bar/exam-bar.component';
 import { ExamParticipationCoverComponent } from 'app/exam/overview/exam-cover/exam-participation-cover.component';
@@ -87,7 +87,7 @@ describe('ExamParticipationComponent', () => {
     let translateService: TranslateService;
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
-    let examManagementService: ExamManagementService;
+    let examUserApi: ExamUserApi;
     let courseOverviewTabDataService: CourseOverviewTabDataService;
 
     function setupActivatedRouteMock() {
@@ -170,7 +170,7 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(CourseExerciseService),
                 MockProvider(ArtemisDatePipe),
-                MockProvider(ExamManagementService),
+                MockProvider(ExamUserApi),
                 MockProvider(CourseOverviewTabDataService),
                 { provide: ProfileService, useClass: MockProfileService },
             ],
@@ -196,7 +196,7 @@ describe('ExamParticipationComponent', () => {
         translateService = TestBed.inject(TranslateService);
         courseService = TestBed.inject(CourseManagementService);
         courseStorageService = TestBed.inject(CourseStorageService);
-        examManagementService = TestBed.inject(ExamManagementService);
+        examUserApi = TestBed.inject(ExamUserApi);
         courseOverviewTabDataService = TestBed.inject(CourseOverviewTabDataService);
         vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([]));
         // Ensure the mocked service has the currentlyLoadedStudentExam Subject in place; otherwise pipelines triggered
@@ -1934,7 +1934,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam().examMode = ExamMode.TEST;
 
             // Spy on the method isAttendanceChecked
-            const attendanceCheckSpy = vi.spyOn<any, any>(examManagementService, 'isAttendanceChecked');
+            const attendanceCheckSpy = vi.spyOn<any, any>(examUserApi, 'isAttendanceChecked');
 
             // Call toggleHandInEarly to change the handInEarly state
             comp.toggleHandInEarly();
@@ -1948,7 +1948,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam().examWithAttendanceCheck = false;
 
             // Spy on the method isAttendanceChecked
-            const attendanceCheckSpy = vi.spyOn<any, any>(examManagementService, 'isAttendanceChecked');
+            const attendanceCheckSpy = vi.spyOn<any, any>(examUserApi, 'isAttendanceChecked');
 
             // Call toggleHandInEarly to change the handInEarly state
             comp.toggleHandInEarly();
@@ -1961,7 +1961,7 @@ describe('ExamParticipationComponent', () => {
             comp.handInEarly.set(true);
 
             // Spy on the method isAttendanceChecked
-            const attendanceCheckSpy = vi.spyOn<any, any>(examManagementService, 'isAttendanceChecked');
+            const attendanceCheckSpy = vi.spyOn<any, any>(examUserApi, 'isAttendanceChecked');
 
             // Call toggleHandInEarly to change the handInEarly state
             comp.toggleHandInEarly();
@@ -1975,7 +1975,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam().examWithAttendanceCheck = true;
 
             // Spy on the method isAttendanceChecked
-            const attendanceCheckSpy = vi.spyOn<any, any>(examManagementService, 'isAttendanceChecked').mockReturnValue(of(new HttpResponse({ body: true })));
+            const attendanceCheckSpy = vi.spyOn<any, any>(examUserApi, 'isAttendanceChecked').mockReturnValue(of(true));
 
             // Call toggleHandInEarly to change the handInEarly state
             comp.toggleHandInEarly();

@@ -4,7 +4,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal/create-test-run-modal.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -21,7 +21,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
-import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
+import type { StudentExam } from 'app/openapi/model/student-exam';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import {
@@ -60,18 +61,19 @@ export class TestRunManagementComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private examManagementService = inject(ExamManagementService);
+    private studentExamApi = inject(StudentExamApi);
     private accountService = inject(AccountService);
     private sortService = inject(SortService);
 
     readonly deleteDialogVisible = signal(false);
-    readonly testRunToDelete = signal<StudentExamDTO | undefined>(undefined);
+    readonly testRunToDelete = signal<StudentExam | undefined>(undefined);
 
     course = signal<Course | undefined>(undefined);
     exam = signal<Exam | undefined>(undefined);
     isLoading = signal(false);
     createTestRunDialogVisible = signal(false);
     isExamStarted = computed(() => this.exam()?.started || false);
-    testRuns = signal<StudentExamDTO[]>([]);
+    testRuns = signal<StudentExam[]>([]);
     instructor = signal<User | undefined>(undefined);
     predicate = signal<string>('id');
     ascending = signal<boolean>(true);
@@ -98,14 +100,14 @@ export class TestRunManagementComponent implements OnInit {
 
     ngOnInit(): void {
         this.examManagementService.find(Number(this.route.snapshot.paramMap.get('courseId')), Number(this.route.snapshot.paramMap.get('examId')), true).subscribe({
-            next: (response: HttpResponse<Exam>) => {
-                this.exam.set(response.body!);
+            next: (exam: Exam) => {
+                this.exam.set(exam);
                 this.course.set(this.exam()!.course);
                 const course = this.course()!;
                 course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
-                this.examManagementService.findAllTestRunsForExam(course.id!, this.exam()!.id!).subscribe({
-                    next: (res: HttpResponse<StudentExamDTO[]>) => {
-                        this.testRuns.set(res.body!);
+                this.studentExamApi.findAllTestRunsForExam(course.id!, this.exam()!.id!).subscribe({
+                    next: (testRuns: StudentExam[]) => {
+                        this.testRuns.set(testRuns);
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
@@ -131,10 +133,10 @@ export class TestRunManagementComponent implements OnInit {
      * @param testRunConfiguration the configuration chosen by the instructor
      */
     createTestRun(testRunConfiguration: CreateTestRunDTO) {
-        this.examManagementService.createTestRun(this.course()!.id!, this.exam()!.id!, testRunConfiguration).subscribe({
-            next: (response: HttpResponse<StudentExamDTO>) => {
-                if (response.body != undefined) {
-                    this.testRuns.update((current) => [...current, response.body!]);
+        this.studentExamApi.createTestRun(this.course()!.id!, this.exam()!.id!, testRunConfiguration).subscribe({
+            next: (testRun: StudentExam) => {
+                if (testRun != undefined) {
+                    this.testRuns.update((current) => [...current, testRun]);
                 }
             },
             error: (error: HttpErrorResponse) => {
@@ -143,7 +145,7 @@ export class TestRunManagementComponent implements OnInit {
         });
     }
 
-    openDeleteDialog(testRun: StudentExamDTO) {
+    openDeleteDialog(testRun: StudentExam) {
         this.testRunToDelete.set(testRun);
         this.deleteDialogVisible.set(true);
     }
@@ -153,12 +155,12 @@ export class TestRunManagementComponent implements OnInit {
      * @param testRunId
      */
     deleteTestRun(testRunId: number) {
-        this.examManagementService.deleteTestRun(this.course()!.id!, this.exam()!.id!, testRunId).subscribe({
+        this.studentExamApi.deleteTestRun(this.course()!.id!, this.exam()!.id!, testRunId).subscribe({
             next: () => {
                 this.testRuns.update((currentTestRuns) => currentTestRuns.filter((testRun) => testRun.id !== testRunId));
                 this.dialogErrorSource.next('');
             },
-            error: (error) => this.dialogErrorSource.next(error.message),
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 
@@ -167,7 +169,7 @@ export class TestRunManagementComponent implements OnInit {
      * @param _index
      * @param item
      */
-    trackId(_index: number, item: StudentExamDTO) {
+    trackId(_index: number, item: StudentExam) {
         return item.id;
     }
 

@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamApi } from 'app/openapi/api/exam-api';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -71,6 +73,8 @@ describe('ExamStudentsComponent', () => {
     let component: ExamStudentsComponent;
     let fixture: ComponentFixture<ExamStudentsComponent>;
     let examManagementService: ExamManagementService;
+    let examApi: ExamApi;
+    let studentExamApi: StudentExamApi;
     let router: Router;
     let alertService: AlertService;
 
@@ -99,10 +103,12 @@ describe('ExamStudentsComponent', () => {
         fixture = TestBed.createComponent(ExamStudentsComponent);
         component = fixture.componentInstance;
         examManagementService = TestBed.inject(ExamManagementService);
+        examApi = TestBed.inject(ExamApi);
+        studentExamApi = TestBed.inject(StudentExamApi);
 
-        vi.spyOn(examManagementService, 'getExerciseStartStatus').mockReturnValue(of(new HttpResponse({ body: null as any })));
+        vi.spyOn(examManagementService, 'getExerciseStartStatus').mockReturnValue(of(null));
         vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [mockDto], totalElements: 1 }));
-        vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithCourse })));
+        vi.spyOn(examManagementService, 'find').mockReturnValue(of(examWithCourse));
 
         router = TestBed.inject(Router);
         alertService = TestBed.inject(AlertService);
@@ -429,7 +435,7 @@ describe('ExamStudentsComponent', () => {
     describe('removeFromExam', () => {
         it('should call removeStudentFromExam with login from DTO and trigger reload', () => {
             fixture.detectChanges();
-            const removeSpy = vi.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse<void>()));
+            const removeSpy = vi.spyOn(examApi, 'removeStudentFromExam').mockReturnValue(of(undefined));
             const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
 
             component.removeFromExam(mockDto, { deleteParticipationsAndSubmission: false });
@@ -440,7 +446,7 @@ describe('ExamStudentsComponent', () => {
 
         it('should pass deleteParticipationsAndSubmission=true when checked', () => {
             fixture.detectChanges();
-            const removeSpy = vi.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse<void>()));
+            const removeSpy = vi.spyOn(examApi, 'removeStudentFromExam').mockReturnValue(of(undefined));
 
             component.removeFromExam(mockDto, { deleteParticipationsAndSubmission: true });
 
@@ -449,7 +455,7 @@ describe('ExamStudentsComponent', () => {
 
         it('should not call removeStudentFromExam when login is missing in DTO', () => {
             fixture.detectChanges();
-            const removeSpy = vi.spyOn(examManagementService, 'removeStudentFromExam');
+            const removeSpy = vi.spyOn(examApi, 'removeStudentFromExam');
 
             component.removeFromExam({ ...mockDto, login: undefined }, { deleteParticipationsAndSubmission: false });
 
@@ -460,7 +466,7 @@ describe('ExamStudentsComponent', () => {
     describe('removeAllStudents', () => {
         it('should call removeAllStudentsFromExam and trigger reload on success', () => {
             fixture.detectChanges();
-            const removeSpy = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
+            const removeSpy = vi.spyOn(examApi, 'removeAllStudentsFromExam').mockReturnValue(of(undefined));
             const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
 
             component.removeAllStudents({ deleteParticipationsAndSubmission: false });
@@ -473,7 +479,7 @@ describe('ExamStudentsComponent', () => {
     describe('registerAllStudentsFromCourse', () => {
         it('should report a failed bulk registration without refreshing the student list', () => {
             fixture.detectChanges();
-            vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            vi.spyOn(examApi, 'registerCourseStudents').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
             const refresh = vi.spyOn(component, 'reloadStudentsView');
             vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm').mockImplementation((options) => options.accept());
             component.registerAllStudentsFromCourse();
@@ -483,7 +489,7 @@ describe('ExamStudentsComponent', () => {
 
         it('should call addAllStudentsOfCourseToExam and trigger reload on success', () => {
             fixture.detectChanges();
-            const addSpy = vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(of(new HttpResponse<void>()));
+            const addSpy = vi.spyOn(examApi, 'registerCourseStudents').mockReturnValue(of(undefined));
             const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
             vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm').mockImplementation((options) => options.accept());
 
@@ -503,7 +509,7 @@ describe('ExamStudentsComponent', () => {
             vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open } as never);
             const importOpen = vi.fn();
             vi.spyOn(component, 'usersImportDialog').mockReturnValue({ open: importOpen } as never);
-            const register = vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam');
+            const register = vi.spyOn(examApi, 'registerCourseStudents');
             for (const index of [0, 1, 3]) {
                 component.manageStudentsMenuActions()[index].command();
             }
@@ -600,15 +606,11 @@ describe('ExamStudentsComponent', () => {
 
         it('should register users and show alerts for not found and rejected staff users', () => {
             fixture.detectChanges();
-            const addSpy = vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(
-                of(
-                    new HttpResponse({
-                        body: {
-                            notFoundStudents: [{ login: 'missing', firstName: '', lastName: '', registrationNumber: '', email: '' }],
-                            rejectedStaffUsers: [{ login: 'staff', firstName: '', lastName: '', registrationNumber: '', email: '' }],
-                        },
-                    }),
-                ),
+            const addSpy = vi.spyOn(examApi, 'addStudentsToExam').mockReturnValue(
+                of({
+                    notFoundStudents: [{ login: 'missing', firstName: '', lastName: '', registrationNumber: '', email: '' }],
+                    rejectedStaffUsers: [{ login: 'staff', firstName: '', lastName: '', registrationNumber: '', email: '' }],
+                }),
             );
             const errorSpy = vi.spyOn(alertService, 'error');
 
@@ -653,9 +655,7 @@ describe('ExamStudentsComponent', () => {
     describe('generateMissingStudentExams', () => {
         it('should call generateMissingStudentExams, show success alert, and reload', () => {
             fixture.detectChanges();
-            const generateSpy = vi
-                .spyOn(examManagementService, 'generateMissingStudentExams')
-                .mockReturnValue(of(new HttpResponse({ body: [{} as StudentExam, {} as StudentExam] })));
+            const generateSpy = vi.spyOn(examApi, 'generateMissingStudentExams').mockReturnValue(of([{}, {}]));
             const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
             const successSpy = vi.spyOn(alertService, 'success');
 
@@ -668,9 +668,7 @@ describe('ExamStudentsComponent', () => {
 
         it('should show error alert and reset isLoading on failure', () => {
             fixture.detectChanges();
-            vi.spyOn(examManagementService, 'generateMissingStudentExams').mockReturnValue(
-                throwError(() => new HttpErrorResponse({ error: { message: 'generation failed' }, status: 500 })),
-            );
+            vi.spyOn(examApi, 'generateMissingStudentExams').mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'generation failed' }, status: 500 })));
             const errorSpy = vi.spyOn(alertService, 'error');
 
             component.generateMissingStudentExams();
@@ -683,10 +681,8 @@ describe('ExamStudentsComponent', () => {
     describe('startExercises', () => {
         it('should call startExercises, show success alert, and reset isLoading', () => {
             fixture.detectChanges();
-            vi.mocked(examManagementService.getExerciseStartStatus).mockReturnValue(
-                of(new HttpResponse({ body: { finished: 2, failed: 0, overall: 2 } as ExamExerciseStartPreparationStatus })),
-            );
-            vi.spyOn(examManagementService, 'startExercises').mockReturnValue(of(new HttpResponse({ body: null })));
+            vi.mocked(examManagementService.getExerciseStartStatus).mockReturnValue(of({ finished: 2, failed: 0, overall: 2 } as ExamExerciseStartPreparationStatus));
+            vi.spyOn(studentExamApi, 'startExercises').mockReturnValue(of(undefined));
             const successSpy = vi.spyOn(alertService, 'success');
 
             component.startExercises();
@@ -697,7 +693,7 @@ describe('ExamStudentsComponent', () => {
 
         it('should show error alert and reset isLoading when starting exercises fails', () => {
             fixture.detectChanges();
-            vi.spyOn(examManagementService, 'startExercises').mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'start failed' }, status: 500 })));
+            vi.spyOn(studentExamApi, 'startExercises').mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'start failed' }, status: 500 })));
             const errorSpy = vi.spyOn(alertService, 'error');
 
             component.startExercises();
@@ -735,7 +731,7 @@ describe('ExamStudentsComponent', () => {
         it('should show a confirmation dialog when student exams already exist and call generateStudentExams on accept', () => {
             fixture.detectChanges();
             component.studentExamCount.set(2);
-            const generateSpy = vi.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(of(new HttpResponse({ body: [] as any })));
+            const generateSpy = vi.spyOn(examApi, 'generateStudentExams').mockReturnValue(of([]));
             const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
             const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((options) => options.accept());
 
@@ -747,7 +743,7 @@ describe('ExamStudentsComponent', () => {
 
         it('should call generateStudentExams directly when no student exams exist yet', () => {
             fixture.detectChanges();
-            const generateSpy = vi.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(of(new HttpResponse({ body: [] as any })));
+            const generateSpy = vi.spyOn(examApi, 'generateStudentExams').mockReturnValue(of([]));
             component.studentExamCount.set(0);
 
             component.handleGenerateStudentExams();
@@ -987,9 +983,9 @@ describe('ExamStudentsComponent accessible names', () => {
         }).compileComponents();
 
         const examManagementService = TestBed.inject(ExamManagementService);
-        vi.spyOn(examManagementService, 'getExerciseStartStatus').mockReturnValue(of(new HttpResponse({ body: null as any })));
+        vi.spyOn(examManagementService, 'getExerciseStartStatus').mockReturnValue(of(null));
         vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [failedDto, passedDto, absentDto], totalElements: 3 }));
-        vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
+        vi.spyOn(examManagementService, 'find').mockReturnValue(of(exam));
 
         fixture = TestBed.createComponent(ExamStudentsComponent);
         fixture.detectChanges();

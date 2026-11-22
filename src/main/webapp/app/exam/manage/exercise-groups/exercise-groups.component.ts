@@ -153,11 +153,11 @@ export class ExerciseGroupsComponent implements OnInit {
         this.examId.set(Number(this.route.snapshot.paramMap.get('examId')));
         // Only take action when a response was received for both requests
         forkJoin([this.loadExerciseGroups(), this.loadLatestIndividualEndDateOfExam()]).subscribe({
-            next: ([examRes, examInfoDTO]) => {
-                this.exam.set(examRes.body!);
+            next: ([exam, examInfoDTO]) => {
+                this.exam.set(exam);
                 this.exerciseGroups.set(this.exam()!.exerciseGroups);
                 this.course.set(this.exam()!.course);
-                this.latestIndividualEndDate.set(examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined);
+                this.latestIndividualEndDate.set(examInfoDTO ? examInfoDTO.latestIndividualEndDate : undefined);
                 this.resumeRunningDeletion();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -201,7 +201,7 @@ export class ExerciseGroupsComponent implements OnInit {
     reloadExerciseGroups() {
         this.loadExerciseGroups()
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({ next: (res) => this.exerciseGroups.set(res.body?.exerciseGroups) });
+            .subscribe({ next: (exam) => this.exerciseGroups.set(exam.exerciseGroups) });
     }
 
     /**

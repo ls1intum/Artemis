@@ -133,8 +133,8 @@ export class QuizQuestionListEditExistingComponent {
                 this.courseManagementService.getAllCoursesWithQuizExercises().subscribe((res: HttpResponse<Course[]>) => {
                     this.courses.set(res.body!);
                 });
-                this.examManagementService.findAllExamsAccessibleToUser(this.courseId()!).subscribe((res: HttpResponse<Exam[]>) => {
-                    this.exams.set(res.body!);
+                this.examManagementService.findAllExamsAccessibleToUser(this.courseId()!).subscribe((exams) => {
+                    this.exams.set(exams);
                 });
             }
         });

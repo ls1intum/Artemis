@@ -1,78 +1,83 @@
-import { ExamConductionCounts } from 'app/exam/shared/entities/exam-conduction-counts.model';
 import { Service, inject } from '@angular/core';
-import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
-import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
-import { ExamUsersNotFoundDTO } from 'app/exam/shared/entities/exam-users-not-found-dto.model';
+import { HttpErrorResponse } from '@angular/common/http';
 import { filter, map, tap } from 'rxjs/operators';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
+import { ExamApi } from 'app/openapi/api/exam-api';
+import { ExamUserApi } from 'app/openapi/api/exam-user-api';
+import { ExerciseGroupApi } from 'app/openapi/api/exercise-group-api';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
+import { AdminExamApi } from 'app/openapi/api/admin-exam-api';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { createRequestOption } from 'app/foundation/util/request.util';
-import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
-import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
-import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { Submission, reconnectSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { convertDateFromServer } from 'app/foundation/util/date.utils';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { ExamWideAnnouncementEvent } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { ExamDeletionSummaryDTO } from 'app/exam/shared/entities/exam-deletion-summary.model';
 import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { buildExamDeletionSummary } from 'app/exam/manage/services/exam-deletion-summary.util';
-import { ExamUpdateDTO, toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
-import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
+import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
-import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
+import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
-import { ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
+import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import type { ExamImport } from 'app/openapi/model/exam-import';
+import type { ExerciseGroupImport } from 'app/openapi/model/exercise-group-import';
+import type { ExerciseImport } from 'app/openapi/model/exercise-import';
 import { ExamImportProgress } from 'app/exam/shared/entities/exam-import-progress.model';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
-import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
+import { ExamSource, toExam, toRows } from 'app/exam/manage/util/generated-exam.util';
 
-type EntityResponseType = HttpResponse<Exam>;
-type EntityArrayResponseType = HttpResponse<Exam[]>;
+/** The error of a save that the server would reject for a missing mandatory field. The exam form cannot be submitted that way, so this is a guard for the types. */
+function missingMandatoryField(url: string): Observable<never> {
+    return throwError(() => new HttpErrorResponse({ status: 400, statusText: 'Bad Request', url }));
+}
 
 @Service()
 export class ExamManagementService {
-    private http = inject(HttpClient);
+    private examApi = inject(ExamApi);
+    private exerciseGroupApi = inject(ExerciseGroupApi);
+    private examUserApi = inject(ExamUserApi);
+    private studentExamApi = inject(StudentExamApi);
+    private adminExamApi = inject(AdminExamApi);
     private accountService = inject(AccountService);
     private entityTitleService = inject(EntityTitleService);
     private websocketService = inject(WebsocketService);
 
     public resourceUrl = 'api/exam/courses';
-    public adminResourceUrl = 'api/exam/admin/courses';
 
     /**
-     * Create an exam on the server using a POST request.
+     * Create an exam on the server.
      * @param courseId The course id.
      * @param exam The exam to create.
      */
-    create(courseId: number, exam: Exam): Observable<EntityResponseType> {
+    create(courseId: number, exam: Exam): Observable<Exam> {
         const dto = toExamUpdateDTO(exam);
-        return this.http
-            .post<Exam>(`${this.resourceUrl}/${courseId}/exams`, dto, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+        const { title, visibleDate, startDate, endDate } = dto;
+        if (!title || !visibleDate || !startDate || !endDate) {
+            return missingMandatoryField(`/api/exam/courses/${courseId}/exams`);
+        }
+        return this.examApi.createExam(courseId, cloneWith(dto, { title, visibleDate, startDate, endDate })).pipe(map((created) => this.processExam(created)));
     }
 
     /**
-     * Update an exam on the server using a PUT request.
+     * Update an exam on the server.
      * @param courseId The course id.
      * @param exam The exam to update.
      */
-    update(courseId: number, exam: Exam): Observable<EntityResponseType> {
+    update(courseId: number, exam: Exam): Observable<Exam> {
         const dto = toExamUpdateDTO(exam);
-        return this.http
-            .put<Exam>(`${this.resourceUrl}/${courseId}/exams`, dto, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+        const { title, visibleDate, startDate, endDate } = dto;
+        if (!title || !visibleDate || !startDate || !endDate) {
+            return missingMandatoryField(`/api/exam/courses/${courseId}/exams`);
+        }
+        return this.examApi.updateExam(courseId, cloneWith(dto, { title, visibleDate, startDate, endDate })).pipe(map((updated) => this.processExam(updated)));
     }
 
     /**
@@ -81,37 +86,40 @@ export class ExamManagementService {
      * @param examId The exam id.
      * @param workingTimeChange The amount of time in seconds by which the working time should be increased or decreased. It can be positive or negative, but must not be 0.
      */
-    updateWorkingTime(courseId: number, examId: number, workingTimeChange: number): Observable<EntityResponseType> {
-        return this.http
-            .patch(`${this.resourceUrl}/${courseId}/exams/${examId}/working-time`, workingTimeChange, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+    updateWorkingTime(courseId: number, examId: number, workingTimeChange: number): Observable<Exam> {
+        return this.examApi.updateExamWorkingTime(courseId, examId, workingTimeChange).pipe(map((exam) => this.processExam(exam)));
     }
 
     getAnnouncements(courseId: number, examId: number): Observable<ExamWideAnnouncementEvent[]> {
-        return this.http.get<ExamWideAnnouncementEvent[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/announcements`).pipe(
+        return this.examApi.getExamAnnouncements(courseId, examId).pipe(
             map((events) => {
-                for (const event of events) {
-                    event.createdDate = convertDateFromServer(event.createdDate)!;
-                }
-                return events;
+                const announcements = toRows<ExamWideAnnouncementEvent>(events);
+                announcements.forEach((event) => this.convertCreatedDate(event));
+                return announcements;
             }),
         );
     }
 
     createAnnouncement(courseId: number, examId: number, content: string): Observable<ExamWideAnnouncementEvent> {
-        return this.http.post<ExamWideAnnouncementEvent>(`${this.resourceUrl}/${courseId}/exams/${examId}/announcements`, content, { observe: 'response' }).pipe(
-            map((res: HttpResponse<ExamWideAnnouncementEvent>) => {
-                const event = res.body!;
-                event.createdDate = convertDateFromServer(event.createdDate)!;
-                return event;
+        return this.examApi.createExamAnnouncement(courseId, examId, content).pipe(
+            map((created) => {
+                const [announcement] = toRows<ExamWideAnnouncementEvent>([created]);
+                this.convertCreatedDate(announcement);
+                return announcement;
             }),
         );
     }
 
+    private convertCreatedDate(event: ExamWideAnnouncementEvent) {
+        if (event.createdDate) {
+            event.createdDate = dayjs(event.createdDate);
+        }
+    }
+
     /**
-     * Imports an exam together with its exercises on the server using a POST request.
+     * Imports an exam together with its exercises on the server.
      * <p>
-     * The returned response carries the full {@link ExamImportResultDTO}: the created exam plus the titles of any
+     * The result carries the full {@link ExamImportResultDTO}: the created exam plus the titles of any
      * exercises that were skipped or only incompletely imported. The import progress dialog renders these (and the live
      * websocket progress for the given {@code importId}) instead of a transient toast.
      *
@@ -119,21 +127,20 @@ export class ExamManagementService {
      * @param exam the exam with exercises to import
      * @param importId a client-generated id correlating this import with its websocket progress channel
      */
-    import(courseId: number, exam: Exam, importId: string): Observable<HttpResponse<ExamImportResultDTO>> {
+    import(courseId: number, exam: Exam, importId: string): Observable<ExamImportResultDTO> {
         const dto = ExamManagementService.convertExamToImportDTO(exam, courseId);
-        return this.http.post<ExamImportResultDTO>(`${this.resourceUrl}/${courseId}/exam-import`, dto, { params: { importId }, observe: 'response' }).pipe(
-            // Apply the same post-processing the (non-DTO) endpoints do for a returned exam: convert server dates, set course
-            // access rights and prime the title cache for the imported exam.
-            tap((res) => {
-                if (res.body?.exam) {
-                    this.convertExamFromServerAndSendTitles(res.body.exam);
-                }
-            }),
+        if (!dto) {
+            return missingMandatoryField(`/api/exam/courses/${courseId}/exam-import`);
+        }
+        return this.examApi.importExamWithExercises(courseId, dto, importId).pipe(
+            map((response) => hydrate(new ExamImportResultDTO(), response)),
+            // Prime the title cache for the imported exam.
+            tap((result) => this.registerExam(result.exam)),
         );
     }
 
     /**
-     * Imports exercise groups into an existing exam on the server using a POST request.
+     * Imports exercise groups into an existing exam on the server.
      * <p>
      * The response carries the full {@link ExerciseGroupImportResultDTO} (the exam's exercise groups plus the skipped /
      * incomplete exercise titles) so the import progress dialog can show the outcome.
@@ -143,12 +150,12 @@ export class ExamManagementService {
      * @param exerciseGroups the exercise groups to be added to the exam
      * @param importId a client-generated id correlating this import with its websocket progress channel
      */
-    importExerciseGroup(courseId: number, examId: number, exerciseGroups: ExerciseGroup[], importId: string): Observable<HttpResponse<ExerciseGroupImportResultDTO>> {
+    importExerciseGroup(courseId: number, examId: number, exerciseGroups: ExerciseGroup[], importId: string): Observable<ExerciseGroupImportResultDTO> {
         const dtos = ExamManagementService.convertExerciseGroupsToImportDTOs(exerciseGroups);
-        return this.http.post<ExerciseGroupImportResultDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/import-exercise-group`, dtos, {
-            params: { importId },
-            observe: 'response',
-        });
+        if (!dtos) {
+            return missingMandatoryField(`/api/exam/courses/${courseId}/exams/${examId}/import-exercise-group`);
+        }
+        return this.exerciseGroupApi.importExerciseGroup(courseId, examId, dtos, importId).pipe(map((response) => hydrate(new ExerciseGroupImportResultDTO(), response)));
     }
 
     /**
@@ -170,85 +177,44 @@ export class ExamManagementService {
     }
 
     /**
-     * Find an exam on the server using a GET request.
+     * Find an exam on the server.
      * @param courseId The course id.
      * @param examId The id of the exam to get.
      * @param withExerciseGroups Boolean flag whether to fetch all exercise groups of the exam
      */
-    find(courseId: number, examId: number, withExerciseGroups = false): Observable<EntityResponseType> {
-        const options = createRequestOption({ withExerciseGroups });
-        return this.http
-            .get<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { params: options, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+    find(courseId: number, examId: number, withExerciseGroups = false): Observable<Exam> {
+        return this.examApi.getExam(courseId, examId, withExerciseGroups).pipe(map((exam) => this.processExam(exam)));
     }
 
     /**
-     * Find an exam on the server using a GET request with exercises for the exam import
+     * Find an exam on the server with exercises for the exam import
      * @param examId The id of the exam to get.
      */
-    findWithExercisesAndWithoutCourseId(examId: number): Observable<EntityResponseType> {
-        return this.http.get<Exam>(`api/exam/exams/${examId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
-    }
-
-    /**
-     * Find all scores of an exam.
-     * @param courseId The id of the course.
-     * @param examId The id of the exam.
-     */
-    getExamScores(courseId: number, examId: number): Observable<HttpResponse<ExamScoreDTO>> {
-        return this.http.get<ExamScoreDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/scores`, { observe: 'response' });
-    }
-
-    /**
-     * Get the exam statistics used within the instructor exam checklist
-     * @param courseId The id of the course.
-     * @param examId The id of the exam.
-     */
-    getExamStatistics(courseId: number, examId: number, audience: 'tutor' | 'instructor' = 'tutor'): Observable<HttpResponse<ExamChecklist>> {
-        const suffix = audience === 'instructor' ? '/for-instructor' : '';
-        return this.http.get<ExamChecklist>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics${suffix}`, { observe: 'response' });
-    }
-
-    getExamConductionCounts(courseId: number, examId: number): Observable<ExamConductionCounts> {
-        return this.http.get<ExamConductionCounts>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics/conduction`);
-    }
-
-    /**
-     * returns the stats of the exam with the provided unique identifiers for the assessment dashboard
-     * @param courseId - the id of the course
-     * @param examId   - the id of the exam
-     */
-    getStatsForExamAssessmentDashboard(courseId: number, examId: number): Observable<HttpResponse<StatsForDashboard>> {
-        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/exams/${examId}/stats-for-exam-assessment-dashboard`, { observe: 'response' });
+    findWithExercisesAndWithoutCourseId(examId: number): Observable<Exam> {
+        return this.examApi.getExamForImportWithExercises(examId).pipe(map((exam) => this.processExam(exam)));
     }
 
     /**
      * Find all exams for the given course.
      * @param courseId The course id.
      */
-    findAllExamsForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.processExamArrayResponseFromServer(res)));
+    findAllExamsForCourse(courseId: number): Observable<Exam[]> {
+        return this.examApi.getExamsForCourse(courseId).pipe(map((exams) => exams.map((exam) => this.processExam(exam))));
     }
 
     /**
      * Find all exams where the in the course they are conducted the user has instructor rights
      * @param courseId The course id where the quiz should be created
      */
-    findAllExamsAccessibleToUser(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams-for-user`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.processExamArrayResponseFromServer(res)));
+    findAllExamsAccessibleToUser(courseId: number): Observable<Exam[]> {
+        return this.examApi.getExamsWithQuizExercisesForUser(courseId).pipe(map((exams) => exams.map((exam) => this.processExam(exam))));
     }
 
     /**
      * Find all exams that are held today and in the future.
      */
-    findAllCurrentAndUpcomingExams(): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Exam[]>(`${this.adminResourceUrl}/upcoming-exams`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.processExamArrayResponseFromServer(res)));
+    findAllCurrentAndUpcomingExams(): Observable<Exam[]> {
+        return this.adminExamApi.getCurrentAndUpcomingExams().pipe(map((exams) => exams.map((exam) => this.processExam(exam))));
     }
 
     /**
@@ -257,24 +223,15 @@ export class ExamManagementService {
      * @param examId - the id of the exam
      * @param isTestRun - boolean to determine whether it is a test run
      */
-    getExamWithInterestingExercisesForAssessmentDashboard(courseId: number, examId: number, isTestRun: boolean): Observable<EntityResponseType> {
-        let url: string;
-        if (isTestRun) {
-            url = `${this.resourceUrl}/${courseId}/exams/${examId}/exam-for-test-run-assessment-dashboard`;
-        } else {
-            url = `${this.resourceUrl}/${courseId}/exams/${examId}/exam-for-assessment-dashboard`;
-        }
-        return this.http.get<Exam>(url, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+    getExamWithInterestingExercisesForAssessmentDashboard(courseId: number, examId: number, isTestRun: boolean): Observable<Exam> {
+        const request = isTestRun ? this.examApi.getExamForTestRunAssessmentDashboard(courseId, examId) : this.examApi.getExamForAssessmentDashboard(courseId, examId);
+        return request.pipe(map((exam) => this.processExam(exam)));
     }
 
-    getLatestIndividualEndDateOfExam(courseId: number, examId: number): Observable<HttpResponse<ExamInformationDTO>> {
-        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/latest-end-date`;
-        return this.http.get<ExamInformationDTO>(url, { observe: 'response' }).pipe(
-            map((res: HttpResponse<ExamInformationDTO>) => {
-                res.body!.latestIndividualEndDate = dayjs(res.body!.latestIndividualEndDate);
-                return res;
-            }),
-        );
+    getLatestIndividualEndDateOfExam(courseId: number, examId: number): Observable<ExamInformationDTO> {
+        return this.examApi
+            .getLatestIndividualEndDateOfExam(courseId, examId)
+            .pipe(map((information) => ({ latestIndividualEndDate: dayjs(information.latestIndividualEndDate) })));
     }
 
     /**
@@ -283,82 +240,47 @@ export class ExamManagementService {
      * @param examId The exam id.
      */
     getDeletionSummary(courseId: number, examId: number): Observable<EntitySummaryCategory[]> {
-        return this.http
-            .get<ExamDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/deletion-summary`, { observe: 'response' })
-            .pipe(map((response) => (response.body ? buildExamDeletionSummary(response.body) : [])));
+        return this.examApi.getDeletionSummary(courseId, examId).pipe(map((summary) => (summary ? buildExamDeletionSummary(summary) : [])));
     }
 
     /**
-     * Delete an exam on the server using a DELETE request.
+     * Find all scores of an exam.
+     * @param courseId The id of the course.
+     * @param examId The id of the exam.
+     */
+    getExamScores(courseId: number, examId: number): Observable<ExamScoreDTO> {
+        return this.examApi.getExamScore(courseId, examId).pipe(map((scores) => hydrate(new ExamScoreDTO(), scores)));
+    }
+
+    /**
+     * Returns exercises in the exam that have submissions eligible for plagiarism detection.
      * @param courseId The course id.
-     * @param examId The id of the exam to delete.
+     * @param examId The exam id.
      */
-    delete(courseId: number, examId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { observe: 'response' });
-    }
-
-    /**
-     * Add students to the registered users for an exam
-     * @param courseId The course id.
-     * @param examId The id of the exam to which to add the student
-     * @param studentDtos Student DTOs of student to add to the exam
-     * @return studentDtos of students that were not found in the system
-     */
-    addStudentsToExam(courseId: number, examId: number, studentDtos: ExamUserDTO[]): Observable<HttpResponse<ExamRegistrationResultDTO>> {
-        return this.http.post<ExamRegistrationResultDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
-    }
-
-    /**
-     * Add all students of the course to the exam
-     * @param courseId
-     * @param examId
-     * @return studentDtos of students that were not found in the system
-     */
-    addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, {}, { observe: 'response' });
-    }
-
-    /**
-     * Parse pdf file with student images and save them
-     * @param courseId
-     * @param examId
-     * @param formData
-     * @return matriculation number of students that were not found in the system
-     */
-    saveImages(courseId: number, examId: number, formData: FormData): Observable<HttpResponse<ExamUsersNotFoundDTO>> {
-        return this.http.post<ExamUsersNotFoundDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users-save-images`, formData, { observe: 'response' });
+    getExercisesWithPotentialPlagiarismForExam(courseId: number, examId: number): Observable<Exercise[]> {
+        return this.examApi.getAllExercisesWithPotentialPlagiarismForExam(courseId, examId).pipe(map((exercises) => toRows<Exercise>(exercises)));
     }
 
     /**
      * Fetch a paginated, searchable, and sortable page of students registered for the exam.
      * @param courseId The course id.
      * @param examId The exam id.
-     * @param params Page index, page size, search term, sort column, and sort direction.
+     * @param search Page index, page size, search term, sort column, and sort direction.
      * @returns A page of {@link ExamStudentDTO} rows with date fields converted to Dayjs instances.
      */
     findExamStudentsPaged(courseId: number, examId: number, search: ExamStudentSearch): Observable<PageableResult<ExamStudentDTO>> {
-        const httpParams: Record<string, string | number> = {
-            page: search.page,
-            pageSize: search.pageSize,
-            sortingOrder: search.sortingOrder,
-            sortedColumn: search.sortedColumn,
-            searchTerm: search.searchTerm,
-        };
-        if (search.filterProp) {
-            httpParams['filterProp'] = search.filterProp;
-        }
-        return this.http
-            .get<ExamStudentDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-students/paged`, {
-                params: httpParams,
-                observe: 'response',
-            })
+        return this.examUserApi
+            .getExamStudentsPaged(courseId, examId, search.page, search.pageSize, search.sortingOrder, search.sortedColumn, search.searchTerm, search.filterProp || undefined)
             .pipe(
-                map((res) => ({
-                    content: (res.body ?? []).map((row) =>
-                        cloneWith(row, { startedDate: convertDateFromServer(row.startedDate), submissionDate: convertDateFromServer(row.submissionDate) }),
-                    ),
-                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
-                })),
+                map((res) => {
+                    const rows = res.body ?? [];
+                    const content = toRows<ExamStudentDTO>(rows);
+                    content.forEach((row, index) => {
+                        row.startedDate = convertDateStringFromServer(rows[index].startedDate);
+                        row.submissionDate = convertDateStringFromServer(rows[index].submissionDate);
+                    });
+                    return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
+                }),
             );
     }
 
@@ -374,169 +296,24 @@ export class ExamManagementService {
      * @returns A {@link UserSearchResult} with matching users and total count.
      */
     searchUsersForExamRegistration(courseId: number, examId: number, searchTerm: string, page: number, size: number): Observable<UserSearchResult> {
-        return this.http
-            .get<UserForRegistration[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/search`, {
-                params: { searchTerm, page, size },
-                observe: 'response',
-            })
-            .pipe(
-                map((res) => ({
-                    content: res.body ?? [],
-                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
-                })),
-            );
-    }
-
-    /**
-     * Verify student's attendance. It will return true if student's attendance was successfully verified. False otherwise
-     * @param courseId
-     * @param examId
-     * @return boolean indicating if the student's attendance was checked
-     */
-    isAttendanceChecked(courseId: number, examId: number): Observable<HttpResponse<boolean>> {
-        return this.http.get<boolean>(`${this.resourceUrl}/${courseId}/exams/${examId}/attendance`, { observe: 'response' });
-    }
-
-    /**
-     * Returns exam users who started the exam and whose attendance checks are incomplete.
-     * @param courseId The course id.
-     * @param examId The exam id.
-     * @param includeAll Include all registered exam users for attendance correction.
-     * @returns Exam users with incomplete attendance check data, or all registered users when requested.
-     */
-    verifyExamUserAttendance(courseId: number, examId: number, includeAll = false): Observable<HttpResponse<ExamUserAttendanceCheckDTO[]>> {
-        return this.http.get<ExamUserAttendanceCheckDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/verify-exam-users`, { observe: 'response', params: { includeAll } });
-    }
-
-    updateAttendance(courseId: number, examId: number, examUserId: number, attended: boolean): Observable<void> {
-        return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users/${examUserId}/attendance`, { attended });
-    }
-
-    /**
-     * Remove a student from the registered users for an exam
-     * @param courseId The course id
-     * @param examId The id of the exam from which to remove the student
-     * @param studentLogin Login of the student
-     * @param withParticipationsAndSubmission
-     */
-    removeStudentFromExam(courseId: number, examId: number, studentLogin: string, withParticipationsAndSubmission = false): Observable<HttpResponse<void>> {
-        const options = createRequestOption({ withParticipationsAndSubmission });
-        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, {
-            params: options,
-            observe: 'response',
-        });
-    }
-
-    /**
-     * Remove all students from an exam
-     * @param courseId The course id
-     * @param examId The id of the exam from which to remove the student
-     * @param withParticipationsAndSubmission if participations and Submissions should also be removed
-     */
-    removeAllStudentsFromExam(courseId: number, examId: number, withParticipationsAndSubmission = false) {
-        const options = createRequestOption({ withParticipationsAndSubmission });
-        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, {
-            params: options,
-            observe: 'response',
-        });
-    }
-
-    /**
-     * Generate student exams for all registered students of the exam.
-     * @param courseId The course id.
-     * @param examId The exam id.
-     * @returns The list of generated student exams.
-     */
-    generateStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
-        return this.http.post<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-student-exams`, {}, { observe: 'response' });
-    }
-
-    /**
-     * Generate a test run student exam based on the testRunConfiguration.
-     * @param courseId the id of the course
-     * @param examId the id of the exam
-     * @param testRunConfiguration the desired exam id, exercise ids (in persistence order) and working time
-     * @returns the created test run. The response body no longer includes `exercises`; it includes the nested `user`.
-     */
-    createTestRun(courseId: number, examId: number, testRunConfiguration: CreateTestRunDTO): Observable<HttpResponse<StudentExamDTO>> {
-        return this.http.post<StudentExamDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-runs`, testRunConfiguration, { observe: 'response' });
-    }
-
-    /**
-     * Delete a test run
-     * @param courseId the id of the course
-     * @param examId the id of the exam
-     * @param testRunId the id of the test run
-     */
-    deleteTestRun(courseId: number, examId: number, testRunId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-runs/${testRunId}`, { observe: 'response' });
-    }
-
-    /**
-     * Find all the test runs for the exam
-     * @param courseId the id of the course
-     * @param examId the id of the exam
-     * @returns the test runs, each including the nested `user` (no `exercises`, no `exam`)
-     */
-    findAllTestRunsForExam(courseId: number, examId: number): Observable<HttpResponse<StudentExamDTO[]>> {
-        return this.http.get<StudentExamDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/test-runs`, { observe: 'response' });
-    }
-
-    /**
-     * Generate student exams for students registered after the initial generation.
-     * @param courseId The course id.
-     * @param examId The exam id.
-     * @returns The list of newly generated student exams.
-     */
-    generateMissingStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
-        return this.http.post<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-missing-student-exams`, {}, { observe: 'response' });
-    }
-
-    /**
-     * Start all the exercises for all the student exams belonging to the exam
-     * @param courseId course to which the exam belongs
-     * @param examId exam to which the student exams belong
-     */
-    startExercises(courseId: number, examId: number): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/start-exercises`, {}, { observe: 'response' });
+        return this.examUserApi.searchStudentsForExamRegistration(courseId, examId, searchTerm, page, size).pipe(
+            map((res) => ({
+                content: toRows<UserForRegistration>(res.body ?? []),
+                totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
+            })),
+        );
     }
 
     /**
      * Get the current progress of starting exercises for all students
      * @param courseId course to which the exam belongs
      * @param examId exam to which the student exams belong
-     * @returns an object containing the status
+     * @returns the status with the start date as dayjs, or null if the server sent none
      */
-    getExerciseStartStatus(courseId: number, examId: number): Observable<HttpResponse<ExamExerciseStartPreparationStatus>> {
-        return this.http
-            .get<ExamExerciseStartPreparationStatus>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/start-exercises/status`, { observe: 'response' })
-            .pipe(
-                tap((res: HttpResponse<ExamExerciseStartPreparationStatus>) => {
-                    if (res.body) {
-                        res.body.startedAt = convertDateFromServer(res.body.startedAt);
-                    }
-                }),
-            );
-    }
-
-    /**
-     * Evaluate all the quiz exercises belonging to the exam
-     * @param courseId id of the course to which the exam belongs
-     * @param examId id of the exam for which the quiz exercises should be evaluated
-     * @returns number of evaluated exercises
-     */
-    evaluateQuizExercises(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<number>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/evaluate-quiz-exercises`, {}, { observe: 'response' });
-    }
-
-    /**
-     * Assess all the modeling and text participations belonging to unsubmitted student exams
-     * @param courseId id of the course to which the exam belongs
-     * @param examId id of the exam
-     * @returns number of evaluated participations
-     */
-    assessUnsubmittedExamModelingAndTextParticipations(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<number>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/assess-unsubmitted-and-empty-student-exams`, {}, { observe: 'response' });
+    getExerciseStartStatus(courseId: number, examId: number): Observable<ExamExerciseStartPreparationStatus | null> {
+        return this.studentExamApi
+            .getExerciseStartStatus(courseId, examId)
+            .pipe(map((status) => (status ? cloneWith(status, { startedAt: convertDateStringFromServer(status.startedAt) }) : null)));
     }
 
     /**
@@ -545,11 +322,14 @@ export class ExamManagementService {
      * @param examId The exam id.
      * @param exerciseGroups List of exercise groups.
      */
-    updateOrder(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<void>> {
+    updateOrder(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<void> {
         // Only the group ids in the desired order are sent. The server persists the order and returns no body — the
         // caller already holds the fully-detailed groups in exactly this order.
-        const orderedGroupIds = exerciseGroups.map((group) => group.id!);
-        return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups-order`, orderedGroupIds, { observe: 'response' });
+        return this.examApi.updateOrderOfExerciseGroups(
+            courseId,
+            examId,
+            exerciseGroups.map((group) => group.id!),
+        );
     }
 
     /**
@@ -557,74 +337,66 @@ export class ExamManagementService {
      * @param courseId The course id.
      * @param examId The exam id.
      */
-    reset(courseId: number, examId: number): Observable<EntityResponseType> {
-        return this.http
-            .delete<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}/reset`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+    reset(courseId: number, examId: number): Observable<Exam> {
+        return this.examApi.resetExam(courseId, examId).pipe(map((exam) => this.processExam(exam)));
     }
 
     /**
-     * Converts an Exam to an ExamImportDTO for the server.
+     * Converts an Exam to the body of the exam import request.
      * @param exam The exam to convert
      * @param courseId The target course id
+     * @returns the body, or undefined if the exam or one of its exercises lacks a field the server requires
      */
-    public static convertExamToImportDTO(exam: Exam, courseId: number): ExamImportDTO {
+    private static convertExamToImportDTO(exam: Exam, courseId: number): ExamImport | undefined {
         const { id, ...editableFields } = toExamUpdateDTO(exam);
-        return cloneWith(editableFields, {
-            courseId,
-            exerciseGroups: exam.exerciseGroups && ExamManagementService.convertExerciseGroupsToImportDTOs(exam.exerciseGroups),
-        });
+        const { title, visibleDate, startDate, endDate } = editableFields;
+        const exerciseGroups = exam.exerciseGroups && ExamManagementService.convertExerciseGroupsToImportDTOs(exam.exerciseGroups);
+        if (!title || !visibleDate || !startDate || !endDate || (exam.exerciseGroups && !exerciseGroups)) {
+            return undefined;
+        }
+        return cloneWith(editableFields, { title, visibleDate, startDate, endDate, courseId, exerciseGroups });
     }
 
     /**
      * Converts exercise groups (as loaded for the import dialogs) to the import DTO shape the server expects: the group
      * title and mandatory flag plus, per exercise, the source exercise id, type and the overrides the dialog can edit.
      * @param exerciseGroups The exercise groups to convert
+     * @returns the groups, or undefined if an exercise lacks the id or type the server requires
      */
-    public static convertExerciseGroupsToImportDTOs(exerciseGroups: ExerciseGroup[]): ExerciseGroupImportDTO[] {
-        return exerciseGroups.map((group) => ({
-            title: group.title,
-            isMandatory: group.isMandatory ?? true,
-            exercises: group.exercises?.map((exercise) => ({
-                id: exercise.id,
-                exerciseType: exercise.type,
-                title: exercise.title,
-                shortName: exercise.shortName,
-                maxPoints: exercise.maxPoints,
-                bonusPoints: exercise.bonusPoints,
-            })),
-        }));
-    }
-
-    private processExamResponseFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            this.convertExamFromServerAndSendTitles(res.body);
+    private static convertExerciseGroupsToImportDTOs(exerciseGroups: ExerciseGroup[]): ExerciseGroupImport[] | undefined {
+        const groups: ExerciseGroupImport[] = [];
+        for (const group of exerciseGroups) {
+            const exercises: ExerciseImport[] = [];
+            for (const exercise of group.exercises ?? []) {
+                if (exercise.id === undefined || exercise.type === undefined) {
+                    return undefined;
+                }
+                exercises.push({
+                    id: exercise.id,
+                    exerciseType: exercise.type,
+                    title: exercise.title,
+                    shortName: exercise.shortName,
+                    maxPoints: exercise.maxPoints,
+                    bonusPoints: exercise.bonusPoints,
+                });
+            }
+            groups.push({ title: group.title, isMandatory: group.isMandatory ?? true, exercises: group.exercises && exercises });
         }
-        return res;
+        return groups;
     }
 
-    private processExamArrayResponseFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach(this.convertExamFromServerAndSendTitles.bind(this));
-        }
-        return res;
+    private processExam(source: ExamSource): Exam {
+        const exam = toExam(source);
+        this.registerExam(exam);
+        return exam;
     }
 
-    private convertExamFromServerAndSendTitles(exam: Exam) {
-        exam.startDate = convertDateFromServer(exam.startDate);
-        exam.endDate = convertDateFromServer(exam.endDate);
-        exam.visibleDate = convertDateFromServer(exam.visibleDate);
-        exam.publishResultsDate = convertDateFromServer(exam.publishResultsDate);
-        exam.examStudentReviewStart = convertDateFromServer(exam.examStudentReviewStart);
-        exam.examStudentReviewEnd = convertDateFromServer(exam.examStudentReviewEnd);
-        exam.exampleSolutionPublicationDate = convertDateFromServer(exam.exampleSolutionPublicationDate);
-        exam.examSummaryPublicationDate = convertDateFromServer(exam.examSummaryPublicationDate);
-
+    /** Sets the access rights of the course of a converted exam and primes the title cache. */
+    private registerExam(exam: Pick<Exam, 'id' | 'title' | 'course'>) {
         if (exam.course) {
             this.accountService.setAccessRightsForCourse(exam.course);
         }
-
-        this.sendTitlesToEntityTitleService(exam);
+        this.entityTitleService.setTitle(EntityType.EXAM, [exam.id], exam.title);
     }
 
     /**
@@ -632,10 +404,11 @@ export class ExamManagementService {
      * @param courseId The course id.
      * @param examId The exam id.
      */
-    findAllLockedSubmissionsOfExam(courseId: number, examId: number) {
-        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/locked-submissions`, { observe: 'response' }).pipe(
-            filter((res) => !!res.body),
-            tap((res) => reconnectSubmissions(res.body!)),
+    findAllLockedSubmissionsOfExam(courseId: number, examId: number): Observable<Submission[]> {
+        return this.examApi.getLockedSubmissionsForExam(courseId, examId).pipe(
+            filter((locked) => !!locked),
+            map((locked) => toRows<Submission>(locked)),
+            tap((submissions) => reconnectSubmissions(submissions)),
         );
     }
 
@@ -649,70 +422,4 @@ export class ExamManagementService {
         const url = `${this.resourceUrl}/${courseId}/exams/${examId}/download-archive`;
         window.open(url, '_blank');
     }
-
-    /**
-     * Archives the exam of the specified examId.
-     * @param courseId the id of the course of the exam
-     * @param examId The id of the exam to archive
-     */
-    archiveExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
-        return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
-    }
-
-    /**
-     * Delete all student submissions and participations for the exam to free up storage.
-     * @param courseId The course id.
-     * @param examId The exam id.
-     */
-    cleanupExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/cleanup`, { observe: 'response' });
-    }
-
-    private sendTitlesToEntityTitleService(exam: Exam | undefined | null) {
-        this.entityTitleService.setTitle(EntityType.EXAM, [exam?.id], exam?.title);
-    }
-
-    /**
-     * Returns exercises in the exam that have submissions eligible for plagiarism detection.
-     * @param courseId The course id.
-     * @param examId The exam id.
-     */
-    getExercisesWithPotentialPlagiarismForExam(courseId: number, examId: number): Observable<Exercise[]> {
-        return this.http.get<Exercise[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercises-with-potential-plagiarism`);
-    }
-
-    /**
-     * Export the list of registered exam users with their seat and room assignments.
-     * @param courseId The course id.
-     * @param examId The exam id.
-     */
-    exportExamUsers(courseId: number, examId: number): Observable<ExportExamUserDTO[]> {
-        return this.http.get<ExportExamUserDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/export-students`);
-    }
-}
-
-interface ExerciseImportDTO {
-    id?: number;
-    exerciseType?: string;
-    title?: string;
-    shortName?: string;
-    maxPoints?: number;
-    bonusPoints?: number;
-}
-
-interface ExerciseGroupImportDTO {
-    title?: string;
-    isMandatory: boolean;
-    exercises?: ExerciseImportDTO[];
-}
-
-interface ExamImportDTO extends Omit<ExamUpdateDTO, 'id' | 'title'> {
-    title?: string;
-    courseId: number;
-    exerciseGroups?: ExerciseGroupImportDTO[];
-}
-
-export interface ExamRegistrationResultDTO {
-    notFoundStudents?: ExamUserDTO[];
-    rejectedStaffUsers?: ExamUserDTO[];
 }

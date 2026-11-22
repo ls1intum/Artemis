@@ -1,5 +1,5 @@
 import { EmbeddedViewRef } from '@angular/core';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,7 +10,8 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
-import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
+import type { StudentExam } from 'app/openapi/model/student-exam';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management/test-run-management.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -31,13 +32,14 @@ describe('Test Run Management Component', () => {
     let component: TestRunManagementComponent;
     let fixture: ComponentFixture<TestRunManagementComponent>;
     let examManagementService: ExamManagementService;
+    let studentExamApi: StudentExamApi;
     let accountService: AccountService;
     let userSpy: ReturnType<typeof vi.spyOn>;
 
     const course = { id: 1, isAtLeastInstructor: true } as Course;
     const exam = { id: 1, course, started: true } as Exam;
     const user = { id: 99 } as User;
-    const studentExams: StudentExamDTO[] = [
+    const studentExams: StudentExam[] = [
         { id: 1, testRun: true, user: { id: 99 } },
         { id: 2, testRun: true, user: { id: 90 } },
     ];
@@ -60,12 +62,13 @@ describe('Test Run Management Component', () => {
                 fixture = TestBed.createComponent(TestRunManagementComponent);
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
+                studentExamApi = TestBed.inject(StudentExamApi);
                 accountService = TestBed.inject(AccountService);
-                vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
-                vi.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
+                vi.spyOn(examManagementService, 'find').mockReturnValue(of(exam));
+                vi.spyOn(studentExamApi, 'findAllTestRunsForExam').mockReturnValue(of(studentExams));
                 userSpy = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
                 vi.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
-                vi.spyOn(examManagementService, 'deleteTestRun').mockReturnValue(of(new HttpResponse<void>()));
+                vi.spyOn(studentExamApi, 'deleteTestRun').mockReturnValue(of(undefined));
             });
     });
 
@@ -95,7 +98,7 @@ describe('Test Run Management Component', () => {
             await Promise.resolve();
 
             expect(examManagementService.find).toHaveBeenCalledWith(course.id!, exam.id!, true);
-            expect(examManagementService.findAllTestRunsForExam).toHaveBeenCalledWith(course.id!, exam.id!);
+            expect(studentExamApi.findAllTestRunsForExam).toHaveBeenCalledWith(course.id!, exam.id!);
             expect(userSpy).toHaveBeenCalledOnce();
 
             expect(component.exam()).toEqual(exam);
@@ -110,7 +113,7 @@ describe('Test Run Management Component', () => {
             fixture.detectChanges();
 
             component.deleteTestRun(studentExams[0].id!);
-            expect(examManagementService.deleteTestRun).toHaveBeenCalledWith(course.id!, exam.id!, studentExams[0].id!);
+            expect(studentExamApi.deleteTestRun).toHaveBeenCalledWith(course.id!, exam.id!, studentExams[0].id!);
         });
     });
 
@@ -125,8 +128,8 @@ describe('Test Run Management Component', () => {
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
             exam.exerciseGroups = [exerciseGroup];
 
-            const createdTestRun: StudentExamDTO = { id: 3, testRun: true, user: { id: 90 } };
-            const createTestRunSpy = vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(of(new HttpResponse({ body: createdTestRun })));
+            const createdTestRun: StudentExam = { id: 3, testRun: true, user: { id: 90 } };
+            const createTestRunSpy = vi.spyOn(studentExamApi, 'createTestRun').mockReturnValue(of(createdTestRun));
             fixture.detectChanges();
 
             expect(component.examContainsExercises()).toBeTruthy();
@@ -155,7 +158,7 @@ describe('Test Run Management Component', () => {
             exam.exerciseGroups = [exerciseGroup];
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
 
-            const createTestRunSpy = vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(throwError(() => httpError));
+            const createTestRunSpy = vi.spyOn(studentExamApi, 'createTestRun').mockReturnValue(throwError(() => httpError));
             vi.spyOn(alertService, 'error');
             fixture.detectChanges();
 
@@ -181,7 +184,7 @@ describe('Test Run Management Component', () => {
             const exerciseGroup = { id: 1, exercises: [exercise] } as ExerciseGroup;
             exam.exerciseGroups = [exerciseGroup];
 
-            const createTestRunSpy = vi.spyOn(examManagementService, 'createTestRun');
+            const createTestRunSpy = vi.spyOn(studentExamApi, 'createTestRun');
             fixture.detectChanges();
 
             const actionsHost = renderTitleBarActions();

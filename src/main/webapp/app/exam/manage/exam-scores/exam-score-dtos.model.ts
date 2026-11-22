@@ -4,14 +4,15 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { BonusResult } from 'app/assessment/shared/entities/bonus.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 
-export interface ExamScoreDTO {
-    examId: number;
-    title: string;
-    maxPoints: number;
-    averagePointsAchieved: number;
-    hasSecondCorrectionAndStarted: boolean;
-    exerciseGroups: ExerciseGroup[];
-    studentResults: StudentResult[];
+/** Deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
+export class ExamScoreDTO {
+    public examId!: number;
+    public title!: string;
+    public maxPoints!: number;
+    public averagePointsAchieved!: number;
+    public hasSecondCorrectionAndStarted!: boolean;
+    public exerciseGroups!: ExerciseGroup[];
+    public studentResults!: StudentResult[];
 }
 
 /**

@@ -32,11 +32,11 @@ describe('Student Exam Service', () => {
             let found: unknown;
             service.find(1, 2, 3).subscribe((result) => (found = result));
 
-            const getRequest = httpMock.expectOne('api/exam/courses/1/exams/2/student-exams/3');
+            const getRequest = httpMock.expectOne('/api/exam/courses/1/exams/2/student-exams/3');
             expect(getRequest.request.method).toBe('GET');
             const findBody = { studentExam: payloadStudentExam } as StudentExamWithGradeDTO;
             getRequest.flush(findBody);
-            expect((found as { body: unknown }).body).toEqual(findBody);
+            expect(found).toEqual(findBody);
             expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(payloadStudentExam?.exam?.course ? 1 : 0);
 
             let updated: unknown;

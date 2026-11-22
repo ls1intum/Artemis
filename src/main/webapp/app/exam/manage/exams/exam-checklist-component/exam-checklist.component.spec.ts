@@ -10,11 +10,12 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { MockExamChecklistService } from 'test/helpers/mocks/service/mock-exam-checklist.service';
-import { Subject, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
+import { map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import * as ErrorReporting from 'app/core/error-reporting/capture-exception';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamApi } from 'app/openapi/api/exam-api';
 import { StudentExamApi } from 'app/openapi/api/student-exam-api';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -24,7 +25,7 @@ import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checkli
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideRouter } from '@angular/router';
@@ -188,16 +189,26 @@ describe('ExamChecklistComponent', () => {
 
     describe('checklist state', () => {
         let alertService: AlertService;
-        let examManagementService: ExamManagementService;
+        let apis: { examApi: ExamApi; studentExamApi: StudentExamApi };
 
         const setUp = (examOverrides: Partial<Exam> = {}, stats: Partial<ExamChecklist> = {}) => {
             alertService = TestBed.inject(AlertService);
-            examManagementService = TestBed.inject(ExamManagementService);
+            apis = { examApi: TestBed.inject(ExamApi), studentExamApi: TestBed.inject(StudentExamApi) };
             const checklist = Object.assign(new ExamChecklist(), { numberOfExamsStarted: 3, numberOfExamsSubmitted: 2, numberOfTotalParticipationsForAssessment: 3 }, stats);
             vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(checklist));
             const testedExam = Object.assign(new Exam(), { id: 1, examMode: ExamMode.REAL, course: { id: 1, isAtLeastInstructor: true } }, examOverrides);
             examChecklistComponentFixture.componentRef.setInput('exam', testedExam);
             return testedExam;
+        };
+
+        // the quiz evaluation answers with the number of evaluated exercises, the assessment of unsubmitted exams with no body
+        const spyOnAction = (action: (typeof actions)[number]['action'], outcome?: Observable<number>) => {
+            if (action === 'evaluateQuizExercises') {
+                const spy = vi.spyOn(apis.examApi, 'evaluateQuizExercises');
+                return outcome ? spy.mockReturnValue(outcome) : spy;
+            }
+            const spy = vi.spyOn(apis.studentExamApi, 'assessUnsubmittedStudentExamsAndEmptySubmissions');
+            return outcome ? spy.mockReturnValue(outcome.pipe(map(() => undefined))) : spy;
         };
 
         const mockLongestWorkingTime = (seconds: number) => vi.spyOn(TestBed.inject(StudentExamApi), 'getLongestWorkingTimeForExam').mockReturnValue(of(seconds));
@@ -422,7 +433,7 @@ describe('ExamChecklistComponent', () => {
         it.each(actions)('should reset the state and report success after $action', ({ action, busy, done, stats }) => {
             setUp({}, stats);
             examChecklistComponentFixture.detectChanges();
-            const serviceSpy = vi.spyOn(examManagementService, action).mockReturnValue(of(new HttpResponse<number>({ body: 7 })));
+            const serviceSpy = spyOnAction(action, of(7));
             const successSpy = vi.spyOn(alertService, 'success').mockImplementation(() => undefined as any);
             expect(component[done]()).toBe(true);
 
@@ -432,14 +443,19 @@ describe('ExamChecklistComponent', () => {
             expect(component[done]()).toBe(false);
             expect(component[busy]()).toBe(false);
             expect(successSpy).toHaveBeenCalledOnce();
-            expect(successSpy.mock.calls[0][1]).toEqual({ number: 7 });
+            if (action === 'evaluateQuizExercises') {
+                expect(successSpy.mock.calls[0][1]).toEqual({ number: 7 });
+            }
         });
 
         it.each(actions)('should keep the open work and show the error when $action fails', ({ action, busy, done, stats }) => {
             setUp({}, stats);
             examChecklistComponentFixture.detectChanges();
             const error = new HttpErrorResponse({ status: 500, statusText: 'Server Error' });
-            vi.spyOn(examManagementService, action).mockReturnValue(throwError(() => error));
+            spyOnAction(
+                action,
+                throwError(() => error),
+            );
             const errorSpy = vi.spyOn(alertService, 'error').mockImplementation(() => undefined as any);
             const successSpy = vi.spyOn(alertService, 'success');
             const dialogErrors: string[] = [];
@@ -457,7 +473,7 @@ describe('ExamChecklistComponent', () => {
         it.each(actions)('should report $action as an error and not call the server without ids', ({ action }) => {
             setUp({ id: undefined });
             examChecklistComponentFixture.detectChanges();
-            const serviceSpy = vi.spyOn(examManagementService, action);
+            const serviceSpy = spyOnAction(action);
             const captureSpy = vi.spyOn(ErrorReporting, 'captureException').mockImplementation(() => '');
 
             component[action]();

@@ -116,7 +116,7 @@ describe('Exam Management Component', () => {
         // GIVEN
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
         vi.spyOn(courseManagementService, 'findForManagement').mockReturnValue(of(responseFakeCourse));
-        const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
+        const responseFakeExams = [exam];
         vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeExams));
 
         // WHEN
@@ -141,7 +141,7 @@ describe('Exam Management Component', () => {
     it('should call findAllExamsForCourse on examListModification event being fired after registering for exam changes', () => {
         // GIVEN
         comp.course.set(course);
-        const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
+        const responseFakeExams = [exam];
         vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeExams));
 
         // WHEN
@@ -214,7 +214,7 @@ describe('Exam Management Component', () => {
 
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
         vi.spyOn(courseManagementService, 'findForManagement').mockReturnValue(of(responseFakeCourse));
-        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of({ body: [exam] } as HttpResponse<Exam[]>));
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of([exam]));
 
         comp.ngOnInit();
 
@@ -231,7 +231,7 @@ describe('Exam Management Component', () => {
 
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
         vi.spyOn(courseManagementService, 'findForManagement').mockReturnValue(of(responseFakeCourse));
-        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of({ body: [exam] } as HttpResponse<Exam[]>));
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of([exam]));
 
         comp.ngOnInit();
 
@@ -248,7 +248,7 @@ describe('Exam Management Component', () => {
 
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
         vi.spyOn(courseManagementService, 'findForManagement').mockReturnValue(of(responseFakeCourse));
-        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of({ body: [exam] } as HttpResponse<Exam[]>));
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of([exam]));
 
         comp.ngOnInit();
 
@@ -264,7 +264,7 @@ describe('Exam Management Component', () => {
 
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
         vi.spyOn(courseManagementService, 'findForManagement').mockReturnValue(of(responseFakeCourse));
-        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of({ body: [exam] } as HttpResponse<Exam[]>));
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of([exam]));
 
         comp.ngOnInit();
         expect(comp.currentExam()).toEqual(exam);

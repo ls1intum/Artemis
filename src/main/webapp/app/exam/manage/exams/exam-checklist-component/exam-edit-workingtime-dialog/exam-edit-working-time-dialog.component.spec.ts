@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
 import { Subject, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
@@ -51,7 +50,7 @@ describe('ExamEditWorkingTimeDialogComponent', () => {
     });
 
     it('should emit the updated exam and close the dialog on success', () => {
-        const response = new Subject<HttpResponse<Exam>>();
+        const response = new Subject<Exam>();
         updateWorkingTime.mockReturnValue(response.asObservable());
         const emitted: Exam[] = [];
         component.workingTimeUpdated.subscribe((updated) => emitted.push(updated));
@@ -62,7 +61,7 @@ describe('ExamEditWorkingTimeDialogComponent', () => {
         expect(updateWorkingTime).toHaveBeenCalledWith(2, 1, 120);
 
         const updatedExam = { id: 1, workingTime: 3720 } as Exam;
-        response.next(new HttpResponse({ body: updatedExam }));
+        response.next(updatedExam);
         expect(component.isLoading()).toBe(false);
         expect(emitted).toEqual([updatedExam]);
         expect(component.visible()).toBe(false);

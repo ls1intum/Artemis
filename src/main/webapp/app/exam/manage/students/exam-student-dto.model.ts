@@ -15,7 +15,7 @@ export type ExamProgress = 'examMissing' | 'notStarted' | 'started' | 'submitted
  */
 export interface ExamStudentDTO {
     // ExamUser fields
-    id: number;
+    id?: number;
     userId?: number;
     login?: string;
     name?: string;

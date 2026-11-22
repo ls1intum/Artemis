@@ -10,7 +10,6 @@ import { UpcomingExamsAndExercisesComponent } from 'app/admin/upcoming-exams-and
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { MockExamManagementService } from 'test/helpers/mocks/service/mock-exam-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ActivatedRoute, provideRouter } from '@angular/router';
@@ -30,7 +29,7 @@ describe('UpcomingExamsAndExercisesComponent', () => {
                 provideRouter([]),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ExerciseService, useClass: MockExerciseService },
-                { provide: ExamManagementService, useClass: MockExamManagementService },
+                { provide: ExamManagementService, useValue: { findAllCurrentAndUpcomingExams: () => of([{ id: 1 } as Exam, { id: 2 } as Exam]) } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -67,7 +66,7 @@ describe('UpcomingExamsAndExercisesComponent', () => {
         });
 
         it('should handle null body from exam service', () => {
-            vi.spyOn(examManagementService, 'findAllCurrentAndUpcomingExams').mockReturnValue(of(new HttpResponse({ body: [] })));
+            vi.spyOn(examManagementService, 'findAllCurrentAndUpcomingExams').mockReturnValue(of([]));
 
             component.ngOnInit();
 
@@ -81,7 +80,7 @@ describe('UpcomingExamsAndExercisesComponent', () => {
             const testExam = { id: 2, title: 'Test Exam', examMode: 'TEST' } as Exam;
             const supervisedSessionExam = { id: 3, title: 'Supervised Session Exam', examMode: 'TEST_WITH_SUPERVISED_SESSION' } as Exam;
 
-            vi.spyOn(examManagementService, 'findAllCurrentAndUpcomingExams').mockReturnValue(of(new HttpResponse({ body: [realExam, testExam, supervisedSessionExam] })));
+            vi.spyOn(examManagementService, 'findAllCurrentAndUpcomingExams').mockReturnValue(of([realExam, testExam, supervisedSessionExam]));
 
             component.ngOnInit();
             fixture.detectChanges();

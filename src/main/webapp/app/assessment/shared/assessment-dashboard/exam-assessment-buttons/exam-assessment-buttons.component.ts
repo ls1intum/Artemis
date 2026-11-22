@@ -8,6 +8,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamApi } from 'app/openapi/api/exam-api';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -27,6 +28,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 export class ExamAssessmentButtonsComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private examManagementService = inject(ExamManagementService);
+    private examApi = inject(ExamApi);
     private studentExamApi = inject(StudentExamApi);
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
@@ -87,8 +89,8 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             - trigger (re)calculation of whether the exam is over
              */
             const examObservable = this.examManagementService.find(this.courseId(), this.examId(), true).pipe(
-                tap((examResponse) => {
-                    this.exam.set(examResponse.body!);
+                tap((exam) => {
+                    this.exam.set(exam);
                     this.calculateIsExamOver();
                 }),
             );
@@ -105,9 +107,9 @@ export class ExamAssessmentButtonsComponent implements OnInit {
      */
     evaluateQuizExercises() {
         this.isEvaluatingQuizExercises.set(true);
-        this.examManagementService.evaluateQuizExercises(this.courseId(), this.examId()).subscribe({
-            next: (res) => {
-                this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
+        this.examApi.evaluateQuizExercises(this.courseId(), this.examId()).subscribe({
+            next: (evaluatedExercises) => {
+                this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: evaluatedExercises });
                 this.isEvaluatingQuizExercises.set(false);
             },
             error: (err: HttpErrorResponse) => {
@@ -119,9 +121,9 @@ export class ExamAssessmentButtonsComponent implements OnInit {
 
     assessUnsubmittedExamModelingAndTextParticipations() {
         this.isAssessingUnsubmittedExams.set(true);
-        this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.courseId(), this.examId()).subscribe({
-            next: (res) => {
-                this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
+        this.studentExamApi.assessUnsubmittedStudentExamsAndEmptySubmissions(this.courseId(), this.examId()).subscribe({
+            next: () => {
+                this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess');
                 this.isAssessingUnsubmittedExams.set(false);
             },
             error: (err: HttpErrorResponse) => {

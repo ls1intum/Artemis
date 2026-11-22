@@ -4,13 +4,13 @@ import { ActivatedRoute, Router, UrlSegment, convertToParamMap, provideRouter } 
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/account/user/user.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
+import { ExamUserAttendanceCheck } from 'app/openapi/model/exam-user-attendance-check';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamUserApi } from 'app/openapi/api/exam-user-api';
 import { ExamStudentsAttendanceCheckComponent } from 'app/exam/manage/students/verify-attendance-check/exam-students-attendance-check.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SortService } from 'app/foundation/service/sort.service';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -39,7 +39,7 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
 
     let component: ExamStudentsAttendanceCheckComponent;
     let fixture: ComponentFixture<ExamStudentsAttendanceCheckComponent>;
-    let examManagementService: ExamManagementService;
+    let examUserApi: ExamUserApi;
     let sortService: SortService;
 
     beforeEach(async () => {
@@ -58,7 +58,7 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
 
         fixture = TestBed.createComponent(ExamStudentsAttendanceCheckComponent);
         component = fixture.componentInstance;
-        examManagementService = TestBed.inject(ExamManagementService);
+        examUserApi = TestBed.inject(ExamUserApi);
         sortService = TestBed.inject(SortService);
     });
 
@@ -79,7 +79,7 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         const startDate = examWithCourse.startDate;
         examWithCourse.startDate = dayjs().add(1, 'hour');
         try {
-            const examServiceSpy = vi.spyOn(examManagementService, 'verifyExamUserAttendance');
+            const examServiceSpy = vi.spyOn(examUserApi, 'getAllWhoDidNotSign');
 
             fixture.detectChanges();
 
@@ -96,11 +96,11 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         ['absent despite an existing signature', unchecked, 'false'],
         ['incomplete identity checks', { ...unchecked, didCheckLogin: true }, ''],
     ])('shows %s from the identity checks', async (_label, checks, expected) => {
-        const user = { id: 5, login: 'student1', started: true, attendanceChecked: false, ...checks } as ExamUserAttendanceCheckDTO;
+        const user = { id: 5, login: 'student1', started: true, attendanceChecked: false, ...checks } as ExamUserAttendanceCheck;
         if (expected === 'false') {
             user.signingImagePath = 'signature.png';
         }
-        vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: [user] })));
+        vi.spyOn(examUserApi, 'getAllWhoDidNotSign').mockReturnValue(of([user]));
         fixture.detectChanges();
         await fixture.whenStable();
         const select = fixture.nativeElement.querySelector('[data-testid="manual-attendance"]') as HTMLSelectElement;
@@ -111,17 +111,17 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
     });
 
     it.each(['', 'automatic', 'null', null, undefined])('does not submit an invalid attendance value %s', (value) => {
-        vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(examUserApi, 'getAllWhoDidNotSign').mockReturnValue(of([]));
         fixture.detectChanges();
         component.hasExamEnded.set(true);
-        const save = vi.spyOn(examManagementService, 'updateAttendance');
-        component.setAttendance({ id: 5 } as ExamUserAttendanceCheckDTO, value as string);
+        const save = vi.spyOn(examUserApi, 'updateAttendance');
+        component.setAttendance({ id: 5 } as ExamUserAttendanceCheck, value as string);
         expect(save).not.toHaveBeenCalled();
     });
 
     it('should reapply the selected sort after reloading attendance', () => {
-        const users = [{ id: 1, login: 'b' } as ExamUserAttendanceCheckDTO, { id: 2, login: 'a' } as ExamUserAttendanceCheckDTO];
-        vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: users })));
+        const users = [{ id: 1, login: 'b' } as ExamUserAttendanceCheck, { id: 2, login: 'a' } as ExamUserAttendanceCheck];
+        vi.spyOn(examUserApi, 'getAllWhoDidNotSign').mockReturnValue(of(users));
         const sortSpy = vi.spyOn(sortService, 'sortByProperty');
         fixture.detectChanges();
         component.predicate.set('login');
@@ -130,24 +130,24 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
     });
 
     it('should save a manual absence after conduction and retain the signature', () => {
-        const signed = { id: 5, login: 'student1', signingImagePath: 'signature.png', ...unchecked } as ExamUserAttendanceCheckDTO;
-        const save = vi.spyOn(examManagementService, 'updateAttendance').mockReturnValue(of(undefined));
-        vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: [signed] })));
+        const signed = { id: 5, login: 'student1', signingImagePath: 'signature.png', ...unchecked } as ExamUserAttendanceCheck;
+        const save = vi.spyOn(examUserApi, 'updateAttendance').mockReturnValue(of(undefined));
+        vi.spyOn(examUserApi, 'getAllWhoDidNotSign').mockReturnValue(of([signed]));
         fixture.detectChanges();
         component.hasExamEnded.set(true);
         component.setAttendance(signed, 'false');
-        expect(save).toHaveBeenCalledWith(course.id, examWithCourse.id, 5, false);
+        expect(save).toHaveBeenCalledWith(course.id, examWithCourse.id, 5, { attended: false });
         expect(component.allExamUsersAttendanceCheck()[0].signingImagePath).toBe('signature.png');
         expect(component.savingAttendance()).toBeUndefined();
     });
 
     it('preserves the selected descending order after a manual correction and reload', () => {
-        const alpha = { id: 5, login: 'alpha', started: true, attendanceChecked: false } as ExamUserAttendanceCheckDTO;
-        const zulu = { id: 6, login: 'zulu', started: true, attendanceChecked: false } as ExamUserAttendanceCheckDTO;
-        vi.spyOn(examManagementService, 'verifyExamUserAttendance')
-            .mockReturnValueOnce(of(new HttpResponse({ body: [alpha, zulu] })))
-            .mockReturnValueOnce(of(new HttpResponse({ body: [{ ...alpha, ...checked, attendanceChecked: true }, zulu] })));
-        vi.spyOn(examManagementService, 'updateAttendance').mockReturnValue(of(undefined));
+        const alpha = { id: 5, login: 'alpha', started: true, attendanceChecked: false } as ExamUserAttendanceCheck;
+        const zulu = { id: 6, login: 'zulu', started: true, attendanceChecked: false } as ExamUserAttendanceCheck;
+        vi.spyOn(examUserApi, 'getAllWhoDidNotSign')
+            .mockReturnValueOnce(of([alpha, zulu]))
+            .mockReturnValueOnce(of([{ ...alpha, ...checked, attendanceChecked: true }, zulu]));
+        vi.spyOn(examUserApi, 'updateAttendance').mockReturnValue(of(undefined));
         fixture.detectChanges();
         component.predicate.set('login');
         component.ascending.set(false);
@@ -165,8 +165,8 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         const users = [
             { id: 5, login: 'incomplete', started: true, signingImagePath: 'signature.png', attendanceChecked: false, ...unchecked, didCheckLogin: true },
             { id: 6, login: 'complete', started: true, signingImagePath: 'signature.png', attendanceChecked: true, ...checked },
-        ] as ExamUserAttendanceCheckDTO[];
-        vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: users })));
+        ] as ExamUserAttendanceCheck[];
+        vi.spyOn(examUserApi, 'getAllWhoDidNotSign').mockReturnValue(of(users));
         fixture.detectChanges();
         const rows = fixture.nativeElement.querySelectorAll('[data-testid="attendance-check-row"]');
         expect(rows[0].querySelector('[data-testid="attendance-check-status"]').getAttribute('data-checked')).toBe('false');
@@ -176,13 +176,13 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
     });
 
     it('should block further edits after a failed refresh and recover through retry', async () => {
-        const original = { id: 5, login: 'student1', started: true, attendanceChecked: false, ...unchecked } as ExamUserAttendanceCheckDTO;
+        const original = { id: 5, login: 'student1', started: true, attendanceChecked: false, ...unchecked } as ExamUserAttendanceCheck;
         const updated = { ...original, ...checked, attendanceChecked: true };
-        vi.spyOn(examManagementService, 'verifyExamUserAttendance')
-            .mockReturnValueOnce(of(new HttpResponse({ body: [original] })))
+        vi.spyOn(examUserApi, 'getAllWhoDidNotSign')
+            .mockReturnValueOnce(of([original]))
             .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
-            .mockReturnValueOnce(of(new HttpResponse({ body: [updated] })));
-        const save = vi.spyOn(examManagementService, 'updateAttendance').mockReturnValue(of(undefined));
+            .mockReturnValueOnce(of([updated]));
+        const save = vi.spyOn(examUserApi, 'updateAttendance').mockReturnValue(of(undefined));
         fixture.detectChanges();
         component.hasExamEnded.set(true);
         component.setAttendance(original, 'true');
@@ -202,10 +202,10 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
     });
 
     it('should restore the persisted selection after a failed save and permit retry', async () => {
-        const original = { id: 5, login: 'student1', started: true, signingImagePath: 'signature.png', attendanceChecked: false, ...unchecked } as ExamUserAttendanceCheckDTO;
-        const reload = vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: [original] })));
+        const original = { id: 5, login: 'student1', started: true, signingImagePath: 'signature.png', attendanceChecked: false, ...unchecked } as ExamUserAttendanceCheck;
+        const reload = vi.spyOn(examUserApi, 'getAllWhoDidNotSign').mockReturnValue(of([original]));
         const save = vi
-            .spyOn(examManagementService, 'updateAttendance')
+            .spyOn(examUserApi, 'updateAttendance')
             .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
             .mockReturnValue(of(undefined));
         fixture.detectChanges();
@@ -227,9 +227,9 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
 
     it('should not edit attendance during the exam', () => {
         fixture.detectChanges();
-        const save = vi.spyOn(examManagementService, 'updateAttendance');
+        const save = vi.spyOn(examUserApi, 'updateAttendance');
         component.hasExamEnded.set(false);
-        component.setAttendance({ id: 5 } as ExamUserAttendanceCheckDTO, 'true');
+        component.setAttendance({ id: 5 } as ExamUserAttendanceCheck, 'true');
         expect(save).not.toHaveBeenCalled();
     });
 
@@ -238,7 +238,7 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         const oldEndDate = examWithCourse.endDate;
         try {
             examWithCourse.endDate = dayjs().add(1, 'second');
-            vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: [] })));
+            vi.spyOn(examUserApi, 'getAllWhoDidNotSign').mockReturnValue(of([]));
             fixture.detectChanges();
             expect(component.hasExamEnded()).toBe(false);
             vi.advanceTimersByTime(1000);
@@ -259,7 +259,7 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         try {
             examWithCourse.endDate = dayjs().add(1, 'hour');
             vi.spyOn(TestBed.inject(ArtemisServerDateService), 'now').mockImplementation(() => dayjs().add(2, 'hours'));
-            vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: [] })));
+            vi.spyOn(examUserApi, 'getAllWhoDidNotSign').mockReturnValue(of([]));
             fixture.detectChanges();
             expect(component.hasExamEnded()).toBe(true);
         } finally {
@@ -299,17 +299,18 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         expect(sortServiceSpy).toHaveBeenLastCalledWith(component.allExamUsersAttendanceCheck(), 'registrationNumber', true);
     });
 
-    it('should call exam management service', () => {
-        const examUserAttendanceCheckDTO = new ExamUserAttendanceCheckDTO();
-        examUserAttendanceCheckDTO.id = 1;
-        examUserAttendanceCheckDTO.studentImagePath = 'studentImagePath';
-        examUserAttendanceCheckDTO.login = 'student1';
-        examUserAttendanceCheckDTO.registrationNumber = '12345678';
-        examUserAttendanceCheckDTO.signingImagePath = 'signingImagePath';
-        examUserAttendanceCheckDTO.started = true;
-        examUserAttendanceCheckDTO.submitted = false;
-        const response: ExamUserAttendanceCheckDTO[] = [examUserAttendanceCheckDTO];
-        const examServiceStub = vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: response })));
+    it('should call the exam user api', () => {
+        const examUserAttendanceCheck: ExamUserAttendanceCheck = {
+            id: 1,
+            studentImagePath: 'studentImagePath',
+            login: 'student1',
+            registrationNumber: '12345678',
+            signingImagePath: 'signingImagePath',
+            started: true,
+            submitted: false,
+        };
+        const response: ExamUserAttendanceCheck[] = [examUserAttendanceCheck];
+        const examServiceStub = vi.spyOn(examUserApi, 'getAllWhoDidNotSign').mockReturnValue(of(response));
 
         fixture.detectChanges();
 

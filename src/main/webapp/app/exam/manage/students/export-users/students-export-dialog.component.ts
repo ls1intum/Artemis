@@ -6,8 +6,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
+import { ExamUserApi } from 'app/openapi/api/exam-user-api';
+import { ExportExamUser } from 'app/openapi/model/export-exam-user';
 import { TranslateService } from '@ngx-translate/core';
 import Papa from 'papaparse';
 
@@ -18,7 +18,7 @@ import Papa from 'papaparse';
 })
 export class StudentsExportDialogComponent {
     private readonly translateService: TranslateService = inject(TranslateService);
-    private readonly examManagementService: ExamManagementService = inject(ExamManagementService);
+    private readonly examUserApi: ExamUserApi = inject(ExamUserApi);
 
     protected readonly faBan = faBan;
     protected readonly faFileExport = faFileExport;
@@ -49,8 +49,8 @@ export class StudentsExportDialogComponent {
     }
 
     exportUsers(): void {
-        this.examManagementService.exportExamUsers(this.courseId(), this.exam().id!).subscribe({
-            next: (exportExamUsers: ExportExamUserDTO[]) => {
+        this.examUserApi.exportExamUsers(this.courseId(), this.exam().id!).subscribe({
+            next: (exportExamUsers: ExportExamUser[]) => {
                 const csvBlob: Blob = this.createCsv(exportExamUsers);
                 this.downloadBlob(csvBlob, `exam-${this.exam().id}-students.csv`);
                 this.closeDialog();
@@ -74,7 +74,7 @@ export class StudentsExportDialogComponent {
         return value && /^[=+\-@]/.test(value) ? `\t${value}` : value;
     }
 
-    private createCsv(data: ExportExamUserDTO[]): Blob {
+    private createCsv(data: ExportExamUser[]): Blob {
         const header: string[] = [
             this.translateService.instant('artemisApp.exam.examUsers.export.header.matriculationNumber'),
             this.translateService.instant('artemisApp.exam.examUsers.export.header.login'),

@@ -4,24 +4,24 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { StudentsExportDialogComponent } from 'app/exam/manage/students/export-users/students-export-dialog.component';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamUserApi } from 'app/openapi/api/exam-user-api';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
+import { ExportExamUser } from 'app/openapi/model/export-exam-user';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('StudentsExportDialogComponent', () => {
     let component: StudentsExportDialogComponent;
     let fixture: ComponentFixture<StudentsExportDialogComponent>;
-    let examManagementService: ExamManagementService;
+    let examUserApi: ExamUserApi;
 
     const course: Course = { id: 1 };
     const exam: Exam = { id: 2, title: 'Final Exam', course };
 
-    const exportUsers: ExportExamUserDTO[] = [
+    const exportUsers: ExportExamUser[] = [
         {
             matriculationNumber: '123456',
             login: 's1',
@@ -45,7 +45,7 @@ describe('StudentsExportDialogComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FormsModule, FaIconComponent, StudentsExportDialogComponent, MockDirective(TranslateDirective)],
-            providers: [MockProvider(ExamManagementService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [MockProvider(ExamUserApi), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(StudentsExportDialogComponent);
@@ -54,7 +54,7 @@ describe('StudentsExportDialogComponent', () => {
         fixture.componentRef.setInput('courseId', course.id);
         fixture.componentRef.setInput('exam', exam);
 
-        examManagementService = TestBed.inject(ExamManagementService);
+        examUserApi = TestBed.inject(ExamUserApi);
 
         vi.spyOn(component as any, 'downloadBlob').mockImplementation(() => {});
         component.openDialog();
@@ -80,7 +80,7 @@ describe('StudentsExportDialogComponent', () => {
     });
 
     it('should call exportExamUsers with correct arguments', () => {
-        const exportSpy = vi.spyOn(examManagementService, 'exportExamUsers').mockReturnValue(of(exportUsers));
+        const exportSpy = vi.spyOn(examUserApi, 'exportExamUsers').mockReturnValue(of(exportUsers));
 
         component.exportUsers();
 
@@ -90,7 +90,7 @@ describe('StudentsExportDialogComponent', () => {
 
     it('should download CSV and close dialog on successful export', () => {
         vi.useFakeTimers();
-        vi.spyOn(examManagementService, 'exportExamUsers').mockReturnValue(of(exportUsers));
+        vi.spyOn(examUserApi, 'exportExamUsers').mockReturnValue(of(exportUsers));
 
         const downloadSpy = vi.spyOn(component as any, 'downloadBlob').mockImplementation(() => {});
         const closeSpy = vi.spyOn(component, 'closeDialog');
@@ -106,7 +106,7 @@ describe('StudentsExportDialogComponent', () => {
     });
 
     it('should set error flag when export fails', () => {
-        vi.spyOn(examManagementService, 'exportExamUsers').mockReturnValue(throwError(() => new Error('boom')));
+        vi.spyOn(examUserApi, 'exportExamUsers').mockReturnValue(throwError(() => new Error('boom')));
 
         component.exportUsers();
 
@@ -157,7 +157,7 @@ describe('StudentsExportDialogComponent', () => {
     }
 
     it('should not throw when exporting empty user list', () => {
-        vi.spyOn(examManagementService, 'exportExamUsers').mockReturnValue(of([]));
+        vi.spyOn(examUserApi, 'exportExamUsers').mockReturnValue(of([]));
 
         expect(() => component.exportUsers()).not.toThrow();
     });

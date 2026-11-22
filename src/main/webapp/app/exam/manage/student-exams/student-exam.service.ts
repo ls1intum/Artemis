@@ -1,19 +1,16 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { StudentExamApi } from 'app/openapi/api/student-exam-api';
 import type { StudentExam } from 'app/openapi/model/student-exam';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 
 @Service()
 export class StudentExamService {
-    private http = inject(HttpClient);
     private studentExamApi = inject(StudentExamApi);
     private accountService = inject(AccountService);
-
-    public resourceUrl = 'api/exam/courses';
 
     /**
      * Find a student exam on the server using a GET request.
@@ -21,10 +18,11 @@ export class StudentExamService {
      * @param examId The exam id.
      * @param studentExamId The id of the student exam to get.
      */
-    find(courseId: number, examId: number, studentExamId: number): Observable<HttpResponse<StudentExamWithGradeDTO>> {
-        return this.http
-            .get<StudentExamWithGradeDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}`, { observe: 'response' })
-            .pipe(tap((res: HttpResponse<StudentExamWithGradeDTO>) => this.processStudentExam(res?.body?.studentExam)));
+    find(courseId: number, examId: number, studentExamId: number): Observable<StudentExamWithGradeDTO> {
+        return this.studentExamApi.getStudentExam(courseId, examId, studentExamId).pipe(
+            map((studentExamWithGrade) => hydrate(new StudentExamWithGradeDTO(), studentExamWithGrade)),
+            tap((studentExamWithGrade) => this.processStudentExam(studentExamWithGrade.studentExam)),
+        );
     }
 
     /**

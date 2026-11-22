@@ -3,11 +3,11 @@ import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@an
 import { TumAetUiButtonDirective, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isActingAsTestExam, isRealExam } from 'app/exam/overview/exam.utils';
-import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
+import type { ExamChecklist } from 'app/openapi/model/exam-checklist';
 import { faChartBar, faEye, faHeartBroken, faListAlt, faSpinner, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamApi } from 'app/openapi/api/exam-api';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
@@ -53,9 +53,9 @@ import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overla
 export class ExamChecklistComponent implements OnInit, OnDestroy {
     private examChecklistService = inject(ExamChecklistService);
     private websocketService = inject(WebsocketService);
-    private examManagementService = inject(ExamManagementService);
-    private alertService = inject(AlertService);
+    private examApi = inject(ExamApi);
     private studentExamApi = inject(StudentExamApi);
+    private alertService = inject(AlertService);
     private profileService = inject(ProfileService);
 
     exam = input.required<Exam>();
@@ -158,8 +158,8 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
                         this.existsUnfinishedAssessments.set(lastAssessmentFinished !== examStats.numberOfTotalParticipationsForAssessment);
                     }
                 }
-                this.existsUnassessedQuizzes.set(examStats.existsUnassessedQuizzes);
-                this.existsUnsubmittedExercises.set(examStats.existsUnsubmittedExercises);
+                this.existsUnassessedQuizzes.set(examStats.existsUnassessedQuizzes ?? false);
+                this.existsUnsubmittedExercises.set(examStats.existsUnsubmittedExercises ?? false);
             },
             error: () => this.conductionCounts.initialize(),
         });
@@ -182,9 +182,9 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
         this.isEvaluatingQuizExercises.set(true);
         const exam = this.exam();
         if (exam.course?.id && exam.id) {
-            this.examManagementService.evaluateQuizExercises(exam.course.id, exam.id).subscribe({
-                next: (res) => {
-                    this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
+            this.examApi.evaluateQuizExercises(exam.course.id, exam.id).subscribe({
+                next: (evaluatedExercises) => {
+                    this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: evaluatedExercises });
                     this.existsUnassessedQuizzes.set(false);
                     this.isEvaluatingQuizExercises.set(false);
                 },
@@ -206,9 +206,9 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
         this.isAssessingUnsubmittedExams.set(true);
         const exam = this.exam();
         if (exam.course?.id && exam.id) {
-            this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(exam.course.id, exam.id).subscribe({
-                next: (res) => {
-                    this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
+            this.studentExamApi.assessUnsubmittedStudentExamsAndEmptySubmissions(exam.course.id, exam.id).subscribe({
+                next: () => {
+                    this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess');
                     this.existsUnsubmittedExercises.set(false);
                     this.isAssessingUnsubmittedExams.set(false);
                 },

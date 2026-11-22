@@ -2,7 +2,7 @@ import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiPanelComponen
 import { By } from '@angular/platform-browser';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EmbeddedViewRef } from '@angular/core';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
@@ -10,7 +10,6 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -143,13 +142,11 @@ describe('Exercise Groups Component', () => {
     });
 
     it('loads the exercise groups', async () => {
-        const mockResponse = new HttpResponse<Exam>({ body: exam });
-
-        vi.spyOn(examManagementService, 'find').mockReturnValue(of(mockResponse));
+        vi.spyOn(examManagementService, 'find').mockReturnValue(of(exam));
 
         comp.loadExerciseGroups().subscribe((response) => {
-            expect(response.body).not.toBeNull();
-            expect(response.body!.id).toBe(exam.id);
+            expect(response).not.toBeNull();
+            expect(response.id).toBe(exam.id);
         });
 
         await Promise.resolve();
@@ -157,14 +154,11 @@ describe('Exercise Groups Component', () => {
 
     it('loads exam information', async () => {
         const latestIndividualEndDate = dayjs();
-        const mockResponse = new HttpResponse<ExamInformationDTO>({ body: { latestIndividualEndDate } });
-
-        vi.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(of(mockResponse));
+        vi.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(of({ latestIndividualEndDate }));
 
         comp.loadLatestIndividualEndDateOfExam().subscribe((response) => {
             expect(response).not.toBeNull();
-            expect(response!.body).not.toBeNull();
-            expect(response!.body!.latestIndividualEndDate).toBe(latestIndividualEndDate);
+            expect(response!.latestIndividualEndDate).toBe(latestIndividualEndDate);
         });
 
         await Promise.resolve();
@@ -196,7 +190,7 @@ describe('Exercise Groups Component', () => {
         comp.exerciseGroups.set(groups);
         vi.spyOn(exerciseGroupApi, 'deleteExerciseGroup').mockReturnValue(of(undefined));
         const serverGroups = [{ id: 0, title: 'still there' } as ExerciseGroup];
-        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of(new HttpResponse<Exam>({ body: { exerciseGroups: serverGroups } as Exam })));
+        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of({ exerciseGroups: serverGroups } as Exam));
 
         comp.deleteExerciseGroup(0, {});
 
@@ -207,7 +201,7 @@ describe('Exercise Groups Component', () => {
     it('reads the exercise groups from the server again, e.g. when it is not known how the deletion of an exercise ended', () => {
         comp.exerciseGroups.set(groups);
         const serverGroups = [{ id: 0, title: 'still there', exercises: [{ id: 11 }] } as ExerciseGroup];
-        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of(new HttpResponse<Exam>({ body: { exerciseGroups: serverGroups } as Exam })));
+        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of({ exerciseGroups: serverGroups } as Exam));
 
         comp.reloadExerciseGroups();
 
@@ -246,7 +240,7 @@ describe('Exercise Groups Component', () => {
         vi.spyOn(exerciseGroupApi, 'deleteExerciseGroup').mockReturnValue(of(undefined));
         const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
         const serverGroups = [...groups];
-        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of(new HttpResponse<Exam>({ body: { exerciseGroups: serverGroups } as Exam })));
+        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of({ exerciseGroups: serverGroups } as Exam));
 
         comp.deleteExerciseGroup(0, {});
 
@@ -283,10 +277,10 @@ describe('Exercise Groups Component', () => {
             loadedExam.title = 'Final exam';
             loadedExam.course = examCourse;
             loadedExam.exerciseGroups = [{ id: 8, title: 'Group A' } as ExerciseGroup, { id: 9, title: 'Group B' } as ExerciseGroup];
-            const loaded = of(new HttpResponse<Exam>({ body: loadedExam }));
+            const loaded = of(loadedExam);
             const loadSpy = vi.spyOn(comp, 'loadExerciseGroups');
             loadSpy.mockReturnValueOnce(loaded);
-            loadSpy.mockReturnValue(reloadedGroups ? of(new HttpResponse<Exam>({ body: { exerciseGroups: reloadedGroups } as Exam })) : loaded);
+            loadSpy.mockReturnValue(reloadedGroups ? of({ exerciseGroups: reloadedGroups } as Exam) : loaded);
             vi.spyOn(comp, 'loadLatestIndividualEndDateOfExam').mockReturnValue(of(null));
             comp.ngOnInit();
         };
@@ -532,8 +526,8 @@ describe('Exercise Groups Component', () => {
         comp.exerciseGroups.set(groups);
 
         // Two independent PUTs, each controlled manually so the test can decide when they resolve.
-        const firstSave = new Subject<HttpResponse<void>>();
-        const secondSave = new Subject<HttpResponse<void>>();
+        const firstSave = new Subject<void>();
+        const secondSave = new Subject<void>();
         const updateOrderSpy = vi.spyOn(examManagementService, 'updateOrder').mockReturnValueOnce(firstSave.asObservable()).mockReturnValueOnce(secondSave.asObservable());
 
         // User action 1: move group at index 0 ("id 0") down. Optimistic local order becomes [1, 0, 2] and a save starts.
@@ -550,7 +544,7 @@ describe('Exercise Groups Component', () => {
         expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 0, 2]);
 
         // The first (and only) in-flight save resolves; the response has no body and the optimistic order stands.
-        firstSave.next(new HttpResponse<void>({}));
+        firstSave.next();
         firstSave.complete();
         await Promise.resolve();
 
@@ -563,7 +557,7 @@ describe('Exercise Groups Component', () => {
         expect(comp.orderSavePending()).toBe(true);
         expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 2, 0]);
 
-        secondSave.next(new HttpResponse<void>({}));
+        secondSave.next();
         secondSave.complete();
         await Promise.resolve();
 
@@ -573,7 +567,7 @@ describe('Exercise Groups Component', () => {
 
     it('restores the previous order and clears the pending flag when the reorder save is rejected', async () => {
         comp.exerciseGroups.set(groups);
-        const failingSave = new Subject<HttpResponse<void>>();
+        const failingSave = new Subject<void>();
         vi.spyOn(examManagementService, 'updateOrder').mockReturnValueOnce(failingSave.asObservable());
         const errorSpy = vi.spyOn(alertService, 'error');
 

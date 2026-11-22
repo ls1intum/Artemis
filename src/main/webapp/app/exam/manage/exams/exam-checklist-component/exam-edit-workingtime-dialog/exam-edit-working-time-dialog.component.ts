@@ -1,4 +1,3 @@
-import { HttpResponse } from '@angular/common/http';
 import { Component, inject, input, model, output, signal } from '@angular/core';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
@@ -61,10 +60,10 @@ export class ExamEditWorkingTimeDialogComponent {
         const currentExam = this.exam();
         this.isLoading.set(true);
         this.examManagementService.updateWorkingTime(currentExam.course!.id!, currentExam.id!, this.workingTimeSeconds).subscribe({
-            next: (res: HttpResponse<Exam>) => {
+            next: (updatedExam: Exam) => {
                 this.isLoading.set(false);
-                if (res.body) {
-                    this.workingTimeUpdated.emit(res.body);
+                if (updatedExam) {
+                    this.workingTimeUpdated.emit(updatedExam);
                 }
                 this.visible.set(false);
             },

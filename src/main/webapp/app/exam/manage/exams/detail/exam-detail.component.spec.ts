@@ -22,7 +22,8 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { CourseExamArchiveButtonComponent } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ExamApi } from 'app/openapi/api/exam-api';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { Subject, of, throwError } from 'rxjs';
 import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
 import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/entities/exam-deleted-event.model';
@@ -60,6 +61,7 @@ describe('ExamDetailComponent', () => {
     let fixture: ComponentFixture<ExamDetailComponent>;
     let component: ExamDetailComponent;
     let service: ExamManagementService;
+    let examApi: ExamApi;
     let router: Router;
 
     const exampleHTML = '<h1>Sample Markdown</h1>';
@@ -124,6 +126,7 @@ describe('ExamDetailComponent', () => {
         fixture = TestBed.createComponent(ExamDetailComponent);
         component = fixture.componentInstance;
         service = TestBed.inject(ExamManagementService);
+        examApi = TestBed.inject(ExamApi);
 
         router = TestBed.inject(Router);
     });
@@ -281,9 +284,7 @@ describe('ExamDetailComponent', () => {
 
         // GIVEN
         component.exam.set({ ...exam, studentExams: [{ id: 1, numberOfExamSessions: 0 }] });
-        const responseFakeReset = { body: exam } as HttpResponse<Exam>;
-        vi.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
-        vi.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
+        vi.spyOn(service, 'reset').mockReturnValue(of(exam));
         const alertSpy = vi.spyOn(alertService, 'success').mockImplementation(() => undefined as any);
 
         // WHEN
@@ -302,17 +303,15 @@ describe('ExamDetailComponent', () => {
 
         // GIVEN
         component.exam.set(exam);
-        const responseFakeDelete = new HttpResponse<void>({ status: 200 });
-        const responseFakeEmptyExamArray = { body: [exam] } as HttpResponse<Exam[]>;
-        vi.spyOn(service, 'delete').mockReturnValue(of(responseFakeDelete));
-        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeEmptyExamArray));
+        vi.spyOn(examApi, 'deleteExam').mockReturnValue(of(undefined));
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of([exam]));
         vi.spyOn(router, 'navigate');
 
         // WHEN
         component.deleteExam(exam.id!);
 
         // THEN
-        expect(service.delete).toHaveBeenCalledOnce();
+        expect(examApi.deleteExam).toHaveBeenCalledOnce();
         expect(broadcastSpy).toHaveBeenCalledTimes(2);
         // The exam is dropped from the shared list before the list is read again and before the page is left, so the overview that is navigated to
         // never shows (or asks for the statistics of) the deleted exam.
@@ -341,7 +340,7 @@ describe('ExamDetailComponent', () => {
         const dialogErrors: string[] = [];
         component.dialogError$.subscribe((message) => dialogErrors.push(message));
         const resetExam = Object.assign(new Exam(), { id: 1, title: 'Reset Exam', course: exam.course });
-        vi.spyOn(service, 'reset').mockReturnValue(of({ body: resetExam } as HttpResponse<Exam>));
+        vi.spyOn(service, 'reset').mockReturnValue(of(resetExam));
 
         component.resetExam();
 
@@ -354,20 +353,20 @@ describe('ExamDetailComponent', () => {
         const dialogErrors: string[] = [];
         component.dialogError$.subscribe((message) => dialogErrors.push(message));
         const error = new HttpErrorResponse({ status: 403, statusText: 'Forbidden', url: '/api/exam/delete' });
-        vi.spyOn(service, 'delete').mockReturnValue(throwError(() => error));
+        vi.spyOn(examApi, 'deleteExam').mockReturnValue(throwError(() => error));
         const navigateSpy = vi.spyOn(router, 'navigate');
         const broadcastSpy = vi.spyOn(TestBed.inject(EventManager), 'broadcast');
 
         component.deleteExam(1);
 
-        expect(service.delete).toHaveBeenCalledWith(1, 1);
+        expect(examApi.deleteExam).toHaveBeenCalledWith(1, 1);
         expect(dialogErrors).toEqual([error.message]);
         expect(navigateSpy).not.toHaveBeenCalled();
         expect(broadcastSpy).not.toHaveBeenCalled();
     });
 
     it('should navigate to the exam list of the course after deleting the exam', () => {
-        vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+        vi.spyOn(examApi, 'deleteExam').mockReturnValue(of(undefined));
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
         component.deleteExam(1);
@@ -388,7 +387,7 @@ describe('ExamDetailComponent', () => {
 
     it('should start the background deletion with the target of the exam', () => {
         const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
-        vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 202 })));
+        vi.spyOn(examApi, 'deleteExam').mockReturnValue(of(undefined));
 
         component.deleteExam(1);
 
@@ -402,7 +401,7 @@ describe('ExamDetailComponent', () => {
         const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
         const ended$ = new Subject<EntityDeletionProgress>();
         deletionService.delete.mockReturnValueOnce(ended$);
-        vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 202 })));
+        vi.spyOn(examApi, 'deleteExam').mockReturnValue(of(undefined));
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
         const broadcastSpy = vi.spyOn(TestBed.inject(EventManager), 'broadcast');
 
@@ -428,7 +427,7 @@ describe('ExamDetailComponent', () => {
         const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
         const failed$ = new Subject<EntityDeletionProgress>();
         deletionService.delete.mockReturnValueOnce(failed$);
-        vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 202 })));
+        vi.spyOn(examApi, 'deleteExam').mockReturnValue(of(undefined));
         const dialogErrorNextSpy = vi.spyOn(component['dialogErrorSource'], 'next');
 
         component.deleteExam(1);
@@ -442,7 +441,7 @@ describe('ExamDetailComponent', () => {
         const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
         const ended$ = new Subject<EntityDeletionProgress>();
         deletionService.delete.mockReturnValueOnce(ended$);
-        vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 202 })));
+        vi.spyOn(examApi, 'deleteExam').mockReturnValue(of(undefined));
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
         const broadcastSpy = vi.spyOn(TestBed.inject(EventManager), 'broadcast');
 
@@ -466,7 +465,7 @@ describe('ExamDetailComponent', () => {
     it('should not leave the page when the background deletion failed', () => {
         const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
         deletionService.status = EntityDeletionStatus.FAILED;
-        vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 202 })));
+        vi.spyOn(examApi, 'deleteExam').mockReturnValue(of(undefined));
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
         component.deleteExam(1);
@@ -477,7 +476,7 @@ describe('ExamDetailComponent', () => {
     it('should only refresh the exam list and stay on the page when the outcome of the deletion is unknown', () => {
         const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
         deletionService.status = EntityDeletionStatus.UNKNOWN;
-        vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 202 })));
+        vi.spyOn(examApi, 'deleteExam').mockReturnValue(of(undefined));
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
         const broadcastSpy = vi.spyOn(TestBed.inject(EventManager), 'broadcast');
 

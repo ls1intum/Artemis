@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamApi } from 'app/openapi/api/exam-api';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -40,7 +40,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 })
 export class UsersImportDialogComponent implements OnDestroy {
     private alertService = inject(AlertService);
-    private examManagementService = inject(ExamManagementService);
+    private examApi = inject(ExamApi);
     private courseManagementService = inject(CourseManagementService);
     private adminUserService = inject(AdminUserService);
     private tutorialGroupApiService = inject(TutorialGroupApi);
@@ -165,9 +165,8 @@ export class UsersImportDialogComponent implements OnDestroy {
                 error: () => this.onSaveError(),
             });
         } else if (!courseGroup && exam) {
-            this.examManagementService.addStudentsToExam(courseId!, exam.id!, this.examUsersToImport()).subscribe({
-                next: (res) => {
-                    const result = res.body;
+            this.examApi.addStudentsToExam(courseId!, exam.id!, this.examUsersToImport()).subscribe({
+                next: (result) => {
                     this.onSaveSuccess(result?.notFoundStudents ?? [], result?.rejectedStaffUsers ?? []);
                 },
                 error: () => this.onSaveError(),

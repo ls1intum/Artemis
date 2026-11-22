@@ -201,7 +201,7 @@ export class ExamScoresComponent implements OnInit {
 
             forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe({
                 next: ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
-                    this.examScoreDTO.set(getExamScoresResponse.body!);
+                    this.examScoreDTO.set(getExamScoresResponse);
                     if (this.examScoreDTO()) {
                         this.hasSecondCorrectionAndStarted.set(this.examScoreDTO().hasSecondCorrectionAndStarted);
                         this.studentResults.set(this.examScoreDTO().studentResults);

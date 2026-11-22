@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamUsersNotFound } from 'app/openapi/model/exam-users-not-found';
+import { ExamUserApi } from 'app/openapi/api/exam-user-api';
 import { StudentsUploadImagesDialogComponent } from 'app/exam/manage/students/upload-images/students-upload-images-dialog.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -23,7 +23,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 describe('StudentsUploadImagesDialogComponent', () => {
     let fixture: ComponentFixture<StudentsUploadImagesDialogComponent>;
     let component: StudentsUploadImagesDialogComponent;
-    let examManagementService: ExamManagementService;
+    let examUserApi: ExamUserApi;
 
     const course: Course = { id: 1 };
     const exam: Exam = { course, id: 2, title: 'Exam Title' };
@@ -40,7 +40,7 @@ describe('StudentsUploadImagesDialogComponent', () => {
             ],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(ExamManagementService),
+                MockProvider(ExamUserApi),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(SessionStorageService),
@@ -52,7 +52,7 @@ describe('StudentsUploadImagesDialogComponent', () => {
         component = fixture.componentInstance;
         fixture.componentRef.setInput('courseId', course.id);
         fixture.componentRef.setInput('exam', exam);
-        examManagementService = TestBed.inject(ExamManagementService);
+        examUserApi = TestBed.inject(ExamUserApi);
         fixture.detectChanges();
     });
 
@@ -114,7 +114,7 @@ describe('StudentsUploadImagesDialogComponent', () => {
             numberOfImagesSaved: 10,
             listOfExamUserRegistrationNumbers: ['12345678'],
         };
-        const examServiceStub = vi.spyOn(examManagementService, 'saveImages').mockReturnValue(of(new HttpResponse({ body: response })));
+        const examServiceStub = vi.spyOn(examUserApi, 'saveUsersImages').mockReturnValue(of(response));
         component.parsePDFFile();
 
         expect(examServiceStub).toHaveBeenCalledOnce();
@@ -125,8 +125,8 @@ describe('StudentsUploadImagesDialogComponent', () => {
     });
 
     it('should ignore the response of an upload that is still pending when the dialog is closed', () => {
-        const pending = new Subject<HttpResponse<any>>();
-        vi.spyOn(examManagementService, 'saveImages').mockReturnValue(pending);
+        const pending = new Subject<ExamUsersNotFound>();
+        vi.spyOn(examUserApi, 'saveUsersImages').mockReturnValue(pending);
         component.visible.set(true);
         fixture.detectChanges();
         component.parsePDFFile();
@@ -136,7 +136,7 @@ describe('StudentsUploadImagesDialogComponent', () => {
         fixture.detectChanges();
         component.open();
         fixture.detectChanges();
-        pending.next(new HttpResponse({ body: { numberOfUsersNotFound: 1, numberOfImagesSaved: 10, listOfExamUserRegistrationNumbers: [] } }));
+        pending.next({ numberOfUsersNotFound: 1, numberOfImagesSaved: 10, listOfExamUserRegistrationNumbers: [] });
 
         expect(pending.observed).toBe(false);
         expect(component.hasParsed()).toBe(false);

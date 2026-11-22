@@ -21,6 +21,7 @@ import { CourseExamArchiveButtonComponent, CourseExamArchiveState } from 'app/sh
 import { CourseExamArchiveCompletedWithWarningsDialogComponent } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-dialog.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamApi } from 'app/openapi/api/exam-api';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -284,8 +285,7 @@ describe('Course Exam Archive Button Component', () => {
         });
 
         it('should archive exam', () => {
-            const response: HttpResponse<void> = new HttpResponse({ status: 200 });
-            const downloadStub = vi.spyOn(examManagementService, 'archiveExam').mockReturnValue(of(response));
+            const downloadStub = vi.spyOn(TestBed.inject(ExamApi), 'archiveExam').mockReturnValue(of(undefined));
 
             comp.archive();
 
@@ -296,7 +296,7 @@ describe('Course Exam Archive Button Component', () => {
             const alertService = TestBed.inject(AlertService);
             const alertServiceSpy = vi.spyOn(alertService, 'success');
 
-            vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: exam })));
+            vi.spyOn(examManagementService, 'find').mockReturnValue(of(exam));
 
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);
