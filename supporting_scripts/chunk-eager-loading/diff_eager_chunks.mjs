@@ -19,8 +19,8 @@
  *   node diff_eager_chunks.mjs <fresh-report.json> --baseline <baseline-report.json>
  *     [--out <comment.md>] [--full-out <full-report.md>] [--max-chars <n>]
  *
- * --out receives the report shortened to at most --max-chars characters (default 60,000) for a PR
- * comment; --full-out receives it in full.
+ * --out receives the report for a PR comment: long chunk lists cut to a few entries and the whole
+ * shortened to at most --max-chars characters (default 60,000). --full-out receives it in full.
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -203,46 +203,47 @@ function chunkLine(c) {
     return `- \`${c.chunk}\`${c.entryPoint ? ` (${c.entryPoint})` : ''} — ${fmtKB(c.bytes)}${modules ? ` — ${modules}${more}` : ''}`;
 }
 
-const MAX_LISTED_ROOTS = 5;
-const MAX_LISTED_CHUNKS = 15;
+// Caps for the PR comment. The full report is rendered with no limits at all.
+const COMMENT_LIMITS = { roots: 5, chunks: 15 };
+const FULL_LIMITS = { roots: Infinity, chunks: Infinity };
 
 /**
  * Renders one route's drill-down as its own block. When the reports carry import edges, the roots
  * (the static imports that caused the change) come first and the full size-sorted chunk list is
  * folded away; without edges (an older baseline) only the plain list is shown, as before.
  */
-function renderDrillDown(heading, rootsLabel, roots, chunks) {
+function renderDrillDown(heading, rootsLabel, roots, chunks, limits) {
     const lines = [''];
     if (roots.length === 0) {
         lines.push(`${heading}:`);
-        appendChunkList(lines, chunks);
+        appendChunkList(lines, chunks, limits);
         return lines.join('\n');
     }
     lines.push(`${heading}, through ${roots.length} static import(s):`);
-    for (const r of roots.slice(0, MAX_LISTED_ROOTS)) {
+    for (const r of roots.slice(0, limits.roots)) {
         const modules = r.topModules.map((m) => `\`${m}\``).join(', ');
         const more = r.moreModules > 0 ? ` (+${r.moreModules} more)` : '';
         const via = [...new Set(r.via)].map((v) => `\`${v}\``).join(', ');
         lines.push(`- ${rootsLabel} ${via}: ${modules}${more} (\`${r.chunk}\`) — ${r.subtreeCount} chunk(s), ${fmtKB(r.subtreeBytes)} including its dependencies`);
     }
-    if (roots.length > MAX_LISTED_ROOTS) {
-        lines.push(`- _...and ${roots.length - MAX_LISTED_ROOTS} more._`);
+    if (roots.length > limits.roots) {
+        lines.push(`- _...and ${roots.length - limits.roots} more._`);
     }
     lines.push('');
     lines.push(`<details><summary>All ${chunks.length} chunk(s), largest first</summary>`);
     lines.push('');
-    appendChunkList(lines, chunks);
+    appendChunkList(lines, chunks, limits);
     lines.push('');
     lines.push('</details>');
     return lines.join('\n');
 }
 
-function appendChunkList(lines, chunks) {
-    for (const c of chunks.slice(0, MAX_LISTED_CHUNKS)) {
+function appendChunkList(lines, chunks, limits) {
+    for (const c of chunks.slice(0, limits.chunks)) {
         lines.push(chunkLine(c));
     }
-    if (chunks.length > MAX_LISTED_CHUNKS) {
-        lines.push(`- _...and ${chunks.length - MAX_LISTED_CHUNKS} more._`);
+    if (chunks.length > limits.chunks) {
+        lines.push(`- _...and ${chunks.length - limits.chunks} more._`);
     }
 }
 
@@ -252,9 +253,11 @@ const DEFAULT_MAX_CHARS = 60_000;
 const TRUNCATION_MARKER = '<!-- chunk-eager-report-truncated -->';
 
 /**
- * Renders the report twice: in full, and as a comment of at most maxChars characters. The
- * comment always keeps the heading, the summary and the baseline line; table rows and then
- * drill-downs follow in order until the next one would not fit, and a note says what was left out.
+ * Renders the report twice: in full (every root and chunk listed), and as a comment that lists a
+ * few roots and chunks per route and stays within maxChars characters. The comment always keeps
+ * the heading, the summary and the baseline line; table rows and then drill-downs follow in order
+ * until the next one would not fit, and a note says what was left out. A comment that differs from
+ * the full report carries the truncation marker, which makes the workflow link the full report.
  */
 function toMarkdown(diffs, meta, maxChars) {
     const regressed = diffs.filter((d) => d.status === 'regressed');
@@ -289,21 +292,37 @@ function toMarkdown(diffs, meta, maxChars) {
     }
     const tableHeader = ['', '| | Route | Eager chunks | Eager size | Δ chunks | Δ size |', '|---|---|---|---|---|---|'].join('\n');
 
-    const drillDowns = [];
-    for (const d of regressed) {
-        if (d.newChunks.length === 0) continue; // size-only regression, nothing new to list
-        drillDowns.push(renderDrillDown(`**${d.route}** — ${d.newChunks.length} new chunk(s) became eager-reachable`, 'Pulled in by', d.newRoots, d.newChunks));
-    }
-    for (const d of improved) {
-        if (d.removedChunks.length === 0) continue; // size-only improvement, nothing removed to list
-        drillDowns.push(
-            renderDrillDown(`**${d.route}** — ${d.removedChunks.length} chunk(s) are no longer eager-reachable`, 'No longer pulled in by', d.removedRoots, d.removedChunks),
-        );
-    }
+    const renderDrillDowns = (limits) => {
+        const blocks = [];
+        for (const d of regressed) {
+            if (d.newChunks.length === 0) continue; // size-only regression, nothing new to list
+            blocks.push(renderDrillDown(`**${d.route}** — ${d.newChunks.length} new chunk(s) became eager-reachable`, 'Pulled in by', d.newRoots, d.newChunks, limits));
+        }
+        for (const d of improved) {
+            if (d.removedChunks.length === 0) continue; // size-only improvement, nothing removed to list
+            blocks.push(
+                renderDrillDown(
+                    `**${d.route}** — ${d.removedChunks.length} chunk(s) are no longer eager-reachable`,
+                    'No longer pulled in by',
+                    d.removedRoots,
+                    d.removedChunks,
+                    limits,
+                ),
+            );
+        }
+        return blocks;
+    };
 
     const headText = head.join('\n');
-    const full = [headText, ...(tableRows.length ? [tableHeader, ...tableRows] : []), ...drillDowns].join('\n');
-    if (full.length <= maxChars) return { full, comment: full };
+    const assemble = (blocks) => [headText, ...(tableRows.length ? [tableHeader, ...tableRows] : []), ...blocks].join('\n');
+    const full = assemble(renderDrillDowns(FULL_LIMITS));
+    const drillDowns = renderDrillDowns(COMMENT_LIMITS);
+    const capped = assemble(drillDowns);
+    if (capped.length <= maxChars) {
+        if (capped === full) return { full, comment: full };
+        const note = '_Long chunk lists are shortened in this comment; the full report is attached to the workflow run._';
+        return { full, comment: [capped, '', note, TRUNCATION_MARKER].join('\n') };
+    }
 
     // Reserve room for the note first, so adding it can never push the comment over the budget.
     const noteReserve = 400;

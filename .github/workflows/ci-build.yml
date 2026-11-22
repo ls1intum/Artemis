@@ -117,6 +117,9 @@ jobs:
           name: chunk-eager-report
           path: chunk-eager-report.json
           if-no-files-found: error
+          # A PR's report is only read by its own comparison job. A develop report is the baseline
+          # for any PR whose merge-base it is, so it is kept for the default 90 days.
+          retention-days: ${{ inputs.is_pr && 14 || 90 }}
       - name: Build .war
         # SBOM generation (cdxgen + cyclonedxBom) adds ~60s to a cold WAR build and is only
         # needed for release-eligible artifacts, so `-Psbom` is gated behind `is_release_build`
@@ -172,11 +175,12 @@ jobs:
           path: build/libs/Artemis-*.war
           if-no-files-found: error
 
-  # Compares this PR's eager-chunk report (uploaded by build-war above) against the latest report
-  # published by a develop push, and posts/updates a PR comment with the result. No dedicated
-  # build: reuses build-war's own build, and develop's side is whatever the last develop push
-  # already computed (see the "Generate eager-chunk loading report" step above), not rebuilt here.
-  # Advisory only (never fails the job) -- this is a brand-new, unproven check; see
+  # Compares this PR's eager-chunk report (uploaded by build-war above) against the report of the
+  # develop commit the PR branched from (the merge-base), and posts/updates a PR comment with the
+  # result. No dedicated build: reuses build-war's own build, and the baseline is whatever the
+  # develop push of that commit already computed (see the "Generate eager-chunk loading report"
+  # step above), not rebuilt here.
+  # Advisory only (never fails the build) -- this is a brand-new, unproven check; see
   # supporting_scripts/chunk-eager-loading/README.md before making it build-blocking.
   chunk-eager-quality:
     name: Client Eager-Chunk Loading Report
@@ -184,6 +188,9 @@ jobs:
     if: ${{ inputs.is_pr }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Advisory report: no failure in this job (an API error, a missing artifact) may fail the
+    # required Build check.
+    continue-on-error: true
     permissions:
       contents: read
       pull-requests: write
@@ -201,16 +208,22 @@ jobs:
         with:
           name: chunk-eager-report
           path: pr-report
-      - name: Resolve develop's latest commit
+      - name: Resolve the commit this branch forked from develop
         id: develop-sha
+        # The merge-base, not develop's tip: a PR that is behind develop would otherwise be
+        # charged with every client change merged to develop since it branched. If the lookup
+        # fails the output stays empty and the comparison is skipped.
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ inputs.commit_sha }}
         run: |
           set -Eeuo pipefail
-          sha=$(gh api "repos/${{ github.repository }}/commits/develop" --jq .sha)
+          sha=$(gh api "repos/${{ github.repository }}/compare/develop...${HEAD_SHA}" --jq .merge_base_commit.sha || true)
           echo "sha=${sha}" >> "$GITHUB_OUTPUT"
       - name: Resolve develop's report run
         id: resolve-develop-run
+        if: steps.develop-sha.outputs.sha != ''
         # Bootstraps false on the very first run of this check (before this PR has ever merged,
         # no develop push has published a chunk-eager-report yet) -- don't fail the job over it,
         # just skip the comparison. Self-resolves once this PR merges and develop rebuilds once.
@@ -257,7 +270,6 @@ jobs:
           path: chunk-diff-report-full.md
           if-no-files-found: ignore
       - name: Find existing PR comment
-        if: steps.resolve-develop-run.outcome == 'success'
         id: find-comment
         continue-on-error: true  # cosmetic lookup; a transient API blip must not fail the job
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -278,13 +290,15 @@ jobs:
             const found = comments.find((c) => c.user?.login === 'github-actions[bot]' && c.body?.includes(marker));
             return found ? String(found.id) : '';
       - name: Post eager-chunk report comment
-        if: steps.resolve-develop-run.outcome == 'success'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         continue-on-error: true  # cosmetic PR comment; must not fail the job over an API blip
         env:
           PR_NUMBER: ${{ inputs.pr_number }}
           EXISTING_COMMENT_ID: ${{ steps.find-comment.outputs.result }}
           FULL_REPORT_URL: ${{ steps.upload-full-diff.outputs.artifact-url }}
+          BASELINE_RESOLVED: ${{ steps.resolve-develop-run.outcome == 'success' }}
+          HEAD_SHA: ${{ inputs.commit_sha }}
+          BASE_SHA: ${{ steps.develop-sha.outputs.sha }}
         with:
           script: |
             const fs = require('fs');
@@ -292,13 +306,21 @@ jobs:
             const existingCommentId = Number(process.env.EXISTING_COMMENT_ID) || null;
 
             let body;
-            try {
-              body = fs.readFileSync('chunk-diff-report.md', 'utf8');
-            } catch {
-              return;
-            }
-            if (body.includes('<!-- chunk-eager-report-truncated -->') && process.env.FULL_REPORT_URL) {
-              body += `\n\n📄 [Full report](${process.env.FULL_REPORT_URL})`;
+            if (process.env.BASELINE_RESOLVED === 'true') {
+              try {
+                body = fs.readFileSync('chunk-diff-report.md', 'utf8');
+              } catch {
+                return;
+              }
+              if (body.includes('<!-- chunk-eager-report-truncated -->') && process.env.FULL_REPORT_URL) {
+                body += `\n\n📄 [Full report](${process.env.FULL_REPORT_URL})`;
+              }
+            } else {
+              // Without a baseline, an earlier report would stay up as if it still applied to this
+              // commit. Replace it with a note; never create a comment just to say nothing was compared.
+              if (!existingCommentId) return;
+              const base = process.env.BASE_SHA ? `the merge-base with develop (\`${process.env.BASE_SHA.slice(0, 10)}\`)` : 'the merge-base with develop';
+              body = `### Client Eager-Chunk Loading Report\n➖ Comparison skipped for \`${process.env.HEAD_SHA.slice(0, 10)}\`: no eager-chunk report is available for ${base}. The previous report no longer applies to this commit.`;
             }
             body += `\n\n🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
             body += `\n<!-- Chunk Eager-Loading Report -->`;

@@ -45,23 +45,30 @@ Instead, `ci-build.yml`'s `build-war` job (which already runs the real productio
 workflow artifact (`chunk-eager-report`). The `chunk-eager-quality` job (PR runs only) then:
 
 1. Downloads its own PR's report (same workflow run, no extra build).
-2. Resolves `develop`'s latest commit via the GitHub API, then resolves _that commit's_ CI run
-   using the shared `.github/actions/resolve-artifact-run` composite action (the same one deploy
-   paths use to find a `.war`/Docker artifact for an exact SHA).
-3. Downloads that run's `chunk-eager-report` — this is the baseline, always built from `develop`'s
-   exact latest commit. `resolve-artifact-run` only looks at runs of that one commit (a commit can
-   have several, e.g. a re-run) and picks the first that still carries a non-expired artifact; if
-   none does, the comparison is skipped (see Known limitations).
+2. Resolves the **merge-base** of the PR head and `develop` via the GitHub compare API — the commit
+   the branch forked from, or the last `develop` commit merged into it — then resolves _that
+   commit's_ CI run using the shared `.github/actions/resolve-artifact-run` composite action (the
+   same one deploy paths use to find a `.war`/Docker artifact for an exact SHA). The merge-base is
+   used instead of `develop`'s tip on purpose: against the tip, every client change merged to
+   `develop` since the PR branched would show up as a regression or improvement of the PR.
+3. Downloads that run's `chunk-eager-report` — this is the baseline. `resolve-artifact-run` only
+   looks at runs of that one commit (a commit can have several, e.g. a re-run) and picks the first
+   that still carries a non-expired artifact; if none does, the comparison is skipped (see Known
+   limitations).
 4. Diffs and posts/updates a PR comment. GitHub rejects comments over 65,536 characters, so when
    many routes change at once (e.g. a shared dependency) the comment is shortened to 60,000: the
    summary always stays, then table rows and per-route drill-downs follow while they fit. The
    complete report is uploaded as the `chunk-eager-diff-report` artifact, and a shortened comment
    links to it. Only a comment posted by `github-actions[bot]` with the report marker is updated;
-   all of the PR's comments are searched for it.
+   all of the PR's comments are searched for it. When no baseline can be resolved for a later push,
+   an existing report comment is replaced by a short "comparison skipped" note, so a report for an
+   older commit is not left standing; no comment is created just to say that.
 
-No build runs twice: the PR side reuses `build-war`'s own build, and `develop`'s side is whatever
-that same job already computed the last time it ran on `develop` — nothing is rebuilt just for the
-comparison.
+No build runs twice: the PR side reuses `build-war`'s own build, and the baseline side is whatever
+that same job already computed when it ran on that `develop` commit — nothing is rebuilt just for
+the comparison. A PR's own report is kept for 14 days, a `develop` report for 90 (the artifact is
+the baseline for every PR forked from that commit). Chunk identities (`moduleKey`) are stored as
+SHA-1 hashes of the chunk's input paths, which keeps the report small.
 
 **Bootstrap note**: until this PR itself merges to `develop` and `develop` rebuilds once, there is
 no `chunk-eager-report` artifact on any `develop` run yet. The `chunk-eager-quality` job handles
@@ -104,13 +111,17 @@ the bug class this guards against (see `discover_route_entries.mjs`'s own header
 
 ## Known limitations
 
-- **Advisory only, not build-blocking.** `chunk-eager-quality` never fails the CI run — it's a new,
-  unproven check; see the plan discussion before making it gate merges.
-- **The baseline must exist for `develop`'s exact latest commit.** The comparison resolves
-  `develop`'s tip SHA and needs a `chunk-eager-report` artifact on that commit's `ci.yml` run. If
-  that commit's build has not published one yet (still running, failed, or expired), the comparison
-  is skipped for that run and no comment is posted — it does not fall back to an older `develop`
-  report.
+- **Advisory only, not build-blocking.** `chunk-eager-quality` is `continue-on-error` as a whole, so
+  no failure in it (an API error, a missing artifact) fails the CI run — it's a new, unproven
+  check; see the plan discussion before making it gate merges.
+- **The baseline must exist for the merge-base commit.** The comparison needs a
+  `chunk-eager-report` artifact on that commit's `ci.yml` run. If that commit's build has not
+  published one (it never ran on `develop`, failed, or the artifact expired after 90 days), the
+  comparison is skipped for that run — it does not fall back to another `develop` report, which
+  would reintroduce the drift described above.
+- **Sizes are those of an unoptimized build.** `build-war` builds with `--optimization=false`, so
+  the byte figures are not minified and are larger than what a user downloads. They are only
+  meaningful relative to another report from the same build.
 - **Fork PRs may not get a posted comment.** The default `GITHUB_TOKEN` for `pull_request` events
   from forked repositories is read-only regardless of the `permissions:` block, so
   `createComment`/`updateComment` can silently no-op for fork-originated PRs (the report is still
@@ -126,6 +137,5 @@ the bug class this guards against (see `discover_route_entries.mjs`'s own header
 - **The drill-down lists** (new chunks for regressions, removed chunks for improvements) match
   chunks by their stable module inputs (not the content-hashed filename), but are still noisiest
   when comparing builds from commits far apart in history — unrelated dependency/vendor-chunk
-  drift shows up as spurious entries on both sides. Usually close together on the real CI path
-  (PR vs. `develop`'s latest), but a long-lived PR can still drift far from `develop`; the
-  aggregate eager chunk count / byte size numbers are the primary, unaffected signal either way.
+  drift shows up as spurious entries on both sides. On the real CI path the baseline is the
+  merge-base, so the two builds differ only by the PR's own changes.

@@ -20,6 +20,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { discoverRouteEntries } from './discover_route_entries.mjs';
 
 const EAGER_KIND = 'import-statement';
@@ -133,10 +134,16 @@ function analyzeRoute(outputs, routeName, entrySourcePath) {
             chunk: file,
             // Stable identity across builds: output filenames are content-hashed and change on
             // every commit even for logically unchanged chunks, so filename can't be used to
-            // detect "is this chunk new" across builds. The set of source inputs is stable.
-            moduleKey: Object.keys(outputs[file].inputs ?? {})
-                .sort()
-                .join('|'),
+            // detect "is this chunk new" across builds. The set of source inputs is stable. It is
+            // stored as a hash: the joined paths made up most of the report's size, and the diff
+            // only ever compares keys for equality.
+            moduleKey: createHash('sha1')
+                .update(
+                    Object.keys(outputs[file].inputs ?? {})
+                        .sort()
+                        .join('|'),
+                )
+                .digest('hex'),
             entryPoint: outputs[file].entryPoint ?? null,
             bytes: outputs[file].bytes,
             parents: parentsByChunk.get(file),
