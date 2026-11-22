@@ -14,6 +14,6 @@ import type { CourseForExam } from './course-for-exam';
 export interface ExamForImportList {
     id?: number;
     title?: string;
-    examMode?: ExamMode;
+    examMode: ExamMode;
     course?: CourseForExam;
 }

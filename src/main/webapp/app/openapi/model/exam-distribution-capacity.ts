@@ -10,6 +10,6 @@
 
 
 export interface ExamDistributionCapacity {
-    combinedDefaultCapacity?: number;
-    combinedMaximumCapacity?: number;
+    combinedDefaultCapacity: number;
+    combinedMaximumCapacity: number;
 }

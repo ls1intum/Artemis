@@ -10,9 +10,9 @@
 
 
 export interface ExamExerciseStartPreparationStatus {
-    finished?: number;
-    failed?: number;
-    overall?: number;
+    finished: number;
+    failed: number;
+    overall: number;
     participationCount?: number;
     startedAt?: string;
 }

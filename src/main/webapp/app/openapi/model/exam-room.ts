@@ -14,6 +14,6 @@ export interface ExamRoom {
     roomNumber: string;
     name: string;
     building: string;
-    numberOfSeats?: number;
+    numberOfSeats: number;
     layoutStrategies: Array<ExamRoomLayoutStrategy>;
 }

@@ -12,13 +12,13 @@ import type { UserName } from './user-name';
 import type { ExamForStudentExam } from './exam-for-student-exam';
 
 export interface StudentExam {
-    id?: number;
+    id: number;
     workingTime?: number;
     started?: boolean;
     startedDate?: string;
     submitted?: boolean;
     submissionDate?: string;
-    testRun?: boolean;
+    testRun: boolean;
     user?: UserName;
     exam?: ExamForStudentExam;
 }

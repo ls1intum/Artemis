@@ -13,6 +13,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO wire representation of an {@link ExerciseGroup}.
@@ -50,7 +51,8 @@ public record ExerciseGroupDTO(long id, @Nullable String title, @Nullable Boolea
      * @param course                         the (slim) course of the exam
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ExamForExerciseGroupDTO(long id, ExamMode examMode, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable CourseForExerciseGroupDTO course) {
+    public record ExamForExerciseGroupDTO(long id, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ExamMode examMode, @Nullable ZonedDateTime exampleSolutionPublicationDate,
+            @Nullable CourseForExerciseGroupDTO course) {
 
         /**
          * Builds the slim exam projection from an exam entity.

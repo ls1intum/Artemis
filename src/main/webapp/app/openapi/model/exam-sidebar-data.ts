@@ -11,9 +11,9 @@
 
 export interface ExamSidebarData {
     title: string;
-    id?: number;
+    id: number;
     moduleNumber?: string;
     startDate: string;
-    workingTime?: number;
+    workingTime: number;
     examMaxPoints?: number;
 }

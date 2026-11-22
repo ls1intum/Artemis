@@ -11,8 +11,8 @@
 import type { ExamLiveEventBase } from './exam-live-event-base';
 
 export interface ProblemStatementUpdateEvent extends ExamLiveEventBase {
-    id?: number;
-    createdDate?: string;
+    id: number;
+    createdDate: string;
     text?: string;
     problemStatement?: string;
     exerciseId?: number;

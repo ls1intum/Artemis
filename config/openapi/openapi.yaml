@@ -8409,6 +8409,7 @@ components:
           problemStatement: {type: string}
           exerciseId: {type: integer, format: int64}
           exerciseName: {type: string}
+      required: [createdDate, id]
     CourseInformationSharingConfiguration:
       type: string
       enum: [DISABLED, COMMUNICATION_AND_MESSAGING, COMMUNICATION_ONLY]
@@ -8565,6 +8566,7 @@ components:
         workingTime: {type: integer, format: int32}
         examMaxPoints: {type: integer, format: int32}
         examMode: {$ref: '#/components/schemas/ExamMode'}
+      required: [examMode, id, workingTime]
     AssessmentNote:
       type: object
       properties:
@@ -9014,6 +9016,7 @@ components:
         maxComplaintTextLimit: {type: integer, format: int32}
         maxComplaintResponseTextLimit: {type: integer, format: int32}
         athenaFormativeFeedbackEnabled: {type: boolean}
+      required: [id]
     PresentationAssessmentStudentRow:
       type: object
       properties:
@@ -9310,6 +9313,7 @@ components:
         examMode: {$ref: '#/components/schemas/ExamMode'}
         workingTime: {type: integer, format: int32}
         course: {$ref: '#/components/schemas/CourseForStudentExam'}
+      required: [examMode, id, workingTime]
     StudentExport:
       type: object
       properties:
@@ -9357,6 +9361,7 @@ components:
       properties:
         used: {type: integer, format: int64}
         limit: {type: integer, format: int32}
+      required: [limit, used]
     ComplaintAction:
       type: string
       enum: [REFRESH_LOCK, RESOLVE_COMPLAINT]
@@ -9649,6 +9654,7 @@ components:
           id: {type: integer, format: int64}
           createdDate: {type: string, format: date-time}
           text: {type: string}
+      required: [createdDate, id]
     DropLocationFromEditor:
       type: object
       properties:
@@ -9730,6 +9736,7 @@ components:
           courseWide: {type: boolean}
           newStartDate: {type: string, format: date-time}
           newEndDate: {type: string, format: date-time}
+      required: [createdDate, id]
     MultipleChoiceSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -9780,6 +9787,7 @@ components:
       properties:
         combinedDefaultCapacity: {type: integer, format: int32}
         combinedMaximumCapacity: {type: integer, format: int32}
+      required: [combinedDefaultCapacity, combinedMaximumCapacity]
     OwnStudentExam:
       type: object
       properties:
@@ -9931,6 +9939,7 @@ components:
         allExamExercisesAllStudentsPrepared: {type: boolean}
         existsUnassessedQuizzes: {type: boolean}
         existsUnsubmittedExercises: {type: boolean}
+      required: [existsUnassessedQuizzes, existsUnsubmittedExercises]
     BonusRequest:
       type: object
       properties:
@@ -10397,7 +10406,7 @@ components:
         startDate: {type: string, format: date-time}
         workingTime: {type: integer, format: int32}
         examMaxPoints: {type: integer, format: int32}
-      required: [startDate, title]
+      required: [id, startDate, title, workingTime]
     DragAndDropSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -10528,7 +10537,7 @@ components:
         name: {type: string}
         type: {$ref: '#/components/schemas/LayoutStrategyType'}
         capacity: {type: integer, format: int32}
-      required: [name, type]
+      required: [capacity, name, type]
     VariantJobDetail:
       type: object
       properties:
@@ -11043,6 +11052,7 @@ components:
         listOfExamUserRegistrationNumbers:
           type: array
           items: {type: string}
+      required: [numberOfImagesSaved, numberOfUsersNotFound]
     CreateExerciseVariantGroup:
       type: object
       properties:
@@ -11213,6 +11223,7 @@ components:
         overall: {type: integer, format: int32}
         participationCount: {type: integer, format: int32}
         startedAt: {type: string, format: date-time}
+      required: [failed, finished, overall]
     WorkerState:
       type: string
       enum: [OFFLINE, NOT_READY, AVAILABLE, RESERVED, BUSY]
@@ -11319,7 +11330,7 @@ components:
           type: array
           items: {$ref: '#/components/schemas/ExamRoomLayoutStrategy'}
           uniqueItems: true
-      required: [building, layoutStrategies, name, roomNumber]
+      required: [building, layoutStrategies, name, numberOfSeats, roomNumber]
     TutorParticipationStatus:
       type: string
       enum: [NOT_PARTICIPATED, REVIEWED_INSTRUCTIONS, TRAINED, COMPLETED]
@@ -11516,6 +11527,7 @@ components:
           id: {type: integer, format: int64}
           createdDate: {type: string, format: date-time}
           text: {type: string}
+      required: [createdDate, id]
     LectureLearningStatistics:
       type: object
       properties:
@@ -11530,6 +11542,7 @@ components:
         numberOfGeneratedStudentExams: {type: integer, format: int64}
         numberOfExamsStarted: {type: integer, format: int64}
         numberOfExamsSubmitted: {type: integer, format: int64}
+      required: [numberOfExamsStarted, numberOfExamsSubmitted, numberOfGeneratedStudentExams]
     ResultAfterEvaluation:
       type: object
       properties:
@@ -12160,6 +12173,7 @@ components:
         title: {type: string}
         examMode: {$ref: '#/components/schemas/ExamMode'}
         course: {$ref: '#/components/schemas/CourseForExam'}
+      required: [examMode]
     MultipleChoiceSubmittedAnswerBeforeEvaluation:
       required: [type]
       type: object
@@ -12204,6 +12218,7 @@ components:
         testRun: {type: boolean}
         user: {$ref: '#/components/schemas/UserName'}
         exam: {$ref: '#/components/schemas/ExamForStudentExam'}
+      required: [id, testRun]
     Type:
       type: string
       enum: [STARTED, PROGRESS, DONE, CANCELLED, ERROR]
@@ -12298,6 +12313,7 @@ components:
         examMode: {$ref: '#/components/schemas/ExamMode'}
         exampleSolutionPublicationDate: {type: string, format: date-time}
         course: {$ref: '#/components/schemas/CourseForExerciseGroup'}
+      required: [examMode]
     GradeSteps:
       type: object
       properties:

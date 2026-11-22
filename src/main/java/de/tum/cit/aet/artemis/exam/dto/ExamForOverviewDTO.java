@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.ExamMode;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * An exam as the course overview sidebar needs it: enough to title, date, sort, group and link to it.
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamMode;
  * @param examMode      the mode of the exam (REAL, TEST, or TEST_WITH_SUPERVISED_SESSION)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamForOverviewDTO(long id, String title, String moduleNumber, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, int workingTime,
-        Integer examMaxPoints, ExamMode examMode) {
+public record ExamForOverviewDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, String title, String moduleNumber, ZonedDateTime visibleDate,
+        ZonedDateTime startDate, ZonedDateTime endDate, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int workingTime, Integer examMaxPoints,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ExamMode examMode) {
 }

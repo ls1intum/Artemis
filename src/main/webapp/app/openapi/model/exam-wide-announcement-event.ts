@@ -11,7 +11,7 @@
 import type { ExamLiveEventBase } from './exam-live-event-base';
 
 export interface ExamWideAnnouncementEvent extends ExamLiveEventBase {
-    id?: number;
-    createdDate?: string;
+    id: number;
+    createdDate: string;
     text?: string;
 }

@@ -13,7 +13,7 @@ import type { ExamMode } from './exam-mode';
 
 export interface ExamForExerciseGroup {
     id?: number;
-    examMode?: ExamMode;
+    examMode: ExamMode;
     exampleSolutionPublicationDate?: string;
     course?: CourseForExerciseGroup;
 }

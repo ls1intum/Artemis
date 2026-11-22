@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamMode;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Minimal projection of an {@link Exam}, nested inside {@link StudentExamDTO} where the client needs exam-level
@@ -11,7 +12,9 @@ import de.tum.cit.aet.artemis.exam.domain.ExamMode;
  * the student exam itself.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamForStudentExamDTO(long id, String title, ExamMode examMode, int workingTime, CourseForStudentExamDTO course) {
+public record ExamForStudentExamDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, String title,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ExamMode examMode, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int workingTime,
+        CourseForStudentExamDTO course) {
 
     /**
      * Converts an Exam into an ExamForStudentExamDTO.

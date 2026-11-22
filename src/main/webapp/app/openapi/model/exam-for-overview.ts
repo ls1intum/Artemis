@@ -11,13 +11,13 @@
 import type { ExamMode } from './exam-mode';
 
 export interface ExamForOverview {
-    id?: number;
+    id: number;
     title?: string;
     moduleNumber?: string;
     visibleDate?: string;
     startDate?: string;
     endDate?: string;
-    workingTime?: number;
+    workingTime: number;
     examMaxPoints?: number;
-    examMode?: ExamMode;
+    examMode: ExamMode;
 }

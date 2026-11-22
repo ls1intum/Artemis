@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamMode;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Slim exam row for the paged exam-import search table, returned inside the
@@ -30,7 +31,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamMode;
  * @param course   the slim course projection (only {@code title} is read on the import table)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamForImportListDTO(long id, @Nullable String title, ExamMode examMode, @Nullable CourseForExamDTO course) {
+public record ExamForImportListDTO(long id, @Nullable String title, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ExamMode examMode, @Nullable CourseForExamDTO course) {
 
     /**
      * Builds a slim import-table row from an exam. Reads the two scalar columns, the {@code examMode} enum and the eager

@@ -13,5 +13,5 @@ import type { LayoutStrategyType } from './layout-strategy-type';
 export interface ExamRoomLayoutStrategy {
     name: string;
     type: LayoutStrategyType;
-    capacity?: number;
+    capacity: number;
 }

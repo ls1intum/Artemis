@@ -10,7 +10,7 @@
 
 
 export interface CourseForStudentExam {
-    id?: number;
+    id: number;
     accuracyOfScores?: number;
     maxComplaintTextLimit?: number;
     maxComplaintResponseTextLimit?: number;

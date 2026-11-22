@@ -19,6 +19,6 @@ export interface ExamChecklist {
     numberOfAllComplaints?: number;
     numberOfAllComplaintsDone?: number;
     allExamExercisesAllStudentsPrepared?: boolean;
-    existsUnassessedQuizzes?: boolean;
-    existsUnsubmittedExercises?: boolean;
+    existsUnassessedQuizzes: boolean;
+    existsUnsubmittedExercises: boolean;
 }

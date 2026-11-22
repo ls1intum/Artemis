@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.exam.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Lightweight conduction counts for the instructor exam checklist, excluding test runs.
  *
@@ -10,5 +12,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param numberOfExamsSubmitted        submitted attempts
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamConductionCountsDTO(long numberOfGeneratedStudentExams, long numberOfExamsStarted, long numberOfExamsSubmitted) {
+public record ExamConductionCountsDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long numberOfGeneratedStudentExams,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long numberOfExamsStarted, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long numberOfExamsSubmitted) {
 }

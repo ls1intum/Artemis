@@ -12,9 +12,9 @@ import type { CourseForStudentExam } from './course-for-student-exam';
 import type { ExamMode } from './exam-mode';
 
 export interface ExamForStudentExam {
-    id?: number;
+    id: number;
     title?: string;
-    examMode?: ExamMode;
-    workingTime?: number;
+    examMode: ExamMode;
+    workingTime: number;
     course?: CourseForStudentExam;
 }

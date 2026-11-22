@@ -10,7 +10,7 @@
 
 
 export interface ExamUsersNotFound {
-    numberOfUsersNotFound?: number;
-    numberOfImagesSaved?: number;
+    numberOfUsersNotFound: number;
+    numberOfImagesSaved: number;
     listOfExamUserRegistrationNumbers?: Array<string>;
 }

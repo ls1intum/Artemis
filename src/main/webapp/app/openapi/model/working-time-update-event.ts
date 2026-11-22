@@ -11,8 +11,8 @@
 import type { ExamLiveEventBase } from './exam-live-event-base';
 
 export interface WorkingTimeUpdateEvent extends ExamLiveEventBase {
-    id?: number;
-    createdDate?: string;
+    id: number;
+    createdDate: string;
     newWorkingTime?: number;
     oldWorkingTime?: number;
     courseWide?: boolean;

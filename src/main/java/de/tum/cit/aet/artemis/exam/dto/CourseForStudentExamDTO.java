@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exam.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Minimal projection of a {@link Course}, nested inside {@link ExamForStudentExamDTO} and, via {@link
@@ -20,7 +21,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * gate the test-exam AI feedback button on the course-level Athena formative feedback setting.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseForStudentExamDTO(long id, Integer accuracyOfScores, int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean athenaFormativeFeedbackEnabled) {
+public record CourseForStudentExamDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, Integer accuracyOfScores, int maxComplaintTextLimit,
+        int maxComplaintResponseTextLimit, boolean athenaFormativeFeedbackEnabled) {
 
     /**
      * Converts a Course into a CourseForStudentExamDTO.

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exam.dto;
 import java.time.ZonedDateTime;
 
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Progress of preparing the exercises of all student exams of an exam.
@@ -13,7 +14,9 @@ import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
  * @param participationCount the number of participations created so far
  * @param startedAt          when the preparation started
  */
-public record ExamExerciseStartPreparationStatusDTO(int finished, int failed, int overall, int participationCount, ZonedDateTime startedAt) {
+public record ExamExerciseStartPreparationStatusDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) int finished,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int failed, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int overall, int participationCount,
+        ZonedDateTime startedAt) {
 
     /**
      * Maps the cached status to its response.

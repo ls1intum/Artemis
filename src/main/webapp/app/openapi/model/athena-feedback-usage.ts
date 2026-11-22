@@ -10,6 +10,6 @@
 
 
 export interface AthenaFeedbackUsage {
-    used?: number;
-    limit?: number;
+    used: number;
+    limit: number;
 }
