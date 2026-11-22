@@ -20,6 +20,7 @@ import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 import { StudentExamApi } from 'app/openapi/api/student-exam-api';
+import type { OwnStudentExam } from 'app/openapi/model/own-student-exam';
 import type { AthenaFeedbackUsage } from 'app/openapi/model/athena-feedback-usage';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 
@@ -144,58 +145,78 @@ describe('ExamParticipationService', () => {
         }
     });
 
-    it('should load a StudentExam', async () => {
-        const sendExam = Object.assign(
-            {
-                visibleDate: dayjs(),
-                startDate: dayjs(),
-                endDate: dayjs(),
-                publishResultDate: dayjs(),
-                examStudentReviewStart: dayjs(),
-                examStudentReviewEnd: dayjs(),
+    describe('own student exam', () => {
+        const ownStudentExam: OwnStudentExam = {
+            id: 3,
+            workingTime: 3600,
+            started: true,
+            startedDate: '2026-01-01T10:05:00.000Z',
+            submitted: true,
+            submissionDate: '2026-01-01T10:50:00.000Z',
+            testRun: false,
+            ended: true,
+            user: { id: 5, login: 'student', name: 'Stu Dent' },
+            exam: {
+                id: 2,
+                title: 'Exam',
+                examMode: 'REAL',
+                visibleDate: '2026-01-01T09:00:00.000Z',
+                startDate: '2026-01-01T10:00:00.000Z',
+                endDate: '2026-01-01T12:00:00.000Z',
+                publishResultsDate: '2026-01-02T12:00:00.000Z',
+                examSummaryPublicationDate: '2026-01-03T12:00:00.000Z',
+                gracePeriod: 180,
+                workingTime: 3600,
+                course: { id: 1 },
             },
-            exam,
-        );
-        const returnedFromService = Object.assign(
-            {
-                exam: sendExam,
-            },
-            studentExam,
-        );
-        service
-            .getOwnStudentExam(1, 1)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
+        };
 
-        const req = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/1/own-student-exam' });
-        req.flush(returnedFromService);
+        it('should GET the own student exam and convert the dates of the student exam and its exam', () => {
+            let loaded: StudentExam | undefined;
+            service.getOwnStudentExam(1, 1).subscribe((value) => (loaded = value));
+            httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/1/own-student-exam' }).flush(ownStudentExam);
+
+            expect(loaded).toEqual({
+                ...ownStudentExam,
+                startedDate: dayjs('2026-01-01T10:05:00.000Z'),
+                submissionDate: dayjs('2026-01-01T10:50:00.000Z'),
+                exam: {
+                    ...ownStudentExam.exam,
+                    visibleDate: dayjs('2026-01-01T09:00:00.000Z'),
+                    startDate: dayjs('2026-01-01T10:00:00.000Z'),
+                    endDate: dayjs('2026-01-01T12:00:00.000Z'),
+                    publishResultsDate: dayjs('2026-01-02T12:00:00.000Z'),
+                    examSummaryPublicationDate: dayjs('2026-01-03T12:00:00.000Z'),
+                    examStudentReviewStart: undefined,
+                    examStudentReviewEnd: undefined,
+                },
+            });
+        });
+
+        it('should leave ended and numberOfExamSessions undefined when the server omits them', () => {
+            let loaded: StudentExam | undefined;
+            service.getOwnStudentExam(1, 1).subscribe((value) => (loaded = value));
+            httpMock.expectOne({ method: 'GET' }).flush({ id: 3, testRun: false });
+
+            expect(loaded?.ended).toBeUndefined();
+            expect(loaded?.numberOfExamSessions).toBeUndefined();
+        });
     });
 
-    it('should load a StudentExam for a TestExam', async () => {
-        const sendExam = Object.assign(
-            {
-                visibleDate: dayjs(),
-                startDate: dayjs(),
-                endDate: dayjs(),
-                publishResultDate: dayjs(),
-                examStudentReviewStart: dayjs(),
-                examStudentReviewEnd: dayjs(),
-            },
-            exam,
-        );
-        const returnedFromService = Object.assign(
-            {
-                exam: sendExam,
-            },
-            studentExam,
-        );
-        service
-            .getOwnStudentExam(1, 1)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
+    it.each([
+        ['conduction', () => service.loadStudentExamWithExercisesForConduction(1, 2, 3), '/api/exam/courses/1/exams/2/student-exams/3/conduction'],
+        ['summary', () => service.loadStudentExamWithExercisesForSummary(1, 2, 3), '/api/exam/courses/1/exams/2/student-exams/3/summary'],
+        ['test run', () => service.loadTestRunWithExercisesForConduction(1, 2, 3), '/api/exam/courses/1/exams/2/test-runs/3/conduction'],
+    ])('should keep an omitted ended flag undefined and keep a sent one for %s', (_name, load, url) => {
+        const results: StudentExam[] = [];
+        load().subscribe((value) => results.push(value));
+        httpMock.expectOne({ method: 'GET', url }).flush({ id: 3, exercises: [] });
+        load().subscribe((value) => results.push(value));
+        httpMock.expectOne({ method: 'GET', url }).flush({ id: 3, ended: false, exercises: [] });
 
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
+        expect(results[0].ended).toBeUndefined();
+        expect(results[0].numberOfExamSessions).toBeUndefined();
+        expect(results[1].ended).toBe(false);
     });
 
     it('should load only the exam overview fields and convert all sidebar dates', () => {
@@ -584,7 +605,8 @@ describe('ExamParticipationService', () => {
         };
         const loaded: StudentExam[] = [];
         service.getOwnStudentExam(1, 2).subscribe((value) => loaded.push(value));
-        httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/2/own-student-exam' }).flush(response);
+        const { exercises: _exercises, ...ownResponse } = response;
+        httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/2/own-student-exam' }).flush(ownResponse);
         service.loadTestRunWithExercisesForConduction(1, 2, 3).subscribe((value) => loaded.push(value));
         httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/2/test-runs/3/conduction' }).flush(response);
 
@@ -593,8 +615,8 @@ describe('ExamParticipationService', () => {
             expect(dayjs.isDayjs(studentExam.startedDate)).toBe(true);
             expect(dayjs.isDayjs(studentExam.submissionDate)).toBe(true);
             expect(dayjs.isDayjs(studentExam.exam?.endDate)).toBe(true);
-            expect(studentExam.exercises?.[0].releaseDate).toBe('2026-01-01T08:00:00Z');
         }
+        expect(loaded[1].exercises?.[0].releaseDate).toBe('2026-01-01T08:00:00Z');
     });
 
     describe('wire contract pins', () => {

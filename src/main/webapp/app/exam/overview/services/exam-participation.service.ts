@@ -8,6 +8,7 @@ import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.mode
 import { ExamApi } from 'app/openapi/api/exam-api';
 import { StudentExamApi } from 'app/openapi/api/student-exam-api';
 import { StudentExamConductionApi } from 'app/openapi/api/student-exam-conduction-api';
+import type { OwnStudentExam } from 'app/openapi/model/own-student-exam';
 import type { StudentExamForConduction } from 'app/openapi/model/student-exam-for-conduction';
 import type { StudentExamForSummary } from 'app/openapi/model/student-exam-for-summary';
 import { toExamsForOverview, toSidebarExam, toStudentExamDTOs } from 'app/exam/overview/util/generated-exam-participation.util';
@@ -159,7 +160,7 @@ export class ExamParticipationService {
     private getStudentExamFromServer(request: Observable<StudentExamForConduction | StudentExamForSummary>): Observable<StudentExam> {
         return request.pipe(
             map((response) => {
-                const studentExam = hydrate(new StudentExam(), response);
+                const studentExam = ExamParticipationService.toStudentExam(response);
                 if (studentExam.examSessions && studentExam.examSessions.length > 0 && studentExam.examSessions[0].sessionToken) {
                     this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
                 }
@@ -198,7 +199,7 @@ export class ExamParticipationService {
     public getOwnStudentExam(courseId: number, examId: number): Observable<StudentExam> {
         return this.examApi.getOwnStudentExam(courseId, examId).pipe(
             map((response) => {
-                const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(hydrate(new StudentExam(), response));
+                const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(ExamParticipationService.toStudentExam(response));
                 this.currentlyLoadedStudentExam.next(convertedStudentExam);
                 return convertedStudentExam;
             }),
@@ -220,7 +221,7 @@ export class ExamParticipationService {
     public loadTestRunWithExercisesForConduction(courseId: number, examId: number, testRunId: number): Observable<StudentExam> {
         return this.studentExamConductionApi.getTestRunForConduction(courseId, examId, testRunId).pipe(
             map((response) => {
-                const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(hydrate(new StudentExam(), response));
+                const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(ExamParticipationService.toStudentExam(response));
                 this.currentlyLoadedStudentExam.next(convertedStudentExam);
                 return convertedStudentExam;
             }),
@@ -322,6 +323,19 @@ export class ExamParticipationService {
     public lastSaveFailed(courseId: number, examId: number): boolean {
         const key = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId) + '-save-failed';
         return this.localStorageService.retrieve<boolean>(key) || false;
+    }
+
+    /**
+     * Gives a conduction response the prototype of {@link StudentExam}. The class sets `ended = false`, but the server
+     * omits `ended` when it cannot decide, and the client then falls back to its own time check, so an omitted value
+     * must stay undefined.
+     */
+    private static toStudentExam(response: StudentExamForConduction | StudentExamForSummary | OwnStudentExam): StudentExam {
+        const studentExam = hydrate(new StudentExam(), response);
+        if (response.ended === undefined) {
+            studentExam.ended = undefined;
+        }
+        return studentExam;
     }
 
     private static convertStudentExamFromServer(studentExam: StudentExam): StudentExam {
