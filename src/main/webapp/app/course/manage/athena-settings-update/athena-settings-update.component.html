@@ -3,7 +3,7 @@
 </div>
 
 <!-- Width, spacing and row surface follow Iris's settings page, so the two AI-feedback settings pages look alike. -->
-<div class="mx-auto flex max-w-[800px] flex-col gap-4! pt-4!">
+<div class="mx-auto flex max-w-[800px] flex-col gap-4 pt-4">
     @if (loadFailed()) {
         <!-- Without the stored configuration the switches would show a state the course may not have, so none are shown. -->
         <tumaet-ui-message severity="error" data-testid="athena-settings-load-failed">
@@ -12,8 +12,8 @@
     } @else {
         @for (feature of features; track feature.key) {
             @let featureKey = 'artemisApp.course.athenaConfig.' + feature.key;
-            <div class="rounded-lg border border-solid border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-4! py-5! sm:px-6!">
-                <div class="flex items-start gap-3!">
+            <div class="rounded-lg border border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-4 py-5 sm:px-6">
+                <div class="flex items-start gap-3">
                     <tumaet-ui-toggle-switch
                         class="shrink-0"
                         [inputId]="feature.testId + '-toggle'"
@@ -25,7 +25,10 @@
                     <!-- The title and hint describe the current state; the switch itself keeps the constant feature name. -->
                     <label [class.cursor-pointer]="loaded()" [for]="feature.testId + '-toggle'">
                         <span [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledLabel' : '.disabledLabel')"></span>
-                        <small class="block text-sm text-(--text-body-secondary)" [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledHint' : '.disabledHint')"></small>
+                        <small
+                            class="block leading-[calc(1.25/0.875)] text-(--text-body-secondary)"
+                            [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledHint' : '.disabledHint')"
+                        ></small>
                     </label>
                 </div>
                 <!-- Athena only adapts students' own feedback requests on text exercises to the feedback style, so the
@@ -34,16 +37,16 @@
                 @if (feature.key === 'formativeFeedbackEnabled' && feature.enabled()) {
                     <div class="mt-[1rem] border-t border-(--border-color) pt-[1rem]" data-testid="athena-settings-feedback-style">
                         <h6 class="athena-settings-section-title" jhiTranslate="artemisApp.course.athenaConfig.feedbackStyle.title"></h6>
-                        <small class="block text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.course.athenaConfig.feedbackStyle.hint"></small>
+                        <small class="block leading-[calc(1.25/0.875)] text-(--text-body-secondary)" jhiTranslate="artemisApp.course.athenaConfig.feedbackStyle.hint"></small>
 
                         <!-- Each style gets a box of its own, so detail and formality read as two separate settings. The
                              sliders are laid out after Iris's "Level of Instructional Support" slider. -->
                         <div class="mt-[1rem] flex flex-col gap-[1rem]">
                             @for (style of feedbackStyles; track style.field) {
                                 @let styleKey = 'artemisApp.course.athenaConfig.' + style.field;
-                                <div class="rounded-lg border border-(--border-color) bg-(--module-bg) p-3! sm:p-[1rem]!" [attr.data-testid]="'athena-settings-' + style.testId">
+                                <div class="rounded-lg border border-(--border-color) bg-(--module-bg) p-3 sm:p-[1rem]" [attr.data-testid]="'athena-settings-' + style.testId">
                                     <span class="block font-medium" [jhiTranslate]="styleKey + '.label'"></span>
-                                    <small class="block text-sm text-(--text-body-secondary)" [jhiTranslate]="styleKey + '.tooltip'"></small>
+                                    <small class="block leading-[calc(1.25/0.875)] text-(--text-body-secondary)" [jhiTranslate]="styleKey + '.tooltip'"></small>
 
                                     <!-- A slider in the WAI-ARIA sense, like the p-slider on Iris's page: the track is the one focusable
                                          element and takes the arrow keys, Home and End, while the ticks are only click targets that
@@ -105,7 +108,7 @@
                                          surface like the example conversation on Iris's settings page. On a phone the nested boxes keep
                                          less padding, so the example feedback keeps room for its title. -->
                                     <div
-                                        class="mt-[1rem] rounded-lg bg-(--hover-slightly-darker-body-bg) p-2 sm:p-[1rem]!"
+                                        class="mt-[1rem] rounded-lg bg-(--hover-slightly-darker-body-bg) p-2 sm:p-[1rem]"
                                         [attr.data-testid]="'athena-settings-' + style.testId + '-example-box'"
                                     >
                                         <small class="mb-2 block text-(--text-body-secondary)" jhiTranslate="artemisApp.course.athenaConfig.exampleFeedbackLabel"></small>

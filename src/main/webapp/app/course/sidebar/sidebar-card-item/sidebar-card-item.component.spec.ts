@@ -92,7 +92,7 @@ describe('SidebarCardItemComponent', () => {
         expect(unreadCountElem?.classList).toContain('me-1');
 
         const titleElem = fixture.nativeElement.querySelector('[data-testid="sidebar-card-title"]');
-        expect(titleElem?.classList).toContain('fw-bold');
+        expect(titleElem?.classList).toContain('font-bold');
     });
 
     it('should not display unread count or bold for muted conversations', () => {
@@ -108,6 +108,6 @@ describe('SidebarCardItemComponent', () => {
         expect(unreadCountElem).toBeNull();
 
         const titleElem = fixture.nativeElement.querySelector('[data-testid="sidebar-card-title"]');
-        expect(titleElem?.classList).not.toContain('fw-bold');
+        expect(titleElem?.classList).not.toContain('font-bold');
     });
 });

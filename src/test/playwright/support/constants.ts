@@ -105,8 +105,23 @@ export enum QuizMode {
     INDIVIDUAL = 'INDIVIDUAL',
 }
 
+// PresentationGradingMethod
+// Copied from app/presentation/shared/entities/presentation-assessment.model
+export enum PresentationGradingMethod {
+    PASS_FAIL = 'PASS_FAIL',
+    SCORE = 'SCORE',
+    RUBRIC = 'RUBRIC',
+}
+
 // Exercise commit entity displayed in commit history
 export type ExerciseCommit = {
     message: string;
     result?: string;
 };
+
+// Copied from src/main/webapp/app/exam/shared/entities/exam.model.ts
+export enum ExamMode {
+    REAL = 'REAL',
+    TEST = 'TEST',
+    TEST_WITH_SUPERVISED_SESSION = 'TEST_WITH_SUPERVISED_SESSION',
+}

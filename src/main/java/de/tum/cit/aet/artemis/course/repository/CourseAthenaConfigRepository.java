@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
@@ -70,19 +71,20 @@ public interface CourseAthenaConfigRepository extends ArtemisJpaRepository<Cours
      *
      * @param exercise the exercise whose course should carry its Athena configuration
      */
-    default void attachToCourseOf(Exercise exercise) {
-        attachTo(exercise == null ? null : exercise.getCourseViaExerciseGroupOrCourseMember());
+    default void attachToCourseOf(@NonNull Exercise exercise) {
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course != null) {
+            attachTo(course);
+        }
     }
 
     /**
      * Puts a course's Athena configuration onto it, for a response that reports the two switches.
      *
-     * @param course the course, may be null
+     * @param course the course
      */
-    default void attachTo(Course course) {
-        if (course != null) {
-            course.setAthenaConfig(findByCourseId(course.getId()).orElse(null));
-        }
+    default void attachTo(@NonNull Course course) {
+        course.setAthenaConfig(findByCourseId(course.getId()).orElse(null));
     }
 
     /**

@@ -840,7 +840,7 @@ function evaluatePolicy(source, github) {
         .replaceAll('needs.detect-changes', 'needs.detect_changes');
     return new Function('github', 'needs', 'cancelled', 'startsWith', 'format', 'return (' + expression + ')')(
         github,
-        { detect_changes: { outputs: { current: 'true' } } },
+        { detect_changes: { outputs: { current: 'true' } }, e2e: { outputs: {} } },
         () => false,
         (value, prefix) => String(value ?? '').startsWith(prefix),
         (template, ...values) => template.replace(/\{(\d+)\}/g, (_, index) => String(values[Number(index)])),

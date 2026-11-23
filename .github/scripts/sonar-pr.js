@@ -47,6 +47,7 @@ async function verifyFork({ pull, fetchImpl = fetch }) {
                 ', then rerun this Sonar verification job.',
         );
     }
+    return entry;
 }
 async function prepareAnalysis({ github, context, core, requestedSha, pullRequest = 0, defaultBranch = false, allowScan = true, fetchImpl }) {
     const manual = context.eventName === 'workflow_dispatch';

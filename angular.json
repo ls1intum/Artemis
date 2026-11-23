@@ -218,18 +218,21 @@
             "prefix": "tumaet-ui",
             "architect": {
                 "build": {
-                    "builder": "@angular/build:ng-packagr",
+                    "builder": "@angular/build:library",
+                    "options": {
+                        "tsConfig": "packages/tum-aet-ui/tsconfig.lib.prod.json",
+                        "outputPath": "packages/tum-aet-ui/dist",
+                        "assets": ["packages/tum-aet-ui/styles.css"],
+                        "allowedNonPeerDependencies": ["@fortawesome/free-solid-svg-icons", "dayjs", "lodash-es"]
+                    },
                     "configurations": {
-                        "production": {
-                            "tsConfig": "packages/tum-aet-ui/tsconfig.lib.prod.json"
-                        },
+                        "production": {},
                         "development": {
-                            "project": "packages/tum-aet-ui/ng-package.dev.json",
-                            "tsConfig": "packages/tum-aet-ui/tsconfig.lib.json"
+                            "tsConfig": "packages/tum-aet-ui/tsconfig.lib.json",
+                            "deleteOutputPath": false
                         },
                         "pack": {
-                            "project": "packages/tum-aet-ui/ng-package.pack.json",
-                            "tsConfig": "packages/tum-aet-ui/tsconfig.lib.prod.json"
+                            "outputPath": "packages/tum-aet-ui/dist-pack"
                         }
                     },
                     "defaultConfiguration": "production"

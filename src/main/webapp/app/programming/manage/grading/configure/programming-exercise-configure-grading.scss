@@ -37,7 +37,7 @@
     }
 
     & > div:last-child {
-        border-left: 1px solid #ddd;
+        border-left: 1px solid var(--border-color);
     }
 }
 
@@ -63,7 +63,7 @@
 
         & > div:last-child {
             border-left: hidden;
-            border-top: 1px solid #ddd;
+            border-top: 1px solid var(--border-color);
         }
     }
 }

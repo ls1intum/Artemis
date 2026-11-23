@@ -4,12 +4,12 @@
     </span>
 }
 <tumaet-ui-popover #resultsPopover padding="none" [ariaLabel]="'artemisApp.result.progressString.title' | artemisTranslate">
-    <div class="flex items-center justify-between px-4! bg-surface-raised border-b" style="height: 40px">
+    <div class="flex items-center justify-between px-4 bg-surface-raised border-b" style="height: 40px">
         <div class="flex items-center gap-2">
-            <fa-icon [icon]="faClock" class="text-text-secondary" style="font-size: 14px" />
-            <span class="font-medium text-text-secondary" style="font-size: 13px" jhiTranslate="artemisApp.result.progressString.title"></span>
+            <fa-icon [icon]="faClock" class="text-muted-color" style="font-size: 14px" />
+            <span class="font-medium text-muted-color" style="font-size: 13px" jhiTranslate="artemisApp.result.progressString.title"></span>
         </div>
-        <span class="text-text-secondary" style="font-size: 12px">{{
+        <span class="text-muted-color" style="font-size: 12px">{{
             (sortedHistoryResults().length === 1 ? 'artemisApp.result.progressString.resultsCount.one' : 'artemisApp.result.progressString.resultsCount.other')
                 | artemisTranslate: { count: sortedHistoryResults().length }
         }}</span>
@@ -18,7 +18,7 @@
         @for (result of displayedResults(); track result.id ?? $index) {
             <div
                 data-testid="result-history-row"
-                class="px-4! py-2 flex items-center gap-2"
+                class="px-4 py-2 flex items-center gap-2"
                 [class.cursor-pointer]="isRowClickable(result)"
                 [class.bg-active-row]="result.id === activeResultId()"
                 [attr.role]="isRowClickable(result) ? 'button' : undefined"
@@ -56,7 +56,7 @@
                     @if (shouldShowResultMetadata(result)) {
                         <div class="flex items-center gap-1">
                             <tumaet-ui-tag [value]="getBadge(result).text | artemisTranslate" [severity]="getBadge(result).severity" />
-                            <span class="text-xs text-text-secondary">{{ result.completionDate | artemisDate }}</span>
+                            <span class="text-xs text-muted-color">{{ result.completionDate | artemisDate }}</span>
                         </div>
                     }
                 </div>

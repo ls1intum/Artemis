@@ -11,7 +11,7 @@
             "updated": "Kurs aktualisiert mit Titel {{ param }}",
             "deleted": "Kurs gelöscht mit Titel {{ param }}",
             "delete": {
-                "question": "Soll der <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Build-Pläne werden gelöscht. <strong class=\"text-danger\">Diese Aktion kann NICHT rückgängig gemacht werden!</strong>",
+                "question": "Soll der <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Build-Pläne werden gelöscht. <strong class=\"text-state-danger\">Diese Aktion kann NICHT rückgängig gemacht werden!</strong>",
                 "testCourse": "Testkurs",
                 "realCourse": "echte Kurs",
                 "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein.",
@@ -58,7 +58,7 @@
                 }
             },
             "reset": {
-                "question": "Soll der <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Alle Studierenden-Daten werden gelöscht, einschließlich Abgaben, Teilnahmen, Beiträge und Einschreibungen. Studierende, Tutor:innen und Editor:innen werden aus dem Kurs entfernt - nur Lehrende bleiben erhalten. Die Kursstruktur (Aufgaben, Vorlesungen, Klausuren, Kompetenzen, Übungsgruppen-Konfiguration) bleibt zur Wiederverwendung erhalten. <strong class=\"text-danger\">Diese Aktion kann NICHT rückgängig gemacht werden!</strong>",
+                "question": "Soll der <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Alle Studierenden-Daten werden gelöscht, einschließlich Abgaben, Teilnahmen, Beiträge und Einschreibungen. Studierende, Tutor:innen und Editor:innen werden aus dem Kurs entfernt - nur Lehrende bleiben erhalten. Die Kursstruktur (Aufgaben, Vorlesungen, Klausuren, Kompetenzen, Übungsgruppen-Konfiguration) bleibt zur Wiederverwendung erhalten. <strong class=\"text-state-danger\">Diese Aktion kann NICHT rückgängig gemacht werden!</strong>",
                 "testCourse": "Testkurs",
                 "realCourse": "echte Kurs",
                 "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein.",
@@ -485,7 +485,7 @@
             "assessmentDueDate": "Bewertung",
             "cleanup": {
                 "title": "Aufräumen",
-                "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studierenden-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
+                "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studierenden-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-state-danger'>NICHT</strong> rückgängig gemacht werden!"
             },
             "detail": {
                 "title": "Kurs Details:",
@@ -499,7 +499,9 @@
                 "complaintsTitle": "Insgesamte Beschwerden",
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
                 "averageStudentScoreTitle": "Durchschnittliche Punktzahl der Studierenden",
-                "currentTotalLLMCostTitle": "Insgesamte LLM Kosten"
+                "currentTotalLLMCostTitle": "LLM-Kosten (USD)",
+                "llmCostNotPriced": "Keine USD-Kosten verfügbar",
+                "llmCostUnpricedRequests": "Anfragen ohne USD-Preis: {{ count }}. In der Summe nicht enthalten."
             },
             "activeStudents": "Aktive Studierende: {{ students }}",
             "notStartedYet": "Der Kurs hat noch nicht offiziell begonnen. Offizieller Kursstart:",
@@ -610,6 +612,11 @@
                     }
                 },
                 "replayWizard": "Einrichtungsassistent wiederholen"
+            },
+            "studentWelcomeContext": {
+                "label": "Startseite für Studierende: Lernansatz",
+                "hint": "Optional: Beschreiben Sie, wie Studierende in diesem Kurs lernen sollen (bis zu 2.000 Zeichen). Der Text erscheint beim ersten Besuch der Startseite und wird für optionale KI-Begrüßungen verwendet.",
+                "tooLong": "Verwenden Sie höchstens 2.000 Zeichen."
             }
         },
         "courseStatistics": {

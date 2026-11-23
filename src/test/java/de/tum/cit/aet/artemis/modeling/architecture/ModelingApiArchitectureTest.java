@@ -15,8 +15,8 @@ class ModelingApiArchitectureTest extends AbstractModuleAccessArchitectureTest {
 
     @Override
     protected Set<Class<?>> getIgnoredClasses() {
-        // ApollonEnabled is intentionally referenced from core (RestTemplateConfiguration) so the apollonRestTemplate
-        // bean can be conditionally created next to the other RestTemplates.
+        // ApollonEnabled is intentionally referenced from core (RestClientConfiguration) so the Apollon RestClient
+        // beans can be conditionally created next to the other RestClients.
         return Set.of(ModelingApiNotPresentException.class, ApollonEnabled.class);
     }
 }

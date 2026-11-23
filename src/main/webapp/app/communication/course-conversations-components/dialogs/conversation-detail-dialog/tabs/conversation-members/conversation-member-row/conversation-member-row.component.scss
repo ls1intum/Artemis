@@ -1,21 +1,5 @@
-.conversation-member-row {
-    min-height: 3rem;
-
-    .interaction {
-        visibility: hidden;
-    }
-
-    &:hover {
-        .interaction {
-            visibility: visible;
-        }
-    }
-
-    .dropdown-toggle::after {
-        content: none;
-    }
-}
-
-.bs-body-color {
-    color: var(--bs-body-color);
+// The row of the logged-in user stays highlighted, as the list item it sits in was.
+:host(.active) {
+    background-color: var(--tumaet-ui-highlight-background);
+    color: var(--tumaet-ui-highlight-color);
 }

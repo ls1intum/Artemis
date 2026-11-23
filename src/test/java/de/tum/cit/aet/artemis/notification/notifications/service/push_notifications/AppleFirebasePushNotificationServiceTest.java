@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -33,10 +33,10 @@ class AppleFirebasePushNotificationServiceTest {
     private PushNotificationDeviceConfigurationRepository repositoryMock;
 
     @Mock
-    private RestTemplate appleRestTemplateMock;
+    private RestClient appleRestClientMock;
 
     @Mock
-    private RestTemplate firebaseRestTemplateMock;
+    private RestClient firebaseRestClientMock;
 
     @Mock
     private FeatureToggleService featureToggleService;
@@ -69,8 +69,8 @@ class AppleFirebasePushNotificationServiceTest {
 
         // Run the relay dispatch on the calling thread, so the assertions below observe it without racing the executor.
         Executor directExecutor = Runnable::run;
-        applePushNotificationService = new ApplePushNotificationService(repositoryMock, appleRestTemplateMock, directExecutor);
-        firebasePushNotificationService = new FirebasePushNotificationService(repositoryMock, firebaseRestTemplateMock, directExecutor);
+        applePushNotificationService = new ApplePushNotificationService(repositoryMock, appleRestClientMock, directExecutor);
+        firebasePushNotificationService = new FirebasePushNotificationService(repositoryMock, firebaseRestClientMock, directExecutor);
 
         ReflectionTestUtils.setField(applePushNotificationService, "relayServerBaseUrl", "test");
         ReflectionTestUtils.setField(firebasePushNotificationService, "relayServerBaseUrl", "test");

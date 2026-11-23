@@ -9,7 +9,6 @@ import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
-import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -33,8 +32,6 @@ describe('SidebarAccordionComponent', () => {
         localStorage.clear();
         await TestBed.configureTestingModule({
             imports: [
-                MockModule(NgbTooltipModule),
-                MockModule(NgbCollapseModule),
                 MockModule(RouterModule),
                 FaIconComponent,
                 SidebarAccordionComponent,

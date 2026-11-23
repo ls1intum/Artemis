@@ -238,7 +238,7 @@ class StagedGenerationRunnerTest {
         SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer,
                 new ExerciseConceptSelector(agentLoopRunner, reviewer), "FRESH");
-        var settings = new HyperionGenerationSettings("small", null, 30, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
+        var settings = new HyperionGenerationSettings("small", null, 30, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, "testpreset", null, false, false);
         runner = runner.forSettings(settings, agentLoopRunner, reviewer);
         String candidates = "## Candidate 1\nFirst concept\n## Candidate 2\nSecond concept\n## Candidate 3\nThird concept";
         when(agentLoopRunner.runTextSession(anyString(), any(), anyString(), eq(1), any(), any(), any()))
@@ -264,7 +264,7 @@ class StagedGenerationRunnerTest {
         when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(rejected);
         when(reviewer.reviewSpecification(anyString(), isNull(), anyString(), any(), any(), any())).thenReturn(rejected);
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
-        var settings = new HyperionGenerationSettings("small", null, 20, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
+        var settings = new HyperionGenerationSettings("small", null, 20, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, "testpreset", null, false, false);
         runner = runner.forSettings(settings, agentLoopRunner, reviewer);
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> completed(invocation.getArgument(3), "spec"));
 
@@ -279,7 +279,7 @@ class StagedGenerationRunnerTest {
     @Test
     void resolvedSmallTurnCapBoundsStagedAuthoring() {
         SpecFidelityCritic reviewer = mock(SpecFidelityCritic.class);
-        var settings = new HyperionGenerationSettings("small", null, 10, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
+        var settings = new HyperionGenerationSettings("small", null, 10, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, "testpreset", null, false, false);
         runner = runner.forSettings(settings, agentLoopRunner, reviewer);
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> completed(invocation.getArgument(3), "spec"));
 

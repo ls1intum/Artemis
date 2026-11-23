@@ -70,7 +70,19 @@ public class CourseAvailableTabsService {
      * @return the available tabs
      */
     public CourseAvailableTabsDTO getAvailableTabs(Course course, User user) {
-        long courseId = course.getId();
+        return getAvailableTabs(course.getId(), user, course.getCourseInformationSharingConfiguration(), course.getLearningPathsEnabled());
+    }
+
+    /**
+     * Computes the same capability policy without hydrating a course graph.
+     *
+     * @param courseId             the authorized course identifier
+     * @param user                 the authenticated user
+     * @param config               the course communication configuration
+     * @param learningPathsEnabled whether learning paths are enabled for the course
+     * @return the course tabs currently available to this user
+     */
+    public CourseAvailableTabsDTO getAvailableTabs(long courseId, User user, CourseInformationSharingConfiguration config, boolean learningPathsEnabled) {
 
         // One query answers whether the course has lectures, competencies, tutorial groups, accepted FAQs and
         // practice quizzes. Each of these used to be a separate round trip, one per feature module, on every course
@@ -93,8 +105,7 @@ public class CourseAvailableTabsService {
         // so it is the cheapest query in this method.
         boolean iris = irisSettingsApi.map(api -> api.isIrisEnabledForCourse(courseId)).orElse(false);
 
-        CourseInformationSharingConfiguration config = course.getCourseInformationSharingConfiguration();
         boolean communication = config == CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING || config == CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
-        return new CourseAvailableTabsDTO(lectures, exams, competencies, tutorialGroups, iris, faq, course.getLearningPathsEnabled(), communication, training);
+        return new CourseAvailableTabsDTO(lectures, exams, competencies, tutorialGroups, iris, faq, learningPathsEnabled, communication, training);
     }
 }

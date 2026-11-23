@@ -1,18 +1,18 @@
-<tr [class.bg-light]="isExpanded()" [class.border-bottom]="isExpanded() && groupCommitIndex() === groupCommitCount() - 1">
+<tr [class]="rowClass()">
     <th scope="row" class="p-2">
         @if (groupCommitIndex() === 0) {
             {{ pushNumber() }}
         } @else {
-            <span class="text-body-secondary">
+            <span class="text-(--text-body-secondary)">
                 {{ pushNumber() + '.' + (groupCommitIndex() + 1) }}
             </span>
         }
     </th>
     <td class="p-2">
         @if (isRepositoryView()) {
-            <a [routerLink]="['./', commit().hash]" ngbTooltip="{{ commit().hash }}"> {{ commit().hash ?? '' | truncate: 7 }} </a>
+            <a [routerLink]="['./', commit().hash]" [tumAetUiTooltip]="commit().hash ?? ''"> {{ commit().hash ?? '' | truncate: 7 }} </a>
         } @else {
-            <span ngbTooltip="{{ commit().hash }}">
+            <span [tumAetUiTooltip]="commit().hash ?? ''">
                 {{ commit().hash ?? '' | truncate: 7 }}
             </span>
         }
@@ -31,7 +31,7 @@
         @if (commit().result) {
             <jhi-result [result]="commit().result" [showUngradedResults]="true" [showBadge]="true" />
         } @else if (groupCommitIndex() === 0) {
-            <span class="text-body-secondary">
+            <span class="text-(--text-body-secondary)">
                 <fa-icon [icon]="faCircle" size="lg" />&nbsp;
                 <span jhiTranslate="artemisApp.result.noResult"></span>
             </span>
@@ -40,13 +40,13 @@
     <td class="p-2">
         {{ commit().message }}
         @if (currentSubmissionHash() === commit().hash) {
-            <span class="badge bg-info" jhiTranslate="artemisApp.programmingExercise.commitInfo.currentSubmission"></span>
+            <tumaet-ui-tag severity="info" [value]="'artemisApp.programmingExercise.commitInfo.currentSubmission' | artemisTranslate" />
         }
         @if (previousSubmissionHash() === commit().hash) {
-            <span class="badge bg-info" jhiTranslate="artemisApp.programmingExercise.commitInfo.previousSubmission"></span>
+            <tumaet-ui-tag severity="info" [value]="'artemisApp.programmingExercise.commitInfo.previousSubmission' | artemisTranslate" />
         }
         @if (!previousSubmissionHash() && firstCommit()) {
-            <span class="badge bg-info" jhiTranslate="artemisApp.programmingExercise.commitInfo.template"></span>
+            <tumaet-ui-tag severity="info" [value]="'artemisApp.programmingExercise.commitInfo.template' | artemisTranslate" />
         }
     </td>
     <td class="flex-container p-2">
@@ -54,8 +54,16 @@
             {{ groupCommitCount() }}
         }
         @if (groupCommitIndex() === 0 && groupCommitCount() > 1) {
-            <button type="button" class="btn btn-link" (click)="onToggleExpand()">
-                <span class="text-body-secondary">
+            <button
+                type="button"
+                tumAetUiButton
+                variant="text"
+                severity="secondary"
+                [attr.aria-expanded]="isExpanded()"
+                [attr.aria-label]="(isExpanded() ? 'global.generic.collapse' : 'global.generic.expand') | artemisTranslate"
+                (click)="onToggleExpand()"
+            >
+                <span class="text-(--text-body-secondary)">
                     @if (isExpanded()) {
                         <fa-icon [icon]="faAngleDown" size="lg" />
                     } @else {

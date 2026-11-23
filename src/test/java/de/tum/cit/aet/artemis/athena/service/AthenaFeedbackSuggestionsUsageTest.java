@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.athena.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -11,13 +12,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 
+import java.io.IOException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
@@ -49,7 +53,7 @@ class AthenaFeedbackSuggestionsUsageTest {
 
     private static final long EXERCISE_ID = 77L;
 
-    private RestTemplate restTemplate;
+    private MockRestServiceServer athenaServer;
 
     private FeatureUsageCollector featureUsageCollector;
 
@@ -61,7 +65,8 @@ class AthenaFeedbackSuggestionsUsageTest {
 
     @BeforeEach
     void init() {
-        restTemplate = mock(RestTemplate.class);
+        RestClient.Builder restClientBuilder = RestClient.builder();
+        athenaServer = MockRestServiceServer.bindTo(restClientBuilder).build();
         featureUsageCollector = mock(FeatureUsageCollector.class);
         var athenaModuleService = mock(AthenaModuleService.class);
         var dtoConverterService = mock(AthenaDTOConverterService.class);
@@ -71,7 +76,7 @@ class AthenaFeedbackSuggestionsUsageTest {
         // for the DTO conversions, and the request is never serialised because the REST call below throws first.
         when(athenaModuleService.getAthenaModuleUrl(any())).thenReturn("http://athena.example.com/modules/text");
 
-        service = new AthenaFeedbackSuggestionsService(restTemplate, athenaModuleService, dtoConverterService, mock(LLMTokenUsageService.class), resultRepository,
+        service = new AthenaFeedbackSuggestionsService(restClientBuilder.build(), athenaModuleService, dtoConverterService, mock(LLMTokenUsageService.class), resultRepository,
                 Optional.<LearnerProfileApi>empty(), Optional.<CourseCompetencyApi>empty(), mock(UserAiPreferenceService.class), mock(CourseAthenaConfigRepository.class),
                 Optional.of(featureUsageCollector));
 
@@ -100,10 +105,11 @@ class AthenaFeedbackSuggestionsUsageTest {
      */
     @Test
     void shouldRecordAFailedAthenaRequestAsAFailure() {
-        when(restTemplate.postForEntity(anyString(), any(), any())).thenThrow(new ResourceAccessException("Athena is unreachable"));
+        athenaServer.expect(requestTo(startsWith("http://athena.example.com/modules/text"))).andRespond(withException(new IOException("Athena is unreachable")));
 
         assertThatExceptionOfType(NetworkingException.class).isThrownBy(() -> service.getTextFeedbackSuggestions(exercise, submission, true, null));
 
+        athenaServer.verify();
         verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("athena"), eq("feedback-suggestions/text/graded"), eq(UserFeature.ATHENA_FEEDBACK_SUGGESTIONS),
                 eq(FeatureInteraction.SYSTEM), eq(Role.ANONYMOUS), eq(true), anyLong());
     }

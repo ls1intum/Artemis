@@ -1,0 +1,14 @@
+:host {
+    display: block;
+    min-width: 0;
+}
+
+.course-home a {
+    text-underline-offset: 0.2em;
+}
+
+.course-home a:focus-visible {
+    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline-offset: 3px;
+    border-radius: 2px;
+}

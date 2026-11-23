@@ -1,5 +1,5 @@
 <div
-    class="search-result-item relative cursor-pointer p-4!"
+    class="search-result-item relative cursor-pointer p-4"
     [class.selected]="isSelected()"
     (click)="onClick()"
     (keydown.enter)="onClick()"
@@ -9,7 +9,7 @@
     role="option"
     tabindex="-1"
 >
-    <div class="flex items-start gap-4!">
+    <div class="flex items-start gap-4">
         <!-- Icon -->
         <div class="result-icon shrink-0">
             <fa-icon [icon]="icon()" size="lg" class="text-primary" aria-hidden="true" />
@@ -18,7 +18,7 @@
         <!-- Content -->
         <div class="result-content min-w-0 flex-1">
             <div class="mb-1 flex items-center gap-2">
-                <h6 class="result-title mt-0 mb-0 truncate leading-[1.2]">{{ result().title }}</h6>
+                <h6 class="result-title mt-0! mb-0! truncate">{{ result().title }}</h6>
                 @if (isExamExercise()) {
                     <tumaet-ui-tag severity="warn" size="sm" data-testid="search-result-exam-tag">
                         <fa-icon [icon]="faGraduationCap" size="xs" aria-hidden="true" />

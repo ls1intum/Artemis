@@ -50,7 +50,7 @@
             </ng-container>
         </jhi-exercise-detail-actions>
         @if (evaluationError(); as error) {
-            <p class="mt-2! text-state-danger" role="alert">{{ error }}</p>
+            <p class="mt-2 text-state-danger" role="alert">{{ error }}</p>
         }
     }
     @if (detailPageSection() === 'administration' && quizExercise().isAtLeastInstructor) {

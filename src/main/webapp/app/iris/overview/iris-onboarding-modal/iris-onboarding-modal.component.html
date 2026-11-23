@@ -8,14 +8,14 @@
             (visibleChange)="onWelcomeVisibleChange($event)"
         >
             <div class="iris-onboarding__welcome flex h-[450px] w-[700px] max-w-[calc(90dvw_-_2px)] pointer-events-auto">
-                <div class="iris-onboarding__welcome-text flex w-[380px] max-w-[60%] shrink-0 flex-col justify-center gap-10 p-6!">
-                    <div class="flex max-w-96 flex-col gap-4!">
-                        <h2 class="iris-onboarding__title m-0! text-[1.35rem]! leading-[1.2] font-bold!" jhiTranslate="artemisApp.iris.onboarding.title"></h2>
-                        <p class="iris-onboarding__muted m-0! text-[0.9rem] leading-[1.6]" jhiTranslate="artemisApp.iris.onboarding.description"></p>
+                <div class="iris-onboarding__welcome-text flex w-[380px] max-w-[60%] shrink-0 flex-col justify-center gap-10 p-6">
+                    <div class="flex max-w-96 flex-col gap-4">
+                        <h2 class="iris-onboarding__title m-0 text-[1.35rem] font-bold" jhiTranslate="artemisApp.iris.onboarding.title"></h2>
+                        <p class="iris-onboarding__muted m-0 text-[0.9rem] leading-[1.6]" jhiTranslate="artemisApp.iris.onboarding.description"></p>
                     </div>
-                    <div class="flex w-full flex-col items-start gap-3!">
+                    <div class="flex w-full flex-col items-start gap-3">
                         <button type="button" tumAetUiButton data-testid="start-iris-tour" (click)="onStartTour()" jhiTranslate="artemisApp.iris.onboarding.getStarted"></button>
-                        <p class="iris-onboarding__muted m-0! text-xs leading-[1.6]" jhiTranslate="artemisApp.iris.onboarding.note"></p>
+                        <p class="iris-onboarding__muted m-0 text-xs leading-[1.6]" jhiTranslate="artemisApp.iris.onboarding.note"></p>
                     </div>
                 </div>
                 <div class="iris-onboarding__illustration relative flex min-w-0 flex-1 flex-col p-2">
@@ -40,11 +40,11 @@
                                     <div class="iris-onboarding__preview-icon h-5 w-6 rounded-sm"></div>
                                 </div>
                             </div>
-                            <div class="flex min-h-60 flex-col items-center justify-center gap-2 p-4!">
-                                <p class="iris-onboarding__title m-0! text-center text-base" jhiTranslate="artemisApp.iris.chat.helpOffer"></p>
-                                <div class="iris-onboarding__chat-bubble w-[200px] max-w-full self-end p-4!"></div>
-                                <div class="iris-onboarding__chat-input mt-1 w-full p-4!">
-                                    <span class="iris-onboarding__muted cursor-default text-[0.8rem]" jhiTranslate="artemisApp.exerciseChatbot.inputMessage"></span>
+                            <div class="flex min-h-60 flex-col items-center justify-center gap-2 p-4">
+                                <p class="iris-onboarding__title m-0 text-center text-base" jhiTranslate="artemisApp.iris.chat.helpOffer"></p>
+                                <div class="iris-onboarding__chat-bubble w-[200px] max-w-full self-end p-4"></div>
+                                <div class="iris-onboarding__chat-input mt-1 w-full p-4">
+                                    <span class="iris-onboarding__muted cursor-default! text-[0.8rem]" jhiTranslate="artemisApp.exerciseChatbot.inputMessage"></span>
                                 </div>
                             </div>
                         </div>
@@ -71,7 +71,7 @@
             <div class="iris-onboarding__coach-mark" aria-hidden="true" [style.top.px]="config.coachMarkPosition.top" [style.left.px]="config.coachMarkPosition.left"></div>
             <div
                 #tourTooltip
-                class="iris-onboarding__tooltip absolute flex flex-col gap-2 p-4! pointer-events-auto"
+                class="iris-onboarding__tooltip absolute flex flex-col gap-2 p-4 pointer-events-auto"
                 [class.iris-onboarding__tooltip--up]="config.arrowDirection === 'up'"
                 [class.iris-onboarding__tooltip--down]="config.arrowDirection === 'down'"
                 [class.iris-onboarding__tooltip--right]="config.arrowDirection === 'right'"
@@ -84,7 +84,7 @@
             >
                 <div class="flex items-start justify-between gap-2">
                     <p
-                        class="iris-onboarding__title m-0! flex-1 text-sm leading-[1.4] font-medium"
+                        class="iris-onboarding__title m-0 flex-1 text-sm leading-[1.4] font-medium"
                         [id]="'onboarding-tooltip-title-' + config.currentStep"
                         [jhiTranslate]="config.titleTranslationKey"
                     ></p>
@@ -101,11 +101,11 @@
                     />
                 </div>
                 <p
-                    class="iris-onboarding__title m-0! text-sm leading-[1.6] font-normal"
+                    class="iris-onboarding__title m-0 text-sm leading-[1.6] font-normal"
                     [id]="'onboarding-tooltip-desc-' + config.currentStep"
                     [jhiTranslate]="config.descriptionTranslationKey"
                 ></p>
-                <div class="mt-2 flex items-center justify-between gap-3!">
+                <div class="mt-2 flex items-center justify-between gap-3">
                     <jhi-stepper [currentStep]="config.currentStep" [totalSteps]="totalTourSteps" />
                     @if (config.currentStep < totalTourSteps) {
                         <button

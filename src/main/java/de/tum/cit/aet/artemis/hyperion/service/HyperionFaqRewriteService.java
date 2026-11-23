@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
 import de.tum.cit.aet.artemis.hyperion.dto.RewriteFaqResponseDTO;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -61,15 +62,15 @@ public class HyperionFaqRewriteService {
      * Creates a new HyperionFaqRewriteService.
      *
      * @param faqRepository       repository for FAQ entities
-     * @param chatClient          the AI chat client
+     * @param chatClients         the chat clients of the Hyperion LLM presets
      * @param templateService     prompt template service
      * @param observationRegistry observation registry for metrics
      * @param objectMapper        object mapper
      */
-    public HyperionFaqRewriteService(FaqRepository faqRepository, ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
-            JsonMapper objectMapper) {
+    public HyperionFaqRewriteService(FaqRepository faqRepository, HyperionChatClientService chatClients, HyperionPromptTemplateService templateService,
+            ObservationRegistry observationRegistry, JsonMapper objectMapper) {
         this.faqRepository = faqRepository;
-        this.chatClient = chatClient;
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.FAQ_REWRITE);
         this.templateService = templateService;
         this.observationRegistry = observationRegistry;
         this.objectMapper = objectMapper;

@@ -25,7 +25,7 @@
                     size="small"
                     type="button"
                     [id]="'pdf-page-' + page.slideId"
-                    class="relative block w-full border-0 p-0 focus-visible:outline-2 focus-visible:outline-offset-2"
+                    class="relative block w-full border-0! p-0! focus-visible:outline-2 focus-visible:outline-offset-2"
                     [attr.aria-label]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: getPageOrder(page.slideId) }"
                     (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()"
                 >
@@ -109,7 +109,7 @@
                                 <br />
                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPageConfirmation"></span>
                             </p>
-                            <div class="submit-container mt-4! flex justify-between">
+                            <div class="submit-container mt-4 flex justify-between">
                                 <button tumAetUiButton severity="secondary" variant="solid" size="default" type="button" (click)="activeButtonPage.set(undefined); popover.close()">
                                     <span jhiTranslate="entity.action.cancel"></span>
                                 </button>
@@ -142,7 +142,7 @@
                     size="small"
                     type="button"
                     [id]="'pdf-page-' + page.slideId"
-                    class="relative block w-full border-0 p-0 focus-visible:outline-2 focus-visible:outline-offset-2"
+                    class="relative block w-full border-0! p-0! focus-visible:outline-2 focus-visible:outline-offset-2"
                     [attr.aria-label]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: getPageOrder(page.slideId) }"
                     (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()"
                 >

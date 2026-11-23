@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -103,7 +103,7 @@ public class AthenaFeedbackSuggestionsService {
     /**
      * Create a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
      *
-     * @param athenaRestTemplate           REST template used for the communication with Athena
+     * @param athenaRestClient             REST client used for the communication with Athena
      * @param athenaModuleService          Athena module serviced used to determine the urls for different modules
      * @param athenaDTOConverterService    Service to convert exercises and submissions to DTOs
      * @param llmTokenUsageService         Service to store the usage of LLM tokens
@@ -113,14 +113,14 @@ public class AthenaFeedbackSuggestionsService {
      *                                         course's feedback style defaults for non-graded text feedback
      * @param featureUsageCollector        counts feedback suggestion requests for the feature usage analysis
      */
-    public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
+    public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestClient") RestClient athenaRestClient, AthenaModuleService athenaModuleService,
             AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, ResultRepository resultRepository,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseCompetencyApi> courseCompetencyApi, UserAiPreferenceService userAiPreferenceService,
             CourseAthenaConfigRepository courseAthenaConfigRepository, Optional<FeatureUsageCollector> featureUsageCollector) {
-        textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
+        textAthenaConnector = new AthenaConnector<>(athenaRestClient, ResponseDTOText.class);
         this.userAiPreferenceService = userAiPreferenceService;
-        programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
-        modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
+        programmingAthenaConnector = new AthenaConnector<>(athenaRestClient, ResponseDTOProgramming.class);
+        modelingAthenaConnector = new AthenaConnector<>(athenaRestClient, ResponseDTOModeling.class);
         this.athenaDTOConverterService = athenaDTOConverterService;
         this.athenaModuleService = athenaModuleService;
         this.llmTokenUsageService = llmTokenUsageService;
