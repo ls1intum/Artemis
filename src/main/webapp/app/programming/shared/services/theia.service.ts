@@ -4,7 +4,6 @@ import { Observable, firstValueFrom } from 'rxjs';
 
 import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { TheiaRedirectProps } from 'app/programming/shared/entities/theia-redirect.model';
 
 @Service()
 export class TheiaService {
@@ -27,7 +26,7 @@ export class TheiaService {
     }
 
     /**
-     * Starts the online IDE (Theia) in a new window using provided parameters
+     * Starts the online IDE (Theia) in a new window. Secret values (the Artemis token and a git URI with credentials) travel in the URL fragment
      */
     async startOnlineIDE(theiaPortalURL: string, theiaImage: string, repositoryUri: string, userName?: string, userEmail?: string): Promise<void> {
         const newWindow = window.open('', '_blank');
@@ -45,32 +44,21 @@ export class TheiaService {
             artemisUrl += window.location.host;
         }
 
-        const data: TheiaRedirectProps = {
-            appDef: theiaImage,
-            gitUri: repositoryUri,
-            gitUser: userName,
-            gitMail: userEmail,
-            artemisToken,
-            artemisUrl,
-        };
+        // Secrets go into the URL fragment, which browsers never send to servers, so they stay out of access logs and Referer headers
+        const query = new URLSearchParams({ appDef: theiaImage, artemisUrl });
+        const fragment = new URLSearchParams({ artemisToken });
+        const gitUri = new URL(repositoryUri);
+        (gitUri.username || gitUri.password ? fragment : query).set('gitUri', repositoryUri);
+        if (userName) {
+            query.set('gitUser', userName);
+        }
+        if (userEmail) {
+            query.set('gitMail', userEmail);
+        }
 
-        newWindow.name = 'Theia-IDE';
-
-        const form = document.createElement('form');
-        form.method = 'GET';
-        form.action = theiaPortalURL;
-        form.target = newWindow.name;
-
-        Object.entries(data).forEach(([key, value]) => {
-            const hiddenField = document.createElement('input');
-            hiddenField.type = 'hidden';
-            hiddenField.name = key;
-            hiddenField.value = value;
-            form.appendChild(hiddenField);
-        });
-
-        document.body.appendChild(form);
-        form.submit();
-        document.body.removeChild(form);
+        const url = new URL(theiaPortalURL);
+        url.search = query.toString();
+        url.hash = fragment.toString();
+        newWindow.location.href = url.toString();
     }
 }

@@ -51,8 +51,6 @@ import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
@@ -138,7 +136,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 { provide: ProfileService, useValue: new MockProfileService() },
                 { provide: ProgrammingExerciseGradingService, useValue: new MockProgrammingExerciseGradingService() },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
-                { provide: NgbModal, useValue: new MockNgbModalService() },
                 { provide: Router, useClass: MockRouter },
                 provideHttpClient(),
                 provideHttpClientTesting(),

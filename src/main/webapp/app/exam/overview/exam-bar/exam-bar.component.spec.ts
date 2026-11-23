@@ -73,7 +73,7 @@ describe('ExamBarComponent', () => {
 
     it('should inset its title and its buttons by 12px, where the title of every page of the exam starts', () => {
         const bar: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-bar"]');
-        expect(bar.classList).toContain('px-3!');
+        expect(bar.classList).toContain('px-3');
         expect(bar.classList).not.toContain('px-4!');
         expect(bar.classList).not.toContain('px-6!');
     });

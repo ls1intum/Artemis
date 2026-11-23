@@ -648,6 +648,22 @@ describe('HomeComponent', () => {
         customFixture.destroy();
     });
 
+    it('should show the internal account message if loginError=internalAccount query param is present', () => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.queryParams = of({ loginError: 'internalAccount' });
+
+        const alertService = TestBed.inject(AlertService) as any;
+        const alertSpy = vi.spyOn(alertService, 'error');
+
+        const customFixture = TestBed.createComponent(HomeComponent);
+        customFixture.detectChanges();
+
+        expect(customFixture.componentInstance.authenticationError()).toBe(true);
+        expect(alertSpy).toHaveBeenCalledWith('home.errors.internalAccount');
+
+        customFixture.destroy();
+    });
+
     describe('ngOnDestroy', () => {
         it('should stop conditional mediation on destroy', () => {
             const stopSpy = vi.spyOn(webauthnService, 'stopConditionalMediation');

@@ -5,12 +5,15 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockDirective, MockPipe } from 'ng-mocks';
 
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { TextareaModule } from 'primeng/textarea';
-import { SelectModule } from 'primeng/select';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
-import { TumAetUiCheckboxComponent, TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDatePickerComponent,
+    TumAetUiFormFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiSelectComponent,
+} from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
@@ -46,10 +49,10 @@ describe('CourseRequestFormComponent', () => {
                 set: {
                     imports: [
                         ReactiveFormsModule,
-                        ButtonModule,
-                        InputTextModule,
-                        TextareaModule,
-                        SelectModule,
+                        TumAetUiButtonDirective,
+                        TumAetUiFormFieldComponent,
+                        TumAetUiInputDirective,
+                        TumAetUiSelectComponent,
                         TumAetUiCheckboxComponent,
                         TumAetUiDatePickerComponent,
                         DatePickerControlDirective,

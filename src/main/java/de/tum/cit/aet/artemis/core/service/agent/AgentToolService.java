@@ -230,7 +230,9 @@ public class AgentToolService {
                         (arguments, api) -> AgentToolResult.of(api.send(HttpMethod.POST, base + "/setup", required(arguments.exercise(), "exercise")))),
                 tool("update_programming_exercise",
                         "Change a programming exercise that students cannot see and have not started. Send the whole exercise with your changes; a smaller body resets the rest. "
-                                + "get_exercise returns the course as an object, but this tool needs courseId: copy course.id into it." + EXERCISE_GUIDANCE,
+                                + "get_exercise returns the course as an object, but this tool needs courseId: copy course.id into it. "
+                                + "The submissionPolicy of the exercise is ignored here and stays as it is; the response shows the stored policy, which is changed only through the submission-policy endpoints of the exercise."
+                                + EXERCISE_GUIDANCE,
                         false, scopes,
                         schema(List.of("exercise"), property("exercise", JsonSchemaDTO.document("UpdateProgrammingExerciseDTO of the API description, with its id and courseId."))),
                         UpdateProgrammingExerciseArguments.class,

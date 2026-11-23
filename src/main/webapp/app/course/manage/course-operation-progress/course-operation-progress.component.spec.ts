@@ -5,13 +5,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseOperationProgressDTO, CourseOperationStatus, CourseOperationType } from 'app/course/shared/entities/course-operation-progress.model';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiMessageComponent, TumAetUiProgressBarComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
-import { DialogModule } from 'primeng/dialog';
-import { ProgressBarModule } from 'primeng/progressbar';
 
 describe('CourseOperationProgressComponent', () => {
     let component: CourseOperationProgressComponent;
@@ -44,8 +42,9 @@ describe('CourseOperationProgressComponent', () => {
                 set: {
                     imports: [
                         CommonModule,
-                        MockModule(DialogModule),
-                        MockModule(ProgressBarModule),
+                        MockComponent(TumAetUiDialogComponent),
+                        MockComponent(TumAetUiProgressBarComponent),
+                        MockComponent(TumAetUiMessageComponent),
                         MockComponent(FaIconComponent),
                         TumAetUiButtonDirective,
                         MockPipe(ArtemisTranslatePipe),
@@ -200,7 +199,7 @@ describe('CourseOperationProgressComponent', () => {
             await flushBuffer();
             fixture.detectChanges();
 
-            expect(component.progressStyleClass()).toBe('');
+            expect(component.progressSeverity()).toBe('primary');
         });
 
         it('should return progress-success when completed', async () => {
@@ -209,7 +208,7 @@ describe('CourseOperationProgressComponent', () => {
             await flushBuffer();
             fixture.detectChanges();
 
-            expect(component.progressStyleClass()).toBe('progress-success');
+            expect(component.progressSeverity()).toBe('success');
         });
 
         it('should return progress-danger when failed', async () => {
@@ -218,7 +217,7 @@ describe('CourseOperationProgressComponent', () => {
             await flushBuffer();
             fixture.detectChanges();
 
-            expect(component.progressStyleClass()).toBe('progress-danger');
+            expect(component.progressSeverity()).toBe('danger');
         });
     });
 

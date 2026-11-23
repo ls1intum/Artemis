@@ -1,4 +1,4 @@
-<fieldset class="m-0 flex min-w-0 flex-wrap items-center gap-2 border-0 p-0" [attr.aria-label]="'artemisApp.exercise.filter' | artemisTranslate">
+<fieldset class="m-0 flex flex-wrap items-center gap-2 border-0 p-0" [attr.aria-label]="'artemisApp.exercise.filter' | artemisTranslate">
     <ng-content />
     @for (group of groups(); track group.labelKey) {
         @if (group.items.length > 1) {
@@ -48,7 +48,7 @@
         <span class="hidden basis-full @min-[80rem]:block" aria-hidden="true"></span>
     }
     @for (group of checkboxGroups(); track group.labelKey) {
-        <div class="inline-flex shrink-0 items-center gap-2 text-sm text-text">
+        <div class="inline-flex shrink-0 items-center gap-2 text-sm text-color">
             <tumaet-ui-checkbox
                 [inputId]="checkboxIdPrefix + group.items[0]"
                 [checked]="group.selected.length > 0"

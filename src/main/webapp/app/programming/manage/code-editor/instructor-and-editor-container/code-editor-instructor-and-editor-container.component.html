@@ -1,6 +1,6 @@
 @if (loadingState() === LOADING_STATE.INITIALIZING || loadingState() === LOADING_STATE.FETCHING_FAILED) {
-    <nav class="card">
-        <div class="card-body">
+    <nav class="rounded-[0.15rem] border border-(--border-color) bg-(--card-bg)">
+        <div class="p-4">
             @if (loadingState() === LOADING_STATE.INITIALIZING) {
                 <span>
                     <fa-icon [icon]="faCircleNotch" animation="spin" />
@@ -9,7 +9,7 @@
             }
             @if (loadingState() === LOADING_STATE.FETCHING_FAILED) {
                 <span>
-                    <fa-icon [icon]="faTimesCircle" class="text-danger" />
+                    <fa-icon [icon]="faTimesCircle" class="text-state-danger" />
                     <span jhiTranslate="artemisApp.editor.errors.participationNotFound"></span>
                 </span>
             }
@@ -18,7 +18,7 @@
 } @else if (exercise(); as exercise) {
     <!-- The @else branch already excludes the two loading states, and the alias narrows the exercise signal to a
          non-null value for the whole block so the bindings below keep type-checking their optional participations. -->
-    <div class="module-bg p-3 pt-1">
+    <div class="bg-(--module-bg) p-4 pt-1">
         <jhi-code-editor-container
             [participation]="selectedParticipation!"
             [editable]="!isProblemStatementEditingLocked()"
@@ -47,7 +47,7 @@
                     }
                 </span>
             </div>
-            <div editorTitleActions class="d-flex align-items-center ms-2">
+            <div editorTitleActions class="flex items-center ms-2">
                 <jhi-programming-exercise-instructor-exercise-status
                     class="me-2"
                     [exercise]="exercise"
@@ -55,112 +55,117 @@
                     [solutionParticipation]="exercise?.solutionParticipation!"
                 />
                 <!-- repository select -->
-                <div ngbDropdown class="d-inline-block me-2">
-                    <button type="button" class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
+                <div class="inline-block me-2">
+                    <button type="button" tumAetUiButton variant="outlined" id="dropdownBasic1" [tumAetUiMenuTrigger]="repositoryMenu">
                         {{ selectedRepository === RepositoryType.AUXILIARY ? selectedAuxiliaryRepositoryName : selectedRepository }}
+                        <fa-icon [icon]="faCaretDown" />
                     </button>
-                    <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                        <button
-                            type="button"
-                            [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUri"
-                            (click)="selectTemplateParticipation()"
-                            ngbDropdownItem
-                            [style.background-color]="selectedRepository === RepositoryType.TEMPLATE ? 'var(--link-color)' : 'transparent'"
-                        >
-                            <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo"></span>
-                        </button>
-                        <button
-                            type="button"
-                            [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUri"
-                            (click)="selectSolutionParticipation()"
-                            ngbDropdownItem
-                            [style.background-color]="selectedRepository === RepositoryType.SOLUTION ? 'var(--link-color)' : 'transparent'"
-                        >
-                            <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"></span>
-                        </button>
-                        <div class="d-flex w-100">
+                    <ng-template #repositoryMenu>
+                        <tumaet-ui-menu aria-labelledby="dropdownBasic1">
                             <button
                                 type="button"
-                                class="flex-grow-1 text-start"
-                                ngbDropdownItem
-                                [disabled]="
-                                    loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
-                                    loadingState() === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
-                                    !exercise.studentParticipations ||
-                                    !exercise.studentParticipations.length ||
-                                    (exercise.studentParticipations!.length > 0 && !repositoryUri(exercise.studentParticipations![0]))
-                                "
-                                (click)="selectAssignmentParticipation()"
-                                [style.background-color]="selectedRepository === RepositoryType.ASSIGNMENT ? 'var(--link-color)' : 'transparent'"
+                                [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUri"
+                                (triggered)="selectTemplateParticipation()"
+                                tumAetUiMenuItem
+                                [style.background-color]="selectedRepository === RepositoryType.TEMPLATE ? 'var(--link-color)' : 'transparent'"
                             >
-                                <span jhiTranslate="artemisApp.editor.repoSelect.assignmentRepo"></span>
+                                <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo"></span>
                             </button>
-                            @if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
-                                <div class="vr my-1"></div>
+                            <button
+                                type="button"
+                                [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUri"
+                                (triggered)="selectSolutionParticipation()"
+                                tumAetUiMenuItem
+                                [style.background-color]="selectedRepository === RepositoryType.SOLUTION ? 'var(--link-color)' : 'transparent'"
+                            >
+                                <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"></span>
+                            </button>
+                            <div class="flex w-full">
                                 <button
                                     type="button"
-                                    class="flex-shrink-1 w-auto px-2"
-                                    ngbDropdownItem
-                                    (click)="createAssignmentParticipation()"
-                                    [disabled]="isExerciseGenerationActionBlocked() || isCreateAssignmentRepoDisabled || loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
-                                    [ngbTooltip]="
-                                        isCreateAssignmentRepoDisabled
-                                            ? ('artemisApp.editor.repoSelect.createAssignmentRepoDisabledTooltip' | artemisTranslate)
-                                            : ('artemisApp.editor.repoSelect.createAssignmentRepo' | artemisTranslate)
+                                    class="grow text-left!"
+                                    tumAetUiMenuItem
+                                    [disabled]="
+                                        loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
+                                        loadingState() === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
+                                        !exercise.studentParticipations ||
+                                        !exercise.studentParticipations.length ||
+                                        (exercise.studentParticipations!.length > 0 && !repositoryUri(exercise.studentParticipations![0]))
                                     "
+                                    (triggered)="selectAssignmentParticipation()"
+                                    [style.background-color]="selectedRepository === RepositoryType.ASSIGNMENT ? 'var(--link-color)' : 'transparent'"
                                 >
-                                    @if (loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
-                                    } @else {
-                                        <fa-icon [icon]="faPlus" />
-                                    }
+                                    <span jhiTranslate="artemisApp.editor.repoSelect.assignmentRepo"></span>
                                 </button>
+                                @if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
+                                    <div class="my-1 w-px self-stretch bg-(--border-color)"></div>
+                                    <button
+                                        type="button"
+                                        class="shrink w-auto! px-2!"
+                                        tumAetUiMenuItem
+                                        (triggered)="createAssignmentParticipation()"
+                                        [disabled]="
+                                            isExerciseGenerationActionBlocked() || isCreateAssignmentRepoDisabled || loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO
+                                        "
+                                        [tumAetUiTooltip]="
+                                            isCreateAssignmentRepoDisabled
+                                                ? ('artemisApp.editor.repoSelect.createAssignmentRepoDisabledTooltip' | artemisTranslate)
+                                                : ('artemisApp.editor.repoSelect.createAssignmentRepo' | artemisTranslate)
+                                        "
+                                    >
+                                        @if (loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
+                                            <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                        } @else {
+                                            <fa-icon [icon]="faPlus" />
+                                        }
+                                    </button>
+                                }
+                                @if (exercise.studentParticipations && exercise.studentParticipations.length && exercise.isAtLeastInstructor) {
+                                    <div class="my-1 w-px self-stretch bg-(--border-color)"></div>
+                                    <button
+                                        type="button"
+                                        class="shrink w-auto! px-2! text-state-danger"
+                                        tumAetUiMenuItem
+                                        (triggered)="deleteAssignmentParticipation()"
+                                        [disabled]="isExerciseGenerationActionBlocked() || loadingState() !== LOADING_STATE.CLEAR"
+                                        [tumAetUiTooltip]="'artemisApp.editor.repoSelect.deleteAssignmentRepo' | artemisTranslate"
+                                    >
+                                        @if (loadingState() === LOADING_STATE.DELETING_ASSIGNMENT_REPO) {
+                                            <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                        } @else {
+                                            <fa-icon [icon]="faTimes" />
+                                        }
+                                    </button>
+                                }
+                            </div>
+                            <button
+                                type="button"
+                                [disabled]="!exercise"
+                                (triggered)="selectTestRepository()"
+                                tumAetUiMenuItem
+                                [style.background-color]="selectedRepository === RepositoryType.TESTS ? 'var(--link-color)' : 'transparent'"
+                                jhiTranslate="artemisApp.editor.repoSelect.testRepo"
+                            ></button>
+                            @for (auxiliaryRepository of exercise.auxiliaryRepositories; track auxiliaryRepository.id ?? i; let i = $index) {
+                                @if (auxiliaryRepository.id) {
+                                    <button
+                                        type="button"
+                                        [disabled]="!exercise"
+                                        (triggered)="selectAuxiliaryRepository(auxiliaryRepository.id)"
+                                        tumAetUiMenuItem
+                                        [style.background-color]="
+                                            selectedRepository === RepositoryType.AUXILIARY && selectedRepositoryId === auxiliaryRepository.id ? 'var(--link-color)' : 'transparent'
+                                        "
+                                    >
+                                        {{ auxiliaryRepository.name }}
+                                    </button>
+                                }
                             }
-                            @if (exercise.studentParticipations && exercise.studentParticipations.length && exercise.isAtLeastInstructor) {
-                                <div class="vr my-1"></div>
-                                <button
-                                    type="button"
-                                    class="flex-shrink-1 w-auto px-2 text-danger"
-                                    ngbDropdownItem
-                                    (click)="deleteAssignmentParticipation()"
-                                    [disabled]="isExerciseGenerationActionBlocked() || loadingState() !== LOADING_STATE.CLEAR"
-                                    [ngbTooltip]="'artemisApp.editor.repoSelect.deleteAssignmentRepo' | artemisTranslate"
-                                >
-                                    @if (loadingState() === LOADING_STATE.DELETING_ASSIGNMENT_REPO) {
-                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
-                                    } @else {
-                                        <fa-icon [icon]="faTimes" />
-                                    }
-                                </button>
-                            }
-                        </div>
-                        <button
-                            type="button"
-                            [disabled]="!exercise"
-                            (click)="selectTestRepository()"
-                            ngbDropdownItem
-                            [style.background-color]="selectedRepository === RepositoryType.TESTS ? 'var(--link-color)' : 'transparent'"
-                            jhiTranslate="artemisApp.editor.repoSelect.testRepo"
-                        ></button>
-                        @for (auxiliaryRepository of exercise.auxiliaryRepositories; track auxiliaryRepository.id ?? i; let i = $index) {
-                            @if (auxiliaryRepository.id) {
-                                <button
-                                    type="button"
-                                    [disabled]="!exercise"
-                                    (click)="selectAuxiliaryRepository(auxiliaryRepository.id)"
-                                    ngbDropdownItem
-                                    [style.background-color]="
-                                        selectedRepository === RepositoryType.AUXILIARY && selectedRepositoryId === auxiliaryRepository.id ? 'var(--link-color)' : 'transparent'
-                                    "
-                                >
-                                    {{ auxiliaryRepository.name }}
-                                </button>
-                            }
-                        }
-                    </div>
+                        </tumaet-ui-menu>
+                    </ng-template>
                 </div>
                 @if (hyperionEnabled) {
-                    <div class="vr mx-2"></div>
+                    <div class="mx-2 w-px self-stretch bg-(--border-color)"></div>
                     <jhi-code-editor-ai-actions
                         [adaptOffered]="adaptOffered()"
                         [variantOffered]="variantOffered()"
@@ -237,7 +242,7 @@
                     </nav>
                 }
             </div>
-            <div editorToolbar class="ms-auto d-flex align-items-center">
+            <div editorToolbar class="ms-auto flex items-center">
                 @if (selectedParticipation && selectedRepository !== RepositoryType.TESTS) {
                     <jhi-updating-result
                         [exercise]="exercise"
@@ -255,7 +260,7 @@
                 }
             </div>
             <!-- Editable instructions with diff support -->
-            <div editorCenter class="d-flex flex-column h-100 instructions-wrapper__content card-body p-0">
+            <div editorCenter class="flex flex-col h-full instructions-wrapper__content editor-panel-body p-0!">
                 @if (showDiff()) {
                     <jhi-diff-review-banner
                         [(allowSplitView)]="allowSplitView"
@@ -280,7 +285,7 @@
                         [mode]="showDiff() ? 'diff' : 'normal'"
                         [renderSideBySide]="allowSplitView()"
                         (diffLineChange)="onDiffLineChange($event)"
-                        class="flex-grow-1 overflow-auto"
+                        class="grow overflow-auto"
                         (instructionChange)="onInstructionChanged($event)"
                         (hasUnsavedChanges)="onProblemStatementUnsavedChangesChanged($event)"
                         (onProblemStatementSaved)="onProblemStatementSaved()"
@@ -289,7 +294,7 @@
                     />
                 } @else {
                     <!-- Loading state while waiting for templateParticipation -->
-                    <div class="d-flex justify-content-center align-items-center h-100">
+                    <div class="flex justify-center items-center h-full">
                         <fa-icon [icon]="faCircleNotch" animation="spin" class="me-2" />
                         <span jhiTranslate="artemisApp.editor.fetchingParticipation"></span>
                     </div>

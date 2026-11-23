@@ -216,7 +216,7 @@
 // In dark mode the shared modal surface (--global-search-modal-bg) is a saturated navy and the
 // global-search border is blue-tinted, which makes the pills read as blue. Give the syntax / hint
 // pills a neutral dark elevation + neutral borders in dark mode only; light mode stays white.
-:host-context([prime-ng-use-dark-theme='true']) {
+:host-context([data-theme='dark']) {
     .filter-menu-syntax,
     .filter-menu-hint {
         background: var(--body-bg);

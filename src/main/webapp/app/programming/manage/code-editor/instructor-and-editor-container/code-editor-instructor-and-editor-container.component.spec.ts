@@ -31,7 +31,6 @@ import { FileSyncState } from 'app/exercise/synchronization/services/code-editor
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -177,7 +176,6 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: Location, useValue: { replaceState: vi.fn() } },
         { provide: ParticipationService, useClass: MockParticipationService },
         { provide: ActivatedRoute, useValue: { params: of({}) } },
-        { provide: NgbModal, useValue: { open: vi.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
         { provide: TumAetUiConfirmationService, useValue: { confirm: vi.fn(), close: vi.fn() } },
         { provide: CodeEditorRepositoryService, useValue: { pull: vi.fn(() => of(void 0)) } },
         { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: vi.fn(() => of({})) } },

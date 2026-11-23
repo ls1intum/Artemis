@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
 import de.tum.cit.aet.artemis.hyperion.domain.ChecklistSection;
 import de.tum.cit.aet.artemis.hyperion.domain.DifficultyDelta;
 import de.tum.cit.aet.artemis.hyperion.domain.QualityIssueCategory;
@@ -161,10 +162,10 @@ public class HyperionChecklistService {
         courseCompetencyCache.entrySet().removeIf(entry -> !entry.getValue().isValid());
     }
 
-    public HyperionChecklistService(ChatClient chatClient, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry,
+    public HyperionChecklistService(HyperionChatClientService chatClients, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry,
             Optional<StandardizedCompetencyApi> standardizedCompetencyApi, Optional<CourseCompetencyApi> courseCompetencyApi, ProgrammingExerciseTaskRepository taskRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, JsonMapper objectMapper, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
-        this.chatClient = chatClient;
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.CHECKLIST);
         this.templates = templates;
         this.observationRegistry = observationRegistry;
         this.standardizedCompetencyApi = standardizedCompetencyApi;

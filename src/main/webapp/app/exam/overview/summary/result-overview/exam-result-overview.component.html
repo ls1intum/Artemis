@@ -1,15 +1,15 @@
 @if (showResultOverview()) {
     <div>
-        <h3 class="mt-6! mb-[12px]! text-base! font-semibold!" data-testid="exam-summary-heading" jhiTranslate="artemisApp.exam.examSummary.points.overview"></h3>
+        <h3 class="mt-6 mb-[12px] text-base font-semibold" data-testid="exam-summary-heading" jhiTranslate="artemisApp.exam.examSummary.points.overview"></h3>
 
         @if (hasManuallyAssessedExercises()) {
-            <p class="mb-3! text-sm" data-testid="test-exam-partial-result" jhiTranslate="artemisApp.exam.examSummary.partialTestExamResult"></p>
+            <p class="mb-3 text-sm" data-testid="test-exam-partial-result" jhiTranslate="artemisApp.exam.examSummary.partialTestExamResult"></p>
         }
         @if (pendingExerciseIds().size > 0) {
-            <p class="mb-3! text-sm" data-testid="test-exam-results-pending" jhiTranslate="artemisApp.exam.examSummary.automaticResultsPending"></p>
+            <p class="mb-3 text-sm" data-testid="test-exam-results-pending" jhiTranslate="artemisApp.exam.examSummary.automaticResultsPending"></p>
         }
         @if (bonusPending()) {
-            <p class="mb-3! text-sm" data-testid="test-exam-bonus-pending" jhiTranslate="artemisApp.exam.examSummary.bonusResultPending"></p>
+            <p class="mb-3 text-sm" data-testid="test-exam-bonus-pending" jhiTranslate="artemisApp.exam.examSummary.bonusResultPending"></p>
         }
         <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['grading-table']" [toggleCollapse]="toggleCollapse('grading-table')">
             <div class="header truncate text-base font-semibold" jhiTranslate="artemisApp.exam.examSummary.resultTable"></div>
@@ -50,7 +50,7 @@
                                             }
                                             <button
                                                 type="button"
-                                                class="min-w-0 border-0 bg-transparent p-0 text-start text-inherit underline focus-visible:outline-2 focus-visible:outline-offset-2"
+                                                class="min-w-0 border-0 bg-transparent p-0 text-left text-inherit underline focus-visible:outline-2 focus-visible:outline-offset-2"
                                                 (click)="scrollToExercise(exercise.id)"
                                                 data-testid="exam-summary-open-exercise"
                                             >
@@ -100,7 +100,7 @@
                             }
                         </tbody>
                         @if (hasAutomaticScore()) {
-                            <tfoot class="border-t-2! border-(--tumaet-ui-border-color)!">
+                            <tfoot class="border-t-2 border-(--tumaet-ui-border-color)">
                                 <tr>
                                     <th scope="row" colspan="2" jhiTranslate="artemisApp.exam.examSummary.points.total"></th>
                                     @if (showIncludedInScoreColumn()) {
@@ -130,7 +130,7 @@
                     </table>
                 </div>
                 @if (hasAutomaticScore()) {
-                    <div class="mt-4! flex flex-col gap-1 px-2" data-testid="exam-result-points-summary">
+                    <div class="mt-4 flex flex-col gap-1 px-2" data-testid="exam-result-points-summary">
                         @if (studentExamWithGrade()?.maxBonusPoints) {
                             <p class="m-0 text-sm" data-testid="exam-result-points-sentence">
                                 {{

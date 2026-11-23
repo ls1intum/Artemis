@@ -1,11 +1,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
-import { TextUnitService } from 'app/lecture/manage/lecture-units/services/text-unit.service';
+import { TextUnitApi } from 'app/openapi/api/text-unit-api';
+import { toLectureUnit, toLectureUnitRequest } from 'app/lecture/shared/util/generated-lecture.util';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { onError } from 'app/foundation/util/global.utils';
-import { finalize } from 'rxjs/operators';
+import { finalize, map } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { combineLatest } from 'rxjs';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
@@ -19,7 +20,7 @@ import { TextUnitFormComponent } from '../text-unit-form/text-unit-form.componen
 export class CreateTextUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
-    private textUnitService = inject(TextUnitService);
+    private textUnitApi = inject(TextUnitApi);
     private alertService = inject(AlertService);
 
     textUnitToCreate: TextUnit = new TextUnit();
@@ -50,9 +51,10 @@ export class CreateTextUnitComponent implements OnInit {
 
         this.isLoading.set(true);
 
-        this.textUnitService
-            .create(this.textUnitToCreate, this.lectureId)
+        this.textUnitApi
+            .createTextUnit(this.lectureId, toLectureUnitRequest(this.textUnitToCreate))
             .pipe(
+                map((unit) => toLectureUnit<TextUnit>(unit)),
                 finalize(() => {
                     this.isLoading.set(false);
                 }),

@@ -40,8 +40,8 @@
         </ng-container>
     </jhi-unified-feedback>
 } @else {
-    <div class="d-flex flex-nowrap align-items-start gap-1 p-1">
-        <div class="flex-grow-1 flex-shrink-1">
+    <div class="flex flex-nowrap items-start gap-1 p-1">
+        <div class="grow shrink">
             <jhi-unified-feedback
                 [feedbackContent]="buildFeedbackTextForCodeEditor(feedback)"
                 [points]="feedback.credits || 0"

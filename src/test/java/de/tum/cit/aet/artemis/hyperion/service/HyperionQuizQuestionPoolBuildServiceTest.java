@@ -820,7 +820,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     void build_throwsWithoutAConfiguredModel() {
         HyperionQuizQuestionPoolBuildService service = service();
 
-        assertThatThrownBy(() -> service.build(5L, 7L, "lease")).isInstanceOf(ServiceUnavailableAlertException.class).hasMessageContaining("no local model configured");
+        assertThatThrownBy(() -> service.build(5L, 7L, "lease")).isInstanceOf(ServiceUnavailableAlertException.class).hasMessageContaining("no LLM presets assigned");
     }
 
     @Test
@@ -903,7 +903,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
     private HyperionQuizQuestionPoolBuildService service() {
         HyperionQuizQuestionPoolModelService models = mock(HyperionQuizQuestionPoolModelService.class);
-        lenient().when(models.chatClient()).thenThrow(HyperionQuizQuestionPoolModelService.notConfigured());
+        lenient().when(models.generatorChatClient()).thenThrow(HyperionQuizQuestionPoolModelService.notConfigured());
         return new HyperionQuizQuestionPoolBuildService(models, planService(), new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi),
                 filterService, llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository, distributedDataProvider, 8, 30, 10);
     }
@@ -911,7 +911,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     private HyperionQuizQuestionPoolBuildService serviceWithChatClient() {
         HyperionQuizQuestionPoolModelService models = mock(HyperionQuizQuestionPoolModelService.class);
         lenient().when(models.isConfigured()).thenReturn(true);
-        lenient().when(models.chatClient()).thenReturn(ChatClient.create(chatModel));
+        lenient().when(models.generatorChatClient()).thenReturn(ChatClient.create(chatModel));
         lenient().when(models.generatorModel()).thenReturn("generator-x");
         return new HyperionQuizQuestionPoolBuildService(models, planService(), new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi),
                 filterService, llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository, distributedDataProvider, 8, 30, 10);

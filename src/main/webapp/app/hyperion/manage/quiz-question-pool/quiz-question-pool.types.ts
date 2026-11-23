@@ -62,7 +62,7 @@ export interface PoolProgress {
     failed: number;
     /** The settings the running build planned its questions with; absent while no build is running. */
     buildSettings?: PoolSettings;
-    /** Whether the pool has its own self-hosted model endpoint; builds are refused without one. */
+    /** Whether the administrator assigned the pool's generator and judge LLM presets; builds are refused without them. */
     modelConfigured: boolean;
     /** The most recent build; absent before the first. */
     lastBuild?: PoolBuild;

@@ -305,8 +305,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // taken once per user and conversation.
         // further database calls are made in async code
         // Note: post via the channel's own course — the path courseId must match the conversation's course (see ensureConversationBelongsToCourseElseThrow)
-        assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED))
-                .hasBeenCalledTimes(12);
+        queryInterceptor.startQueryCount();
+        request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED);
+        List<String> statements = queryInterceptor.getStatements();
+        // The response header may refresh the shared one-minute LTI-origin cache. Account for that bounded read
+        // separately, keeping the message/authentication budget exact even when this request observes a cache miss.
+        long platformOriginReads = statements.stream().filter(sql -> sql.contains(" from lti_platform_configuration ")).count();
+        assertThat(platformOriginReads).as("LTI-origin cache reads").isBetween(0L, 1L);
+        assertThat(statements.size() - platformOriginReads).as("message and authentication queries").isEqualTo(12);
     }
 
     @ParameterizedTest
