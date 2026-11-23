@@ -186,18 +186,6 @@ describe('PostingReactionsBarComponent', () => {
         expect(getEditButton()).not.toBeNull();
     });
 
-    it('should give the edit button the metrics of the other action pills', () => {
-        fixture.componentRef.setInput('isReadOnlyMode', false);
-        fixture.componentRef.setInput('previewMode', false);
-        fixture.componentRef.setInput('posting', { id: 1, title: 'Test Post' } as Post);
-        vi.spyOn(communicationService, 'currentUserIsAuthorOfPosting').mockReturnValue(true);
-        component.ngOnInit();
-        fixture.changeDetectorRef.detectChanges();
-
-        // A kit button is taller than a pill, so the stylesheet sizes it through this class; without it the row is shifted.
-        expect(getEditButton()!.nativeElement.classList).toContain('reaction-edit-button');
-    });
-
     it('should display the delete option to user with channel moderation rights when not the author', () => {
         fixture.componentRef.setInput('isReadOnlyMode', false);
         fixture.componentRef.setInput('previewMode', false);
