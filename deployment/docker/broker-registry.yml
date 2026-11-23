@@ -40,6 +40,9 @@ services:
             # "--http-host 0.0.0.0 --relax-jolokia" is the default
             # "--nio" is apparently required to make it work on ARM CPUs
             EXTRA_ARGS: --http-host 0.0.0.0 --relax-jolokia --nio
+            # Temporary: the image ships a JDK older than 25.0.5.1, so the Base64 intrinsics stay off (CVE-2026-114938).
+            # Remove the option once the image of ACTIVEMQ_VERSION ships JDK 25.0.5.1 or newer.
+            JDK_JAVA_OPTIONS: -XX:-UseBASE64Intrinsics
         ports:
             - "61613:61616"
         healthcheck:

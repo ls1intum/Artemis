@@ -27,18 +27,18 @@
                         (keyup.space)="$event.target === $event.currentTarget ? keyboardAction16.click() : undefined"
                     >
                         <div class="flex grow items-center justify-between">
-                            <h5 class="mb-0 font-medium!" jhiTranslate="artemisApp.communication.label">Communication</h5>
+                            <h5 class="mb-0 font-medium" jhiTranslate="artemisApp.communication.label">Communication</h5>
                             <fa-icon [icon]="faChevronRight" />
                         </div>
                     </div>
                     <!-- body -->
                     @if (noChannelAvailable()) {
-                        <div class="grow p-4!" jhiTranslate="artemisApp.communication.channel.noChannel"></div>
+                        <div class="grow p-4" jhiTranslate="artemisApp.communication.channel.noChannel"></div>
                     } @else {
                         <div [class]="embedded() ? 'flex w-full grow flex-col overflow-hidden px-2 pt-0' : 'grow px-4! pt-0 pb-4!'">
                             @if (currentPost(); as selectedPost) {
                                 <div class="my-2">
-                                    <fa-icon [icon]="faArrowLeft" (click)="resetCurrentPost()" class="back-button me-2 clickable" />
+                                    <fa-icon [icon]="faArrowLeft" (click)="resetCurrentPost()" class="back-button me-2 cursor-pointer" />
                                     <span class="back-instruction" jhiTranslate="artemisApp.communication.post.showAllPosts"></span>
                                     <jhi-posting-thread [post]="selectedPost" [showAnswers]="true" [id]="'item-' + selectedPost.id" [showChannelReference]="false" />
                                 </div>
@@ -79,7 +79,7 @@
                                             <span class="pe-1" jhiTranslate="artemisApp.communication.discussionSection.sortByDate"></span>
                                             @if (!currentSortDirection()) {
                                                 <div
-                                                    class="clickable"
+                                                    class="cursor-pointer"
                                                     (click)="onChangeSortDir()"
                                                     #keyboardAction98
                                                     role="button"
@@ -97,7 +97,7 @@
                                             }
                                             @if (currentSortDirection()) {
                                                 <div
-                                                    class="clickable"
+                                                    class="cursor-pointer"
                                                     (click)="onChangeSortDir()"
                                                     #keyboardAction106
                                                     role="button"
@@ -196,7 +196,7 @@
                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction183.click() : undefined"
             >
                 <fa-icon class="expand-postings-icon" [icon]="faChevronLeft" />
-                <span class="text-xl! leading-tight! font-medium!" jhiTranslate="artemisApp.communication.label">Communication</span>
+                <span class="text-xl leading-tight font-medium" jhiTranslate="artemisApp.communication.label">Communication</span>
                 <div class="spacer"></div>
                 <fa-icon class="expand-postings-icon" [icon]="faChevronLeft" />
             </div>

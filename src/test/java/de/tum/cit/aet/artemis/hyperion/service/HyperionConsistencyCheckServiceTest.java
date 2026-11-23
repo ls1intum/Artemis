@@ -3,9 +3,13 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,6 +24,8 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -33,10 +39,15 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 
+import com.openai.core.JsonValue;
+import com.openai.models.completions.CompletionUsage;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
+import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -84,13 +95,15 @@ class HyperionConsistencyCheckServiceTest {
 
     private HyperionConsistencyCheckService hyperionConsistencyCheckService;
 
+    private HyperionPromptTemplateService templateService;
+
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
         // Since Spring AI 2.0 the ChatClient merges request options into the model's options, which must be non-null
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
-        var templateService = new HyperionPromptTemplateService();
+        templateService = spy(new HyperionPromptTemplateService());
         // Wire minimal renderer with mocked dependencies
         HyperionProgrammingExerciseContextRendererService exerciseContextRenderer = new HyperionProgrammingExerciseContextRendererService(repositoryService,
                 new HyperionProgrammingLanguageContextFilterService());
@@ -100,8 +113,8 @@ class HyperionConsistencyCheckServiceTest {
         var llmTokenUsageService = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, costConfiguration);
         var observationRegistry = ObservationRegistry.create();
         var reviewCommentContextRenderer = new HyperionReviewCommentContextRendererService(commentThreadRepository, JsonObjectMapper.get());
-        this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
-                reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository, JsonObjectMapper.get());
+        this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, HyperionTestChatClients.returning(chatClient), templateService,
+                exerciseContextRenderer, reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository, JsonObjectMapper.get());
     }
 
     @Test
@@ -197,7 +210,7 @@ class HyperionConsistencyCheckServiceTest {
             AssistantMessage msg = new AssistantMessage(json);
             var usage = new DefaultUsage(100, 50, 150);
             var metadata = ChatResponseMetadata.builder().model("gpt-5-mini-2024-07-18").usage(usage).build();
-            return new ChatResponse(List.of(new Generation(msg)), metadata);
+            return LlmTestCatalog.tagged(new ChatResponse(List.of(new Generation(msg)), metadata), LlmTestCatalog.PRESET);
         });
 
         ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
@@ -214,8 +227,72 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(resp.tokens().total()).isEqualTo(450L);
 
         assertThat(resp.costs()).isNotNull();
-        // Costs should be calculated based on configured rates (EUR)
-        assertThat(resp.costs().totalEur()).isGreaterThan(0);
+        // Without a provider amount, the cost comes from the price list entry of the preset that made the call.
+        assertThat(resp.costs().totalUsd()).isGreaterThan(0);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "structural,false,0.002", "semantic,false,0.002", "verification,false,0.002", "structural,true,0.002", "semantic,true,0.002", "verification,true,0.002",
+            "structural,false,0", "semantic,false,0", "verification,false,0", "structural,true,0", "semantic,true,0", "verification,true,0" })
+    void billedResponseFailureRetainsKnownCosts(String failedStage, boolean afterUsageRecorded, double callCost) throws Exception {
+        var exercise = getProgrammingExercise();
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any(), anyLong()))
+                .thenReturn(Map.of("src/main/java/Tree.java", "class Tree {}"));
+        for (String stage : List.of("structural", "semantic", "verification")) {
+            doReturn("stage::" + stage).when(templateService).render(eq("/prompts/hyperion/consistency_" + stage + ".st"), any());
+        }
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
+            Prompt prompt = invocation.getArgument(0);
+            boolean unparseable = prompt.getInstructions().stream().anyMatch(message -> Objects.toString(message.getText(), "").contains("stage::" + failedStage));
+            var nativeUsage = CompletionUsage.builder().promptTokens(100).completionTokens(50).totalTokens(150).putAdditionalProperty("cost", JsonValue.from(callCost))
+                    .putAdditionalProperty("cost_currency", JsonValue.from("USD")).build();
+            var metadata = ChatResponseMetadata.builder().model("gpt-5-mini").usage(new DefaultUsage(100, 50, 150, nativeUsage)).build();
+            return new ChatResponse(List
+                    .of(new Generation(new AssistantMessage(unparseable ? (afterUsageRecorded ? "{\"issues\":[null]}" : "billed output without valid JSON") : "{\"issues\":[]}"))),
+                    metadata);
+        });
+
+        var response = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
+
+        verify(chatModel, times(3)).call(any(Prompt.class));
+        assertThat(response.costs().totalUsd()).isEqualTo(callCost * (afterUsageRecorded ? 3 : 2));
+        assertThat(response.costs().totalUsdComplete()).isEqualTo(afterUsageRecorded);
+        var persisted = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+        verify(llmTokenUsageTraceRepository).save(persisted.capture());
+        var requests = persisted.getValue().getLLMRequests();
+        assertThat(requests).hasSize(3);
+        assertThat(requests.stream().filter(request -> request.getTotalCostUsd() != null)).hasSize(afterUsageRecorded ? 3 : 2).allSatisfy(request -> {
+            assertThat(request.getTotalCostUsd()).isEqualTo(callCost);
+        });
+        assertThat(requests.stream().filter(request -> request.getTotalCostUsd() == null)).hasSize(afterUsageRecorded ? 0 : 1).allSatisfy(request -> {
+            assertThat(request.getModel()).isEmpty();
+            assertThat(request.getNumInputTokens()).isZero();
+            assertThat(request.getNumOutputTokens()).isZero();
+            assertThat(request.getServicePipelineId()).isEqualTo("HYPERION_CONSISTENCY");
+        });
+    }
+
+    @Test
+    void missingUsageForEveryConsistencyCallPersistsThreeUnpricedAttempts() throws Exception {
+        var exercise = getProgrammingExercise();
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any(), anyLong()))
+                .thenReturn(Map.of("src/main/java/Tree.java", "class Tree {}"));
+        when(chatModel.call(any(Prompt.class))).thenThrow(new IllegalStateException("No response usage available"));
+
+        var response = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
+
+        assertThat(response.costs().totalUsd()).isNull();
+        assertThat(response.costs().totalUsdComplete()).isFalse();
+        assertThat(response.tokens().total()).isZero();
+        var persisted = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+        verify(llmTokenUsageTraceRepository).save(persisted.capture());
+        assertThat(persisted.getValue().getLLMRequests()).hasSize(3).allSatisfy(request -> {
+            assertThat(request.getTotalCostUsd()).isNull();
+            assertThat(request.getNumInputTokens()).isZero();
+            assertThat(request.getNumOutputTokens()).isZero();
+        });
     }
 
     @Test
@@ -427,18 +504,8 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(promptText).contains("[UNKNOWN/UNKNOWN] Missing metadata but keep text");
     }
 
-    private static LLMModelCostConfiguration createTestConfiguration() {
-        var config = new LLMModelCostConfiguration();
-        var modelCosts = Map.of("gpt-5-mini", createModelCostProperties(0.23f, 1.84f));
-        config.setModelCosts(new java.util.HashMap<>(modelCosts));
-        return config;
-    }
-
-    private static LLMModelCostConfiguration.ModelCostProperties createModelCostProperties(float inputEur, float outputEur) {
-        var props = new LLMModelCostConfiguration.ModelCostProperties();
-        props.setInputCostPerMillionEur(inputEur);
-        props.setOutputCostPerMillionEur(outputEur);
-        return props;
+    private static LlmProperties createTestConfiguration() {
+        return LlmTestCatalog.priced("gpt-5-mini", LlmTestCatalog.price("gpt-5-mini", 0.25, 0.025, null, 2.0));
     }
 
     private static @NonNull ProgrammingExercise getProgrammingExercise() {

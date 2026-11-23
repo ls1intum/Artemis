@@ -1,12 +1,12 @@
 import { Component, computed, input } from '@angular/core';
 import { TestCaseStats } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { round } from 'app/foundation/util/utils';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-test-case-passed-builds-chart',
     template: `
-        <div class="chart-body" placement="left auto" [ngbTooltip]="tooltip()">
+        <div class="chart-body" tumAetUiTooltipPlacement="left" [tumAetUiTooltip]="tooltip()">
             <div class="passed-bar" [style]="{ width: passedPercent() + '%' }"></div>
             <div class="failed-bar" [style]="{ left: passedPercent() + '%', width: failedPercent() + '%' }"></div>
         </div>
@@ -16,7 +16,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
         '.passed-bar { position: absolute; top: 0; left: 0; height: 10px; background-color: #28a745 }',
         '.failed-bar { position: absolute; top: 0; height: 10px; background-color: #dc3545 }',
     ],
-    imports: [NgbTooltip],
+    imports: [TumAetUiTooltipDirective],
 })
 export class TestCasePassedBuildsChartComponent {
     readonly testCaseStats = input<TestCaseStats>();

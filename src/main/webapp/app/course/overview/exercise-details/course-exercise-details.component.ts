@@ -769,10 +769,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this._studentParticipations.set(updatedParticipations);
     }
 
-    exerciseRatedBadge(result: Result): string {
-        return result.rated ? 'bg-success' : 'bg-info';
-    }
-
     /**
      * Loads and stores the complaint if any exists. Furthermore, loads the latest rated result and stores it.
      */

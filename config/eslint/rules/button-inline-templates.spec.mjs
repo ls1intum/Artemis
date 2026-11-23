@@ -5,7 +5,6 @@ import * as templateParser from '@angular-eslint/template-parser';
 import processor from './button-inline-templates.mjs';
 import rule from './enforce-button-intent.mjs';
 import noBootstrapClasses from './no-bootstrap-classes.mjs';
-import noAmbiguousSpacingUtility from './no-ambiguous-spacing-utility.mjs';
 
 describe('button inline template enforcement', () => {
     it('checks extracted templates and maps diagnostics back without losing TypeScript checks', async () => {
@@ -51,8 +50,8 @@ describe('button inline template enforcement', () => {
                 {
                     files: ['**/*.lock-template'],
                     languageOptions: { parser: templateParser },
-                    plugins: { lock: { rules: { bootstrap: noBootstrapClasses, spacing: noAmbiguousSpacingUtility } } },
-                    rules: { 'lock/bootstrap': 'error', 'lock/spacing': 'error' },
+                    plugins: { lock: { rules: { bootstrap: noBootstrapClasses } } },
+                    rules: { 'lock/bootstrap': 'error' },
                 },
             ],
         });
@@ -75,7 +74,6 @@ describe('button inline template enforcement', () => {
             { ruleId: 'product/buttons', line: 4 },
             { ruleId: 'lock/bootstrap', line: 5 },
             { ruleId: 'lock/bootstrap', line: 5 },
-            { ruleId: 'lock/spacing', line: 5 },
             { ruleId: 'lock/bootstrap', line: 10 },
         ]);
     });

@@ -221,6 +221,15 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
         return Object.is(a, b) || a === b;
     }
 
+    /**
+     * The value of an option as a `data-value` attribute, for values that have a stable text form. It gives tests and
+     * scripts a way to address an option that does not depend on its translated label.
+     */
+    protected optionDataValue(option: unknown): string | null {
+        const value = this.resolveValue(option);
+        return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value) : null;
+    }
+
     protected isSelected(option: unknown): boolean {
         const current = this.selectedValue();
         if (current === undefined || current === null) {
@@ -287,6 +296,12 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
     }
 
     protected selectOption(option: unknown): void {
+        // Choosing the option that is already selected is no change, as with a native select. Reporting it would let
+        // a consumer redo the work of a selection, such as resetting fields that depend on the value.
+        if (this.isSelected(option)) {
+            this.close();
+            return;
+        }
         const value = this.resolveValue(option);
         this.selectedValue.set(value);
         this.onChangeCallback(value);

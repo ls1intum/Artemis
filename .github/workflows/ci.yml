@@ -359,6 +359,7 @@ jobs:
               - 'supporting_scripts/tests/**'
               - 'supporting_scripts/client/run-affected-tests*'
               - 'supporting_scripts/ci/E2E-tests/**'
+              - 'supporting_scripts/ci/pull-through-registry-proxy.sh'
               - 'deployment/kubernetes/install-localci-kubernetes-ubuntu.sh'
               - 'supporting_scripts/test_verified_installers.py'
               - 'supporting_scripts/check_action_pinning.py'

@@ -1,6 +1,6 @@
-<div class="d-flex align-content-between flex-wrap mb-2">
+<div class="flex flex-wrap content-between mb-2">
     @if (!loadingResults()) {
-        <div class="f-flex flex-column">
+        <div>
             <div>
                 <span class="me-1" jhiTranslate="artemisApp.participation.templateParticipation"></span>
                 @if (programmingExercise()?.templateParticipation) {
@@ -28,10 +28,12 @@
     <button
         id="submit_button"
         type="button"
-        class="btn btn-success navbar-btn ms-auto"
+        tumAetUiButton
+        severity="success"
+        class="ms-auto"
         [disabled]="!this.buildPlan()"
         (click)="submit()"
-        [ngbTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
+        [tumAetUiTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
     >
         <span>
             <fa-icon [icon]="farPlayCircle" />
@@ -39,9 +41,9 @@
         </span>
     </button>
 </div>
-<div class="card build-plan-editor">
+<div class="build-plan-editor flex-col rounded-sm border border-(--border-color)">
     <jhi-code-editor-header [fileName]="'artemisApp.programmingExercise.buildplan' | artemisTranslate" [isLoading]="isLoading()" (onValidateTabSize)="updateTabSize($event)" />
-    <div class="d-flex card-body build-plan-editor__content">
+    <div class="build-plan-editor__content">
         <div class="build-plan-editor__content__editor">
             <jhi-monaco-editor
                 #editor

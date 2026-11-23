@@ -14,7 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -50,10 +50,10 @@ public class AthenaSubmissionSendingService {
     /**
      * Creates a new AthenaSubmissionSendingService.
      */
-    public AthenaSubmissionSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, SubmissionRepository submissionRepository,
+    public AthenaSubmissionSendingService(@Qualifier("athenaRestClient") RestClient athenaRestClient, SubmissionRepository submissionRepository,
             AthenaModuleService athenaModuleService, AthenaDTOConverterService athenaDTOConverterService) {
         this.submissionRepository = submissionRepository;
-        connector = new AthenaConnector<>(athenaRestTemplate, ResponseDTO.class);
+        connector = new AthenaConnector<>(athenaRestClient, ResponseDTO.class);
         this.athenaModuleService = athenaModuleService;
         this.athenaDTOConverterService = athenaDTOConverterService;
     }

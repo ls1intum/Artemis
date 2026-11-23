@@ -142,7 +142,7 @@ class HyperionQuizQuestionPoolServiceTest {
     void startBuild_isRefusedWithoutAConfiguredModel() {
         when(modelService.isConfigured()).thenReturn(false);
 
-        assertThatThrownBy(() -> service.startBuild(course, 7L)).isInstanceOf(ServiceUnavailableAlertException.class).hasMessageContaining("no local model configured");
+        assertThatThrownBy(() -> service.startBuild(course, 7L)).isInstanceOf(ServiceUnavailableAlertException.class).hasMessageContaining("no LLM presets assigned");
         verify(buildService, never()).tryStart(anyLong());
         verify(buildService, never()).enqueue(course);
     }

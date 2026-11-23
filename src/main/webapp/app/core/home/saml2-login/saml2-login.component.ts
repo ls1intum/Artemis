@@ -49,7 +49,10 @@ export class Saml2LoginComponent implements OnInit {
                     // for example if user was disabled
                     let message = 'Forbidden';
                     const details = error.headers.get('X-artemisApp-error');
-                    if (details) {
+                    if (details?.startsWith('home.errors.')) {
+                        // a translation key, e.g. for an account with a password of its own
+                        message = details;
+                    } else if (details) {
                         message += ': ' + details;
                     }
                     this.alertService.warning(message);

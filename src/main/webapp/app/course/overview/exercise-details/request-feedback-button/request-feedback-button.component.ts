@@ -26,6 +26,7 @@ import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shar
 import { isAthenaAIResult } from 'app/exercise/result/result.utils';
 import dayjs from 'dayjs/esm';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 // Mirrors the server-side default for `artemis.athena.allowed-feedback-requests`
 export const DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT = 10;
@@ -43,7 +44,7 @@ function isPendingAthenaFeedbackResult(result: Result | undefined): boolean {
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [FontAwesomeModule, TranslateDirective],
+    imports: [FontAwesomeModule, TranslateDirective, TumAetUiButtonDirective],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {

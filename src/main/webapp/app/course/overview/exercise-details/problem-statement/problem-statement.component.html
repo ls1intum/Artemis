@@ -1,6 +1,7 @@
 @if (programmingExercise()) {
-    <div class="row mb-4 p-1">
+    <div class="-mx-2 mb-6 flex flex-wrap p-1">
         <jhi-programming-exercise-instructions
+            class="w-full max-w-full shrink-0 px-2"
             [exercise]="programmingExercise()!"
             [participation]="participation()!"
             [personalParticipation]="true"
@@ -9,8 +10,8 @@
     </div>
 } @else {
     @if (exercise()?.problemStatement) {
-        <div [ngClass]="isStandalone() ? 'p-3' : 'mb-2'" class="row align-items-baseline" id="problem-statement">
-            <div class="col-12 col-md-12 markdown-preview problem-statement">
+        <div [ngClass]="isStandalone() ? 'p-4!' : 'mb-2'" class="-mx-2 flex flex-wrap items-baseline" id="problem-statement">
+            <div class="markdown-preview problem-statement w-full max-w-full shrink-0 px-2">
                 @if (exercise()?.exerciseGroup) {
                     <h3 jhiTranslate="artemisApp.courseOverview.exerciseDetails.problemStatement"></h3>
                 }

@@ -13,7 +13,7 @@ import { faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome
 
 import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { RequestFeedbackButtonComponent } from '../request-feedback-button/request-feedback-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -26,7 +26,7 @@ import { OpenCodeEditorButtonComponent } from 'app/course/overview/exercise-deta
         NgTemplateOutlet,
         ExerciseActionButtonComponent,
         RouterLink,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         OpenCodeEditorButtonComponent,
         CodeButtonComponent,
         RequestFeedbackButtonComponent,
@@ -37,8 +37,7 @@ import { OpenCodeEditorButtonComponent } from 'app/course/overview/exercise-deta
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../../course-overview/course-overview.scss'],
     host: {
-        '[class.col]': 'equalColumns()',
-        '[class.col-auto]': 'smallColumns()',
+        '[class]': 'columnClasses()',
     },
 })
 export class ExerciseDetailsStudentActionsComponent extends StudentExerciseActionsDirective {
@@ -53,6 +52,13 @@ export class ExerciseDetailsStudentActionsComponent extends StudentExerciseActio
 
     readonly equalColumns = input(true);
     readonly smallColumns = input(false);
+    /** How the actions take part in a flex row: sized by their content, or sharing the free space equally. */
+    protected readonly columnClasses = computed(() => {
+        if (this.smallColumns()) {
+            return 'w-auto flex-none';
+        }
+        return this.equalColumns() ? 'shrink-0 grow basis-0' : '';
+    });
 
     readonly programmingParticipationForCodeButton = computed(() => this.getProgrammingParticipationForCodeButton());
     readonly gradedRepositoryUri = computed(() => this.getGradedRepositoryUri());

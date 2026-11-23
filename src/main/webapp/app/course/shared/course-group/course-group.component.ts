@@ -15,14 +15,15 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/shared-ui/user-import/util/write-users-to-csv';
-import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
-import { TableLazyLoadEvent } from 'primeng/table';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewLazyLoadEvent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-modal/user-registration-modal.component';
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
-import { Button, ButtonDirective } from 'primeng/button';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faDownload, faFileImport, faUserMinus, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';
 
 @Component({
@@ -37,13 +38,18 @@ import { CourseRoleMember } from 'app/course/shared/course-group/course-role-mem
         ProfilePictureComponent,
         DeleteButtonDirective,
         UserRegistrationModalComponent,
-        Button,
-        ButtonDirective,
+        TumAetUiButtonDirective,
+        FaIconComponent,
     ],
 })
 export class CourseGroupComponent {
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly alertService = inject(AlertService);
+
+    protected readonly faUserPlus = faUserPlus;
+    protected readonly faFileImport = faFileImport;
+    protected readonly faDownload = faDownload;
+    protected readonly faUserMinus = faUserMinus;
 
     private readonly tableViewRef = viewChild(TableViewComponent);
     private lazyLoadGeneration = 0;
@@ -150,7 +156,7 @@ export class CourseGroupComponent {
         },
     ]);
 
-    onLazyLoad(event: TableLazyLoadEvent): void {
+    onLazyLoad(event: TableViewLazyLoadEvent): void {
         const courseId = this.course().id;
         const slug = this.courseRoleSlug();
         if (!courseId || !slug) {

@@ -10,12 +10,23 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { DialogModule } from 'primeng/dialog';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-course-unenrollment-modal',
     templateUrl: './course-unenrollment-modal.component.html',
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, DialogModule],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ReactiveFormsModule,
+        FaIconComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        TumAetUiDialogComponent,
+        TumAetUiButtonDirective,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+    ],
 })
 export class CourseUnenrollmentModalComponent implements OnInit {
     private courseService = inject(CourseManagementService);

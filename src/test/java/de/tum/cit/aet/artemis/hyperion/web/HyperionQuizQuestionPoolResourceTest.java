@@ -34,6 +34,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -44,6 +45,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -113,6 +116,9 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     private HyperionQuizQuestionPoolService poolService;
 
     @Autowired
+    private FeatureToggleService featureToggleService;
+
+    @Autowired
     private LectureUtilService lectureUtilService;
 
     @Autowired
@@ -175,14 +181,19 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         slideDeckReachedThePrompt.set(false);
         mockModel();
         when(quizQuestionPoolModelService.isConfigured()).thenReturn(true);
-        when(quizQuestionPoolModelService.chatClient()).thenReturn(ChatClient.create(azureOpenAiChatModel));
+        // each preset's client carries its model as default option, as the clients of LlmClientService do
+        when(quizQuestionPoolModelService.generatorChatClient())
+                .thenReturn(ChatClient.builder(azureOpenAiChatModel).defaultOptions(ChatOptions.builder().model(GENERATOR_MODEL)).build());
+        when(quizQuestionPoolModelService.judgeChatClient()).thenReturn(ChatClient.builder(azureOpenAiChatModel).defaultOptions(ChatOptions.builder().model(JUDGE_MODEL)).build());
         when(quizQuestionPoolModelService.generatorModel()).thenReturn(GENERATOR_MODEL);
         when(quizQuestionPoolModelService.judgeModel()).thenReturn(JUDGE_MODEL);
+        featureToggleService.enableFeature(Feature.SmartQuizzes);
     }
 
     @AfterEach
-    void resetMocks() {
+    void resetTestState() {
         reset(azureOpenAiChatModel);
+        featureToggleService.disableFeature(Feature.SmartQuizzes);
     }
 
     /**
@@ -227,6 +238,20 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
             }
             return response("{ \"questions\": [" + questions + "] }");
         }).when(azureOpenAiChatModel).call(any(Prompt.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldBlockPoolAccessAndBuildsWhenSmartQuizzesAreDisabled() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        String poolUrl = "/api/hyperion/courses/" + courseId + "/quiz-question-pool";
+
+        featureToggleService.disableFeature(Feature.SmartQuizzes);
+        request.get(poolUrl + "/progress", HttpStatus.FORBIDDEN, QuizQuestionPoolProgressDTO.class);
+        request.performMvcRequest(post(poolUrl + "/build")).andExpect(status().isForbidden());
+
+        featureToggleService.enableFeature(Feature.SmartQuizzes);
+        assertThat(request.get(poolUrl + "/progress", HttpStatus.OK, QuizQuestionPoolProgressDTO.class).total()).isZero();
     }
 
     @Test
