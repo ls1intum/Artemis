@@ -1,6 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { By } from '@angular/platform-browser';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { UserRegistrationModalComponent } from './user-registration-modal.component';
 import { UserForRegistration } from './user-for-registration.model';
@@ -510,5 +515,67 @@ describe('UserRegistrationModalComponent', () => {
 
             expect(component.selectedInCurrentResults()).toEqual([makeUser(1), makeUser(2)]);
         });
+    });
+});
+
+describe('UserRegistrationModalComponent with its real dialog', () => {
+    let component: UserRegistrationModalComponent;
+    let fixture: ComponentFixture<UserRegistrationModalComponent>;
+    let mockRegisterFn: ReturnType<typeof vi.fn>;
+
+    const dialog = () => fixture.debugElement.query(By.directive(TumAetUiDialogComponent)).componentInstance as TumAetUiDialogComponent;
+
+    beforeEach(async () => {
+        mockRegisterFn = vi.fn();
+        await TestBed.configureTestingModule({
+            imports: [UserRegistrationModalComponent],
+            providers: [{ provide: AlertService, useValue: { error: vi.fn() } }, { provide: TranslateService, useClass: MockTranslateService }, provideArtemisTumAetUiTranslator()],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(UserRegistrationModalComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('titleKey', 'test.title');
+        fixture.componentRef.setInput('searchFn', vi.fn());
+        fixture.componentRef.setInput('registerFn', mockRegisterFn);
+        fixture.detectChanges();
+    });
+
+    it('should show the dialog while the modal is open', () => {
+        component.open();
+        fixture.detectChanges();
+
+        expect(dialog().visible()).toBe(true);
+    });
+
+    it('should reset the selection when the dialog itself is dismissed, as by the close button, the backdrop or Escape', () => {
+        component.open();
+        component.selectedUsers.set([{ id: 1, login: 'user1', name: 'User 1', isRegistered: false }]);
+        fixture.detectChanges();
+
+        dialog().visible.set(false);
+        fixture.detectChanges();
+
+        expect(component.isOpen()).toBe(false);
+        expect(component.selectedUsers()).toEqual([]);
+    });
+
+    it('should not let a registration started before the dismissal close the reopened dialog', () => {
+        const finishRegistration = new Subject<void>();
+        mockRegisterFn.mockReturnValue(finishRegistration);
+        component.open();
+        component.selectedUsers.set([{ id: 1, login: 'user1', name: 'User 1', isRegistered: false }]);
+        fixture.detectChanges();
+        component.register();
+
+        dialog().visible.set(false);
+        fixture.detectChanges();
+        component.open();
+        fixture.detectChanges();
+        finishRegistration.next();
+        finishRegistration.complete();
+        fixture.detectChanges();
+
+        expect(component.isOpen()).toBe(true);
+        expect(dialog().visible()).toBe(true);
     });
 });
