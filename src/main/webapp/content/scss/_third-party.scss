@@ -1,5 +1,5 @@
-// Styles of third-party libraries, and the rules that adapt them to Artemis. Not in a cascade layer: the libraries ship
-// their styles outside a layer, so a rule that has to override them must be outside one, too.
+// Styles of third-party libraries, and the rules that adapt them and TUM AET UI to Artemis. Not in a cascade layer:
+// most of these libraries ship their styles outside a layer, so a rule that has to override them must be outside one, too.
 
 // Mathematical formulas in the markdown editor
 
@@ -31,15 +31,6 @@ Angular CDK
 /* ==========================================================================
 TUM AET UI
 ========================================================================== */
-
-// `_base.scss` sets `border-width: 0` on table cells. This rule keeps the bottom border of the cells of a kit table.
-.tumaet-ui-table {
-    thead th,
-    tbody td {
-        border-bottom-width: 1px;
-        border-bottom-style: solid;
-    }
-}
 
 // `tumaet:disabled:opacity-60` compiles to `:disabled`, which never matches an `<a>`.
 a[tumAetUiButton].disabled {

@@ -84,10 +84,18 @@
     .tumaet-ui-input {
         height: var(--title-bar-content-height);
         min-height: var(--title-bar-content-height);
-        padding-block: 0;
 
         /* Matching the line box to the pinned height is what vertically centres the label. */
         line-height: var(--title-bar-content-height);
+    }
+
+    /* The option of a select button keeps the vertical padding of the component. */
+    .tumaet-ui-btn,
+    .tumaet-ui-select-trigger,
+    .tumaet-ui-multi-select-trigger,
+    .tumaet-ui-select-button,
+    .tumaet-ui-input {
+        padding-block: 0;
     }
 
     /*

@@ -31,7 +31,7 @@
                 @if (uncheckedCount() > 0) {
                     <div>
                         <span [jhiTranslate]="'artemisApp.examManagement.examStudents.notCheckedStudents'">Students who did not sign</span>:
-                        <tumaet-ui-tag severity="danger" class="ms-1!" id="#registered-users" data-testid="not-checked-count"> {{ uncheckedCount() }}</tumaet-ui-tag>
+                        <tumaet-ui-tag severity="danger" class="ms-1" id="#registered-users" data-testid="not-checked-count"> {{ uncheckedCount() }}</tumaet-ui-tag>
                     </div>
                 }
                 @if (uncheckedCount() === 0) {

@@ -4,7 +4,7 @@
         <p jhiTranslate="artemisApp.quizTraining.howItWorks.content"></p>
         <h6 jhiTranslate="artemisApp.quizTraining.leagues.title"></h6>
         <p jhiTranslate="artemisApp.quizTraining.leagues.content"></p>
-        <table class="w-2/5!">
+        <table class="w-2/5">
             @for (l of leagues; track l.league) {
                 <tr>
                     <td class="pb-2 align-middle">
@@ -22,11 +22,7 @@
             <div class="leaderboard-toggle flex items-center">
                 <tumaet-ui-toggle-switch inputId="quiz-training-show-in-leaderboard" [(ngModel)]="showInLeaderboard" />
                 <label class="m-0 ms-2" for="quiz-training-show-in-leaderboard" jhiTranslate="artemisApp.quizTraining.showInLeaderboard"></label>
-                <span
-                    class="ms-2!"
-                    [tumAetUiTooltip]="'artemisApp.userSettings.quizTrainingSettings.leaderboardVisibilityInfo' | artemisTranslate"
-                    tumAetUiTooltipPlacement="right"
-                >
+                <span class="ms-2" [tumAetUiTooltip]="'artemisApp.userSettings.quizTrainingSettings.leaderboardVisibilityInfo' | artemisTranslate" tumAetUiTooltipPlacement="right">
                     <fa-icon [icon]="faQuestionCircle" />
                 </span>
             </div>

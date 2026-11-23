@@ -421,7 +421,8 @@ describe('@tumaet/ui-angular integration contract', () => {
         const packageElementsWithNativeControls = uniqueSorted(
             packageRuntimeFiles.filter(({ file }) => templatesWithNativeControls.has(file)).flatMap(({ source }) => componentElementSelectors(source)),
         );
-        const stylesheet = postcss.parse(packageTailwind);
+        // The rules of the package are in the cascade layer `tumaet-ui`.
+        const stylesheet = postcss.parse(packageTailwind).nodes.find((node) => node.type === 'atrule' && node.name === 'layer' && node.params === 'tumaet-ui' && node.nodes);
         const typographyRule = stylesheet.nodes.find(
             (node) => node.type === 'rule' && node.nodes.some((child) => child.type === 'decl' && child.prop === 'font-family' && child.value === 'var(--tumaet-ui-font-family)'),
         );

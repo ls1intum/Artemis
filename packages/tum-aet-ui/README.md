@@ -59,6 +59,39 @@ replacing its bootstrap. Import supported symbols from `@tumaet/ui-angular`; dee
 not supported. See the [component reference](https://docs.artemis.tum.de/developer/tum-aet-ui-reference)
 for forms, tables, charts, and keyboard interactions.
 
+## Cascade layers
+
+All styles of the package are in cascade layers, also the styles of the components:
+
+| Layer             | Content                                                |
+| ----------------- | ------------------------------------------------------ |
+| `tumaet-ui-theme` | Default values of the semantic custom properties       |
+| `tumaet-ui-cdk`   | Overlay styles of Angular CDK                          |
+| `tumaet-ui`       | Components, their utility classes and the shared rules |
+
+A declaration outside a layer overrides every layered one, whatever the specificity of its selector. Global styles
+of the host that are not in a layer therefore override the components. That is intended for deliberate overrides,
+but an element reset such as `button { padding: 0 }` or `* { margin: 0 }` would strip the components. Put resets
+and element defaults into a layer and declare it before the layers of the package:
+
+```css
+@layer reset, tumaet-ui-theme, tumaet-ui-cdk, tumaet-ui, utilities;
+
+@layer reset {
+    button {
+        padding: 0;
+    }
+}
+```
+
+A host that uses Tailwind CSS lists `tumaet-ui` before its `utilities` layer, as above. A utility class of the host
+on a component then overrides the component without the important modifier, for example
+`<button tumAetUiButton class="p-0">`. Tailwind's preflight is already in the layer `base`; declare `base` before
+`tumaet-ui`.
+
+A few components set a style inline, which no stylesheet rule overrides without the important modifier:
+`tumaet-ui-table-layout` sets its maximum height from the free viewport height unless it fills its parent.
+
 ## Host theme integration
 
 Theme defaults use a low-priority cascade layer. Set `data-theme="dark"` on `<html>` to activate
