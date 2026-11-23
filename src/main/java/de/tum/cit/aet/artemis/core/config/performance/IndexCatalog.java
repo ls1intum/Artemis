@@ -14,6 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import javax.sql.DataSource;
@@ -41,12 +42,12 @@ public class IndexCatalog {
 
     private static final Logger log = LoggerFactory.getLogger(IndexCatalog.class);
 
-    private static final Pattern PLAIN_COLUMN = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
+    private static final Pattern PLAIN_COLUMN = Pattern.compile("[A-Za-z_]\\w*");
 
     private final DataSource dataSource;
 
     /** Read on first use: the schema does not change after the migrations ran at startup. */
-    private volatile Map<String, List<TableIndex>> indexes;
+    private final AtomicReference<Map<String, List<TableIndex>>> indexes = new AtomicReference<>();
 
     public IndexCatalog(DataSource dataSource) {
         this.dataSource = dataSource;
@@ -58,13 +59,13 @@ public class IndexCatalog {
      * @return table name (lower case) to its indexes; empty if the database could not be read.
      */
     public Map<String, List<TableIndex>> indexes() {
-        Map<String, List<TableIndex>> result = indexes;
+        Map<String, List<TableIndex>> result = indexes.get();
         if (result == null) {
             synchronized (this) {
-                result = indexes;
+                result = indexes.get();
                 if (result == null) {
                     result = read();
-                    indexes = result;
+                    indexes.set(result);
                 }
             }
         }
@@ -116,10 +117,11 @@ public class IndexCatalog {
                 String filter = resultSet.getString("FILTER_CONDITION");
                 if (column == null || !PLAIN_COLUMN.matcher(column).matches() || (filter != null && !filter.isBlank())) {
                     unusable.add(name);
-                    continue;
                 }
-                boolean unique = !resultSet.getBoolean("NON_UNIQUE");
-                byName.computeIfAbsent(name, k -> new IndexColumns(unique)).add(resultSet.getShort("ORDINAL_POSITION"), column.toLowerCase(Locale.ROOT));
+                else {
+                    boolean unique = !resultSet.getBoolean("NON_UNIQUE");
+                    byName.computeIfAbsent(name, k -> new IndexColumns(unique)).add(resultSet.getShort("ORDINAL_POSITION"), column.toLowerCase(Locale.ROOT));
+                }
             }
         }
         List<TableIndex> result = new ArrayList<>();

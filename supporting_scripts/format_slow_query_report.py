@@ -1318,7 +1318,7 @@ def main():
     parser.add_argument("static_findings", nargs="?", default="")
     parser.add_argument("--baseline", help="keys of a baseline run (written by --keys-out of that run)")
     parser.add_argument("--keys-out", help="write this run's finding keys here, for use as a later baseline")
-    parser.add_argument("--inline-out", help="write the new findings that have a line of code, as inline PR comments, here")
+    parser.add_argument("--inline-out", help="write the new findings that have a line of code, as inline PR comments, here (only with a baseline)")
     parser.add_argument("--phase", default="", help="the E2E job's phase (phase1, phase2 or all), named in the report's title")
     args = parser.parse_args()
 
@@ -1350,7 +1350,9 @@ def main():
     if args.html_output_path:
         with open(args.html_output_path, "w", encoding="utf-8") as f:
             f.write(build_html_report(report, groups, static_findings, baseline, args.run_url, args.phase))
-    if args.inline_out:
+    # Without a baseline there is no comparison: write no file, so that a reader cannot take "nothing
+    # new" for "everything fixed" and delete the comments of an earlier run.
+    if args.inline_out and baseline is not None:
         with open(args.inline_out, "w", encoding="utf-8") as f:
             json.dump(build_inline_comments(report, groups, static_findings, baseline, args.run_url), f, indent=1)
     if args.keys_out:

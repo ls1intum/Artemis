@@ -44,7 +44,8 @@ BASELINE_DIR="slow-query-baseline"
 BASELINE_KEYS="${BASELINE_DIR}/${KEYS_FILE}"
 
 # self-hosted runners keep their workspace between runs; never let a previous run's keys be uploaded
-rm -f "${KEYS_FILE}"
+# or its inline comments be posted (a missing comments file means "no complete comparison")
+rm -f "${KEYS_FILE}" "${INLINE_COMMENTS}"
 
 echo "=== Slow-Query Report Collection ==="
 echo "Source: ${REPORT_SOURCE}"
@@ -76,7 +77,7 @@ python3 supporting_scripts/find_slow_queries.py --json "${STATIC_FINDINGS}" > /d
 # Develop baseline: the finding keys of the latest develop run, downloaded by the preceding CI step
 # when one exists. With it, the report marks what this run adds; without it, nothing is marked new.
 BASELINE_ARGS=()
-rm -f "${BASELINE_KEYS}" "${INLINE_COMMENTS}"
+rm -f "${BASELINE_KEYS}"
 if [ -s "${BASELINE_ZIP}" ]; then
     if python3 -c "import sys, zipfile; zipfile.ZipFile(sys.argv[1]).extract('${KEYS_FILE}', sys.argv[2])" "${BASELINE_ZIP}" "${BASELINE_DIR}" 2>/dev/null; then
         BASELINE_ARGS=(--baseline "${BASELINE_KEYS}")
