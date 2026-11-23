@@ -408,10 +408,10 @@ class AresAgentDetectionTest {
         assertThat(argLine).contains("ares-agent.jar");
 
         // With combine.self="override", the execution does not inherit the argLine of the plugin but only the argLine property, which is empty in the template.
-        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(inSurefirePlugin(maven,
-                "<executions><execution><id>policy-tests</id><configuration combine.self=\"override\"><includes><include>**/*Test.java</include></includes></configuration>"
-                        + "</execution></executions>"))))
-                .isFalse();
+        String overriding = "<executions><execution><id>%s</id><configuration combine.self=\"override\"><includes><include>**/*Test.java</include></includes></configuration>"
+                + "</execution></executions>";
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(inSurefirePlugin(maven, overriding.formatted("policy-tests"))))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(inSurefirePlugin(maven, overriding.formatted("default-test"))))).isFalse();
         assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(inSurefirePlugin(maven,
                 "<executions><execution><id>policy-tests</id><configuration combine.self=\"override\">" + argLine + "</configuration></execution></executions>")))).isTrue();
         // An argLine property with the agent still reaches an execution that overrides the configuration of the plugin.
