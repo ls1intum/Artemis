@@ -71,7 +71,7 @@
 @supports (cx: 1) {
     .wrapper .toggle-popover-wrapper .theme-toggle.dark .sun-and-moon > .moon > circle {
         transform: translateX(0);
-        cx: 17;
+        cx: 17px;
     }
 }
 
