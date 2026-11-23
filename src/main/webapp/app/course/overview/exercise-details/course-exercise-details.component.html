@@ -46,6 +46,7 @@
             [athenaEnabled]="athenaEnabled"
             [quizLiveStatus]="participationMode() === 'graded' ? liveQuizStatus() : undefined"
             [titleBarShowsPills]="titleBarShowsPills()"
+            [collapseSidePanels]="focusMode()"
             (quizSubmitted)="onQuizSubmitted($event)"
             (liveQuizStatusChange)="onLiveQuizStatusChange($event)"
             (quizPracticeParticipationChanged)="onNewParticipation($event)"

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, DestroyRef, effect, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, Signal, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
@@ -34,6 +34,8 @@ import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
  */
 interface ExerciseDetailsRef {
     setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void;
+    /** Set while the page wants the list out of the way, for example during a running quiz. Pages that never do omit it. */
+    readonly focusMode?: Signal<boolean>;
 }
 
 function isExerciseDetailsRef(component: unknown): component is ExerciseDetailsRef {
@@ -102,6 +104,8 @@ export class CourseExercisesComponent implements SidebarView {
     private readonly _multiLaunchExerciseIDs = signal<number[]>([]);
     private readonly _activeExerciseDetails = signal<ExerciseDetailsRef | undefined>(undefined);
     readonly pageTitle = signal<string>('');
+    /** Whether the active page has collapsed the list for focus, so that leaving it restores the stored preference. */
+    private sidebarFocused = false;
     private courseUpdateSubscription?: Subscription;
     private exercisesLoadSubscription?: Subscription;
 
@@ -157,6 +161,20 @@ export class CourseExercisesComponent implements SidebarView {
 
         effect(() => {
             this._activeExerciseDetails()?.setSidebarToggle(this._isCollapsed(), () => this.toggleSidebar());
+        });
+
+        // A focused page collapses the list without touching the stored preference of the student, who can still open it
+        // by hand. When the page ends or is left, the list goes back to the stored preference.
+        effect(() => {
+            const focused = this._activeExerciseDetails()?.focusMode?.() ?? false;
+            untracked(() => {
+                if (focused) {
+                    this._isCollapsed.set(true);
+                } else if (this.sidebarFocused) {
+                    this._isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('exercise'));
+                }
+                this.sidebarFocused = focused;
+            });
         });
 
         this.destroyRef.onDestroy(() => {

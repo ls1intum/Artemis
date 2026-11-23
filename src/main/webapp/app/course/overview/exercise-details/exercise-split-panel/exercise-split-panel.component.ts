@@ -129,6 +129,8 @@ export class ExerciseSplitPanelComponent {
     readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
     /** Whether the title bar is showing the status and due date pills, in which case the details leave them out. */
     readonly titleBarShowsPills = input<boolean>(false);
+    /** Keeps the side panels collapsed, for example while a quiz runs. The student can still open them, and they open again when this ends. */
+    readonly collapseSidePanels = input<boolean>(false);
 
     /**
      * Stable key describing the sub-route this panel should navigate to. It deliberately captures only the route

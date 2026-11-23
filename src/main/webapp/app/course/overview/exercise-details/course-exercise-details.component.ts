@@ -165,6 +165,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     // Display-only override for the quiz participation status badge, set from the live quiz view.
     readonly liveQuizStatus = signal<LiveQuizParticipationStatus | undefined>(undefined);
 
+    /**
+     * True while the student takes a running graded quiz, in live mode, synchronized or individual. The course sidebars
+     * (the exercise list and the side panels) read it and give way to the quiz, so the student can focus on it. Practice
+     * mode and a quiz that has not started or has ended do not count.
+     */
+    readonly focusMode = computed(
+        () => this._exercise()?.type === ExerciseType.QUIZ && this.participationMode() === 'graded' && this.liveQuizStatus() === LiveQuizParticipationStatus.PARTICIPATING,
+    );
+
     readonly activeParticipation = computed(() => {
         return this.participationMode() === 'practice' ? (this.practiceStudentParticipation() ?? this.gradedStudentParticipation()) : this.gradedStudentParticipation();
     });
