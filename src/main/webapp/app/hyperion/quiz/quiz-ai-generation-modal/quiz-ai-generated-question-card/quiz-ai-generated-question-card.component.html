@@ -1,21 +1,21 @@
-<article class="rounded-xl border border-border bg-surface-raised p-5!" data-testid="quiz-ai-generated-question-card">
-    <div class="mb-2 flex items-center justify-between gap-3!">
-        <h5 class="m-0 text-base leading-tight font-bold text-text">{{ questionIndex() + 1 }}. {{ question().title }}</h5>
+<article class="rounded-xl border border-(--border-color) bg-surface-raised p-5" data-testid="quiz-ai-generated-question-card">
+    <div class="mb-2 flex items-center justify-between gap-3">
+        <h5 class="m-0">{{ questionIndex() + 1 }}. {{ question().title }}</h5>
         <tumaet-ui-tag severity="secondary" size="sm" [rounded]="true" class="whitespace-nowrap uppercase">
             <span [jhiTranslate]="getQuestionTypeLabelKey(question().type)"></span>
         </tumaet-ui-tag>
     </div>
-    <div class="mb-4! text-text" data-testid="question-text" [jhiMarkdown]="question().questionText"></div>
+    <div class="mb-4 text-color" data-testid="question-text" [jhiMarkdown]="question().questionText"></div>
     <div class="flex flex-col gap-2">
         @for (option of question().options; track option.text) {
             <div
-                class="flex items-center justify-between rounded-lg border border-s-3 px-3.5 py-3!"
+                class="flex items-center justify-between rounded-lg border px-3.5 py-3"
                 [class]="option.correct ? 'border-state-success/30 border-s-5 border-s-state-success bg-state-success/10' : 'border-border border-s-transparent bg-surface-raised'"
                 [attr.data-correct]="option.correct ? true : undefined"
                 data-testid="quiz-ai-generated-option"
             >
                 <div class="min-w-0">
-                    <div class="font-semibold text-text" [jhiMarkdown]="option.text"></div>
+                    <div class="font-semibold text-color" [jhiMarkdown]="option.text"></div>
                     @if (showExplanations() && option.explanation) {
                         <div class="mt-1 text-sm text-muted-color" data-testid="quiz-ai-generated-option-explanation" [jhiMarkdown]="option.explanation"></div>
                     }
@@ -29,7 +29,7 @@
         }
     </div>
     @if (showExplanations() && question().explanation) {
-        <div class="mt-4! text-sm text-text" data-testid="quiz-ai-generated-question-explanation">
+        <div class="mt-4 text-sm text-color" data-testid="quiz-ai-generated-question-explanation">
             <p class="m-0 mb-1 font-semibold" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.explanation"></p>
             <div [jhiMarkdown]="question().explanation"></div>
         </div>

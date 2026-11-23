@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
@@ -64,8 +63,6 @@ public class AtlasAgentService {
 
     private static final Pattern PLAN_MARKER_PATTERN = Pattern.compile("%%ARTEMIS_PLAN:([A-Z_]+)(?::exerciseId=(\\d+))?(?::exerciseTitle=([^%]*))?%%");
 
-    private final ChatClient chatClient;
-
     private final ChatMemory chatMemory;
 
     private final AtlasAgentDelegationService delegationService;
@@ -92,13 +89,12 @@ public class AtlasAgentService {
 
     private final AtlasAgentPreviewService previewService;
 
-    public AtlasAgentService(@Nullable ChatClient chatClient, @Nullable ChatMemory chatMemory, AtlasAgentDelegationService delegationService,
+    public AtlasAgentService(@Nullable ChatMemory chatMemory, AtlasAgentDelegationService delegationService,
             @Qualifier("mainAgentToolCallbackProvider") AtlasToolSurface mainAgentToolCallbackProvider,
             @Qualifier("competencyExpertToolCallbackProvider") AtlasToolSurface competencyExpertToolCallbackProvider,
             @Qualifier("competencyMapperToolCallbackProvider") AtlasToolSurface competencyMapperToolCallbackProvider,
             @Qualifier("exerciseMapperToolCallbackProvider") AtlasToolSurface exerciseMapperToolCallbackProvider, ExecutionPlanStateManagerService executionPlanStateManagerService,
             AtlasAgentSessionCacheService atlasAgentSessionCacheService, AtlasAgentPreviewService previewService) {
-        this.chatClient = chatClient;
         this.chatMemory = chatMemory;
         this.delegationService = delegationService;
         this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider.provider();
@@ -121,10 +117,6 @@ public class AtlasAgentService {
      * @return result containing the AI response and competency modification flag
      */
     public AtlasAgentChatResponseDTO processChatMessage(String message, Long courseId, String sessionId) {
-        if (chatClient == null) {
-            return new AtlasAgentChatResponseDTO("Atlas Agent is not available. Please contact your administrator.", ZonedDateTime.now(), false, null, null, null, null);
-        }
-
         try {
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             AtlasAgentToolsService.setCurrentCourseId(courseId);
@@ -303,7 +295,7 @@ public class AtlasAgentService {
      * @return true if the service is ready, false otherwise
      */
     public boolean isAvailable() {
-        return chatClient != null && chatMemory != null;
+        return chatMemory != null;
     }
 
     /**

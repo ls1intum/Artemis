@@ -29,7 +29,7 @@ import {
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleQuestion, faComment, faHashtag, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCircleQuestion, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -45,8 +45,8 @@ export interface ColumnDef<T> {
     field?: string;
     header?: string;
     headerKey?: string;
-    /** PrimeIcons CSS class string, e.g. 'pi pi-hashtag'. Rendered as <i> in the column header. */
-    headerIcon?: string;
+    /** Icon shown after the header text; a column with only a `headerTooltip` shows a question mark. */
+    headerIcon?: IconDefinition;
     /** Translation key shown as a the table tooltip on the column header. */
     headerTooltip?: string;
     width?: string;
@@ -106,6 +106,10 @@ export interface TableConfig {
     showSearch: boolean;
     /** Translation key for the search input placeholder. Default: 'artemisApp.course.exercise.search.searchPlaceholder' */
     searchPlaceholder: string;
+    /** Search input size. Leave undefined for the default size. */
+    searchSize?: 'small' | 'large';
+    /** Put search above the other toolbar controls and stretch it to the available width. Default: false. */
+    searchFullWidth?: boolean;
     /** Translation key for the message shown when the table has no rows. Default: 'artemisApp.dataTable.search.noResults' */
     emptyMessageTranslation: string;
     /** Take the height of a flex-column parent instead of sizing to the rows (up to the free viewport height). Default: false */
@@ -238,8 +242,6 @@ export class TableViewComponent<T> {
     protected readonly faSort = faSort;
     protected readonly faSortUp = faSortUp;
     protected readonly faSortDown = faSortDown;
-    protected readonly faHashtag = faHashtag;
-    protected readonly faComment = faComment;
     protected readonly faCircleQuestion = faCircleQuestion;
     protected readonly sortField = computed(() => this.query().field ?? this.resolvedOptions().initialSortField);
     protected readonly sortOrder = computed(() => (this.query().field ? this.query().order : this.resolvedOptions().initialSortOrder));
@@ -311,6 +313,8 @@ export class TableViewComponent<T> {
             pageSizeOptions: opts.hidePageSizeOptions ? undefined : (opts.pageSizeOptions ?? DEFAULT_TABLE_CONFIG.pageSizeOptions),
             showSearch: opts.showSearch ?? DEFAULT_TABLE_CONFIG.showSearch,
             searchPlaceholder: opts.searchPlaceholder ?? DEFAULT_TABLE_CONFIG.searchPlaceholder,
+            searchSize: opts.searchSize,
+            searchFullWidth: opts.searchFullWidth,
             emptyMessageTranslation: opts.emptyMessageTranslation ?? DEFAULT_TABLE_CONFIG.emptyMessageTranslation,
             fill: opts.fill ?? DEFAULT_TABLE_CONFIG.fill,
             rowActionsFrozen: opts.rowActionsFrozen ?? DEFAULT_TABLE_CONFIG.rowActionsFrozen,

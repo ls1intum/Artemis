@@ -8,6 +8,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
 
+import org.jspecify.annotations.NonNull;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -172,6 +174,7 @@ public class ExamUser extends AbstractAuditingEntity {
         this.didCheckLogin = didCheckLogin;
     }
 
+    @NonNull
     public Exam getExam() {
         return exam;
     }

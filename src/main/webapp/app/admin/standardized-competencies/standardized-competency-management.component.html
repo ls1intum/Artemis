@@ -20,7 +20,7 @@
         (knowledgeAreaFilterChange)="filterByKnowledgeArea($event)"
         (competencyTitleFilterChange)="filterByCompetencyTitle($event)"
     />
-    <div class="mt-4! mb-2 flex flex-wrap items-center gap-2">
+    <div class="mt-4 mb-2 flex flex-wrap items-center gap-2">
         <h3 class="me-1 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>
         <tumaet-ui-button
             size="small"
@@ -92,7 +92,7 @@
         <ng-template let-knowledgeArea="knowledgeArea" #knowledgeAreaTemplate>
             <div class="flex items-center">
                 <fa-icon
-                    class="clickable"
+                    class="cursor-pointer"
                     role="button"
                     tabindex="0"
                     size="sm"
@@ -108,7 +108,7 @@
         </ng-template>
         <ng-template let-competency="competency" #competencyTemplate>
             <div
-                class="clickable flex items-center"
+                class="cursor-pointer flex items-center"
                 role="button"
                 tabindex="0"
                 (click)="selectCompetency(competency)"
@@ -129,7 +129,7 @@
 
 <ng-template #detailTemplate>
     @if (selectedCompetency(); as competency) {
-        <div class="rounded-lg border bg-surface-0 p-4! dark:bg-surface-900" data-testid="competency-detail">
+        <div class="rounded-lg border border-(--border-color) bg-surface-0 p-4 dark:bg-surface-900" data-testid="competency-detail">
             <jhi-standardized-competency-edit
                 [competency]="competency"
                 [knowledgeAreas]="knowledgeAreasForSelect"
@@ -143,7 +143,7 @@
             />
         </div>
     } @else if (selectedKnowledgeArea(); as knowledgeArea) {
-        <div class="rounded-lg border bg-surface-0 p-4! dark:bg-surface-900" data-testid="knowledge-area-detail">
+        <div class="rounded-lg border border-(--border-color) bg-surface-0 p-4 dark:bg-surface-900" data-testid="knowledge-area-detail">
             <jhi-knowledge-area-edit
                 [knowledgeArea]="knowledgeArea"
                 [knowledgeAreas]="knowledgeAreasForSelect"

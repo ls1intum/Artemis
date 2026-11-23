@@ -41,7 +41,7 @@
                     "lastBuildRunning": "läuft seit {{ time }}.",
                     "lastBuildCounts": "{{ enqueued }} hinzugefügt, {{ generated }} generiert, {{ accepted }} angenommen, {{ rejected }} abgelehnt, {{ failed }} fehlgeschlagen.",
                     "lastBuildFailure": "Vorzeitig beendet: {{ failure }}",
-                    "modelMissing": "Smart Quizzes benötigt ein selbst betriebenes Sprachmodell, das auf diesem Server nicht korrekt konfiguriert ist. Bitte wende dich an deine Artemis-Administration; bis dahin können keine Fragen generiert werden."
+                    "modelMissing": "Für Smart Quizzes sind auf diesem Server keine Sprachmodelle zugewiesen. Bitte wende dich an deine Artemis-Administration; bis dahin können keine Fragen erzeugt werden."
                 },
                 "settings": {
                     "title": "Einstellungen",

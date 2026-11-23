@@ -92,6 +92,14 @@ describe('Exam Management Service Tests', () => {
         expect(categories).toEqual([]);
     });
 
+    it('requests the lightweight conduction counts', () => {
+        const counts = { numberOfGeneratedStudentExams: 8, numberOfExamsStarted: 5, numberOfExamsSubmitted: 2 };
+        const received = vi.fn();
+        service.getExamConductionCounts(1, 2).subscribe(received);
+        httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/1/exams/2/statistics/conduction' }).flush(counts);
+        expect(received).toHaveBeenCalledExactlyOnceWith(counts);
+    });
+
     it('should choose instructor statistics explicitly before requesting', () => {
         service.getExamStatistics(1, 2, 'instructor').subscribe();
         const req = httpMock.expectOne({ method: 'GET' });

@@ -8,7 +8,6 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Result, ResultSimpleDTO } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
 import { ComplaintDTO, ParticipantDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
@@ -24,7 +23,6 @@ export interface IComplaintService {
     isComplaintLockedForLoggedInUser: (complaint: Complaint, exercise: Exercise) => boolean | undefined;
     isComplaintLockedByLoggedInUser: (complaint: Complaint) => boolean | undefined;
     isComplaintLocked: (complaint: Complaint) => boolean | undefined;
-    create: (complaintRequest: ComplaintRequestDTO) => Observable<EntityResponseType>;
     findBySubmissionIdForAssessment: (submissionId: number) => Observable<EntityResponseType>;
     findForTutorByCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
     findForTutorByExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
@@ -84,14 +82,6 @@ export class ComplaintService implements IComplaintService {
         } else {
             return false;
         }
-    }
-
-    /**
-     * Create a new complaint.
-     * @param complaintRequest
-     */
-    create(complaintRequest: ComplaintRequestDTO): Observable<EntityResponseType> {
-        return this.http.post<ComplaintDTO>(this.resourceUrl, complaintRequest, { observe: 'response' });
     }
 
     /**

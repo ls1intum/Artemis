@@ -22,6 +22,10 @@
         "strictTemplates": true,
         // Same as the Artemis tsconfig: a camelCase event binding that no directive emits and that is not a native DOM
         // event (a misspelled output) fails the build.
-        "strictUnclaimedEventNames": true
+        "strictUnclaimedEventNames": true,
+        // Same as the Artemis tsconfig: an unknown element fails the build even when an attribute directive matches
+        // it, and so does a binding to a property that `<ng-template>` does not have.
+        "strictUnknownElements": true,
+        "strictNgTemplateTypes": true
     }
 }

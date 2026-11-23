@@ -1,3 +1,4 @@
+import { TumAetUiCheckboxComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { Component, input } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -8,7 +9,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 @Component({
     selector: 'jhi-programming-exercise-version-control',
     templateUrl: './programming-exercise-version-control.component.html',
-    imports: [TranslateDirective, FormsModule, HelpIconComponent],
+    imports: [TranslateDirective, FormsModule, HelpIconComponent, TumAetUiCheckboxComponent, TumAetUiInputDirective],
 })
 export class ProgrammingExerciseVersionControlComponent {
     programmingExercise = input.required<ProgrammingExercise>();

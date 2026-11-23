@@ -92,9 +92,32 @@ artemis:
     atlas:
         enabled: true
         atlasllm:
-            enabled: true # Production defaults this off; the agent and orchestrator tests need their beans, and the shared ChatClient is mocked.
-        orchestrator:
-            responses-api-enabled: false # General integration tests mock the shared ChatClient; adapter tests enable Responses explicitly.
+            enabled: true # Production defaults this off; the agent and orchestrator tests need their beans, and the LLM client factory is mocked.
+            llm-presets:
+                default: testchat
+    # Test LLM catalog. Integration tests mock LlmClientService, so nothing connects to this endpoint.
+    llm:
+        endpoints:
+            test:
+                base-url: http://localhost:1234/v1
+                api-key: dummy-key
+        presets:
+            testchat:
+                endpoint: test
+                model: openai/gpt-oss-20b
+                api: chat-completions
+            testgeneration:
+                endpoint: test
+                model: openai/gpt-oss-20b
+                api: chat-completions
+                max-retries: 0
+    hyperion:
+        llm-presets:
+            default: testchat
+        agent:
+            llm-preset: testgeneration
+    deimos:
+        llm-preset: testchat
     apollon:
         enabled: true
         conversion-service-url: http://localhost:8080
@@ -117,17 +140,8 @@ info:
 
 spring:
   ai:
-    model:
-      chat: openai
     chat:
       client:
         enabled: ${artemis.hyperion.enabled}
       memory:
         max-messages: 20
-    openai:
-      # The official OpenAI SDK appends /chat/completions itself, so the base URL includes the /v1 prefix
-      base-url: http://localhost:1234/v1
-      api-key: dummy-key      # most local servers ignore it
-      chat:
-        model: openai/gpt-oss-20b    # or whatever name your local server expects
-        temperature: 0.7

@@ -102,7 +102,7 @@ Replace them with your setup specific values.
 
 ### Artemis
 
-Artemis runs with `server.forward-headers-strategy: native`, so it builds absolute URLs from the headers the reverse proxy sends.
+Artemis runs with `server.request.header.forwarded.strategy: web-server`, so it builds absolute URLs from the headers the reverse proxy sends.
 This includes the redirect that starts the SAML2 login.
 Pass the original host and port of the request on with `$host` and `$server_port`.
 The websocket endpoint needs the `Upgrade` and `Connection` headers, which nginx does not forward on its own.
