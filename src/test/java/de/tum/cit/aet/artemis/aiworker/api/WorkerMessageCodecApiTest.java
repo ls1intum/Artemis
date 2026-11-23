@@ -27,10 +27,18 @@ class WorkerMessageCodecApiTest {
     @Test
     void rejectsDuplicateUnknownAndIncompatibleEnvelopeFields() {
         String body = codec.encode(start("document"));
-        assertThatThrownBy(() -> codec.decodeCommand(body.replaceFirst("\\{", "{\"protocolVersion\":4,"))).isInstanceOf(RuntimeException.class);
-        assertThatThrownBy(() -> codec.decodeCommand(body.replaceFirst("\\{", "{\"unknown\":true,"))).isInstanceOf(RuntimeException.class);
-        assertThatThrownBy(() -> codec.decodeCommand(body.replace("\"protocolVersion\":" + WorkerCommandDTO.PROTOCOL_VERSION, "\"protocolVersion\":4")))
+        assertThatThrownBy(() -> codec.decodeCommand(body.replaceFirst("\\{", "{\"protocolVersion\":" + WorkerCommandDTO.PROTOCOL_VERSION + ",")))
                 .isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> codec.decodeCommand(body.replaceFirst("\\{", "{\"unknown\":true,"))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> codec
+                .decodeCommand(body.replace("\"protocolVersion\":" + WorkerCommandDTO.PROTOCOL_VERSION, "\"protocolVersion\":" + (WorkerCommandDTO.PROTOCOL_VERSION - 1))))
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void rejectsTheVersionBeforeFindingLocationsChangedTheWireFormat() {
+        var command = start("document");
+        assertThatThrownBy(() -> new WorkerCommandDTO(4, WorkerCommandType.START, command.identity(), command.assignment())).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
