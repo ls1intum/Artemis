@@ -137,6 +137,7 @@ jobs:
             --accept '200..=299,403,429' --exclude-path documentation/docs/developer/assets
             --exclude '^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0)' --exclude '^https?://[^/]*\.(example|invalid|local)(/|$)'
             --exclude '^https?://[^/]*example\.(com|org)(/|$)' --exclude '^https?://[^/]*(<|\$|\{)'
+            --exclude '^https://artemis-test[0-9]+\.artemis\.cit\.tum\.de(/|$)' --exclude '^https://hub\.docker\.com/orgs/'
             'documentation/docs/**/*.md' 'documentation/docs/**/*.mdx' 'README.md' 'documentation/README.md'
           output: ${{ runner.temp }}/lychee.md
           fail: false

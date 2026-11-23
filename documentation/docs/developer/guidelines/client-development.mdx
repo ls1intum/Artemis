@@ -919,11 +919,21 @@ describes the anatomy, sizes and responsive behaviour; the Storybook story **Dat
 
 Use Tailwind for application layout and TUM AET UI for reusable component styling. Add component SCSS
 only when semantic utilities and component contracts cannot express a genuinely component-specific
-rule. Keep global styles in `src/main/webapp/content/scss` limited to application-wide foundations:
-`_base.scss` holds the element defaults (body, headings, links, tables, form controls) in the cascade
-layer `base`, and the theme files hold the colours.
+rule. Keep global styles in `src/main/webapp/content/scss` limited to what a component stylesheet cannot
+hold. The theme files hold the colours and import `_application.scss`, which lists the global files:
 
-When an application component needs owned class selectors, use [BEM](https://getbem.com/introduction/):
+| File                     | Content                                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------------------- |
+| `_base.scss`             | Element defaults (body, headings, links, tables, form controls) in the cascade layer `base`     |
+| `_third-party.scss`      | Styles of libraries (KaTeX, emoji picker, Angular CDK) and rules that adapt them and TUM AET UI |
+| `_rendered-content.scss` | Content inserted with `innerHTML`: rendered markdown, answers of Iris, search results           |
+| `_layout.scss`           | Layout shared by the shells and their pages: dividers, title bars, scroll region, page sidebar  |
+| `_shared-classes.scss`   | Small classes that several features share and that have no Tailwind utility                     |
+| `_print.scss`            | Print styles                                                                                    |
+
+Do not add a rule to these files for a single feature; put it in the stylesheet of the component.
+
+When an application component needs owned class selectors, use [BEM](https://getbem.com/introduction):
 
 ```scss
 .my-container {
@@ -1020,20 +1030,25 @@ defaults instead. Tailwind is imported with `source(none)` and an explicit `@sou
 emits utilities only for the listed folders. After a change to that list, restart the dev server: `ng serve` does not
 reliably pick up changes of `tailwind.css`.
 
-| Symptom                              | Cause                                                             | Fix                                               |
-| ------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------- |
-| A utility has no effect in the build | the folder is missing from `@source`                              | add it to the `@source` list of `tailwind.css`    |
-| A utility has no effect on one tag   | an unlayered rule of component SCSS or of a TUM AET UI class wins | write the important modifier, for example `mt-6!` |
-| Spacing is about a third too small   | a Bootstrap step was copied instead of converted by size          | see [Spacing utilities](#spacing-utilities)       |
+| Symptom                              | Cause                                                                          | Fix                                               |
+| ------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------- |
+| A utility has no effect in the build | the folder is missing from `@source`                                           | add it to the `@source` list of `tailwind.css`    |
+| A utility has no effect on one tag   | an unlayered rule (component SCSS, global layout rule) or an inline style wins | write the important modifier, for example `mt-6!` |
+| Spacing is about a third too small   | a Bootstrap step was copied instead of converted by size                       | see [Spacing utilities](#spacing-utilities)       |
 
 #### Spacing utilities
 
 Tailwind emits its utilities into the cascade layer `utilities`. The element defaults of `_base.scss` are in the layer
 `base`, which comes first, so a utility overrides them: `<p class="mt-6">` has a top margin and `<h2 class="text-xl">`
-the size of the utility. A declaration outside a layer still wins over every utility. That is the SCSS of the
-components and the classes of TUM AET UI. Where a utility has to override one of those, write Tailwind's important
-modifier: `mb-6!`, `text-state-danger!`. `global.scss` keeps two element rules outside the layers on purpose: links
-are not underlined except on hover, and the text colour of a `textarea`.
+the size of the utility. The styles of TUM AET UI are in the layer `tumaet-ui`, between `base` and `utilities`, so a
+utility on a TUM AET UI component overrides the component as well: `<button tumAetUiButton class="p-0">` has no
+padding. A declaration outside a layer still wins over every utility. That is the SCSS of the application components
+and the global rules of `_layout.scss` and the other files listed above, for example the compact controls of a title
+bar. Where a utility has to override such a rule, write Tailwind's important modifier: `mb-6!`. The same holds for a
+style that a component sets inline: `tumaet-ui-table-layout` sets its maximum height this way, so `max-h-72!` needs the
+modifier. The order of the layers is declared in `_base.scss` and, for the time before the stylesheet has loaded, in the
+boot styles of `index.html`; keep the two lists equal. The end of `_base.scss` keeps a few element rules outside the layers on purpose,
+for example: links are not underlined except on hover, and the text colour of a `textarea`.
 
 `rounded` and the shadows `shadow-sm`, `shadow` and `shadow-lg` have the values Artemis has always rendered, not
 Tailwind's defaults; `tailwind.css` sets them in its `@theme` block. A bare `border` draws a 1px line in the default

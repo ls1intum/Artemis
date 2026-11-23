@@ -84,10 +84,18 @@
     .tumaet-ui-input {
         height: var(--title-bar-content-height);
         min-height: var(--title-bar-content-height);
-        padding-block: 0;
 
         /* Matching the line box to the pinned height is what vertically centres the label. */
         line-height: var(--title-bar-content-height);
+    }
+
+    /* The option of a select button keeps the vertical padding of the component. */
+    .tumaet-ui-btn,
+    .tumaet-ui-select-trigger,
+    .tumaet-ui-multi-select-trigger,
+    .tumaet-ui-select-button,
+    .tumaet-ui-input {
+        padding-block: 0;
     }
 
     /*
@@ -108,7 +116,7 @@
  * Turns a title bar into a size container so the controls projected into it can react to the width of the bar
  * instead of the width of the viewport. The two differ by whatever the sidebar currently takes, so a viewport
  * media query collapses labels far too late on a page that has one. Paired with `.title-bar-collapsible-label`
- * in `global.scss`.
+ * in `_layout.scss`.
  */
 @mixin title-bar-size-container {
     container: title-bar / inline-size;

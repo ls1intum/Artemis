@@ -50,7 +50,9 @@ const packageStyles = globSync(
     .join('\n');
 const storybookTheme = readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/themes.css'), 'utf8');
 const hostTailwind = readFileSync(resolve(repoRoot, 'src/main/webapp/tailwind.css'), 'utf8');
-const hostGlobalStyles = readFileSync(resolve(repoRoot, 'src/main/webapp/content/scss/global.scss'), 'utf8');
+const hostGlobalStyles = globSync('src/main/webapp/content/scss/_*.scss', { cwd: repoRoot })
+    .map((file) => readFileSync(resolve(repoRoot, file), 'utf8'))
+    .join('\n');
 const workspace = parse(readFileSync(resolve(repoRoot, 'pnpm-workspace.yaml'), 'utf8'));
 const catalog = workspace.catalog ?? {};
 const namedCatalogs = workspace.catalogs ?? {};
@@ -419,7 +421,8 @@ describe('@tumaet/ui-angular integration contract', () => {
         const packageElementsWithNativeControls = uniqueSorted(
             packageRuntimeFiles.filter(({ file }) => templatesWithNativeControls.has(file)).flatMap(({ source }) => componentElementSelectors(source)),
         );
-        const stylesheet = postcss.parse(packageTailwind);
+        // The rules of the package are in the cascade layer `tumaet-ui`.
+        const stylesheet = postcss.parse(packageTailwind).nodes.find((node) => node.type === 'atrule' && node.name === 'layer' && node.params === 'tumaet-ui' && node.nodes);
         const typographyRule = stylesheet.nodes.find(
             (node) => node.type === 'rule' && node.nodes.some((child) => child.type === 'decl' && child.prop === 'font-family' && child.value === 'var(--tumaet-ui-font-family)'),
         );
