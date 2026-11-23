@@ -14,6 +14,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -472,7 +473,8 @@ public class GitService extends AbstractGitService {
     public String commitAndPushAs(Repository repo, String message, boolean emptyCommit, PersonIdent identity) throws GitAPIException {
         return workingCopyLocks.withLock(workingCopyPath(repo), () -> {
             try (Git git = new Git(repo)) {
-                RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(identity).call();
+                // The commit time is the time of the commit, not the time the identity was built, which may be minutes before for an identity shared by several commits.
+                RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(new PersonIdent(identity, Instant.now())).call();
                 log.debug("commitAndPush -> Push {}", repo.getLocalPath());
                 setRemoteUrl(repo);
                 pushCommand(git).call();
