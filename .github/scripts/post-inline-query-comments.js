@@ -72,14 +72,29 @@ function plan(desired, existing) {
 }
 
 /**
- * @returns {Promise<{anchored: number, posted: number, updated: number, removed: number}>}
+ * Reconciles the pull request's inline query comments with the findings of one report.
+ *
+ * Nothing is posted or deleted unless the report is a complete comparison against a baseline (the
+ * file exists and holds a list; the formatter writes none without a baseline) and was produced for
+ * the commit the pull request currently has. A missing report, a missing baseline or a head that
+ * moved on is not evidence that a finding is fixed, so the existing comments stay as they are.
+ * @param {string} headSha the head commit of the pull request now
+ * @param {string} testedSha the commit the report was produced for; comments are attached to it
+ * @returns {Promise<{anchored: number, posted: number, updated: number, removed: number, skipped?: string}>}
  */
-async function postInlineQueryComments({ github, context, prNumber, commentsPath, headSha, removeStale = true }) {
-    let comments = [];
+async function postInlineQueryComments({ github, context, prNumber, commentsPath, headSha, testedSha, removeStale = true }) {
+    const skipped = (reason) => ({ anchored: 0, posted: 0, updated: 0, removed: 0, skipped: reason });
+    if (!testedSha || headSha !== testedSha) {
+        return skipped(`the pull request head ${headSha} is not the tested commit ${testedSha}`);
+    }
+    let comments;
     try {
         comments = JSON.parse(fs.readFileSync(commentsPath, 'utf8'));
     } catch {
-        // no report, or no baseline to compare with: nothing to post, but earlier comments may be stale
+        return skipped('no complete report to compare');
+    }
+    if (!Array.isArray(comments)) {
+        return skipped('the report is not a list of comments');
     }
     const { owner, repo } = context.repo;
     const files = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number: prNumber, per_page: 100 });
@@ -99,13 +114,13 @@ async function postInlineQueryComments({ github, context, prNumber, commentsPath
     if (post.length > 0) {
         const review = post.map((c) => ({ path: c.path, line: c.line, side: 'RIGHT', body: c.body }));
         try {
-            await github.rest.pulls.createReview({ owner, repo, pull_number: prNumber, commit_id: headSha, event: 'COMMENT', comments: review });
+            await github.rest.pulls.createReview({ owner, repo, pull_number: prNumber, commit_id: testedSha, event: 'COMMENT', comments: review });
             posted = post.length;
         } catch (error) {
             // one rejected line fails the whole review; fall back to one comment at a time
             for (const c of review) {
                 try {
-                    await github.rest.pulls.createReviewComment({ owner, repo, pull_number: prNumber, commit_id: headSha, ...c });
+                    await github.rest.pulls.createReviewComment({ owner, repo, pull_number: prNumber, commit_id: testedSha, ...c });
                     posted++;
                 } catch (single) {
                     console.log(`Could not comment on ${c.path}:${c.line}: ${single.message}`);

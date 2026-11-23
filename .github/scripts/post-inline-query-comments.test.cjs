@@ -68,7 +68,61 @@ test('findings are posted as one review; a rejected review falls back to single 
             updateReviewComment: async () => {},
         } },
     };
-    const result = await postInlineQueryComments({ github, context: { repo: { owner: 'o', repo: 'r' } }, prNumber: 1, commentsPath: file, headSha: 'sha' });
+    const result = await postInlineQueryComments({ github, context: { repo: { owner: 'o', repo: 'r' } }, prNumber: 1, commentsPath: file, headSha: 'sha', testedSha: 'sha' });
     assert.deepEqual(result, { anchored: 2, posted: 2, updated: 0, removed: 0 });
     assert.deepEqual(calls, [['review', 2], ['single', 11], ['single', 12]]);
+});
+
+function recordingGithub(calls) {
+    return {
+        paginate: async (fn) => (fn.name === 'listFiles' ? [{ filename: 'src/A.java', patch }] : [{ id: 7, body: 'old <!-- query-inline:aaaa -->' }]),
+        rest: { pulls: {
+            listFiles: function listFiles() {},
+            listReviewComments: function listReviewComments() {},
+            createReview: async (r) => { calls.push(['review', r.commit_id]); },
+            createReviewComment: async () => {},
+            deleteReviewComment: async (r) => { calls.push(['delete', r.comment_id]); },
+            updateReviewComment: async () => {},
+        } },
+    };
+}
+
+test('without a complete report nothing is deleted', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'inline-'));
+    const missing = path.join(dir, 'missing.json');
+    const broken = path.join(dir, 'broken.json');
+    fs.writeFileSync(broken, '{not json');
+    for (const commentsPath of [missing, broken]) {
+        const calls = [];
+        const result = await postInlineQueryComments({ github: recordingGithub(calls), context: { repo: { owner: 'o', repo: 'r' } }, prNumber: 1, commentsPath, headSha: 'sha', testedSha: 'sha' });
+        assert.equal(result.removed, 0);
+        assert.ok(result.skipped);
+        assert.deepEqual(calls, []);
+    }
+});
+
+test('an empty but complete report deletes the comments whose findings are gone', async () => {
+    const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'inline-')), 'comments.json');
+    fs.writeFileSync(file, '[]');
+    const calls = [];
+    const result = await postInlineQueryComments({ github: recordingGithub(calls), context: { repo: { owner: 'o', repo: 'r' } }, prNumber: 1, commentsPath: file, headSha: 'sha', testedSha: 'sha' });
+    assert.equal(result.removed, 1);
+    assert.deepEqual(calls, [['delete', 7]]);
+});
+
+test('a report of another commit than the pull request head is not reconciled', async () => {
+    const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'inline-')), 'comments.json');
+    fs.writeFileSync(file, JSON.stringify([{ path: 'src/A.java', line: 11, key: 'bbbb', body: 'two' }]));
+    const calls = [];
+    const result = await postInlineQueryComments({ github: recordingGithub(calls), context: { repo: { owner: 'o', repo: 'r' } }, prNumber: 1, commentsPath: file, headSha: 'newer', testedSha: 'older' });
+    assert.ok(result.skipped);
+    assert.deepEqual(calls, []);
+});
+
+test('comments are attached to the tested commit', async () => {
+    const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'inline-')), 'comments.json');
+    fs.writeFileSync(file, JSON.stringify([{ path: 'src/A.java', line: 11, key: 'bbbb', body: 'two' }]));
+    const calls = [];
+    await postInlineQueryComments({ github: recordingGithub(calls), context: { repo: { owner: 'o', repo: 'r' } }, prNumber: 1, commentsPath: file, headSha: 'sha', testedSha: 'sha', removeStale: false });
+    assert.deepEqual(calls, [['review', 'sha']]);
 });

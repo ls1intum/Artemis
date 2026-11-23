@@ -366,6 +366,7 @@ jobs:
         continue-on-error: true
         env:
           INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
+          TESTED_SHA: ${{ inputs.commit_sha }}
         with:
           script: |
             const prNumber = Number(process.env.INPUT_PR_NUMBER);
@@ -373,7 +374,7 @@ jobs:
             const { postInlineQueryComments } = require('./.github/scripts/post-inline-query-comments.js');
             const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
             const result = await postInlineQueryComments({
-              github, context, prNumber, headSha: pr.head.sha,
+              github, context, prNumber, headSha: pr.head.sha, testedSha: process.env.TESTED_SHA,
               commentsPath: 'slow-query-inline-comments.json',
               removeStale: false,
             });
@@ -644,6 +645,7 @@ jobs:
         continue-on-error: true
         env:
           INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
+          TESTED_SHA: ${{ inputs.commit_sha }}
         with:
           script: |
             const prNumber = Number(process.env.INPUT_PR_NUMBER);
@@ -651,7 +653,7 @@ jobs:
             const { postInlineQueryComments } = require('./.github/scripts/post-inline-query-comments.js');
             const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
             const result = await postInlineQueryComments({
-              github, context, prNumber, headSha: pr.head.sha,
+              github, context, prNumber, headSha: pr.head.sha, testedSha: process.env.TESTED_SHA,
               commentsPath: 'slow-query-inline-comments.json',
               removeStale: false,
             });
@@ -909,6 +911,7 @@ jobs:
         continue-on-error: true
         env:
           INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
+          TESTED_SHA: ${{ inputs.commit_sha }}
         with:
           script: |
             const prNumber = Number(process.env.INPUT_PR_NUMBER);
@@ -916,7 +919,7 @@ jobs:
             const { postInlineQueryComments } = require('./.github/scripts/post-inline-query-comments.js');
             const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
             const result = await postInlineQueryComments({
-              github, context, prNumber, headSha: pr.head.sha,
+              github, context, prNumber, headSha: pr.head.sha, testedSha: process.env.TESTED_SHA,
               commentsPath: 'slow-query-inline-comments.json',
               removeStale: true,
             });
