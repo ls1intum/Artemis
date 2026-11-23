@@ -39,11 +39,6 @@ final class PresetTaggingChatModel implements ChatModel {
         return delegate.getOptions();
     }
 
-    @Override
-    public ChatOptions getDefaultOptions() {
-        return delegate.getDefaultOptions();
-    }
-
     private @Nullable ChatResponse tag(@Nullable ChatResponse response) {
         // pass on what the delegate returned; this wrapper only adds the preset name
         if (response == null) {
