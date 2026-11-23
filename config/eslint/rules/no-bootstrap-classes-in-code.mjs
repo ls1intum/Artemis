@@ -1,12 +1,13 @@
 import { isBanned } from './no-bootstrap-classes.mjs';
 
 /**
- * Forbid Bootstrap class names in the TypeScript of modules that are locked against Bootstrap.
+ * Forbid Bootstrap class names in TypeScript. Bootstrap is removed from the client; the rule keeps its class names
+ * from coming back in code.
  *
  * `no-bootstrap-classes` reads templates, so a class that a component computes (`'text-' + color`), keeps in a map
  * (`{ danger: 'text-danger' }`), passes to a library (`styleClass: 'btn btn-sm'`) or looks up in the DOM
- * (`querySelector('.modal-dialog')`) is invisible to it. Such a name stops working once Bootstrap is removed, and the
- * template lint cannot see it.
+ * (`querySelector('.modal-dialog')`) is invisible to it. Such a name styles or finds nothing, and the template lint
+ * cannot see it.
  *
  * The rule judges string literals and the static chunks of template literals:
  *
@@ -48,11 +49,11 @@ export default {
     meta: {
         type: 'problem',
         docs: {
-            description: 'Forbid Bootstrap class names in the TypeScript of locked modules; the template rules cannot see classes built in code.',
+            description: 'Forbid class names of the removed Bootstrap library in TypeScript; the template rules cannot see classes built in code.',
         },
         messages: {
             bootstrapClassInCode:
-                "Bootstrap class '{{cls}}' in code is not allowed in a migrated module: use a TUM AET UI input, a Tailwind utility with a semantic token, or the component's own state (`text-state-danger`, `font-bold`, ...).",
+                "Bootstrap class '{{cls}}' in code has no effect, Bootstrap is removed from the client: use a TUM AET UI input, a Tailwind utility with a semantic token, or the component's own state (`text-state-danger`, `font-bold`, ...).",
             dynamicBootstrapClass:
                 "'{{prefix}}' plus an expression builds a Bootstrap class name ('{{prefix}}danger', ...). Map the value to a TUM AET UI variant or a semantic Tailwind class (`text-state-*`) instead.",
         },

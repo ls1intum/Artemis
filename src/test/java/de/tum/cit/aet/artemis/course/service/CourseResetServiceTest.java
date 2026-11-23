@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepos
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.service.home.CourseHomeVisitService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -107,6 +108,9 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
     private PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
 
     @Autowired
+    private CourseHomeVisitService homeVisits;
+
+    @Autowired
     private PresentationRubricCriterionRepository presentationRubricCriterionRepository;
 
     @Autowired
@@ -128,6 +132,16 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void resetRemovesSuccessfulHomeVisits() {
+        var now = java.time.Instant.now();
+        homeVisits.acknowledge(course.getId(), student.getId(), now, 0, now);
+        assertThat(homeVisits.read(course.getId(), student.getId()).lastSeenAt()).isNotNull();
+        courseResetService.resetStudentData(course.getId());
+        assertThat(homeVisits.read(course.getId(), student.getId()).lastSeenAt()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetCourseWithLLMTokenUsageData_shouldNotViolateForeignKeyConstraint() {
         // Create a trace with an associated request (simulating real LLM usage)
         var trace = new LLMTokenUsageTrace();
@@ -140,8 +154,6 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         request.setModel("gpt-4");
         request.setNumInputTokens(100);
         request.setNumOutputTokens(50);
-        request.setCostPerMillionInputTokens(30.0f);
-        request.setCostPerMillionOutputTokens(60.0f);
         request.setServicePipelineId("test-pipeline");
         request.setTrace(trace);
         llmTokenUsageRequestTestRepository.save(request);
@@ -173,8 +185,6 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
             request.setModel("gpt-4");
             request.setNumInputTokens(100 * (i + 1));
             request.setNumOutputTokens(50 * (i + 1));
-            request.setCostPerMillionInputTokens(30.0f);
-            request.setCostPerMillionOutputTokens(60.0f);
             request.setServicePipelineId("pipeline-" + i);
             request.setTrace(trace);
             llmTokenUsageRequestTestRepository.save(request);

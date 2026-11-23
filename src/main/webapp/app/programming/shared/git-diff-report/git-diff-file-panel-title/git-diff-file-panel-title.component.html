@@ -1,14 +1,8 @@
 <div class="my-2 ps-1 file-path-with-badge">
     {{ diffInformation().title }}
     @if (diffInformation().fileStatus !== FileStatus.UNCHANGED) {
-        <span
-            [jhiTranslate]="'artemisApp.programmingExercise.diffReport.fileChange.' + diffInformation().fileStatus"
-            [ngClass]="{
-                badge: true,
-                'bg-success': diffInformation().fileStatus === FileStatus.CREATED,
-                'bg-warning': diffInformation().fileStatus === FileStatus.RENAMED,
-                'bg-danger': diffInformation().fileStatus === FileStatus.DELETED,
-            }"
-        ></span>
+        <tumaet-ui-tag class="file-status-tag" data-testid="file-status-tag" [severity]="statusSeverity()" [attr.data-severity]="statusSeverity()">
+            <span [jhiTranslate]="'artemisApp.programmingExercise.diffReport.fileChange.' + diffInformation().fileStatus"></span>
+        </tumaet-ui-tag>
     }
 </div>

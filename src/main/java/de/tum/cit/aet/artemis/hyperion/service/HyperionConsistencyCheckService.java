@@ -26,8 +26,8 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
 import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
 import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.domain.Severity;
@@ -73,7 +73,6 @@ public class HyperionConsistencyCheckService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    @Nullable
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templates;
@@ -94,7 +93,7 @@ public class HyperionConsistencyCheckService {
      * Creates the consistency-check orchestration service with all required persistence, prompt, and observability dependencies.
      *
      * @param programmingExerciseRepository repository for loading programming exercises with participations
-     * @param chatClient                    configured Spring AI chat client
+     * @param chatClients                   the chat clients of the Hyperion LLM presets
      * @param templates                     prompt template renderer
      * @param exerciseContextRenderer       renderer for exercise problem/repository context
      * @param reviewCommentContextRenderer  renderer for existing review-thread prompt context
@@ -103,11 +102,12 @@ public class HyperionConsistencyCheckService {
      * @param userRepository                repository for resolving current user id
      * @param objectMapper                  Spring-managed Jackson JsonMapper
      */
-    public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, @Nullable ChatClient chatClient, HyperionPromptTemplateService templates,
-            HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
-            ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, JsonMapper objectMapper) {
+    public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, HyperionChatClientService chatClients,
+            HyperionPromptTemplateService templates, HyperionProgrammingExerciseContextRendererService exerciseContextRenderer,
+            HyperionReviewCommentContextRendererService reviewCommentContextRenderer, ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService,
+            UserRepository userRepository, JsonMapper objectMapper) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.chatClient = chatClient;
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.CONSISTENCY_CHECK);
         this.templates = templates;
         this.exerciseContextRenderer = exerciseContextRenderer;
         this.reviewCommentContextRenderer = reviewCommentContextRenderer;
@@ -128,8 +128,7 @@ public class HyperionConsistencyCheckService {
         if (response == null || response.getMetadata() == null || response.getMetadata().getUsage() == null) {
             return null;
         }
-        var usage = response.getMetadata().getUsage();
-        return llmTokenUsageService.buildLLMRequest(response.getMetadata().getModel(), usage.getPromptTokens(), usage.getCompletionTokens(), pipelineId);
+        return llmTokenUsageService.buildLLMRequest(response, pipelineId);
     }
 
     /**
@@ -156,10 +155,6 @@ public class HyperionConsistencyCheckService {
      */
     @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
     public ConsistencyCheckResponseDTO checkConsistency(long exerciseId, boolean skipThreadContext) {
-        if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "ConsistencyCheck", "ConsistencyCheck.chatClientNotConfigured");
-        }
-
         log.info("Performing consistency check for exercise {}", exerciseId);
 
         Instant startTime = Instant.now();
@@ -203,13 +198,15 @@ public class HyperionConsistencyCheckService {
             issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
         }
 
-        List<LLMRequest> validRequests = usageCollector.stream().filter(Objects::nonNull).toList();
-        if (!validRequests.isEmpty()) {
+        // Keep attempted calls without usage unpriced in persisted aggregates as well as in this response.
+        // Their zero counters mean no observed tokens; the request leaves USD unknown rather than estimating a free call.
+        List<LLMRequest> requests = usageCollector.stream().map(request -> request != null ? request : new LLMRequest("", 0, 0, CONSISTENCY_PIPELINE_ID)).toList();
+        if (!requests.isEmpty()) {
             Long courseId = exerciseWithParticipations.getCourseViaExerciseGroupOrCourseMember() != null
                     ? exerciseWithParticipations.getCourseViaExerciseGroupOrCourseMember().getId()
                     : null;
             Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
-            llmTokenUsageService.saveLLMTokenUsage(validRequests, LLMServiceType.HYPERION,
+            llmTokenUsageService.saveLLMTokenUsage(requests, LLMServiceType.HYPERION,
                     builder -> builder.withCourse(courseId).withExercise(exerciseWithParticipations.getId()).withUser(userId));
         }
 
@@ -219,13 +216,14 @@ public class HyperionConsistencyCheckService {
         var timingDTO = new TimingDTO(startTime.toString(), endTime.toString(), durationSeconds);
 
         // Aggregate token usage and costs from LLMRequest data
-        long totalPromptTokens = validRequests.stream().mapToLong(LLMRequest::numInputTokens).sum();
-        long totalCompletionTokens = validRequests.stream().mapToLong(LLMRequest::numOutputTokens).sum();
-        double promptCost = validRequests.stream().mapToDouble(r -> r.numInputTokens() * r.costPerMillionInputToken() / 1_000_000.0).sum();
-        double completionCost = validRequests.stream().mapToDouble(r -> r.numOutputTokens() * r.costPerMillionOutputToken() / 1_000_000.0).sum();
+        long totalPromptTokens = requests.stream().mapToLong(LLMRequest::numInputTokens).sum();
+        long totalCompletionTokens = requests.stream().mapToLong(LLMRequest::numOutputTokens).sum();
+        boolean costComplete = !requests.isEmpty() && requests.stream().allMatch(request -> request.totalCostUsd() != null);
+        boolean hasKnownCost = requests.stream().anyMatch(request -> request.totalCostUsd() != null);
+        double totalCostUsd = requests.stream().map(LLMRequest::totalCostUsd).filter(Objects::nonNull).mapToDouble(Double::doubleValue).sum();
 
         var tokenDTO = new TokensDTO(totalPromptTokens, totalCompletionTokens, totalPromptTokens + totalCompletionTokens);
-        var costsDto = new CostsDTO(promptCost, completionCost, promptCost + completionCost);
+        var costsDto = new CostsDTO(hasKnownCost ? totalCostUsd : null, costComplete);
 
         log.debug("Consistency check for exercise {} complete: {} issues", exerciseId, issueDTOs.size());
         issueDTOs.forEach(issue -> log.debug("Issue [{}] {}: {}", issue.severity(), issue.category(), issue.description()));
@@ -247,6 +245,7 @@ public class HyperionConsistencyCheckService {
                 .highCardinalityKeyValue(io.micrometer.common.KeyValue.of(LF_SPAN_NAME_KEY, "structural check")).parentObservation(parentObs).start();
         final var resourcePath = "/prompts/hyperion/consistency_structural.st";
         String renderedPrompt = templates.render(resourcePath, input);
+        boolean usageRecorded = false;
         try (Observation.Scope scope = child.openScope()) {
             // @formatter:off
             var structuralIssuesResponse = chatClient
@@ -257,9 +256,13 @@ public class HyperionConsistencyCheckService {
                 .responseEntity(StructuredOutputSchema.StructuralConsistencyIssues.class);
             // @formatter:on
             usageCollector.add(buildRequestFromResponse(structuralIssuesResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
+            usageRecorded = true;
             return toGenericConsistencyIssue(structuralIssuesResponse.entity());
         }
         catch (RuntimeException e) {
+            if (!usageRecorded) {
+                usageCollector.add(null);
+            }
             child.error(e);
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
             return new ArrayList<>();
@@ -283,6 +286,7 @@ public class HyperionConsistencyCheckService {
                 .highCardinalityKeyValue(io.micrometer.common.KeyValue.of(LF_SPAN_NAME_KEY, "semantic check")).parentObservation(parentObs).start();
         final var resourcePath = "/prompts/hyperion/consistency_semantic.st";
         String renderedPrompt = templates.render(resourcePath, input);
+        boolean usageRecorded = false;
         try (Observation.Scope scope = child.openScope()) {
             // @formatter:off
             var semanticIssuesResponse = chatClient
@@ -293,9 +297,13 @@ public class HyperionConsistencyCheckService {
                 .responseEntity(StructuredOutputSchema.SemanticConsistencyIssues.class);
             // @formatter:on
             usageCollector.add(buildRequestFromResponse(semanticIssuesResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
+            usageRecorded = true;
             return toGenericConsistencyIssue(semanticIssuesResponse.entity());
         }
         catch (RuntimeException e) {
+            if (!usageRecorded) {
+                usageCollector.add(null);
+            }
             child.error(e);
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
             return new ArrayList<>();
@@ -325,15 +333,20 @@ public class HyperionConsistencyCheckService {
 
         final var resourcePath = "/prompts/hyperion/consistency_verification.st";
         final String renderedPrompt = templates.render(resourcePath, input);
+        boolean usageRecorded = false;
         try (Observation.Scope scope = child.openScope()) {
             var verificationResponse = chatClient.prompt().system("You are a senior educational quality assurance engineer. Return only JSON matching the schema.")
                     .user(renderedPrompt).call().responseEntity(StructuredOutputSchema.UnifiedConsistencyIssues.class);
 
             usageCollector.add(buildRequestFromResponse(verificationResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
+            usageRecorded = true;
             var entity = verificationResponse.entity();
             return (entity == null || entity.issues == null) ? List.of() : List.copyOf(entity.issues);
         }
         catch (RuntimeException e) {
+            if (!usageRecorded) {
+                usageCollector.add(null);
+            }
             child.error(e);
             log.warn("Verification call failed — caller will fall back to pre-verification results", e);
             return null;

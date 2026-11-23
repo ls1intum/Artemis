@@ -93,7 +93,7 @@ class GenerationVariantServiceTest {
         target = new ProgrammingExercise();
         target.setId(2L);
         request = new VariantGenerationRequestDTO(null, "A library", null, null, new VariantPlacementDTO(VariantPlacementDTO.PlacementType.STANDALONE, null, null));
-        var settings = new HyperionGenerationSettings("draft", "Draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 128_000, null, false, false);
+        var settings = new HyperionGenerationSettings("draft", "Draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 128_000, "testpreset", null, false, false);
         reservation = new GenerationAdmissionService.ReservedRun(user, source, new ExerciseGenerationRequestDTO(GenerationMode.ADAPT, "A library", null), settings, "A library",
                 null, new ExerciseGenerationInputDTO("A library", List.of(), 1L), "budget");
         event = new GenerationStartedEvent("job", user, target, "A library", GenerationMode.ADAPT, null, null, null, "budget", null, settings,

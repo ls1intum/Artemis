@@ -2,7 +2,7 @@
 id: security
 title: Security
 sidebar_label: Security
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-19
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -167,7 +167,7 @@ artemis:
 
 <Callout variant={CalloutVariant.warning}>
     `trusted-proxies` is the narrower of **two** filters, not the only one. Artemis runs with
-    `server.forward-headers-strategy: native`, so Tomcat's `RemoteIpValve` already resolves `X-Forwarded-For` for any
+    `server.request.header.forwarded.strategy: web-server`, so Tomcat's `RemoteIpValve` already resolves `X-Forwarded-For` for any
     peer matching `server.tomcat.remoteip.internal-proxies`, which defaults to the private ranges
     (`10/8`, `172.16/12`, `192.168/16`, `127/8`, link-local). The addresses whose forwarding headers are believed are
     therefore the **union** of that regex and `trusted-proxies`.
@@ -311,9 +311,9 @@ uses. Docker applies a subnet only when it creates a network, so run `docker com
 
 #### Host key of the SSH server
 
-A build agent that clones over SSH checks the host key of the core node. It reads the SHA-256 fingerprints that the core node publishes at `api/localvc/public/ssh-fingerprints` (the same values that users see on the page for SSH keys) and compares the fingerprint of the key it is shown with them. The agent reaches the endpoint at `artemis.version-control.url`, below the path of that URL if it has one. It reads the fingerprints only over `https`: with an `http` URL it does not ask for them at all, as fingerprints from an unprotected channel would prove nothing, and treats them as not readable (see the table below). It keeps the fingerprints for five minutes and reads them again before it refuses a key, so a host key that you replaced on the core nodes is accepted without restarting the agents. The endpoint lists every host key of the core node, also several keys of one algorithm, so you can add the new key before you remove the old one. A core node reads its key files once, when the first request arrives, and keeps the result until it restarts, so restart a core node after you replace its host keys. An agent that cannot read the fingerprints does not ask again for 30 seconds and logs one warning in that time.
+A build agent that clones over SSH checks the host key of the core node. It reads the SHA-256 fingerprints that the core node publishes at `api/localvc/public/ssh-fingerprints` (the same values that users see on the page for SSH keys) and compares the fingerprint of the key it is shown with them. The agent reaches the endpoint at `artemis.version-control.url`, below the path of that URL if it has one. It reads the fingerprints only over `https`: with an `http` URL it does not ask for them at all, as fingerprints from an unprotected channel would prove nothing, and treats them as not readable (see the table below). It keeps the fingerprints for five minutes and reads them again before it refuses a key, so a host key that you replaced on the core nodes is accepted without restarting the agents. The endpoint lists every host key of the core node, also several keys of one algorithm, so you can add the new key before you remove the old one. A core node keeps what it has read from its key files for 30 seconds, so a key that you add or remove is published within that time. Whether the SSH server itself presents a changed key without a restart depends on the setting: with a directory as `ssh-host-key-path` it reads the key files for every SSH session, with a single key file it keeps that key until it restarts, so restart the core node after you replace that file. An agent that cannot read the fingerprints does not ask again for 30 seconds and logs one warning in that time.
 
-The agent does not read a `known_hosts` file for the core node, so an entry there, including a revoked one, has no effect. To stop trusting a host key, remove it from the host keys of the core node and restart the core nodes: a core node reads its host keys when it starts and publishes them until it is restarted. An agent keeps the fingerprints that it has read for five minutes, and for as long as it cannot read new ones, so it can accept a removed key for that time after its last successful read.
+The agent does not read a `known_hosts` file for the core node, so an entry there, including a revoked one, has no effect. To stop trusting a host key, remove it from the host keys of the core node, and restart the core node if it uses a single key file (see above). The core node stops publishing the key within 30 seconds. An agent keeps the fingerprints that it has read for five minutes, and for as long as it cannot read new ones, so it can accept a removed key for that time after its last successful read.
 
 If the fingerprint is none of the published ones, the clone fails and the log of the build agent names the host and the fingerprints. This does not depend on any setting. If the agent cannot read the fingerprints, because `artemis.version-control.url` does not reach a core node or the core node publishes none, the setting `artemis.version-control.ssh-host-key-verification` on the build agent decides:
 

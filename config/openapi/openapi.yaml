@@ -1757,6 +1757,28 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
+  /api/lecture/lecture-units/{lectureUnitId}/tumlive-upload/file:
+    post:
+      tags: [tum-live-upload]
+      operationId: transferUpload
+      parameters:
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: ref
+        in: query
+        required: true
+        schema: {type: string}
+      requestBody:
+        content:
+          application/octet-stream:
+            schema: {type: string, format: binary}
+          video/mp4:
+            schema: {type: string, format: binary}
+        required: true
+      responses:
+        '204': {description: No Content}
   /api/lecture/courses/{courseId}/lectures:
     get:
       tags: [lecture]
@@ -3447,6 +3469,21 @@ paths:
                 type: array
                 items: {$ref: '#/components/schemas/SimpleLecture'}
                 uniqueItems: true
+  /api/lecture/courses/{courseId}/tumlive-upload-availability:
+    get:
+      tags: [tum-live-upload]
+      operationId: getTumLiveUploadAvailability
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TumLiveUploadAvailability'}
   /api/lecture/courses/{courseId}/tumlive-uploads:
     get:
       tags: [tum-live-upload]
@@ -5050,8 +5087,8 @@ components:
         outputTokens: {type: integer, format: int64}
         cachedInputTokens: {type: integer, format: int64}
         cachedInputTokensComplete: {type: boolean}
-        estimatedCostEur: {type: number, format: double}
-        estimatedCostEurComplete: {type: boolean}
+        costUsd: {type: number, format: double}
+        costUsdComplete: {type: boolean}
         models:
           type: array
           items: {type: string}
@@ -5060,8 +5097,8 @@ components:
           items: {type: string}
         providerRequestIdsComplete: {type: boolean}
       required: [agentTurns, attempts, cachedInputTokens, cachedInputTokensComplete,
-        estimatedCostEur, estimatedCostEurComplete, inputTokens, modelCalls, models,
-        outputTokens, providerRequestIds, providerRequestIdsComplete, toolCalls]
+        costUsd, costUsdComplete, inputTokens, modelCalls, models, outputTokens, providerRequestIds,
+        providerRequestIdsComplete, toolCalls]
     ExerciseGenerationJobStart:
       type: object
       properties:
@@ -8843,6 +8880,10 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/StudentExport'}
+    TumLiveUploadAvailability:
+      type: object
+      properties:
+        available: {type: boolean}
     TumLiveUploadState:
       type: object
       properties:
@@ -9139,12 +9180,11 @@ components:
       type: object
       description: Response containing consistency check costs
       properties:
-        promptEur: {type: number, format: double, description: Prompt costs in EUR,
-          example: 0.011224}
-        completionEur: {type: number, format: double, description: Completion costs
-            in EUR, example: 0.016513}
-        totalEur: {type: number, format: double, description: Total costs in EUR,
-          example: 0.027738}
+        totalUsd: {type: number, format: double, description: Known cost in USD; a
+            lower bound when incomplete, example: 0.027738}
+        totalUsdComplete: {type: boolean, description: Whether every recorded request
+            has a USD cost}
+      required: [totalUsdComplete]
     MultipleChoiceSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -9418,11 +9458,11 @@ components:
             this run was admitted against}
         modelCalls: {type: integer, format: int64, description: Provider responses
             accounted for so far}
-        estimatedCostEur: {type: number, format: double, description: 'Estimated cost
-            in EUR, absent when any model used has no configured price'}
-        estimatedCostComplete: {type: boolean, description: Whether a price was configured
-            for every response counted so far}
-      required: [billableTokens, cachedInputTokens, estimatedCostComplete, inputTokens,
+        costUsd: {type: number, format: double, description: 'Cost in USD, absent
+            when any response has neither a reported USD cost nor complete USD prices'}
+        costUsdComplete: {type: boolean, description: Whether every response counted
+            so far has a reported or completely estimated USD cost}
+      required: [billableTokens, cachedInputTokens, costUsdComplete, inputTokens,
         modelCalls, outputTokens, tokenBudget]
     ShortAnswerSubmittedTextFromStudent:
       type: object
