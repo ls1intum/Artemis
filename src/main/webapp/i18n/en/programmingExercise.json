@@ -921,6 +921,13 @@
                         "undo": "Undo",
                         "undoLabel": "Undo the removal of",
                         "undoBlocked": "Now assigned to {{ policy }}. Remove it there to undo this.",
+                        "conflict": {
+                            "label": "Conflict:",
+                            "text": "A newer save assigns all test cases of {{ testClass }} to this policy, but your unsaved changes remove {{ testCases }}. Choose which applies before you save.",
+                            "keepClass": "Keep all test cases",
+                            "keepRemoval": "Keep removal",
+                            "casesUnknown": "Artemis cannot load the test cases of {{ testClass }}, which keeping the removal needs. You can also choose them under Add Test Cases."
+                        },
                         "removeLabel": "Remove",
                         "remove": {
                             "caseTitle": "Remove Test Case",
@@ -1071,6 +1078,7 @@
                     "problem": {
                         "nameRequired": "A security policy has no name.",
                         "hiddenPeriod": "{{ policy }}: “Hidden until” must be after “Hidden from”.",
+                        "assignmentConflict": "{{ policy }}: a newer save assigns all test cases of {{ testClass }}, but your unsaved changes remove some of them. Choose which applies under Assign Test Cases.",
                         "noTests": "{{ policy }} has no assigned test case. Artemis finds a policy through the test cases that use it, so assign at least one.",
                         "sameFile": "Two policies would be saved to the same file, or a policy to the file of a deleted one. Rename one of them."
                     },
@@ -1091,6 +1099,7 @@
                         "reload": "Reload",
                         "reloadFailed": "The newer version could not be loaded. Your unsaved changes are kept; reload again.",
                         "reloaded": "Reloaded the version saved as commit {{ hash }}. Your unsaved changes are kept — save again when ready.",
+                        "reloadedWithConflicts": "Reloaded the version saved as commit {{ hash }}. Your unsaved changes are kept, but some of them conflict with it: choose which applies where a policy shows a conflict, then save again.",
                         "orphaned": "A policy you changed is gone from the repository",
                         "orphanedText": "Since you opened the editor, someone deleted, renamed or broke {{ files }}, so it can no longer be edited here. Your unsaved changes to it are kept as a new policy: save it to keep them, or delete it to drop them.",
                         "failed": "Saving failed — nothing was changed",

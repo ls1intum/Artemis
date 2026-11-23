@@ -19,6 +19,7 @@ type Handlers = {
     onPresetsChange(values: unknown[]): void;
     onBehaviorChange(behavior: unknown): void;
     onAssignmentChange(change: { tests: string[]; extraClasses: string[] }): void;
+    onWholeClassKept(testClass: string): void;
     setBoxCollapsed(box: string, collapsed: boolean): void;
 };
 
@@ -69,6 +70,16 @@ describe('SecurityPolicyPanelComponent', () => {
         expect(changes[1].working?.preset).toBe('B');
         expect(changes[2].working?.testBehavior).toEqual({ strictTimeout: { timeout: 1 } });
         expect(changes[3].working?.testClasses).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
+    });
+
+    it('ends a conflict of an assignment whose whole class the instructor keeps', () => {
+        const conflict = { testClass: 'de.example.SortingTest', removedTestCases: ['de.example.SortingTest#first'] };
+        create({ ...editorPolicyOf(FILE), assignmentConflicts: [conflict, { testClass: 'de.example.StressTest', removedTestCases: ['de.example.StressTest#run'] }] });
+
+        handlers.onWholeClassKept('de.example.StressTest');
+
+        expect(changes[0].assignmentConflicts).toEqual([conflict]);
+        expect(changes[0].tests).toEqual(comp.policy().tests);
     });
 
     it('offers the YAML of a policy only once the policy is expanded', () => {

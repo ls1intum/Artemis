@@ -319,8 +319,10 @@ it or choose a newer version.
 Saving creates one commit with your description in the tests repository and runs the template and solution builds
 again. If someone saved a newer version to the tests repository after you opened the view, saving is refused and you
 can reload: your unsaved changes stay and are applied to the newer version. If that version deleted or renamed a
-policy you changed, your changes to it are kept as a new policy, which you can save or delete. Your unsaved changes
-also stay when you switch the form to simple mode and back.
+policy you changed, your changes to it are kept as a new policy, which you can save or delete. If you removed a test
+case whose whole test class the newer version assigns to the policy, **Assign Test Cases** marks the class as a
+conflict: choose **Keep all test cases** or **Keep removal** before you save. Your unsaved changes also stay when you
+switch the form to simple mode and back.
 
 <Callout variant={CalloutVariant.warning}>
 

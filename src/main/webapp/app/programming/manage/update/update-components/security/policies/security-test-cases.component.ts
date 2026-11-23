@@ -1,8 +1,8 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, effect, input, output, signal, untracked } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { faPlus, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -12,11 +12,13 @@ import { SecurityConfirmDialogComponent, SecurityTranslatable } from 'app/progra
 import { SecurityDeclareClassesDialogComponent } from 'app/programming/manage/update/update-components/security/policies/security-declare-classes-dialog.component';
 import { SecurityHelpComponent } from 'app/programming/manage/update/update-components/security/policies/security-help.component';
 import {
+    AssignmentConflict,
     EditorPolicy,
     TEST_CASE_SEPARATOR,
     classesOfTests,
     countKey,
     testClassOf,
+    withRemovalKept,
     withRestoredEntry,
 } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 
@@ -36,6 +38,15 @@ interface ClassEntries {
 interface PackageEntries {
     packageName: string;
     classes: ClassEntries[];
+}
+
+/** A conflict of the Assigned column, see {@link EditorPolicy.assignmentConflicts}. */
+interface ConflictView {
+    conflict: AssignmentConflict;
+    /** The names of the removed test cases, e.g. "first, second". */
+    removedNames: string;
+    /** The test cases of the class that can use a policy; undefined while the test structure loads, empty if it does not know them. */
+    testCases?: string[];
 }
 
 /** A class of the Declared column. */
@@ -62,6 +73,7 @@ const PREFIX = 'artemisApp.programmingExercise.security.advanced.tests';
     imports: [
         NgTemplateOutlet,
         TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
         TumAetUiTagComponent,
         TumAetUiTooltipDirective,
         FaIconComponent,
@@ -77,6 +89,7 @@ export class SecurityTestCasesComponent {
     protected readonly countKey = countKey;
     protected readonly faPlus = faPlus;
     protected readonly faXmark = faXmark;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
 
     readonly policy = input.required<EditorPolicy>();
     /** The file of the policy, which the dialogs name. */
@@ -88,6 +101,8 @@ export class SecurityTestCasesComponent {
     readonly disabled = input(false);
 
     readonly assignmentChange = output<{ tests: string[]; extraClasses: string[] }>();
+    /** Emits the test class of a conflict whose whole class stays assigned, see {@link EditorPolicy.assignmentConflicts}. */
+    readonly wholeClassKept = output<string>();
     readonly structureRequested = output<void>();
 
     readonly assignOpen = signal(false);
@@ -118,6 +133,17 @@ export class SecurityTestCasesComponent {
             byPackage.set(packageName, [...(byPackage.get(packageName) ?? []), node]);
         }
         return [...byPackage.entries()].sort(([first], [second]) => first.localeCompare(second)).map(([packageName, classes]) => ({ packageName, classes }));
+    });
+
+    /** The conflicts by their test class; keeping a removal needs the test cases of the class, which the test structure lists. */
+    readonly conflicts = computed(() => {
+        const structure = this.structure();
+        const views = new Map<string, ConflictView>();
+        for (const conflict of this.policy().assignmentConflicts ?? []) {
+            const removedNames = conflict.removedTestCases.map((entry) => entry.substring(entry.indexOf(TEST_CASE_SEPARATOR) + 1)).join(', ');
+            views.set(conflict.testClass, { conflict, removedNames, testCases: structure ? testCasesOf(structure, conflict.testClass) : undefined });
+        }
+        return views;
     });
 
     readonly assignedClassCount = computed(() => this.assignedPackages().reduce((count, group) => count + group.classes.length, 0));
@@ -164,6 +190,15 @@ export class SecurityTestCasesComponent {
         return [...byPackage.entries()].sort(([first], [second]) => first.localeCompare(second)).map(([packageName, classes]) => ({ packageName, classes }));
     });
 
+    constructor() {
+        // A conflict is resolved with the test cases of its class, so they are loaded while one is shown.
+        effect(() => {
+            if (this.policy().assignmentConflicts?.length) {
+                untracked(() => this.structureRequested.emit());
+            }
+        });
+    }
+
     readonly declaredCount = computed(() => this.declaredClasses().filter((declared) => declared.state !== 'removed').length);
     readonly classesOfAssignedTests = computed(() => classesOfTests(this.policy().tests));
 
@@ -208,6 +243,19 @@ export class SecurityTestCasesComponent {
         this.assignmentChange.emit({ tests: withRestoredEntry(this.policy().tests, entry), extraClasses: this.policy().extraClasses });
     }
 
+    /** Keeps the whole class of a conflict assigned, so the test cases the unsaved changes removed keep using the policy. */
+    protected keepWholeClass(testClass: string): void {
+        this.wholeClassKept.emit(testClass);
+    }
+
+    /** Keeps the removal of a conflict: the other test cases of the class stay assigned one by one, which also ends the conflict. */
+    protected keepRemoval(view: ConflictView): void {
+        if (!view.testCases?.length) {
+            return;
+        }
+        this.assignmentChange.emit({ tests: withRemovalKept(this.policy().tests, view.conflict, view.testCases), extraClasses: this.policy().extraClasses });
+    }
+
     protected undoClass(qualifiedName: string): void {
         this.assignmentChange.emit({ tests: this.policy().tests, extraClasses: [...this.policy().extraClasses, qualifiedName] });
     }
@@ -238,6 +286,16 @@ export class SecurityTestCasesComponent {
             params: { testClass: simpleName },
         };
     });
+}
+
+/** @returns the entries of the test cases of a class that can use a policy, i.e. that are not switched off; empty if the structure does not list them */
+function testCasesOf(structure: SecurityTestStructure, qualifiedName: string): string[] {
+    const testClass = structure.testClasses?.find((candidate) => candidate.qualifiedName === qualifiedName);
+    if (!testClass || testClass.switchedOff) {
+        return [];
+    }
+    const fixedCases = testClass.fixedCases ?? [];
+    return (testClass.testCases ?? []).filter((name) => !fixedCases.includes(name)).map((name) => qualifiedName + TEST_CASE_SEPARATOR + name);
 }
 
 /** @returns how an entry differs from the committed policy: removed if the working policy no longer has it, new if only the working policy has it */

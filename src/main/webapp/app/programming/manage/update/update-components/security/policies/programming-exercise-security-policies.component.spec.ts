@@ -19,7 +19,7 @@ import { SecurityFrameworkService } from 'app/programming/shared/services/securi
 import { By } from '@angular/platform-browser';
 import { SecurityActivationDialogComponent } from 'app/programming/manage/update/update-components/security/policies/security-activation-dialog.component';
 import { ProgrammingExerciseSecurityPoliciesComponent } from 'app/programming/manage/update/update-components/security/policies/programming-exercise-security-policies.component';
-import { fileNameOf, withAssignment, withRows } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
+import { fileNameOf, withAssignment, withRows, withWholeClassKept } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 
 const DOCUMENT: SecurityPolicyDocument = {
     policyPath: 'SecurityPolicy.yaml',
@@ -485,6 +485,28 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(configs.at(-1)).toEqual({ ...configured(), frameworkVersion: '2.3.0' });
         expect(comp.editor()?.baseCommitHash).toBe('c'.repeat(40));
         expect(comp.policies()[0].tests).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
+    });
+
+    it('keeps a test case removed while a newer commit assigns its whole class as a conflict, which blocks saving until the instructor decides', () => {
+        const oneByOne = editor();
+        oneByOne.policies = oneByOne.policies?.map((file) => ({ ...file, assignedTests: ['de.example.SortingTest#first', 'de.example.SortingTest#second'] }));
+        service.getPolicies.mockReturnValue(of(oneByOne));
+        create(configured(), false);
+        comp['onPolicyChange'](withAssignment(comp.policies()[0], ['de.example.SortingTest#second'], []));
+        service.getPolicies.mockReturnValue(of(editor('c'.repeat(40))));
+
+        comp['reload'](true);
+
+        expect(comp.policies()[0].tests).toEqual(['de.example.SortingTest']);
+        expect(comp.policies()[0].assignmentConflicts).toEqual([{ testClass: 'de.example.SortingTest', removedTestCases: ['de.example.SortingTest#first'] }]);
+        // The change is not reported as kept while the removed test case still uses the policy.
+        expect(comp.totalChanges()).toBe(1);
+        expect(comp.banner()).toEqual({ kind: 'info', text: 'artemisApp.programmingExercise.security.advanced.banner.reloadedWithConflicts' });
+        expect(comp.problems()).toEqual(['artemisApp.programmingExercise.security.advanced.problem.assignmentConflict']);
+
+        comp['onPolicyChange'](withWholeClassKept(comp.policies()[0], 'de.example.SortingTest'));
+        expect(comp.problems()).toEqual([]);
+        expect(comp.totalChanges()).toBe(0);
     });
 
     it('shows the translated reason of a refused commit', () => {

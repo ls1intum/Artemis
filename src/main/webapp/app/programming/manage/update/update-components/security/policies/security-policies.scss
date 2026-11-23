@@ -453,6 +453,12 @@
     min-width: 0;
 }
 
+// A conflict of an assignment, under the test class it concerns
+.sp-conflict {
+    display: block;
+    margin-top: calc(var(--tumaet-ui-spacing) * 2);
+}
+
 // Previews of the feedback students see
 .sp-preview {
     display: flex;

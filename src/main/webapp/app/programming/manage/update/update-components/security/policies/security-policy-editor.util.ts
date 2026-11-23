@@ -99,10 +99,23 @@ export interface EditorPolicy {
     /** The name with the unsaved changes; it determines the file name. */
     name: string;
     /**
+     * The test cases the unsaved changes remove while a newer commit assigns their whole class, e.g. pkg.T#a while it assigns pkg.T. The policy cannot hold
+     * both, so the instructor decides which one applies; until then the changes cannot be saved. Absent if there is no such conflict.
+     */
+    assignmentConflicts?: AssignmentConflict[];
+    /**
      * Whether a new policy got a language configuration of its own, e.g. from an imported file, so it keeps it instead of following the committed policies
      * when dependency scanning is switched.
      */
     ownLanguageConfiguration?: boolean;
+}
+
+/** Test cases the unsaved changes remove while a newer commit assigns their whole class, see {@link EditorPolicy.assignmentConflicts}. */
+export interface AssignmentConflict {
+    /** The test class the newer commit assigns as a whole, e.g. pkg.T. */
+    testClass: string;
+    /** The test cases of the class the unsaved changes remove, e.g. pkg.T#a. */
+    removedTestCases: string[];
 }
 
 /** The unsaved changes of a policy, by kind, as the commit bar lists them. */
@@ -388,10 +401,31 @@ export function declaredTestClasses(previous: readonly string[], tests: readonly
     return [...kept, ...added];
 }
 
-/** @returns the policy with other tests and extra classes; its document declares their classes */
+/**
+ * @returns the policy with other tests and extra classes; its document declares their classes. A conflict ends once the tests no longer assign its class as
+ * a whole, e.g. because the instructor chose single test cases of it.
+ */
 export function withAssignment(policy: EditorPolicy, tests: readonly string[], extraClasses: readonly string[]): EditorPolicy {
     const working = policy.working ? cloneWith(policy.working, { testClasses: declaredTestClasses(policy.working.testClasses ?? [], tests, extraClasses) }) : undefined;
-    return cloneWith(policy, { tests: [...tests], extraClasses: [...extraClasses], working });
+    const conflicts = policy.assignmentConflicts?.filter((conflict) => tests.includes(conflict.testClass));
+    return cloneWith(policy, { tests: [...tests], extraClasses: [...extraClasses], working, assignmentConflicts: conflicts?.length ? conflicts : undefined });
+}
+
+/** @returns the policy that keeps the whole class of the conflict assigned, so the test cases the unsaved changes removed stay assigned */
+export function withWholeClassKept(policy: EditorPolicy, testClass: string): EditorPolicy {
+    const conflicts = policy.assignmentConflicts?.filter((conflict) => conflict.testClass !== testClass);
+    return cloneWith(policy, { assignmentConflicts: conflicts?.length ? conflicts : undefined });
+}
+
+/**
+ * Keeps the removal of a conflict: the class is assigned through its other test cases instead of as a whole, so the removed ones no longer use the policy.
+ *
+ * @param testCases the test cases of the class that can use a policy, from the test structure, e.g. pkg.T#a and pkg.T#b
+ * @returns the tests of the policy afterwards
+ */
+export function withRemovalKept(tests: readonly string[], conflict: AssignmentConflict, testCases: readonly string[]): string[] {
+    const kept = testCases.filter((entry) => !conflict.removedTestCases.includes(entry));
+    return [...tests.filter((entry) => entry !== conflict.testClass), ...kept.filter((entry) => !tests.includes(entry))];
 }
 
 /** @returns the name shown for a committed policy */
@@ -415,7 +449,9 @@ export function summarizeChanges(policy: EditorPolicy): PolicyChangeSummary {
     const tests = listChanges(policy.baseTests, policy.tests);
     const testClasses = listChanges(policy.baseExtraClasses, policy.extraClasses);
     const settings = isNew ? 0 : changedSettings(policy, working);
-    const testCases = tests.added.length + tests.removed.length;
+    // A removed test case whose whole class a newer commit assigns is an unsaved change until the instructor decides, even though the tests do not show it.
+    const conflicts = (policy.assignmentConflicts ?? []).reduce((sum, conflict) => sum + conflict.removedTestCases.length, 0);
+    const testCases = tests.added.length + tests.removed.length + conflicts;
     const classChanges = testClasses.added.length + testClasses.removed.length + changedDeclarations(policy, tests, testClasses);
     return {
         restrictions,
@@ -480,8 +516,9 @@ export function editorPolicyOf(file: SecurityPolicyFile): EditorPolicy {
 /**
  * Applies the unsaved changes made on top of one commit to the policy of a newer commit, so a reload keeps them: rows added, changed or removed by key,
  * changed behaviour categories, a changed preset or file setting, and the tests and extra classes that were assigned or released. Where the newer commit
- * changed the same thing, the unsaved change wins, and a whole test class replaces the entries of its test cases. If the newer file cannot be edited here,
- * the result is that read-only policy; the caller keeps the unsaved changes as a new policy.
+ * changed the same thing, the unsaved change wins, and a whole test class replaces the entries of its test cases. A test case the unsaved changes remove
+ * while the newer commit assigns its whole class is kept as an assignment conflict, see {@link EditorPolicy.assignmentConflicts}. If the newer file cannot be
+ * edited here, the result is that read-only policy; the caller keeps the unsaved changes as a new policy.
  */
 export function rebasePolicy(policy: EditorPolicy, file: SecurityPolicyFile): EditorPolicy {
     const fresh = editorPolicyOf(file);
@@ -523,9 +560,30 @@ export function rebasePolicy(policy: EditorPolicy, file: SecurityPolicyFile): Ed
     }
     // Declarations an import changed on their own, e.g. pkg.Test#second instead of pkg.Test#first; the assignment below keeps those of declared classes.
     result = cloneWith(result, { testClasses: applyListChanges(result.testClasses ?? [], listChanges(oldBase.testClasses ?? [], working.testClasses ?? [])) });
-    const tests = withoutCoveredTestCases(applyTestChanges(fresh.baseTests, listChanges(policy.baseTests, policy.tests)));
+    // The test cases of a conflict of an earlier reload are still removed, e.g. once a newer commit assigns them one by one again.
+    const testChanges = listChanges(policy.baseTests, policy.tests);
+    const conflicting = (policy.assignmentConflicts ?? []).flatMap((conflict) => conflict.removedTestCases).filter((entry) => !testChanges.removed.includes(entry));
+    const changes = { added: testChanges.added, removed: [...testChanges.removed, ...conflicting] };
+    const tests = withoutCoveredTestCases(applyTestChanges(fresh.baseTests, changes));
     const extraClasses = applyListChanges(fresh.baseExtraClasses, listChanges(policy.baseExtraClasses, policy.extraClasses));
-    return withAssignment(cloneWith(fresh, { working: cloneWith(result, { policyPath: working.policyPath }), name: policy.name }), tests, extraClasses);
+    const assignmentConflicts = conflictsOf(changes, tests);
+    const rebased = cloneWith(fresh, { working: cloneWith(result, { policyPath: working.policyPath }), name: policy.name, assignmentConflicts });
+    return withAssignment(rebased, tests, extraClasses);
+}
+
+/**
+ * The test cases the unsaved changes remove while the rebased tests assign their whole class, e.g. pkg.T#a after a newer commit assigned pkg.T instead of
+ * pkg.T#a and pkg.T#b. A class the instructor assigned as a whole is no conflict.
+ */
+function conflictsOf(changes: { added: string[]; removed: string[] }, tests: readonly string[]): AssignmentConflict[] {
+    const byClass = new Map<string, string[]>();
+    for (const entry of changes.removed.filter((removed) => removed.includes(TEST_CASE_SEPARATOR))) {
+        const testClass = testClassOf(entry);
+        if (tests.includes(testClass) && !changes.added.includes(testClass)) {
+            byClass.set(testClass, [...(byClass.get(testClass) ?? []), entry]);
+        }
+    }
+    return [...byClass.entries()].map(([testClass, removedTestCases]) => ({ testClass, removedTestCases }));
 }
 
 /** @returns the entries without the test cases of a class that is assigned as a whole, which the server refuses together with it */

@@ -140,6 +140,39 @@ describe('SecurityTestCasesComponent', () => {
         expect(changes).toEqual([{ tests: ['de.a.SortingTest', 'de.d.FreeTest#run'], extraClasses: [] }]);
     });
 
+    it('shows a conflict of an assignment and resolves it either way', () => {
+        const kept: string[] = [];
+        let structureRequests = 0;
+        comp.wholeClassKept.subscribe((testClass) => kept.push(testClass));
+        comp.structureRequested.subscribe(() => structureRequests++);
+        const conflicting = { ...policy(['de.a.SortingTest']), assignmentConflicts: [{ testClass: 'de.a.SortingTest', removedTestCases: ['de.a.SortingTest#sorts'] }] };
+        fixture.componentRef.setInput('policy', conflicting);
+        fixture.detectChanges();
+
+        const conflict: HTMLElement = fixture.nativeElement.querySelector('[data-testid="security-test-cases-conflict"]');
+        expect(conflict.closest('[data-testid="security-test-cases-class"]')).not.toBeNull();
+        // Keeping the removal needs the test cases of the class, which are loaded for it.
+        expect(structureRequests).toBe(1);
+        const keepRemoval: HTMLButtonElement = conflict.querySelector('[data-testid="security-test-cases-conflict-keep-removal"]')!;
+        expect(keepRemoval.disabled).toBe(true);
+
+        (conflict.querySelector('[data-testid="security-test-cases-conflict-keep-class"]') as HTMLButtonElement).click();
+        expect(kept).toEqual(['de.a.SortingTest']);
+
+        // A switched-off test case cannot use a policy, so it is not assigned on its own either.
+        fixture.componentRef.setInput('structure', { testClasses: [{ qualifiedName: 'de.a.SortingTest', testCases: ['sorts', 'merges', 'fixed'], fixedCases: ['fixed'] }] });
+        fixture.detectChanges();
+        expect(keepRemoval.disabled).toBe(false);
+        keepRemoval.click();
+        expect(changes).toEqual([{ tests: ['de.a.SortingTest#merges'], extraClasses: [] }]);
+
+        // Without the test cases of the class, the removal cannot be kept here, and the conflict says where to choose them.
+        fixture.componentRef.setInput('structure', { testClasses: [] });
+        fixture.detectChanges();
+        expect(keepRemoval.disabled).toBe(true);
+        expect(keepRemoval.getAttribute('aria-describedby')).toBe('security-conflict-cases-de.a.SortingTest');
+    });
+
     it('shows that no test uses a policy without assigned tests', () => {
         fixture.componentRef.setInput('policy', { ...policy([]), baseTests: [] });
         fixture.detectChanges();

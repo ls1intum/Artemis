@@ -27,6 +27,7 @@ import {
     countKey,
     fileNameOf,
     withAssignment,
+    withWholeClassKept,
 } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 
 /** The boxes of a policy, which open and close on their own. */
@@ -143,6 +144,10 @@ export class SecurityPolicyPanelComponent {
 
     protected onAssignmentChange(change: { tests: string[]; extraClasses: string[] }): void {
         this.policyChange.emit(withAssignment(this.policy(), change.tests, change.extraClasses));
+    }
+
+    protected onWholeClassKept(testClass: string): void {
+        this.policyChange.emit(withWholeClassKept(this.policy(), testClass));
     }
 
     private updateWorking(working: SecurityPolicyDocument): void {

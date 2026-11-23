@@ -21,8 +21,10 @@ import {
     summarizeChanges,
     testClassOf,
     withAssignment,
+    withRemovalKept,
     withRestoredEntry,
     withRows,
+    withWholeClassKept,
 } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
 
 const DOCUMENT: SecurityPolicyDocument = {
@@ -200,6 +202,37 @@ describe('security-policy-editor.util', () => {
         const narrowed = withAssignment(policy, ['de.example.SortingTest#first', 'de.example.StressTest'], []);
         expect(rebasePolicy(narrowed, newer).tests).toEqual(['de.example.StressTest', 'de.example.SortingTest#first']);
         expect(rebasePolicy(released, { ...FILE, assignedTests: ['de.example.SortingTest', 'de.example.StressTest'] }).tests).toEqual(['de.example.StressTest']);
+    });
+
+    it('keeps a test case removed while the newer commit assigns its whole class as an assignment conflict until the instructor decides', () => {
+        const policy = editorPolicyOf({ ...FILE, assignedTests: ['de.example.SortingTest#first', 'de.example.SortingTest#second'] });
+        const removed = withAssignment(policy, ['de.example.SortingTest#second'], policy.extraClasses);
+        const newer: SecurityPolicyFile = { ...FILE, assignedTests: ['de.example.SortingTest'] };
+
+        const rebased = rebasePolicy(removed, newer);
+
+        const conflict = { testClass: 'de.example.SortingTest', removedTestCases: ['de.example.SortingTest#first'] };
+        expect(rebased.tests).toEqual(['de.example.SortingTest']);
+        expect(rebased.assignmentConflicts).toEqual([conflict]);
+        // The removal is still an unsaved change, although the whole class assigns the test case again.
+        expect(summarizeChanges(rebased).total).toBe(1);
+        // Another reload keeps the conflict while the class is assigned as a whole, and removes the test case again once it is assigned on its own.
+        expect(rebasePolicy(rebased, { ...FILE, assignedTests: ['de.example.SortingTest', 'de.example.StressTest'] }).assignmentConflicts).toEqual([conflict]);
+        const split = rebasePolicy(rebased, { ...FILE, assignedTests: ['de.example.SortingTest#first', 'de.example.SortingTest#second'] });
+        expect(split.tests).toEqual(['de.example.SortingTest#second']);
+        expect(split.assignmentConflicts).toBeUndefined();
+        // A class the instructor assigned as a whole after removing one of its test cases is no conflict.
+        const wholeAgain = withAssignment(removed, ['de.example.SortingTest'], policy.extraClasses);
+        expect(rebasePolicy(wholeAgain, newer).assignmentConflicts).toBeUndefined();
+
+        // Keeping the whole class ends the conflict without changing the tests.
+        const keptClass = withWholeClassKept(rebased, 'de.example.SortingTest');
+        expect(keptClass.assignmentConflicts).toBeUndefined();
+        expect(summarizeChanges(keptClass).total).toBe(0);
+        // Keeping the removal assigns the other test cases of the class one by one, which ends the conflict as well.
+        const tests = withRemovalKept(rebased.tests, conflict, ['de.example.SortingTest#first', 'de.example.SortingTest#second', 'de.example.SortingTest#third']);
+        expect(tests).toEqual(['de.example.SortingTest#second', 'de.example.SortingTest#third']);
+        expect(withAssignment(rebased, tests, rebased.extraClasses).assignmentConflicts).toBeUndefined();
     });
 
     it('restores an entry without assigning a whole class together with one of its test cases', () => {

@@ -396,6 +396,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             if (from && until && !until.isAfter(from)) {
                 problems.push(this.translateService.instant(`${PREFIX}.problem.hiddenPeriod`, { policy: policy.name }));
             }
+            // The instructor decides whether a test case removed while a newer commit assigned its whole class keeps using the policy.
+            for (const conflict of policy.assignmentConflicts ?? []) {
+                const testClass = conflict.testClass.substring(conflict.testClass.lastIndexOf('.') + 1);
+                problems.push(this.translateService.instant(`${PREFIX}.problem.assignmentConflict`, { policy: policy.name, testClass }));
+            }
             // Like the server, only a policy the commit writes must be used by a test; an unchanged one may be used by no test of the class.
             if (!policy.tests.length && (this.summaries().get(policy.id)?.total ?? 0) > 0) {
                 problems.push(this.translateService.instant(`${PREFIX}.problem.noTests`, { policy: policy.name }));
@@ -753,7 +758,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         if (vanished.length) {
             this.banner.set({ kind: 'orphaned', files: vanished.map((policy) => fileNameOf(policy.file?.policyPath ?? '')).join(', ') });
         } else if (announce) {
-            this.banner.set({ kind: 'info', text: this.translateService.instant(`${PREFIX}.banner.reloaded`, { hash: editor.lastCommit?.hash.substring(0, 7) ?? '' }) });
+            // Changes that conflict with the newer commit are kept as well, but the instructor has to decide on them before saving.
+            const reloaded = this.policies().some((policy) => policy.assignmentConflicts?.length) ? 'reloadedWithConflicts' : 'reloaded';
+            this.banner.set({ kind: 'info', text: this.translateService.instant(`${PREFIX}.banner.${reloaded}`, { hash: editor.lastCommit?.hash.substring(0, 7) ?? '' }) });
         }
     }
 

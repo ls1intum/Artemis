@@ -921,6 +921,13 @@
                         "undo": "Rückgängig",
                         "undoLabel": "Entfernen rückgängig machen für",
                         "undoBlocked": "Jetzt {{ policy }} zugeordnet. Entferne es dort, um dies rückgängig zu machen.",
+                        "conflict": {
+                            "label": "Konflikt:",
+                            "text": "Eine neuere Speicherung ordnet dieser Richtlinie alle Testfälle von {{ testClass }} zu, deine ungespeicherten Änderungen entfernen aber {{ testCases }}. Wähle vor dem Speichern, was gelten soll.",
+                            "keepClass": "Alle Testfälle behalten",
+                            "keepRemoval": "Entfernen beibehalten",
+                            "casesUnknown": "Artemis kann die Testfälle von {{ testClass }} nicht laden, die zum Beibehalten des Entfernens nötig sind. Du kannst sie auch unter „Testfälle hinzufügen“ wählen."
+                        },
                         "removeLabel": "Entfernen",
                         "remove": {
                             "caseTitle": "Testfall entfernen",
@@ -1071,6 +1078,7 @@
                     "problem": {
                         "nameRequired": "Eine Sicherheitsrichtlinie hat keinen Namen.",
                         "hiddenPeriod": "{{ policy }}: „Versteckt bis“ muss nach „Versteckt ab“ liegen.",
+                        "assignmentConflict": "{{ policy }}: Eine neuere Speicherung ordnet alle Testfälle von {{ testClass }} zu, deine ungespeicherten Änderungen entfernen aber einige davon. Wähle unter „Testfälle zuordnen“, was gelten soll.",
                         "noTests": "{{ policy }} ist kein Testfall zugeordnet. Artemis findet eine Richtlinie über die Testfälle, die sie verwenden, daher ordne mindestens einen zu.",
                         "sameFile": "Zwei Richtlinien würden in derselben Datei gespeichert, oder eine Richtlinie in der Datei einer gelöschten. Benenne eine davon um."
                     },
@@ -1091,6 +1099,7 @@
                         "reload": "Neu laden",
                         "reloadFailed": "Die neuere Version konnte nicht geladen werden. Deine ungespeicherten Änderungen bleiben erhalten; lade erneut.",
                         "reloaded": "Die als Commit {{ hash }} gespeicherte Fassung wurde neu geladen. Deine ungespeicherten Änderungen bleiben erhalten — speichere erneut, wenn du so weit bist.",
+                        "reloadedWithConflicts": "Die als Commit {{ hash }} gespeicherte Fassung wurde neu geladen. Deine ungespeicherten Änderungen bleiben erhalten, einige widersprechen ihr aber: Wähle bei den Richtlinien mit Konflikt, was gelten soll, und speichere dann erneut.",
                         "orphaned": "Eine geänderte Richtlinie fehlt im Repository",
                         "orphanedText": "Seit du den Editor geöffnet hast, hat jemand {{ files }} gelöscht, umbenannt oder beschädigt, daher kann sie hier nicht mehr bearbeitet werden. Deine ungespeicherten Änderungen daran bleiben als neue Richtlinie erhalten: Speichere sie, um sie zu behalten, oder lösche sie, um sie zu verwerfen.",
                         "failed": "Speichern fehlgeschlagen — nichts wurde geändert",
