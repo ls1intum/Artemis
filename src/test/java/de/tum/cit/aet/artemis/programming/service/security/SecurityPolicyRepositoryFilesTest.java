@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.service.security;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
@@ -11,7 +10,6 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,6 +17,7 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -847,10 +846,11 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    @Timeout(value = 5, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
     void readsTheAresVersionAfterALongCommentFullOfPinsQuickly() {
         // A pin-shaped line in a comment is no assignment the build reads, so it is not followed to the end of the comment again for every such line.
         String gradleBuild = "/*\n" + "aresVersion = '9.9.9' /*\n".repeat(10_000) + "*/\next { aresVersion = '2.2.1' }\n";
-        assertTimeoutPreemptively(Duration.ofSeconds(5), () -> assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1"));
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
     }
 
     @ParameterizedTest
