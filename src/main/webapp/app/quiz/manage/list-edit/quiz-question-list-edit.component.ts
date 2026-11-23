@@ -22,7 +22,7 @@ import { QuizAiQuestionRefinementPanelComponent } from 'app/hyperion/quiz/quiz-a
     selector: 'jhi-quiz-question-list-edit',
     templateUrl: './quiz-question-list-edit.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrls: ['./quiz-question-list-edit.component.scss', '../../shared/quiz.scss'],
+    styleUrls: ['./quiz-question-list-edit.component.css', '../../shared/quiz.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         TranslateDirective,

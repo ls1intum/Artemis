@@ -1,0 +1,69 @@
+/*
+ * Styles of third-party libraries, and the rules that adapt them and TUM AET UI to Artemis. Not in a cascade layer:
+ * most of these libraries ship their styles outside a layer, so a rule that has to override them must be outside one, too.
+ */
+
+/*
+ * ==========================================================================
+ * Angular CDK
+ * ==========================================================================
+ */
+
+/*
+ * Kit overlays (dialogs, calendars, select panels, tooltips) open in this one container, so they all share one layer.
+ * Stacking order of the layers an Artemis page can show, lowest first:
+ * 1049-1053  Iris onboarding tour: click guard 1049, tour root and spotlight 1050, card 1051, coach mark 1052, highlighted target 1053
+ * 1200       this container: kit dialogs and everything the kit opens above them
+ * 100000     alert overlay
+ * `delete-dialog-layering.spec.ts` compiles the default theme, which includes this file, and checks that a confirmation opened from inside a kit dialog
+ * (delete button in the presentation edit dialog) stacks above it.
+ */
+.cdk-overlay-container {
+    z-index: 1200;
+}
+
+/*
+ * ==========================================================================
+ * TUM AET UI
+ * ==========================================================================
+ */
+
+/* `tumaet:disabled:opacity-60` compiles to `:disabled`, which never matches an `<a>`. */
+a[tumAetUiButton].disabled {
+    opacity: 0.6;
+}
+
+/*
+ * ==========================================================================
+ * Apollon
+ * ==========================================================================
+ */
+.apollon-editor label {
+    margin-bottom: 0;
+}
+
+/*
+ * An Apollon surface taken fullscreen (the editor frame, the assessed canvas) is promoted
+ * to <body> and sits at z-index 4000, so anything portaled out of it
+ * would paint behind it. There are two such portals and they attach to different roots:
+ *
+ * - Apollon's popovers use a Base UI portal under <body>. It is unpositioned, so it
+ * needs the position/inset as well as the z-index; pointer events are handed back
+ * to its children so the transparent full-screen layer never swallows a click.
+ * - TUM AET UI dialogs use Angular CDK, whose overlay container is appended to <html>
+ * and already positions itself - only the z-index is missing there.
+ */
+html:fullscreen body:has(> .apollon-fullscreen-frame) > [data-base-ui-portal] {
+    position: fixed;
+    z-index: 4001;
+    inset: 0;
+    pointer-events: none;
+}
+
+html:fullscreen body:has(> .apollon-fullscreen-frame) > [data-base-ui-portal] > * {
+    pointer-events: auto;
+}
+
+html:fullscreen:has(> body > .apollon-fullscreen-frame) > .cdk-overlay-container {
+    z-index: 4001;
+}

@@ -1,0 +1,80 @@
+@layer tumaet-ui {
+    :host {
+        display: grid;
+        grid-template-rows: 1fr;
+        border-radius: var(--tumaet-ui-radius-md);
+        outline-width: 1px;
+        outline-style: solid;
+        outline-offset: -1px;
+        font-size: var(--tumaet-ui-font-size-base);
+        font-weight: 500;
+    }
+
+    .tumaet-ui-message-content {
+        display: flex;
+        align-items: center;
+        min-height: 0;
+        padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 3);
+        gap: calc(var(--tumaet-ui-spacing) * 2);
+    }
+
+    .tumaet-ui-message-icon {
+        flex-shrink: 0;
+        font-size: var(--tumaet-ui-font-size-lg);
+    }
+
+    .tumaet-ui-message-dismiss {
+        display: inline-flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        margin-inline-start: auto;
+        padding: 0;
+        border: 0;
+        border-radius: 9999px;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        appearance: none;
+        transition: background-color 0.15s;
+    }
+
+    .tumaet-ui-message-dismiss:hover {
+        background: color-mix(in srgb, currentcolor 12%, transparent);
+    }
+
+    .tumaet-ui-message-dismiss:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 2px;
+    }
+
+    :host[data-severity='info'] {
+        background: color-mix(in srgb, var(--tumaet-ui-state-info) 10%, var(--tumaet-ui-content-background));
+        outline-color: color-mix(in srgb, var(--tumaet-ui-state-info) 40%, var(--tumaet-ui-content-background));
+        color: var(--tumaet-ui-state-info-foreground);
+        box-shadow: 0 4px 8px 0 color-mix(in srgb, var(--tumaet-ui-state-info), transparent 96%);
+    }
+
+    :host[data-severity='success'] {
+        background: color-mix(in srgb, var(--tumaet-ui-state-success) 10%, var(--tumaet-ui-content-background));
+        outline-color: color-mix(in srgb, var(--tumaet-ui-state-success) 40%, var(--tumaet-ui-content-background));
+        color: var(--tumaet-ui-state-success-foreground);
+        box-shadow: 0 4px 8px 0 color-mix(in srgb, var(--tumaet-ui-state-success), transparent 96%);
+    }
+
+    :host[data-severity='warn'] {
+        background: color-mix(in srgb, var(--tumaet-ui-state-warning) 10%, var(--tumaet-ui-content-background));
+        outline-color: color-mix(in srgb, var(--tumaet-ui-state-warning) 40%, var(--tumaet-ui-content-background));
+        color: var(--tumaet-ui-state-warning-foreground);
+        box-shadow: 0 4px 8px 0 color-mix(in srgb, var(--tumaet-ui-state-warning), transparent 96%);
+    }
+
+    :host[data-severity='error'] {
+        background: color-mix(in srgb, var(--tumaet-ui-state-danger) 10%, var(--tumaet-ui-content-background));
+        outline-color: color-mix(in srgb, var(--tumaet-ui-state-danger) 40%, var(--tumaet-ui-content-background));
+        color: var(--tumaet-ui-state-danger-foreground);
+        box-shadow: 0 4px 8px 0 color-mix(in srgb, var(--tumaet-ui-state-danger), transparent 96%);
+    }
+}

@@ -19,7 +19,7 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-tutorial-groups-checklist',
     templateUrl: './tutorial-groups-checklist.component.html',
-    styleUrl: './tutorial-groups-checklist.component.scss',
+    styleUrl: './tutorial-groups-checklist.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TumAetUiButtonDirective, LoadingIndicatorContainerComponent, TranslateDirective, ChecklistCheckComponent, RouterLink, FaIconComponent],
 })

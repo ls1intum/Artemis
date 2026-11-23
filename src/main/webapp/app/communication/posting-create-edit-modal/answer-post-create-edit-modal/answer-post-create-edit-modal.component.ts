@@ -11,7 +11,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',
     templateUrl: './answer-post-create-edit-modal.component.html',
-    styleUrls: ['answer-post-create-edit-modal.component.scss'],
+    styleUrls: ['answer-post-create-edit-modal.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TumAetUiButtonComponent, ArtemisTranslatePipe],
 })

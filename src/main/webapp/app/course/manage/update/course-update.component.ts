@@ -111,7 +111,7 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
 @Component({
     selector: 'jhi-course-update',
     templateUrl: './course-update.component.html',
-    styleUrls: ['./course-update.component.scss'],
+    styleUrls: ['./course-update.component.css'],
     imports: [
         FormsModule,
         ReactiveFormsModule,

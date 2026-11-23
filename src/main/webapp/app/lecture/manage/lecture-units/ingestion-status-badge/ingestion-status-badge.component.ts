@@ -43,7 +43,7 @@ const LOST_CONTACT_SERVER_AGE_MS = 120_000;
 @Component({
     selector: 'jhi-ingestion-status-badge',
     templateUrl: './ingestion-status-badge.component.html',
-    styleUrls: ['./ingestion-status-badge.component.scss'],
+    styleUrls: ['./ingestion-status-badge.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, TumAetUiTooltipDirective, TumAetUiTagComponent, TranslateDirective, ArtemisTranslatePipe],
 })

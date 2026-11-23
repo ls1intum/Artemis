@@ -19,7 +19,7 @@ import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
-    styleUrls: ['../learner-profile.component.scss'],
+    styleUrls: ['../learner-profile.component.css'],
     imports: [TranslateDirective, FormsModule, TumAetUiPanelComponent, TumAetUiSelectComponent, ArtemisTranslatePipe],
 })
 export class CourseLearnerProfileComponent implements OnInit {

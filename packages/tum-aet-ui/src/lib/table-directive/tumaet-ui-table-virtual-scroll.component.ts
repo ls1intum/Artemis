@@ -13,7 +13,7 @@ const HEADER_PADDING: Record<TumAetUiTableSize, string> = {
 @Component({
     selector: 'tumaet-ui-table-virtual-scroll',
     templateUrl: './tumaet-ui-table-virtual-scroll.component.html',
-    styleUrl: './tumaet-ui-table-virtual-scroll.component.scss',
+    styleUrl: './tumaet-ui-table-virtual-scroll.component.css',
     imports: [ScrollingModule, NgTemplateOutlet],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

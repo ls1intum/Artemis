@@ -17,11 +17,11 @@ Use the Angular CLI or another build that runs Angular's linker. Zone.js is not 
 Server-side rendering is not supported.
 
 In `angular.json`, add the stylesheet to `projects.<app>.architect.build.options.styles`, after
-existing global styles. Keep your application's current `.css` or `.scss` path:
+existing global styles. Keep your application's current `.css` or `.css` path:
 
 ```json
 {
-    "styles": ["src/styles.scss", "@tumaet/ui-angular/styles.css"]
+    "styles": ["src/styles.css", "@tumaet/ui-angular/styles.css"]
 }
 ```
 

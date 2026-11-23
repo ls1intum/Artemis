@@ -10,7 +10,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
     selector: 'jhi-leaderboard',
     imports: [FontAwesomeModule, ProfilePictureComponent, TranslateDirective, TumAetUiTableDirective, TumAetUiTableLayoutComponent],
     templateUrl: './leaderboard.component.html',
-    styleUrl: './leaderboard.component.scss',
+    styleUrl: './leaderboard.component.css',
 })
 export class LeaderboardComponent {
     currentUserId = input<number>();

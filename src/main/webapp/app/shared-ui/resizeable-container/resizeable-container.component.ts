@@ -18,7 +18,7 @@ import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive
 @Component({
     selector: 'jhi-resizeable-container',
     templateUrl: './resizeable-container.component.html',
-    styleUrls: ['./resizeable-container.component.scss'],
+    styleUrls: ['./resizeable-container.component.css'],
     imports: [FaIconComponent, NgTemplateOutlet, ResizableDirective],
     host: {
         class: 'grow',

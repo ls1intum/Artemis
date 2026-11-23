@@ -872,7 +872,7 @@ one in percentages or with its own pixel value.
   `<div class="draggable-left panel-divider-x"></div>`. The class sets the width, the small grip and a grab area that reaches
   4px into the following panel.
 - A `tumaet-ui-splitter` sets `[gutterSize]="6"` and draws the grip from two 2px bars with a 1px gap, as
-  `resizable-panels.component.scss` does.
+  `resizable-panels.component.css` does.
 
 ### Data tables
 
@@ -917,35 +917,69 @@ describes the anatomy, sizes and responsive behaviour; the Storybook story **Dat
 
 ### Styling
 
-Use Tailwind for application layout and TUM AET UI for reusable component styling. Add component SCSS
-only when semantic utilities and component contracts cannot express a genuinely component-specific
-rule. Keep global styles in `src/main/webapp/content/scss` limited to what a component stylesheet cannot
-hold. The theme files hold the colours and import `_application.scss`, which lists the global files:
+Use Tailwind for application layout and TUM AET UI for reusable component styling. Add a component
+stylesheet only when semantic utilities and component contracts cannot express a genuinely
+component-specific rule. Keep global styles in `src/main/webapp/content/css` limited to what a
+component stylesheet cannot hold. `application.css` is the entry of the global styles: it declares the
+order of the cascade layers and imports the other files in the order in which they are loaded:
 
 | File                     | Content                                                                                         |
 | ------------------------ | ----------------------------------------------------------------------------------------------- |
-| `_base.scss`             | Element defaults (body, headings, links, tables, form controls) in the cascade layer `base`     |
-| `_third-party.scss`      | Styles of libraries (KaTeX, emoji picker, Angular CDK) and rules that adapt them and TUM AET UI |
-| `_rendered-content.scss` | Content inserted with `innerHTML`: rendered markdown, answers of Iris, search results           |
-| `_layout.scss`           | Layout shared by the shells and their pages: dividers, title bars, scroll region, page sidebar  |
-| `_shared-classes.scss`   | Small classes that several features share and that have no Tailwind utility                     |
-| `_print.scss`            | Print styles                                                                                    |
+| `themes/light.css`       | The colour and size tokens of the application with their values in the light theme              |
+| `themes/dark.css`        | The values of the tokens that differ in the dark theme                                          |
+| `base.css`               | Element defaults (body, headings, links, tables, form controls) in the cascade layer `base`     |
+| `third-party.css`        | Rules that adapt libraries (Angular CDK, Apollon) and TUM AET UI to Artemis                     |
+| `github-alerts.css`      | Markdown alerts and callouts                                                                    |
+| `rendered-content.css`   | Content inserted with `innerHTML`: rendered markdown, answers of Iris, search results           |
+| `layout.css`             | Layout shared by the shells and their pages: dividers, title bars, scroll region, page sidebar  |
+| `shared-classes.css`     | Small classes that several features share and that have no Tailwind utility                     |
+| `print.css`              | Print styles                                                                                    |
+| `themes/dark-rules.css`  | The few rules of the dark theme that a token cannot express                                     |
 
 Do not add a rule to these files for a single feature; put it in the stylesheet of the component.
 
-When an application component needs owned class selectors, use [BEM](https://getbem.com/introduction):
+#### Stylesheets are plain CSS
 
-```scss
+The client has no Sass. Every stylesheet is a `.css` file that the browser could read as it is; the build
+only resolves `@import`, runs Tailwind and adds the vendor prefixes that the supported browsers need.
+
+- **Do not nest style rules.** Write the full selector of every rule. The view encapsulation of Angular
+  scopes a nested selector differently from the flat one: `:host { &.open { … } }` matches nothing, and
+  `.a { &:hover { … } }` gets a higher specificity than `.a:hover`. Stylelint rejects nested rules
+  (`max-nesting-depth`). A rule inside `@media`, `@container`, `@supports` or `@layer` is not nesting.
+- **Use the tokens of the theme for values.** A colour is `var(--primary)`, not a copy of its value; derive a
+  shade with `color-mix(in srgb, var(--primary) 20%, transparent)`. A value that a stylesheet uses several
+  times is a custom property on `:host`, or on the outermost element of a component without view encapsulation.
+- **Share rules with `styleUrls`, not with `@import`.** Components that share rules list the shared stylesheet
+  before their own: `styleUrls: ['../build-jobs-table.css', './finished-jobs-table.component.css']`.
+  Rules that several features need and that no component owns belong in `layout.css` or `shared-classes.css`,
+  behind a class, as the controls of a title bar are (`title-bar-controls`).
+- **Do not write vendor prefixes** next to the standard property. The build adds `-webkit-user-select` and the
+  like from the list of supported browsers in `.browserslistrc`. A property that exists only with a prefix
+  (`-webkit-line-clamp`) stays as it is.
+- **Remove a rule together with the last element that uses its class.** A stylesheet without rules is deleted
+  with its `styleUrl`.
+
+When an application component needs owned class selectors, use [BEM](https://getbem.com/introduction)
+names and write each of them in full:
+
+```css
 .my-container {
-    // container styles
-    &__content {
-        // content styles
-        &--modifier {
-            // modifier styles
-        }
-    }
+    /* container styles */
+}
+
+.my-container__content {
+    /* content styles */
+}
+
+.my-container__content--modifier {
+    /* modifier styles */
 }
 ```
+
+A change to a global stylesheet, to the tokens or to many component stylesheets can alter pages that the
+author does not look at. Compare the client before and after such a change with the scripts in
+[Compare the styles of two clients](/developer/client-style-comparison).
 
 **Bootstrap, ng-bootstrap and PrimeNG are removed.** Their class names, components and tokens no
 longer do anything, and lint rejects them. When one turns up in a review or in an old branch, this is
@@ -1025,7 +1059,7 @@ is added to that list, to the Stylelint overrides and to the `@source` list of `
 </div>
 ```
 
-**Tailwind setup.** `tailwind.css` does not import Tailwind's Preflight; `content/scss/_base.scss` holds the element
+**Tailwind setup.** `tailwind.css` does not import Tailwind's Preflight; `content/css/base.css` holds the element
 defaults instead. Tailwind is imported with `source(none)` and an explicit `@source` list, one line per module, so it
 emits utilities only for the listed folders. After a change to that list, restart the dev server: `ng serve` does not
 reliably pick up changes of `tailwind.css`.
@@ -1033,21 +1067,21 @@ reliably pick up changes of `tailwind.css`.
 | Symptom                              | Cause                                                                          | Fix                                               |
 | ------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------- |
 | A utility has no effect in the build | the folder is missing from `@source`                                           | add it to the `@source` list of `tailwind.css`    |
-| A utility has no effect on one tag   | an unlayered rule (component SCSS, global layout rule) or an inline style wins | write the important modifier, for example `mt-6!` |
+| A utility has no effect on one tag   | an unlayered rule (component stylesheet, global layout rule) or an inline style wins | write the important modifier, for example `mt-6!` |
 | Spacing is about a third too small   | a Bootstrap step was copied instead of converted by size                       | see [Spacing utilities](#spacing-utilities)       |
 
 #### Spacing utilities
 
-Tailwind emits its utilities into the cascade layer `utilities`. The element defaults of `_base.scss` are in the layer
+Tailwind emits its utilities into the cascade layer `utilities`. The element defaults of `base.css` are in the layer
 `base`, which comes first, so a utility overrides them: `<p class="mt-6">` has a top margin and `<h2 class="text-xl">`
 the size of the utility. The styles of TUM AET UI are in the layer `tumaet-ui`, between `base` and `utilities`, so a
 utility on a TUM AET UI component overrides the component as well: `<button tumAetUiButton class="p-0">` has no
-padding. A declaration outside a layer still wins over every utility. That is the SCSS of the application components
-and the global rules of `_layout.scss` and the other files listed above, for example the compact controls of a title
+padding. A declaration outside a layer still wins over every utility. That is the stylesheets of the application components
+and the global rules of `layout.css` and the other files listed above, for example the compact controls of a title
 bar. Where a utility has to override such a rule, write Tailwind's important modifier: `mb-6!`. The same holds for a
 style that a component sets inline: `tumaet-ui-table-layout` sets its maximum height this way, so `max-h-72!` needs the
-modifier. The order of the layers is declared in `_base.scss` and, for the time before the stylesheet has loaded, in the
-boot styles of `index.html`; keep the two lists equal. The end of `_base.scss` keeps a few element rules outside the layers on purpose,
+modifier. The order of the layers is declared in `application.css` and, for the time before the stylesheet has loaded, in the
+boot styles of `index.html`; keep the two lists equal. The end of `base.css` keeps a few element rules outside the layers on purpose,
 for example: links are not underlined except on hover, and the text colour of a `textarea`.
 
 `rounded` and the shadows `shadow-sm`, `shadow` and `shadow-lg` have the values Artemis has always rendered, not

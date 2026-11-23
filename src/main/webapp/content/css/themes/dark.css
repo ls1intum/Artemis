@@ -1,0 +1,411 @@
+/*
+ * The dark theme: only the tokens whose value differs from the light theme (light.css).
+ * The theme service sets `data-theme='dark'` on the root element.
+ */
+
+:root[data-theme='dark'] {
+    /*
+     * === BOOTSTRAP ===
+     * Mostly stolen from Bootswatch Darkly 5.1.3
+     */
+
+    --gray-200: #ebebeb;
+    --gray-600: #888;
+    --gray-700: #444;
+    --gray-800: #22272e; /* cool-slate (h213 s12). Unifies the dark backdrop + --gray-800-derived surfaces with the navbar/module temperature */
+    --gray-900: #1f242b; /* cool-slate (h213). Keeps gray-900-derived dark surfaces (text-exercise editor, Monaco suggest widget, link-item) on the slate family */
+    --pink: #e83e8c;
+    --red: #e74c3c;
+    --yellow: #f39c12;
+    --green: #00bc8c;
+
+    /*
+     * On dark theme the primary is already on a dark surface; keep a slightly darker shade so that
+     * the on-brand buttons remain crisp (contrast is driven mostly by lightness of --white here).
+     */
+    --primary-dark: #2d6cae;
+    --light: var(--gray-500);
+    --dark: var(--gray-800);
+    --body-color: var(--gray-100);
+    --body-secondary-color: var(--secondary);
+    --body-bg: var(--gray-800);
+    --input-color: var(--gray-800);
+    --artemis-control-background: #101214;
+    --artemis-control-border: #434c56;
+    --artemis-control-border-hover: #5e6a78;
+    --artemis-control-color: #fff;
+    --artemis-control-muted: #7e8b9a;
+    --artemis-control-disabled-background: #343a42;
+    --artemis-control-disabled-color: #7e8b9a;
+
+    /* The pink of this theme (Bootswatch Darkly) is only 4.6:1 on the slate surface and drops below AA once a message on it is highlighted. */
+    --code-color: #ed6ca7;
+    --link-color: #3e8acc;
+
+    /* Border */
+    --border-color: #38404b;
+
+    /*
+     * Base for dark spaces — cool-slate (h214 s14 l10).
+     * This is the de-facto app-wide dark surface token (--module-bg, --card-bg, panels). Keeping it on the
+     * same hue as the navbar (--artemis-dark #353d47, h213) and varying only lightness via the lighten()
+     * steps below makes every dark surface one cohesive cool-slate family.
+     */
+    --neutral-dark: #16191d;
+    --neutral-dark-l-5: #21262c;
+    --neutral-dark-l-10: #2c323a;
+    --neutral-dark-l-15: #373f49;
+    --neutral-dark-l-20: #424b57;
+
+    /* Footer */
+    --footer-bg: var(--neutral-dark);
+
+    /* Module and Navigationbar */
+    --module-bg: var(--neutral-dark);
+    --link-item-bg: var(--gray-900);
+    --sidebar-card-selected-bg: #353d47;
+
+    /* Cards */
+    --card-bg: var(--neutral-dark);
+    --card-cap-bg: var(--neutral-dark-l-5);
+    --navbar-breadcrumb-color: var(--primary);
+
+    /* === END BOOTSTRAP === */
+
+    /* Navigation Tab Bar */
+    --tab-bar-color: var(--gray-500);
+    --tab-bar-color-hover: var(--gray-300);
+    --tab-bar-color-active: #8fbbe1;
+
+    /* Backgrounds */
+    --brighter-body-bg: #38404b;
+    --hover-slightly-darker-body-bg: rgba(255, 255, 255, 0.1);
+    --dropdown-bg: var(--neutral-dark);
+    --popover-bg: var(--neutral-dark-l-5);
+
+    /* Borders */
+    --theme-switch-box-border-color: var(--neutral-dark-l-15);
+    --form-control-focus-background: rgba(255, 255, 255, 0.1);
+    --form-control-color: var(--white);
+    --editor-outline-background: transparent;
+    --negative-color: var(--danger);
+    --negative-background: var(--gray-800);
+    --positive-color: var(--success);
+    --positive-background: var(--gray-800);
+    --artemis-pre-color: white;
+    --artemis-pre-background: var(--neutral-dark-l-10);
+    --artemis-pre-border: var(--neutral-dark-l-20);
+    --unreferenced-feedback-background: rgba(255, 255, 255, 0.05);
+    --markdown-preview-blockquote: #8b949e; /* #6a737d (the light theme value) is only 3.7:1 on the slate surface */
+
+    /* Markdown Editor */
+    --md-wrapper-color: white;
+    --md-tab-list-bg: var(--body-bg);
+    --md-editor-background: var(--body-bg);
+    --md-resize-icon-color: var(--gray-400);
+
+    /* Communication */
+    --communication-conversation-sidebar-muted: var(--gray-600);
+    --communication-gray: #8b949e; /* text and icon grey of a message; #6a737d (the light theme value) is only 3.7:1 on the slate surface */
+    --communication-light-blue: #0e252d;
+    --reaction-button-default-color: var(--gray-800);
+    --reaction-button-hover-color: var(--gray-700);
+    --reaction-button-reacted-color: var(--gray-800);
+    --reaction-button-emoji-count-color: var(--gray-200);
+    --communication-selection-option-background: var(--neutral-dark);
+
+    /*
+     * The highlight of a hovered message is a hint on the message surface, not a second surface. The +5% lightness step of the
+     * card and popover ramp lifts it far enough to push secondary text, links and inline code below AA (4.3:1 to 4.0:1).
+     */
+    --communication-selection-option-hover-background: #1a1e23;
+
+    /* Component: plagiarism-case-instructor-detail-view.component.css */
+    --plagiarism-verdict-disabled-overlay-color: rgba(0, 0, 0, 0.9);
+
+    /* Component: course-exercise-card */
+    --course-exercise-card-background: var(--neutral-dark);
+
+    /* Component: color selector */
+    --color-selector-background: var(--neutral-dark-l-10);
+    --color-selector-border: var(--neutral-dark-l-20);
+    --color-selector-box-shadow: rgba(0, 0, 0, 0.3);
+
+    /* Student statistics: exercise-type palette for the Artemis score ring. */
+    --statistics-score-quiz-color: #53cedf;
+    --statistics-score-programming-color: #ffac68;
+    --statistics-score-modeling-color: #9c7bff;
+    --statistics-score-text-color: #f17ac0;
+    --statistics-score-file-upload-color: #57c8b4;
+
+    /* Component: Statistics average score graph */
+    --stat-av-sc-legend-background: var(--brighter-body-bg);
+
+    /* These are from graph colors */
+    --stat-av-sc-legend-critical: rgb(204, 0, 0);
+    --stat-av-sc-legend-median: rgb(127, 127, 127);
+    --stat-av-sc-legend-best: rgb(40, 164, 40);
+    --pdf-preview-enlarged-container-overlay: rgba(0, 0, 0, 0.8);
+    --pdf-preview-date-box-title-background: var(--gray-800);
+
+    /* Programming Exercise Update */
+    --update-programming-exercise-plan-preview-box-background: rgba(255, 255, 255, 0.05);
+
+    /* Form Footer */
+    --update-footer-background: var(--neutral-dark);
+    --edit-quiz-footer-background: var(--body-bg);
+    --quiz-exercise-detail-max-score-background: var(--artemis-dark);
+    --quiz-exercise-detail-max-score-color: white;
+
+    /* Quiz Exercises */
+    --quiz-drag-items-background: var(--neutral-dark-l-5);
+    --quiz-drag-item-background: var(--neutral-dark-l-10);
+    --quiz-drag-item-border: var(--neutral-dark-l-20);
+    --quiz-drag-item-color: white;
+    --quiz-participation-footer-background: var(--brighter-body-bg);
+    --quiz-participation-footer-dnd-background: #296773;
+    --quiz-participation-footer-mc-background: #9d8a1e;
+    --quiz-participation-footer-sa-background: #703e20;
+    --quiz-participation-footer-content-quiz-score-incorrect-color: white;
+    --quiz-participation-btn-circle-light-border-color: transparent;
+    --quiz-participation-question-disabled-color: var(--gray-500);
+    --quiz-participation-question-disabled-background: rgba(255, 255, 255, 0.1);
+    --quiz-question-background: var(--neutral-dark);
+    --quiz-question-border-color: var(--neutral-dark-l-20);
+    --quiz-visual-answer-correct-container-hover-color: #89ffe1;
+    --quiz-visual-answer-wrong-container-hover-color: #fdf3f2;
+    --dnd-question-dnd-items-drag-items-background: var(--neutral-dark-l-10);
+    --sa-question-container-input-background: rgba(255, 255, 255, 0.05);
+    --sa-question-container-input-border: rgba(255, 255, 255, 0.1);
+    --sa-question-input-invalid-background: var(--gray-700);
+    --sa-question-input-wrong-background: var(--danger);
+    --sa-question-input-correct-background: var(--warning);
+    --sa-question-input-completely-correct-background: var(--success);
+    --mc-question-answer-option-border: var(--neutral-dark-l-10);
+    --mc-question-answer-option-hover-background: var(--neutral-dark-l-5);
+
+    /* SGI */
+
+    --sgi-assessment-layout-zero-background: #362203;
+    --sgi-assessment-layout-positive-background: #00231a;
+    --sgi-assessment-layout-negative-background: #370b07;
+
+    /* Code Editor */
+    --code-editor-panel-header-background: var(--neutral-dark);
+    --code-editor-panel-header-border: var(--neutral-dark-l-10);
+    --code-editor-file-browser-header-background: var(--neutral-dark-l-5);
+    --code-editor-file-browser-header-border: var(--neutral-dark-l-10);
+    --code-editor-file-browser-tree-hover: var(--neutral-dark-l-5);
+    --code-editor-file-browser-input-background: black;
+    --code-editor-file-browser-input-color: white;
+
+    /* Monaco editor */
+    --monaco-suggest-widget-background: var(--gray-900);
+    --monaco-editor-build-annotation-error-background: rgba(231, 76, 60, 0.2);
+    --monaco-editor-build-annotation-warning-background: rgba(243, 156, 18, 0.2);
+    --monaco-editor-build-annotation-outdated-background: rgba(173, 181, 189, 0.1);
+    --monaco-editor-diff-line-highlight: rgba(0, 150, 112, 0.2);
+    --monaco-editor-add-feedback-button-background: var(--gray-600);
+    --monaco-editor-add-feedback-button-hover-background: #a2a2a2;
+    --monaco-editor-add-feedback-button-text: var(--gray-300);
+    --overview-light-border-color: #2d333d;
+    --overview-light-background-color: rgba(45, 51, 61, 0.3);
+    --overview-blue-border-color: #225582;
+    --overview-tab-active-border-color: var(--body-color);
+
+    /* Lecture Unit */
+    --lecture-unit-card-body-background: var(--neutral-dark);
+
+    /* Text Editor */
+    --text-editor-background: var(--gray-900);
+    --text-editor-focus-background: var(--gray-900);
+    --text-editor-color: var(--white);
+    --text-editor-border-color: var(--gray-800);
+
+    /* Exam (Manage) */
+
+    /* Team Participation Table */
+    --team-participation-table-current-exercise-bg: #142928;
+    --team-participation-table-current-exercise-text: var(--success);
+
+    /* Team Short Name */
+    --team-short-name-background: rgba(62, 138, 204, 0.15);
+    --team-short-name-color: var(--blue);
+
+    /* Exam */
+    --exam-navigation-bar-background-color: var(--neutral-dark-l-5);
+    --exam-navigation-bar-exercise-index-color: white;
+    --exam-timer-label-color: white;
+    --exam-participation-footer-disconnected-background: #6c4e05;
+
+    /* Assessment */
+    --textblock-assessment-span-hover-background: var(--gray-700);
+    --textblock-assessment-text-feedback-positive-background: var(--gray-800);
+    --textblock-assessment-text-feedback-negative-background: var(--gray-800);
+    --textblock-assessment-text-feedback-neutral-color: var(--gray-100);
+    --textblock-assessment-text-feedback-neutral-background: var(--gray-800);
+    --textblock-assessment-text-feedback-neutral-active-decoration: var(--gray-100);
+    --textblock-assessment-text-feedback-highlighted-color: var(--gray-100);
+    --textblock-assessment-text-feedback-highlighted-background: darkblue;
+    --textblock-assessment-textblock-feedback-editor-active-border: var(--gray-600);
+    --manual-text-selection-span-hover-background-color: var(--gray-700);
+
+    /* Alerts */
+    --artemis-alert-info-color: #36cee6;
+    --artemis-alert-info-background: #062a30;
+    --artemis-alert-info-border: #148ea1;
+    --artemis-alert-danger-color: #ef8b80;
+    --artemis-alert-danger-background: #370b07;
+    --artemis-alert-danger-border: #e43725;
+    --artemis-alert-warning-color: var(--warning);
+    --artemis-alert-warning-background: #362203;
+    --artemis-alert-warning-border: #e08e0b;
+    --artemis-alert-success-color: var(--success);
+    --artemis-alert-success-background: #00231a;
+    --artemis-alert-success-border: #00a379;
+    --artemis-alert-neutral-color: white;
+    --artemis-alert-neutral-background: #555;
+    --close-circle-color: white;
+    --close-circle-background: var(--gray-900);
+    --close-circle-border: rgba(206, 212, 218, 0.8);
+    --close-circle-opacity: 0.9;
+}
+
+:root[data-theme='dark'],
+[data-theme='dark'] .artemis-apollon-theme {
+    /* Apollon */
+    --apollon-primary: var(--link-color);
+    --apollon-background-variant: var(--neutral-dark-l-10);
+    --apollon-gray: var(--neutral-dark-l-5);
+    --apollon-gray-variant: var(--gray-100);
+    --apollon-grid: var(--neutral-dark-l-10);
+    --apollon-danger: var(--artemis-alert-danger-color);
+    --apollon-surface: var(--neutral-dark-l-5);
+    --apollon-surface-sunken: #121417;
+    --apollon-border-subtle: var(--neutral-dark-l-10);
+    --apollon-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.55);
+    --apollon-hover-neutral: rgba(248, 249, 250, 0.1);
+    --apollon-swatch-slate: var(--gray-400);
+    --apollon-chrome-radius-sm: 0.15rem;
+    --apollon-chrome-radius-md: 0.25rem;
+    --apollon-chrome-radius-lg: 0.5rem;
+}
+
+:root[data-theme='dark'] {
+    /* Feedback Suggestions (Athena) */
+    --feedback-suggestions-primary: rgb(181, 78, 254);
+
+    /* Graph Colors */
+    --graph-light-grey: rgb(182, 182, 182);
+    --graph-grey: rgb(150, 150, 150);
+    --graph-dark-blue: rgb(159, 186, 248);
+    --graph-blue: rgb(93, 138, 201);
+    --graph-light-blue: rgb(58, 96, 141);
+    --graph-green: rgb(40, 164, 40);
+    --graph-red: rgb(204, 0, 0);
+    --graph-yellow: rgb(230, 174, 6);
+    --graph-black: rgb(229, 229, 229);
+
+    /* User-Management */
+    --user-management-background-color: rgba(255, 255, 255, 0.02);
+    --competency-rings-red-bg: rgba(231, 76, 60, 0.2);
+    --competency-rings-green-bg: rgba(0, 188, 140, 0.2);
+
+    /*
+     * Iris Chatbot
+     * Iris Theme Variables
+     */
+    --iris-primary-background: var(--neutral-dark);
+    --iris-secondary-background: var(--neutral-dark-l-5);
+    --iris-tertiary-background: var(--neutral-dark-l-10);
+    --iris-accent-background: var(--neutral-dark-l-15);
+    --iris-label-color: var(--gray-500);
+    --iris-table-header-background: var(--neutral-dark-l-5);
+    --iris-blue-background: color-mix(in srgb, var(--primary) 10%, var(--black));
+
+    /* Iris Communication */
+    --tutor-suggestion-background: var(--gray-700);
+
+    /* Calendar */
+    --pastel-cyan: #63d9ec;
+    --pastel-blue: #5296d1;
+    --pastel-teal: #52e3b8;
+    --calendar-loading-overlay-background: rgba(22, 25, 29, 0.5);
+
+    /* Video Player */
+    --transcript-active-bg: #225582;
+    --transcript-active-text: var(--white);
+    --calendar-day-badge-selected: var(--gray-700);
+    --league-badge-diamond-color: hsl(195deg, 60%, 60%);
+    --league-badge-master-color: hsl(270deg, 60%, 60%);
+    --progress-bar-background: var(--gray-700);
+
+    /* LLM Selection Popup */
+    --ai-modal-card-bg: var(--neutral-dark-l-10);
+    --ai-modal-cloud-bg: linear-gradient(135deg, #5a6986 0%, #667189 100%);
+    --ai-modal-cloud-bg-hover: linear-gradient(135deg, #5e6989 0%, #7483b5 100%);
+    --ai-modal-local-bg: linear-gradient(135deg, #46536b 0%, #5c667c 100%);
+    --ai-modal-local-bg-hover: linear-gradient(135deg, #5c667c 0%, #6a7494 100%);
+    --ai-modal-no-ai-bg: linear-gradient(135deg, #425265 0%, #4d5669 100%);
+    --ai-modal-no-ai-bg-hover: linear-gradient(135deg, #4d5669 0%, #4b5269 100%);
+    --ai-modal-icons-bg: rgba(255, 255, 255, 0.05);
+    --ai-modal-description-color: var(--gray-300);
+    --ai-modal-subtitle: var(--white);
+
+    /*
+     * Exercise variant AI wizard
+     * Stronger than the light theme's 0.1: a 10%-black shadow is invisible against the dark surfaces,
+     * which flattens the option-card hover lift and the icon tiles.
+     */
+    --variant-wizard-elevation-shadow: rgba(0, 0, 0, 0.45);
+
+    /* Global search modal - Artemis blue tones for dark mode */
+    --global-search-modal-bg: #1a2a3a;
+    --global-search-modal-footer-bg: rgba(62, 138, 204, 0.06);
+    --global-search-item-hover-bg: rgba(62, 138, 204, 0.12);
+    --global-search-kbd-bg: #243447;
+    --global-search-kbd-border: rgba(90, 158, 214, 0.3);
+    --global-search-icon-bg: rgba(62, 138, 204, 0.15);
+    --global-search-border-color: rgba(90, 158, 214, 0.15);
+
+    /*
+     * Tailwind colour utilities
+     * The values behind `text-primary`, `text-color`, `text-muted-color`, `border-surface`, `bg-highlight` and the
+     * neutral `surface` ramp (`bg-surface-100`); tailwind.css maps the utilities to these variables.
+     */
+    --ui-primary: #65a1d6;
+    --ui-primary-contrast: #16191d;
+    --ui-text-color: #fff;
+    --ui-text-muted-color: #7e8b9a;
+    --ui-border-color: #262b31;
+    --ui-highlight-background: rgba(101, 161, 214, 0.16);
+    --ui-highlight-color: rgba(255, 255, 255, 0.87);
+    --ui-emphasis-background: #262b31;
+    --ui-emphasis-color: #fff;
+    --ui-surface-50: #f4f5f6;
+    --ui-surface-100: #e2e5e9;
+    --ui-surface-200: #c6cbd2;
+    --ui-surface-300: #a4acb7;
+    --ui-surface-400: #7e8b9a;
+    --ui-surface-500: #5e6a78;
+    --ui-surface-600: #434c56;
+    --ui-surface-700: #343a42;
+    --ui-surface-800: #262b31;
+    --ui-surface-900: #16191d;
+    --ui-surface-950: #101214;
+
+    /* Tables of rendered markdown */
+    --markdown-table-color: var(--body-color);
+    --markdown-table-border-color: var(--gray-700);
+
+    /*
+     * Course overview cards. Backgrounds sit on the cool slate surface ramp so they stay
+     * consistent with the dark chrome (keep these on the slate steps, not off-ramp neutral greys).
+     */
+    --onboarding-page-bg: #16191d;
+    --onboarding-content-bg: #16191d;
+    --onboarding-input-bg: #101214;
+    --overview-card-bg: #16191d;
+    --overview-card-nested-bg: #343a42;
+    --overview-card-hover-bg: #434c56;
+}

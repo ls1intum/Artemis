@@ -28,7 +28,7 @@ const DEFAULT_COLORS = [
 @Component({
     selector: 'jhi-color-selector',
     templateUrl: './color-selector.component.html',
-    styleUrls: ['./color-selector.scss'],
+    styleUrls: ['./color-selector.css'],
 })
 export class ColorSelectorComponent implements OnInit {
     private elementRef = inject(ElementRef);

@@ -26,7 +26,7 @@ type TaskComparator = (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase,
 @Component({
     selector: 'jhi-programming-exercise-grading-tasks-table',
     templateUrl: './programming-exercise-grading-tasks-table.component.html',
-    styleUrls: ['./programming-exercise-grading-tasks-table.scss'],
+    styleUrls: ['./programming-exercise-grading-tasks-table.css'],
     imports: [
         TumAetUiButtonDirective,
         TranslateDirective,

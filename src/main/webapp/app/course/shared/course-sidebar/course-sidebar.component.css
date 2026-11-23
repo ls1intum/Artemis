@@ -1,0 +1,219 @@
+/* Sidebar Button Transition Variables */
+.sidebar-container {
+    width: var(--sidebar-nav-width);
+}
+
+.sidebar-container.collapsed {
+    width: var(--sidebar-nav-width-collapsed) !important;
+}
+
+/*
+ * Displays a red circle at the top right corner of the tab item.
+ * Used to indicate that there are new messages.
+ */
+.collapsed.newMessage::after,
+.newMessage::after {
+    position: relative;
+    content: '';
+    border-radius: 50%;
+    background-color: var(--danger);
+    padding-left: 0.7rem;
+    top: -5px;
+    right: 0;
+    transform: translate(50%, -50%);
+    font-size: xx-small;
+}
+
+.newMessage::after {
+    margin-left: 0.25rem;
+}
+
+.collapsed.newMessage::after {
+    margin-left: -0.9rem;
+}
+
+/*
+ * Open, the toggle is pushed towards the right edge; collapsed it centres in the rail like every icon above it, so
+ * the nudge and the padding that align it in the open state have to go.
+ */
+.double-arrow.menu-collapsed {
+    transform: none;
+    padding-right: 0;
+    margin-top: 0.5rem;
+}
+
+.double-arrow {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    cursor: pointer;
+}
+
+.menu-collapsed.double-arrow {
+    justify-content: center;
+}
+
+.double-arrow-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 22px;
+    transition: transform 0.3s ease;
+    transform: rotate(180deg);
+}
+
+.menu-collapsed .double-arrow-icon {
+    transform: rotate(0deg);
+
+    /* The 40px minimum is what reserves room for the label beside it when open; collapsed it just offsets the pair. */
+    justify-content: center;
+    min-width: 0;
+}
+
+.me-negative {
+    margin-right: -10px;
+}
+
+@media screen and (max-width: 960px) {
+    .sidebar-container {
+        width: var(--sidebar-nav-width-collapsed) !important;
+    }
+
+    .nav-link-sidebar.collapsed {
+        display: flex;
+        justify-content: center;
+    }
+
+    .auto-collapse {
+        display: none;
+    }
+
+    .newMessage::after {
+        margin-left: -0.9rem;
+    }
+}
+
+/*
+ * A sidebar entry: a link, the toggle of the "more" menu, or an action. The colour set here replaces the link colour
+ * that `base.css` gives to every anchor.
+ */
+.nav-link-sidebar {
+    display: block;
+    white-space: nowrap;
+    color: var(--body-color);
+    text-decoration: none;
+    transition: color 0.15s ease-in-out;
+}
+
+.nav-link-sidebar:focus-visible {
+    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline-offset: -2px;
+}
+
+/* The toggle of the "more" menu is a button that looks like the links around it. */
+button.nav-link-sidebar {
+    width: 100%;
+    border: 0;
+    background: none;
+    font: inherit;
+    text-align: start;
+}
+
+/* Hidden wins over the display the rules of this file give an entry. */
+.collapsed .nav-link-sidebar {
+    display: flex;
+    justify-content: center;
+}
+
+/* Hidden wins over the display the rules of this file give an entry, so this comes after them. */
+.nav-link-sidebar[hidden],
+.collapsed .nav-link-sidebar[hidden] {
+    display: none;
+}
+
+.nav-link-sidebar:hover,
+.nav-link-sidebar.active {
+    width: 100%;
+    background-color: var(--link-item-bg);
+    color: var(--link-item-color);
+}
+
+/*
+ * Overrides the hover underline from `base.css`, because only the label span below should be underlined — the
+ * anchor also holds the icon, so an underline on it draws a second line under the label and a dash beside the icon.
+ * See the comment in `base.css` for why the exclusions belong in one `:not()` argument list.
+ */
+a:not(.tumaet-ui-btn, .tab-link):hover {
+    text-decoration: none !important;
+}
+
+.nav-link-sidebar:hover span {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+}
+
+.three-dots {
+    cursor: pointer;
+}
+
+.three-dots:hover {
+    color: var(--link-item-color);
+}
+
+/*
+ * The "more" menu renders in an overlay, but its template belongs to this component, so these rules reach it. Entries
+ * look like the sidebar entries they stand in for, on a surface as narrow as the sidebar.
+ */
+.more-menu {
+    min-width: 10rem;
+    max-width: var(--sidebar-nav-width);
+    padding: 0;
+    background-color: var(--dropdown-bg);
+    border-color: var(--border-color);
+    border-radius: 0.25rem;
+    box-shadow: none;
+}
+
+.more-menu.fixedContentSize {
+    max-height: 171px; /* To avoid cut offs in the menu content (4 items) */
+}
+
+.more-menu .nav-link-sidebar {
+    display: flex;
+    justify-content: flex-start;
+    gap: 0;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.more-menu .more-menu-action {
+    padding: 0.5rem 1rem;
+}
+
+@media print {
+    :host {
+        display: none; /* Hide the sidebar when printing */
+    }
+}
+
+/*
+ * An image icon (SidebarItem.iconImage), sized like a fixed-width fa-icon and painted in the current text colour
+ * through its alpha channel, so it follows hover, active and dark-theme colours like the icons around it.
+ */
+.sidebar-icon-image {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 1.25em;
+    height: 1.25em;
+    vertical-align: -0.125em;
+    background-color: currentcolor;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+}
+
+.sidebar-collapsed-course-overview {
+    display: none;
+}

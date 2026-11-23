@@ -55,7 +55,7 @@ type ToolbarItem = { id: string; kind: 'format'; tag: FormatTag; icon: IconDefin
 @Component({
     selector: 'jhi-message-editor',
     templateUrl: './message-editor.component.html',
-    styleUrl: './message-editor.component.scss',
+    styleUrl: './message-editor.component.css',
     imports: [
         ArtemisTranslatePipe,
         FaIconComponent,

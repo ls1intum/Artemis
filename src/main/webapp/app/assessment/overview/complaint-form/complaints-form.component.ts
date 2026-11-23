@@ -16,7 +16,7 @@ import { TextareaCounterComponent } from 'app/shared-ui/textarea/textarea-counte
 @Component({
     selector: 'jhi-complaint-form',
     templateUrl: './complaints-form.component.html',
-    styleUrls: ['../complaints.scss'],
+    styleUrls: ['../complaints.css'],
     imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, TextareaCounterComponent, TumAetUiButtonDirective, TumAetUiInputDirective],
     // A custom element is inline by default; its block child then splits it, so the width and margins of the card would not apply.
     host: { class: 'block' },
