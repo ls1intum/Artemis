@@ -38,10 +38,7 @@ import { lastValueFrom } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { providePrimeNG } from 'primeng/config';
-import { DialogService } from 'primeng/dynamicdialog';
 import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
-import { AuraArtemis } from './primeng-artemis-theme';
 import { RoleAwarePreloadingStrategy } from 'app/core/config/role-aware-preloading.strategy';
 
 export const appConfig: ApplicationConfig = {
@@ -49,10 +46,10 @@ export const appConfig: ApplicationConfig = {
         ArtemisTranslatePipe,
         provideArtemisTumAetUiTranslator(),
         // Keep CDK overlays inside the active browser-fullscreen element. This is required by the modeling editor and
-        // also applies to every other CDK overlay in the application; PrimeNG overlays use a separate container.
+        // also applies to every other CDK overlay in the application.
         { provide: OverlayContainer, useClass: FullscreenOverlayContainer },
-        DialogService,
-        // CDK 22 puts overlays in the browser top layer, where no z-index can lift a body-appended PrimeNG panel above them.
+        // CDK 22 would render overlays in the browser top layer. Artemis keeps them in the overlay container, where
+        // z-index orders them against the rest of the page.
         { provide: OVERLAY_DEFAULT_CONFIG, useValue: { usePopover: false } },
         // NB: `BrowserModule` is intentionally NOT listed here. Standalone Angular apps bootstrap
         // via `bootstrapApplication` and don't need `BrowserModule`; its providers (notably
@@ -183,13 +180,5 @@ export const appConfig: ApplicationConfig = {
             useClass: ArtemisVersionInterceptor,
             multi: true,
         },
-        providePrimeNG({
-            theme: {
-                preset: AuraArtemis,
-                options: {
-                    darkModeSelector: '[prime-ng-use-dark-theme="true"]',
-                },
-            },
-        }),
     ],
 };

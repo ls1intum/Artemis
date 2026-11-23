@@ -5,6 +5,5 @@ import { NotificationSettingsComponent } from 'app/course/overview/course-settin
     selector: 'jhi-course-settings',
     imports: [NotificationSettingsComponent],
     templateUrl: './course-settings.component.html',
-    styleUrl: './course-settings.component.scss',
 })
 export class CourseSettingsComponent {}

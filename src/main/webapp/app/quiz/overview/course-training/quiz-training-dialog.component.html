@@ -4,25 +4,29 @@
         <p jhiTranslate="artemisApp.quizTraining.howItWorks.content"></p>
         <h6 jhiTranslate="artemisApp.quizTraining.leagues.title"></h6>
         <p jhiTranslate="artemisApp.quizTraining.leagues.content"></p>
-        <table class="w-40">
+        <table class="w-2/5!">
             @for (l of leagues; track l.league) {
                 <tr>
                     <td class="pb-2 align-middle">
                         <jhi-league-icon [class]="'small-icon'" [league]="l.league" />
                     </td>
                     <th scope="row" class="pb-2 ps-2 align-middle font-normal" [jhiTranslate]="l.translationKey"></th>
-                    <td class="pb-2 text-start align-middle">{{ l.range }}</td>
+                    <td class="pb-2 text-left align-middle">{{ l.range }}</td>
                 </tr>
             }
         </table>
-        <p class="mt-4!" jhiTranslate="artemisApp.quizTraining.scoring.content"></p>
+        <p class="mt-4" jhiTranslate="artemisApp.quizTraining.scoring.content"></p>
 
         @if (showLeaderboardSettings()) {
-            <h6 class="mb-4!" jhiTranslate="artemisApp.quizTraining.leaderboardSetting">Leaderboard Settings</h6>
+            <h6 class="mb-4" jhiTranslate="artemisApp.quizTraining.leaderboardSetting">Leaderboard Settings</h6>
             <div class="leaderboard-toggle flex items-center">
                 <tumaet-ui-toggle-switch inputId="quiz-training-show-in-leaderboard" [(ngModel)]="showInLeaderboard" />
                 <label class="m-0 ms-2" for="quiz-training-show-in-leaderboard" jhiTranslate="artemisApp.quizTraining.showInLeaderboard"></label>
-                <span class="ms-2" [tumAetUiTooltip]="'artemisApp.userSettings.quizTrainingSettings.leaderboardVisibilityInfo' | artemisTranslate" tumAetUiTooltipPlacement="right">
+                <span
+                    class="ms-2!"
+                    [tumAetUiTooltip]="'artemisApp.userSettings.quizTrainingSettings.leaderboardVisibilityInfo' | artemisTranslate"
+                    tumAetUiTooltipPlacement="right"
+                >
                     <fa-icon [icon]="faQuestionCircle" />
                 </span>
             </div>

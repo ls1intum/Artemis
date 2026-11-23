@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { DynamicDialogConfig } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig } from '@tumaet/ui-angular';
 
 export interface DialogData {
     slideToReference: string;
@@ -8,5 +8,5 @@ export interface DialogData {
 
 @Component({ templateUrl: './enlarge-slide-image.component.html' })
 export class EnlargeSlideImageComponent {
-    data = inject<DynamicDialogConfig<DialogData>>(DynamicDialogConfig).data!;
+    data = inject(TumAetUiDialogConfig<DialogData>).data!;
 }

@@ -1,11 +1,15 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +45,7 @@ import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
  * A lecture unit is groundable when it carries text this service can read: the content of a text unit, the text of an attachment
  * video unit's stored PDF, or that unit's transcript. {@link #extractText} returns that text cut to
  * {@code artemis.hyperion.quiz-pool.max-material-characters}; a PDF that cannot be read contributes nothing and is logged.
+ * {@link #fingerprintOf} identifies the material's version without reading the PDF, so a later build can tell whether it changed.
  */
 @Service
 @Lazy
@@ -177,6 +182,36 @@ public class HyperionQuizQuestionPoolMaterialService {
 
     private static String transcriptText(LectureTranscription transcription) {
         return transcription.getSegments().stream().map(LectureTranscriptionSegment::text).filter(text -> text != null && !text.isBlank()).collect(Collectors.joining("\n"));
+    }
+
+    /**
+     * Fingerprints the unit's material: the hash of a text unit's content; for an attachment video unit the attachment's version,
+     * upload date and link together with the hash of its transcript. Two builds that see the same fingerprint see the same material.
+     *
+     * @param unit the unit
+     * @return the fingerprint, at most 135 characters
+     */
+    public String fingerprintOf(LectureUnit unit) {
+        if (unit instanceof TextUnit textUnit) {
+            return "text:" + sha256(textUnit.getContent() == null ? "" : textUnit.getContent());
+        }
+        if (unit instanceof AttachmentVideoUnit videoUnit) {
+            Attachment attachment = videoUnit.getAttachment();
+            String attachmentPart = attachment == null ? "none"
+                    : attachment.getVersion() + ":" + (attachment.getUploadDate() == null ? "" : attachment.getUploadDate().toInstant()) + ":" + attachment.getLink();
+            String transcriptPart = transcript(videoUnit).map(transcription -> sha256(transcriptText(transcription))).orElse("none");
+            return "video:" + sha256(attachmentPart) + ":" + transcriptPart;
+        }
+        return "none";
+    }
+
+    private static String sha256(String text) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(text.getBytes(StandardCharsets.UTF_8)));
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is not available", e);
+        }
     }
 
     /**

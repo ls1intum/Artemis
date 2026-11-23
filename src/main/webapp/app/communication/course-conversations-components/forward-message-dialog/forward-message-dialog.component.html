@@ -1,25 +1,27 @@
-<div class="modal-header">
-    <h4 class="modal-title" jhiTranslate="artemisApp.communication.forward.forwardMessage"></h4>
-    <button type="button" class="btn-close" aria-label="Close" (click)="dialogRef.destroy()"></button>
-</div>
-<div class="modal-body">
-    <div class="autocomplete-container mt-1 mb-2 form-group">
-        <div class="tag-input-container form-control">
+<div class="flex flex-col gap-4">
+    <div class="flex items-start justify-between gap-2 pt-4">
+        <h4 class="m-0 text-xl font-medium" jhiTranslate="artemisApp.communication.forward.forwardMessage">Forward this message</h4>
+        <button
+            type="button"
+            tumAetUiButton
+            severity="secondary"
+            variant="text"
+            rounded
+            class="size-8 shrink-0 p-0!"
+            data-testid="dialog-close-button"
+            [attr.aria-label]="'entity.action.close' | artemisTranslate"
+            (click)="dialogRef.dismiss()"
+        >
+            <fa-icon [icon]="faXmark" />
+        </button>
+    </div>
+    <div class="relative">
+        <div class="tag-input-container flex min-h-10 cursor-text flex-wrap items-center gap-1 rounded-md px-3 py-1.5">
             @for (channel of selectedChannels; track channel) {
-                <ng-container>
-                    <span class="badge bg-primary me-1">
-                        {{ channel.name }}
-                        <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChannel(channel)"></button>
-                    </span>
-                </ng-container>
+                <tumaet-ui-chip size="small" removable [label]="channel.name" (removed)="removeSelectedChannel(channel)" />
             }
             @for (user of selectedUsers; track user) {
-                <ng-container>
-                    <span class="badge bg-secondary me-1">
-                        {{ user.name }}
-                        <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedUser(user)"></button>
-                    </span>
-                </ng-container>
+                <tumaet-ui-chip size="small" removable [label]="user.name" (removed)="removeSelectedUser(user)" />
             }
             <input
                 [attr.aria-label]="'artemisApp.communication.forward.searchBar' | artemisTranslate"
@@ -27,6 +29,7 @@
                 type="text"
                 role="combobox"
                 aria-autocomplete="list"
+                cdkFocusInitial
                 [attr.aria-expanded]="destinationListVisible()"
                 [attr.aria-controls]="destinationListVisible() ? destinationListboxId : null"
                 [attr.aria-activedescendant]="activeDestinationId()"
@@ -42,7 +45,7 @@
         </div>
         @if (destinationListVisible()) {
             <ul
-                class="list-group autocomplete-dropdown"
+                class="autocomplete-dropdown m-0 list-none rounded-md border border-(--border-color) bg-surface-raised p-0 shadow-md"
                 role="listbox"
                 [id]="destinationListboxId"
                 [attr.aria-label]="'artemisApp.communication.forward.searchBar' | artemisTranslate"
@@ -50,13 +53,12 @@
                 @for (option of filteredOptions(); track option; let i = $index) {
                     <li
                         #destinationOption
-                        class="list-group-item list-group-item-action"
+                        class="destination-option cursor-pointer px-3 py-2 font-medium"
                         role="option"
                         [id]="destinationListboxId + '-option-' + i"
                         [attr.aria-selected]="activeDestinationIndex() === i"
                         [class.active]="activeDestinationIndex() === i"
                         data-testid="forward-destination-option"
-                        [ngClass]="{ 'channel-option': option.type === 'channel', 'chat-option': option.type === 'chat' }"
                         (mousedown)="selectOption(option)"
                     >
                         @if (option.type === 'channel') {
@@ -65,6 +67,7 @@
                             <span class="me-2"><fa-icon [fixedWidth]="true" [icon]="faPeopleGroup" /></span>
                         } @else {
                             <jhi-profile-picture
+                                class="me-[0.2rem]"
                                 imageSizeInRem="1.5"
                                 fontSizeInRem="0.6"
                                 imageId="user-profile-picture"
@@ -72,7 +75,6 @@
                                 [authorId]="option.id"
                                 [authorName]="option.name"
                                 [imageUrl]="addPublicFilePrefix(option.img)"
-                                style="margin-right: 0.2rem"
                             />
                         }
                         {{ option.name }}
@@ -82,12 +84,14 @@
         }
     </div>
 
-    <h5 jhiTranslate="artemisApp.communication.forward.addMessage"></h5>
-    @if (courseId(); as currentCourseId) {
-        <jhi-message-editor [content]="newPost.content ?? ''" (contentChange)="updateField($event)" [courseId]="currentCourseId" [suppressNewlineOnEnter]="false" />
-    }
-    <div class="col mt-1 text-end">
-        <p class="small my-0 ms-2" [class.text-state-danger]="!isMessageValid()">{{ newPost.content?.length ?? 0 }} / {{ maxContentLength }}</p>
+    <div class="flex flex-col gap-2">
+        <h5 class="m-0 text-base font-medium" jhiTranslate="artemisApp.communication.forward.addMessage">Add a message</h5>
+        @if (courseId(); as currentCourseId) {
+            <jhi-message-editor [content]="newPost.content ?? ''" (contentChange)="updateField($event)" [courseId]="currentCourseId" [suppressNewlineOnEnter]="false" />
+        }
+        <div class="text-right">
+            <p class="m-0 text-sm" [class.text-state-danger]="!isMessageValid()">{{ newPost.content?.length ?? 0 }} / {{ maxContentLength }}</p>
+        </div>
     </div>
 
     @if (postToForward()) {
@@ -96,6 +100,7 @@
             <div class="forwarded-message-content">
                 <div class="forwarded-message-header">
                     <jhi-profile-picture
+                        class="me-[0.2rem]"
                         imageSizeInRem="1.5"
                         fontSizeInRem="0.6"
                         imageId="user-profile-picture"
@@ -103,11 +108,10 @@
                         [authorId]="postToForward()?.author?.id"
                         [authorName]="postToForward()?.author?.name"
                         [imageUrl]="addPublicFilePrefix(postToForward()?.author?.imageUrl)"
-                        style="margin-right: 0.2rem"
                     />
                     <span class="forwarded-message-author">{{ postToForward()?.author?.name }}</span>
                 </div>
-                <div class="forwarded-message-body" [ngClass]="{ expanded: showFullForwardedMessage() }" id="messageContent" #messageContent>
+                <div class="forwarded-message-body" [class.expanded]="showFullForwardedMessage()" id="messageContent" #messageContent>
                     <jhi-posting-content
                         [previewMode]="false"
                         [content]="postToForward()?.content!"
@@ -119,7 +123,7 @@
                     />
                 </div>
                 @if (isContentLong()) {
-                    <button type="button" class="btn btn-link p-0" style="width: fit-content" (click)="toggleShowFullForwardedMessage()">
+                    <button type="button" tumAetUiButton variant="text" size="small" class="w-fit" (click)="toggleShowFullForwardedMessage()">
                         {{
                             showFullForwardedMessage()
                                 ? ('artemisApp.communication.forward.showLess' | artemisTranslate)
@@ -130,14 +134,15 @@
             </div>
         </div>
     }
-</div>
-<div class="modal-footer">
-    <button
-        type="button"
-        class="btn btn-primary"
-        data-testid="forward-send-button"
-        [disabled]="!hasSelections() || !isMessageValid()"
-        (click)="send()"
-        jhiTranslate="artemisApp.conversationsLayout.sendMessage"
-    ></button>
+
+    <div class="flex justify-end">
+        <button
+            type="button"
+            tumAetUiButton
+            data-testid="forward-send-button"
+            [disabled]="!hasSelections() || !isMessageValid()"
+            (click)="send()"
+            jhiTranslate="artemisApp.conversationsLayout.sendMessage"
+        ></button>
+    </div>
 </div>

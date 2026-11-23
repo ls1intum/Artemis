@@ -1,9 +1,13 @@
-.card {
+.course-card {
     // best possible height to fit header, information, and manage course button: 80px header + 200px card content
     height: 283px;
 
     // ensure the card takes the full width of its column in the container
     width: 100%;
+    overflow-wrap: break-word;
+    color: var(--body-color);
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border-color);
     transition: transform 0.2s linear;
 
     &:hover {
@@ -11,7 +15,7 @@
         background-color: var(--hover-slightly-darker-body-bg);
     }
 
-    .card-body {
+    .course-card-body {
         .information-box-wrapper {
             height: 135px;
         }
@@ -28,17 +32,21 @@
             .chart-level {
                 z-index: 2;
                 cursor: pointer;
-
-                // Sized here rather than with a utility class: this template is outside Tailwind's @source
-                // list, so a `h-40 w-40` on the element is never generated and the ring collapses to whatever
-                // the flex row leaves it.
                 width: 160px;
                 height: 160px;
             }
         }
 
-        .btn-wrapper {
-            // needed, otherwise button won't work due to stretched-link class
+        // the link that makes the whole card clickable
+        .cover-link::after {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            content: '';
+        }
+
+        .raised-link {
+            // needed, otherwise the link won't work because the cover link lies on top of it
             z-index: 2;
             position: relative;
         }
@@ -51,20 +59,4 @@
             text-overflow: ellipsis;
         }
     }
-}
-
-.container {
-    max-width: unset;
-}
-
-jhi-image {
-    ::ng-deep img {
-        border-radius: 50%;
-        height: 65px;
-        width: auto;
-    }
-}
-
-.card-header-title {
-    max-width: 280px;
 }

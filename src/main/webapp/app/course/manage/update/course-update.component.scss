@@ -33,7 +33,7 @@ $course-form-inset: 1rem;
     padding: $course-form-inset;
 }
 
-/* Bootstrap's heading styles are unlayered and would win over Tailwind utilities, so the size is set here. */
+/* The title is sized here, with the rest of the header. */
 .course-create-title {
     margin: 0;
     font-size: 1.25rem;

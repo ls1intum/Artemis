@@ -24,7 +24,8 @@ public final class HttpRequestUtils {
     /**
      * Extract the client address from the Http Request as String.
      * <p>
-     * This is the address that the servlet container resolved for the request. Request headers are never read here: with {@code server.forward-headers-strategy: native},
+     * This is the address that the servlet container resolved for the request. Request headers are never read here: with
+     * {@code server.request.header.forwarded.strategy: web-server},
      * Tomcat takes forwarding headers into account only for the proxies in {@code server.tomcat.remoteip.internal-proxies} and
      * otherwise keeps the address of the connection, so the value cannot be chosen by the sender of a request.
      *
@@ -63,7 +64,7 @@ public final class HttpRequestUtils {
      * header rather than replacing it.
      * <p>
      * <b>This is a second filter, not the only one, and it cannot repair the first.</b> Artemis runs with
-     * {@code server.forward-headers-strategy: native}, so Tomcat's {@code RemoteIpValve} has already rewritten
+     * {@code server.request.header.forwarded.strategy: web-server}, so Tomcat's {@code RemoteIpValve} has already rewritten
      * {@code getRemoteAddr()} from {@code X-Forwarded-For} before this method sees anything, for any peer matching
      * {@code server.tomcat.remoteip.internal-proxies} - which defaults to the private ranges and loopback. The starting
      * point is therefore not the TCP peer but Tomcat's conclusion about it, and a caller connecting <em>from</em> one

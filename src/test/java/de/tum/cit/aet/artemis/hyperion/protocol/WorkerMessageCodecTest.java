@@ -26,20 +26,31 @@ class WorkerMessageCodecTest {
 
     private final WorkerMessageCodecApi wire = new WorkerMessageCodecApi();
 
+    @Test
+    void usdUsageRoundTripPreservesTheProviderAmount() {
+        var update = new ProviderUsageUpdate(ProviderUsageUpdate.Kind.RESPONSE, 1, new ProviderUsageUpdate.Call("model", "request", 10, 2, null, 0d));
+
+        assertThat(codec.decodePayload(codec.encodePayload(update), ProviderUsageUpdate.class)).isEqualTo(update);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "\"bad\"", "{}", "[]", "-1" })
+    void malformedOptionalCostDoesNotRejectAWorkerUsageEvent(String malformed) {
+        var update = codec.decodePayload("""
+                {"kind":"RESPONSE","count":1,"call":{"model":"model","inputTokens":10,"outputTokens":2,
+                "totalCostUsd":%s}}
+                """.formatted(malformed), ProviderUsageUpdate.class);
+
+        assertThat(update.call().inputTokens()).isEqualTo(10);
+        assertThat(update.call().totalCostUsd()).isNull();
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "modelCalls", "toolCalls", "agentTurns", "attempts", "inputTokens", "outputTokens", "cachedInputTokens" })
     void rejectsNegativeUsageCountersOnTheWire(String field) {
         var json = completeUsageEvent();
         ((ObjectNode) json.at("/payload/usage")).put(field, -1);
         assertThatThrownBy(() -> decodeEvent(packPayload(json))).isInstanceOf(RuntimeException.class).hasMessageContaining("usage");
-    }
-
-    @ParameterizedTest
-    @ValueSource(doubles = { -0.01, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY })
-    void rejectsInvalidUsageCostOnTheWire(double cost) {
-        var json = completeUsageEvent();
-        ((ObjectNode) json.at("/payload/usage")).put("estimatedCostEur", cost);
-        assertThatThrownBy(() -> decodeEvent(packPayload(json))).isInstanceOf(RuntimeException.class);
     }
 
     @Test
@@ -60,7 +71,7 @@ class WorkerMessageCodecTest {
 
     private ObjectNode completeUsageEvent() {
         var id = identity();
-        var usage = new GenerationUsage(0, 0, 0, 0, 10, 0, 0, true, 0, true, List.of(), List.of(), true);
+        var usage = new GenerationUsage(0, 0, 0, 0, 10, 0, 0, true, List.of(), List.of(), true);
         var output = new GenerationOutput(new WorkspaceSnapshot(List.of()), new VerificationResult(false, false, false, 0, List.of()), null, new SpecFidelityReport(List.of()),
                 "RUN_FAILED", usage, GenerationOutput.AccountingState.COMPLETE, "standard");
         var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.FINISHED, id, false, IMAGE, null,
@@ -75,7 +86,7 @@ class WorkerMessageCodecTest {
         var identity = identity();
         var seed = new WorkspaceSnapshot(List.of(new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { -1, 0, 42 }, false),
                 new WorkspaceFile("template/src/.gitkeep", new byte[0], false), new WorkspaceFile("tests/gradlew", new byte[] { 35, 33 }, true)));
-        var parameters = new GenerationParameters(effortProfile, 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS");
+        var parameters = new GenerationParameters(effortProfile, 10, 100_000, Duration.ofMinutes(5), 128_000, "testpreset", true, "CONTINUOUS", 0.5);
         var assignment = new GenerationAssignment(identity, new ExerciseBrief("Stack", "stack", "de.example", null, "Create a stack", ExerciseBrief.Mode.GENERATE), parameters,
                 seed, Instant.parse("2026-09-08T12:00:00Z"), IMAGE, new GradingContext(true, java.util.Set.of("testPush"), java.util.Set.of("testPush")));
         var command = new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.START, identity, assignment);

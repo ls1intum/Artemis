@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProgrammingExerciseTimelineComponent } from './programming-exercise-timeline.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ConfirmationService } from 'primeng/api';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { BehaviorSubject } from 'rxjs';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -68,6 +68,15 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
             exampleSolutionPublicationDate,
         } as ProgrammingExercise;
     });
+
+    /** Finds a button of the open confirmation dialog by its label; the translate mock renders the key. */
+    function findConfirmDialogButton(label: string): HTMLButtonElement {
+        const button = Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find((candidate) => candidate.textContent?.trim() === label);
+        if (!button) {
+            throw new Error(`No button labelled "${label}" found`);
+        }
+        return button;
+    }
 
     function createTestComponent() {
         fixture = TestBed.createComponent(ProgrammingExerciseTimelineComponent);
@@ -734,6 +743,8 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         }
         createTestComponent();
         fixture.componentRef.setInput('isExamMode', examMode);
+        // The parent form derives this flag from the exercise or, for an exam exercise, from the exam.
+        fixture.componentRef.setInput('exampleSolutionPublicationDateSet', true);
         fixture.detectChanges();
 
         expect(fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution').disabled).toBe(false);
@@ -756,7 +767,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
         const confirmSpy = vi.spyOn(confirmationService, 'confirm');
 
         const checkbox = fixture.debugElement.nativeElement.querySelector('#setTestCaseVisibilityToAfterDueDate-checkbox');
@@ -779,12 +790,14 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const rejectButton = document.querySelector('.p-confirmdialog-reject-button') as HTMLButtonElement;
+        const rejectButton = findConfirmDialogButton('entity.action.cancel');
         rejectButton.click();
         fixture.detectChanges();
         await fixture.whenStable();
 
         expect(component.setTestCaseVisibilityToAfterDueDate()).toBe(true);
+        // The native input has to agree with the drawn box, or the next click would check it again without a prompt.
+        expect(checkbox.checked).toBe(true);
     });
 
     it('should uncheck when the user confirms the setTestCaseVisibilityToAfterDueDate confirmation dialog', async () => {
@@ -800,7 +813,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const acceptButton = document.querySelector('.p-confirmdialog-accept-button') as HTMLButtonElement;
+        const acceptButton = findConfirmDialogButton('entity.action.confirm');
         acceptButton.click();
         fixture.detectChanges();
         await fixture.whenStable();
@@ -816,7 +829,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
         const confirmSpy = vi.spyOn(confirmationService, 'confirm');
 
         const checkbox = fixture.debugElement.nativeElement.querySelector('#setTestCaseVisibilityToAfterDueDate-checkbox');
