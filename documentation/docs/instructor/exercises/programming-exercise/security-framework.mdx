@@ -266,7 +266,8 @@ configuration of every policy, for example from `JAVA_USING_GRADLE_ARCHUNIT_AND_
 `JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION`, and saves this in one commit. Every test runs considerably slower, so check
 your strict timeouts afterwards. The option is available only when no policy is shown read-only and the build file of
 the tests repository attaches the Ares agent to every test run, as the Java templates do: in Gradle in the configuration
-of the test tasks, in Maven in each Surefire execution that starts its own test JVM.
+of the test tasks, as a JVM argument or in the list that `asArguments()` of an argument provider returns, in Maven in
+each Surefire execution that starts its own test JVM.
 
 ### Edit a Policy
 

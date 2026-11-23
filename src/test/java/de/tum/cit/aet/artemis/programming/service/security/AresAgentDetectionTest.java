@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-class BuildFileSyntaxTest {
+class AresAgentDetectionTest {
 
     private static final Path TEMPLATES = Path.of("src", "main", "resources", "templates", "java");
 
@@ -51,8 +51,8 @@ class BuildFileSyntaxTest {
         String gradle = Files.readString(TEMPLATES.resolve("test/gradle/projectTemplate/build.gradle"), StandardCharsets.UTF_8);
         String maven = Files.readString(TEMPLATES.resolve("test/maven/projectTemplate/pom.xml"), StandardCharsets.UTF_8);
 
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(gradle))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, maven))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(gradle))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, maven))).isTrue();
     }
 
     @ParameterizedTest
@@ -60,10 +60,10 @@ class BuildFileSyntaxTest {
     void theAgentOfTheArgLineDoesNotCountIfSurefireRunsTheTestsInTheMavenJvm(String forkCount) throws IOException {
         String maven = Files.readString(TEMPLATES.resolve(MAVEN_TEMPLATE), StandardCharsets.UTF_8);
 
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(inSurefireConfiguration(maven, forkCount)))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(inSurefireConfiguration(maven, forkCount)))).isFalse();
         // A forked test JVM gets the argLine, and a forkCount in a comment has no effect.
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(inSurefireConfiguration(maven, "<forkCount>1</forkCount>")))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(inSurefireConfiguration(maven, "<!-- " + forkCount + " -->")))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(inSurefireConfiguration(maven, "<forkCount>1</forkCount>")))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(inSurefireConfiguration(maven, "<!-- " + forkCount + " -->")))).isTrue();
     }
 
     @Test
@@ -72,7 +72,7 @@ class BuildFileSyntaxTest {
         String inProcess = maven.replaceFirst("<properties>", "<properties><forkCount>0</forkCount>");
 
         assertThat(inProcess).isNotEqualTo(maven);
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(inProcess))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(inProcess))).isFalse();
     }
 
     @Test
@@ -83,8 +83,8 @@ class BuildFileSyntaxTest {
                 + "<properties><forkCount>0</forkCount></properties></profile></profiles></project>";
 
         // The build of the templates names no profile, so a profile without an activation does not apply to it.
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", optIn)))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault)))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(maven.replace("</project>", optIn)))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault)))).isFalse();
     }
 
     @ParameterizedTest
@@ -95,8 +95,8 @@ class BuildFileSyntaxTest {
         assertThat(added).isNotEqualTo(gradle);
 
         // add of the dependency handler adds the same dependency to the same configuration, which the test JVM takes its agent from.
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(added))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(added.replace("configurations.aresAgent", "configurations.otherAgent")))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(added))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(added.replace("configurations.aresAgent", "configurations.otherAgent")))).isFalse();
     }
 
     @Test
@@ -107,15 +107,15 @@ class BuildFileSyntaxTest {
         String continued = variable.replace("def agentJar = configurations.agent", "def agentJar =\n        configurations.agent");
         String chained = variable.replace("def agentJar = configurations.agent", "def agentJar = files()\nagentJar\n    .from(configurations.agent)");
 
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(direct))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(direct.replace("${configurations.agent.singleFile}", "${ configurations.agent.singleFile }")))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(variable))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(continued))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(direct))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(direct.replace("${configurations.agent.singleFile}", "${ configurations.agent.singleFile }")))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(variable))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(continued))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(
                 gradle(direct.replace("agent \"de.tum.cit.ase:ares:${aresVersion}:agent\"", "agent(\n        \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n    )")))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(chained))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(chained))).isTrue();
         // The declaration may follow the brace that opens the block of dependencies on the same line.
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(direct.replace("dependencies {\n    agent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}",
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(direct.replace("dependencies {\n    agent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}",
                 "dependencies { agent(\"de.tum.cit.ase:ares:${aresVersion}:agent\") }")))).isTrue();
     }
 
@@ -129,16 +129,16 @@ class BuildFileSyntaxTest {
         String readProperty = unusedProperty.replace("@{argLine}", "@{argLine} ${aresAgentArgument}");
 
         // A property that no argLine reads does not reach the test JVM.
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(unusedProperty))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(readProperty))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(unusedProperty))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(readProperty))).isTrue();
         // The argLine property reaches the test JVM through @{argLine} in the configuration, and not without it.
         String argLineProperty = withoutAgent.replace("<argLine></argLine>", "<argLine>" + agent + "</argLine>");
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(argLineProperty))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(argLineProperty.replace("@{argLine}", "")))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(argLineProperty))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(argLineProperty.replace("@{argLine}", "")))).isFalse();
         // The argLine of another plugin, e.g. Failsafe, does not reach the tests Surefire runs.
         String failsafe = "<artifactId>maven-failsafe-plugin</artifactId><configuration><argLine>" + agent + "</argLine></configuration></plugin><plugin>";
         String failsafeAgent = withoutAgent.replace("<artifactId>maven-surefire-plugin</artifactId>", failsafe + "<artifactId>maven-surefire-plugin</artifactId>");
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(failsafeAgent))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(failsafeAgent))).isFalse();
     }
 
     @Test
@@ -151,12 +151,12 @@ class BuildFileSyntaxTest {
         String byDefault = optIn.replace("<id>other</id>", "<id>other</id><activation><activeByDefault>true</activeByDefault></activation>");
 
         // An argLine that is neither the configuration of Surefire nor its property reaches no test JVM.
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(withoutAgent.replace("</project>", "<reporting>" + argLine + "</reporting></project>")))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(withoutAgent.replace("</project>", "<reporting>" + argLine + "</reporting></project>")))).isFalse();
         // A profile the build does not name changes nothing, but one that can apply on its own may replace the argLine of the POM.
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", optIn)))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault)))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(maven.replace("</project>", optIn)))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault)))).isFalse();
         // An empty argLine of such a profile replaces the one of the POM as well.
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault.replace(argLine, "<argLine/>"))))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault.replace(argLine, "<argLine/>"))))).isFalse();
     }
 
     @Test
@@ -169,16 +169,17 @@ class BuildFileSyntaxTest {
         String byDefault = optIn.replace("<id>other</id>", "<id>other</id><activation><activeByDefault>true</activeByDefault></activation>");
 
         assertThat(maven).isNotEqualTo(template).contains("<aresAgent>");
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", optIn)))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault)))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(maven))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(maven.replace("</project>", optIn)))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault)))).isFalse();
         // A property that the argLine does not read changes nothing.
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault.replace("aresAgent>", "otherAgent>"))))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault.replace("aresAgent>", "otherAgent>"))))).isTrue();
         // Maven reads an empty element as an empty value, which replaces the agent as well, also with attributes like combine.self.
         String emptied = byDefault.replace("<aresAgent>-javaagent:other-agent.jar</aresAgent>", "<aresAgent/>");
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", emptied)))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault.replace("<aresAgent>", "<aresAgent combine.self=\"override\">"))))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("<aresAgent>" + agent + "</aresAgent>", "<aresAgent/>")))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(maven.replace("</project>", emptied)))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(maven.replace("</project>", byDefault.replace("<aresAgent>", "<aresAgent combine.self=\"override\">")))))
+                .isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(maven.replace("<aresAgent>" + agent + "</aresAgent>", "<aresAgent/>")))).isFalse();
     }
 
     @Test
@@ -189,13 +190,13 @@ class BuildFileSyntaxTest {
         String listed = direct + "test {\n    jvmArgs += [\n        '--enable-preview',\n        \"-javaagent:${configurations.agent.singleFile}\"\n    ]\n}\n";
 
         assertThat(notRegistered).isNotEqualTo(gradle);
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(notRegistered))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(notRegistered))).isFalse();
         // The registration may put its argument on the next line.
-        assertThat(BuildFileSyntax
+        assertThat(AresAgentDetection
                 .attachesAresAgent(gradle(gradle.replace("jvmArgumentProviders.add(aresJvmArguments)", "jvmArgumentProviders.add(\n        aresJvmArguments\n    )")))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(direct + "def agentArgument = \"-javaagent:${configurations.agent.singleFile}\"\n"))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(direct + "def agentArgument = \"-javaagent:${configurations.agent.singleFile}\"\n"))).isFalse();
         // The arguments of jvmArgs may continue on the following lines.
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(listed))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(listed))).isTrue();
     }
 
     @Test
@@ -205,14 +206,14 @@ class BuildFileSyntaxTest {
                 + "<build><plugins><plugin><artifactId>maven-surefire-plugin</artifactId><configuration>"
                 + "<argLine>-javaagent:${settings.localRepository}/de/tum/cit/ase/ares/${ares.version}/ares-${ares.version}-agent.jar</argLine>"
                 + "</configuration></plugin></plugins></build>";
-        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, mavenWithAgent))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, mavenWithAgent))).isTrue();
 
         // The Gradle build pins the Ares version, so it is the build that runs; the pom.xml next to it does not attach the agent to the tests.
-        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(gradleWithoutAgent, mavenWithAgent))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles("repositories { mavenCentral() }\n", mavenWithAgent))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(gradleWithoutAgent, mavenWithAgent))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles("repositories { mavenCentral() }\n", mavenWithAgent))).isTrue();
         // Pins of different versions leave the version unknown, but the Gradle build that sets them still runs instead of the pom.xml.
         String conflictingPins = "project.ext.aresVersion = '2.3.0'\nproject.ext.aresVersion = '2.2.1'\n";
-        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(conflictingPins, mavenWithAgent))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(conflictingPins, mavenWithAgent))).isFalse();
     }
 
     @Test
@@ -221,8 +222,8 @@ class BuildFileSyntaxTest {
                 + "test {\n    jvmArgs \"-javaagent:${configurations.testAgent.singleFile}\"\n}\n";
 
         // The test JVM takes the agent from testAgent, the second configuration that declares the Ares agent.
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(twoConfigurations))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(twoConfigurations.replace("configurations.testAgent", "configurations.otherAgent")))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(twoConfigurations))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(twoConfigurations.replace("configurations.testAgent", "configurations.otherAgent")))).isFalse();
     }
 
     @Test
@@ -245,18 +246,18 @@ class BuildFileSyntaxTest {
         String aresNamedVariable = "dependencies {\n    aresAgent \"de.tum.cit.ase:ares:1.0:agent\"\n}\ndef aresAgentJar = files('jacocoagent.jar')\n"
                 + "test {\n    jvmArgs \"-javaagent:${aresAgentJar.singleFile}\"\n}\n";
 
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(jacoco))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(declaredButNotAttached))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(otherInterpolatedAgent))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(sameLine))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(sharedConfiguration))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(reassigned))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(sameLineDependencies))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(aresNamedVariable))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(aresNamedVariable.replace("${aresAgentJar.singleFile}", "${ aresAgentJar.singleFile }")))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(mentionedOnly))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(commented))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, null))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(jacoco))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(declaredButNotAttached))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(otherInterpolatedAgent))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(sameLine))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(sharedConfiguration))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(reassigned))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(sameLineDependencies))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(aresNamedVariable))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(aresNamedVariable.replace("${aresAgentJar.singleFile}", "${ aresAgentJar.singleFile }")))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(mentionedOnly))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(commented))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(new SecurityPolicyRepositoryFiles.BuildFiles(null, null))).isFalse();
     }
 
     @Test
@@ -268,28 +269,61 @@ class BuildFileSyntaxTest {
         int agentEnd = maven.indexOf("</artifactItem>", agentStart) + "</artifactItem>".length();
         String commentedArtifact = maven.substring(0, agentStart) + "<!-- " + maven.substring(agentStart, agentEnd) + " -->" + maven.substring(agentEnd);
 
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(maven))).isTrue();
         // Only the agent of the argLine of Surefire differs from the template.
         assertThat(jacocoOnly).isNotEqualTo(maven);
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(jacocoOnly))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(jacocoOnly))).isFalse();
         // Only the Ares agent artifact is commented out; the argLine of Surefire still names the agent.
         assertThat(agentStart).isNotNegative();
         assertThat(commentedArtifact).contains("\"-javaagent:${project.build.directory}/ares/ares-agent.jar\"");
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(commentedArtifact))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(commentedArtifact))).isFalse();
     }
 
     @Test
     void onlyTheFileNameOfTheAgentJarNamesAres() throws IOException {
         String dependency = "dependencies {\n    aresAgent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\n";
 
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-javaagent:/opt/ares/ares-2.2.1-agent.jar'\n}\n"))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-javaagent:/opt/agents/ares-agent.jar=mode=strict'\n}\n"))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-javaagent:/opt/ares/ares-2.2.1-agent.jar'\n}\n"))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-javaagent:/opt/agents/ares-agent.jar=mode=strict'\n}\n"))).isTrue();
         // The options after = and the directories of the JAR do not name the agent.
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-javaagent:jacocoagent.jar=destfile=ares.exec'\n}\n"))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-javaagent:/shares/jacocoagent.jar'\n}\n"))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-javaagent:/opt/shares-agent.jar'\n}\n"))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-javaagent:jacocoagent.jar=destfile=ares.exec'\n}\n"))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-javaagent:/shares/jacocoagent.jar'\n}\n"))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-javaagent:/opt/shares-agent.jar'\n}\n"))).isFalse();
         String maven = mavenTemplate();
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(maven.replace("/ares/ares-agent.jar", "/ares/jacocoagent.jar=destfile=ares.exec")))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(maven.replace("/ares/ares-agent.jar", "/ares/jacocoagent.jar=destfile=ares.exec")))).isFalse();
+    }
+
+    @Test
+    void onlyAnArgumentThatStartsWithTheAgentOptionPassesAnAgent() throws IOException {
+        String dependency = "dependencies {\n    aresAgent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\n";
+
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-Xmx1g -javaagent:ares-agent.jar'\n}\n"))).isTrue();
+        // An option within the value of another one only sets a system property and loads no agent.
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-Dagent.example=-javaagent:ares-agent.jar'\n}\n"))).isFalse();
+        String maven = mavenTemplate();
+        String inValue = maven.replace("\"-javaagent:${project.build.directory}/ares/ares-agent.jar\"",
+                "\"-Dagent.example=-javaagent:${project.build.directory}/ares/ares-agent.jar\"");
+        assertThat(inValue).isNotEqualTo(maven);
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(inValue))).isFalse();
+    }
+
+    @Test
+    void anArgumentProviderPassesOnlyTheArgumentsItsAsArgumentsReturns() throws IOException {
+        String gradle = Files.readString(TEMPLATES.resolve("test/gradle/projectTemplate/build.gradle"), StandardCharsets.UTF_8);
+        String arguments = "Iterable<String> asArguments() {\n        [\n                \"-javaagent:${agentJar.singleFile.absolutePath}\".toString(),";
+        assertThat(gradle).contains(arguments);
+
+        assertThat(
+                AresAgentDetection.attachesAresAgent(gradle(gradle.replace("Iterable<String> asArguments() {\n        [", "Iterable<String> asArguments() {\n        return ["))))
+                .isTrue();
+        // The agent in another method of the provider is not passed to the tests.
+        String otherMethod = gradle.replace(arguments,
+                "String example() {\n        \"-javaagent:${agentJar.singleFile.absolutePath}\".toString()\n    }\n\n    Iterable<String> asArguments() {\n        [");
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(otherMethod))).isFalse();
+        // Artemis cannot tell which value asArguments returns when it computes it in several statements, or when the provider inherits it.
+        String severalStatements = gradle.replace("Iterable<String> asArguments() {\n        [", "Iterable<String> asArguments() {\n        def unused = []\n        [");
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(severalStatements))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(gradle.replace("Iterable<String> asArguments()", "Iterable<String> otherArguments()")))).isFalse();
     }
 
     @Test
@@ -297,24 +331,23 @@ class BuildFileSyntaxTest {
         String dependency = "dependencies {\n    aresAgent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\n";
         String call = "jvmArgs '-javaagent:ares-agent.jar'";
 
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    " + call + "\n}\n"))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "tasks.named('test') {\n    " + call + "\n}\n"))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "tasks.withType(Test)\n    .configureEach {\n    " + call + "\n}\n"))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test." + call + "\n"))).isTrue();
-        assertThat(
-                BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    if (true) {\n        " + call + "\n    } else if (false) {\n        " + call + "\n    }\n}\n")))
-                .isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    " + call + "\n}\n"))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "tasks.named('test') {\n    " + call + "\n}\n"))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "tasks.withType(Test)\n    .configureEach {\n    " + call + "\n}\n"))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test." + call + "\n"))).isTrue();
+        assertThat(AresAgentDetection
+                .attachesAresAgent(gradle(dependency + "test {\n    if (true) {\n        " + call + "\n    } else if (false) {\n        " + call + "\n    }\n}\n"))).isTrue();
         // A method or a closure in a variable may never run, and another task does not run the tests.
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "def configureUnusedAgent() {\n    " + call + "\n}\n"))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "def configureAgent() {\n    test {\n        " + call + "\n    }\n}\n"))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "def configureAgent = {\n    " + call + "\n}\n"))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "tasks.register('run', JavaExec) {\n    " + call + "\n}\n"))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + call + "\n"))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "def configureUnusedAgent() {\n    " + call + "\n}\n"))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "def configureAgent() {\n    test {\n        " + call + "\n    }\n}\n"))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "def configureAgent = {\n    " + call + "\n}\n"))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "tasks.register('run', JavaExec) {\n    " + call + "\n}\n"))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + call + "\n"))).isFalse();
         // The same holds for the registration of the argument provider of the template.
         String gradle = Files.readString(TEMPLATES.resolve("test/gradle/projectTemplate/build.gradle"), StandardCharsets.UTF_8);
         String registration = "tasks.withType(Test).configureEach {\n    jvmArgumentProviders.add(aresJvmArguments)\n}";
         assertThat(gradle).contains(registration);
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(gradle.replace(registration, "def registerAres() {\n    " + registration + "\n}")))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(gradle.replace(registration, "def registerAres() {\n    " + registration + "\n}")))).isFalse();
     }
 
     @Test
@@ -322,29 +355,29 @@ class BuildFileSyntaxTest {
         String dependency = "dependencies {\n    aresAgent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\n";
         String call = "jvmArgs '-javaagent:ares-agent.jar'";
 
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    " + call + "\n    setJvmArgs([])\n}\n"))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    " + call + "\n    jvmArgs = ['-Dfile.encoding=UTF-8']\n}\n"))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    " + call + "\n    setJvmArgs([])\n}\n"))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    " + call + "\n    jvmArgs = ['-Dfile.encoding=UTF-8']\n}\n"))).isFalse();
         // Arguments set after the replacement, or added to the arguments, keep the agent.
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    setJvmArgs([])\n    " + call + "\n}\n"))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs = ['-javaagent:ares-agent.jar']\n}\n"))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    " + call + "\n    jvmArgs += ['-Dfile.encoding=UTF-8']\n}\n"))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    setJvmArgs([])\n    " + call + "\n}\n"))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs = ['-javaagent:ares-agent.jar']\n}\n"))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    " + call + "\n    jvmArgs += ['-Dfile.encoding=UTF-8']\n}\n"))).isTrue();
         // setJvmArgs keeps the argument providers of the template, but setAllJvmArgs replaces them as well.
         String gradle = Files.readString(TEMPLATES.resolve("test/gradle/projectTemplate/build.gradle"), StandardCharsets.UTF_8);
         String testBlock = "test {\n    defaultCharacterEncoding = 'UTF-8'";
         assertThat(gradle).contains(testBlock);
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(gradle.replace(testBlock, testBlock + "\n    setJvmArgs([])")))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(gradle.replace(testBlock, testBlock + "\n    setAllJvmArgs([])")))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(gradle.replace(testBlock, testBlock + "\n    allJvmArgs = []")))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(gradle.replace(testBlock, testBlock + "\n    setJvmArgs([])")))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(gradle.replace(testBlock, testBlock + "\n    setAllJvmArgs([])")))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(gradle.replace(testBlock, testBlock + "\n    allJvmArgs = []")))).isFalse();
     }
 
     @Test
     void aSemicolonInAStringDoesNotEndTheArguments() {
         String dependency = "dependencies {\n    aresAgent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\n";
 
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-Dseparator=;', '-javaagent:ares-agent.jar'\n}\n"))).isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs \"-Dseparator=\\\";\", '-javaagent:ares-agent.jar'\n}\n"))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-Dseparator=;', '-javaagent:ares-agent.jar'\n}\n"))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs \"-Dseparator=\\\";\", '-javaagent:ares-agent.jar'\n}\n"))).isTrue();
         // A semicolon outside a string still ends the statement, so the agent after it is no argument of jvmArgs.
-        assertThat(BuildFileSyntax.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-Dseparator=x'; def unused = '-javaagent:ares-agent.jar'\n}\n"))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(gradle(dependency + "test {\n    jvmArgs '-Dseparator=x'; def unused = '-javaagent:ares-agent.jar'\n}\n"))).isFalse();
     }
 
     @Test
@@ -353,19 +386,39 @@ class BuildFileSyntaxTest {
         String withoutAgent = "<configuration><argLine>-Dfile.encoding=UTF-8</argLine></configuration>";
 
         // A second execution with its own argLine runs its tests without Ares.
-        assertThat(
-                BuildFileSyntax.attachesAresAgent(mavenBuild(inSurefirePlugin(maven, "<executions><execution><id>policy-tests</id>" + withoutAgent + "</execution></executions>"))))
-                .isFalse();
-        assertThat(
-                BuildFileSyntax.attachesAresAgent(mavenBuild(inSurefirePlugin(maven, "<executions><execution><id>default-test</id>" + withoutAgent + "</execution></executions>"))))
-                .isFalse();
+        assertThat(AresAgentDetection
+                .attachesAresAgent(mavenBuild(inSurefirePlugin(maven, "<executions><execution><id>policy-tests</id>" + withoutAgent + "</execution></executions>")))).isFalse();
+        assertThat(AresAgentDetection
+                .attachesAresAgent(mavenBuild(inSurefirePlugin(maven, "<executions><execution><id>default-test</id>" + withoutAgent + "</execution></executions>")))).isFalse();
         // An execution without an argLine of its own takes the one of the plugin, and one that runs no tests does not count.
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(inSurefirePlugin(maven, "<executions><execution><id>policy-tests</id></execution></executions>")))).isTrue();
-        assertThat(BuildFileSyntax
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(inSurefirePlugin(maven, "<executions><execution><id>policy-tests</id></execution></executions>")))).isTrue();
+        assertThat(AresAgentDetection
                 .attachesAresAgent(mavenBuild(inSurefirePlugin(maven, "<executions><execution><id>unused</id><phase>none</phase>" + withoutAgent + "</execution></executions>"))))
                 .isTrue();
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(
                 inSurefirePlugin(maven, "<executions><execution><id>unused</id>" + withoutAgent.replace("<argLine>", "<skip>true</skip><argLine>") + "</execution></executions>"))))
+                .isTrue();
+    }
+
+    @Test
+    void anExecutionThatOverridesTheConfigurationOfThePluginNeedsItsOwnAgent() throws IOException {
+        String maven = mavenTemplate();
+        int start = maven.indexOf("<argLine>\n");
+        String argLine = maven.substring(start, maven.indexOf("</argLine>", start) + "</argLine>".length());
+        assertThat(argLine).contains("ares-agent.jar");
+
+        // With combine.self="override", the execution does not inherit the argLine of the plugin but only the argLine property, which is empty in the template.
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(inSurefirePlugin(maven,
+                "<executions><execution><id>policy-tests</id><configuration combine.self=\"override\"><includes><include>**/*Test.java</include></includes></configuration>"
+                        + "</execution></executions>"))))
+                .isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(inSurefirePlugin(maven,
+                "<executions><execution><id>policy-tests</id><configuration combine.self=\"override\">" + argLine + "</configuration></execution></executions>")))).isTrue();
+        // An argLine property with the agent still reaches an execution that overrides the configuration of the plugin.
+        String agentInProperty = maven.replace("<argLine></argLine>", "<argLine>-javaagent:${project.build.directory}/ares/ares-agent.jar</argLine>");
+        assertThat(agentInProperty).isNotEqualTo(maven);
+        assertThat(AresAgentDetection.attachesAresAgent(
+                mavenBuild(inSurefirePlugin(agentInProperty, "<executions><execution><id>policy-tests</id><configuration combine.self=\"override\"/></execution></executions>"))))
                 .isTrue();
     }
 
@@ -374,18 +427,26 @@ class BuildFileSyntaxTest {
         String maven = mavenTemplate();
         String referenced = inSurefireConfiguration(maven, "<forkCount>${test.forks}</forkCount>");
 
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(referenced.replaceFirst("<properties>", "<properties><test.forks>0</test.forks>")))).isFalse();
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(referenced.replaceFirst("<properties>", "<properties><test.forks>1</test.forks>")))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(referenced.replaceFirst("<properties>", "<properties><test.forks>0</test.forks>")))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(referenced.replaceFirst("<properties>", "<properties><test.forks>1</test.forks>")))).isTrue();
         // Without a value, Artemis cannot tell whether Surefire forks.
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(referenced))).isFalse();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(referenced))).isFalse();
         // The forkCount of an execution of Surefire counts as well.
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(
                 inSurefirePlugin(maven, "<executions><execution><id>policy-tests</id><configuration><forkCount>0</forkCount></configuration></execution></executions>"))))
                 .isFalse();
+        // A forkCount of 1 in another execution does not change the forkCount property of 0, with which the default execution runs the tests in Maven's JVM.
+        String inProcessByProperty = maven.replaceFirst("<properties>", "<properties><forkCount>0</forkCount>");
+        String forkingExecution = "<execution><id>%s</id><configuration><forkCount>1</forkCount></configuration></execution>";
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(inProcessByProperty))).isFalse();
+        assertThat(AresAgentDetection
+                .attachesAresAgent(mavenBuild(inSurefirePlugin(inProcessByProperty, "<executions>" + forkingExecution.formatted("policy-tests") + "</executions>")))).isFalse();
+        assertThat(AresAgentDetection
+                .attachesAresAgent(mavenBuild(inSurefirePlugin(inProcessByProperty, "<executions>" + forkingExecution.formatted("default-test") + "</executions>")))).isTrue();
         // The forkCount of Failsafe does not change how Surefire runs the tests.
         String failsafe = "<artifactId>maven-failsafe-plugin</artifactId><configuration><forkCount>0</forkCount></configuration></plugin><plugin>";
         String failsafeInProcess = maven.replace("<artifactId>maven-surefire-plugin</artifactId>", failsafe + "<artifactId>maven-surefire-plugin</artifactId>");
         assertThat(failsafeInProcess).isNotEqualTo(maven);
-        assertThat(BuildFileSyntax.attachesAresAgent(mavenBuild(failsafeInProcess))).isTrue();
+        assertThat(AresAgentDetection.attachesAresAgent(mavenBuild(failsafeInProcess))).isTrue();
     }
 }

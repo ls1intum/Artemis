@@ -475,7 +475,7 @@ public class SecurityPolicyEditorService {
                         packageName == null || packageName.isBlank() ? null : packageName, null, List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), null))
                 .orElse(null);
         return new SecurityPolicyEditorDTO(commit.name(), lastCommit, SecurityPolicyRepositoryFiles.parseAresVersion(buildFiles.gradleBuild(), buildFiles.mavenPom()).orElse(null),
-                policies, presets, BuildFileSyntax.attachesAresAgent(buildFiles), newPolicyTemplate);
+                policies, presets, AresAgentDetection.attachesAresAgent(buildFiles), newPolicyTemplate);
     }
 
     /**
@@ -544,7 +544,7 @@ public class SecurityPolicyEditorService {
         @Nullable
         String frameworkVersion = pinRequestedVersion(root, change.frameworkVersion());
         ChangedPaths changedPaths = changedPaths(root, change, existing);
-        boolean javaAgent = BuildFileSyntax.attachesAresAgent(SecurityPolicyRepositoryFiles.buildFiles(root));
+        boolean javaAgent = AresAgentDetection.attachesAresAgent(SecurityPolicyRepositoryFiles.buildFiles(root));
         Map<String, String> rendered = new LinkedHashMap<>();
         for (SecurityPolicyChangeDTO.PolicyChangeDTO policy : change.policies()) {
             String path = requireValidPolicyPath(policy.document().policyPath());
