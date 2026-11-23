@@ -20,7 +20,7 @@ export class MockFileService {
         return of(new Blob());
     };
 
-    createAttachmentFileUrl(downloadUrl: string, downloadName: string, encodeName: boolean, version?: number) {
+    createAttachmentFileUrl(downloadUrl: string, downloadName: string, version?: number) {
         return this.addAttachmentVersionToUrl('attachments/' + downloadName.replace(' ', '-') + '.pdf', version);
     }
 
