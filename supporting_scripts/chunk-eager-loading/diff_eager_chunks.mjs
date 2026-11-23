@@ -14,23 +14,23 @@
  * full table would bury the ones that need a look.
  *
  * Two documents come out of one comparison:
- *   --out       the PR comment: route table, per route a fold naming the imports that caused the
- *               change and the largest modules each brings along, within --max-chars.
- *   --full-out  the full report for the workflow run's summary page: every import, every module,
- *               every chunk and the unchanged routes. Nothing is shortened (apart from a size
- *               guard for GitHub's 1 MiB limit per step summary).
- * The route table is an HTML table inside markdown (a pipe table cannot hold a fold or a cell that spans columns);
- * the open folds are text lines in a monospace block, because GitHub stripes and borders every table row.
+ *   --out        the PR comment (markdown): route table, per route a fold naming the imports that
+ *                caused the change and the largest modules each brings along, within --max-chars.
+ *   --full-out   the full report as a standalone HTML page for people: every import, every module,
+ *                every chunk and the unchanged routes. Nothing is shortened.
+ * In the comment the route table is an HTML table inside markdown (a pipe table cannot hold a fold or a
+ * cell that spans columns) and the open folds are text lines in a monospace block, because GitHub
+ * stripes and borders every table row and strips styling.
  *
  * Usage:
  *   node diff_eager_chunks.mjs <fresh-report.json> --baseline <baseline-report.json>
- *     [--out <comment.md>] [--full-out <full-report.md>] [--max-chars <n>]
+ *     [--out <comment.md>] [--full-out <full-report.html>] [--max-chars <n>]
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const USAGE = 'node diff_eager_chunks.mjs <fresh-report.json> --baseline <baseline-report.json> [--out <comment.md>] [--full-out <full-report.md>] [--max-chars <n>]';
+const USAGE = 'node diff_eager_chunks.mjs <fresh-report.json> --baseline <baseline-report.json> [--out <comment.md>] [--full-out <full-report.html>] [--max-chars <n>]';
 
 const REPORT_FORMAT_VERSION = 2; // must match analyze_eager_chunks.mjs
 const CHUNK_COUNT_THRESHOLD = 3; // absolute: allow small drift (e.g. a shared vendor chunk split differently)
@@ -38,8 +38,6 @@ const BYTES_THRESHOLD_PCT = 0.1; // relative: classify as changed if eager bytes
 
 // GitHub rejects a comment body over 65,536 characters. The workflow appends a short footer.
 const DEFAULT_MAX_CHARS = 60_000;
-// A step summary may hold 1 MiB; stay clearly below it.
-const MAX_FULL_CHARS = 900_000;
 // Modules listed per import in the comment. The full report lists all of them.
 const COMMENT_MODULES_PER_IMPORT = 5;
 // Imports that explain less than this are not worth a row (usually a tiny helper in a chunk of its own).
@@ -366,59 +364,77 @@ function renderComment(diffs, counts, total, meta, maxChars) {
     return text;
 }
 
-/** The full report for the run's summary page: nothing shortened except to stay under GitHub's size limit. */
-function renderFull(diffs, unchangedDiffs, counts, total, meta) {
-    const changed = diffs.filter((d) => d.skipped || d.status !== 'unchanged');
-    const build = ({ chunkLists, unchangedTable }) => {
-        const out = ['### Client Eager-Chunk Loading Report: full', summaryLine(counts, total), '', legend(meta), '', '#### Overview', '', table(changed.map(routeRow)), ''];
-        const detailed = changed.filter((d) => !d.skipped);
-        if (detailed.length > 0) {
-            out.push(
-                '### Per route',
-                '',
-                'Open the imports line to see each import with its size and, under it, every module it brings along, one per row, largest first. A module is an npm package or one of your own files. Below each route table, the chunk list shows how the code is bundled, with file names.',
-                '',
-            );
-        }
-        detailed.forEach((d, index) => {
-            out.push(`#### ${esc(d.route)}`, '', table([routeRow(d), foldRow(d, Infinity, index === 0)].filter(Boolean)), '');
-            if (chunkLists && d.changedChunks.length > 0) {
-                const verb = d.status === 'improved' ? 'no longer loaded' : 'new';
-                out.push(`<details><summary>All ${d.changedChunks.length} ${verb} chunks of <b>${esc(d.route)}</b>, largest first, with file names</summary>`, '');
-                for (const c of d.changedChunks) out.push(`- **${fmtSize(c.bytes)}** ${code(c.file)}: ${c.modules.map((m) => code(m[0])).join(', ')}`);
-                out.push('', '</details>', '');
-            }
-            out.push('---', '');
-        });
-        if (unchangedTable && unchangedDiffs.length > 0) {
-            out.push(`### Unchanged routes (${unchangedDiffs.length})`, '', `<details><summary>Show all ${unchangedDiffs.length} routes</summary>`, '', '<table>');
-            out.push(
-                '<thead><tr><th align="left">Route</th><th align="right">Eager chunks</th><th align="right">Eager size</th><th align="right">Δ chunks</th></tr></thead>',
-                '<tbody>',
-            );
-            for (const d of unchangedDiffs)
-                out.push(
-                    `<tr><td>${esc(d.route)}</td><td align="right">${d.fresh.chunks}</td><td align="right">${fmtSize(d.fresh.bytes)}</td><td align="right">${fmtCountSigned(d.chunkCountDelta)}</td></tr>`,
-                );
-            out.push('</tbody>', '</table>', '', '</details>', '');
-        }
-        return out.join('\n');
-    };
+// Style of the standalone full report: GitHub-like tables and code, light and dark. The comment cannot carry any
+// style (GitHub strips it), so this is the one place the report may look the way it was designed.
+const FULL_REPORT_STYLE = `
+:root { --bg: #fff; --fg: #1f2328; --muted: #59636e; --line: #d1d9e0; --soft: #f6f8fa; --code: #eff1f3; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #3d444d; --soft: #151b23; --code: #262c36; color-scheme: dark; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif; }
+main { max-width: 1000px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 24px; margin: 0 0 12px; } h2 { font-size: 18px; margin: 32px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); } h3 { font-size: 15px; margin: 24px 0 8px; }
+blockquote { margin: 0 0 16px; padding: 0 1em; color: var(--muted); border-left: 4px solid var(--line); }
+table { border-collapse: collapse; margin: 0 0 12px; } th, td { border: 1px solid var(--line); padding: 6px 13px; text-align: left; vertical-align: top; }
+tr:nth-child(2n) > td { background: var(--soft); } td > details > summary { cursor: pointer; } td[colspan] { padding: 8px 13px; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 85%; background: var(--code); padding: 0.2em 0.4em; border-radius: 6px; }
+pre { background: var(--soft); border-radius: 6px; padding: 12px 16px; overflow: auto; font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+details { margin: 0 0 8px; } summary { cursor: pointer; } ul { padding-left: 2em; } li { margin: 3px 0; } hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
+.small { color: var(--muted); font-size: 12.5px; }
+`;
 
-    for (const options of [
-        { chunkLists: true, unchangedTable: true },
-        { chunkLists: false, unchangedTable: true },
-        { chunkLists: false, unchangedTable: false },
-    ]) {
-        const text = build(options);
-        if (text.length <= MAX_FULL_CHARS) {
-            const dropped = [!options.chunkLists && 'the chunk lists', !options.unchangedTable && 'the table of unchanged routes'].filter(Boolean);
-            return dropped.length > 0
-                ? `${text}\n_This page was shortened to fit GitHub's size limit for step summaries: ${dropped.join(' and ')} left out. The raw JSON report is attached to the workflow run._\n`
-                : text;
-        }
+const legendHtml = (meta) =>
+    `<blockquote>A route's <b>eager chunks</b> are the JavaScript files its page downloads as soon as it opens, before the user does anything. This compares them with ${code(meta.sourceBranch)} @ ${code(String(meta.sourceCommit).slice(0, 10))}, the commit this branch was cut from.</blockquote>`;
+
+/** The full report as one standalone HTML page: nothing shortened, and the style it was designed with. */
+function renderFullHtml(diffs, unchangedDiffs, counts, total, meta) {
+    const changed = diffs.filter((d) => d.skipped || d.status !== 'unchanged');
+    const detailed = changed.filter((d) => !d.skipped);
+    const out = [
+        '<!doctype html>',
+        '<html lang="en">',
+        '<head>',
+        '<meta charset="utf-8">',
+        '<meta name="viewport" content="width=device-width, initial-scale=1">',
+        '<title>Client Eager-Chunk Loading Report</title>',
+        `<style>${FULL_REPORT_STYLE}</style>`,
+        '</head>',
+        '<body>',
+        '<main>',
+        '<h1>Client Eager-Chunk Loading Report</h1>',
+        `<p>${esc(summaryLine(counts, total))}</p>`,
+        legendHtml(meta),
+        '<h2>Overview</h2>',
+        changed.length > 0 ? table(changed.map(routeRow)) : '<p>No route changed.</p>',
+    ];
+    if (detailed.length > 0) {
+        out.push(
+            '<h2>Per route</h2>',
+            '<p class="small">Open the imports line to see each import with its size and, under it, every module it brings along, largest first. A module is an npm package or one of your own files. Below each route table, the chunk list shows how the code is bundled, with file names.</p>',
+        );
     }
-    return `${build({ chunkLists: false, unchangedTable: false }).slice(0, MAX_FULL_CHARS)}\n\n_This page was cut to fit GitHub's size limit for step summaries. The raw JSON report is attached to the workflow run._\n`;
+    detailed.forEach((d, index) => {
+        out.push(`<h3>${esc(d.route)}</h3>`, table([routeRow(d), foldRow(d, Infinity, index === 0)].filter(Boolean)));
+        if (d.changedChunks.length > 0) {
+            const verb = d.status === 'improved' ? 'no longer loaded' : 'new';
+            out.push(`<details><summary>All ${d.changedChunks.length} ${verb} chunks of <b>${esc(d.route)}</b>, largest first, with file names</summary>`, '<ul>');
+            for (const c of d.changedChunks) out.push(`<li><b>${fmtSize(c.bytes)}</b> ${code(c.file)}: ${c.modules.map((m) => code(m[0])).join(', ')}</li>`);
+            out.push('</ul>', '</details>');
+        }
+        out.push('<hr>');
+    });
+    if (unchangedDiffs.length > 0) {
+        out.push(`<h2>Unchanged routes (${unchangedDiffs.length})</h2>`, `<details><summary>Show all ${unchangedDiffs.length} routes</summary>`, '<table>');
+        out.push(
+            '<thead><tr><th align="left">Route</th><th align="right">Eager chunks</th><th align="right">Eager size</th><th align="right">Δ chunks</th></tr></thead>',
+            '<tbody>',
+        );
+        for (const d of unchangedDiffs)
+            out.push(
+                `<tr><td>${esc(d.route)}</td><td align="right">${d.fresh.chunks}</td><td align="right">${fmtSize(d.fresh.bytes)}</td><td align="right">${fmtCountSigned(d.chunkCountDelta)}</td></tr>`,
+            );
+        out.push('</tbody>', '</table>', '</details>');
+    }
+    out.push('<p class="small">Generated by supporting_scripts/chunk-eager-loading.</p>', '</main>', '</body>', '</html>');
+    return out.join('\n');
 }
 
 function main() {
@@ -442,13 +458,13 @@ function main() {
     const unchangedDiffs = sorted.filter((d) => !d.skipped && d.status === 'unchanged').sort((a, b) => a.route.localeCompare(b.route));
 
     const comment = renderComment(sorted, counts, diffs.length, baseline.meta, maxChars);
-    const full = renderFull(sorted, unchangedDiffs, counts, diffs.length, baseline.meta);
 
     if (outPath) {
         writeFileSync(outPath, comment);
         console.log(`Comment written to ${outPath} (${comment.length} characters)`);
     }
     if (fullOutPath) {
+        const full = renderFullHtml(sorted, unchangedDiffs, counts, diffs.length, baseline.meta);
         writeFileSync(fullOutPath, full);
         console.log(`Full report written to ${fullOutPath} (${full.length} characters)`);
     }

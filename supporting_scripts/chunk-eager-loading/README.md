@@ -30,19 +30,20 @@ instead of loading it on demand.
    its size and the modules it brings along. Only changed routes get a table row — with ~215 routes,
    tabulating every unchanged one would bury the ones that actually need a look.
 
-    It writes two documents. The route table is an HTML table inside markdown, because a pipe table
-    cannot hold a fold or a cell that spans columns. GitHub keeps tables, `<details>`, `<pre>`,
-    `colspan` and `align` but strips `style` and `class`, and stripes and borders every table row, so
-    the open folds are text lines in a monospace block: the hierarchy is carried by characters (↳
-    and indentation) and the sizes are padded to one column, not coloured or tabulated.
+    It writes two documents:
 
     - **The PR comment** (`--out`): a short legend and a collapsed "How to read the table" before the
       table; one row per changed route with a collapsed line under it that names the imports ("imports
       `a` and `b`"); opened, each import with its size and its five largest modules; a collapsed
-      "How to fix a regression" after the table.
-    - **The full report** (`--full-out`): the same layout with nothing cut. Per route a table with the
-      route row and the imports fold (every module, one row each), a fold with all chunks (file name,
-      size, every module), and at the end the unchanged routes.
+      "How to fix a regression" after the table. The route table is an HTML table inside markdown,
+      because a pipe table cannot hold a fold or a cell that spans columns. GitHub keeps tables,
+      `<details>`, `<pre>`, `colspan` and `align` but strips `style` and `class`, and stripes and
+      borders every table row, so the open folds are text lines in a monospace block: the hierarchy
+      is carried by characters (↳ and indentation) and the sizes are padded to one column.
+    - **The full report** (`--full-out`): a standalone HTML page for people, the same layout with
+      nothing cut. Per route a table with the route row and the imports fold (every module, one row
+      each), a fold with all chunks (file name, size, every module), and at the end the unchanged
+      routes. It carries its own style, so it looks the same in any browser, light or dark.
 
 No browser or live server is needed — this is a pure build-time static analysis.
 
@@ -74,10 +75,11 @@ workflow artifact (`chunk-eager-report`). The `chunk-eager-quality` job (PR runs
    marker is updated; all of the PR's comments are searched for it. When no baseline can be resolved
    for a later push, an existing report comment is replaced by a short "comparison skipped" note, so
    a report for an older commit is not left standing; no comment is created just to say that.
-5. Writes the full report to the workflow run's **summary page** (`$GITHUB_STEP_SUMMARY`), which
-   renders it as inline markdown. Every comment links to it. An artifact would be a zip to download.
-   GitHub limits a step summary to 1 MiB; the script drops the chunk lists, then the table of
-   unchanged routes, to stay below that.
+5. Uploads the full report as the artifact `chunk-eager-diff-report` (kept 14 days), which holds
+   `full-report.html`. Every comment links to it in its last line. GitHub serves artifacts as zips,
+   so reading the full report means downloading it; the comment is the quick view. The report has no
+   size limit to speak of, so a huge pull request does not produce an unreadable page in the run.
+   The raw reports stay where they always were, as the `chunk-eager-report` artifact of each run.
 
 No build runs twice: the PR side reuses `build-war`'s own build, and the baseline side is whatever
 that same job already computed when it ran on that `develop` commit — nothing is rebuilt just for
@@ -107,7 +109,8 @@ node supporting_scripts/chunk-eager-loading/diff_eager_chunks.mjs report.json --
 ```
 
 The diff prints a one-line summary and the changed routes. `--out <file>` writes the PR comment
-(at most `--max-chars`, default 60,000 characters), `--full-out <file>` the full report.
+(at most `--max-chars`, default 60,000 characters), `--full-out <file>` the full report as an HTML
+page.
 
 Exits with code 1 if any route is classified `regressed` (0 otherwise, regardless of improvements —
 `ci-build.yml` currently ignores this exit code entirely; see Known limitations). Every report
