@@ -98,7 +98,7 @@
         </div>
     }
     @if (agentNotFound()) {
-        <tumaet-ui-message severity="warn" class="mb-6 block">
+        <tumaet-ui-message severity="warn" class="mb-6">
             <div>
                 <span jhiTranslate="artemisApp.buildAgents.notFound" [translateValues]="{ agentName: agentName() }"></span>
                 <br />

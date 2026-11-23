@@ -35,7 +35,7 @@ const CONTAINER_MIXIN = 'title-bar-size-container';
 const CONTROLS_MIXIN = 'title-bar-compact-controls';
 
 const mixinsFile = resolve(webapp, 'content/scss/_artemis-mixins.scss');
-const globalFile = resolve(webapp, 'content/scss/global.scss');
+const globalFile = resolve(webapp, 'content/scss/_layout.scss');
 
 describe('collapsible title bar labels', () => {
     it('names its container in the mixin the bars include', () => {
@@ -50,7 +50,7 @@ describe('collapsible title bar labels', () => {
     it('queries that same container name from the opt-in class', () => {
         const global = readFileSync(globalFile, 'utf8');
         const rule = global.match(new RegExp(`\\.${LABEL_CLASS}\\s*\\{([\\s\\S]*?)\\n\\}\\n`));
-        expect(rule, `.${LABEL_CLASS} is not defined in global.scss`).toBeTruthy();
+        expect(rule, `.${LABEL_CLASS} is not defined in _layout.scss`).toBeTruthy();
         expect(rule[1], `.${LABEL_CLASS} must collapse inside an @container title-bar query`).toMatch(/@container\s+title-bar\s*\(/);
         // `display: none` would drop the label out of the accessibility tree and leave the icon-only control unnamed.
         expect(rule[1]).not.toMatch(/display:\s*none/);
@@ -69,7 +69,7 @@ describe('collapsible title bar labels', () => {
     it('queries that container from the drop-on-narrow class too', () => {
         const global = readFileSync(globalFile, 'utf8');
         const rule = global.match(new RegExp(`\\.${OPTIONAL_CLASS}\\s*\\{([\\s\\S]*?)\\n\\}\\n`));
-        expect(rule, `.${OPTIONAL_CLASS} is not defined in global.scss`).toBeTruthy();
+        expect(rule, `.${OPTIONAL_CLASS} is not defined in _layout.scss`).toBeTruthy();
         expect(rule[1], `.${OPTIONAL_CLASS} must drop its control inside an @container title-bar query`).toMatch(/@container\s+title-bar\s*\(/);
         expect(rule[1]).toMatch(/display:\s*none/);
     });

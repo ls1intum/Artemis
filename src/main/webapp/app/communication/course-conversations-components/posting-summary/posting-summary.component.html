@@ -9,7 +9,7 @@
                 data-testid="posting-summary-open"
                 (click)="$event.stopPropagation(); onTriggerNavigateToPost()"
                 [attr.aria-label]="'artemisApp.communication.post.openPost' | artemisTranslate: { title: post()!.conversation!.title! }"
-                class="posting-summary-conversation text-[0.75rem] text-muted-color mb-1! flex items-center border-0 bg-transparent p-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2"
+                class="posting-summary-conversation text-[0.75rem] text-muted-color mb-1 flex items-center border-0 bg-transparent p-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2"
             >
                 <span class="inline-block">
                     <fa-icon [icon]="post()!.conversation!.type! === ConversationType.CHANNEL ? faHashtag : faLock" />
@@ -49,7 +49,7 @@
                                     data-testid="posting-summary-open"
                                     (click)="$event.stopPropagation(); onTriggerNavigateToPost()"
                                     [attr.aria-label]="'artemisApp.communication.post.openPost' | artemisTranslate: { title: post()!.author!.name! }"
-                                    class="me-1! inline-block border-0 bg-transparent p-0 font-semibold text-left text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+                                    class="me-1 inline-block border-0 bg-transparent p-0 font-semibold text-left text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
                                 >
                                     {{ post()!.author!.name! }}
                                 </button>
