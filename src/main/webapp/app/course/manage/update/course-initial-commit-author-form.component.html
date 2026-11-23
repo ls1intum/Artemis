@@ -71,6 +71,7 @@
                     type="text"
                     class="w-full"
                     formControlName="name"
+                    required
                     [maxLength]="nameMaxLength"
                     data-testid="initial-commit-author-name"
                 />
@@ -89,6 +90,7 @@
                     type="email"
                     class="w-full"
                     formControlName="email"
+                    required
                     [maxLength]="emailMaxLength"
                     data-testid="initial-commit-author-email"
                 />

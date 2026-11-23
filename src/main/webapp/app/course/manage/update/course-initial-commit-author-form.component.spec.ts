@@ -189,6 +189,39 @@ describe('CourseInitialCommitAuthorFormComponent', () => {
         });
     });
 
+    it('declares both identity inputs as required natively, so that assistive technology knows', () => {
+        const { element } = render(createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM }));
+
+        for (const testId of ['initial-commit-author-name', 'initial-commit-author-email']) {
+            const input = element.querySelector<HTMLInputElement>(`[data-testid="${testId}"]`)!;
+            expect(input.hasAttribute('required')).toBe(true);
+            expect(input.required).toBe(true);
+        }
+    });
+
+    it('keeps the same errors and validity with the native required attribute', async () => {
+        const { fixture, group } = render(createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM }));
+        await fixture.whenStable();
+
+        expect(group.controls.name.errors).toEqual({ required: true });
+        expect(group.controls.email.errors).toEqual({ required: true });
+
+        group.controls.name.setValue('   ');
+        expect(group.controls.name.errors).toEqual({ required: true });
+
+        group.controls.name.setValue('Course Team');
+        group.controls.email.setValue('team@example');
+        expect(group.controls.name.valid).toBe(true);
+        expect(group.controls.email.errors).toEqual({ email: true });
+
+        group.controls.email.setValue('team@example.org');
+        expect(group.valid).toBe(true);
+
+        group.controls.mode.setValue(InitialCommitAuthorMode.PLACEHOLDER);
+        group.controls.name.setValue('');
+        expect(group.valid).toBe(true);
+    });
+
     it('writes the chosen identity into the form', async () => {
         const { fixture, group, element } = render(createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM }));
         const name = element.querySelector<HTMLInputElement>('[data-testid="initial-commit-author-name"]')!;
