@@ -9,7 +9,9 @@
                     inputId="initialCommitAuthorCreator"
                     [ariaLabel]="'artemisApp.course.initialCommitAuthor.creator.label' | artemisTranslate"
                     name="initialCommitAuthorMode"
-                    formControlName="mode"
+                    [ngModel]="mode()"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="selectMode($event)"
                     [value]="InitialCommitAuthorMode.EXERCISE_CREATOR"
                     data-testid="initial-commit-author-creator"
                 />
@@ -23,7 +25,9 @@
                     inputId="initialCommitAuthorPlaceholder"
                     [ariaLabel]="'artemisApp.course.initialCommitAuthor.placeholder.label' | artemisTranslate"
                     name="initialCommitAuthorMode"
-                    formControlName="mode"
+                    [ngModel]="mode()"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="selectMode($event)"
                     [value]="InitialCommitAuthorMode.PLACEHOLDER"
                     data-testid="initial-commit-author-placeholder"
                 />
@@ -37,7 +41,9 @@
                     inputId="initialCommitAuthorCustom"
                     [ariaLabel]="'artemisApp.course.initialCommitAuthor.custom.label' | artemisTranslate"
                     name="initialCommitAuthorMode"
-                    formControlName="mode"
+                    [ngModel]="mode()"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="selectMode($event)"
                     [value]="InitialCommitAuthorMode.CUSTOM"
                     data-testid="initial-commit-author-custom"
                 />

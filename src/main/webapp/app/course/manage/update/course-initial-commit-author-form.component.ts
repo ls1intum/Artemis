@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiRadioButtonComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -93,7 +93,7 @@ export function createInitialCommitAuthorFormGroup(setting?: InitialCommitAuthor
 /** The course setting that says who authors the first commit of the repositories of new programming exercises. */
 @Component({
     selector: 'jhi-course-initial-commit-author-form',
-    imports: [ReactiveFormsModule, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiRadioButtonComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [FormsModule, ReactiveFormsModule, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiRadioButtonComponent, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './course-initial-commit-author-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -107,10 +107,15 @@ export class CourseInitialCommitAuthorFormComponent {
     /** Counts the events of the form, so that the state derived from the controls below is read again after each change, touch and validation. */
     private readonly formRevision = signal(0);
 
-    protected readonly isCustom = computed(() => {
+    /**
+     * The mode of the form control. The kit radio buttons only learn about a value that was set by a click on another radio button through the model that they are bound to, so
+     * they are bound to this signal, which follows the control for every change, including a reset or a patch of the group.
+     */
+    protected readonly mode = computed(() => {
         this.formRevision();
-        return this.group().controls.mode.value === InitialCommitAuthorMode.CUSTOM;
+        return this.group().controls.mode.value;
     });
+    protected readonly isCustom = computed(() => this.mode() === InitialCommitAuthorMode.CUSTOM);
     protected readonly nameError = computed(() => {
         this.formRevision();
         return fieldErrorOf(this.group().controls.name);
@@ -128,6 +133,13 @@ export class CourseInitialCommitAuthorFormComponent {
         this.formRevision();
         return this.group().controls.email.touched && this.group().controls.email.invalid;
     });
+
+    protected selectMode(mode: InitialCommitAuthorMode): void {
+        const control = this.group().controls.mode;
+        control.setValue(mode);
+        control.markAsDirty();
+        control.markAsTouched();
+    }
 
     constructor() {
         effect((onCleanup) => {

@@ -144,6 +144,51 @@ describe('CourseInitialCommitAuthorFormComponent', () => {
         expect(nameAlert().hidden).toBe(true);
     });
 
+    describe('visual state of the radio buttons', () => {
+        /** The radios whose box has the checked classes of the kit: the state a user sees, which the native input does not tell. */
+        const visuallyChecked = (element: HTMLElement): string[] =>
+            Array.from(element.querySelectorAll<HTMLElement>('tumaet-ui-radio-button'))
+                .filter((radio) => radio.querySelector('.tumaet-ui-radio-button-box')!.classList.contains('tumaet:bg-primary'))
+                .map((radio) => radio.querySelector('input')!.id);
+
+        it('shows exactly one option as selected after each click on an option or on its text', async () => {
+            const { fixture, group, element } = render();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            expect(visuallyChecked(element)).toEqual(['initialCommitAuthorCreator']);
+
+            const steps: [string, InitialCommitAuthorMode, 'input' | 'label'][] = [
+                ['initialCommitAuthorPlaceholder', InitialCommitAuthorMode.PLACEHOLDER, 'label'],
+                ['initialCommitAuthorCustom', InitialCommitAuthorMode.CUSTOM, 'input'],
+                ['initialCommitAuthorCreator', InitialCommitAuthorMode.EXERCISE_CREATOR, 'label'],
+                ['initialCommitAuthorCustom', InitialCommitAuthorMode.CUSTOM, 'label'],
+            ];
+            for (const [id, mode, target] of steps) {
+                element.querySelector<HTMLElement>(target === 'input' ? `#${id}` : `label[for="${id}"]`)!.click();
+                await fixture.whenStable();
+                fixture.detectChanges();
+
+                expect(group.controls.mode.value).toBe(mode);
+                expect(visuallyChecked(element)).toEqual([id]);
+            }
+        });
+
+        it('follows a change of the form that the user did not make', async () => {
+            const { fixture, group, element } = render();
+            await fixture.whenStable();
+
+            group.controls.mode.setValue(InitialCommitAuthorMode.PLACEHOLDER);
+            await fixture.whenStable();
+            fixture.detectChanges();
+            expect(visuallyChecked(element)).toEqual(['initialCommitAuthorPlaceholder']);
+
+            group.reset({ mode: InitialCommitAuthorMode.CUSTOM, name: '', email: '' });
+            await fixture.whenStable();
+            fixture.detectChanges();
+            expect(visuallyChecked(element)).toEqual(['initialCommitAuthorCustom']);
+        });
+    });
+
     it('writes the chosen identity into the form', async () => {
         const { fixture, group, element } = render(createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM }));
         const name = element.querySelector<HTMLInputElement>('[data-testid="initial-commit-author-name"]')!;
