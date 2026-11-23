@@ -5,15 +5,16 @@
 Read the checked-in skill for the task at hand. Installation is optional for reading these files;
 see [Work with AI](documentation/docs/developer/work-with-ai.mdx) for native skill discovery.
 
-| Task                                                        | Guidance                                                   |
-| ----------------------------------------------------------- | ---------------------------------------------------------- |
-| Run, write, or debug Playwright E2E tests                   | [e2e-pr-check](skills/e2e-pr-check/SKILL.md)               |
-| Diagnose failed, stuck, or missing CI checks                | [ci-triage](skills/ci-triage/SKILL.md)                     |
-| Change server Java or investigate an architecture violation | [server-arch-gates](skills/server-arch-gates/SKILL.md)     |
-| Change a database schema or fix a failing changeset         | [liquibase-migration](skills/liquibase-migration/SKILL.md) |
-| Change Angular application or TUM AET UI code               | [client-conventions](skills/client-conventions/SKILL.md)   |
-| Write or debug JUnit or Vitest tests                        | [write-tests](skills/write-tests/SKILL.md)                 |
-| Set up, build, or troubleshoot the local application        | [local-setup](skills/local-setup/SKILL.md)                 |
+| Task                                                          | Guidance                                                   |
+| ------------------------------------------------------------- | ---------------------------------------------------------- |
+| Run, write, or debug Playwright E2E tests                     | [e2e-pr-check](skills/e2e-pr-check/SKILL.md)               |
+| Diagnose failed, stuck, or missing CI checks                  | [ci-triage](skills/ci-triage/SKILL.md)                     |
+| Change server Java or investigate an architecture violation   | [server-arch-gates](skills/server-arch-gates/SKILL.md)     |
+| Change a database schema or fix a failing changeset           | [liquibase-migration](skills/liquibase-migration/SKILL.md) |
+| Change Angular application or TUM AET UI code                 | [client-conventions](skills/client-conventions/SKILL.md)   |
+| Write or debug JUnit or Vitest tests                          | [write-tests](skills/write-tests/SKILL.md)                 |
+| Set up, build, or troubleshoot the local application          | [local-setup](skills/local-setup/SKILL.md)                 |
+| Test a change in a local browser across every affected screen | [browser-qa](skills/browser-qa/SKILL.md)                   |
 
 Read the relevant guideline for a rule-governed change. Keep procedures in the matching skill.
 When changing a convention, update its skill and supporting documentation in the same change.
