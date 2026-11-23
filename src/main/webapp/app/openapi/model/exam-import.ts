@@ -7,36 +7,10 @@
  *
  * NOTE: This file is auto-generated. Do not edit manually.
  */
-
-import type { ExamMode } from './exam-mode';
+import type { ExamUpdate } from './exam-update';
 import type { ExerciseGroupImport } from './exercise-group-import';
 
-export interface ExamImport {
-    title: string;
-    examMode: ExamMode;
-    examWithAttendanceCheck?: boolean;
-    visibleDate: string;
-    startDate: string;
-    endDate: string;
-    publishResultsDate?: string;
-    examStudentReviewStart?: string;
-    examStudentReviewEnd?: string;
-    gracePeriod?: number;
-    workingTime?: number;
-    startText?: string;
-    endText?: string;
-    confirmationStartText?: string;
-    confirmationEndText?: string;
-    examMaxPoints?: number;
-    randomizeExerciseOrder?: boolean;
-    numberOfExercisesInExam?: number;
-    numberOfCorrectionRoundsInExam?: number;
-    examiner?: string;
-    moduleNumber?: string;
-    courseName?: string;
-    exampleSolutionPublicationDate?: string;
-    examSummaryPublicationDate?: string;
-    channelName?: string;
+export interface ExamImport extends ExamUpdate {
     courseId: number;
     exerciseGroups?: Array<ExerciseGroupImport>;
 }

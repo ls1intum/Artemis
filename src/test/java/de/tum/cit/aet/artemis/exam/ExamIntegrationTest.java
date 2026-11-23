@@ -3252,12 +3252,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         for (List<ExerciseGroupImportDTO> malformedGroups : List.of(Arrays.asList((ExerciseGroupImportDTO) null),
                 List.of(new ExerciseGroupImportDTO("g", true, Arrays.asList((ExerciseImportDTO) null))))) {
-            ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.examMode(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
-                    importDTO.endDate(), importDTO.publishResultsDate(), importDTO.examStudentReviewStart(), importDTO.examStudentReviewEnd(), importDTO.gracePeriod(),
-                    importDTO.workingTime(), importDTO.startText(), importDTO.endText(), importDTO.confirmationStartText(), importDTO.confirmationEndText(),
-                    importDTO.examMaxPoints(), importDTO.randomizeExerciseOrder(), importDTO.numberOfExercisesInExam(), importDTO.numberOfCorrectionRoundsInExam(),
-                    importDTO.examiner(), importDTO.moduleNumber(), importDTO.courseName(), importDTO.exampleSolutionPublicationDate(), importDTO.examSummaryPublicationDate(),
-                    importDTO.channelName(), importDTO.courseId(), malformedGroups);
+            ExamImportDTO body = new ExamImportDTO(importDTO.exam(), importDTO.courseId(), malformedGroups);
             request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", body, HttpStatus.BAD_REQUEST, null);
         }
 
@@ -3270,12 +3265,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
         ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
         ExerciseGroupImportDTO malformedGroup = new ExerciseGroupImportDTO("g", true, List.of(new ExerciseImportDTO(null, ExerciseType.TEXT, "x", null, null, null)));
-        ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.examMode(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
-                importDTO.endDate(), importDTO.publishResultsDate(), importDTO.examStudentReviewStart(), importDTO.examStudentReviewEnd(), importDTO.gracePeriod(),
-                importDTO.workingTime(), importDTO.startText(), importDTO.endText(), importDTO.confirmationStartText(), importDTO.confirmationEndText(), importDTO.examMaxPoints(),
-                importDTO.randomizeExerciseOrder(), importDTO.numberOfExercisesInExam(), importDTO.numberOfCorrectionRoundsInExam(), importDTO.examiner(), importDTO.moduleNumber(),
-                importDTO.courseName(), importDTO.exampleSolutionPublicationDate(), importDTO.examSummaryPublicationDate(), importDTO.channelName(), importDTO.courseId(),
-                List.of(malformedGroup));
+        ExamImportDTO body = new ExamImportDTO(importDTO.exam(), importDTO.courseId(), List.of(malformedGroup));
         int examsBefore = examRepository.findByCourseId(course1.getId()).size();
 
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", body, HttpStatus.BAD_REQUEST, null);

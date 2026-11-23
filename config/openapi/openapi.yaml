@@ -7285,38 +7285,15 @@ components:
         ended: {type: boolean}
       x-parent: true
     ExamImport:
-      type: object
-      properties:
-        title: {type: string}
-        examMode: {$ref: '#/components/schemas/ExamMode'}
-        examWithAttendanceCheck: {type: boolean}
-        visibleDate: {type: string, format: date-time}
-        startDate: {type: string, format: date-time}
-        endDate: {type: string, format: date-time}
-        publishResultsDate: {type: string, format: date-time}
-        examStudentReviewStart: {type: string, format: date-time}
-        examStudentReviewEnd: {type: string, format: date-time}
-        gracePeriod: {type: integer, format: int32}
-        workingTime: {type: integer, format: int32}
-        startText: {type: string}
-        endText: {type: string}
-        confirmationStartText: {type: string}
-        confirmationEndText: {type: string}
-        examMaxPoints: {type: integer, format: int32}
-        randomizeExerciseOrder: {type: boolean}
-        numberOfExercisesInExam: {type: integer, format: int32}
-        numberOfCorrectionRoundsInExam: {type: integer, format: int32}
-        examiner: {type: string}
-        moduleNumber: {type: string}
-        courseName: {type: string}
-        exampleSolutionPublicationDate: {type: string, format: date-time}
-        examSummaryPublicationDate: {type: string, format: date-time}
-        channelName: {type: string}
-        courseId: {type: integer, format: int64}
-        exerciseGroups:
-          type: array
-          items: {$ref: '#/components/schemas/ExerciseGroupImport'}
-      required: [courseId, endDate, examMode, startDate, title, visibleDate]
+      allOf:
+      - {$ref: '#/components/schemas/ExamUpdate'}
+      - type: object
+        properties:
+          courseId: {type: integer, format: int64}
+          exerciseGroups:
+            type: array
+            items: {$ref: '#/components/schemas/ExerciseGroupImport'}
+        required: [courseId]
     BonusExample:
       type: object
       properties:
@@ -7701,6 +7678,7 @@ components:
         examSummaryPublicationDate: {type: string, format: date-time}
         channelName: {type: string}
       required: [endDate, examMode, startDate, title, visibleDate]
+      x-parent: true
     TestCase:
       type: object
       properties:
