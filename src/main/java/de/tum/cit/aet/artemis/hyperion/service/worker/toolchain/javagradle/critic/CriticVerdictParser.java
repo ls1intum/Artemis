@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureClass;
  * <p>
  * The parser is where the critic decides what it is willing to believe. A verdict is discarded outright when its mandatory checks are missing or malformed, because a reviewer that
  * skipped the checks proves nothing; and an individual claim is dropped ("abstained") unless its {@code sourceQuote} literally appears in the grounding source for that finding
- * category. Both rules exist so a hallucinated blocker can never drive the repair loop or reach the instructor.
+ * category. A contradiction also needs an explicit affirmative final verdict; a hypothesis the reviewer refuted must not drive repair or reach the instructor as a blocker.
  */
 class CriticVerdictParser {
 
@@ -64,7 +64,7 @@ class CriticVerdictParser {
 
     /** The structured shape the full-artifact review parses the model JSON into. */
     private record CriticResponse(@Nullable List<ExampleCheckItem> exampleChecks, @Nullable List<ApiCheckItem> apiChecks, @Nullable List<TemplateCheckItem> templateChecks,
-            @Nullable List<MutantCheckItem> mutantChecks, @Nullable List<RequirementFindingItem> uncovered, @Nullable List<RequirementFindingItem> contradictions,
+            @Nullable List<MutantCheckItem> mutantChecks, @Nullable List<RequirementFindingItem> uncovered, @Nullable List<ContradictionCheckItem> contradictions,
             @Nullable List<RequirementFindingItem> hiddenRequirements, @Nullable List<RequirementFindingItem> weakOracle, @Nullable List<RequirementFindingItem> templateGaps,
             @Nullable List<ExampleGapItem> missingExamples, @Nullable List<RequirementFindingItem> invented, @Nullable List<AdaptationChangeItem> unrequestedChanges,
             @Nullable List<RequirementFindingItem> missingRequestedChanges) {
@@ -72,6 +72,10 @@ class CriticVerdictParser {
 
     private record RequirementFindingItem(@Nullable String requirement, @Nullable String reason, @Nullable String sourceQuote, @Nullable String evidenceArtifact,
             @Nullable String evidenceQuote, @Nullable String ownerType) {
+    }
+
+    private record ContradictionCheckItem(@Nullable String requirement, @Nullable Boolean contradicted, @Nullable String reason, @Nullable String sourceQuote,
+            @Nullable String evidenceArtifact, @Nullable String evidenceQuote) {
     }
 
     private record ExampleCheckItem(@Nullable String claim, @Nullable @JsonDeserialize(using = ScalarTextDeserializer.class) String computedOutcome, @Nullable Boolean consistent,
@@ -375,9 +379,11 @@ class CriticVerdictParser {
         return malformedBlockingItems(items) || items.stream().anyMatch(item -> item.sourceQuote() == null || item.sourceQuote().isBlank());
     }
 
-    private static boolean malformedGroundedContradictions(List<RequirementFindingItem> items) {
-        return malformedGroundedBlockingItems(items) || items.stream()
-                .anyMatch(item -> item.evidenceArtifact() == null || item.evidenceArtifact().isBlank() || item.evidenceQuote() == null || item.evidenceQuote().isBlank());
+    private static boolean malformedGroundedContradictions(List<ContradictionCheckItem> items) {
+        return items.stream()
+                .anyMatch(item -> item == null || item.requirement() == null || item.requirement().isBlank() || item.contradicted() == null || item.reason() == null
+                        || item.reason().isBlank() || item.sourceQuote() == null || item.sourceQuote().isBlank() || item.evidenceArtifact() == null
+                        || item.evidenceArtifact().isBlank() || item.evidenceQuote() == null || item.evidenceQuote().isBlank());
     }
 
     private static boolean malformedBlockingItems(List<RequirementFindingItem> items) {
@@ -409,12 +415,16 @@ class CriticVerdictParser {
     }
 
     /**
-     * A contradiction needs evidence for both sides: the authority it violates and the repairable artifact that conflicts with it. Grounding only the first side lets fluent
+     * A confirmed contradiction needs evidence for both sides: the authority it violates and the repairable artifact that conflicts with it. Grounding only the first side lets
+     * fluent
      * reviewer prose invent a downstream fact that is not present in any produced file.
      */
-    private static void appendGroundedContradictions(List<SpecFidelityReport.Finding> findings, List<RequirementFindingItem> items, String authoritativeSource,
+    private static void appendGroundedContradictions(List<SpecFidelityReport.Finding> findings, List<ContradictionCheckItem> items, String authoritativeSource,
             Map<String, String> downstreamEvidenceByArtifact) {
-        for (RequirementFindingItem item : items) {
+        for (ContradictionCheckItem item : items) {
+            if (!Boolean.TRUE.equals(item.contradicted())) {
+                continue;
+            }
             if (findings.size() >= MAX_REVIEW_FINDINGS) {
                 return;
             }

@@ -107,8 +107,28 @@ public final class GenerationOutcome {
         return output == null ? TerminationReason.RUN_FAILED : TerminationReason.valueOf(output.terminationReason());
     }
 
+    /**
+     * The worker's review, with every finding location the saved candidate cannot resolve removed. Review threads anchor at a location only when its file exists in the frozen
+     * candidate and spans its lines; any other finding falls back to the problem statement instead of being dropped by the review-thread service.
+     *
+     * @return the review whose locations all point into the candidate
+     */
     public SpecFidelityReport specFidelityReport() {
-        return output == null ? SpecFidelityReport.empty() : output.review();
+        if (output == null) {
+            return SpecFidelityReport.empty();
+        }
+        return new SpecFidelityReport(output.review().findings().stream().map(finding -> finding.location() == null || resolves(finding.location()) ? finding
+                : new SpecFidelityReport.Finding(finding.kind(), finding.requirement(), finding.detail())).toList());
+    }
+
+    private boolean resolves(SpecFidelityReport.Location location) {
+        RepositoryType role = switch (location.repository()) {
+            case TEMPLATE -> RepositoryType.TEMPLATE;
+            case SOLUTION -> RepositoryType.SOLUTION;
+            case TESTS -> RepositoryType.TESTS;
+        };
+        String content = producedFiles(role).get(location.path());
+        return content != null && location.endLine() <= Math.max(1, content.lines().count());
     }
 
     public boolean isMechanicallyVerified() {

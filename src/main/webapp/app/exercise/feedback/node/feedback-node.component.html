@@ -1,5 +1,5 @@
 @if (feedbackItem()) {
-    <tumaet-ui-message class="feedback-item mb-2 block" [severity]="messageSeverity(feedbackItem()!.color)">
+    <tumaet-ui-message class="feedback-item mb-2" [severity]="messageSeverity(feedbackItem()!.color)">
         <div class="w-full">
             <div class="flex justify-between gap-8">
                 <h4 class="feedback-item__category m-0 text-base font-semibold">{{ feedbackItem()!.name }} {{ feedbackItem()!.title && '· ' + feedbackItem()!.title }}</h4>

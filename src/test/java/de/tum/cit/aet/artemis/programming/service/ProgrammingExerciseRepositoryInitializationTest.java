@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
@@ -34,8 +35,10 @@ class ProgrammingExerciseRepositoryInitializationTest {
     Path tempDir;
 
     @ParameterizedTest
-    @CsvSource({ "PYTHON, false", "PYTHON, true", "JAVA, false", "JAVA, true" })
-    void setupExerciseTemplate_initializesRemoteRepositoriesDespiteStaleWorkingCopies(ProgrammingLanguage language, boolean staleWorkingCopies) throws Exception {
+    @CsvSource({ "PYTHON, false,", "PYTHON, true,", "JAVA, false,", "JAVA, true,", "JAVA, false, GRADLE_GRADLE", "JAVA, true, GRADLE_GRADLE", "JAVA, false, MAVEN_MAVEN",
+            "JAVA, true, MAVEN_MAVEN" })
+    void setupExerciseTemplate_initializesRemoteRepositoriesDespiteStaleWorkingCopies(ProgrammingLanguage language, boolean staleWorkingCopies, ProjectType projectType)
+            throws Exception {
         Path bareBase = tempDir.resolve("bare");
         Path cloneBase = tempDir.resolve("clones");
         GitService gitService = new GitService();
@@ -51,6 +54,7 @@ class ProgrammingExerciseRepositoryInitializationTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setTitle("New exercise");
         exercise.setProgrammingLanguage(language);
+        exercise.setProjectType(projectType);
         exercise.setPackageName("de.test");
         exercise.setStaticCodeAnalysisEnabled(false);
         exercise.setTemplateParticipation(new TemplateProgrammingExerciseParticipation());
@@ -89,6 +93,10 @@ class ProgrammingExerciseRepositoryInitializationTest {
                 assertThat(checkout.resolve(Constants.HEAD)).isNotNull();
                 assertThat(checkout.getLocalPath().resolve("stale.txt")).doesNotExist();
                 assertThat(gitService.getFiles(checkout)).isNotEmpty();
+                if (projectType != null && !uri.equals(exercise.getVcsTestRepositoryUri())) {
+                    assertThat(checkout.getLocalPath().resolve(".vscode/launch.json")).content().contains("de.test.Client");
+                    assertThat(checkout.getLocalPath().resolve(".vscode/tasks.json")).isRegularFile();
+                }
             }
         }
     }
