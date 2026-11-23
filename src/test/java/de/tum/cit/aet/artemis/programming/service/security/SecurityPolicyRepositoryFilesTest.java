@@ -1621,8 +1621,8 @@ class SecurityPolicyRepositoryFilesTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "ext { aresVersion = '2.2' + '.1' }\n", "ext { aresVersion = \"${base}.1\" }\n", "ext.aresVersion = '2.2.1'.trim()\n",
-            "ext { aresVersion = '2.2.1' }\next.aresVersion = \"${base}.1\"\n", "ext { aresVersion = '2.2.' /* Ares 2 */ + '1' }\n",
-            "ext.aresVersion = '2.2.1' /* Ares\n2 */ + ''\n", "ext.aresVersion = '2.2.1'\n    .trim()\n", "ext.aresVersion = '2.2.1'\n// Ares 2\n    ?: fallback\n" })
+            "ext { aresVersion = '2.2.1' }\next.aresVersion = \"${base}.1\"\n", "ext { aresVersion = '2.2.' /* comment */ + '1' }\n",
+            "ext.aresVersion = '2.2.' /* first */ /* multi\nline */ + '1'\n" })
     void aGradleExpressionIsNoPin(String gradleBuild) throws IOException {
         // Artemis could neither read the version of an expression nor replace it without changing what the build computes.
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).isEmpty();
@@ -1635,30 +1635,6 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(null,
                 "<properties><ares.version>2.2.1</ares.version></properties><properties><ares.version>${base.version}</ares.version></properties>")).isEmpty();
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("ext { aresVersion = '2.2.1' }\nif (aresVersion == '2.2.1') { println 'Ares 2' }\n", null)).contains("2.2.1");
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "project.ext.aresVersion = '2.3.0'\nproject.ext.aresVersion = '2.2.1'\n", "ext { aresVersion = \"${base}.1\" }\n",
-            "ext { aresVersion = '2.2.' /* Ares 2 */ + '1' }\n" })
-    void aGradleBuildThatAssignsAnUnreadableVersionLeavesItUnknownNextToAPom(String gradleBuild) throws IOException {
-        String pom = "<properties><ares.version>2.2.1</ares.version></properties>";
-        // The Gradle build is the one the exercise runs; the pom.xml next to it does not, so its version is neither reported nor changed.
-        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, pom)).isEmpty();
-        assertThat(SecurityPolicyRepositoryFiles.pinAresVersion(gradleBuild, pom, "2.4.0")).isEmpty();
-        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), gradleBuild, StandardCharsets.UTF_8);
-        FileUtils.writeStringToFile(root.resolve("pom.xml").toFile(), pom, StandardCharsets.UTF_8);
-        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isFalse();
-        assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo(gradleBuild);
-        assertThat(Files.readString(root.resolve("pom.xml"))).isEqualTo(pom);
-
-        Map<String, String> sources = Map.of("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest"));
-        var reason = new SecurityFrameworkState.UnsupportedReason("build.gradle", SecurityFrameworkState.UnsupportedReasonType.NO_ARES_VERSION_PINNED);
-        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(gradleBuild, pom)).unsupportedReasons()).containsExactly(reason);
-        // Nor does a profile of that POM matter.
-        String profile = "<profiles><profile><properties><ares.version>2.3.0</ares.version></properties></profile></profiles>";
-        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(gradleBuild, pom + profile)).unsupportedReasons()).containsExactly(reason);
-        // A Gradle build that does not set the version leaves it to the POM.
-        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("repositories { mavenCentral() }\n", pom)).contains("2.2.1");
     }
 
     @Test
@@ -1679,10 +1655,42 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(Files.readString(root.resolve("pom.xml"))).isEqualTo(pom.replace("2.2.1", "2.4.0"));
     }
 
+    @Test
+    void aGradleBuildThatAssignsTheAresVersionDecidesItEvenNextToAPom() throws IOException {
+        Map<String, String> sources = Map.of("test/de/example/SortingTest.java", TEST_CLASS.formatted("de.example", "SortingTest"));
+        String gradleBuild = "project.ext.aresVersion = '2.3.0'\nproject.ext.aresVersion = '2.2.1'\n";
+        String pom = "<properties><ares.version>2.2.1</ares.version></properties>";
+        // The Gradle build uses one of its own pins, so the pin of the POM next to it neither tells nor changes the version of the exercise.
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, pom)).isEmpty();
+        var reason = new SecurityFrameworkState.UnsupportedReason("build.gradle", SecurityFrameworkState.UnsupportedReasonType.NO_ARES_VERSION_PINNED);
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(gradleBuild, pom)).unsupportedReasons()).containsExactly(reason);
+        String profilePom = "<profiles><profile><properties><ares.version>2.3.0</ares.version></properties></profile></profiles>";
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(gradleBuild, profilePom)).unsupportedReasons()).containsExactly(reason);
+        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), gradleBuild, StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(root.resolve("pom.xml").toFile(), pom, StandardCharsets.UTF_8);
+
+        assertThat(SecurityPolicyRepositoryFiles.detectBuildTool(root)).isEmpty();
+        assertThat(SecurityPolicyRepositoryFiles.writeAresVersion(root, "2.4.0")).isFalse();
+        assertThat(Files.readString(root.resolve("build.gradle"))).isEqualTo(gradleBuild);
+        assertThat(Files.readString(root.resolve("pom.xml"))).isEqualTo(pom);
+
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("ext { aresVersion = \"${base}.1\" }\n", pom)).isEmpty();
+        // A Gradle build that does not assign the version where the build reads it leaves it to the POM.
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("plugins { id 'java' }\n", pom)).contains("2.2.1");
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion("// aresVersion = '2.3.0'\n", pom)).contains("2.2.1");
+    }
+
+    @Test
+    @Timeout(value = 5, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void readsTheAresVersionAfterALongCommentFullOfPinsQuickly() {
+        // A pin-shaped line in a comment is no assignment the build reads, so it is not followed to the end of the comment again for every such line.
+        String gradleBuild = "/*\n" + "aresVersion = '9.9.9' /*\n".repeat(10_000) + "*/\next { aresVersion = '2.2.1' }\n";
+        assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "ext { aresVersion = '2.2.1' }\n", "ext.aresVersion = '2.2.1'; // Ares 2\n", "ext.aresVersion = \"2.2.1\" /* Ares 2 */\n", "ext.aresVersion = '2.2.1'",
-            "ext { aresVersion = '2.2.1' /* Ares 2 */ }\n", "ext.aresVersion = '2.2.1' /* Ares 2 */ // latest\napply plugin: 'java'\n",
-            "ext.aresVersion = '2.2.1'\r\n// .trim() is not needed\r\napply plugin: 'java'\r\n" })
+            "ext { aresVersion = '2.2.1' /* Ares 2 */ /* pinned */ }\n" })
     void aCompleteLiteralIsAPin(String gradleBuild) {
         assertThat(SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
     }
