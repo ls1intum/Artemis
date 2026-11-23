@@ -93,8 +93,8 @@ export function outputDirectory(options, ...segments) {
 
 /** The users of the E2E setup; override them with the environment variables for another environment. */
 export const users = {
-    admin: { username: process.env.ARTEMIS_ADMIN_USERNAME ?? 'artemis_admin', password: process.env.ARTEMIS_ADMIN_PASSWORD ?? 'artemis_admin' },
-    student: { username: process.env.ARTEMIS_STUDENT_USERNAME ?? 'artemis_test_user_1', password: process.env.ARTEMIS_STUDENT_PASSWORD ?? 'artemis_test_user_1' },
+    admin: { username: process.env.STYLE_COMPARISON_ADMIN_USERNAME ?? 'artemis_admin', password: process.env.STYLE_COMPARISON_ADMIN_PASSWORD ?? 'artemis_admin' },
+    student: { username: process.env.STYLE_COMPARISON_STUDENT_USERNAME ?? 'artemis_test_user_1', password: process.env.STYLE_COMPARISON_STUDENT_PASSWORD ?? 'artemis_test_user_1' },
 };
 
 export async function openPage() {
