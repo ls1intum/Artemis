@@ -27,6 +27,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.jupiter.api.AfterEach;
@@ -60,8 +62,10 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.InitialCommitAuthorMode;
 import de.tum.cit.aet.artemis.course.dto.CourseMaterialImportOptionsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseMaterialImportResultDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -149,6 +153,15 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Value("${artemis.repo-clone-path}")
     private String repoClonePath;
+
+    @Value("${artemis.git.name}")
+    private String artemisGitName;
+
+    @Value("${artemis.git.email}")
+    private String artemisGitEmail;
+
+    @Autowired
+    private CourseConfigurationRepository courseConfigurationRepository;
 
     @Autowired
     private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
@@ -1097,6 +1110,84 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         assertThat(importedExercise.exerciseVariantGroup()).isNull();
         assertNotInAnyVariantGroup(importedExercise.id());
         assertVariantGroupMembers(group, programmingExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSetupProgrammingExercise_placeholderAuthorsTheRootCommitOfAllRepositoriesOfACourseExercise() throws Exception {
+        courseConfigurationRepository.updateInitialCommitAuthor(course.getId(), InitialCommitAuthorMode.PLACEHOLDER, null, null);
+        mockDockerForTheBuildsCreatingAnExerciseTriggers();
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.setChannelName("pe-placeholder-author");
+
+        var response = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+        ProgrammingExercise created = programmingExerciseRepository.findWithAllParticipationsById(response.id()).orElseThrow();
+        createdExercisesToCleanUp.add(created);
+
+        assertRootCommitsAreAuthoredBy(created, artemisGitName, artemisGitEmail);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSetupProgrammingExercise_placeholderAuthorsTheRootCommitOfAllRepositoriesOfAnExamExercise() throws Exception {
+        courseConfigurationRepository.updateInitialCommitAuthor(course.getId(), InitialCommitAuthorMode.PLACEHOLDER, null, null);
+        mockDockerForTheBuildsCreatingAnExerciseTriggers();
+        var exam = examUtilService.addExamWithExerciseGroup(course, true);
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exam.getExerciseGroups().getFirst());
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+
+        var response = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+        ProgrammingExercise created = programmingExerciseRepository.findWithAllParticipationsById(response.id()).orElseThrow();
+        createdExercisesToCleanUp.add(created);
+
+        assertRootCommitsAreAuthoredBy(created, artemisGitName, artemisGitEmail);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSetupProgrammingExercise_withoutAChoiceTheExerciseCreatorAuthorsTheRootCommit() throws Exception {
+        mockDockerForTheBuildsCreatingAnExerciseTriggers();
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.setChannelName("pe-creator-author");
+
+        var response = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+        ProgrammingExercise created = programmingExerciseRepository.findWithAllParticipationsById(response.id()).orElseThrow();
+        createdExercisesToCleanUp.add(created);
+
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        assertRootCommitsAreAuthoredBy(created, instructor.getName(), instructor.getEmail());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportProgrammingExerciseFromFile_theCourseSettingAuthorsTheRootCommitOfAllRepositories() throws Exception {
+        courseConfigurationRepository.updateInitialCommitAuthor(course.getId(), InitialCommitAuthorMode.CUSTOM, "Course Team", "team@university.example");
+
+        ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", course, body -> body);
+        ProgrammingExercise imported = programmingExerciseRepository.findWithAllParticipationsById(importResult.importedExercise().id()).orElseThrow();
+        createdExercisesToCleanUp.add(imported);
+
+        assertRootCommitsAreAuthoredBy(imported, "Course Team", "team@university.example");
+    }
+
+    private void assertRootCommitsAreAuthoredBy(ProgrammingExercise exercise, String name, String email) throws Exception {
+        for (LocalVCRepositoryUri uri : List.of(exercise.getVcsTemplateRepositoryUri(), exercise.getVcsSolutionRepositoryUri(), exercise.getVcsTestRepositoryUri())) {
+            try (Git git = Git.open(uri.getLocalRepositoryPath(localVCBasePath).toFile())) {
+                List<RevCommit> commits = new ArrayList<>();
+                git.log().call().forEach(commits::add);
+                RevCommit root = commits.getLast();
+                assertThat(root.getParentCount()).as("the root commit of %s", uri).isZero();
+                assertThat(root.getAuthorIdent().getName()).as("author of the root commit of %s", uri).isEqualTo(name);
+                assertThat(root.getAuthorIdent().getEmailAddress()).isEqualTo(email);
+                assertThat(root.getCommitterIdent().getName()).isEqualTo(name);
+                assertThat(root.getCommitterIdent().getEmailAddress()).isEqualTo(email);
+            }
+        }
     }
 
     @Test

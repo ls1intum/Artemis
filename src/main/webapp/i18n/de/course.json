@@ -596,7 +596,7 @@
             },
             "initialCommitAuthor": {
                 "label": "Autor des ersten Commits",
-                "hint": "Jedes Repository einer neuen Programmieraufgabe beginnt mit einem Commit, den Artemis erstellt, und die Repositories der Studierenden kopieren ihn. Wähle, wer als Autor dieses Commits angezeigt wird. Die Auswahl gilt für Aufgaben, die danach erstellt werden.",
+                "hint": "Wähle, wer als Autor des ersten Commits angezeigt wird, den Artemis erstellt: im Template-, Lösungs- und Test-Repository von Programmieraufgaben, die du erstellst oder aus einer Datei importierst, und im Repository jeder Studentin und jedes Studenten, das Artemis ab jetzt erstellt. Bestehende Repositories behalten ihren Verlauf.",
                 "creator": {
                     "label": "Die Person, die die Aufgabe erstellt",
                     "description": "So funktioniert es, wenn du nichts anderes wählst."

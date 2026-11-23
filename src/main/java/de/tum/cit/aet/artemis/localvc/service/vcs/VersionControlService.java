@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localvc.service.vcs;
 
 import java.util.Map;
 
+import org.eclipse.jgit.lib.PersonIdent;
 import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -86,11 +87,12 @@ public interface VersionControlService {
      * @param targetRepositoryName The desired name of the target repository
      * @param attempt              The attempt number
      * @param additionalFiles      Files to add to the copy's commit, by repository-relative path; they replace files of the source at the same path
+     * @param author               The identity that authors the copy's commit, or null to keep the author of the first commit of the source
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
     LocalVCRepositoryUri copyRepositoryWithoutHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey,
-            String targetRepositoryName, Integer attempt, Map<String, byte[]> additionalFiles) throws VersionControlException;
+            String targetRepositoryName, Integer attempt, Map<String, byte[]> additionalFiles, @Nullable PersonIdent author) throws VersionControlException;
 
     /**
      * Copies a repository from one project to another one. The project can be the same. The commit history is preserved.

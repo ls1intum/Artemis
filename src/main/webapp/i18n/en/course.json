@@ -596,7 +596,7 @@
             },
             "initialCommitAuthor": {
                 "label": "Author of the first commit",
-                "hint": "Every repository of a new programming exercise starts with a commit that Artemis creates, and the repositories of students copy it. Choose who is shown as the author of that commit. The choice applies to exercises created afterwards.",
+                "hint": "Choose who is shown as the author of the first commit that Artemis creates: in the template, solution and test repository of programming exercises that you create or import from a file, and in the repository of each student that Artemis creates from now on. Existing repositories keep their history.",
                 "creator": {
                     "label": "The user who creates the exercise",
                     "description": "This is how it works if you do not choose anything else."

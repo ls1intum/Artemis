@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import org.eclipse.jgit.lib.PersonIdent;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -67,6 +68,26 @@ public record InitialCommitAuthorDTO(@NotNull InitialCommitAuthorMode mode, @Nul
         if (strippedEmail.length() > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.matcher(strippedEmail).matches()) {
             throw new BadRequestAlertException("The author email address is not valid.", "course", "invalidInitialCommitAuthorEmail");
         }
+    }
+
+    /**
+     * The identity that authors the first commit according to this setting.
+     *
+     * @param placeholder     the identity the server configures for commits it makes itself, used by {@link InitialCommitAuthorMode#PLACEHOLDER}
+     * @param exerciseCreator the identity of the user who creates the exercise, or null where there is none, which leaves the author as it is
+     * @return the identity, or null if the setting asks for the exercise creator and there is none
+     */
+    @Nullable
+    public PersonIdent toIdentity(PersonIdent placeholder, @Nullable PersonIdent exerciseCreator) {
+        // No switch over the enum: it would add a synthetic class to this package that the DTO naming rule rejects.
+        if (mode == InitialCommitAuthorMode.PLACEHOLDER) {
+            return placeholder;
+        }
+        // The setting is validated when it is stored; a custom one that lost its identity must not commit as nobody.
+        if (mode == InitialCommitAuthorMode.CUSTOM && name != null && email != null) {
+            return new PersonIdent(name.strip(), email.strip());
+        }
+        return exerciseCreator;
     }
 
     /**

@@ -34,7 +34,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
-import de.tum.cit.aet.artemis.course.domain.InitialCommitAuthorMode;
 import de.tum.cit.aet.artemis.course.dto.InitialCommitAuthorDTO;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -128,18 +127,8 @@ public class ProgrammingExerciseRepositoryService {
      * @return the identity of the commit
      */
     private PersonIdent initialCommitIdentity(final User exerciseCreator, @Nullable final InitialCommitAuthorDTO initialCommitAuthor) {
-        if (initialCommitAuthor == null || initialCommitAuthor.mode() == InitialCommitAuthorMode.EXERCISE_CREATOR) {
-            return new PersonIdent(exerciseCreator.getName(), exerciseCreator.getEmail());
-        }
-        if (initialCommitAuthor.mode() == InitialCommitAuthorMode.PLACEHOLDER) {
-            return gitService.getPlaceholderIdentity();
-        }
-        // The setting is validated when it is stored; a custom one that lost its identity must not commit as nobody.
-        if (initialCommitAuthor.name() == null || initialCommitAuthor.email() == null) {
-            log.warn("The course asks for a custom first commit author without a name or an email address, so the exercise creator is used");
-            return new PersonIdent(exerciseCreator.getName(), exerciseCreator.getEmail());
-        }
-        return new PersonIdent(initialCommitAuthor.name(), initialCommitAuthor.email());
+        PersonIdent creator = new PersonIdent(exerciseCreator.getName(), exerciseCreator.getEmail());
+        return initialCommitAuthor == null ? creator : initialCommitAuthor.toIdentity(gitService.getPlaceholderIdentity(), creator);
     }
 
     /**

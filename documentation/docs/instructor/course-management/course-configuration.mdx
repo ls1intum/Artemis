@@ -78,9 +78,8 @@ about, and never included in, the automatic deletion of old student data. Turn i
 
 ### Author of the First Commit
 
-Every repository of a new programming exercise starts with a commit that Artemis creates, and the repository of each
-student copies it. **Author of the first commit** decides who is shown as the author of that commit, for example in
-the commit history of the repository:
+Artemis creates the first commit of a repository itself, and **Author of the first commit** decides who is shown as
+its author, for example in the commit history of the repository:
 
 - **The user who creates the exercise** is the default and the behavior of every course that never changed this
   setting.
@@ -90,8 +89,17 @@ the commit history of the repository:
   address in the commit history, so use one that you are happy to show them. The name may have up to 100 characters and
   the address up to 254. A name must not contain `<` or `>` or line breaks, and the address must be a valid email address.
 
-The setting applies to programming exercises that are created after you save it. Repositories that already exist keep
-their history, and so do exercises that you import from a file or from another exercise. The setting is part of the
+The setting applies to these repositories, after you saved it:
+
+- the template, solution and test repository of a programming exercise that you create from scratch or import from a
+  file. A file import carries no history, so its first commit is the import itself;
+- the repository of every student, for each repository that Artemis creates from then on. This includes the exercises
+  that existed before you chose, and exercises that were imported from another exercise. A student repository starts
+  with one commit that copies the template, and the setting decides its author.
+
+It does not change repositories that already exist, and it does not rewrite history. An exercise that you import from
+another exercise keeps the history of its source, so its template, solution and test repository keep the author of the
+first commit they were copied with. The auxiliary repositories keep their author as well. The setting is part of the
 form of an existing course. It is not shown while a course is created, so it starts with the default.
 
 ## Exercises and Grading

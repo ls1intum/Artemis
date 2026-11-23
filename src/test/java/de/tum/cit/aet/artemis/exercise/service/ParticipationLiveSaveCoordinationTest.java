@@ -26,9 +26,11 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -52,7 +54,7 @@ class ParticipationLiveSaveCoordinationTest {
         var uriService = mock(UriService.class);
         var participations = mock(ProgrammingExerciseStudentParticipationTestRepository.class);
         var service = new ParticipationService(Optional.empty(), Optional.of(vcs), null, null, participations, null, null, null, uriService, null, null, null, null,
-                Optional.of(api));
+                Optional.of(api), mock(CourseConfigurationRepository.class), mock(GitService.class));
         var exercise = new ProgrammingExercise();
         exercise.setId(exerciseId);
         var course = new Course();
@@ -73,7 +75,7 @@ class ParticipationLiveSaveCoordinationTest {
         when(participations.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var templateHead = new AtomicReference<>("baseline");
         var copiedHead = new AtomicReference<String>();
-        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), anyMap())).thenAnswer(invocation -> {
+        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), anyMap(), any())).thenAnswer(invocation -> {
             copiedHead.set(templateHead.get());
             return destination;
         });
@@ -126,7 +128,7 @@ class ParticipationLiveSaveCoordinationTest {
         var uriService = mock(UriService.class);
         var participations = mock(ProgrammingExerciseStudentParticipationTestRepository.class);
         var service = new ParticipationService(Optional.empty(), Optional.of(vcs), null, null, participations, null, null, null, uriService, null, null, null, null,
-                Optional.of(new HyperionExerciseMutationApi(liveSave)));
+                Optional.of(new HyperionExerciseMutationApi(liveSave)), mock(CourseConfigurationRepository.class), mock(GitService.class));
         var exercise = new ProgrammingExercise();
         exercise.setId(exerciseId);
         var course = new Course();
@@ -140,7 +142,7 @@ class ParticipationLiveSaveCoordinationTest {
         when(participations.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var bothCopying = new CountDownLatch(2);
         var finishCopies = new CountDownLatch(1);
-        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), anyMap())).thenAnswer(invocation -> {
+        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), anyMap(), any())).thenAnswer(invocation -> {
             bothCopying.countDown();
             assertThat(finishCopies.await(10, TimeUnit.SECONDS)).isTrue();
             return destination;
@@ -180,7 +182,7 @@ class ParticipationLiveSaveCoordinationTest {
         var uriService = mock(UriService.class);
         var participations = mock(ProgrammingExerciseStudentParticipationTestRepository.class);
         var service = new ParticipationService(Optional.empty(), Optional.of(vcs), null, null, participations, null, null, null, uriService, null, null, null, null,
-                Optional.of(new HyperionExerciseMutationApi(liveSave)));
+                Optional.of(new HyperionExerciseMutationApi(liveSave)), mock(CourseConfigurationRepository.class), mock(GitService.class));
         var course = new Course();
         course.setShortName("te");
         var exam = new de.tum.cit.aet.artemis.exam.domain.Exam();
@@ -197,7 +199,7 @@ class ParticipationLiveSaveCoordinationTest {
         var destination = new LocalVCRepositoryUri("https://artemis.example.org/git/TEST/test-examstudent.git");
         when(uriService.getRepositorySlugFromRepositoryUri(source)).thenReturn("test-template");
         when(participations.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), anyMap())).thenReturn(destination);
+        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), anyMap(), any())).thenReturn(destination);
         Supplier<LocalVCRepositoryUri> sourceUri = () -> source;
         Supplier<String> branch = () -> "main";
 
