@@ -4,7 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -32,7 +32,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -41,9 +41,9 @@ import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { GeneratedQuestion } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD } from 'app/foundation/constants/input.constants';
 
 describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;
@@ -156,7 +156,6 @@ describe('QuizExerciseUpdateComponent', () => {
     const configureTestBed = async (testRoute?: ActivatedRoute) => {
         await TestBed.configureTestingModule({
             providers: [
-                MockProvider(DialogService),
                 MockProvider(ChangeDetectorRef),
                 MockProvider(DragAndDropQuestionUtil),
                 MockProvider(ShortAnswerQuestionUtil),
@@ -608,6 +607,27 @@ describe('QuizExerciseUpdateComponent', () => {
             expect(comp.isImport()).toBeTruthy();
         });
 
+        it('should import a quiz read from a file on the route of a new quiz', async () => {
+            const snapshot = new ActivatedRouteSnapshot();
+            snapshot.params = { courseId: course.id };
+            vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
+            await configureFreshFixture({ snapshot, queryParams: of({}) } as ActivatedRoute);
+            const fromFile = new QuizExercise(undefined, undefined);
+            fromFile.id = 9;
+            fromFile.title = 'From file';
+            fromFile.quizQuestions = [];
+            history.replaceState({ exerciseForImportFromFile: fromFile }, '');
+
+            comp.ngOnInit();
+            history.replaceState(null, '');
+
+            expect(quizExerciseServiceStub).not.toHaveBeenCalled();
+            expect(comp.isImport()).toBe(true);
+            expect(comp.quizExercise().title).toBe('From file');
+            expect(comp.quizExercise().id).toBeUndefined();
+            expect(comp.quizExercise().course).toEqual(course);
+        });
+
         it('should assign exerciseGroup to existing quizExercise in exam mode', async () => {
             const snapshot = new ActivatedRouteSnapshot();
             snapshot.params = { courseId: course.id, exerciseId: 456, examId: 1, exerciseGroupId: 2 };
@@ -1043,9 +1063,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(true);
             });
 
-            it('should be valid if MC question explanation has exactly 500 characters', () => {
+            it('should be valid if MC question explanation has exactly the explanation limit', () => {
                 const { question } = createValidMCQuestion();
-                question.explanation = 'f'.repeat(500);
+                question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(true);
@@ -1059,9 +1079,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(false);
             });
 
-            it('should not be valid if MC question explanation has more than 500 characters', () => {
+            it('should not be valid if MC question explanation exceeds the explanation limit', () => {
                 const { question } = createValidMCQuestion();
-                question.explanation = 'f'.repeat(500 + 1);
+                question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(false);
@@ -1075,9 +1095,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(true);
             });
 
-            it('should be valid if MC answer option explanation has exactly 500 characters', () => {
+            it('should be valid if MC answer option explanation has exactly the explanation limit', () => {
                 const { question } = createValidMCQuestion();
-                question.answerOptions![0]!.explanation = 'f'.repeat(500);
+                question.answerOptions![0]!.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(true);
@@ -1091,9 +1111,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(false);
             });
 
-            it('should not be valid if MC answer option explanation has more than 1000 characters', () => {
+            it('should not be valid if MC answer option explanation exceeds the explanation limit', () => {
                 const { question } = createValidMCQuestion();
-                question.answerOptions![0]!.explanation = 'f'.repeat(500 + 1);
+                question.answerOptions![0]!.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(false);
@@ -1141,9 +1161,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(true);
             });
 
-            it('should be valid if DnD question explanation has exactly 500 characters', () => {
+            it('should be valid if DnD question explanation has exactly the explanation limit', () => {
                 const { question } = createValidDnDQuestion();
-                question.explanation = 'f'.repeat(500);
+                question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(true);
@@ -1157,9 +1177,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(false);
             });
 
-            it('should not be valid if DnD question explanation has more than 500 characters', () => {
+            it('should not be valid if DnD question explanation exceeds the explanation limit', () => {
                 const { question } = createValidDnDQuestion();
-                question.explanation = 'f'.repeat(500 + 1);
+                question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(false);
@@ -1510,32 +1530,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizExercise().releaseDate).toEqual(dayjs(now));
             });
 
-            it('getEnhancedDescriptionForSuggestions should combine title and question texts, with fallback', () => {
-                // title only
-                comp.quizExercise().title = 'Quiz Title';
-                comp.quizExercise().quizQuestions = [];
-                expect(comp.getEnhancedDescriptionForSuggestions()).toBe('Quiz Title');
-
-                // title + questions
-                const q1 = new MultipleChoiceQuestion();
-                q1.title = 'Q1';
-                q1.text = 'First question';
-                const q2 = new MultipleChoiceQuestion();
-                q2.title = 'Q2';
-                q2.text = 'Second question';
-                comp.quizExercise().quizQuestions = [q1, q2];
-                const combined = comp.getEnhancedDescriptionForSuggestions();
-                expect(combined).toContain('Quiz Title');
-                expect(combined).toContain('Q1 First question');
-                expect(combined).toContain('Q2 Second question');
-
-                // fallback to problemStatement
-                comp.quizExercise().title = '';
-                comp.quizExercise().quizQuestions = [];
-                comp.quizExercise().problemStatement = 'Problem statement fallback';
-                expect(comp.getEnhancedDescriptionForSuggestions()).toBe('Problem statement fallback');
-            });
-
             it('should handle undefined quizQuestions gracefully (cover ?? [])', () => {
                 comp.quizExercise().quizQuestions = undefined;
 
@@ -1848,35 +1842,6 @@ describe('QuizExerciseUpdateComponent', () => {
                     expect(dndQuestion.dragItems[0].id).toBeUndefined();
                 });
             });
-
-            it('should return empty string if quizExercise is not set', () => {
-                comp.quizExercise.set(undefined as any);
-
-                const result = comp.getEnhancedDescriptionForSuggestions();
-
-                expect(result).toBe('');
-            });
-
-            it('should handle undefined title or text in questions gracefully (cover || "")', () => {
-                comp.quizExercise().title = 'Main Title';
-
-                const q1 = new MultipleChoiceQuestion();
-                q1.title = undefined;
-                q1.text = undefined;
-
-                const q2 = new MultipleChoiceQuestion();
-                q2.title = undefined;
-                q2.text = 'Only Text';
-
-                const q3 = new MultipleChoiceQuestion();
-                q3.title = 'Only Title';
-                q3.text = null as any;
-
-                comp.quizExercise().quizQuestions = [q1, q2, q3];
-
-                const result = comp.getEnhancedDescriptionForSuggestions();
-                expect(result).toBe('Main Title Only Text Only Title');
-            });
         });
 
         describe('quiz mode', () => {
@@ -1978,14 +1943,12 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('validateItemLimit', () => {
-            let dialogService: DialogService;
+            let confirmationService: TumAetUiConfirmationService;
             let saveSpy: any;
-            let dialogOpenSpy: any;
 
             beforeEach(() => {
-                dialogService = TestBed.inject(DialogService);
+                confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
                 saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {}); // Prevent actual save logic
-                dialogOpenSpy = vi.spyOn(dialogService, 'open');
                 comp.quizExercise.set(quizExercise);
             });
 
@@ -1995,45 +1958,38 @@ describe('QuizExerciseUpdateComponent', () => {
 
                 comp.validateItemLimit();
 
-                expect(dialogOpenSpy).not.toHaveBeenCalled();
+                expect(confirmationService.request(undefined)).toBeUndefined();
                 expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
             });
 
-            it('should open dialog and save if confirmed when limit is exceeded', () => {
+            it('should ask for confirmation and save if confirmed when the limit is exceeded', () => {
                 vi.spyOn(comp, 'checkItemCountDragAndDrop').mockReturnValue(true);
 
-                const onClose = new Subject<boolean | undefined>();
-                dialogOpenSpy.mockReturnValue({ onClose } as unknown as DynamicDialogRef);
-
                 comp.validateItemLimit();
 
-                expect(dialogOpenSpy).toHaveBeenCalledExactlyOnceWith(
-                    GenericConfirmationDialogComponent,
-                    // The second-layer confirmation dialog must stay within the viewport on narrow screens (responsive breakpoints, not a fixed width).
+                const request = confirmationService.request(undefined);
+                expect(request).toEqual(
                     expect.objectContaining({
-                        width: '40rem',
-                        breakpoints: { '768px': '95vw' },
-                        data: expect.objectContaining({ translationKeys: expect.anything(), canBeUndone: true }),
+                        header: 'artemisApp.quizWarning.title',
+                        acceptLabel: 'artemisApp.quizWarning.confirmButton',
+                        rejectLabel: 'entity.action.cancel',
                     }),
                 );
+                expect(saveSpy).not.toHaveBeenCalled();
 
-                // confirm
-                onClose.next(true);
+                request!.accept();
                 expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
             });
 
-            it('should open dialog and NOT save if cancelled', () => {
+            it('should ask for confirmation and NOT save if cancelled', () => {
                 vi.spyOn(comp, 'checkItemCountShortAnswer').mockReturnValue(true);
-
-                const onClose = new Subject<boolean | undefined>();
-                dialogOpenSpy.mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
                 comp.validateItemLimit();
 
-                expect(dialogOpenSpy).toHaveBeenCalled();
+                const request = confirmationService.request(undefined);
+                expect(request).toBeDefined();
 
-                // dismiss
-                onClose.next(undefined);
+                request!.reject?.();
                 expect(saveSpy).not.toHaveBeenCalled();
             });
         });
@@ -2133,7 +2089,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason if question explanation is too long', () => {
-                    question.explanation = 'f'.repeat(500 + 1);
+                    question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionExplanationLength');
                 });
 
@@ -2143,7 +2099,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason if answer option explanation is too long', () => {
-                    answerOption1.explanation = 'f'.repeat(500 + 1);
+                    answerOption1.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.answerExplanationLength');
                 });
 
@@ -2153,8 +2109,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason exactly once if more than one answer option explanation is too long', () => {
-                    answerOption1.explanation = 'f'.repeat(500 + 1);
-                    answerOption2.explanation = 'f'.repeat(500 + 1);
+                    answerOption1.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
+                    answerOption2.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                     const invalidReasonsAnswerOptions = comp
                         .computeInvalidReasons()
                         .filter((reason) => reason.translateKey === 'artemisApp.quizExercise.invalidReasons.answerExplanationLength');
@@ -2223,7 +2179,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason if question explanation is too long', () => {
-                    question.explanation = 'f'.repeat(500 + 1);
+                    question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionExplanationLength');
                 });
 
@@ -2451,6 +2407,33 @@ describe('QuizExerciseUpdateComponent', () => {
             expect((comp.quizExercise().quizQuestions?.[1] as MultipleChoiceQuestion).singleChoice).toBe(true);
             expect((comp.quizExercise().quizQuestions?.[2] as MultipleChoiceQuestion).singleChoice).toBe(false);
             expect((comp.quizExercise().quizQuestions?.[3] as MultipleChoiceQuestion).singleChoice).toBe(true);
+        });
+
+        it('should keep the quiz serializable so that a titled quiz with generated questions becomes valid', () => {
+            const quiz = new QuizExercise(undefined, undefined);
+            quiz.title = 'Generated quiz';
+            quiz.duration = 600;
+            quiz.quizQuestions = [];
+            comp.quizExercise.set(quiz);
+            comp.savedEntity = new QuizExercise(undefined, undefined);
+
+            comp.appendAiGeneratedQuestions([
+                {
+                    id: 'q1',
+                    type: 'single-choice',
+                    title: 'Generated Title',
+                    questionText: 'Generated question',
+                    options: [
+                        { text: 'A', correct: true },
+                        { text: 'B', correct: false },
+                    ],
+                },
+            ]);
+
+            expect(() => JSON.stringify(comp.quizExercise())).not.toThrow();
+            expect(comp.pendingChangesCache()).toBe(true);
+            expect(comp.invalidReasons().map((reason) => reason.translateKey)).not.toContain('artemisApp.quizExercise.invalidReasons.noQuestion');
+            expect(comp.invalidReasons().map((reason) => reason.translateKey)).not.toContain('artemisApp.quizExercise.invalidReasons.quizTitle');
         });
     });
     describe('save tooltip', () => {

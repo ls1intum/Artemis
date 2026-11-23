@@ -24,9 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -52,8 +54,11 @@ public class ApollonDiagramResource {
 
     private final ApollonDiagramRepository apollonDiagramRepository;
 
-    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository) {
+    private final AuthorizationCheckService authCheckService;
+
+    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService) {
         this.apollonDiagramRepository = apollonDiagramRepository;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -124,6 +129,11 @@ public class ApollonDiagramResource {
     @GetMapping("apollon-diagrams/{diagramId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getDiagramTitle(@PathVariable Long diagramId) {
+        Long courseId = apollonDiagramRepository.findCourseIdById(diagramId);
+        if (courseId == null) {
+            return ResponseEntity.notFound().build();
+        }
+        authCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.STUDENT, courseId);
         final var title = apollonDiagramRepository.getDiagramTitle(diagramId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }

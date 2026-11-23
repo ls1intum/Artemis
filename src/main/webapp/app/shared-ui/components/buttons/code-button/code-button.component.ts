@@ -3,19 +3,19 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleExclamation, faCircleNotch, faCode } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiButtonSeverity, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AuthenticationMethodData, CodeButtonPopoverContentComponent, NonEmptyArray, SshKeyState, TheiaLinkData } from './code-button-popover-content.component';
-import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
+import { SshUserSettingsService } from 'app/account/user/settings/credentials/ssh-settings/ssh-user-settings.service';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { Observable, firstValueFrom } from 'rxjs';
-import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
-import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
+import { IdeSettingsService } from 'app/account/user/settings/exercises/ide-preferences/ide-settings.service';
+import { Ide } from 'app/account/user/settings/exercises/ide-preferences/ide.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { User } from 'app/account/user/user.model';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
@@ -84,6 +84,8 @@ export class CodeButtonComponent {
     readonly programmingLanguage = input<ProgrammingLanguage>();
     readonly disabled = input(false);
     readonly size = input<CodeButtonSize>('default');
+    /** Match the surrounding action group's semantic emphasis. */
+    readonly severity = input<TumAetUiButtonSeverity>('primary');
     readonly hideLabelMobile = input(false);
     readonly hideLabelBreakpoint = input<'md' | 'xl'>('md');
 

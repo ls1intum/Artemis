@@ -17,7 +17,6 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { LockRepositoryPolicy, SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -25,6 +24,7 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 describe('ExerciseHeadersInformationComponent', () => {
@@ -159,6 +159,18 @@ describe('ExerciseHeadersInformationComponent', () => {
 
             expect(titles()).toEqual([STATUS]);
         });
+    });
+
+    it('should map the color of a relative date to a state color class', () => {
+        const colorClass = (color: string | undefined) => component['timeAgoColorClass'](color);
+
+        expect(colorClass('danger')).toBe('text-state-danger');
+        expect(colorClass('warning')).toBe('text-state-warning');
+        expect(colorClass('success')).toBe('text-state-success');
+        expect(colorClass('info')).toBe('text-state-info');
+        // the inherited color for everything else, and for no color
+        expect(colorClass('body-color')).toBe('');
+        expect(colorClass(undefined)).toBe('');
     });
 
     it('should render one information box per computed item', () => {

@@ -15,6 +15,8 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -22,7 +24,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.errors.LargeObjectException;
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.AfterEach;
@@ -46,6 +50,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
@@ -65,6 +71,7 @@ import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -94,6 +101,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
@@ -417,6 +425,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
+    private StudentExam addExerciseToOwnStudentExam(TextExercise examExercise, String studentLogin) {
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(examExercise.getExam(), studentLogin);
+        studentExam.setExercises(new ArrayList<>(List.of(examExercise)));
+        return studentExamRepository.save(studentExam);
+    }
+
     /**
      * Students can start participations during the working time of the exam.
      */
@@ -427,6 +441,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
         examTestRepository.save(examTextExercise.getExam());
+        addExerciseToOwnStudentExam(examTextExercise, TEST_PREFIX + "student1");
 
         StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null,
                 StudentParticipationDTO.class, HttpStatus.CREATED);
@@ -442,6 +457,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
         examTestRepository.save(examTextExercise.getExam());
+        addExerciseToOwnStudentExam(examTextExercise, TEST_PREFIX + "student1");
 
         StudentParticipationDTO initialParticipation = request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null,
                 StudentParticipationDTO.class, HttpStatus.CREATED);
@@ -471,8 +487,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().minusHours(1));
         examTestRepository.save(examTextExercise.getExam());
+        // the exercise is part of the own student exam, so the end of the working time is what refuses the request
+        addExerciseToOwnStudentExam(examTextExercise, TEST_PREFIX + "student1");
 
-        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+        request.postAndExpectError("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN,
+                "dueDateOver.participationInPracticeMode");
     }
 
     /**
@@ -505,6 +524,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         StudentExam studentExam = examUtilService.addStudentExamWithUser(examTextExercise.getExam(), studentLogin);
         int threeHours = 3 * 60 * 60;
         studentExam.setWorkingTime(threeHours);
+        studentExam.setExercises(new ArrayList<>(List.of(examTextExercise)));
         studentExamRepository.save(studentExam);
 
         StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null,
@@ -532,9 +552,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         StudentExam studentExam = examUtilService.addStudentExamWithUser(examTextExercise.getExam(), studentLogin);
         int twoHours = 2 * 60 * 60;
         studentExam.setWorkingTime(twoHours);
+        // the exercise is part of the own student exam, so the end of the individual working time is what refuses the request
+        studentExam.setExercises(new ArrayList<>(List.of(examTextExercise)));
         studentExamRepository.save(studentExam);
 
-        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+        request.postAndExpectError("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN,
+                "dueDateOver.participationInPracticeMode");
     }
 
     @Test
@@ -1752,6 +1775,46 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(updatedParticipation.team().students()).extracting(UserNameDTO::id).containsExactlyInAnyOrder(student1.getId(), student2.getId());
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resumeProgrammingExerciseParticipation_rejectsExistingExerciseMismatch(boolean requestedExerciseIsExam) throws Exception {
+        var examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(ZonedDateTime.now().minusMinutes(10),
+                ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3), TEST_PREFIX + "student1", 7200, TEST_PREFIX);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, examExercise);
+        programmingExercise = exerciseRepository.save(programmingExercise);
+        examExercise = exerciseRepository.save(examExercise);
+        var originalExercise = requestedExerciseIsExam ? programmingExercise : examExercise;
+        var requestedExercise = requestedExerciseIsExam ? examExercise : programmingExercise;
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, originalExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var studentRepository = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+        participation = participationRepo.save(participation);
+        long originalParticipationId = participation.getId();
+        String originalRepositoryUri = participation.getRepositoryUri();
+        String originalBuildPlanId = participation.getBuildPlanId();
+        var answerFile = studentRepository.workingCopyPath().resolve("student-answer.txt");
+        FileUtils.writeStringToFile(answerFile.toFile(), "The original student's answer", StandardCharsets.UTF_8);
+        String originalHead = studentRepository.workingCopy().getRepository().resolve("HEAD").name();
+        Mockito.clearInvocations(continuousIntegrationService);
+
+        request.put("/api/exercise/exercises/" + requestedExercise.getId() + "/participations/" + originalParticipationId + "/resume-programming-participation", null,
+                HttpStatus.BAD_REQUEST);
+
+        var persisted = (ProgrammingExerciseStudentParticipation) participationRepo.findById(originalParticipationId).orElseThrow();
+        assertThat(persisted.getExercise().getId()).isEqualTo(originalExercise.getId());
+        assertThat(persisted.getId()).isEqualTo(originalParticipationId);
+        assertThat(persisted.getInitializationState()).isEqualTo(InitializationState.INACTIVE);
+        assertThat(persisted.getRepositoryUri()).isEqualTo(originalRepositoryUri);
+        assertThat(persisted.getBuildPlanId()).isEqualTo(originalBuildPlanId);
+        assertThat(participationRepo.findByExerciseId(requestedExercise.getId())).isEmpty();
+        assertThat(Files.readString(answerFile)).isEqualTo("The original student's answer");
+        assertThat(studentRepository.workingCopy().getRepository().resolve("HEAD").name()).isEqualTo(originalHead);
+        verify(continuousIntegrationService, never()).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
+        verify(continuousIntegrationService, never()).configureBuildPlan(any());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resumeProgrammingExerciseParticipation_wrongExerciseId() throws Exception {
@@ -2112,6 +2175,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationWithLatestResult() throws Exception {
+        // The assessment due date is in the past, so the completed results are released and the student may see them.
+        textExercise.setAssessmentDueDate(ZonedDateTime.now().minusHours(3));
+        exerciseRepository.save(textExercise);
         var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true));
         var firstResult = participationUtilService.addResultToSubmission(null, ZonedDateTime.now().minusHours(2), participation.findLatestSubmission().orElseThrow());
@@ -2131,6 +2197,91 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(actualParticipation.submissions()).as("Only latest submission is returned").extracting(ParticipationSubmissionDTO::id).containsExactly(submission.getId());
         assertThat(actualParticipation.submissions().getFirst().results()).as("All results of the latest submission are returned").extracting(ParticipationSubmissionResultDTO::id)
                 .containsExactlyInAnyOrder(firstResult.getId(), latestResult.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getParticipationWithLatestResult_hidesPreliminaryManualResult() throws Exception {
+        // The assessment due date is in the future, so a completed manual result is not released yet and its score must not leak through this generic endpoint either.
+        textExercise.setAssessmentDueDate(ZonedDateTime.now().plusHours(3));
+        exerciseRepository.save(textExercise);
+        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true));
+        var manualResult = ParticipationFactory.generateResult(true, 88D);
+        manualResult.submission(submission).setCompletionDate(ZonedDateTime.now().minusHours(1));
+        manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        manualResult.setExerciseId(textExercise.getId());
+        manualResult = resultRepository.save(manualResult);
+        submission.addResult(manualResult);
+
+        var actualParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipationDTO.class);
+
+        assertThat(actualParticipation).isNotNull();
+        var resultIds = actualParticipation.submissions() == null ? List.<Long>of()
+                : actualParticipation.submissions().stream()
+                        .flatMap(currentSubmission -> currentSubmission.results() == null ? Stream.empty() : currentSubmission.results().stream())
+                        .map(ParticipationSubmissionResultDTO::id).toList();
+        assertThat(resultIds).as("The score of a not-yet-released manual result must not leak via with-latest-result").doesNotContain(manualResult.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getParticipationWithLatestResult_showsAutomaticAthenaResultBeforeAssessmentDueDate() throws Exception {
+        // Athena automatic feedback is shown to students before the assessment due date, so it must stay visible here even though the due date has not passed.
+        textExercise.setAssessmentDueDate(ZonedDateTime.now().plusHours(3));
+        exerciseRepository.save(textExercise);
+        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true));
+        var athenaResult = ParticipationFactory.generateResult(true, 10D);
+        athenaResult.submission(submission).setCompletionDate(ZonedDateTime.now().minusHours(1));
+        athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        athenaResult.setExerciseId(textExercise.getId());
+        athenaResult = resultRepository.save(athenaResult);
+        submission.addResult(athenaResult);
+
+        var actualParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipationDTO.class);
+
+        assertThat(actualParticipation).isNotNull();
+        var resultIds = actualParticipation.submissions() == null ? List.<Long>of()
+                : actualParticipation.submissions().stream()
+                        .flatMap(currentSubmission -> currentSubmission.results() == null ? Stream.empty() : currentSubmission.results().stream())
+                        .map(ParticipationSubmissionResultDTO::id).toList();
+        assertThat(resultIds).as("Athena automatic feedback stays visible before the assessment due date").contains(athenaResult.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLatestResultWithFeedbacks_hidesUnpublishedTextExamResult() throws Exception {
+        // The latest-result-with-feedbacks endpoint also serves non-programming participations, so an unpublished text exam result must stay hidden there as well.
+        String studentLogin = TEST_PREFIX + "student1";
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        Exam exam = examTextExercise.getExam();
+        exam.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        exam.setPublishResultsDate(ZonedDateTime.now().plusHours(1));
+        examTestRepository.save(exam);
+        User student = userUtilService.getUserByLogin(studentLogin);
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, student);
+        studentExam.setExercises(List.of(examTextExercise));
+        studentExamRepository.save(studentExam);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, studentLogin);
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true));
+        var result = ParticipationFactory.generateResult(true, 88D);
+        result.submission(submission).setCompletionDate(ZonedDateTime.now().minusMinutes(30));
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        result.setExerciseId(examTextExercise.getId());
+        result = resultRepository.save(result);
+        submission.addResult(result);
+
+        String url = "/api/programming/programming-exercise-participations/" + participation.getId() + "/latest-result-with-feedbacks";
+        assertThat(request.get(url, HttpStatus.OK, Result.class)).as("An unpublished text exam result must not leak via latest-result-with-feedbacks").isNull();
+
+        // Once the exam results are published, the result becomes visible through the same endpoint.
+        exam.setPublishResultsDate(ZonedDateTime.now().minusMinutes(1));
+        examTestRepository.save(exam);
+        var publishedResult = request.get(url, HttpStatus.OK, Result.class);
+        assertThat(publishedResult).isNotNull();
+        assertThat(publishedResult.getId()).isEqualTo(result.getId());
     }
 
     @Test
@@ -2735,6 +2886,119 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         courseUtilService.saveWithConfigurations(exerciseCourse);
     }
 
+    /**
+     * The exercise has to be part of the student exam of the requesting user.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInExamTextExerciseNotPartOfOwnStudentExamForbidden() throws Exception {
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
+        examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
+        examTestRepository.save(examTextExercise.getExam());
+
+        // no student exam at all
+        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+
+        // a student exam that does not contain the exercise
+        examUtilService.addStudentExamWithUser(examTextExercise.getExam(), TEST_PREFIX + "student1");
+        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * A student exam that was already handed in cannot be used to start a participation.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInExamTextExerciseAfterStudentExamSubmittedForbidden() throws Exception {
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
+        examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
+        examTestRepository.save(examTextExercise.getExam());
+        StudentExam studentExam = addExerciseToOwnStudentExam(examTextExercise, TEST_PREFIX + "student1");
+        studentExam.setSubmitted(true);
+        studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(5));
+        studentExamRepository.save(studentExam);
+
+        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * An instructor conducts an exam test run with a student exam of their own that is marked as test run. Without it the instructor is treated like any other user.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void participateInExamTextExerciseAsInstructorOnlyWithOwnTestRun() throws Exception {
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
+        examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
+        examTestRepository.save(examTextExercise.getExam());
+        String url = "/api/exercise/exercises/" + examTextExercise.getId() + "/participations";
+
+        // no test run yet
+        request.postWithResponseBody(url, null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+
+        StudentExam testRun = ExamFactory.generateExamTestRun(examTextExercise.getExam());
+        testRun.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        testRun.addExercise(examTextExercise);
+        studentExamRepository.save(testRun);
+
+        StudentParticipationDTO participation = request.postWithResponseBody(url, null, StudentParticipationDTO.class, HttpStatus.CREATED);
+        assertThat(participation.student().getId()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getId());
+    }
+
+    /**
+     * A test run belongs to the instructor who created it: a test run of another instructor does not open the exercise for anybody else.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInExamTextExerciseWithTestRunOfAnotherUserForbidden() throws Exception {
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
+        examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
+        examTestRepository.save(examTextExercise.getExam());
+        StudentExam testRun = ExamFactory.generateExamTestRun(examTextExercise.getExam());
+        testRun.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        testRun.addExercise(examTextExercise);
+        studentExamRepository.save(testRun);
+
+        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * A test exam can be attempted several times: only the attempt that was not handed in yet can be used to start a participation.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInTestExamTextExerciseOnlyWithAnAttemptThatWasNotHandedIn() throws Exception {
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        Exam testExam = examTextExercise.getExam();
+        testExam.setExamMode(ExamMode.TEST);
+        testExam.setStartDate(ZonedDateTime.now().minusHours(2));
+        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+        testExam.setWorkingTime(60 * 60);
+        examTestRepository.save(testExam);
+        String url = "/api/exercise/exercises/" + examTextExercise.getId() + "/participations";
+
+        StudentExam firstAttempt = examUtilService.addStudentExamForTestExam(testExam, TEST_PREFIX + "student1");
+        firstAttempt.setExercises(new ArrayList<>(List.of(examTextExercise)));
+        firstAttempt.setStartedAndStartDate(ZonedDateTime.now().minusHours(1));
+        firstAttempt.setSubmitted(true);
+        firstAttempt.setSubmissionDate(ZonedDateTime.now().minusMinutes(30));
+        studentExamRepository.save(firstAttempt);
+
+        // the only attempt was handed in already
+        request.postWithResponseBody(url, null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+
+        StudentExam secondAttempt = examUtilService.addStudentExamForTestExam(testExam, TEST_PREFIX + "student1");
+        secondAttempt.setExercises(new ArrayList<>(List.of(examTextExercise)));
+        secondAttempt.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(5));
+        studentExamRepository.save(secondAttempt);
+
+        StudentParticipationDTO participation = request.postWithResponseBody(url, null, StudentParticipationDTO.class, HttpStatus.CREATED);
+        assertThat(participation.student().getId()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testStartParticipationForExamProgrammingExerciseAsTutorNotAllowed() throws Exception {
@@ -3092,6 +3356,42 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
+        void getParticipationsPage_combinesCategoriesAndKeepsAlternativesWithinCategory() throws Exception {
+            var manualSuccess = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var automaticSuccess = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            var manualFailure = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
+            var practice = participationUtilService.createAndSavePracticeParticipationForExercise(textExercise, TEST_PREFIX + "student4");
+            for (var participation : List.of(manualSuccess, automaticSuccess, manualFailure, practice)) {
+                var result = participationUtilService.createSubmissionAndResult(participation, participation == manualFailure ? 30 : 100, true);
+                result.setSuccessful(participation != manualFailure);
+                result.setAssessmentType(participation == automaticSuccess ? AssessmentType.AUTOMATIC : AssessmentType.MANUAL);
+                resultRepository.save(result);
+            }
+
+            var search = buildParticipationSearch("", "Successful, Manual,Manual,NoPracticeMode", "id", SortingOrder.ASCENDING);
+            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(manualSuccess.getId());
+
+            search = buildParticipationSearch("", "Successful,Unsuccessful,Manual,NoPracticeMode", "id", SortingOrder.ASCENDING);
+            results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(manualSuccess.getId(), manualFailure.getId());
+
+            search = new ParticipationSearchDTO(0, 1, SortingOrder.ASCENDING, "id", "", "Successful,Unsuccessful,Manual,Automatic,NoPracticeMode", 50, 100);
+            var page = request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl).params(pageableSearchUtilService.searchMapping(search))).andExpect(status().isOk())
+                    .andReturn();
+            assertThat(page.getResponse().getHeader("X-Total-Count")).isEqualTo("2");
+            results = request.getObjectMapper().readValue(page.getResponse().getContentAsString(),
+                    request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, ParticipationManagementDTO.class));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(manualSuccess.getId());
+        }
+
+        @Test
+        void getParticipationsPage_rejectsUnknownFilterInCombination() throws Exception {
+            var search = buildParticipationSearch("", "Successful, Unknown", "id", SortingOrder.ASCENDING);
+            request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl).params(pageableSearchUtilService.searchMapping(search))).andExpect(status().isBadRequest());
+        }
+
+        @Test
         void getParticipationsPage_filterSuccessful() throws Exception {
             var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
             var r1 = participationUtilService.createSubmissionAndResult(p1, 100, true);
@@ -3147,6 +3447,36 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
             assertThat(results).hasSize(1);
             assertThat(results.getFirst().participantIdentifier()).contains("student1");
+
+            r1.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+            resultRepository.save(r1);
+            var manualResults = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(manualResults).isEmpty();
+            var semiAutomaticSearch = buildParticipationSearch("", "SemiAutomatic", "id", SortingOrder.ASCENDING);
+            var semiAutomaticResults = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class,
+                    pageableSearchUtilService.searchMapping(semiAutomaticSearch));
+            assertThat(semiAutomaticResults).extracting(ParticipationManagementDTO::participationId).containsExactly(p1.getId());
+        }
+
+        @Test
+        void getParticipationsPage_filterSemiAutomaticModelingAssessment() throws Exception {
+            var participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+            var result = participationUtilService.createSubmissionAndResult(participation, 80, true);
+            result.addFeedback(new Feedback().type(FeedbackType.AUTOMATIC).credits(1.0));
+            result.determineAssessmentType();
+            assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+            resultRepository.save(result);
+
+            var url = "/api/exercise/exercises/" + modelingExercise.getId() + "/participations/page";
+            var search = buildParticipationSearch("", "SemiAutomatic", "id", SortingOrder.ASCENDING);
+            var results = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(participation.getId());
+            assertThat(results.getFirst().assessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+            for (var filter : List.of("Manual", "Automatic")) {
+                var exclusiveSearch = buildParticipationSearch("", filter, "id", SortingOrder.ASCENDING);
+                var excluded = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(exclusiveSearch));
+                assertThat(excluded).isEmpty();
+            }
         }
 
         @Test
@@ -3165,6 +3495,43 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
             assertThat(results).hasSize(1);
             assertThat(results.getFirst().participantIdentifier()).contains("student2");
+        }
+
+        @Test
+        void getParticipationsPage_intersectsGradedManualAndLockedProgrammingFilters() throws Exception {
+            var lockedManual = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+            var ungradedManual = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+            var lockedAutomatic = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student3");
+            var completedManual = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student4");
+            Result lockedManualResult = null;
+            for (var participation : List.of(lockedManual, ungradedManual, lockedAutomatic, completedManual)) {
+                var result = participationUtilService.createSubmissionAndResult(participation, 80, participation != ungradedManual);
+                result.setAssessmentType(participation == lockedAutomatic ? AssessmentType.AUTOMATIC : AssessmentType.MANUAL);
+                if (participation != completedManual) {
+                    result.setCompletionDate(null);
+                    result.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+                }
+                result = resultRepository.save(result);
+                if (participation == lockedManual) {
+                    lockedManualResult = result;
+                }
+            }
+            var url = "/api/exercise/exercises/" + programmingExercise.getId() + "/participations/page";
+            var gradedSearch = buildParticipationSearch("", "Graded", "id", SortingOrder.ASCENDING);
+            var graded = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(gradedSearch));
+            assertThat(graded).extracting(ParticipationManagementDTO::participationId).containsExactlyInAnyOrder(lockedManual.getId(), lockedAutomatic.getId(),
+                    completedManual.getId());
+            for (var filter : List.of("Manual,Locked,Graded", "Manual,Locked,NoPracticeMode,Graded")) {
+                var search = buildParticipationSearch("", filter, "id", SortingOrder.ASCENDING);
+                var results = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+                assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(lockedManual.getId());
+            }
+            assertThat(lockedManualResult).isNotNull();
+            lockedManualResult.setRated(false);
+            resultRepository.save(lockedManualResult);
+            var search = buildParticipationSearch("", "Manual,Locked,Graded", "id", SortingOrder.ASCENDING);
+            var empty = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(empty).isEmpty();
         }
 
         @Test
@@ -3315,10 +3682,60 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
             participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
 
+            var opened = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
+            var initial = new TextSubmission();
+            initial.setSubmitted(false);
+            participationUtilService.addSubmission(opened, initial);
+
             var search = buildParticipationSearch("", "NoSubmissions", "id", SortingOrder.ASCENDING);
             var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
-            assertThat(results).hasSize(1);
-            assertThat(results.getFirst().participantIdentifier()).contains("student2");
+            assertThat(results).hasSize(2);
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).contains(opened.getId());
+            assertThat(results).extracting(ParticipationManagementDTO::participantIdentifier).anyMatch(login -> login.contains("student2"));
+
+            var validSearch = buildParticipationSearch("", "ValidSubmissions", "id", SortingOrder.ASCENDING);
+            var validResults = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(validSearch));
+            assertThat(validResults).extracting(ParticipationManagementDTO::participationId).containsExactly(p1.getId());
+        }
+
+        @Test
+        void getParticipationsPage_validProgrammingSubmissionsExcludeFailedAndPendingBuilds() throws Exception {
+            var exercise = programmingExercise;
+            var valid = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+            var failed = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
+            var pending = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student3");
+            participationUtilService.createSubmissionAndResult(valid, 80, true);
+            var failedResult = participationUtilService.createSubmissionAndResult(failed, 0, true);
+            var failedSubmission = (ProgrammingSubmission) failedResult.getSubmission();
+            failedSubmission.setBuildFailed(true);
+            submissionRepository.save(failedSubmission);
+            var pendingSubmission = new ProgrammingSubmission();
+            pendingSubmission.setSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+            participationUtilService.addSubmission(pending, pendingSubmission);
+            var url = "/api/exercise/exercises/" + exercise.getId() + "/participations/page";
+            var search = buildParticipationSearch("", "ValidSubmissions", "id", SortingOrder.ASCENDING);
+            var results = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(valid.getId());
+
+            var missing = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student4");
+            search = buildParticipationSearch("", "Failed,NoSubmissions", "id", SortingOrder.ASCENDING);
+            results = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(pending.getId(), missing.getId());
+        }
+
+        @Test
+        void getParticipationsPage_filterGradedQuizParticipations() throws Exception {
+            var course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Graded filter", TEST_PREFIX);
+            var quiz = ExerciseUtilService.getFirstExerciseWithType(course, QuizExercise.class);
+            var graded = participationUtilService.createAndSaveParticipationForExercise(quiz, TEST_PREFIX + "student1");
+            var ungraded = participationUtilService.createAndSaveParticipationForExercise(quiz, TEST_PREFIX + "student2");
+            var missingResult = participationUtilService.createAndSaveParticipationForExercise(quiz, TEST_PREFIX + "student3");
+            participationUtilService.createSubmissionAndResult(graded, 80, true);
+            participationUtilService.createSubmissionAndResult(ungraded, 80, false);
+            var url = "/api/exercise/exercises/" + quiz.getId() + "/participations/page";
+            var search = buildParticipationSearch("", "Graded", "id", SortingOrder.ASCENDING);
+            var results = request.getList(url, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(graded.getId());
         }
 
         @Test
@@ -3696,8 +4113,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         void filterNoSubmissionsAppliesToTeamRowsAndPracticeRows() throws Exception {
             assertThat(list("", "NoSubmissions", "id", SortingOrder.ASCENDING).ids()).containsExactlyElementsOf(allIdsById());
 
-            participationUtilService.addSubmission(practiceOfStudent3, new TextSubmission());
-            participationUtilService.addSubmission(zuluParticipation, new TextSubmission());
+            for (var participation : List.of(practiceOfStudent3, zuluParticipation)) {
+                var submission = new TextSubmission();
+                submission.setSubmitted(true);
+                participationUtilService.addSubmission(participation, submission);
+            }
 
             var listing = list("", "NoSubmissions", "id", SortingOrder.ASCENDING);
             assertThat(listing.ids()).containsExactly(alphaParticipation.getId(), practiceOfStudent1.getId(), practiceOfStudent4.getId());
@@ -3714,8 +4134,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         @Test
         void filterAndSearchAndSortCombine() throws Exception {
-            participationUtilService.addSubmission(practiceOfStudent3, new TextSubmission());
-            participationUtilService.addSubmission(zuluParticipation, new TextSubmission());
+            for (var participation : List.of(practiceOfStudent3, zuluParticipation)) {
+                var submission = new TextSubmission();
+                submission.setSubmitted(true);
+                participationUtilService.addSubmission(participation, submission);
+            }
 
             var listing = list("student", "NoSubmissions", "participantName", SortingOrder.DESCENDING);
 

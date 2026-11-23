@@ -17,6 +17,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): test infrastructure for the Jenkins setup, delete with Jenkins support
 /**
  * Template test class for JenkinsLocalVC tests - runs actual Maven/Gradle builds.
  * This class is in a separate bucket because template tests are slow (they run real builds).

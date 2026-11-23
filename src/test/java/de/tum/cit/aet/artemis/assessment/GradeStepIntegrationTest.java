@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.assessment.dto.GradeStepsDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -209,10 +211,13 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
     /**
      * Test get request for all grade steps
      */
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAllGradeStepsForExam() throws Exception {
-        exam.setPublishResultsDate(ZonedDateTime.now().minusMinutes(1));
+    void testGetAllGradeStepsForExam(boolean testExam) throws Exception {
+        exam.setExamMode(testExam ? ExamMode.TEST : ExamMode.REAL);
+        // Practice results and their theoretical grading key are available without a publication date.
+        exam.setPublishResultsDate(testExam ? null : ZonedDateTime.now().minusMinutes(1));
         examRepository.save(exam);
         GradeStep gradeStep1 = new GradeStep();
         GradeStep gradeStep2 = new GradeStep();
@@ -237,6 +242,27 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(gradeStepsDTO.title()).isEqualTo(exam.getTitle());
 
         assertThat(gradeStepsDTO.gradeSteps()).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeSteps);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student1", roles = "USER")
+    void testGetAllGradeStepsForTestExamStudentNotInCourse() throws Exception {
+        exam.setExamMode(ExamMode.TEST);
+        examRepository.save(exam);
+        gradingScaleRepository.save(examGradingScale);
+
+        request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAllGradeStepsForTestExamRejectsUnrelatedCourse() throws Exception {
+        exam.setExamMode(ExamMode.TEST);
+        exam.setCourse(courseUtilService.createCourse());
+        examRepository.save(exam);
+        gradingScaleRepository.save(examGradingScale);
+
+        request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);
     }
 
     /**

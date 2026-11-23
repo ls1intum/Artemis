@@ -12,9 +12,8 @@
         </div>
     </div>
     <div class="step-body">
-        <div class="row mb-3 g-3">
-            <div class="col-md-6">
-                <label for="onboarding-maxPoints" class="form-label" jhiTranslate="artemisApp.course.maxPoints.title"></label>
+        <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+            <tumaet-ui-form-field class="min-w-0" [label]="'artemisApp.course.maxPoints.title' | artemisTranslate" controlId="onboarding-maxPoints">
                 <jhi-points-input
                     fluid
                     inputId="onboarding-maxPoints"
@@ -27,31 +26,37 @@
                     #maxPointsInput="ngModel"
                 />
                 @if (maxPointsInput.errors?.['min']) {
-                    <div class="alert alert-danger mt-1" jhiTranslate="artemisApp.course.maxPoints.min"></div>
+                    <tumaet-ui-message severity="error" class="mt-1" data-testid="onboarding-maxPoints-error">
+                        <span jhiTranslate="artemisApp.course.maxPoints.min"></span>
+                    </tumaet-ui-message>
                 }
                 @if (maxPointsInput.errors?.['max']) {
-                    <div class="alert alert-danger mt-1" jhiTranslate="artemisApp.course.maxPoints.max" [translateValues]="{ max: MAX_GRADING_POINTS }"></div>
+                    <tumaet-ui-message severity="error" class="mt-1" data-testid="onboarding-maxPoints-error">
+                        <span jhiTranslate="artemisApp.course.maxPoints.max" [translateValues]="{ max: MAX_GRADING_POINTS }"></span>
+                    </tumaet-ui-message>
                 }
                 @if (maxPointsInput.errors?.['pattern']) {
-                    <div class="alert alert-danger mt-1" jhiTranslate="artemisApp.course.maxPoints.wholeNumber"></div>
+                    <tumaet-ui-message severity="error" class="mt-1" data-testid="onboarding-maxPoints-error">
+                        <span jhiTranslate="artemisApp.course.maxPoints.wholeNumber"></span>
+                    </tumaet-ui-message>
                 }
-            </div>
-            <div class="col-md-6">
-                <label for="onboarding-accuracyOfScores" class="form-label" jhiTranslate="artemisApp.course.accuracyOfScores.title"></label>
+            </tumaet-ui-form-field>
+            <tumaet-ui-form-field class="min-w-0" [label]="'artemisApp.course.accuracyOfScores.title' | artemisTranslate" controlId="onboarding-accuracyOfScores">
                 <input
-                    id="onboarding-accuracyOfScores"
                     [attr.aria-label]="'artemisApp.course.accuracyOfScores.title' | artemisTranslate"
+                    id="onboarding-accuracyOfScores"
+                    tumAetUiInput
+                    class="w-full"
                     type="number"
-                    class="form-control"
                     [ngModel]="course().accuracyOfScores"
                     (ngModelChange)="updateField('accuracyOfScores', $event)"
                     min="0"
                     max="5"
                 />
-            </div>
+            </tumaet-ui-form-field>
         </div>
 
-        <div class="d-flex align-items-center gap-3 mb-1">
+        <div class="flex items-center gap-4 mb-1">
             <strong jhiTranslate="artemisApp.course.complaintsEnabled.title"></strong>
             <div class="feature-toggle">
                 <button
@@ -78,55 +83,55 @@
             </div>
         </div>
         @if (complaintsToggled()) {
-            <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.assessment.complaintsEnabled"></p>
+            <p class="text-(--text-body-secondary) text-[0.875em] mb-4!" jhiTranslate="artemisApp.course.onboarding.assessment.complaintsEnabled"></p>
         } @else {
-            <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.assessment.complaintsDisabled"></p>
+            <p class="text-(--text-body-secondary) text-[0.875em] mb-4!" jhiTranslate="artemisApp.course.onboarding.assessment.complaintsDisabled"></p>
         }
 
         @if (complaintsToggled()) {
-            <div class="ms-4 mb-3">
-                <div class="row g-3 mb-2 align-items-end">
-                    <div class="col-md-4">
-                        <label for="onboarding-maxComplaints" class="form-label" jhiTranslate="artemisApp.course.maxComplaints.title"></label>
+            <div class="ms-6 mb-4">
+                <div class="grid grid-cols-1 items-end gap-4 mb-2 md:grid-cols-3">
+                    <tumaet-ui-form-field class="min-w-0" [label]="'artemisApp.course.maxComplaints.title' | artemisTranslate" controlId="onboarding-maxComplaints">
                         <input
-                            id="onboarding-maxComplaints"
                             [attr.aria-label]="'artemisApp.course.maxComplaints.title' | artemisTranslate"
+                            id="onboarding-maxComplaints"
+                            tumAetUiInput
+                            class="w-full"
                             type="number"
-                            class="form-control"
                             [ngModel]="course().maxComplaints"
                             (ngModelChange)="updateField('maxComplaints', $event)"
                             min="0"
                         />
-                    </div>
-                    <div class="col-md-4">
-                        <label for="onboarding-maxTeamComplaints" class="form-label" jhiTranslate="artemisApp.course.maxTeamComplaints.title"></label>
+                    </tumaet-ui-form-field>
+                    <tumaet-ui-form-field class="min-w-0" [label]="'artemisApp.course.maxTeamComplaints.title' | artemisTranslate" controlId="onboarding-maxTeamComplaints">
                         <input
-                            id="onboarding-maxTeamComplaints"
                             [attr.aria-label]="'artemisApp.course.maxTeamComplaints.title' | artemisTranslate"
+                            id="onboarding-maxTeamComplaints"
+                            tumAetUiInput
+                            class="w-full"
                             type="number"
-                            class="form-control"
                             [ngModel]="course().maxTeamComplaints"
                             (ngModelChange)="updateField('maxTeamComplaints', $event)"
                             min="0"
                         />
-                    </div>
-                    <div class="col-md-4">
-                        <label for="onboarding-maxComplaintTimeDays" class="form-label" jhiTranslate="artemisApp.course.maxComplaintTimeDays.title"></label>
+                    </tumaet-ui-form-field>
+                    <tumaet-ui-form-field class="min-w-0" [label]="'artemisApp.course.maxComplaintTimeDays.title' | artemisTranslate" controlId="onboarding-maxComplaintTimeDays">
                         <input
-                            id="onboarding-maxComplaintTimeDays"
                             [attr.aria-label]="'artemisApp.course.maxComplaintTimeDays.title' | artemisTranslate"
+                            id="onboarding-maxComplaintTimeDays"
+                            tumAetUiInput
+                            class="w-full"
                             type="number"
-                            class="form-control"
                             [ngModel]="course().maxComplaintTimeDays"
                             (ngModelChange)="updateField('maxComplaintTimeDays', $event)"
                             min="0"
                         />
-                    </div>
+                    </tumaet-ui-form-field>
                 </div>
             </div>
         }
 
-        <div class="d-flex align-items-center gap-3 mb-1">
+        <div class="flex items-center gap-4 mb-1">
             <strong jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title"></strong>
             <div class="feature-toggle">
                 <button
@@ -152,24 +157,28 @@
             </div>
         </div>
         @if (requestMoreFeedbackToggled()) {
-            <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.assessment.moreFeedbackEnabled"></p>
+            <p class="text-(--text-body-secondary) text-[0.875em] mb-4!" jhiTranslate="artemisApp.course.onboarding.assessment.moreFeedbackEnabled"></p>
         } @else {
-            <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.assessment.moreFeedbackDisabled"></p>
+            <p class="text-(--text-body-secondary) text-[0.875em] mb-4!" jhiTranslate="artemisApp.course.onboarding.assessment.moreFeedbackDisabled"></p>
         }
 
         @if (requestMoreFeedbackToggled()) {
-            <div class="ms-4 mb-3">
-                <label for="onboarding-maxRequestMoreFeedbackTimeDays" class="form-label" jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title"></label>
+            <tumaet-ui-form-field
+                class="ms-6 mb-4"
+                [label]="'artemisApp.course.maxRequestMoreFeedbackTimeDays.title' | artemisTranslate"
+                controlId="onboarding-maxRequestMoreFeedbackTimeDays"
+            >
                 <input
-                    id="onboarding-maxRequestMoreFeedbackTimeDays"
                     [attr.aria-label]="'artemisApp.course.maxRequestMoreFeedbackTimeDays.title' | artemisTranslate"
+                    id="onboarding-maxRequestMoreFeedbackTimeDays"
+                    tumAetUiInput
+                    class="w-full"
                     type="number"
-                    class="form-control"
                     [ngModel]="course().maxRequestMoreFeedbackTimeDays"
                     (ngModelChange)="updateField('maxRequestMoreFeedbackTimeDays', $event)"
                     min="0"
                 />
-            </div>
+            </tumaet-ui-form-field>
         }
     </div>
 </div>

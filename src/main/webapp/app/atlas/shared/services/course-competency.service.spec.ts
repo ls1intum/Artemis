@@ -1,9 +1,6 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
-import { MockProvider } from 'ng-mocks';
-import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { Competency, CompetencyWithTailRelationDTO, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -26,11 +23,6 @@ describe('CourseCompetencyService', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(LectureUnitService, {
-                    convertLectureUnitArrayDatesFromServer<T extends LectureUnit>(res: T[]): T[] {
-                        return res;
-                    },
-                }),
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ExerciseService, useClass: MockExerciseService },
             ],

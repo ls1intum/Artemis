@@ -1,5 +1,5 @@
 import { type Mock, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getBackgroundColorHue, getColorBrightness, getContrastingTextColor, isColorDark } from 'app/foundation/util/color.utils';
+import { getBackgroundColorHue, getColorBrightness, getContrastingTextColor, getReadableTextColor, isColorDark } from 'app/foundation/util/color.utils';
 import { deterministicRandomValueFromString } from 'app/foundation/util/text.utils';
 
 vi.mock('app/foundation/util/text.utils', () => ({
@@ -86,6 +86,30 @@ describe('color utils', () => {
 
         it('getContrastingTextColor returns black for NaN brightness', () => {
             expect(getContrastingTextColor('GGGGGG')).toBe('black');
+        });
+    });
+
+    describe('getReadableTextColor', () => {
+        it('picks white on dark and black on light backgrounds', () => {
+            expect(getReadableTextColor('#8b0000')).toBe('white');
+            expect(getReadableTextColor('#000000')).toBe('white');
+            expect(getReadableTextColor('#FFFFFF')).toBe('black');
+            expect(getReadableTextColor('#ffe000')).toBe('black');
+        });
+
+        it('chooses by contrast ratio, not by brightness, for saturated colors', () => {
+            // Brightness alone would choose white here, but black has the higher contrast ratio
+            expect(getReadableTextColor('#ff0000')).toBe('black');
+            expect(getReadableTextColor('#1b97ca')).toBe('black');
+        });
+
+        it('returns undefined for anything but a plain #rrggbb color', () => {
+            expect(getReadableTextColor(undefined)).toBeUndefined();
+            expect(getReadableTextColor('')).toBeUndefined();
+            expect(getReadableTextColor('000000')).toBeUndefined();
+            expect(getReadableTextColor('#00000000')).toBeUndefined();
+            expect(getReadableTextColor('#fff')).toBeUndefined();
+            expect(getReadableTextColor('red')).toBeUndefined();
         });
     });
 });

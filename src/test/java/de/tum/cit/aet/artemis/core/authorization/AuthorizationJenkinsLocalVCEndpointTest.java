@@ -7,6 +7,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): test infrastructure for the Jenkins setup, delete with Jenkins support
 /**
  * Contains the one automatic test covering all rest endpoints for authorization tests.
  */

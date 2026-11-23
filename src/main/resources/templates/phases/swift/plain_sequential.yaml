@@ -1,0 +1,39 @@
+- name: setup
+  script: |-
+    cp -R Tests ${studentParentWorkingDirectoryName}
+    cp Package.swift ${studentParentWorkingDirectoryName}
+- name: compile
+  script: |-
+    cd ${studentParentWorkingDirectoryName}
+    swift build
+- name: structural_tests
+  script: |-
+    cd ${studentParentWorkingDirectoryName}
+    status=0
+    # Swift Testing appends -swift-testing to the name of the xUnit file, so its results are in xunit-swift-testing.xml.
+    # Exercises created before the Swift Testing templates use XCTest with SwiftTestReporter, which writes tests.xml with the failure messages.
+    # The xUnit file of SwiftPM has another name, because it would replace that report and lose the messages.
+    swift test --filter 'AttributeTest|ClassTest|MethodTest' --xunit-output xunit.xml || status=$?
+    if [ -e xunit-swift-testing.xml ]; then mv xunit-swift-testing.xml structural-tests.xml; fi
+    if [ -e tests.xml ]; then mv tests.xml structural-tests-xctest.xml; fi
+    exit $status
+  resultPaths:
+    - '${studentParentWorkingDirectoryName}/structural-tests.xml'
+    - '${studentParentWorkingDirectoryName}/structural-tests-xctest.xml'
+- name: behavior_tests
+  script: |-
+    cd ${studentParentWorkingDirectoryName}
+    status=0
+    swift test --filter 'SortingExampleBehaviorTest' --xunit-output xunit.xml || status=$?
+    if [ -e xunit-swift-testing.xml ]; then mv xunit-swift-testing.xml behavior-tests.xml; fi
+    if [ -e tests.xml ]; then mv tests.xml behavior-tests-xctest.xml; fi
+    exit $status
+  resultPaths:
+    - '${studentParentWorkingDirectoryName}/behavior-tests.xml'
+    - '${studentParentWorkingDirectoryName}/behavior-tests-xctest.xml'
+- name: finalize
+  script: |-
+    # The used docker container is calling 'swift build' which creates files as root (e.g. tests.xml),
+    # so we need to allow everyone to access these files
+    chmod -R 777 .
+  forceRun: true

@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): serves Jenkins job definitions, remove the controller and LocalCILegacyRestPaths.PROGRAMMING_PUBLIC_PREFIX
 @Profile(PROFILE_JENKINS)
 @Lazy
 @FeatureUsage(UserFeature.PROGRAMMING_BUILD_CONFIGURATION)

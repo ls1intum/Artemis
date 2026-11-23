@@ -1,9 +1,16 @@
 <div>
     <div>
-        <div class="d-flex justify-content-between">
+        <div class="flex justify-between">
             <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title"></h4>
             @if (tableFiltered) {
-                <button type="button" class="btn btn-info" (click)="resetTableFilter()" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.resetFilter"></button>
+                <button
+                    type="button"
+                    tumAetUiButton
+                    size="small"
+                    severity="secondary"
+                    (click)="resetTableFilter()"
+                    jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.resetFilter"
+                ></button>
             }
         </div>
         <p>
@@ -12,7 +19,7 @@
         </p>
         <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.description' | artemisTranslate"></p>
     </div>
-    <div class="chart bg-light">
+    <div class="chart bg-(--light) dark:bg-white/5">
         <tumaet-ui-bar-chart
             [labels]="weightChartData().labels"
             [series]="weightChartData().series"
@@ -22,11 +29,11 @@
             [ariaLabel]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title' | artemisTranslate"
         />
     </div>
-    <div class="mt-4">
+    <div class="mt-6">
         <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCasePoints.title"></h4>
         <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.description' | artemisTranslate"></p>
     </div>
-    <div class="points-chart bg-light">
+    <div class="points-chart bg-(--light) dark:bg-white/5">
         <tumaet-ui-bar-chart
             [labels]="pointsChartData().labels"
             [series]="pointsChartData().series"

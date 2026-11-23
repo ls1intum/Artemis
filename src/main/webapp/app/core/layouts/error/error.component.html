@@ -1,13 +1,13 @@
 <div>
-    <div class="row">
-        <div class="col">
-            <h1 jhiTranslate="error.title"></h1>
+    <h1 jhiTranslate="error.title"></h1>
 
-            <div [hidden]="!errorMessage()">
-                <div class="alert alert-danger">{{ errorMessage() }}</div>
-            </div>
-            <div [hidden]="!error403()" class="alert alert-danger" jhiTranslate="error.http.403"></div>
-            <div [hidden]="!error404()" class="alert alert-danger" jhiTranslate="error.http.404"></div>
-        </div>
-    </div>
+    @if (errorMessage()) {
+        <tumaet-ui-message severity="error" class="mb-4">{{ errorMessage() }}</tumaet-ui-message>
+    }
+    @if (error403()) {
+        <tumaet-ui-message severity="error" class="mb-4"><span jhiTranslate="error.http.403"></span></tumaet-ui-message>
+    }
+    @if (error404()) {
+        <tumaet-ui-message severity="error" class="mb-4"><span jhiTranslate="error.http.404"></span></tumaet-ui-message>
+    }
 </div>

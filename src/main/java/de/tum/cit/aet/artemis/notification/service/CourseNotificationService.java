@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -106,13 +107,24 @@ public class CourseNotificationService {
         // Read every recipient's settings once rather than per recipient per channel: the filter below runs for each
         // supported channel, and asking per user made a course-wide announcement cost a lookup per student per channel.
         var recipientSettings = courseNotificationSettingService.loadSettingsFor(courseNotification.courseId, recipients);
-
+        var recipientsByChannel = new LinkedHashMap<NotificationChannelOption, List<CourseNotificationRecipientDTO>>();
         for (var supportedChannel : supportedChannels) {
-            var service = serviceMap.get(supportedChannel);
-            if (service == null) {
+            if (!serviceMap.containsKey(supportedChannel)) {
                 continue;
             }
             var filteredRecipients = courseNotificationSettingService.filterRecipientsBy(courseNotification, recipients, supportedChannel, recipientSettings);
+            recipientsByChannel.put(supportedChannel, filteredRecipients);
+            filteredRecipients.forEach(recipient -> notifiedUserIds.add(recipient.id()));
+        }
+
+        // A client can mark a websocket notification as seen as soon as delivery starts. Commit its status first,
+        // otherwise that update affects no row and the later insert makes the notification unseen again.
+        userCourseNotificationStatusService.batchCreateStatusForUserIds(notifiedUserIds, courseNotificationEntityId, courseNotification.courseId);
+
+        for (var channelRecipients : recipientsByChannel.entrySet()) {
+            var supportedChannel = channelRecipients.getKey();
+            var service = serviceMap.get(supportedChannel);
+            var filteredRecipients = channelRecipients.getValue();
             // One count per notification that actually reached somebody on this channel, which is what answers whether a
             // channel is worth maintaining. Sends that every recipient has switched off are not usage.
             boolean anybodyToDeliverTo = !filteredRecipients.isEmpty();
@@ -140,12 +152,7 @@ public class CourseNotificationService {
                 }
                 throw e;
             }
-
-            // We keep track of the notified users so that we only create notification status entries for them
-            filteredRecipients.forEach(recipient -> notifiedUserIds.add(recipient.id()));
         }
-
-        userCourseNotificationStatusService.batchCreateStatusForUserIds(notifiedUserIds, courseNotificationEntityId, courseNotification.courseId);
     }
 
     private void recordChannelUsage(String feature, boolean failed, long durationMs) {

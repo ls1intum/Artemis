@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
+/** Path of the Athena mark, a monochrome black PNG on a transparent background. */
+export const ATHENA_LOGO_PATH = 'public/images/athena/athena-logo.png';
+
 /**
  * The Athena mark, shown next to the Athena AI Feedback title on the course overview and in the onboarding wizard.
  *
@@ -12,7 +15,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
  */
 @Component({
     selector: 'jhi-athena-logo',
-    template: `<img class="athena-logo" src="public/images/athena/athena-logo.png" alt="" aria-hidden="true" [style.height.px]="size()" />`,
+    template: `<img class="athena-logo" [src]="logoPath" alt="" aria-hidden="true" [style.height.px]="size()" />`,
     changeDetection: ChangeDetectionStrategy.OnPush,
     styles: [
         `
@@ -29,13 +32,15 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
             // A filter replaces rather than extends the one above, so the dark variant repeats the shadow. Inverting
             // first casts it from the recoloured silhouette, leaving it dark exactly as the Iris logo's stays.
-            :host-context(html[prime-ng-use-dark-theme='true']) .athena-logo {
+            :host-context(html[data-theme='dark']) .athena-logo {
                 filter: invert(1) drop-shadow(0 3px 8px rgba(0, 0, 0, 0.24));
             }
         `,
     ],
 })
 export class AthenaLogoComponent {
+    protected readonly logoPath = ATHENA_LOGO_PATH;
+
     /**
      * The height of the mark in pixels. Larger than the Iris logo next to it by default, because this is a full figure
      * whose spear, shield and helmet detail turns to mush at the ~21px the Iris mark uses.

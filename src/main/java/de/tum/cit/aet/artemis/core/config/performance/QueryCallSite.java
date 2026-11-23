@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config.performance;
 
 import java.lang.reflect.Proxy;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
 import org.springframework.data.repository.Repository;
@@ -25,10 +26,44 @@ import de.tum.cit.aet.artemis.core.api.AbstractApi;
  *                             no application frame is on the stack at all. Module API delegates
  *                             ({@link AbstractApi}) are skipped: they only forward a call from another
  *                             module, so the code that decided to issue the query is their caller.
+ * @param sourceFile       repository-relative path of the source file of {@code callerMethod}, e.g.
+ *                             {@code src/main/java/de/tum/cit/aet/artemis/core/service/CourseService.java};
+ *                             {@code null} if unknown. Not part of the call site's identity.
+ * @param line             the line in {@code sourceFile} that issued the call; {@code null} if unknown.
+ *                             Not part of the call site's identity.
  */
-public record QueryCallSite(String repositoryMethod, String callerMethod) {
+public record QueryCallSite(String repositoryMethod, String callerMethod, String sourceFile, Integer line) {
 
     static final QueryCallSite UNKNOWN = new QueryCallSite(null, null);
+
+    private static final String SOURCE_ROOT = "src/main/java/";
+
+    /**
+     * A call site without a source location.
+     *
+     * @param repositoryMethod see the record component
+     * @param callerMethod     see the record component
+     */
+    public QueryCallSite(String repositoryMethod, String callerMethod) {
+        this(repositoryMethod, callerMethod, null, null);
+    }
+
+    /**
+     * Two call sites are the same piece of code when they name the same repository and caller
+     * method; the line only says where that code was seen first, so it must not split a count.
+     *
+     * @param other the object to compare with
+     * @return whether {@code other} is a call site of the same repository and caller method
+     */
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof QueryCallSite site && Objects.equals(repositoryMethod, site.repositoryMethod) && Objects.equals(callerMethod, site.callerMethod);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(repositoryMethod, callerMethod);
+    }
 
     private static final String APP_PACKAGE = "de.tum.cit.aet.artemis.";
 
@@ -59,11 +94,21 @@ public record QueryCallSite(String repositoryMethod, String callerMethod) {
                 }
                 String className = declaringClass.getName();
                 if (className.startsWith(APP_PACKAGE) && !DETECTOR_CLASSES.contains(declaringClass) && !AbstractApi.class.isAssignableFrom(declaringClass)) {
-                    return new QueryCallSite(repositoryMethod, declaringClass.getSimpleName() + "." + sourceMethodName(frame.getMethodName()));
+                    return new QueryCallSite(repositoryMethod, declaringClass.getSimpleName() + "." + sourceMethodName(frame.getMethodName()), sourcePath(declaringClass, frame),
+                            frame.getLineNumber() > 0 ? frame.getLineNumber() : null);
                 }
             }
             return new QueryCallSite(repositoryMethod, null);
         });
+    }
+
+    /**
+     * The repository-relative path of the file a frame's class is declared in, or {@code null}
+     * when the frame has no file name (compiled without debug information).
+     */
+    private static String sourcePath(Class<?> declaringClass, StackWalker.StackFrame frame) {
+        String fileName = frame.getFileName();
+        return fileName == null ? null : SOURCE_ROOT + declaringClass.getPackageName().replace('.', '/') + "/" + fileName;
     }
 
     /**

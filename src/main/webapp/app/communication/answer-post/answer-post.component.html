@@ -2,7 +2,7 @@
     [id]="'item-' + posting()?.id"
     class="answer-post hover-container"
     [ngClass]="{
-        'module-bg rounded-2': isCommunicationPage(),
+        'bg-(--module-bg) rounded-md': isCommunicationPage(),
         'is-saved': !isConsecutive() && posting()?.isSaved,
         'non-consecutive': !isConsecutive(),
         'unverified-iris': isUnverifiedIris(),
@@ -10,21 +10,21 @@
     }"
 >
     @if (posting()?.resolvesPost) {
-        <div class="resolving-answer-marker post-content-padding fs-xx-small py-1" data-testid="resolving-answer-marker">
+        <div class="resolving-answer-marker post-content-padding text-[0.625rem] py-1" data-testid="resolving-answer-marker">
             <fa-icon [icon]="faCheck" aria-hidden="true" />
-            <span class="fw-semibold" jhiTranslate="artemisApp.communication.answerPost.resolvesPost"></span>
+            <span class="font-semibold" jhiTranslate="artemisApp.communication.answerPost.resolvesPost"></span>
         </div>
     }
     @if (posting()?.isSaved) {
-        <div jhi-saved-posting-banner class="post-is-saved-message post-content-padding fs-xx-small py-1" [consecutive]="isConsecutive()"></div>
+        <div jhi-saved-posting-banner class="post-is-saved-message post-content-padding text-[0.625rem] py-1" [consecutive]="isConsecutive()"></div>
     }
     @if (isConsecutive()) {
-        <span class="post-time fs-small" ngbTooltip="{{ posting()?.creationDate | artemisDate: 'time' }}">
+        <span class="post-time text-[0.875rem]" [tumAetUiTooltip]="posting()?.creationDate | artemisDate: 'time'" tumAetUiTooltipDescribesHost="false">
             {{ posting()?.creationDate | artemisDate: 'time' }}
         </span>
     }
     @if (!isConsecutive()) {
-        <div class="ps-3">
+        <div class="ps-4">
             <jhi-posting-header
                 [posting]="posting()"
                 [readOnlyMode]="isReadOnlyMode()"
@@ -42,29 +42,40 @@
                 @if (isUnverifiedIris() && mayVerify && isEditingIrisReply()) {
                     <div class="iris-edit-area mt-1">
                         <textarea
-                            pTextarea
-                            class="w-full mb-2"
+                            tumAetUiInput
+                            class="mb-2 w-full"
                             rows="4"
                             [(ngModel)]="editedIrisContent"
                             [disabled]="isVerifying()"
                             [attr.aria-label]="'artemisApp.communication.answerPost.unverifiedIris.editAreaLabel' | artemisTranslate"
                         ></textarea>
                         <div class="flex gap-2">
-                            <p-button
+                            <button
+                                tumAetUiButton
+                                type="button"
                                 severity="success"
                                 size="small"
-                                [outlined]="true"
-                                (onClick)="approveAnswer(editedIrisContent)"
+                                variant="outlined"
+                                (click)="approveAnswer(editedIrisContent)"
                                 [disabled]="isVerifying() || !editedIrisContent.trim()"
                                 data-testid="iris-save-approve-button"
                             >
                                 <fa-icon [icon]="faCheck" />
                                 <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.saveAndApprove"></span>
-                            </p-button>
-                            <p-button severity="secondary" size="small" [text]="true" (onClick)="cancelEditAnswer()" [disabled]="isVerifying()" data-testid="iris-cancel-button">
+                            </button>
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                severity="secondary"
+                                size="small"
+                                variant="text"
+                                (click)="cancelEditAnswer()"
+                                [disabled]="isVerifying()"
+                                data-testid="iris-cancel-button"
+                            >
                                 <fa-icon [icon]="faXmark" />
                                 <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.cancelEdit"></span>
-                            </p-button>
+                            </button>
                         </div>
                     </div>
                 } @else {
@@ -82,18 +93,45 @@
                     />
                     @if (isUnverifiedIris() && mayVerify) {
                         <div class="iris-verify-actions mt-1 flex gap-2">
-                            <p-button severity="success" size="small" [outlined]="true" (onClick)="approveAnswer()" [disabled]="isVerifying()" data-testid="iris-approve-button">
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                severity="success"
+                                size="small"
+                                variant="outlined"
+                                (click)="approveAnswer()"
+                                [disabled]="isVerifying()"
+                                data-testid="iris-approve-button"
+                            >
                                 <fa-icon [icon]="faCheck" />
                                 <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.approve"></span>
-                            </p-button>
-                            <p-button severity="secondary" size="small" [outlined]="true" (onClick)="editAnswer()" [disabled]="isVerifying()" data-testid="iris-edit-button">
+                            </button>
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                severity="warn"
+                                size="small"
+                                variant="outlined"
+                                (click)="editAnswer()"
+                                [disabled]="isVerifying()"
+                                data-testid="iris-edit-button"
+                            >
                                 <fa-icon [icon]="faPencilAlt" />
                                 <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.edit"></span>
-                            </p-button>
-                            <p-button severity="danger" size="small" [outlined]="true" (onClick)="rejectAnswer()" [disabled]="isVerifying()" data-testid="iris-reject-button">
+                            </button>
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                severity="danger"
+                                size="small"
+                                variant="outlined"
+                                (click)="rejectAnswer()"
+                                [disabled]="isVerifying()"
+                                data-testid="iris-reject-button"
+                            >
                                 <fa-icon [icon]="faTrash" />
                                 <span jhiTranslate="artemisApp.communication.answerPost.unverifiedIris.reject"></span>
-                            </p-button>
+                            </button>
                         </div>
                     }
                 }
@@ -139,35 +177,65 @@
 
 <!-- Right-Click Dropdown -->
 @if (showDropdown()) {
-    <div style="position: fixed" [style.top.px]="dropdownPosition().y" [style.left.px]="dropdownPosition().x" class="dropdown-menu show" data-testid="posting-context-menu">
-        <button type="button" class="dropdown-item d-flex" (click)="addReaction($event)" data-testid="posting-menu-react">
+    <div
+        class="fixed z-1000 flex min-w-40 flex-col rounded-md border border-(--border-color) bg-surface-raised py-2 text-color shadow-md"
+        [style.top.px]="dropdownPosition().y"
+        [style.left.px]="dropdownPosition().x"
+        data-testid="posting-context-menu"
+    >
+        <button
+            type="button"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color"
+            (click)="addReaction($event)"
+            data-testid="posting-menu-react"
+        >
             <fa-icon [icon]="faSmile" class="item-icon" />
             <span jhiTranslate="artemisApp.communication.post.addReaction"></span>
         </button>
         @if (mayEdit()) {
-            <button type="button" class="dropdown-item d-flex" (click)="editPosting()" data-testid="posting-menu-edit">
+            <button
+                type="button"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color"
+                (click)="editPosting()"
+                data-testid="posting-menu-edit"
+            >
                 <fa-icon [icon]="faPencilAlt" class="item-icon" />
                 <span jhiTranslate="artemisApp.communication.post.editMessage"></span>
             </button>
         }
         @if (mayDelete()) {
-            <button type="button" class="dropdown-item d-flex" (click)="deletePost()" data-testid="posting-menu-delete">
+            <button
+                type="button"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color"
+                (click)="deletePost()"
+                data-testid="posting-menu-delete"
+            >
                 <fa-icon [icon]="faTrash" class="item-icon" />
                 <span jhiTranslate="artemisApp.communication.answerPost.deleteAnswer"></span>
             </button>
         }
-        <button type="button" class="dropdown-item d-flex" (click)="toggleSavePost()" data-testid="posting-menu-bookmark">
+        <button
+            type="button"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color"
+            (click)="toggleSavePost()"
+            data-testid="posting-menu-bookmark"
+        >
             <fa-icon [icon]="posting()?.isSaved ? faBookmark : farBookmark" class="item-icon" />
             <span [jhiTranslate]="posting()?.isSaved ? 'artemisApp.communication.post.removeBookmarkPost' : 'artemisApp.communication.post.bookmarkPost'"></span>
         </button>
-        <button type="button" class="dropdown-item d-flex" (click)="forwardMessage()" data-testid="posting-menu-forward">
+        <button
+            type="button"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color"
+            (click)="forwardMessage()"
+            data-testid="posting-menu-forward"
+        >
             <fa-icon [icon]="faShare" class="item-icon" />
             <span jhiTranslate="artemisApp.communication.post.forwardMessage"></span>
         </button>
     </div>
 }
 
-<div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin style="position: fixed" [style.top.px]="clickPosition.y" [style.left.px]="clickPosition.x"></div>
+<div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin class="fixed" [style.top.px]="clickPosition.y" [style.left.px]="clickPosition.x"></div>
 
 <ng-template
     cdkConnectedOverlay

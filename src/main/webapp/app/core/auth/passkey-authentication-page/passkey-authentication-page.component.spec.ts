@@ -11,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
+import { WebauthnService } from 'app/account/user/settings/credentials/passkey-settings/webauthn.service';
 import { User } from 'app/account/user/user.model';
 import { By } from '@angular/platform-browser';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
@@ -247,10 +247,10 @@ describe('PasskeyAuthenticationPageComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const infoAlert = fixture.nativeElement.querySelector('.alert-info');
+        const infoAlert = fixture.nativeElement.querySelector('tumaet-ui-message[severity="info"]');
         expect(infoAlert).toBeTruthy();
 
-        const alertText = infoAlert.querySelector('p[jhiTranslate="global.menu.admin.passkeyRestrictionExplanation"]');
+        const alertText = infoAlert.querySelector('[jhiTranslate="global.menu.admin.passkeyRestrictionExplanation"]');
         expect(alertText).toBeTruthy();
     });
 
@@ -259,7 +259,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const instructionSpans = fixture.nativeElement.querySelectorAll('p.text-wrap span[jhiTranslate]');
+        const instructionSpans = fixture.nativeElement.querySelectorAll('p.whitespace-normal span[jhiTranslate]');
         expect(instructionSpans.length).toBeGreaterThanOrEqual(3);
 
         const startSpan = Array.from<HTMLElement>(instructionSpans).find(
@@ -267,7 +267,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
         );
         expect(startSpan).toBeTruthy();
 
-        const link = fixture.nativeElement.querySelector('a[routerLink="/user-settings/passkeys"]');
+        const link = fixture.nativeElement.querySelector('a[routerLink="/user-settings/credentials"]');
         expect(link).toBeTruthy();
 
         const linkSpan = link.querySelector('span[jhiTranslate="global.menu.admin.passkeyApprovalInstructions.link"]');
@@ -284,10 +284,10 @@ describe('PasskeyAuthenticationPageComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const warningAlert = fixture.nativeElement.querySelector('.alert-warning');
+        const warningAlert = fixture.nativeElement.querySelector('tumaet-ui-message[severity="warn"]');
         expect(warningAlert).toBeTruthy();
 
-        const alertText = warningAlert.querySelector('p[jhiTranslate="global.menu.admin.passkeyNotYetApproved"]');
+        const alertText = warningAlert.querySelector('[jhiTranslate="global.menu.admin.passkeyNotYetApproved"]');
         expect(alertText).toBeTruthy();
     });
 

@@ -236,8 +236,8 @@
                 },
                 "confirmSaveDialog": {
                     "header": "Gruppe Speichern?",
-                    "message": "Du hast den Sessionplan verändert. Bei einer Speicherung werden alle existierended Sessions überschrieben.",
-                    "acceptButtonLabel": "Speichern und Überschreiben"
+                    "message": "Du hast den Sessionplan verändert. Beim Speichern werden die Sessions an den neuen Plan angepasst: weiterhin stattfindende Sessions behalten ihre erfasste Anwesenheit, nicht mehr stattfindende Sessions werden entfernt.",
+                    "acceptButtonLabel": "Speichern und Aktualisieren"
                 }
             },
             "tutorialGroupDetail": {
@@ -263,6 +263,8 @@
                 "location": "Ort:",
                 "title": "Übungsgruppen-Details",
                 "sessionsListTitle": "Sessions",
+                "sessionsEmptyTitle": "Keine Sessions vorhanden",
+                "sessionsEmptyDescription": "Erstelle die erste Session dieser Tutoriumsgruppe.",
                 "sessionListOptionLabel": {
                     "allSessions": "Alle",
                     "futureSessions": "Zukünftige"

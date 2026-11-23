@@ -1,4 +1,4 @@
-<p-panel styleClass="version-meta-panel">
+<tumaet-ui-panel class="version-meta-panel">
     @if (!hasData()) {
         <p class="metadata-empty-note" jhiTranslate="artemisApp.programmingExercise.versionHistory.snapshot.noProgrammingData"></p>
     }
@@ -19,7 +19,7 @@
         </div>
     </section>
 
-    <p-divider />
+    <hr class="my-4" />
 
     <section class="metadata-section">
         <h4 jhiTranslate="artemisApp.programmingExercise.repositories"></h4>
@@ -33,30 +33,30 @@
                         <span class="metadata-row__value metadata-row__value--mono metadata-row__value--actions">
                             <span class="metadata-commit__actions">
                                 <button
-                                    pButton
+                                    tumAetUiButton
                                     type="button"
-                                    text
-                                    rounded
+                                    variant="text"
+                                    severity="secondary"
                                     size="small"
                                     class="metadata-commit__button"
                                     [attr.aria-label]="'global.generic.copy' | artemisTranslate"
-                                    [pTooltip]="'global.generic.copy' | artemisTranslate"
-                                    tooltipPosition="left"
+                                    [tumAetUiTooltip]="'global.generic.copy' | artemisTranslate"
+                                    tumAetUiTooltipPlacement="left"
                                     [cdkCopyToClipboard]="field.repositoryUri ?? ''"
                                 >
                                     <fa-icon [icon]="faCopy" aria-hidden="true" />
                                 </button>
                                 @if (field.repositoryViewLink; as viewLink) {
                                     <button
-                                        pButton
+                                        tumAetUiButton
                                         type="button"
-                                        text
-                                        rounded
+                                        variant="text"
+                                        severity="success"
                                         size="small"
                                         class="metadata-commit__button"
                                         [attr.aria-label]="'entity.action.view' | artemisTranslate"
-                                        [pTooltip]="'entity.action.view' | artemisTranslate"
-                                        tooltipPosition="left"
+                                        [tumAetUiTooltip]="'entity.action.view' | artemisTranslate"
+                                        tumAetUiTooltipPlacement="left"
                                         [routerLink]="viewLink"
                                     >
                                         <fa-icon [icon]="faEye" aria-hidden="true" />
@@ -64,15 +64,15 @@
                                 }
                                 @if (field.repositoryEditorLink; as editorLink) {
                                     <button
-                                        pButton
+                                        tumAetUiButton
                                         type="button"
-                                        text
-                                        rounded
+                                        variant="text"
+                                        severity="warn"
                                         size="small"
                                         class="metadata-commit__button"
                                         [attr.aria-label]="'entity.action.edit' | artemisTranslate"
-                                        [pTooltip]="'entity.action.edit' | artemisTranslate"
-                                        tooltipPosition="left"
+                                        [tumAetUiTooltip]="'entity.action.edit' | artemisTranslate"
+                                        tumAetUiTooltipPlacement="left"
                                         [routerLink]="editorLink"
                                     >
                                         <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
@@ -82,35 +82,35 @@
                         </span>
                     } @else if (field.kind === 'commit') {
                         <span class="metadata-row__value metadata-row__value--mono metadata-row__value--commit">
-                            <span class="metadata-commit__hash" [pTooltip]="field.fullCommitHash" tooltipPosition="left">
+                            <span class="metadata-commit__hash" [tumAetUiTooltip]="field.fullCommitHash" tumAetUiTooltipPlacement="left">
                                 {{ field.shortCommitHash }}
                             </span>
                             <span class="metadata-commit__actions">
                                 <button
-                                    pButton
+                                    tumAetUiButton
                                     type="button"
-                                    text
-                                    rounded
+                                    variant="text"
+                                    severity="secondary"
                                     size="small"
                                     class="metadata-commit__button"
                                     [attr.aria-label]="'global.generic.copy' | artemisTranslate"
-                                    [pTooltip]="'global.generic.copy' | artemisTranslate"
-                                    tooltipPosition="left"
+                                    [tumAetUiTooltip]="'global.generic.copy' | artemisTranslate"
+                                    tumAetUiTooltipPlacement="left"
                                     [cdkCopyToClipboard]="field.fullCommitHash ?? ''"
                                 >
                                     <fa-icon [icon]="faCopy" aria-hidden="true" />
                                 </button>
                                 @if (field.commitLink; as commitLink) {
                                     <button
-                                        pButton
+                                        tumAetUiButton
                                         type="button"
-                                        text
-                                        rounded
+                                        variant="text"
+                                        severity="success"
                                         size="small"
                                         class="metadata-commit__button"
                                         [attr.aria-label]="'entity.action.view' | artemisTranslate"
-                                        [pTooltip]="'entity.action.view' | artemisTranslate"
-                                        tooltipPosition="left"
+                                        [tumAetUiTooltip]="'entity.action.view' | artemisTranslate"
+                                        tumAetUiTooltipPlacement="left"
                                         [routerLink]="commitLink"
                                     >
                                         <fa-icon [icon]="faEye" aria-hidden="true" />
@@ -126,7 +126,7 @@
         </div>
     </section>
 
-    <p-divider />
+    <hr class="my-4" />
 
     <section class="metadata-section">
         <h4 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle"></h4>
@@ -144,7 +144,7 @@
         </div>
     </section>
 
-    <p-divider />
+    <hr class="my-4" />
 
     <section class="metadata-section">
         <h4 jhiTranslate="artemisApp.programmingExercise.buildConfiguration"></h4>
@@ -179,4 +179,4 @@
             }
         </div>
     </section>
-</p-panel>
+</tumaet-ui-panel>

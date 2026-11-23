@@ -8,6 +8,8 @@
 .gitignore
 *.swp
 *.bak
+# Values for supporting_scripts/check_helm_chart.sh, not part of a release of the chart.
+ci/
 *.orig
 *~
 .vscode/

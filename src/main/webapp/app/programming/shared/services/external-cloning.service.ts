@@ -1,5 +1,5 @@
 import { Service } from '@angular/core';
-import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
+import { Ide } from 'app/account/user/settings/exercises/ide-preferences/ide.model';
 
 @Service()
 export class ExternalCloningService {

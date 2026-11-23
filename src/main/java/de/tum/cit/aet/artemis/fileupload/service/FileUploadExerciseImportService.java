@@ -105,6 +105,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         log.debug("Copying the file upload exercise basis from {}", sourceExercise);
         prepareNewExerciseForImport(newExercise);
         super.copyExerciseBasis(newExercise, sourceExercise, new HashMap<>());
+        newExercise.validateTitle();
         newExercise.setAssessmentType(AssessmentType.MANUAL);
         // Prefer the caller's edited value (standalone import form), fall back to the source content.
         newExercise.setFilePattern(firstNonNull(newExercise.getFilePattern(), sourceExercise.getFilePattern()));

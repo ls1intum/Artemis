@@ -3,7 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { LectureSeriesCreateComponent } from './lecture-series-create.component';
-import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { LectureApi } from 'app/openapi/api/lecture-api';
+import type { LectureSeriesCreateLecture } from 'app/openapi/model/lecture-series-create-lecture';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -12,13 +13,13 @@ import { Router } from '@angular/router';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { of, throwError } from 'rxjs';
-import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 
 describe('LectureSeriesCreateComponent', () => {
     let fixture: ComponentFixture<LectureSeriesCreateComponent>;
     let component: LectureSeriesCreateComponent;
 
-    let lectureServiceMock: { createSeries: ReturnType<typeof vi.fn> };
+    let lectureApiMock: { createLectureSeries: ReturnType<typeof vi.fn> };
     let alertServiceMock: { addErrorAlert: ReturnType<typeof vi.fn> };
     let routerMock: { navigate: ReturnType<typeof vi.fn> };
     let navigationUtilServiceMock: { navigateBack: ReturnType<typeof vi.fn> };
@@ -26,8 +27,8 @@ describe('LectureSeriesCreateComponent', () => {
     const testCourseId = 42;
 
     beforeEach(async () => {
-        lectureServiceMock = {
-            createSeries: vi.fn(),
+        lectureApiMock = {
+            createLectureSeries: vi.fn(),
         };
         alertServiceMock = {
             addErrorAlert: vi.fn(),
@@ -38,7 +39,7 @@ describe('LectureSeriesCreateComponent', () => {
         await TestBed.configureTestingModule({
             imports: [LectureSeriesCreateComponent, MockJhiTranslateDirective],
             providers: [
-                { provide: LectureService, useValue: lectureServiceMock },
+                { provide: LectureApi, useValue: lectureApiMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useValue: routerMock },
@@ -393,18 +394,24 @@ describe('LectureSeriesCreateComponent', () => {
 
         const existingLectures: Lecture[] = [createLecture(1, 'Lecture 1', todayAt14.add(3, 'day'), undefined), createLecture(2, 'Lecture 2', undefined, undefined)];
 
-        const expectedLectureDTOsWithoutExistingLectures: LectureSeriesCreateLectureDTO[] = [
-            new LectureSeriesCreateLectureDTO('Lecture 1', dayjs(firstInitialLectureStartDate), dayjs(firstInitialLectureEndDate)),
-            new LectureSeriesCreateLectureDTO('Lecture 2', dayjs(secondInitialLectureStartDate), dayjs(secondInitialLectureEndDate)),
-            new LectureSeriesCreateLectureDTO('Lecture 3', dayjs(firstInitialLectureStartDate).add(1, 'week'), dayjs(firstInitialLectureEndDate).add(1, 'week')),
-            new LectureSeriesCreateLectureDTO('Lecture 4', dayjs(secondInitialLectureStartDate).add(1, 'week'), dayjs(secondInitialLectureEndDate).add(1, 'week')),
+        const seriesLecture = (title: string, startDate: dayjs.Dayjs, endDate: dayjs.Dayjs): LectureSeriesCreateLecture => ({
+            title,
+            startDate: startDate.toJSON(),
+            endDate: endDate.toJSON(),
+        });
+
+        const expectedLectureDTOsWithoutExistingLectures: LectureSeriesCreateLecture[] = [
+            seriesLecture('Lecture 1', dayjs(firstInitialLectureStartDate), dayjs(firstInitialLectureEndDate)),
+            seriesLecture('Lecture 2', dayjs(secondInitialLectureStartDate), dayjs(secondInitialLectureEndDate)),
+            seriesLecture('Lecture 3', dayjs(firstInitialLectureStartDate).add(1, 'week'), dayjs(firstInitialLectureEndDate).add(1, 'week')),
+            seriesLecture('Lecture 4', dayjs(secondInitialLectureStartDate).add(1, 'week'), dayjs(secondInitialLectureEndDate).add(1, 'week')),
         ];
 
-        const expectedLectureDTOsWithExistingLectures: LectureSeriesCreateLectureDTO[] = [
-            new LectureSeriesCreateLectureDTO('Lecture 1', dayjs(firstInitialLectureStartDate), dayjs(firstInitialLectureEndDate)),
-            new LectureSeriesCreateLectureDTO('Lecture 3', dayjs(secondInitialLectureStartDate), dayjs(secondInitialLectureEndDate)),
-            new LectureSeriesCreateLectureDTO('Lecture 4', dayjs(firstInitialLectureStartDate).add(1, 'week'), dayjs(firstInitialLectureEndDate).add(1, 'week')),
-            new LectureSeriesCreateLectureDTO('Lecture 5', dayjs(secondInitialLectureStartDate).add(1, 'week'), dayjs(secondInitialLectureEndDate).add(1, 'week')),
+        const expectedLectureDTOsWithExistingLectures: LectureSeriesCreateLecture[] = [
+            seriesLecture('Lecture 1', dayjs(firstInitialLectureStartDate), dayjs(firstInitialLectureEndDate)),
+            seriesLecture('Lecture 3', dayjs(secondInitialLectureStartDate), dayjs(secondInitialLectureEndDate)),
+            seriesLecture('Lecture 4', dayjs(firstInitialLectureStartDate).add(1, 'week'), dayjs(firstInitialLectureEndDate).add(1, 'week')),
+            seriesLecture('Lecture 5', dayjs(secondInitialLectureStartDate).add(1, 'week'), dayjs(secondInitialLectureEndDate).add(1, 'week')),
         ];
 
         let isLoadingSpy: ReturnType<typeof vi.spyOn>;
@@ -429,14 +436,14 @@ describe('LectureSeriesCreateComponent', () => {
         });
 
         it('should save new lectures', async () => {
-            lectureServiceMock.createSeries.mockReturnValue(of(void 0));
+            lectureApiMock.createLectureSeries.mockReturnValue(of(void 0));
 
             component.save();
             fixture.changeDetectorRef.detectChanges();
             await fixture.whenStable();
 
-            expect(lectureServiceMock.createSeries).toHaveBeenCalledTimes(1);
-            const [passedLectureSeriesCreateDTOs, passedCourseId] = lectureServiceMock.createSeries.mock.calls[0];
+            expect(lectureApiMock.createLectureSeries).toHaveBeenCalledTimes(1);
+            const [passedCourseId, passedLectureSeriesCreateDTOs] = lectureApiMock.createLectureSeries.mock.calls[0];
             expect(passedCourseId).toBe(testCourseId);
             expect(passedLectureSeriesCreateDTOs).toEqual(expectedLectureDTOsWithoutExistingLectures);
 
@@ -450,14 +457,14 @@ describe('LectureSeriesCreateComponent', () => {
             fixture.changeDetectorRef.detectChanges();
             await fixture.whenStable();
 
-            lectureServiceMock.createSeries.mockReturnValue(throwError(() => new Error('Creation failed')));
+            lectureApiMock.createLectureSeries.mockReturnValue(throwError(() => new Error('Creation failed')));
 
             component.save();
             fixture.changeDetectorRef.detectChanges();
             await fixture.whenStable();
 
-            expect(lectureServiceMock.createSeries).toHaveBeenCalledTimes(1);
-            const [passedLectureSeriesCreateDTOs, passedLectureCreateCourseId] = lectureServiceMock.createSeries.mock.calls[0];
+            expect(lectureApiMock.createLectureSeries).toHaveBeenCalledTimes(1);
+            const [passedLectureCreateCourseId, passedLectureSeriesCreateDTOs] = lectureApiMock.createLectureSeries.mock.calls[0];
             expect(passedLectureCreateCourseId).toBe(testCourseId);
             expect(passedLectureSeriesCreateDTOs).toEqual(expectedLectureDTOsWithExistingLectures);
             expect(alertServiceMock.addErrorAlert).toHaveBeenCalledTimes(1);

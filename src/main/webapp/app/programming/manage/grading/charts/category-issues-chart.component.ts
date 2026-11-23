@@ -1,7 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 import { IssuesMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 export interface IssueColumn {
     w: string;
@@ -14,16 +14,16 @@ export interface IssueColumn {
     selector: 'jhi-category-issues-chart',
     template: `
         <div style="max-width: 120px; margin: auto;">
-            <div style="height: 30px;" class="d-flex justify-content-between">
+            <div style="height: 30px;" class="flex justify-between">
                 @for (column of columns(); track column) {
-                    <div class="d-flex align-items-end" [style]="{ width: column.w, height: '30px' }" [ngbTooltip]="column.tooltip" placement="bottom auto">
+                    <div class="flex items-end" [style]="{ width: column.w, height: '30px' }" [tumAetUiTooltip]="column.tooltip" tumAetUiTooltipPlacement="bottom">
                         <div [style]="{ width: '100%', height: column.h, background: column.color }"></div>
                     </div>
                 }
             </div>
         </div>
     `,
-    imports: [NgbTooltip],
+    imports: [TumAetUiTooltipDirective],
 })
 export class CategoryIssuesChartComponent {
     readonly issuesMap = input<IssuesMap>();

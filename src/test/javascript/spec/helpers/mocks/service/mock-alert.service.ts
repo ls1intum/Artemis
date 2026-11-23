@@ -7,6 +7,8 @@ export class MockAlertService {
     info = (message: string) => ({}) as Alert;
     addAlert = (alert: Alert) => {};
     addErrorAlert = (message?: any, translationKey?: string, translationParams?: { [key: string]: unknown }) => {};
+    /** Whether the global handling would alert for the error; nothing is alerted unless a test says so. */
+    showsHttpErrorAlert = (response: unknown) => false;
     closeAll = () => {};
     get = () => [] as Alert[];
 }

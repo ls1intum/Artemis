@@ -1,4 +1,4 @@
-import { convertDateFromServer, convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { LegacyTutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
@@ -11,12 +11,6 @@ import { TutorialGroupFreePeriod as TutorialGroupSummaryFreePeriod } from 'app/o
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
-
-export function convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupFreePeriod: TutorialGroupFreePeriod): TutorialGroupFreePeriod {
-    tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
-    tutorialGroupFreePeriod.end = convertDateFromServer(tutorialGroupFreePeriod.end);
-    return tutorialGroupFreePeriod;
-}
 
 function convertTutorialGroupSummaryFreePeriod(freePeriodSummary: TutorialGroupSummaryFreePeriod): TutorialGroupFreePeriod {
     const freePeriod = new TutorialGroupFreePeriod();

@@ -1,3 +1,4 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -14,6 +15,7 @@ import {
     TumAetUiDialogComponent,
     TumAetUiEmptyStateComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
 } from '@tumaet/ui-angular';
@@ -42,12 +44,15 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleDirective,
         ExamModeBadgeComponent,
+        TumAetUiTableLayoutComponent,
     ],
 })
 export class ExamManagementOverviewComponent implements OnDestroy {
     private examManagementComponent = inject(ExamManagementComponent);
     private sortService = inject(SortService);
     private router = inject(Router);
+
+    protected readonly ExamMode = ExamMode;
 
     readonly course = this.examManagementComponent.course;
     readonly exams = this.examManagementComponent.exams;

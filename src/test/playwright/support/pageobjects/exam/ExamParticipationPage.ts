@@ -95,8 +95,7 @@ export class ExamParticipationPage extends ExamParticipationActions {
     }
 
     private async makeFileUploadExerciseSubmission(fileUploadFixture: string) {
-        // The exam variant attaches the file and confirms it right away; there is no separate save step, the exam's
-        // own "save and continue" is what persists the submission.
+        // Selecting the file starts the upload; wait for it before moving to the next exercise.
         await this.fileUploadExerciseEditor.attachFileExam(Fixtures.getAbsoluteFilePath(fileUploadFixture));
     }
 

@@ -264,6 +264,10 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
         if (this.notificationsForSelectedCategory().length < this.courseNotificationService.pageSize && !this.pagesFinished) {
             this.queryStartSize = this.notificationsForSelectedCategory().length;
             this.queryCurrentCategory();
+        } else if (this.isShown() && !this.isLoading()) {
+            // A cached list does not emit another update when reopened. Persist its newly displayed
+            // notifications too, so closing the overview cannot leave them seen only in memory.
+            this.updateCurrentCategoryNotificationsToSeenOnServer();
         }
     }
 

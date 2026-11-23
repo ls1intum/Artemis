@@ -11,6 +11,7 @@ import { SavedPostStatus } from 'app/communication/shared/entities/posting.model
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
@@ -23,6 +24,7 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { CourseScoreAccuracy } from 'app/foundation/util/utils';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -81,7 +83,7 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
 export type SidebarLecture = Pick<Lecture, 'id' | 'title' | 'startDate' | 'endDate' | 'isTutorialLecture'>;
 
 /** The exam fields the sidebar renders; see {@link SidebarLecture}. */
-export type SidebarExam = Pick<Exam, 'id' | 'title' | 'moduleNumber' | 'startDate' | 'workingTime' | 'examMaxPoints' | 'testExam'>;
+export type SidebarExam = Pick<Exam, 'id' | 'title' | 'moduleNumber' | 'startDate' | 'workingTime' | 'examMaxPoints' | 'examMode'>;
 
 @Service()
 export class CourseOverviewService {
@@ -258,7 +260,13 @@ export class CourseOverviewService {
         return groupedExerciseGroups;
     }
 
-    buildGroupedExerciseData(exercises: Exercise[]): { groupedData: AccordionGroups; ungroupedData: SidebarCardElement[] } {
+    /**
+     * Builds the cards of the exercise sidebar.
+     *
+     * @param exercises the exercises of the course
+     * @param course what every card needs of the course of the exercises for the accuracy of the score in its result, as the exercises of the course overview have no course
+     */
+    buildGroupedExerciseData(exercises: Exercise[], course?: CourseScoreAccuracy): { groupedData: AccordionGroups; ungroupedData: SidebarCardElement[] } {
         const groupByExerciseId = new Map<number, CourseExerciseGroup>();
         for (const group of buildGroupsFromExercises(exercises)) {
             for (const member of group.exercises ?? []) {
@@ -283,7 +291,7 @@ export class CourseOverviewService {
                     ungroupedData.push(card);
                 }
             } else {
-                const card = this.mapExerciseToSidebarCardElement(exercise);
+                const card = this.mapExerciseToSidebarCardElement(exercise, course);
                 groupedData[this.getCorrespondingExerciseGroupByDate(exercise)].entityData.push(card);
                 ungroupedData.push(card);
             }
@@ -454,14 +462,6 @@ export class CourseOverviewService {
         return tutorialGroups.map((tutorialGroup) => this.mapTutorialGroupToSidebarCardElement(tutorialGroup));
     }
 
-    mapExercisesToSidebarCardElements(exercises: Exercise[]) {
-        return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
-    }
-
-    mapExamsToSidebarCardElements(exams: Exam[], studentExams?: StudentExam[]) {
-        return exams.map((exam, index) => this.mapExamToSidebarCardElement(exam, studentExams?.[index]));
-    }
-
     /**
      * Maps an array of conversations to their respective sidebar card representations.
      * This is used to display conversation cards (channels, group chats, etc.) in the sidebar.
@@ -471,13 +471,6 @@ export class CourseOverviewService {
      */
     mapConversationsToSidebarCardElements(conversations: ConversationDTO[]) {
         return conversations.map((conversation) => this.mapConversationToSidebarCardElement(conversation));
-    }
-
-    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExamOrDTO[], indices?: number[]) {
-        if (attempts && indices) {
-            return attempts.map((attempt, index) => this.mapAttemptToSidebarCardElement(attempt, index));
-        }
-        return undefined;
     }
 
     mapLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {
@@ -561,7 +554,7 @@ export class CourseOverviewService {
         return [undefined, undefined];
     }
 
-    mapExerciseToSidebarCardElement(exercise: Exercise): SidebarCardElement {
+    mapExerciseToSidebarCardElement(exercise: Exercise, course?: CourseScoreAccuracy): SidebarCardElement {
         return {
             title: exercise.title ?? '',
             id: exercise.id ?? '',
@@ -570,6 +563,7 @@ export class CourseOverviewService {
             icon: getIcon(exercise.type),
             difficulty: exercise.difficulty,
             exercise: exercise,
+            course,
             studentParticipation: exercise?.studentParticipations?.length
                 ? this.participationService.getSpecificStudentParticipation(exercise.studentParticipations, false)
                 : undefined,
@@ -577,20 +571,20 @@ export class CourseOverviewService {
         };
     }
 
-    mapExamToSidebarCardElement(exam: Exam, studentExam?: StudentExam, numberOfAttempts?: number): SidebarCardElement {
+    mapExamToSidebarCardElement(exam: Exam, options?: { studentExam?: StudentExam; numberOfAttempts?: number; workingTime?: number }): SidebarCardElement {
         return {
             title: exam.title ?? '',
             id: exam.id ?? '',
             icon: faGraduationCap,
             subtitleLeft: exam.moduleNumber ?? '',
             startDateWithTime: exam.startDate,
-            workingTime: exam.workingTime,
-            studentExam: studentExam,
+            workingTime: options?.workingTime ?? exam.workingTime,
+            studentExam: options?.studentExam,
             attainablePoints: exam.examMaxPoints ?? 0,
             size: 'L',
             isAttempt: false,
-            testExam: exam.testExam,
-            attempts: numberOfAttempts ?? 0,
+            testExam: !isRealExam(exam),
+            attempts: options?.numberOfAttempts ?? 0,
         };
     }
 
@@ -697,7 +691,7 @@ export class CourseOverviewService {
 
     calculateUsedWorkingTime(studentExam: StudentExamOrDTO): number {
         let usedWorkingTime = 0;
-        if (studentExam.exam!.testExam && studentExam.started && studentExam.submitted && studentExam.workingTime && studentExam.startedDate && studentExam.submissionDate) {
+        if (!isRealExam(studentExam.exam) && studentExam.started && studentExam.submitted && studentExam.workingTime && studentExam.startedDate && studentExam.submissionDate) {
             const regularExamDuration = studentExam.workingTime;
             // As students may submit during the grace period, the workingTime is limited to the regular exam duration
             usedWorkingTime = Math.min(regularExamDuration, dayjs(studentExam.submissionDate).diff(dayjs(studentExam.startedDate), 'seconds'));

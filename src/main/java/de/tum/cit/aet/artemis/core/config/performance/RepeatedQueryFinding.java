@@ -29,6 +29,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *                                  is the number of redundant executions.
  * @param repositoryMethod      see {@link QueryCallSite#repositoryMethod()}; may be {@code null}.
  * @param callerMethod          see {@link QueryCallSite#callerMethod()}; may be {@code null}.
+ * @param sourceFile            see {@link QueryCallSite#sourceFile()}; may be {@code null}.
+ * @param line                  see {@link QueryCallSite#line()}; may be {@code null}.
  * @param httpMethod            HTTP verb of the request.
  * @param httpEndpoint          route template of the request, e.g. {@code /api/courses/{courseId}}.
  * @param testName              Playwright test name from the {@code X-Playwright-Test-Name} header; may be {@code null}.
@@ -36,8 +38,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param callSites             for a duplicate across several pieces of code, each of them; empty otherwise.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record RepeatedQueryFinding(Type type, String normalizedSql, int executions, int distinctParameterSets, String repositoryMethod, String callerMethod, String httpMethod,
-        String httpEndpoint, String testName, String phase, List<QueryCallSite> callSites) {
+public record RepeatedQueryFinding(Type type, String normalizedSql, int executions, int distinctParameterSets, String repositoryMethod, String callerMethod, String sourceFile,
+        Integer line, String httpMethod, String httpEndpoint, String testName, String phase, List<QueryCallSite> callSites) {
 
     /** The two repetition shapes, see the class documentation. */
     public enum Type {

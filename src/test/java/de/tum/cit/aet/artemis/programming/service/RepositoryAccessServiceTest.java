@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismAccessApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -105,6 +107,125 @@ class RepositoryAccessServiceTest {
 
         assertThatExceptionOfType(AccessForbiddenException.class)
                 .isThrownBy(() -> repositoryAccessService.checkHasAccessToPlagiarismSubmission(participation, user, RepositoryActionType.READ));
+    }
+
+    @Test
+    void checkHasAccessToPlagiarismSubmission_withoutPlagiarismModule_isRefusedForNonStaff() {
+        var course = new Course();
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setExercise(exerciseWithCourse(course));
+        when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)).thenReturn(false);
+        when(authorizationCheckService.isAtLeastStudentInCourse(course, user)).thenReturn(true);
+
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> repositoryAccessService.checkHasAccessToPlagiarismSubmission(participation, user, RepositoryActionType.READ));
+    }
+
+    @Test
+    void checkHasAccessToPlagiarismSubmission_withoutCourseRole_isRefused() {
+        var course = new Course();
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setExercise(exerciseWithCourse(course));
+        when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)).thenReturn(false);
+        when(authorizationCheckService.isAtLeastStudentInCourse(course, user)).thenReturn(false);
+
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> repositoryAccessService.checkHasAccessToPlagiarismSubmission(participation, user, RepositoryActionType.READ));
+    }
+
+    /**
+     * @return a service whose plagiarism module is present and is the given API
+     */
+    private RepositoryAccessService serviceWithPlagiarismModule(PlagiarismAccessApi plagiarismAccessApi) {
+        return new RepositoryAccessService(Optional.of(plagiarismAccessApi), authorizationCheckService, new ExerciseDateService(null, Optional.empty(), Optional.empty()),
+                mock(ParticipationAuthorizationCheckService.class));
+    }
+
+    @Test
+    void checkHasAccessToPlagiarismSubmission_studentWithAccessToTheSubmission_isAllowed() {
+        var course = new Course();
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setId(5L);
+        participation.setExercise(exerciseWithCourse(course));
+        user.setLogin("student1");
+        var plagiarismAccessApi = mock(PlagiarismAccessApi.class);
+        when(plagiarismAccessApi.hasAccessToSubmission(1L, 5L, "student1", participation)).thenReturn(true);
+        when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)).thenReturn(false);
+        when(authorizationCheckService.isAtLeastStudentInCourse(course, user)).thenReturn(true);
+
+        assertThatCode(() -> serviceWithPlagiarismModule(plagiarismAccessApi).checkHasAccessToPlagiarismSubmission(participation, user, RepositoryActionType.READ))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void checkHasAccessToPlagiarismSubmission_studentWithoutAccessToTheSubmission_isRefused() {
+        var course = new Course();
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setId(5L);
+        participation.setExercise(exerciseWithCourse(course));
+        user.setLogin("student1");
+        var plagiarismAccessApi = mock(PlagiarismAccessApi.class);
+        when(plagiarismAccessApi.hasAccessToSubmission(1L, 5L, "student1", participation)).thenReturn(false);
+        when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)).thenReturn(false);
+        when(authorizationCheckService.isAtLeastStudentInCourse(course, user)).thenReturn(true);
+
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> serviceWithPlagiarismModule(plagiarismAccessApi).checkHasAccessToPlagiarismSubmission(participation, user, RepositoryActionType.READ));
+    }
+
+    @Test
+    void checkHasAccessToPlagiarismSubmission_userWithoutCourseRole_isRefusedWithoutAskingThePlagiarismModule() {
+        var course = new Course();
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setId(5L);
+        participation.setExercise(exerciseWithCourse(course));
+        user.setLogin("noncourseuser1");
+        // the module would allow the access, so the refusal below has to come from the missing course role
+        var plagiarismAccessApi = mock(PlagiarismAccessApi.class);
+        when(plagiarismAccessApi.hasAccessToSubmission(1L, 5L, "noncourseuser1", participation)).thenReturn(true);
+        when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)).thenReturn(false);
+        when(authorizationCheckService.isAtLeastStudentInCourse(course, user)).thenReturn(false);
+
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> serviceWithPlagiarismModule(plagiarismAccessApi).checkHasAccessToPlagiarismSubmission(participation, user, RepositoryActionType.READ));
+        verifyNoInteractions(plagiarismAccessApi);
+    }
+
+    @Test
+    void checkHasAccessToPlagiarismSubmission_teachingAssistant_readsTheLiveRepository() {
+        var course = new Course();
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setId(5L);
+        participation.setExercise(exerciseWithCourse(course));
+        var plagiarismAccessApi = mock(PlagiarismAccessApi.class);
+        when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)).thenReturn(true);
+        when(authorizationCheckService.isAtLeastEditorInCourse(course, user)).thenReturn(true);
+
+        assertThat(serviceWithPlagiarismModule(plagiarismAccessApi).checkHasAccessToPlagiarismSubmission(participation, user, RepositoryActionType.READ)).isTrue();
+        verifyNoInteractions(plagiarismAccessApi);
+    }
+
+    @Test
+    void findStoredComparedCommitHash_readsTheStoredHashOfTheParticipation() {
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setId(5L);
+        participation.setExercise(exerciseWithCourse(new Course()));
+        var plagiarismAccessApi = mock(PlagiarismAccessApi.class);
+        when(plagiarismAccessApi.findComparedCommitHash(1L, 5L)).thenReturn(Optional.of("abc123"));
+
+        assertThat(serviceWithPlagiarismModule(plagiarismAccessApi).findStoredComparedCommitHash(participation)).contains("abc123");
+    }
+
+    @Test
+    void findComparisonCreatedDate_readsTheCreationDateOfTheNewestResult() {
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setId(5L);
+        participation.setExercise(exerciseWithCourse(new Course()));
+        var plagiarismAccessApi = mock(PlagiarismAccessApi.class);
+        Instant created = Instant.parse("2026-01-01T10:00:00Z");
+        when(plagiarismAccessApi.findComparisonCreatedDate(1L, 5L)).thenReturn(Optional.of(created));
+
+        assertThat(serviceWithPlagiarismModule(plagiarismAccessApi).findComparisonCreatedDate(participation)).contains(created);
     }
 
     @Test

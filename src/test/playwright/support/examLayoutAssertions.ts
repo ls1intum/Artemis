@@ -56,12 +56,6 @@ const PROGRAMMING_ACTIONS_BELOW_MAX_WIDTH = 480;
 /** The width in px the title of a page keeps at least next to the programming actions (the product keeps 256px, a name that is cut off there is still readable). */
 const MIN_TITLE_WIDTH_NEXT_TO_ACTIONS = 200;
 
-/** From this width in px the panel of the file upload page has room for the file input and the Upload button in one row; below it the button wraps below the input. */
-const FILE_UPLOAD_ROW_MIN_WIDTH = 1280;
-
-/** The distance in px between the file input and the Upload button when they are in one row. */
-const FILE_UPLOAD_GAP = 8;
-
 /** The rule below the title row. The row draws it itself, inside its 40px, so a row without it is 40px high all the same. */
 const TITLE_RULE_WIDTH = '1px';
 
@@ -227,26 +221,6 @@ export async function expectProgrammingActions(page: Page, row: Locator, viewpor
                 message: `the title of the programming page at ${viewport.width}x${viewport.height} is squeezed by the actions next to it`,
             })
             .toBeGreaterThanOrEqual(MIN_TITLE_WIDTH_NEXT_TO_ACTIONS);
-    }
-}
-
-/**
- * Expects the file input of the file upload page and its Upload button to belong together: both are as high as a small button, and where the
- * panel has room (from 1280px) the button follows the input in the same row, 8px from its end and at the same vertical centre, instead of
- * floating at the far end of the panel; where it has not, the button is below the input and starts at the same edge.
- */
-export async function expectFileUploadRow(page: Page, viewport: LayoutViewport): Promise<void> {
-    const field = page.getByTestId('file-upload-field').filter({ visible: true });
-    const upload = page.getByTestId('file-upload-submit').filter({ visible: true });
-    await expectHeight(field, SMALL_BUTTON_HEIGHT, { name: 'the file input' });
-    await expectHeight(upload, SMALL_BUTTON_HEIGHT, { name: 'the Upload button' });
-    if (viewport.width >= FILE_UPLOAD_ROW_MIN_WIDTH) {
-        // both are 34px high, so the same top is the same vertical centre
-        await expectAligned([field, upload], 'top', { name: 'the file input and the Upload button' });
-        await expectGap(field, upload, 'horizontal', FILE_UPLOAD_GAP, { name: 'the file input and the Upload button' });
-    } else {
-        await expectBelow([upload], field, { name: 'the Upload button' });
-        await expectAligned([field, upload], 'left', { name: 'the file input and the Upload button' });
     }
 }
 

@@ -1,216 +1,253 @@
-<p-dialog
-    [(visible)]="visible"
-    [modal]="true"
-    [draggable]="false"
-    [resizable]="false"
-    [showHeader]="false"
-    [closable]="false"
-    [style]="{ width: '90vw', 'max-width': '84rem' }"
-    [contentStyle]="{ padding: '1.25rem' }"
-    styleClass="quiz-ai-generation-modal"
-    [pt]="{ root: { 'data-testid': 'quiz-ai-generation-modal' }, header: { 'data-testid': 'quiz-ai-generation-modal-header' } }"
-    [breakpoints]="{ '1200px': '96vw' }"
-    appendTo="body"
->
-    <div class="quiz-ai-generation-layout">
-        <section class="quiz-ai-generation-configuration">
-            <h6 class="section-title" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.title"></h6>
+<tumaet-ui-dialog [(visible)]="visible" [showHeader]="false" [closeOnEscape]="false" [ariaLabel]="'artemisApp.quizExercise.aiGeneration.modalTitle' | artemisTranslate">
+    <div class="w-[min(84rem,calc(90dvw-2.5rem))] pt-4" data-testid="quiz-ai-generation-modal">
+        <div class="grid grid-cols-1 gap-4 min-[993px]:grid-cols-[minmax(18rem,23rem)_1fr]">
+            <section class="flex max-h-[72vh] min-h-[38rem] flex-col gap-4 overflow-y-auto rounded-xl border border-(--border-color) bg-surface-raised p-4">
+                <h6 class="m-0 text-xl font-bold" data-testid="quiz-ai-configuration-title" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.title"></h6>
 
-            <!-- Mode toggle — competency mode only shown when the course has competencies -->
-            @if (isLoadingCompetencies() || hasCompetencies()) {
-                <div class="field-group">
-                    <span class="field-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.mode"></span>
-                    <div class="selection-list">
-                        <button
-                            pButton
-                            type="button"
-                            severity="secondary"
-                            class="selection-button"
-                            [ngClass]="{ 'selection-button-active': !isCompetencyMode() }"
-                            (click)="selectMode('free-topic')"
-                        >
-                            <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.modeFreeTopicLabel"></span>
-                        </button>
-                        <button
-                            pButton
-                            type="button"
-                            severity="secondary"
-                            class="selection-button"
-                            [ngClass]="{ 'selection-button-active': isCompetencyMode() }"
-                            [disabled]="isLoadingCompetencies()"
-                            (click)="selectMode('competency-graph')"
-                        >
-                            <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.modeCompetencyGraphLabel"></span>
-                        </button>
+                <!-- Mode toggle — competency mode only shown when the course has competencies -->
+                @if (isLoadingCompetencies() || hasCompetencies()) {
+                    <div>
+                        <span class="mb-1.5 inline-block font-semibold text-color" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.mode"></span>
+                        <div class="flex flex-wrap gap-2" role="group">
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                [severity]="isCompetencyMode() ? 'secondary' : 'primary'"
+                                variant="outlined"
+                                class="min-w-34"
+                                data-testid="quiz-ai-mode-free-topic"
+                                [attr.aria-pressed]="!isCompetencyMode()"
+                                (click)="selectMode('free-topic')"
+                            >
+                                <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.modeFreeTopicLabel"></span>
+                            </button>
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                [severity]="isCompetencyMode() ? 'primary' : 'secondary'"
+                                variant="outlined"
+                                class="min-w-34"
+                                data-testid="quiz-ai-mode-competency-graph"
+                                [attr.aria-pressed]="isCompetencyMode()"
+                                [disabled]="isLoadingCompetencies()"
+                                (click)="selectMode('competency-graph')"
+                            >
+                                <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.modeCompetencyGraphLabel"></span>
+                            </button>
+                        </div>
                     </div>
-                </div>
-            }
+                }
 
-            <!-- Free-topic mode: topic input -->
-            @if (!isCompetencyMode()) {
-                <div class="field-group">
-                    <label class="field-label" for="quiz-ai-topic" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.topic"></label>
-                    <input id="quiz-ai-topic" pInputText class="w-100" [ngModel]="topic()" (ngModelChange)="topic.set($event)" />
-                </div>
-            }
+                <!-- Free-topic mode: topic input -->
+                @if (!isCompetencyMode()) {
+                    <div>
+                        <label class="mb-1.5 font-semibold text-color" for="quiz-ai-topic" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.topic"></label>
+                        <input id="quiz-ai-topic" tumAetUiInput class="w-full" [ngModel]="topic()" (ngModelChange)="topic.set($event)" />
+                    </div>
+                }
 
-            <!-- Competency-graph mode: multi-select -->
-            @if (isCompetencyMode()) {
-                <div class="field-group">
-                    <div class="field-label label-with-help">
-                        <label for="quiz-ai-competencies" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.competencies"></label>
-                        <span
-                            class="label-with-help-icon"
-                            [pTooltip]="'artemisApp.quizExercise.aiGeneration.configuration.competenciesTooltip' | artemisTranslate"
-                            tooltipPosition="right"
-                            appendTo="body"
-                            tooltipStyleClass="quiz-ai-generation-tooltip"
-                            tabindex="0"
+                <!-- Competency-graph mode: multi-select -->
+                @if (isCompetencyMode()) {
+                    <div>
+                        <div class="mb-1.5 flex items-center gap-1.5 font-semibold text-color">
+                            <label for="quiz-ai-competencies" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.competencies"></label>
+                            <span
+                                class="inline-flex items-center text-muted-color"
+                                role="img"
+                                tabindex="0"
+                                [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.configuration.competenciesTooltip' | artemisTranslate"
+                                [tumAetUiTooltip]="'artemisApp.quizExercise.aiGeneration.configuration.competenciesTooltip' | artemisTranslate"
+                                tumAetUiTooltipPlacement="right"
+                            >
+                                <fa-icon [icon]="faQuestionCircle" />
+                            </span>
+                        </div>
+                        <tumaet-ui-multi-select
+                            inputId="quiz-ai-competencies"
+                            data-testid="quiz-ai-competencies"
+                            [options]="courseCompetencies()"
+                            [ngModel]="selectedCompetencyIds()"
+                            (ngModelChange)="onCompetencySelectionChange($event)"
+                            optionLabel="title"
+                            optionValue="id"
+                            [placeholder]="'artemisApp.quizExercise.aiGeneration.configuration.competenciesPlaceholder' | artemisTranslate"
+                            [disabled]="isLoadingCompetencies()"
                         >
-                            <fa-stack class="icon-full-size">
-                                <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
-                            </fa-stack>
+                            <ng-template #option let-option>
+                                <span class="flex-1 truncate" data-testid="quiz-ai-competency-option">{{ option.title }}</span>
+                            </ng-template>
+                        </tumaet-ui-multi-select>
+                    </div>
+                }
+
+                <div>
+                    <div class="mb-1.5 flex items-center gap-1.5 font-semibold text-color">
+                        <label for="quiz-ai-optional-prompt" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.optionalPrompt"></label>
+                        <span
+                            class="inline-flex items-center text-muted-color"
+                            role="img"
+                            tabindex="0"
+                            [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.configuration.optionalPromptTooltip' | artemisTranslate"
+                            [tumAetUiTooltip]="'artemisApp.quizExercise.aiGeneration.configuration.optionalPromptTooltip' | artemisTranslate"
+                            tumAetUiTooltipPlacement="right"
+                        >
+                            <fa-icon [icon]="faQuestionCircle" />
                         </span>
                     </div>
-                    <p-multiselect
-                        [pt]="{ overlay: { 'data-testid': 'quiz-ai-competency-overlay' }, option: { 'data-testid': 'quiz-ai-competency-option' } }"
-                        inputId="quiz-ai-competencies"
-                        [options]="courseCompetencies()"
-                        [ngModel]="selectedCompetencies()"
-                        (ngModelChange)="selectedCompetencies.set($event)"
-                        optionLabel="title"
-                        [placeholder]="'artemisApp.quizExercise.aiGeneration.configuration.competenciesPlaceholder' | artemisTranslate"
-                        [loading]="isLoadingCompetencies()"
-                        [showToggleAll]="false"
-                        styleClass="w-100"
-                        appendTo="body"
+                    <textarea
+                        id="quiz-ai-optional-prompt"
+                        tumAetUiInput
+                        class="w-full"
+                        rows="4"
+                        [ngModel]="optionalPrompt()"
+                        (ngModelChange)="optionalPrompt.set($event)"
+                    ></textarea>
+                </div>
+
+                <div>
+                    <span class="mb-1.5 inline-block font-semibold text-color" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.language"></span>
+                    <div class="flex flex-wrap gap-2" role="group">
+                        @for (languageOption of languages; track languageOption) {
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                [severity]="isLanguageSelected(languageOption) ? 'primary' : 'secondary'"
+                                variant="outlined"
+                                class="min-w-34"
+                                [attr.data-testid]="'quiz-ai-language-' + languageOption"
+                                [attr.aria-pressed]="isLanguageSelected(languageOption)"
+                                (click)="selectLanguage(languageOption)"
+                            >
+                                <span [jhiTranslate]="getLanguageLabelKey(languageOption)"></span>
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                        class="mb-1.5 font-semibold text-color"
+                        for="quiz-ai-number-of-questions"
+                        jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.numberOfQuestions"
+                    ></label>
+                    <tumaet-ui-input-number
+                        inputId="quiz-ai-number-of-questions"
+                        [ngModel]="numberOfQuestions()"
+                        (ngModelChange)="numberOfQuestions.set($event ?? 1)"
+                        [min]="1"
+                        [max]="10"
+                        [showButtons]="true"
+                        [useGrouping]="false"
+                        [step]="1"
+                        [fluid]="true"
                     />
                 </div>
-            }
 
-            <div class="field-group">
-                <div class="field-label label-with-help">
-                    <label for="quiz-ai-optional-prompt" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.optionalPrompt"></label>
+                <div>
+                    <span class="mb-1.5 inline-block font-semibold text-color" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.questionType"></span>
+                    <div class="flex flex-wrap gap-2" role="group">
+                        @for (questionType of questionTypes; track questionType) {
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                [severity]="isQuestionTypeSelected(questionType) ? 'primary' : 'secondary'"
+                                variant="outlined"
+                                class="min-w-34"
+                                [attr.data-testid]="'quiz-ai-question-type-' + questionType"
+                                [attr.aria-pressed]="isQuestionTypeSelected(questionType)"
+                                (click)="toggleQuestionType(questionType)"
+                            >
+                                <span [jhiTranslate]="getQuestionTypeLabelKey(questionType)"></span>
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div class="mt-1">
                     <span
-                        class="label-with-help-icon"
-                        [pTooltip]="'artemisApp.quizExercise.aiGeneration.configuration.optionalPromptTooltip' | artemisTranslate"
-                        tooltipPosition="right"
-                        appendTo="body"
-                        tooltipStyleClass="quiz-ai-generation-tooltip"
-                        tabindex="0"
-                    >
-                        <fa-stack class="icon-full-size">
-                            <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
-                        </fa-stack>
-                    </span>
+                        id="quiz-ai-difficulty-label"
+                        class="mb-1.5 inline-block font-semibold text-color"
+                        jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficulty"
+                    ></span>
+                    <!-- The kit has no slider, so this is a native range input: it is a slider for assistive tech, is focusable and handles the arrow, Home, End and Page keys. -->
+                    <input
+                        #difficultyInput
+                        type="range"
+                        class="block w-full cursor-pointer accent-primary"
+                        min="0"
+                        max="100"
+                        step="1"
+                        aria-labelledby="quiz-ai-difficulty-label"
+                        data-testid="quiz-ai-difficulty"
+                        [value]="difficulty()"
+                        (input)="difficulty.set(difficultyInput.valueAsNumber)"
+                    />
+                    <div class="mt-2 flex justify-between text-sm text-muted-color">
+                        <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficultyLevels.easy"></span>
+                        <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficultyLevels.medium"></span>
+                        <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficultyLevels.hard"></span>
+                    </div>
                 </div>
-                <textarea id="quiz-ai-optional-prompt" pTextarea class="w-100" rows="4" [ngModel]="optionalPrompt()" (ngModelChange)="optionalPrompt.set($event)"></textarea>
-            </div>
 
-            <div class="field-group">
-                <span class="field-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.language"></span>
-                <div class="selection-list">
-                    @for (languageOption of languages; track languageOption) {
-                        <button
-                            pButton
-                            type="button"
-                            severity="secondary"
-                            class="selection-button"
-                            [ngClass]="{ 'selection-button-active': isLanguageSelected(languageOption) }"
-                            (click)="selectLanguage(languageOption)"
-                        >
-                            <span [jhiTranslate]="getLanguageLabelKey(languageOption)"></span>
-                        </button>
-                    }
-                </div>
-            </div>
-
-            <div class="field-group">
-                <label class="field-label" for="quiz-ai-number-of-questions" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.numberOfQuestions"></label>
-                <p-inputnumber
-                    inputId="quiz-ai-number-of-questions"
-                    [ngModel]="numberOfQuestions()"
-                    (ngModelChange)="numberOfQuestions.set($event ?? 1)"
-                    [min]="1"
-                    [max]="10"
-                    [showButtons]="true"
-                    [useGrouping]="false"
-                    [step]="1"
-                    styleClass="w-100"
-                />
-            </div>
-
-            <div class="field-group">
-                <span class="field-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.questionType"></span>
-                <div class="selection-list">
-                    @for (questionType of questionTypes; track questionType) {
-                        <button
-                            pButton
-                            type="button"
-                            severity="secondary"
-                            class="selection-button"
-                            [ngClass]="{ 'selection-button-active': isQuestionTypeSelected(questionType) }"
-                            (click)="toggleQuestionType(questionType)"
-                        >
-                            <span [jhiTranslate]="getQuestionTypeLabelKey(questionType)"></span>
-                        </button>
-                    }
-                </div>
-            </div>
-
-            <div class="field-group difficulty-field">
-                <span class="field-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficulty"></span>
-                <p-slider [ngModel]="difficulty()" (ngModelChange)="difficulty.set($event ?? 50)" [min]="0" [max]="100" />
-                <div class="difficulty-labels">
-                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficultyLevels.easy"></span>
-                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficultyLevels.medium"></span>
-                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficultyLevels.hard"></span>
-                </div>
-            </div>
-
-            <button pButton type="button" class="w-100 mt-2 generate-button" [disabled]="!canGenerate() || isGenerating()" (click)="generateQuestions()">
-                @if (isGenerating()) {
-                    <span class="generate-loading-label">
-                        <span [jhiTranslate]="getCurrentLoadingPhraseKey()"></span><span class="loading-dots">{{ getLoadingDots() }}</span>
-                    </span>
-                } @else {
-                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.generate"></span>
-                }
-            </button>
-        </section>
-
-        <section class="quiz-ai-generation-preview">
-            <div class="preview-header">
-                <h6 class="section-title mb-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.title"></h6>
                 <button
-                    pButton
+                    tumAetUiButton
                     type="button"
-                    severity="secondary"
-                    [text]="true"
-                    [rounded]="true"
-                    icon="pi pi-times"
-                    [attr.aria-label]="'entity.action.close' | artemisTranslate"
-                    [pTooltip]="'entity.action.close' | artemisTranslate"
-                    tooltipPosition="top"
-                    (click)="close()"
-                ></button>
-            </div>
-
-            @if (!hasGeneratedQuestions()) {
-                <div class="preview-empty">
-                    <h6 jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyTitle"></h6>
-                    <p class="mb-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyDescription"></p>
-                </div>
-            } @else {
-                <div class="question-list">
-                    @for (question of generatedQuestions(); track question.id; let questionIndex = $index) {
-                        <jhi-quiz-ai-generated-question-card [question]="question" [questionIndex]="questionIndex" />
+                    class="mt-2 w-full"
+                    data-testid="quiz-ai-generate-button"
+                    [disabled]="!canGenerate() || isGenerating()"
+                    (click)="generateQuestions()"
+                >
+                    @if (isGenerating()) {
+                        <span class="inline-flex min-h-5 items-center justify-center" data-testid="quiz-ai-generate-loading">
+                            <span [jhiTranslate]="getCurrentLoadingPhraseKey()"></span><span class="inline-block w-[1.8rem] text-left">{{ getLoadingDots() }}</span>
+                        </span>
+                    } @else {
+                        <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.generate"></span>
                     }
-                </div>
-                <button pButton type="button" severity="success" class="add-to-quiz-fab" (click)="addGeneratedQuestionsToQuiz()">
-                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.addToEditor"></span>
                 </button>
-            }
-        </section>
+            </section>
+
+            <section class="relative max-h-[72vh] min-h-[38rem] overflow-y-auto rounded-xl border border-(--border-color) bg-surface-raised p-4">
+                <div class="mb-4 flex items-center justify-between border-b border-border pb-3" data-testid="quiz-ai-preview-header">
+                    <h6 class="m-0 text-xl font-bold" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.title"></h6>
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        severity="secondary"
+                        variant="text"
+                        class="size-8 rounded-full! p-0!"
+                        data-testid="quiz-ai-close-button"
+                        [attr.aria-label]="'entity.action.close' | artemisTranslate"
+                        [tumAetUiTooltip]="'entity.action.close' | artemisTranslate"
+                        (click)="close()"
+                    >
+                        <fa-icon [icon]="faTimes" />
+                    </button>
+                </div>
+
+                @if (!hasGeneratedQuestions()) {
+                    <div class="preview-empty rounded-xl border border-(--border-color) p-5 text-muted-color">
+                        <h6 class="mb-2 text-base font-medium" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyTitle"></h6>
+                        <p class="m-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyDescription"></p>
+                    </div>
+                } @else {
+                    <div class="question-list flex flex-col gap-3.5">
+                        @for (question of generatedQuestions(); track question.id; let questionIndex = $index) {
+                            <jhi-quiz-ai-generated-question-card [question]="question" [questionIndex]="questionIndex" />
+                        }
+                    </div>
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        severity="success"
+                        class="sticky bottom-0 float-right mt-4 shadow-lg!"
+                        data-testid="quiz-ai-add-to-quiz"
+                        (click)="addGeneratedQuestionsToQuiz()"
+                    >
+                        <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.addToEditor"></span>
+                    </button>
+                }
+            </section>
+        </div>
     </div>
-</p-dialog>
+</tumaet-ui-dialog>

@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.factories.CompetencyFactory;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
@@ -98,8 +97,6 @@ public class CompetencyDemoService {
 
     private final CourseCompetencyService courseCompetencyService;
 
-    private final CompetencyAtlasMLNotificationService atlasMLNotificationService;
-
     private final CompetencyRelationService competencyRelationService;
 
     private final LearningPathService learningPathService;
@@ -108,16 +105,14 @@ public class CompetencyDemoService {
 
     public CompetencyDemoService(CourseRepository courseRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository,
             CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CompetencyRelationRepository competencyRelationRepository,
-            CompetencyValidationService competencyValidationService, CourseCompetencyService courseCompetencyService,
-            CompetencyAtlasMLNotificationService atlasMLNotificationService, CompetencyRelationService competencyRelationService, LearningPathService learningPathService,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyValidationService competencyValidationService, CourseCompetencyService courseCompetencyService, CompetencyRelationService competencyRelationService,
+            LearningPathService learningPathService, CompetencyProgressService competencyProgressService) {
         this.courseRepository = courseRepository;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
         this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.competencyValidationService = competencyValidationService;
         this.courseCompetencyService = courseCompetencyService;
-        this.atlasMLNotificationService = atlasMLNotificationService;
         this.competencyRelationService = competencyRelationService;
         this.learningPathService = learningPathService;
         this.competencyProgressService = competencyProgressService;
@@ -184,7 +179,7 @@ public class CompetencyDemoService {
 
     /**
      * Returns the competency of the given kind with the title of the given one, or creates the given one like {@code CompetencyResource#createCompetency} and
-     * {@code PrerequisiteResource#createPrerequisite} do: validated and stored for the course, and for a competency, AtlasML learns about it.
+     * {@code PrerequisiteResource#createPrerequisite} do: validated and stored for the course.
      *
      * @param course     the course with its competencies and prerequisites.
      * @param existing   the competencies of the given kind that the course already has.
@@ -198,9 +193,6 @@ public class CompetencyDemoService {
         }).orElseGet(() -> {
             competencyValidationService.checkForCreation(competency);
             C createdCompetency = courseCompetencyService.createCourseCompetency(competency, course);
-            if (createdCompetency instanceof Competency created) {
-                atlasMLNotificationService.notifyAtlasML(List.of(created), OperationTypeDTO.UPDATE, "demo competency creation");
-            }
             log.info("Created demo {} '{}' with id {}", createdCompetency.getType(), createdCompetency.getTitle(), createdCompetency.getId());
             return createdCompetency;
         });

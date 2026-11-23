@@ -30,6 +30,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
  * The pool is a grid of cells, one per combination of competency, lecture unit linked to that competency, language, question type
  * and difficulty, and each cell holds a fixed number of items numbered by {@code itemIndex}. An item is created in state {@link QuizQuestionPoolItemState#PENDING} and
  * carries its generated question once generated and the filter's decision once judged.
+ * When the lecture unit's material changes after generation, unreviewed items are deleted and approved ones are kept with
+ * {@code materialChanged} set, so they no longer count towards the cell's target.
  */
 @Entity
 @Table(name = "quiz_question_pool_item")
@@ -69,6 +71,9 @@ public class QuizQuestionPoolItem extends DomainObject {
     @Column(name = "review_state", nullable = false)
     private QuizQuestionReviewState reviewState = QuizQuestionReviewState.PENDING;
 
+    @Column(name = "material_changed", nullable = false)
+    private boolean materialChanged;
+
     @Column(name = "generation_attempts", nullable = false)
     private int generationAttempts;
 
@@ -102,6 +107,10 @@ public class QuizQuestionPoolItem extends DomainObject {
     @Column(name = "accepted")
     @Nullable
     private Boolean accepted;
+
+    /** Whether the filter's verdicts ask a reviewer to look at the question; {@code null} until the question is judged. */
+    @Column(name = "flagged")
+    private Boolean flagged;
 
     @Column(name = "claimed_at")
     @Nullable
@@ -190,6 +199,14 @@ public class QuizQuestionPoolItem extends DomainObject {
         this.reviewState = reviewState;
     }
 
+    public boolean isMaterialChanged() {
+        return materialChanged;
+    }
+
+    public void setMaterialChanged(boolean materialChanged) {
+        this.materialChanged = materialChanged;
+    }
+
     public int getGenerationAttempts() {
         return generationAttempts;
     }
@@ -258,6 +275,14 @@ public class QuizQuestionPoolItem extends DomainObject {
 
     public void setAccepted(@Nullable Boolean accepted) {
         this.accepted = accepted;
+    }
+
+    public @Nullable Boolean getFlagged() {
+        return flagged;
+    }
+
+    public void setFlagged(@Nullable Boolean flagged) {
+        this.flagged = flagged;
     }
 
     @Nullable

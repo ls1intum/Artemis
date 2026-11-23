@@ -1,12 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck, faCircleNotch, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCaretRight, faCheck, faCircleNotch, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { IrisActivityItem, IrisActivityState } from 'app/iris/shared/entities/iris-activity.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type IrisActivityFeedMode = 'live' | 'trail';
+
+// Number of decimals the summed duration in the summary is rendered with.
+const ACTIVITY_DURATION_DECIMALS = 1;
+// Shortest summed duration (in s) still worth showing: anything below this rounds away to "0.0s" at one decimal.
+const MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS = 0.5 * 10 ** -ACTIVITY_DURATION_DECIMALS;
 
 interface IrisActivityViewItem extends IrisActivityItem {
     label: string;
@@ -26,6 +31,10 @@ export function prettifyActivityName(name: string): string {
     return `${label.charAt(0).toUpperCase()}${label.slice(1)}`;
 }
 
+/**
+ * One group of Iris steps, drawn as a quiet one-line summary that expands to a list.
+ * Live, the summary names the step that is running; afterwards it counts the steps.
+ */
 @Component({
     selector: 'jhi-iris-activity-feed',
     templateUrl: './iris-activity-feed.component.html',
@@ -36,6 +45,9 @@ export function prettifyActivityName(name: string): string {
 export class IrisActivityFeedComponent {
     private readonly translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
+
+    protected readonly faCaretRight = faCaretRight;
+    protected readonly faCircleNotch = faCircleNotch;
 
     readonly activities = input<IrisActivityItem[]>([]);
     readonly mode = input<IrisActivityFeedMode>('live');
@@ -60,6 +72,25 @@ export class IrisActivityFeedComponent {
                 spin: activity.state === IrisActivityState.RUNNING,
                 tooltip: parts.join(' · '),
             });
+        });
+    });
+
+    /** Only the live group names a running step; a saved group may hold one that never finished. */
+    protected readonly runningItem = computed(() => (this.mode() === 'live' ? this.viewItems().find((activity) => activity.state === IrisActivityState.RUNNING) : undefined));
+
+    protected readonly summary = computed(() => {
+        this.currentLocale();
+        const activities = this.activities();
+        const totalDurationSeconds = activities.reduce((sum, activity) => sum + (activity.durationMillis ?? 0), 0) / 1000;
+        // A single activity reads as "1 tool", more than one as "n tools", so the plural form picks the key.
+        const pluralSuffix = activities.length === 1 ? 'Singular' : 'Plural';
+        // Durations that round away to "0.0s" add noise rather than information, so the time is omitted entirely.
+        if (totalDurationSeconds < MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS) {
+            return this.translateService.instant(`artemisApp.iris.activities.trailSummaryWithoutDuration${pluralSuffix}`, { count: activities.length });
+        }
+        return this.translateService.instant(`artemisApp.iris.activities.trailSummary${pluralSuffix}`, {
+            count: activities.length,
+            duration: totalDurationSeconds.toFixed(ACTIVITY_DURATION_DECIMALS),
         });
     });
 

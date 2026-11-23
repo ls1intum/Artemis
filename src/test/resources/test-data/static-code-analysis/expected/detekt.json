@@ -1,0 +1,38 @@
+{
+  "tool": "DETEKT",
+  "issues": [
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/src/de/tum/in/ase/QuickSort.kt",
+      "startLine": 15,
+      "endLine": 36,
+      "startColumn": 5,
+      "endColumn": 6,
+      "rule": "detekt.naming.MemberNameEqualsClassName",
+      "category": "naming",
+      "message": "A member is named after the class. This might result in confusion. Either rename the member or change it to a constructor.",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/src/de/tum/in/ase/Client.kt",
+      "startLine": 8,
+      "endLine": 8,
+      "startColumn": 48,
+      "endColumn": 51,
+      "rule": "detekt.style.MagicNumber",
+      "category": "style",
+      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/src/de/tum/in/ase/Client.kt",
+      "startLine": 19,
+      "endLine": 19,
+      "startColumn": 44,
+      "endColumn": 54,
+      "rule": "detekt.style.UnusedParameter",
+      "category": "style",
+      "message": "Function parameter `sortPolicy` is unused.",
+      "priority": "warning"
+    }
+  ]
+}

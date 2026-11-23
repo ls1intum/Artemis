@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -26,8 +25,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantPlacementDTO;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionChatClientService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -71,12 +72,11 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
 
     private final ExerciseDeletionService exerciseDeletionService;
 
-    @Nullable
     private final ChatClient chatClient;
 
     public QuizVariantAdapterService(QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService, QuizExerciseService quizExerciseService,
             VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService, JsonMapper objectMapper, HyperionPromptTemplateService templateService,
-            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, ExerciseDeletionService exerciseDeletionService, @Nullable ChatClient chatClient) {
+            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, ExerciseDeletionService exerciseDeletionService, HyperionChatClientService chatClients) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizExerciseImportService = quizExerciseImportService;
         this.quizExerciseService = quizExerciseService;
@@ -87,7 +87,7 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
         this.exerciseDeletionService = exerciseDeletionService;
-        this.chatClient = chatClient;
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.VARIANTS);
     }
 
     @Override
@@ -257,10 +257,6 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
     }
 
     private List<VerificationReport.VerificationFinding> critique(QuizExercise quiz, ChangePlan plan, VariantJob job) {
-        if (chatClient == null) {
-            log.debug("Skipping quiz variant critique for exercise {}: AI chat client is not configured", quiz.getId());
-            return List.of();
-        }
         try {
             String systemPrompt = templateService.render("prompts/hyperion/variants/critique_quiz_system.st",
                     Map.of("changePlan", renderPlanContract(plan), "variantContext", renderContext(quiz)));

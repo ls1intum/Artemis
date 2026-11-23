@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -17,6 +16,7 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 
@@ -83,6 +83,7 @@ record ExamUserLocationDTO(
     }
 }
 
+// The e-mail address is not needed to check the attendance, so it is not sent to the teaching assistants operating the app
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 record ExamUserWithExamRoomAndSeatDTO (
     @NotBlank @Size(max = 50) String login,
@@ -90,7 +91,6 @@ record ExamUserWithExamRoomAndSeatDTO (
     @Nullable @Size(max = 50) String firstName,
     @Nullable @Size(max = 50) String lastName,
     @NotBlank @Size(max = 10) String registrationNumber,
-    @Nullable @Email @Size(max = 100) String email,
     @Nullable String imageUrl,
     boolean didCheckImage,
     boolean didCheckName,
@@ -106,7 +106,6 @@ record ExamUserWithExamRoomAndSeatDTO (
             examUser.getUser().getFirstName(),
             examUser.getUser().getLastName(),
             examUser.getUser().getRegistrationNumber(),
-            examUser.getUser().getEmail(),
             examUser.getStudentImagePath(),
             examUser.getDidCheckImage(),
             examUser.getDidCheckName(),
@@ -129,7 +128,7 @@ public record AttendanceCheckerAppExamInformationDTO(
     @NotBlank String examTitle,
     @NotNull ZonedDateTime startDate,
     @NotNull ZonedDateTime endDate,
-    boolean isTestExam,
+    @NotNull ExamMode examMode,
     long courseId,
     @NotBlank String courseTitle,
     @NotNull Set<ExamRoomForAttendanceCheckerDTO> examRoomsUsedInExam,  // empty if legacy version
@@ -148,7 +147,7 @@ public record AttendanceCheckerAppExamInformationDTO(
             exam.getTitle(),
             exam.getStartDate(),
             exam.getEndDate(),
-            exam.isTestExam(),
+            exam.getExamMode(),
             exam.getCourse().getId(),
             exam.getCourse().getTitle(),
             examRooms.stream().map(ExamRoomForAttendanceCheckerDTO::from).collect(Collectors.toSet()),

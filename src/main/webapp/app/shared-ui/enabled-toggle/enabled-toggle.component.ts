@@ -24,6 +24,7 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
                 class="enabled-toggle-btn"
                 [class.enabled-toggle-btn--active-on]="enabled()"
                 [attr.aria-pressed]="enabled()"
+                [disabled]="disabled()"
                 [attr.data-testid]="testId() ? testId() + '-enable' : undefined"
                 (click)="enabledChange.emit(true)"
             >
@@ -35,6 +36,7 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
                 class="enabled-toggle-btn"
                 [class.enabled-toggle-btn--active-off]="!enabled()"
                 [attr.aria-pressed]="!enabled()"
+                [disabled]="disabled()"
                 [attr.data-testid]="testId() ? testId() + '-disable' : undefined"
                 (click)="enabledChange.emit(false)"
             >
@@ -56,7 +58,7 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
             .enabled-toggle-group {
                 display: flex;
-                border: 1px solid var(--p-content-border-color);
+                border: 1px solid var(--tumaet-ui-border-color);
                 border-radius: 0.625rem;
                 overflow: hidden;
             }
@@ -77,15 +79,20 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
                 padding: 0.5rem 1rem;
                 border: none;
-                background: var(--overview-card-nested-bg, var(--p-content-background));
-                color: var(--p-text-muted-color);
+                background: var(--overview-card-nested-bg, var(--tumaet-ui-content-background));
+                color: var(--tumaet-ui-muted-color);
                 font-weight: 500;
                 font-size: 0.88rem;
                 cursor: pointer;
                 transition: all 0.2s ease;
 
+                &:disabled {
+                    cursor: not-allowed;
+                    opacity: 0.6;
+                }
+
                 &:first-child {
-                    border-right: 1px solid var(--p-content-border-color);
+                    border-right: 1px solid var(--tumaet-ui-border-color);
                 }
 
                 &--active-on {
@@ -118,6 +125,8 @@ export class EnabledToggleComponent {
     readonly ariaLabel = input<string>();
     /** When set, the two buttons get `<testId>-enable` and `<testId>-disable` as their test ids. */
     readonly testId = input<string>();
+    /** Blocks both buttons, e.g. while the state they would switch is still loading. */
+    readonly disabled = input(false);
 
     readonly enabledChange = output<boolean>();
 }

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -45,6 +46,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingServ
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import io.micrometer.registry.otlp.OtlpMeterRegistry;
 
 /**
  * Integration tests for emails sent via {@link MailService} and {@link MailSendingService}.
@@ -58,6 +60,9 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @RegisterExtension
     static GreenMailExtension greenMail = new GreenMailExtension(ServerSetupTest.SMTP.dynamicPort());
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @Autowired
     private SpringTemplateEngine templateEngine;
@@ -107,6 +112,13 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         recipient.setLogin("testuser");
         recipient.setFirstName("Jane");
         recipient.setLastName("Doe");
+    }
+
+    @Test
+    void testContextDoesNotPollSharedMailSpyFromMetricsPublisher() {
+        assertThat(applicationContext.containsBean("mailHealthContributor")).isFalse();
+        assertThat(applicationContext.containsBean("mailHealthIndicator")).isFalse();
+        assertThat(applicationContext.getBeansOfType(OtlpMeterRegistry.class)).isEmpty();
     }
 
     // -- Activation email --
@@ -290,7 +302,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("user-settings/passkeys");
+        assertThat(body).contains("user-settings/credentials");
         assertThat(body).contains("Jane Doe");
     }
 
@@ -301,7 +313,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("user-settings/passkeys");
+        assertThat(body).contains("user-settings/credentials");
         assertThat(body).contains("Jane Doe");
     }
 
@@ -350,7 +362,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
                 new HashMap<>());
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("user-settings/vcs-token");
+        assertThat(body).contains("user-settings/credentials");
         assertThat(body).contains("Jane Doe");
     }
 
@@ -362,7 +374,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
                 new HashMap<>());
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("user-settings/vcs-token");
+        assertThat(body).contains("user-settings/credentials");
         assertThat(body).contains("Jane Doe");
     }
 
@@ -385,7 +397,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(body).contains("My Laptop Key");
         assertThat(body).contains("SHA256:abc123hash");
         assertThat(body).contains("17.02.2026 - 10:30:00");
-        assertThat(body).contains("user-settings/ssh");
+        assertThat(body).contains("user-settings/credentials");
     }
 
     @Test
@@ -407,7 +419,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(body).contains("Mein Laptop Key");
         assertThat(body).contains("SHA256:de456hash");
         assertThat(body).contains("17.02.2026 - 10:30:00");
-        assertThat(body).contains("user-settings/ssh");
+        assertThat(body).contains("user-settings/credentials");
     }
 
     // -- Data export created email --

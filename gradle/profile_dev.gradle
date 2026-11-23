@@ -65,7 +65,6 @@ tasks.register("webapp", PnpmTask) {
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(
         "packages/tum-aet-ui/package.json",
-        "packages/tum-aet-ui/ng-package.dev.json",
         "packages/tum-aet-ui/tsconfig.base.json",
         "packages/tum-aet-ui/tsconfig.lib.json",
         "packages/tum-aet-ui/tailwind.css",

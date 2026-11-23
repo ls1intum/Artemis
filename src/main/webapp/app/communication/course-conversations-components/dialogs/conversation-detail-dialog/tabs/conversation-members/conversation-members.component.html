@@ -1,57 +1,55 @@
 @if (course() && activeConversation()) {
-    <div class="members-container">
-        <div class="members-header">
-            <div class="row">
-                <div class="col-auto">
-                    @if (canAddUsersToConversation(activeConversation()!)) {
-                        <button type="button" class="btn btn-outline-secondary addUsers" (click)="openAddUsersDialog($event)">
-                            <fa-icon [icon]="faUserPlus" />
-                            {{ 'artemisApp.dialogs.conversationDetail.memberTab.addUsers' | artemisTranslate }}
-                        </button>
-                    }
+    <div class="flex h-full flex-col">
+        <div class="flex shrink-0 flex-col gap-2 p-2">
+            @if (canAddUsersToConversation(activeConversation()!)) {
+                <div>
+                    <button type="button" tumAetUiButton severity="secondary" variant="outlined" class="addUsers" (click)="openAddUsersDialog($event)">
+                        <fa-icon [icon]="faUserPlus" />
+                        {{ 'artemisApp.dialogs.conversationDetail.memberTab.addUsers' | artemisTranslate }}
+                    </button>
                 </div>
-            </div>
-            <div class="row mt-2">
-                <div class="col-8">
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <fa-icon [icon]="faMagnifyingGlass" size="xs" />
-                        </span>
-                        <input
-                            [attr.aria-label]="'artemisApp.dialogs.conversationDetail.memberTab.findMembers' | artemisTranslate"
-                            (input)="onSearchQueryInput($event)"
-                            [placeholder]="'artemisApp.dialogs.conversationDetail.memberTab.findMembers' | artemisTranslate"
-                            class="form-control"
-                            id="searchQuery"
-                            type="text"
-                        />
-                    </div>
-                </div>
-                <div class="col-4">
-                    <p-select
-                        id="searchFilter"
+            }
+            <div class="flex items-start gap-2">
+                <tumaet-ui-input-group class="basis-2/3">
+                    <tumaet-ui-input-group-addon>
+                        <fa-icon [icon]="faMagnifyingGlass" size="xs" />
+                    </tumaet-ui-input-group-addon>
+                    <input
+                        tumAetUiInput
+                        tumAetUiInputSize="small"
+                        class="min-w-0 grow"
+                        id="searchQuery"
+                        type="text"
+                        [attr.aria-label]="'artemisApp.dialogs.conversationDetail.memberTab.findMembers' | artemisTranslate"
+                        [placeholder]="'artemisApp.dialogs.conversationDetail.memberTab.findMembers' | artemisTranslate"
+                        (input)="onSearchQueryInput($event)"
+                    />
+                </tumaet-ui-input-group>
+                <div class="basis-1/3">
+                    <tumaet-ui-select
+                        inputId="searchFilter"
+                        [ariaLabel]="'artemisApp.dialogs.conversationDetail.memberTab.filter' | artemisTranslate"
+                        class="flex! w-full"
+                        size="small"
+                        optionLabel="label"
+                        optionValue="value"
                         [options]="filterOptions()"
                         [(ngModel)]="selectedFilter"
                         (ngModelChange)="onFilterChange($event)"
-                        optionLabel="label"
-                        optionValue="value"
-                        styleClass="w-100"
-                        size="small"
                     />
                 </div>
-                @if (isSearching()) {
-                    <div class="col-12">
-                        <small class="form-text text-body-secondary d-inline-block" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.searching"></small>
-                    </div>
-                }
             </div>
+            @if (isSearching()) {
+                <small class="leading-[calc(1.25/0.875)] text-muted-color" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.searching"></small>
+            }
         </div>
         @if (members().length > 0) {
-            <div class="members-list">
-                <ul class="list-group">
+            <div class="flex-1 overflow-y-auto p-2">
+                <tumaet-ui-list>
                     @for (user of members(); track trackIdentity(i, user); let i = $index) {
                         <li
-                            class="list-group-item"
+                            tumAetUiListItem
+                            class="py-2!"
                             [id]="'user-' + user.id"
                             jhi-conversation-member-row
                             [conversationMember]="user"
@@ -61,16 +59,16 @@
                             (onUserNameClicked)="userNameClicked.emit($event)"
                         ></li>
                     }
-                </ul>
+                </tumaet-ui-list>
             </div>
-            <div class="members-footer">
-                <div class="d-flex justify-content-center">
-                    <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
-                </div>
-                <div class="d-flex justify-content-center">
-                    <p-paginator [first]="(page() - 1) * itemsPerPage" [rows]="itemsPerPage" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
-                </div>
-            </div>
+            <tumaet-ui-paginator
+                class="shrink-0"
+                [page]="page() - 1"
+                [pageSize]="itemsPerPage"
+                [totalRecords]="totalItems()"
+                [showRowsPerPage]="false"
+                (pageChange)="onPageChange($event)"
+            />
         }
     </div>
 }

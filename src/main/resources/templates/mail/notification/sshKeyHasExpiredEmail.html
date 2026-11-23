@@ -32,7 +32,7 @@
     <p>
         <span th:text="#{email.notification.sshKeyExpiry.renew}">You can renew your SSH key here:</span>
 
-        <a th:with="url=(@{|${baseUrl}/user-settings/ssh|})" th:href="${url}" th:text="${url}">Login
+        <a th:with="url=(@{|${baseUrl}/user-settings/credentials|})" th:href="${url}" th:text="${url}">Login
             link</a>
     </p>
 

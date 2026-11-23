@@ -115,15 +115,11 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final FileService fileService;
-
     private final GitService gitService;
 
     private final GitRepositoryExportService gitRepositoryExportService;
 
     private final RepositoryExportGitService repositoryExportGitService;
-
-    private final ZipFileService zipFileService;
 
     private final BuildPlanRepository buildPlanRepository;
 
@@ -154,16 +150,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
             PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         // Programming exercises do not have a submission export service
-        super(objectMapper, null, teamAssignmentConfigRepository, plagiarismDetectionConfigRepository);
+        super(objectMapper, null, teamAssignmentConfigRepository, plagiarismDetectionConfigRepository, fileService, zipFileService);
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.fileService = fileService;
         this.gitService = gitService;
         this.gitRepositoryExportService = gitRepositoryExportService;
         this.repositoryExportGitService = repositoryExportGitService;
-        this.zipFileService = zipFileService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.buildPlanRepository = buildPlanRepository;
     }

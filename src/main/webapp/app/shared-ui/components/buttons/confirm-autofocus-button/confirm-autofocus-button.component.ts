@@ -2,7 +2,7 @@ import { Component, computed, input, output, signal } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiButtonSeverity, TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiButtonSeverity, TumAetUiButtonSize, TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -20,6 +20,7 @@ export class ConfirmAutofocusButtonComponent {
     readonly disabled = input(false);
     readonly isLoading = input(false);
     readonly btnType = input(ButtonType.PRIMARY);
+    readonly size = input<TumAetUiButtonSize>('default');
     readonly confirmationTitle = input('');
     readonly confirmationTitleTranslationParams = input<Record<string, string>>();
     readonly confirmationText = input('');

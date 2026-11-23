@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiPanelComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
@@ -15,10 +16,6 @@ import { booleanLabel } from 'app/exercise/version-history/shared/version-histor
 import dayjs from 'dayjs/esm';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonModule } from 'primeng/button';
-import { DividerModule } from 'primeng/divider';
-import { PanelModule } from 'primeng/panel';
-import { TooltipModule } from 'primeng/tooltip';
 
 /**
  * View-model for a single row in the metadata panel.
@@ -67,7 +64,7 @@ interface MetadataField {
     selector: 'jhi-programming-exercise-version-programming-metadata',
     templateUrl: './programming-exercise-version-programming-metadata.component.html',
     styleUrls: ['./programming-exercise-version-programming-metadata.component.scss'],
-    imports: [PanelModule, DividerModule, ButtonModule, TooltipModule, RouterLink, CdkCopyToClipboard, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, TumAetUiPanelComponent, TumAetUiTooltipDirective, RouterLink, CdkCopyToClipboard, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProgrammingExerciseVersionProgrammingMetadataComponent {
@@ -165,6 +162,8 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
             this.toTextField('artemisApp.programmingExercise.checkoutSolutionRepository.title', booleanLabel(this.translateService, buildConfig.checkoutSolutionRepository)),
             this.toTextField('artemisApp.programmingExercise.allowBranching.title', booleanLabel(this.translateService, buildConfig.allowBranching)),
             this.toTextField('artemisApp.programmingExercise.branchRegex.title', buildConfig.branchRegex),
+            this.toTextField('artemisApp.programmingExercise.buildTimeWindow.start', this.formatDate(buildConfig.advancedSettings?.buildTimeWindow?.start)),
+            this.toTextField('artemisApp.programmingExercise.buildTimeWindow.end', this.formatDate(buildConfig.advancedSettings?.buildTimeWindow?.end)),
             this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.dockerFlags', buildConfig.dockerFlags),
             this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.theiaImage', buildConfig.theiaImage),
             this.toTextField(
@@ -207,6 +206,11 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
     };
 
     // ── View-model factory methods (called only inside computed() signals) ──
+
+    /** Formats a snapshot date string for display, or returns undefined when the date is missing. */
+    private formatDate(value?: string): string | undefined {
+        return value ? dayjs(value).format('MMM D, YYYY HH:mm') : undefined;
+    }
 
     /** Creates a plain text metadata field with pre-computed display values. */
     private toTextField(label: string, value?: string | number): MetadataField {

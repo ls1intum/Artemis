@@ -1,49 +1,43 @@
-import XCTest
+import Foundation
+import Testing
 @testable import ${packageName}Lib
 
-class SortingExampleBehaviorTest: XCTestCase {
-    let dateFormat = DateFormatter()
-    var unorderedDates: [Date]!
-    var orderedDates: [Date]!
+/// A new instance of the suite is created for every test, so every test sorts its own random dates.
+@Suite struct SortingExampleBehaviorTest {
+    let orderedDates: [Date]
+    let unorderedDates: [Date]
 
-    static var allTests = [
-        ("testBubbleSort", testBubbleSort),
-        ("testMergeSort", testMergeSort),
-    ]
+    init() {
+        orderedDates = SortingExampleBehaviorTest.createOrderedDatesList(11)
+        unorderedDates = orderedDates.shuffled()
+    }
 
-    private func createOrderedDatesList(_ amount: Int) -> [Date] {
+    private static func createOrderedDatesList(_ amount: Int) -> [Date] {
         var list = [Date]()
-        let dateFormat = DateFormatter()
-        dateFormat.dateFormat = "dd.MM.yyyy"
-        dateFormat.timeZone = TimeZone(identifier: "UTC")
         var orderedSeconds: Double = 0.00
         for _ in 0 ..< amount {
             /// create random dates in an ascending order
             orderedSeconds += Double.random(in: 1000000...1000000000)
-            let orderedDate: Date! = Date(timeIntervalSince1970: orderedSeconds)
-            list.append(orderedDate)
+            list.append(Date(timeIntervalSince1970: orderedSeconds))
         }
         return list
     }
 
-    /// This is the setUp() instance method. It is called before each test method begins.
-    override func setUp() {
-        super.setUp()
-        self.orderedDates = createOrderedDatesList(11)
-        self.unorderedDates = self.orderedDates.shuffled()
-    }
-
-    func testBubbleSort() {
+    @Test func testBubbleSort() {
         let bubbleSort = BubbleSort()
         let sortedInput = bubbleSort.performSort(unorderedDates)
 
-        XCTAssertEqual(sortedInput, orderedDates!, "BubbleSort does not sort correctly.")
+        if sortedInput != orderedDates {
+            Issue.record("BubbleSort does not sort correctly.")
+        }
     }
 
-    func testMergeSort() {
+    @Test func testMergeSort() {
         let mergeSort = MergeSort()
         let sortedInput = mergeSort.performSort(unorderedDates)
 
-        XCTAssertEqual(sortedInput, orderedDates!, "MergeSort does not sort correctly.")
+        if sortedInput != orderedDates {
+            Issue.record("MergeSort does not sort correctly.")
+        }
     }
 }

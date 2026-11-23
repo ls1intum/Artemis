@@ -5,7 +5,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
-import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
+import { Ide } from 'app/account/user/settings/exercises/ide-preferences/ide.model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -113,6 +113,12 @@ describe('CodeButtonPopoverContentComponent', () => {
         expect(authenticationMenuTrigger().textContent).toContain(label);
         expect(repositoryUrlElement().textContent.trim()).toBe(repositoryUrl);
     }
+
+    it('retains read-only repository access by default without offering browser editing', () => {
+        renderComponent([tokenAuthenticationMethodData]);
+        expect(fixture.nativeElement.querySelector('[data-testid="open-repository-button"]')?.getAttribute('href')).toBe('/courses/1/exercises/2/repository');
+        expect(fixture.nativeElement.querySelector('[data-testid="edit-repository-button"]')).toBeNull();
+    });
 
     describe('authentication method rendering and selection', () => {
         it('should render every authentication method and select one from the menu', async () => {

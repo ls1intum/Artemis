@@ -10,7 +10,7 @@ import { MockProvider } from 'ng-mocks';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { ActivatedRouteSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Navigation, Router } from '@angular/router';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { of } from 'rxjs';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -49,6 +49,21 @@ describe('TextExerciseResolver', () => {
         });
 
         expect(textExerciseService.find).toHaveBeenCalledWith('123', true);
+    });
+
+    it('should resolve the exercise read from a file for a new exercise of a course', () => {
+        const course = { id: 1 } as Course;
+        vi.spyOn(TestBed.inject(CourseManagementService), 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
+        const fromFile = new TextExercise(undefined, undefined);
+        fromFile.title = 'From file';
+        vi.spyOn(TestBed.inject(Router), 'currentNavigation').mockReturnValue({ extras: { state: { exerciseForImportFromFile: fromFile } } } as unknown as Navigation);
+        route.params = { courseId: '1' };
+
+        let result: TextExercise | undefined;
+        resolver.resolve(route).subscribe((exercise) => (result = exercise));
+
+        expect(result).toBe(fromFile);
+        expect(result?.course).toBe(course);
     });
 
     it('should resolve a TextExercise for a course and exercise group', () => {

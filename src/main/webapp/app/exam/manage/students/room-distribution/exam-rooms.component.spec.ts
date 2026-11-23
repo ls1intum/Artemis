@@ -179,6 +179,26 @@ describe('ExamRoomsComponent', () => {
         });
     });
 
+    it('should re-sort the room table when a column header sort is applied', () => {
+        const roomA = { roomNumber: '1', name: 'Alpha', building: 'MI', numberOfSeats: 10, layoutStrategies: [] } as unknown as ExamRoomDTO;
+        const roomB = { roomNumber: '2', name: 'Beta', building: 'MW', numberOfSeats: 20, layoutStrategies: [] } as unknown as ExamRoomDTO;
+        vi.spyOn(service, 'getRoomOverview').mockReturnValue(of(createHttpResponse({ newestUniqueExamRooms: [roomB, roomA] } as ExamRoomOverviewDTO)));
+        fixture.detectChanges();
+        expect(component.examRoomData()!.map((room) => room.name)).toEqual(['Alpha', 'Beta']);
+
+        component['onSortChange']({ field: 'name', order: -1 });
+
+        expect(component.sortAttribute()).toBe('name');
+        expect(component.ascending()).toBe(false);
+        expect(component.examRoomData()!.map((room) => room.name)).toEqual(['Beta', 'Alpha']);
+
+        component['onSortChange']({ field: 'building', order: 1 });
+
+        expect(component.sortAttribute()).toBe('building');
+        expect(component.ascending()).toBe(true);
+        expect(component.examRoomData()!.map((room) => room.building)).toEqual(['MI', 'MW']);
+    });
+
     it('should show error message on loadExamRoomOverview fail', () => {
         vi.spyOn(service, 'getRoomOverview').mockReturnValue(throwError(() => new Error()));
 

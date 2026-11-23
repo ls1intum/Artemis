@@ -9,7 +9,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 type ImportTab = 'existing' | 'file';
 
 /**
- * Lets the instructor pick an existing exercise of the given type, or for programming exercises a file, to import into an exercise
+ * Lets the instructor pick an existing exercise of the given type, or an exported file, to import into an exercise
  * group. The dialog is created while it is open, so every opening starts on the list of existing exercises with an empty search.
  */
 @Component({
@@ -29,11 +29,12 @@ type ImportTab = 'existing' | 'file';
 export class ExamExerciseImportDialogComponent {
     readonly visible = model(false);
     readonly exerciseType = input.required<ExerciseType>();
+    /** The course of the exam, which owns the problem statement images of an exercise imported from a file. */
+    readonly courseId = input.required<number>();
     /** Emits the exercise to import. An exercise read from a file has no id. */
     readonly imported = output<Exercise>();
 
     protected readonly activeTab = signal<ImportTab>('existing');
-    protected readonly fromFileAvailable = computed(() => this.exerciseType() === ExerciseType.PROGRAMMING);
     protected readonly headerKey = computed(() =>
         this.exerciseType() === ExerciseType.FILE_UPLOAD ? 'artemisApp.fileUploadExercise.home.importLabel' : `artemisApp.${this.exerciseType()}Exercise.home.importLabel`,
     );

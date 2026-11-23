@@ -22,7 +22,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -62,7 +61,7 @@ class AtlasAgentRoutingCoverageTest {
     @BeforeEach
     void setUp() {
         var surface = new AtlasToolSurface(mock(ToolCallbackProvider.class));
-        service = new AtlasAgentService(mock(ChatClient.class), memory, delegation, surface, surface, surface, surface, plans, cache, new AtlasAgentPreviewService(memory));
+        service = new AtlasAgentService(memory, delegation, surface, surface, surface, surface, plans, cache, new AtlasAgentPreviewService(memory));
         expert = new CompetencyExpertToolsService(JsonObjectMapper.get(), null, null, cache);
         CompetencyMappingToolsService.clearAllPreviews();
         CompetencyExpertToolsService.getAndClearPreviews();
@@ -342,7 +341,7 @@ class AtlasAgentRoutingCoverageTest {
         when(competencies.findById(2L)).thenReturn(Optional.of(second));
         when(competencies.findAllById(java.util.Set.of(1L, 2L))).thenReturn(List.of(first, second));
         when(relations.findAllWithHeadAndTailByCourseId(1L)).thenReturn(java.util.Set.of());
-        var tools = new CompetencyMappingToolsService(JsonObjectMapper.get(), competencies, relations, null, null, cache, Optional.empty(), null, null);
+        var tools = new CompetencyMappingToolsService(JsonObjectMapper.get(), competencies, relations, null, null, cache, null, null);
         var existing = new de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO(5L, 1L, 2L, RelationType.EXTENDS);
         var unsaved = new de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO(null, 2L, 1L, RelationType.ASSUMES);
         assertThat(tools.previewRelationMappings(1L, batch ? List.of(existing, unsaved) : List.of(existing), false)).contains("Preview generated successfully");

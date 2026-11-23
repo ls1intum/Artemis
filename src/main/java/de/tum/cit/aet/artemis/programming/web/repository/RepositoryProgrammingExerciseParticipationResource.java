@@ -50,8 +50,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -104,9 +104,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            RepositoryParticipationService repositoryParticipationService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
-        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService,
+            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService,
+            Optional<LocalVCPushProcessingService> localVCPushProcessingService, RepositoryParticipationService repositoryParticipationService,
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCPushProcessingService,
                 programmingExerciseMutationGuard);
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
@@ -230,7 +231,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         log.debug("REST request to files for plagiarism view for domainId : {}", participationId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = repositoryParticipationService.getRepositoryForPlagiarismView(participationId);
+            var target = repositoryParticipationService.resolvePlagiarismViewTarget(participationId);
+            if (target.commitHash() != null) {
+                return new ResponseEntity<>(repositoryService.getFilesAtCommit(target.participation(), target.commitHash()), HttpStatus.OK);
+            }
+            Repository repository = repositoryParticipationService.getRepositoryFromGitService(true, target.participation());
             Map<String, FileType> fileList = repositoryService.getFiles(repository);
             return new ResponseEntity<>(fileList, HttpStatus.OK);
         });
@@ -419,7 +424,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         log.debug("REST request to file {} for plagiarism view for domainId : {}", filename, participationId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = repositoryParticipationService.getRepositoryForPlagiarismView(participationId);
+            var target = repositoryParticipationService.resolvePlagiarismViewTarget(participationId);
+            if (target.commitHash() != null) {
+                return repositoryService.getFileAtCommit(target.participation(), target.commitHash(), filename);
+            }
+            Repository repository = repositoryParticipationService.getRepositoryFromGitService(true, target.participation());
             return repositoryService.getFileFromRepository(filename, repository);
         });
     }

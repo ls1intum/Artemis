@@ -67,8 +67,8 @@ test.describe('Programming exercise staff repository access token', { tag: '@fas
         // token automatically, exactly like the dedicated repository view does.
         await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}`);
 
-        // Scope to the template repository row (stable detail id) instead of relying on the order of code buttons on the page.
-        const templateCodeButton = page.locator('[id="detail-value-artemisApp.programmingExercise.templateRepositoryUri"]').getByTestId('code-button');
+        // Scope to the template repository panel instead of relying on the order of code buttons on the page.
+        const templateCodeButton = page.getByTestId('template-build-panel').getByTestId('code-button');
         await programmingExerciseOverview.openCloneMenu(GitCloneMethod.httpsWithToken, templateCodeButton);
         const cloneUrl = await programmingExerciseOverview.copyCloneUrl(GitCloneMethod.httpsWithToken, templateCodeButton);
 

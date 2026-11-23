@@ -295,16 +295,49 @@ describe('E2E selector against real commit diffs', () => {
         assertPartition(result, directory);
         assert.ok(paths(result).includes('e2e/exercise/ExerciseImport.spec.ts'));
     });
+    const nonRuntimeFiles = [
+        'eslint.config.mjs',
+        'config/stylelint/stylelint.config.json',
+        'config/stylelint/stylelint.config.js',
+        'packages/tum-aet-ui/src/lib/multi-select/tumaet-ui-multi-select.component.stories.ts',
+    ];
+    for (const file of nonRuntimeFiles) {
+        it(`retains the exact module and cross-module selection with ${file}`, () => {
+            const { directory, commit, select } = repository();
+            put(directory, 'src/main/webapp/app/quiz/manage/quiz.component.ts');
+            commit();
+            const expected = select();
+            assertPartition(expected, directory);
+            assert.ok(paths(expected).includes('e2e/exam/ExamQuizQuestionTypes.spec.ts'));
+
+            put(directory, file);
+            commit();
+            assert.deepEqual(select(), expected);
+        });
+    }
+    it('selects only the authentication and health smoke tests for lint config and library story changes', () => {
+        const { directory, commit, select } = repository();
+        for (const file of nonRuntimeFiles) put(directory, file);
+        commit();
+        const result = select();
+        assertPartition(result, directory);
+        assert.deepEqual(paths(result), [...mapping.alwaysRunTests].sort());
+    });
     for (const file of [
         'src/main/java/de/tum/cit/aet/artemis/newmodule/Endpoint.java',
         'src/main/webapp/app/shared/table.ts',
         'src/main/webapp/app/core/bootstrap.ts',
+        'src/main/webapp/app/openapi/schema.ts',
         'src/main/java/de/tum/cit/aet/artemis/core/service/distributed/Provider.java',
         'src/main/java/de/tum/cit/aet/artemis/account/AccountService.java',
         'src/main/java/de/tum/cit/aet/artemis/quiz/security/QuizSecurity.java',
         'src/main/java/de/tum/cit/aet/artemis/quiz/config/QuizConfiguration.java',
         'src/main/java/de/tum/cit/aet/artemis/localci/service/BuildQueue.java',
         'src/main/resources/config/application.yml',
+        'config/stylelint/unknown.config.js',
+        'packages/tum-aet-ui/.storybook/main.ts',
+        'packages/tum-aet-ui/src/lib/multi-select/tumaet-ui-multi-select.component.ts',
+        'pnpm-lock.yaml',
         'src/test/playwright/support/fixture.ts',
         'src/test/playwright/fixtures/quiz.json',
         'src/test/playwright/e2e/shared/helpers.ts',
@@ -629,22 +662,47 @@ describe('workflow selection and required report contract', () => {
         assert.equal(result.scope, 'Full suite');
         assert.equal(result.phase2_intentionally_skipped, 'false');
     });
-    it('passes the completed non-PR full-suite path used by develop, merge groups, and manual builds', () => {
+    const completedFullSuite = {
+        IS_PR: 'false',
+        DETERMINE_JOB: 'skipped',
+        RELEVANT_JOB: 'skipped',
+        RELEVANT_RESULT: '',
+        RELEVANT_CLASS: '',
+        RELEVANT_INFRA: '',
+        ALL_NON_PR_JOB: 'success',
+        ALL_NON_PR_RESULT: 'success',
+        ALL_NON_PR_CLASS: 'clean',
+        ALL_NON_PR_INFRA: 'false',
+    };
+    for (const developPush of ['true', 'false']) {
+        it(`passes the completed non-PR full-suite path with DEVELOP_PUSH=${developPush}`, () => {
+            const result = gate({ ...completedFullSuite, DEVELOP_PUSH: developPush, DEVELOP_TIP_JOB: 'success', DEVELOP_TIP_CURRENT: 'true' });
+            assert.equal(result.conclusion, 'success');
+            assert.equal(result.scope, 'Full suite');
+        });
+    }
+    it('reports a proven superseded develop suite as skipped coverage', () => {
         const result = gate({
             IS_PR: 'false',
             DETERMINE_JOB: 'skipped',
-            RELEVANT_JOB: 'skipped',
-            RELEVANT_RESULT: '',
-            RELEVANT_CLASS: '',
-            RELEVANT_INFRA: '',
-            ALL_NON_PR_JOB: 'success',
-            ALL_NON_PR_RESULT: 'success',
-            ALL_NON_PR_CLASS: 'clean',
-            ALL_NON_PR_INFRA: 'false',
+            DEVELOP_PUSH: 'true',
+            DEVELOP_TIP_JOB: 'success',
+            DEVELOP_TIP_CURRENT: 'false',
         });
-        assert.equal(result.conclusion, 'success');
-        assert.equal(result.scope, 'Full suite');
+        assert.equal(result.status, 'superseded');
+        assert.equal(result.conclusion, 'skipped');
     });
+    for (const tip of [
+        { DEVELOP_TIP_JOB: 'success', DEVELOP_TIP_CURRENT: '' },
+        { DEVELOP_TIP_JOB: 'failure', DEVELOP_TIP_CURRENT: 'false' },
+        { DEVELOP_TIP_JOB: 'skipped', DEVELOP_TIP_CURRENT: '' },
+    ]) {
+        it(`blocks a develop run without verified tip evidence: ${JSON.stringify(tip)}`, () => {
+            const result = gate({ ...completedFullSuite, DEVELOP_PUSH: 'true', ...tip });
+            assert.equal(result.conclusion, 'failure');
+            assert.equal(result.status, 'error');
+        });
+    }
     it('preserves the blocking Phase 1 verdict when full-mode Phase 2 fails fast', () => {
         const result = gate({ RUN_FULL_SUITE: 'true', RELEVANT_RESULT: 'failure', RELEVANT_CLASS: 'real' });
         assert.equal(result.conclusion, 'failure');

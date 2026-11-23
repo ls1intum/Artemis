@@ -2,6 +2,7 @@
 id: distributed-data
 title: Distributed Data with Redis or Valkey
 sidebar_label: Distributed Data with Redis or Valkey
+last_reviewed: 2026-11-12
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -18,7 +19,7 @@ and follows the same procedure. Redis and Valkey persist queues, maps, sets, and
 restart. Hazelcast does not retain this data after its cluster stops and therefore needs no persistent-data migration.
 
 Artemis assigns a schema version to its Redis or Valkey data. Stored structures use versioned keys such as
-`artemis:v1:{buildJobQueue}`. The metadata keys are deliberately readable without an Artemis-specific codec:
+`artemis:v2:{buildJobQueue}`. The metadata keys are deliberately readable without an Artemis-specific codec:
 
 ```text
 artemis:distributed-data-schema
@@ -80,6 +81,27 @@ Do not mix this permit protocol with an earlier release that used one result-pro
 processes before starting replacements, including any core that can process results or delete exercises. Keep admission
 closed during the transition. Neither the retained result queues nor the distributed-data schema needs to be cleared.
 
+### Schema `1` to `2`
+
+Schema `2` stores the class of every test in the build result. Both result queues hold build results in the old layout, which
+the new release cannot read, so the migration **discards** them: `buildResultQueue` and `deferredBuildResultQueue`.
+A finished build whose result had not yet been written to the database at the moment of the upgrade loses its feedback,
+and the student needs a new build (a new push, or a retrigger by the instructor). To avoid this, first stop new builds from starting
+(**Pause All Agents** in the build agent administration), then wait until the running builds (`processingJobs`) have finished and both result queues are empty,
+and only then stop the old nodes. A build that is still running can add a result to a queue after you checked it. Builds that are queued stay queued
+and run after the upgrade. A build that was still running on a node you stopped is not continued: it is marked as missing and rebuilt automatically, which takes about
+five to ten minutes with the default `artemis.continuous-integration.retry-missing-jobs-interval-seconds`. The structures whose types did not change move over unchanged:
+
+| Structure | Why it is preserved |
+|---|---|
+| `buildJobQueue` | Contains queued student builds. |
+| `processingJobs` | Tracks builds that are already assigned to an agent. |
+| `features` | Contains runtime feature-toggle changes made by an administrator. |
+| `pyris-job-map-v2` | Tracks in-flight Iris jobs and their remaining expiry time. |
+
+Everything else starts empty, as in the first migration. A store that has never been migrated goes through `0` and `1` and
+ends at `2` in the same startup.
+
 Other distributed structures start empty in the initial schema `0` to `1` migration. They contain reconstructible or transient state such as
 build-agent registrations, websocket presence, caches, and topic messages. A user whose short-lived operation was in
 progress, for example an LTI launch, may need to retry it after the maintenance window.
@@ -104,7 +126,7 @@ Read the metadata with `redis-cli` or the equivalent `valkey-cli` commands:
 ```bash
 redis-cli GET artemis:distributed-data-schema
 redis-cli GET artemis:distributed-data-schema:release
-redis-cli --scan --pattern 'artemis:v1:*'
+redis-cli --scan --pattern 'artemis:v2:*'
 ```
 
 The first command must report the schema expected by the release. The second reports the Artemis release that last
@@ -125,6 +147,50 @@ bypassing this protection.
 
 Stop all new nodes before restoring the backup. Never let old and new Artemis releases use the restored store at the
 same time.
+
+## Types that Artemis reads from the store
+
+Both distributed data providers, Hazelcast and Redis or Valkey, only create objects of known types when they read a
+stored value. A class name found in the store that is not on the list is refused before the class is loaded, and the
+read fails with the message `Type <name> is not allowed in the distributed data store`. Hazelcast reports its own
+message, `Resolving class <name> is not allowed`. Artemis logs the refused name on the Redis or Valkey provider.
+
+The filter only restricts what is read. It does not change how values are written, the stored format or the schema
+version, so the migration described on this page is not affected. A mixed-version rollout needs one precaution: the result
+of a failed build job carries the exception of the failure with its causes, and an updated build agent replaces causes of
+types outside the list (for example a Git client exception of a failed clone) by plain exceptions before it publishes them.
+A build agent that is not updated yet still publishes the original types, and an updated core node refuses to read them.
+Update the build agents before or together with the core nodes. If an old agent can still publish results, or such a result
+is already queued, wait until the result queues are empty, or add the missing prefix, for example `org.eclipse.jgit.`, to
+`artemis.distributed-data.additional-allowed-types` until all agents are updated.
+
+The default list contains:
+
+| Entries                                                                                  | Reason                                                       |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `de.tum.cit.aet.artemis.` (everything below this prefix)                                 | Queue items, DTO records, enums and cache values of Artemis  |
+| `java.util.`, `java.time.`, `java.math.`                                                 | Collections, dates and numbers inside those records          |
+| A fixed set of `java.lang` classes, for example `String`, the number types and `Throwable` | Values and exceptions held by stored records                 |
+| `org.springframework.security.web.webauthn.api.`                                         | Passkey registration options                                 |
+| `org.springframework.security.oauth2.core.`                                              | Pending OpenID Connect sign-in requests                      |
+| `com.nimbusds.jose.`                                                                     | Signing keys of the LTI key set                              |
+| `com.github.dockerjava.api.exception.`                                                   | Exceptions of failed build jobs                              |
+| Two Spring cache markers, `NullValue` and `SimpleKey`                                    | A cached `null` and a composite cache key                    |
+| `com.hazelcast.`, `io.github.bucket4j.` (Hazelcast only)                                 | Classes that Hazelcast and the rate limiter store themselves |
+
+Types outside the default list, such as those in `java.net` or most of `java.io`, are refused. Most
+installations need no change. If a plugin or a locally patched Artemis stores additional types, add them with the
+property `artemis.distributed-data.additional-allowed-types`. It takes a comma separated list. An entry that ends with
+a dot allows every type below that prefix, any other entry allows exactly one class:
+
+```yaml
+artemis:
+    distributed-data:
+        additional-allowed-types: org.example.extension., org.example.other.StoredValue
+```
+
+Set the property identically on all core nodes and build agents, because every node reads values that another node
+wrote. A change takes effect when the node restarts.
 
 ## Legacy keys after the first migration
 

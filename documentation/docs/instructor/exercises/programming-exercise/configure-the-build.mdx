@@ -2,6 +2,7 @@
 id: configure-the-build
 title: Configure the Build
 sidebar_label: Configure the Build
+last_reviewed: 2026-11-09
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -20,7 +21,9 @@ Each section below says whether it needs [Integrated Code Lifecycle](/instructor
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
 Instructors can configure the build phases.
-A new exercise starts with a default build plan for its programming language. To adapt it, open the exercise's detail page and click **Edit build plan**. All changes apply to all builds (template, solution, and student submissions).
+A new exercise starts with a default build plan for its programming language. To adapt it, select the exercise title
+in course management, scroll to **Repositories and builds**, and choose **Edit build plan** beside that heading.
+All changes apply to all builds (template, solution, and student submissions).
 The build plan editor shows the template and solution build status next to the configuration, so you can immediately see whether your changes still build. You can also view the configured build plan on the exercise's detail page.
 
 <Image src={buildPlanPhases} alt="Build phases with their scripts and result paths" size={ImageSize.large} caption="The build phases" />
@@ -58,7 +61,8 @@ Controlling when tests *run* (via build-phase inclusion conditions) is separate 
 - **Importing a programming exercise in exam mode**: Tests are automatically set to only show after the release date of results. However, the build plan is imported as-is. This prevents situations where, for example, a build plan with only a single phase is unintentionally set to run `After due date`.
 
 You can also use a custom Docker image. Make sure to:
-- Publish the image in a publicly available repository (e.g., DockerHub)
+- Publish the image in a registry that the build agents can pull from. A public repository (e.g., DockerHub) works without further setup; for a private registry, ask your administrators to log the build agents in, see [Images from a private registry](/admin/production-setup/localci-build-environment#images-from-a-private-registry)
+- Use a versioned tag and change it when you update the image. A build agent only pulls an image that it does not have yet, so it does not notice that a tag such as `latest` now points to a new image
 - Build for both amd64 and arm64 architectures
 - Keep the image size small (build agents download before execution)
 - Include all build dependencies to avoid downloading in every build
@@ -73,11 +77,13 @@ You can also use a custom Docker image. Make sure to:
 
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
-Preconfigured checkout paths usually don't need changes.
+Preconfigured checkout paths usually don't need changes. They depend on the programming language and project type.
+For a saved exercise, the **Checkout directories** lists in the **Template** and **Solution** panels under
+**Repositories and builds** show where the repositories are placed during each build.
 
-Checkout paths depend on the programming language and project type:
-
-To change checkout paths, click **edit repositories checkout path**:
+To customize these paths while creating an exercise, use advanced mode and enter a valid **Short Name** in
+**General** to show the repository **Preview**. Choose **Edit repositories checkout path** below the preview.
+This control is available during creation, rather than on the saved exercise's details or edit form.
 
 Update the build plan accordingly (see the [Adapt Build Phases](#adapt-build-phases-optional) section).
 
@@ -97,7 +103,8 @@ Update the build plan accordingly (see the [Adapt Build Phases](#adapt-build-pha
 
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
-You edit this on the dedicated build plan editor page, which you open with the **Edit build plan** button on the exercise detail page (see [Adapt Build Phases](#adapt-build-phases-optional)).
+You edit this on the dedicated build plan editor page, which you open with **Edit build plan** beside
+**Repositories and builds** on the exercise detail page (see [Adapt Build Phases](#adapt-build-phases-optional)).
 
 The default maximum build duration (120 seconds) usually doesn't need changes.
 
@@ -109,7 +116,8 @@ Use the slider to adjust the time limit for build plan execution:
 
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
-You edit this on the dedicated build plan editor page, which you open with the **Edit build plan** button on the exercise detail page (see [Adapt Build Phases](#adapt-build-phases-optional)).
+You edit this on the dedicated build plan editor page, which you open with **Edit build plan** beside
+**Repositories and builds** on the exercise detail page (see [Adapt Build Phases](#adapt-build-phases-optional)).
 
 In most cases, the default container configuration does not need to be changed.
 
@@ -204,7 +212,7 @@ The same pattern applies to any language: put the run command into `tasks.json`,
 
 If static code analysis was activated, the **Test** repository contains configuration files.
 
-For Java exercises, the *staticCodeAnalysisConfig* folder contains configuration files for each tool.
+For Java and Kotlin exercises, the *staticCodeAnalysisConfig* folder contains configuration files for each tool.
 Artemis generates default configurations with predefined rules. Instructors can freely customize these files.
 
 On exercise import, configurations are copied from the imported exercise.
@@ -281,6 +289,21 @@ On exercise import, configurations are copied from the imported exercise.
       <td>Dart</td>
       <td><a href="https://dart.dev/tools/analysis">dart analyze</a></td>
       <td>analysis_options.yaml</td>
+    </tr>
+    <tr>
+      <td>Kotlin</td>
+      <td><a href="https://detekt.dev/">detekt</a></td>
+      <td>detekt-student.yml</td>
+    </tr>
+    <tr>
+      <td>Go</td>
+      <td><a href="https://golangci-lint.run/">golangci-lint</a></td>
+      <td>.golangci.yml</td>
+    </tr>
+    <tr>
+      <td>C#</td>
+      <td><a href="https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview">.NET compiler analyzers (Roslyn)</a></td>
+      <td>(via the build phase)</td>
     </tr>
   </tbody>
 </table>

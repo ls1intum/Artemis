@@ -26,6 +26,9 @@
     <!-- Add the custom filter -->
     <turboFilter class="de.tum.cit.aet.artemis.core.config.StompErrorLogFilter" />
 
+    <!-- Errors that a STOMP client causes itself (frames after the end of its session, duplicate subscriptions) are warnings, not errors of the server. -->
+    <turboFilter class="de.tum.cit.aet.artemis.core.config.StompClientErrorLogFilter" />
+
     <!-- Mail services report template failures safely; Thymeleaf's duplicate includes the original recipient-bearing cause. -->
     <turboFilter class="de.tum.cit.aet.artemis.core.config.MailTemplateErrorLogFilter" />
 

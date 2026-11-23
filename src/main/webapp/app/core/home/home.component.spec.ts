@@ -4,13 +4,14 @@ import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { HomeComponent } from './home.component';
 import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
-import { WebauthnApiService } from 'app/account/user/settings/passkey-settings/webauthn-api.service';
+import { WebauthnService } from 'app/account/user/settings/credentials/passkey-settings/webauthn.service';
+import { WebauthnApiService } from 'app/account/user/settings/credentials/passkey-settings/webauthn-api.service';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -26,6 +27,7 @@ import { RouterLink } from '@angular/router';
 import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 describe('HomeComponent', () => {
+    const originalPublicKeyCredential = Object.getOwnPropertyDescriptor(window, 'PublicKeyCredential');
     let component: HomeComponent;
     let fixture: ComponentFixture<HomeComponent>;
     let loginService: LoginService;
@@ -93,10 +95,38 @@ describe('HomeComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        // Several specs replace the global; an assignment is not undone by restoring the mocks.
+        if (originalPublicKeyCredential) {
+            Object.defineProperty(window, 'PublicKeyCredential', originalPublicKeyCredential);
+        } else {
+            delete (window as any).PublicKeyCredential;
+        }
     });
 
     it('should create the component', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('should show the form again when the session ends after the page was created while signed in', async () => {
+        const accountService = TestBed.inject(AccountService);
+        const wrapper = (fixture.nativeElement as HTMLElement).firstElementChild as HTMLElement;
+        const prefillSpy = vi.spyOn(component as any, 'prefillPasskeysIfPossible').mockResolvedValue(undefined);
+        accountService.userIdentity.set({ id: 99, login: 'admin' } as User);
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(component.account()).toBeDefined();
+        expect(component.loading()).toBe(true);
+        expect(wrapper.hidden).toBe(true);
+        expect(prefillSpy).not.toHaveBeenCalled();
+
+        accountService.userIdentity.set(undefined);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.account()).toBeUndefined();
+        expect(component.loading()).toBe(false);
+        expect(wrapper.hidden).toBe(false);
+        expect(prefillSpy).toHaveBeenCalledOnce();
     });
 
     it('should initialize with profile info and prefilled username', () => {
@@ -488,6 +518,38 @@ describe('HomeComponent', () => {
             expect(startSpy).toHaveBeenCalledWith(expect.any(Function), expect.any(Function));
         });
 
+        it('should not start conditional mediation when the user signed in during the capability check', async () => {
+            component.isPasskeyEnabled.set(true);
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
+            let resolveAvailability!: (available: boolean) => void;
+            const isConditionalMediationAvailable = vi.fn().mockReturnValue(new Promise<boolean>((resolve) => (resolveAvailability = resolve)));
+            (window as any).PublicKeyCredential = { isConditionalMediationAvailable };
+
+            const pending = component.prefillPasskeysIfPossible();
+            expect(isConditionalMediationAvailable).toHaveBeenCalledOnce();
+            TestBed.inject(AccountService).userIdentity.set({ id: 99, login: 'admin' } as User);
+            resolveAvailability(true);
+            await pending;
+
+            expect(startSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not start conditional mediation when the page was destroyed during the capability check', async () => {
+            component.isPasskeyEnabled.set(true);
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
+            let resolveAvailability!: (available: boolean) => void;
+            const isConditionalMediationAvailable = vi.fn().mockReturnValue(new Promise<boolean>((resolve) => (resolveAvailability = resolve)));
+            (window as any).PublicKeyCredential = { isConditionalMediationAvailable };
+
+            const pending = component.prefillPasskeysIfPossible();
+            expect(isConditionalMediationAvailable).toHaveBeenCalledOnce();
+            fixture.destroy();
+            resolveAvailability(true);
+            await pending;
+
+            expect(startSpy).not.toHaveBeenCalled();
+        });
+
         it('should not call startConditionalMediation if passkey is disabled', async () => {
             component.isPasskeyEnabled.set(false);
             const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
@@ -516,6 +578,54 @@ describe('HomeComponent', () => {
 
             await expect(component.prefillPasskeysIfPossible()).resolves.not.toThrow();
         });
+
+        describe('refocus of the username field', () => {
+            /** Starts the conditional mediation and returns the callback that the browser-side flow calls once it is active. */
+            async function startMediationAndGetRefocus(): Promise<() => void> {
+                component.isPasskeyEnabled.set(true);
+                const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
+                (window as any).PublicKeyCredential = {
+                    isConditionalMediationAvailable: vi.fn().mockResolvedValue(true),
+                };
+                await component.prefillPasskeysIfPossible();
+                return startSpy.mock.calls[0][1] as () => void;
+            }
+
+            beforeEach(() => {
+                vi.useFakeTimers();
+            });
+
+            afterEach(() => {
+                vi.useRealTimers();
+            });
+
+            it('should focus the username field again while it is focused and empty', async () => {
+                const refocus = await startMediationAndGetRefocus();
+                const input: HTMLInputElement = component.usernameInput()!.nativeElement;
+                component.username = '';
+                input.focus();
+                const blurSpy = vi.spyOn(input, 'blur');
+                const focusSpy = vi.spyOn(input, 'focus');
+
+                refocus();
+                vi.runAllTimers();
+
+                expect(blurSpy).toHaveBeenCalledOnce();
+                expect(focusSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should do nothing without an error once the username field is gone', async () => {
+                const refocus = await startMediationAndGetRefocus();
+                // the user continued to the next stage, which replaces the field of the first one
+                component.currentStage.set(2);
+                fixture.detectChanges();
+                expect(component.usernameInput()).toBeUndefined();
+
+                refocus();
+
+                expect(() => vi.runAllTimers()).not.toThrow();
+            });
+        });
     });
 
     it('should set authenticationError and display alert if loginError=deactivated query param is present', () => {
@@ -534,6 +644,22 @@ describe('HomeComponent', () => {
         expect(customComponent.authenticationError()).toBe(true);
         // Verify the correct error message is shown
         expect(alertSpy).toHaveBeenCalledWith('home.errors.loginDeactivated');
+
+        customFixture.destroy();
+    });
+
+    it('should show the internal account message if loginError=internalAccount query param is present', () => {
+        const route = TestBed.inject(ActivatedRoute);
+        route.queryParams = of({ loginError: 'internalAccount' });
+
+        const alertService = TestBed.inject(AlertService) as any;
+        const alertSpy = vi.spyOn(alertService, 'error');
+
+        const customFixture = TestBed.createComponent(HomeComponent);
+        customFixture.detectChanges();
+
+        expect(customFixture.componentInstance.authenticationError()).toBe(true);
+        expect(alertSpy).toHaveBeenCalledWith('home.errors.internalAccount');
 
         customFixture.destroy();
     });

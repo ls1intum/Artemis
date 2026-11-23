@@ -18,6 +18,7 @@ import java.util.Optional;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.videosource.service.TumLivePlaylistLookup;
 import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
+@ResourceLock("FilePathConverter")
 class PyrisWebhookServiceResolveVideoUrlTest {
 
     private final YouTubeUrlService youTubeUrlService = new YouTubeUrlService();

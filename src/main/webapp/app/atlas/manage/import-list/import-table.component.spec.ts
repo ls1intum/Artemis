@@ -1,5 +1,7 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Observable, Subject, of } from 'rxjs';
@@ -10,7 +12,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { ImportTableComponent } from 'app/atlas/manage/import-list/import-table.component';
 import { Column } from 'app/shared-ui/import/import.component';
-import { PaginatorState } from 'primeng/paginator';
 
 describe('ImportTableComponent', () => {
     let component: ImportTableComponent<Course>;
@@ -113,6 +114,22 @@ describe('ImportTableComponent', () => {
         });
     });
 
+    it('should show the empty state only when there are no results and nothing is loading', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).toBeNull();
+
+        searchSpy.mockReturnValue(of({ ...searchResult, resultsOnPage: [] }));
+        const searchField = fixture.debugElement.nativeElement.querySelector('#import-objects-search');
+        searchField.value = 'no such object';
+        searchField.dispatchEvent(new Event('input'));
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).not.toBeNull();
+    });
+
     it('should set isLoading correctly on data load', async () => {
         const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
 
@@ -159,8 +176,8 @@ describe('ImportTableComponent', () => {
 
         expect(component.page()).toBe(1);
 
-        // PrimeNG paginator emits a 0-indexed page; page 1 (0-indexed) is the component's page 2.
-        component['onPageChange']({ page: 1 } as PaginatorState);
+        // The paginator emits a 0-indexed page; page 1 (0-indexed) is the component's page 2.
+        fixture.debugElement.query(By.directive(TumAetUiPaginatorComponent)).triggerEventHandler('pageChange', 1);
 
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();

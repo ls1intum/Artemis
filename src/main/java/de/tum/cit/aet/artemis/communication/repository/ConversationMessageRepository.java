@@ -23,9 +23,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -45,17 +47,45 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     Logger log = LoggerFactory.getLogger(ConversationMessageRepository.class);
 
     /**
+     * Persist a message and its recipients' unread counters as one unit. A reader must not see the message while
+     * its increment is still pending, or acknowledging that message can be overwritten by the late increment.
+     *
+     * @param message the new conversation message
+     * @return the persisted message
+     */
+    @Transactional // the message and its unread increments must become visible together
+    default Post saveWithUnreadMessages(Post message) {
+        Post saved = save(message);
+        incrementUnreadMessagesCountOfParticipants(saved.getConversation().getId(), saved.getAuthor().getId());
+        return saved;
+    }
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ConversationParticipant conversationParticipant
+            SET conversationParticipant.unreadMessagesCount = conversationParticipant.unreadMessagesCount + 1
+            WHERE conversationParticipant.conversation.id = :conversationId
+                AND conversationParticipant.user.id <> :senderId
+                AND conversationParticipant.unreadMessagesCount IS NOT NULL
+                AND conversationParticipant.isMuted = FALSE
+            """)
+    void incrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
+
+    /**
      * Configures the search specifications based on the provided filter criteria.
      *
-     * @param specification     The existing specification to be configured.
-     * @param postContextFilter Filtering and sorting properties for post objects.
-     * @param userId            The id of the user for which the messages should be returned.
+     * @param specification                The existing specification to be configured.
+     * @param postContextFilter            Filtering and sorting properties for post objects.
+     * @param userId                       The id of the user for which the messages should be returned.
+     * @param includeUnverifiedIrisAnswers whether the requester may read pending Iris replies
      * @return A Specification object configured with search criteria.
      */
-    private Specification<Post> configureSearchSpecification(Specification<Post> specification, PostContextFilterDTO postContextFilter, long userId) {
+    private Specification<Post> configureSearchSpecification(Specification<Post> specification, PostContextFilterDTO postContextFilter, long userId,
+            boolean includeUnverifiedIrisAnswers) {
         return specification
         // @formatter:off
-            .and(getSearchTextAndAuthorSpecification(postContextFilter.searchText(), postContextFilter.authorIds()))
+            .and(getSearchTextAndAuthorSpecification(postContextFilter.searchText(), postContextFilter.authorIds(), includeUnverifiedIrisAnswers))
             .and(getCourseWideChannelsSpecification(Boolean.TRUE.equals(postContextFilter.filterToCourseWide()), postContextFilter.courseId()))
             .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))
             .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
@@ -68,14 +98,15 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     /**
      * Generates SQL Query via specifications to find and sort Messages
      *
-     * @param postContextFilter filtering and sorting properties for post objects
-     * @param pageable          paging object which contains the page number and number of records to fetch
-     * @param userId            the id of the user for which the messages should be returned
+     * @param postContextFilter            filtering and sorting properties for post objects
+     * @param pageable                     paging object which contains the page number and number of records to fetch
+     * @param userId                       the id of the user for which the messages should be returned
+     * @param includeUnverifiedIrisAnswers whether the requester may read pending Iris replies
      * @return returns a Page of Messages
      */
-    default Page<Post> findMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId) {
+    default Page<Post> findMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId, boolean includeUnverifiedIrisAnswers) {
         var specification = getConversationsSpecification(postContextFilter.conversationIds());
-        specification = configureSearchSpecification(specification, postContextFilter, userId);
+        specification = configureSearchSpecification(specification, postContextFilter, userId, includeUnverifiedIrisAnswers);
         // Fetch all necessary attributes to avoid lazy loading (even though relations are defined as EAGER in the domain class, specification queries do not respect this)
         return findPostsWithSpecification(pageable, specification);
     }

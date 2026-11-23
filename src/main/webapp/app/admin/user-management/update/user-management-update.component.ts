@@ -145,6 +145,7 @@ export class UserManagementUpdateComponent implements OnInit {
     readonly persistedLogin = signal<string | undefined>(undefined);
 
     /** Whether Jenkins profile is active */
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): remove isJenkins and the login-change warning that uses it
     private isJenkins = false;
 
     /**

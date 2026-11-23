@@ -1,23 +1,27 @@
 <div class="search-block" [class.active]="isSearchActive()">
-    <div class="input-group page-top-bar shell-divider-b rounded-3 px-2 me-2 module-bg">
+    <div class="search-bar page-top-bar shell-divider-b bg-(--module-bg) me-2 flex w-full flex-wrap items-stretch rounded-lg px-2">
         @if (isSidebarCollapsed()) {
-            <div class="d-none d-sm-flex align-items-center me-2">
+            <div class="me-2 hidden items-center min-[576px]:flex">
                 <jhi-course-sidebar-toggle-button [isCollapsed]="true" [isCommunicationModule]="true" (toggleSidebar)="toggleSidebar.emit()" />
             </div>
         }
         <!-- search bar with selected channel -->
-        <div class="tag-input-container form-control">
+        <div class="tag-input-container">
             @for (conversation of selectedConversations(); track conversation) {
-                <span class="badge bg-primary me-1">
-                    <span class="me-1">{{ CONVERSATION_FILTER.value }}#{{ getConversationName(conversation) }}</span>
-                    <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChannel(conversation)"></button>
-                </span>
+                <tumaet-ui-tag class="me-1!" severity="info" size="sm" rounded>
+                    <span>{{ CONVERSATION_FILTER.value }}#{{ getConversationName(conversation) }}</span>
+                    <button type="button" class="tag-remove" aria-label="Remove" (click)="removeSelectedChannel(conversation)">
+                        <fa-icon [icon]="faTimes" />
+                    </button>
+                </tumaet-ui-tag>
             }
             @for (author of selectedAuthors(); track author) {
-                <span class="badge bg-secondary me-1">
-                    <span class="me-1">{{ USER_FILTER.value }}&#64;{{ author.name }}</span>
-                    <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedAuthor(author)"></button>
-                </span>
+                <tumaet-ui-tag class="me-1!" severity="secondary" size="sm" rounded>
+                    <span>{{ USER_FILTER.value }}&#64;{{ author.name }}</span>
+                    <button type="button" class="tag-remove" aria-label="Remove" (click)="removeSelectedAuthor(author)">
+                        <fa-icon [icon]="faTimes" />
+                    </button>
+                </tumaet-ui-tag>
             }
             <input
                 [attr.aria-label]="
@@ -49,44 +53,46 @@
             />
 
             @if (fullSearchTerm || selectedConversations().length > 0 || selectedAuthors().length > 0) {
-                <button type="button" class="btn-close ms-1" aria-label="Clear search" (click)="clearSearch()"></button>
+                <button type="button" class="tag-remove ms-1" aria-label="Clear search" (click)="clearSearch()">
+                    <fa-icon [icon]="faTimes" />
+                </button>
             } @else {
-                <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.communication.globalSearch.toolTip' | artemisTranslate" class="text-secondary" />
+                <fa-icon [icon]="faQuestionCircle" [tumAetUiTooltip]="'artemisApp.communication.globalSearch.toolTip' | artemisTranslate" class="text-muted-color" />
             }
         </div>
         <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onTriggerSearch()" />
 
         @if (isSearchActive()) {
-            <div class="filter-suggestions">
+            <div #suggestions class="filter-suggestions">
                 @if (showDropdown()) {
                     <!-- Suggestions dropdown -->
-                    <ul class="list-group suggestions-dropdown">
+                    <ul class="suggestion-list suggestions-dropdown">
                         @if (filteredOptions().length === 0) {
-                            <li class="list-group-item">
+                            <li class="suggestion-item">
                                 @if (searchMode() === SearchMode.CONVERSATION) {
                                     <span
-                                        class="text-muted"
+                                        class="text-muted-color"
                                         jhiTranslate="artemisApp.communication.globalSearch.noConversationFound"
                                         [translateValues]="{ search: searchTermWithoutPrefix() }"
                                     ></span>
                                 } @else if (searchMode() === SearchMode.USER) {
                                     @if (userSearchStatus() === UserSearchStatus.RESULTS) {
                                         <span
-                                            class="text-muted"
+                                            class="text-muted-color"
                                             jhiTranslate="artemisApp.communication.globalSearch.noUserFound"
                                             [translateValues]="{ search: searchTermWithoutPrefix() }"
                                         ></span>
                                     } @else if (userSearchStatus() === UserSearchStatus.LOADING) {
                                         <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
                                     } @else if (userSearchStatus() === UserSearchStatus.TOO_SHORT) {
-                                        <span class="text-muted" jhiTranslate="artemisApp.communication.globalSearch.userQueryTooShort"></span>
+                                        <span class="text-muted-color" jhiTranslate="artemisApp.communication.globalSearch.userQueryTooShort"></span>
                                     }
                                 }
                             </li>
                         } @else {
                             @for (option of filteredOptions(); let i = $index; track option) {
                                 <li
-                                    class="list-group-item dropdown-option"
+                                    class="suggestion-item suggestion-option"
                                     [class.active]="i === activeDropdownIndex()"
                                     (mousedown)="selectOption(option)"
                                     (mouseover)="setActiveDropdownIndex(i)"
@@ -96,7 +102,7 @@
                                         <span class="me-2">#</span>
                                         {{ option.name }}
                                     } @else if (option.type === 'user') {
-                                        <div class="d-flex align-items-center">
+                                        <div class="flex items-center">
                                             <jhi-profile-picture
                                                 [imageSizeInRem]="'1.1'"
                                                 [fontSizeInRem]="'0.5'"
@@ -118,9 +124,9 @@
                     </ul>
                 } @else {
                     <!-- Show available filters only if no dropdown and no text -->
-                    <ul class="list-group">
+                    <ul class="suggestion-list">
                         <li
-                            class="list-group-item dropdown-option"
+                            class="suggestion-item suggestion-option"
                             [class.active]="0 === activeDropdownIndex()"
                             (mousedown)="onPreselectFilter(USER_FILTER)"
                             (mouseover)="setActiveDropdownIndex(0)"
@@ -130,7 +136,7 @@
                             <span class="me-2" jhiTranslate="artemisApp.communication.globalSearch.filterUserPreselection"></span>
                         </li>
                         <li
-                            class="list-group-item dropdown-option"
+                            class="suggestion-item suggestion-option"
                             [class.active]="1 === activeDropdownIndex()"
                             (mousedown)="onPreselectFilter(CONVERSATION_FILTER)"
                             (mouseover)="setActiveDropdownIndex(1)"

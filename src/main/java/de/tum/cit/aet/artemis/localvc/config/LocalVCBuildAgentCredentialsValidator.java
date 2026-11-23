@@ -35,6 +35,7 @@ import org.springframework.util.StringUtils;
  *
  * @see de.tum.cit.aet.artemis.core.config.BuildAgentGitPasswordValidator
  */
+// REMOVE_IN_ARTEMIS_11 (Jenkins): the shared build agent username/password option is Jenkins-only, remove it with Jenkins support
 @Component
 @Profile(PROFILE_LOCALVC)
 @Lazy(false)

@@ -5,16 +5,15 @@ import { faBars, faFlag, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
-import { MenuModule } from 'primeng/menu';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
-import { MenuItem } from 'primeng/api';
 
 @Component({
     selector: 'jhi-landing-navbar',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, ArtemisTranslatePipe, ThemeSwitchComponent, MenuModule],
+    imports: [FaIconComponent, ArtemisTranslatePipe, ThemeSwitchComponent, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, FindLanguageFromKeyPipe],
     styles: `
         :host {
             display: block;
@@ -84,8 +83,10 @@ import { MenuItem } from 'primeng/api';
             align-items: center;
         }
 
-        .lang-dropdown .nav-link {
+        .lang-toggle {
             color: var(--navbar-dark-color);
+            background: none;
+            border: 0;
             padding: 0;
             display: flex;
             align-items: center;
@@ -93,7 +94,7 @@ import { MenuItem } from 'primeng/api';
             cursor: pointer;
         }
 
-        .lang-dropdown .nav-link:hover {
+        .lang-toggle:hover {
             color: var(--navbar-foreground);
         }
 
@@ -156,7 +157,7 @@ import { MenuItem } from 'primeng/api';
                 flex-direction: column;
                 gap: 16px;
                 padding: 16px 20px;
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                border-block-start: 1px solid color-mix(in srgb, var(--white) 10%, transparent);
             }
 
             .mobile-nav .mobile-controls {
@@ -176,11 +177,17 @@ import { MenuItem } from 'primeng/api';
             <div class="right-section">
                 <jhi-theme-switch [popoverPlacement]="'bottom-right'" />
                 <div class="lang-dropdown">
-                    <button type="button" class="nav-link" (click)="langMenu.toggle($event)">
+                    <button type="button" class="lang-toggle" [tumAetUiMenuTrigger]="langMenu">
                         <fa-icon [icon]="faFlag" />
                         <span>{{ 'global.menu.language' | artemisTranslate }}</span>
                     </button>
-                    <p-menu #langMenu [model]="languageMenuItems" [popup]="true" />
+                    <ng-template #langMenu>
+                        <tumaet-ui-menu>
+                            @for (lang of languages; track lang) {
+                                <button type="button" tumAetUiMenuItem class="text-[0.9rem]!" (triggered)="changeLanguage(lang)">{{ lang | findLanguageFromKey }}</button>
+                            }
+                        </tumaet-ui-menu>
+                    </ng-template>
                 </div>
                 <button class="login-btn" (click)="navigateToLogin()">{{ 'landing.navbar.logIn' | artemisTranslate }}</button>
                 <button
@@ -199,11 +206,19 @@ import { MenuItem } from 'primeng/api';
                 <div class="mobile-controls">
                     <jhi-theme-switch [popoverPlacement]="'bottom'" />
                     <div class="lang-dropdown">
-                        <button type="button" class="nav-link" (click)="mobileLangMenu.toggle($event)">
+                        <button type="button" class="lang-toggle" [tumAetUiMenuTrigger]="mobileLangMenu">
                             <fa-icon [icon]="faFlag" />
                             <span>{{ 'global.menu.language' | artemisTranslate }}</span>
                         </button>
-                        <p-menu #mobileLangMenu [model]="mobileLanguageMenuItems" [popup]="true" />
+                        <ng-template #mobileLangMenu>
+                            <tumaet-ui-menu>
+                                @for (lang of languages; track lang) {
+                                    <button type="button" tumAetUiMenuItem class="text-[0.9rem]!" (triggered)="changeLanguage(lang); toggleMobileMenu()">
+                                        {{ lang | findLanguageFromKey }}
+                                    </button>
+                                }
+                            </tumaet-ui-menu>
+                        </ng-template>
                     </div>
                 </div>
             </div>
@@ -218,23 +233,8 @@ export class LandingNavbarComponent {
     protected readonly faXmark = faXmark;
     protected readonly faFlag = faFlag;
 
-    private findLanguagePipe = new FindLanguageFromKeyPipe();
-
-    languages = LANGUAGES;
+    protected readonly languages = LANGUAGES;
     mobileMenuOpen = signal(false);
-
-    languageMenuItems: MenuItem[] = this.languages.map((lang) => ({
-        label: this.findLanguagePipe.transform(lang),
-        command: () => this.changeLanguage(lang),
-    }));
-
-    mobileLanguageMenuItems: MenuItem[] = this.languages.map((lang) => ({
-        label: this.findLanguagePipe.transform(lang),
-        command: () => {
-            this.changeLanguage(lang);
-            this.toggleMobileMenu();
-        },
-    }));
 
     changeLanguage(languageKey: string): void {
         this.translateService.use(languageKey);

@@ -26,8 +26,7 @@ import {
     getExerciseModeDetailSection,
     getExerciseProblemDetailSection,
 } from 'app/exercise/util/utils';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { ExerciseDetailHeaderComponent } from 'app/exercise/detail/exercise-detail-header.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 
@@ -35,8 +34,7 @@ import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestrati
     selector: 'jhi-text-exercise-detail',
     templateUrl: './text-exercise-detail.component.html',
     imports: [
-        TranslateDirective,
-        DocumentationButtonComponent,
+        ExerciseDetailHeaderComponent,
         NonProgrammingExerciseDetailCommonActionsComponent,
         ExerciseDetailStatisticsComponent,
         DetailOverviewListComponent,

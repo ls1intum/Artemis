@@ -144,15 +144,8 @@ public class ConversationMessagingService extends PostingService {
         // update last read date and unread message count of author
         conversationParticipantRepository.updateLastRead(author.getId(), conversation.getId(), ZonedDateTime.now());
 
-        var createdMessage = conversationMessageRepository.save(newMessage);
-        log.debug("      conversationMessageRepository.save DONE");
-
-        // Increment the recipients' unread counters here rather than on the @Async notification path below. The read
-        // side resets this counter to zero, and nothing orders the two, so an increment running asynchronously could
-        // land after a recipient had already read the message and leave them an unread badge for it (#13396 in spirit:
-        // the counter contradicted what the user had seen). Running it in the request also means the counter is correct
-        // by the time the websocket broadcast reaches the client.
-        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
+        // The post and its unread counters commit together, before any reader can acknowledge the post.
+        var createdMessage = conversationMessageRepository.saveWithUnreadMessages(newMessage);
         // set the conversation again, because it might have been lost during save
         createdMessage.setConversation(conversation);
         log.debug("      conversationMessageRepository.save DONE");
@@ -290,7 +283,7 @@ public class ConversationMessagingService extends PostingService {
             throw new AccessForbiddenException("Only tutors and above may filter for unverified Iris replies");
         }
 
-        Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
+        Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId(), requesterIsAtLeastTutor);
         setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);
 
         // students must never see unverified Iris replies, even if a previous fetch included them in the in-memory answers

@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCompactionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisSuggestedContextDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -235,6 +236,8 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             message.addContent(content);
         }
         message.setIntermediate(true);
+        // The steps that ran since the previous message of the run, so the chat shows them right before this message.
+        message.setToolActivity(emptyToNull(statusUpdate.messageActivities()));
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
         irisChatWebsocketService.sendMessage(session, savedMessage, PyrisRunState.RUNNING, statusUpdate.error(), sessionTitle, List.of(), job.jobId(), null, null, false);
         return recordTokenUsage(session, job, statusUpdate, null);
@@ -266,7 +269,8 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
                 message.addContent(content);
             }
             var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(result)).orElse(List.of());
-            message.setToolActivity(statusUpdate.activities());
+            // Only the steps no interim message of the run shows yet; a Pyris without per-message steps sends the whole run.
+            message.setToolActivity(emptyToNull(statusUpdate.messageActivities() != null ? statusUpdate.messageActivities() : statusUpdate.activities()));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             var updatedJob = trackedJob.withAssistantMessageId(savedMessage.getId());
             pyrisJobService.updateJob(updatedJob);
@@ -278,6 +282,11 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             pyrisJobService.updateJob(updatedJob);
             return updatedJob;
         });
+    }
+
+    @Nullable
+    private static List<PyrisActivityDTO> emptyToNull(@Nullable List<PyrisActivityDTO> activities) {
+        return activities == null || activities.isEmpty() ? null : activities;
     }
 
     private void applyNonResultSideEffects(S session, TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, String sessionTitle) {

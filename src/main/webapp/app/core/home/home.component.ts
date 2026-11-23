@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, DestroyRef, ElementRef, OnDestroy, OnInit, Renderer2, computed, inject, signal, viewChild } from '@angular/core';
+import { AfterViewChecked, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/account/user/user.model';
@@ -14,7 +14,7 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
+import { WebauthnService } from 'app/account/user/settings/credentials/passkey-settings/webauthn.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { HttpClient } from '@angular/common/http';
@@ -49,7 +49,6 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     private readonly accountService = inject(AccountService);
     private readonly loginService = inject(LoginService);
     private readonly sessionStorageService = inject(SessionStorageService);
-    private readonly renderer = inject(Renderer2);
     private readonly eventManager = inject(EventManager);
     private readonly profileService = inject(ProfileService);
     private readonly alertService = inject(AlertService);
@@ -113,6 +112,28 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         }
     };
 
+    private wasSignedIn = false;
+    private destroyed = false;
+
+    constructor() {
+        // A logout can create this page while the user is still signed in: the identity lookup then stores the account
+        // and leaves the page in its loading state, which hides the form. Show it again once the session has ended.
+        // The lookup skipped the passkey autofill for the signed-in user, so it starts here as well.
+        effect(() => {
+            const signedIn = !!this.accountService.userIdentity();
+            if (this.wasSignedIn && !signedIn) {
+                untracked(() => {
+                    this.account.set(undefined);
+                    if (this.loading()) {
+                        this.loading.set(false);
+                        void this.prefillPasskeysIfPossible();
+                    }
+                });
+            }
+            this.wasSignedIn = signedIn;
+        });
+    }
+
     ngOnInit() {
         window.addEventListener('pageshow', this.onPageShow);
         this.initializeWithProfileInfo();
@@ -138,6 +159,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.destroyed = true;
         this.webauthnService.stopConditionalMediation();
     }
 
@@ -155,7 +177,9 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             return;
         }
         const isAvailable = await PublicKeyCredential.isConditionalMediationAvailable();
-        if (isAvailable) {
+        // The page may be gone or the user signed in by now: a request started then would outlive its page, replace
+        // the request of a newer sign-in page, or run for a user who needs no sign-in.
+        if (isAvailable && !this.destroyed && !this.accountService.userIdentity()) {
             this.webauthnService.startConditionalMediation(
                 () => this.handleLoginSuccess(),
                 () => this.refocusUsernameFieldForPasskeyAutofill(),
@@ -175,7 +199,8 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     private refocusUsernameFieldForPasskeyAutofill(): void {
         // Allow one event-loop tick so the browser fully registers the conditional mediation.
         setTimeout(() => {
-            const usernameInput = this.renderer.selectRootElement('#username', true);
+            // The field is gone when the user already continued to the next stage or left the page, which is no error.
+            const usernameInput = this.usernameInput()?.nativeElement;
             if (!usernameInput) {
                 return;
             }
@@ -242,6 +267,9 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             if (params['loginError'] === 'deactivated') {
                 this.authenticationError.set(true);
                 this.alertService.error('home.errors.loginDeactivated');
+            } else if (params['loginError'] === 'internalAccount') {
+                this.authenticationError.set(true);
+                this.alertService.error('home.errors.internalAccount');
             } else if (params['loginError'] === 'oidcFailure') {
                 this.authenticationError.set(true);
                 this.alertService.error('home.errors.ssoFailure');

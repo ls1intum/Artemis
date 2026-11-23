@@ -2,6 +2,7 @@
 id: jenkins-localvc
 title: Jenkins and LocalVC Setup
 sidebar_label: Jenkins and LocalVC Setup
+last_reviewed: 2026-11-03
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -17,6 +18,13 @@ import sshCredentials from './assets/jenkins/jenkins_ssh_credentials.png';
 import jenkinsNode from './assets/jenkins/jenkins_node.png';
 import masterNode from './assets/jenkins/jenkins_master_node.png';
 import authorizationPermissions from './assets/jenkins/jenkins_authorization_permissions.png';
+
+<Callout variant={CalloutVariant.warning}>
+    **Jenkins is deprecated and will be removed in Artemis 11 (planned for March 2027).**
+    Use the [Integrated Code Lifecycle with LocalCI](/admin/production-setup/integrated-code-lifecycle-setup) for new installations,
+    and plan the migration of existing ones with the [Jenkins to LocalCI migration guide](/admin/jenkins-to-localci-migration).
+    See also [Planned removals in Artemis 11](/admin/upgrade-guide#planned-removals-in-artemis-11).
+</Callout>
 
 This section describes how to set up a programming exercise environment based on Jenkins and LocalVC, which is integrated in Artemis.
 Optional commands are in curly brackets `{}`.

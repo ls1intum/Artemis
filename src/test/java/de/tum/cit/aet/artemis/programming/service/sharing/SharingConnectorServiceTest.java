@@ -12,13 +12,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.ResponseActions;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
-import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -26,10 +24,6 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private SharingPlatformMockProvider sharingPlatformMockProvider;
-
-    @Autowired
-    @Qualifier("sharingRestTemplate")
-    private RestTemplate restTemplate;
 
     @Autowired
     private SharingConnectorService sharingConnectorService;
@@ -109,6 +103,22 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
         String fakeKey = "x1234123123sdfsdfxx";
         assertThat(sharingConnectorService.validateApiKey(fakeKey)).isFalse();
         assertThat(sharingConnectorService.validateApiKey("Bearer " + fakeKey)).isFalse();
+    }
+
+    @Test
+    void validateApiKey_withoutConfiguredKeyOrWithNearMatches_shouldReturnFalse() {
+        String configuredApiKey = sharingConnectorService.getSharingApiKey();
+        try {
+            assertThat(sharingConnectorService.validateApiKey(configuredApiKey.substring(1))).isFalse();
+            assertThat(sharingConnectorService.validateApiKey(configuredApiKey + "x")).isFalse();
+
+            sharingConnectorService.setSharingApiKey(null);
+            assertThat(sharingConnectorService.validateApiKey(configuredApiKey)).isFalse();
+            assertThat(sharingConnectorService.validateApiKey("null")).isFalse();
+        }
+        finally {
+            sharingConnectorService.setSharingApiKey(configuredApiKey);
+        }
     }
 
     @Test

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.jenkins.service.build_plan;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): Jenkins support is removed in Artemis 11, delete with the whole jenkins module
 public class JenkinsBuildPlanUtils {
 
     private static final String PIPELINE_SCRIPT_DETECTION_COMMENT = "// ARTEMIS: JenkinsPipeline";
