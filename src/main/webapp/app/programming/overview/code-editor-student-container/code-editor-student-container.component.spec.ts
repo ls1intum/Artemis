@@ -9,7 +9,7 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { BehaviorSubject, Subject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ActivatedRoute, Params } from '@angular/router';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -162,6 +162,31 @@ describe('CodeEditorStudentContainerComponent', () => {
         // the AI feedback of the shown submission still replaces its test result
         newResults.next({ id: 82, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, feedbacks: [], submission: { id: 8 } });
         expect(comp.latestResult()?.id).toBe(82);
+    });
+
+    it('should keep showing newer results after the feedback of a result could not be loaded', () => {
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(
+            of({
+                ...studentParticipation,
+                submissions: [{ id: 7, results: [{ id: 71, assessmentType: AssessmentType.AUTOMATIC, feedbacks: [] }] }],
+            } as ProgrammingExerciseStudentParticipation),
+        );
+        vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
+        const newResults = new BehaviorSubject<Result | undefined>(undefined);
+        vi.spyOn(TestBed.inject(ParticipationWebsocketService), 'subscribeForLatestResultOfParticipation').mockReturnValue(newResults);
+        vi.spyOn(TestBed.inject(ResultApi), 'getResultDetails')
+            .mockReturnValueOnce(throwError(() => new Error('lookup failed')))
+            .mockReturnValueOnce(of([{ id: 3, text: 'Use a for loop' } as FeedbackResponse]));
+
+        comp.ngOnInit();
+        // a result without feedback whose feedback cannot be loaded leaves the shown result as it is
+        newResults.next({ id: 81, assessmentType: AssessmentType.AUTOMATIC, submission: { id: 8 } });
+        expect(comp.latestResult()?.id).toBe(71);
+
+        newResults.next({ id: 91, assessmentType: AssessmentType.AUTOMATIC, submission: { id: 9 } });
+        expect(comp.participation().submissions).toEqual([expect.objectContaining({ id: 9 })]);
+        expect(comp.latestResult()?.id).toBe(91);
+        expect(comp.latestResult()?.feedbacks).toEqual([expect.objectContaining({ id: 3 })]);
     });
     describe('an earlier submission from the result history', () => {
         const commitHash = 'a'.repeat(40);

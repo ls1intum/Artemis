@@ -197,9 +197,11 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
                 switchMap((result) =>
                     result.feedbacks
                         ? of(result)
-                        : this.resultApi
-                              .getResultDetails(participationId, result.id!)
-                              .pipe(map((feedbacks) => cloneWith(result, { feedbacks: toFeedbacksOfResult(feedbacks, result) }))),
+                        : this.resultApi.getResultDetails(participationId, result.id!).pipe(
+                              map((feedbacks) => cloneWith(result, { feedbacks: toFeedbacksOfResult(feedbacks, result) })),
+                              // Skips only this result, so the editor keeps what it shows and still follows the later ones.
+                              catchError(() => EMPTY),
+                          ),
                 ),
             )
             .subscribe((result) => {
