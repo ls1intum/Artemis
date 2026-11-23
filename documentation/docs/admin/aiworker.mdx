@@ -39,9 +39,6 @@ review, especially when the host also serves core or grading workloads.
 Generated-code containers use network `none`, a read-only root filesystem, dropped
 capabilities, `no-new-privileges`, and bounded CPU, memory, processes and writable
 scratch mounts. They never receive the Docker socket or provider credentials.
-While the default sandbox image runs a JDK older than 25.0.5.1, every JVM in a sandbox
-starts with `-XX:-UseBASE64Intrinsics` (CVE-2026-114938), and its build output begins
-with `NOTE: Picked up JDK_JAVA_OPTIONS`.
 Restrict supervisor egress to approved provider, model, registry and telemetry endpoints.
 The worker does not load the core Langfuse exporter.
 Configure approved worker telemetry explicitly.

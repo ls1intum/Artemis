@@ -67,12 +67,6 @@ public class DockerSandboxService implements InteractiveSandbox, SandboxApi {
 
     private static final int MAX_IMAGE_VOLUME_COUNT = 16;
 
-    /**
-     * Temporary: the default sandbox image runs a JDK older than 25.0.5.1, so every JVM of a session keeps the Base64 intrinsics off (CVE-2026-114938), as the broker container
-     * does. Every command of the session inherits the variable. Remove it once the default sandbox image ships JDK 25.0.5.1 or newer.
-     */
-    static final String JVM_MITIGATION_ENVIRONMENT = "JDK_JAVA_OPTIONS=-XX:-UseBASE64Intrinsics";
-
     private static final Pattern INVALID_WORKER_ID_CHARS = Pattern.compile("[^a-zA-Z0-9_.-]");
 
     /** Cap on captured stdout/stderr returned to the caller; longer output is truncated to the tail (where compiler/test failures appear) to bound the agent's context. */
@@ -304,8 +298,7 @@ public class DockerSandboxService implements InteractiveSandbox, SandboxApi {
         try (final var createCommand = dockerClient.createContainerCmd(immutableImageId)) {
             // The main process only keeps the container warm; the session is driven by separate `docker exec` calls and removed explicitly at teardown.
             var response = createCommand.withName(containerName).withLabels(Map.of(settings.ownerLabel(), settings.id())).withUser("1000:1000").withWorkingDir(WORKING_DIRECTORY)
-                    .withEnv(JVM_MITIGATION_ENVIRONMENT).withHostConfig(hostConfig).withEntrypoint(List.of())
-                    .withCmd("sh", "-c", "mkdir -p " + WORKING_DIRECTORY + "; while :; do sleep 3600; done").exec();
+                    .withHostConfig(hostConfig).withEntrypoint(List.of()).withCmd("sh", "-c", "mkdir -p " + WORKING_DIRECTORY + "; while :; do sleep 3600; done").exec();
             String containerId = response.getId();
             try {
                 try (final var startCommand = dockerClient.startContainerCmd(containerId)) {
