@@ -290,6 +290,22 @@ describe('FileUploadSubmissionComponent', () => {
             expect(component.submissionFile()).toBeUndefined();
         });
 
+        it('should frame a submission assessed without any feedback as assessed', async () => {
+            const exercise = createExercise();
+            const submission = createSubmittedSubmission(exercise);
+            const result = createResult(submission);
+            result.score = 0;
+            submission.results = [result];
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(component.showsAssessedSubmission()).toBe(true);
+            expect(fixture.nativeElement.querySelector('[data-testid="file-upload-assessed-submission"]')).not.toBeNull();
+        });
+
         it('should ignore a submission without participation', async () => {
             const submission = createSubmission();
             submission.participation = undefined;
