@@ -43,7 +43,9 @@ export class TumAetUiTableVirtualScrollComponent<T> {
     protected readonly effectiveTrackBy = computed<TrackByFunction<T>>(() => this.trackBy() ?? ((_, item) => item));
 
     protected readonly headerClasses = computed(() => {
-        const base = 'tumaet-ui-vs-header tumaet:box-border tumaet:flex tumaet:text-sm tumaet:font-semibold tumaet:text-text tumaet:bg-hover-background';
+        const base =
+            'tumaet-ui-vs-header tumaet:box-border tumaet:flex tumaet:text-sm tumaet:font-semibold tumaet:text-text tumaet:bg-table-header ' +
+            'tumaet:border-b tumaet:border-border';
         return `${base} ${HEADER_PADDING[this.size()]}`;
     });
 

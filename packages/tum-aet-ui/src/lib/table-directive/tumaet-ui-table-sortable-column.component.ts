@@ -56,7 +56,7 @@ export class TumAetUiTableSortableColumnComponent {
         }
     });
 
-    protected readonly hostClasses = computed(() => (this.disabled() ? '' : 'tumaet:cursor-pointer tumaet:select-none tumaet:hover:bg-border'));
+    protected readonly hostClasses = computed(() => (this.disabled() ? '' : 'tumaet:cursor-pointer tumaet:select-none tumaet:hover:bg-table-header-hover'));
 
     protected onActivate(): void {
         this.table.requestSort(this.field());

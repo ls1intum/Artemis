@@ -17,10 +17,17 @@ const SIZE_PADDING: Record<TumAetUiTableSize, string> = {
 const HEADER_CLASSES =
     'tumaet:[&>thead_th]:h-[30px] tumaet:[&>thead_th]:py-0 tumaet:[&>thead_th]:text-start tumaet:[&>thead_th]:font-semibold tumaet:[&>thead_th]:whitespace-nowrap ' +
     'tumaet:[&>thead_th]:sticky tumaet:[&>thead_th]:top-0 tumaet:[&>thead_th]:z-10 ' +
-    'tumaet:[&>thead_th]:bg-hover-background tumaet:[&>thead_th]:text-text';
+    'tumaet:[&>thead_th]:bg-table-header tumaet:[&>thead_th]:text-text tumaet:[&>thead_th]:border-b tumaet:[&>thead_th]:border-border';
 
-/** The last row has no rule of its own: the frame or the footer below it already closes the table. */
-const BODY_CLASSES = 'tumaet:[&_tbody_td]:text-text tumaet:[&_tbody_td]:border-b tumaet:[&_tbody_td]:border-border tumaet:[&_tbody_tr:last-child_td]:border-b-0';
+/**
+ * Every row has a rule below it, row header cells included. In a table with a footer the last row gives the rule to the
+ * footer: `border-separate` draws a border on cells only, never on a `<tfoot>`, so the footer cells carry a heavier rule above them.
+ * Inside `tumaet-ui-table-layout` the frame leaves out the rules around the header and below the last row (see `tailwind.css`).
+ */
+const BODY_CLASSES =
+    'tumaet:[&_tbody_td]:text-text tumaet:[&_tbody_td]:border-b tumaet:[&_tbody_td]:border-border tumaet:[&_tbody_th]:border-b tumaet:[&_tbody_th]:border-border ' +
+    'tumaet:[&:has(>tfoot)>tbody>tr:last-child>td]:border-b-0 tumaet:[&:has(>tfoot)>tbody>tr:last-child>th]:border-b-0 ' +
+    'tumaet:[&_tfoot_td]:border-t-2 tumaet:[&_tfoot_td]:border-border tumaet:[&_tfoot_th]:border-t-2 tumaet:[&_tfoot_th]:border-border';
 
 const STRIPED_CLASSES = 'tumaet:[&_tbody_tr:nth-child(odd)]:bg-table-striped-background';
 
