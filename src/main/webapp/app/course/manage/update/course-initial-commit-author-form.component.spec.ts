@@ -109,6 +109,25 @@ describe('CourseInitialCommitAuthorFormComponent', () => {
         expect(element.querySelector('[data-testid="initial-commit-author-email"]')).not.toBeNull();
     });
 
+    it.each([
+        ['Placeholder', InitialCommitAuthorMode.PLACEHOLDER],
+        ['Custom', InitialCommitAuthorMode.CUSTOM],
+        ['Creator', InitialCommitAuthorMode.EXERCISE_CREATOR],
+    ])('selects the mode when the text of the option %s is clicked', async (suffix, mode) => {
+        const { fixture, group, element } = render(
+            createInitialCommitAuthorFormGroup({
+                mode: mode === InitialCommitAuthorMode.EXERCISE_CREATOR ? InitialCommitAuthorMode.PLACEHOLDER : InitialCommitAuthorMode.EXERCISE_CREATOR,
+            }),
+        );
+
+        const label = element.querySelector<HTMLLabelElement>(`label[for="initialCommitAuthor${suffix}"]`)!;
+        label.querySelector<HTMLElement>('span')!.click();
+        await fixture.whenStable();
+
+        expect(group.controls.mode.value).toBe(mode);
+        expect(element.querySelector<HTMLInputElement>(`#initialCommitAuthor${suffix}`)!.getAttribute('aria-label')).toBeTruthy();
+    });
+
     it('writes the chosen identity into the form', async () => {
         const { fixture, group, element } = render(createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM }));
         const name = element.querySelector<HTMLInputElement>('[data-testid="initial-commit-author-name"]')!;
