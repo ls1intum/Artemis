@@ -17,10 +17,10 @@ const SIZE_PADDING: Record<TumAetUiTableSize, string> = {
 const HEADER_CLASSES =
     'tumaet:[&>thead_th]:h-[30px] tumaet:[&>thead_th]:py-0 tumaet:[&>thead_th]:text-start tumaet:[&>thead_th]:font-semibold tumaet:[&>thead_th]:whitespace-nowrap ' +
     'tumaet:[&>thead_th]:sticky tumaet:[&>thead_th]:top-0 tumaet:[&>thead_th]:z-10 ' +
-    'tumaet:[&>thead_th]:bg-content-background tumaet:[&>thead_th]:text-text ' +
-    'tumaet:[&>thead_th]:border-b tumaet:[&>thead_th]:border-border';
+    'tumaet:[&>thead_th]:bg-hover-background tumaet:[&>thead_th]:text-text';
 
-const BODY_CLASSES = 'tumaet:[&_tbody_td]:text-text tumaet:[&_tbody_td]:border-b tumaet:[&_tbody_td]:border-border';
+/** The last row has no rule of its own: the frame or the footer below it already closes the table. */
+const BODY_CLASSES = 'tumaet:[&_tbody_td]:text-text tumaet:[&_tbody_td]:border-b tumaet:[&_tbody_td]:border-border tumaet:[&_tbody_tr:last-child_td]:border-b-0';
 
 const STRIPED_CLASSES = 'tumaet:[&_tbody_tr:nth-child(odd)]:bg-table-striped-background';
 
