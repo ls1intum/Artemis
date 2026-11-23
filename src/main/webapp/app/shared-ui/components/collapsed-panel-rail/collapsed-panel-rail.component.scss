@@ -33,11 +33,11 @@
     color: var(--body-color);
     background: transparent;
     border: 0;
-    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+    border-bottom: 1px solid var(--border-color);
 
     &:hover,
     &:focus-visible {
-        color: var(--bs-primary);
+        color: var(--primary);
         background: var(--hover-slightly-darker-body-bg);
     }
 }
@@ -47,5 +47,5 @@
     width: auto;
     min-width: 3rem;
     border-bottom: 0;
-    border-right: var(--bs-border-width) solid var(--bs-border-color);
+    border-right: 1px solid var(--border-color);
 }
