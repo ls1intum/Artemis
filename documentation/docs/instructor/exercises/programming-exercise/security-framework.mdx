@@ -261,12 +261,12 @@ useful.
 ### Scan the Libraries Students Use
 
 **Scan the libraries students use** makes Ares also check the libraries that the student code calls, for example a JSON
-or HTTP library, so that a forbidden access
-through a library is caught too. Artemis switches the programming language configuration of every policy, for example
-from `JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ` to `JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION`, and saves this in one
-commit. Every
-test runs considerably slower, so check your strict timeouts afterwards. The option is available only when the build
-file of the tests repository attaches the Ares agent, as the Java templates do, and no policy is shown read-only.
+or HTTP library, so that a forbidden access through a library is caught too. Artemis switches the programming language
+configuration of every policy, for example from `JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ` to
+`JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION`, and saves this in one commit. Every test runs considerably slower, so check
+your strict timeouts afterwards. The option is available only when no policy is shown read-only and the build file of
+the tests repository attaches the Ares agent to every test run, as the Java templates do: in Gradle in the configuration
+of the test tasks, in Maven in each Surefire execution that starts its own test JVM.
 
 ### Edit a Policy
 

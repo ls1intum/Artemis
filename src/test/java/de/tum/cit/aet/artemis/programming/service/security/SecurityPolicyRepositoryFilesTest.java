@@ -596,14 +596,7 @@ class SecurityPolicyRepositoryFilesTest {
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
         // JUnit runs the override, which has no annotation of its own, unless a package-private method of another package cannot be overridden.
-        SecurityFrameworkState.UnsupportedReason reason = new SecurityFrameworkState.UnsupportedReason(subclassPackage + ".MoreSortingTest",
-                SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS);
-        if (unsupported) {
-            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).contains(reason);
-        }
-        else {
-            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).doesNotContain(reason);
-        }
+        assertKeepsAnInheritedActivePolicy(subclassPackage + ".MoreSortingTest", unsupported);
     }
 
     @ParameterizedTest
@@ -636,14 +629,7 @@ class SecurityPolicyRepositoryFilesTest {
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
         // A method with a parameter of another type with the same simple name is an overload, so the inherited test still runs with the sandbox.
-        SecurityFrameworkState.UnsupportedReason reason = new SecurityFrameworkState.UnsupportedReason("de.other.MoreSortingTest",
-                SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS);
-        if (unsupported) {
-            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).contains(reason);
-        }
-        else {
-            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).doesNotContain(reason);
-        }
+        assertKeepsAnInheritedActivePolicy("de.other.MoreSortingTest", unsupported);
     }
 
     @Test
@@ -714,18 +700,23 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @ParameterizedTest
-    @CsvSource(delimiter = '|', value = { "T extends java.util.Date|java.util.Date|java.util.Date|false",
-            "T extends java.util.Date & java.io.Serializable|java.util.Date|java.util.Date|false", "T extends Date|java.util.Date|java.util.Date|false",
-            "T|java.lang.Object|java.lang.Object|false", "T extends java.util.Date|java.util.Date|java.sql.Timestamp|true", "T extends Other|Other|Other|true" })
-    void anOverrideOfATestWithATypeVariableParameterMatchesTheErasureOfTheVariable(String typeParameter, String typeArgument, String parameterType, boolean unsupported)
-            throws IOException {
+    @CsvSource(delimiter = '|', value = { "T extends java.util.Date|java.util.Date|java.util.Date|false|",
+            "T extends java.util.Date & java.io.Serializable|java.util.Date|java.util.Date|false|", "T extends Date|java.util.Date|java.util.Date|false|",
+            "T|java.lang.Object|java.lang.Object|false|", "T extends java.util.Date|java.util.Date|java.sql.Timestamp|true|",
+            "T extends Other|Other|Other|true|org.example.library.*" })
+    void anOverrideOfATestWithATypeVariableParameterMatchesTheErasureOfTheVariable(String typeParameter, String typeArgument, String parameterType, boolean unsupported,
+            String libraryImport) throws IOException {
         writeBuildFile();
+        // Other comes from a library on the classpath through a wildcard import, so Java resolves it, but Artemis only reads the sources of the repository.
+        String imports = libraryImport == null ? "" : "import " + libraryImport + ";\n\n";
         String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(T value)";
         String parent = TEST_CLASS.formatted("de.example", "SortingTest").replace("class SortingTest {", "class SortingTest<" + typeParameter + "> {")
-                .replace("    @Test\n    void runs()", annotated).replace("import org.junit.jupiter.api.Test;", "import java.util.Date;\n\nimport org.junit.jupiter.api.Test;");
+                .replace("    @Test\n    void runs()", annotated)
+                .replace("import org.junit.jupiter.api.Test;", "import java.util.Date;\n\n" + imports + "import org.junit.jupiter.api.Test;");
         writeSource("test/de/example/SortingTest.java", parent);
         writeSource("test/de/example/MoreSortingTest.java",
-                importingOverride("MoreSortingTest extends SortingTest<" + typeArgument + ">", "public void runs(" + parameterType + " value)"));
+                importingOverride("MoreSortingTest extends SortingTest<" + typeArgument + ">", "public void runs(" + parameterType + " value)")
+                        .replace("import org.junit.jupiter.api.Test;", imports + "import org.junit.jupiter.api.Test;"));
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
         // runs(T) erases to its leftmost bound, or to Object without one; an override with that type replaces it, so the switched-off subclass inherits no
@@ -800,14 +791,7 @@ class SecurityPolicyRepositoryFilesTest {
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
         // Date in the type argument of a field declares nothing, so runs(Date) overrides the inherited test; a type variable of the class shadows the import.
-        SecurityFrameworkState.UnsupportedReason reason = new SecurityFrameworkState.UnsupportedReason("de.example.MoreSortingTest",
-                SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS);
-        if (unsupported) {
-            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).contains(reason);
-        }
-        else {
-            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).doesNotContain(reason);
-        }
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", unsupported);
     }
 
     @ParameterizedTest
@@ -1276,14 +1260,7 @@ class SecurityPolicyRepositoryFilesTest {
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
         // A protected method is overridden in another package as well; a package-private one is not.
-        SecurityFrameworkState.UnsupportedReason reason = new SecurityFrameworkState.UnsupportedReason("de.other.MoreSortingTest",
-                SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS);
-        if (unsupported) {
-            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).contains(reason);
-        }
-        else {
-            assertThat(SecurityPolicyRepositoryFiles.evaluate(root).unsupportedReasons()).doesNotContain(reason);
-        }
+        assertKeepsAnInheritedActivePolicy("de.other.MoreSortingTest", unsupported);
     }
 
     @Test
@@ -1802,6 +1779,11 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + referencingProfile)).unsupportedReasons()).containsExactly(reason);
         String spacedProperty = profile.replace("<ares.version>2.3.0</ares.version>", "<ares.version >2.3.0</ares.version\n>");
         assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + spacedProperty)).unsupportedReasons()).containsExactly(reason);
+        // Maven reads the text of a CDATA section and an empty element as the value of the property as well.
+        String cdataProfile = profile.replace("<ares.version>2.3.0</ares.version>", "<ares.version><![CDATA[2.3.0]]></ares.version>");
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + cdataProfile)).unsupportedReasons()).containsExactly(reason);
+        String emptyProfile = profile.replace("<ares.version>2.3.0</ares.version>", "<ares.version />");
+        assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + emptyProfile)).unsupportedReasons()).containsExactly(reason);
         // A Gradle build that pins the version is the one the exercise uses, and a profile in a comment pins nothing.
         assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles("ext { aresVersion = '2.2.1' }\n", profile)).unsupportedReasons()).isEmpty();
         assertThat(evaluate(sources, new SecurityPolicyRepositoryFiles.BuildFiles(null, rootPin + "<!-- " + profile + " -->")).unsupportedReasons()).isEmpty();
