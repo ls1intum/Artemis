@@ -45,6 +45,22 @@ Apollon
     margin-bottom: 0;
 }
 
+/* Apollon renders its popovers (the edit popup of an element, selects, color pickers) in a Base UI portal under <body>.
+   That portal is unpositioned and has no z-index, so a popover opened from an editor inside a kit dialog is painted behind
+   the dialog: the overlay container above is appended to <html> and sits at z-index 1200, and the dialog hides the popover
+   without any error. This puts the portal one layer above the overlay container, still below the alert overlay, and
+   hands pointer events back to its children so the transparent layer never swallows a click. */
+body > [data-base-ui-portal] {
+    position: fixed;
+    z-index: 1201;
+    inset: 0;
+    pointer-events: none;
+
+    > * {
+        pointer-events: auto;
+    }
+}
+
 /* An Apollon surface taken fullscreen (the editor frame, the assessed canvas) is promoted
    to <body> and sits at $modeling-editor-fullscreen-z-index, so anything portaled out of it
    would paint behind it. There are two such portals and they attach to different roots:
