@@ -11,11 +11,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.TestPropertySource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
-import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
+import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSessionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSessionReviewDTO;
@@ -36,17 +35,24 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.EntityIdRefDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerFromLiveClientDTO;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCBatchTest;
 
-@TestPropertySource(properties = { "artemis.hyperion.enabled=true" })
-class PracticeQuizIntegrationTest extends AbstractAtlasIntegrationTest {
+class PracticeQuizIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCBatchTest {
 
     private static final String TEST_PREFIX = "practicequiztest";
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
 
     @Autowired
     private QuizQuestionPoolItemRepository quizQuestionPoolItemRepository;
