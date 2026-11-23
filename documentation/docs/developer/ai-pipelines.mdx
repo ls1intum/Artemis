@@ -2,7 +2,7 @@
 id: ai-pipelines
 title: AI Pipelines and Service Boundaries
 sidebar_label: AI Pipelines
-last_reviewed: 2026-11-20
+last_reviewed: 2026-11-23
 ---
 
 This catalog describes the **Artemis-owned control plane** for AI-enabled workflows: the requests Artemis creates, the data and authorization it owns, and the integration contracts it exposes. It is not generated API documentation and does not replace the implementation documentation of Iris, Athena, or Logos.
@@ -17,7 +17,7 @@ Use this page together with the [Artemis Intelligence ecosystem map](/admin/arte
 | Athena                | Module selection/configuration, request forwarding, exercise/submission state, scheduling, and repository export authorization | Module processing and any module-specific model decisions in Athena              |
 | Hyperion              | Authoring workflows, prompts and context assembly, exercise/repository integration, and result persistence                     | Model access selected through Artemis Spring AI configuration                    |
 | Atlas                 | Companion-agent, competency-orchestration, tool, course, and competency contracts                                              | Model access selected through Artemis Spring AI configuration                             |
-| Artemis Global Search | Searchable-entity schemas, index lifecycle, query authorization, and result shaping                                            | Weaviate storage and optional vectorization                                      |
+| Artemis Global Search | Searchable-entity schemas, index lifecycle, embedding computation (through `LlmClientService`), query authorization, and result shaping | Weaviate storage and vector/keyword indexing                                     |
 
 ## Iris and Pyris
 

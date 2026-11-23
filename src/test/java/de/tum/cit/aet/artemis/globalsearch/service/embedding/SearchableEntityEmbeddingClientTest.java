@@ -176,6 +176,28 @@ class SearchableEntityEmbeddingClientTest {
     }
 
     @Test
+    void embedQuery_turnsAnInvalidEmbeddingTypeIntoEmbeddingFailed() throws IOException {
+        var client = clientFor(_ -> "{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"index\":0,\"embedding\":{\"bad\":1}}]}", Duration.ofSeconds(3), 32);
+
+        assertThatThrownBy(() -> client.embedQuery("anything")).isInstanceOf(EmbeddingFailedException.class);
+    }
+
+    @Test
+    void embedQuery_turnsInvalidBase64EmbeddingIntoEmbeddingFailed() throws IOException {
+        var client = clientFor(_ -> "{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"index\":0,\"embedding\":\"not!base64\"}]}", Duration.ofSeconds(3), 32);
+
+        assertThatThrownBy(() -> client.embedQuery("anything")).isInstanceOf(EmbeddingFailedException.class);
+    }
+
+    @Test
+    void embedQuery_turnsTruncatedBase64EmbeddingIntoEmbeddingFailed() throws IOException {
+        // AACAPwA= decodes to 5 bytes (one 4-byte float plus 1 trailing byte); the SDK would silently drop the trailing byte.
+        var client = clientFor(_ -> "{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"index\":0,\"embedding\":\"AACAPwA=\"}]}", Duration.ofSeconds(3), 32);
+
+        assertThatThrownBy(() -> client.embedQuery("anything")).isInstanceOf(EmbeddingFailedException.class).hasMessageContaining("byte length");
+    }
+
+    @Test
     void embedQuery_failsWhenTheEndpointIsUnreachable() throws IOException {
         var client = clientFor(SearchableEntityEmbeddingClientTest::unitVectors, Duration.ofMillis(500), 32);
         server.stop(0);

@@ -206,6 +206,9 @@ class LlmClientServiceTest {
             assertThat(request.callTimeout()).isEqualTo(Duration.ofSeconds(4));
         });
         assertThatIllegalArgumentException().isThrownBy(() -> service.embed("chat", List.of("text"), Duration.ofSeconds(2))).withMessageContaining("not an embeddings preset");
+        assertThatIllegalArgumentException().isThrownBy(() -> service.embed("embed", List.of("text"), Duration.ZERO)).withMessageContaining("timeout");
+        assertThatIllegalArgumentException().isThrownBy(() -> service.embed("embed", List.of("text"), Duration.ofSeconds(-1))).withMessageContaining("timeout");
+        assertThatIllegalArgumentException().isThrownBy(() -> service.embed("embed", List.of("text"), null)).withMessageContaining("timeout");
     }
 
     private static Endpoint endpoint(EndpointType type, String baseUrl, @Nullable String apiKey) {

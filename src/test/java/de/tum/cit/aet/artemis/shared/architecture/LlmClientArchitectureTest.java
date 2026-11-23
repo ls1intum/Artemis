@@ -28,8 +28,8 @@ class LlmClientArchitectureTest extends AbstractArchitectureTest {
     private static final String[] LLM_CORE_PACKAGES = { ARTEMIS_PACKAGE + ".core.service.llm..", ARTEMIS_PACKAGE + ".core.config.llm.." };
 
     private static final DescribedPredicate<JavaClass> PROVIDER_CLIENTS = resideInAnyPackage("com.openai.client..", "com.openai.services..",
-            "org.springframework.ai.openai.setup..").or(nameMatching("org\\.springframework\\.ai\\.openai\\.(responses\\.)?OpenAi\\w+Model"))
-            .as("are clients or models of an LLM provider");
+            "org.springframework.ai.openai.setup..").or(nameMatching("org\\.springframework\\.ai\\.openai\\.(responses\\.)?OpenAi\\w+Model(\\$Builder)?"))
+            .or(nameMatching("org\\.springframework\\.ai\\.openai\\.http\\.okhttp\\.SpringAiOpenAiHttpClient(\\$.*)?")).as("are clients or models of an LLM provider");
 
     private static final DescribedPredicate<JavaClass> LLM_ENDPOINTS = nameMatching("de\\.tum\\.cit\\.aet\\.artemis\\.core\\.config\\.llm\\.LlmProperties\\$Endpoint.*")
             .<JavaClass>forSubtype().as("are LLM endpoints, which hold URLs and keys");

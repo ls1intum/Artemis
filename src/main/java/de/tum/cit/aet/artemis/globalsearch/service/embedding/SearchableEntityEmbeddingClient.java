@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.globalsearch.service.embedding;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.openai.errors.OpenAIException;
 import com.openai.models.embeddings.CreateEmbeddingResponse;
 import com.openai.models.embeddings.Embedding;
+import com.openai.models.embeddings.EmbeddingValue;
 
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
@@ -120,12 +122,19 @@ public class SearchableEntityEmbeddingClient {
         if (presetName == null) {
             throw new EmbeddingFailedException("No embedding-llm-preset is assigned");
         }
-        EmbeddingResponseDTO response;
+        CreateEmbeddingResponse rawResponse;
         try {
-            response = toResponse(llmClientService.embed(presetName, texts, timeout));
+            rawResponse = llmClientService.embed(presetName, texts, timeout);
         }
         catch (OpenAIException e) {
             throw new EmbeddingFailedException("Embedding request failed: " + e.getMessage(), e);
+        }
+        EmbeddingResponseDTO response;
+        try {
+            response = toResponse(rawResponse);
+        }
+        catch (OpenAIException | IllegalStateException | IllegalArgumentException e) {
+            throw new EmbeddingFailedException("Malformed embedding response: " + e.getMessage(), e);
         }
         return validate(response, texts.size());
     }
@@ -141,7 +150,14 @@ public class SearchableEntityEmbeddingClient {
                 data.add(null);
                 continue;
             }
-            List<Float> values = embedding.embedding();
+            EmbeddingValue embeddingValue = embedding.embeddingValue();
+            if (embeddingValue.isBase64()) {
+                byte[] decoded = Base64.getDecoder().decode(embeddingValue.asBase64());
+                if (decoded.length % Float.BYTES != 0) {
+                    throw new EmbeddingFailedException("Base64 embedding byte length " + decoded.length + " is not a multiple of " + Float.BYTES);
+                }
+            }
+            List<Float> values = embeddingValue.asFloats();
             float[] vector = new float[values.size()];
             for (int i = 0; i < vector.length; i++) {
                 Float value = values.get(i);

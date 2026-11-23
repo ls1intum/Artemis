@@ -114,11 +114,14 @@ public class LlmClientService {
      *
      * @param presetName a configured preset with {@code api: embeddings}
      * @param inputs     the texts to embed, in order
-     * @param timeout    the time limit for the answer
+     * @param timeout    the positive time limit for the answer
      * @return the provider's response; it is not validated, so reading a field the provider left out throws an {@code OpenAIInvalidDataException}
-     * @throws IllegalArgumentException when the preset is not configured or is not an embeddings preset
+     * @throws IllegalArgumentException when the preset is not configured, is not an embeddings preset, or the timeout is not positive
      */
     public CreateEmbeddingResponse embed(String presetName, List<String> inputs, Duration timeout) {
+        if (timeout == null || !timeout.isPositive()) {
+            throw new IllegalArgumentException("The embedding timeout must be positive");
+        }
         Preset preset = preset(presetName);
         if (preset.api() != Api.EMBEDDINGS) {
             throw new IllegalArgumentException("The LLM preset " + presetName + " is not an embeddings preset");
