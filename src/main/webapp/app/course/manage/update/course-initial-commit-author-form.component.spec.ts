@@ -66,6 +66,18 @@ describe('createInitialCommitAuthorFormGroup', () => {
         expect(group.controls.name.valid).toBe(true);
     });
 
+    it.each(['a@b.c', 'a@.b.c', 'a@b..c', 'first.last+tag@sub.example.org'])('accepts the email %j with an inner dot in the domain', (email) => {
+        const group = createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM, name: 'Course Team', email });
+
+        expect(group.controls.email.valid).toBe(true);
+    });
+
+    it.each(['a@b.', 'a@.b', 'a@.', 'a@b'])('rejects the email %j without an inner dot in the domain', (email) => {
+        const group = createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM, name: 'Course Team', email });
+
+        expect(group.controls.email.invalid).toBe(true);
+    });
+
     it('accepts names with umlauts and an address with a plus tag', () => {
         const group = createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM, name: 'Jürgen Müller', email: 'j.mueller+course@sub.university.example' });
 

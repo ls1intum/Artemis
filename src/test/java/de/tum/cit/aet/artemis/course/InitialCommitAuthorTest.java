@@ -22,6 +22,18 @@ class InitialCommitAuthorTest {
                 .doesNotThrowAnyException();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "a@b.c", "a@.b.c", "a@b..c", "first.last+tag@sub.example.org" })
+    void validate_acceptsAnAddressWithAnInnerDotInTheDomain(String email) {
+        assertThatCode(() -> new InitialCommitAuthorDTO(InitialCommitAuthorMode.CUSTOM, "Course Team", email).validate()).doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "a@b.", "a@.b", "a@.", "a@b" })
+    void validate_rejectsADomainWithoutAnInnerDot(String email) {
+        assertThatThrownBy(() -> new InitialCommitAuthorDTO(InitialCommitAuthorMode.CUSTOM, "Course Team", email).validate()).isInstanceOf(BadRequestAlertException.class);
+    }
+
     @Test
     void validate_ignoresTheIdentityOfTheOtherModes() {
         assertThatCode(() -> new InitialCommitAuthorDTO(InitialCommitAuthorMode.EXERCISE_CREATOR, "<bad>\n", "not an email").validate()).doesNotThrowAnyException();

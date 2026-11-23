@@ -39,8 +39,8 @@ public record InitialCommitAuthorDTO(@NotNull InitialCommitAuthorMode mode, @Nul
      */
     private static final Pattern NAME_PATTERN = Pattern.compile("[^<>\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]+");
 
-    /** One address without angle brackets, a second {@code @}, any space or separator (Z), control (Cc) or format (Cf) character, with a dot in the domain. */
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("[^<>@\\p{Cc}\\p{Cf}\\p{Z}]+@[^<>@\\p{Cc}\\p{Cf}\\p{Z}]+\\.[^<>@\\p{Cc}\\p{Cf}\\p{Z}]+");
+    /** A character that no part of an address may contain: an angle bracket, a control (Cc) or format (Cf) character, or any space or separator (Z). */
+    private static final Pattern FORBIDDEN_ADDRESS_CHARACTER = Pattern.compile("[<>\\p{Cc}\\p{Cf}\\p{Z}]");
 
     /**
      * Reads the setting of a course.
@@ -68,9 +68,27 @@ public record InitialCommitAuthorDTO(@NotNull InitialCommitAuthorMode mode, @Nul
             throw new BadRequestAlertException("The author name must not be blank, longer than " + MAX_NAME_LENGTH + " characters or contain line breaks, < or >.", "course",
                     "invalidInitialCommitAuthorName");
         }
-        if (strippedEmail.length() > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.matcher(strippedEmail).matches()) {
+        if (strippedEmail.length() > MAX_EMAIL_LENGTH || !isValidEmail(strippedEmail)) {
             throw new BadRequestAlertException("The author email address is not valid.", "course", "invalidInitialCommitAuthorEmail");
         }
+    }
+
+    /**
+     * Whether the text is one address: a local part, exactly one {@code @} and a domain with a dot that is neither its first nor its last character, without a forbidden
+     * character. It is checked by position, not by a pattern with a quantifier on each side of the dot, which backtracks heavily on a long text. The client checks the same.
+     */
+    private static boolean isValidEmail(String address) {
+        int at = address.indexOf('@');
+        if (at <= 0 || at != address.lastIndexOf('@') || FORBIDDEN_ADDRESS_CHARACTER.matcher(address).find()) {
+            return false;
+        }
+        int lastDomainIndex = address.length() - 1;
+        for (int i = at + 2; i < lastDomainIndex; i++) {
+            if (address.charAt(i) == '.') {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
