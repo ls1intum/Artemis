@@ -9,9 +9,11 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <ares.version>2.2.1</ares.version>
-        <aspectj.version>1.9.25.1</aspectj.version>
+        <aspectj.version>1.9.27</aspectj.version>
         <!-- Ares brings Guava with it. Keep it on a release that fixes GHSA-xxph-c9ww-hj94 (33.7.2 or newer) -->
         <guava.version>33.8.0-jre</guava.version>
+        <!-- Ares brings commons-beanutils 1.9.4 with it, which is affected by CVE-2025-48734 (fixed in 1.11.0) -->
+        <commons-beanutils.version>1.11.0</commons-beanutils.version>
         <!-- Keeps @{argLine} resolvable when no other plugin contributes JVM arguments -->
         <argLine></argLine>
         <!--%static-code-analysis-start%-->
@@ -21,6 +23,12 @@
 	</properties>
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <!-- Pins the commons-beanutils that Ares brings along, see commons-beanutils.version -->
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>${commons-beanutils.version}</version>
+            </dependency>
             <dependency>
                 <!-- Pins the Guava that Ares brings along, see guava.version -->
                 <groupId>com.google.guava</groupId>
@@ -74,6 +82,18 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.5.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.plexus</groupId>
+                        <artifactId>plexus-utils</artifactId>
+                        <version>4.2.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.16.0</version>
                 <configuration>
@@ -84,11 +104,18 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>3.5.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.plexus</groupId>
+                        <artifactId>plexus-utils</artifactId>
+                        <version>4.2.0</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.6.0</version>
+                <version>3.6.1</version>
                 <configuration>
                     <argLine>
                         @{argLine}
@@ -117,10 +144,20 @@
             </plugin>
             <!-- Weave the Ares security aspects into the student code -->
             <plugin>
-                <groupId>dev.aspectj</groupId>
+                <groupId>org.codehaus.mojo</groupId>
                 <artifactId>aspectj-maven-plugin</artifactId>
-                <version>1.14.1</version>
+                <version>1.17.0</version>
                 <dependencies>
+                    <dependency>
+                        <groupId>commons-beanutils</groupId>
+                        <artifactId>commons-beanutils</artifactId>
+                        <version>1.11.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.iq80.snappy</groupId>
+                        <artifactId>snappy</artifactId>
+                        <version>0.5</version>
+                    </dependency>
                     <dependency>
                         <groupId>org.aspectj</groupId>
                         <artifactId>aspectjtools</artifactId>
@@ -130,7 +167,6 @@
                 <configuration>
                     <forceAjcCompile>true</forceAjcCompile>
                     <complianceLevel>25</complianceLevel>
-                    <release>25</release>
                     <aspectLibraries>
                         <aspectLibrary>
                             <groupId>de.tum.cit.ase</groupId>
@@ -153,6 +189,13 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>3.2.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.plexus</groupId>
+                        <artifactId>plexus-utils</artifactId>
+                        <version>4.2.0</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
                         <id>verify-ares-reserved-packages-v2</id>
@@ -227,6 +270,13 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>3.11.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>commons-beanutils</groupId>
+                        <artifactId>commons-beanutils</artifactId>
+                        <version>1.11.0</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
                         <id>copy-ares-runtime-jars</id>
@@ -265,6 +315,11 @@
                 <version>4.10.5.0</version>
                 <dependencies>
                     <dependency>
+                        <groupId>org.iq80.snappy</groupId>
+                        <artifactId>snappy</artifactId>
+                        <version>0.5</version>
+                    </dependency>
+                    <dependency>
                         <!-- SpotBugs brings Guava 33.7.1 with it, which is affected by GHSA-xxph-c9ww-hj94 -->
                         <groupId>com.google.guava</groupId>
                         <artifactId>guava</artifactId>
@@ -293,6 +348,21 @@
                 <version>3.6.0</version>
                 <dependencies>
                     <dependency>
+                        <groupId>org.apache.commons</groupId>
+                        <artifactId>commons-lang3</artifactId>
+                        <version>3.22.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.codehaus.plexus</groupId>
+                        <artifactId>plexus-utils</artifactId>
+                        <version>4.2.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.iq80.snappy</groupId>
+                        <artifactId>snappy</artifactId>
+                        <version>0.5</version>
+                    </dependency>
+                    <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
                         <version>14.4.0</version>
@@ -313,14 +383,34 @@
                 <version>3.28.0</version>
                 <dependencies>
                     <dependency>
+                        <groupId>commons-beanutils</groupId>
+                        <artifactId>commons-beanutils</artifactId>
+                        <version>1.11.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.codehaus.plexus</groupId>
+                        <artifactId>plexus-utils</artifactId>
+                        <version>4.2.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.iq80.snappy</groupId>
+                        <artifactId>snappy</artifactId>
+                        <version>0.5</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.mozilla</groupId>
+                        <artifactId>rhino</artifactId>
+                        <version>1.7.15.1</version>
+                    </dependency>
+                    <dependency>
                         <groupId>net.sourceforge.pmd</groupId>
                         <artifactId>pmd-core</artifactId>
-                        <version>7.28.0</version>
+                        <version>7.29.0</version>
                     </dependency>
                     <dependency>
                         <groupId>net.sourceforge.pmd</groupId>
                         <artifactId>pmd-java</artifactId>
-                        <version>7.28.0</version>
+                        <version>7.29.0</version>
                     </dependency>
                 </dependencies>
                 <configuration>

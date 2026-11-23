@@ -59,7 +59,7 @@ describe('pull-through-registry-proxy.sh', () => {
         ['alpine:3', 'library/alpine:3'],
         ['docker.io/library/postgres:18', 'library/postgres:18'],
         ['docker.io/nginx:1', 'library/nginx:1'],
-        ['ls1tum/artemis-maven-template:java25-5', 'ls1tum/artemis-maven-template:java25-5'],
+        ['ls1tum/artemis-maven-template:java25-6', 'ls1tum/artemis-maven-template:java25-6'],
         ['index.docker.io/valkey/valkey:9', 'valkey/valkey:9'],
     ])('pulls the Docker Hub image %s through the proxy and gives it its own name', (image, path) => {
         const { status, calls } = run([image]);
