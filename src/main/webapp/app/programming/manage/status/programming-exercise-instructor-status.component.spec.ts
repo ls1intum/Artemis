@@ -14,8 +14,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -38,7 +37,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ProgrammingExerciseInstructorStatusComponent, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe)],
+            imports: [ProgrammingExerciseInstructorStatusComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         });
         fixture = TestBed.createComponent(ProgrammingExerciseInstructorStatusComponent);

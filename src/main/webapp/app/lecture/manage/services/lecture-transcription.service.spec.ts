@@ -1,74 +1,34 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
-import { LectureTranscriptionDTO, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { LectureTranscriptionApi } from 'app/openapi/api/lecture-transcription-api';
+import type { LectureTranscription } from 'app/openapi/model/lecture-transcription';
 
 describe('LectureTranscriptionService', () => {
     let service: LectureTranscriptionService;
-    let httpMock: HttpTestingController;
+    let api: { getTranscript: ReturnType<typeof vi.fn> };
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
-        });
-
+        api = { getTranscript: vi.fn() };
+        TestBed.configureTestingModule({ providers: [{ provide: LectureTranscriptionApi, useValue: api }] });
         service = TestBed.inject(LectureTranscriptionService);
-        httpMock = TestBed.inject(HttpTestingController);
     });
 
-    afterEach(() => {
-        httpMock.verify();
-    });
-
-    it('should get transcriptions', () => {
-        const dto: LectureTranscriptionDTO = { lectureUnitId: 1, language: 'en', segments: [] };
-        let result: LectureTranscriptionDTO | undefined;
+    it('should get the transcription of a lecture unit', () => {
+        const transcription: LectureTranscription = { lectureUnitId: 1, language: 'en', segments: [] };
+        api.getTranscript.mockReturnValue(of(transcription));
+        let result: LectureTranscription | undefined;
         service.getTranscription(1).subscribe((r) => (result = r));
-        const req = httpMock.expectOne(`api/lecture/lecture-units/1/transcript`);
-        req.flush(dto, { status: 200, statusText: 'OK' });
-        expect(result).toEqual(dto);
+        expect(api.getTranscript).toHaveBeenCalledWith(1);
+        expect(result).toEqual(transcription);
     });
 
     it('should return undefined on get transcription error', () => {
-        let result: LectureTranscriptionDTO | undefined;
+        api.getTranscript.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+        let result: LectureTranscription | undefined = { lectureUnitId: 1 };
         service.getTranscription(1).subscribe((r) => (result = r));
-        const req = httpMock.expectOne(`api/lecture/lecture-units/1/transcript`);
-        req.flush('error', { status: 404, statusText: 'Not Found' });
-        expect(result).toBeUndefined();
-    });
-
-    it('should get transcription status', () => {
-        let result: TranscriptionStatus | undefined;
-        service.getTranscriptionStatus(1).subscribe((r) => (result = r));
-        const req = httpMock.expectOne(`api/lecture/lecture-units/1/transcript/status`);
-        req.flush('COMPLETED', { status: 200, statusText: 'OK' });
-        expect(result).toBe('COMPLETED');
-    });
-
-    it('should return undefined on get transcription status error', () => {
-        let result: TranscriptionStatus | undefined;
-        service.getTranscriptionStatus(1).subscribe((r) => (result = r));
-        const req = httpMock.expectOne(`api/lecture/lecture-units/1/transcript/status`);
-        req.flush('error', { status: 500, statusText: 'Server Error' });
-        expect(result).toBeUndefined();
-    });
-
-    it('should return undefined when transcription status response body is empty', () => {
-        let result: TranscriptionStatus | undefined;
-        service.getTranscriptionStatus(1).subscribe((r) => (result = r));
-        const req = httpMock.expectOne(`api/lecture/lecture-units/1/transcript/status`);
-        req.flush('', { status: 200, statusText: 'OK' });
-        expect(result).toBeUndefined();
-    });
-
-    it('should return undefined when transcription response body is null', () => {
-        let result: LectureTranscriptionDTO | undefined;
-        service.getTranscription(1).subscribe((r) => (result = r));
-        const req = httpMock.expectOne(`api/lecture/lecture-units/1/transcript`);
-        req.flush(null, { status: 200, statusText: 'OK' });
         expect(result).toBeUndefined();
     });
 });

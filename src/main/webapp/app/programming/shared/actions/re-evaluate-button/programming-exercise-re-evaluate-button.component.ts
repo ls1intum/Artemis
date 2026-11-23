@@ -16,7 +16,7 @@ import { ProgrammingExerciseGradingService } from 'app/programming/manage/servic
     template: `
         <jhi-button
             id="re-evaluate-button"
-            class="ms-3"
+            class="ms-4!"
             [disabled]="disabled() || isReEvaluationRunning()"
             [btnType]="ButtonType.ERROR"
             [isLoading]="isReEvaluationRunning()"

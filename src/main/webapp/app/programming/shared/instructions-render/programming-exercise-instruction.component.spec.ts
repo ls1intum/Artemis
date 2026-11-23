@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ApplicationRef, DebugElement, VERSION, WritableSignal } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -36,7 +35,6 @@ import { TaskArray } from 'app/programming/shared/instructions-render/task/progr
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockModule } from 'ng-mocks';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -96,7 +94,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), ProgrammingExerciseInstructionComponent],
+            imports: [ProgrammingExerciseInstructionComponent],
             providers: [
                 ProgrammingExerciseTaskExtensionWrapper,
                 ProgrammingExercisePlantUmlExtensionWrapper,
@@ -464,7 +462,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
-        expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
+        expect(debugElement.queryAll(By.css('.stepwizard-button'))).toHaveLength(2);
         await new Promise((resolve) => setTimeout(resolve, 10));
         fixture.changeDetectorRef.detectChanges();
         // The task-status components are attached via ApplicationRef.attachView and render on the app tick.
@@ -538,7 +536,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
-        expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
+        expect(debugElement.queryAll(By.css('.stepwizard-button'))).toHaveLength(2);
         await new Promise((resolve) => setTimeout(resolve, 10));
         fixture.changeDetectorRef.detectChanges();
         // The task-status components are attached via ApplicationRef.attachView and render on the app tick.
@@ -691,7 +689,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), ProgrammingExerciseInstructionComponent],
+            imports: [ProgrammingExerciseInstructionComponent],
             providers: [
                 ProgrammingExerciseTaskExtensionWrapper,
                 ProgrammingExercisePlantUmlExtensionWrapper,

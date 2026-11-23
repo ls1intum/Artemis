@@ -1,5 +1,8 @@
 import { Component, OnInit, WritableSignal, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -34,10 +37,23 @@ const NOT_LOADED = Symbol('docker flags not loaded');
     selector: 'jhi-programming-exercise-build-configuration',
     templateUrl: './programming-exercise-build-configuration.component.html',
     styleUrls: ['../../../shared/programming-exercise-form.scss'],
-    imports: [TranslateDirective, HelpIconComponent, FormsModule, TableEditableFieldComponent, FaIconComponent, TableViewComponent],
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        FormsModule,
+        TableEditableFieldComponent,
+        FaIconComponent,
+        TableViewComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectComponent,
+    ],
 })
 export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     private profileService = inject(ProfileService);
+    private readonly translateService = inject(TranslateService);
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     programmingExercise = input<ProgrammingExercise>();
     dockerImage = input.required<string>();
@@ -59,6 +75,17 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     readonly envVarValueTemplate = viewChild<CellTemplateRef<[string, string]>>('envVarValueTemplate');
 
     network = signal<string | undefined>(undefined);
+
+    /** The entries of the network select: the default first, then every network the server allows. */
+    readonly networkOptions = computed(() => {
+        this.currentLocale();
+        const prefix = 'artemisApp.programmingExercise.dockerFlags.useCustomNetwork.';
+        const options = [{ value: '', label: this.translateService.instant(prefix + 'defaultOption') as string }];
+        for (const customNetwork of this.allowedCustomNetworks() ?? []) {
+            options.push({ value: customNetwork, label: customNetwork === 'none' ? (this.translateService.instant(prefix + 'noneOption') as string) : customNetwork });
+        }
+        return options;
+    });
 
     readonly timeoutMinValue = signal<number | undefined>(undefined);
     readonly timeoutMaxValue = signal<number | undefined>(undefined);

@@ -105,6 +105,10 @@ public final class Constants {
     // Keep in sync with MAX_PRESENTATION_COUNT in input.constants.ts.
     public static final int MAX_PRESENTATION_COUNT = 100;
 
+    // Upper bound for the number of criteria of a presentation rubric, and with that for the ratings of one assessment. A domain limit.
+    // Keep in sync with MAX_RUBRIC_CRITERIA in presentation-rubric.util.ts.
+    public static final int MAX_RUBRIC_CRITERIA = 20;
+
     public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
@@ -171,6 +175,12 @@ public final class Constants {
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
 
     public static final int MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH = 255; // Keep in sync with MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH in input.constants.ts
+
+    /**
+     * Maximum length of the explanation of a quiz question and of an answer option. Must match the quiz_question.explanation column and
+     * MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD in input.constants.ts.
+     */
+    public static final int MAX_QUIZ_EXPLANATION_LENGTH = 2000;
 
     // Note: Must be consistent with EXAM_TEXT_MAX_LENGTH in input.constants.ts
     public static final int EXAM_TEXT_MAX_LENGTH = 10_000; // Applies to the exam start/end and confirmation start/end texts

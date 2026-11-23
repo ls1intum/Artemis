@@ -311,13 +311,23 @@ public class GitService extends AbstractGitService {
                 log.debug("Cloning from {} to {}", gitUriAsString, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-                CloneCommand clone = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
+                CloneCommand clone = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).setTransportConfigCallback(_ -> {
+                    // The first fetch must finish GC before callers can copy or delete this checkout.
+                    try (Git initializedCheckout = Git.open(localPath.toFile())) {
+                        var config = initializedCheckout.getRepository().getConfig();
+                        config.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
+                        config.save();
+                    }
+                    catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
                 if (selectCloneBranch) {
                     clone.setBranch(defaultBranch);
                 }
                 cloneWithoutSymbolicLinks(clone);
             }
-            catch (IOException | URISyntaxException | GitAPIException | InvalidPathException e) {
+            catch (IOException | UncheckedIOException | URISyntaxException | GitAPIException | InvalidPathException e) {
                 // cleanup the folder to avoid problems in the future.
                 // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid another try-catch block.
                 // 'deleteQuietly' also returns false when there was nothing to delete (JGit's CloneCommand already cleans up

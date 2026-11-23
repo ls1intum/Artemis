@@ -3,11 +3,15 @@ package de.tum.cit.aet.artemis.lti;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.headerDoesNotExist;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.util.UUID;
 
@@ -16,14 +20,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
+
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistrationFactory;
@@ -41,10 +49,11 @@ class LtiDynamicRegistrationServiceTest {
     private LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
 
     @Mock
-    private RestTemplate restTemplate;
-
-    @Mock
     private ProfileService profileService;
+
+    private final JsonMapper jsonMapper = JsonObjectMapper.get();
+
+    private MockRestServiceServer server;
 
     private LtiDynamicRegistrationService ltiDynamicRegistrationService;
 
@@ -62,7 +71,9 @@ class LtiDynamicRegistrationServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiDynamicRegistrationService = new LtiDynamicRegistrationService(ltiPlatformConfigurationRepository, oAuth2JWKSService, restTemplate, profileService);
+        RestClient.Builder builder = RestClient.builder();
+        server = MockRestServiceServer.bindTo(builder).build();
+        ltiDynamicRegistrationService = new LtiDynamicRegistrationService(ltiPlatformConfigurationRepository, oAuth2JWKSService, builder.build(), profileService);
         ReflectionTestUtils.setField(ltiDynamicRegistrationService, "artemisServerUrl", "http://artemis.com");
 
         Course course = new Course();
@@ -81,22 +92,37 @@ class LtiDynamicRegistrationServiceTest {
         if (closeable != null) {
             closeable.close();
         }
-        reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, restTemplate, profileService);
+        reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, profileService);
+    }
+
+    private void expectPlatformConfiguration(String url, Lti13PlatformConfiguration configuration) {
+        server.expect(requestTo(url)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess(jsonMapper.writeValueAsString(configuration), MediaType.APPLICATION_JSON));
+    }
+
+    private void expectClientRegistration(String endpoint, String expectedAuthorization) {
+        var expectation = server.expect(requestTo(endpoint)).andExpect(method(HttpMethod.POST)).andExpect(header("Content-Type", MediaType.APPLICATION_JSON_VALUE));
+        if (expectedAuthorization != null) {
+            expectation.andExpect(header("Authorization", expectedAuthorization));
+        }
+        else {
+            expectation.andExpect(headerDoesNotExist("Authorization"));
+        }
+        expectation.andRespond(withSuccess(jsonMapper.writeValueAsString(clientRegistrationResponse), MediaType.APPLICATION_JSON));
     }
 
     @Test
     void badRequestWhenGetPlatformConfigurationFails() {
-
-        doThrow(HttpClientErrorException.class).when(restTemplate).getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class);
+        server.expect(requestTo(openIdConfigurationUrl)).andRespond(withBadRequest());
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken));
+        server.verify();
     }
 
     @Test
     void badRequestWhenPlatformConfigurationEmpty() {
         Lti13PlatformConfiguration platformConfiguration = new Lti13PlatformConfiguration(null, null, null, null, null);
-        when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
+        expectPlatformConfiguration(openIdConfigurationUrl, platformConfiguration);
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken));
@@ -106,8 +132,7 @@ class LtiDynamicRegistrationServiceTest {
     void badRequestWhenRegistrationEndpointEmpty() {
         Lti13PlatformConfiguration platformConfiguration = new Lti13PlatformConfiguration(null, "https://example.com/token", "https://example.com/auth", "https://example.com/jwks",
                 null);
-
-        when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
+        expectPlatformConfiguration(openIdConfigurationUrl, platformConfiguration);
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken));
@@ -115,37 +140,34 @@ class LtiDynamicRegistrationServiceTest {
 
     @Test
     void badRequestWhenGetPostClientRegistrationFails() {
-
-        when(restTemplate.getForEntity(eq(openIdConfigurationUrl), any())).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
-
-        doThrow(HttpClientErrorException.class).when(restTemplate).postForEntity(eq(platformConfiguration.registrationEndpoint()), any(), eq(Lti13ClientRegistration.class));
+        expectPlatformConfiguration(openIdConfigurationUrl, platformConfiguration);
+        server.expect(requestTo(platformConfiguration.registrationEndpoint())).andRespond(withBadRequest());
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken));
+        server.verify();
     }
 
     @Test
     void performDynamicRegistrationSuccess() {
-
-        when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
-        when(restTemplate.postForEntity(eq(platformConfiguration.registrationEndpoint()), any(), eq(Lti13ClientRegistration.class)))
-                .thenReturn(ResponseEntity.accepted().body(clientRegistrationResponse));
+        expectPlatformConfiguration(openIdConfigurationUrl, platformConfiguration);
+        expectClientRegistration(platformConfiguration.registrationEndpoint(), "Bearer " + registrationToken);
 
         ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, registrationToken);
 
+        server.verify();
         verify(ltiPlatformConfigurationRepository).save(any());
         verify(oAuth2JWKSService).updateKey(any());
     }
 
     @Test
     void performDynamicRegistrationSuccessWithoutToken() {
-
-        when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
-        when(restTemplate.postForEntity(eq(platformConfiguration.registrationEndpoint()), any(), eq(Lti13ClientRegistration.class)))
-                .thenReturn(ResponseEntity.accepted().body(clientRegistrationResponse));
+        expectPlatformConfiguration(openIdConfigurationUrl, platformConfiguration);
+        expectClientRegistration(platformConfiguration.registrationEndpoint(), null);
 
         ltiDynamicRegistrationService.performDynamicRegistration(openIdConfigurationUrl, null);
 
+        server.verify();
         verify(ltiPlatformConfigurationRepository).save(any());
         verify(oAuth2JWKSService).updateKey(any());
     }
@@ -157,13 +179,12 @@ class LtiDynamicRegistrationServiceTest {
         Lti13PlatformConfiguration localhostPlatformConfiguration = new Lti13PlatformConfiguration(null, "http://localhost:8086/token", "http://localhost:8086/auth",
                 "http://localhost:8086/jwks", "http://localhost:8086/register");
 
-        when(restTemplate.getForEntity(localhostOpenIdConfigurationUrl, Lti13PlatformConfiguration.class))
-                .thenReturn(ResponseEntity.accepted().body(localhostPlatformConfiguration));
-        when(restTemplate.postForEntity(eq(localhostPlatformConfiguration.registrationEndpoint()), any(), eq(Lti13ClientRegistration.class)))
-                .thenReturn(ResponseEntity.accepted().body(clientRegistrationResponse));
+        expectPlatformConfiguration(localhostOpenIdConfigurationUrl, localhostPlatformConfiguration);
+        expectClientRegistration(localhostPlatformConfiguration.registrationEndpoint(), "Bearer " + registrationToken);
 
         ltiDynamicRegistrationService.performDynamicRegistration(localhostOpenIdConfigurationUrl, registrationToken);
 
+        server.verify();
         verify(ltiPlatformConfigurationRepository).save(any());
         verify(oAuth2JWKSService).updateKey(any());
     }

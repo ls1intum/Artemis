@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.service.CourseStatsService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -64,6 +65,9 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
 
     @Autowired
     private LLMTokenUsageTraceTestRepository llmTokenUsageTraceRepository;
+
+    @Autowired
+    private CourseStatsService courseStatsService;
 
     @BeforeEach
     void initTestCase() {
@@ -107,37 +111,49 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
     }
 
     /**
-     * Cached and cache-write input tokens are part of the input token count but are billed at their own rates. All dashboard cost queries must use the same formula
-     * as the course cost.
+     * Every dashboard query uses the complete USD amount once, without adding the legacy token-rate estimate.
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void costQueries_billCachedAndCacheWriteTokensAtTheirOwnRates() {
+    void costQueries_useProviderUsdInsteadOfLegacyRates() {
         String model = "gpt-6-luna-dashboard-cost-test";
         // 2M input tokens: 1M read from the cache, 0.4M written to it, 0.6M uncached
-        var request = new LLMRequest(model, 2_000_000, 1.0f, 100_000, 4.0f, "IRIS_CHAT_COURSE_MESSAGE", 1_000_000, 0.1f, 400_000, 1.25f);
-        LLMTokenUsageTrace trace = llmTokenUsageService.saveLLMTokenUsage(List.of(request), LLMServiceType.IRIS, builder -> builder);
+        var request = new LLMRequest(model, 2_000_000, 100_000, "IRIS_CHAT_COURSE_MESSAGE", 1_000_000, 400_000, 0.9);
+        var estimate = new LLMRequest(model, 100, 10, "IRIS_CHAT_COURSE_MESSAGE", 0, 0, 0.2);
+        var legacy = new LLMRequest(model, 1_000_000, 100, "IRIS_CHAT_COURSE_MESSAGE");
+        var free = new LLMRequest(model, 100, 10, "IRIS_CHAT_COURSE_MESSAGE", 0, 0, 0d);
+        Course course = courseUtilService.createCourse();
+        LLMTokenUsageTrace trace = llmTokenUsageService.saveLLMTokenUsage(List.of(request, estimate, legacy, free), LLMServiceType.IRIS,
+                builder -> builder.withCourse(course.getId()));
         // a window no other test writes to
         ZonedDateTime traceTime = ZonedDateTime.of(2031, 3, 14, 10, 0, 0, 0, ZoneOffset.UTC);
         trace.setTime(traceTime);
         llmTokenUsageTraceRepository.save(trace);
         Instant from = traceTime.minusHours(1).toInstant();
         Instant to = traceTime.plusHours(1).toInstant();
-        // 0.6M x 1.0 + 1M x 0.1 + 0.4M x 1.25 + 0.1M x 4.0 = 0.6 + 0.1 + 0.5 + 0.4
-        double expectedCost = 1.6;
+        // Sum each complete USD amount once. The old rates do not establish a USD amount.
+        double expectedCost = 1.1;
 
         List<Object[]> totals = dashboardRepository.computeTokenCost(from, to, "ALL");
         assertThat(totals).hasSize(1);
         assertThat(((Number) totals.getFirst()[1]).doubleValue()).isCloseTo(expectedCost, within(0.001));
+        assertThat(((Number) totals.getFirst()[2]).longValue()).isEqualTo(1);
 
         List<Object[]> timeline = dashboardRepository.findTokenCostWithTimestamps(from, to, "ALL");
         assertThat(timeline).hasSize(1);
         assertThat(((Number) timeline.getFirst()[2]).doubleValue()).isCloseTo(expectedCost, within(0.001));
+        assertThat(((Number) timeline.getFirst()[3]).longValue()).isEqualTo(1);
 
         List<Object[]> byModel = dashboardRepository.computeTokenCostByModel(from, to, "ALL");
         assertThat(byModel).hasSize(1);
         assertThat(byModel.getFirst()[0]).isEqualTo(model);
         assertThat(((Number) byModel.getFirst()[2]).doubleValue()).isCloseTo(expectedCost, within(0.001));
+        assertThat(((Number) byModel.getFirst()[3]).longValue()).isEqualTo(1);
+        assertThat(llmTokenUsageTraceRepository.calculateTotalLlmCostInUsdForCourse(course.getId())).isCloseTo(expectedCost, within(0.001));
+        assertThat(llmTokenUsageTraceRepository.countUnpricedRequestsForCourse(course.getId())).isEqualTo(1);
+        var courseStats = courseStatsService.getStatsForDetailView(course, null);
+        assertThat(courseStats.currentTotalLlmCostInUsd()).isCloseTo(expectedCost, within(0.001));
+        assertThat(courseStats.unpricedLlmRequestCount()).isEqualTo(1);
     }
 
     /**
@@ -252,7 +268,7 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
         assertThat(all.uniqueUsers()).isEqualTo(3);
         assertThat(all.totalMessages()).isEqualTo(6);
         assertThat(all.avgResponseTimeSeconds()).isCloseTo(90.0, within(0.001));
-        assertThat(all.totalTokenCostEur()).isCloseTo(3.0, within(0.001));
+        assertThat(all.totalTokenCostUsd()).isCloseTo(3.0, within(0.001));
         assertThat(all.thumbsUpCount()).isEqualTo(1);
         assertThat(all.thumbsDownCount()).isEqualTo(1);
         assertThat(all.sessionsWithThumbsUp()).isEqualTo(1);
@@ -263,7 +279,7 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
         assertThat(cloud.uniqueUsers()).isEqualTo(1);
         assertThat(cloud.totalMessages()).isEqualTo(2);
         assertThat(cloud.avgResponseTimeSeconds()).isCloseTo(10.0, within(0.001));
-        assertThat(cloud.totalTokenCostEur()).isCloseTo(1.0, within(0.001));
+        assertThat(cloud.totalTokenCostUsd()).isCloseTo(1.0, within(0.001));
         assertThat(cloud.thumbsUpCount()).isEqualTo(1);
         assertThat(cloud.thumbsDownCount()).isZero();
         assertThat(cloud.thumbsUpRatio()).isCloseTo(100.0, within(0.001));
@@ -274,7 +290,7 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
         assertThat(local.totalSessions()).isEqualTo(1);
         assertThat(local.uniqueUsers()).isEqualTo(1);
         assertThat(local.avgResponseTimeSeconds()).isCloseTo(200.0, within(0.001));
-        assertThat(local.totalTokenCostEur()).isCloseTo(0.0, within(0.001));
+        assertThat(local.totalTokenCostUsd()).isCloseTo(0.0, within(0.001));
         assertThat(local.thumbsUpCount()).isZero();
         assertThat(local.thumbsDownCount()).isEqualTo(1);
         assertThat(local.thumbsDownRatio()).isCloseTo(100.0, within(0.001));
@@ -307,9 +323,9 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
 
     /**
      * Creates a chat session with one user message and one answer after {@code responseSeconds}, rated {@code helpful}, plus a
-     * token usage trace for the answer that costs {@code costEur}.
+     * token usage trace for the answer that costs {@code costUsd}.
      */
-    private void createAnsweredSession(Course course, User user, ZonedDateTime createdAt, int responseSeconds, Boolean helpful, String model, float costEur) {
+    private void createAnsweredSession(Course course, User user, ZonedDateTime createdAt, int responseSeconds, Boolean helpful, String model, float costUsd) {
         IrisChatSession newSession = new IrisChatSession(course, user);
         newSession.setCreationDate(createdAt);
         IrisChatSession session = irisChatSessionRepository.save(newSession);
@@ -319,8 +335,8 @@ class IrisAdminDashboardResourceIntegrationTest extends AbstractIrisIntegrationT
         saveMessage(session, IrisMessageSender.USER, "Question", askedAt, null);
         IrisMessage savedAnswer = saveMessage(session, IrisMessageSender.LLM, "Answer", answeredAt, helpful);
 
-        // 1M output tokens at costEur per million
-        var llmRequest = new LLMRequest(model, 0, 0f, 1_000_000, costEur, "IRIS_CHAT_COURSE_MESSAGE");
+        // The complete USD amount is separate from the legacy unit-rate fields.
+        var llmRequest = new LLMRequest(model, 0, 1_000_000, "IRIS_CHAT_COURSE_MESSAGE", 0, 0, (double) costUsd);
         LLMTokenUsageTrace trace = llmTokenUsageService.saveLLMTokenUsage(List.of(llmRequest), LLMServiceType.IRIS,
                 builder -> builder.withIrisMessageID(savedAnswer.getId()).withUser(user.getId()));
         trace.setTime(answeredAt);

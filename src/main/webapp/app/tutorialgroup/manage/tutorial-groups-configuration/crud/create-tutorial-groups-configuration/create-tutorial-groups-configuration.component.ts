@@ -11,7 +11,7 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { TutorialGroupsConfigurationService, TutorialGroupsConfigurationSettings } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
-import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { tutorialGroupsConfigurationSaveObserver } from '../tutorial-groups-configuration-save.util';
 
 @Component({
     selector: 'jhi-create-tutorial-groups-configuration',
@@ -64,14 +64,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
                 }),
                 takeUntil(this.ngUnsubscribe),
             )
-            .subscribe({
-                next: (configuration) => {
-                    this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configuration);
-                    this.courseStorageService.updateCourse(this.course());
-                    void this.router.navigate(['/course-management', this.course().id!, 'tutorial-groups-checklist']);
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            .subscribe(tutorialGroupsConfigurationSaveObserver(this.course, this.courseStorageService, this.router, this.alertService, 'tutorial-groups-checklist'));
     }
 
     ngOnDestroy(): void {

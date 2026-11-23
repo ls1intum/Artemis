@@ -47,6 +47,7 @@
                     [ngModel]="selectedCreateLectureOption()"
                     (ngModelChange)="selectedCreateLectureOption.set($event)"
                     [allowEmpty]="false"
+                    [disabled]="recordingSaving() || !!savedRecording()"
                     optionLabel="label"
                     optionValue="mode"
                     size="small"
@@ -57,14 +58,14 @@
             <jhi-lecture-series-create [existingLectures]="existingLectures()" [courseId]="currentCourseId" />
         } @else {
             <div class="flex flex-col gap-6">
-                <section #detailsSection class="lecture-update-section flex flex-col gap-6 rounded-lg p-3.5 sm:p-6" aria-labelledby="artemisApp.lecture.sections.title">
+                <section
+                    #detailsSection
+                    class="lecture-update-section flex flex-col gap-6 rounded-lg p-3.5 sm:p-6"
+                    aria-labelledby="artemisApp.lecture.sections.title"
+                    [attr.inert]="recordingSaving() || savedRecording() ? '' : null"
+                >
                     <div class="flex flex-col gap-1">
-                        <h3
-                            id="artemisApp.lecture.sections.title"
-                            tabindex="-1"
-                            class="m-0 scroll-mt-4 text-lg font-semibold"
-                            jhiTranslate="artemisApp.lecture.sections.title"
-                        ></h3>
+                        <h3 id="artemisApp.lecture.sections.title" tabindex="-1" class="m-0 scroll-mt-4" jhiTranslate="artemisApp.lecture.sections.title"></h3>
                         <p class="lecture-update-hint m-0 text-sm" jhiTranslate="artemisApp.lecture.sections.titleDescription"></p>
                     </div>
                     <jhi-lecture-title-channel-name [lecture]="lecture()" (lectureChange)="onLectureChange($event)" />
@@ -92,7 +93,7 @@
                             variant="text"
                             size="small"
                             type="button"
-                            class="inline-flex cursor-help border-0 p-0"
+                            class="inline-flex cursor-help border-0! p-0!"
                             [attr.aria-label]="tutorialLectureTooltip"
                             [tumAetUiTooltip]="tutorialLectureTooltip"
                             tumAetUiTooltipDescribesHost="false"
@@ -101,7 +102,7 @@
                         </button>
                     </div>
                 </section>
-                <section #periodSection class="lecture-update-section rounded-lg p-3.5 sm:p-6">
+                <section #periodSection class="lecture-update-section rounded-lg p-3.5 sm:p-6" [attr.inert]="recordingSaving() || savedRecording() ? '' : null">
                     <jhi-lecture-timeline
                         [(startDate)]="lecture().startDate"
                         [(endDate)]="lecture().endDate"
@@ -109,6 +110,30 @@
                         (datesChanged)="updateIsChangesMadeToTitleOrPeriodSection()"
                     />
                 </section>
+                @if (!isEditMode() && (recordingAvailable() || recording() || savedRecording())) {
+                    <section class="lecture-update-section flex flex-col gap-2 rounded-lg p-3.5 sm:p-6" aria-labelledby="lecture-recording-title">
+                        <h3 id="lecture-recording-title" class="m-0" jhiTranslate="artemisApp.tumLiveUpload.optionalRecording"></h3>
+                        <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.tumLiveUpload.recordingHint"></p>
+                        <jhi-tum-live-file-picker
+                            [(file)]="recording"
+                            [(invalid)]="recordingInvalid"
+                            [disabled]="recordingSaving() || !!savedRecording()?.unitId || !!recordingRecovery()"
+                        />
+                        @if (!recordingRecovery() && (savedRecording()?.unitId || (savedRecording() && !recording()))) {
+                            <div>
+                                <button tumAetUiButton type="button" [disabled]="recordingSaving()" (click)="continueRecording()">
+                                    {{ 'artemisApp.tumLiveUpload.openSaved' | artemisTranslate }}
+                                </button>
+                            </div>
+                        }
+                    </section>
+                }
+                @if (recordingRecovery(); as recovery) {
+                    <jhi-tum-live-save-recovery [scope]="recovery" />
+                }
+                @if (isEditMode() && recordingNeedsReselection()) {
+                    <tumaet-ui-message severity="info" [text]="'artemisApp.tumLiveUpload.reselect' | artemisTranslate" />
+                }
                 @if (isEditMode()) {
                     <section class="lecture-update-section rounded-lg p-3.5 sm:p-6">
                         <jhi-lecture-update-units [lecture]="lecture()" />
@@ -119,8 +144,10 @@
     </div>
     @if (showsSingleLectureForm) {
         <jhi-lecture-edit-footer
-            [hasChanges]="isChangeMadeToTitleOrPeriodSection()"
+            [hasChanges]="isChangeMadeToTitleOrPeriodSection() || (!!recording() && !isEditMode())"
             [isSaving]="isSaving()"
+            [allowLeaveWhileSaving]="recordingSaving()"
+            [saveLabel]="recording() && !isEditMode() ? 'artemisApp.tumLiveUpload.saveAndUpload' : 'entity.action.save'"
             [invalidReason]="saveBlockedReason()"
             [savedAt]="lastSavedAt()"
             [changedSections]="unsavedSections()"

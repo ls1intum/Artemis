@@ -32,6 +32,9 @@ logging:
             total-size-cap: "10GB"
 
 artemis:
+    course-home:
+        ai:
+            enabled: false
     version: #project.version#
     file-upload-path: uploads
     feedback:
@@ -115,7 +118,7 @@ artemis:
                 matlab:
                     default: "mathworks/matlab:r2024b"
                 ruby:
-                    default: "ghcr.io/ls1intum/artemis-ruby-docker:v1.0.1"
+                    default: "ghcr.io/ls1intum/artemis-ruby-docker:v1.0.2"
                 dart:
                     default: "ghcr.io/ls1intum/artemis-dart-docker:v1.1.0"
 
@@ -163,20 +166,13 @@ artemis:
             default-limit: -1
             default-timeframe-hours: -1
 
-    # Deimos uses its own LLM config (not spring.ai.openai.*) to isolate student code from the shared Atlas/Hyperion endpoint
+    # Deimos sends student code to the LLM preset assigned under artemis.deimos.llm-preset (see artemis.llm)
     deimos:
         enabled: false
         executor:
             core-pool-size: 2
             max-pool-size: 4
             queue-capacity: 25
-        llm:
-            base-url: https://gpu.aet.cit.tum.de
-            api-key: dummy
-            model: openai/gpt-oss-120b
-            # The SDK appends /chat/completions itself; this path is stripped down to the prefix (e.g. /api)
-            completions-path: /api/chat/completions
-            temperature: 0
 
     weaviate:
         enabled: false
@@ -262,6 +258,12 @@ management:
                     name: http.server.requests
 
 spring: #disabled by default, you must enable it
+    properties:
+        migrator:
+            # spring-boot-properties-migrator reports a key that has a replacement of the same type as renamed (a warning, the value is remapped)
+            # and a key that Spring or a library marks as removed or deprecated without such a replacement as an error. Some keys of the
+            # second kind still work. The server refuses to start on an error instead of silently ignoring a setting, see the upgrade guide.
+            fail: on-error
     mail:
         properties:
             # Without a timeout the mail library waits forever for an SMTP server that stopped answering and blocks the thread
@@ -270,13 +272,16 @@ spring: #disabled by default, you must enable it
             mail.smtp.timeout: 30000
             mail.smtp.writetimeout: 30000
     ai:
+        # Artemis configures every LLM under artemis.llm and builds its clients itself; Spring AI creates no model of its own.
         model:
-            chat: none # possible values: openai, none (since Spring AI 2.0 the openai module also serves Azure OpenAI / Microsoft Foundry)
+            chat: none
             audio.speech: none
             audio.transcription: none
             embedding: none
             image: none
             moderation:  none
+            # Spring AI 2.1 added the decision model. Artemis does not use it, and without this key Spring AI creates it and fails for want of credentials.
+            decision: none
     application:
         name: Artemis
     jmx:
@@ -404,7 +409,12 @@ server:
             cookie:
                 http-only: true
     shutdown: graceful
-    forward-headers-strategy: native
+    request:
+        header:
+            forwarded:
+                # Tomcat resolves the X-Forwarded-* headers itself (RemoteIpValve), formerly forward-headers-strategy: native.
+                # Spring Boot 4.2 fails startup if both this and the deprecated server.forward-headers-strategy are set.
+                strategy: web-server
 
 # Properties to be exposed on the /management/info endpoint via DeduplicatedEnvironmentInfoContributor.
 # Define keys in camelCase here; INFO_* environment-variable overrides (necessarily all-lowercase) are case-normalized back to these camelCase keys.
@@ -414,6 +424,9 @@ info:
     textAssessmentAnalyticsEnabled: false
     studentExamStoreSessionData: true
     localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
+    # Comma separated hosts that images in markdown (posts, problem statements, ...) may be loaded from, for example "images.example.org, *.cdn.example.org".
+    # The host of Artemis itself is always allowed. Empty (the default) allows every host.
+    allowedImageHosts: ''
 
 # ===================================================================
 # JHipster specific properties
