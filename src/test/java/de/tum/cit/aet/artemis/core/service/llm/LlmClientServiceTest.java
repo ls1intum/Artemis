@@ -50,6 +50,10 @@ class LlmClientServiceTest {
              "usage":{"input_tokens":3,"input_tokens_details":{"cached_tokens":0},"output_tokens":1,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":4}}
             """;
 
+    private static final String EMBEDDINGS = """
+            {"object":"list","model":"served-model","data":[{"object":"embedding","index":0,"embedding":[0.5,-0.5]}],"usage":{"prompt_tokens":2,"total_tokens":2}}
+            """;
+
     private final List<Captured> requests = new ArrayList<>();
 
     private record Captured(String path, @Nullable String authorization, @Nullable String azureKey, @Nullable String customHeader, JsonNode body, Duration callTimeout) {
@@ -180,6 +184,33 @@ class LlmClientServiceTest {
         assertThatIllegalArgumentException().isThrownBy(() -> service.chatModel("missing")).withMessageContaining("missing is not configured");
     }
 
+    @Test
+    void embeddingsPresetSendsItsModelAndTheInputsAsFloatsWithTheCallersTimeout() {
+        var endpoint = endpoint(EndpointType.OPENAI, "https://llm.example.org/v1", "secret");
+        var service = service(Map.of("main", endpoint),
+                Map.of("embed", new Preset("main", "Qwen/Qwen3-Embedding-8B", Api.EMBEDDINGS, null, null, null, null, null, null, null, null), "chat",
+                        new Preset("main", "m", Api.CHAT_COMPLETIONS, null, null, null, null, null, null, null, null)));
+
+        var response = service.embed("embed", List.of("first", "second"), Duration.ofSeconds(2));
+
+        assertThat(response.data()).singleElement().satisfies(embedding -> assertThat(embedding.embedding()).containsExactly(0.5f, -0.5f));
+        assertThat(requests).singleElement().satisfies(request -> {
+            assertThat(request.path()).isEqualTo("/v1/embeddings");
+            assertThat(request.authorization()).isEqualTo("Bearer secret");
+            assertThat(request.customHeader()).isEqualTo("on");
+            assertThat(request.body().get("model").asString()).isEqualTo("Qwen/Qwen3-Embedding-8B");
+            assertThat(request.body().get("input")).hasSize(2);
+            // the SDK asks for base64 unless told otherwise; float is the API default, which global search relied on before
+            assertThat(request.body().get("encoding_format").asString()).isEqualTo("float");
+            // two seconds to connect, then two for the answer
+            assertThat(request.callTimeout()).isEqualTo(Duration.ofSeconds(4));
+        });
+        assertThatIllegalArgumentException().isThrownBy(() -> service.embed("chat", List.of("text"), Duration.ofSeconds(2))).withMessageContaining("not an embeddings preset");
+        assertThatIllegalArgumentException().isThrownBy(() -> service.embed("embed", List.of("text"), Duration.ZERO)).withMessageContaining("timeout");
+        assertThatIllegalArgumentException().isThrownBy(() -> service.embed("embed", List.of("text"), Duration.ofSeconds(-1))).withMessageContaining("timeout");
+        assertThatIllegalArgumentException().isThrownBy(() -> service.embed("embed", List.of("text"), null)).withMessageContaining("timeout");
+    }
+
     private static Endpoint endpoint(EndpointType type, String baseUrl, @Nullable String apiKey) {
         return new Endpoint(type, baseUrl, apiKey, Duration.ofSeconds(300), 0, null, null, Map.of("X-Test", "on"), List.of());
     }
@@ -198,7 +229,8 @@ class LlmClientServiceTest {
             JsonNode body = new JsonMapper().readTree(buffer.readUtf8());
             requests.add(new Captured(request.url().encodedPath(), request.header("Authorization"), request.header("api-key"), request.header("X-Test"), body,
                     Duration.ofNanos(chain.call().timeout().timeoutNanos())));
-            String json = request.url().encodedPath().endsWith("/responses") ? RESPONSE : CHAT_COMPLETION;
+            String path = request.url().encodedPath();
+            String json = path.endsWith("/responses") ? RESPONSE : path.endsWith("/embeddings") ? EMBEDDINGS : CHAT_COMPLETION;
             return respond(request, json);
         });
         return new LlmClientService(new LlmProperties(endpoints, presets, null), new JsonMapper(), observations, new SimpleMeterRegistry(), List.of(capture));

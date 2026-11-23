@@ -340,6 +340,6 @@ Do not subscribe manually to theme changes or mirror the current theme into a mu
 
 ## Cascade and source scanning
 
-Element defaults live in `content/scss/_base.scss` and are not in a cascade layer, so they and component SCSS win
-over Tailwind utilities. Tailwind scans only the folders listed in `tailwind.css`. Both constraints are documented in
+Element defaults live in `content/scss/_base.scss`, in the cascade layer `base`, so a Tailwind utility overrides
+them. Component SCSS is not in a layer and wins over Tailwind utilities. Tailwind scans only the folders listed in `tailwind.css`. Both constraints are documented in
 [Client Development: Styling](/developer/guidelines/client-development#styling).
