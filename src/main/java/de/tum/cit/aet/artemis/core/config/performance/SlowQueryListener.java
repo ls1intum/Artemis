@@ -129,7 +129,7 @@ public class SlowQueryListener implements QueryExecutionListener {
                 phase = req.getHeader(PLAYWRIGHT_PHASE_HEADER);
             }
         }
-        catch (IllegalStateException ignored) {
+        catch (IllegalStateException _) {
             // No request context bound (e.g. startup, scheduled tasks)
         }
 
@@ -187,7 +187,7 @@ public class SlowQueryListener implements QueryExecutionListener {
         try {
             return URLDecoder.decode(header, StandardCharsets.UTF_8);
         }
-        catch (IllegalArgumentException malformed) {
+        catch (IllegalArgumentException _) {
             return header;
         }
     }

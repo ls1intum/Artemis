@@ -120,8 +120,10 @@ public class SlowQueryCollector {
         if (executionTimeMs >= properties.getSlowQueryThresholdMs()) {
             if (slowQueries.size() < properties.getMaxRecordedQueries()) {
                 slowQueries.add(new SlowQueryRecord(normalizedSql, executionTimeMs, joinCount, httpMethod, httpEndpoint, testName, phase, threadName, Instant.now()));
-                log.debug("[SlowQuery] {}ms | {} {} | test='{}' | phase='{}' | thread='{}' | sql={}", executionTimeMs, httpMethod, httpEndpoint, testName, phase, threadName,
-                        abbreviate(normalizedSql));
+                if (log.isDebugEnabled()) {
+                    log.debug("[SlowQuery] {}ms | {} {} | test='{}' | phase='{}' | thread='{}' | sql={}", executionTimeMs, httpMethod, httpEndpoint, testName, phase, threadName,
+                            abbreviate(normalizedSql));
+                }
             }
             else {
                 log.warn("[SlowQuery] Circuit-breaker: max {} entries reached, ignoring further slow queries", properties.getMaxRecordedQueries());

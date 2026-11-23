@@ -130,6 +130,21 @@ class InlineCommentTest(unittest.TestCase):
         self.assertEqual(self.comments([repeated(**self.LOCATION)], baseline_findings=[repeated(**self.LOCATION)]), [])
         self.assertEqual(self.comments([repeated()]), [])
 
+    def test_without_a_baseline_no_inline_file_is_written(self):
+        # an empty file would read as "everything is fixed" and delete the comments of an earlier run
+        import json
+        import os
+        import tempfile
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as tmp:
+            source, inline = os.path.join(tmp, "report.json"), os.path.join(tmp, "inline.json")
+            with open(source, "w", encoding="utf-8") as f:
+                json.dump({"repeatedQueries": [repeated(**self.LOCATION)]}, f)
+            for extra, expected in (([], False), (["--baseline", os.path.join(tmp, "missing.json")], False)):
+                with mock.patch.object(sys, "argv", ["x", source, "--inline-out", inline, *extra]), mock.patch("builtins.print"):
+                    report.main()
+                self.assertEqual(os.path.exists(inline), expected)
+
     def test_the_line_does_not_change_the_key(self):
         first = self.comments([repeated(**self.LOCATION)])[0]["key"]
         moved = self.comments([repeated(sourceFile=self.LOCATION["sourceFile"], line=130)])[0]["key"]
