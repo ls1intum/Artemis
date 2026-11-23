@@ -529,6 +529,31 @@ describe('ModelingAssessmentComponent', () => {
             expect(addOrUpdate).toHaveBeenCalledWith(expect.objectContaining({ modelElementId: PACKAGE_ID, title: 'artemisApp.feedback.type.positive', score: -1 }));
         });
 
+        it.each([
+            ['accepted', FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER],
+            ['adapted', FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER],
+        ])('keeps the typed title of a reopened %s suggestion that Apollon drops when only the points change', async (_state, prefix) => {
+            fixture.componentRef.setInput('umlModel', makeMockModel());
+            fixture.detectChanges();
+            const suggestion = Feedback.forModeling(2, undefined, PACKAGE_ID, 'Package');
+            suggestion.text = prefix + 'artemisApp.feedback.type.positive';
+            suggestion.titleGenerated = false;
+            suggestion.detailText = 'Original detail';
+            comp.elementFeedback.set(PACKAGE_ID, suggestion);
+            // Reopening the saved assessment hands the typed title to Apollon
+            comp['updateApollonAssessments']([suggestion]);
+            const addOrUpdate = vi.spyOn(comp.apollonEditor!, 'addOrUpdateAssessment');
+
+            // Apollon clears a title that reads like a default together with the points change
+            comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, feedback: 'Original detail', score: -1 })]);
+
+            expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'artemisApp.feedback.type.positive');
+            expect(suggestion.titleGenerated).toBe(false);
+            expect(suggestion.credits).toBe(-1);
+            await Promise.resolve();
+            expect(addOrUpdate).toHaveBeenCalledWith(expect.objectContaining({ modelElementId: PACKAGE_ID, title: 'artemisApp.feedback.type.positive', score: -1 }));
+        });
+
         it('references an element by its UML type, not by the kind Apollon reports', () => {
             fixture.componentRef.setInput('umlModel', makeMockModel());
 
