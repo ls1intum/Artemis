@@ -82,7 +82,9 @@ Artemis creates the first commit of a repository itself, and **Author of the fir
 its author, for example in the commit history of the repository:
 
 - **The user who creates the exercise** is the default and the behavior of every course that never changed this
-  setting.
+  setting. Nothing is rewritten: a repository keeps the author it was created with. A student repository keeps the
+  author of the first commit of the template repository. That author can differ from the creator of the exercise if
+  the course used another option when the exercise was created or imported.
 - **The Artemis placeholder** uses the name and email address that the server configures as `artemis.git.name` and
   `artemis.git.email`, so no person appears as the author.
 - **A name and email address of your choice** uses an identity you enter, for example a course team. Students see this

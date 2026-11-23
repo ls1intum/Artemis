@@ -93,7 +93,8 @@ public record InitialCommitAuthorDTO(@NotNull InitialCommitAuthorMode mode, @Nul
     }
 
     /**
-     * The identity that authors the first commit according to this setting.
+     * The identity that authors the first commit according to this setting. For {@link InitialCommitAuthorMode#EXERCISE_CREATOR} this is the given creator, or null if there is
+     * none. Null means that nothing is rewritten: the commit keeps the author it already has.
      *
      * @param placeholder     the identity the server configures for commits it makes itself, used by {@link InitialCommitAuthorMode#PLACEHOLDER}
      * @param exerciseCreator the identity of the user who creates the exercise, or null where there is none, which leaves the author as it is

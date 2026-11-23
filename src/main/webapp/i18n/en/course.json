@@ -596,10 +596,10 @@
             },
             "initialCommitAuthor": {
                 "label": "Author of the first commit",
-                "hint": "Choose who is shown as the author of the first commit that Artemis creates: in the template, solution and test repository of programming exercises that you create or import from a file, and in the repository of each student that Artemis creates from now on. Existing repositories keep their history.",
+                "hint": "Choose who is shown as the author of the first commit that Artemis creates: in the template, solution and test repository of programming exercises that you create or import from a file, and in the repository of each student that Artemis creates from now on. Existing repositories keep their history. With the first option nothing is rewritten: a student repository keeps the author of the first commit of the template repository, which can differ from the exercise creator.",
                 "creator": {
                     "label": "The user who creates the exercise",
-                    "description": "This is how it works if you do not choose anything else."
+                    "description": "Nothing is rewritten. Repositories keep the author they were created with."
                 },
                 "placeholder": {
                     "label": "The Artemis placeholder",

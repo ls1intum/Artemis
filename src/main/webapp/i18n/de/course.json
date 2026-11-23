@@ -596,10 +596,10 @@
             },
             "initialCommitAuthor": {
                 "label": "Autor des ersten Commits",
-                "hint": "Wähle, wer als Autor des ersten Commits angezeigt wird, den Artemis erstellt: im Template-, Lösungs- und Test-Repository von Programmieraufgaben, die du erstellst oder aus einer Datei importierst, und im Repository jeder Studentin und jedes Studenten, das Artemis ab jetzt erstellt. Bestehende Repositories behalten ihren Verlauf.",
+                "hint": "Wähle, wer als Autor des ersten Commits angezeigt wird, den Artemis erstellt: im Template-, Lösungs- und Test-Repository von Programmieraufgaben, die du erstellst oder aus einer Datei importierst, und im Repository jeder Studentin und jedes Studenten, das Artemis ab jetzt erstellt. Bestehende Repositories behalten ihren Verlauf. Bei der ersten Option wird nichts umgeschrieben: Das Repository einer Studentin oder eines Studenten behält den Autor des ersten Commits des Template-Repositorys, der von der Person abweichen kann, die die Aufgabe erstellt hat.",
                 "creator": {
                     "label": "Die Person, die die Aufgabe erstellt",
-                    "description": "So funktioniert es, wenn du nichts anderes wählst."
+                    "description": "Es wird nichts umgeschrieben. Repositories behalten den Autor, mit dem sie erstellt wurden."
                 },
                 "placeholder": {
                     "label": "Der Artemis-Platzhalter",

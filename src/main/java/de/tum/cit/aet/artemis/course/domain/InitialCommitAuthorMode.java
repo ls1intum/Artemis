@@ -6,7 +6,11 @@ package de.tum.cit.aet.artemis.course.domain;
  */
 public enum InitialCommitAuthorMode {
 
-    /** The user who created the exercise. This is the behavior of every course that never chose another one. */
+    /**
+     * The default, and the behavior of every course that never chose another mode. Nothing is rewritten: a repository keeps the author it was created with. A student
+     * repository keeps the author of the first commit of the template repository, which can differ from the creator of the exercise if the course used another mode when the
+     * exercise was created or imported.
+     */
     EXERCISE_CREATOR,
 
     /** The identity that the server configures as {@code artemis.git.name} and {@code artemis.git.email}. */
