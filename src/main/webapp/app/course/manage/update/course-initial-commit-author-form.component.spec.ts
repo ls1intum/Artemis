@@ -128,6 +128,22 @@ describe('CourseInitialCommitAuthorFormComponent', () => {
         expect(element.querySelector<HTMLInputElement>(`#initialCommitAuthor${suffix}`)!.getAttribute('aria-label')).toBeTruthy();
     });
 
+    it('shows the error of a field once it was left and hides it when the value is valid', async () => {
+        const { fixture, group, element } = render(createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM }));
+        const nameAlert = () => element.querySelectorAll<HTMLElement>('[role="alert"]')[0];
+
+        expect(nameAlert().hidden).toBe(true);
+
+        group.controls.name.markAsTouched();
+        await fixture.whenStable();
+        expect(nameAlert().hidden).toBe(false);
+        expect(nameAlert().textContent).toContain('artemisApp.course.initialCommitAuthor.name.required');
+
+        group.controls.name.setValue('Course Team');
+        await fixture.whenStable();
+        expect(nameAlert().hidden).toBe(true);
+    });
+
     it('writes the chosen identity into the form', async () => {
         const { fixture, group, element } = render(createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM }));
         const name = element.querySelector<HTMLInputElement>('[data-testid="initial-commit-author-name"]')!;

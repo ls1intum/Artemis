@@ -55,7 +55,7 @@
                 controlId="initialCommitAuthorName"
                 required
                 [label]="'artemisApp.course.initialCommitAuthor.name.label' | artemisTranslate"
-                [invalid]="group().controls.name.touched && group().controls.name.invalid"
+                [invalid]="showNameError()"
                 [error]="nameError() ? ('artemisApp.course.initialCommitAuthor.name.' + nameError() | artemisTranslate: { max: nameMaxLength }) : ''"
             >
                 <input
@@ -73,7 +73,7 @@
                 controlId="initialCommitAuthorEmail"
                 required
                 [label]="'artemisApp.course.initialCommitAuthor.email.label' | artemisTranslate"
-                [invalid]="group().controls.email.touched && group().controls.email.invalid"
+                [invalid]="showEmailError()"
                 [error]="emailError() ? ('artemisApp.course.initialCommitAuthor.email.' + emailError() | artemisTranslate: { max: emailMaxLength }) : ''"
             >
                 <input

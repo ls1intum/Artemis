@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiRadioButtonComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -104,16 +104,35 @@ export class CourseInitialCommitAuthorFormComponent {
 
     readonly group = input.required<InitialCommitAuthorFormGroup>();
 
-    /** Read from the control on every check: a click on a radio button marks this component for checking, as it does for the other fields of the form. */
-    protected isCustom(): boolean {
+    /** Counts the events of the form, so that the state derived from the controls below is read again after each change, touch and validation. */
+    private readonly formRevision = signal(0);
+
+    protected readonly isCustom = computed(() => {
+        this.formRevision();
         return this.group().controls.mode.value === InitialCommitAuthorMode.CUSTOM;
-    }
-
-    protected nameError(): FieldError | undefined {
+    });
+    protected readonly nameError = computed(() => {
+        this.formRevision();
         return fieldErrorOf(this.group().controls.name);
-    }
-
-    protected emailError(): FieldError | undefined {
+    });
+    protected readonly emailError = computed(() => {
+        this.formRevision();
         return fieldErrorOf(this.group().controls.email);
+    });
+    /** An error is shown once the field was left, like the other fields of the course form. */
+    protected readonly showNameError = computed(() => {
+        this.formRevision();
+        return this.group().controls.name.touched && this.group().controls.name.invalid;
+    });
+    protected readonly showEmailError = computed(() => {
+        this.formRevision();
+        return this.group().controls.email.touched && this.group().controls.email.invalid;
+    });
+
+    constructor() {
+        effect((onCleanup) => {
+            const subscription = this.group().events.subscribe(() => this.formRevision.update((revision) => revision + 1));
+            onCleanup(() => subscription.unsubscribe());
+        });
     }
 }
