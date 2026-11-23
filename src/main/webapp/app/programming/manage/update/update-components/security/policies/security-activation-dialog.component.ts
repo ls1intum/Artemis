@@ -2,7 +2,8 @@ import { Component, computed, effect, input, model, output, signal, untracked } 
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleInfo, faCircleXmark, faMagnifyingGlass, faPlus, faShieldHalved, faTrashCan, faTriangleExclamation, faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo, faCircleXmark, faMagnifyingGlass, faPlus, faShieldHalved, faTriangleExclamation, faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
+import { faTrashCan } from '@fortawesome/free-regular-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

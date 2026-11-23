@@ -1,7 +1,8 @@
 import { Component, computed, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCode, faLock, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faTrashCan } from '@fortawesome/free-regular-svg-icons';
 import {
     TumAetUiButtonDirective,
     TumAetUiInputDirective,

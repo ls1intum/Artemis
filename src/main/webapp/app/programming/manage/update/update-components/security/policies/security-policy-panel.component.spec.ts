@@ -71,6 +71,20 @@ describe('SecurityPolicyPanelComponent', () => {
         expect(changes[3].working?.testClasses).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
     });
 
+    it('offers the YAML of a policy only once the policy is expanded', () => {
+        create(editorPolicyOf(FILE));
+        const viewYaml = () => fixture.nativeElement.querySelector('[data-testid="security-policy-view-yaml"]');
+        expect(comp.collapsed()).toBe(true);
+        expect(viewYaml()).toBeNull();
+
+        comp.collapsed.set(false);
+        fixture.detectChanges();
+        let opened = 0;
+        comp.viewYaml.subscribe(() => opened++);
+        viewYaml().click();
+        expect(opened).toBe(1);
+    });
+
     it('associates every label with its control', () => {
         create(editorPolicyOf(FILE));
         comp.collapsed.set(false);

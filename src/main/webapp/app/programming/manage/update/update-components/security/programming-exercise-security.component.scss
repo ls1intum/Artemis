@@ -8,6 +8,8 @@
     --sf-foreground: var(--tumaet-ui-muted-color);
     --sf-syncline-color: var(--tumaet-ui-muted-color);
 
+    // The layout of the version follows the width of the card, not of the window: the card is narrower than the window wherever the form has a sidebar.
+    container-type: inline-size;
     border: 1px solid var(--tumaet-ui-border-color);
     border-color: color-mix(in srgb, var(--sf-accent) 30%, var(--tumaet-ui-border-color));
     border-radius: 0.5rem;
@@ -23,10 +25,17 @@
         padding: 0.95rem 1.1rem;
     }
 
+    // The text gives way to the version, so the version keeps its place on the right instead of wrapping below a long description.
     &__left {
         display: flex;
+        flex: 1 1 0;
         align-items: flex-start;
         gap: 0.85rem;
+        min-width: 0;
+    }
+
+    &__main > .sf-list {
+        flex-basis: 100%;
     }
 }
 
@@ -103,6 +112,7 @@
 
 .sf-version {
     display: flex;
+    flex: none;
     flex-direction: column;
     align-items: flex-end;
     gap: 0.35rem;
@@ -112,6 +122,26 @@
         display: block;
         min-width: 10rem;
         max-width: 100%;
+    }
+}
+
+// Too narrow for two columns: the version moves below the text as one row with its label, like in the Advanced view.
+@container (max-width: 36rem) {
+    .sf-card__main {
+        gap: 0.75rem;
+    }
+
+    .sf-card__left {
+        flex-basis: 100%;
+    }
+
+    .sf-version {
+        flex: 1 1 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6rem;
+        min-width: 0;
     }
 }
 

@@ -28,10 +28,13 @@
             }
         </span>
         <span class="sp-panel-actions">
-            <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="viewYaml.emit()" data-testid="security-policy-view-yaml">
-                <fa-icon [icon]="faCode" />
-                <span [jhiTranslate]="prefix + 'viewYaml'"></span>
-            </button>
+            <!-- The YAML is a detail of an opened policy, so a collapsed one does not offer it. -->
+            @if (!collapsed()) {
+                <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="viewYaml.emit()" data-testid="security-policy-view-yaml">
+                    <fa-icon [icon]="faCode" />
+                    <span [jhiTranslate]="prefix + 'viewYaml'"></span>
+                </button>
+            }
             <button
                 type="button"
                 tumAetUiButton

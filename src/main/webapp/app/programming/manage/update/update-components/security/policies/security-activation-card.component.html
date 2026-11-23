@@ -90,9 +90,11 @@
     <div class="sp-row-between">
         <div class="sp-mut sp-row text-xs" data-testid="security-advanced-sync">
             @if (lastCommit(); as commit) {
-                <span>{{ (active() ? prefix + 'synced' : prefix + 'notActive') | artemisTranslate }} · {{ prefix + 'commit' | artemisTranslate }}</span>
+                <span>{{ (active() ? prefix + 'synced' : prefix + 'notActive') | artemisTranslate }} ·</span>
                 <span class="sp-mono">{{ commit.hash.substring(0, 7) }}</span>
-                <jhi-security-help [text]="(active() ? prefix + 'syncedHelp' : prefix + 'notActiveHelp') | artemisTranslate" />
+                @if (!active()) {
+                    <jhi-security-help [text]="prefix + 'notActiveHelp' | artemisTranslate" />
+                }
                 @if (lastCommitDate(); as date) {
                     <span>· {{ date | artemisTimeAgo }}</span>
                 }
@@ -112,6 +114,7 @@
             </span>
             @if (active()) {
                 <tumaet-ui-select
+                    class="sp-version-select"
                     inputId="securityAdvancedVersion"
                     size="small"
                     [options]="versionOptions()"

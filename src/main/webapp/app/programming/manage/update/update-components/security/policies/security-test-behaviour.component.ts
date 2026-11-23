@@ -26,9 +26,9 @@ import {
     BEHAVIOUR_TABS,
     BehaviourCategory,
     BehaviourTab,
-    TIME_UNITS,
     formatAresDate,
     isSameValue,
+    offeredTimeUnits,
     parseAresDate,
     setBehaviour,
 } from 'app/programming/manage/update/update-components/security/policies/security-policy-editor.util';
@@ -95,7 +95,10 @@ export class SecurityTestBehaviourComponent {
     readonly activeTab = signal<BehaviourTab>('securityFeedback');
 
     readonly timeUnitOptions = computed(() =>
-        TIME_UNITS.map((unit) => ({ value: unit, label: this.translateService.instant(`artemisApp.programmingExercise.security.advanced.behaviour.unit.${unit}`) })),
+        offeredTimeUnits([this.shownTimeout().timeUnit, this.shownTimeout().terminationGraceUnit]).map((unit) => ({
+            value: unit,
+            label: this.translateService.instant(`artemisApp.programmingExercise.security.advanced.behaviour.unit.${unit}`),
+        })),
     );
 
     readonly privilegedExceptions = computed(() => this.behavior()?.privilegedExceptions);

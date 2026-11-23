@@ -61,6 +61,13 @@ describe('SecurityTestCasesComponent', () => {
             ['StressTest', true, 'new'],
         ]);
         expect(comp.declaredCount()).toBe(2);
+        // Like the assigned test cases, the declared classes are a tree of packages.
+        expect(comp.declaredPackages().map((group) => [group.packageName, group.classes.map((declared) => declared.simpleName)])).toEqual([
+            ['de.a', ['Helper', 'MathTest', 'SortingTest']],
+            ['de.b', ['StressTest']],
+        ]);
+        const rows: HTMLElement[] = [...fixture.nativeElement.querySelectorAll('[data-testid="security-test-classes-row"]')];
+        expect(rows.map((row) => row.closest('ul')?.parentElement?.querySelector('.sp-strong')?.textContent?.trim())).toEqual(['de.a', 'de.a', 'de.a', 'de.b']);
     });
 
     it('asks about the whole class when the assignment of a class is removed', () => {

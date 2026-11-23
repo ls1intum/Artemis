@@ -98,7 +98,9 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(element.querySelector('[data-testid="security-advanced-card"]')).not.toBeNull();
         expect(element.querySelector('[data-testid="security-policies-section"]')).not.toBeNull();
         expect(element.querySelector('[data-testid="security-policy-file"]')?.textContent).toContain('SecurityPolicy.yaml');
+        // Without changes there is nothing to save or discard, so the bar says that everything is saved and offers no buttons.
         expect(element.querySelector('[data-testid="security-policies-commit-bar-idle"]')).not.toBeNull();
+        expect(element.querySelector('[data-testid="security-policies-commit-bar-idle"] button')).toBeNull();
         expect(comp.cardState()).toBe('configured');
         expect(comp.scanDependencies()).toBe(false);
         expect(comp.scanAvailable()).toBe(true);

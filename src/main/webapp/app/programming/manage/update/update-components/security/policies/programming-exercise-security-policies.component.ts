@@ -12,7 +12,6 @@ import {
     faPlus,
     faRotateRight,
     faSpinner,
-    faTrashCan,
     faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -165,7 +164,6 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     protected readonly faPlus = faPlus;
     protected readonly faRotateRight = faRotateRight;
     protected readonly faSpinner = faSpinner;
-    protected readonly faTrashCan = faTrashCan;
     protected readonly faTriangleExclamation = faTriangleExclamation;
 
     readonly exerciseId = input.required<number>();

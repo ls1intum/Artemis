@@ -113,6 +113,14 @@ describe('SecurityTestBehaviourComponent', () => {
         expect(emitted.at(-1)).toBeUndefined();
     });
 
+    it('offers milliseconds to hours as time units, and keeps a unit the policy already uses', () => {
+        expect(comp.timeUnitOptions().map((option) => option.value)).toEqual(['MILLISECONDS', 'SECONDS', 'MINUTES', 'HOURS']);
+
+        // A policy written by hand may use any unit of Java; the field shows it instead of an empty selection.
+        fixture.componentRef.setInput('behavior', { strictTimeout: { timeout: 500, timeUnit: 'MICROSECONDS', terminationGrace: 1, terminationGraceUnit: 'DAYS' } });
+        expect(comp.timeUnitOptions().map((option) => option.value)).toEqual(['MICROSECONDS', 'MILLISECONDS', 'SECONDS', 'MINUTES', 'HOURS', 'DAYS']);
+    });
+
     it('refuses numbers that are no exact whole number of the server', () => {
         handlers.setStrictTimeout(true);
         handlers.setMirrorOutput(true);

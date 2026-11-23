@@ -13,23 +13,55 @@
             } @else if (!shown().length) {
                 <p class="sp-mut m-0 p-2 text-sm">{{ prefix + 'empty' | artemisTranslate: { query: search() } }}</p>
             }
-            @for (option of shown(); track option.qualifiedName) {
-                <div class="sp-tree-row sp-level-0" [class.sp-selected]="!option.fromTests && selection().has(option.qualifiedName)" data-testid="security-declare-classes-row">
-                    <tumaet-ui-checkbox
-                        [checked]="option.fromTests || selection().has(option.qualifiedName)"
-                        [disabled]="option.fromTests"
-                        [ariaLabel]="(prefix + 'declare' | artemisTranslate) + ' ' + option.qualifiedName"
-                        [tumAetUiTooltip]="option.fromTests ? (prefix + 'fromTestsHelp' | artemisTranslate) : undefined"
-                        (changed)="toggle(option)"
-                    />
-                    <span class="sp-class-name">
-                        <span class="sp-mono">{{ option.simpleName }}</span>
-                        <span class="sp-mono sp-mut text-xs">{{ option.packageName }}</span>
-                    </span>
-                    @if (option.helper) {
-                        <span class="sp-mut sp-push text-xs" [jhiTranslate]="prefix + 'noTests'"></span>
+            @for (group of groups(); track group.packageName) {
+                <div class="sp-tree-row sp-level-0" data-testid="security-declare-classes-package">
+                    @if (group.selectable.length) {
+                        <tumaet-ui-checkbox
+                            [checked]="group.allSelected"
+                            [indeterminate]="group.partlySelected"
+                            [ariaLabel]="(prefix + 'selectPackage' | artemisTranslate) + ' ' + group.packageName"
+                            (changed)="togglePackage(group)"
+                        />
+                    } @else {
+                        <span class="sp-spacer"></span>
                     }
+                    <button
+                        type="button"
+                        class="sp-twisty"
+                        [attr.aria-expanded]="group.open"
+                        [attr.aria-label]="
+                            ((group.open ? 'artemisApp.programmingExercise.security.advanced.assign.collapse' : 'artemisApp.programmingExercise.security.advanced.assign.expand')
+                                | artemisTranslate) +
+                            ' ' +
+                            group.packageName
+                        "
+                        (click)="toggleOpen(group.packageName)"
+                    >
+                        <fa-icon [icon]="group.open ? faChevronDown : faChevronRight" />
+                    </button>
+                    <span class="sp-mono sp-strong">{{ group.packageName }}</span>
                 </div>
+                @if (group.open) {
+                    @for (option of group.classes; track option.qualifiedName) {
+                        <div
+                            class="sp-tree-row sp-level-1"
+                            [class.sp-selected]="!option.fromTests && selection().has(option.qualifiedName)"
+                            data-testid="security-declare-classes-row"
+                        >
+                            <tumaet-ui-checkbox
+                                [checked]="option.fromTests || selection().has(option.qualifiedName)"
+                                [disabled]="option.fromTests"
+                                [ariaLabel]="(prefix + 'declare' | artemisTranslate) + ' ' + option.qualifiedName"
+                                [tumAetUiTooltip]="option.fromTests ? (prefix + 'fromTestsHelp' | artemisTranslate) : undefined"
+                                (changed)="toggle(option)"
+                            />
+                            <span class="sp-mono">{{ option.simpleName }}</span>
+                            @if (option.helper) {
+                                <span class="sp-mut sp-push text-xs" [jhiTranslate]="prefix + 'noTests'"></span>
+                            }
+                        </div>
+                    }
+                }
             }
         </fieldset>
     </div>

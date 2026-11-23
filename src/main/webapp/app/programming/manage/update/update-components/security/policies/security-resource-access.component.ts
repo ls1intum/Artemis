@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faEllipsisVertical, faLock, faPen, faPlus, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsisVertical, faLock, faPen, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faTrashCan } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import {
     TumAetUiButtonDirective,

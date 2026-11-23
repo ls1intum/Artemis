@@ -99,53 +99,57 @@
         @if (!declaredClasses().length) {
             <p class="sp-empty" [jhiTranslate]="prefix + 'noClasses'"></p>
         } @else {
-            <ul class="sp-l1 sp-plain-list" [attr.aria-label]="prefix + 'declaredIn' | artemisTranslate: { policy: policy().name }">
-                @for (declared of declaredClasses(); track declared.qualifiedName) {
-                    <li data-testid="security-test-classes-row">
-                        <span class="sp-li-row">
-                            <span class="sp-class-name">
-                                <span class="sp-mono">{{ declared.simpleName }}</span>
-                                <span class="sp-mono sp-mut text-xs">{{ declared.packageName }}</span>
-                            </span>
-                            @if (declared.fromTests) {
-                                <tumaet-ui-tag severity="secondary" size="sm" [tumAetUiTooltip]="prefix + 'fromTestsHelp' | artemisTranslate" tabindex="0">
-                                    <span [jhiTranslate]="prefix + 'fromTests'"></span>
-                                </tumaet-ui-tag>
-                            } @else if (declared.state === 'removed') {
-                                <tumaet-ui-tag severity="danger" size="sm" [tumAetUiTooltip]="prefix + 'classRemovedHelp' | artemisTranslate" tabindex="0">
-                                    <span [jhiTranslate]="prefix + 'removed'"></span>
-                                </tumaet-ui-tag>
-                                <button
-                                    type="button"
-                                    tumAetUiButton
-                                    severity="primary"
-                                    variant="text"
-                                    size="small"
-                                    [disabled]="disabled()"
-                                    [attr.aria-label]="(prefix + 'undoLabel' | artemisTranslate) + ' ' + declared.simpleName"
-                                    (click)="undoClass(declared.qualifiedName)"
-                                >
-                                    {{ prefix + 'undo' | artemisTranslate }}
-                                </button>
-                            } @else {
-                                @if (declared.state === 'new') {
-                                    <tumaet-ui-tag severity="warn" size="sm" [tumAetUiTooltip]="prefix + 'classNewHelp' | artemisTranslate" tabindex="0">
-                                        <span jhiTranslate="artemisApp.programmingExercise.security.advanced.uncommitted"></span>
-                                    </tumaet-ui-tag>
-                                }
-                                <button
-                                    type="button"
-                                    class="sp-help"
-                                    [disabled]="disabled()"
-                                    [attr.aria-label]="(prefix + 'removeLabel' | artemisTranslate) + ' ' + declared.simpleName"
-                                    [tumAetUiTooltip]="prefix + 'removeLabel' | artemisTranslate"
-                                    (click)="askRemove('class', declared.qualifiedName)"
-                                    data-testid="security-test-classes-remove"
-                                >
-                                    <fa-icon [icon]="faXmark" />
-                                </button>
+            <ul class="sp-l1" [attr.aria-label]="prefix + 'declaredIn' | artemisTranslate: { policy: policy().name }">
+                @for (group of declaredPackages(); track group.packageName) {
+                    <li>
+                        <span class="sp-mono sp-strong">{{ group.packageName }}</span>
+                        <ul class="sp-l2">
+                            @for (declared of group.classes; track declared.qualifiedName) {
+                                <li data-testid="security-test-classes-row">
+                                    <span class="sp-li-row">
+                                        <span class="sp-mono">{{ declared.simpleName }}</span>
+                                        @if (declared.fromTests) {
+                                            <tumaet-ui-tag severity="secondary" size="sm" [tumAetUiTooltip]="prefix + 'fromTestsHelp' | artemisTranslate" tabindex="0">
+                                                <span [jhiTranslate]="prefix + 'fromTests'"></span>
+                                            </tumaet-ui-tag>
+                                        } @else if (declared.state === 'removed') {
+                                            <tumaet-ui-tag severity="danger" size="sm" [tumAetUiTooltip]="prefix + 'classRemovedHelp' | artemisTranslate" tabindex="0">
+                                                <span [jhiTranslate]="prefix + 'removed'"></span>
+                                            </tumaet-ui-tag>
+                                            <button
+                                                type="button"
+                                                tumAetUiButton
+                                                severity="primary"
+                                                variant="text"
+                                                size="small"
+                                                [disabled]="disabled()"
+                                                [attr.aria-label]="(prefix + 'undoLabel' | artemisTranslate) + ' ' + declared.simpleName"
+                                                (click)="undoClass(declared.qualifiedName)"
+                                            >
+                                                {{ prefix + 'undo' | artemisTranslate }}
+                                            </button>
+                                        } @else {
+                                            @if (declared.state === 'new') {
+                                                <tumaet-ui-tag severity="warn" size="sm" [tumAetUiTooltip]="prefix + 'classNewHelp' | artemisTranslate" tabindex="0">
+                                                    <span jhiTranslate="artemisApp.programmingExercise.security.advanced.uncommitted"></span>
+                                                </tumaet-ui-tag>
+                                            }
+                                            <button
+                                                type="button"
+                                                class="sp-help"
+                                                [disabled]="disabled()"
+                                                [attr.aria-label]="(prefix + 'removeLabel' | artemisTranslate) + ' ' + declared.simpleName"
+                                                [tumAetUiTooltip]="prefix + 'removeLabel' | artemisTranslate"
+                                                (click)="askRemove('class', declared.qualifiedName)"
+                                                data-testid="security-test-classes-remove"
+                                            >
+                                                <fa-icon [icon]="faXmark" />
+                                            </button>
+                                        }
+                                    </span>
+                                </li>
                             }
-                        </span>
+                        </ul>
                     </li>
                 }
             </ul>

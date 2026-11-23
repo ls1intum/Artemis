@@ -155,6 +155,15 @@ export class SecurityTestCasesComponent {
         return owners;
     });
 
+    /** The declared classes grouped by their package, like the assigned test cases, so both columns show the same tree. */
+    readonly declaredPackages = computed<{ packageName: string; classes: DeclaredClass[] }[]>(() => {
+        const byPackage = new Map<string, DeclaredClass[]>();
+        for (const declared of [...this.declaredClasses()].sort((first, second) => first.simpleName.localeCompare(second.simpleName))) {
+            byPackage.set(declared.packageName, [...(byPackage.get(declared.packageName) ?? []), declared]);
+        }
+        return [...byPackage.entries()].sort(([first], [second]) => first.localeCompare(second)).map(([packageName, classes]) => ({ packageName, classes }));
+    });
+
     readonly declaredCount = computed(() => this.declaredClasses().filter((declared) => declared.state !== 'removed').length);
     readonly classesOfAssignedTests = computed(() => classesOfTests(this.policy().tests));
 

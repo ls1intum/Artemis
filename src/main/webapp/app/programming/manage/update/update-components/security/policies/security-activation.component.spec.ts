@@ -32,7 +32,18 @@ describe('Security activation', () => {
 
             const element: HTMLElement = fixture.nativeElement;
             expect(element.querySelector('[data-testid="security-advanced-configured"]')).not.toBeNull();
-            expect(element.querySelector('[data-testid="security-advanced-sync"]')?.textContent).toContain('abcdef1');
+            // The saved version needs no explanation while the sandbox is active; only an inactive one explains what its builds do.
+            const sync = element.querySelector('[data-testid="security-advanced-sync"]');
+            expect(sync?.textContent).toContain('abcdef1');
+            expect(sync?.textContent).not.toContain('card.commit');
+            expect(sync?.querySelector('jhi-security-help')).toBeNull();
+            fixture.componentRef.setInput('state', 'inactive');
+            fixture.componentRef.setInput('toggleOn', false);
+            fixture.detectChanges();
+            expect(element.querySelector('[data-testid="security-advanced-sync"] jhi-security-help')).not.toBeNull();
+            fixture.componentRef.setInput('state', 'configured');
+            fixture.componentRef.setInput('toggleOn', true);
+            fixture.detectChanges();
 
             const handlers = comp as unknown as { onToggle(on: boolean): void; onScan(on: boolean): void; onVersion(version: unknown): void };
             handlers.onToggle(false);

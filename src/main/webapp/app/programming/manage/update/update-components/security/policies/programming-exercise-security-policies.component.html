@@ -120,13 +120,10 @@
                         </tumaet-ui-message>
                     } @else {
                         <div class="sp-commit-bar-idle" data-testid="security-policies-commit-bar-idle">
+                            <!-- Discard and Save appear only once there is something to save. -->
                             <span class="sp-mut sp-row text-sm">
                                 <fa-icon [icon]="faCircleCheck" />
                                 <span [jhiTranslate]="canCommit() ? prefix + 'commitBar.nothing' : prefix + 'commitBar.instructorsOnly'"></span>
-                            </span>
-                            <span class="sp-row">
-                                <button type="button" tumAetUiButton severity="danger" variant="outlined" disabled>{{ prefix + 'commitBar.discard' | artemisTranslate }}</button>
-                                <button type="button" tumAetUiButton disabled>{{ prefix + 'commitBar.commit' | artemisTranslate }}</button>
                             </span>
                         </div>
                     }

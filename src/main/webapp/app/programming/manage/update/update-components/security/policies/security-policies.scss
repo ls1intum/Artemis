@@ -61,6 +61,13 @@
     gap: calc(var(--tumaet-ui-spacing) * 2);
 }
 
+// The option list is exactly as wide as the select, so it needs room for a label like "2.2.1 (latest)" next to the check mark.
+.sp-version-select {
+    display: block;
+    min-width: 10rem;
+    max-width: 100%;
+}
+
 .sp-row-between {
     display: flex;
     flex-wrap: wrap;
@@ -397,7 +404,7 @@
     width: calc(var(--tumaet-ui-spacing) * 6);
 }
 
-// Lists of assigned tests and declared classes
+// Trees of assigned tests and declared classes: packages, their classes and their test cases, connected by guide lines like the trees of the dialogs
 .sp-l1,
 .sp-l2,
 .sp-l3 {
@@ -405,26 +412,31 @@
     flex-direction: column;
     gap: calc(var(--tumaet-ui-spacing) * 2);
     margin: 0;
-    padding-inline-start: calc(var(--tumaet-ui-spacing) * 6);
+    padding: 0;
     font-size: var(--tumaet-ui-font-size-sm);
+    list-style: none;
 }
 
-.sp-l1 {
-    list-style: disc;
-}
-
-.sp-l2 {
-    margin-top: calc(var(--tumaet-ui-spacing) * 2);
-    list-style: circle;
-}
-
+.sp-l2,
 .sp-l3 {
     margin-top: calc(var(--tumaet-ui-spacing) * 2);
-    list-style: square;
-}
+    margin-inline-start: calc(var(--tumaet-ui-spacing) * 1.5);
+    padding-inline-start: calc(var(--tumaet-ui-spacing) * 4);
+    border-inline-start: 1px solid var(--tumaet-ui-border-color);
 
-.sp-plain-list {
-    list-style: none;
+    > li {
+        position: relative;
+
+        // The branch from the guide line to the entry
+        &::before {
+            position: absolute;
+            top: 0.75em;
+            inset-inline-start: calc(var(--tumaet-ui-spacing) * -4);
+            width: calc(var(--tumaet-ui-spacing) * 3);
+            border-top: 1px solid var(--tumaet-ui-border-color);
+            content: '';
+        }
+    }
 }
 
 .sp-li-row {
@@ -432,13 +444,6 @@
     flex-wrap: wrap;
     align-items: center;
     gap: calc(var(--tumaet-ui-spacing) * 2);
-}
-
-.sp-class-name {
-    display: inline-flex;
-    flex-direction: column;
-    min-width: 0;
-    overflow-wrap: anywhere;
 }
 
 .sp-col {

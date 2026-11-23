@@ -135,8 +135,19 @@ export function changedFileSettings(base: SecurityPolicyDocument | undefined, wo
     return FILE_SETTINGS.filter((setting) => !isSameValue(base?.[setting], working[setting]));
 }
 
-/** The time units the timeout fields offer: every value of Java's {@code TimeUnit}, smallest first. */
-export const TIME_UNITS: readonly string[] = ['NANOSECONDS', 'MICROSECONDS', 'MILLISECONDS', 'SECONDS', 'MINUTES', 'HOURS', 'DAYS'];
+/** Every value of Java's {@code TimeUnit}, smallest first; a policy may use any of them. */
+const TIME_UNITS: readonly string[] = ['NANOSECONDS', 'MICROSECONDS', 'MILLISECONDS', 'SECONDS', 'MINUTES', 'HOURS', 'DAYS'];
+
+/** The time units that suit the timeout of a test case; nanoseconds, microseconds and days do not. */
+const OFFERED_TIME_UNITS: readonly string[] = ['MILLISECONDS', 'SECONDS', 'MINUTES', 'HOURS'];
+
+/**
+ * @param inUse the units the policy uses; a unit that is not offered stays selectable while a policy uses it, so its value is shown as it is
+ * @returns the time units a timeout field offers, smallest first
+ */
+export function offeredTimeUnits(inUse: readonly (string | undefined)[]): string[] {
+    return TIME_UNITS.filter((unit) => OFFERED_TIME_UNITS.includes(unit) || inUse.includes(unit));
+}
 
 /** The file extension of new policies, like the one Artemis generates. */
 const POLICY_EXTENSION = '.yaml';
