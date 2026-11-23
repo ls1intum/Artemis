@@ -6,59 +6,8 @@
 
     .quiz-options {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
+        flex-direction: column;
         width: 100%;
-
-        input {
-            display: inline-block;
-        }
-
-        .input-group-btn {
-            display: inline-block;
-            width: auto;
-        }
-
-        .datepicker-input {
-            max-width: 140px;
-        }
-
-        .checkbox {
-            display: inline-block;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 1.5rem;
-
-            .start-time {
-                width: 80%;
-            }
-
-            label {
-                font-size: medium;
-                font-weight: bolder;
-            }
-
-            .form-check-label {
-                font-size: var(--bs-body-font-size);
-            }
-
-            > div.time-picker {
-                margin-top: -15px;
-                margin-left: 0;
-            }
-
-            .form-control:disabled {
-                background-color: var(--gray-200);
-            }
-        }
-
-        .custom-checkbox {
-            display: block;
-        }
 
         .background-file,
         .drag-item-file {
@@ -69,17 +18,7 @@
             margin-bottom: 0.5rem;
             margin-top: 0.5rem;
         }
-
-        .quiz-duration {
-            input {
-                width: 4rem;
-            }
-        }
     }
-}
-
-.edit-quiz-re-evaluate .card.mb-3 {
-    overflow: hidden;
 }
 
 .edit-quiz-re-evaluate .question-card-body {
@@ -95,8 +34,4 @@
     z-index: 10;
     border-top: 1px solid var(--border-color);
     background: var(--edit-quiz-footer-background);
-
-    .container {
-        height: 100%;
-    }
 }

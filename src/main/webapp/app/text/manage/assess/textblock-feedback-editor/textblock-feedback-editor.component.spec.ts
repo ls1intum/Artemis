@@ -21,6 +21,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { MenuHarness } from '@angular/aria/menu/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 
 /**
  * Test suite for TextBlockFeedbackEditorComponent.
@@ -252,6 +254,41 @@ describe('TextBlockFeedbackEditorComponent', () => {
         fixture.detectChanges();
 
         expect(compiled.querySelector('.unified-feedback-detail-row [data-testid="feedback-instruction-menu"]')).toBeTruthy();
+    });
+
+    it('should name each criterion group of the instruction menu, so equal instructions of different criteria stay distinguishable', async () => {
+        const instruction = (id: number) => ({ id, credits: 1, instructionDescription: 'Correct' }) as GradingInstruction;
+        fixture.componentRef.setInput('criteria', [
+            { id: 1, title: 'Correctness', structuredGradingInstructions: [instruction(2)] } as GradingCriterion,
+            { id: 3, structuredGradingInstructions: [instruction(4)] } as GradingCriterion,
+        ]);
+        fixture.detectChanges();
+
+        (compiled.querySelector('[data-testid="feedback-instruction-menu"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        const menu = await TestbedHarnessEnvironment.documentRootLoader(fixture).getHarness(MenuHarness);
+
+        expect(await menu.getItems()).toHaveLength(2);
+        const groups = Array.from(document.querySelectorAll('tumaet-ui-menu [data-testid="feedback-instruction-group"]'));
+        expect(groups.map((group) => [group.getAttribute('role'), group.getAttribute('aria-label')])).toEqual([
+            ['group', 'Correctness'],
+            ['group', 'artemisApp.textAssessment.feedbackEditor.noTitle'],
+        ]);
+        expect(groups.map((group) => group.querySelectorAll('[tumAetUiMenuItem]').length)).toEqual([1, 1]);
+    });
+
+    it('should not wrap the instructions of a single criterion in a named group', async () => {
+        fixture.componentRef.setInput('criteria', [
+            { id: 1, title: 'Correctness', structuredGradingInstructions: [{ id: 2, credits: 1 } as GradingInstruction] } as GradingCriterion,
+        ]);
+        fixture.detectChanges();
+
+        (compiled.querySelector('[data-testid="feedback-instruction-menu"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        const menu = await TestbedHarnessEnvironment.documentRootLoader(fixture).getHarness(MenuHarness);
+
+        expect(await menu.getItems()).toHaveLength(1);
+        expect(document.querySelectorAll('tumaet-ui-menu [role="group"]')).toHaveLength(0);
     });
 
     it('should update the assessment when a grading instruction is chosen from the menu', () => {
