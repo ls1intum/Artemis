@@ -15,16 +15,21 @@ $transition-color-length: 0.2s;
 
 // Displays a red circle at the top right corner of the tab item.
 // Used to indicate that there are new messages.
+// The size is explicit on both axes. A box sized by padding and font alone has the height of its text, which differs
+// between browsers, and where the link is a flex container (the collapsed sidebar, as on a phone) the box is a flex
+// item that stretches to the full height of the link and turns the circle into a tall ellipse.
 %message-block {
     position: relative;
     content: '';
+    display: inline-block;
+    flex: none;
+    align-self: flex-start;
+    width: 0.7rem;
+    height: 0.7rem;
     border-radius: 50%;
     background-color: var(--danger);
-    padding-left: 0.7rem;
-    top: -5px;
+    top: -3px;
     right: 0;
-    transform: translate(50%, -50%);
-    font-size: xx-small;
 }
 
 .newMessage::after {
