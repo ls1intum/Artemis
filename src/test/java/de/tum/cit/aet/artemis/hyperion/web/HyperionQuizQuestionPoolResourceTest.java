@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionQuizQuestionPoolApi;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolBuildTrigger;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
@@ -68,6 +69,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitRelevanceD
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolReviewDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionCandidateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionDTO;
@@ -119,6 +121,9 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
 
     @Autowired
     private HyperionQuizQuestionPoolService poolService;
+
+    @Autowired
+    private HyperionQuizQuestionPoolApi poolApi;
 
     @Autowired
     private FeatureToggleService featureToggleService;
@@ -821,6 +826,32 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         assertThat(candidates).containsExactly(new QuizQuestionPoolSelectionCandidateDTO(firstCompetency.getId(), firstTextUnit.getId(), QuizQuestionGenerationType.SINGLE_CHOICE,
                 QuizQuestionDifficulty.MEDIUM, 3));
         assertThat(draw.questions()).extracting(QuizQuestionPoolItemDTO::id).containsExactlyInAnyOrder(approved.getId(), unreviewed.getId(), approvedDespiteRejection.getId());
+    }
+
+    @Test
+    void shouldOfferTheEligibleQuestionsAndTheirCountsThroughTheModuleApi() {
+        QuizQuestionPoolItem approved = saveApprovedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 1);
+        QuizQuestionPoolItem unreviewed = saveJudgedItem(QuizQuestionGenerationType.MULTIPLE_CHOICE, 2, QuizQuestionReviewState.PENDING, true, false);
+        saveJudgedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 3, QuizQuestionReviewState.PENDING, true, true);
+        saveJudgedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 4, QuizQuestionReviewState.PENDING, false, false);
+        saveJudgedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 5, QuizQuestionReviewState.EXCLUDED, true, false);
+
+        List<QuizQuestionPoolQuestionDTO> all = poolApi.findEligibleQuestions(courseId, null, null, null, null);
+        List<QuizQuestionPoolQuestionDTO> singleChoice = poolApi.findEligibleQuestions(courseId, List.of(firstCompetency.getId()), List.of(firstTextUnit.getId()),
+                List.of(QuizQuestionGenerationType.SINGLE_CHOICE), List.of(QuizQuestionDifficulty.MEDIUM));
+
+        assertThat(all).extracting(QuizQuestionPoolQuestionDTO::id).containsExactlyInAnyOrder(approved.getId(), unreviewed.getId());
+        assertThat(singleChoice).singleElement().satisfies(question -> {
+            assertThat(question.id()).isEqualTo(approved.getId());
+            assertThat(question.competencyId()).isEqualTo(firstCompetency.getId());
+            assertThat(question.question().title()).isEqualTo("Question 1");
+        });
+        assertThat(poolApi.countEligibleQuestions(courseId)).containsExactlyInAnyOrder(
+                new QuizQuestionPoolSelectionCandidateDTO(firstCompetency.getId(), firstTextUnit.getId(), QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.MEDIUM,
+                        1),
+                new QuizQuestionPoolSelectionCandidateDTO(firstCompetency.getId(), firstTextUnit.getId(), QuizQuestionGenerationType.MULTIPLE_CHOICE, QuizQuestionDifficulty.MEDIUM,
+                        1));
+        assertThat(itemRepository.findByIdElseThrow(approved.getId()).getSelectionCount()).isZero();
     }
 
     @Test

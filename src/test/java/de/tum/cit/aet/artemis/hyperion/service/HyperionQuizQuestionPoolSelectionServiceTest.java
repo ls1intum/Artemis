@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -139,6 +140,37 @@ class HyperionQuizQuestionPoolSelectionServiceTest {
         HyperionQuizQuestionPoolSelectionService.Selection selection = service.select(5L, request(List.of(9L), 8));
 
         assertThat(selection.items()).hasSize(1);
+    }
+
+    @Test
+    void findEligible_coversEveryCompetencyOfTheCourseWhenNoneIsNamed() {
+        QuizQuestionPoolItem first = item(1L, 9L, 90L, QuizQuestionGenerationType.SINGLE_CHOICE);
+        QuizQuestionPoolItem second = item(2L, 10L, 91L, QuizQuestionGenerationType.MULTIPLE_CHOICE);
+        when(itemRepository.findCompetencyIdsForCourse(5L)).thenReturn(List.of(9L, 10L));
+        when(itemRepository.findAllForSelection(5L, List.of(9L, 10L), QuizQuestionPoolItemState.FILTERED)).thenReturn(List.of(first, second));
+
+        assertThat(service.findEligible(5L, null, null, null, null)).containsExactly(first, second);
+    }
+
+    @Test
+    void findEligible_appliesTheUnitTypeAndDifficultyFilters() {
+        QuizQuestionPoolItem match = item(1L, 9L, 90L, QuizQuestionGenerationType.SINGLE_CHOICE);
+        QuizQuestionPoolItem otherUnit = item(2L, 9L, 91L, QuizQuestionGenerationType.SINGLE_CHOICE);
+        QuizQuestionPoolItem otherType = item(3L, 9L, 90L, QuizQuestionGenerationType.MULTIPLE_CHOICE);
+        QuizQuestionPoolItem otherDifficulty = item(4L, 9L, 90L, QuizQuestionGenerationType.SINGLE_CHOICE);
+        otherDifficulty.setDifficulty(QuizQuestionDifficulty.HARD);
+        stubEligible(List.of(match, otherUnit, otherType, otherDifficulty));
+
+        assertThat(service.findEligible(5L, List.of(9L), List.of(90L), List.of(QuizQuestionGenerationType.SINGLE_CHOICE), List.of(QuizQuestionDifficulty.MEDIUM)))
+                .containsExactly(match);
+    }
+
+    @Test
+    void findEligible_returnsNothingForACourseWithoutPoolQuestions() {
+        when(itemRepository.findCompetencyIdsForCourse(5L)).thenReturn(List.of());
+
+        assertThat(service.findEligible(5L, List.of(), null, null, null)).isEmpty();
+        verify(itemRepository, never()).findAllForSelection(anyLong(), any(), any());
     }
 
     private void stubEligible(List<QuizQuestionPoolItem> items) {
