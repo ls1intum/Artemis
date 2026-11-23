@@ -475,8 +475,9 @@ UI classes, which a rule in the layer `base` cannot.
 // running a paint transition - which is enough to keep a surface on a stale raster.
 // The rule is outside the layers for the elements of the application, where it has always overridden the transition
 // utilities. An element of TUM AET UI gets it from the layer `base` instead, so the transition that the component
-// declares for itself (a button, a toggle switch) still wins. `:where()` keeps the specificity of the selector.
-*:not(svg, svg *, :where([class*='tumaet'])) {
+// declares for itself (a button, a toggle switch, the link of an empty state) still wins. `:where()` keeps the
+// specificity of the selector.
+*:not(svg, svg *, :where([class*='tumaet'], .tumaet-ui-empty-state-documentation a)) {
     transition:
         background-color 0.2s,
         background 0.2s;

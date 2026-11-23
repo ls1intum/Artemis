@@ -12,7 +12,7 @@
         <tbody>
             @for (row of rows(); track row.entry.module + '/' + row.entry.key) {
                 <tr [attr.data-testid]="'adoption-row-' + row.entry.module + '-' + row.entry.key">
-                    <td class="">{{ row.area ? (areaTranslationKey(row.area) | artemisTranslate) : '-' }}</td>
+                    <td>{{ row.area ? (areaTranslationKey(row.area) | artemisTranslate) : '-' }}</td>
                     <td>{{ row.entry.feature ? (featureTranslationKey(row.entry.feature, 'name') | artemisTranslate) : '-' }}</td>
                     <td class="font-mono text-xs">{{ row.entry.module }}/{{ row.entry.key }}</td>
                     <td class="text-right">{{ row.entry.count }} / {{ row.entry.total }}</td>

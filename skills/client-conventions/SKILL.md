@@ -277,7 +277,8 @@ Tailwind utilities are in the cascade layer `utilities`. The element defaults in
 `src/main/webapp/content/scss/_base.scss` (`p`, `h1` to `h6`, `ul`, `a`) are in the layer `base`, so a utility
 overrides them without a modifier. The styles of TUM AET UI are in the layer `tumaet-ui`, between the two, so a
 utility on a TUM AET UI component overrides the component, too. Component SCSS of the application is not in a
-layer and wins over every utility: write the important modifier where a utility has to override it (`mb-6!`). Bootstrap used the
+layer and wins over every utility, as does a style that a component sets inline: write the important modifier where a
+utility has to override one of them (`mb-6!`). Bootstrap used the
 spacing names with another scale for the steps 3 to 5 (16, 24 and 48px against Tailwind's 12, 16 and 20px); markup
 from an old branch needs `mb-3` to `mb-4`, `mb-4` to `mb-6` and `mb-5` to `mb-12`. See _Spacing utilities_ in
 `documentation/docs/developer/guidelines/client-development.mdx`.

@@ -347,7 +347,7 @@
         </table>
     </tumaet-ui-table-layout>
 } @else if (sbomUnavailable()) {
-    <tumaet-ui-message severity="info" class="" data-testid="sbom-unavailable-message">
+    <tumaet-ui-message severity="info" data-testid="sbom-unavailable-message">
         <div class="flex items-start gap-4">
             <fa-icon [icon]="faInfoCircle" size="lg" />
             <div>
@@ -358,7 +358,7 @@
         </div>
     </tumaet-ui-message>
 } @else {
-    <tumaet-ui-message severity="error" class="" data-testid="sbom-load-error-message">
+    <tumaet-ui-message severity="error" data-testid="sbom-load-error-message">
         <span jhiTranslate="artemisApp.dependencies.loadError"></span>
     </tumaet-ui-message>
 }

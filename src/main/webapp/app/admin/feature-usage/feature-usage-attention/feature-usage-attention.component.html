@@ -27,7 +27,7 @@
                     <tbody>
                         @for (feature of section.features; track feature.feature) {
                             <tr [attr.data-testid]="'attention-row-' + feature.feature">
-                                <td class="">{{ areaTranslationKey(feature.area) | artemisTranslate }}</td>
+                                <td>{{ areaTranslationKey(feature.area) | artemisTranslate }}</td>
                                 <td>
                                     <span [tumAetUiTooltip]="featureTranslationKey(feature.feature, 'description') | artemisTranslate">{{
                                         featureTranslationKey(feature.feature, 'name') | artemisTranslate

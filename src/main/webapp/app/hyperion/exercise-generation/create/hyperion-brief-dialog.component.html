@@ -11,13 +11,13 @@
         <p id="hyperion-brief-intro" class="text-muted-color m-0" jhiTranslate="artemisApp.hyperion.generation.brief.intro"></p>
 
         @if (setupFailed()) {
-            <tumaet-ui-message severity="error" live class="" data-testid="hyperion-brief-setup-failed">
+            <tumaet-ui-message severity="error" live data-testid="hyperion-brief-setup-failed">
                 <span jhiTranslate="artemisApp.hyperion.generation.brief.setupFailed"></span>
             </tumaet-ui-message>
         }
 
         @if (startFailed()) {
-            <tumaet-ui-message severity="error" live class="" data-testid="hyperion-brief-start-failed">
+            <tumaet-ui-message severity="error" live data-testid="hyperion-brief-start-failed">
                 <div class="flex flex-col gap-2">
                     <span jhiTranslate="artemisApp.hyperion.generation.brief.startFailed"></span>
                     @if (capacityUnavailable()) {

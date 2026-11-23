@@ -89,6 +89,9 @@ on a component then overrides the component without the important modifier, for 
 `<button tumAetUiButton class="p-0">`. Tailwind's preflight is already in the layer `base`; declare `base` before
 `tumaet-ui`.
 
+A few components set a style inline, which no stylesheet rule overrides without the important modifier:
+`tumaet-ui-table-layout` sets its maximum height from the free viewport height unless it fills its parent.
+
 ## Host theme integration
 
 Theme defaults use a low-priority cascade layer. Set `data-theme="dark"` on `<html>` to activate

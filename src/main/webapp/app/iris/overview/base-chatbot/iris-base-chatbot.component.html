@@ -200,7 +200,7 @@
                         />
                     </button>
                     <ng-template #sessionMenu>
-                        <!-- Important: the menu's own unlayered `max-height: inherit` would otherwise beat this utility and let a long list grow to the viewport height. -->
+                        <!-- The maximum height overrides the `max-height: inherit` of the menu, so a long list does not grow to the viewport height. -->
                         <tumaet-ui-menu class="w-[300px] max-h-[220px] overflow-y-auto!">
                             @for (group of sessionMenuGroups(); track group.labelKey) {
                                 <div role="group" [attr.aria-label]="group.labelKey | artemisTranslate">

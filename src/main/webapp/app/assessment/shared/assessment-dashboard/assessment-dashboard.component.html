@@ -338,7 +338,7 @@
                 </tumaet-ui-table-layout>
             </tumaet-ui-panel>
             @if (course() && course().isAtLeastInstructor && tutorIssues().length > 0) {
-                <tumaet-ui-message severity="warn" class="">
+                <tumaet-ui-message severity="warn">
                     <span class="flex flex-col gap-2">
                         <span class="flex items-center gap-2">
                             <fa-icon [icon]="faTriangleExclamation" class="shrink-0" />

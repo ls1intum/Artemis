@@ -84,8 +84,8 @@
         display: inline-block;
     }
 
-    // The inputs of TUM AET UI components keep the width of the component.
-    input:not([class*='tumaet-ui-']) {
+    // The inputs inside these TUM AET UI components keep the width that the component sets.
+    input:not(.tumaet-ui-input-number-input, .tumaet-ui-checkbox-input, .tumaet-ui-radio-button-input) {
         width: 1rem;
     }
 
