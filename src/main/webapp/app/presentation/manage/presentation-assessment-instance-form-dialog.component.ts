@@ -86,6 +86,31 @@ interface AssessorOption {
 function remainingCriteriaOf(ratingsForm: RatingsForm): number {
     return ratingsForm.hasError('ratingsIncomplete') || ratingsForm.hasError('ratingsRequired') ? countUnrated(ratingsForm) : 0;
 }
+
+/**
+ * Whether a result of the grading method is entered; only a graded presentation has an assessor. A rubric counts as soon as one criterion is rated,
+ * as only then its ratings are sent.
+ */
+function hasResultOf(
+    gradingMethod: PresentationGradingMethod | undefined,
+    passed: boolean | null | undefined,
+    resultPoints: number | null | undefined,
+    ratedCriteria: number,
+): boolean {
+    switch (gradingMethod) {
+        case PresentationGradingMethod.PASS_FAIL:
+            return isSet(passed);
+        case PresentationGradingMethod.RUBRIC:
+            return ratedCriteria > 0;
+        default:
+            return isSet(resultPoints);
+    }
+}
+
+/** The assessor of the autocomplete, or undefined while it is empty or holds text that was typed but not selected. */
+function selectedAssessor(value: AssessorOption | string | undefined | null): AssessorOption | undefined {
+    return value && typeof value === 'object' ? value : undefined;
+}
 const OUTCOMES = [
     { key: 'passed', value: true, icon: faCheck },
     { key: 'failed', value: false, icon: faXmark },
@@ -164,8 +189,8 @@ export class PresentationAssessmentInstanceFormDialogComponent {
 
     private readonly assessorSearchTerms = new Subject<string>();
 
-    readonly searchAssessors = (searchTerms: Observable<string>): Observable<UserNameAndLoginDTO[]> =>
-        searchTerms.pipe(
+    searchAssessors(searchTerms: Observable<string>): Observable<UserNameAndLoginDTO[]> {
+        return searchTerms.pipe(
             debounceTime(200),
             distinctUntilChanged(),
             switchMap((term) => {
@@ -181,20 +206,13 @@ export class PresentationAssessmentInstanceFormDialogComponent {
                 );
             }),
         );
+    }
 
     protected readonly assessorSuggestions = toSignal(this.searchAssessors(this.assessorSearchTerms), { initialValue: [] });
 
     protected searchAssessorsByQuery(query: string): void {
         this.assessorSearchTerms.next(query);
     }
-
-    /** The selected assessor, or undefined while the field is empty or holds text typed into the autocomplete. */
-    protected selectedAssessorOption(): AssessorOption | undefined {
-        const value = this.editForm.controls.assessorOption.value;
-        return value && typeof value === 'object' ? value : undefined;
-    }
-
-    readonly assessorFormatter = (assessor: UserNameAndLoginDTO): string => `${assessor.name ?? ''} (${assessor.login ?? ''})`;
 
     protected readonly assessorOptions = computed(() => this.assessorSuggestions().map((assessor) => this.toAssessorOption(assessor)));
 
@@ -260,28 +278,43 @@ export class PresentationAssessmentInstanceFormDialogComponent {
             meetingLink: ['', [Validators.maxLength(1000), httpUrl]],
             remark: ['', Validators.maxLength(1000)],
         },
-        // Read untracked, as the form also validates inside effects, which would otherwise rerun and reset it whenever the result state changes
-        { validators: [resultPointsDoNotExceedMaxPoints, assessorSelectedForResult(() => untracked(() => this.hasResult()))] },
+        { validators: [resultPointsDoNotExceedMaxPoints, assessorSelectedForResult(() => this.formHasResult())] },
     );
 
+    /** The values of the form, updated with every change; disabled controls count too, as the form is disabled while saving. */
+    private readonly formValue = toSignal(this.editForm.valueChanges.pipe(map(() => this.editForm.getRawValue())), { initialValue: this.editForm.getRawValue() });
+    /** The number of rated criteria of a rubric, updated with every change of the ratings. */
+    private readonly ratedCriteria = toSignal(
+        toObservable(this.ratingsForm).pipe(
+            switchMap((ratingsForm) =>
+                ratingsForm
+                    ? ratingsForm.valueChanges.pipe(
+                          startWith(undefined),
+                          map(() => ratingsForm.length - countUnrated(ratingsForm)),
+                      )
+                    : of(0),
+            ),
+        ),
+        { initialValue: 0 },
+    );
+    protected readonly selectedAssessorOption = computed(() => selectedAssessor(this.formValue().assessorOption));
+    protected readonly hasResult = computed(() => {
+        const value = this.formValue();
+        return hasResultOf(this.gradingMethod(), value.passed, value.resultPoints, this.ratedCriteria());
+    });
+
     /**
-     * Whether the form holds a result of the grading method; only a graded presentation has an assessor. A rubric counts as soon as one criterion is rated,
-     * as only then its ratings are sent. The form validates itself while it is built, before it is assigned, when nothing is entered yet.
+     * Whether the controls hold a result, read from the controls themselves as the form validates before it emits its new value. The form also validates
+     * while it is built, before it is assigned, and inside effects, which must not rerun and reset it whenever the result changes, so the signals are read
+     * untracked.
      */
-    protected hasResult(): boolean {
+    private formHasResult(): boolean {
         if (!this.editForm) {
             return false;
         }
-        switch (this.gradingMethod()) {
-            case PresentationGradingMethod.PASS_FAIL:
-                return isSet(this.editForm.controls.passed.value);
-            case PresentationGradingMethod.RUBRIC: {
-                const ratingsForm = this.ratingsForm();
-                return !!ratingsForm && countUnrated(ratingsForm) < ratingsForm.length;
-            }
-            default:
-                return isSet(this.editForm.controls.resultPoints.value);
-        }
+        const ratingsForm = untracked(this.ratingsForm);
+        const ratedCriteria = ratingsForm ? ratingsForm.length - countUnrated(ratingsForm) : 0;
+        return hasResultOf(untracked(this.gradingMethod), this.editForm.controls.passed.value, this.editForm.controls.resultPoints.value, ratedCriteria);
     }
 
     constructor() {
@@ -346,7 +379,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
         }
 
         const value = this.editForm.getRawValue();
-        const graded = this.hasResult();
+        const graded = this.formHasResult();
         const assessorLogin = graded ? this.selectedAssessorOption()?.assessor.login : undefined;
         if (!value.presentationDate || !value.language || !value.mode || (graded && !assessorLogin)) {
             return;
@@ -411,7 +444,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     }
 
     private toAssessorOption(assessor: UserNameAndLoginDTO): AssessorOption {
-        return { assessor, label: this.assessorFormatter(assessor) };
+        return { assessor, label: `${assessor.name ?? ''} (${assessor.login ?? ''})` };
     }
 
     /** An existing instance keeps its assessor; a new one, or one graded before assessors were stored, is assessed by the current user. */
