@@ -92,7 +92,8 @@ export class FileService {
      * Creates the URL to download a attachment file
      *
      * @param downloadUrl url that is stored in the attachment model
-     * @param downloadName the name given to the attachment
+     * @param downloadName the name given to the attachment. The server ignores this last path segment and names the download itself, so characters that cannot be part of a
+     *                     single path segment are replaced when the name is encoded, see {@link toSingleSafeSegment}
      * @param encodeName whether or not to encode the downloadName
      * @param version attachment version used to invalidate cached downloads after a replacement
      */
@@ -101,7 +102,7 @@ export class FileService {
         // take the last element
         const extension = downloadUrlComponents.pop()!.split('.').pop();
         const restOfUrl = downloadUrlComponents.join('/');
-        const encodedDownloadName = encodeName ? encodeURIComponent(downloadName + '.' + extension) : downloadName + '.' + extension;
+        const encodedDownloadName = encodeName ? encodeURIComponent(toSingleSafeSegment(downloadName) + '.' + extension) : downloadName + '.' + extension;
         const attachmentUrl = restOfUrl + '/' + encodedDownloadName;
         return this.addAttachmentVersionToUrl(attachmentUrl, version);
     }
@@ -181,4 +182,15 @@ export class FileService {
         const lastSlashIndex = link.lastIndexOf('/');
         return `${link.substring(0, lastSlashIndex)}/student${link.substring(lastSlashIndex)}`;
     }
+}
+
+/**
+ * Makes an attachment name usable as the single last segment of a download URL.
+ *
+ * A slash or backslash would end the segment, and the server rejects the encoded forms %2F and %5C as well as %25 and %3B (percent sign and semicolon) with a 400 response before the
+ * request reaches the file endpoint. The segment only decides the file name a browser suggests, so these characters are replaced rather than rejected. The name is not trusted
+ * beyond that: the server resolves the file by the id in the URL and never by this segment.
+ */
+function toSingleSafeSegment(name: string): string {
+    return name.replace(/[/\\%;]/g, '_');
 }
