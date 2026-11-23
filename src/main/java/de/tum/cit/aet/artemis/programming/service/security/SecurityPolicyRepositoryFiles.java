@@ -232,12 +232,14 @@ public final class SecurityPolicyRepositoryFiles {
                     SecurityFrameworkState.UnsupportedReasonType.ARES_1));
         }
         Optional<BuildTool> buildTool = detectBuildTool(buildFiles.gradleBuild(), buildFiles.mavenPom());
-        boolean pinsInProfile = buildFiles.mavenPom() != null && BuildFileSyntax.pinsInMavenProfile(buildFiles.mavenPom());
-        if (pinsInProfile && buildTool.filter(BuildTool.GRADLE::equals).isEmpty()) {
+        // A Gradle build that assigns the Ares version is the build that runs, so the POM next to it decides nothing, see detectBuildTool.
+        boolean gradleAssignsVersion = buildFiles.gradleBuild() != null && BuildFileSyntax.assignsGradleAresVersion(buildFiles.gradleBuild());
+        boolean pomDecides = buildFiles.mavenPom() != null && !gradleAssignsVersion;
+        if (pomDecides && BuildFileSyntax.pinsInMavenProfile(buildFiles.mavenPom())) {
             reasons.add(new SecurityFrameworkState.UnsupportedReason(MAVEN_BUILD_FILE, SecurityFrameworkState.UnsupportedReasonType.ARES_VERSION_IN_MAVEN_PROFILE));
         }
         else if (buildTool.isEmpty()) {
-            reasons.add(new SecurityFrameworkState.UnsupportedReason(buildFiles.mavenPom() != null ? MAVEN_BUILD_FILE : GRADLE_BUILD_FILE,
+            reasons.add(new SecurityFrameworkState.UnsupportedReason(pomDecides ? MAVEN_BUILD_FILE : GRADLE_BUILD_FILE,
                     SecurityFrameworkState.UnsupportedReasonType.NO_ARES_VERSION_PINNED));
         }
         summaries.forEach(summary -> summary.problems().forEach(problem -> reasons.add(new SecurityFrameworkState.UnsupportedReason(summary.path(), problem))));
@@ -507,13 +509,17 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
+     * The build tool whose build file pins the Ares version. A Gradle build that assigns the version is the build the exercise runs, so its pins decide even if
+     * Artemis cannot read them, e.g. if they name different versions: a {@code pom.xml} next to it does not run, and reading or changing its version would
+     * leave the build unchanged. Only if the Gradle build does not assign the version does a pin of the POM count.
+     *
      * @param gradleBuild content of {@code build.gradle}, if the repository has one
      * @param mavenPom    content of {@code pom.xml}, if the repository has one
-     * @return the build tool whose build file pins an Ares version
+     * @return the build tool whose build file pins an Ares version; empty if none does or the Gradle build assigns a version that cannot be read
      */
     static Optional<BuildTool> detectBuildTool(@Nullable String gradleBuild, @Nullable String mavenPom) {
-        if (gradleBuild != null && !BuildFileSyntax.aresVersionPins(gradleBuild, BuildTool.GRADLE).isEmpty()) {
-            return Optional.of(BuildTool.GRADLE);
+        if (gradleBuild != null && BuildFileSyntax.assignsGradleAresVersion(gradleBuild)) {
+            return BuildFileSyntax.aresVersionPins(gradleBuild, BuildTool.GRADLE).isEmpty() ? Optional.empty() : Optional.of(BuildTool.GRADLE);
         }
         if (mavenPom != null && !BuildFileSyntax.aresVersionPins(mavenPom, BuildTool.MAVEN).isEmpty()) {
             return Optional.of(BuildTool.MAVEN);

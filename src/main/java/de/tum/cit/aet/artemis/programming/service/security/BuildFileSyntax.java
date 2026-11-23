@@ -96,11 +96,14 @@ final class BuildFileSyntax {
     private static final Pattern GRADLE_DECLARATION_BEFORE = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})(?:def|var|final|String|Object)\\s++$");
 
     /**
-     * The Ares version as a complete string literal on the right of {@code aresVersion =}, e.g. {@code aresVersion = '2.2.1'}. An expression such as
-     * {@code '2.2' + '.1'} or an interpolation such as {@code "${base}.1"} pins no version Artemis could read or replace, so it is no pin.
+     * The Ares version as a string literal on the right of {@code aresVersion =}, e.g. {@code aresVersion = '2.2.1'}. It pins the version only if the statement
+     * ends after it, see {@link #endsGradleStatement(String, boolean[], int)}: an expression such as {@code '2.2' + '.1'} or an interpolation such as
+     * {@code "${base}.1"} pins no version Artemis could read or replace.
      */
-    private static final Pattern GRADLE_ARES_VERSION = Pattern
-            .compile("(?<!\\p{javaJavaIdentifierPart})(aresVersion\\s*=\\s*['\"])([^'\"$]+)(['\"])(?=[ \\t]*+(?:[;}\\r\\n]|//|/\\*|$))");
+    private static final Pattern GRADLE_ARES_VERSION = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})(aresVersion\\s*=\\s*['\"])([^'\"$]+)(['\"])");
+
+    /** The first characters of a line that continue the Gradle statement of the line before, e.g. {@code .trim()}, {@code ?: fallback} or {@code && ready}. */
+    private static final String CONTINUING_STARTS = ".?&|";
 
     /** The Ares version as the text of {@code <ares.version>}; a reference to another property, e.g. {@code ${base.version}}, is no pin. */
     private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version\\s*+>)([^<$]+)(</ares\\.version\\s*+>)");
@@ -673,8 +676,9 @@ final class BuildFileSyntax {
      * The places that pin the Ares version in a build file. A pin inside a comment, e.g. {@code // aresVersion = '2.3.0'}, or inside a Gradle string, e.g.
      * {@code "aresVersion = '2.3.0'"}, has no effect on the build, so it is neither read nor replaced. Neither is a pin in a Maven profile, which applies
      * only while its profile is active, so the pin of the POM itself is the one the build uses, nor a local variable of a Gradle method or closure, e.g.
-     * {@code def aresVersion = '2.3.0'} in a helper method. If another assignment that counts has no readable value, e.g. {@code aresVersion = "${base}.1"}
-     * or {@code <ares.version>${next}</ares.version>}, or if the pins name different versions, the version the build uses is unknown, so there are no pins.
+     * {@code def aresVersion = '2.3.0'} in a helper method. If another assignment that counts has no readable value, e.g. {@code aresVersion = "${base}.1"},
+     * {@code aresVersion = '2.2.' /* note *}{@code / + '1'} or {@code <ares.version>${next}</ares.version>}, or if the pins name different versions, the
+     * version the build uses is unknown, so there are no pins.
      *
      * @param content   the content of the build file
      * @param buildTool the build tool the file belongs to
@@ -682,16 +686,63 @@ final class BuildFileSyntax {
      */
     static List<MatchResult> aresVersionPins(String content, SecurityPolicyRepositoryFiles.BuildTool buildTool) {
         boolean gradle = buildTool == SecurityPolicyRepositoryFiles.BuildTool.GRADLE;
-        boolean[] noCode = gradle ? gradleCommentsAndStrings(content) : mavenComments(content);
-        boolean[] profiles = gradle ? new boolean[content.length()] : mavenProfiles(content, noCode);
-        IntPredicate counts = start -> !noCode[start] && !profiles[start] && !(gradle && declaresLocalGradleVariable(content, noCode, start));
-        List<MatchResult> pins = (gradle ? GRADLE_ARES_VERSION : MAVEN_ARES_VERSION).matcher(content).results().filter(pin -> counts.test(pin.start())).toList();
+        IntPredicate counts = countsInBuild(content, gradle);
+        boolean[] comments = gradle ? gradleComments(content) : new boolean[content.length()];
+        List<MatchResult> pins = (gradle ? GRADLE_ARES_VERSION : MAVEN_ARES_VERSION).matcher(content).results()
+                .filter(pin -> counts.test(pin.start()) && (!gradle || endsGradleStatement(content, comments, pin.end()))).toList();
         Set<Integer> readable = pins.stream().map(MatchResult::start).collect(Collectors.toSet());
         boolean allReadable = (gradle ? GRADLE_ARES_VERSION_ASSIGNMENT : MAVEN_ARES_VERSION_DEFINITION).matcher(content).results().mapToInt(MatchResult::start).filter(counts)
                 .allMatch(readable::contains);
         // Pins of different versions leave open which one the dependency reads, e.g. after a later assignment of project.ext.aresVersion.
         boolean oneVersion = pins.stream().map(pin -> pin.group(2).trim()).distinct().count() <= 1;
         return allReadable && oneVersion ? pins : List.of();
+    }
+
+    /**
+     * Whether the Gradle build assigns the Ares version anywhere it counts, see {@link #aresVersionPins(String, SecurityPolicyRepositoryFiles.BuildTool)},
+     * whether or not Artemis can read the value, e.g. also {@code aresVersion = "${base}.1"} or two assignments of different versions.
+     *
+     * @param gradleBuild the content of {@code build.gradle}
+     * @return whether the Gradle build sets the Ares version itself
+     */
+    static boolean assignsGradleAresVersion(String gradleBuild) {
+        return GRADLE_ARES_VERSION_ASSIGNMENT.matcher(gradleBuild).results().mapToInt(MatchResult::start).anyMatch(countsInBuild(gradleBuild, true));
+    }
+
+    /**
+     * @return whether code at an offset of the build file affects the build: it is in neither a comment nor a Gradle string, nor in a Maven profile, which
+     *         applies only while it is active, nor in a local variable of a Gradle method or closure
+     */
+    private static IntPredicate countsInBuild(String content, boolean gradle) {
+        boolean[] noCode = gradle ? gradleCommentsAndStrings(content) : mavenComments(content);
+        boolean[] profiles = gradle ? new boolean[content.length()] : mavenProfiles(content, noCode);
+        return start -> !noCode[start] && !profiles[start] && !(gradle && declaresLocalGradleVariable(content, noCode, start));
+    }
+
+    /**
+     * Whether the Gradle statement ends right after a string literal: the next code is a semicolon or a closing brace, or the line ends and the next line
+     * does not continue the statement, e.g. with {@code .trim()}. Comments in between are skipped, so {@code aresVersion = '2.2.' /* note *}{@code / + '1'}
+     * continues with {@code + '1'}; a line break inside a block comment does not end the statement.
+     *
+     * @param comments for each character of the build file whether it belongs to a comment
+     * @param offset   the offset right after the literal
+     * @return whether the literal is the complete value of its statement
+     */
+    private static boolean endsGradleStatement(String content, boolean[] comments, int offset) {
+        boolean lineEnded = false;
+        for (int index = offset; index < content.length(); index++) {
+            char character = content.charAt(index);
+            if (comments[index]) {
+                continue;
+            }
+            if (character == '\n') {
+                lineEnded = true;
+            }
+            else if (!Character.isWhitespace(character)) {
+                return lineEnded ? CONTINUING_STARTS.indexOf(character) < 0 : character == ';' || character == '}';
+            }
+        }
+        return true;
     }
 
     /**
