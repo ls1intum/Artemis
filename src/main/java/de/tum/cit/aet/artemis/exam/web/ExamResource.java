@@ -95,11 +95,13 @@ import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
 import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamConductionCountsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForAssessmentDashboardDTO;
@@ -127,16 +129,17 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exam.service.ExamDeletionService;
+import de.tum.cit.aet.artemis.exam.service.ExamDeletionSummaryService;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
-import de.tum.cit.aet.artemis.exam.service.ExamUserService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.util.ExamDateUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.dto.EntityDeletionProgressDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -184,6 +187,8 @@ public class ExamResource {
 
     private final ExamDeletionService examDeletionService;
 
+    private final ExamDeletionSummaryService examDeletionSummaryService;
+
     private final ExamDateService examDateService;
 
     private final ExamRegistrationService examRegistrationService;
@@ -216,8 +221,6 @@ public class ExamResource {
 
     private final StudentExamService studentExamService;
 
-    private final ExamUserService examUserService;
-
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
@@ -227,13 +230,14 @@ public class ExamResource {
             AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
-            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
+            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
-            StudentParticipationRepository studentParticipationRepository) {
+            StudentParticipationRepository studentParticipationRepository, ExamDeletionSummaryService examDeletionSummaryService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
         this.examDeletionService = examDeletionService;
+        this.examDeletionSummaryService = examDeletionSummaryService;
         this.submissionService = submissionService;
         this.examDateService = examDateService;
         this.examRegistrationService = examRegistrationService;
@@ -251,7 +255,6 @@ public class ExamResource {
         this.examSessionService = examSessionRepository;
         this.examLiveEventsService = examLiveEventsService;
         this.studentExamService = studentExamService;
-        this.examUserService = examUserService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -267,7 +270,7 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exams")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<ExamDTO> createExam(@PathVariable Long courseId, @RequestBody ExamUpdateDTO examDTO) throws URISyntaxException {
+    public ResponseEntity<ExamDTO> createExam(@PathVariable Long courseId, @Valid @RequestBody ExamUpdateDTO examDTO) throws URISyntaxException {
         log.debug("REST request to create an exam : {}", examDTO);
         if (examDTO.id() != null) {
             throw new BadRequestAlertException("A new exam cannot already have an ID", ENTITY_NAME, "idExists");
@@ -299,7 +302,7 @@ public class ExamResource {
     @PutMapping("courses/{courseId}/exams")
     @EnforceAtLeastStudent
     @ManualConfig
-    public ResponseEntity<ExamDTO> updateExam(@PathVariable Long courseId, @RequestBody ExamUpdateDTO examUpdateDTO) {
+    public ResponseEntity<ExamDTO> updateExam(@PathVariable Long courseId, @Valid @RequestBody ExamUpdateDTO examUpdateDTO) {
         log.debug("REST request to update an exam : {}", examUpdateDTO);
 
         if (examUpdateDTO.id() == null) {
@@ -311,7 +314,7 @@ public class ExamResource {
 
         // Fetch the original exam from the database (this is the managed entity)
         Exam originalExam = examRepository.findByIdElseThrow(examUpdateDTO.id());
-        var originalExamDuration = originalExam.getDuration();
+        var originalExamDuration = originalExam.getExamMode().isReal() ? originalExam.getDuration() : originalExam.getWorkingTime();
         ZonedDateTime originalVisibleDate = originalExam.getVisibleDate();
         ZonedDateTime originalStartDate = originalExam.getStartDate();
         ZonedDateTime originalEndDate = originalExam.getEndDate();
@@ -319,12 +322,17 @@ public class ExamResource {
         ZonedDateTime originalLatestEndDate = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(originalExam)).orElse(null);
 
         // The Exam Mode cannot be changed after creation -> Compare request with version in the database
-        if (examUpdateDTO.testExam() != originalExam.isTestExam()) {
+        if (examUpdateDTO.examMode() != originalExam.getExamMode()) {
             throw new ConflictException("The Exam Mode cannot be changed after creation", ENTITY_NAME, "examModeMismatch");
         }
 
         // Apply DTO values to the managed entity
         examUpdateDTO.applyTo(originalExam);
+        examDateService.checkSupervisedSessionStartChangeAllowedElseThrow(originalExam.getExamMode(), originalStartDate, originalExam.getStartDate(), now());
+        if (originalStartDate != null && originalExam.getStartDate() != null) {
+            examDateService.checkSupervisedSessionEndChangeAllowedElseThrow(originalExam.getId(), originalExam.getExamMode(),
+                    Exam.supervisedSessionEndDate(originalStartDate, originalExamDuration), originalExam.getSupervisedSessionEndDate(), now());
+        }
 
         // Validate the updated exam
         checkForExamConflictsElseThrow(courseId, originalExam);
@@ -351,7 +359,8 @@ public class ExamResource {
         boolean gracePeriodChanged = !Objects.equals(originalGracePeriod, savedExam.getGracePeriod());
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
-        int workingTimeChange = savedExam.getDuration() - originalExamDuration;
+        int savedExamDuration = savedExam.getExamMode().isReal() ? savedExam.getDuration() : savedExam.getWorkingTime();
+        int workingTimeChange = savedExamDuration - originalExamDuration;
         if (workingTimeChange != 0) {
             Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
@@ -368,7 +377,7 @@ public class ExamResource {
                     && now.isAfter(originalStartDate.minusMinutes(EXAM_START_WAIT_TIME_MINUTES)) && now.isBefore(savedExam.getEndDate());
             // Test exams have no instructor-controlled pre-start countdown and their clients do not subscribe to these
             // updates, so skip them to avoid persisting unused events.
-            if ((startDateChanged || endDateChanged) && withinConductionWindow && !savedExam.isTestExam()) {
+            if ((startDateChanged || endDateChanged) && withinConductionWindow && savedExam.getExamMode().isReal()) {
                 Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
                 examService.sendScheduleUpdateToStudentExams(examWithStudentExams);
             }
@@ -427,19 +436,23 @@ public class ExamResource {
         // Validate before mutating, using long arithmetic so extreme deltas cannot wrap around.
         long newWorkingTime = (long) originalWorkingTime + workingTimeChange;
         long newDuration = (long) originalExamDuration + workingTimeChange;
-        if (newWorkingTime <= 0 || newDuration <= 0 || (exam.isTestExam() && newWorkingTime > newDuration)) {
+        if (newWorkingTime <= 0 || newDuration <= 0 || (!exam.getExamMode().isReal() && newWorkingTime > newDuration)) {
             throw new BadRequestAlertException("The working time must be positive and fit within the exam's working window.", ENTITY_NAME, "examTimes");
         }
         if (newDuration > Integer.MAX_VALUE) {
             throw new BadRequestAlertException("The exam's working window exceeds the supported duration.", ENTITY_NAME, "examTimes");
         }
         checkExamWorkingTimeLimitElseThrow(newWorkingTime);
-        if (!exam.isTestExam()) {
+        if (exam.getStartDate() != null) {
+            examDateService.checkSupervisedSessionEndChangeAllowedElseThrow(examId, exam.getExamMode(), Exam.supervisedSessionEndDate(exam.getStartDate(), originalWorkingTime),
+                    Exam.supervisedSessionEndDate(exam.getStartDate(), (int) newWorkingTime), now());
+        }
+        if (exam.getExamMode().isReal()) {
             checkExamWorkingTimeLimitElseThrow(newDuration);
         }
 
         // Test exams have an availability window independent of their regular working time.
-        int originalRegularWorkingTime = exam.isTestExam() ? originalWorkingTime : originalExamDuration;
+        int originalRegularWorkingTime = exam.getExamMode().isReal() ? originalExamDuration : originalWorkingTime;
         // Validate every student projection before saving the exam, so overflow cannot leave a partial update.
         try {
             for (StudentExam studentExam : exam.getStudentExams()) {
@@ -459,6 +472,7 @@ public class ExamResource {
         // change, so checking only the new nominal end date would miss an extended student crossing the publication
         // date. Safe to validate after mutating: the exam is detached here, and throwing skips the save below.
         checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(exam, originalExamDuration);
+        checkExamForWorkingTimeConflictsElseThrow(exam);
         examRepository.save(exam);
 
         // 2. Re-calculate the working times of all student exams
@@ -474,6 +488,20 @@ public class ExamResource {
         searchableEntityWeaviateService.ifPresent(service -> service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(exam)));
 
         return ResponseEntity.ok(ExamDTO.of(exam));
+    }
+
+    /**
+     * @param courseId the course containing the exam
+     * @param examId   the exam whose announcement history is requested
+     * @return all exam-wide announcements, including their original timestamps
+     */
+    @FeatureUsage(UserFeature.EXAM_CONDUCTION_MANAGEMENT)
+    @GetMapping("courses/{courseId}/exams/{examId}/announcements")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<List<ExamWideAnnouncementEventDTO>> getExamAnnouncements(@PathVariable Long courseId, @PathVariable Long examId) {
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        return ResponseEntity.ok(examLiveEventsService.getAnnouncements(examId));
     }
 
     /**
@@ -625,7 +653,7 @@ public class ExamResource {
      * @param exam the exam to be checked
      */
     private void checkExamNumericFieldLimitsElseThrow(Exam exam) {
-        checkExamWorkingTimeLimitElseThrow(exam.isTestExam() ? exam.getWorkingTime() : exam.getDuration());
+        checkExamWorkingTimeLimitElseThrow(exam.getExamMode().isReal() ? exam.getDuration() : exam.getWorkingTime());
 
         // Grace period: max 1 hour = 3600 seconds
         if (exam.getGracePeriod() != null && exam.getGracePeriod() > 3600) {
@@ -692,7 +720,7 @@ public class ExamResource {
      * @param originalExamDuration the exam duration in seconds before this update
      */
     private void checkExamSummaryPublicationDateAfterIndividualEndDatesElseThrow(Exam exam, int originalExamDuration) {
-        if (exam.getId() == null || exam.getExamSummaryPublicationDate() == null || exam.isTestExam()) {
+        if (exam.getId() == null || exam.getExamSummaryPublicationDate() == null || !exam.getExamMode().isReal()) {
             return;
         }
         ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDateAfterDurationChange(exam, originalExamDuration);
@@ -711,7 +739,7 @@ public class ExamResource {
     private void checkExamForWorkingTimeConflictsElseThrow(Exam exam) {
         var examDuration = exam.getDuration();
 
-        if (exam.isTestExam()) {
+        if (!exam.getExamMode().isReal()) {
             if (exam.getWorkingTime() > examDuration || exam.getWorkingTime() < 1) {
                 throw new BadRequestAlertException("For TestExams, the working time must be at least 1 and at most the duration of the working window.", ENTITY_NAME, "examTimes");
             }
@@ -735,11 +763,11 @@ public class ExamResource {
             throw new BadRequestAlertException("An exam cannot have negative points.", ENTITY_NAME, "negativePoints");
         }
 
-        if (exam.isTestExam() && exam.getNumberOfCorrectionRoundsInExam() != 0) {
+        if (!exam.getExamMode().isReal() && exam.getNumberOfCorrectionRoundsInExam() != 0) {
             throw new BadRequestAlertException("A testExam has to have 0 correction rounds", ENTITY_NAME, "correctionRoundViolation");
         }
 
-        if (!exam.isTestExam() && (exam.getNumberOfCorrectionRoundsInExam() <= 0 || exam.getNumberOfCorrectionRoundsInExam() > 2)) {
+        if (exam.getExamMode().isReal() && (exam.getNumberOfCorrectionRoundsInExam() <= 0 || exam.getNumberOfCorrectionRoundsInExam() > 2)) {
             throw new BadRequestAlertException("A realExam has to have either 1 or 2 correction rounds", ENTITY_NAME, "correctionRoundViolation");
         }
     }
@@ -750,7 +778,7 @@ public class ExamResource {
      * @param exam the exam to be checked
      */
     private void checkExamAttendanceCheckSettings(Exam exam) {
-        if (exam.isTestExam() && exam.isExamWithAttendanceCheck()) {
+        if (!exam.getExamMode().isReal() && exam.isExamWithAttendanceCheck()) {
             throw new BadRequestAlertException("A test exam cannot have attendance check turned on", ENTITY_NAME, "attendanceCheckViolation");
         }
     }
@@ -873,6 +901,8 @@ public class ExamResource {
     @GetMapping("exams/{examId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getExamTitle(@PathVariable Long examId) {
+        long courseId = examRepository.findCourseIdById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        authCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.STUDENT, courseId);
         final var title = examRepository.getExamTitle(examId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
@@ -905,6 +935,22 @@ public class ExamResource {
     public ResponseEntity<ExamChecklistDTO> getExamStatisticsForInstructor(@PathVariable Long courseId, @PathVariable Long examId) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         return getExamStatistics(examId, true);
+    }
+
+    /**
+     * Returns only the conduction counts, without loading exercises or assessment and complaint statistics.
+     *
+     * @param courseId the course to which the exam belongs
+     * @param examId   the exam whose counts are requested
+     * @return the generated, started and submitted student exam counts, excluding test runs
+     */
+    @FeatureUsage(UserFeature.EXAM_SCORES)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("courses/{courseId}/exams/{examId}/statistics/conduction")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<ExamConductionCountsDTO> getExamConductionCounts(@PathVariable Long courseId, @PathVariable Long examId) {
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        return ResponseEntity.ok(examService.getConductionCounts(examId));
     }
 
     private ResponseEntity<ExamChecklistDTO> getExamStatistics(Long examId, boolean instructorAudience) {
@@ -1082,12 +1128,12 @@ public class ExamResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/exams/{examId} : Delete the exam with the given id.
+     * DELETE /courses/{courseId}/exams/{examId} : Delete the exam with the given id in the background. The progress is sent over the websocket topic of the exam.
      * The delete operation cascades to all student exams, exercise group, exercises and their participations.
      *
      * @param courseId the course to which the exam belongs
      * @param examId   the id of the exam to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 202 (Accepted), or 409 (Conflict) if the exam, or one of its exercise groups, is already being deleted
      */
     @FeatureUsage(UserFeature.EXAM_ARCHIVE)
     @DeleteMapping("courses/{courseId}/exams/{examId}")
@@ -1096,15 +1142,12 @@ public class ExamResource {
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to delete exam : {}", examId);
 
-        var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        examDeletionService.delete(examId);
+        // The exam, its exercises and the signatures and images of the registered students are deleted in the background.
+        examDeletionService.startAsyncDeletion(courseId, examId, userRepository.getUser().getLogin());
 
-        // delete all exam user signatures and images
-        exam.getExamUsers().forEach(examUserService::deleteAvailableExamUserImages);
-
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
+        return ResponseEntity.accepted().build();
     }
 
     /**
@@ -1148,14 +1191,11 @@ public class ExamResource {
         log.info("REST request to generate student exams for exam {}", examId);
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
-        // Reset existing student exams & participations in case they already exist
+        // Reset existing student exams and participations only after validating the exam configuration above.
         examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
-
         List<StudentExam> studentExams = studentExamService.generateStudentExams(exam);
         log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
-        // The client only counts the generated student exams; return the slim, exam-masked projection (no nested exam graph,
-        // which is why the previous breakCyclesForSerialization is no longer needed).
-        return ResponseEntity.ok().body(studentExams.stream().map(StudentExamDTO::of).toList());
+        return ResponseEntity.ok(studentExams.stream().map(StudentExamDTO::of).toList());
     }
 
     @NonNull
@@ -1165,7 +1205,7 @@ public class ExamResource {
         // and, through its eager user association, a select per student on top.
         final Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
 
-        if (exam.isTestExam()) {
+        if (exam.getExamMode() == ExamMode.TEST || exam.getExamMode() == ExamMode.TEST_WITH_SUPERVISED_SESSION && !ZonedDateTime.now().isBefore(exam.getStartDate())) {
             throw new BadRequestAlertException("Generate student exams is only allowed for real exams", ENTITY_NAME, "generateStudentExamsOnlyForRealExams");
         }
 
@@ -1224,7 +1264,7 @@ public class ExamResource {
                     "evaluateQuizExercisesTooEarly");
         }
         var exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        if (exam.isTestExam()) {
+        if (!exam.getExamMode().isReal()) {
             throw new BadRequestAlertException("Evaluate quiz exercises is only allowed for real exams", ENTITY_NAME, "evaluateQuizExercisesOnlyForRealExams");
         }
 
@@ -1244,7 +1284,7 @@ public class ExamResource {
      * @param courseId    the id of the course
      * @param examId      the id of the exam
      * @param studentDtos the list of students (with at least registration number) who should get access to the exam
-     * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     * @return the registration result
      */
     @FeatureUsage(UserFeature.EXAM_REGISTRATION)
     @PostMapping("courses/{courseId}/exams/{examId}/students")
@@ -1255,8 +1295,7 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        ExamRegistrationResultDTO notFoundStudentsDtos = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
-        return ResponseEntity.ok().body(notFoundStudentsDtos);
+        return ResponseEntity.ok(examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos));
     }
 
     /**
@@ -1264,7 +1303,7 @@ public class ExamResource {
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam
-     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     * @return status 200 for successful registration, or status 404 if the exam is absent
      */
     @FeatureUsage(UserFeature.EXAM_REGISTRATION)
     @PostMapping("courses/{courseId}/exams/{examId}/register-course-students")
@@ -1276,12 +1315,12 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (exam.isTestExam()) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Registration of course students is only allowed for real exams", ENTITY_NAME, "AddCourseStudentsOnlyForRealExams");
         }
 
         examRegistrationService.addAllStudentsOfCourseToExam(courseId, exam);
-        return ResponseEntity.ok().body(null);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -1312,7 +1351,7 @@ public class ExamResource {
 
         var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
-        if (exam.isTestExam()) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Deletion of users is only allowed for real exams", ENTITY_NAME, "unregisterStudentsOnlyForRealExams");
         }
 
@@ -1342,7 +1381,7 @@ public class ExamResource {
 
         var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
-        if (exam.isTestExam()) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Deregister students is only allowed for real exams", ENTITY_NAME, "unregisterAllOnlyForRealExams");
         }
 
@@ -1659,6 +1698,23 @@ public class ExamResource {
     public ResponseEntity<ExamDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId, @PathVariable long examId) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         log.debug("REST request to get deletion summary for exam : {}", examId);
-        return ResponseEntity.ok(examDeletionService.getExamDeletionSummary(examId));
+        return ResponseEntity.ok(examDeletionSummaryService.getExamDeletionSummary(examId));
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/deletion-progress : Get the latest progress of the background deletion of the exam or of one of its exercise groups, for a client that
+     * opens the page while the deletion runs.
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return the ResponseEntity with status 200 (OK) and the progress, or 204 (No Content) if neither the exam nor one of its exercise groups is being deleted
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/deletion-progress")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<EntityDeletionProgressDTO> getDeletionProgress(@PathVariable long courseId, @PathVariable long examId) {
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        log.debug("REST request to get the deletion progress of exam : {}", examId);
+        return examDeletionService.getDeletionProgress(examId).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }
 }

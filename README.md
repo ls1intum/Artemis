@@ -9,7 +9,6 @@ their own infrastructure.
 
 [![CI](https://github.com/ls1intum/Artemis/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/ci.yml)
 [![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/deploy-documentation.yml/badge.svg?event=push)](https://docs.artemis.tum.de)
-[![Code Quality Status](https://app.codacy.com/project/badge/Grade/89860aea5fa74d998ec884f1a875ed0c)](https://app.codacy.com/gh/ls1intum/Artemis/dashboard?branch=develop)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ls1intum_Artemis&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ls1intum_Artemis)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=ls1intum_Artemis&metric=reliability_rating)](https://sonarcloud.io/project/issues?id=ls1intum_Artemis&issueStatuses=OPEN%2CCONFIRMED&types=BUG)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=ls1intum_Artemis&metric=security_rating)](https://sonarcloud.io/project/issues?id=ls1intum_Artemis&issueStatuses=OPEN%2CCONFIRMED&types=VULNERABILITY)
@@ -157,7 +156,7 @@ in Artemis 11.
 This produces `build/libs/Artemis-<version>.war`. To run it locally:
 
 ```shell
-java -jar build/libs/*.war --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,atlas
+java -jar build/libs/*.war --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local
 ```
 
 Then open [http://localhost:8080](http://localhost:8080). You may need to copy a configuration YAML
@@ -167,7 +166,7 @@ file into `build/libs` first; see the
 The following command automates deployment to a test server:
 
 ```shell
-./deployment/artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-10.6.war
+./deployment/artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-10.8.war
 ```
 
 ## Repository layout

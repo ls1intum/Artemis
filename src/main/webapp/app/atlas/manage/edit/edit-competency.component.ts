@@ -1,3 +1,4 @@
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
@@ -10,11 +11,12 @@ import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/compe
 import { EditCourseCompetencyComponent } from 'app/atlas/manage/edit/edit-course-competency.component';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-edit-competency',
     templateUrl: './edit-competency.component.html',
-    imports: [CompetencyFormComponent, TranslateDirective],
+    imports: [CompetencyFormComponent, TranslateDirective, TumAetUiProgressSpinnerComponent, ArtemisTranslatePipe],
 })
 export class EditCompetencyComponent extends EditCourseCompetencyComponent implements OnInit {
     private competencyService = inject(CompetencyService);

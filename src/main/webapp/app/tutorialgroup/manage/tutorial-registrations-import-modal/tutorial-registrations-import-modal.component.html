@@ -34,11 +34,7 @@
                 }
                 @default never;
             }
-            <div class="table-container-scroll-container">
-                <div class="table-container">
-                    <jhi-tutorial-registrations-import-modal-table [rows]="tableRows()" />
-                </div>
-            </div>
+            <jhi-tutorial-registrations-import-modal-table class="block w-full" [rows]="tableRows()" />
         }
         <div class="controls-footer">
             @switch (step) {
@@ -75,6 +71,7 @@
                     <button
                         type="button"
                         tumAetUiButton
+                        severity="secondary"
                         size="small"
                         data-testid="import-button"
                         jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.importButtonLabel"

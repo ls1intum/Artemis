@@ -21,8 +21,8 @@ import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.dto.FaqCensusDTO;
 import de.tum.cit.aet.artemis.communication.dto.FaqCensusEntryDTO;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.service.FaqIngestionReconcileServiceTestAccess;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
@@ -37,7 +37,7 @@ class PyrisFaqReconcileIntegrationTest extends AbstractIrisIntegrationTest {
     private static final String TEST_PREFIX = "pyrisfaqreconcile";
 
     @Autowired
-    private FaqRepository faqRepository;
+    private FaqTestRepository faqRepository;
 
     @Autowired
     private CourseUtilService courseUtilService;

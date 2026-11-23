@@ -331,6 +331,10 @@ describe('SidebarComponent', () => {
                 showHeader: false,
                 ariaLabel: 'artemisApp.courseOverview.exerciseFilter.modalTitle',
                 dismissableMask: false,
+                data: {
+                    sidebarData: component.sidebarDataBeforeFiltering(),
+                    exerciseFilters: component.exerciseFilters(),
+                },
             });
         });
     });
@@ -443,20 +447,27 @@ describe('SidebarComponent', () => {
             expect(component.isFilterActive()).toBe(true);
         });
 
+        /** The entries only exist while the menu is open, in an overlay outside the component. */
+        function openCreateMenu(): void {
+            (fixture.nativeElement.querySelector('[data-testid="sidebar-create-menu-button"]') as HTMLElement).click();
+            fixture.changeDetectorRef.detectChanges();
+        }
+
         it('should show "Create Channel" button when canCreateChannel is true', () => {
             fixture.componentRef.setInput('inCommunication', true);
             fixture.componentRef.setInput('sidebarData', { sidebarType: 'default', canCreateChannel: true } as SidebarData);
             fixture.changeDetectorRef.detectChanges();
-            const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
-            expect(createChannelButton).toBeTruthy();
+            openCreateMenu();
+            expect(document.querySelector('.createChannel')).not.toBeNull();
         });
 
         it('should not show "Create Channel" button when canCreateChannel is false', () => {
             fixture.componentRef.setInput('inCommunication', true);
             fixture.componentRef.setInput('sidebarData', { sidebarType: 'default', canCreateChannel: false } as SidebarData);
             fixture.changeDetectorRef.detectChanges();
-            const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
-            expect(createChannelButton).toBeFalsy();
+            openCreateMenu();
+            expect(document.querySelector('[role="menu"]')).not.toBeNull();
+            expect(document.querySelector('.createChannel')).toBeNull();
         });
     });
 });

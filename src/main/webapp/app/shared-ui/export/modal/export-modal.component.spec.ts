@@ -2,14 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings, ExportModalComponent } from 'app/shared-ui/export/modal/export-modal.component';
 import { By } from '@angular/platform-browser';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExportModalComponent', () => {
     let component: ExportModalComponent;
     let fixture: ComponentFixture<ExportModalComponent>;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
     let translateService: TranslateService;
 
     beforeEach(async () => {
@@ -21,13 +21,13 @@ describe('ExportModalComponent', () => {
             imports: [ExportModalComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DynamicDialogRef, useValue: mockDialogRef },
+                { provide: TumAetUiDialogRef, useValue: mockDialogRef },
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExportModalComponent);
         component = fixture.componentInstance;
-        dialogRef = TestBed.inject(DynamicDialogRef);
+        dialogRef = TestBed.inject(TumAetUiDialogRef);
         translateService = TestBed.inject(TranslateService);
         fixture.detectChanges();
     });
@@ -66,13 +66,13 @@ describe('ExportModalComponent', () => {
 
     it('should dismiss modal if close or cancel button are clicked', () => {
         const closeSpy = vi.spyOn(dialogRef, 'close');
-        const closeButton = fixture.debugElement.query(By.css('button.btn-close'));
+        const closeButton = fixture.debugElement.query(By.css('[data-testid="export-options-close"]'));
         expect(closeButton).not.toBeNull();
         closeButton.nativeElement.click();
         expect(closeSpy).toHaveBeenCalledOnce();
         expect(closeSpy).toHaveBeenCalledWith({ cancelled: true });
 
-        const cancelButton = fixture.debugElement.query(By.css('button.cancel'));
+        const cancelButton = fixture.debugElement.query(By.css('[data-testid="export-cancel-button"]'));
         expect(cancelButton).not.toBeNull();
         cancelButton.nativeElement.click();
         expect(closeSpy).toHaveBeenCalledTimes(2);
@@ -80,7 +80,7 @@ describe('ExportModalComponent', () => {
     });
 
     it('should return empty on finish when excel export is active', () => {
-        component.activeTab = 1;
+        component.activeTab.set(1);
         const closeSpy = vi.spyOn(dialogRef, 'close');
         component.onFinish();
         expect(closeSpy).toHaveBeenCalledWith();
@@ -94,7 +94,7 @@ describe('ExportModalComponent', () => {
             decimalSeparator: CsvDecimalSeparator.COMMA,
         };
         component.options.set(testOptions);
-        component.activeTab = 2;
+        component.activeTab.set(2);
         const closeSpy = vi.spyOn(dialogRef, 'close');
         component.onFinish();
         expect(closeSpy).toHaveBeenCalledWith(testOptions);

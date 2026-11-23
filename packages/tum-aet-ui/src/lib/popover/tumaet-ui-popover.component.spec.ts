@@ -82,6 +82,68 @@ describe('TumAetUiPopoverComponent', () => {
             view.matchMedia = previous;
         });
 
+        it('announces that it is gone only after the fade, when the panel has handed focus back', async () => {
+            const { finish } = stubAnimations();
+            component.open(origin);
+            fixture.detectChanges();
+            const closedSpy = vi.spyOn(component.closed, 'emit');
+
+            component.close();
+            expect(closedSpy).not.toHaveBeenCalled();
+
+            finish();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(panel()).toBeNull();
+            expect(closedSpy).toHaveBeenCalledOnce();
+        });
+
+        it('has handed the focus back to the element focused before it opened by the time it announces that it is gone', async () => {
+            const { finish } = stubAnimations();
+            // The focus trap restores the previously focused element; focus the origin explicitly to check that
+            // this has happened before closed emits.
+            origin.focus();
+            component.open(origin);
+            fixture.detectChanges();
+            (panel() as HTMLElement).focus();
+            expect(document.activeElement).toBe(panel());
+            let focusWhenClosed: Element | null = null;
+            component.closed.subscribe(() => (focusWhenClosed = document.activeElement));
+
+            component.close();
+            finish();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(focusWhenClosed).toBe(origin);
+        });
+
+        it('announces that it is gone at once when there is no fade', () => {
+            const closedSpy = vi.spyOn(component.closed, 'emit');
+            component.open(origin);
+            fixture.detectChanges();
+
+            component.close();
+
+            expect(closedSpy).toHaveBeenCalledOnce();
+        });
+
+        it('stays silent when the component is destroyed before the fade ends', async () => {
+            const { finish } = stubAnimations();
+            component.open(origin);
+            fixture.detectChanges();
+            const closedSpy = vi.spyOn(component.closed, 'emit');
+            component.close();
+
+            fixture.destroy();
+            finish();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(closedSpy).not.toHaveBeenCalled();
+        });
+
         it('opens again cleanly while the last one is still leaving', async () => {
             const { finish } = stubAnimations();
             component.open(origin);

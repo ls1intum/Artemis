@@ -1,18 +1,21 @@
+import { NgTemplateOutlet } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { Observable, Subject, merge, of, pairwise } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { rxResource, takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { Observable, Subject, catchError, debounceTime, distinctUntilChanged, forkJoin, map, merge, of, pairwise, startWith, switchMap, tap } from 'rxjs';
 import dayjs from 'dayjs/esm';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faSave, faXmark } from '@fortawesome/free-solid-svg-icons';
 import {
     TumAetUiAutoCompleteComponent,
     TumAetUiButtonComponent,
     TumAetUiDatePickerComponent,
     TumAetUiInputDirective,
     TumAetUiMessageComponent,
+    TumAetUiProgressSpinnerComponent,
+    TumAetUiRadioButtonComponent,
     TumAetUiSelectComponent,
 } from '@tumaet/ui-angular';
 
@@ -20,6 +23,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { onError } from 'app/foundation/util/global.utils';
+import { Course } from 'app/course/shared/entities/course.model';
 import { User, UserNameAndLoginDTO } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import {
@@ -28,13 +33,16 @@ import {
     PresentationAssessmentInstanceRequest,
     PresentationAssessmentInstancesCreate,
     PresentationAssessmentMode,
+    PresentationGradingMethod,
 } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { TranslateService } from '@ngx-translate/core';
 import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
-import { hasResultPoints } from 'app/presentation/manage/presentation-assessment-management.helper';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
+import { PresentationRubricGradingComponent } from 'app/presentation/manage/presentation-rubric-grading.component';
+import { RatingsForm, countUnrated, createRatingsForm, readRatingsForm } from 'app/presentation/manage/presentation-rubric-rating-form';
+import { isSet } from 'app/presentation/shared/presentation.util';
 
 const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     const resultPoints = control.get('resultPoints')?.value;
@@ -43,19 +51,21 @@ const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl)
 };
 
 /**
- * Only a graded presentation has an assessor, so the assessor is required as soon as result points are entered. The autocomplete writes the typed text into
- * the control, so only a selected assessor (an object) counts; without result points neither is checked, as the field is hidden then.
+ * Only a graded presentation has an assessor, so the assessor is required as soon as the form holds a result. The autocomplete writes the typed text into
+ * the control, so only a selected assessor (an object) counts; without a result neither is checked, as the field is hidden then.
  */
-const assessorSelectedForGrade: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
-    if (!hasResultPoints(control.get('resultPoints')?.value)) {
-        return null;
-    }
-    const assessorOption = control.get('assessorOption')?.value;
-    if (!assessorOption) {
-        return { assessorRequired: true };
-    }
-    return typeof assessorOption === 'string' ? { assessorNotSelected: true } : null;
-};
+function assessorSelectedForResult(hasResult: () => boolean): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+        if (!hasResult()) {
+            return null;
+        }
+        const assessorOption = control.get('assessorOption')?.value;
+        if (!assessorOption) {
+            return { assessorRequired: true };
+        }
+        return typeof assessorOption === 'string' ? { assessorNotSelected: true } : null;
+    };
+}
 
 /** A meeting link is rendered as a link, so without a scheme the browser would open it relative to the Artemis URL. */
 const httpUrl: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
@@ -72,14 +82,23 @@ interface AssessorOption {
     label: string;
 }
 
+/** The criteria still to rate while a rubric is rated incompletely, or 0 while it is rated completely or, being optional, not at all. */
+function remainingCriteriaOf(ratingsForm: RatingsForm): number {
+    return ratingsForm.hasError('ratingsIncomplete') || ratingsForm.hasError('ratingsRequired') ? countUnrated(ratingsForm) : 0;
+}
+const OUTCOMES = [
+    { key: 'passed', value: true, icon: faCheck },
+    { key: 'failed', value: false, icon: faXmark },
+] as const;
 export type PresentationAssessmentInstanceFormResult =
     { kind: 'create'; request: PresentationAssessmentInstancesCreate } | { kind: 'update'; instance: PresentationAssessmentInstanceRequest };
 
 @Component({
     selector: 'jhi-presentation-assessment-instance-form-dialog',
     templateUrl: './presentation-assessment-instance-form-dialog.component.html',
-    styleUrl: './presentation-assessment-instance-form-dialog.component.scss',
     imports: [
+        NgTemplateOutlet,
+        FormsModule,
         ReactiveFormsModule,
         FaIconComponent,
         TranslateDirective,
@@ -92,23 +111,28 @@ export type PresentationAssessmentInstanceFormResult =
         PointsInputComponent,
         ProfilePictureComponent,
         TumAetUiMessageComponent,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiRadioButtonComponent,
         TumAetUiSelectComponent,
+        PresentationRubricGradingComponent,
     ],
 })
 export class PresentationAssessmentInstanceFormDialogComponent {
     private readonly formBuilder = inject(FormBuilder);
     private readonly translateService = inject(TranslateService);
     private readonly accountService = inject(AccountService);
-    private readonly alertService = inject(AlertService);
     private readonly presentationAssessmentService = inject(PresentationAssessmentService);
+    private readonly alertService = inject(AlertService);
     private readonly translationChanges = toSignal(merge(this.translateService.onLangChange, this.translateService.onTranslationChange));
 
     readonly courseId = input.required<number>();
+    /** The course, whose settings round the preview of a rubric result. */
+    readonly course = input<Course>();
     readonly presentationAssessment = input.required<PresentationAssessment>();
     readonly instance = input<PresentationAssessmentInstance>();
     readonly initialAssignedStudents = input<User[]>([]);
     readonly isSaving = input(false);
-    /** Editors and instructors choose the assessor; tutors keep the given one or assess themselves. */
+    /** Instructors choose the assessor; tutors and editors keep the given one or assess themselves. */
     readonly canChooseAssessor = input(false);
     readonly saved = output<PresentationAssessmentInstanceFormResult>();
     readonly cancelled = output<void>();
@@ -116,10 +140,11 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
     protected readonly PresentationAssessmentMode = PresentationAssessmentMode;
+    protected readonly PresentationGradingMethod = PresentationGradingMethod;
+    protected readonly outcomes = OUTCOMES;
     protected readonly dateTextValid = signal(true);
     protected readonly timeTextValid = signal(true);
     protected readonly resultPointsUpperBound = RESULT_POINTS_UPPER_BOUND;
-    protected readonly hasResultPoints = hasResultPoints;
     readonly languageOptions = computed(() => {
         this.translationChanges();
         return [
@@ -173,11 +198,60 @@ export class PresentationAssessmentInstanceFormDialogComponent {
 
     protected readonly assessorOptions = computed(() => this.assessorSuggestions().map((assessor) => this.toAssessorOption(assessor)));
 
+    protected readonly gradingMethod = computed(() => this.presentationAssessment().gradingMethod);
+
+    /** The rubric and, when editing, the saved ratings; only a presentation graded by rubric loads them. */
+    private readonly rubricResource = rxResource({
+        params: () => {
+            const presentationAssessment = this.presentationAssessment();
+            return presentationAssessment.gradingMethod === PresentationGradingMethod.RUBRIC && presentationAssessment.id !== undefined
+                ? { courseId: this.courseId(), presentationAssessmentId: presentationAssessment.id, instanceId: this.instance()?.id }
+                : undefined;
+        },
+        stream: ({ params }) =>
+            forkJoin({
+                criteria: this.presentationAssessmentService.getRubric(params.courseId, params.presentationAssessmentId).pipe(map((response) => response.body?.criteria ?? [])),
+                ratings:
+                    params.instanceId === undefined
+                        ? of([])
+                        : this.presentationAssessmentService
+                              .getRatings(params.courseId, params.presentationAssessmentId, params.instanceId)
+                              .pipe(map((response) => response.body ?? [])),
+            }).pipe(tap({ error: (error: HttpErrorResponse) => onError(this.alertService, error) })),
+    });
+    protected readonly isRubricLoading = computed(() => this.rubricResource.isLoading());
+    protected readonly criteria = computed(() => (this.rubricResource.hasValue() ? this.rubricResource.value().criteria : []));
+    /** One rating per criterion; a saved rubric result can be changed but not removed, so its ratings stay required. */
+    protected readonly ratingsForm = computed(() => {
+        if (!this.rubricResource.hasValue()) {
+            return undefined;
+        }
+        const { criteria, ratings } = this.rubricResource.value();
+        return createRatingsForm(criteria, ratings, isSet(this.instance()?.rubricScore));
+    });
+    /** Saving without the loaded rubric would drop the ratings of the instance. */
+    protected readonly rubricUnavailable = computed(() => this.gradingMethod() === PresentationGradingMethod.RUBRIC && !this.ratingsForm());
+    /** The number of criteria still to rate while the rubric is rated incompletely, updated with every change of the ratings. */
+    protected readonly remainingCriteria = toSignal(
+        toObservable(this.ratingsForm).pipe(
+            switchMap((ratingsForm) =>
+                ratingsForm
+                    ? ratingsForm.events.pipe(
+                          startWith(undefined),
+                          map(() => remainingCriteriaOf(ratingsForm)),
+                      )
+                    : of(0),
+            ),
+        ),
+        { initialValue: 0 },
+    );
+
     editForm = this.formBuilder.group(
         {
             presentationDate: [undefined as dayjs.Dayjs | undefined, [Validators.required, minimumPresentationDate]],
             presentationTime: [undefined as dayjs.Dayjs | undefined],
             resultPoints: [undefined as number | undefined, [Validators.min(0), Validators.max(RESULT_POINTS_UPPER_BOUND)]],
+            passed: [undefined as boolean | undefined],
             maxPoints: [0],
             assessorOption: [undefined as AssessorOption | undefined],
             language: ['en', Validators.required],
@@ -186,8 +260,29 @@ export class PresentationAssessmentInstanceFormDialogComponent {
             meetingLink: ['', [Validators.maxLength(1000), httpUrl]],
             remark: ['', Validators.maxLength(1000)],
         },
-        { validators: [resultPointsDoNotExceedMaxPoints, assessorSelectedForGrade] },
+        // Read untracked, as the form also validates inside effects, which would otherwise rerun and reset it whenever the result state changes
+        { validators: [resultPointsDoNotExceedMaxPoints, assessorSelectedForResult(() => untracked(() => this.hasResult()))] },
     );
+
+    /**
+     * Whether the form holds a result of the grading method; only a graded presentation has an assessor. A rubric counts as soon as one criterion is rated,
+     * as only then its ratings are sent. The form validates itself while it is built, before it is assigned, when nothing is entered yet.
+     */
+    protected hasResult(): boolean {
+        if (!this.editForm) {
+            return false;
+        }
+        switch (this.gradingMethod()) {
+            case PresentationGradingMethod.PASS_FAIL:
+                return isSet(this.editForm.controls.passed.value);
+            case PresentationGradingMethod.RUBRIC: {
+                const ratingsForm = this.ratingsForm();
+                return !!ratingsForm && countUnrated(ratingsForm) < ratingsForm.length;
+            }
+            default:
+                return isSet(this.editForm.controls.resultPoints.value);
+        }
+    }
 
     constructor() {
         this.editForm.controls.mode.valueChanges.pipe(pairwise(), takeUntilDestroyed()).subscribe(([previousMode, mode]) => {
@@ -203,10 +298,17 @@ export class PresentationAssessmentInstanceFormDialogComponent {
             this.dateTextValid.set(true);
             this.timeTextValid.set(true);
             this.assignedStudents.set([...this.initialAssignedStudents()]);
+            // A saved score can be changed but not removed
+            this.editForm.controls.resultPoints.setValidators([
+                Validators.min(0),
+                Validators.max(RESULT_POINTS_UPPER_BOUND),
+                ...(isSet(instance?.resultPoints) ? [Validators.required] : []),
+            ]);
             this.editForm.reset({
                 presentationDate: instance?.presentationDate?.startOf('day'),
                 presentationTime: instance?.presentationDate,
                 resultPoints: instance?.resultPoints,
+                passed: instance?.passed ?? undefined,
                 maxPoints: this.presentationAssessment().maxPoints ?? 0,
                 assessorOption: this.initialAssessorOption(instance),
                 language: instance?.language ?? 'en',
@@ -216,20 +318,37 @@ export class PresentationAssessmentInstanceFormDialogComponent {
                 remark: instance?.remark ?? '',
             });
         });
-        effect(() => (this.isSaving() ? this.editForm.disable({ emitEvent: false }) : this.editForm.enable({ emitEvent: false })));
+        effect(() => {
+            const ratingsForm = this.ratingsForm();
+            if (this.isSaving()) {
+                this.editForm.disable({ emitEvent: false });
+                ratingsForm?.disable({ emitEvent: false });
+            } else {
+                this.editForm.enable({ emitEvent: false });
+                ratingsForm?.enable({ emitEvent: false });
+            }
+        });
+        // A rated criterion makes the assessor required, so the ratings validate the form again like the other results do
+        effect((onCleanup) => {
+            const subscription = this.ratingsForm()?.valueChanges.subscribe(() => this.editForm.updateValueAndValidity());
+            onCleanup(() => subscription?.unsubscribe());
+        });
     }
 
     save(): void {
         const instance = this.instance();
+        const ratingsForm = this.ratingsForm();
 
-        if (this.isSaving() || this.editForm.invalid || !this.dateTextValid() || !this.timeTextValid()) {
+        if (this.isSaving() || this.rubricUnavailable() || this.editForm.invalid || ratingsForm?.invalid || !this.dateTextValid() || !this.timeTextValid()) {
             this.editForm.markAllAsTouched();
+            ratingsForm?.markAllAsTouched();
             return;
         }
 
         const value = this.editForm.getRawValue();
-        const assessorLogin = hasResultPoints(value.resultPoints) ? this.selectedAssessorOption()?.assessor.login : undefined;
-        if (!value.presentationDate || !value.language || !value.mode || (hasResultPoints(value.resultPoints) && !assessorLogin)) {
+        const graded = this.hasResult();
+        const assessorLogin = graded ? this.selectedAssessorOption()?.assessor.login : undefined;
+        if (!value.presentationDate || !value.language || !value.mode || (graded && !assessorLogin)) {
             return;
         }
 
@@ -241,9 +360,12 @@ export class PresentationAssessmentInstanceFormDialogComponent {
             .second(0)
             .millisecond(0);
 
+        const gradingMethod = this.gradingMethod();
         const data = {
             presentationDate: combinedPresentationDate,
-            resultPoints: value.resultPoints ?? undefined,
+            resultPoints: gradingMethod === PresentationGradingMethod.SCORE ? (value.resultPoints ?? undefined) : undefined,
+            passed: gradingMethod === PresentationGradingMethod.PASS_FAIL ? (value.passed ?? undefined) : undefined,
+            ratings: ratingsForm ? readRatingsForm(this.criteria(), ratingsForm) : undefined,
             language: value.language,
             mode: value.mode,
             location: value.mode === PresentationAssessmentMode.IN_PERSON ? value.location?.trim() || undefined : undefined,

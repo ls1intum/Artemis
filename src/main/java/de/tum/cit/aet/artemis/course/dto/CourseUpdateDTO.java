@@ -61,7 +61,7 @@ public record CourseUpdateDTO(
 
         // UI settings
         @Nullable String color, @Nullable String courseIcon, @Nullable Boolean enrollmentEnabled, @Nullable @Size(max = 2000) String enrollmentConfirmationMessage,
-        boolean unenrollmentEnabled, @Nullable String courseInformationSharingMessagingCodeOfConduct,
+        boolean unenrollmentEnabled, @Nullable @Size(max = 10000) String courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
         boolean learningPathsEnabled, @Nullable Boolean presentationAssessmentsEnabled,
@@ -79,7 +79,8 @@ public record CourseUpdateDTO(
 
         // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides.
         boolean autoOrchestratorEnabled, @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
-        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) implements CourseSettingsDTO {
+        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride, @Size(max = 2000) String studentWelcomeContext)
+        implements CourseSettingsDTO {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -124,6 +125,9 @@ public record CourseUpdateDTO(
         configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
         configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
         configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
+        if (studentWelcomeContext != null) {
+            configuration.setStudentWelcomeContext(studentWelcomeContext);
+        }
 
         return course;
     }

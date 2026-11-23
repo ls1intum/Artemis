@@ -2,6 +2,7 @@
 id: client-tests
 title: Client Tests
 sidebar_label: Client Tests
+last_reviewed: 2026-11-03
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -199,14 +200,14 @@ Query them through `fixture.nativeElement` instead.
 Keep a host component where the directive needs a template around it:
 
 - Structural directives, which inject a `TemplateRef`, such as `*jhiHasAnyAuthority` and `*jhiExtensionPoint`.
-- Directives that need something around or beside them, or content Angular keeps rendering inside them: `jhiSortBy`
-  needs `jhiSort` on an enclosing element and reads the icon projected into it, a validator tested through `ngModel`
+- Directives that need something around or beside them, or content Angular keeps rendering inside them: `tumAetUiSortableColumn`
+  needs `tumAetUiTable` on an enclosing element and renders its own sort trigger, a validator tested through `ngModel`
   needs the `NgModel` beside it, and `infinite-scroll` has to keep its sentinels around a `@for` list.
 - Directives whose constructor reads a static attribute the template writes on the host, such as the `href` that
   `jhiSecureLink` must leave alone. Angular writes static attributes before it creates the directive, which
   `createDirective` cannot do.
 - Inputs that take a `TemplateRef` or a component instance declared in the same template, such as
-  `jhiStickyPopover` and `tumAetUiPopoverTrigger`.
+  `tumAetUiPopoverTrigger`.
 
 An abstract base directive is still tested through a concrete subclass. One spec can use both: `createDirective` for
 the cases that fit, and a small host component, with a comment saying why, for the case that needs a template.

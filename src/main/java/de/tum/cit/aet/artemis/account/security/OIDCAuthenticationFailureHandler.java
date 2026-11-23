@@ -5,7 +5,6 @@ import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +12,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
@@ -32,6 +32,16 @@ public class OIDCAuthenticationFailureHandler implements AuthenticationFailureHa
 
     private static final Logger log = LoggerFactory.getLogger(OIDCAuthenticationFailureHandler.class);
 
+    /**
+     * The error code Spring Security uses when a callback matches no stored authorization request. It is a literal in Spring's OAuth2LoginAuthenticationFilter.
+     */
+    private static final String AUTHORIZATION_REQUEST_NOT_FOUND = "authorization_request_not_found";
+
+    /**
+     * The error code that {@link OIDCService} raises for a login name that belongs to an internal account.
+     */
+    private static final String INTERNAL_ACCOUNT = "internal_account";
+
     private final TemplateEngine templateEngine;
 
     public OIDCAuthenticationFailureHandler(TemplateEngine templateEngine) {
@@ -49,16 +59,27 @@ public class OIDCAuthenticationFailureHandler implements AuthenticationFailureHa
      */
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-        log.error("OIDC authentication failed: {}", exception.getMessage(), exception);
+        String failureCode = exception instanceof OAuth2AuthenticationException oauth2Exception ? oauth2Exception.getError().getErrorCode() : null;
+        if (AUTHORIZATION_REQUEST_NOT_FOUND.equals(failureCode) || INTERNAL_ACCOUNT.equals(failureCode)) {
+            // The browser came back without the state cookie of its login attempt, e.g. because the cookie expired, was blocked or the login was opened in another browser,
+            // or the login name belongs to an account with a password of its own. Neither is a defect of the server and the user simply signs in again,
+            // so there is no stack trace to analyse.
+            log.warn("OIDC authentication failed: {}", exception.getMessage());
+        }
+        else {
+            log.error("OIDC authentication failed: {}", exception.getMessage(), exception);
+        }
+        // Absent if the callback could not be matched to an authorization request, e.g. because it expired or was already used
         String redirectTarget = null;
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            redirectTarget = (String) session.getAttribute(OIDCConstants.OIDC_REDIRECT_TARGET_SESSION_KEY);
-            session.invalidate();
+        if (request.getAttribute(OIDCConstants.OIDC_AUTHORIZATION_REQUEST_ATTRIBUTE) instanceof OAuth2AuthorizationRequest authorizationRequest) {
+            redirectTarget = authorizationRequest.getAttribute(OIDCConstants.OIDC_REDIRECT_TARGET_ATTRIBUTE);
         }
         // If user is not validated
-        boolean isDeactivated = exception instanceof OAuth2AuthenticationException oauth2Exception && "user_deactivated".equals(oauth2Exception.getError().getErrorCode());
-        String errorCode = isDeactivated ? "deactivated" : "oidcFailure";
+        String errorCode = switch (failureCode == null ? "" : failureCode) {
+            case "user_deactivated" -> "deactivated";
+            case INTERNAL_ACCOUNT -> "internalAccount";
+            default -> "oidcFailure";
+        };
 
         if (OIDCConstants.VS_CODE_REDIRECT_TARGET.equals(redirectTarget)) {
             String deepLink = OIDCConstants.VS_CODE_DEEP_LINK_BASE + "?error=" + errorCode;

@@ -7,7 +7,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { AdminPasskeyManagementService } from './admin-passkey-management.service';
 import { AdminPasskeyDTO } from './admin-passkey.dto';
-import { PasskeyDTO } from 'app/account/user/settings/passkey-settings/dto/passkey.dto';
+import { PasskeyDTO } from 'app/account/user/settings/credentials/passkey-settings/dto/passkey.dto';
 
 describe('AdminPasskeyManagementService', () => {
     let service: AdminPasskeyManagementService;

@@ -154,6 +154,14 @@ const routes: Routes = [
                 },
             },
             {
+                path: 'confirm-email-change',
+                pathMatch: 'full',
+                loadComponent: () => import('app/account/confirm-email-change/confirm-email-change.component').then((m) => m.ConfirmEmailChangeComponent),
+                data: {
+                    pageTitle: 'confirmEmailChange.title',
+                },
+            },
+            {
                 path: 'password',
                 pathMatch: 'full',
                 loadComponent: () => import('app/account/password/password.component').then((m) => m.PasswordComponent),
@@ -186,16 +194,6 @@ const routes: Routes = [
                 data: {
                     pageTitle: 'register.title',
                 },
-            },
-            {
-                path: 'settings',
-                pathMatch: 'full',
-                loadComponent: () => import('app/account/settings/settings.component').then((m) => m.SettingsComponent),
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                    pageTitle: 'global.menu.account.settings',
-                },
-                canActivate: [UserRouteAccessService],
             },
         ],
         data: {

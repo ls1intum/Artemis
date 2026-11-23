@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.core.service.llm.MockChatModelLlmConfiguration;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -83,7 +84,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @AutoConfigureMockMvc
 @ExtendWith({ SpringExtension.class, AsyncWorkDrainExtension.class })
 @Execution(ExecutionMode.CONCURRENT)
-@Import({ TestRepositoryConfiguration.class, JacksonDeserializerInitializationConfig.class, AsyncWorkTrackingConfiguration.class })
+@Import({ TestRepositoryConfiguration.class, JacksonDeserializerInitializationConfig.class, AsyncWorkTrackingConfiguration.class, MockChatModelLlmConfiguration.class })
 @AutoConfigureEmbeddedDatabase
 public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 

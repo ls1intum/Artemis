@@ -11,9 +11,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
-import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
-import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
+import { Ide } from 'app/account/user/settings/exercises/ide-preferences/ide.model';
+import { IdeSettingsService } from 'app/account/user/settings/exercises/ide-preferences/ide-settings.service';
+import { SshUserSettingsService } from 'app/account/user/settings/credentials/ssh-settings/ssh-user-settings.service';
 import { User } from 'app/account/user/user.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeButtonComponent, RepositoryAuthenticationMethod, type VcsAccessTokenSourceInfo } from './code-button.component';
@@ -137,6 +137,13 @@ describe('CodeButtonComponent', () => {
             fixture.detectChanges();
         }
     }
+
+    it('keeps Code focused on repository access without a browser editor action', async () => {
+        createComponent(false);
+        await fixture.whenStable();
+        expect(document.querySelector('[data-testid="edit-repository-button"]')).toBeNull();
+        expect(document.querySelector('[data-testid="open-repository-button"]')?.getAttribute('href')).toBe('/courses/1/exercises/42/repository');
+    });
 
     it('should defer resource loading until the popover trigger is clicked', async () => {
         createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { returnedTokenType: 'participation-token', participationId: 7 }, false);

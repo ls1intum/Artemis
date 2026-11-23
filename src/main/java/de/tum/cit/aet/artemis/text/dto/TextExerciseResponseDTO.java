@@ -55,8 +55,8 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
 
     /**
      * Creates the record written into the exercise details file of an archive. It is the response record without the
-     * ids of the plagiarism detection and the team assignment configuration: those are rows of this instance, and a
-     * file read back elsewhere must not carry them.
+     * ids of the plagiarism detection and the team assignment configuration and of the grading criteria: those are rows
+     * of this instance, and a file read back elsewhere must not carry them.
      *
      * @param exercise the text exercise to export (may be {@code null})
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
@@ -101,6 +101,7 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
         if (forExport) {
             teamAssignmentConfigDTO = teamAssignmentConfigDTO == null ? null : teamAssignmentConfigDTO.withoutId();
             plagiarismDetectionConfigDTO = plagiarismDetectionConfigDTO == null ? null : plagiarismDetectionConfigDTO.withoutId();
+            gradingCriterionDTOs = gradingCriterionDTOs == null ? null : gradingCriterionDTOs.stream().map(GradingCriterionDTO::withoutIds).toList();
         }
 
         // Only populated on the single-exercise detail endpoint, which explicitly loads example submissions; null/omitted elsewhere.

@@ -45,14 +45,11 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
-import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -70,7 +67,9 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -91,6 +90,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     /** Tutor/instructor not enrolled in the test course; exercises the wrong-course branches. */
     private static final String OTHER_PREFIX = "modelingexerciseother";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
@@ -133,12 +135,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ConversationUtilService conversationUtilService;
-
-    @Autowired
-    private Optional<AtlasMLRequestMockProvider> atlasMLRequestMockProvider;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     @Autowired(required = false)
     private de.tum.cit.aet.artemis.globalsearch.service.WeaviateService weaviateService;
@@ -453,7 +449,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteModelingExercise_asInstructor() throws Exception {
         long exerciseId = classExercise.getId();
-        request.delete("/api/modeling/modeling-exercises/" + exerciseId, HttpStatus.OK);
+        request.delete("/api/modeling/modeling-exercises/" + exerciseId, HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(exerciseId);
         assertThat(modelingExerciseTestRepository.findById(exerciseId)).as("exercise was deleted").isEmpty();
         assertExerciseNotInWeaviate(weaviateService, exerciseId);
         request.delete("/api/modeling/modeling-exercises/" + exerciseId, HttpStatus.FORBIDDEN);
@@ -465,7 +462,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         classExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, classExercise, 1)));
         modelingExerciseTestRepository.save(classExercise);
 
-        request.delete("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
+        request.delete("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(classExercise.getId());
 
         verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
     }
@@ -477,7 +475,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise modelingExercise = modelingExerciseTestRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         Channel exerciseChannel = conversationUtilService.addChannelToExercise(modelingExercise);
 
-        request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
+        request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(modelingExercise.getId());
 
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();
@@ -497,7 +496,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         assertThat(tutorParticipationRepository.findByAssessedExercise(classExercise)).isNotEmpty();
 
-        request.delete("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
+        request.delete("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(classExercise.getId());
 
         assertThat(modelingExerciseTestRepository.findById(classExercise.getId())).as("exercise was deleted").isEmpty();
         assertThat(tutorParticipationRepository.findByAssessedExercise(classExercise)).isEmpty();
@@ -1582,32 +1582,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
-        var provider = atlasMLRequestMockProvider.orElseThrow(() -> new IllegalStateException("AtlasMLRequestMockProvider must be available for AtlasML tests"));
-        featureToggleService.enableFeature(Feature.AtlasML);
-        try {
-            provider.enableMockingOfRequests();
-            provider.mockSaveCompetenciesAny();
-            // Create
-            var modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-            modelingExercise.setTitle("AtlasML Create");
-            request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
-
-            // Update
-            var created = modelingExerciseTestRepository.findByCourseIdWithCategories(classExercise.getCourseViaExerciseGroupOrCourseMember().getId()).getFirst();
-            created.setTitle("AtlasML Update");
-            request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(created), ModelingExerciseResponseDTO.class, HttpStatus.OK);
-
-            // Delete
-            request.delete("/api/modeling/modeling-exercises/" + created.getId(), HttpStatus.OK);
-        }
-        finally {
-            featureToggleService.disableFeature(Feature.AtlasML);
-        }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportModelingExercise_setGradingInstructionForCopiedFeedback() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
@@ -1720,5 +1694,26 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(listItem.teamMode()).isFalse();
         assertThat(listItem.course()).isNotNull();
         assertThat(listItem.course().title()).isEqualTo(classExercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportExercise() throws Exception {
+        classExercise.setProblemStatement("Model a class diagram");
+        classExercise.setCategories(Set.of("{\"category\":\"export\"}"));
+        modelingExerciseTestRepository.save(classExercise);
+        gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(classExercise));
+
+        var export = exerciseUtilService.readExerciseExport(request.getFile("/api/modeling/modeling-exercises/" + classExercise.getId() + "/export", HttpStatus.OK));
+
+        assertThat(export.details()).containsEntry("type", "modeling").containsKey("categories");
+        ExerciseUtilService.assertExportedGradingCriteriaWithoutIds(export.details());
+        assertThat(export.entries().keySet()).anyMatch(name -> name.startsWith("Problem-Statement-"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void exportExercise_asTutor_forbidden() throws Exception {
+        request.getFile("/api/modeling/modeling-exercises/" + classExercise.getId() + "/export", HttpStatus.FORBIDDEN);
     }
 }

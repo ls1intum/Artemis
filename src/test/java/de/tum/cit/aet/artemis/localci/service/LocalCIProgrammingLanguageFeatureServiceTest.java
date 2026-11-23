@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -30,12 +32,24 @@ class LocalCIProgrammingLanguageFeatureServiceTest {
     }
 
     @Test
-    void shouldSupportSequentialTestRunsForKotlin() {
+    void shouldSupportSequentialTestRunsAndStaticCodeAnalysisForKotlin() {
         var kotlin = service.getProgrammingLanguageFeatures(ProgrammingLanguage.KOTLIN);
 
         assertThat(kotlin.sequentialTestRuns()).isTrue();
-        // Kotlin has no static code analysis, so a sequential exercise selects the template without the static suffix
-        assertThat(kotlin.staticCodeAnalysis()).isFalse();
+        assertThat(kotlin.staticCodeAnalysis()).isTrue();
+        assertThat(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.KOTLIN)).containsExactly(StaticCodeAnalysisTool.DETEKT);
+    }
+
+    @Test
+    void shouldSupportStaticCodeAnalysisForCSharp() {
+        assertThat(service.getProgrammingLanguageFeatures(ProgrammingLanguage.C_SHARP).staticCodeAnalysis()).isTrue();
+        assertThat(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.C_SHARP)).containsExactly(StaticCodeAnalysisTool.ROSLYN);
+    }
+
+    @Test
+    void shouldSupportStaticCodeAnalysisForGo() {
+        assertThat(service.getProgrammingLanguageFeatures(ProgrammingLanguage.GO).staticCodeAnalysis()).isTrue();
+        assertThat(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.GO)).containsExactly(StaticCodeAnalysisTool.GOLANGCI_LINT);
     }
 
     @Test
@@ -47,9 +61,9 @@ class LocalCIProgrammingLanguageFeatureServiceTest {
         assertThat(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.SWIFT)).containsExactly(StaticCodeAnalysisTool.SWIFTLINT);
     }
 
-    @Test
-    void shouldKeepSequentialTestRunsOfJavaAndHaskell() {
-        assertThat(service.getProgrammingLanguageFeatures(ProgrammingLanguage.JAVA).sequentialTestRuns()).isTrue();
-        assertThat(service.getProgrammingLanguageFeatures(ProgrammingLanguage.HASKELL).sequentialTestRuns()).isTrue();
+    @ParameterizedTest
+    @EnumSource(value = ProgrammingLanguage.class, names = { "C_SHARP", "DART", "GO", "HASKELL", "JAVA", "JAVASCRIPT", "KOTLIN", "PYTHON", "RUBY", "RUST", "SWIFT", "TYPESCRIPT" })
+    void shouldSupportSequentialTestRunsWhereATemplateExists(ProgrammingLanguage language) {
+        assertThat(service.getProgrammingLanguageFeatures(language).sequentialTestRuns()).isTrue();
     }
 }

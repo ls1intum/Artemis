@@ -2,6 +2,7 @@
 id: tum-live-course-connection
 title: TUM.Live Course Connections
 sidebar_label: TUM.Live Connections
+last_reviewed: 2026-11-19
 ---
 
 # Set up TUM.Live course connections
@@ -34,3 +35,9 @@ Artemis derives the callback from `server.url`. GoCast must use that exact callb
 Regenerating or revoking the integration's API key does not remove existing course grants. After replacing a key, update the server-side Artemis deployment secret before the next integration request. Artemis does not send the key to browsers.
 
 Key management and course approval are separate actions. Generating a key does not approve any course grant or change existing course permissions. A course owner or an explicitly assigned course administrator must approve the request; instance-administrator authority alone is insufficient. The resulting integration grant does not grant access to course settings or private videos. Instructors can disconnect from Artemis; this revokes the exact grant in TUM.Live before Artemis removes its local connection.
+
+## Video uploads
+
+Artemis forwards the video body to TUM.Live while the browser is still uploading. If Artemis is behind a reverse proxy, allow large request bodies and disable request buffering for `/api/lecture/lecture-units/{lectureUnitId}/tumlive-upload/file`. The included nginx configuration sets these options for this route.
+
+Artemis limits the outbound upload to `artemis.tum-live.upload-max-age` (six hours by default). The limit covers sending the video and waiting for TUM.Live to accept it.

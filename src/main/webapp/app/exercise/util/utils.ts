@@ -7,6 +7,11 @@ export function getExerciseGeneralDetailsSection(exercise: Exercise): DetailOver
     return {
         headline: 'artemisApp.exercise.sections.general',
         details: [
+            exercise.id !== undefined && {
+                type: DetailType.Text,
+                title: 'artemisApp.exerciseDetail.id',
+                data: { text: String(exercise.id) },
+            },
             exercise.course && {
                 type: DetailType.Link,
                 title: 'artemisApp.exercise.course',

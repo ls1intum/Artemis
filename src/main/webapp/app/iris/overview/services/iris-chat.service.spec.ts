@@ -29,7 +29,7 @@ import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
-import { IrisSender } from 'app/iris/shared/entities/iris-message.model';
+import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
@@ -424,12 +424,14 @@ describe('IrisChatService', () => {
             it('should load that session instead of resolving the current one', async () => {
                 const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
                 const currentStub = vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists');
+                const sendStub = vi.spyOn(service, 'sendMessage');
 
                 service.openChat(ChatServiceMode.COURSE, courseId, 777);
                 await waitForSessionIdValue(777);
 
                 expect(byIdStub).toHaveBeenCalledExactlyOnceWith(courseId, 777);
                 expect(currentStub).not.toHaveBeenCalled();
+                expect(sendStub).not.toHaveBeenCalled();
                 // The session's own topic becomes the committed context, so the chip shows the lecture the chat was opened on.
                 expect(service['contextService'].committed()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: lectureId });
             });
@@ -505,7 +507,8 @@ describe('IrisChatService', () => {
 
                 service.openChat(ChatServiceMode.COURSE, courseId, 777);
 
-                expect(await firstValueFrom(service.currentError())).toBeDefined();
+                // The template translates the error, so it has to be the translation key and not the error that the request failed with
+                expect(await firstValueFrom(service.currentError())).toBe(IrisErrorMessageKey.SESSION_LOAD_FAILED);
                 expect(service.sessionId).toBeUndefined();
             });
         });
@@ -1212,6 +1215,62 @@ describe('IrisChatService', () => {
             expect(service.numNewMessages.getValue()).toBe(0);
         });
 
+        const interimFrame = (runId: string, id: number, text: string, activities?: IrisActivityItem[]): IrisChatWebsocketDTO =>
+            messageFrame(runId, {
+                final: false,
+                message: { ...mockWebsocketServerMessage.message!, id, final: false, content: [{ type: 'text', textContent: text }], activities },
+            });
+
+        it('live feed: drops the steps an interim message now shows, also from later snapshots', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+
+            websocketSubject.next(interimFrame('run-1', 40, 'Let me pull up the details.'));
+            websocketSubject.next(statusFrame('run-1', IrisRunState.RUNNING, { activities: [finishedActivity('act-1')], activitySeq: 1 }));
+            expect(service.activities.getValue()).toEqual([finishedActivity('act-1')]);
+
+            websocketSubject.next(interimFrame('run-1', 41, 'Let me switch over.', [finishedActivity('act-1')]));
+            expect(service.activities.getValue()).toEqual([]);
+
+            websocketSubject.next(statusFrame('run-1', IrisRunState.RUNNING, { activities: [finishedActivity('act-1'), runningActivity('act-2')], activitySeq: 2 }));
+            expect(service.activities.getValue()).toEqual([runningActivity('act-2')]);
+        });
+
+        it('live feed: after a reload mid-run, drops the steps the loaded interim messages show', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+            const earlierAnswer = { ...mockWebsocketServerMessage.message!, id: 30, activities: [finishedActivity('act-1')] } as IrisMessage;
+            const loadedInterim = { ...mockWebsocketServerMessage.message!, id: 41, final: false, activities: [finishedActivity('act-1')] } as IrisMessage;
+            service.messages.next([earlierAnswer, mockUserMessageWithContent('question') as IrisMessage, loadedInterim]);
+
+            websocketSubject.next(statusFrame('run-1', IrisRunState.RUNNING, { activities: [finishedActivity('act-1'), runningActivity('act-2')], activitySeq: 5 }));
+
+            expect(service.activities.getValue()).toEqual([runningActivity('act-2')]);
+        });
+
+        it('live feed: interim messages of a finished run do not hide steps of the next run', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+            const oldInterim = { ...mockWebsocketServerMessage.message!, id: 41, final: false, activities: [finishedActivity('act-1')] } as IrisMessage;
+            const oldAnswer = { ...mockWebsocketServerMessage.message!, id: 42 } as IrisMessage;
+            service.messages.next([mockUserMessageWithContent('question') as IrisMessage, oldInterim, oldAnswer]);
+
+            websocketSubject.next(statusFrame('run-2', IrisRunState.RUNNING, { activities: [runningActivity('act-1')], activitySeq: 1 }));
+
+            expect(service.activities.getValue()).toEqual([runningActivity('act-1')]);
+        });
+
+        it('live feed: a new run with reused step ids shows all its steps', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+
+            websocketSubject.next(interimFrame('run-1', 40, 'Let me check.', [finishedActivity('act-1')]));
+            websocketSubject.next(messageFrame('run-1', { message: { ...mockWebsocketServerMessage.message!, id: 41 } }));
+            websocketSubject.next(statusFrame('run-2', IrisRunState.RUNNING, { activities: [runningActivity('act-1')], activitySeq: 1 }));
+
+            expect(service.activities.getValue()).toEqual([runningActivity('act-1')]);
+        });
+
         it('guard: awaitingAnswer clears on FAILED while keeping the last live activities', async () => {
             const websocketSubject = new Subject<IrisChatWebsocketDTO>();
             await startSessionWithWebsocket(websocketSubject);
@@ -1611,6 +1670,23 @@ describe('IrisChatService', () => {
             vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithEmptyConversation));
             vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
             vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+        });
+
+        it.each([LLMSelectionDecision.CLOUD_AI, LLMSelectionDecision.NO_AI])('reports saving state until %s succeeds or fails', (decision) => {
+            for (const fails of [false, true]) {
+                const request = new Subject<HttpResponse<void>>();
+                userMock.updateLLMSelectionDecision.mockReturnValueOnce(request.asObservable());
+                expect(service.isSavingLLMUsageConsent()).toBe(false);
+                service.updateLLMUsageConsent(decision);
+                expect(service.isSavingLLMUsageConsent()).toBe(true);
+                if (fails) {
+                    request.error(new HttpErrorResponse({ status: 500 }));
+                } else {
+                    request.next(new HttpResponse<void>());
+                    request.complete();
+                }
+                expect(service.isSavingLLMUsageConsent()).toBe(false);
+            }
         });
 
         it('should emit llmOptedOut$ once after NO_AI is persisted successfully', () => {

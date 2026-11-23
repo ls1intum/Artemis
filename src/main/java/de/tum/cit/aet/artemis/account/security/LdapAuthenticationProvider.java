@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
+import de.tum.cit.aet.artemis.account.service.user.ScienceIdentityRenameService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
@@ -46,12 +47,15 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
 
     private final UserRepository userRepository;
 
+    private final ScienceIdentityRenameService scienceIdentityRenameService;
+
     public LdapAuthenticationProvider(LdapUserService ldapUserService, UserCreationService userCreationService, SpringSecurityLdapTemplate ldapTemplate,
-            UserRepository userRepository) {
+            UserRepository userRepository, ScienceIdentityRenameService scienceIdentityRenameService) {
         this.ldapUserService = ldapUserService;
         this.userCreationService = userCreationService;
         this.ldapTemplate = ldapTemplate;
         this.userRepository = userRepository;
+        this.scienceIdentityRenameService = scienceIdentityRenameService;
     }
 
     @Override
@@ -143,6 +147,7 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
      * @return The saved or updated user
      */
     private User saveUserIfNeeded(User user, LdapUserDto ldapUserDto) {
+        final String previousLogin = user.getLogin();
         boolean saveNeeded = false;
         if (!Objects.equals(user.getLogin(), ldapUserDto.getLogin())) {
             user.setLogin(ldapUserDto.getLogin());
@@ -169,6 +174,7 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
         // only save the user in the database in case it has changed
         if (saveNeeded) {
             user = userRepository.save(user);
+            scienceIdentityRenameService.renameScienceEventIdentityIfLoginChanged(previousLogin, user);
         }
         return user;
     }

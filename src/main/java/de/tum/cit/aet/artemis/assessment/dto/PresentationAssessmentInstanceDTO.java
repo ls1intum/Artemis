@@ -20,12 +20,12 @@ import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PresentationAssessmentInstanceDTO(Long id, @NotNull ZonedDateTime presentationDate,
-        @PositiveOrZero @DecimalMax("10000") @Digits(integer = 5, fraction = 3) Double resultPoints, @NotBlank @Size(max = 10) String language,
+        @PositiveOrZero @DecimalMax("10000") @Digits(integer = 5, fraction = 3) Double resultPoints, Boolean passed, Double rubricScore, @NotBlank @Size(max = 10) String language,
         @NotNull PresentationAssessmentMode mode, @Size(max = 255) String location, @Size(max = 1000) String meetingLink, @Size(max = 1000) String remark,
         PresentationAssessmentStudentDTO student, UserNameAndLoginDTO assessor, UserNameAndLoginDTO gradeEditedBy) {
 
     /**
-     * Creates the DTO of an instance whose student, assessor and grader are loaded. The person who last changed the grade is only included when they are not
+     * Creates the DTO of an instance whose student, assessor and grader are loaded. The person who last changed the result is only included when they are not
      * the assessor, as only then the client names them.
      *
      * @param instance the presentation assessment instance
@@ -34,8 +34,9 @@ public record PresentationAssessmentInstanceDTO(Long id, @NotNull ZonedDateTime 
     public static PresentationAssessmentInstanceDTO of(PresentationAssessmentInstance instance) {
         User gradedBy = instance.getGradedBy();
         boolean gradeEditedByOther = gradedBy != null && (instance.getAssessor() == null || !gradedBy.getId().equals(instance.getAssessor().getId()));
-        return new PresentationAssessmentInstanceDTO(instance.getId(), instance.getPresentationDate(), instance.getResultPoints(), instance.getLanguage(), instance.getMode(),
-                instance.getLocation(), instance.getMeetingLink(), instance.getRemark(), PresentationAssessmentStudentDTO.of(instance.getStudent()),
-                instance.getAssessor() != null ? UserNameAndLoginDTO.of(instance.getAssessor()) : null, gradeEditedByOther ? UserNameAndLoginDTO.of(gradedBy) : null);
+        return new PresentationAssessmentInstanceDTO(instance.getId(), instance.getPresentationDate(), instance.getResultPoints(), instance.getPassed(), instance.getRubricScore(),
+                instance.getLanguage(), instance.getMode(), instance.getLocation(), instance.getMeetingLink(), instance.getRemark(),
+                PresentationAssessmentStudentDTO.of(instance.getStudent()), instance.getAssessor() != null ? UserNameAndLoginDTO.of(instance.getAssessor()) : null,
+                gradeEditedByOther ? UserNameAndLoginDTO.of(gradedBy) : null);
     }
 }

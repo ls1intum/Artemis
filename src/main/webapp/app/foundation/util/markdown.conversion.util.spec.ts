@@ -1,9 +1,227 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import { MarkdownitTagClass, htmlForMarkdown, markdownForHtml } from './markdown.conversion.util';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { MarkdownitTagClass, htmlForMarkdown, markdownForHtml, restrictRenderedAttributes } from './markdown.conversion.util';
 import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
+import { setAllowedImageHosts } from 'app/foundation/util/image-host-policy.util';
 import MarkdownIt, { type MarkdownIt as MarkdownItInstance } from 'markdown-it';
 
 describe('markdown.conversion.util', () => {
+    describe('allowed image hosts', () => {
+        const markdown = '![a](https://images.example.net/a.png) ![b](https://other.example.org/b.png) ![c](/api/core/files/markdown/c.png) ![d](https://eu.cdn.example.net/d.png)';
+
+        afterEach(() => setAllowedImageHosts(undefined));
+
+        it('keeps the images of every host by default', () => {
+            const html = htmlForMarkdown(markdown);
+
+            expect(html).toContain('https://images.example.net/a.png');
+            expect(html).toContain('https://other.example.org/b.png');
+        });
+
+        it('drops the address of an image of a host that is not allowed', () => {
+            setAllowedImageHosts('images.example.net, *.cdn.example.net');
+
+            const container = document.createElement('div');
+            container.innerHTML = htmlForMarkdown(markdown);
+            const sources = Array.from(container.querySelectorAll('img')).map((image) => image.getAttribute('src'));
+
+            expect(sources).toEqual(['https://images.example.net/a.png', null, '/api/core/files/markdown/c.png', 'https://eu.cdn.example.net/d.png']);
+        });
+
+        it('refuses spellings that the browser resolves to another host', () => {
+            setAllowedImageHosts('images.example.net');
+
+            const html = htmlForMarkdown(
+                '<img src="https://images.example.net.unlisted.example/a.png"> <img src="https:\\\\unlisted.example/b.png"> <img src="//unlisted.example/c.png">',
+            );
+
+            expect(html).not.toContain('unlisted.example');
+        });
+    });
+
+    describe('attributes that load an image while image hosts are restricted', () => {
+        const restricted = (markup: string, selector: string): Element => {
+            const container = document.createElement('div');
+            container.innerHTML = markup;
+            container.querySelectorAll('*').forEach((element) => restrictRenderedAttributes(element));
+            return container.querySelector(selector)!;
+        };
+
+        beforeEach(() => setAllowedImageHosts('images.example.net'));
+        afterEach(() => setAllowedImageHosts(undefined));
+
+        it('removes an img srcset that has a candidate of another host', () => {
+            const image = restricted('<img srcset="https://images.example.net/a.png 1x, https://unlisted.example/b.png 2x">', 'img');
+
+            expect(image.hasAttribute('srcset')).toBe(false);
+        });
+
+        it('keeps an img srcset whose candidates are all allowed', () => {
+            const image = restricted('<img srcset="https://images.example.net/a.png 1x, /local.png 2x">', 'img');
+
+            expect(image.getAttribute('srcset')).toContain('images.example.net');
+        });
+
+        it('removes the srcset of an img with an allowed src', () => {
+            const image = restricted('<img src="/ok.png" srcset="https://unlisted.example/b.png 2x">', 'img');
+
+            expect(image.getAttribute('src')).toBe('/ok.png');
+            expect(image.hasAttribute('srcset')).toBe(false);
+        });
+
+        it('keeps an allowed srcset when only the src is not allowed', () => {
+            const image = restricted('<img src="https://unlisted.example/a.png" srcset="https://images.example.net/a.png 1x">', 'img');
+
+            expect(image.hasAttribute('src')).toBe(false);
+            expect(image.getAttribute('srcset')).toContain('images.example.net');
+        });
+
+        it('removes both the src and the srcset when neither is allowed', () => {
+            const image = restricted('<img src="https://unlisted.example/a.png" srcset="https://unlisted.example/b.png 2x">', 'img');
+
+            expect(image.hasAttribute('src')).toBe(false);
+            expect(image.hasAttribute('srcset')).toBe(false);
+        });
+
+        it('finds a candidate that follows a data address with a comma', () => {
+            const image = restricted('<img srcset="data:image/png;base64,AAAA 1x, https://unlisted.example/b.png 2x">', 'img');
+
+            expect(image.hasAttribute('srcset')).toBe(false);
+        });
+
+        it('reads a candidate with a long run of commas inside its address without taking long', () => {
+            const started = performance.now();
+            const image = restricted(`<img srcset="https://unlisted.example/a${','.repeat(200000)}x,">`, 'img');
+
+            expect(image.hasAttribute('srcset')).toBe(false);
+            expect(performance.now() - started).toBeLessThan(1000);
+        });
+
+        it('removes the srcset of a source in a picture', () => {
+            const source = restricted('<picture><source srcset="https://unlisted.example/b.png"><img src="/ok.png"></picture>', 'source');
+
+            expect(source.hasAttribute('srcset')).toBe(false);
+        });
+
+        it('removes the poster of a video', () => {
+            const video = restricted('<video poster="https://unlisted.example/p.png"></video>', 'video');
+
+            expect(video.hasAttribute('poster')).toBe(false);
+        });
+
+        it('removes the address of an image inside an svg', () => {
+            const image = restricted('<svg><image href="https://unlisted.example/i.png" xlink:href="https://unlisted.example/j.png"></image></svg>', 'image');
+
+            expect(image.hasAttribute('href')).toBe(false);
+            expect(image.hasAttribute('xlink:href')).toBe(false);
+        });
+
+        it('removes a mask, fill or filter of an svg element that names an image that is not allowed', () => {
+            const rect = restricted(
+                '<svg><rect width="1" height="1" mask="url(https://unlisted.example/m.png)" fill="url(\'https://unlisted.example/f.png\')" filter="url(https://unlisted.example/x.svg#f)"></rect></svg>',
+                'rect',
+            );
+
+            expect(rect.hasAttribute('mask')).toBe(false);
+            expect(rect.hasAttribute('fill')).toBe(false);
+            expect(rect.hasAttribute('filter')).toBe(false);
+        });
+
+        it('removes a mask whose url function is not closed', () => {
+            const rect = restricted('<svg><rect width="1" height="1" mask="url(https://unlisted.example/m.png"></rect></svg>', 'rect');
+
+            expect(rect.hasAttribute('mask')).toBe(false);
+        });
+
+        it('removes a mask whose url function is not closed without taking long on a long run of white space', () => {
+            const started = performance.now();
+            const rect = restricted(`<svg><rect width="1" height="1" mask="url(${' '.repeat(4000)}"></rect></svg>`, 'rect');
+
+            expect(rect.hasAttribute('mask')).toBe(false);
+            expect(performance.now() - started).toBeLessThan(1000);
+        });
+
+        it('removes a mask with a url function inside the address of another one', () => {
+            const rect = restricted('<svg><rect width="1" height="1" mask="url(#m url(https://unlisted.example/m.png)"></rect></svg>', 'rect');
+
+            expect(rect.hasAttribute('mask')).toBe(false);
+        });
+
+        it('keeps a reference to an element of the same document and an allowed address', () => {
+            const rect = restricted('<svg><rect width="1" height="1" mask="url(#m)" fill="url(https://images.example.net/f.png)" stroke="red"></rect></svg>', 'rect');
+
+            expect(rect.getAttribute('mask')).toBe('url(#m)');
+            expect(rect.getAttribute('fill')).toBe('url(https://images.example.net/f.png)');
+            expect(rect.getAttribute('stroke')).toBe('red');
+        });
+
+        it('does not treat U+FEFF as the end of an address', () => {
+            const image = restricted('<img srcset="https://images.example.net\uFEFF.unlisted.example/a.png 1x">', 'img');
+
+            expect(image.hasAttribute('srcset')).toBe(false);
+        });
+
+        it('finds the candidate that follows a malformed descriptor with nested parentheses', () => {
+            const image = restricted('<img srcset="https://images.example.net/a.png ((x), https://unlisted.example/b.png 1x">', 'img');
+
+            expect(image.hasAttribute('srcset')).toBe(false);
+        });
+
+        it('still reads a descriptor with parentheses and a comma inside', () => {
+            const image = restricted('<img srcset="https://images.example.net/a.png (1x, 2x), https://images.example.net/b.png 2x">', 'img');
+
+            expect(image.hasAttribute('srcset')).toBe(true);
+        });
+
+        it.each([
+            ['a url function', 'background-image: url(https://unlisted.example/p.png)'],
+            ['an image-set function', 'background: image-set("https://unlisted.example/p.png" 1x)'],
+            ['an escaped function name', 'background: u\\72 l(https://unlisted.example/p.png)'],
+            ['a comment inside the value', 'background: url/**/(https://unlisted.example/p.png)'],
+            ['an import', '@import url(https://unlisted.example/s.css)'],
+        ])('removes %s from a style that is kept', (_description, style) => {
+            const container = document.createElement('div');
+            container.innerHTML = '<p>text</p>';
+            // set as an attribute: a quote in the style would end an attribute that is written in markup
+            container.querySelector('p')!.setAttribute('style', `color: red; ${style}`);
+            container.querySelectorAll('*').forEach((element) => restrictRenderedAttributes(element, true));
+
+            const paragraph = container.querySelector('p')!;
+            expect(paragraph.getAttribute('style') ?? '').toBe('color: red');
+        });
+
+        it('keeps a style without images when image hosts are restricted', () => {
+            const container = document.createElement('div');
+            container.innerHTML = '<p style="color: red; margin: 0">text</p>';
+            container.querySelectorAll('*').forEach((element) => restrictRenderedAttributes(element, true));
+
+            expect(container.querySelector('p')!.getAttribute('style')).toBe('color: red;margin: 0');
+        });
+
+        it('removes the background attribute of a table cell', () => {
+            const cell = restricted('<table><tr><td background="https://unlisted.example/bg.png">x</td></tr></table>', 'td');
+
+            expect(cell.hasAttribute('background')).toBe(false);
+        });
+
+        it('keeps the attributes when every host is allowed', () => {
+            setAllowedImageHosts(undefined);
+            const container = document.createElement('div');
+            container.innerHTML = '<video poster="https://unlisted.example/p.png"></video><img srcset="https://unlisted.example/b.png 2x">';
+            container.querySelectorAll('*').forEach((element) => restrictRenderedAttributes(element));
+
+            expect(container.querySelector('video')!.getAttribute('poster')).toContain('unlisted.example');
+            expect(container.querySelector('img')!.getAttribute('srcset')).toContain('unlisted.example');
+        });
+
+        it('leaves none of them in rendered markdown', () => {
+            const html = htmlForMarkdown(
+                '<img srcset="https://unlisted.example/a.png 2x"><picture><source srcset="https://unlisted.example/b.png"></picture><video poster="https://unlisted.example/c.png"></video><table><tr><td background="https://unlisted.example/d.png">x</td></tr></table>',
+            );
+
+            expect(html).not.toContain('unlisted.example');
+        });
+    });
+
     describe('htmlForMarkdown', () => {
         describe('empty and undefined input', () => {
             it('should return empty string for undefined input', () => {
@@ -359,6 +577,35 @@ describe('markdown.conversion.util', () => {
             it('should sanitize onerror attributes', () => {
                 const result = htmlForMarkdown('<img src="x" onerror="alert(1)">');
                 expect(result).not.toContain('onerror');
+            });
+
+            it('should keep only the placement of a formula and no other style, also on elements that claim a formula class', () => {
+                const formula = htmlForMarkdown('$x^2$');
+                expect(formula).toContain('style="');
+
+                const forged = htmlForMarkdown('<span class="katex" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: red">x</span>');
+                expect(forged).not.toContain('position');
+                expect(forged).not.toContain('background');
+                expect(forged).not.toContain('100vw');
+                expect(forged).not.toContain('100vh');
+            });
+
+            it('should keep what a formula needs to draw rules, boxes and colors', () => {
+                const rule = htmlForMarkdown('$\\rule[1em]{2em}{0.4em}$');
+                expect(rule).toContain('border-right-width:2em');
+                expect(rule).toContain('bottom:1em');
+
+                const colored = htmlForMarkdown('$\\textcolor{red}{x} \\colorbox{yellow}{y} \\fbox{z}$');
+                expect(colored).toContain('color:red');
+                expect(colored).toContain('background-color:yellow');
+                expect(colored).toContain('border-style:solid');
+            });
+
+            it('should refuse values of a formula style that are not plain colors or lengths', () => {
+                const forged = htmlForMarkdown('<span class="katex" style="color: url(https://example.com/a); position: fixed; width: calc(100vw)">x</span>');
+                expect(forged).not.toContain('url(');
+                expect(forged).not.toContain('fixed');
+                expect(forged).not.toContain('calc');
             });
 
             it('should sanitize style tags', () => {

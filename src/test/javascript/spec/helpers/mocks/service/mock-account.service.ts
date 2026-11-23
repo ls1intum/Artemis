@@ -8,6 +8,7 @@ import dayjs from 'dayjs/esm';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Authority } from 'app/foundation/constants/authority.constants';
+import { PendingEmailChangeDTO, UpdateBasicInformationResponseDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
 
 export class MockAccountService implements IAccountService {
     userIdentity = signal<User | undefined>(undefined);
@@ -22,7 +23,7 @@ export class MockAccountService implements IAccountService {
     fetch = () => of({ body: { id: 99 } as User } as any);
     updateLanguage = (languageKey: string) => of({});
     getImageUrl = () => 'blob';
-    isAtLeastTutor = () => this.hasAnyAuthorityDirect([Authority.TUTOR]);
+    readonly isAtLeastTutor = signal(true);
     hasEditorAccess = () => this.hasAnyAuthorityDirect([Authority.EDITOR]);
     hasAdministratorAccess = () => this.isAdmin() && (!this.isPasskeyRequiredForAdministratorFeatures() || this.isUserLoggedInWithApprovedPasskey());
     mayCreateAgentTokens = () => this.hasAnyAuthorityDirect([Authority.EDITOR, Authority.INSTRUCTOR]);
@@ -42,8 +43,12 @@ export class MockAccountService implements IAccountService {
     setAccessRightsForCourseAndReferencedExercises = (course?: Course) => {};
     isAuthenticated = () => true;
     isOwnerOfParticipation = () => true;
-    isAdmin = () => true;
-    save = (account: any) => ({}) as any;
+    readonly isAdmin = signal(true);
+    readonly isSuperAdmin = signal(true);
+    save = (account: any) => of({ pendingEmailChange: null } as UpdateBasicInformationResponseDTO);
+    getPendingEmailChange = () => of(undefined as PendingEmailChangeDTO | undefined);
+    cancelPendingEmailChange = () => of(undefined as void);
+    resendPendingEmailChange = () => of({} as PendingEmailChangeDTO);
     getVcsAccessToken = (participationId: number) => of();
     createVcsAccessToken = (participationId: number) => of();
     getToolToken = () => of();

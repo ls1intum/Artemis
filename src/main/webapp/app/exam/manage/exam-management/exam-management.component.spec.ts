@@ -11,14 +11,14 @@ import { ExamManagementComponent } from 'app/exam/manage/exam-management/exam-ma
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { EventManager } from 'app/foundation/service/event-manager.service';
+import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
+import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/entities/exam-deleted-event.model';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { DurationPipe } from 'app/foundation/pipes/artemis-duration.pipe';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -61,7 +61,6 @@ describe('Exam Management Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockRouterLinkDirective,
-                MockDirective(SortDirective),
                 MockPipe(DurationPipe),
             ],
             providers: [
@@ -151,6 +150,50 @@ describe('Exam Management Component', () => {
 
         // THEN
         expect(service.findAllExamsForCourse).toHaveBeenCalledOnce();
+        expect(comp.exams()).toEqual([exam]);
+    });
+
+    it('should drop a deleted exam from the shared list at once, without waiting for the list to be read again', () => {
+        // GIVEN: the overview that a deletion navigates to renders this list, so a deleted exam in it would be asked for its statistics
+        const other = new Exam();
+        other.id = 124;
+        comp.course.set(course);
+        comp.exams.set([exam, other]);
+        const findAllSpy = vi.spyOn(service, 'findAllExamsForCourse');
+        comp.registerChangeInExams();
+
+        // WHEN
+        eventManager.broadcast(new EventWithContent<ExamDeletedEventContent>(EXAM_DELETED_EVENT, { examId: exam.id! }));
+
+        // THEN
+        expect(comp.exams()).toEqual([other]);
+        expect(findAllSpy).not.toHaveBeenCalled();
+    });
+
+    it('should clear the current exam when the exam in view is deleted', () => {
+        comp.course.set(course);
+        comp.exams.set([exam]);
+        comp.currentExam.set(exam);
+        comp.registerChangeInExams();
+        mockRoute.snapshot = { paramMap: convertToParamMap({ examId: exam.id }), firstChild: undefined };
+
+        eventManager.broadcast(new EventWithContent<ExamDeletedEventContent>(EXAM_DELETED_EVENT, { examId: exam.id! }));
+
+        expect(comp.exams()).toEqual([]);
+        expect(comp.currentExam()).toBeUndefined();
+    });
+
+    it('should ignore an event of a deleted exam without an exam id, and stop listening once destroyed', () => {
+        comp.course.set(course);
+        comp.exams.set([exam]);
+        comp.registerChangeInExams();
+
+        eventManager.broadcast(new EventWithContent<unknown>(EXAM_DELETED_EVENT, undefined));
+        eventManager.broadcast(EXAM_DELETED_EVENT);
+        expect(comp.exams()).toEqual([exam]);
+
+        comp.ngOnDestroy();
+        eventManager.broadcast(new EventWithContent<ExamDeletedEventContent>(EXAM_DELETED_EVENT, { examId: exam.id! }));
         expect(comp.exams()).toEqual([exam]);
     });
 

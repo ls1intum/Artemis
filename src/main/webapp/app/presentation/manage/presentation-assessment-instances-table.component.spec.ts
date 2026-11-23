@@ -1,15 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { User } from 'app/account/user/user.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { PresentationAssessmentInstancesTableComponent } from 'app/presentation/manage/presentation-assessment-instances-table.component';
 import { PresentationStudentTableRow } from 'app/presentation/manage/presentation-assessment-management.helper';
-import { PresentationAssessment, PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationAssessment, PresentationAssessmentMode, PresentationGradingMethod } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PresentationAssessmentInstancesTableComponent', () => {
@@ -39,25 +37,27 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
         fixture.componentRef.setInput('rows', rows);
         fixture.componentRef.setInput('presentationAssessment', presentationAssessment);
         fixture.componentRef.setInput('canDelete', canDelete);
+        fixture.componentRef.setInput('sortField', 'studentLogin');
+        fixture.componentRef.setInput('sortOrder', 1);
         fixture.detectChanges();
     }
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentInstancesTableComponent],
-            providers: [provideArtemisTumAetUiTranslator(), { provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }],
+            providers: [provideArtemisTumAetUiTranslator(), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PresentationAssessmentInstancesTableComponent);
         component = fixture.componentInstance;
     });
 
-    it('should render one row per student and a message when there are none', () => {
+    it('should render one row per student and no rows when there are none', () => {
         render([createRow(), createRow({ studentLogin: 'student2', rowKey: '11:student2', displayName: 'Student Two' })]);
         expect(element().querySelectorAll('tbody tr')).toHaveLength(2);
 
         render([]);
-        expect(query('tbody td[colspan="7"]')?.getAttribute('jhiTranslate')).toBe('artemisApp.presentationAssessment.noMatchingStudents');
+        expect(element().querySelectorAll('tbody tr')).toHaveLength(0);
     });
 
     it('should show the assessor name and login and a dash without one', () => {
@@ -74,10 +74,21 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
 
     it('should show the result points against the maximum only for assessed rows', () => {
         render([createRow()]);
-        expect(query('[data-testid="instance-result-points"]')?.textContent).toContain('12 / 20');
+        expect(query('[data-testid="instance-result"]')?.textContent).toContain('12 / 20');
 
         render([createRow({ assessed: false, instance: { id: 10 } })]);
-        expect(query('[data-testid="instance-result-points"]')).toBeNull();
+        expect(query('[data-testid="instance-result"]')).toBeNull();
+    });
+
+    it.each([
+        { gradingMethod: PresentationGradingMethod.PASS_FAIL, instance: { id: 10, passed: false }, expected: 'artemisApp.presentationAssessment.result.failed' },
+        { gradingMethod: PresentationGradingMethod.RUBRIC, instance: { id: 10, rubricScore: 72.5 }, expected: '72.5 %' },
+    ])('should show the result as the grading method $gradingMethod expresses it', ({ gradingMethod, instance, expected }) => {
+        render([createRow({ instance })]);
+        fixture.componentRef.setInput('presentationAssessment', { ...presentationAssessment, gradingMethod, maxPoints: undefined });
+        fixture.detectChanges();
+
+        expect(query('[data-testid="instance-result"]')?.textContent).toContain(expected);
     });
 
     it('should offer the delete button only when deleting is allowed', () => {
@@ -132,5 +143,28 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
         fixture.componentRef.setInput('presentationAssessment', { id: 2, title: 'Midterm', maxPoints: 20 });
         fixture.detectChanges();
         expect(query('.presentation-detail-row')).toBeNull();
+    });
+
+    describe('sorting', () => {
+        it('should emit the sort event of a server sortable header and keep the order of the rows', () => {
+            const sortSpy = vi.fn();
+            component.sortChange.subscribe(sortSpy);
+            const rows = [createRow({ studentLogin: 'b', rowKey: '1:b', displayName: 'bob' }), createRow({ studentLogin: 'a', rowKey: '2:a', displayName: 'Alice' })];
+            render(rows);
+
+            const header = query('th[tumAetUiSortableColumn="presentationDate"]')!;
+            ((header.querySelector('button') ?? header) as HTMLElement).click();
+
+            expect(sortSpy).toHaveBeenCalledWith(expect.objectContaining({ field: 'presentationDate' }));
+            const names = Array.from(element().querySelectorAll<HTMLElement>('[data-testid="toggle-row-details"]')).map((el) => el.textContent!.trim());
+            expect(names[0]).toContain('bob');
+        });
+
+        it('should not offer sorting by the status or the assessment because the server cannot sort by them', () => {
+            render([createRow()]);
+            expect(query('th[tumAetUiSortableColumn="assessed"]')).toBeNull();
+            expect(query('th[tumAetUiSortableColumn="resultPoints"]')).toBeNull();
+            expect(element().querySelectorAll('th[tumAetUiSortableColumn]')).toHaveLength(2);
+        });
     });
 });

@@ -5,7 +5,7 @@ import preferSignalReactivityOverNgOnChanges from './prefer-signal-reactivity-ov
 import preferSignalTemplateState from './prefer-signal-template-state.mjs';
 import noRawTailwindColorPalette from './no-raw-tailwind-color-palette.mjs';
 import noBootstrapClasses from './no-bootstrap-classes.mjs';
-import noAmbiguousSpacingUtility from './no-ambiguous-spacing-utility.mjs';
+import noBootstrapClassesInCode from './no-bootstrap-classes-in-code.mjs';
 import noPrimengComponentClasses from './no-primeng-component-classes.mjs';
 import requireChartAccessibleName from './require-chart-accessible-name.mjs';
 import noNavigationInEffect from './no-navigation-in-effect.mjs';
@@ -15,6 +15,7 @@ import noAsAnyCast from './no-as-any-cast.mjs';
 import noComponentRefSetInput from './no-component-ref-set-input.mjs';
 import preferDeepClone from './prefer-deep-clone.mjs';
 import noBindInTemplateBinding from './no-bind-in-template-binding.mjs';
+import enforceButtonIntent from './enforce-button-intent.mjs';
 
 export default {
     rules: {
@@ -25,7 +26,7 @@ export default {
         'prefer-signal-template-state': preferSignalTemplateState,
         'no-raw-tailwind-color-palette': noRawTailwindColorPalette,
         'no-bootstrap-classes': noBootstrapClasses,
-        'no-ambiguous-spacing-utility': noAmbiguousSpacingUtility,
+        'no-bootstrap-classes-in-code': noBootstrapClassesInCode,
         'no-primeng-component-classes': noPrimengComponentClasses,
         'require-chart-accessible-name': requireChartAccessibleName,
         'no-navigation-in-effect': noNavigationInEffect,
@@ -35,5 +36,6 @@ export default {
         'no-component-ref-set-input': noComponentRefSetInput,
         'prefer-deep-clone': preferDeepClone,
         'no-bind-in-template-binding': noBindInTemplateBinding,
+        'enforce-button-intent': enforceButtonIntent,
     },
 };

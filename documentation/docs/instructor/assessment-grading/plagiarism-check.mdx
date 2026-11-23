@@ -2,6 +2,7 @@
 id: plagiarism-check
 title: Plagiarism checks
 sidebar_label: Plagiarism checks
+last_reviewed: 2026-11-03
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -150,7 +151,7 @@ We visualized the process in the following diagram.
 
     a. For course exercises: Course Management → Course → Assessment → Plagiarism Cases.
 
-    b. For exam exercises: Course Management → Course → Exams → Exam → the step "Handle the plagiarism cases" of the Exam Correction checklist. Test exams have no Exam Correction checklist.
+    b. For exam exercises: Course Management → Course → Exams → Exam → the step "Handle the plagiarism cases" of the Exam Correction checklist. Practice exams have no Exam Correction checklist.
 
 <Image src={plagiarismCaseNavigationImg} alt={"plagiarism-cases-navigation"} size={ImageSize.large} />
 
@@ -174,6 +175,8 @@ We visualized the process in the following diagram.
 5. Notify the student about the potential plagiarism case and ask them for a statement.
 
 <Image src={studentNotificationImg} alt={"student-notification"} size={ImageSize.medium} />
+
+    Notified students see the programming submissions of the case in the state that was compared by the check, even if a repository changed afterwards. For checks that did not store the compared commit, the last commit submitted before the check was created is shown. Tutors and instructors see the current state of the repository.
 
 6. Make a final verdict by selecting one of 4 available options. The final verdict must be approved by clicking 'Confirm' in the dialog.
 

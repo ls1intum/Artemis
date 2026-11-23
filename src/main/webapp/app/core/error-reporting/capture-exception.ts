@@ -116,7 +116,7 @@ function buildReport(exception: unknown, context?: ErrorContext): ClientErrorRep
     const error = exception instanceof Error ? exception : undefined;
     const message = error ? error.message || error.name : describe(exception);
     return {
-        severity: context?.severity ?? 'ERROR',
+        severity: severityOf(exception, context?.severity ?? 'ERROR'),
         message: message.slice(0, MAX_MESSAGE_LENGTH) || 'Unknown error',
         // a message has no stack: the place that reported it would only show the reporter in a minified build
         stack: error ? stackOf(error) : undefined,
@@ -125,6 +125,41 @@ function buildReport(exception: unknown, context?: ErrorContext): ClientErrorRep
         extra: toEntries(context?.extra),
         tags: toEntries(context?.tags),
     };
+}
+
+/** The status of the failed request that is the error itself or its cause, or undefined if the error does not stem from a failed request. */
+function statusOfFailedRequest(exception: unknown): number | undefined {
+    let candidate = exception;
+    for (let depth = 0; depth <= MAX_CAUSES && candidate !== undefined && candidate !== null; depth++) {
+        const response = candidate as { name?: unknown; status?: unknown };
+        if (response.name === 'HttpErrorResponse' && typeof response.status === 'number') {
+            return response.status;
+        }
+        candidate = candidate instanceof Error ? candidate.cause : undefined;
+    }
+    return undefined;
+}
+
+const SEVERITY_ORDER: readonly ErrorSeverity[] = ['INFO', 'WARN', 'ERROR', 'CRITICAL'];
+
+/**
+ * The severity of a report, which is the requested one unless the error is a failed request that is no error of the application:
+ * - A request that never got an answer (status 0, for example offline, blocked or aborted) and one that the proxy answered with 499 because the client gave up are
+ *   `INFO`: nobody can fix them on the server.
+ * - A gateway that did not get an answer in time (status 502, 503 and 504) is `WARN`, because it points at an overloaded or restarting node, not at a defect of the code.
+ * Other statuses keep the requested severity, also a status of 400 to 499: it can be a defect of the client, such as a request to a path that no longer exists, and the
+ * client that cannot start because of it must stay visible.
+ * An error that failed because of such a request, which is its cause, is classified like the request. An error never gets a higher severity than requested.
+ */
+function severityOf(exception: unknown, requested: ErrorSeverity): ErrorSeverity {
+    const status = statusOfFailedRequest(exception);
+    let cap: ErrorSeverity = 'CRITICAL';
+    if (status === 0 || status === 499) {
+        cap = 'INFO';
+    } else if (status === 502 || status === 503 || status === 504) {
+        cap = 'WARN';
+    }
+    return SEVERITY_ORDER.indexOf(cap) < SEVERITY_ORDER.indexOf(requested) ? cap : requested;
 }
 
 function describe(exception: unknown): string {

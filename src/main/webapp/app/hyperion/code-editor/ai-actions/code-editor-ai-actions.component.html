@@ -52,6 +52,7 @@
                 class="rounded-[0.15rem]! px-3! text-[0.9rem]! leading-normal!"
                 severity="secondary"
                 variant="outlined"
+                [attr.aria-label]="'entity.action.cancel' | artemisTranslate"
                 (click)="cancelRequested.emit()"
                 data-testid="hyperion-cancel-ai-operation"
             >
@@ -142,8 +143,8 @@
 
 <!-- The prompt is kept on dismiss so typed text is not lost. -->
 <tumaet-ui-popover #refinementPopover [ariaLabel]="refineLabelKey() | artemisTranslate">
-    <div class="flex w-[min(28rem,80vw)] flex-col gap-3" data-testid="hyperion-refinement-panel">
-        <div class="flex items-center justify-between gap-3">
+    <div class="flex w-[min(28rem,80vw)] flex-col gap-4" data-testid="hyperion-refinement-panel">
+        <div class="flex items-center justify-between gap-4">
             <span class="text-sm font-semibold" [jhiTranslate]="refineLabelKey()"></span>
             <button
                 tumAetUiButton
@@ -168,7 +169,7 @@
             [disabled]="!!refineBlockedReason()"
             [attr.maxlength]="MAX_USER_PROMPT_LENGTH"
         ></textarea>
-        <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center justify-between gap-4">
             <span class="text-xs text-muted-color" [class.text-state-danger]="promptNearLimit()">{{ prompt().length }}/{{ MAX_USER_PROMPT_LENGTH }}</span>
             <button tumAetUiButton type="button" size="small" [disabled]="!promptSubmittable()" (click)="submitRefinement()" data-testid="hyperion-refine-submit">
                 <fa-icon [icon]="faPaperPlane" />

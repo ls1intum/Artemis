@@ -9,7 +9,7 @@
 >
     @if (!ready()) {
         <!-- Live progress while the import is running -->
-        <div class="mb-4 flex items-center">
+        <div class="mb-6 flex items-center">
             <fa-icon [icon]="faSpinner" animation="spin" class="me-2 text-(color:--primary)" />
             <span>
                 @if (currentExerciseTitle()) {
@@ -32,17 +32,17 @@
             </div>
         } @else {
             <!-- Completed with issues: the instructor must review the listed exercises -->
-            <div class="mb-4 flex items-center">
+            <div class="mb-6 flex items-center">
                 <fa-icon [icon]="faExclamationTriangle" size="lg" class="me-2 text-state-warning" />
                 <span>{{ 'artemisApp.examManagement.import.progress.summary' | artemisTranslate: { imported: importedCount(), total: totalExercises() } }}</span>
             </div>
             @if (incompleteExercises().length) {
-                <div class="mb-4">
+                <div class="mb-6">
                     <div class="mb-1 flex items-center">
                         <fa-icon [icon]="faExclamationTriangle" class="me-2 text-state-warning" />
                         <strong>{{ 'artemisApp.examManagement.import.progress.incompleteHeader' | artemisTranslate }}</strong>
                     </div>
-                    <ul class="my-0!">
+                    <ul class="my-0">
                         <!-- track by $index: exercise titles are not unique (and "(unnamed exercise)" repeats), so they are not safe track keys -->
                         @for (title of incompleteExercises(); track $index) {
                             <li>{{ title }}</li>
@@ -51,12 +51,12 @@
                 </div>
             }
             @if (skippedExercises().length) {
-                <div class="mb-4">
+                <div class="mb-6">
                     <div class="mb-1 flex items-center">
                         <fa-icon [icon]="faInfoCircle" class="me-2 text-state-info" />
                         <strong>{{ 'artemisApp.examManagement.import.progress.skippedHeader' | artemisTranslate }}</strong>
                     </div>
-                    <ul class="my-0!">
+                    <ul class="my-0">
                         <!-- track by $index: exercise titles are not unique (and "(unnamed exercise)" repeats), so they are not safe track keys -->
                         @for (title of skippedExercises(); track $index) {
                             <li>{{ title }}</li>
@@ -66,7 +66,7 @@
             }
         }
         <div class="mt-6 flex justify-end">
-            <button tumAetUiButton data-testid="exam-import-progress-dismiss" type="button" (click)="onDismiss()">
+            <button tumAetUiButton severity="secondary" data-testid="exam-import-progress-dismiss" type="button" (click)="onDismiss()">
                 {{ 'artemisApp.examManagement.import.progress.dismiss' | artemisTranslate }}
             </button>
         </div>

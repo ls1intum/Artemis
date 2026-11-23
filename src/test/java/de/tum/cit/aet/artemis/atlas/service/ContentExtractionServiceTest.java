@@ -48,7 +48,7 @@ class ContentExtractionServiceTest {
         // quiz repository is only consulted for persisted quizzes (id != null); the in-memory quizzes
         // built here keep their questions, so it is never called.
         quizExerciseRepository = mock(QuizExerciseTestRepository.class);
-        contentExtractionService = new ContentExtractionService(null, null, quizExerciseRepository, "", "low", 1.0);
+        contentExtractionService = new ContentExtractionService(null, null, quizExerciseRepository);
     }
 
     @Test

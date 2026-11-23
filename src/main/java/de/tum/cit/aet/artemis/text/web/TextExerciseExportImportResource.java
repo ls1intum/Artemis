@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.text.web;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -11,6 +12,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
@@ -41,6 +44,7 @@ import de.tum.cit.aet.artemis.text.dto.ImportTextExerciseDTO;
 import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.service.TextExerciseImportService;
+import de.tum.cit.aet.artemis.text.service.TextExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
 
 /**
@@ -73,9 +77,11 @@ public class TextExerciseExportImportResource {
 
     private final Optional<ExerciseGroupApi> exerciseGroupApi;
 
+    private final TextExerciseWithSubmissionsExportService textExerciseWithSubmissionsExportService;
+
     public TextExerciseExportImportResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExerciseVersionService exerciseVersionService,
-            CourseRepository courseRepository, Optional<ExerciseGroupApi> exerciseGroupApi) {
+            CourseRepository courseRepository, Optional<ExerciseGroupApi> exerciseGroupApi, TextExerciseWithSubmissionsExportService textExerciseWithSubmissionsExportService) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -84,6 +90,7 @@ public class TextExerciseExportImportResource {
         this.exerciseVersionService = exerciseVersionService;
         this.courseRepository = courseRepository;
         this.exerciseGroupApi = exerciseGroupApi;
+        this.textExerciseWithSubmissionsExportService = textExerciseWithSubmissionsExportService;
     }
 
     /**
@@ -165,5 +172,25 @@ public class TextExerciseExportImportResource {
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
         Path zipFilePath = textSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
         return ResponseUtil.ok(zipFilePath);
+    }
+
+    /**
+     * GET /text-exercises/:exerciseId/export : sends the exercise definition as zip, without any submissions
+     *
+     * @param exerciseId the id of the text exercise to export
+     * @return ResponseEntity with the zip file containing the exercise details, the problem statement and its embedded files
+     */
+    @GetMapping("text-exercises/{exerciseId}/export")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportExercise(@PathVariable long exerciseId) {
+        TextExercise textExercise = textExerciseRepository.findWithCompetenciesCategoriesAndGradingCriteriaByIdElseThrow(exerciseId);
+        try {
+            return ResponseUtil.ok(textExerciseWithSubmissionsExportService.exportExerciseForDownload(textExercise));
+        }
+        catch (IOException e) {
+            log.error("Error while exporting text exercise with id {} for instructor", exerciseId, e);
+            throw new InternalServerErrorException("Error while exporting text exercise with id " + exerciseId + " for instructor");
+        }
     }
 }

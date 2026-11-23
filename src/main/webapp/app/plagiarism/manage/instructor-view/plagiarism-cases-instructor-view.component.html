@@ -20,10 +20,15 @@
             </button>
         </ng-template>
         @for (exercise of exercisesWithPlagiarismCases(); track exercise.id; let exerciseIndex = $index) {
-            <div #plagExerciseElement class="card mb-2" [id]="'exercise-with-plagiarism-case-' + exercise.id">
-                <div class="card-header">
-                    <div class="row">
-                        <div class="col-3">
+            <tumaet-ui-card
+                #plagExerciseElement
+                class="mb-2"
+                [id]="'exercise-with-plagiarism-case-' + exercise.id"
+                [attr.data-testid]="'exercise-with-plagiarism-case-' + exercise.id"
+            >
+                <div tumAetUiCardHeader class="border-b border-border px-5! py-3!">
+                    <div class="grid grid-cols-4 items-center gap-x-6">
+                        <div>
                             <h5 class="mb-0">
                                 @if (exercise.type) {
                                     <fa-icon [icon]="getIcon(exercise.type)" />
@@ -39,7 +44,7 @@
                                 </small>
                             </h5>
                         </div>
-                        <div class="col-3">
+                        <div>
                             <jhi-progress-bar
                                 [denominator]="numberOfCases(groupedPlagiarismCases()[exercise!.id!])"
                                 [numerator]="numberOfCasesWithPost(groupedPlagiarismCases()[exercise!.id!])"
@@ -47,7 +52,7 @@
                                 [tooltip]="'artemisApp.plagiarism.plagiarismCases.casesWithPost' | artemisTranslate"
                             />
                         </div>
-                        <div class="col-3">
+                        <div>
                             <jhi-progress-bar
                                 [denominator]="numberOfCasesWithPost(groupedPlagiarismCases()[exercise!.id!])"
                                 [numerator]="numberOfCasesWithStudentAnswer(groupedPlagiarismCases()[exercise!.id!])"
@@ -55,7 +60,7 @@
                                 [tooltip]="'artemisApp.plagiarism.plagiarismCases.casesWithStudentAnswer' | artemisTranslate"
                             />
                         </div>
-                        <div class="col-3">
+                        <div>
                             <jhi-progress-bar
                                 [denominator]="numberOfCases(groupedPlagiarismCases()[exercise!.id!])"
                                 [numerator]="numberOfCasesWithVerdict(groupedPlagiarismCases()[exercise!.id!])"
@@ -65,45 +70,43 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-body">
-                    @for (plagiarismCase of groupedPlagiarismCases()[exercise!.id!]; track plagiarismCase; let plagiarismCaseIndex = $index) {
-                        <div class="row mb-3">
-                            @if (plagiarismCase.student) {
-                                <div class="col-1 text-center">
-                                    <a [routerLink]="['/course-management', courseId(), 'plagiarism-cases', plagiarismCase.id]">
-                                        {{ plagiarismCase.student.name }} ({{ plagiarismCase.student.login }})
-                                    </a>
-                                </div>
-                            }
-                            @if (plagiarismCase.plagiarismSubmissionCount !== undefined) {
-                                <div class="col-2 text-center">
-                                    <span>
-                                        {{ 'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate: { count: plagiarismCase.plagiarismSubmissionCount } }}
-                                    </span>
-                                </div>
-                            }
-
-                            @if (plagiarismCase.post) {
-                                <div class="col-3 text-center">
-                                    {{ 'artemisApp.plagiarism.plagiarismCases.notifiedAt' | artemisTranslate }} {{ plagiarismCase.post.creationDate | artemisDate }}
-                                </div>
-                            }
-                            @if (!plagiarismCase.post) {
-                                <div class="col-3 text-center" jhiTranslate="artemisApp.plagiarism.plagiarismCases.notNotified"></div>
-                            }
-                            @if (hasStudentAnswer(plagiarismCase)) {
-                                <div class="col-3 text-center" jhiTranslate="artemisApp.plagiarism.plagiarismCases.respondedByStudent"></div>
-                            }
-                            @if (!hasStudentAnswer(plagiarismCase)) {
-                                <div class="col-3 text-center" jhiTranslate="artemisApp.plagiarism.plagiarismCases.notResponded"></div>
-                            }
-                            <div class="col-3">
-                                <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" [hideDetails]="true" />
+                @for (plagiarismCase of groupedPlagiarismCases()[exercise!.id!]; track plagiarismCase; let plagiarismCaseIndex = $index) {
+                    <div class="mb-4 grid grid-cols-12 items-start gap-x-6">
+                        @if (plagiarismCase.student) {
+                            <div class="col-span-1 text-center">
+                                <a [routerLink]="['/course-management', courseId(), 'plagiarism-cases', plagiarismCase.id]">
+                                    {{ plagiarismCase.student.name }} ({{ plagiarismCase.student.login }})
+                                </a>
                             </div>
+                        }
+                        @if (plagiarismCase.plagiarismSubmissionCount !== undefined) {
+                            <div class="col-span-2 text-center">
+                                <span>
+                                    {{ 'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate: { count: plagiarismCase.plagiarismSubmissionCount } }}
+                                </span>
+                            </div>
+                        }
+
+                        @if (plagiarismCase.post) {
+                            <div class="col-span-3 text-center">
+                                {{ 'artemisApp.plagiarism.plagiarismCases.notifiedAt' | artemisTranslate }} {{ plagiarismCase.post.creationDate | artemisDate }}
+                            </div>
+                        }
+                        @if (!plagiarismCase.post) {
+                            <div class="col-span-3 text-center" jhiTranslate="artemisApp.plagiarism.plagiarismCases.notNotified"></div>
+                        }
+                        @if (hasStudentAnswer(plagiarismCase)) {
+                            <div class="col-span-3 text-center" jhiTranslate="artemisApp.plagiarism.plagiarismCases.respondedByStudent"></div>
+                        }
+                        @if (!hasStudentAnswer(plagiarismCase)) {
+                            <div class="col-span-3 text-center" jhiTranslate="artemisApp.plagiarism.plagiarismCases.notResponded"></div>
+                        }
+                        <div class="col-span-3">
+                            <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" [hideDetails]="true" />
                         </div>
-                    }
-                </div>
-            </div>
+                    </div>
+                }
+            </tumaet-ui-card>
         }
     </div>
 } @else {

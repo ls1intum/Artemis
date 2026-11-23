@@ -76,6 +76,19 @@ describe('ProgrammingExercise Sharing Service', () => {
             req.flush(programmingExercise);
         });
 
+        it('should convert the build time window dates of the loaded exercise details', () => {
+            const programmingExercise = new ProgrammingExercise(undefined, undefined);
+            programmingExercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: '2026-10-01T10:00:00Z' as unknown as dayjs.Dayjs } };
+
+            service.loadDetailsForExercises(defailtSharingInfo).subscribe((exercise) => {
+                const start = exercise.buildConfig!.advancedSettings!.buildTimeWindow!.start;
+                expect(dayjs.isDayjs(start)).toBe(true);
+                expect(start!.isSame(dayjs('2026-10-01T10:00:00Z'))).toBe(true);
+            });
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush(programmingExercise);
+        });
+
         it('should setup for import', () => {
             const programmingExercise = new ProgrammingExercise(undefined, undefined);
 

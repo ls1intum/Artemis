@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -34,10 +35,17 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
 
     private final LocalVCServletService localVCServletService;
 
+    private final LocalVCAccessLogRecorderService accessLogRecorder;
+
+    private final LocalVCPushProcessingService pushProcessingService;
+
     private final LocalVCUsageTrackingService usageTrackingService;
 
-    public LocalVCPushFilter(LocalVCServletService localVCServletService, LocalVCUsageTrackingService usageTrackingService) {
+    public LocalVCPushFilter(LocalVCServletService localVCServletService, LocalVCAccessLogRecorderService accessLogRecorder, LocalVCPushProcessingService pushProcessingService,
+            LocalVCUsageTrackingService usageTrackingService) {
         this.localVCServletService = localVCServletService;
+        this.accessLogRecorder = accessLogRecorder;
+        this.pushProcessingService = pushProcessingService;
         this.usageTrackingService = usageTrackingService;
     }
 
@@ -70,7 +78,15 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         }
 
         if (!"POST".equals(servletRequest.getMethod())) {
+            // The request that advertises the references is the first of every push, and all there is of one that has nothing new.
+            String commitHashBefore = LocalVCAccessLogRecorderService.headCommitOf(servletRequest);
+            // The entry is written after the response was sent, so it carries the time of the request, not the time of the write
+            ZonedDateTime requestStarted = ZonedDateTime.now();
             filterChain.doFilter(servletRequest, servletResponse);
+            if (servletResponse.getStatus() < HttpServletResponse.SC_BAD_REQUEST) {
+                accessLogRecorder.auditOf(servletRequest).onAccessed(commitHashBefore, requestStarted);
+                accessLogRecorder.recordPushHTTPS(servletRequest);
+            }
             return;
         }
 
@@ -78,10 +94,13 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         GitRepositoryAccessDTO exercise = (GitRepositoryAccessDTO) servletRequest.getAttribute(LocalVCServletService.AUTHORIZED_EXERCISE_ATTRIBUTE);
         final ProgrammingExerciseMutationGuardService.MutationLease mutationLease;
         try {
-            mutationLease = localVCServletService.claimProgrammingExerciseMutation(repository, exercise.exerciseId());
+            mutationLease = pushProcessingService.claimProgrammingExerciseMutation(repository, exercise.exerciseId());
         }
         catch (HttpStatusException e) {
             servletResponse.sendError(e.getStatusCode().value(), e.getMessage() + " Please retry the push later.");
+            // The push was attempted and refused, so it is a failed push, which the log joins to the advertisement that came before it.
+            accessLogRecorder.auditOf(servletRequest).onPushReceived(LocalVCAccessLogRecorderService.headCommitOf(servletRequest));
+            accessLogRecorder.recordPushHTTPS(servletRequest);
             return;
         }
         long startNanos = System.nanoTime();
@@ -92,6 +111,8 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         }
         finally {
             usageTrackingService.recordPush(servletRequest, (System.nanoTime() - startNanos) / 1_000_000, failed);
+            // the push is over, so everything about it is known: it is written if it brought commands
+            accessLogRecorder.recordPushHTTPS(servletRequest);
         }
     }
 }

@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { TumAetUiAccordionComponent, TumAetUiAccordionPanelComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { Accordion, AccordionContent, AccordionHeader, AccordionPanel } from 'primeng/accordion';
 import { FAQ_ITEMS } from 'app/core/landing/landing-data';
 
 @Component({
     selector: 'jhi-landing-faq',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, Accordion, AccordionPanel, AccordionHeader, AccordionContent],
+    imports: [ArtemisTranslatePipe, TumAetUiAccordionComponent, TumAetUiAccordionPanelComponent],
     styles: `
         :host {
             display: block;
@@ -47,53 +47,34 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
 
         .faq-content {
             width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
         }
 
-        :host ::ng-deep .p-accordion {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+        .faq-panel {
+            --tumaet-ui-accordion-header-padding: 16px;
+            --tumaet-ui-accordion-content-padding: 0;
+            --tumaet-ui-accordion-icon-size: 14px;
+            --tumaet-ui-accordion-icon-color: var(--text-body-secondary);
 
-        :host ::ng-deep .p-accordionpanel {
             border: 0.75px solid var(--iris-accent-background);
             border-radius: 8px;
             background: var(--iris-secondary-background);
-            overflow: clip;
-        }
-
-        :host ::ng-deep .p-accordionpanel-active {
-            border-color: var(--primary);
-            color: var(--body-color);
-        }
-
-        :host ::ng-deep .p-accordionheader {
-            padding: 16px;
             font-size: 18px;
             font-weight: 500;
+            line-height: 1.5;
             color: var(--body-color);
-            background: transparent;
-            border: none;
         }
 
-        :host ::ng-deep .p-accordioncontent-content {
+        .faq-panel[data-expanded='true'] {
+            border-color: var(--primary);
+        }
+
+        .faq-answer {
+            margin: 0;
             padding: 0 16px 16px;
             font-size: 16px;
             font-weight: 400;
             color: var(--text-body-secondary);
             line-height: 1.6;
-            font-family: inherit;
-        }
-
-        :host ::ng-deep .p-accordionpanel-active .p-accordionheader {
-            color: var(--body-color) !important;
-        }
-
-        .faq-answer {
-            margin: 0;
             font-family: inherit;
         }
 
@@ -112,7 +93,7 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
                 font-size: 32px;
             }
 
-            :host ::ng-deep .p-accordionheader {
+            .faq-panel {
                 font-size: 16px;
             }
         }
@@ -123,18 +104,13 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
                 <span class="faq-label">{{ 'landing.faq.label' | artemisTranslate }}</span>
                 <h2 class="faq-title">{{ 'landing.faq.title' | artemisTranslate }}</h2>
             </div>
-            <div class="faq-content">
-                <p-accordion [multiple]="false">
-                    @for (item of faqItems; track item.questionKey) {
-                        <p-accordionpanel [value]="item.questionKey">
-                            <p-accordionheader>{{ item.questionKey | artemisTranslate }}</p-accordionheader>
-                            <p-accordioncontent>
-                                <p class="faq-answer" [innerHTML]="formatAnswer(item.questionKey, item.answerKey | artemisTranslate)"></p>
-                            </p-accordioncontent>
-                        </p-accordionpanel>
-                    }
-                </p-accordion>
-            </div>
+            <tumaet-ui-accordion class="faq-content">
+                @for (item of faqItems; track item.questionKey) {
+                    <tumaet-ui-accordion-panel class="faq-panel" [header]="item.questionKey | artemisTranslate">
+                        <p class="faq-answer" [innerHTML]="formatAnswer(item.questionKey, item.answerKey | artemisTranslate)"></p>
+                    </tumaet-ui-accordion-panel>
+                }
+            </tumaet-ui-accordion>
         </section>
     `,
 })
@@ -151,7 +127,7 @@ export class LandingFaqComponent {
         }
         return translatedAnswer.replace(
             /docs\.artemis(?:\.cit)?\.tum\.de/,
-            '<a class="text-primary fw-semibold" href="https://docs.artemis.tum.de" target="_blank" rel="noopener noreferrer">docs.artemis.tum.de</a>',
+            '<a class="text-primary font-semibold" href="https://docs.artemis.tum.de" target="_blank" rel="noopener noreferrer">docs.artemis.tum.de</a>',
         );
     }
 }

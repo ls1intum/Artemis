@@ -67,6 +67,38 @@ class BuildPhasesTemplateServiceDefaultTemplatesTest {
     }
 
     @Test
+    void shouldFallBackToPlainMavenForJavaSequentialTestRunsWithoutProjectType() throws Exception {
+        var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.JAVA, Optional.empty(), false, true);
+
+        assertThat(names(phases)).containsExactly("compile_structural", "compile_behavior", "structural", "behavior");
+        assertThat(phases).isEqualTo(service.getBuildPlanPhasesFor(ProgrammingLanguage.JAVA, Optional.of(ProjectType.PLAIN_MAVEN), false, true));
+    }
+
+    @Test
+    void shouldRunStructuralBeforeBehaviorTestsForGo() throws Exception {
+        var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.GO, Optional.empty(), false, true);
+
+        assertThat(names(phases)).containsExactly("build", "structural_tests", "behavior_tests");
+    }
+
+    @Test
+    void shouldRunStructuralBeforeBehaviorTestsForCSharp() throws Exception {
+        var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.C_SHARP, Optional.empty(), false, true);
+
+        assertThat(names(phases)).containsExactly("build", "structural_tests", "behavior_tests");
+    }
+
+    @Test
+    void shouldRunOnlyTheTestFileOfTheStageForRubySequentialTestRuns() throws Exception {
+        var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.RUBY, Optional.empty(), false, true);
+
+        assertThat(names(phases)).containsExactly("install_dependencies", "syntax_check", "structural_tests", "behavior_tests");
+        // the rake task ignores TEST and would run every test file in both stages, which reports each test twice as a duplicate
+        assertThat(phases.get(2).script()).contains("ruby -Itest test/test_structural.rb").doesNotContain("rake ci:test").doesNotContain("test_behavior");
+        assertThat(phases.get(3).script()).contains("ruby -Itest test/test_behavior.rb").doesNotContain("rake ci:test").doesNotContain("test_structural");
+    }
+
+    @Test
     void shouldSelectTheStaticCodeAnalysisTemplateForSwift() throws Exception {
         var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.SWIFT, Optional.of(ProjectType.PLAIN), true, false);
 
@@ -77,6 +109,34 @@ class BuildPhasesTemplateServiceDefaultTemplatesTest {
         assertThat(staticCodeAnalysis.resultPaths()).containsExactly("target/swiftlint-result.xml");
         // the build agent only collects a file as static code analysis report if a tool recognizes its name
         assertThat(StaticCodeAnalysisTool.getToolByFilePattern("swiftlint-result.xml")).contains(StaticCodeAnalysisTool.SWIFTLINT);
+    }
+
+    @Test
+    void shouldCollectTheReportsOfXCTestAndSwiftTestingForSwift() throws Exception {
+        // an exercise whose build plans are recreated keeps its test repository, which may still contain XCTest tests that write tests.xml
+        for (boolean staticAnalysis : List.of(false, true)) {
+            var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.SWIFT, Optional.of(ProjectType.PLAIN), staticAnalysis, false);
+
+            var test = phases.stream().filter(phase -> phase.name().equals("test")).findFirst().orElseThrow();
+            assertThat(test.resultPaths()).hasSize(2);
+            assertThat(test.resultPaths().get(0)).endsWith("/tests.xml");
+            assertThat(test.resultPaths().get(1)).endsWith("/xunit-swift-testing.xml");
+        }
+    }
+
+    @Test
+    void shouldCollectTheReportsOfXCTestAndSwiftTestingForSequentialSwift() throws Exception {
+        var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.SWIFT, Optional.of(ProjectType.PLAIN), false, true);
+
+        for (String stage : List.of("structural", "behavior")) {
+            var phase = phases.stream().filter(candidate -> candidate.name().equals(stage + "_tests")).findFirst().orElseThrow();
+            // each report is renamed only if it exists, because a test repository has the tests of one framework only
+            assertThat(phase.script()).contains("if [ -e xunit-swift-testing.xml ]; then mv xunit-swift-testing.xml " + stage + "-tests.xml; fi")
+                    .contains("if [ -e tests.xml ]; then mv tests.xml " + stage + "-tests-xctest.xml; fi");
+            assertThat(phase.resultPaths()).hasSize(2);
+            assertThat(phase.resultPaths().get(0)).endsWith("/" + stage + "-tests.xml");
+            assertThat(phase.resultPaths().get(1)).endsWith("/" + stage + "-tests-xctest.xml");
+        }
     }
 
     @Test

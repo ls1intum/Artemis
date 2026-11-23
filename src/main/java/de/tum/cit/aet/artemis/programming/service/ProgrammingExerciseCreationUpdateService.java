@@ -535,11 +535,28 @@ public class ProgrammingExerciseCreationUpdateService {
             }
         }
         programmingExercise.validateDates();
+        validateBuildTimeWindowFitsDates(programmingExercise);
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExerciseCreationScheduleService.scheduleOperations(savedProgrammingExercise.getId());
         programmingExerciseCreationScheduleService.createNotificationsOnUpdate(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
+    }
+
+    /**
+     * Rejects a date change that would leave the build time window of the exercise (if any) outside of its new dates, as no push would be built then.
+     * Callers that change several exercises call this before they persist anything.
+     *
+     * @param programmingExercise the exercise with its new dates
+     * @throws BadRequestAlertException if the stored window does not lie between the start (or release) date and the due date
+     */
+    public void validateBuildTimeWindowFitsDates(ProgrammingExercise programmingExercise) {
+        var window = programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(programmingExercise.getId());
+        ZonedDateTime earliest = programmingExercise.getStartDate() != null ? programmingExercise.getStartDate() : programmingExercise.getReleaseDate();
+        if (window != null && !window.isWithin(earliest, programmingExercise.getDueDate())) {
+            throw new BadRequestAlertException("The build time window must lie between the start (or release) date and the due date of the exercise", "programmingExercise",
+                    "buildTimeWindowOutsideExerciseDates");
+        }
     }
 
     /**
@@ -645,7 +662,22 @@ public class ProgrammingExerciseCreationUpdateService {
         }
     }
 
-    private void validateProblemStatementLength(@Nullable String problemStatement) {
+    /**
+     * Refuses an update of the exercise that changes the name of its channel to one that the channel does not accept. The update itself refuses it only after it has done other
+     * work, so a request that shares the update with other changes asks for this first. Nothing is changed.
+     *
+     * @param updatedProgrammingExercise the exercise with the update applied
+     */
+    public void validateChannelNameOfUpdate(ProgrammingExercise updatedProgrammingExercise) {
+        channelService.validateExerciseChannelUpdate(updatedProgrammingExercise);
+    }
+
+    /**
+     * Refuses a problem statement that is longer than the maximum length.
+     *
+     * @param problemStatement the problem statement, which may be absent
+     */
+    public void validateProblemStatementLength(@Nullable String problemStatement) {
         if (problemStatement != null && problemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
             throw new BadRequestAlertException("The problem statement must not exceed " + MAX_PROBLEM_STATEMENT_LENGTH + " characters", "ProgrammingExercise",
                     "problemStatementTooLong");

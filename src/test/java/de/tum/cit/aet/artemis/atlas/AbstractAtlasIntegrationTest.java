@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.atlas;
 
-import java.util.Optional;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
@@ -11,7 +8,6 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilServic
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.PrerequisiteUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.StandardizedCompetencyUtilService;
-import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
 import de.tum.cit.aet.artemis.atlas.learningpath.util.LearningPathUtilService;
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
@@ -19,7 +15,6 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository;
-import de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
@@ -74,9 +69,6 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected LearningPathTestRepository learningPathRepository;
-
-    @Autowired
-    protected ScienceSettingRepository scienceSettingRepository;
 
     @Autowired
     protected ScienceEventTestRepository scienceEventRepository;
@@ -175,17 +167,5 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected TeamUtilService teamUtilService;
-
-    @Autowired
-    protected Optional<AtlasMLRequestMockProvider> atlasMLRequestMockProvider;
-
-    @BeforeEach
-    void setupAtlasMLMocks() {
-        atlasMLRequestMockProvider.ifPresent(provider -> {
-            provider.reset();
-            provider.enableMockingOfRequests();
-            provider.mockSaveCompetenciesAny();
-        });
-    }
 
 }

@@ -1,6 +1,6 @@
+import { TumAetUiButtonDirective, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { Component, inject, input, output } from '@angular/core';
 import { faCopy } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -17,7 +17,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-programming-exercise-grading-table-actions',
     templateUrl: './programming-exercise-grading-table-actions.component.html',
-    imports: [FaIconComponent, TranslateDirective],
+    imports: [TumAetUiButtonDirective, FaIconComponent, TranslateDirective],
 })
 export class ProgrammingExerciseGradingTableActionsComponent {
     private dialogService = inject(TumAetUiDialogService);

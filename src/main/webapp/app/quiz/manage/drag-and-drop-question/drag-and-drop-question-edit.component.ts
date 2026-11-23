@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiSelectComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { QuestionReevaluationActionsComponent } from '../question-reevaluation-actions/question-reevaluation-actions.component';
 import {
     AfterViewInit,
@@ -21,7 +22,6 @@ import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-q
 import { dragItemPicturePath } from 'app/quiz/shared/util/drag-and-drop-file-url.util';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/quiz/shared/entities/drag-state.enum';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
@@ -46,9 +46,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SelectModule } from 'primeng/select';
-import { CheckboxModule } from 'primeng/checkbox';
-import { InputTextModule } from 'primeng/inputtext';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import {
     faAngleDown,
@@ -78,13 +75,13 @@ import { CustomMaxLengthDirective } from 'app/foundation/validators/custom-max-l
     styleUrls: ['./drag-and-drop-question-edit.component.scss', '../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
+        TumAetUiButtonDirective,
         QuestionReevaluationActionsComponent,
         FaIconComponent,
         FormsModule,
         CustomMaxLengthDirective,
         TranslateDirective,
-        NgbTooltip,
-        NgbCollapse,
+        TumAetUiTooltipDirective,
         QuizScoringInfoModalComponent,
         MarkdownEditorMonacoComponent,
         CdkDropListGroup,
@@ -97,9 +94,9 @@ import { CustomMaxLengthDirective } from 'app/foundation/validators/custom-max-l
         CdkDragPlaceholder,
         DragAndDropQuestionComponent,
         ArtemisTranslatePipe,
-        SelectModule,
-        CheckboxModule,
-        InputTextModule,
+        TumAetUiSelectComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
         PointsInputComponent,
     ],
 })
@@ -246,9 +243,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
         this.mouse = new DragAndDropMouseEvent();
         this.questionEditorText.set(generateExerciseHintExplanation(question));
 
-        // check if question was generated with an ApollonDiagram
+        // check if the question was generated with an ApollonDiagram or imported from a file; both bring their images as files keyed by path
         if (question.importedFiles) {
-            this.setBackgroundFileFromFile(new File([question.importedFiles.get('diagram-background.png')!], 'diagram-background.png'));
+            const backgroundFilePath = question.backgroundFilePath;
+            if (backgroundFilePath && question.importedFiles.has(backgroundFilePath)) {
+                this.setBackgroundFileFromFile(new File([question.importedFiles.get(backgroundFilePath)!], backgroundFilePath));
+            }
             for (const dragItem of question.dragItems ?? []) {
                 if (dragItem.pictureFilePath && question.importedFiles.has(dragItem.pictureFilePath)) {
                     this.changeToPictureDragItemFromFile(dragItem, new File([question.importedFiles.get(dragItem.pictureFilePath)!], dragItem.pictureFilePath));

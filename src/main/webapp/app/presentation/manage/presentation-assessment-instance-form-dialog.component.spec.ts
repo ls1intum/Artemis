@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
@@ -5,7 +7,7 @@ import { TumAetUiAutoCompleteComponent, TumAetUiDatePickerComponent } from '@tum
 import { MockComponent } from 'ng-mocks';
 import { firstValueFrom, of, throwError } from 'rxjs';
 import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
-import { Mock, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Mock, MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
 
 import {
@@ -17,33 +19,34 @@ import { User, UserNameAndLoginDTO } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { PresentationAssessmentMode, PresentationGradingMethod, PresentationRubricScale } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { rubricCriterion } from 'test/helpers/presentation-rubric-test-helpers';
 
 describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentInstanceFormDialogComponent>;
     let component: PresentationAssessmentInstanceFormDialogComponent;
     let saved: Mock<(value: PresentationAssessmentInstanceFormResult) => void>;
     let translateService: MockTranslateService;
-    let searchAssessors: ReturnType<typeof vi.fn>;
+    let searchAssessors: MockInstance<PresentationAssessmentService['searchAssessors']>;
 
     const presentationDate = dayjs('2026-07-31T13:26:00');
 
     beforeEach(async () => {
         saved = vi.fn();
         translateService = new MockTranslateService();
-        searchAssessors = vi.fn().mockReturnValue(of(new HttpResponse<UserNameAndLoginDTO[]>({ body: [] })));
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentInstanceFormDialogComponent],
             providers: [
                 { provide: TranslateService, useValue: translateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: PresentationAssessmentService, useValue: { searchAssessors } },
-                { provide: AlertService, useValue: { error: vi.fn() } },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             // The presenter selector searches students on the server and is tested on its own.
@@ -53,11 +56,12 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
             })
             .compileComponents();
 
+        searchAssessors = vi.spyOn(TestBed.inject(PresentationAssessmentService), 'searchAssessors').mockReturnValue(of(new HttpResponse<UserNameAndLoginDTO[]>({ body: [] })));
         TestBed.inject(AccountService).userIdentity.set(Object.assign(new User(), { login: 'tutor1', name: 'Tutor One' }));
         fixture = TestBed.createComponent(PresentationAssessmentInstanceFormDialogComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('courseId', 1);
-        fixture.componentRef.setInput('presentationAssessment', { id: 42, maxPoints: 20 });
+        fixture.componentRef.setInput('presentationAssessment', { id: 42, gradingMethod: PresentationGradingMethod.SCORE, maxPoints: 20 });
         fixture.componentRef.setInput('instance', { id: 11, presentationDate, student: { login: 'student1' } });
         fixture.componentRef.setInput('initialAssignedStudents', [new User(undefined, 'student1')]);
         component.saved.subscribe(saved);
@@ -298,12 +302,13 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     });
 
     it('should report a failed assessor search instead of showing no assessors', async () => {
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
         searchAssessors.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
         const result = await firstValueFrom(component.searchAssessors(of('grace')));
 
         expect(result).toEqual([]);
-        expect(TestBed.inject(AlertService).error).toHaveBeenCalledExactlyOnceWith('artemisApp.presentationAssessment.assessorSearchFailed');
+        expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.presentationAssessment.assessorSearchFailed');
     });
 
     it('should provide assessor suggestions with name and login', async () => {
@@ -558,5 +563,249 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         fixture.detectChanges();
 
         expect(query('[data-testid="presentation-instance-presenter-missing"]')).not.toBeNull();
+    });
+
+    /** Sends the form as the save button does. */
+    function submit(): void {
+        fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+    }
+
+    function setPresentation(gradingMethod: PresentationGradingMethod, maxPoints?: number): void {
+        fixture.componentRef.setInput('presentationAssessment', { id: 42, gradingMethod, maxPoints });
+        fixture.detectChanges();
+    }
+
+    describe('graded by pass/fail', () => {
+        beforeEach(() => setPresentation(PresentationGradingMethod.PASS_FAIL));
+
+        it('should send the chosen result and no result of another method', () => {
+            (query('[data-testid="presentation-instance-failed"] input') as HTMLInputElement).click();
+            fixture.detectChanges();
+            expect((query('[data-testid="presentation-instance-failed"] input') as HTMLInputElement).checked).toBe(true);
+
+            submit();
+
+            expect(saved).toHaveBeenCalledWith({
+                kind: 'update',
+                instance: expect.objectContaining({ id: 11, passed: false, resultPoints: undefined, ratings: undefined }),
+            });
+        });
+
+        it('should ask for the assessor once a result is chosen and send it', () => {
+            expect(query('#presentation-instance-assessor')).toBeNull();
+
+            (query('[data-testid="presentation-instance-passed"] input') as HTMLInputElement).click();
+            fixture.detectChanges();
+
+            expect((query('[data-testid="presentation-instance-assessor"]') as HTMLInputElement).value).toBe('Tutor One (tutor1)');
+            submit();
+            expect(saved).toHaveBeenCalledWith({ kind: 'update', instance: expect.objectContaining({ passed: true, assessorLogin: 'tutor1' }) });
+        });
+    });
+
+    describe('graded by score', () => {
+        beforeEach(() => setPresentation(PresentationGradingMethod.SCORE, 20));
+
+        it('should show the points against the maximum', () => {
+            expect(query('input#presentation-instance-result')).not.toBeNull();
+            expect(query('[jhiTranslate="artemisApp.presentationAssessment.pointsOf"]')!.parentElement!.textContent).toContain('20');
+        });
+
+        it('should keep saved points from being removed', () => {
+            fixture.componentRef.setInput('instance', { id: 11, presentationDate, resultPoints: 12, student: { login: 'student1' } });
+            fixture.detectChanges();
+
+            component.editForm.controls.resultPoints.setValue(undefined);
+            component.editForm.controls.resultPoints.markAsTouched();
+            fixture.detectChanges();
+
+            expect(query('[data-testid="presentation-instance-points-error"]')!.textContent).toContain('artemisApp.presentationAssessment.validation.resultRequired');
+            expect((query('[data-testid="save-instance-button"] button') as HTMLButtonElement).disabled).toBe(true);
+        });
+
+        it('should send only the points', () => {
+            component.editForm.controls.resultPoints.setValue(15);
+
+            submit();
+
+            expect(saved).toHaveBeenCalledWith({ kind: 'update', instance: expect.objectContaining({ resultPoints: 15, passed: undefined, ratings: undefined }) });
+        });
+    });
+
+    describe('graded by rubric', () => {
+        const RUBRIC_URL = 'api/assessment/courses/1/presentation-assessments/42/rubric';
+        const RATINGS_URL = 'api/assessment/courses/1/presentation-assessments/42/instances/11/ratings';
+        let httpMock: HttpTestingController;
+
+        const criteria = [
+            rubricCriterion('Content', 50, PresentationRubricScale.FIVE_POINT, { id: 1 }),
+            rubricCriterion('Delivery', 30, PresentationRubricScale.THREE_POINT, { id: 2 }),
+            rubricCriterion('Slides', 20, PresentationRubricScale.FIVE_POINT, { id: 3 }),
+        ];
+
+        beforeEach(() => {
+            httpMock = TestBed.inject(HttpTestingController);
+            const course = new Course();
+            course.accuracyOfScores = 1;
+            fixture.componentRef.setInput('course', course);
+        });
+
+        afterEach(() => httpMock.verify());
+
+        /** Opens the dialog for an existing instance, which loads the rubric and the saved ratings. */
+        async function openInstance(ratings: object[], rubricScore?: number): Promise<void> {
+            fixture.componentRef.setInput('instance', { id: 11, presentationDate, rubricScore, student: { login: 'student1' } });
+            setPresentation(PresentationGradingMethod.RUBRIC);
+            httpMock.expectOne({ method: 'GET', url: RUBRIC_URL }).flush({ criteria, assessedInstanceCount: 0 });
+            httpMock.expectOne({ method: 'GET', url: RATINGS_URL }).flush(ratings);
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        function rate(criterionIndex: number, position: number): void {
+            (query(`[data-testid="rubric-grading-level-${criterionIndex}-${position}"] input`) as HTMLInputElement).click();
+            fixture.detectChanges();
+        }
+
+        function saveButton(): HTMLButtonElement {
+            return query('[data-testid="save-instance-button"] button') as HTMLButtonElement;
+        }
+
+        it('should load only the rubric for a new instance and keep saving off until it arrived', async () => {
+            fixture.componentRef.setInput('instance', undefined);
+            setPresentation(PresentationGradingMethod.RUBRIC);
+            component.editForm.controls.presentationDate.setValue(presentationDate);
+            fixture.detectChanges();
+            expect(query('tumaet-ui-progress-spinner')).not.toBeNull();
+            expect(saveButton().disabled).toBe(true);
+
+            httpMock.expectOne({ method: 'GET', url: RUBRIC_URL }).flush({ criteria, assessedInstanceCount: 0 });
+            httpMock.expectNone(RATINGS_URL);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(query('[data-testid="rubric-grading-criterion-2"]')).not.toBeNull();
+            expect(saveButton().disabled).toBe(false);
+        });
+
+        it('should create an instance without a result while no criterion is rated', async () => {
+            fixture.componentRef.setInput('instance', undefined);
+            setPresentation(PresentationGradingMethod.RUBRIC);
+            httpMock.expectOne({ method: 'GET', url: RUBRIC_URL }).flush({ criteria, assessedInstanceCount: 0 });
+            await fixture.whenStable();
+            component.editForm.controls.presentationDate.setValue(presentationDate);
+            fixture.detectChanges();
+
+            submit();
+
+            expect(saved).toHaveBeenCalledWith({ kind: 'create', request: expect.objectContaining({ studentLogins: ['student1'], ratings: undefined }) });
+        });
+
+        it('should show the saved ratings of an assessed instance', async () => {
+            await openInstance(
+                [
+                    { criterionId: 1, levelId: 14, comment: 'Clear structure' },
+                    { criterionId: 2, levelId: 23 },
+                    { criterionId: 3, levelId: 32 },
+                ],
+                72.5,
+            );
+
+            expect((query('[data-testid="rubric-grading-level-0-3"] input') as HTMLInputElement).checked).toBe(true);
+            expect((query('[data-testid="rubric-grading-comment-0"]') as HTMLTextAreaElement).value).toBe('Clear structure');
+            expect(query('[data-testid="rubric-grading-overall"]')!.textContent).toContain('72.5 %');
+        });
+
+        it('should ask for a general remark', async () => {
+            await openInstance([]);
+
+            expect(query('label[for="presentation-instance-remark"]')!.textContent).toContain('artemisApp.presentationAssessment.generalRemark');
+        });
+
+        it('should not save a partly rated rubric and say how many criteria remain', async () => {
+            await openInstance([]);
+
+            rate(0, 3);
+
+            expect(query('[data-testid="rubric-remaining"]')).not.toBeNull();
+            expect(saveButton().disabled).toBe(true);
+            expect(saveButton().getAttribute('aria-describedby')).toBe('rubric-remaining');
+            submit();
+            expect(saved).not.toHaveBeenCalled();
+        });
+
+        it('should send the ratings of a fully rated rubric and no result of another method', async () => {
+            await openInstance([]);
+
+            rate(0, 3);
+            rate(1, 2);
+            rate(2, 1);
+            expect(query('[data-testid="rubric-remaining"]')).toBeNull();
+            submit();
+
+            expect(saved).toHaveBeenCalledWith({
+                kind: 'update',
+                instance: expect.objectContaining({
+                    resultPoints: undefined,
+                    passed: undefined,
+                    ratings: [
+                        { criterionId: 1, levelId: 14, comment: undefined },
+                        { criterionId: 2, levelId: 23, comment: undefined },
+                        { criterionId: 3, levelId: 32, comment: undefined },
+                    ],
+                }),
+            });
+        });
+
+        it('should ask for the assessor once a criterion is rated', async () => {
+            await openInstance([]);
+            expect(query('#presentation-instance-assessor')).toBeNull();
+
+            rate(0, 3);
+
+            expect(query('#presentation-instance-assessor')).not.toBeNull();
+        });
+
+        it('should not save a rated rubric without an assessor', async () => {
+            await openInstance([]);
+            fixture.componentRef.setInput('canChooseAssessor', true);
+            component.editForm.controls.assessorOption.setValue(undefined);
+            expect(component.editForm.valid).toBe(true);
+
+            rate(0, 3);
+            rate(1, 2);
+            rate(2, 1);
+
+            expect(component.editForm.hasError('assessorRequired')).toBe(true);
+            submit();
+            expect(saved).not.toHaveBeenCalled();
+        });
+
+        it('should not save when the rubric cannot be loaded', async () => {
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            setPresentation(PresentationGradingMethod.RUBRIC);
+            httpMock.expectOne({ method: 'GET', url: RUBRIC_URL }).flush(null, { status: 404, statusText: 'Not Found' });
+            httpMock
+                .match(RATINGS_URL)
+                .filter((request) => !request.cancelled)
+                .forEach((request) => request.flush([]));
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(errorSpy).toHaveBeenCalledWith('error.http.404');
+            expect(query('[data-testid="rubric-unavailable"]')).not.toBeNull();
+            expect(saveButton().disabled).toBe(true);
+            submit();
+            expect(saved).not.toHaveBeenCalled();
+        });
+
+        it('should lock the ratings while saving', async () => {
+            await openInstance([]);
+
+            fixture.componentRef.setInput('isSaving', true);
+            fixture.detectChanges();
+
+            expect((query('[data-testid="rubric-grading-level-0-3"] input') as HTMLInputElement).disabled).toBe(true);
+        });
     });
 });

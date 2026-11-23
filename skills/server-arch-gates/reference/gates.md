@@ -139,6 +139,31 @@ provider. Add cases for an admitted and a rejected user to
 
 Full guidance: `documentation/docs/developer/guidelines/websocket.mdx`.
 
+## Language models
+
+**Rule.** Every call to a language model, for chat or for embeddings, uses a preset of the catalog
+under `artemis.llm` and a client from `LlmClientService` in `core.service.llm`. A module adds only
+keys that name presets (`llm-preset`, `llm-presets`), registers them as `LlmPresetAssignments`, and
+never reads an endpoint's URL or key. There are no exceptions; a kind of call the core does not offer
+yet is added to `LlmClientService`.
+
+**Enforced by.**
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/LlmClientArchitectureTest.java`. It fails
+when a production class outside `core.service.llm` and `core.config.llm` depends on `com.openai.client..`,
+`com.openai.services..`, `org.springframework.ai.openai.setup..` or a Spring AI OpenAI model class, or reads `LlmProperties.Endpoint`
+or the methods that return endpoints. Request options, response, usage and exception types of the SDKs
+stay allowed. The test cannot see a module that adds its own URL and key properties and calls a model
+with a plain HTTP client; that is forbidden too, and reviews have to catch it.
+
+**Why it matters.** The core applies the preset's options, the timeouts, the custom headers,
+Microsoft Foundry authentication and observations; chat calls also get the preset's retries, and every
+chat response is tagged with its preset for cost tracking. `embed` makes no SDK retries, whatever the
+endpoint configures, so the caller decides whether and when to retry. The startup validation checks
+every assignment. A module with its own client skips all of that, and every deployment has to
+configure the same provider a second time.
+
+Full guidance: section "Connect a feature to a language model" in `documentation/docs/developer/ai-pipelines.mdx`.
+
 ## Caching
 
 **Rule.** No `@Cache` (Hibernate second-level) annotations on entities or associations.
@@ -165,8 +190,7 @@ visible for long, the cache belongs in the distributed manager instead.
 **Cache records, not entities.** A cached Hibernate entity carries its proxies and its association
 graph with it. Cache a DTO or a projection.
 
-**Always pair it with explicit eviction.** Either `@CacheEvict` on the writing service, or a
-Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. For propagating the eviction of a
+**Always pair it with explicit eviction.** `@CacheEvict` on the writing service. For propagating the eviction of a
 per-node entry to every node, the pattern is
 `src/main/java/de/tum/cit/aet/artemis/core/service/cache/PerNodeCacheEvictionService.java`. It
 broadcasts over a plain topic on purpose: a dropped broadcast self-corrects within the TTL, so the

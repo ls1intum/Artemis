@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -74,6 +75,7 @@ import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
@@ -97,6 +99,9 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     private static final String TEST_PREFIX = "examparticipationtest";
 
     private static final Logger log = LoggerFactory.getLogger(ExamParticipationIntegrationTest.class);
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private QuizExerciseTestRepository quizExerciseRepository;
@@ -338,7 +343,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(participationsStudent2).hasSize(studentExam2.getExercises().size());
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
     }
 
     @Test
@@ -371,7 +377,37 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(studentParticipations).hasSize(12);
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "generate-student-exams", "generate-missing-student-exams" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGenerateStudentExams_testWithSupervisedSession_rejectedAfterStart(String endpoint) throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, NUMBER_OF_STUDENTS);
+        exam.setExamMode(ExamMode.TEST_WITH_SUPERVISED_SESSION);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setWorkingTime(3600);
+        exam.setEndDate(ZonedDateTime.now().plusHours(3));
+        exam = examRepository.save(exam);
+        String url = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/" + endpoint;
+
+        List<StudentExamDTO> generatedExams = request.postListWithResponseBody(url, Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
+        assertThat(generatedExams).hasSize(NUMBER_OF_STUDENTS);
+        studentExamService.startExercises(exam.getId()).join();
+        List<Participation> participations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
+        assertThat(participations).isNotEmpty();
+
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        examRepository.save(exam);
+        request.postListWithResponseBody(url, Optional.empty(), StudentExamDTO.class, HttpStatus.BAD_REQUEST);
+
+        List<StudentExamDTO> remainingExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
+        assertThat(remainingExams).extracting(StudentExamDTO::id).containsExactlyInAnyOrderElementsOf(generatedExams.stream().map(StudentExamDTO::id).toList());
+        assertThat(participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId())).extracting(Participation::getId)
+                .containsExactlyInAnyOrderElementsOf(participations.stream().map(Participation::getId).toList());
     }
 
     @Test
@@ -418,7 +454,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(participationsStudent1).isEmpty();
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -1116,7 +1153,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         // Make sure delete also works if so many objects have been created before
         waitForParticipantScores();
-        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
         assertThat(examRepository.findById(exam.getId())).isEmpty();
     }
 

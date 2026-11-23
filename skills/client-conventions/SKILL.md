@@ -113,7 +113,7 @@ Package code imports it locally from `packages/tum-aet-ui/src/lib/internal/set-i
 destructured, at error level in production code of the application and the UI kit; specs are
 exempt. The package helper is the only place that disables it. Pass `setInputs` a plain object and a ref to
 one component type; a union of components is rejected.
-`inputBinding`, `ngComponentOutlet` inputs and the PrimeNG `DialogService` `inputValues` use
+`inputBinding`, `ngComponentOutlet` inputs and the `inputValues` of `TumAetUiDialogService` use
 string names too and are no substitute; the rule does not cover them.
 
 ## Redirecting from guards and resolvers
@@ -166,7 +166,7 @@ the element choice or group names, in TUM AET UI and the client template areas l
 ## Points inputs
 
 Enter points, bonus points and credits only with `jhi-points-input` (`PointsInputComponent`,
-`app/shared-ui/tum-aet-ui-integration/points-input`), not with `<input type="number">` or PrimeNG. It fixes
+`app/shared-ui/tum-aet-ui-integration/points-input`), not with `<input type="number">`. It fixes
 the setup (three fraction digits, `.` and `,` accepted, no grouping) on `tumaet-ui-input-number` and works with
 `ngModel`, `formControlName` and `formControl`. Bind `[min]`/`[max]` on it (a native attribute does not validate
 a custom control) and pass `inputId` for labels and E2E locators. In specs, type with `typeIntoInputNumber` from
@@ -216,8 +216,46 @@ Details: the _Exercise update forms_ subsection of
 
 ## Styling
 
-Use TUM AET UI components (`@tumaet/ui-angular`) and Tailwind v4 utilities. Do not add Bootstrap or
-ng-bootstrap in new work.
+Use TUM AET UI components (`@tumaet/ui-angular`) and Tailwind v4 utilities. Bootstrap, ng-bootstrap
+and PrimeNG are removed from the client; do not add them again.
+
+Choose button severity by the established action family and its context, following
+[Button intent and hierarchy](../../documentation/docs/developer/guidelines/client-theming.mdx#button-intent-and-hierarchy).
+Across the client, preserve blue workflow/navigation/Create/Save, yellow authoring/configuration, cyan
+analytics/assessment, green preview/reference and positive execution/activation, red destructive/stop
+or consequential bulk actions, and neutral utilities consistently across course lists, exam lists
+and details. Use variants and grouping for
+emphasis rather than changing an action's category. Equivalent utilities share a size and severity;
+an exercise toolbar may contain several action families. Data transfer is a distinct functional
+category: standalone import/export/download buttons, including report exports and dialog launchers,
+use gray `secondary`; menu entries retain menu styling. Neutral `secondary` is an
+enabled gray-toned utility style, independent of disabled state. Distinguish action colours from
+status/validation feedback.
+Let TUM AET UI choose the contrasting foreground; do not override button text or icon colours.
+
+Button colors have one light/dark source: the Button palette blocks in
+`packages/tum-aet-ui/themes.css`, using `--tumaet-ui-button-<severity>-background`, `-contrast` and
+`-foreground`. Keep button-only adjustments separate from status colors. Prefer native
+`tumAetUiButton` and give adjacent action groups the same size, typography and spacing. Attribute-selector components that already own a native button
+host use `tumAetUiButtonClasses()` rather than attaching a second component to that element.
+Trace reset/cancel/retry handlers: saved-work deletion/overrides stay danger, ordinary view refresh
+is secondary, and persisted grading resets are danger. Conditional Create/Edit uses primary/warn;
+ordinary Save stays primary. Selected-state colors are separate; use a solid semantic variant on a
+colored selected row when text/outlined contrast would be insufficient. Remove local color
+hover/foreground overrides when migrating. Check the Button Palette Storybook browser tests after
+changing shared tokens and retain permission/feature/disabled/loading/submit behavior.
+
+The client lint gate enforces `localRules/enforce-button-intent` in external and inline application
+templates. Common labels (resolved through the English catalog) must match their action family;
+native TUM buttons cannot override their palette with local color classes/styles. Use the component's
+`ariaLabel` input when an icon-only `<tumaet-ui-button>` needs a name;
+an `aria-label` on its wrapper does not name the native button. For an opaque action
+label, declare `data-button-intent`; for a contextual exception, also declare a static
+`data-button-intent-reason` describing the behavior. Preserve destructive cancellation/editing and
+documented variant-authoring exceptions rather than recoloring them from their labels. Semantic
+selection controls and a provably disabled green completion state remain distinct from actions.
+Do not use a generic lint suppression. Unknown dynamic labels/severities still need behavioral
+tests and review. Run `pnpm run test:rules` and `pnpm run lint` after changing this policy.
 
 Colours use semantic tokens. Use TUM AET UI component variants, or `text-state-danger`,
 `text-state-success`, `text-state-warning`, `text-state-info` for plain markup. Never `--p-<color>-N`
@@ -225,38 +263,36 @@ primitives, never `text-red-500`, never `text-danger`, never the superseded arbi
 `text-(--danger)` form.
 
 `localRules/no-raw-tailwind-color-palette` enforces the palette part across
-`src/main/webapp/app/**/*.html` and `packages/tum-aet-ui/src/lib/**/*.html`. **The Bootstrap ban is
-only partly enforced**: `localRules/no-bootstrap-classes` covers the migrated directories listed
-in `eslint.config.mjs`.
-The convention applies throughout the client even where lint does not enforce it. Add newly
-migrated directories to that list.
+`src/main/webapp/app/**/*.html` and `packages/tum-aet-ui/src/lib/**/*.html`. Every module is in
+`migratedModules` of `eslint.config.mjs`, and lint keeps the removed libraries out of them: it rejects
+Bootstrap classes in external and inline templates (`localRules/no-bootstrap-classes`), Bootstrap class
+names built in TypeScript (`localRules/no-bootstrap-classes-in-code`), PrimeNG root classes such as
+`class="p-button"` (`localRules/no-primeng-component-classes`),
+imports of PrimeNG, ng-bootstrap and Bootstrap (specs included), and, in Stylelint, `--bs-*` and `--p-*`
+values, hex and `rgb()` colours, PrimeNG selectors and Bootstrap component selectors.
+Add a new module to `migratedModules`, to the Stylelint override and to the `@source` list of
+`tailwind.css`; `pnpm run test:rules` checks that the three agree.
 
-Bootstrap and Tailwind share the spacing class names (`m`, `p` and `gap` with their side and axis
-forms) but differ for 3 to 5: Bootstrap renders 16, 24 and 48px, Tailwind 12, 16 and 20px, and
-Bootstrap's `!important` rule wins while it is loaded. `localRules/no-ambiguous-spacing-utility`
-therefore rejects a bare `*-3`, `*-4` or `*-5` and suggests the important spelling that keeps the
-value Bootstrap renders (`mb-3` to `mb-4!`, `mb-4` to `mb-6!`, `mb-5` to `mb-12!`) or the Tailwind
-value (`mb-3!`, `mb-4!`, `mb-5!`). Never write a bare `mb-6`: it loses to Bootstrap's Reboot margins
-and to component SCSS.
-
-The rule is enabled for the Tailwind-laid-out templates of the student exam mode and the pages it
-shows, in the block of `eslint.config.mjs` that lists the folders. To adopt it elsewhere, add
-`<folder>/**/*.html` to that block, make sure `tailwind.css` scans the folder with `@source`
-(`migration-source-coverage` checks it), apply the suggestion that keeps the value, and update the
-specs that assert the old class names. See _Ambiguous Spacing Utilities_ in
+Tailwind utilities are in the cascade layer `utilities`. The element defaults in
+`src/main/webapp/content/scss/_base.scss` (`p`, `h1` to `h6`, `ul`, `a`) are in the layer `base`, so a utility
+overrides them without a modifier. Component SCSS and the classes of TUM AET UI are not in a layer and win over
+every utility: write the important modifier where a utility has to override them (`mb-6!`). Bootstrap used the
+spacing names with another scale for the steps 3 to 5 (16, 24 and 48px against Tailwind's 12, 16 and 20px); markup
+from an old branch needs `mb-3` to `mb-4`, `mb-4` to `mb-6` and `mb-5` to `mb-12`. See _Spacing utilities_ in
 `documentation/docs/developer/guidelines/client-development.mdx`.
-
-Never hand-write PrimeNG root classes such as `class="p-button"` or `class="p-inputtext"`. Render
-the real PrimeNG component so its styles load deterministically. Enforced by
-`localRules/no-primeng-component-classes`.
-
-PrimeNG itself is a transitional fallback, used only when a TUM AET UI gap cannot reasonably be closed
-in the same change. Explain the contained fallback in the pull request.
 
 If TUM AET UI lacks a reusable capability, add or evolve a package component around native HTML,
 Angular Aria (`@angular/aria`, for composite widgets such as menus and tabs), or stable Angular CDK
 primitives, and keep Artemis-specific composition in the application. See
 `documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx`.
+
+## Data tables
+
+A table that is the main content of a page or a large dialog sits in `tumaet-ui-table-layout`: a toolbar of at most
+40px that never wraps, a body that is the only part that scrolls under a sticky 30px column header, and a footer of at
+most 40px with `tumaet-ui-paginator`. Slot nodes (`tumAetUiTableToolbar`, `tumAetUiTableFooter`) must not sit directly
+in an `@if` (NG8011): use `[hidden]`. Use `tumAetUiInputSize="small"`, not `size`, on toolbar inputs. See
+[Data tables](../../documentation/docs/developer/guidelines/client-development.mdx#data-tables).
 
 ## Other rules worth knowing
 

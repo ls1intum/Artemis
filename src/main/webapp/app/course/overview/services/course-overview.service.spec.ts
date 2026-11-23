@@ -448,6 +448,23 @@ describe('CourseOverviewService', () => {
             expect(groupTrack).not.toBe(exerciseTrack);
         });
 
+        it('hands every exercise card the accuracy of the scores of the course, because the exercises of the overview carry no course', () => {
+            const first: Exercise = { id: 1, title: 'First', dueDate: dayjs().add(1, 'day') } as Exercise;
+            const second: Exercise = { id: 2, title: 'Second', dueDate: dayjs().add(2, 'days') } as Exercise;
+            const course = { accuracyOfScores: 2 };
+
+            const { ungroupedData, groupedData } = courseOverviewService.buildGroupedExerciseData([first, second], course);
+
+            expect(ungroupedData.map((card) => card.course)).toEqual([course, course]);
+            expect(Object.values(groupedData).flatMap((timeGroup) => timeGroup.entityData.map((card) => card.course))).toEqual([course, course]);
+        });
+
+        it('leaves the course of an exercise card unset without a course', () => {
+            const exercise: Exercise = { id: 1, title: 'First', dueDate: dayjs().add(1, 'day') } as Exercise;
+
+            expect(courseOverviewService.mapExerciseToSidebarCardElement(exercise).course).toBeUndefined();
+        });
+
         it('keeps the members on the group card so it stays searchable and selectable, without rendering them', () => {
             const reference = { id: 7, title: 'Variant Group' };
             const variantA: Exercise = { id: 20, title: 'Variant A', dueDate: dayjs().add(1, 'day'), exerciseVariantGroup: reference } as Exercise;

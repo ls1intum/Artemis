@@ -1,4 +1,4 @@
-<h3 class="top-container flex-wrap lg:flex-nowrap">
+<h3 class="top-container flex-wrap">
     <!--back button only used in assessment dashboard-->
     <div class="row-container me-2 flex items-center gap-2">
         @if (isTestRun()) {
@@ -24,7 +24,7 @@
         </tumaet-ui-message>
     }
     @if (!isLoading()) {
-        <div class="row-container flex-wrap lg:flex-nowrap">
+        <div class="row-container flex-wrap">
             @if (!isAssessor() && !hasComplaint()) {
                 <span
                     id="assessmentLocked"
@@ -100,7 +100,14 @@
             }
             <!-- Highlight the difference between first and second correction -->
             @if (!isProgrammingExercise() && result() && correctionRound() > 0) {
-                <button type="button" class="ms-2" (click)="toggleHighlightDifferences()" [disabled]="saveBusy() || submitBusy() || cancelBusy()" tumAetUiButton severity="primary">
+                <button
+                    type="button"
+                    class="ms-2"
+                    (click)="toggleHighlightDifferences()"
+                    [disabled]="saveBusy() || submitBusy() || cancelBusy()"
+                    tumAetUiButton
+                    severity="secondary"
+                >
                     @if (!highlightDifferences()) {
                         <span
                             tumAetUiTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOn' | artemisTranslate }}"
@@ -116,7 +123,7 @@
                 </button>
             }
             <br />
-            <div class="flex flex-wrap lg:flex-nowrap">
+            <div class="flex flex-wrap">
                 @if (!result()?.completionDate) {
                     <button
                         type="button"
@@ -150,6 +157,8 @@
                     </button>
                     @if (!isTestRun()) {
                         <button
+                            data-button-intent="destructive"
+                            data-button-intent-reason="Cancels the persisted assessment"
                             type="button"
                             id="cancel"
                             class="m-1"
@@ -182,7 +191,7 @@
                     </button>
                 }
                 @if (result()?.completionDate && exercise()?.isAtLeastInstructor && (exercise()!.type === ExerciseType.MODELING || exercise()!.type === ExerciseType.TEXT)) {
-                    <button type="button" class="m-1" id="useAsExampleSubmission" (click)="onUseAsExampleSolutionClicked()" tumAetUiButton severity="primary">
+                    <button type="button" class="m-1" id="useAsExampleSubmission" (click)="onUseAsExampleSolutionClicked()" tumAetUiButton severity="secondary">
                         @if (submitBusy()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />
                         }
@@ -201,7 +210,7 @@
                         (click)="nextSubmission.emit(); sendAssessNextEventToAnalytics()"
                         [tumAetUiTooltip]="nextSubmissionShortcut"
                         tumAetUiButton
-                        severity="success"
+                        severity="primary"
                     >
                         @if (nextSubmissionBusy()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />

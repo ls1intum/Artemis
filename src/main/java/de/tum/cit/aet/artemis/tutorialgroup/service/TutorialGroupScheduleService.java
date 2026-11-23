@@ -2,13 +2,18 @@ package de.tum.cit.aet.artemis.tutorialgroup.service;
 
 import static de.tum.cit.aet.artemis.core.util.DateUtil.getFirstDateOfWeekDay;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -22,6 +27,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupScheduleDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.exception.SessionOverlapsWithSessionException;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
@@ -48,25 +55,151 @@ public class TutorialGroupScheduleService {
     }
 
     /**
-     * Create a new schedule for the given tutorial group and creates all corresponding sessions
+     * Rejects a schedule update that would make a retained session overlap an individually edited session. Read-only: it persists nothing,
+     * so a caller can validate before performing its own writes and side effects.
+     *
+     * @param course         the course of the tutorial group
+     * @param tutorialGroup  the tutorial group whose schedule is being updated
+     * @param newScheduleDTO the requested schedule, or null if the schedule is being removed
+     * @throws SessionOverlapsWithSessionException if applying the schedule would make a retained session overlap an individual session
+     */
+    public void validateScheduleUpdateDoesNotOverlapIndividualSessions(Course course, TutorialGroup tutorialGroup, TutorialGroupScheduleDTO newScheduleDTO) {
+        if (newScheduleDTO == null) {
+            return;
+        }
+        TutorialGroupSchedule oldSchedule = tutorialGroupScheduleRepository.findByTutorialGroup_Id(tutorialGroup.getId()).orElse(null);
+        if (oldSchedule == null) {
+            return;
+        }
+        TutorialGroupSchedule newSchedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(newScheduleDTO);
+        if (oldSchedule.sameSchedule(newSchedule) || oldSchedule.onlyLocationChanged(newSchedule)) {
+            return;
+        }
+        Set<Instant> retainedStarts = new HashSet<>();
+        for (TutorialGroupSession session : tutorialGroupSessionRepository.findAllByScheduleId(oldSchedule.getId())) {
+            retainedStarts.add(session.getStart().toInstant());
+        }
+        List<TutorialGroupSession> detachedSessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId()).stream()
+                .filter(session -> session.getTutorialGroupSchedule() == null).toList();
+        if (retainedStarts.isEmpty() || detachedSessions.isEmpty()) {
+            return;
+        }
+        Set<TutorialGroupSession> overlappingIndividualSessions = new HashSet<>();
+        for (TutorialGroupSession generatedSession : generateSessionsForSchedule(course, newSchedule)) {
+            if (retainedStarts.contains(generatedSession.getStart().toInstant())) {
+                detachedSessions.stream().filter(detached -> overlaps(generatedSession, detached)).forEach(overlappingIndividualSessions::add);
+            }
+        }
+        if (!overlappingIndividualSessions.isEmpty()) {
+            throw new SessionOverlapsWithSessionException(overlappingIndividualSessions, ZoneId.of(course.getTimeZone()));
+        }
+    }
+
+    /**
+     * Saves the given schedule and brings its generated sessions in sync with it.
+     * <p>
+     * For a new schedule, all sessions are generated. For an existing one, generated sessions are matched to the current ones by start
+     * instant: a match keeps its id and recorded attendance while its end and location follow the new schedule, and its free-period status
+     * is recomputed from the new interval - except a manual cancellation, which is kept with no free-period association. Starts that no
+     * longer occur are removed, and new starts are added. Sessions edited individually (detached from the schedule) are left untouched -
+     * neither duplicated nor removed. A schedule change that would extend a retained session into an individually edited session is
+     * rejected before anything is persisted, so no overlapping sessions are created.
      *
      * @param course                the course of the tutorial group
-     * @param tutorialGroup         the tutorial group for which the schedule should be created
-     * @param tutorialGroupSchedule the schedule to create
+     * @param tutorialGroup         the tutorial group the schedule belongs to
+     * @param tutorialGroupSchedule the schedule to save and generate or update the sessions for
+     * @throws SessionOverlapsWithSessionException if applying the schedule would make a retained session overlap an individually edited session
      */
     public void saveScheduleAndGenerateScheduledSessions(Course course, TutorialGroup tutorialGroup, TutorialGroupSchedule tutorialGroupSchedule) {
-        var individualSessions = generateSessionsForSchedule(course, tutorialGroupSchedule);
         tutorialGroupSchedule.setTutorialGroup(tutorialGroup);
-        if (tutorialGroupSchedule.getId() != null) {
-            tutorialGroupSessionRepository.deleteByTutorialGroupSchedule(tutorialGroupSchedule);
+        boolean scheduleAlreadyExisted = tutorialGroupSchedule.getId() != null;
+
+        // Individually edited sessions are detached from the schedule (schedule set to null) but keep their slot. A regenerated session
+        // that overlaps one of them is left to the edited session instead of being added as a duplicate.
+        List<TutorialGroupSession> detachedSessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId()).stream()
+                .filter(session -> session.getTutorialGroupSchedule() == null).toList();
+
+        // Key by instant, not ZonedDateTime: a persisted start read back (in UTC) would not equal a freshly generated one in the course
+        // zone even for the same moment, so a ZonedDateTime key would never match and nothing would be preserved. If two sessions share a
+        // start (e.g. from overlapping saves), keep the one carrying recorded data as the match and remove the other.
+        Map<Instant, TutorialGroupSession> existingSessionsByStart = new HashMap<>();
+        List<TutorialGroupSession> sessionsToRemove = new ArrayList<>();
+        if (scheduleAlreadyExisted) {
+            for (TutorialGroupSession existingSession : tutorialGroupSessionRepository.findAllByScheduleId(tutorialGroupSchedule.getId())) {
+                Instant start = existingSession.getStart().toInstant();
+                TutorialGroupSession alreadyKept = existingSessionsByStart.putIfAbsent(start, existingSession);
+                if (alreadyKept != null) {
+                    if (hasRecordedData(existingSession) && !hasRecordedData(alreadyKept)) {
+                        existingSessionsByStart.put(start, existingSession);
+                        sessionsToRemove.add(alreadyKept);
+                    }
+                    else {
+                        sessionsToRemove.add(existingSession);
+                    }
+                }
+            }
         }
 
-        TutorialGroupSchedule savedSchedule = tutorialGroupScheduleRepository.save(tutorialGroupSchedule);
-        for (var individualSession : individualSessions) {
-            individualSession.setTutorialGroupSchedule(savedSchedule);
-            individualSession.setTutorialGroup(savedSchedule.getTutorialGroup());
+        List<TutorialGroupSession> generatedSessions = generateSessionsForSchedule(course, tutorialGroupSchedule);
+
+        // Reject before persisting: extending a retained session into an individually edited session would create an overlap the
+        // single-session endpoint forbids. Nothing is saved yet, so both sessions and their recorded attendance stay intact.
+        Set<TutorialGroupSession> overlappingIndividualSessions = new HashSet<>();
+        for (TutorialGroupSession generatedSession : generatedSessions) {
+            if (existingSessionsByStart.containsKey(generatedSession.getStart().toInstant())) {
+                detachedSessions.stream().filter(detached -> overlaps(generatedSession, detached)).forEach(overlappingIndividualSessions::add);
+            }
         }
-        tutorialGroupSessionRepository.saveAll(individualSessions);
+        if (!overlappingIndividualSessions.isEmpty()) {
+            throw new SessionOverlapsWithSessionException(overlappingIndividualSessions, ZoneId.of(course.getTimeZone()));
+        }
+
+        tutorialGroupScheduleRepository.save(tutorialGroupSchedule);
+
+        // A regenerated session that starts at the same time as an existing one is the same session, so keep its id and recorded
+        // attendance and let its end and location follow the new schedule. Existing sessions whose start no longer occurs are removed.
+        List<TutorialGroupSession> sessionsToPersist = new ArrayList<>();
+        for (TutorialGroupSession generatedSession : generatedSessions) {
+            TutorialGroupSession existingSession = existingSessionsByStart.remove(generatedSession.getStart().toInstant());
+            if (existingSession != null) {
+                existingSession.setEnd(generatedSession.getEnd());
+                existingSession.setLocation(generatedSession.getLocation());
+                // The new interval may now overlap (or no longer overlap) a free period, so recompute the free-period status from the
+                // generated session's lookup. updateStatusAndFreePeriod keeps a manual cancellation; the attendance is untouched.
+                updateStatusAndFreePeriod(existingSession, Optional.ofNullable(generatedSession.getTutorialGroupFreePeriod()));
+                sessionsToPersist.add(existingSession);
+            }
+            else if (detachedSessions.stream().noneMatch(detached -> overlaps(generatedSession, detached))) {
+                sessionsToPersist.add(generatedSession);
+            }
+        }
+        // Save kept/new sessions before deleting obsolete ones, so an interruption leaves extra sessions, never missing ones.
+        tutorialGroupSessionRepository.saveAll(sessionsToPersist);
+        sessionsToRemove.addAll(existingSessionsByStart.values());
+        if (!sessionsToRemove.isEmpty()) {
+            tutorialGroupSessionRepository.deleteAll(sessionsToRemove);
+        }
+    }
+
+    /**
+     * Whether two sessions overlap in time, so that only one of them should occupy the slot.
+     *
+     * @param first  the first session
+     * @param second the second session
+     * @return true if their intervals overlap
+     */
+    private static boolean overlaps(TutorialGroupSession first, TutorialGroupSession second) {
+        return first.getStart().isBefore(second.getEnd()) && second.getStart().isBefore(first.getEnd());
+    }
+
+    /**
+     * Whether a session carries data worth keeping when two sessions share a start.
+     *
+     * @param session the session to check
+     * @return true if it has recorded attendance, a status explanation or a cancellation
+     */
+    private static boolean hasRecordedData(TutorialGroupSession session) {
+        return session.getAttendanceCount() != null || session.getStatusExplanation() != null || session.getStatus() == TutorialGroupSessionStatus.CANCELLED;
     }
 
     /**
@@ -117,6 +250,12 @@ public class TutorialGroupScheduleService {
      * @param overlappingPeriod an Optional that may contain a TutorialGroupFreePeriod if there is an overlapping free period.
      */
     public static void updateStatusAndFreePeriod(TutorialGroupSession newSession, Optional<TutorialGroupFreePeriod> overlappingPeriod) {
+        // A manual cancellation (CANCELLED without a free period) is kept with its explanation regardless of free-period overlap; only
+        // the explicit activate action reverses it. Free-period and active sessions derive their status from the current overlap.
+        boolean manuallyCancelled = newSession.getStatus() == TutorialGroupSessionStatus.CANCELLED && newSession.getTutorialGroupFreePeriod() == null;
+        if (manuallyCancelled) {
+            return;
+        }
         if (overlappingPeriod.isPresent()) {
             newSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
             // the status explanation is set to null, as it is specified in the TutorialGroupFreePeriod

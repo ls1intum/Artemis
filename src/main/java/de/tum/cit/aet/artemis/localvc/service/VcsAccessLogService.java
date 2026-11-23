@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.eclipse.jgit.api.Git;
@@ -43,23 +44,22 @@ public class VcsAccessLogService {
     }
 
     /**
-     * Creates a vcs access log entry and stores it to the database
+     * Creates a vcs access log entry in the background and stores it to the database.
+     * <p>
+     * For the record of a rejected attempt, which nothing waits for. The participation is passed by id: the entry only references it, and an entity or a proxy that is
+     * handed to another thread cannot be read there, not even to be logged.
      *
      * @param user                    The user accessing the repository
-     * @param participation           The participation which owns the repository
-     * @param actionType              The action type: READ or WRITE
+     * @param participationId         The id of the participation which owns the repository
+     * @param actionType              The action type, for example a failed clone or push
      * @param authenticationMechanism The used authentication mechanism: password, vcs token (user/participation), SSH or code editor
      * @param commitHash              The latest commit hash
      * @param ipAddress               The ip address of the user accessing the repository
      */
     @Async("vcsAccessLogExecutor")
-    public void saveAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
-            String commitHash, String ipAddress) {
-        log.debug("Storing access operation for user {}", user);
-
-        VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash,
-                ipAddress);
-        vcsAccessLogRepository.save(accessLogEntry);
+    public void saveAccessLog(User user, long participationId, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism, String commitHash,
+            String ipAddress) {
+        createAccessLog(user, participationId, actionType, authenticationMechanism, commitHash, ipAddress);
     }
 
     /**
@@ -87,7 +87,7 @@ public class VcsAccessLogService {
 
         // The name column is NOT NULL and is what identifies the accessor in the audit UI, so it carries both parts.
         // The email column is likewise NOT NULL and has nothing meaningful to hold for an agent.
-        String accessor = "Build agent " + buildAgentName + " (build job " + buildJobId + ")";
+        String accessor = VcsAccessLog.BUILD_AGENT_ACCESSOR_PREFIX + buildAgentName + " (build job " + buildJobId + ")";
         if (accessor.length() > ACCESSOR_NAME_MAX_LENGTH) {
             // The column is varchar(100); a long agent short name must not turn an audit entry into a failed insert
             accessor = accessor.substring(0, ACCESSOR_NAME_MAX_LENGTH);
@@ -97,34 +97,45 @@ public class VcsAccessLogService {
     }
 
     /**
-     * Updates the commit hash of the newest log entry
+     * Creates a vcs access log entry and stores it before returning.
+     * <p>
+     * An entry is written once, when the operation is over and everything about it is known, and is never changed afterwards. A failure to write it must not fail the Git
+     * operation, so the callers catch it.
      *
-     * @param participation The participation to which the repository belongs to
-     * @param commitHash    The newest commit hash which should get set for the access log entry
+     * @param user                    The user accessing the repository
+     * @param participationId         The id of the participation which owns the repository
+     * @param actionType              The action: a clone, pull or push, or a failed one
+     * @param authenticationMechanism The used authentication mechanism: password, vcs token (user/participation), SSH or code editor
+     * @param commitHash              The commit hash that belongs to the action
+     * @param ipAddress               The ip address of the user accessing the repository
+     * @return the stored entry
      */
-    @Async("vcsAccessLogExecutor")
-    public void updateCommitHash(ProgrammingExerciseParticipation participation, String commitHash) {
-        var vcsAccessLog = vcsAccessLogRepository.findNewestUserEntryByParticipationId(participation.getId());
-        if (vcsAccessLog.isPresent()) {
-            vcsAccessLog.get().setCommitHash(commitHash);
-            vcsAccessLogRepository.save(vcsAccessLog.get());
-        }
+    public VcsAccessLog createAccessLog(User user, long participationId, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism, String commitHash,
+            String ipAddress) {
+        return createAccessLog(user, participationId, actionType, authenticationMechanism, commitHash, ipAddress, ZonedDateTime.now());
     }
 
     /**
-     * Updates the commit hash of the newest log entry
+     * Stores an entry for an access that happened at the given time. The entry of a request that advertises the references is written after its response was sent, so it carries
+     * the time of the request: the next request of the same operation can be answered and written before it, and the log joins the two by their times.
      *
-     * @param localVCRepositoryUri The localVCRepositoryUri of the participation to which vcsAccessLog belongs to
-     * @param repositoryActionType The repository action type to which the vcsAccessLog should get updated to
+     * @param user                    The user accessing the repository
+     * @param participationId         The id of the participation which owns the repository
+     * @param actionType              The action: a read or a write that moved no data, or a clone, pull or push, or a failed one
+     * @param authenticationMechanism The used authentication mechanism: password, vcs token (user/participation), SSH or code editor
+     * @param commitHash              The commit hash that belongs to the action
+     * @param ipAddress               The ip address of the user accessing the repository
+     * @param timestamp               When the access happened
+     * @return the stored entry
      */
-    @Async("vcsAccessLogExecutor")
-    public void updateRepositoryActionType(LocalVCRepositoryUri localVCRepositoryUri, RepositoryActionType repositoryActionType) {
-        var repositoryURL = localVCRepositoryUri.toString().replace("/git-upload-pack", "").replace("/git-receive-pack", "");
-        var vcsAccessLog = vcsAccessLogRepository.findNewestUserEntryByRepositoryUri(repositoryURL);
-        if (vcsAccessLog.isPresent()) {
-            vcsAccessLog.get().setRepositoryActionType(repositoryActionType);
-            vcsAccessLogRepository.save(vcsAccessLog.get());
-        }
+    public VcsAccessLog createAccessLog(User user, long participationId, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism, String commitHash,
+            String ipAddress, ZonedDateTime timestamp) {
+        log.debug("Storing access operation for user {}", user.getLogin());
+
+        // The entry only references the participation, so the reference is enough and nothing is loaded.
+        Participation participation = participationRepository.getReferenceById(participationId);
+        return vcsAccessLogRepository
+                .save(new VcsAccessLog(user, participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash, ipAddress, timestamp));
     }
 
     /**

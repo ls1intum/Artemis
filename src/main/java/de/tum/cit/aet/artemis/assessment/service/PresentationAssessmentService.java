@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -25,18 +26,24 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationGradingMethod;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricRating;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstancesBatchCreateDTO;
+import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO;
+import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricRatingDTO;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentWriteRepository.PresentationRubricChanges;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricRatingRepository;
+import de.tum.cit.aet.artemis.assessment.service.PresentationRubricService.RubricGrade;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
@@ -75,9 +82,14 @@ public class PresentationAssessmentService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final PresentationRubricService presentationRubricService;
+
+    private final PresentationRubricRatingRepository presentationRubricRatingRepository;
+
     public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository, CourseRepository courseRepository,
-            CourseConfigurationRepository courseConfigurationRepository, AuthorizationCheckService authorizationCheckService) {
+            CourseConfigurationRepository courseConfigurationRepository, AuthorizationCheckService authorizationCheckService, PresentationRubricService presentationRubricService,
+            PresentationRubricRatingRepository presentationRubricRatingRepository) {
         this.presentationAssessmentRepository = presentationAssessmentRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -85,6 +97,8 @@ public class PresentationAssessmentService {
         this.courseRepository = courseRepository;
         this.courseConfigurationRepository = courseConfigurationRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.presentationRubricService = presentationRubricService;
+        this.presentationRubricRatingRepository = presentationRubricRatingRepository;
     }
 
     /**
@@ -135,12 +149,12 @@ public class PresentationAssessmentService {
      *
      * @param courseId         the owning course id
      * @param assessmentId     the presentation assessment id, or null for no filter
-     * @param assessed         whether result points are assigned, or null for no filter
+     * @param assessed         whether a result is assigned, or null for no filter
      * @param linkedToExercise whether the presentation is linked to an exercise, or null for no filter
      * @param searchTerm       text to search in student login, email, full name, or presentation title; null or blank disables searching
      * @param page             zero-based page index
      * @param size             page size between 1 and 100
-     * @param sortField        studentLogin, presentationTitle, presentationDate, or resultPoints
+     * @param sortField        studentLogin, presentationTitle, or presentationDate
      * @param direction        sorting direction
      * @return the matching rows in the requested order, including the total number of matches
      */
@@ -173,7 +187,6 @@ public class PresentationAssessmentService {
             case "studentLogin" -> "student.login";
             case "presentationTitle" -> "presentationAssessment.title";
             case "presentationDate" -> "presentationDate";
-            case "resultPoints" -> "resultPoints";
             default -> throw new BadRequestAlertException("Unsupported sort field", PresentationAssessmentInstance.ENTITY_NAME, "invalidSortField");
         };
         return PageRequest.of(page, size, Sort.by(direction, property).and(Sort.by("id")));
@@ -186,17 +199,20 @@ public class PresentationAssessmentService {
      * @param dto      the presentation assessment data
      * @return the persisted presentation assessment as a DTO
      */
-    public PresentationAssessmentDTO create(long courseId, PresentationAssessmentDTO dto) {
+    public PresentationAssessmentDTO create(long courseId, PresentationAssessmentRequestDTO dto) {
         if (dto.id() != null) {
             throw new BadRequestAlertException("A new presentation assessment cannot already have an ID", PresentationAssessment.ENTITY_NAME, "idExists");
         }
+        presentationRubricService.validateRubricPresence(dto.gradingMethod(), dto.rubricCriteria(), true);
         PresentationAssessment presentationAssessment = new PresentationAssessment();
         presentationAssessment.setCourse(courseRepository.getReferenceById(courseId));
+        presentationAssessment.setGradingMethod(dto.gradingMethod());
         ExerciseIdAndTitleDTO exercise = applyDto(presentationAssessment, dto);
-        PresentationAssessment savedAssessment = presentationAssessmentRepository.save(presentationAssessment);
+        PresentationRubricChanges rubric = dto.rubricCriteria() == null ? PresentationRubricChanges.NONE
+                : presentationRubricService.buildReplacement(presentationAssessment, dto.rubricCriteria());
+        PresentationAssessment savedAssessment = presentationAssessmentRepository.createWithRubric(presentationAssessment, rubric);
 
-        return new PresentationAssessmentDTO(savedAssessment.getId(), savedAssessment.getTitle(), savedAssessment.getDescription(), savedAssessment.getMaxPoints(), courseId,
-                exercise != null ? exercise.id() : null, exercise != null ? exercise.title() : null);
+        return toDto(savedAssessment, courseId, exercise);
     }
 
     /**
@@ -207,7 +223,7 @@ public class PresentationAssessmentService {
      * @param dto          the updated presentation assessment data
      * @return the saved presentation assessment as a DTO
      */
-    public PresentationAssessmentDTO update(long courseId, long assessmentId, PresentationAssessmentDTO dto) {
+    public PresentationAssessmentDTO update(long courseId, long assessmentId, PresentationAssessmentRequestDTO dto) {
         if (dto.id() == null) {
             throw new BadRequestAlertException("A presentation assessment update must have an ID", PresentationAssessment.ENTITY_NAME, "idMissing");
         }
@@ -215,28 +231,41 @@ public class PresentationAssessmentService {
             throw new BadRequestAlertException("The path id and body id must match", PresentationAssessment.ENTITY_NAME, "idMismatch");
         }
         PresentationAssessment presentationAssessment = findByIdAndCourseIdElseThrow(courseId, assessmentId);
-        long expectedVersion = presentationAssessment.getVersion();
-
-        double highestResultPoints = presentationAssessmentInstanceRepository.findHighestResultPointsByPresentationAssessmentId(assessmentId).orElse(0.0);
-        if (dto.maxPoints() < highestResultPoints) {
-            throw new BadRequestAlertException("The maximum points cannot be lower than an existing result", PresentationAssessment.ENTITY_NAME, "maxPointsBelowExistingResult");
+        if (dto.gradingMethod() != presentationAssessment.getGradingMethod()) {
+            throw new BadRequestAlertException("The grading method of a presentation cannot be changed", PresentationAssessment.ENTITY_NAME, "gradingMethodImmutable");
         }
+        long expectedVersion = presentationAssessment.getVersion();
         ExerciseIdAndTitleDTO exercise = applyDto(presentationAssessment, dto);
 
-        int updated = presentationAssessmentRepository.updateIfVersionMatches(assessmentId, courseId, expectedVersion, presentationAssessment.getTitle(),
-                presentationAssessment.getDescription(), presentationAssessment.getMaxPoints(), presentationAssessment.getExercise());
-
-        if (updated != 1) {
-            throw new ConflictException("The presentation assessment changed while the update was being validated. Please reload and try again.",
-                    PresentationAssessment.ENTITY_NAME, "concurrentModification");
+        if (presentationAssessment.getGradingMethod() == PresentationGradingMethod.SCORE) {
+            double highestResultPoints = presentationAssessmentInstanceRepository.findHighestResultPointsByPresentationAssessmentId(assessmentId).orElse(0.0);
+            if (presentationAssessment.getMaxPoints() < highestResultPoints) {
+                throw new BadRequestAlertException("The maximum points cannot be lower than an existing result", PresentationAssessment.ENTITY_NAME,
+                        "maxPointsBelowExistingResult");
+            }
         }
 
+        presentationRubricService.validateRubricPresence(presentationAssessment.getGradingMethod(), dto.rubricCriteria(), false);
+        PresentationRubricChanges rubric = PresentationRubricChanges.NONE;
+        if (dto.rubricCriteria() != null) {
+            boolean locked = presentationAssessmentInstanceRepository.countByPresentationAssessmentIdAndRubricScoreIsNotNull(assessmentId) > 0;
+            rubric = locked ? presentationRubricService.buildLockedUpdate(assessmentId, dto.rubricCriteria())
+                    : presentationRubricService.buildReplacement(presentationAssessment, dto.rubricCriteria());
+        }
+        presentationAssessmentRepository.updateWithRubricIfVersionMatches(courseId, assessmentId, expectedVersion, presentationAssessment, rubric);
+
+        return toDto(presentationAssessment, courseId, exercise);
+    }
+
+    private static PresentationAssessmentDTO toDto(PresentationAssessment presentationAssessment, long courseId, ExerciseIdAndTitleDTO exercise) {
         return new PresentationAssessmentDTO(presentationAssessment.getId(), presentationAssessment.getTitle(), presentationAssessment.getDescription(),
-                presentationAssessment.getMaxPoints(), courseId, exercise != null ? exercise.id() : null, exercise != null ? exercise.title() : null);
+                presentationAssessment.getGradingMethod(), presentationAssessment.getMaxPoints(), courseId, exercise != null ? exercise.id() : null,
+                exercise != null ? exercise.title() : null);
     }
 
     /**
      * Delete a presentation assessment.
+     * Its instances and its rubric with all ratings are removed by the database ({@code ON DELETE CASCADE}).
      *
      * @param courseId     the course id
      * @param assessmentId the presentation assessment id
@@ -263,9 +292,11 @@ public class PresentationAssessmentService {
         long expectedVersion = assessment.getVersion();
 
         PresentationAssessmentInstance instance = findInstanceElseThrow(courseId, assessmentId, instanceId);
-        applyInstanceDto(courseId, assessment, instance, dto);
+        RubricGrade grade = gradeRubric(assessment, dto.ratings());
+        applyInstanceDto(courseId, assessment, instance, dto, grade);
 
-        presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, assessmentId, expectedVersion, instance);
+        List<PresentationRubricRating> ratings = grade == null ? null : grade.ratingsFor(instance);
+        presentationAssessmentRepository.updateInstanceIfVersionMatches(courseId, assessmentId, expectedVersion, instance, ratings);
 
         return findInstanceElseThrow(courseId, assessmentId, instanceId);
     }
@@ -287,13 +318,40 @@ public class PresentationAssessmentService {
             throw new BadRequestAlertException("At least one student must be selected", PresentationAssessmentInstance.ENTITY_NAME, "individualInstanceHasInvalidStudentCount");
         }
         rejectAlreadyAssignedStudents(assessmentId, students);
+        RubricGrade grade = gradeRubric(assessment, dto.ratings());
 
+        boolean graded = hasResult(assessment.getGradingMethod(), dto.passed(), dto.resultPoints(), grade);
         User currentUser = userRepository.getUser();
-        User assessor = resolveAssessor(courseId, currentUser, null, dto.resultPoints(), dto.assessorLogin());
-        User gradedBy = dto.resultPoints() != null ? currentUser : null;
+        User assessor = resolveAssessor(courseId, currentUser, null, graded, dto.assessorLogin());
+        User gradedBy = graded ? currentUser : null;
         List<PresentationAssessmentInstance> instances = students.stream()
-                .map(student -> createIndividualInstance(assessment, dto.forStudent(student.getLogin()), student, assessor, gradedBy)).toList();
-        return presentationAssessmentInstanceRepository.createInstancesIfVersionMatches(courseId, assessmentId, expectedVersion, instances);
+                .map(student -> createIndividualInstance(assessment, dto.forStudent(student.getLogin()), student, grade, assessor, gradedBy)).toList();
+        List<PresentationRubricRating> ratings = grade == null ? List.of() : instances.stream().flatMap(instance -> grade.ratingsFor(instance).stream()).toList();
+        return presentationAssessmentRepository.createInstancesIfVersionMatches(courseId, assessmentId, expectedVersion, instances, ratings);
+    }
+
+    /**
+     * Loads the ratings of an instance, so that an assessed instance can be opened again.
+     *
+     * @param courseId     the owning course id
+     * @param assessmentId the presentation assessment id
+     * @param instanceId   the instance id
+     * @return the ratings of the instance, in the order of the rubric
+     */
+    public List<PresentationRubricRatingDTO> getRatings(long courseId, long assessmentId, long instanceId) {
+        findInstanceElseThrow(courseId, assessmentId, instanceId);
+        return presentationRubricRatingRepository.findAllByInstanceIdOrderByCriterionPosition(instanceId).stream().map(PresentationRubricRatingDTO::of).toList();
+    }
+
+    /**
+     * Validates the ratings of a request once, so that a batch does not repeat it for every student.
+     * Ratings for another grading method are rejected later together with the other results.
+     */
+    private @Nullable RubricGrade gradeRubric(PresentationAssessment assessment, @Nullable List<PresentationRubricRatingDTO> ratings) {
+        if (ratings == null || assessment.getGradingMethod() != PresentationGradingMethod.RUBRIC) {
+            return null;
+        }
+        return presentationRubricService.grade(assessment.getId(), ratings);
     }
 
     /**
@@ -307,7 +365,7 @@ public class PresentationAssessmentService {
         PresentationAssessment assessment = findByIdAndCourseIdElseThrow(courseId, assessmentId);
         long expectedVersion = assessment.getVersion();
         PresentationAssessmentInstance instance = findInstanceElseThrow(courseId, assessmentId, instanceId);
-        presentationAssessmentInstanceRepository.deleteInstanceIfVersionMatches(courseId, assessmentId, expectedVersion, instance);
+        presentationAssessmentRepository.deleteInstanceIfVersionMatches(courseId, assessmentId, expectedVersion, instance);
     }
 
     private PresentationAssessmentInstance findInstanceElseThrow(long courseId, long assessmentId, long instanceId) {
@@ -315,7 +373,8 @@ public class PresentationAssessmentService {
                 .orElseThrow(() -> new EntityNotFoundException(PresentationAssessmentInstance.ENTITY_NAME, instanceId));
     }
 
-    private void applyInstanceDto(long courseId, PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto) {
+    private void applyInstanceDto(long courseId, PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto,
+            @Nullable RubricGrade grade) {
         // The course membership is only checked when the presenter changes, so a grade or remark can still be recorded for a student who left the course.
         boolean presenterUnchanged = dto.studentLogin() != null && dto.studentLogin().trim().equals(instance.getStudent().getLogin());
         User student = presenterUnchanged ? instance.getStudent() : resolveAssignedCourseStudent(courseId, dto.studentLogin());
@@ -323,22 +382,20 @@ public class PresentationAssessmentService {
                 && presentationAssessmentInstanceRepository.existsByPresentationAssessmentIdAndStudentIdAndIdNot(assessment.getId(), student.getId(), instance.getId())) {
             throwStudentAlreadyAssigned(List.of(student.getLogin()));
         }
-        Double previousResultPoints = instance.getResultPoints();
-        applyInstanceData(assessment, instance, dto);
+        boolean resultChanged = changesResult(assessment, instance, dto, grade);
+        applyInstanceData(assessment, instance, dto, grade);
         instance.setStudent(student);
         User currentUser = userRepository.getUser();
-        instance.setAssessor(resolveAssessor(courseId, currentUser, instance.getAssessor(), dto.resultPoints(), dto.assessorLogin()));
-        // Who last changed the points; the client names them when they differ from the assessor.
-        if (dto.resultPoints() == null) {
-            instance.setGradedBy(null);
-        }
-        else if (!Objects.equals(previousResultPoints, dto.resultPoints())) {
+        boolean graded = hasResult(assessment.getGradingMethod(), dto.passed(), dto.resultPoints(), grade);
+        instance.setAssessor(resolveAssessor(courseId, currentUser, instance.getAssessor(), graded, dto.assessorLogin()));
+        // Who last changed the result; the client names them when they differ from the assessor.
+        if (resultChanged) {
             instance.setGradedBy(currentUser);
         }
     }
 
     /**
-     * Only a graded presentation has an assessor, so one without result points has none, also after its points were removed. Instructors choose any tutor,
+     * Only a graded presentation has an assessor, so one without a result of its grading method has none. Instructors choose any tutor,
      * editor or instructor of the course as the assessor; like the presenter, an unchanged assessor is kept even if they left the course. Tutors and editors
      * always assess as themselves and cannot edit an instance that someone else assesses, as only instructors override another person's result of an exercise.
      * Like the assessor of a result, anyone allowed to grade may assess as themselves, so an administrator without a course role can too.
@@ -346,17 +403,17 @@ public class PresentationAssessmentService {
      * @param courseId        the owning course id
      * @param currentUser     the user who sends the request
      * @param currentAssessor the assessor of the instance being updated, or null for a new instance or one without an assessor
-     * @param resultPoints    the requested result points, or null for an ungraded presentation
-     * @param assessorLogin   the requested assessor login, only required with result points
+     * @param graded          whether the request contains a result of the grading method of the presentation
+     * @param assessorLogin   the requested assessor login, only required with a result
      * @return the assessor to store, or null for an ungraded presentation
      */
-    private User resolveAssessor(long courseId, User currentUser, User currentAssessor, Double resultPoints, String assessorLogin) {
+    private User resolveAssessor(long courseId, User currentUser, User currentAssessor, boolean graded, String assessorLogin) {
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(courseId);
         boolean assessedBySomeoneElse = currentAssessor != null && !currentAssessor.getId().equals(currentUser.getId());
         if (!isAtLeastInstructor && assessedBySomeoneElse) {
             throw new AccessForbiddenException("Tutors and editors cannot edit presentations assessed by someone else");
         }
-        if (resultPoints == null) {
+        if (!graded) {
             return null;
         }
         String login = assessorLogin == null ? "" : assessorLogin.trim();
@@ -376,6 +433,40 @@ public class PresentationAssessmentService {
                 () -> new BadRequestAlertException("The assessor must be at least a tutor in the course", PresentationAssessmentInstance.ENTITY_NAME, "assessorNotInCourse"));
     }
 
+    /** Whether the request grades the presentation with the result of its grading method; results of another method are rejected when the data is applied. */
+    private static boolean hasResult(PresentationGradingMethod gradingMethod, @Nullable Boolean passed, @Nullable Double resultPoints, @Nullable RubricGrade grade) {
+        return switch (gradingMethod) {
+            case PASS_FAIL -> passed != null;
+            case SCORE -> resultPoints != null;
+            case RUBRIC -> grade != null;
+        };
+    }
+
+    /**
+     * Whether the request changes the saved result of the grading method. For a rubric, another level of any criterion counts, while a changed comment does not,
+     * just as a changed remark does not count for the other methods.
+     */
+    private boolean changesResult(PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto,
+            @Nullable RubricGrade grade) {
+        return switch (assessment.getGradingMethod()) {
+            case PASS_FAIL -> dto.passed() != null && !dto.passed().equals(instance.getPassed());
+            case SCORE -> dto.resultPoints() != null && !dto.resultPoints().equals(instance.getResultPoints());
+            case RUBRIC -> grade != null && !levelsByCriterion(grade).equals(savedLevelsByCriterion(instance));
+        };
+    }
+
+    private static Map<Long, Long> levelsByCriterion(RubricGrade grade) {
+        return grade.ratings().stream().collect(Collectors.toMap(rating -> rating.criterion().getId(), rating -> rating.level().getId()));
+    }
+
+    private Map<Long, Long> savedLevelsByCriterion(PresentationAssessmentInstance instance) {
+        if (instance.getRubricScore() == null) {
+            return Map.of();
+        }
+        return presentationRubricRatingRepository.findAllByInstanceIdOrderByCriterionPosition(instance.getId()).stream()
+                .collect(Collectors.toMap(rating -> rating.getCriterion().getId(), rating -> rating.getLevel().getId()));
+    }
+
     /**
      * A student presents a presentation once, so selecting a student who already has an instance of it is rejected instead of creating a second one.
      * The check is not racy: both writes read the presentation version before this check and only one of them can advance it.
@@ -393,16 +484,13 @@ public class PresentationAssessmentService {
                 "studentAlreadyAssigned", Map.of("logins", joinedLogins));
     }
 
-    private void applyInstanceData(PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto) {
-        if (dto.resultPoints() != null && dto.resultPoints() > assessment.getMaxPoints()) {
-            throw new BadRequestAlertException("The achieved result points cannot exceed the maximum points", PresentationAssessmentInstance.ENTITY_NAME,
-                    "resultPointsExceedMaxPoints");
-        }
+    private void applyInstanceData(PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto,
+            @Nullable RubricGrade grade) {
         if (dto.presentationDate().toLocalDate().isBefore(EARLIEST_PRESENTATION_DATE)) {
             throw new BadRequestAlertException("The presentation date cannot be before 1970-01-01", PresentationAssessmentInstance.ENTITY_NAME, "presentationDateBeforeUnixEpoch");
         }
+        applyResult(assessment, instance, dto, grade);
         instance.setPresentationDate(dto.presentationDate());
-        instance.setResultPoints(dto.resultPoints());
         instance.setLanguage(dto.language());
         instance.setMode(dto.mode());
         instance.setLocation(dto.mode() == PresentationAssessmentMode.IN_PERSON ? dto.location() : null);
@@ -410,18 +498,64 @@ public class PresentationAssessmentService {
         instance.setRemark(dto.remark());
     }
 
-    private PresentationAssessmentInstance createIndividualInstance(PresentationAssessment assessment, PresentationAssessmentInstanceRequestDTO dto, User student, User assessor,
-            User gradedBy) {
+    private void applyResult(PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto,
+            @Nullable RubricGrade grade) {
+        boolean hadResult = instance.getResultPoints() != null || instance.getPassed() != null || instance.getRubricScore() != null;
+        switch (assessment.getGradingMethod()) {
+            case PASS_FAIL -> {
+                rejectResultOfOtherMethod(dto.resultPoints() != null || dto.ratings() != null);
+                rejectRemovedResult(hadResult, dto.passed() != null);
+                instance.setPassed(dto.passed());
+            }
+            case SCORE -> {
+                rejectResultOfOtherMethod(dto.passed() != null || dto.ratings() != null);
+                rejectRemovedResult(hadResult, dto.resultPoints() != null);
+                if (dto.resultPoints() != null && dto.resultPoints() > assessment.getMaxPoints()) {
+                    throw new BadRequestAlertException("The achieved result points cannot exceed the maximum points", PresentationAssessmentInstance.ENTITY_NAME,
+                            "resultPointsExceedMaxPoints");
+                }
+                instance.setResultPoints(dto.resultPoints());
+            }
+            case RUBRIC -> {
+                rejectResultOfOtherMethod(dto.passed() != null || dto.resultPoints() != null);
+                rejectRemovedResult(hadResult, grade != null);
+                instance.setRubricScore(grade == null ? null : grade.score());
+            }
+        }
+    }
+
+    private static void rejectResultOfOtherMethod(boolean hasResultOfOtherMethod) {
+        if (hasResultOfOtherMethod) {
+            throw new BadRequestAlertException("The result does not match the grading method of the presentation", PresentationAssessmentInstance.ENTITY_NAME,
+                    "resultDoesNotMatchGradingMethod");
+        }
+    }
+
+    private static void rejectRemovedResult(boolean hadResult, boolean hasResult) {
+        if (hadResult && !hasResult) {
+            throw new BadRequestAlertException("An assigned result cannot be removed", PresentationAssessmentInstance.ENTITY_NAME, "resultCannotBeRemoved");
+        }
+    }
+
+    private PresentationAssessmentInstance createIndividualInstance(PresentationAssessment assessment, PresentationAssessmentInstanceRequestDTO dto, User student,
+            @Nullable RubricGrade grade, User assessor, User gradedBy) {
         PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
         instance.setPresentationAssessment(assessment);
-        applyInstanceData(assessment, instance, dto);
+        applyInstanceData(assessment, instance, dto, grade);
         instance.setStudent(student);
         instance.setAssessor(assessor);
         instance.setGradedBy(gradedBy);
         return instance;
     }
 
-    private ExerciseIdAndTitleDTO applyDto(PresentationAssessment presentationAssessment, PresentationAssessmentDTO dto) {
+    private ExerciseIdAndTitleDTO applyDto(PresentationAssessment presentationAssessment, PresentationAssessmentRequestDTO dto) {
+        boolean gradedByScore = presentationAssessment.getGradingMethod() == PresentationGradingMethod.SCORE;
+        if (gradedByScore && dto.maxPoints() == null) {
+            throw new BadRequestAlertException("A presentation graded by score needs maximum points", PresentationAssessment.ENTITY_NAME, "maxPointsRequired");
+        }
+        if (!gradedByScore && dto.maxPoints() != null) {
+            throw new BadRequestAlertException("Only a presentation graded by score has maximum points", PresentationAssessment.ENTITY_NAME, "maxPointsNotAllowed");
+        }
         ExerciseIdAndTitleDTO exercise = findCourseExercise(presentationAssessment.getCourse().getId(), dto.exerciseId());
 
         presentationAssessment.setTitle(dto.title().trim());

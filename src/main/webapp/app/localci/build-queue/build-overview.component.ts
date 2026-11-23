@@ -1,10 +1,10 @@
-import { BuildJobSearchComponent } from 'app/localci/shared/build-job-search.component';
+import { FinishedBuildsToolbarComponent } from 'app/localci/shared/finished-builds-toolbar.component';
 import { subscribeToFinishedBuildJobSearch, subscribeToFinishedBuildJobs } from 'app/localci/build-queue/finished-build-job-loading';
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BuildJob, FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
-import { faFilter, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
@@ -13,10 +13,9 @@ import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
-import { TumAetUiButtonComponent, TumAetUiButtonGroupComponent, TumAetUiDialogComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonGroupComponent, TumAetUiDialogComponent, TumAetUiTableLayoutComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { FormsModule } from '@angular/forms';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
 import { downloadFile } from 'app/foundation/util/download.util';
 import { Subject, Subscription } from 'rxjs';
@@ -49,11 +48,11 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
     styleUrl: './build-overview.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        BuildJobSearchComponent,
+        TumAetUiTableLayoutComponent,
+        FinishedBuildsToolbarComponent,
         NgTemplateOutlet,
         TranslateDirective,
         FaIconComponent,
-        FormsModule,
         BuildJobStatisticsComponent,
         SliceNavigatorComponent,
         AdminTitleBarTitleDirective,
@@ -108,8 +107,6 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     websocketSubscriptions: Subscription[] = [];
 
     // Font Awesome icons for the UI
-    readonly faSync = faSync;
-    readonly faFilter = faFilter;
     readonly faTimes = faTimes;
 
     /** Signal indicating if more finished build jobs are available for pagination */
@@ -119,7 +116,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     itemsPerPage = ITEMS_PER_PAGE;
 
     /** Current page number for pagination (1-indexed) */
-    currentPage = 1;
+    currentPage = signal(1);
 
     /** Column to sort finished build jobs by */
     predicate = 'buildSubmissionDate';
@@ -287,7 +284,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         }
 
         // Only update if we're on the first page (sorted by submission date descending)
-        if (this.currentPage !== 1) {
+        if (this.currentPage() !== 1) {
             return;
         }
 
@@ -422,7 +419,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      */
     fetchFinishedBuildJobs() {
         const paginationOptions = {
-            page: this.currentPage,
+            page: this.currentPage(),
             pageSize: this.itemsPerPage,
             sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
             sortedColumn: this.predicate,
@@ -520,7 +517,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * @param event
      */
     onPageChange(event: PageChangeEvent) {
-        this.currentPage = event.page;
+        this.currentPage.set(event.page);
         this.loadFinishedBuildJobs();
     }
 

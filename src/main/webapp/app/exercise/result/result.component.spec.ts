@@ -31,7 +31,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { faCheckCircle } from '@fortawesome/free-regular-svg-icons';
 
 const mockExercise: Exercise = {
@@ -259,6 +259,27 @@ describe('ResultComponent', () => {
             // 0 of 0 passed tests is a pass, not a failure: the badge stays green
             expect(comp.textColorClass()).toBe('text-state-success');
             expect(comp.resultIconClass()).toBe(faCheckCircle);
+        });
+
+        describe('exercises that carry no course', () => {
+            const resultWithManyDecimals: Result = { id: 8, score: 42.4567, rated: true, completionDate: dayjs().subtract(1, 'hour'), submission: { id: 22 } };
+            const exerciseWithoutCourse = { id: 4, type: ExerciseType.TEXT, maxPoints: 10 } as Exercise;
+
+            beforeEach(() => {
+                fixture.componentRef.setInput('exercise', exerciseWithoutCourse);
+                fixture.componentRef.setInput('result', resultWithManyDecimals);
+                fixture.componentRef.setInput('short', true);
+            });
+
+            it('rounds the score to the accuracy of the passed course', () => {
+                const instantSpy = vi.spyOn(TestBed.inject(TranslateService), 'instant');
+                fixture.componentRef.setInput('course', { accuracyOfScores: 3 });
+                fixture.detectChanges();
+
+                comp.resultString();
+
+                expect(instantSpy).toHaveBeenCalledWith('artemisApp.result.resultString.short', { relativeScore: 42.457 });
+            });
         });
 
         describe('results that belong to no participation', () => {

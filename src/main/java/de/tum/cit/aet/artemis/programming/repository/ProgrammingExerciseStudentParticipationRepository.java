@@ -38,7 +38,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
      * <p>
      * Includes results if:
      * <ul>
-     * <li>they are automatic,</li>
+     * <li>they are automatic (including Athena automatic feedback),</li>
      * <li>they are completed and the assessment due date is before {@code dateTime} (or not set), or</li>
      * <li>no result exists yet.</li>
      * </ul>
@@ -60,6 +60,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             WHERE p.id = :participationId
                 AND (
                     r.assessmentType = 'AUTOMATIC'
+                    OR r.assessmentType = 'AUTOMATIC_ATHENA'
                     OR (r.completionDate IS NOT NULL AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime))
                     OR r.id IS NULL
                     )

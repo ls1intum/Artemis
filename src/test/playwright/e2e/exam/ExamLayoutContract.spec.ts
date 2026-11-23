@@ -9,7 +9,6 @@ import {
     expectExamContentInsets,
     expectExamSummaryLayout,
     expectFileBrowserDividerResizes,
-    expectFileUploadRow,
     expectHandInInsets,
     expectPageNotToScrollSideways,
     expectProblemStatementDivider,
@@ -23,7 +22,7 @@ import {
     visibleTitleRow,
 } from '../../support/examLayoutAssertions';
 import { test } from '../../support/fixtures';
-import { expectAligned, expectHeight, expectSameValue, forEachViewport, measure } from '../../support/layout';
+import { expectAligned, expectGap, expectHeight, expectInset, expectSameValue, forEachViewport, measure } from '../../support/layout';
 import { SEED_COURSES } from '../../support/seedData';
 import { admin, studentTwo } from '../../support/users';
 
@@ -55,8 +54,8 @@ const LONG_GROUP_TITLE_SUFFIX = ' with a group title that is much longer than th
  * room, and below it where there is not. The exam bar is 40px, the sidebar and the content end on the same line, and none of it scrolls
  * sideways. The panels of a page are set apart by the 6px divider of the application: the solution and the problem statement of the text,
  * modeling and file upload page, also while the problem statement is collapsed, and the file browser, the editor, the instructions and the
- * build output of the programming page; the dividers can still be dragged. The file input of the file upload page and its Upload button are
- * one row where the panel has room. The hand-in page and the summary keep the same title row and insets, and the summary scroller ends inside
+ * build output of the programming page; the dividers can still be dragged. The file upload page has a prominent drop/select area
+ * at least 160px high that fills the solution panel. The hand-in page and the summary keep the same title row and insets, and the summary scroller ends inside
  * the window. See the section on layout contract tests in the E2E documentation.
  */
 test.describe('Exam layout contract', { tag: '@slow' }, () => {
@@ -119,6 +118,15 @@ test.describe('Exam layout contract', { tag: '@slow' }, () => {
         ];
 
         const sidebar = page.getByTestId('exam-sidebar');
+        const expectStackedProblemStatement = async () => {
+            const solution = page.getByTestId('resizeable-container-left').filter({ visible: true });
+            const instructions = page.getByTestId('resizeable-container-right').filter({ visible: true });
+            const content = page.getByTestId('exam-content-column');
+            // Comparing against the exam content catches two equally squeezed panels as well as an overflowing one.
+            await expectAligned([solution, instructions, content], 'width', { name: 'the stacked solution and instructions fill the exam content' });
+            await expectAligned([solution, instructions, content], 'left', { name: 'the stacked panels start at the content edge' });
+            await expectGap(instructions, solution, 'vertical', 6, { name: 'the stacked instructions keep the divider space above the solution' });
+        };
         const openExamPage = async (index: number) => {
             const examPage = pages[index];
             await sidebar.getByTestId('sidebar-card-title').nth(index).click();
@@ -164,10 +172,20 @@ test.describe('Exam layout contract', { tag: '@slow' }, () => {
                             await expectProgrammingPanelDividers(page);
                         }
                         if (PAGES_WITH_PROBLEM_STATEMENT.includes(examPage.name as ExerciseType)) {
-                            await expectProblemStatementDivider(page, `the ${examPage.name} page`);
+                            if (viewport.width <= 992) {
+                                await expectStackedProblemStatement();
+                            } else {
+                                await expectProblemStatementDivider(page, `the ${examPage.name} page`);
+                            }
                         }
                         if (examPage.name === ExerciseType.FILE_UPLOAD) {
-                            await expectFileUploadRow(page, viewport);
+                            const uploadArea = page.getByTestId('file-upload-field').filter({ visible: true });
+                            const solutionPanel = page.getByTestId('exam-file-upload-area').filter({ visible: true });
+                            await expect
+                                .poll(async () => (await measure(uploadArea)).height, { message: 'the file drop/select area is at least 160px high' })
+                                .toBeGreaterThanOrEqual(160);
+                            await expectInset(uploadArea, solutionPanel, 'left', 8, { name: 'the file drop/select area' });
+                            await expectInset(uploadArea, solutionPanel, 'right', 8, { name: 'the file drop/select area' });
                         }
                         await expectPageNotToScrollSideways(page, row);
                     });
@@ -175,6 +193,25 @@ test.describe('Exam layout contract', { tag: '@slow' }, () => {
                 expectSameValue(page, 'top of the title row on the pages of the exam', tops);
                 expectSameValue(page, 'left edge of the title on the pages of the exam', lefts);
             }));
+
+        await test.step('The file upload and instructions remain reachable on a phone', async () => {
+            const originalViewport = page.viewportSize()!;
+            try {
+                await page.setViewportSize({ width: 390, height: 844 });
+                await openExamPage(pages.findIndex(({ name }) => name === ExerciseType.FILE_UPLOAD));
+                await expectStackedProblemStatement();
+                const instructions = page.getByTestId('resizeable-container-right').filter({ visible: true });
+                const uploadArea = page.getByTestId('file-upload-field').filter({ visible: true });
+                await instructions.getByRole('button').first().scrollIntoViewIfNeeded();
+                await expect(instructions.getByRole('button').first()).toBeInViewport({ ratio: 1 });
+                await uploadArea.scrollIntoViewIfNeeded();
+                await expect(uploadArea, 'the full upload control can be reached without clipping').toBeInViewport({ ratio: 1 });
+                await expectPageNotToScrollSideways(page, uploadArea);
+                await page.getByTestId('exam-content-scroller').evaluate((element) => (element.scrollTop = 0));
+            } finally {
+                await page.setViewportSize(originalViewport);
+            }
+        });
 
         // The dividers keep working as handles, and the collapsed problem statement keeps its distance. A divider that was dragged leaves the width
         // it was given in px, which a smaller window does not undo, so this is left to the end of the pages, at the size of the window the test started with.

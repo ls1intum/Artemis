@@ -32,17 +32,17 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
             [closable]="true"
             size="small"
         >
-            <div class="mb-3">
+            <div class="mb-4!">
                 <jhi-type-ahead-user-search-field [(loginOrName)]="selectedUserLogin" />
             </div>
-            <div class="mb-3">
+            <div class="mb-4!">
                 <div class="flex items-center gap-2">
                     <tumaet-ui-radio-button inputId="executeScheduled" name="executeOption" [value]="false" [(ngModel)]="executeNow" data-testid="schedule-radio" />
                     <label for="executeScheduled" jhiTranslate="artemisApp.dataExport.admin.schedule"></label>
                 </div>
                 <small class="text-muted-color" jhiTranslate="artemisApp.dataExport.admin.scheduleDescription"></small>
             </div>
-            <div class="mb-3">
+            <div class="mb-4!">
                 <div class="flex items-center gap-2">
                     <tumaet-ui-radio-button inputId="executeNow" name="executeOption" [value]="true" [(ngModel)]="executeNow" data-testid="execute-now-radio" />
                     <label for="executeNow" jhiTranslate="artemisApp.dataExport.admin.executeNow"></label>
@@ -52,7 +52,16 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
             <ng-template #footer>
                 <div class="flex justify-end gap-2">
                     <button tumAetUiButton size="small" severity="secondary" (click)="cancel()" jhiTranslate="entity.action.cancel" data-testid="cancel-btn"></button>
-                    <button tumAetUiButton size="small" [disabled]="!selectedUserLogin() || isSubmitting()" (click)="submit()" data-testid="submit-btn">
+                    <button
+                        data-button-intent="transfer"
+                        data-button-intent-reason="Creates a data export request"
+                        tumAetUiButton
+                        size="small"
+                        severity="secondary"
+                        [disabled]="!selectedUserLogin() || isSubmitting()"
+                        (click)="submit()"
+                        data-testid="submit-btn"
+                    >
                         @if (isSubmitting()) {
                             <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
                         }

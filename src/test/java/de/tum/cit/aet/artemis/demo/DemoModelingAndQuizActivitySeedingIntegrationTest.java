@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 
 import tools.jackson.databind.JsonNode;
 
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.api.CourseApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -48,6 +50,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.programming.api.ProgrammingDemoApi;
 import de.tum.cit.aet.artemis.quiz.api.QuizDemoApi;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
@@ -186,6 +189,22 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
         assertThat(Stream.of(ONGOING_MODELING_TITLE, IN_ASSESSMENT_MODELING_TITLE, ONGOING_QUIZ_TITLE, ENDED_QUIZ_TITLE).map(this::demoExercise))
                 .as("every exercise has the version that creating it in the exercise editor records")
                 .allSatisfy(exercise -> assertThat(exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId())).isPresent());
+    }
+
+    @Test
+    void seedsDragAndDropQuestionWithPictureIntoOngoingQuiz() throws Exception {
+        seed();
+
+        QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsElseThrow(demoExercise(ONGOING_QUIZ_TITLE).getId());
+        assertThat(quiz.isValid()).as("the quiz with the drag and drop question is valid").isTrue();
+        DragAndDropQuestion question = quiz.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast).findFirst()
+                .orElseThrow();
+        assertThat(question.getDropLocations()).as("a box for each operation").hasSize(3);
+        assertThat(question.getDragItems()).as("an item for each cost").hasSize(3);
+        assertThat(question.getCorrectMappings()).as("every item belongs to one box").hasSize(3);
+        assertThat(question.getBackgroundFilePath()).as("the picture of the question was stored").isNotBlank().endsWith(".png");
+        assertThat(FilePathConverter.getDragAndDropBackgroundFilePath().resolve(question.getBackgroundFilePath())).as("quiz creation preserves the packaged background image bytes")
+                .hasBinaryContent(new ClassPathResource("demo/quiz/collection-lookup-costs.png").getContentAsByteArray());
     }
 
     @Test

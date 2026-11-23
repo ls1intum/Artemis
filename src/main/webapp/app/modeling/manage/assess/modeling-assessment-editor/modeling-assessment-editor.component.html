@@ -97,7 +97,7 @@
             @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
                 <jhi-assessment-not-possible-yet [reason]="assessmentNotPossibleYetReason" />
             } @else if (!loadingInitialSubmission()) {
-                <div class="modeling-assessment-not-found mt-4">
+                <div class="modeling-assessment-not-found mt-6">
                     <tumaet-ui-message severity="warn">
                         <span jhiTranslate="artemisApp.modelingAssessment.notFound"></span>
                     </tumaet-ui-message>

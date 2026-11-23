@@ -1,6 +1,6 @@
 <form id="teamsImportDialogForm" name="importForm" role="form" novalidate (ngSubmit)="importTeams()" #editForm="ngForm">
-    <div class="p-4!">
-        <div class="w-full flex justify-center border-b border-border bg-surface-raised p-3!">
+    <div class="p-4">
+        <div class="w-full flex justify-center border-b border-border bg-surface-raised p-3">
             <div class="inline-flex flex-wrap gap-1">
                 <button
                     tumAetUiButton
@@ -22,7 +22,7 @@
                 </button>
             </div>
         </div>
-        <div class="mb-4!">
+        <div class="mb-4">
             @if (showImportFromExercise()) {
                 <p class="intro-text" jhiTranslate="artemisApp.team.importTeams.introTextExercise"></p>
             }
@@ -31,17 +31,17 @@
             }
         </div>
         @if (!showImportFromExercise()) {
-            <div class="mb-4!">
+            <div class="mb-4">
                 <div class="flex items-end">
                     <jhi-teams-import-from-file-form (teamsChanged)="onTeamsChanged($event)" />
                 </div>
             </div>
         }
         @if (showImportFromExercise()) {
-            <div class="mb-4!">
+            <div class="mb-4">
                 <div class="flex items-end">
                     <div>
-                        <label class="label-narrow" for="exercise-search-input" jhiTranslate="artemisApp.team.sourceExercise.label"></label>
+                        <label class="label-narrow inline-block mb-[0.1rem]" for="exercise-search-input" jhiTranslate="artemisApp.team.sourceExercise.label"></label>
                         <jhi-help-icon text="artemisApp.team.sourceExercise.tooltip" class="me-1" />
                     </div>
                     @if (searchingExercises()) {
@@ -74,10 +74,10 @@
             </div>
         }
         @if (sourceExercise() || sourceTeams()) {
-            <div class="mb-4! mt-2">
+            <div class="mb-4 mt-2">
                 <div class="flex items-end">
                     <div>
-                        <span class="label-narrow" jhiTranslate="artemisApp.team.sourceTeams.label"></span>
+                        <span class="label-narrow inline-block mb-[0.1rem]" jhiTranslate="artemisApp.team.sourceTeams.label"></span>
                         <jhi-help-icon text="artemisApp.team.sourceTeams.tooltip" class="me-1" />
                     </div>
                     @if (loadingSourceTeams()) {
@@ -96,7 +96,7 @@
                                         {{ i + 1 }}
                                     </div>
                                     <div
-                                        class="border border-border px-3! py-2 team-list-item--teams"
+                                        class="border! border-border px-3! py-2! team-list-item--teams"
                                         [class.has-error]="teamShortNamesAlreadyExistingInExercise().includes(team.shortName!)"
                                         [class.has-success]="isSourceTeamFreeOfAnyConflicts(team)"
                                     >
@@ -113,8 +113,8 @@
                             }
                             @if (!sourceTeams || sourceTeams.length === 0) {
                                 <li class="team-list-item-container flex items-center">
-                                    <div class="team-list-item-index text-text-secondary">1</div>
-                                    <div class="border border-border px-3! py-2 team-list-item--teams py-12!" [class.has-warning]="sourceTeams?.length === 0">
+                                    <div class="team-list-item-index text-muted-color">1</div>
+                                    <div class="border! border-border px-3! py-2! team-list-item--teams py-12!" [class.has-warning]="sourceTeams?.length === 0">
                                         @if (showImportFromExercise() && sourceTeams?.length === 0) {
                                             <span jhiTranslate="artemisApp.team.noTeamsInSourceExercise"></span>
                                         }
@@ -126,8 +126,8 @@
                             }
                         </ul>
                         @if (showLegend) {
-                            <div class="source-teams-legend-container mt-6!">
-                                <hr class="mt-4! mb-2" />
+                            <div class="source-teams-legend-container mt-6">
+                                <hr class="mt-4 mb-2" />
                                 <div>
                                     <span jhiTranslate="artemisApp.team.sourceTeams.legend.label"></span>
                                     <jhi-help-icon text="artemisApp.team.sourceTeams.legend.tooltip" class="me-1" />
@@ -177,14 +177,14 @@
             </div>
         }
         @if (showImportStrategyChoices) {
-            <hr class="my-6!" />
+            <hr class="my-6" />
             <div class="mb-4! mb-0" role="group" aria-labelledby="import-strategy-label">
                 <div>
-                    <span id="import-strategy-label" class="label-narrow" jhiTranslate="artemisApp.team.importStrategy.label"></span>
+                    <span id="import-strategy-label" class="label-narrow inline-block mb-[0.1rem]" jhiTranslate="artemisApp.team.importStrategy.label"></span>
                     <jhi-help-icon text="artemisApp.team.importStrategy.tooltip" class="me-1" />
                 </div>
                 <div class="flex flex-col mt-2 ps-2">
-                    <label for="import-strategy-purge-existing" class="flex items-start">
+                    <label for="import-strategy-purge-existing" class="items-start">
                         <tumaet-ui-radio-button
                             inputId="import-strategy-purge-existing"
                             name="importStrategy"
@@ -193,22 +193,22 @@
                             (selected)="updateImportStrategy(ImportStrategy.PURGE_EXISTING)"
                             [value]="ImportStrategy.PURGE_EXISTING"
                         />
-                        <div class="ms-2 radio-label-with-explanation">
+                        <div class="ms-2! radio-label-with-explanation">
                             <strong>
                                 {{ 'artemisApp.team.importStrategy.options.purgeExisting.label' | artemisTranslate }}
                                 <span
-                                    class="inline-flex rounded-md px-2 py-1 text-xs bg-state-danger ms-1"
+                                    class="inline-flex rounded-md px-2 py-1 text-xs bg-state-danger ms-1!"
                                     jhiTranslate="artemisApp.team.importStrategy.options.purgeExisting.badge"
                                 ></span>
                             </strong>
                             <p
-                                [class.text-text-secondary]="importStrategy() !== ImportStrategy.PURGE_EXISTING"
+                                [class.text-muted-color]="importStrategy() !== ImportStrategy.PURGE_EXISTING"
                                 class="explanation mb-2"
                                 jhiTranslate="artemisApp.team.importStrategy.options.purgeExisting.explanation"
                             ></p>
                         </div>
                     </label>
-                    <label for="import-strategy-create-only" class="flex items-start">
+                    <label for="import-strategy-create-only" class="items-start">
                         <tumaet-ui-radio-button
                             inputId="import-strategy-create-only"
                             name="importStrategy"
@@ -217,16 +217,16 @@
                             (selected)="updateImportStrategy(ImportStrategy.CREATE_ONLY)"
                             [value]="ImportStrategy.CREATE_ONLY"
                         />
-                        <div class="ms-2 radio-label-with-explanation">
+                        <div class="ms-2! radio-label-with-explanation">
                             <strong>
                                 {{ 'artemisApp.team.importStrategy.options.createOnly.label' | artemisTranslate }}
                                 <span
-                                    class="inline-flex rounded-md px-2 py-1 text-xs bg-state-success ms-1"
+                                    class="inline-flex rounded-md px-2 py-1 text-xs bg-state-success ms-1!"
                                     jhiTranslate="artemisApp.team.importStrategy.options.createOnly.badge"
                                 ></span>
                             </strong>
                             <p
-                                [class.text-text-secondary]="importStrategy() !== ImportStrategy.CREATE_ONLY"
+                                [class.text-muted-color]="importStrategy() !== ImportStrategy.CREATE_ONLY"
                                 class="explanation mb-0"
                                 jhiTranslate="artemisApp.team.importStrategy.options.createOnly.explanation"
                             ></p>
@@ -236,7 +236,7 @@
             </div>
         }
     </div>
-    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4!">
+    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4">
         @if (showImportPreviewNumbers && sourceTeams(); as sourceTeams) {
             <div class="shrink-0 me-2 flex">
                 @if (studentsAppearInMultipleTeams()) {
@@ -256,10 +256,10 @@
                     }
                     @if (numberOfTeamsToBeImported! > 0) {
                         @if (numberOfTeamsToBeDeleted! > 0) {
-                            <div class="me-4!"><strong jhiTranslate="artemisApp.team.importPreview.teamsToBeDeleted"></strong> {{ numberOfTeamsToBeDeleted! }}</div>
+                            <div class="me-4"><strong jhiTranslate="artemisApp.team.importPreview.teamsToBeDeleted"></strong> {{ numberOfTeamsToBeDeleted! }}</div>
                         }
                         @if (numberOfTeamsToBeImported! !== numberOfTeamsAfterImport!) {
-                            <div class="me-4!">
+                            <div class="me-4">
                                 <strong jhiTranslate="artemisApp.team.importPreview.teamsToBeImported"></strong> {{ numberOfTeamsToBeImported! }}
                                 @if (numberOfTeamsToBeImported! < sourceTeams.length) {
                                     <span jhiTranslate="artemisApp.team.importPreview.outOf" [translateValues]="{ number: sourceTeams.length }">
@@ -278,17 +278,19 @@
                 <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
             @if (importStrategy() !== ImportStrategy.PURGE_EXISTING) {
-                <button tumAetUiButton type="submit" class="" [disabled]="editForm.invalid || isSubmitDisabled">
+                <button severity="secondary" tumAetUiButton type="submit" [disabled]="editForm.invalid || isSubmitDisabled">
                     <fa-icon [icon]="faUpload" class="me-2" />
                     <span jhiTranslate="entity.action.to-import"></span>
-                    <fa-icon class="ms-1" [hidden]="!isImporting()" animation="spin" [icon]="faCircleNotch" />
+                    <fa-icon class="ms-1!" [hidden]="!isImporting()" animation="spin" [icon]="faCircleNotch" />
                 </button>
             }
             @if (importStrategy() === ImportStrategy.PURGE_EXISTING) {
                 <button
+                    data-button-intent="destructive"
+                    data-button-intent-reason="Deletes the existing teams before importing replacements"
                     tumAetUiButton
                     type="button"
-                    severity="warn"
+                    severity="danger"
                     [disabled]="editForm.invalid || isSubmitDisabled"
                     jhiDeleteButton
                     [renderButtonText]="false"
@@ -302,7 +304,7 @@
                     <fa-icon [icon]="faUpload" class="me-1" />
                     <span jhiTranslate="entity.action.purge"></span> +
                     <span jhiTranslate="entity.action.to-import"></span>
-                    <fa-icon class="ms-1" [hidden]="!isImporting()" animation="spin" [icon]="faCircleNotch" />
+                    <fa-icon class="ms-1!" [hidden]="!isImporting()" animation="spin" [icon]="faCircleNotch" />
                 </button>
             }
         </div>

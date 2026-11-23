@@ -27,10 +27,16 @@ buildscript {
             force "org.apache.httpcomponents.core5:httpcore5-h2:5.4.4"
             // Force the patched jsoup onto the build-script / plugin classpath as well. org.owasp.dependencycheck
             // (dependency-check-core 13.0.0) resolves jsoup 1.23.1 there, which is affected by CVE-2026-75140 and is
-            // reported by the GitHub dependency graph even though the shipped WAR declares 1.23.2 directly. Build-time
+            // reported by the GitHub dependency graph even though the shipped WAR declares 1.24.1 directly. Build-time
             // only, not shipped. Keep equal to the project-level jsoup version below and to the minimum in
             // gradle/dependency-families.gradle (verifyBuildscriptClasspathPins).
-            force "org.jsoup:jsoup:1.23.2"
+            force "org.jsoup:jsoup:1.24.1"
+            // Force the patched org.json onto the build-script / plugin classpath as well. org.owasp.dependencycheck
+            // (dependency-check-core 13.0.0) resolves 20260522, which is affected by an unbounded numeric string
+            // resource exhaustion in JSONTokener (fixed in 20260719) and reported by the GitHub dependency graph via
+            // settings.gradle. Build-time only, not shipped; the test classpath pins its own version below. Keep equal
+            // to the minimum in gradle/dependency-families.gradle (verifyBuildscriptClasspathPins).
+            force "org.json:json:20260814"
         }
     }
     // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)
@@ -53,7 +59,7 @@ buildscript {
             mavenCentral()
         }
         dependencies {
-            classpath "de.tum.cit.aet:openapi-generator-angular22:3.0.0"
+            classpath "de.tum.cit.aet:openapi-generator-angular22:4.1.0"
         }
     }
     dependencies {
@@ -64,8 +70,8 @@ buildscript {
         // shipped WAR only ever contains the patched versions. enforcedPlatform applies each jackson-bom's
         // authoritative per-module versions, so no version is invented. Build-time only, not shipped. Keep
         // both versions in sync with the project-level jackson-bom imports below.
-        classpath enforcedPlatform("tools.jackson:jackson-bom:3.2.4")
-        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.4")
+        classpath enforcedPlatform("tools.jackson:jackson-bom:3.3.0")
+        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.23.0")
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
         classpath("org.liquibase:liquibase-core:${liquibase_version}") {
@@ -82,17 +88,17 @@ plugins {
     id "com.adarshr.test-logger" version "4.0.0"
     id "com.diffplug.spotless" version "${spotless_plugin_version}"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "io.github.ben-manes.versions" version "0.66.0"
+    id "io.github.ben-manes.versions" version "0.67.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.4"
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id "io.spring.dependency-management" version "1.1.7"
-    id "nebula.lint" version "21.3.0"
+    id "nebula.lint" version "21.4.1"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "13.0.0"
     id "org.sonarqube" version "${sonarqube_plugin_version}"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
+    id "org.springdoc.openapi-gradle-plugin" version "2.1.0"
     // Bump this one by hand, never on the strength of a green build. The custom "angular22" generator on the
     // buildscript classpath above declares openapi-generator 7.21.0 and is discovered through ServiceLoader, so
     // raising the plugin runs that generator against a core it was not compiled against - and nothing in CI would
@@ -102,10 +108,11 @@ plugins {
     // src/main/webapp/app/openapi aside, `git checkout` it, switch version, regenerate, diff.
     // 7.21.0 -> 7.25.0 was checked that way: the generator loads and emits a complete client, and the only
     // difference is `{ [key: string]: any }` becoming `{ [key: string]: any | null }` for free-form maps, which is
-    // the same type in TypeScript.
-    id "org.openapi.generator" version "7.25.0"
+    // the same type in TypeScript. 7.25.0 -> 7.27.0 was checked the same way and produced an identical client apart
+    // from .openapi-generator/VERSION.
+    id "org.openapi.generator" version "7.27.0"
     id "com.google.osdetector" version "1.7.3"
-    id "org.cyclonedx.bom" version "3.5.1"
+    id "org.cyclonedx.bom" version "3.6.1"
 }
 
 // Load Docker image versions from .env (single source of truth for Docker, tests, and build dependencies)
@@ -116,7 +123,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "10.6"
+version = "10.8"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -126,7 +133,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.8.2"
+    gradleVersion = "9.9.2"
 }
 
 node {
@@ -236,15 +243,17 @@ tasks.named('generateGitProperties') {
 // them declares every BOM-managed dependency at its managed version, and none of them has the
 // configurations.configureEach excludes below. The GitHub dependency graph reports those resolutions although no
 // classpath contains them, so a vulnerable managed version raises an alert even when the dependency is pinned higher
-// in the dependencies block. Both artifacts below are declared explicitly, so these two overrides only change what
-// the graph sees.
-// hazelcast: GHSA-6v25-8wq6-xq4j, GHSA-w294-6q5q-53p8 (the Boot BOM manages 5.5.0; 5.6.0 is affected too and
-//         5.7.0 is the first patched release on Maven Central)
+// in the dependencies block. The artifact below is declared explicitly, so this override only changes what the graph
+// sees. Hazelcast (5.7.0) no longer needs an override: the Spring Boot 4.2 BOM manages that version.
 // testcontainers-redis: 2.2.4 imports spring-boot-dependencies 3.4.2, which reaches artemis-project 2.37.0
-//         (GHSA-pm4j-p7pm-fpvx) in the GitHub dependency graph. 3.0.0 imports spring-boot-dependencies 4.1.1, the BOM
-//         this build uses today; after a Spring Boot bump the graph walks 4.1.1's imports as well.
-ext["hazelcast.version"] = hazelcast_version
+//         (GHSA-pm4j-p7pm-fpvx) in the GitHub dependency graph. 3.0.0 imports spring-boot-dependencies 4.1.1, the minor
+//         before the BOM this build uses today; after a Spring Boot bump the graph walks 4.1.1's imports as well.
 ext["testcontainers-redis-module.version"] = testcontainers_redis_version
+// Logback and Tomcat: the Spring Boot 4.2.0 BOM manages logback 1.6.6 and Tomcat 11.0.27, these are newer patch releases.
+// An override replaces what the BOM manages, also when a later Boot patch release manages something newer. Compare both
+// with the BOM on every Spring Boot bump and delete an override that the BOM has caught up with.
+ext["logback.version"] = logback_version
+ext["tomcat.version"] = tomcat_version
 
 // Pin the entire Jackson 2.x and 3.x families to releases outside every known jackson-databind vulnerable
 // range. Spring Boot / Spring AI manage older jackson BOMs as dependency-management constraints, which beat
@@ -256,16 +265,23 @@ ext["testcontainers-redis-module.version"] = testcontainers_redis_version
 // pinning tools.jackson.core:jackson-databind on its own — is what keeps the sibling modules (notably
 // jackson-dataformat-cbor) on the same patch: a sibling left behind on an older patch re-declares that older
 // jackson-databind in its POM, and the GitHub dependency graph then reports it as a vulnerable version even
-// though no configuration resolves it. Keep Jackson 3 on the minor that webauthn4j / spring-ai expect, and
-// bump both families to the latest patched release when new advisories land.
+// though no configuration resolves it. webauthn4j and spring-ai declare older Jackson 3 minors (3.2 and 3.1), which
+// Jackson keeps binary compatible, so both families follow the latest release. After a minor bump, run the passkey,
+// LTI, Spring AI and static code analysis parser tests (Jackson 3.3.0 passes root element attributes to the XML
+// deserializer, see CheckstyleParser); bump both families to the latest patched release when new advisories land.
 // Import order matters and is load-bearing: the Jackson 3 BOM also manages
 // com.fasterxml.jackson.core:jackson-annotations (that artifact never moved to the tools.jackson group) at a
 // version trailing the Jackson 2 line, and io.spring.dependency-management lets a later import override an
 // earlier one. Keeping the Jackson 2 BOM last is what stops it from dragging jackson-annotations backwards.
+// OpenTelemetry is pinned the same way. Spring Boot 4.2.0 manages 1.68.0, which equals opentelemetry_version, but an
+// older line (1.62.0 in Boot 4.1) is reported by the GitHub dependency graph (GHSA-ccrj-gw8r-854m, fixed in 1.67.0),
+// so the import stays as a floor for the Boot patch releases that follow, and the resolutionStrategy force above
+// already puts every runtime configuration on ${opentelemetry_version}.
 dependencyManagement {
     imports {
-        mavenBom "tools.jackson:jackson-bom:3.2.4"
-        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.4"
+        mavenBom "io.opentelemetry:opentelemetry-bom:${opentelemetry_version}"
+        mavenBom "tools.jackson:jackson-bom:3.3.0"
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.23.0"
     }
 }
 
@@ -426,7 +442,7 @@ dependencies {
     // Align all Spring AI modules to the same version, pinned to a release addressing
     // GHSA-q62f-h9x2-gcqc (ChatMemory DEFAULT_CONVERSATION_ID cross-user leakage).
     // Artemis was not exposed (explicit per-(course,user) conversation ids), but the scanner flags the range.
-    implementation platform("org.springframework.ai:spring-ai-bom:2.0.2")
+    implementation platform("org.springframework.ai:spring-ai-bom:2.1.0")
     implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
     // OpenAI module (official com.openai SDK). Since 2.0.0-M5/M6 this single module serves both
     // Azure OpenAI / Microsoft Foundry (prod) and OpenAI-compatible local servers (dev) —
@@ -438,6 +454,9 @@ dependencies {
     // Spring Boot 4's OTLP tracing auto-configuration is not supplied by the exporter alone.
     // The starter also supplies the tracing bridge, so do not declare that bridge again below.
     implementation "org.springframework.boot:spring-boot-starter-opentelemetry"
+    // Fails the start-up on a configuration key that Spring Boot removed (spring.properties.migrator.fail in application.yml).
+    // Version managed by the Spring Boot BOM.
+    runtimeOnly "org.springframework.boot:spring-boot-properties-migrator"
     // Jackson 3 core modules — versions supplied by the tools.jackson jackson-bom import above. Declared
     // explicitly because webauthn4j / spring-ai only request them transitively, at an older patch.
     implementation "tools.jackson.core:jackson-core"
@@ -488,7 +507,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // Allows generating UML diagrams from text descriptions in problem statement markdown files for programming exercises
-    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.9"
+    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.10"
 
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -503,7 +522,7 @@ dependencies {
     implementation "ch.qos.logback:logback-classic"
     implementation "ch.qos.logback:logback-core"
 
-    implementation "org.jsoup:jsoup:1.23.2"
+    implementation "org.jsoup:jsoup:1.24.1"
     // Shibboleth 9.2.3 decodes all Base64 with a STRICT 76-column codec. Since commons-codec 1.23.0,
     // this rejects valid SAML metadata certificates and SAML messages with different whitespace.
     // Update commons-codec to 1.23.0 once the OpenSAML dependency brings in shib-support 9.3.0 with the fix for
@@ -552,7 +571,7 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-annotations"
 
     // Avoid outdated version of json-smart to prevent security issues, we only use this as transitive dependency for third party dependencies
-    implementation("net.minidev:json-smart") { version {strictly "2.6.0" } }
+    implementation("net.minidev:json-smart") { version {strictly "2.6.1" } }
 
 
     // Required for synchronization between nodes and build agents (LocalCI)
@@ -612,14 +631,16 @@ dependencies {
     implementation "org.springframework.data:spring-data-ldap"
     implementation "org.springframework.ldap:spring-ldap-core"
 
-    // Spring Cloud (Oakwood 2025.1.x; the exact train is spring_cloud_version in gradle.properties) —
-    // these individual module versions are pinned because the spring-cloud-dependencies BOM does not
-    // publish versions for them. The train's compatibility verifier accepts Spring Boot 4.0.x and 4.1.x;
-    // do not drop below 2025.1.2, because 2025.1.1 rejected Boot 4.1.0 and shut the app down at startup.
-    // eureka-client trails the other two: spring-cloud-netflix releases separately and was last released as 5.0.3.
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:5.0.3"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:5.0.6"
-    implementation "org.springframework.cloud:spring-cloud-commons:5.0.4"
+    // Spring Cloud (Paddington 2026.0.x; the exact train is spring_cloud_version in gradle.properties) —
+    // these starters and the commons module are pinned individually instead of being resolved from the train.
+    // Each Boot minor needs the matching train: 2025.1.x accepted Boot 4.0.x and 4.1.x, 2026.0.x is built for
+    // Boot 4.2.x. A mismatch is not a startup failure; the compatibility verifier shuts the application down
+    // shortly after the "Started" banner.
+    // Keep each version equal to the spring-cloud-netflix, spring-cloud-config and spring-cloud-commons version
+    // that the spring-cloud-dependencies BOM of the train lists as its property.
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:5.1.0"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:5.1.0"
+    implementation "org.springframework.cloud:spring-cloud-commons:5.1.0"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support).
     // Version managed by the Spring Boot BOM.
@@ -631,7 +652,7 @@ dependencies {
     // passkey functionality to simplify login — Spring Security versions managed by the Spring Boot BOM.
     implementation "org.springframework.security:spring-security-webauthn"
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.12.0.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.31.11.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.32.0.RELEASE"
 
     implementation "org.springframework.security:spring-security-messaging"
     implementation "org.springframework.security:spring-security-ldap"
@@ -687,14 +708,14 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
     // required by sshd-git; pinned to a patched release addressing GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
-    implementation "org.bouncycastle:bcpkix-jdk18on:1.86"
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.87"
     // 1.86 is a joint release of every module, so the provider is back in step with its siblings and no longer
     // needs the out-of-band patch level 1.85.2 carried (AES CBC-256 via the id_aes256_CBC OID silently derived a
     // 192-bit key, bc-java #2390). The org.bouncycastle entry in gradle/dependency-families.gradle keeps accepting
     // such a patch, because BC ships one whenever a single module needs fixing between joint releases.
-    implementation "org.bouncycastle:bcprov-jdk18on:1.86"
+    implementation "org.bouncycastle:bcprov-jdk18on:1.87"
     // pulled transitively by sshd-git; pin to patched version
-    implementation "org.bouncycastle:bcpg-jdk18on:1.86"
+    implementation "org.bouncycastle:bcpg-jdk18on:1.87"
 
     // required for database connections
     // REMOVE_IN_ARTEMIS_11 (MySQL): remove the driver once MySQL support is removed
@@ -702,16 +723,18 @@ dependencies {
     implementation "org.postgresql:postgresql:42.7.14"
 
     // Required by JPlag
-    implementation "com.ibm.icu:icu4j-charset:78.3"
+    implementation "com.ibm.icu:icu4j-charset:79.1"
+    // Normalizes host names the way a browser does (UTS #46, not the older IDNA2003 of java.net.IDN), for the image host policy. Kept in step with icu4j-charset above.
+    implementation "com.ibm.icu:icu4j:79.1"
     // Required by exam session service
     implementation "com.github.seancfoley:ipaddress:5.6.2"
 
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.pdfbox:pdfbox:3.0.8"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.commonmark:commonmark:0.31.0"
-    implementation "org.commonmark:commonmark-ext-gfm-tables:0.31.0"
-    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.31.0"
+    implementation "org.commonmark:commonmark:0.32.0"
+    implementation "org.commonmark:commonmark-ext-gfm-tables:0.32.0"
+    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.32.0"
 
     implementation "commons-fileupload:commons-fileupload:1.6.0"
 
@@ -749,7 +772,7 @@ dependencies {
     checkstyle "org.codehaus.plexus:plexus-container-default:2.1.1"
     checkstyle "org.codehaus.plexus:plexus-classworlds:2.12.1"
     // Override plexus-utils to fix Zip Slip vulnerability (GHSA-6fmv-xxpf-w3cw)
-    checkstyle "org.codehaus.plexus:plexus-utils:4.1.0"
+    checkstyle "org.codehaus.plexus:plexus-utils:4.2.0"
     checkstyle "com.puppycrawl.tools:checkstyle:${checkstyle_version}"
 
 
@@ -771,10 +794,10 @@ dependencies {
     }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.199"
+    testImplementation "io.github.classgraph:classgraph:6.0.2"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.8.2"
+    testImplementation "org.gradle:gradle-tooling-api:9.9.2"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.6.1"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:${testcontainers_redis_version}"
@@ -818,7 +841,7 @@ dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}"
         // BOM uses 3-part versions (e.g. 18.1.0); POSTGRES_VERSION from .env may be 2-part (e.g. 18.1)
-        def pgVersion = findProperty('postgres_version') ?: '18.6'
+        def pgVersion = findProperty('postgres_version') ?: '18.7'
         def bomVersion = pgVersion.count('.') < 2 ? "${pgVersion}.0" : pgVersion
         mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:${bomVersion}"
         mavenBom "org.testcontainers:testcontainers-bom:${testcontainers_version}"

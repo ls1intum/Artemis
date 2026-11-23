@@ -190,7 +190,7 @@ tasks.register('behaviorTests', Test) {
 
 // %static-code-analysis-start%
 checkstyle {
-    toolVersion = '14.3.0'
+    toolVersion = '14.4.0'
     configFile = file("$scaConfigDirectory/checkstyle-configuration.xml")
     configDirectory.set(file(scaConfigDirectory))
     ignoreFailures = true

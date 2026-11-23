@@ -43,7 +43,7 @@
             </button>
             <div
                 #advancedBar
-                class="message-editor-advanced-toolbar absolute start-0 z-10 flex max-w-full flex-wrap items-center gap-1 rounded-md border p-1 shadow-md"
+                class="message-editor-advanced-toolbar absolute start-0 z-10 flex max-w-full flex-wrap items-center gap-1 rounded-md border border-(--border-color) p-1 shadow-md"
                 [class]="barBelow() ? 'top-full mt-1' : 'bottom-full mb-1'"
                 [id]="advancedToolbarId"
                 [hidden]="!toolbarExpanded()"
@@ -182,7 +182,7 @@
             (compositionstart)="linkComposing.set(true)"
             (compositionend)="linkComposing.set(false)"
         >
-            <label class="flex min-w-0 flex-1 flex-col gap-1 text-sm">
+            <label class="min-w-0 flex-1 flex-col gap-1 text-sm">
                 {{ 'artemisApp.communication.formattedEditor.linkText' | artemisTranslate }}
                 <input
                     data-testid="message-link-text"
@@ -195,7 +195,7 @@
                     (keydown.enter)="saveLink($event)"
                 />
             </label>
-            <label class="flex min-w-0 flex-1 flex-col gap-1 text-sm">
+            <label class="min-w-0 flex-1 flex-col gap-1 text-sm">
                 {{ 'artemisApp.communication.formattedEditor.linkUrl' | artemisTranslate }}
                 <input
                     tumAetUiInput
@@ -212,15 +212,33 @@
                 {{ 'artemisApp.communication.formattedEditor.apply' | artemisTranslate }}
             </button>
             @if (editingLink()) {
-                <button data-testid="remove-message-link" type="button" tumAetUiButton variant="text" size="small" (click)="removeLink()">
+                <button
+                    severity="secondary"
+                    data-button-intent="utility"
+                    data-button-intent-reason="Removes link formatting while preserving the message text"
+                    data-testid="remove-message-link"
+                    type="button"
+                    tumAetUiButton
+                    variant="text"
+                    size="small"
+                    (click)="removeLink()"
+                >
                     {{ 'artemisApp.communication.formattedEditor.unlink' | artemisTranslate }}
                 </button>
             }
-            <button type="button" tumAetUiButton variant="text" size="small" (click)="closeLink()" [attr.aria-label]="'artemisApp.communication.cancel' | artemisTranslate">
+            <button
+                type="button"
+                tumAetUiButton
+                severity="secondary"
+                variant="text"
+                size="small"
+                (click)="closeLink()"
+                [attr.aria-label]="'artemisApp.communication.cancel' | artemisTranslate"
+            >
                 <fa-icon [icon]="icons.faXmark" />
             </button>
             @if (linkInvalid()) {
-                <p [id]="listId + '-link-error'" class="m-0 w-full text-sm text-state-danger" role="alert">
+                <p [id]="listId + '-link-error'" class="m-0! w-full text-sm text-state-danger" role="alert">
                     {{ 'artemisApp.communication.formattedEditor.invalidLink' | artemisTranslate }}
                 </p>
             }
@@ -267,14 +285,17 @@
         ></div>
     </div>
     <!--
-        The visible hint is short, so it takes at most two lines at any width, and the full text sits in the tooltip of the help button.
-        Screen readers get the full text as the description of the editor.
+        The hint is split into three parts that never repeat each other: what @ and # do (triggers), how Enter and Shift+Enter behave (short)
+        and what else is worth knowing (details). The visible hint is short, so it takes at most two lines at any width. The tooltip of the help
+        button adds what the visible line leaves out: only the details on a wide line, and the triggers as well on a narrow one.
+        Screen readers get all three parts as the description of the editor.
     -->
+    @let triggersHint = 'artemisApp.communication.formattedEditor.hintTriggers' | artemisTranslate;
+    @let shortHint = 'artemisApp.communication.formattedEditor.hintShort' | artemisTranslate;
+    @let detailsHint = 'artemisApp.communication.formattedEditor.hintDetails' | artemisTranslate;
     <div class="message-editor-divider message-editor-muted flex items-start gap-1 border-t py-1 ps-2 pe-1 text-xs">
-        <p class="m-0 min-w-0 flex-1 py-1" aria-hidden="true" data-testid="message-editor-hint">
-            {{ (wideHint() ? 'artemisApp.communication.formattedEditor.hint' : 'artemisApp.communication.formattedEditor.hintShort') | artemisTranslate }}
-        </p>
-        <span [id]="hintId" class="sr-only">{{ 'artemisApp.communication.formattedEditor.hintDetails' | artemisTranslate }}</span>
+        <p class="m-0! min-w-0 flex-1 py-1" aria-hidden="true" data-testid="message-editor-hint">{{ wideHint() ? triggersHint + ' ' + shortHint : shortHint }}</p>
+        <span [id]="hintId" class="sr-only">{{ triggersHint + ' ' + shortHint + ' ' + detailsHint }}</span>
         <button
             type="button"
             tumAetUiButton
@@ -284,7 +305,7 @@
             class="shrink-0"
             data-testid="message-editor-help"
             [attr.aria-label]="'artemisApp.communication.formattedEditor.help' | artemisTranslate"
-            [tumAetUiTooltip]="'artemisApp.communication.formattedEditor.hintDetails' | artemisTranslate"
+            [tumAetUiTooltip]="wideHint() ? detailsHint : triggersHint + ' ' + detailsHint"
         >
             <fa-icon [icon]="icons.faCircleQuestion" />
         </button>
@@ -305,7 +326,7 @@
                 {{ 'artemisApp.communication.formattedEditor.loading' | artemisTranslate }}
             } @else if (searchFailed()) {
                 {{ 'artemisApp.communication.formattedEditor.searchError' | artemisTranslate }}
-                <button type="button" tumAetUiButton size="small" variant="text" (mousedown)="$event.preventDefault()" (click)="refreshSuggestions()">
+                <button type="button" tumAetUiButton severity="secondary" size="small" variant="text" (mousedown)="$event.preventDefault()" (click)="refreshSuggestions()">
                     {{ 'artemisApp.communication.formattedEditor.retry' | artemisTranslate }}
                 </button>
             } @else if (!suggestions().length) {
@@ -314,14 +335,14 @@
                 {{ 'artemisApp.communication.formattedEditor.choose' | artemisTranslate }}
             }
         </div>
-        <ul [id]="listId" role="listbox" class="m-0 list-none p-1" [attr.aria-label]="'artemisApp.communication.formattedEditor.suggestions' | artemisTranslate">
+        <ul [id]="listId" role="listbox" class="m-0! list-none p-1!" [attr.aria-label]="'artemisApp.communication.formattedEditor.suggestions' | artemisTranslate">
             @for (suggestion of suggestions(); track suggestion.markdown; let index = $index) {
                 <li
                     tabindex="-1"
                     role="option"
                     [id]="listId + '-' + index"
                     [attr.aria-selected]="index === activeIndex()"
-                    class="message-suggestion flex cursor-pointer items-center justify-between gap-4 rounded-sm px-2 py-1"
+                    class="message-suggestion flex cursor-pointer items-center justify-between gap-6 rounded-sm px-2 py-1"
                     (mousedown)="$event.preventDefault()"
                     (click)="accept(suggestion)"
                     (keydown.enter)="accept(suggestion); $event.preventDefault(); $event.stopPropagation()"

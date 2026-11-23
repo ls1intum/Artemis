@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewEncapsulation, inject, input, output, signal, viewChildren } from '@angular/core';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -34,7 +35,8 @@ import { QuizAiQuestionRefinementPanelComponent } from 'app/hyperion/quiz/quiz-a
     ],
 })
 export class QuizQuestionListEditComponent {
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
     private cdr = inject(ChangeDetectorRef);
 
     courseId = input.required<number>();
@@ -255,23 +257,14 @@ export class QuizQuestionListEditComponent {
     }
 
     async importApollonDragAndDropQuestion() {
-        const ref = this.dialogService.open(ApollonDiagramImportDialogComponent, {
-            width: '80rem',
-            breakpoints: {
-                '1400px': '75vw',
-                '1200px': '85vw',
-                '992px': '95vw',
-            },
-            // Auto height: this dialog hosts a short list and a full diagram
-            // editor, so the view decides its own size rather than the dialog.
-            contentStyle: { padding: '0', display: 'flex', 'flex-direction': 'column', 'min-height': '0', overflow: 'hidden' },
-            modal: true,
-            closable: true,
+        const ref = this.dialogService.open<ApollonDiagramImportDialogComponent, DragAndDropQuestion, { courseId: number }>(ApollonDiagramImportDialogComponent, {
+            size: 'large',
+            // This dialog hosts a short list and a full diagram editor, so the view decides its own size and spacing.
+            contentPadding: 'none',
             closeOnEscape: true,
             dismissableMask: false,
-            draggable: false,
-            resizable: false,
             showHeader: false,
+            ariaLabel: this.translateService.instant('artemisApp.quizExercise.addApollonDragAndDropQuestion'),
             data: { courseId: this.courseId() },
         });
         if (!ref) {

@@ -3,9 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import {
@@ -27,7 +26,6 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 import { Component as NgComponent, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 
@@ -69,11 +67,10 @@ describe('CompetencyManagementTableComponent', () => {
             imports: [WrappedComponent],
             providers: [
                 MockProvider(AlertService),
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -117,8 +114,8 @@ describe('CompetencyManagementTableComponent', () => {
         expect(component.allCompetencies).toHaveLength(2);
     });
 
-    it('should open the import-all dialog with a responsive width that never exceeds the viewport', () => {
-        const dialogService = TestBed.inject(DialogService);
+    it('should open the import-all dialog sized by the kit with the translated title', () => {
+        const dialogService = TestBed.inject(TumAetUiDialogService);
         const openSpy = vi.spyOn(dialogService, 'open');
 
         competencyManagementTableComponent.openImportAllModal();
@@ -126,9 +123,49 @@ describe('CompetencyManagementTableComponent', () => {
         expect(openSpy).toHaveBeenCalledWith(
             ImportAllCompetenciesComponent,
             expect.objectContaining({
-                style: { width: '90vw', maxWidth: '60rem', height: '85vh' },
+                header: 'artemisApp.competency.importAll.title',
+                size: 'large',
+                data: { disabledIds: [1] },
             }),
         );
+    });
+
+    describe('import all result handling', () => {
+        const dialogResult = { courseForImportDTO: { id: 7, title: 'Other course' }, importRelations: true };
+
+        function openWithResult(response: CompetencyWithTailRelationDTO[]) {
+            vi.spyOn(TestBed.inject(TumAetUiDialogService), 'open').mockReturnValue({ onClose: of(dialogResult) } as any);
+            const importAllSpy = vi.spyOn(competencyService, 'importAll').mockReturnValue(of(new HttpResponse({ body: response })));
+            competencyManagementTableComponent.service = competencyService;
+            competencyManagementTableComponent.openImportAllModal();
+            return importAllSpy;
+        }
+
+        it('should import the competencies of the chosen course and report the imported ones', () => {
+            const alertService = TestBed.inject(AlertService);
+            const successSpy = vi.spyOn(alertService, 'success');
+            component.courseCompetencies.set([{ id: 1 } as CourseCompetency]);
+            fixture.detectChanges();
+
+            const importAllSpy = openWithResult([
+                { competency: { id: 1 }, tailRelations: [] },
+                { competency: { id: 2 }, tailRelations: [] },
+            ]);
+
+            expect(importAllSpy).toHaveBeenCalledWith(1, 7, true);
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.competency.importAll.success', { noOfCompetencies: 2, courseTitle: 'Other course' });
+            expect(component.allCompetencies.map((c) => c.id)).toEqual([2]);
+        });
+
+        it('should warn when nothing was imported', () => {
+            const alertService = TestBed.inject(AlertService);
+            const warningSpy = vi.spyOn(alertService, 'warning');
+
+            openWithResult([]);
+
+            expect(warningSpy).toHaveBeenCalledWith('artemisApp.competency.importAll.warning', { courseTitle: 'Other course' });
+            expect(component.allCompetencies).toHaveLength(0);
+        });
     });
 
     it('should handle delete competency', () => {
@@ -143,6 +180,30 @@ describe('CompetencyManagementTableComponent', () => {
         competencyManagementTableComponent.deleteCompetency(1);
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(competencyDeletedSpy).toHaveBeenCalledWith(1);
+    });
+
+    describe('empty state', () => {
+        const empty = () => fixture.nativeElement.querySelector('[data-testid="table-empty"]');
+
+        it('should show the empty state with a create action when the course has no competencies', () => {
+            component.courseCompetencies.set([]);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(empty()).not.toBeNull();
+            expect(empty().querySelector('a')).not.toBeNull();
+        });
+
+        it('should show the empty state without a create action when only the filter matches nothing', () => {
+            component.courseCompetencies.set([{ id: 1, title: 'Algebra' } as CourseCompetency]);
+            fixture.changeDetectorRef.detectChanges();
+            expect(empty()).toBeNull();
+
+            competencyManagementTableComponent.filterText.set('zzz');
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(empty()).not.toBeNull();
+            expect(empty().querySelector('a')).toBeNull();
+        });
     });
 
     describe('filtering', () => {
@@ -186,6 +247,25 @@ describe('CompetencyManagementTableComponent', () => {
     });
 
     describe('sorting', () => {
+        it('should apply the sort event of the table header to predicate and direction', () => {
+            const competency1 = { id: 1, title: 'Zoology', taxonomy: CompetencyTaxonomy.REMEMBER } as CourseCompetency;
+            const competency2 = { id: 2, title: 'Algebra', taxonomy: CompetencyTaxonomy.ANALYZE } as CourseCompetency;
+            component.courseCompetencies.set([competency1, competency2]);
+            fixture.detectChanges();
+
+            competencyManagementTableComponent.onSortChange({ field: 'taxonomy', order: 1 });
+
+            expect(competencyManagementTableComponent.sortPredicate).toBe('taxonomy');
+            expect(competencyManagementTableComponent.sortAscending).toBe(true);
+            expect(competencyManagementTableComponent.filteredAndSortedCompetencies().map((c) => c.id)).toEqual([2, 1]);
+
+            competencyManagementTableComponent.onSortChange({ field: 'title', order: -1 });
+
+            expect(competencyManagementTableComponent.sortPredicate).toBe('title');
+            expect(competencyManagementTableComponent.sortAscending).toBe(false);
+            expect(competencyManagementTableComponent.filteredAndSortedCompetencies().map((c) => c.id)).toEqual([1, 2]);
+        });
+
         it('should sort by title ascending by default', () => {
             const competency1 = { id: 1, title: 'Zoology' } as CourseCompetency;
             const competency2 = { id: 2, title: 'Algebra' } as CourseCompetency;

@@ -12,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -73,13 +72,9 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
 
-    // NOTE: MockitoBean is used here because ChatModel and ChatClient cannot be instantiated in tests without Azure OpenAI credentials
-    // These beans are provided by SpringAIConfiguration in production, but need to be mocked for tests
+    // every LLM preset answers through this mock (see MockChatModelLlmConfiguration), so no test reaches a provider
     @MockitoBean
     protected ChatModel chatModel;
-
-    @MockitoBean
-    protected ChatClient chatClient;
 
     @MockitoBean
     protected ChatMemory chatMemory;
@@ -150,9 +145,6 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
                 passkeyAuthenticationService, resourceLoaderService);
         if (chatModel != null) {
             Mockito.reset(chatModel);
-        }
-        if (chatClient != null) {
-            Mockito.reset(chatClient);
         }
         if (tumLiveService != null) {
             Mockito.reset(tumLiveService);

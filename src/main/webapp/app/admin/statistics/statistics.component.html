@@ -9,13 +9,14 @@
             optionLabel="label"
             optionValue="value"
             size="small"
+            [allowEmpty]="false"
             [itemTemplate]="spanItem"
         />
         <ng-template #spanItem let-option>
             {{ option.label | artemisTranslate }}
         </ng-template>
     </div>
-    <div class="mb-5"></div>
+    <div class="mb-12"></div>
     @for (graph of graphTypes; track graph; let i = $index) {
         <div id="graph-{{ i }}" class="graph">
             <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan()" [statisticsView]="statisticsView()" />

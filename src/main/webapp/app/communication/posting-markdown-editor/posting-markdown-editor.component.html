@@ -31,7 +31,16 @@
 <!-- Footer controls keep their native Enter activation without triggering the parent composer's Enter-to-send handler. -->
 <div class="mt-2 flex flex-wrap items-center justify-end gap-2">
     @if (showCloseButton()) {
-        <button type="button" tumAetUiButton size="small" variant="text" data-testid="close-message-editor" (keydown.enter)="$event.stopPropagation()" (click)="closeEditor.emit()">
+        <button
+            severity="secondary"
+            type="button"
+            tumAetUiButton
+            size="small"
+            variant="text"
+            data-testid="close-message-editor"
+            (keydown.enter)="$event.stopPropagation()"
+            (click)="closeEditor.emit()"
+        >
             {{ 'artemisApp.communication.cancel' | artemisTranslate }}
         </button>
     }
@@ -56,7 +65,7 @@
     }
 </div>
 @if (isInputLengthDisplayed() || (content()?.length ?? 0) > maxContentLength()!) {
-    <p class="mt-1 mb-0 text-end text-xs" data-testid="message-content-length" [class.text-state-danger]="(content()?.length ?? 0) > maxContentLength()!">
+    <p class="mt-1 mb-0 text-right text-xs" data-testid="message-content-length" [class.text-state-danger]="(content()?.length ?? 0) > maxContentLength()!">
         {{ content()?.length ?? 0 }} / {{ maxContentLength() }}
     </p>
 }

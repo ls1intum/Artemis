@@ -16,7 +16,7 @@
 - [ ] This is a small issue that I tested locally and was confirmed by another developer on a test server.
 - [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://docs.artemis.tum.de/developer/guidelines/language).
 - [ ] I chose a title conforming to the [naming conventions for pull requests](https://docs.artemis.tum.de/developer/development-process#pr-naming-conventions).
-- [ ] I updated the [documentation](https://docs.artemis.tum.de/developer/guidelines/documentation#keeping-the-documentation-up-to-date) for changed configuration, deployment files, commands, user-facing labels or behavior, or none of these apply.
+- [ ] I updated the [documentation](https://docs.artemis.tum.de/developer/guidelines/documentation#keeping-the-documentation-up-to-date) for changed configuration, deployment files, commands, user-facing labels or behavior, and set `last_reviewed` of the pages I checked against the code, or none of these apply.
 
 
 #### Server
@@ -25,6 +25,7 @@
 - [ ] I **strictly** followed the [server coding and design guidelines](https://docs.artemis.tum.de/developer/guidelines/server-development) and the [REST API guidelines](https://docs.artemis.tum.de/developer/guidelines/rest-api).
 - [ ] I added multiple integration tests (Spring) related to the features (with a high test coverage).
 - [ ] I added pre-authorization annotations according to the [guidelines](https://docs.artemis.tum.de/developer/guidelines/rest-api#authorization) and checked the course groups for all new REST Calls (security).
+- [ ] I went through the [security guideline](https://docs.artemis.tum.de/developer/guidelines/security): the ids of every request are checked against the course in the path, and tests cover a refused request.
 - [ ] I documented the Java code using JavaDoc style.
 
 

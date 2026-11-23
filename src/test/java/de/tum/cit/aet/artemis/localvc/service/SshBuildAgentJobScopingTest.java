@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
-import de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService;
+import de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenServiceFixture;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -45,7 +45,8 @@ class SshBuildAgentJobScopingTest {
     @BeforeEach
     void setUp() {
         distributedDataAccessService = mock(DistributedDataAccessService.class);
-        sshGitLocationResolverService = new SshGitLocationResolverService(null, null, Optional.of(distributedDataAccessService), Optional.of(new BuildJobCloneTokenService()));
+        sshGitLocationResolverService = new SshGitLocationResolverService(null, null, null, null, null, Optional.of(distributedDataAccessService),
+                Optional.of(BuildJobCloneTokenServiceFixture.service()));
     }
 
     private static LocalVCRepositoryUri uriOf(String path) {
@@ -119,7 +120,7 @@ class SshBuildAgentJobScopingTest {
 
     @Test
     void shouldRefuseWhenTheNodeHasNoLocalCi() {
-        sshGitLocationResolverService = new SshGitLocationResolverService(null, null, Optional.empty(), Optional.empty());
+        sshGitLocationResolverService = new SshGitLocationResolverService(null, null, null, null, null, Optional.empty(), Optional.empty());
 
         assertThat(mayRead(AGENT_NAME, uriOf("/git/TESTEXERCISE/testexercise-student1.git"))).isFalse();
     }

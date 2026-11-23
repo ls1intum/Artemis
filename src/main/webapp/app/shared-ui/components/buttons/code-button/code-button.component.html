@@ -1,6 +1,7 @@
 <button
     type="button"
     tumAetUiButton
+    [severity]="severity()"
     [attr.aria-label]="'artemisApp.exerciseActions.code' | artemisTranslate"
     [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
     [forceDisabled]="disabled()"

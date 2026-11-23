@@ -2,6 +2,7 @@
 id: exports
 title: Exports
 sidebar_label: Exports
+last_reviewed: 2026-11-03
 ---
 
 Artemis lets you download your own work and your own data. As a student you can export three things:
@@ -106,8 +107,14 @@ If tutorial groups are enabled:
 If you presented in a course that uses presentation assessments:
 - Course and title of the presentation
 - Date, language and mode (online or in person), including location or meeting link
-- Maximum points and the points you achieved
+- How the presentation is graded (pass/fail, score or rubric) and your result: passed or failed, the points you achieved out of the maximum, or your rubric score in percent
 - The remark the instructors entered about your presentation
+
+#### Presentation Rubric Ratings (`presentation_rubric_ratings.csv`)
+If one of your presentations was graded by rubric:
+- Each criterion with its weight and rating scale
+- The level you were rated on, from 1 for the lowest level up to 3 or 5 for the highest, depending on the scale
+- The comment the instructors entered for the criterion
 
 #### AI Tutor Interactions (`iris_chat_sessions.json`)
 If Iris (AI tutor) is enabled:
@@ -129,9 +136,12 @@ If competency-based learning is enabled:
 - Last modification timestamps
 
 #### Science Events (`science_events.csv`)
-If science/analytics tracking is enabled:
-- Learning events (opening lectures, exercises, etc.)
-- Timestamps of activities
+If Artemis holds science events for you (see [Science Data Collection](/student/progress-analytics/science-data-collection)):
+- One row per event, with the columns `timestamp`, `event_type`, `course_id` and `resource_id`
+- The interactions recorded while you contributed data to a course, such as opening a lecture, an exercise or your learning path
+- Your decisions per course: `SCIENCE__OPT_IN` when you agreed, `SCIENCE__OPT_OUT` when you declined or withdrew, and `SCIENCE__DATA_DELETED` when you deleted recorded data for that course
+- Interactions recorded before Artemis asked for consent per course
+- An empty `course_id` for events Artemis could not assign to a course
 
 #### Plagiarism Cases
 If you were involved in plagiarism cases:

@@ -34,7 +34,7 @@ export class QuizExerciseParticipationPage {
      * Returns the locator for the waiting for quiz start alert.
      */
     getWaitingForStartAlert() {
-        return this.page.locator('.quiz-waiting-for-start-overlay');
+        return this.page.getByTestId('quiz-waiting-for-start');
     }
 
     /**

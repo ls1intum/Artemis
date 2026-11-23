@@ -1,54 +1,40 @@
+// The recipient field looks like a TUM AET UI input: it holds the selected recipients next to the search input.
 .tag-input-container {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    border-radius: 0.25rem;
-    padding: 0.375rem 0.75rem;
-    min-height: 2rem;
-    cursor: text;
-    transition:
-        border-color 0.15s ease-in-out,
-        box-shadow 0.15s ease-in-out;
-}
+    border: 1px solid var(--tumaet-ui-control-border-color);
+    background-color: var(--tumaet-ui-control-background);
+    color: var(--tumaet-ui-text-color);
+    transition: border-color 200ms;
 
-.tag-input-container:focus-within {
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    &:hover {
+        border-color: var(--tumaet-ui-control-border-hover-color);
+    }
+
+    &:focus-within {
+        border-color: var(--tumaet-ui-focus-color);
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 2px;
+    }
 }
 
 .tag-input {
     flex: 1;
-    background: transparent;
+    min-width: 4rem;
+    padding: 0;
     border: none;
     outline: none;
-    min-width: 4rem;
-    color: var(--form-control-color);
+    background: transparent;
+    color: inherit;
 }
 
-.badge {
-    display: flex;
-    align-items: center;
-    height: 1.5rem;
-    margin-bottom: 0.2rem;
-}
+.destination-option {
+    &:hover {
+        background-color: var(--tumaet-ui-hover-background);
+    }
 
-.badge .btn-close {
-    padding: 0 0.2rem;
-    margin-left: 0.5rem;
-    cursor: pointer;
-}
-
-.list-group-item.active {
-    background-color: var(--bs-primary);
-    border-color: var(--bs-primary);
-}
-
-.list-group-item {
-    cursor: pointer;
-    font-weight: 500;
-}
-
-.autocomplete-container {
-    position: relative;
+    &.active {
+        background-color: var(--tumaet-ui-highlight-background);
+        color: var(--tumaet-ui-highlight-color);
+    }
 }
 
 .autocomplete-dropdown {
@@ -73,7 +59,6 @@
     padding-top: 0.3rem;
     padding-bottom: 0.3rem;
     border-radius: 5px;
-    margin-top: 1rem;
 
     .forwarded-message-content {
         display: flex;
@@ -103,16 +88,6 @@
         &.expanded {
             max-height: none;
             -webkit-line-clamp: none;
-        }
-    }
-
-    .forwarded-message-footer {
-        display: flex;
-        justify-content: flex-end;
-        font-size: 0.8rem;
-
-        .forwarded-message-channel {
-            margin-right: 1rem;
         }
     }
 }
