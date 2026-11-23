@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
 import java.time.Duration;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -12,16 +11,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
-import com.openai.models.ReasoningEffort;
-import com.openai.models.chat.completions.ChatCompletionCreateParams;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
@@ -52,23 +44,17 @@ public class HyperionEffortProfileService {
 
     private final HyperionGenerationSettings defaultSettings;
 
-    // Required: with the package-private test constructor also present, Spring cannot pick an injection constructor without it.
-    @Autowired
-    public HyperionEffortProfileService(HyperionAgentProperties properties, Collection<ChatModel> chatModels) {
-        this(properties, configuredOptions(chatModels));
-    }
-
-    HyperionEffortProfileService(HyperionAgentProperties properties, @Nullable ChatOptions modelDefaults) {
+    public HyperionEffortProfileService(HyperionAgentProperties properties) {
         // Validated eagerly, before any profile can inherit it: an invalid deployment default would otherwise surface only on the first run that used it.
         validateStagedContext(properties.getStagedContext());
         HyperionGenerationSettings deploymentDefault = new HyperionGenerationSettings("", null, properties.getMaxTurns(), properties.getMaxJobDuration(),
-                properties.getMaxTokensPerJob(), properties.isStagedGeneration(), properties.getStagedContext(), properties.getContextWindowTokens(), null, true, false,
-                properties.getRepairModel());
+                properties.getMaxTokensPerJob(), properties.isStagedGeneration(), properties.getStagedContext(), properties.getContextWindowTokens(), agentPreset(properties), null,
+                true, false, repairPreset(properties.getRepairLlmPreset()));
         if (properties.getProfiles().size() > MAX_PROFILES) {
             throw new IllegalArgumentException("artemis.hyperion.agent.profiles must not configure more than " + MAX_PROFILES + " effort profiles");
         }
         Map<String, HyperionGenerationSettings> resolved = new LinkedHashMap<>();
-        properties.getProfiles().forEach((name, profile) -> resolved.put(name, materialise(name, profile, properties, modelDefaults)));
+        properties.getProfiles().forEach((name, profile) -> resolved.put(name, materialise(name, profile, properties)));
         // Order-preserving rather than Map.copyOf: the selectable list is instructor-facing, and a set that reorders itself between restarts makes "the first one" an unusable
         // convention for any client.
         this.profilesByName = Collections.unmodifiableMap(resolved);
@@ -93,8 +79,7 @@ public class HyperionEffortProfileService {
         return named;
     }
 
-    private static HyperionGenerationSettings materialise(String name, HyperionAgentProperties.EffortProfileProperties profile, HyperionAgentProperties properties,
-            @Nullable ChatOptions modelDefaults) {
+    private static HyperionGenerationSettings materialise(String name, HyperionAgentProperties.EffortProfileProperties profile, HyperionAgentProperties properties) {
         if (name == null || !PROFILE_NAME.matcher(name).matches()) {
             throw new IllegalArgumentException("Hyperion effort profile names must use lower snake_case and contain at most 64 characters");
         }
@@ -108,9 +93,9 @@ public class HyperionEffortProfileService {
         String stagedContext = profile.getStagedContext() == null ? properties.getStagedContext() : profile.getStagedContext();
         validateStagedContext(stagedContext);
         int contextWindowTokens = profile.getContextWindowTokens() == null ? properties.getContextWindowTokens() : profile.getContextWindowTokens();
-        boolean providerOptionsOverride = profile.overridesProviderOptions();
-        validateProviderOptions(name, profile);
-        OpenAiChatOptions chatOptions = providerOptionsOverride ? buildChatOptions(profile, modelDefaults) : null;
+        // A profile with its own preset runs a different model or different options than the deployment default.
+        String llmPreset = profile.getLlmPreset() != null && !profile.getLlmPreset().isBlank() ? profile.getLlmPreset().strip() : agentPreset(properties);
+        boolean providerOptionsOverride = !llmPreset.equals(agentPreset(properties));
         boolean engineDefaults = !providerOptionsOverride && maxTurns == properties.getMaxTurns() && maxJobDuration.equals(properties.getMaxJobDuration())
                 && stagedGeneration == properties.isStagedGeneration() && stagedContext.equals(properties.getStagedContext())
                 && contextWindowTokens == properties.getContextWindowTokens();
@@ -118,66 +103,25 @@ public class HyperionEffortProfileService {
         if (label.length() > 100) {
             throw new IllegalArgumentException("Hyperion effort profile '" + name + "': label must contain at most 100 characters");
         }
-        return new HyperionGenerationSettings(name, label, maxTurns, maxJobDuration, maxTokensPerJob, stagedGeneration, stagedContext, contextWindowTokens, chatOptions,
-                engineDefaults, providerOptionsOverride, profile.getRepairModel() == null ? properties.getRepairModel() : profile.getRepairModel());
-    }
-
-    private static void validateProviderOptions(String name, HyperionAgentProperties.EffortProfileProperties profile) {
-        if (profile.getModel() != null && profile.getModel().isBlank()) {
-            throw invalidOption(name, "model must not be blank");
-        }
-        if (profile.getMaxCompletionTokens() != null && profile.getMaxCompletionTokens() <= 0) {
-            throw invalidOption(name, "max-completion-tokens must be positive");
-        }
-        if (profile.getTemperature() != null && (!Double.isFinite(profile.getTemperature()) || profile.getTemperature() < 0 || profile.getTemperature() > 2)) {
-            throw invalidOption(name, "temperature must be finite and between 0 and 2");
-        }
-        if (profile.getTopP() != null && (!Double.isFinite(profile.getTopP()) || profile.getTopP() < 0 || profile.getTopP() > 1)) {
-            throw invalidOption(name, "top-p must be finite and between 0 and 1");
-        }
-        if (profile.getReasoningEffort() != null && !ReasoningEffort.of(profile.getReasoningEffort()).isValid()) {
-            throw invalidOption(name, "reasoning-effort is not supported by the OpenAI SDK");
-        }
-        if (profile.getVerbosity() != null && !ChatCompletionCreateParams.Verbosity.of(profile.getVerbosity()).isValid()) {
-            throw invalidOption(name, "verbosity is not supported by the OpenAI SDK");
-        }
+        // Like the profile's own preset, an unset or blank repair preset inherits the agent's.
+        String profileRepairPreset = repairPreset(profile.getRepairLlmPreset());
+        String repairLlmPreset = profileRepairPreset != null ? profileRepairPreset : repairPreset(properties.getRepairLlmPreset());
+        return new HyperionGenerationSettings(name, label, maxTurns, maxJobDuration, maxTokensPerJob, stagedGeneration, stagedContext, contextWindowTokens, llmPreset, null,
+                engineDefaults, providerOptionsOverride, repairLlmPreset);
     }
 
     private static IllegalArgumentException invalidOption(String profileName, String message) {
         return new IllegalArgumentException("Hyperion effort profile '" + profileName + "': " + message);
     }
 
-    /**
-     * Starts from the configured {@code ChatModel}'s own options and overlays only what the profile states, which is Spring AI's runtime-options merge: prompt options replace
-     * model defaults per field. The result is an {@link OpenAiChatOptions} and never a generic {@code DefaultChatOptions}, because {@code OpenAiChatModel#buildRequestPrompt}
-     * casts the runtime options.
-     */
-    private static OpenAiChatOptions buildChatOptions(HyperionAgentProperties.EffortProfileProperties profile, @Nullable ChatOptions modelDefaults) {
-        OpenAiChatOptions.Builder builder = modelDefaults instanceof OpenAiChatOptions openAiDefaults ? openAiDefaults.mutate() : OpenAiChatOptions.builder();
-        if (profile.getModel() != null) {
-            builder.model(profile.getModel());
-        }
-        if (profile.getTemperature() != null) {
-            builder.temperature(profile.getTemperature());
-        }
-        if (profile.getTopP() != null) {
-            builder.topP(profile.getTopP());
-        }
-        if (profile.getReasoningEffort() != null) {
-            builder.reasoningEffort(profile.getReasoningEffort());
-        }
-        if (profile.getVerbosity() != null) {
-            builder.verbosity(profile.getVerbosity());
-        }
-        if (profile.getMaxCompletionTokens() != null) {
-            builder.maxCompletionTokens(profile.getMaxCompletionTokens());
-        }
-        return builder.build();
+    /** A configured repair preset, or {@code null} when it is unset or blank; validated at startup like the agent's preset. */
+    private static @Nullable String repairPreset(@Nullable String preset) {
+        return preset == null || preset.isBlank() ? null : preset.strip();
     }
 
-    @Nullable
-    private static ChatOptions configuredOptions(Collection<ChatModel> chatModels) {
-        return chatModels.isEmpty() ? null : chatModels.iterator().next().getOptions();
+    /** The agent's preset; the startup validation of artemis.llm requires it whenever exercise generation is enabled. */
+    private static String agentPreset(HyperionAgentProperties properties) {
+        return properties.getLlmPreset() == null ? "" : properties.getLlmPreset().strip();
     }
 
     /**

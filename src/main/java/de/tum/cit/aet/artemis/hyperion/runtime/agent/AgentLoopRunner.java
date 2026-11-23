@@ -76,9 +76,8 @@ public class AgentLoopRunner {
     private static final int SUMMARY_MAX_OUTPUT_TOKENS = 4_096;
 
     /**
-     * Fallback per-turn completion cap for the main agent call, bounding a single tool-calling step's cost/latency. A deployment can override it with
-     * {@code spring.ai.openai.chat.options.max-tokens} or {@code spring.ai.openai.chat.options.max-completion-tokens} (see
-     * {@link #configuredTurnTokenLimit()}).
+     * Fallback per-turn completion cap for the main agent call, bounding a single tool-calling step's cost/latency. The LLM preset of the run can override it
+     * with {@code max-tokens} or {@code max-completion-tokens} (see {@link #configuredTurnTokenLimit()}).
      */
     private static final int TURN_MAX_OUTPUT_TOKENS = 16_384;
 
@@ -131,8 +130,19 @@ public class AgentLoopRunner {
     /** The model's usable context window in tokens; compaction keeps the conversation below {@code contextWindow - RESERVE_TOKENS}. Configurable because deployments cap it. */
     private final int contextWindowTokens;
 
+    /**
+     * The model that may take over one stalled repair block, resolved from the run's repair LLM preset. It brings its own endpoint, options and price, so its calls are
+     * accounted for under that preset rather than the primary one.
+     *
+     * @param preset    the name of the repair LLM preset
+     * @param chatModel the preset's chat model
+     * @param options   the options every request of the handoff starts from
+     */
+    public record RepairModel(String preset, ChatModel chatModel, ChatOptions options) {
+    }
+
     @Nullable
-    private final String repairModel;
+    private final RepairModel repairModel;
 
     /**
      * Injects the collection (not a single {@link ChatModel}) and uses the first available one: multiple beans may be on the classpath, so a single-bean injection would be
@@ -157,11 +167,13 @@ public class AgentLoopRunner {
 
     /** Derivation constructor for {@link #forSettings}; shares the wrapped model, tool manager, and cooldown state of the deployment-wide runner. */
     private AgentLoopRunner(AgentLoopRunner deploymentRunner, HyperionGenerationSettings settings) {
-        this(deploymentRunner, settings.chatOptions() != null ? settings.chatOptions() : deploymentRunner.effectiveOptions, settings.contextWindowTokens(), settings.repairModel());
+        this(deploymentRunner, deploymentRunner.chatModel, settings.chatOptions() != null ? settings.chatOptions() : deploymentRunner.effectiveOptions,
+                settings.contextWindowTokens(), deploymentRunner.repairModel);
     }
 
-    private AgentLoopRunner(AgentLoopRunner deploymentRunner, @Nullable ChatOptions options, int contextWindowTokens, @Nullable String repairModel) {
-        this.chatModel = deploymentRunner.chatModel;
+    private AgentLoopRunner(AgentLoopRunner deploymentRunner, @Nullable ChatModel chatModel, @Nullable ChatOptions options, int contextWindowTokens,
+            @Nullable RepairModel repairModel) {
+        this.chatModel = chatModel;
         this.effectiveOptions = options;
         this.toolCallingManager = deploymentRunner.toolCallingManager;
         this.contextWindowTokens = contextWindowTokens;
@@ -181,6 +193,21 @@ public class AgentLoopRunner {
      */
     public AgentLoopRunner forSettings(@Nullable HyperionGenerationSettings settings) {
         return settings == null ? this : new AgentLoopRunner(this, settings);
+    }
+
+    /**
+     * A runner that may hand one stalled repair block to the given model. Runners derived from it through {@link #forSettings} keep the handoff.
+     *
+     * @param repairModel the resolved repair preset, or {@code null} to disable the handoff
+     * @return a runner with the same model, options and context window that may hand off to {@code repairModel}
+     */
+    public AgentLoopRunner withRepairModel(@Nullable RepairModel repairModel) {
+        return new AgentLoopRunner(this, chatModel, effectiveOptions, contextWindowTokens, repairModel);
+    }
+
+    /** The runner of the handoff: the repair preset's model and options, on this runner's context window, without a further handoff. */
+    private AgentLoopRunner repairRunner(RepairModel repair) {
+        return new AgentLoopRunner(this, new HarmonyScrubbingChatModel(repair.chatModel()), repair.options(), contextWindowTokens, null);
     }
 
     /**
@@ -337,10 +364,10 @@ public class AgentLoopRunner {
                     return session(AgentLoopResult.Status.COMPLETED, turn - 1, lastAssistantText, conversation);
                 }
                 if (decision == AuthoringProgressMonitor.Decision.STALLED) {
-                    if (activeRunner == this && repairModel != null && !repairModel.equals(configuredModel()) && progressSource.claimRepairModelHandoff()) {
-                        activeRunner = new AgentLoopRunner(this, configuredOptionsBuilder().model(repairModel).build(), contextWindowTokens, null);
+                    if (activeRunner == this && repairModel != null && progressSource.claimRepairModelHandoff()) {
+                        activeRunner = repairRunner(repairModel);
                         repairLastTurn = Math.min(maxTurns, turn - 1 + AuthoringProgressMonitor.BLOCK_TURNS);
-                        emit(stepListener, "No verified improvement across two work blocks; handing the current repair to " + repairModel
+                        emit(stepListener, "No verified improvement across two work blocks; handing the current repair to the LLM preset " + repairModel.preset()
                                 + " for at most 20 turns within the remaining job budget.");
                         conversation.add(new UserMessage(
                                 "Continue from the current files and latest verifier evidence. Diagnose the repeated failure and make one scoped correction. Do not restart the exercise or add requirements."));

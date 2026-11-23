@@ -2,7 +2,7 @@
     <ul>
         <li class="not_participated" [ngClass]="calculateClasses(NOT_PARTICIPATED)">0</li>
         <li
-            class="ms-0"
+            class="ms-0!"
             data-testid="tutor-instructions-step"
             [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)"
             (click)="navigate()"
@@ -58,7 +58,7 @@
                 </li>
             }
         }
-        <li class="progress-bar-li me-0" [ngClass]="progressBarClass()">
+        <li class="progress-bar-li me-0!" [ngClass]="progressBarClass()">
             <jhi-progress-bar
                 [tooltip]="'artemisApp.assessmentDashboard.evaluateStudentsComplaints' | artemisTranslate"
                 [percentage]="percentageComplaintsProgress()"

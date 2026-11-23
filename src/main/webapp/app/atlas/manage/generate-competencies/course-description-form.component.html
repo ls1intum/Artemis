@@ -1,7 +1,7 @@
 <form [formGroup]="form" (ngSubmit)="submitForm()">
     <div class="flex items-center">
         <label class="me-1" jhiTranslate="artemisApp.competency.generate.courseDescription.title" for="courseDescription"></label>
-        <fa-icon [icon]="faQuestionCircle" class="text-text-secondary" [tumAetUiTooltip]="'artemisApp.competency.generate.courseDescription.infoTooltip' | artemisTranslate" />
+        <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.competency.generate.courseDescription.infoTooltip' | artemisTranslate" />
     </div>
     <div class="mb-2">
         <textarea

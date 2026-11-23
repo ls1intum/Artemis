@@ -204,11 +204,11 @@ class HyperionQuizQuestionFilterServiceTest {
     @Test
     void evaluate_throwsWithoutAConfiguredModel() {
         HyperionQuizQuestionPoolModelService models = mock(HyperionQuizQuestionPoolModelService.class);
-        when(models.chatClient()).thenThrow(HyperionQuizQuestionPoolModelService.notConfigured());
+        when(models.judgeChatClient()).thenThrow(HyperionQuizQuestionPoolModelService.notConfigured());
         var serviceWithoutModel = new HyperionQuizQuestionFilterService(models, new HyperionPromptTemplateService(), llmTokenUsageService);
 
         assertThatThrownBy(() -> serviceWithoutModel.evaluate(course, 7L, question(), GROUNDING_BLOCK)).isInstanceOf(ServiceUnavailableAlertException.class)
-                .hasMessageContaining("no local model configured");
+                .hasMessageContaining("no LLM presets assigned");
         verify(chatModel, never()).call(any(Prompt.class));
     }
 
@@ -227,21 +227,14 @@ class HyperionQuizQuestionFilterServiceTest {
     }
 
     @Test
-    void evaluate_bindsTheJudgeModelOfThePoolEndpointOntoTheRequest() {
-        respondWith(verdict(Map.of()));
-
-        service.evaluate(course, 7L, question(), GROUNDING_BLOCK);
-
-        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel).call(prompt.capture());
-        assertThat(prompt.getValue().getOptions().getModel()).isEqualTo("judge-x");
+    void judgeModelIsTheModelOfTheJudgePreset() {
         assertThat(service.getJudgeModel()).isEqualTo("judge-x");
     }
 
     private static HyperionQuizQuestionPoolModelService configuredModels(ChatClient chatClient, String judgeModel) {
         HyperionQuizQuestionPoolModelService models = mock(HyperionQuizQuestionPoolModelService.class);
         lenient().when(models.isConfigured()).thenReturn(true);
-        lenient().when(models.chatClient()).thenReturn(chatClient);
+        lenient().when(models.judgeChatClient()).thenReturn(chatClient);
         lenient().when(models.judgeModel()).thenReturn(judgeModel);
         return models;
     }

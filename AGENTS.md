@@ -5,15 +5,16 @@
 Read the checked-in skill for the task at hand. Installation is optional for reading these files;
 see [Work with AI](documentation/docs/developer/work-with-ai.mdx) for native skill discovery.
 
-| Task                                                        | Guidance                                                   |
-| ----------------------------------------------------------- | ---------------------------------------------------------- |
-| Run, write, or debug Playwright E2E tests                   | [e2e-pr-check](skills/e2e-pr-check/SKILL.md)               |
-| Diagnose failed, stuck, or missing CI checks                | [ci-triage](skills/ci-triage/SKILL.md)                     |
-| Change server Java or investigate an architecture violation | [server-arch-gates](skills/server-arch-gates/SKILL.md)     |
-| Change a database schema or fix a failing changeset         | [liquibase-migration](skills/liquibase-migration/SKILL.md) |
-| Change Angular application or TUM AET UI code               | [client-conventions](skills/client-conventions/SKILL.md)   |
-| Write or debug JUnit or Vitest tests                        | [write-tests](skills/write-tests/SKILL.md)                 |
-| Set up, build, or troubleshoot the local application        | [local-setup](skills/local-setup/SKILL.md)                 |
+| Task                                                          | Guidance                                                   |
+| ------------------------------------------------------------- | ---------------------------------------------------------- |
+| Run, write, or debug Playwright E2E tests                     | [e2e-pr-check](skills/e2e-pr-check/SKILL.md)               |
+| Diagnose failed, stuck, or missing CI checks                  | [ci-triage](skills/ci-triage/SKILL.md)                     |
+| Change server Java or investigate an architecture violation   | [server-arch-gates](skills/server-arch-gates/SKILL.md)     |
+| Change a database schema or fix a failing changeset           | [liquibase-migration](skills/liquibase-migration/SKILL.md) |
+| Change Angular application or TUM AET UI code                 | [client-conventions](skills/client-conventions/SKILL.md)   |
+| Write or debug JUnit or Vitest tests                          | [write-tests](skills/write-tests/SKILL.md)                 |
+| Set up, build, or troubleshoot the local application          | [local-setup](skills/local-setup/SKILL.md)                 |
+| Test a change in a local browser across every affected screen | [browser-qa](skills/browser-qa/SKILL.md)                   |
 
 Read the relevant guideline for a rule-governed change. Keep procedures in the matching skill.
 When changing a convention, update its skill and supporting documentation in the same change.
@@ -69,12 +70,11 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - In production client TypeScript, do not copy objects with spread, `Object.assign` or
   `structuredClone`; use the repository's deep-clone helpers. Array spread and object rest are
   allowed. [client development](documentation/docs/developer/guidelines/client-development.mdx)
-- Use TUM AET UI and Tailwind. Do not add Bootstrap or ng-bootstrap. If TUM AET UI lacks a reusable
-  feature, extend it on native HTML, Angular Aria or stable Angular CDK primitives; use PrimeNG
-  only if that cannot reasonably be done in the same change, and explain the fallback in the PR.
-  [TUM AET UI](documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx)
-- Use semantic colour tokens, not primitive colours, Bootstrap classes or hand-written PrimeNG
-  root classes. [client theming](documentation/docs/developer/guidelines/client-theming.mdx)
+- Use TUM AET UI and Tailwind. Bootstrap, ng-bootstrap and PrimeNG are removed from the client; do
+  not add them again. If TUM AET UI lacks a reusable feature, extend it on native HTML, Angular
+  Aria or stable Angular CDK primitives. [TUM AET UI](documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx)
+- Use semantic colour tokens, not primitive colours or the class names of the removed libraries.
+  [client theming](documentation/docs/developer/guidelines/client-theming.mdx)
 
 ### Everywhere
 
@@ -87,7 +87,7 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 
 ## Repository boundaries
 
-- The server uses Spring Boot 4.1 and Java 25; the client uses Angular 22. Use the Gradle wrapper,
+- The server uses Spring Boot 4.2 and Java 25; the client uses Angular 22. Use the Gradle wrapper,
   Node 26, and the pnpm version pinned in `package.json` (`npm install --global corepack`, then `corepack enable`). Exact versions live
   in `gradle.properties`, `pnpm-workspace.yaml`, and `package.json`.
 - Server features live under `src/main/java/de/tum/cit/aet/artemis/`; the Angular application is

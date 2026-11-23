@@ -38,9 +38,6 @@ export const MockComplaintArrayResponse: HttpResponse<ComplaintDTO[]> = {
 } as HttpResponse<ComplaintDTO[]>;
 
 export class MockComplaintService implements IComplaintService {
-    create(complaint: Complaint): Observable<EntityResponseType> {
-        return of();
-    }
     find(complaintId: number): Observable<EntityResponseType> {
         return of();
     }

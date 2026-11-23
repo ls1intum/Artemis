@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +27,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
 import de.tum.cit.aet.artemis.aiworker.api.WorkloadApi;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity;
@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HarmonyScrubbingChatModel;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureCooldown;
-import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderRetryPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.worker.GenerationObserver;
 import de.tum.cit.aet.artemis.hyperion.service.worker.ToolchainGenerationAdapter;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
@@ -73,13 +72,9 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
 
     private final SandboxApi sandbox;
 
-    private final List<ChatModel> models;
+    private final LlmClientService llmClientService;
 
     private final int maxSemanticRepairs;
-
-    private final boolean retriesDisabled;
-
-    private final Duration providerTimeout;
 
     private final AgentTranscriptWriter transcripts;
 
@@ -102,26 +97,35 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         }
     };
 
-    public JavaGradleGenerationAdapterService(SandboxApi sandbox, Collection<ChatModel> models, JsonMapper mapper, ObservationRegistry observations,
-            @Value("${artemis.hyperion.agent.max-semantic-repairs:6}") int maxSemanticRepairs, @Value("${spring.ai.openai.max-retries:1}") int providerRetries,
-            @Value("${spring.ai.openai.chat.max-retries:#{null}}") @Nullable Integer chatProviderRetries,
-            @Value("${spring.ai.openai.chat.timeout:${spring.ai.openai.timeout:60s}}") Duration providerTimeout,
-            @Value("${artemis.hyperion.agent.transcript-dir:}") String transcriptDirectory) {
-        int effectiveProviderRetries = ProviderRetryPolicy.effectiveSdkRetries(providerRetries, chatProviderRetries);
-        if (models.size() != 1 || maxSemanticRepairs < 1 || maxSemanticRepairs > 12 || providerRetries < 0 || effectiveProviderRetries < 0) {
-            throw new IllegalArgumentException("Configure one worker chat model, 1–12 semantic repairs and a nonnegative provider retry limit");
-        }
-        if (providerTimeout.isZero() || providerTimeout.isNegative()) {
-            throw new IllegalArgumentException("The worker provider timeout must be positive");
+    public JavaGradleGenerationAdapterService(SandboxApi sandbox, LlmClientService llmClientService, JsonMapper mapper, ObservationRegistry observations,
+            @Value("${artemis.hyperion.agent.max-semantic-repairs:6}") int maxSemanticRepairs, @Value("${artemis.hyperion.agent.transcript-dir:}") String transcriptDirectory) {
+        if (maxSemanticRepairs < 1 || maxSemanticRepairs > 12) {
+            throw new IllegalArgumentException("Configure 1–12 semantic repairs");
         }
         this.observations = observations;
         this.mapper = mapper;
         this.sandbox = sandbox;
-        this.models = List.copyOf(models);
+        this.llmClientService = llmClientService;
         this.maxSemanticRepairs = maxSemanticRepairs;
-        this.retriesDisabled = effectiveProviderRetries == 0;
-        this.providerTimeout = providerTimeout;
         this.transcripts = new AgentTranscriptWriter(transcriptDirectory);
+    }
+
+    /**
+     * Resolves the preset core assigned to this run in the worker's own configuration. Core and workers must carry the same {@code artemis.llm} block; a
+     * worker without the preset, or with SDK retries for it, fails the run at its start instead of producing unaccounted calls.
+     */
+    ChatModel workerModel(String llmPreset) {
+        try {
+            llmClientService.preset(llmPreset);
+        }
+        catch (IllegalArgumentException e) {
+            throw new IllegalStateException(
+                    "This AI worker has no LLM preset '" + llmPreset + "' under artemis.llm.presets; configure the same artemis.llm block on core and workers", e);
+        }
+        if (llmClientService.effectiveMaxRetries(llmPreset) != 0) {
+            throw new IllegalStateException("The LLM preset '" + llmPreset + "' retries in the SDK; exercise generation needs max-retries 0 on the preset or its endpoint");
+        }
+        return llmClientService.chatModel(llmPreset);
     }
 
     @Override
@@ -144,7 +148,9 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
 
     private GenerationOutput generateObserved(GenerationAssignment assignment, BooleanSupplier cancelled, GenerationObserver observer, Consumer<GenerationOutput> checkpoint) {
         var parameters = assignment.parameters();
-        var usage = new WorkerUsageRecorder(parameters.maxTokens(), parameters.cachedInputTokenWeight(), retriesDisabled,
+        ChatModel model = workerModel(parameters.llmPreset());
+        // Presets of exercise generation never retry in the SDK (checked above), so every provider call is accounted for.
+        var usage = new WorkerUsageRecorder(parameters.maxTokens(), parameters.cachedInputTokenWeight(),
                 event -> observer.progress("Provider usage recorded.", new GenerationProgress(null, null, null, event)));
         BooleanSupplier stopAuthoring = stopAuthoring(cancelled, usage, assignment.authoringDeadline());
         var progress = progressSink(observer);
@@ -155,10 +161,9 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         var verifier = new DifferentialVerifier(commands, approvedSpecs, stopVerification(cancelled, assignment.authoringDeadline()));
         var stageChecks = new StageChecks(verifier, approvedSpecs);
         var prompt = new AgentSystemPrompt(commands);
-        var runner = new AgentLoopRunner(models, parameters.contextWindowTokens(), Duration.ofMinutes(5), cooldown);
-        var model = models.getFirst();
+        var runner = new AgentLoopRunner(List.of(model), parameters.contextWindowTokens(), Duration.ofMinutes(5), cooldown).withRepairModel(repairModel(parameters));
         var critic = new SpecFidelityCritic(ChatClient.create(new HarmonyScrubbingChatModel(model)), mapper, new PromptTemplates(), model.getOptions().getModel(),
-                Duration.ofMinutes(5), cooldown, parameters.contextWindowTokens(), models);
+                Duration.ofMinutes(5), cooldown, parameters.contextWindowTokens(), List.of(model));
         var stages = new StagedGenerationRunner(runner, prompt, stageChecks, transcripts, approvedSpecs, critic, new ExerciseConceptSelector(runner, critic),
                 parameters.stagedContext(), parameters.maxDuration(), parameters.maxTurns());
         var orchestrator = new GenerationOrchestrator(sandbox.forExecution(assignment.identity().executionId()), workspace, runner, verifier, prompt,
@@ -173,7 +178,8 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         active.put(assignment.identity(), orchestrator);
         try {
             var outcome = orchestrator.generate(input, assignment.seed(), brief.prompt(), assignment.identity().jobId(), brief.mode(), stopAuthoring, progress, files, usage,
-                    brief.sourceBrief(), settings(parameters), spec -> files.accept(new GenerationProgress.FileChange("SPEC.md", "write", 0, Instant.now(), boundedSpec(spec))),
+                    brief.sourceBrief(), settings(parameters, model),
+                    spec -> files.accept(new GenerationProgress.FileChange("SPEC.md", "write", 0, Instant.now(), boundedSpec(spec))),
                     candidate -> checkpoint.accept(GenerationOutputCapture.capture(assignment, candidate, usage, true)));
             return GenerationOutputCapture.capture(assignment, outcome, usage, false);
         }
@@ -203,31 +209,30 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         return true;
     }
 
-    HyperionGenerationSettings settings(GenerationParameters parameters) {
-        var defaults = models.getFirst().getOptions();
+    /**
+     * Resolves the run's repair preset like its primary preset, so a worker without it fails the run at its start rather than at the handoff. A repair preset equal to the
+     * primary one would hand the repair to the same model, so it disables the handoff.
+     */
+    AgentLoopRunner.@Nullable RepairModel repairModel(GenerationParameters parameters) {
+        String repairPreset = parameters.repairLlmPreset();
+        if (repairPreset == null || repairPreset.equals(parameters.llmPreset())) {
+            return null;
+        }
+        ChatModel repair = workerModel(repairPreset);
+        var defaults = repair.getOptions();
         var builder = defaults instanceof OpenAiChatOptions openAi ? openAi.mutate() : OpenAiChatOptions.builder();
-        // Spring AI's default chat options carry 60s even when its configured HTTP client has a longer timeout.
-        builder.timeout(providerTimeout);
-        if (parameters.model() != null) {
-            builder.model(parameters.model());
-        }
-        if (parameters.reasoningEffort() != null) {
-            builder.reasoningEffort(parameters.reasoningEffort());
-        }
-        if (parameters.temperature() != null) {
-            builder.temperature(parameters.temperature());
-        }
-        if (parameters.topP() != null) {
-            builder.topP(parameters.topP());
-        }
-        if (parameters.maxCompletionTokens() != null) {
-            builder.maxTokens(null).maxCompletionTokens(parameters.maxCompletionTokens());
-        }
-        if (parameters.verbosity() != null) {
-            builder.verbosity(parameters.verbosity());
-        }
+        builder.timeout(llmClientService.effectiveTimeout(repairPreset));
+        return new AgentLoopRunner.RepairModel(repairPreset, repair, builder.build());
+    }
+
+    HyperionGenerationSettings settings(GenerationParameters parameters, ChatModel model) {
+        var defaults = model.getOptions();
+        var builder = defaults instanceof OpenAiChatOptions openAi ? openAi.mutate() : OpenAiChatOptions.builder();
+        // Spring AI's default chat options carry 60s even when the configured HTTP client has a longer timeout.
+        builder.timeout(llmClientService.effectiveTimeout(parameters.llmPreset()));
         return new HyperionGenerationSettings(parameters.effortProfile(), null, parameters.maxTurns(), parameters.maxDuration(), parameters.maxTokens(),
-                parameters.stagedGeneration(), parameters.stagedContext(), parameters.contextWindowTokens(), builder.build(), false, true, parameters.repairModel());
+                parameters.stagedGeneration(), parameters.stagedContext(), parameters.contextWindowTokens(), parameters.llmPreset(), builder.build(), false, true,
+                parameters.repairLlmPreset());
     }
 
     private static String boundedSpec(String spec) {

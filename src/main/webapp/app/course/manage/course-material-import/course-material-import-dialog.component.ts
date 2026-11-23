@@ -1,12 +1,18 @@
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
-import { DialogModule } from 'primeng/dialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
-import { CheckboxModule } from 'primeng/checkbox';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiPaginatorComponent,
+    TumAetUiProgressSpinnerComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+} from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -26,15 +32,15 @@ type DialogStep = 'selectCourse' | 'selectOptions';
     selector: 'jhi-course-material-import-dialog',
     imports: [
         FormsModule,
-        DialogModule,
+        TumAetUiDialogComponent,
         TumAetUiButtonDirective,
         FaIconComponent,
-        CheckboxModule,
+        TumAetUiCheckboxComponent,
         TumAetUiTableDirective,
         TumAetUiTableLayoutComponent,
         TumAetUiInputDirective,
         TumAetUiPaginatorComponent,
-        ProgressSpinnerModule,
+        TumAetUiProgressSpinnerComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
     ],

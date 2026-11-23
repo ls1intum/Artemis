@@ -1,5 +1,5 @@
 .course-card-header {
-    // needed, otherwise hover effect won't work due to stretched-link class
+    // needed, otherwise the hover effect won't work because the cover link of the card lies on top
     z-index: 2;
     position: relative;
     height: 85px;
@@ -17,22 +17,18 @@
         background-color: color-mix(in srgb, var(--background-color-for-hover) 88%, var(--title-color) 12%) !important;
     }
 
-    .container {
-        height: 80px;
-
-        .row {
-            height: 80px;
-        }
-    }
-
     // The flex item that holds the title has to be allowed to shrink below its content width. Otherwise a long word
     // keeps it wider than the card and the title overflows instead of wrapping.
     .course-title-container {
         min-width: 0;
     }
 
-    .card-title {
-        // Three lines (3 * 1.2 * 1.25rem = 72px) fit into the 85px header. The clamp ends the title with an ellipsis,
+    .course-title {
+        font-size: 16px;
+        color: inherit;
+        margin-top: 0;
+
+        // Three lines (3 * 1.2 * 16px = 57.6px) fit into the 85px header. The clamp ends the title with an ellipsis,
         // where a fixed max-height cut the fourth line in half. The full title is available as tooltip.
         display: -webkit-box;
         -webkit-box-orient: vertical;
@@ -43,7 +39,7 @@
         // break a word that is wider than the card rather than overflowing it
         overflow-wrap: anywhere;
 
-        // the title is centered vertically, so it must not carry the bottom margin of Bootstrap's .card-title
+        // the title is centered vertically, so it must not carry the bottom margin of a heading
         margin-bottom: 0;
     }
 
@@ -53,11 +49,29 @@
         min-width: 65px;
         background-color: var(--course-image-bg);
         border-radius: 50%;
-        display: inline-block;
-        color: var(--bs-body-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--body-color);
+
+        .course-initial {
+            // the responsive size of a fourth-level heading
+            font-size: calc(1.275rem + 0.3vw);
+
+            @media (min-width: 1200px) {
+                font-size: 1.5rem;
+            }
+        }
     }
 
-    .card-header-notification-bubble {
+    .cover-link::after {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        content: '';
+    }
+
+    .notification-bubble-anchor {
         position: absolute;
         top: 0;
         right: -0.5rem;
@@ -95,18 +109,10 @@
     border-inline-start: 1px solid color-mix(in srgb, var(--title-color), transparent 70%);
 }
 
-.container {
-    max-width: unset;
-}
-
 jhi-image {
     ::ng-deep img {
         border-radius: 50%;
         height: 65px;
         width: auto;
     }
-}
-
-.card-header-title {
-    max-width: 280px;
 }

@@ -375,18 +375,9 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
             return "ERROR: file exceeds the workspace size limit. No file was written.";
         }
         String safe = SandboxPathPolicy.workspaceRelativePath(path);
-        if (safe == null) {
-            return SandboxPathPolicy.invalidPathError(path);
-        }
-        if (!SandboxPathPolicy.isWritableGenerationPath(safe)) {
-            return "ERROR: write only SPEC.md, test-plan.json, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
-        }
-        String stageRejection = stageWriteRejection(safe);
-        if (stageRejection != null) {
-            return stageRejection;
-        }
-        if (SandboxPathPolicy.isManagedBuildInfrastructurePath(safe)) {
-            return SandboxPathPolicy.immutableHarnessError(safe);
+        String pathRejection = writablePathRejection(path, safe, "write");
+        if (pathRejection != null) {
+            return pathRejection;
         }
         String contractRejection = approvedContractWriteRejection(safe, content);
         if (contractRejection != null) {
@@ -484,18 +475,9 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
     public String deleteFile(@ToolParam(description = AgentToolDescriptions.DELETE_FILE_PATH) String path) {
         latestMutationContent = null;
         String safe = SandboxPathPolicy.workspaceRelativePath(path);
-        if (safe == null) {
-            return SandboxPathPolicy.invalidPathError(path);
-        }
-        if (!SandboxPathPolicy.isWritableGenerationPath(safe)) {
-            return "ERROR: delete only SPEC.md, test-plan.json, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
-        }
-        String stageRejection = stageWriteRejection(safe);
-        if (stageRejection != null) {
-            return stageRejection;
-        }
-        if (SandboxPathPolicy.isManagedBuildInfrastructurePath(safe)) {
-            return SandboxPathPolicy.immutableHarnessError(safe);
+        String pathRejection = writablePathRejection(path, safe, "delete");
+        if (pathRejection != null) {
+            return pathRejection;
         }
         if ("SPEC.md".equals(safe)) {
             String contractRejection = approvedContractWriteRejection(safe, "");
@@ -687,6 +669,22 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
             seededStructuralTests.set(result == null ? SeededStructuralTests.EMPTY : result);
         }
         return seededStructuralTests.get();
+    }
+
+    /** Validates structured mutations in the same order, retaining the operation in root-path errors. */
+    private @Nullable String writablePathRejection(String path, @Nullable String safe, String operation) {
+        if (safe == null) {
+            return SandboxPathPolicy.invalidPathError(path);
+        }
+        if (!SandboxPathPolicy.isWritableGenerationPath(safe)) {
+            return "ERROR: " + operation
+                    + " only SPEC.md, test-plan.json, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.";
+        }
+        String stageRejection = stageWriteRejection(safe);
+        if (stageRejection != null) {
+            return stageRejection;
+        }
+        return SandboxPathPolicy.isManagedBuildInfrastructurePath(safe) ? SandboxPathPolicy.immutableHarnessError(safe) : null;
     }
 
     /**

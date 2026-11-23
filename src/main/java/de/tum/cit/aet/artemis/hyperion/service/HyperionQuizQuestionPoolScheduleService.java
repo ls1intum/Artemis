@@ -22,6 +22,8 @@ import org.springframework.core.task.TaskRejectedException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -59,13 +61,16 @@ public class HyperionQuizQuestionPoolScheduleService {
 
     private final HyperionQuizQuestionPoolModelService modelService;
 
+    private final FeatureToggleService featureToggleService;
+
     private final TaskExecutor executor;
 
     private final Duration window;
 
     public HyperionQuizQuestionPoolScheduleService(HyperionCourseSettingsRepository settingsRepository, CourseRepository courseRepository,
             QuizQuestionPoolBuildRepository buildRepository, HyperionQuizQuestionPoolBuildService buildService, HyperionQuizQuestionPoolModelService modelService,
-            @Qualifier("hyperionQuizQuestionPoolTaskExecutor") TaskExecutor executor, @Value("${artemis.hyperion.quiz-pool.schedule-window-hours:7}") int windowHours) {
+            FeatureToggleService featureToggleService, @Qualifier("hyperionQuizQuestionPoolTaskExecutor") TaskExecutor executor,
+            @Value("${artemis.hyperion.quiz-pool.schedule-window-hours:7}") int windowHours) {
         if (windowHours < 1 || windowHours > 23) {
             throw new IllegalArgumentException("artemis.hyperion.quiz-pool.schedule-window-hours must be between 1 and 23, got " + windowHours);
         }
@@ -74,6 +79,7 @@ public class HyperionQuizQuestionPoolScheduleService {
         this.buildRepository = buildRepository;
         this.buildService = buildService;
         this.modelService = modelService;
+        this.featureToggleService = featureToggleService;
         this.executor = executor;
         this.window = Duration.ofHours(windowHours);
     }
@@ -101,6 +107,9 @@ public class HyperionQuizQuestionPoolScheduleService {
      * @return the number of courses whose pool was built
      */
     int buildEnabledPools(ZonedDateTime now, ZonedDateTime deadline) {
+        if (!featureToggleService.isFeatureEnabled(Feature.SmartQuizzes)) {
+            return 0;
+        }
         if (!modelService.isConfigured()) {
             log.warn("Scheduled quiz question pool build skipped: no model is configured for the pool");
             return 0;
@@ -108,7 +117,7 @@ public class HyperionQuizQuestionPoolScheduleService {
         List<Long> courseIds = coursesInBuildOrder();
         log.info("Scheduled quiz question pool build: {} courses enabled, window ends at {}", courseIds.size(), deadline);
         int built = 0;
-        for (int position = 0; position < courseIds.size(); position++) {
+        for (int position = 0; position < courseIds.size() && featureToggleService.isFeatureEnabled(Feature.SmartQuizzes); position++) {
             if (!ZonedDateTime.now().isBefore(deadline)) {
                 log.info("Scheduled quiz question pool build: the window ended, {} courses wait for the next run", courseIds.size() - position);
                 break;

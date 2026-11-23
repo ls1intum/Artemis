@@ -15,7 +15,7 @@ import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
 
@@ -38,7 +38,7 @@ class ArtemisVersionServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        service = new ArtemisVersionService(mock(RestTemplate.class), mock(CacheManager.class));
+        service = new ArtemisVersionService(mock(RestClient.class), mock(CacheManager.class));
         isNewerVersionAvailable = ArtemisVersionService.class.getDeclaredMethod("isNewerVersionAvailable", String.class, String.class);
         isNewerVersionAvailable.setAccessible(true);
     }
@@ -109,11 +109,11 @@ class ArtemisVersionServiceTest {
         CacheManager cacheManager = new ConcurrentMapCacheManager();
         ArtemisVersionDTO cached = new ArtemisVersionDTO("10.0", "10.0", false, null, null, Instant.now().toString());
         cacheManager.getCache("artemisVersion").put("latestVersion:10.0", cached);
-        RestTemplate restTemplate = new RestTemplate();
+        RestClient.Builder restClient = RestClient.builder();
         // No request is expected, so any call to GitHub fails the test
-        MockRestServiceServer server = MockRestServiceServer.bindTo(restTemplate).build();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(restClient).build();
 
-        ArtemisVersionDTO versionInfo = createService(restTemplate, cacheManager, "10.0").getVersionInfo();
+        ArtemisVersionDTO versionInfo = createService(restClient, cacheManager, "10.0").getVersionInfo();
 
         server.verify();
         assertThat(versionInfo).isEqualTo(cached);
@@ -134,18 +134,18 @@ class ArtemisVersionServiceTest {
     }
 
     private static ArtemisVersionDTO fetchWith(String currentVersion, CacheManager cacheManager, String... releases) {
-        RestTemplate restTemplate = new RestTemplate();
-        MockRestServiceServer server = MockRestServiceServer.bindTo(restTemplate).build();
+        RestClient.Builder restClient = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(restClient).build();
         server.expect(requestTo(RELEASES_URL)).andRespond(withSuccess("[" + String.join(",", releases) + "]", MediaType.APPLICATION_JSON));
 
-        ArtemisVersionDTO versionInfo = createService(restTemplate, cacheManager, currentVersion).getVersionInfo();
+        ArtemisVersionDTO versionInfo = createService(restClient, cacheManager, currentVersion).getVersionInfo();
 
         server.verify();
         return versionInfo;
     }
 
-    private static ArtemisVersionService createService(RestTemplate restTemplate, CacheManager cacheManager, String currentVersion) {
-        ArtemisVersionService versionService = new ArtemisVersionService(restTemplate, cacheManager);
+    private static ArtemisVersionService createService(RestClient.Builder restClient, CacheManager cacheManager, String currentVersion) {
+        ArtemisVersionService versionService = new ArtemisVersionService(restClient.build(), cacheManager);
         ReflectionTestUtils.setField(versionService, "currentVersion", currentVersion);
         return versionService;
     }

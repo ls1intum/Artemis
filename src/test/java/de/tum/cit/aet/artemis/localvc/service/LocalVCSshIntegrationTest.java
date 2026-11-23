@@ -2,20 +2,25 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.channels.UnresolvedAddressException;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;
@@ -29,8 +34,16 @@ import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.session.ServerSession;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.SshTransport;
+import org.eclipse.jgit.transport.sshd.ServerKeyDatabase;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +55,8 @@ import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshGitCommand;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
@@ -243,11 +258,11 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
             assertThat(outputStream).isNotNull();
             assertThat(outputStream.size()).isGreaterThan(0); // Assuming the command produces some output
 
-            // 3. Verify cacheAttributesInSshSession stored data in the session during receive-pack execution
-            var cachedAccessLog = ((ServerSession) serverSession).getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
-            assertThat(cachedAccessLog).as("cacheAttributesInSshSession should cache access log for template repo").isNotNull();
-            assertThat(cachedAccessLog.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.SSH);
-            assertThat(cachedAccessLog.getUser().getLogin()).isEqualTo(user.getLogin());
+            // 3. Verify cacheAttributesInSshSession stored who the command is for in the session during receive-pack execution
+            var cachedSubject = ((ServerSession) serverSession).getAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY);
+            assertThat(cachedSubject).as("cacheAttributesInSshSession should cache the subject of the access log for the template repo").isNotNull();
+            assertThat(cachedSubject.mechanism()).isEqualTo(AuthenticationMechanism.SSH);
+            assertThat(cachedSubject.user().getLogin()).isEqualTo(user.getLogin());
         }
     }
 
@@ -311,11 +326,98 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
             assertThat(serverSession.isOpen()).isTrue();
 
             // When participation is absent, cacheAttributesInSshSession should NOT cache anything
-            var cachedAccessLog = ((ServerSession) serverSession).getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
-            assertThat(cachedAccessLog).as("No VCS access log should be cached when participation is absent").isNull();
+            var cachedSubject = ((ServerSession) serverSession).getAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY);
+            assertThat(cachedSubject).as("No subject of the VCS access log should be cached when participation is absent").isNull();
             var cachedParticipation = ((ServerSession) serverSession).getAttribute(SshConstants.PARTICIPATION_KEY);
             assertThat(cachedParticipation).as("No participation should be cached for tests repo").isNull();
         }
+    }
+
+    /**
+     * An instructor who pushes commits into the repository of a student over ssh, as in the report that a push was recorded as a clone. Every operation writes one entry of its
+     * own kind, and the push carries the commit it delivered.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testEachSshOperationIsLoggedOnceWithItsOwnKind(@TempDir Path tempDir) throws Exception {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair = setupKeyPairAndAddToUser();
+        User instructor = userTestRepository.getUser();
+        SshdSessionFactory sessionFactory = sshSessionFactory(keyPair, tempDir);
+        String repositoryUri = "ssh://git@" + URI.create(artemisServerUrl).getHost() + ":" + sshPort + "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git";
+
+        try (Git clone = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDir.resolve("clone").toFile())
+                .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call()) {
+            // The entry is written when the command is over, which is just after the client has its answer, so the test waits for it.
+            assertThat(awaitAccessLog(participation.getId(), 1)).singleElement().satisfies(entry -> {
+                assertThat(entry.getRepositoryActionType()).isEqualTo(RepositoryActionType.CLONE);
+                assertThat(entry.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.SSH);
+                assertThat(entry.getUser().getId()).isEqualTo(instructor.getId());
+            });
+
+            String commit = localVCLocalCITestService.commitFile(tempDir.resolve("clone"), clone, "pushed-by-the-instructor.txt");
+            clone.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("HEAD:refs/heads/" + localVCLocalCITestService.getDefaultBranch()))
+                    .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+
+            var entries = awaitAccessLog(participation.getId(), 2);
+            assertThat(entries).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.CLONE, RepositoryActionType.PUSH);
+            assertThat(entries.getLast().getCommitHash()).as("the push carries the commit it delivered").isEqualTo(commit);
+            assertThat(entries.getLast().getUser().getId()).isEqualTo(instructor.getId());
+
+            // A commit that arrives from elsewhere is transferred by the next fetch, which is a pull, once, whatever number of connections JGit opens.
+            try (Git otherClone = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDir.resolve("other-clone").toFile())
+                    .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call()) {
+                awaitAccessLog(participation.getId(), 3);
+                localVCLocalCITestService.commitFile(tempDir.resolve("other-clone"), otherClone, "pushed-from-elsewhere.txt");
+                otherClone.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("HEAD:refs/heads/" + localVCLocalCITestService.getDefaultBranch()))
+                        .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+            }
+            awaitAccessLog(participation.getId(), 4);
+            clone.fetch().setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+
+            assertThat(awaitAccessLog(participation.getId(), 5)).extracting(VcsAccessLog::getRepositoryActionType).containsExactly(RepositoryActionType.CLONE,
+                    RepositoryActionType.PUSH, RepositoryActionType.CLONE, RepositoryActionType.PUSH, RepositoryActionType.PULL);
+
+            // Fetching and pushing again moves nothing, which is still an access to the repository and is written, with the newest commit as it is now.
+            clone.fetch().setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+            var afterFetch = awaitAccessLog(participation.getId(), 6);
+            assertThat(afterFetch.getLast().getRepositoryActionType()).isEqualTo(RepositoryActionType.READ);
+            assertThat(afterFetch.getLast().getCommitHash()).as("the newest commit is the one the previous pull received").isEqualTo(afterFetch.get(4).getCommitHash());
+            clone.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("HEAD:refs/heads/" + localVCLocalCITestService.getDefaultBranch()))
+                    .setTransportConfigCallback(transport -> ((SshTransport) transport).setSshSessionFactory(sessionFactory)).call();
+            var afterPush = awaitAccessLog(participation.getId(), 7);
+            assertThat(afterPush.getLast().getRepositoryActionType()).isEqualTo(RepositoryActionType.WRITE);
+            assertThat(afterPush.getLast().getUser().getId()).isEqualTo(instructor.getId());
+        }
+    }
+
+    /**
+     * The entries that people caused. A build agent that clones for the build job of a push writes an entry of its own, with no user, at a moment nobody controls.
+     */
+    private List<VcsAccessLog> accessLogOfPeople(long participationId) {
+        return vcsAccessLogRepository.findAllByParticipationId(participationId).stream().filter(entry -> entry.getUser() != null).toList();
+    }
+
+    private List<VcsAccessLog> awaitAccessLog(long participationId, int count) {
+        await().atMost(Duration.ofSeconds(10)).until(() -> accessLogOfPeople(participationId).size() >= count);
+        return accessLogOfPeople(participationId);
+    }
+
+    private static SshdSessionFactory sshSessionFactory(KeyPair keyPair, Path sshHome) {
+        ServerKeyDatabase acceptsAnyServerKey = new ServerKeyDatabase() {
+
+            @Override
+            public List<PublicKey> lookup(String connectAddress, InetSocketAddress remoteAddress, Configuration config) {
+                return List.of();
+            }
+
+            @Override
+            public boolean accept(String connectAddress, InetSocketAddress remoteAddress, PublicKey serverKey, Configuration config, CredentialsProvider provider) {
+                return true;
+            }
+        };
+        return new SshdSessionFactoryBuilder().setPreferredAuthentications("publickey").setHomeDirectory(sshHome.toFile()).setSshDirectory(sshHome.toFile())
+                .setDefaultKeysProvider(_ -> List.of(keyPair)).setServerKeyDatabase((_, _) -> acceptsAnyServerKey).build(null);
     }
 
     private SshGitCommand setupCommand(String commandString, ServerSession serverSession) {

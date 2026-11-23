@@ -9,7 +9,6 @@ import { MockProvider } from 'ng-mocks';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
-import { HttpResponse } from '@angular/common/http';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -33,7 +32,7 @@ describe('CourseLecturesComponent', () => {
                 }),
                 MockProvider(CourseOverviewService),
                 MockProvider(LectureService, {
-                    find: () => of(new HttpResponse({ body: new Lecture() })),
+                    find: () => of(new Lecture()),
                     // The lectures tab loads its own lectures instead of reading them off the course
                     findAllByCourseIdForOverview: () => of([] as LectureForOverview[]),
                 }),
@@ -153,8 +152,8 @@ describe('CourseLecturesComponent', () => {
 
     it('should cancel an in-flight multi-launch detail load when the course changes', () => {
         const params = new BehaviorSubject({ courseId: '1' });
-        const firstDetail = new Subject<HttpResponse<Lecture>>();
-        const secondDetail = new Subject<HttpResponse<Lecture>>();
+        const firstDetail = new Subject<Lecture>();
+        const secondDetail = new Subject<Lecture>();
         const route = TestBed.inject(ActivatedRoute) as any;
         route.parent.params = params.asObservable();
         route.queryParams = of({ lectureIDs: '7' });
@@ -170,9 +169,9 @@ describe('CourseLecturesComponent', () => {
         expect(firstDetail.observed).toBe(false);
         expect(secondDetail.observed).toBe(true);
 
-        firstDetail.next(new HttpResponse({ body: { id: 7, title: 'Stale detail' } as Lecture }));
+        firstDetail.next({ id: 7, title: 'Stale detail' } as Lecture);
         firstDetail.complete();
-        secondDetail.next(new HttpResponse({ body: { id: 7, title: 'New detail' } as Lecture }));
+        secondDetail.next({ id: 7, title: 'New detail' } as Lecture);
         secondDetail.complete();
 
         expect(component.sortedLectures).toEqual([{ id: 7, title: 'New detail' }]);
@@ -276,7 +275,7 @@ describe('CourseLecturesComponent', () => {
         const lecture2 = new Lecture();
         lecture2.id = 2;
 
-        vi.spyOn(lectureService, 'find').mockImplementation((id: number) => of(new HttpResponse({ body: id === 1 ? lecture1 : lecture2 })));
+        vi.spyOn(lectureService, 'find').mockImplementation((id: number) => of(id === 1 ? lecture1 : lecture2));
 
         (TestBed.inject(ActivatedRoute) as any).queryParams = of({ lectureIDs: '1,2' });
 

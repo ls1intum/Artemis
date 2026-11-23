@@ -477,6 +477,40 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void structuredMutationsKeepOperationSpecificRootErrors() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.writeFile("buildSrc/build.gradle", "plugins {}")).isEqualTo(
+                "ERROR: write only SPEC.md, test-plan.json, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.");
+        assertThat(tools.deleteFile("buildSrc/build.gradle")).isEqualTo(
+                "ERROR: delete only SPEC.md, test-plan.json, problem-statement.md, or files inside solution/, template/, or tests/. Workspace build infrastructure is managed by Artemis.");
+        assertThat(sandbox.execCount()).isZero();
+    }
+
+    @Test
+    void structuredMutationsRejectTheStageBeforeManagedInfrastructure() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+        tools.enterStage(GenerationStage.SPEC);
+
+        assertThat(tools.writeFile("/workspace/tests/pom.xml", "<project/>")).isEqualTo(tools.deleteFile("/workspace/tests/pom.xml"))
+                .contains("current SPEC stage cannot write 'tests/pom.xml'");
+        assertThat(sandbox.execCount()).isZero();
+    }
+
+    @Test
+    void deleteFileRetainsTheApprovedSpecificationGuard() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        StageChecks stageChecks = mock(StageChecks.class);
+        when(stageChecks.validateArtifactWrite("s", "SPEC.md", "")).thenReturn(Optional.of("ERROR: approved specification is read-only"));
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", null, null, Map.of(), false, stageChecks);
+
+        assertThat(tools.deleteFile("/workspace/SPEC.md")).isEqualTo("ERROR: approved specification is read-only");
+        assertThat(sandbox.execCount()).isZero();
+    }
+
+    @Test
     void writeFile_rejectsTestsRepositoryHarnessFiles() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");

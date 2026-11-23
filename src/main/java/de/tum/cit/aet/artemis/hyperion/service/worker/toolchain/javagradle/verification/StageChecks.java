@@ -414,27 +414,35 @@ public class StageChecks {
     record RiskInventoryRow(String seamId, String ruleIds, String admittedPartitions) {
     }
 
-    /** The first cell is the type and the FINAL cell is the closed-set template status, whatever columns a specification puts in between. */
-    static List<DesignRow> designTableRows(String spec) {
-        int start = spec.indexOf("## Design");
+    /** Scans structured SPEC tables without interpreting their section-specific cells. */
+    private static List<String> tableDataLines(String spec, String heading) {
+        int start = spec.indexOf(heading);
         if (start < 0) {
             return List.of();
         }
-        List<DesignRow> rows = new ArrayList<>();
+        List<String> rows = new ArrayList<>();
         boolean pastHeader = false;
         for (String line : spec.substring(start).lines().map(String::strip).toList()) {
-            if (line.startsWith("## ") && !line.startsWith("## Design")) {
+            if (line.startsWith("## ") && !line.startsWith(heading)) {
                 break;
             }
             if (!line.startsWith("|")) {
                 continue;
             }
-            if (!pastHeader) {
-                if (line.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ')) {
-                    pastHeader = true;
-                }
-                continue;
+            if (pastHeader) {
+                rows.add(line);
             }
+            else if (line.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ')) {
+                pastHeader = true;
+            }
+        }
+        return List.copyOf(rows);
+    }
+
+    /** The first cell is the type and the FINAL cell is the closed-set template status, whatever columns a specification puts in between. */
+    static List<DesignRow> designTableRows(String spec) {
+        List<DesignRow> rows = new ArrayList<>();
+        for (String line : tableDataLines(spec, "## Design")) {
             String row = line.substring(1, line.endsWith("|") ? line.length() - 1 : line.length());
             List<String> cells = Arrays.stream(row.split("\\|", -1)).map(String::strip).toList();
             if (cells.isEmpty()) {
@@ -528,27 +536,10 @@ public class StageChecks {
 
     /** Invalid seam IDs are retained rather than dropped, so the SPEC gate can name them in its rejection. */
     static List<TestingStrategyRow> testingStrategyRows(String spec) {
-        int start = spec.indexOf("## Testing Strategy");
-        if (start < 0) {
-            return List.of();
-        }
         List<String> headers = testingStrategyHeaders(spec);
         int weightColumn = headers.indexOf("Weight") + 1;
         List<TestingStrategyRow> rows = new ArrayList<>();
-        boolean pastHeader = false;
-        for (String line : spec.substring(start).lines().map(String::strip).toList()) {
-            if (line.startsWith("## ") && !line.startsWith("## Testing Strategy")) {
-                break;
-            }
-            if (!line.startsWith("|")) {
-                continue;
-            }
-            if (!pastHeader) {
-                if (line.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ')) {
-                    pastHeader = true;
-                }
-                continue;
-            }
+        for (String line : tableDataLines(spec, "## Testing Strategy")) {
             String[] columns = line.split("\\|", -1);
             String seam = columns.length > 1 ? normalizeTestingCell(columns[1]) : "";
             String owner = columns.length > 2 ? normalizeTestingCell(columns[2]) : "";
@@ -599,25 +590,8 @@ public class StageChecks {
 
     /** Invalid and incomplete rows are retained so the SPEC gate can reject them with their exact seam ID. */
     static List<RiskInventoryRow> riskInventoryRows(String spec) {
-        int start = spec.indexOf(CONTRACT_RISK_INVENTORY_HEADING);
-        if (start < 0) {
-            return List.of();
-        }
         List<RiskInventoryRow> rows = new ArrayList<>();
-        boolean pastHeader = false;
-        for (String line : spec.substring(start).lines().map(String::strip).toList()) {
-            if (line.startsWith("## ") && !line.startsWith(CONTRACT_RISK_INVENTORY_HEADING)) {
-                break;
-            }
-            if (!line.startsWith("|")) {
-                continue;
-            }
-            if (!pastHeader) {
-                if (line.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ')) {
-                    pastHeader = true;
-                }
-                continue;
-            }
+        for (String line : tableDataLines(spec, CONTRACT_RISK_INVENTORY_HEADING)) {
             String[] columns = line.split("\\|", -1);
             String seam = columns.length > 1 ? normalizeTestingCell(columns[1]) : "";
             String rules = columns.length > 2 ? normalizeTestingCell(columns[2]) : "";

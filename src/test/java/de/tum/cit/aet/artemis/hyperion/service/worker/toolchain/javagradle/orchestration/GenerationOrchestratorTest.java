@@ -1875,8 +1875,8 @@ class GenerationOrchestratorTest {
         when(specFidelityCritic.forSettings(any())).thenReturn(specFidelityCritic);
         when(stagedGenerationRunner.forSettings(any(), any(), any())).thenReturn(stagedGenerationRunner);
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
-        HyperionGenerationSettings draft = new HyperionGenerationSettings("draft", "Quick draft", 20, java.time.Duration.ofMinutes(12), 600_000L, false, "CONTINUOUS", 64_000, null,
-                false, false);
+        HyperionGenerationSettings draft = new HyperionGenerationSettings("draft", "Quick draft", 20, java.time.Duration.ofMinutes(12), 600_000L, false, "CONTINUOUS", 64_000,
+                "testpreset", null, false, false);
 
         newService().generate(exercise, SEED, "Build a bubble sort exercise.", JOB_ID, Mode.GENERATE, () -> false, null, null, null, null, draft, _ -> {
         }, _ -> {

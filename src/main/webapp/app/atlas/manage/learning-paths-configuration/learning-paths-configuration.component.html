@@ -1,6 +1,6 @@
 <div>
     <div class="flex items-center justify-between">
-        <h5 class="m-0!" jhiTranslate="artemisApp.learningPathManagement.learningPathsConfiguration.title"></h5>
+        <h5 class="m-0" jhiTranslate="artemisApp.learningPathManagement.learningPathsConfiguration.title"></h5>
         @if (isEditMode()) {
             <button type="button" id="save-learning-paths-configuration-button" tumAetUiButton severity="primary" size="small" (click)="saveLearningPathsConfiguration()">
                 @if (isSaving()) {
@@ -20,7 +20,7 @@
             ></button>
         }
     </div>
-    <hr class="my-2!" />
+    <hr class="my-2" />
     <div class="flex max-h-[220px] items-center gap-2 overflow-y-auto">
         @if (isConfigLoading()) {
             <div class="flex w-full justify-center p-2">

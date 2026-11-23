@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orch
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -24,15 +25,16 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
+import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationAssignment;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput.AccountingState;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationParameters;
-import de.tum.cit.aet.artemis.hyperion.protocol.GenerationProgress;
 import de.tum.cit.aet.artemis.hyperion.protocol.GradingContext;
-import de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
 import de.tum.cit.aet.artemis.hyperion.service.worker.GenerationObserver;
 import io.micrometer.observation.Observation;
@@ -49,16 +51,30 @@ class JavaGradleGenerationAdapterTest {
 
     private final GenerationObserver observer = mock(GenerationObserver.class);
 
+    private final LlmClientService llmClientService = mock(LlmClientService.class);
+
     private JavaGradleGenerationAdapterService engine(int retries) {
         when(sandbox.forExecution(org.mockito.ArgumentMatchers.any())).thenReturn(executionSandbox);
+        presetWithRetries(retries);
+        return adapter(ObservationRegistry.NOOP, 6);
+    }
+
+    private void presetWithRetries(int retries) {
         when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().model("test-model").build());
-        return new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 6, retries, null, Duration.ofMinutes(10), "");
+        when(llmClientService.preset("testpreset")).thenReturn(LlmTestCatalog.preset("test", "test-model", LlmProperties.Api.RESPONSES));
+        when(llmClientService.effectiveMaxRetries("testpreset")).thenReturn(retries);
+        when(llmClientService.effectiveTimeout("testpreset")).thenReturn(Duration.ofMinutes(10));
+        when(llmClientService.chatModel("testpreset")).thenReturn(model);
+    }
+
+    private JavaGradleGenerationAdapterService adapter(ObservationRegistry registry, int maxSemanticRepairs) {
+        return new JavaGradleGenerationAdapterService(sandbox, llmClientService, JsonObjectMapper.get(), registry, maxSemanticRepairs, "");
     }
 
     private static GenerationAssignment assignment(Instant deadline) {
         var identity = new ExecutionIdentity("job", 1, UUID.randomUUID(), "worker", UUID.randomUUID());
         var brief = new ExerciseBrief("Stack", "stack", "de.example", null, "Create a stack", ExerciseBrief.Mode.GENERATE);
-        var parameters = new GenerationParameters("standard", 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS");
+        var parameters = new GenerationParameters("standard", 10, 100_000, Duration.ofMinutes(5), 128_000, "testpreset", true, "CONTINUOUS", 0.5);
         return new GenerationAssignment(identity, brief, parameters, new WorkspaceSnapshot(List.of()), deadline, "sha256:" + "a".repeat(64),
                 new GradingContext(false, Set.of(), Set.of()));
     }
@@ -69,10 +85,10 @@ class JavaGradleGenerationAdapterTest {
         var a = assignment(Instant.now().plusSeconds(300));
         var brief = new ExerciseBrief("Stack", "stack", namespace, null, "Create", ExerciseBrief.Mode.GENERATE);
         var invalid = new GenerationAssignment(a.identity(), brief, a.parameters(), a.seed(), a.authoringDeadline(), a.imageDigest(), a.gradingContext());
-        var adapter = new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 6, 0, null, Duration.ofMinutes(10), "");
+        var adapter = adapter(ObservationRegistry.NOOP, 6);
         assertThatIllegalArgumentException().isThrownBy(() -> adapter.generate(invalid, () -> false, observer, ignored -> {
         }));
-        verifyNoInteractions(model, sandbox, observer);
+        verifyNoInteractions(model, sandbox, observer, llmClientService);
     }
 
     @Test
@@ -113,8 +129,75 @@ class JavaGradleGenerationAdapterTest {
     }
 
     @Test
-    void expiredAdmissionDeadlineStopsBeforeSandboxCreation() {
+    void unknownPresetOrPresetWithRetriesFailsTheRunBeforeSandboxWork() {
         var engine = engine(1);
+        assertThatIllegalStateException().isThrownBy(() -> engine.generate(assignment(Instant.now().plusSeconds(300)), () -> false, observer, ignored -> {
+        })).withMessageContaining("max-retries 0");
+
+        when(llmClientService.preset("testpreset")).thenThrow(new IllegalArgumentException("unknown"));
+        assertThatIllegalStateException().isThrownBy(() -> engine.generate(assignment(Instant.now().plusSeconds(300)), () -> false, observer, ignored -> {
+        })).withMessageContaining("no LLM preset 'testpreset'");
+        verifyNoInteractions(executionSandbox, observer);
+    }
+
+    @Test
+    void settingsUseThePresetTimeoutAndModelOptions() {
+        var engine = engine(0);
+        var settings = engine.settings(assignment(Instant.now()).parameters(), model);
+
+        assertThat(settings.llmPreset()).isEqualTo("testpreset");
+        assertThat(settings.chatOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+            assertThat(options.getModel()).isEqualTo("test-model");
+            assertThat(options.getTimeout()).isEqualTo(Duration.ofMinutes(10));
+        });
+    }
+
+    @Test
+    void repairPresetIsResolvedWithItsOwnModelAndTimeoutOrDisabledWhenItIsThePrimaryPreset() {
+        var engine = engine(0);
+        var primary = assignment(Instant.now()).parameters();
+        assertThat(engine.repairModel(primary)).isNull();
+        assertThat(engine.repairModel(withRepairPreset(primary, "testpreset"))).isNull();
+
+        ChatModel repair = mock(ChatModel.class);
+        when(repair.getOptions()).thenReturn(OpenAiChatOptions.builder().model("repair-model").build());
+        when(llmClientService.preset("repairpreset")).thenReturn(LlmTestCatalog.preset("repair", "repair-model", LlmProperties.Api.RESPONSES));
+        when(llmClientService.effectiveMaxRetries("repairpreset")).thenReturn(0);
+        when(llmClientService.effectiveTimeout("repairpreset")).thenReturn(Duration.ofMinutes(3));
+        when(llmClientService.chatModel("repairpreset")).thenReturn(repair);
+
+        var resolved = engine.repairModel(withRepairPreset(primary, "repairpreset"));
+        assertThat(resolved).isNotNull();
+        assertThat(resolved.preset()).isEqualTo("repairpreset");
+        assertThat(resolved.chatModel()).isSameAs(repair);
+        assertThat(resolved.options()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+            assertThat(options.getModel()).isEqualTo("repair-model");
+            assertThat(options.getTimeout()).isEqualTo(Duration.ofMinutes(3));
+        });
+        assertThat(engine.settings(withRepairPreset(primary, "repairpreset"), model).repairLlmPreset()).isEqualTo("repairpreset");
+    }
+
+    @Test
+    void aRepairPresetTheWorkerDoesNotConfigureFailsTheRunBeforeSandboxWork() {
+        var engine = engine(0);
+        when(llmClientService.preset("missing")).thenThrow(new IllegalArgumentException("unknown"));
+        var assignment = assignment(Instant.now().plusSeconds(300));
+        var withMissingRepair = new GenerationAssignment(assignment.identity(), assignment.brief(), withRepairPreset(assignment.parameters(), "missing"), assignment.seed(),
+                assignment.authoringDeadline(), assignment.imageDigest(), assignment.gradingContext());
+
+        assertThatIllegalStateException().isThrownBy(() -> engine.generate(withMissingRepair, () -> false, observer, ignored -> {
+        })).withMessageContaining("no LLM preset 'missing'");
+        verifyNoInteractions(executionSandbox, observer);
+    }
+
+    private static GenerationParameters withRepairPreset(GenerationParameters parameters, String repairPreset) {
+        return new GenerationParameters(parameters.effortProfile(), parameters.maxTurns(), parameters.maxTokens(), parameters.maxDuration(), parameters.contextWindowTokens(),
+                parameters.llmPreset(), parameters.stagedGeneration(), parameters.stagedContext(), parameters.cachedInputTokenWeight(), repairPreset);
+    }
+
+    @Test
+    void expiredAdmissionDeadlineStopsBeforeSandboxCreation() {
+        var engine = engine(0);
 
         var result = engine.generate(assignment(Instant.now().minusSeconds(1)), () -> false, observer, ignored -> {
             throw new AssertionError("No candidate can be verified after an already expired admission");
@@ -122,10 +205,9 @@ class JavaGradleGenerationAdapterTest {
 
         assertThat(result.terminationReason()).isEqualTo("CANCELLED");
         assertThat(result.verifiedDigest()).isNull();
-        assertThat(result.accountingState()).isEqualTo(AccountingState.INCOMPLETE);
+        assertThat(result.accountingState()).isEqualTo(AccountingState.COMPLETE);
         assertThat(engine.requestCancel(assignment(Instant.now()).identity())).isFalse();
         verify(executionSandbox, org.mockito.Mockito.never()).createSession();
-        verify(observer).progress("Provider usage recorded.", new GenerationProgress(null, null, null, new ProviderUsageUpdate(ProviderUsageUpdate.Kind.UNCERTAIN, 0, null)));
     }
 
     @Test
@@ -144,9 +226,9 @@ class JavaGradleGenerationAdapterTest {
                 stopped.add(context);
             }
         });
-        when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().model("test-model").build());
+        presetWithRetries(0);
         when(sandbox.forExecution(org.mockito.ArgumentMatchers.any())).thenReturn(executionSandbox);
-        var engine = new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), registry, 6, 0, null, Duration.ofMinutes(10), "");
+        var engine = adapter(registry, 6);
         var assignment = assignment(Instant.now().plusSeconds(300));
         engine.generate(assignment, () -> {
             assertThat(registry.getCurrentObservation()).isNotNull();
@@ -214,19 +296,7 @@ class JavaGradleGenerationAdapterTest {
 
     @Test
     void invalidOperatorConfigurationFailsAtStartup() {
-        assertThatIllegalArgumentException().isThrownBy(
-                () -> new JavaGradleGenerationAdapterService(sandbox, List.of(), JsonObjectMapper.get(), ObservationRegistry.NOOP, 6, 0, null, Duration.ofMinutes(10), ""));
-        assertThatIllegalArgumentException().isThrownBy(() -> new JavaGradleGenerationAdapterService(sandbox, List.of(model, model), JsonObjectMapper.get(),
-                ObservationRegistry.NOOP, 6, 0, null, Duration.ofMinutes(10), ""));
-        assertThatIllegalArgumentException().isThrownBy(
-                () -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 0, 0, null, Duration.ofMinutes(10), ""));
-        assertThatIllegalArgumentException().isThrownBy(
-                () -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 13, 0, null, Duration.ofMinutes(10), ""));
-        assertThatIllegalArgumentException().isThrownBy(
-                () -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 6, -1, null, Duration.ofMinutes(10), ""));
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 6, 0, null, Duration.ZERO, ""));
-        assertThatIllegalArgumentException().isThrownBy(
-                () -> new JavaGradleGenerationAdapterService(sandbox, List.of(model), JsonObjectMapper.get(), ObservationRegistry.NOOP, 6, 0, null, Duration.ofSeconds(-1), ""));
+        assertThatIllegalArgumentException().isThrownBy(() -> adapter(ObservationRegistry.NOOP, 0));
+        assertThatIllegalArgumentException().isThrownBy(() -> adapter(ObservationRegistry.NOOP, 13));
     }
 }

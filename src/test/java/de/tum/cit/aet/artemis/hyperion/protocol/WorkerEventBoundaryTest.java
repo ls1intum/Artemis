@@ -95,7 +95,7 @@ class WorkerEventBoundaryTest {
     @ParameterizedTest
     @ValueSource(strings = { "identity", "capability", "image", "deadline" })
     void assignmentPayloadCannotOverrideAuthorizedEnvelope(String field) {
-        var parameters = new GenerationParameters(null, 10, 100000, Duration.ofMinutes(5), 128000, null, null, null, null, null, true, "CONTINUOUS");
+        var parameters = new GenerationParameters(null, 10, 100000, Duration.ofMinutes(5), 128000, "testpreset", true, "CONTINUOUS", 0.5);
         var deadline = Instant.parse("2030-01-01T00:00:00Z");
         var assignment = new GenerationAssignment(ID, new ExerciseBrief("Title", "short", "de.example", null, "Generate", ExerciseBrief.Mode.GENERATE), parameters,
                 new WorkspaceSnapshot(List.of()), deadline, IMAGE, new GradingContext(false, java.util.Set.of(), java.util.Set.of()));

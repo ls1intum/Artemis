@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
-import { faCancel, faCheck, faEdit, faFileImport, faFilter, faPencilAlt, faPlus, faQuestion, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCancel, faCheck, faFileImport, faFilter, faPencilAlt, faPlus, faQuestion, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -14,11 +14,9 @@ import { SortService } from 'app/foundation/service/sort.service';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { CommonModule } from '@angular/common';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
@@ -27,21 +25,23 @@ import { FaqImportDialogComponent } from './import/faq-import-dialog.component';
 import {
     TumAetUiButtonComponent,
     TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
     TumAetUiEmptyStateComponent,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
     TumAetUiTableDirective,
     TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
 } from '@tumaet/ui-angular';
+
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
-    styleUrls: [],
     imports: [
         TumAetUiButtonDirective,
         CustomExerciseCategoryBadgeComponent,
         SearchFilterComponent,
-        NgbDropdownModule,
         MarkdownDirective,
         TranslateDirective,
         FontAwesomeModule,
@@ -50,11 +50,13 @@ import {
         TumAetUiTableDirective,
         TumAetUiTableLayoutComponent,
         TumAetUiTableSortableColumnComponent,
-        CommonModule,
         CourseTitleBarActionsDirective,
         ArtemisTranslatePipe,
         TumAetUiEmptyStateComponent,
         TumAetUiButtonComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
         FaqImportDialogComponent,
     ],
 })
@@ -90,7 +92,6 @@ export class FaqComponent implements OnInit, OnDestroy {
     readonly ascending = signal(true);
 
     // Icons
-    protected readonly faEdit = faEdit;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
     protected readonly faPencilAlt = faPencilAlt;

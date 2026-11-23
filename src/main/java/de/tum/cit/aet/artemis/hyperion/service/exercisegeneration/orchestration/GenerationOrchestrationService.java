@@ -139,7 +139,7 @@ public class GenerationOrchestrationService {
                     if (event.output() != null && !resolved.name().equals(event.output().effortProfile())) {
                         throw new IllegalArgumentException("Worker output does not attest the assigned effort profile");
                     }
-                    apply(event, progress, files, usage);
+                    apply(event, progress, files, usage, resolved.llmPreset());
                     if (event.type() == WorkerEvent.Type.CHECKPOINT) {
                         GenerationOutcome captured = GenerationOutcome.received(event.output(), seed, false);
                         jobs.retainUnsavedArtifacts(exercise.getId(), jobId, user.getLogin(),
@@ -186,11 +186,8 @@ public class GenerationOrchestrationService {
     }
 
     private GenerationParameters parameters(HyperionGenerationSettings settings) {
-        var options = settings.chatOptions();
         return new GenerationParameters(settings.name(), settings.maxTurns(), settings.maxTokensPerJob(), settings.maxJobDuration(), settings.contextWindowTokens(),
-                options == null ? null : options.getModel(), options == null ? null : options.getReasoningEffort(), options == null ? null : options.getTemperature(),
-                options == null ? null : options.getTopP(), options == null ? null : options.getMaxCompletionTokens(), settings.stagedGeneration(), settings.stagedContext(),
-                options == null ? null : options.getVerbosity(), properties.getCachedInputTokenWeight(), settings.repairModel());
+                settings.llmPreset(), settings.stagedGeneration(), settings.stagedContext(), properties.getCachedInputTokenWeight(), settings.repairLlmPreset());
     }
 
     private boolean matchesAccount(GenerationOutput output, User user, ProgrammingExercise exercise) {
@@ -202,7 +199,7 @@ public class GenerationOrchestrationService {
                 && reported.providerRequestIds().equals(recorded.providerRequestIds()) && reported.models().equals(recorded.models());
     }
 
-    private static void apply(WorkerEvent event, GenerationProgressSink progress, Consumer<GenerationFileUpdate> files, Consumer<ChatResponse> usage) {
+    private static void apply(WorkerEvent event, GenerationProgressSink progress, Consumer<GenerationFileUpdate> files, Consumer<ChatResponse> usage, String llmPreset) {
         var detail = event.progress();
         if (detail == null) {
             if (event.activity() != null) {
@@ -231,7 +228,8 @@ public class GenerationOrchestrationService {
         else if (detail.usage() != null && usage instanceof ProviderUsageSink sink) {
             var update = detail.usage();
             switch (update.kind()) {
-                case RESPONSE -> sink.accept(ProviderUsageTransport.restore(update.call()));
+                // The worker reports the preset-less call; core knows the preset it assigned and prices the call with it.
+                case RESPONSE -> sink.accept(ProviderUsageTransport.restore(update.call(), llmPreset));
                 case TOOL_CALLS -> sink.recordToolCalls(update.count());
                 case TURN -> sink.recordTurn();
                 case ATTEMPT -> sink.recordAttempt();
