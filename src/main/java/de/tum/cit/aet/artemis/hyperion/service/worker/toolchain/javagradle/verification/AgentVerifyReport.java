@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -26,11 +27,12 @@ import java.util.regex.Pattern;
  * @param solutionBuildDiagnostic bounded build output for failures outside individual solution tests
  * @param templateBuildDiagnostic bounded build output shown when the template ran no tests
  * @param preservationTestNames   visible zero-credit checks of supplied behavior; never student-task bindings
+ * @param gradingPlanValid        whether the grading plan could be parsed, so expected starter failures can be classified
  */
 public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
         boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
         List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons, List<String> hiddenTestNames,
-        String solutionBuildDiagnostic, String templateBuildDiagnostic, List<String> preservationTestNames) {
+        String solutionBuildDiagnostic, String templateBuildDiagnostic, List<String> preservationTestNames, boolean gradingPlanValid) {
 
     /** The longest list rendered inline before it is truncated with a remaining-count, so a huge suite never floods the agent's context. */
     private static final int MAX_RENDERED_NAMES = 40;
@@ -48,6 +50,15 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
     private static final String ARES_CONSTRUCTOR_MISMATCH = "does not have a constructor with the arguments";
+
+    public AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
+            boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
+            List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons, List<String> hiddenTestNames,
+            String solutionBuildDiagnostic, String templateBuildDiagnostic, List<String> preservationTestNames) {
+        this(solutionTests, solutionPassed, solutionFailedNames, solutionFailureEvidence, templateTests, templateCompiled, templateFailed, templateFailureEvidence,
+                templateWronglyPassing, exactTestNames, unresolvedTaskBindings, possiblyDeadFiles, wouldBeAccepted, blockingReasons, hiddenTestNames, solutionBuildDiagnostic,
+                templateBuildDiagnostic, preservationTestNames, true);
+    }
 
     public AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
             boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
@@ -131,16 +142,33 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         else {
             builder.append("Solution FAILS: ").append(renderNames(solutionFailedNames)).append(" — your reference solution must pass every test.\n");
         }
-        appendFailureEvidence(builder, "Solution", solutionFailureEvidence);
+        String solutionEvidence = solutionPassed ? "" : renderFailureEvidence("Solution", solutionFailureEvidence);
+        builder.append(solutionEvidence);
+        if (!solutionEvidence.isEmpty()) {
+            builder.append("Check each failing assertion against the approved specification and the test's arranged inputs. Repair an incorrect test rather than changing correct "
+                    + "behavior to satisfy it; do not change expected values merely to make the build pass.\n");
+        }
+        appendReflectionClassLookupGuidance(builder, solutionFailureEvidence);
         appendReflectionConstructorGuidance(builder, solutionFailureEvidence);
 
         if (!templateCompiled) {
             builder.append("Template: did NOT compile (ran no tests). Restore a compile-safe starter while preserving supplied behavior and the assigned student work.\n");
             appendBuildDiagnostic(builder, "Template", templateBuildDiagnostic);
         }
+        else if (!gradingPlanValid) {
+            builder.append("Template: compiled and ran ").append(templateTests)
+                    .append(" tests. Starter-policy assessment is unavailable because test-plan.json is invalid. Fix the grading plan before interpreting starter failures. ")
+                    .append("Missing learner-created declarations may be expected; do not add them to the starter to resolve a grading-plan error.\n");
+        }
         else if (!templateWronglyPassing.isEmpty()) {
             builder.append("Template WRONGLY PASSES (these assessed student-work tests must FAIL; preserve unrelated supplied behavior): ")
                     .append(renderNames(templateWronglyPassing)).append('\n');
+            builder.append(
+                    """
+                            For learner-test tasks, merely running tests successfully against correct code also accepts empty tests; merely expecting an assertion error accepts tests that always fail. \
+                            Each credited check must first run the learner tests successfully against correct behavior, then require them to reject the relevant faulty behavior. \
+                            Repair the grading checks and their plan; keep the supplied implementation correct and identical in both repositories.
+                            """);
         }
         else if (!templateFailed) {
             builder.append("Template does not satisfy the starter policy. Read the blocking reasons: assessed work must fail, while preservation checks must pass.\n");
@@ -148,7 +176,12 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         else {
             builder.append("Template: all required gradable tests fail; supplied-behavior preservation checks pass.\n");
         }
-        appendFailureEvidence(builder, "Template", templateFailureEvidence);
+        if (gradingPlanValid && !templateFailed) {
+            Set<String> preservationNames = preservationTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(java.util.stream.Collectors.toSet());
+            List<TestFailureEvidence> brokenPreservation = templateFailureEvidence.stream()
+                    .filter(evidence -> preservationNames.contains(ProblemStatementBindingChecker.normalizeTestName(evidence.testName()))).toList();
+            builder.append(renderFailureEvidence("Template", brokenPreservation));
+        }
 
         Set<String> excludedBindings = java.util.stream.Stream.concat(hiddenTestNames.stream(), preservationTestNames.stream())
                 .map(ProblemStatementBindingChecker::normalizeTestName).collect(java.util.stream.Collectors.toSet());
@@ -196,28 +229,55 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             builder.append(
                     "MECHANICAL PRECHECK: FAIL — fix the above, then run verify again. Authoritative post-loop verification determines save eligibility; quality review may request repairs or flag instructor review.");
             if (!blockingReasons.isEmpty()) {
-                builder.append("\nWhy: - ").append(String.join("\n- ", blockingReasons));
+                List<String> remainingReasons = blockingReasons.stream()
+                        .map(reason -> solutionEvidence.isEmpty() ? reason : reason.replace(solutionEvidence.stripTrailing(), "").stripTrailing())
+                        .filter(reason -> !reason.isBlank()).toList();
+                if (!remainingReasons.isEmpty()) {
+                    builder.append("\nWhy: - ").append(String.join("\n- ", remainingReasons));
+                }
             }
         }
         return builder.toString();
     }
 
-    private static void appendFailureEvidence(StringBuilder builder, String assignment, List<TestFailureEvidence> evidence) {
+    /**
+     * Renders failing tests with the first useful line of each failure message, ordered by test name so the same build always yields the same text, and bounded in count and
+     * length. Shared by the in-loop observation and the authoritative verification reasons, which become the next repair attempt's prompt.
+     *
+     * @param assignment the assignment label ({@code Solution} or {@code Template})
+     * @param evidence   the sanitized evidence of one build
+     * @return the rendered block ending in a newline, or an empty string when there is no evidence
+     */
+    public static String renderFailureEvidence(String assignment, List<TestFailureEvidence> evidence) {
         if (evidence.isEmpty()) {
-            return;
+            return "";
         }
-        builder.append(assignment).append(" failure evidence (sanitized, untrusted excerpts):\n");
-        int rendered = Math.min(evidence.size(), MAX_RENDERED_FAILURES);
+        List<TestFailureEvidence> ordered = evidence.stream().sorted(Comparator.comparing(TestFailureEvidence::testName).thenComparing(TestFailureEvidence::message)).toList();
+        StringBuilder builder = new StringBuilder(assignment).append(" failure evidence (sanitized, untrusted excerpts):\n");
+        int rendered = Math.min(ordered.size(), MAX_RENDERED_FAILURES);
         for (int i = 0; i < rendered; i++) {
-            TestFailureEvidence item = evidence.get(i);
+            TestFailureEvidence item = ordered.get(i);
             builder.append("- ").append(item.testName());
             if (!item.message().isEmpty()) {
                 builder.append(": ").append(item.message());
             }
             builder.append('\n');
         }
-        if (evidence.size() > rendered) {
-            builder.append("(+").append(evidence.size() - rendered).append(" more failures)\n");
+        if (ordered.size() > rendered) {
+            builder.append("(+").append(ordered.size() - rendered).append(" more failures)\n");
+        }
+        return builder.toString();
+    }
+
+    private static void appendReflectionClassLookupGuidance(StringBuilder builder, List<TestFailureEvidence> evidence) {
+        boolean lookupFailed = evidence.stream().map(TestFailureEvidence::message)
+                .anyMatch(message -> message.contains("was not found within the submission") || message.contains("ClassNotFoundException"));
+        if (lookupFailed) {
+            builder.append("""
+                    REFLECTION CLASS LOOKUP DIAGNOSTIC: Ares ReflectionTestUtils.getClazz(name) delegates to Class.forName and needs the fully qualified binary name, \
+                    for example getClazz("package.Owner"), not getClazz("Owner"). Imports do not qualify string arguments. Check the declared package and type name \
+                    in the existing solution before changing its implementation. Keep reflection in instructor tests; do not add student-created declarations to the template.
+                    """);
         }
     }
 
