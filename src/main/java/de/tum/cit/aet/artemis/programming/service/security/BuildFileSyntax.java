@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -7,7 +8,7 @@ import java.util.function.IntPredicate;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Reads the syntax of the build files of a tests repository as far as the Security Framework needs it: which parts are comments, strings or Maven
@@ -32,12 +33,16 @@ final class BuildFileSyntax {
     /** A keyword or type right before a Gradle variable that declares it, e.g. {@code def}, matched at the end of the code before the variable. */
     private static final Pattern GRADLE_DECLARATION_BEFORE = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})(?:def|var|final|String|Object)\\s++$");
 
+    /** A closed Gradle block comment, e.g. {@code /* Ares 2 *}{@code /}, also one that spans several lines. */
+    private static final String GRADLE_BLOCK_COMMENT = "/\\*(?:[^*]|\\*(?!/))*+\\*/";
+
     /**
      * The Ares version as a complete string literal on the right of {@code aresVersion =}, e.g. {@code aresVersion = '2.2.1'}. An expression such as
-     * {@code '2.2' + '.1'} or an interpolation such as {@code "${base}.1"} pins no version Artemis could read or replace, so it is no pin.
+     * {@code '2.2' + '.1'} or an interpolation such as {@code "${base}.1"} pins no version Artemis could read or replace, so it is no pin. Block comments
+     * after the literal are skipped, so {@code '2.2.' /* note *}{@code / + '1'} is an expression as well.
      */
     private static final Pattern GRADLE_ARES_VERSION = Pattern
-            .compile("(?<!\\p{javaJavaIdentifierPart})(aresVersion\\s*=\\s*['\"])([^'\"$]+)(['\"])(?=[ \\t]*+(?:[;}\\r\\n]|//|/\\*|$))");
+            .compile("(?<!\\p{javaJavaIdentifierPart})(aresVersion\\s*=\\s*['\"])([^'\"$]+)(['\"])(?=(?:[ \\t]|" + GRADLE_BLOCK_COMMENT + ")*+(?:[;}\\r\\n]|//|$))");
 
     /** The Ares version as the text of {@code <ares.version>}; a reference to another property, e.g. {@code ${base.version}}, is no pin. */
     private static final Pattern MAVEN_ARES_VERSION = Pattern.compile("(<ares\\.version\\s*+>)([^<$]+)(</ares\\.version\\s*+>)");
@@ -103,16 +108,43 @@ final class BuildFileSyntax {
      */
     static List<MatchResult> aresVersionPins(String content, SecurityPolicyRepositoryFiles.BuildTool buildTool) {
         boolean gradle = buildTool == SecurityPolicyRepositoryFiles.BuildTool.GRADLE;
-        boolean[] noCode = gradle ? gradleCommentsAndStrings(content) : mavenComments(content);
-        boolean[] profiles = gradle ? new boolean[content.length()] : mavenProfiles(content, noCode);
-        IntPredicate counts = start -> !noCode[start] && !profiles[start] && !(gradle && declaresLocalGradleVariable(content, noCode, start));
-        List<MatchResult> pins = (gradle ? GRADLE_ARES_VERSION : MAVEN_ARES_VERSION).matcher(content).results().filter(pin -> counts.test(pin.start())).toList();
-        Set<Integer> readable = pins.stream().map(MatchResult::start).collect(Collectors.toSet());
-        boolean allReadable = (gradle ? GRADLE_ARES_VERSION_ASSIGNMENT : MAVEN_ARES_VERSION_DEFINITION).matcher(content).results().mapToInt(MatchResult::start).filter(counts)
-                .allMatch(readable::contains);
+        // The literal is matched only where the build reads an assignment, so a pin-shaped line in a comment is not followed to the end of the comment.
+        Matcher literal = (gradle ? GRADLE_ARES_VERSION : MAVEN_ARES_VERSION).matcher(content).useTransparentBounds(true);
+        List<MatchResult> pins = new ArrayList<>();
+        for (int start : assignments(content, gradle, readByTheBuild(content, gradle)).toArray()) {
+            if (!literal.region(start, content.length()).lookingAt()) {
+                return List.of();
+            }
+            pins.add(literal.toMatchResult());
+        }
         // Pins of different versions leave open which one the dependency reads, e.g. after a later assignment of project.ext.aresVersion.
         boolean oneVersion = pins.stream().map(pin -> pin.group(2).trim()).distinct().count() <= 1;
-        return allReadable && oneVersion ? pins : List.of();
+        return oneVersion ? List.copyOf(pins) : List.of();
+    }
+
+    /**
+     * @return whether a Gradle build file assigns the Ares version where the build reads it, whether Artemis can read the value or not, e.g. also
+     *         {@code aresVersion = "${base}.1"} or two pins of different versions
+     */
+    static boolean assignsGradleAresVersion(String gradleBuild) {
+        return assignments(gradleBuild, true, readByTheBuild(gradleBuild, true)).findAny().isPresent();
+    }
+
+    /**
+     * @return the offsets of the assignments of the Ares version that the build reads, whatever their value
+     */
+    private static IntStream assignments(String content, boolean gradle, IntPredicate counts) {
+        return (gradle ? GRADLE_ARES_VERSION_ASSIGNMENT : MAVEN_ARES_VERSION_DEFINITION).matcher(content).results().mapToInt(MatchResult::start).filter(counts);
+    }
+
+    /**
+     * @return whether the build reads an assignment of the Ares version at an offset: not in a comment or a Gradle string, not in a Maven profile and not
+     *         as a local variable of a Gradle method or closure
+     */
+    private static IntPredicate readByTheBuild(String content, boolean gradle) {
+        boolean[] noCode = gradle ? gradleCommentsAndStrings(content) : mavenComments(content);
+        boolean[] profiles = gradle ? new boolean[content.length()] : mavenProfiles(content, noCode);
+        return start -> !noCode[start] && !profiles[start] && !(gradle && declaresLocalGradleVariable(content, noCode, start));
     }
 
     /**
