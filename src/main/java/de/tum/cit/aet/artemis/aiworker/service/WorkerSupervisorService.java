@@ -261,7 +261,7 @@ public class WorkerSupervisorService implements AutoCloseable {
                 WorkerEventDTO update = event(reliable ? WorkerEventType.ACCOUNTING : WorkerEventType.PROGRESS, identity, bounded(message), payload);
                 retainEvent(update);
             };
-            String result = policy.execute(execution.assignment, () -> execution.cancelled.get() || execution.finishRequested.get(), progress,
+            String result = policy.execute(execution.assignment, new WorkloadApi.StopSignal(execution.cancelled::get, execution.finishRequested::get), progress,
                     checkpoint -> retainCheckpoint(identity, checkpoint));
             if (result == null || result.isBlank() || result.length() > WorkerEventDTO.MAX_PAYLOAD_LENGTH) {
                 throw new IllegalArgumentException("Workload returned invalid terminal output");
