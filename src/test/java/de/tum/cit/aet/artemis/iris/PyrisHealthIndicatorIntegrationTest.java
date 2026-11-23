@@ -12,6 +12,7 @@ import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.Status;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
 
@@ -61,34 +62,34 @@ class PyrisHealthIndicatorIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void shouldReturnDownWhenNullBody() {
+    void shouldReturnDegradedWhenNullBody() {
         irisRequestMockProvider.mockHealthNullBody();
         Health health = pyrisHealthIndicator.health();
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
         assertThat(health.getDetails().get("error").toString()).contains(RED).contains("Empty response");
     }
 
     @Test
-    void shouldReturnDownWhenServerError() {
+    void shouldReturnDegradedWhenServerError() {
         irisRequestMockProvider.mockHealthStatusFailure();
         Health h = pyrisHealthIndicator.health();
-        assertThat(h.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(h.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
         assertThat(h.getDetails().get("error").toString()).contains(RED).contains("failed");
     }
 
     @Test
-    void shouldReturnDownWhenMalformedJson() {
+    void shouldReturnDegradedWhenMalformedJson() {
         irisRequestMockProvider.mockHealthMalformedJson();  // triggers JsonProcessingException
         Health health = pyrisHealthIndicator.health();
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
         assertThat(health.getDetails().get("error").toString()).contains(RED).contains("Incorrect format from Pyris");
     }
 
     @Test
-    void shouldReturnDownWhenTimeout() {
+    void shouldReturnDegradedWhenTimeout() {
         irisRequestMockProvider.mockHealthTimeout();  // triggers ResourceAccessException
         Health health = pyrisHealthIndicator.health();
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
         assertThat(health.getDetails().get("error").toString()).contains(RED).contains("timed out");
     }
 
@@ -172,19 +173,19 @@ class PyrisHealthIndicatorIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void shouldReturnDownOnMalformedJson() {
+    void shouldReturnDegradedOnMalformedJson() {
         irisRequestMockProvider.mockHealthMalformedJson();
         Health h = pyrisHealthIndicator.health();
-        assertThat(h.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(h.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
         assertThat(h.getDetails().get("error").toString()).contains("\uD83D\uDD34") // 🔴
                 .contains("Incorrect format from Pyris");
     }
 
     @Test
-    void shouldReturnDownOnTimeout() {
+    void shouldReturnDegradedOnTimeout() {
         irisRequestMockProvider.mockHealthTimeout();
         Health h = pyrisHealthIndicator.health();
-        assertThat(h.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(h.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
         assertThat(h.getDetails().get("error").toString()).contains("\uD83D\uDD34") // 🔴
                 .contains("timed out");
     }

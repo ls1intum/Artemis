@@ -10,6 +10,7 @@ import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.Status;
 
 import de.tum.cit.aet.artemis.core.connector.apollon.ApollonRequestMockProvider;
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonHealthIndicator;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -39,9 +40,9 @@ class ApollonHealthIndicatorTest extends AbstractSpringIntegrationIndependentTes
     }
 
     @Test
-    void healthDown() {
+    void healthDegraded() {
         apollonRequestMockProvider.mockStatus(false);
         final Health health = apollonHealthIndicator.health();
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
     }
 }

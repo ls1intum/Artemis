@@ -47,6 +47,6 @@ public class ApollonHealthIndicator implements HealthIndicator {
             health = new ConnectorHealth(error);
         }
 
-        return health.asActuatorHealth();
+        return health.asOptionalActuatorHealth();
     }
 }

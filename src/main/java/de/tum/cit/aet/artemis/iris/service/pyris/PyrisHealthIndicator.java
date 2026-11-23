@@ -128,7 +128,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
             connectorHealth = fail(additionalInfo, "Connection to Pyris failed");
         }
 
-        var newHealth = connectorHealth.asActuatorHealth();
+        var newHealth = connectorHealth.asOptionalActuatorHealth();
         cachedHealth = newHealth;
         lastUpdated = System.currentTimeMillis();
         return newHealth;
