@@ -23,13 +23,13 @@ class InitialCommitAuthorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "a@b.c", "a@.b.c", "a@b..c", "first.last+tag@sub.example.org" })
+    @ValueSource(strings = { "a@b.c", "a@example.com", "a@b..c", "first.last+tag@sub.example.org" })
     void validate_acceptsAnAddressWithAnInnerDotInTheDomain(String email) {
         assertThatCode(() -> new InitialCommitAuthorDTO(InitialCommitAuthorMode.CUSTOM, "Course Team", email).validate()).doesNotThrowAnyException();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "a@b.", "a@.b", "a@.", "a@b" })
+    @ValueSource(strings = { "a@b.", "a@.b", "a@.", "a@b", "a@.example.com", "a@example." })
     void validate_rejectsADomainWithoutAnInnerDot(String email) {
         assertThatThrownBy(() -> new InitialCommitAuthorDTO(InitialCommitAuthorMode.CUSTOM, "Course Team", email).validate()).isInstanceOf(BadRequestAlertException.class);
     }

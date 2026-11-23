@@ -74,12 +74,13 @@ public record InitialCommitAuthorDTO(@NotNull InitialCommitAuthorMode mode, @Nul
     }
 
     /**
-     * Whether the text is one address: a local part, exactly one {@code @} and a domain with a dot that is neither its first nor its last character, without a forbidden
-     * character. It is checked by position, not by a pattern with a quantifier on each side of the dot, which backtracks heavily on a long text. The client checks the same.
+     * Whether the text is one address: a local part, exactly one {@code @} and a domain that does not start with a dot but has a dot that is not its last character,
+     * without a forbidden character. It is checked by position, not by a pattern with a quantifier on each side of the dot, which backtracks heavily on a long text. The client
+     * checks the same.
      */
     private static boolean isValidEmail(String address) {
         int at = address.indexOf('@');
-        if (at <= 0 || at != address.lastIndexOf('@') || FORBIDDEN_ADDRESS_CHARACTER.matcher(address).find()) {
+        if (at <= 0 || at + 1 >= address.length() || address.charAt(at + 1) == '.' || at != address.lastIndexOf('@') || FORBIDDEN_ADDRESS_CHARACTER.matcher(address).find()) {
             return false;
         }
         int lastDomainIndex = address.length() - 1;
