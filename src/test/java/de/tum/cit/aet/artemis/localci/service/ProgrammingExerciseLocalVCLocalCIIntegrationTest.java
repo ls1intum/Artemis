@@ -1353,8 +1353,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // Create the exercise and verify status code 201. The query cap guards against the response mapping pulling
         // additional sub-graphs into the creation flow. An SCA-enabled exercise also inserts its default
         // category entities (Python has 60); auxiliary repositories add one insert each. These caps cover
-        // PostgreSQL (73/133 statements) and MySQL (74/134 statements).
-        int queryLimit = (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) ? 134 : 74) + newExercise.getAuxiliaryRepositories().size();
+        // PostgreSQL (74/134 statements) and MySQL (75/135 statements). Each includes one SELECT that reads the setting of the course for the author of the first commit
+        // (CourseConfigurationRepository, during the setup of the repositories), which raised the caps by one.
+        int queryLimit = (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) ? 135 : 75) + newExercise.getAuxiliaryRepositories().size();
         var response = assertThatDb(() -> request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig),
                 ProgrammingExerciseResponseDTO.class, params, HttpStatus.CREATED)).hasBeenCalledAtMostTimes(queryLimit);
         assertCreationResponseReadContract(response, newExercise);
