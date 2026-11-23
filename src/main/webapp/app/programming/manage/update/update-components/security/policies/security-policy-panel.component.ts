@@ -40,6 +40,8 @@ let panelCounter = 0;
  * the supervised code it applies to, and the boxes Allow Resource Access, Configure Test Behaviour and Assign Test Cases. A policy the editor cannot keep
  * completely is shown read-only, with the reason.
  */
+const PREFIX = 'artemisApp.programmingExercise.security.advanced.policy';
+
 @Component({
     selector: 'jhi-security-policy-panel',
     templateUrl: './security-policy-panel.component.html',
@@ -63,13 +65,22 @@ let panelCounter = 0;
     ],
 })
 export class SecurityPolicyPanelComponent {
-    protected readonly countKey = countKey;
     protected readonly faCode = faCode;
     protected readonly faLock = faLock;
     protected readonly faTrashCan = faTrashCan;
 
     readonly policy = input.required<EditorPolicy>();
     readonly summary = input.required<PolicyChangeSummary>();
+    /** The translation keys of the tooltips of the change counts of the policy and of its boxes, in the singular for exactly one change. */
+    protected readonly changesHelpKeys = computed(() => {
+        const summary = this.summary();
+        return {
+            policy: countKey(`${PREFIX}.changesHelp`, summary.total),
+            resources: countKey(`${PREFIX}.boxChangesHelp`, summary.restrictions),
+            behaviour: countKey(`${PREFIX}.boxChangesHelp`, summary.behaviours),
+            tests: countKey(`${PREFIX}.boxChangesHelp`, summary.testCases + summary.testClasses),
+        };
+    });
     /** The path the policy is saved to with the unsaved changes. */
     readonly policyPath = input('');
     readonly presets = input<SecurityPreset[]>([]);

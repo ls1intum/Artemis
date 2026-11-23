@@ -562,6 +562,9 @@ public class SecurityPolicyEditorService {
         }
 
         Map<String, SecurityTestAssignments.TestClass> testClasses = SecurityTestAssignments.read(SecurityPolicyRepositoryFiles.javaSources(root));
+        // A policy that no test used before the change, e.g. one that only a class annotation names whose test cases all override it, may stay unused.
+        Map<String, List<String>> assignedBefore = SecurityTestAssignments.entriesByPolicy(testClasses.values());
+        Set<String> unusedBefore = existing.keySet().stream().filter(path -> assignedBefore.getOrDefault(path, List.of()).isEmpty()).collect(Collectors.toSet());
         Map<String, String> requested = requestedEntries(change, testClasses, changedPaths.touched());
         try {
             SecurityPolicyConflicts.requireKnownTestCasesOfSplitClasses(repository, baseCommitHash, testClasses, requested);
@@ -574,7 +577,7 @@ public class SecurityPolicyEditorService {
         changedPaths.deleted().forEach(path -> SecurityPolicyRepositoryFiles.deletePolicyFileIfPolicy(root, path));
         rendered.forEach((path, content) -> SecurityPolicyRepositoryFiles.writePolicy(root, path, content));
         SecurityTestAssignments.assignTestCases(root, reassignedTestClasses(testClasses, requested, changedPaths.vacated()));
-        requireUsedPoliciesAndConfiguration(root, rendered.keySet());
+        requireUsedPoliciesAndConfiguration(root, rendered.keySet(), unusedBefore);
     }
 
     /**
@@ -679,15 +682,19 @@ public class SecurityPolicyEditorService {
     }
 
     /**
-     * Refuses a change that leaves a written policy without a test that uses it, or that leaves the Security Framework in another state than configured.
+     * Refuses a change that leaves a written policy without a test that uses it, or that leaves the Security Framework in another state than configured. A
+     * policy that no test case used before the change may keep having none, so that a change of all policies, e.g. turning on dependency scanning, does not
+     * fail because of a policy that it does not make unused.
+     *
+     * @param unusedBefore the existing policies that no test case used before the change
      */
-    private static void requireUsedPoliciesAndConfiguration(Path root, Set<String> writtenPolicies) {
+    private static void requireUsedPoliciesAndConfiguration(Path root, Set<String> writtenPolicies, Set<String> unusedBefore) {
         SecurityFrameworkState after = SecurityPolicyRepositoryFiles.evaluate(root);
         Set<String> referencedPolicies = after.policyFiles().stream().map(SecurityFrameworkState.PolicyFile::policyPath).collect(Collectors.toSet());
         // A class annotation can still point to a policy whose test cases all override it, so each policy needs a test case that uses it, too.
         Map<String, List<String>> assignedAfter = SecurityTestAssignments.entriesByPolicy(SecurityTestAssignments.read(SecurityPolicyRepositoryFiles.javaSources(root)).values());
         for (String path : writtenPolicies) {
-            if (!referencedPolicies.contains(path) || assignedAfter.getOrDefault(path, List.of()).isEmpty()) {
+            if (!referencedPolicies.contains(path) || (assignedAfter.getOrDefault(path, List.of()).isEmpty() && !unusedBefore.contains(path))) {
                 throw refused("No test uses the policy " + path + ". Assign at least one test case to it.", "securityPolicyUnused", Map.of("path", path));
             }
         }

@@ -1536,6 +1536,35 @@ class SecurityPolicyEditorServiceTest {
     }
 
     @Test
+    void turnsOnDependencyScanningAlsoForAPolicyThatNoTestCaseUses() throws Exception {
+        pushToTests("build.gradle", "ext {\n    aresVersion = '2.2.1'\n}\ndependencies {\n    aresAgent \"de.tum.cit.ase:ares:${aresVersion}:agent\"\n}\n"
+                + "test {\n    jvmArgs '-javaagent:ares-agent.jar'\n}\n");
+        pushToTests("StressTests.yaml", POLICY);
+        // Only the class annotation of SortingTest names StressTests.yaml, and each of its test cases overrides it.
+        pushToTests(SORTING_TEST_PATH,
+                SORTING_TEST
+                        .replace("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\nclass", "@de.tum.cit.ase.ares.api.Policy(value = \"StressTests.yaml\")\nclass")
+                        .replace("    @Test\n", "    @de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\n    @Test\n"));
+        SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());
+        assertThat(editor.scanDependenciesAvailable()).isTrue();
+        assertThat(editor.policies()).filteredOn(policy -> policy.policyPath().equals("StressTests.yaml")).singleElement()
+                .satisfies(policy -> assertThat(policy.assignedTests()).isEmpty());
+        List<SecurityPolicyChangeDTO.PolicyChangeDTO> scanning = editor.policies().stream().map(policy -> {
+            SecurityPolicyDocumentDTO document = policy.document();
+            return edited(new SecurityPolicyDocumentDTO(document.policyPath(), document.preset(), "JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION", document.supervisedPackage(),
+                    document.mainClass(), document.testClasses(), document.files(), document.network(), document.commands(), document.threads(), document.packages(),
+                    document.timeouts(), document.testBehavior()), policy.assignedTests());
+        }).toList();
+
+        // The switch does not make StressTests.yaml unused, so the policy that no test case used before does not stop it.
+        editorService.commit(exercise(), new SecurityPolicyChangeDTO(editor.baseCommitHash(), null, null, scanning, List.of()), user);
+
+        assertThat(readPushed("StressTests.yaml")).hasValueSatisfying(content -> assertThat(content).contains("JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION"));
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME))
+                .hasValueSatisfying(content -> assertThat(content).contains("JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION"));
+    }
+
+    @Test
     void refusesDependencyScanningWithoutTheAresAgentAlsoIfAPolicyCommentNamesIt() {
         pushToTests(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, POLICY + "# JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION\n");
         SecurityPolicyEditorDTO editor = editorService.getEditor(exercise());

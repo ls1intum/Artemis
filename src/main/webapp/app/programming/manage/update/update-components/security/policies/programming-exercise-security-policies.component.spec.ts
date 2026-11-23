@@ -1393,13 +1393,17 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(service.commitPolicies).toHaveBeenCalledOnce();
         fixture.componentRef.setInput('locked', false);
 
-        service.commitPolicies.mockReturnValueOnce(of({ editor: editor('f'.repeat(40)), config: configured() }));
+        // The server answers with the committed policies, which now scan the libraries.
+        const scanning = { ...DOCUMENT, languageConfiguration: 'JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION' };
+        expect(failed.policies[0].document.languageConfiguration).toBe(scanning.languageConfiguration);
+        service.commitPolicies.mockReturnValueOnce(of({ editor: editor('f'.repeat(40), scanning), config: configured() }));
         comp['retryCommit']();
 
         expect(service.commitPolicies).toHaveBeenCalledTimes(2);
         expect(lastChange()).toEqual(failed);
         expect(lastChange().policies[0].assignedTests).toEqual(['de.example.SortingTest']);
         expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'committed', titleKey: 'artemisApp.programmingExercise.security.advanced.scanOn.committedTitle' }));
+        expect(comp.shownScanDependencies()).toBe(true);
         expect(comp.policies()[0].tests).toEqual(['de.example.SortingTest', 'de.example.StressTest']);
     });
 

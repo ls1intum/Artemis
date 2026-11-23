@@ -523,7 +523,7 @@ export function rebasePolicy(policy: EditorPolicy, file: SecurityPolicyFile): Ed
     }
     // Declarations an import changed on their own, e.g. pkg.Test#second instead of pkg.Test#first; the assignment below keeps those of declared classes.
     result = cloneWith(result, { testClasses: applyListChanges(result.testClasses ?? [], listChanges(oldBase.testClasses ?? [], working.testClasses ?? [])) });
-    const tests = withoutCoveredTestCases(applyListChanges(fresh.baseTests, listChanges(policy.baseTests, policy.tests)));
+    const tests = withoutCoveredTestCases(applyTestChanges(fresh.baseTests, listChanges(policy.baseTests, policy.tests)));
     const extraClasses = applyListChanges(fresh.baseExtraClasses, listChanges(policy.baseExtraClasses, policy.extraClasses));
     return withAssignment(cloneWith(fresh, { working: cloneWith(result, { policyPath: working.policyPath }), name: policy.name }), tests, extraClasses);
 }
@@ -531,6 +531,16 @@ export function rebasePolicy(policy: EditorPolicy, file: SecurityPolicyFile): Ed
 /** @returns the entries without the test cases of a class that is assigned as a whole, which the server refuses together with it */
 export function withoutCoveredTestCases(tests: readonly string[]): string[] {
     return tests.filter((entry) => !entry.includes(TEST_CASE_SEPARATOR) || !tests.includes(testClassOf(entry)));
+}
+
+/**
+ * Applies released and assigned tests like {@link applyListChanges}. Releasing a whole class also releases its test cases, also those that the newer commit
+ * assigns one by one instead of the class, e.g. {@code pkg.T#first} and {@code pkg.T#second} instead of {@code pkg.T}, so the release is not lost.
+ */
+function applyTestChanges(tests: readonly string[], changes: { added: string[]; removed: string[] }): string[] {
+    const releasedClasses = changes.removed.filter((entry) => !entry.includes(TEST_CASE_SEPARATOR));
+    const withoutReleasedTestCases = tests.filter((entry) => !entry.includes(TEST_CASE_SEPARATOR) || !releasedClasses.includes(testClassOf(entry)));
+    return applyListChanges(withoutReleasedTestCases, changes);
 }
 
 function applyListChanges(list: readonly string[], changes: { added: string[]; removed: string[] }): string[] {
@@ -699,24 +709,32 @@ export function diffLines(before: string, after: string): DiffRow[] {
 
 /** Appends the rows of the changed part between the unchanged start and end; both sides of it begin at the line index {@code start}. */
 function diffMiddle(left: string[], right: string[], start: number, rows: DiffRow[]): void {
-    const removed = (i: number): DiffRow => ({ kind: 'removed', left: { number: start + i + 1, text: left[i] } });
-    const added = (j: number): DiffRow => ({ kind: 'added', right: { number: start + j + 1, text: right[j] } });
-    const width = right.length + 1;
-    if ((left.length + 1) * width > MAX_DIFF_CELLS) {
-        for (let k = 0; k < Math.max(left.length, right.length); k++) {
-            if (k < left.length && k < right.length && left[k] === right[k]) {
-                rows.push({ kind: 'same', left: { number: start + k + 1, text: left[k] }, right: { number: start + k + 1, text: right[k] } });
-                continue;
-            }
-            if (k < left.length) {
-                rows.push(removed(k));
-            }
-            if (k < right.length) {
-                rows.push(added(k));
-            }
-        }
-        return;
+    if ((left.length + 1) * (right.length + 1) > MAX_DIFF_CELLS) {
+        diffByPosition(left, right, start, rows);
+    } else {
+        diffByCommonLines(left, right, start, rows);
     }
+}
+
+/** Compares the lines position by position, for a change too large for the table of {@link diffByCommonLines}. */
+function diffByPosition(left: string[], right: string[], start: number, rows: DiffRow[]): void {
+    for (let k = 0; k < Math.max(left.length, right.length); k++) {
+        if (k < left.length && k < right.length && left[k] === right[k]) {
+            rows.push({ kind: 'same', left: { number: start + k + 1, text: left[k] }, right: { number: start + k + 1, text: right[k] } });
+            continue;
+        }
+        if (k < left.length) {
+            rows.push({ kind: 'removed', left: { number: start + k + 1, text: left[k] } });
+        }
+        if (k < right.length) {
+            rows.push({ kind: 'added', right: { number: start + k + 1, text: right[k] } });
+        }
+    }
+}
+
+/** Keeps the longest common subsequence of lines and marks the others as removed or added. */
+function diffByCommonLines(left: string[], right: string[], start: number, rows: DiffRow[]): void {
+    const width = right.length + 1;
     const lengths = new Uint32Array((left.length + 1) * width);
     for (let i = left.length - 1; i >= 0; i--) {
         for (let j = right.length - 1; j >= 0; j--) {
@@ -731,10 +749,10 @@ function diffMiddle(left: string[], right: string[], start: number, rows: DiffRo
             i++;
             j++;
         } else if (j < right.length && (i === left.length || lengths[i * width + j + 1] >= lengths[(i + 1) * width + j])) {
-            rows.push(added(j));
+            rows.push({ kind: 'added', right: { number: start + j + 1, text: right[j] } });
             j++;
         } else {
-            rows.push(removed(i));
+            rows.push({ kind: 'removed', left: { number: start + i + 1, text: left[i] } });
             i++;
         }
     }

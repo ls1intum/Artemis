@@ -95,12 +95,19 @@ describe('SecurityPolicyPanelComponent', () => {
 
         const element: HTMLElement = fixture.nativeElement;
         const labels = Array.from(element.querySelectorAll<HTMLLabelElement>('label[for]'));
-        expect(labels.map((label) => label.htmlFor)).toContain(`${comp.idPrefix()}Name`);
+        // Each label points to a control a click and a screen reader can reach, not only to an element with that id.
         for (const label of labels) {
             expect(label.textContent?.trim()).not.toBe('');
-            expect(element.querySelector(`[id="${label.htmlFor}"]`)).not.toBeNull();
+            expect(label.control).not.toBeNull();
+            expect(label.control?.id).toBe(label.htmlFor);
         }
-        expect(element.querySelector('[data-testid="security-policy-name"]')?.id).toBe(`${comp.idPrefix()}Name`);
+        const name = element.querySelector('[data-testid="security-policy-name"]');
+        expect(labels.find((label) => label.htmlFor === `${comp.idPrefix()}Name`)?.control).toBe(name);
+        // The trigger of the presets is a combobox that no label can name, so it carries the name of the field itself.
+        const presets = element.querySelector<HTMLElement>(`[id="${comp.idPrefix()}Presets"]`);
+        expect(presets?.getAttribute('role')).toBe('combobox');
+        expect(presets?.getAttribute('aria-label')).toBe('artemisApp.programmingExercise.security.advanced.policy.presets');
+        expect(labels.some((label) => label.htmlFor === `${comp.idPrefix()}Presets`)).toBe(false);
     });
 
     it('shows a policy it cannot edit as read-only with the reason', () => {

@@ -17,7 +17,7 @@
                 <tumaet-ui-tag
                     severity="warn"
                     size="sm"
-                    [tumAetUiTooltip]="countKey(prefix + 'changesHelp', summary().total) | artemisTranslate: { count: summary().total }"
+                    [tumAetUiTooltip]="changesHelpKeys().policy | artemisTranslate: { count: summary().total }"
                     tabindex="0"
                     data-testid="security-policy-changes"
                     [value]="'artemisApp.programmingExercise.security.advanced.uncommittedCount' | artemisTranslate: { count: summary().total }"
@@ -74,11 +74,13 @@
                 </div>
                 <div class="sp-stack">
                     <span class="sp-label-row">
-                        <label class="sp-label" [for]="id + 'Presets'">{{ prefix + 'presets' | artemisTranslate }}</label>
+                        <!-- The trigger of the multi-select is no labelable element, so a label for it would name nothing; its aria-label names it instead. -->
+                        <span class="sp-label" aria-hidden="true">{{ prefix + 'presets' | artemisTranslate }}</span>
                         <jhi-security-help [text]="(presets().length ? prefix + 'presetsHelp' : prefix + 'presetsUnavailable') | artemisTranslate" />
                     </span>
                     <tumaet-ui-multi-select
                         [inputId]="id + 'Presets'"
+                        [ariaLabel]="prefix + 'presets' | artemisTranslate"
                         [options]="presets()"
                         optionLabel="label"
                         optionValue="name"
@@ -122,7 +124,7 @@
                         <tumaet-ui-tag
                             severity="warn"
                             size="sm"
-                            [tumAetUiTooltip]="countKey(prefix + 'boxChangesHelp', summary().restrictions) | artemisTranslate: { count: summary().restrictions }"
+                            [tumAetUiTooltip]="changesHelpKeys().resources | artemisTranslate: { count: summary().restrictions }"
                             tabindex="0"
                             [value]="'artemisApp.programmingExercise.security.advanced.uncommittedCount' | artemisTranslate: { count: summary().restrictions }"
                         />
@@ -154,7 +156,7 @@
                         <tumaet-ui-tag
                             severity="warn"
                             size="sm"
-                            [tumAetUiTooltip]="countKey(prefix + 'boxChangesHelp', summary().behaviours) | artemisTranslate: { count: summary().behaviours }"
+                            [tumAetUiTooltip]="changesHelpKeys().behaviour | artemisTranslate: { count: summary().behaviours }"
                             tabindex="0"
                             [value]="'artemisApp.programmingExercise.security.advanced.uncommittedCount' | artemisTranslate: { count: summary().behaviours }"
                         />
@@ -183,10 +185,7 @@
                         <tumaet-ui-tag
                             severity="warn"
                             size="sm"
-                            [tumAetUiTooltip]="
-                                countKey(prefix + 'boxChangesHelp', summary().testCases + summary().testClasses)
-                                    | artemisTranslate: { count: summary().testCases + summary().testClasses }
-                            "
+                            [tumAetUiTooltip]="changesHelpKeys().tests | artemisTranslate: { count: summary().testCases + summary().testClasses }"
                             tabindex="0"
                             [value]="'artemisApp.programmingExercise.security.advanced.uncommittedCount' | artemisTranslate: { count: summary().testCases + summary().testClasses }"
                         />

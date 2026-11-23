@@ -23,7 +23,8 @@ type Handlers = {
 function expectLabelledControls(element: HTMLElement): void {
     for (const label of Array.from(element.querySelectorAll<HTMLLabelElement>('label[for]'))) {
         expect(label.textContent?.trim()).not.toBe('');
-        expect(element.querySelector(`[id="${label.htmlFor}"]`)).not.toBeNull();
+        expect(label.control).not.toBeNull();
+        expect(element.contains(label.control)).toBe(true);
     }
 }
 
@@ -103,7 +104,11 @@ describe('SecurityTestBehaviourComponent', () => {
         handlers.setStrictTimeout(true);
         expect(emitted.at(-1)?.strictTimeout).toEqual({ timeout: 5, timeUnit: 'SECONDS', terminationGrace: 1, terminationGraceUnit: 'SECONDS' });
 
+        // A timeout of 0 is refused right away, not only overwritten by the next valid value.
+        const emissions = emitted.length;
         handlers.setTimeoutField('timeout', '0');
+        expect(emitted).toHaveLength(emissions);
+        expect(emitted.at(-1)?.strictTimeout?.timeout).toBe(5);
         handlers.setTimeoutField('timeout', 3);
         handlers.setTimeoutField('terminationGrace', '');
         handlers.setTimeoutUnit('timeUnit', 'MINUTES');

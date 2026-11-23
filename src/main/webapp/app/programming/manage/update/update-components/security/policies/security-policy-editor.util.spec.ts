@@ -187,6 +187,21 @@ describe('security-policy-editor.util', () => {
         expect(changedLineNumbers('a\nb\n', 'a\nb\n')).toEqual(new Set());
     });
 
+    it('keeps the release of a whole class when the newer commit assigns its test cases one by one', () => {
+        const policy = editorPolicyOf({ ...FILE, assignedTests: ['de.example.SortingTest', 'de.example.StressTest'] });
+        const released = withAssignment(policy, ['de.example.StressTest'], []);
+        const newer: SecurityPolicyFile = { ...FILE, assignedTests: ['de.example.SortingTest#first', 'de.example.SortingTest#second', 'de.example.StressTest'] };
+
+        const rebased = rebasePolicy(released, newer);
+
+        expect(rebased.tests).toEqual(['de.example.StressTest']);
+        expect(summarizeChanges(rebased).testCases).toBe(2);
+        // A test case kept in the unsaved changes stays, and the newer commit still assigning the whole class is released as before.
+        const narrowed = withAssignment(policy, ['de.example.SortingTest#first', 'de.example.StressTest'], []);
+        expect(rebasePolicy(narrowed, newer).tests).toEqual(['de.example.StressTest', 'de.example.SortingTest#first']);
+        expect(rebasePolicy(released, { ...FILE, assignedTests: ['de.example.SortingTest', 'de.example.StressTest'] }).tests).toEqual(['de.example.StressTest']);
+    });
+
     it('restores an entry without assigning a whole class together with one of its test cases', () => {
         expect(withRestoredEntry(['de.a.A#one', 'de.a.A#two', 'de.b.B'], 'de.a.A')).toEqual(['de.b.B', 'de.a.A']);
         expect(withRestoredEntry(['de.a.A'], 'de.a.A#one')).toEqual(['de.a.A']);
