@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
-import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCandidateDTO;
 
 class UniformBaselinePolicyTest {
 
@@ -19,7 +19,7 @@ class UniformBaselinePolicyTest {
 
     private User student;
 
-    private List<QuizQuestionPoolItem> items;
+    private List<QuizQuestionPoolCandidateDTO> items;
 
     @BeforeEach
     void setUp() {
@@ -29,18 +29,14 @@ class UniformBaselinePolicyTest {
 
         items = new ArrayList<>();
         for (long i = 1; i <= 10; i++) {
-            QuizQuestionPoolItem item = new QuizQuestionPoolItem();
-            item.setId(i);
-            item.setCompetencyId(100L);
-            item.setDifficulty(QuizQuestionDifficulty.MEDIUM);
-            items.add(item);
+            items.add(new QuizQuestionPoolCandidateDTO(i, 100L, QuizQuestionDifficulty.MEDIUM));
         }
     }
 
     @Test
     void testAllocateQuestionsReturnsRequestedCount() {
         int count = 5;
-        List<QuizQuestionPoolItem> allocated = policy.allocateQuestions(student, Set.of(), count, items);
+        List<QuizQuestionPoolCandidateDTO> allocated = policy.allocateQuestions(student, Set.of(), count, items);
 
         assertThat(allocated).hasSize(count);
         assertThat(items).containsAll(allocated);
@@ -50,7 +46,7 @@ class UniformBaselinePolicyTest {
     @Test
     void testAllocateQuestionsWhenCountExceedsAvailable() {
         int count = 15;
-        List<QuizQuestionPoolItem> allocated = policy.allocateQuestions(student, Set.of(), count, items);
+        List<QuizQuestionPoolCandidateDTO> allocated = policy.allocateQuestions(student, Set.of(), count, items);
 
         assertThat(allocated).hasSize(10);
         assertThat(allocated).containsExactlyInAnyOrderElementsOf(items);
@@ -58,7 +54,7 @@ class UniformBaselinePolicyTest {
 
     @Test
     void testAllocateQuestionsWithEmptyPool() {
-        List<QuizQuestionPoolItem> allocated = policy.allocateQuestions(student, Set.of(), 5, List.of());
+        List<QuizQuestionPoolCandidateDTO> allocated = policy.allocateQuestions(student, Set.of(), 5, List.of());
         assertThat(allocated).isEmpty();
     }
 

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -19,6 +21,9 @@ import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSessionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSessionReviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSessionSummaryDTO;
 import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSubmissionDTO;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
@@ -46,12 +51,16 @@ class PracticeQuizIntegrationTest extends AbstractAtlasIntegrationTest {
     @Autowired
     private QuizQuestionPoolItemRepository quizQuestionPoolItemRepository;
 
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
     private Course course;
 
     private QuizQuestionPoolItem poolItem1;
 
     @BeforeEach
     void initTestCase() {
+        featureToggleService.enableFeature(Feature.SmartQuizzes);
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
 
@@ -62,6 +71,11 @@ class PracticeQuizIntegrationTest extends AbstractAtlasIntegrationTest {
         // Create practice-eligible questions in the AI question pool
         poolItem1 = createPoolItem(0, "Item 1 Title", "Item 1 Text", competency.getId(), lectureUnit.getId());
         createPoolItem(1, "Item 2 Title", "Item 2 Text", competency.getId(), lectureUnit.getId());
+    }
+
+    @AfterEach
+    void tearDown() {
+        featureToggleService.disableFeature(Feature.SmartQuizzes);
     }
 
     private QuizQuestionPoolItem createPoolItem(int index, String title, String text, Long competencyId, Long lectureUnitId) {
@@ -98,13 +112,18 @@ class PracticeQuizIntegrationTest extends AbstractAtlasIntegrationTest {
         assertThat(sessionDTO.questions()).isNotEmpty();
 
         long sessionId = sessionDTO.id();
+        // Verify question explanation is hidden in practice session DTO
+        assertThat(sessionDTO.questions().getFirst().explanation()).isNull();
 
         // 2. Check current in-progress session
         PracticeSessionDTO currentSession = request.get("/api/atlas/courses/" + course.getId() + "/smart-quizzes/current", HttpStatus.OK, PracticeSessionDTO.class);
         assertThat(currentSession).isNotNull();
         assertThat(currentSession.id()).isEqualTo(sessionId);
 
-        // 3. Submit answers
+        // 3. Attempting to review an unfinished session should fail to prevent leaking solutions
+        request.get("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions/" + sessionId, HttpStatus.BAD_REQUEST, PracticeSessionReviewDTO.class);
+
+        // 4. Submit answers
         SubmittedAnswerFromLiveClientDTO answerDTO = new MultipleChoiceSubmittedAnswerFromLiveClientDTO(new EntityIdRefDTO(poolItem1.getId()), Set.of(new EntityIdRefDTO(0L)));
         PracticeSubmissionDTO submission = new PracticeSubmissionDTO(List.of(answerDTO));
 
@@ -115,18 +134,44 @@ class PracticeQuizIntegrationTest extends AbstractAtlasIntegrationTest {
         assertThat(reviewDTO.id()).isEqualTo(sessionId);
         assertThat(reviewDTO.completedAt()).isNotNull();
         assertThat(reviewDTO.questions()).isNotEmpty();
+        // Verify question explanation is exposed in review DTO
+        assertThat(reviewDTO.questions().getFirst().question().explanation()).isEqualTo("Overall Explanation");
 
-        // 4. Verify review endpoint
+        // 5. Verify review endpoint
         PracticeSessionReviewDTO fetchedReview = request.get("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions/" + sessionId, HttpStatus.OK,
                 PracticeSessionReviewDTO.class);
         assertThat(fetchedReview).isNotNull();
         assertThat(fetchedReview.id()).isEqualTo(sessionId);
+        assertThat(fetchedReview.questions().getFirst().question().explanation()).isEqualTo("Overall Explanation");
 
-        // 5. Verify sessions list
+        // 6. Verify sessions list
         List<PracticeSessionSummaryDTO> summaries = request.getList("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions", HttpStatus.OK,
                 PracticeSessionSummaryDTO.class);
         assertThat(summaries).hasSize(1);
         assertThat(summaries.getFirst().id()).isEqualTo(sessionId);
         assertThat(summaries.getFirst().completed()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testEndpointsBlockWhenFeatureToggleDisabled() throws Exception {
+        featureToggleService.disableFeature(Feature.SmartQuizzes);
+        request.post("/api/atlas/courses/" + course.getId() + "/smart-quizzes/start", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCrossCourseSessionAccessBlocked() throws Exception {
+        PracticeSessionDTO sessionDTO = request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/smart-quizzes/start", null, PracticeSessionDTO.class,
+                HttpStatus.OK);
+        // 1. Not enrolled in other course -> 403 Forbidden
+        Course foreignCourse = courseUtilService.createCourse();
+        request.get("/api/atlas/courses/" + foreignCourse.getId() + "/smart-quizzes/sessions/" + sessionDTO.id(), HttpStatus.FORBIDDEN, PracticeSessionReviewDTO.class);
+
+        // 2. Enrolled in other course, but session belongs to course -> 404 Not Found
+        Course enrolledOtherCourse = courseUtilService.createCourse();
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.enrollUserInCourse(student, enrolledOtherCourse, CourseRole.STUDENT);
+        request.get("/api/atlas/courses/" + enrolledOtherCourse.getId() + "/smart-quizzes/sessions/" + sessionDTO.id(), HttpStatus.NOT_FOUND, PracticeSessionReviewDTO.class);
     }
 }

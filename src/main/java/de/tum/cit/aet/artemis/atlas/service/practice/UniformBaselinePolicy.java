@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCandidateDTO;
 
 /**
  * Baseline policy that uniformly and randomly samples questions across available candidate items from the AI Quiz Question Pool.
@@ -24,12 +24,12 @@ import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 public class UniformBaselinePolicy implements PracticeAllocationPolicy {
 
     @Override
-    public List<QuizQuestionPoolItem> allocateQuestions(User user, Set<CourseCompetency> competencies, int count, List<QuizQuestionPoolItem> availableItems) {
+    public List<QuizQuestionPoolCandidateDTO> allocateQuestions(User user, Set<CourseCompetency> competencies, int count, List<QuizQuestionPoolCandidateDTO> availableItems) {
         if (availableItems == null || availableItems.isEmpty() || count <= 0) {
             return List.of();
         }
 
-        List<QuizQuestionPoolItem> shuffled = new ArrayList<>(availableItems);
+        List<QuizQuestionPoolCandidateDTO> shuffled = new ArrayList<>(availableItems);
         Collections.shuffle(shuffled);
         return shuffled.stream().limit(count).toList();
     }

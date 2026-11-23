@@ -25,6 +25,10 @@ import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSessionSummaryDTO;
 import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSubmissionDTO;
 import de.tum.cit.aet.artemis.atlas.service.practice.PracticeQuizService;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
@@ -33,6 +37,8 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
  */
 @RestController
 @Conditional(AtlasEnabled.class)
+@FeatureToggle(Feature.SmartQuizzes)
+@FeatureUsage(UserFeature.QUIZ_PRACTICE)
 @Lazy
 @RequestMapping("api/atlas/")
 public class PracticeQuizResource {
@@ -82,7 +88,7 @@ public class PracticeQuizResource {
             @Valid @RequestBody PracticeSubmissionDTO submissionDTO) {
         log.debug("REST request to submit practice quiz session {} in course: {}", sessionId, courseId);
         User user = userRepository.getUser();
-        PracticeSessionReviewDTO reviewDTO = practiceQuizService.submitPracticeSession(sessionId, user, submissionDTO);
+        PracticeSessionReviewDTO reviewDTO = practiceQuizService.submitPracticeSession(courseId, sessionId, user, submissionDTO);
         return ResponseEntity.ok(reviewDTO);
     }
 
@@ -113,7 +119,7 @@ public class PracticeQuizResource {
     public ResponseEntity<PracticeSessionReviewDTO> getPracticeSessionForReview(@PathVariable long courseId, @PathVariable long sessionId) {
         log.debug("REST request to review practice quiz session {} in course: {}", sessionId, courseId);
         User user = userRepository.getUser();
-        PracticeSessionReviewDTO reviewDTO = practiceQuizService.getPracticeSessionForReview(sessionId, user);
+        PracticeSessionReviewDTO reviewDTO = practiceQuizService.getPracticeSessionForReview(courseId, sessionId, user);
         return ResponseEntity.ok(reviewDTO);
     }
 

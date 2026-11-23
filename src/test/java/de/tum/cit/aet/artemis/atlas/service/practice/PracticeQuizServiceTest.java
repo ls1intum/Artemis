@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.service.practice;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCandidateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.EntityIdRefDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerFromLiveClientDTO;
@@ -104,7 +106,11 @@ class PracticeQuizServiceTest {
 
     @Test
     void testStartPracticeSessionAllocatesQuestionsFromPool() {
-        when(quizQuestionPoolApi.getPracticeEligibleQuestions(course.getId())).thenReturn(poolItems);
+        List<QuizQuestionPoolCandidateDTO> candidates = poolItems.stream().map(item -> new QuizQuestionPoolCandidateDTO(item.getId(), item.getCompetencyId(), item.getDifficulty()))
+                .toList();
+
+        when(quizQuestionPoolApi.getPracticeEligibleQuestionCandidates(course.getId())).thenReturn(candidates);
+        when(quizQuestionPoolApi.findAllById(anyCollection())).thenReturn(poolItems);
         when(courseCompetencyRepository.findAllForCourse(course.getId())).thenReturn(Set.of());
         when(practiceSessionRepository.save(any(PracticeSession.class))).thenAnswer(invocation -> {
             PracticeSession ps = invocation.getArgument(0);
@@ -117,6 +123,8 @@ class PracticeQuizServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.id()).isEqualTo(100L);
         assertThat(result.questions()).hasSize(10);
+        // Ensure question explanation is hidden during active quiz
+        assertThat(result.questions().getFirst().explanation()).isNull();
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<PracticeLog>> logsCaptor = ArgumentCaptor.forClass(List.class);
@@ -128,7 +136,7 @@ class PracticeQuizServiceTest {
 
     @Test
     void testStartPracticeSessionThrowsWhenNoQuestionsAvailable() {
-        when(quizQuestionPoolApi.getPracticeEligibleQuestions(course.getId())).thenReturn(List.of());
+        when(quizQuestionPoolApi.getPracticeEligibleQuestionCandidates(course.getId())).thenReturn(List.of());
 
         assertThatThrownBy(() -> practiceQuizService.startPracticeSession(student, course)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("No quiz questions available");
@@ -156,7 +164,7 @@ class PracticeQuizServiceTest {
 
         List<PracticeLog> logs = List.of(log1, log2);
 
-        when(practiceSessionRepository.findByIdAndUserIdOrElseThrow(100L, student.getId())).thenReturn(session);
+        when(practiceSessionRepository.findByIdAndCourseIdAndUserIdOrElseThrow(100L, course.getId(), student.getId())).thenReturn(session);
         when(practiceLogRepository.findAllByPracticeSessionIdOrderByIdAsc(100L)).thenReturn(logs);
         when(quizQuestionPoolApi.findById(poolItems.get(0).getId())).thenReturn(Optional.of(poolItems.get(0)));
         when(quizQuestionPoolApi.findById(poolItems.get(1).getId())).thenReturn(Optional.of(poolItems.get(1)));
@@ -168,13 +176,15 @@ class PracticeQuizServiceTest {
         SubmittedAnswerFromLiveClientDTO answer2 = new MultipleChoiceSubmittedAnswerFromLiveClientDTO(new EntityIdRefDTO(poolItems.get(1).getId()), Set.of(new EntityIdRefDTO(1L)));
         PracticeSubmissionDTO submission = new PracticeSubmissionDTO(List.of(answer1, answer2));
 
-        PracticeSessionReviewDTO review = practiceQuizService.submitPracticeSession(100L, student, submission);
+        PracticeSessionReviewDTO review = practiceQuizService.submitPracticeSession(course.getId(), 100L, student, submission);
 
         assertThat(review).isNotNull();
         assertThat(review.score()).isEqualTo(1.0);
         assertThat(review.maxPoints()).isEqualTo(2.0);
         assertThat(review.completedAt()).isNotNull();
         assertThat(review.questions()).hasSize(2);
+        // Ensure question explanation is exposed in review
+        assertThat(review.questions().getFirst().question().explanation()).isEqualTo("Explanation");
 
         verify(practiceLogRepository).saveAll(logs);
         verify(practiceSessionRepository).save(session);
@@ -190,12 +200,26 @@ class PracticeQuizServiceTest {
         session.setCourse(course);
         session.setCompletedAt(ZonedDateTime.now());
 
-        when(practiceSessionRepository.findByIdAndUserIdOrElseThrow(100L, student.getId())).thenReturn(session);
+        when(practiceSessionRepository.findByIdAndCourseIdAndUserIdOrElseThrow(100L, course.getId(), student.getId())).thenReturn(session);
 
-        assertThatThrownBy(() -> practiceQuizService.submitPracticeSession(100L, student, new PracticeSubmissionDTO(List.of()))).isInstanceOf(BadRequestAlertException.class)
-                .hasMessageContaining("already been completed");
+        assertThatThrownBy(() -> practiceQuizService.submitPracticeSession(course.getId(), 100L, student, new PracticeSubmissionDTO(List.of())))
+                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("already been completed");
 
         verify(practiceLogRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void testReviewUnfinishedSessionThrowsBadRequest() {
+        PracticeSession session = new PracticeSession();
+        session.setId(100L);
+        session.setUser(student);
+        session.setCourse(course);
+        session.setCompletedAt(null);
+
+        when(practiceSessionRepository.findByIdAndCourseIdAndUserIdOrElseThrow(100L, course.getId(), student.getId())).thenReturn(session);
+
+        assertThatThrownBy(() -> practiceQuizService.getPracticeSessionForReview(course.getId(), 100L, student)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("not completed yet");
     }
 
     @Test

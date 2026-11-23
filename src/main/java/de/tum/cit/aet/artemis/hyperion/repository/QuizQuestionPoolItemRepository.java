@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCandidateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitCountDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
@@ -57,6 +58,25 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
             WHERE item.course.id = :courseId AND (:competencyId IS NULL OR item.competencyId = :competencyId)
             """)
     Page<QuizQuestionPoolItem> findPageForCourse(@Param("courseId") long courseId, @Param("competencyId") @Nullable Long competencyId, Pageable pageable);
+
+    /**
+     * Finds lightweight candidate metadata for all items of a course that are eligible for adaptive practice quizzing.
+     * Selects only ID, competency ID, and difficulty to avoid loading full question JSON for candidates that are not sampled.
+     *
+     * @param courseId the course ID
+     * @return the list of lightweight practice-eligible candidate DTOs
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCandidateDTO(item.id, item.competencyId, item.difficulty)
+            FROM QuizQuestionPoolItem item
+            WHERE item.course.id = :courseId
+                AND item.state = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState.FILTERED
+                AND item.accepted = TRUE
+                AND item.reviewState != de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState.EXCLUDED
+                AND item.question IS NOT NULL
+            ORDER BY item.competencyId, item.difficulty, item.itemIndex
+            """)
+    List<QuizQuestionPoolCandidateDTO> findAllPracticeEligibleCandidatesByCourseId(@Param("courseId") long courseId);
 
     /**
      * Finds all items of a course that are eligible for adaptive practice quizzing.

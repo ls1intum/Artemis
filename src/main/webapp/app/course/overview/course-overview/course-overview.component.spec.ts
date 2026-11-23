@@ -422,6 +422,15 @@ describe('CourseOverviewComponent', () => {
         expect(sidebarItems[4].title).toContain('FAQs');
     });
 
+    it('should include smart quizzes sidebar item only when atlas and smart quizzes feature are enabled', () => {
+        component.atlasEnabled = true;
+        component['smartQuizzesActive'].set(false);
+        expect(component.getSidebarItems().some((item) => item.routerLink === 'smart-quizzes')).toBe(false);
+
+        component['smartQuizzesActive'].set(true);
+        expect(component.getSidebarItems().some((item) => item.routerLink === 'smart-quizzes')).toBe(true);
+    });
+
     it('loads conversations when switching to message tab once', async () => {
         const courseConversationsServiceStub = vi.spyOn(courseConversationsService, 'setUpConversationService').mockReturnValue(EMPTY);
         const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');

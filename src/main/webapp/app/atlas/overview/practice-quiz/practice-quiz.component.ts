@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faAward, faCheck, faCheckCircle, faHistory, faListCheck, faPlay, faRedo, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -22,7 +23,7 @@ import {
 @Component({
     selector: 'jhi-practice-quiz',
     templateUrl: './practice-quiz.component.html',
-    imports: [CommonModule, FaIconComponent, ArtemisDatePipe, DecimalPipe, TumAetUiButtonDirective],
+    imports: [CommonModule, FaIconComponent, ArtemisDatePipe, DecimalPipe, TumAetUiButtonDirective, MarkdownDirective],
 })
 export class PracticeQuizComponent implements OnInit, OnDestroy {
     // 1. All inject() calls strictly before any other class members
@@ -122,7 +123,7 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
      */
     startNewQuiz(): void {
         const cId = this.activeCourseId();
-        if (!cId) {
+        if (!cId || this.isLoading()) {
             return;
         }
 
@@ -179,7 +180,7 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
                 return false;
             }
         }
-        return (this.selectedOptions()[item.question?.id] ?? []).includes(optionId);
+        return false;
     }
 
     /**
@@ -255,6 +256,10 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
         this.state.set('OVERVIEW');
         this.reviewSession.set(null);
         this.currentSession.set(null);
-        this.loadOverview();
+        const cId = this.activeCourseId();
+        if (cId) {
+            this.isLoading.set(true);
+            this.loadPastSessions(cId);
+        }
     }
 }

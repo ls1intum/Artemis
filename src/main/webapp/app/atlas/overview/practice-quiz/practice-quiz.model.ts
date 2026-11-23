@@ -21,6 +21,8 @@ export interface QuizQuestionDTO {
     singleChoice?: boolean;
     competencyId?: number;
     difficulty?: string;
+    hint?: string;
+    explanation?: string;
 }
 
 export type QuizQuestionWithoutSolutionDTO = QuizQuestionDTO;

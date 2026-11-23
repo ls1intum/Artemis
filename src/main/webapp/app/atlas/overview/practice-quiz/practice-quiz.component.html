@@ -5,7 +5,7 @@
             <h2 class="text-2xl font-bold flex items-center gap-2.5">
                 <fa-icon [icon]="faListCheck" class="text-primary" />
                 <span>Smart Quiz</span>
-                <span class="text-xs font-normal px-2.5 py-0.5 rounded-full bg-surface-100 text-muted-color border border-surface-200"> exploratory </span>
+                <span class="text-xs font-normal px-2.5 py-0.5 rounded-full bg-surface-sunken text-muted-color border border-surface-200"> exploratory </span>
             </h2>
             <p class="text-sm text-muted-color mt-1">Practice course concepts on-demand. These quizzes do not affect your grade.</p>
         </div>
@@ -19,7 +19,7 @@
 
     <!-- Error Banner -->
     @if (errorMessage()) {
-        <div class="mb-4 p-3 rounded-lg border border-state-danger text-state-danger bg-surface-50 flex items-center justify-between">
+        <div class="mb-4 p-3 rounded-lg border border-state-danger text-state-danger bg-surface-sunken flex items-center justify-between">
             <span>{{ errorMessage() }}</span>
             <button type="button" class="text-state-danger hover:opacity-75 font-bold px-2" (click)="errorMessage.set(null)">✕</button>
         </div>
@@ -59,13 +59,13 @@
                         Loading...
                     </div>
                 } @else if (pastSessions().length === 0) {
-                    <div class="text-center py-8 bg-surface-50 rounded-lg border border-dashed border-surface-200">
+                    <div class="text-center py-8 bg-surface-sunken rounded-lg border border-dashed border-surface-200">
                         <p class="text-muted-color text-sm mb-0">No past quizzes completed yet. Click "Generate Quiz" to begin.</p>
                     </div>
                 } @else {
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
-                            <thead class="bg-surface-50 text-muted-color text-xs uppercase font-semibold border-b border-surface-200">
+                            <thead class="bg-surface-sunken text-muted-color text-xs uppercase font-semibold border-b border-surface-200">
                                 <tr>
                                     <th class="px-4 py-3">#</th>
                                     <th class="px-4 py-3">Date</th>
@@ -77,16 +77,16 @@
                             </thead>
                             <tbody class="divide-y divide-surface-200">
                                 @for (s of pastSessions(); track s.id) {
-                                    <tr class="hover:bg-surface-50 transition">
+                                    <tr class="hover:bg-surface-hover transition">
                                         <td class="px-4 py-3 font-mono text-xs text-muted-color">#{{ s.id }}</td>
                                         <td class="px-4 py-3">{{ s.startTime | artemisDate: 'short' }}</td>
                                         <td class="px-4 py-3">
                                             @if (s.completed) {
-                                                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-surface-100 text-state-success border border-state-success"
+                                                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-surface-sunken text-state-success border border-state-success"
                                                     >Completed</span
                                                 >
                                             } @else {
-                                                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-surface-100 text-state-warning border border-state-warning"
+                                                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-surface-sunken text-state-warning border border-state-warning"
                                                     >In Progress</span
                                                 >
                                             }
@@ -127,7 +127,7 @@
             @if (currentSession(); as session) {
                 <div class="space-y-6">
                     <!-- Session Status Bar -->
-                    <div class="bg-surface-50 border border-surface-200 rounded-lg p-4 flex items-center justify-between">
+                    <div class="bg-surface-sunken border border-surface-200 rounded-lg p-4 flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                                 <fa-icon [icon]="faListCheck" />
@@ -146,17 +146,17 @@
                     <!-- Questions List -->
                     @for (q of session.questions; track q.id; let i = $index) {
                         <div class="shadow-sm border border-surface-200 rounded-xl overflow-hidden bg-surface-card">
-                            <div class="bg-surface-50 border-b border-surface-200 py-3 px-5 flex items-center justify-between">
+                            <div class="bg-surface-sunken border-b border-surface-200 py-3 px-5 flex items-center justify-between">
                                 <span class="font-bold text-color">Question {{ i + 1 }}: {{ q.title || 'Practice Question' }}</span>
-                                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-surface-100 text-muted-color border border-surface-200">
+                                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-surface-raised text-muted-color border border-surface-200">
                                     {{ q.difficulty || 'MEDIUM' }}
                                 </span>
                             </div>
 
                             <div class="p-5">
-                                <!-- Question Text -->
+                                <!-- Question Text (Markdown & LaTeX) -->
                                 @if (q.text) {
-                                    <div class="text-base text-color mb-4 whitespace-pre-wrap">{{ q.text }}</div>
+                                    <div class="text-base text-color mb-4" [jhiMarkdown]="q.text"></div>
                                 }
 
                                 <!-- Answer Options -->
@@ -166,7 +166,7 @@
                                             <div
                                                 class="border rounded-lg p-3.5 flex items-start gap-3 cursor-pointer transition select-none"
                                                 [class.border-primary]="isOptionSelected(q.id, opt.id)"
-                                                [class.bg-surface-100]="isOptionSelected(q.id, opt.id)"
+                                                [class.bg-surface-sunken]="isOptionSelected(q.id, opt.id)"
                                                 [class.border-surface-200]="!isOptionSelected(q.id, opt.id)"
                                                 role="button"
                                                 tabindex="0"
@@ -178,13 +178,14 @@
                                                     [type]="q.singleChoice ? 'radio' : 'checkbox'"
                                                     [name]="'question-' + q.id"
                                                     [checked]="isOptionSelected(q.id, opt.id)"
+                                                    [attr.aria-label]="opt.text"
                                                     class="mt-1 cursor-pointer"
                                                     (click)="$event.stopPropagation(); toggleOption(q.id, opt.id, q.singleChoice)"
                                                 />
                                                 <div class="flex-1">
-                                                    <div class="text-sm font-medium text-color">{{ opt.text }}</div>
+                                                    <div class="text-sm font-medium text-color" [jhiMarkdown]="opt.text"></div>
                                                     @if (opt.hint) {
-                                                        <div class="text-xs text-muted-color mt-0.5">{{ opt.hint }}</div>
+                                                        <div class="text-xs text-muted-color mt-0.5" [jhiMarkdown]="opt.hint"></div>
                                                     }
                                                 </div>
                                             </div>
@@ -215,7 +216,7 @@
                     <div class="bg-surface-card border border-surface-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
                         <div>
                             <span
-                                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-100 text-state-success border border-state-success mb-2"
+                                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-sunken text-state-success border border-state-success mb-2"
                             >
                                 <fa-icon [icon]="faAward" />
                                 Session Completed
@@ -230,7 +231,7 @@
                         </div>
                         <div class="flex items-center gap-3">
                             <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="backToOverview()">Back to Overview</button>
-                            <button tumAetUiButton type="button" size="small" (click)="startNewQuiz()">
+                            <button tumAetUiButton type="button" size="small" [disabled]="isLoading()" (click)="startNewQuiz()">
                                 <fa-icon [icon]="faRedo" class="me-1" />
                                 <span>Practice Again</span>
                             </button>
@@ -240,7 +241,7 @@
                     <!-- Per-Question Review List -->
                     @for (item of review.questions; track item.question.id; let i = $index) {
                         <div class="shadow-sm border border-surface-200 rounded-xl overflow-hidden bg-surface-card">
-                            <div class="bg-surface-50 border-b border-surface-200 py-3 px-5 flex items-center justify-between">
+                            <div class="bg-surface-sunken border-b border-surface-200 py-3 px-5 flex items-center justify-between">
                                 <span class="font-bold text-color">Question {{ i + 1 }}: {{ item.question.title || 'Practice Question' }}</span>
                                 <div>
                                     <span
@@ -255,7 +256,7 @@
 
                             <div class="p-5">
                                 @if (item.question.text) {
-                                    <div class="text-base text-color mb-4 whitespace-pre-wrap">{{ item.question.text }}</div>
+                                    <div class="text-base text-color mb-4" [jhiMarkdown]="item.question.text"></div>
                                 }
 
                                 <!-- Answer Options Review -->
@@ -266,7 +267,7 @@
                                             <div
                                                 class="border rounded-lg p-3.5 flex items-start gap-3"
                                                 [class.border-state-success]="opt.isCorrect"
-                                                [class.bg-surface-100]="opt.isCorrect && isChosen"
+                                                [class.bg-surface-sunken]="opt.isCorrect && isChosen"
                                                 [class.border-state-danger]="isChosen && !opt.isCorrect"
                                                 [class.border-surface-200]="!isChosen && !opt.isCorrect"
                                                 [class.bg-surface-card]="!opt.isCorrect"
@@ -281,16 +282,17 @@
                                                     }
                                                 </div>
                                                 <div class="flex-1">
-                                                    <div
-                                                        class="text-sm font-medium"
-                                                        [class.text-state-success]="opt.isCorrect"
-                                                        [class.text-state-danger]="isChosen && !opt.isCorrect"
-                                                        [class.text-muted-color]="!isChosen && !opt.isCorrect"
-                                                    >
-                                                        {{ opt.text }}
+                                                    <div class="flex flex-wrap items-center gap-2 mb-1">
+                                                        <div
+                                                            class="text-sm font-medium"
+                                                            [class.text-state-success]="opt.isCorrect"
+                                                            [class.text-state-danger]="isChosen && !opt.isCorrect"
+                                                            [class.text-muted-color]="!isChosen && !opt.isCorrect"
+                                                            [jhiMarkdown]="opt.text"
+                                                        ></div>
                                                         @if (isChosen) {
                                                             <span
-                                                                class="px-2 py-0.5 rounded text-xs font-semibold text-white ms-2"
+                                                                class="px-2 py-0.5 rounded text-xs font-semibold text-white"
                                                                 [class.bg-state-success]="opt.isCorrect"
                                                                 [class.bg-state-danger]="!opt.isCorrect"
                                                             >
@@ -299,27 +301,33 @@
                                                         }
                                                         @if (opt.isCorrect) {
                                                             <span
-                                                                class="px-2 py-0.5 rounded text-xs font-semibold text-state-success bg-surface-100 border border-state-success ms-1"
+                                                                class="px-2 py-0.5 rounded text-xs font-semibold text-state-success bg-surface-sunken border border-state-success"
                                                             >
                                                                 Correct Solution
                                                             </span>
                                                         } @else if (isChosen) {
-                                                            <span
-                                                                class="px-2 py-0.5 rounded text-xs font-semibold text-state-danger bg-surface-100 border border-state-danger ms-1"
-                                                            >
+                                                            <span class="px-2 py-0.5 rounded text-xs font-semibold text-state-danger bg-surface-sunken border border-state-danger">
                                                                 Incorrect
                                                             </span>
                                                         }
                                                     </div>
                                                     @if (opt.explanation) {
-                                                        <div class="text-xs text-color mt-1 font-normal bg-surface-50 p-2 rounded">
-                                                            <strong>Explanation:</strong>
-                                                            {{ opt.explanation }}
+                                                        <div class="text-xs text-color mt-1 font-normal bg-surface-sunken p-2 rounded">
+                                                            <strong class="block mb-0.5">Option explanation:</strong>
+                                                            <div [jhiMarkdown]="opt.explanation"></div>
                                                         </div>
                                                     }
                                                 </div>
                                             </div>
                                         }
+                                    </div>
+                                }
+
+                                <!-- Question-Level Explanation -->
+                                @if (item.question.explanation) {
+                                    <div class="mt-4 p-4 rounded-lg bg-surface-sunken border border-surface-200">
+                                        <strong class="text-xs font-bold uppercase tracking-wider text-muted-color block mb-1">Explanation</strong>
+                                        <div class="text-sm text-color" [jhiMarkdown]="item.question.explanation"></div>
                                     </div>
                                 }
                             </div>

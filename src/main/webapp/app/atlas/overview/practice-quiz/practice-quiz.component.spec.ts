@@ -3,7 +3,8 @@ import { of } from 'rxjs';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { PracticeQuizComponent } from 'app/atlas/overview/practice-quiz/practice-quiz.component';
@@ -73,7 +74,7 @@ describe('PracticeQuizComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [PracticeQuizComponent, MockPipe(ArtemisDatePipe)],
+            imports: [PracticeQuizComponent, MockPipe(ArtemisDatePipe), MockDirective(MarkdownDirective)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -191,10 +192,10 @@ describe('PracticeQuizComponent', () => {
         expect(component.isUserSelected(reviewItem, 201)).toBe(true);
         expect(component.isUserSelected(reviewItem, 202)).toBe(false);
 
-        // Fallback when no submittedAnswer JSON exists
+        // When no submittedAnswer JSON exists, review should strictly return false rather than falling back to local state
         const fallbackItem = { question: { id: 101 } as any, isAdaptive: false };
         component.toggleOption(101, 202, false);
-        expect(component.isUserSelected(fallbackItem, 202)).toBe(true);
+        expect(component.isUserSelected(fallbackItem, 202)).toBe(false);
         expect(component.isUserSelected(fallbackItem, 201)).toBe(false);
     });
 });

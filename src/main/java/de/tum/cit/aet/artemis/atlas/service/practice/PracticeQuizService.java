@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCandidateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.EntityIdRefDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerFromLiveClientDTO;
@@ -95,15 +96,15 @@ public class PracticeQuizService {
             throw new BadRequestAlertException("Quiz question pool service is not available", "practiceQuiz", "poolNotAvailable");
         }
 
-        List<QuizQuestionPoolItem> availableItems = quizQuestionPoolApi.get().getPracticeEligibleQuestions(course.getId());
-        if (availableItems.isEmpty()) {
+        List<QuizQuestionPoolCandidateDTO> availableCandidates = quizQuestionPoolApi.get().getPracticeEligibleQuestionCandidates(course.getId());
+        if (availableCandidates.isEmpty()) {
             throw new BadRequestAlertException("No quiz questions available in the question pool for this course", "practiceQuiz", "noQuestionsAvailable");
         }
 
-        int totalCount = Math.min(DEFAULT_PRACTICE_QUIZ_SIZE, availableItems.size());
+        int totalCount = Math.min(DEFAULT_PRACTICE_QUIZ_SIZE, availableCandidates.size());
         Set<CourseCompetency> competencies = courseCompetencyRepository.findAllForCourse(course.getId());
 
-        List<QuizQuestionPoolItem> allocatedQuestions = practiceAllocationPolicy.allocateQuestions(user, competencies, totalCount, availableItems);
+        List<QuizQuestionPoolCandidateDTO> allocatedCandidates = practiceAllocationPolicy.allocateQuestions(user, competencies, totalCount, availableCandidates);
 
         PracticeSession session = new PracticeSession();
         session.setUser(user);
@@ -112,19 +113,21 @@ public class PracticeQuizService {
         PracticeSession savedSession = practiceSessionRepository.save(session);
 
         List<PracticeLog> logs = new ArrayList<>();
-        for (QuizQuestionPoolItem item : allocatedQuestions) {
+        for (QuizQuestionPoolCandidateDTO candidate : allocatedCandidates) {
             PracticeLog logEntry = new PracticeLog();
             logEntry.setPracticeSession(savedSession);
-            logEntry.setPoolItemId(item.getId());
-            logEntry.setCompetencyId(item.getCompetencyId());
-            logEntry.setDifficulty(item.getDifficulty() != null ? item.getDifficulty().name() : null);
+            logEntry.setPoolItemId(candidate.id());
+            logEntry.setCompetencyId(candidate.competencyId());
+            logEntry.setDifficulty(candidate.difficulty() != null ? candidate.difficulty().name() : null);
             logEntry.setAdaptive(false);
             logs.add(logEntry);
         }
 
         practiceLogRepository.saveAll(logs);
 
-        Map<Long, QuizQuestionPoolItem> itemsById = availableItems.stream().collect(Collectors.toMap(QuizQuestionPoolItem::getId, Function.identity(), (a, b) -> a));
+        List<Long> allocatedIds = allocatedCandidates.stream().map(QuizQuestionPoolCandidateDTO::id).toList();
+        List<QuizQuestionPoolItem> allocatedItems = quizQuestionPoolApi.get().findAllById(allocatedIds);
+        Map<Long, QuizQuestionPoolItem> itemsById = allocatedItems.stream().collect(Collectors.toMap(QuizQuestionPoolItem::getId, Function.identity(), (a, b) -> a));
 
         List<PracticeQuestionDTO> questionDTOs = logs.stream().map(l -> toPracticeQuestionDTO(itemsById.get(l.getPoolItemId()), false)).filter(Objects::nonNull).toList();
 
@@ -135,13 +138,14 @@ public class PracticeQuizService {
      * Submits student responses for a practice quiz session, computes scores, and records the responses.
      * Guaranteed never to modify Atlas competency mastery or core grade records.
      *
+     * @param courseId      the ID of the course
      * @param sessionId     the ID of the practice session
      * @param user          the student submitting responses
      * @param submissionDTO the submitted answers
      * @return the review DTO with solutions, explanations, and scores
      */
-    public PracticeSessionReviewDTO submitPracticeSession(long sessionId, User user, PracticeSubmissionDTO submissionDTO) {
-        PracticeSession session = practiceSessionRepository.findByIdAndUserIdOrElseThrow(sessionId, user.getId());
+    public PracticeSessionReviewDTO submitPracticeSession(long courseId, long sessionId, User user, PracticeSubmissionDTO submissionDTO) {
+        PracticeSession session = practiceSessionRepository.findByIdAndCourseIdAndUserIdOrElseThrow(sessionId, courseId, user.getId());
         if (session.getCompletedAt() != null) {
             throw new BadRequestAlertException("This practice session has already been completed", "practiceQuiz", "sessionAlreadyCompleted");
         }
@@ -200,6 +204,19 @@ public class PracticeQuizService {
     }
 
     /**
+     * Submits student responses for a practice quiz session, looking up the session by sessionId and user.
+     *
+     * @param sessionId     the ID of the practice session
+     * @param user          the student submitting responses
+     * @param submissionDTO the submitted answers
+     * @return the review DTO with solutions, explanations, and scores
+     */
+    public PracticeSessionReviewDTO submitPracticeSession(long sessionId, User user, PracticeSubmissionDTO submissionDTO) {
+        PracticeSession session = practiceSessionRepository.findByIdAndUserIdOrElseThrow(sessionId, user.getId());
+        return submitPracticeSession(session.getCourse().getId(), sessionId, user, submissionDTO);
+    }
+
+    /**
      * Evaluates whether the student's selected options match the correct answers for a pool item.
      *
      * @param item      the pool item
@@ -226,13 +243,18 @@ public class PracticeQuizService {
 
     /**
      * Retrieves an already completed practice session for student review, including questions, solutions, and explanations.
+     * Verifies that the session belongs to the specified course and has actually been completed to prevent leaking solutions.
      *
+     * @param courseId  the ID of the course
      * @param sessionId the ID of the practice session
      * @param user      the student reviewing the session
      * @return the review DTO
      */
-    public PracticeSessionReviewDTO getPracticeSessionForReview(long sessionId, User user) {
-        PracticeSession session = practiceSessionRepository.findByIdAndUserIdOrElseThrow(sessionId, user.getId());
+    public PracticeSessionReviewDTO getPracticeSessionForReview(long courseId, long sessionId, User user) {
+        PracticeSession session = practiceSessionRepository.findByIdAndCourseIdAndUserIdOrElseThrow(sessionId, courseId, user.getId());
+        if (session.getCompletedAt() == null) {
+            throw new BadRequestAlertException("This practice session is not completed yet", "practiceQuiz", "sessionNotCompleted");
+        }
         List<PracticeLog> logs = practiceLogRepository.findAllByPracticeSessionIdOrderByIdAsc(sessionId);
 
         List<PracticeQuestionReviewDTO> reviewQuestions = logs.stream().map(logEntry -> {
@@ -242,6 +264,18 @@ public class PracticeQuizService {
         }).toList();
 
         return PracticeSessionReviewDTO.of(session, reviewQuestions);
+    }
+
+    /**
+     * Retrieves an already completed practice session for student review, looking up the session by sessionId and user.
+     *
+     * @param sessionId the ID of the practice session
+     * @param user      the student reviewing the session
+     * @return the review DTO
+     */
+    public PracticeSessionReviewDTO getPracticeSessionForReview(long sessionId, User user) {
+        PracticeSession session = practiceSessionRepository.findByIdAndUserIdOrElseThrow(sessionId, user.getId());
+        return getPracticeSessionForReview(session.getCourse().getId(), sessionId, user);
     }
 
     /**
@@ -309,8 +343,9 @@ public class PracticeQuizService {
 
         boolean singleChoice = question.type() == QuizQuestionGenerationType.SINGLE_CHOICE;
         String difficulty = item.getDifficulty() != null ? item.getDifficulty().name() : "MEDIUM";
+        String explanation = includeSolution ? question.explanation() : null;
 
-        return new PracticeQuestionDTO(item.getId(), question.title(), question.questionText(), 1.0, "multiple-choice", optionDTOs, singleChoice, item.getCompetencyId(),
-                difficulty);
+        return new PracticeQuestionDTO(item.getId(), question.title(), question.questionText(), question.hint(), explanation, 1.0, "multiple-choice", optionDTOs, singleChoice,
+                item.getCompetencyId(), difficulty);
     }
 }
