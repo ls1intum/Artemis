@@ -2,7 +2,7 @@
 id: aiworker
 title: AI Worker Operations
 sidebar_label: AI Worker Setup
-last_reviewed: 2026-11-20
+last_reviewed: 2026-11-23
 ---
 
 AI Worker runs bounded, explicitly installed workloads outside the Artemis server.
@@ -39,6 +39,9 @@ review, especially when the host also serves core or grading workloads.
 Generated-code containers use network `none`, a read-only root filesystem, dropped
 capabilities, `no-new-privileges`, and bounded CPU, memory, processes and writable
 scratch mounts. They never receive the Docker socket or provider credentials.
+While the default sandbox image runs a JDK older than 25.0.5.1, every JVM in a sandbox
+starts with `-XX:-UseBASE64Intrinsics` (CVE-2026-114938), and its build output begins
+with `NOTE: Picked up JDK_JAVA_OPTIONS`.
 Restrict supervisor egress to approved provider, model, registry and telemetry endpoints.
 The worker does not load the core Langfuse exporter.
 Configure approved worker telemetry explicitly.
@@ -228,8 +231,8 @@ spacing and core's reservation lifetime longer than presence lifetime.
 4. Deploy matching core, worker, provider access and image configuration; then verify readiness.
 5. Run a workload canary before reopening admission.
 
-Protocol **4** uses neutral envelopes and explicitly versioned workload capabilities.
-It is incompatible with earlier Hyperion-only wire protocols. Drain and stop old workers,
+Protocol **7** uses neutral envelopes, explicitly versioned workload capabilities and
+LLM presets named by core. It is incompatible with earlier wire protocols. Drain and stop old workers,
 reconcile their containers under the old ownership labels, and change provider
 configuration together. Do not keep old and new workers sharing an identity.
 

@@ -123,6 +123,15 @@ class DockerSandboxTest {
     }
 
     @Test
+    void createSessionKeepsTheBase64IntrinsicsOffInEveryJvmOfTheSession() {
+        DockerSandboxService service = new DockerSandboxService(dockerClient, sandboxPolicy("worker-1", IMAGE_ID, "runc", 1024 * 1024 * 1024, 100_000, 128));
+
+        service.createSession();
+
+        verify(createContainerCmd).withEnv("JDK_JAVA_OPTIONS=-XX:-UseBASE64Intrinsics");
+    }
+
+    @Test
     void createSessionRunsAnInitProcessAsPidOneSoTheContainerStopsOnSignal() {
         DockerSandboxService service = new DockerSandboxService(dockerClient, sandboxPolicy("worker-1", IMAGE_ID, "runc", 1024 * 1024 * 1024, 100_000, 128));
 
