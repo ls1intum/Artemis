@@ -8,9 +8,9 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { ExamExerciseDeletionCounts } from './exam-exercise-deletion-counts';
 
-export interface ExamDeletionSummary {
-    numberOfBuilds?: number;
+export interface ExamDeletionSummary extends ExamExerciseDeletionCounts {
     numberOfCommunicationPosts?: number;
     numberOfAnswerPosts?: number;
     numberRegisteredStudents?: number;
@@ -18,17 +18,6 @@ export interface ExamDeletionSummary {
     numberStartedExams?: number;
     numberSubmittedExams?: number;
     numberOfExerciseGroups?: number;
-    numberOfProgrammingExercises?: number;
-    numberOfQuizExercises?: number;
-    numberOfTextExercises?: number;
-    numberOfModelingExercises?: number;
-    numberOfFileUploadExercises?: number;
-    numberOfStudentParticipations?: number;
-    numberOfSubmissions?: number;
-    numberOfResults?: number;
-    numberOfAssessments?: number;
-    numberOfComplaints?: number;
-    numberOfPlagiarismComparisons?: number;
     numberOfTestRuns?: number;
     numberOfExamSessions?: number;
     numberOfExamLiveEvents?: number;

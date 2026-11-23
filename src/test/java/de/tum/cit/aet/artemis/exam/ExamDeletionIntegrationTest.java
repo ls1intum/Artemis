@@ -127,7 +127,7 @@ class ExamDeletionIntegrationTest extends AbstractSpringIntegrationIndependentTe
         addStudentExam(student4, true, true);
 
         var response = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/deletion-summary", HttpStatus.OK, ExamDeletionSummaryDTO.class);
-        assertThat(response.numberOfBuilds()).isEqualTo(1);
+        assertThat(response.exerciseCounts().numberOfBuilds()).isEqualTo(1);
         assertThat(response.numberOfCommunicationPosts()).isEqualTo(1);
         assertThat(response.numberOfAnswerPosts()).isEqualTo(2);
         assertThat(response.numberNotStartedExams()).isEqualTo(2);

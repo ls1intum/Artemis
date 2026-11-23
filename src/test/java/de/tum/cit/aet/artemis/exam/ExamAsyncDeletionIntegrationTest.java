@@ -446,19 +446,19 @@ class ExamAsyncDeletionIntegrationTest extends AbstractSpringIntegrationIndepend
         var summary = request.get(examUrl() + "/deletion-summary", HttpStatus.OK, ExamDeletionSummaryDTO.class);
 
         assertThat(summary.numberOfExerciseGroups()).isEqualTo(6);
-        assertThat(summary.numberOfTextExercises()).isEqualTo(4);
-        assertThat(summary.numberOfQuizExercises()).isEqualTo(2);
-        assertThat(summary.numberOfFileUploadExercises()).isEqualTo(2);
-        assertThat(summary.numberOfModelingExercises()).isEqualTo(2);
-        assertThat(summary.numberOfProgrammingExercises()).isZero();
-        assertThat(summary.numberOfStudentParticipations()).isEqualTo(1);
-        assertThat(summary.numberOfSubmissions()).isEqualTo(1);
-        assertThat(summary.numberOfResults()).isEqualTo(1);
+        assertThat(summary.exerciseCounts().numberOfTextExercises()).isEqualTo(4);
+        assertThat(summary.exerciseCounts().numberOfQuizExercises()).isEqualTo(2);
+        assertThat(summary.exerciseCounts().numberOfFileUploadExercises()).isEqualTo(2);
+        assertThat(summary.exerciseCounts().numberOfModelingExercises()).isEqualTo(2);
+        assertThat(summary.exerciseCounts().numberOfProgrammingExercises()).isZero();
+        assertThat(summary.exerciseCounts().numberOfStudentParticipations()).isEqualTo(1);
+        assertThat(summary.exerciseCounts().numberOfSubmissions()).isEqualTo(1);
+        assertThat(summary.exerciseCounts().numberOfResults()).isEqualTo(1);
         assertThat(summary.numberRegisteredStudents()).isEqualTo(NUMBER_OF_STUDENTS);
         assertThat(summary.numberNotStartedExams()).isEqualTo(1);
         assertThat(summary.numberOfTestRuns()).isZero();
-        assertThat(summary.numberOfComplaints()).isZero();
-        assertThat(summary.numberOfPlagiarismComparisons()).isZero();
+        assertThat(summary.exerciseCounts().numberOfComplaints()).isZero();
+        assertThat(summary.exerciseCounts().numberOfPlagiarismComparisons()).isZero();
         assertThat(summary.numberOfExamSessions()).isZero();
         assertThat(summary.numberOfExamLiveEvents()).isZero();
     }
@@ -475,14 +475,14 @@ class ExamAsyncDeletionIntegrationTest extends AbstractSpringIntegrationIndepend
         examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student1");
 
         var textSummary = request.get(examUrl() + "/exercise-groups/" + textGroup.getId() + "/deletion-summary", HttpStatus.OK, ExerciseGroupDeletionSummaryDTO.class);
-        assertThat(textSummary.numberOfTextExercises()).isEqualTo(2);
-        assertThat(textSummary.numberOfQuizExercises()).isZero();
-        assertThat(textSummary.numberOfStudentParticipations()).isEqualTo(2);
-        assertThat(textSummary.numberOfBuilds()).isZero();
+        assertThat(textSummary.exerciseCounts().numberOfTextExercises()).isEqualTo(2);
+        assertThat(textSummary.exerciseCounts().numberOfQuizExercises()).isZero();
+        assertThat(textSummary.exerciseCounts().numberOfStudentParticipations()).isEqualTo(2);
+        assertThat(textSummary.exerciseCounts().numberOfBuilds()).isZero();
 
         var quizSummary = request.get(examUrl() + "/exercise-groups/" + quizGroup.getId() + "/deletion-summary", HttpStatus.OK, ExerciseGroupDeletionSummaryDTO.class);
-        assertThat(quizSummary.numberOfQuizExercises()).isEqualTo(2);
-        assertThat(quizSummary.numberOfTextExercises()).isZero();
-        assertThat(quizSummary.numberOfStudentParticipations()).isZero();
+        assertThat(quizSummary.exerciseCounts().numberOfQuizExercises()).isEqualTo(2);
+        assertThat(quizSummary.exerciseCounts().numberOfTextExercises()).isZero();
+        assertThat(quizSummary.exerciseCounts().numberOfStudentParticipations()).isZero();
     }
 }

@@ -8687,30 +8687,20 @@ components:
           items: {type: integer, format: int64}
           uniqueItems: true
     ExamDeletionSummary:
-      type: object
-      properties:
-        numberOfBuilds: {type: integer, format: int64}
-        numberOfCommunicationPosts: {type: integer, format: int64}
-        numberOfAnswerPosts: {type: integer, format: int64}
-        numberRegisteredStudents: {type: integer, format: int64}
-        numberNotStartedExams: {type: integer, format: int64}
-        numberStartedExams: {type: integer, format: int64}
-        numberSubmittedExams: {type: integer, format: int64}
-        numberOfExerciseGroups: {type: integer, format: int64}
-        numberOfProgrammingExercises: {type: integer, format: int64}
-        numberOfQuizExercises: {type: integer, format: int64}
-        numberOfTextExercises: {type: integer, format: int64}
-        numberOfModelingExercises: {type: integer, format: int64}
-        numberOfFileUploadExercises: {type: integer, format: int64}
-        numberOfStudentParticipations: {type: integer, format: int64}
-        numberOfSubmissions: {type: integer, format: int64}
-        numberOfResults: {type: integer, format: int64}
-        numberOfAssessments: {type: integer, format: int64}
-        numberOfComplaints: {type: integer, format: int64}
-        numberOfPlagiarismComparisons: {type: integer, format: int64}
-        numberOfTestRuns: {type: integer, format: int64}
-        numberOfExamSessions: {type: integer, format: int64}
-        numberOfExamLiveEvents: {type: integer, format: int64}
+      allOf:
+      - {$ref: '#/components/schemas/ExamExerciseDeletionCounts'}
+      - type: object
+        properties:
+          numberOfCommunicationPosts: {type: integer, format: int64}
+          numberOfAnswerPosts: {type: integer, format: int64}
+          numberRegisteredStudents: {type: integer, format: int64}
+          numberNotStartedExams: {type: integer, format: int64}
+          numberStartedExams: {type: integer, format: int64}
+          numberSubmittedExams: {type: integer, format: int64}
+          numberOfExerciseGroups: {type: integer, format: int64}
+          numberOfTestRuns: {type: integer, format: int64}
+          numberOfExamSessions: {type: integer, format: int64}
+          numberOfExamLiveEvents: {type: integer, format: int64}
     AssessmentCriteriaGenerationRequest:
       type: object
       description: Context used to generate structured assessment criteria
@@ -10346,6 +10336,22 @@ components:
         indexed: {type: integer, format: int64}
         missing: {type: integer, format: int64}
         orphaned: {type: integer, format: int64}
+    ExamExerciseDeletionCounts:
+      type: object
+      properties:
+        numberOfProgrammingExercises: {type: integer, format: int64}
+        numberOfQuizExercises: {type: integer, format: int64}
+        numberOfTextExercises: {type: integer, format: int64}
+        numberOfModelingExercises: {type: integer, format: int64}
+        numberOfFileUploadExercises: {type: integer, format: int64}
+        numberOfStudentParticipations: {type: integer, format: int64}
+        numberOfSubmissions: {type: integer, format: int64}
+        numberOfResults: {type: integer, format: int64}
+        numberOfAssessments: {type: integer, format: int64}
+        numberOfComplaints: {type: integer, format: int64}
+        numberOfPlagiarismComparisons: {type: integer, format: int64}
+        numberOfBuilds: {type: integer, format: int64}
+      x-parent: true
     ResultForExport:
       type: object
       properties:
@@ -12491,21 +12497,11 @@ components:
           type: array
           items: {$ref: '#/components/schemas/ExerciseImport'}
     ExerciseGroupDeletionSummary:
-      type: object
-      properties:
-        numberOfProgrammingExercises: {type: integer, format: int64}
-        numberOfQuizExercises: {type: integer, format: int64}
-        numberOfTextExercises: {type: integer, format: int64}
-        numberOfModelingExercises: {type: integer, format: int64}
-        numberOfFileUploadExercises: {type: integer, format: int64}
-        numberOfStudentParticipations: {type: integer, format: int64}
-        numberOfSubmissions: {type: integer, format: int64}
-        numberOfResults: {type: integer, format: int64}
-        numberOfAssessments: {type: integer, format: int64}
-        numberOfComplaints: {type: integer, format: int64}
-        numberOfPlagiarismComparisons: {type: integer, format: int64}
-        numberOfBuilds: {type: integer, format: int64}
-        numberOfStudentExams: {type: integer, format: int64}
+      allOf:
+      - {$ref: '#/components/schemas/ExamExerciseDeletionCounts'}
+      - type: object
+        properties:
+          numberOfStudentExams: {type: integer, format: int64}
     RatingListItem:
       type: object
       properties:

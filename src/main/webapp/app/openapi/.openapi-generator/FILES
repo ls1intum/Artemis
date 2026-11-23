@@ -191,6 +191,7 @@ model/exam-checklist.ts
 model/exam-conduction-counts.ts
 model/exam-deletion-summary.ts
 model/exam-distribution-capacity.ts
+model/exam-exercise-deletion-counts.ts
 model/exam-exercise-for-conduction.ts
 model/exam-exercise-group-assignment.ts
 model/exam-exercise-start-preparation-status.ts

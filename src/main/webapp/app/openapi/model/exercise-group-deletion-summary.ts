@@ -8,19 +8,8 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { ExamExerciseDeletionCounts } from './exam-exercise-deletion-counts';
 
-export interface ExerciseGroupDeletionSummary {
-    numberOfProgrammingExercises?: number;
-    numberOfQuizExercises?: number;
-    numberOfTextExercises?: number;
-    numberOfModelingExercises?: number;
-    numberOfFileUploadExercises?: number;
-    numberOfStudentParticipations?: number;
-    numberOfSubmissions?: number;
-    numberOfResults?: number;
-    numberOfAssessments?: number;
-    numberOfComplaints?: number;
-    numberOfPlagiarismComparisons?: number;
-    numberOfBuilds?: number;
+export interface ExerciseGroupDeletionSummary extends ExamExerciseDeletionCounts {
     numberOfStudentExams?: number;
 }
