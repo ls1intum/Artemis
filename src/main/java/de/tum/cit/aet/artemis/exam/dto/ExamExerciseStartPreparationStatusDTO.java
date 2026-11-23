@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.exam.dto;
 
 import java.time.ZonedDateTime;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -14,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param participationCount the number of participations created so far
  * @param startedAt          when the preparation started
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamExerciseStartPreparationStatusDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) int finished,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int failed, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int overall, int participationCount,
         ZonedDateTime startedAt) {
