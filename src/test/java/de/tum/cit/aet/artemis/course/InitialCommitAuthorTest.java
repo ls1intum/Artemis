@@ -29,7 +29,7 @@ class InitialCommitAuthorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "a@b.", "a@.b", "a@.", "a@b", "a@.example.com", "a@example." })
+    @ValueSource(strings = { "a@b.", "a@.b", "a@.", "a@b", "a@.example.com", "a@example.", "a@b.c." })
     void validate_rejectsADomainWithoutAnInnerDot(String email) {
         assertThatThrownBy(() -> new InitialCommitAuthorDTO(InitialCommitAuthorMode.CUSTOM, "Course Team", email).validate()).isInstanceOf(BadRequestAlertException.class);
     }

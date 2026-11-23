@@ -72,7 +72,7 @@ describe('createInitialCommitAuthorFormGroup', () => {
         expect(group.controls.email.valid).toBe(true);
     });
 
-    it.each(['a@b.', 'a@.b', 'a@.', 'a@b', 'a@.example.com', 'a@example.'])('rejects the email %j without an inner dot in the domain', (email) => {
+    it.each(['a@b.', 'a@.b', 'a@.', 'a@b', 'a@.example.com', 'a@example.', 'a@b.c.'])('rejects the email %j without an inner dot in the domain', (email) => {
         const group = createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM, name: 'Course Team', email });
 
         expect(group.controls.email.invalid).toBe(true);

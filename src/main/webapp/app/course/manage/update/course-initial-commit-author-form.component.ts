@@ -17,12 +17,12 @@ const NAME_PATTERN = /^[^<>\p{Cc}\p{Cf}\p{Zl}\p{Zp}]+$/u;
 const FORBIDDEN_ADDRESS_CHARACTER = /[<>\p{Cc}\p{Cf}\p{Z}]/u;
 
 /**
- * Whether the text is one address: a local part, exactly one at sign and a domain that does not start with a dot but has a dot that is not its last character, without a forbidden
+ * Whether the text is one address: a local part, exactly one at sign and a domain that neither starts nor ends with a dot and has a dot inside, without a forbidden
  * character. It is checked by position, not by a pattern with a quantifier on each side of the dot, which backtracks heavily on a long text. The server checks the same.
  */
 function isValidEmail(address: string): boolean {
     const at = address.indexOf('@');
-    if (at <= 0 || address.charAt(at + 1) === '.' || at !== address.lastIndexOf('@') || FORBIDDEN_ADDRESS_CHARACTER.test(address)) {
+    if (at <= 0 || address.charAt(at + 1) === '.' || address.endsWith('.') || at !== address.lastIndexOf('@') || FORBIDDEN_ADDRESS_CHARACTER.test(address)) {
         return false;
     }
     return address.indexOf('.', at + 2) !== -1 && address.indexOf('.', at + 2) < address.length - 1;
