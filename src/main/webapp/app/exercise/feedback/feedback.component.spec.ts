@@ -359,7 +359,7 @@ describe('FeedbackComponent', () => {
             makeFeedback({
                 text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Check this implementation`,
                 detailText: 'The returned value is wrong.',
-                reference: 'file:src/main/java/Example.java_line:2',
+                reference: 'file:src/main/java/Example.java_line:3',
             }),
         ];
 
@@ -427,7 +427,7 @@ describe('FeedbackComponent', () => {
             makeFeedback({
                 text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Check this implementation`,
                 detailText: 'The returned value is wrong.',
-                reference: 'file:src/main/java/Example.java_line:2-4',
+                reference: 'file:src/main/java/Example.java_line:3-5',
             }),
         ];
 
@@ -454,7 +454,7 @@ describe('FeedbackComponent', () => {
             makeFeedback({
                 text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Check this implementation`,
                 detailText: 'The returned value is wrong.',
-                reference: 'file:src/main/java/Example.java_line:2-1000000',
+                reference: 'file:src/main/java/Example.java_line:3-1000000',
             }),
         ];
 
@@ -472,7 +472,7 @@ describe('FeedbackComponent', () => {
             makeFeedback({
                 text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Check this implementation`,
                 detailText: 'The returned value is wrong.',
-                reference: 'file:src/main/java/Example.java_line:1',
+                reference: 'file:src/main/java/Example.java_line:2',
             }),
         ];
 
