@@ -14,7 +14,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,12 +81,6 @@ public class GitService extends AbstractGitService {
 
     @Value("${artemis.repo-clone-path}")
     private Path repoClonePath;
-
-    @Value("${artemis.git.name}")
-    private String artemisGitName;
-
-    @Value("${artemis.git.email}")
-    private String artemisGitEmail;
 
     /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
@@ -461,20 +454,18 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Commits with the given message into the repository, as the given identity, and pushes it to the remote.
+     * Commits as the given identity, at the time of the commit, and pushes it to the remote.
      *
      * @param repo        Local Repository Object.
      * @param message     Commit Message
      * @param emptyCommit whether the git service should also produce an empty commit
-     * @param identity    The identity that commits. The commit has no other author, so this is the author as well.
+     * @param identity    The identity that commits and authors
      * @return the id of the commit that was created
-     * @throws GitAPIException if the commit failed.
      */
     public String commitAndPushAs(Repository repo, String message, boolean emptyCommit, PersonIdent identity) throws GitAPIException {
         return workingCopyLocks.withLock(workingCopyPath(repo), () -> {
             try (Git git = new Git(repo)) {
-                // The commit time is the time of the commit, not the time the identity was built, which may be minutes before for an identity shared by several commits.
-                RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(new PersonIdent(identity, Instant.now())).call();
+                RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(identity.getName(), identity.getEmailAddress()).call();
                 log.debug("commitAndPush -> Push {}", repo.getLocalPath());
                 setRemoteUrl(repo);
                 pushCommand(git).call();
@@ -484,15 +475,6 @@ public class GitService extends AbstractGitService {
                 return commit.getName();
             }
         });
-    }
-
-    /**
-     * The identity that the server configures for commits it makes itself, {@code artemis.git.name} and {@code artemis.git.email}.
-     *
-     * @return the placeholder identity
-     */
-    public PersonIdent getPlaceholderIdentity() {
-        return new PersonIdent(artemisGitName, artemisGitEmail);
     }
 
     /**
