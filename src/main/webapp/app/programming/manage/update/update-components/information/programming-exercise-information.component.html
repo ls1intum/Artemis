@@ -4,7 +4,7 @@
         id="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle"
     ></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepMessage"></p>
-    <div class="form-group">
+    <div class="mb-4">
         <jhi-exercise-title-channel-name
             [exercise]="programmingExercise()"
             [course]="programmingExercise().course"
@@ -20,20 +20,23 @@
         />
     </div>
     @if (isEditFieldDisplayedRecord().shortName || (!programmingExerciseCreationConfig().isExamMode && isEditFieldDisplayedRecord().categories)) {
-        <div class="row">
+        <div class="flex flex-wrap -mx-2">
             @if (isEditFieldDisplayedRecord().shortName) {
-                <div class="form-group col-lg-6">
+                <div class="mb-4 w-full px-2 min-[992px]:w-1/2">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label
+                        <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label
                         ><span class="text-state-danger" aria-hidden="true">*</span>
                         <jhi-help-icon text="artemisApp.programmingExercise.shortNameTooltip" />
                     </div>
                     <input
                         required
                         type="text"
-                        class="form-control"
+                        tumAetUiInput
+                        class="w-full"
                         name="shortName"
                         id="field_shortName"
+                        tumAetUiInputId="field_shortName"
+                        [tumAetUiInputInvalid]="!!shortName.invalid && !!(shortName.dirty || shortName.touched)"
                         minlength="3"
                         [maxlength]="PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH"
                         [pattern]="programmingExerciseCreationConfig().shortNamePattern"
@@ -46,17 +49,17 @@
                     />
                     @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error.key) {
                         @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
-                            <p-message severity="error">
+                            <tumaet-ui-message severity="error" class="mt-1 block">
                                 <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
-                            </p-message>
+                            </tumaet-ui-message>
                         }
                     }
                 </div>
             }
             @if (!programmingExerciseCreationConfig().isExamMode && isEditFieldDisplayedRecord().categories) {
-                <div class="col-12" [class.col-lg-6]="isEditFieldDisplayedRecord().shortName" id="creation-config-selector">
+                <div class="w-full px-2" [class]="isEditFieldDisplayedRecord().shortName ? 'min-[992px]:w-1/2' : ''" id="creation-config-selector">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories"></label>
+                        <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.exercise.categories"></label>
                         <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
                     </div>
                     <jhi-category-selector
@@ -69,9 +72,9 @@
         </div>
     }
     @if (programmingExercise().shortName && isShortNameFieldValid()) {
-        <div class="form-group">
+        <div class="mb-4">
             <div>
-                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
+                <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
                 <jhi-help-icon [text]="'artemisApp.programmingExercise.preview.tooltipLocalVC'" />
             </div>
             <jhi-programming-exercise-repository-and-build-plan-details
@@ -100,7 +103,7 @@
                 />
             }
             @if (!programmingExerciseCreationConfig().isImportFromExistingExercise && programmingExerciseCreationConfig().auxiliaryRepositoriesSupported) {
-                <div class="form-group">
+                <div class="mb-4">
                     @if (
                         programmingExercise().auxiliaryRepositories &&
                         programmingExercise().auxiliaryRepositories!.length > 0 &&
@@ -115,19 +118,19 @@
                         />
                     }
                     @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames || programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateDirectories) {
-                        <p-message severity="error">
+                        <tumaet-ui-message severity="error" class="mt-1 block">
                             @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames) {
                                 <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames"></span>
                             }
                             @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateDirectories) {
                                 <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames"></span>
                             }
-                        </p-message>
+                        </tumaet-ui-message>
                     }
                     @if (programmingExerciseCreationConfig() && !isLocalCIEnabled()) {
-                        <p-message severity="info">
+                        <tumaet-ui-message severity="info" class="mt-1 block">
                             <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
-                        </p-message>
+                        </tumaet-ui-message>
                     }
                     @if (isLocalCIEnabled() && !isImport() && !programmingExerciseCreationConfig().isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
                         <jhi-button
@@ -142,7 +145,7 @@
                         <jhi-add-auxiliary-repository-button
                             [programmingExercise]="programmingExercise()"
                             (onRefresh)="programmingExerciseCreationConfig().refreshAuxiliaryRepositoryChecks()"
-                            class="ml-2"
+                            class="ms-2"
                         />
                         <jhi-help-icon text="artemisApp.programmingExercise.auxiliaryRepository.usageDescription" />
                     }
@@ -150,22 +153,18 @@
             }
         </div>
     }
-    <div class="form-group">
+    <div class="mb-4">
         @if (programmingExerciseCreationConfig().isImportFromExistingExercise) {
-            <div class="form-check">
-                <label class="form-check-label" for="field_recreateBuildPlans">
-                    <input
-                        #recreateBuildPlans="ngModel"
-                        class="form-check-input"
-                        type="checkbox"
-                        name="recreateBuildPlans"
-                        id="field_recreateBuildPlans"
-                        [(ngModel)]="importOptions().recreateBuildPlans"
-                        (change)="programmingExerciseCreationConfig().recreateBuildPlanChange()"
-                    />
-                    <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title"></span>
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recreateBuildPlans.description" />
-                </label>
+            <div class="flex items-center gap-2 mb-1">
+                <tumaet-ui-checkbox
+                    #recreateBuildPlans="ngModel"
+                    name="recreateBuildPlans"
+                    inputId="field_recreateBuildPlans"
+                    [(ngModel)]="importOptions().recreateBuildPlans"
+                    (changed)="programmingExerciseCreationConfig().recreateBuildPlanChange()"
+                />
+                <label class="mb-0" for="field_recreateBuildPlans" jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title"></label>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recreateBuildPlans.description" />
             </div>
         }
     </div>
@@ -197,7 +196,15 @@
 </ng-template>
 
 <ng-template #auxDescriptionTemplate let-cell>
-    <textarea class="form-control table-editable-field__input me-2" [id]="cell.data.id + '-description'" [(ngModel)]="cell.data.description" name="description"></textarea>
+    <textarea
+        tumAetUiTextarea
+        class="w-full table-editable-field__input me-2!"
+        [id]="cell.data.id + '-description'"
+        [tumAetUiInputId]="cell.data.id + '-description'"
+        [attr.aria-label]="'artemisApp.programmingExercise.auxiliaryRepository.description' | artemisTranslate"
+        [(ngModel)]="cell.data.description"
+        name="description"
+    ></textarea>
 </ng-template>
 
 <ng-template #auxRepoActionsRef let-row>

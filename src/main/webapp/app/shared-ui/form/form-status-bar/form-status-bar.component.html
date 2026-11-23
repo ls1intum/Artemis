@@ -5,7 +5,7 @@
             @for (formStatusSection of formStatusSections(); track formStatusSection.title; let index = $index) {
                 <div class="flex flex-col items-center" id="status-bar-section-item-{{ index }}">
                     <div
-                        class="form-status-circle rounded-full border"
+                        class="form-status-circle rounded-full border border-(--border-color)"
                         [attr.aria-label]="formStatusSection.title | artemisTranslate"
                         (click)="scrollToHeadline(formStatusSection.title)"
                         #keyboardAction7
@@ -23,7 +23,7 @@
                     </div>
                     <a
                         (click)="scrollToHeadline(formStatusSection.title)"
-                        class="hidden cursor-pointer text-primary underline sm:inline"
+                        class="hidden text-primary sm:inline"
                         #keyboardAction14
                         role="button"
                         tabindex="0"

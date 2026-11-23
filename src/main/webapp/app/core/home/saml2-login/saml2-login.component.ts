@@ -4,11 +4,12 @@ import { LoginService } from 'app/core/login/login.service';
 import { Saml2Config } from 'app/core/home/saml2-login/saml2.config';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-saml2-login',
     templateUrl: './saml2-login.component.html',
-    imports: [],
+    imports: [TumAetUiButtonDirective],
 })
 export class Saml2LoginComponent implements OnInit {
     private readonly loginService = inject(LoginService);
@@ -48,7 +49,10 @@ export class Saml2LoginComponent implements OnInit {
                     // for example if user was disabled
                     let message = 'Forbidden';
                     const details = error.headers.get('X-artemisApp-error');
-                    if (details) {
+                    if (details?.startsWith('home.errors.')) {
+                        // a translation key, e.g. for an account with a password of its own
+                        message = details;
+                    } else if (details) {
                         message += ': ' + details;
                     }
                     this.alertService.warning(message);

@@ -6,7 +6,7 @@
                 {{ index + 1 }}
             </div>
             <!-- A datetime needs about 14rem; on a narrow screen the end picker wraps below the start picker instead of truncating the text. -->
-            <div class="flex min-w-0 flex-1 flex-wrap gap-6!">
+            <div class="flex min-w-0 flex-1 flex-wrap gap-6">
                 <tumaet-ui-date-picker
                     class="min-w-56 flex-1"
                     [inputId]="'start-date-' + (index + 1)"
@@ -75,14 +75,14 @@
     @if (drafts.length > 0) {
         <h3 jhiTranslate="artemisApp.lecture.createSeries.generatedLecturesHeading"></h3>
         <div class="w-full px-0">
-            <div class="grid grid-cols-1 gap-4! md:grid-cols-2 lg:grid-cols-3">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 @for (draft of drafts; track draft.id; let index = $index) {
                     <div class="min-w-0 flex-1">
                         <div class="draft-card">
                             <span class="enumerator primary" [ngClass]="{ edited: draft.state === LectureDraftState.EDITED }">
                                 {{ index + 1 }}
                             </span>
-                            <span class="draft-title">{{ draft.dto.title }}</span>
+                            <span class="draft-title">{{ draft.title }}</span>
                             <button
                                 tumAetUiButton
                                 severity="warn"
@@ -91,7 +91,7 @@
                                 type="button"
                                 class="draft-action"
                                 (click)="draftEditModal.open(draft)"
-                                [attr.aria-label]="'Edit ' + draft.dto.title"
+                                [attr.aria-label]="'Edit ' + draft.title"
                             >
                                 <fa-icon [icon]="faPenToSquare" />
                             </button>
@@ -103,7 +103,7 @@
                                 type="button"
                                 class="draft-action"
                                 (click)="deleteLectureDraft(draft)"
-                                [attr.aria-label]="'Delete ' + draft.dto.title"
+                                [attr.aria-label]="'Delete ' + draft.title"
                             >
                                 <fa-icon [icon]="faXmark" />
                             </button>

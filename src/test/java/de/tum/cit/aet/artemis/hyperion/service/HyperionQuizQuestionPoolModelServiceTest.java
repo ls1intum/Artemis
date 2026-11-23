@@ -2,98 +2,63 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import java.time.Duration;
-import java.util.List;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.client.ChatClient;
 
+import de.tum.cit.aet.artemis.core.config.llm.LlmPresetAssignment;
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
+import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 
 class HyperionQuizQuestionPoolModelServiceTest {
 
-    private static final String LOCAL_ENDPOINT = "https://logos.example.org/v1";
-
-    private static final String MODEL = "openai/gpt-oss-120b";
-
-    private static final List<String> ALLOWED = List.of(MODEL, "Qwen/Qwen3.8-27B");
+    private final LlmClientService llmClientService = mock(LlmClientService.class);
 
     @Test
-    void constructor_leavesThePoolOffWithoutAnyConfiguration() {
-        HyperionQuizQuestionPoolModelService service = service("", "", "", ALLOWED);
+    void withoutPresetsThePoolIsOffAndNeedsNoAssignment() {
+        HyperionQuizQuestionPoolModelService service = new HyperionQuizQuestionPoolModelService(llmClientService, "", " ");
 
         assertThat(service.isConfigured()).isFalse();
+        assertThat(service.llmPresetAssignments()).isEmpty();
         assertThat(service.generatorModel()).isEmpty();
-        assertThatThrownBy(service::chatClient).isInstanceOf(ServiceUnavailableAlertException.class).hasMessageContaining("no local model configured");
+        assertThat(service.judgeModel()).isEmpty();
+        assertThatThrownBy(service::generatorChatClient).isInstanceOf(ServiceUnavailableAlertException.class);
+        assertThatThrownBy(service::judgeChatClient).isInstanceOf(ServiceUnavailableAlertException.class);
+        verifyNoInteractions(llmClientService);
     }
 
     @Test
-    void constructor_buildsTheClientOfTheOwnEndpointForAllowedModels() {
-        HyperionQuizQuestionPoolModelService service = service(" " + LOCAL_ENDPOINT + " ", " " + MODEL + " ", "Qwen/Qwen3.8-27B", ALLOWED);
+    void onePresetRequiresTheOther() {
+        HyperionQuizQuestionPoolModelService service = new HyperionQuizQuestionPoolModelService(llmClientService, "local", "");
+
+        assertThat(service.isConfigured()).isFalse();
+        assertThat(service.llmPresetAssignments()).extracting(LlmPresetAssignment::propertyKey, LlmPresetAssignment::preset).containsExactly(
+                org.assertj.core.groups.Tuple.tuple(HyperionQuizQuestionPoolModelService.GENERATOR_KEY, "local"),
+                org.assertj.core.groups.Tuple.tuple(HyperionQuizQuestionPoolModelService.JUDGE_KEY, null));
+        assertThatThrownBy(service::generatorChatClient).isInstanceOf(ServiceUnavailableAlertException.class);
+    }
+
+    @Test
+    void bothPresetsGiveTheClientsAndModelsOfTheirPresets() {
+        ChatClient generator = mock(ChatClient.class);
+        ChatClient judge = mock(ChatClient.class);
+        when(llmClientService.chatClient("local")).thenReturn(generator);
+        when(llmClientService.chatClient("judge")).thenReturn(judge);
+        when(llmClientService.preset("local")).thenReturn(LlmTestCatalog.preset("logos", "Qwen/Qwen3.8-27B", LlmProperties.Api.CHAT_COMPLETIONS));
+        when(llmClientService.preset("judge")).thenReturn(LlmTestCatalog.preset("logos", "openai/gpt-oss-120b", LlmProperties.Api.CHAT_COMPLETIONS));
+
+        HyperionQuizQuestionPoolModelService service = new HyperionQuizQuestionPoolModelService(llmClientService, " local ", "judge");
 
         assertThat(service.isConfigured()).isTrue();
-        assertThat(service.chatClient()).isNotNull();
-        assertThat(service.generatorModel()).isEqualTo(MODEL);
-        assertThat(service.judgeModel()).isEqualTo("Qwen/Qwen3.8-27B");
-    }
-
-    @Test
-    void constructor_leavesThePoolOffWhenTheConfigurationIsInvalid() {
-        for (HyperionQuizQuestionPoolModelService service : List.of(service(LOCAL_ENDPOINT, MODEL, "", ALLOWED), service(LOCAL_ENDPOINT, MODEL, "anthropic/claude-opus", ALLOWED),
-                service("https://api.openai.com/v1", MODEL, MODEL, ALLOWED), service("logos.example.org/v1", MODEL, MODEL, ALLOWED))) {
-            assertThat(service.isConfigured()).isFalse();
-            assertThatThrownBy(service::chatClient).isInstanceOf(ServiceUnavailableAlertException.class);
-        }
-    }
-
-    @Test
-    void validate_rejectsAPartialConfiguration() {
-        assertThatThrownBy(() -> validate(LOCAL_ENDPOINT, MODEL, "", ALLOWED)).isInstanceOf(IllegalStateException.class).hasMessageContaining("judge-model");
-        assertThatThrownBy(() -> validate("", MODEL, MODEL, ALLOWED)).isInstanceOf(IllegalStateException.class).hasMessageContaining("base-url");
-    }
-
-    @Test
-    void validate_rejectsAModelOutsideTheAllowlist() {
-        assertThatThrownBy(() -> validate(LOCAL_ENDPOINT, MODEL, "anthropic/claude-opus", ALLOWED)).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("anthropic/claude-opus").hasMessageContaining("allowed-models");
-        assertThatThrownBy(() -> validate(LOCAL_ENDPOINT, MODEL, MODEL, List.of())).isInstanceOf(IllegalStateException.class).hasMessageContaining("allowed-models");
-    }
-
-    @Test
-    void validate_rejectsCloudProviderEndpoints() {
-        for (String endpoint : List.of("https://api.openai.com/v1", "https://my-resource.openai.azure.com", "https://api.anthropic.com/v1",
-                "https://generativelanguage.googleapis.com/v1beta/openai", "https://bedrock-runtime.eu-central-1.amazonaws.com")) {
-            assertThatThrownBy(() -> validate(endpoint, MODEL, MODEL, ALLOWED)).as(endpoint).isInstanceOf(IllegalStateException.class).hasMessageContaining("self-hosted");
-        }
-    }
-
-    @Test
-    void validate_rejectsAnEndpointThatIsNotAnHttpUrl() {
-        assertThatThrownBy(() -> validate("logos.example.org/v1", MODEL, MODEL, ALLOWED)).isInstanceOf(IllegalStateException.class).hasMessageContaining("http or https");
-        assertThatThrownBy(() -> validate("ftp://logos.example.org/v1", MODEL, MODEL, ALLOWED)).isInstanceOf(IllegalStateException.class).hasMessageContaining("http or https");
-    }
-
-    @Test
-    void validate_acceptsALocalEndpointWithAllowedModelsAndReportsAnEmptyConfiguration() {
-        assertThat(validate(LOCAL_ENDPOINT, MODEL, MODEL, ALLOWED)).isTrue();
-        assertThat(validate("http://localhost:11434/v1", MODEL, MODEL, ALLOWED)).isTrue();
-        assertThat(validate("", "", "", ALLOWED)).isFalse();
-    }
-
-    @Test
-    void isCloudHost_matchesProviderDomainsButNotLookalikes() {
-        assertThat(HyperionQuizQuestionPoolModelService.isCloudHost("api.openai.com")).isTrue();
-        assertThat(HyperionQuizQuestionPoolModelService.isCloudHost("openai.com")).isTrue();
-        assertThat(HyperionQuizQuestionPoolModelService.isCloudHost("logos.aet.cit.tum.de")).isFalse();
-        assertThat(HyperionQuizQuestionPoolModelService.isCloudHost("notopenai.com")).isFalse();
-        assertThat(HyperionQuizQuestionPoolModelService.isCloudHost("localhost")).isFalse();
-    }
-
-    private static boolean validate(String baseUrl, String generatorModel, String judgeModel, List<String> allowedModels) {
-        return HyperionQuizQuestionPoolModelService.validate(baseUrl, generatorModel, judgeModel, allowedModels);
-    }
-
-    private static HyperionQuizQuestionPoolModelService service(String baseUrl, String generatorModel, String judgeModel, List<String> allowedModels) {
-        return new HyperionQuizQuestionPoolModelService(baseUrl, "", Duration.ofMinutes(5), generatorModel, judgeModel, allowedModels);
+        assertThat(service.llmPresetAssignments()).extracting(LlmPresetAssignment::preset).containsExactly("local", "judge");
+        assertThat(service.generatorChatClient()).isSameAs(generator);
+        assertThat(service.judgeChatClient()).isSameAs(judge);
+        assertThat(service.generatorModel()).isEqualTo("Qwen/Qwen3.8-27B");
+        assertThat(service.judgeModel()).isEqualTo("openai/gpt-oss-120b");
     }
 }

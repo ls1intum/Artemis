@@ -1,12 +1,12 @@
-<div class="p-5!">
-    <h2 class="text-xl! font-medium!"><span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.warning"></span></h2>
+<div class="p-5">
+    <h2 class="text-xl font-medium!"><span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.warning"></span></h2>
     <div class="p-2.5">
-        <h4 class="text-base! font-medium!"><span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.problems"></span></h4>
+        <h4 class="text-base font-medium!"><span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.problems"></span></h4>
         <ul>
             @if (questionElementDeleted()) {
                 <li class="pt-1">
                     <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.element_deleted"></span>
-                    <ul class="ps-4!">
+                    <ul class="ps-4">
                         <li class="-mb-2.5">
                             <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
                             <p class="ms-2.5" jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.resulttext.element_deleted"></p>
@@ -18,7 +18,7 @@
             @if (questionElementInvalid()) {
                 <li class="pt-1">
                     <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.element_invalid"></span>
-                    <ul class="ps-4!">
+                    <ul class="ps-4">
                         <li class="-mb-2.5">
                             <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
                             <p class="ms-2.5" jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.resulttext.element_invalid"></p>
@@ -30,7 +30,7 @@
             @if (questionCorrectness()) {
                 <li class="pt-1">
                     <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.element_correctness"></span>
-                    <ul class="ps-4!">
+                    <ul class="ps-4">
                         <li class="-mb-2.5">
                             <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
                             <p class="ms-2.5 text-state-danger" jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.resulttext.scoring_change"></p>
@@ -41,7 +41,7 @@
             @if (questionDeleted()) {
                 <li class="pt-1">
                     <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.question_deleted"></span>
-                    <ul class="ps-4!">
+                    <ul class="ps-4">
                         <li class="-mb-2.5">
                             <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
                             <p class="ms-2.5" jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.resulttext.question_deleted"></p>
@@ -53,7 +53,7 @@
             @if (questionInvalid()) {
                 <li class="pt-1">
                     <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.question_invalid"></span>
-                    <ul class="ps-4!">
+                    <ul class="ps-4">
                         <li class="-mb-2.5">
                             <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
                             <p class="ms-2.5" jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.resulttext.question_invalid"></p>
@@ -65,7 +65,7 @@
             @if (scoringChanged()) {
                 <li class="pt-1">
                     <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.scoring_change"></span>
-                    <ul class="ps-4!">
+                    <ul class="ps-4">
                         <li class="-mb-2.5">
                             <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
                             <p class="ms-2.5 text-state-danger" jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.resulttext.scoring_change"></p>
@@ -81,7 +81,7 @@
         </ul>
     </div>
     <div class="edit-quiz-footer-content">
-        <h4 class="text-base! font-medium!">
+        <h4 class="text-base font-medium!">
             @if (!successful() && !failed() && !busy()) {
                 <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirmtext"></span>
             }
@@ -98,7 +98,7 @@
             }
         </h4>
         &nbsp;
-        <div class="mb-4!">
+        <div class="mb-4">
             @if (!successful()) {
                 <button [disabled]="busy()" type="button" tumAetUiButton size="small" severity="secondary" (click)="clear()">
                     <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>

@@ -16,16 +16,14 @@ const read = (path) => readFileSync(resolve(webapp, path), 'utf8');
  * against the declarations themselves.
  */
 describe('regions that have to stay flexible', () => {
-    it('lets a page top bar control grow past the contract height', () => {
-        const global = read('content/scss/global.scss');
-        const bar = global.match(/\.page-top-bar\s*\{([\s\S]*?)\n\}/);
-        expect(bar, '.page-top-bar is not defined in global.scss').toBeTruthy();
-        const formControl = bar[1].match(/\.form-control\s*\{([\s\S]*?)\n {4}\}/);
-        expect(formControl, '.page-top-bar .form-control is not defined').toBeTruthy();
-        // The only `.form-control` in a page top bar is the communication search, which wraps a badge per selected
-        // conversation and author. A fixed height leaves every wrapped row outside the bar.
-        expect(formControl[1], 'pin a minimum, not a height: the control below this wraps its content').not.toMatch(/\n\s*height:/);
-        expect(formControl[1]).toMatch(/min-height:\s*var\(--title-bar-content-height\)/);
+    it('lets the communication search grow past the contract height', () => {
+        const scss = read('app/communication/shared/conversation-global-search/conversation-global-search.component.scss');
+        const container = scss.match(/\.tag-input-container\s*\{([\s\S]*?)\n\}/);
+        expect(container, '.tag-input-container is not defined in the conversation search').toBeTruthy();
+        // The search sits in a page top bar and wraps a tag per selected conversation and author. A fixed height
+        // leaves every wrapped row outside the bar.
+        expect(container[1], 'pin a minimum, not a height: the search wraps its tags').not.toMatch(/\n {4}height:/);
+        expect(container[1]).toMatch(/min-height:\s*var\(--title-bar-content-height\)/);
     });
 
     it('sizes both panes of the communication row from the row', () => {

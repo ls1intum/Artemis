@@ -3,7 +3,7 @@
         <div class="plagiarism-header-top">
             <div class="plagiarism-header-top-left">
                 <h4
-                    class="plagiarism-page-title font-medium!"
+                    class="plagiarism-page-title font-medium"
                     (click)="showOptions = !showOptions"
                     [class.active]="showOptions"
                     [attr.aria-expanded]="showOptions"
@@ -95,7 +95,7 @@
                 >
                     <fa-icon [icon]="faQuestionCircle" />
                 </span>
-                <input tumAetUiInput type="number" required class="w-40" min="0" max="100" step="5" id="plagiarism-similarity-threshold" [(ngModel)]="similarityThreshold" />
+                <input tumAetUiInput type="number" required class="w-2/5!" min="0" max="100" step="5" id="plagiarism-similarity-threshold" [(ngModel)]="similarityThreshold" />
             </div>
             <div class="plagiarism-option" [class.disabled]="!enableMinimumScore">
                 <div class="plagiarism-checkbox">
@@ -116,7 +116,7 @@
                     required
                     type="number"
                     [disabled]="!enableMinimumScore"
-                    class="w-40"
+                    class="w-2/5!"
                     min="0"
                     max="100"
                     id="plagiarism-minimum-score"
@@ -137,7 +137,7 @@
                     required
                     type="number"
                     [disabled]="!enableMinimumSize"
-                    class="w-40"
+                    class="w-2/5!"
                     min="0"
                     max="100"
                     id="plagiarism-minimum-size"
@@ -178,7 +178,7 @@
         <div class="plagiarism-empty">
             @if (detectionInProgress()) {
                 <div class="flex flex-col">
-                    <tumaet-ui-progress-spinner class="mb-1 self-center" [ariaLabel]="'loading' | artemisTranslate" />
+                    <tumaet-ui-progress-spinner class="mb-1! self-center" [ariaLabel]="'loading' | artemisTranslate" />
                     <p>{{ detectionInProgressMessage() }}</p>
                 </div>
             }

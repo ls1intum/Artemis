@@ -1,6 +1,6 @@
 <tumaet-ui-popover #calendarSubscriptionPopover [ariaLabel]="'artemisApp.calendar.subscriptionPopover.title' | artemisTranslate" placement="bottom">
-    <div class="flex flex-col gap-2" [class]="isMobile() ? 'w-60' : 'w-156'">
-        <h5 class="m-0!" jhiTranslate="artemisApp.calendar.subscriptionPopover.title"></h5>
+    <div class="flex max-h-[75dvh] flex-col gap-2 overflow-y-auto" data-testid="subscription-popover-content" [class]="isMobile() ? 'w-80 max-w-[calc(100vw-4rem)]' : 'w-156'">
+        <h5 class="m-0" jhiTranslate="artemisApp.calendar.subscriptionPopover.title"></h5>
         <span jhiTranslate="artemisApp.calendar.subscriptionPopover.configurationExplanation"></span>
         @if (isMobile()) {
             <tumaet-ui-select-button
@@ -11,7 +11,7 @@
                 optionLabel="label"
                 optionValue="value"
             />
-            <div class="flex gap-6!">
+            <div class="flex flex-wrap gap-x-6 gap-y-2">
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center gap-1">
                         <tumaet-ui-checkbox
@@ -54,7 +54,7 @@
                 </div>
             </div>
         } @else {
-            <div class="flex gap-6!">
+            <div class="flex gap-6">
                 <tumaet-ui-select-button
                     data-testid="language-select"
                     [options]="languageOptions()"
@@ -102,34 +102,73 @@
                 </div>
             </div>
         }
-        <span jhiTranslate="artemisApp.calendar.subscriptionPopover.copyExplanation"></span>
-        <div class="flex">
-            <div class="flex-1 rounded-s-sm border border-e-0 border-(--border-color) p-1.5">
-                <textarea
-                    [attr.aria-label]="'accessibility.calendarSubscriptionUrl' | artemisTranslate"
-                    class="w-full resize-none overflow-hidden border-0 bg-transparent text-xs leading-4 break-all outline-none focus:ring-0 focus:outline-none"
-                    cdkTextareaAutosize
-                    cdkAutosizeMinRows="1"
-                    cdkAutosizeMaxRows="10"
-                    [ngModel]="subscriptionUrl()"
-                    readonly
-                ></textarea>
+        @if (resetting()) {
+            <span data-testid="subscription-link-reset-pending" jhiTranslate="artemisApp.calendar.subscriptionPopover.resetPending"></span>
+        } @else {
+            <span jhiTranslate="artemisApp.calendar.subscriptionPopover.copyExplanation"></span>
+            <div class="flex">
+                <div class="flex-1 rounded-s-sm border border-(--border-color) p-1.5">
+                    <textarea
+                        [attr.aria-label]="'accessibility.calendarSubscriptionUrl' | artemisTranslate"
+                        class="w-full overflow-hidden border-0 bg-transparent break-all outline-none focus:ring-0 focus:outline-none"
+                        cdkTextareaAutosize
+                        cdkAutosizeMinRows="1"
+                        cdkAutosizeMaxRows="10"
+                        [ngModel]="subscriptionUrl()"
+                        readonly
+                    ></textarea>
+                </div>
+                <button
+                    type="button"
+                    tumAetUiButton
+                    variant="outlined"
+                    class="rounded-s-none!"
+                    data-testid="subscription-link-copy-button"
+                    [attr.aria-label]="'artemisApp.calendar.subscriptionPopover.copyButtonLabel' | artemisTranslate"
+                    (click)="copySubscriptionUrlToClipboard()"
+                >
+                    @if (copyConfirmed()) {
+                        <fa-icon [icon]="faCheck" />
+                    } @else {
+                        <fa-icon [icon]="faCopy" />
+                    }
+                </button>
             </div>
-            <button
-                type="button"
-                tumAetUiButton
-                variant="outlined"
-                class="rounded-s-none!"
-                data-testid="subscription-link-copy-button"
-                [attr.aria-label]="'artemisApp.calendar.subscriptionPopover.copyButtonLabel' | artemisTranslate"
-                (click)="copySubscriptionUrlToClipboard()"
-            >
-                @if (copiedUrl()) {
-                    <fa-icon [icon]="faCheck" />
-                } @else {
-                    <fa-icon [icon]="faCopy" />
-                }
-            </button>
-        </div>
+        }
+        @if (!resetting()) {
+            @if (confirmingReset()) {
+                <span data-testid="subscription-link-reset-explanation" jhiTranslate="artemisApp.calendar.subscriptionPopover.resetExplanation"></span>
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        severity="danger"
+                        data-testid="subscription-link-reset-confirm"
+                        (click)="resetSubscriptionLink()"
+                        jhiTranslate="artemisApp.calendar.subscriptionPopover.resetButtonLabel"
+                    ></button>
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="outlined"
+                        severity="secondary"
+                        data-testid="subscription-link-reset-cancel"
+                        (click)="confirmingReset.set(false)"
+                        jhiTranslate="entity.action.cancel"
+                    ></button>
+                </div>
+            } @else {
+                <div>
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="text"
+                        data-testid="subscription-link-reset-button"
+                        (click)="confirmingReset.set(true)"
+                        jhiTranslate="artemisApp.calendar.subscriptionPopover.resetButtonLabel"
+                    ></button>
+                </div>
+            }
+        }
     </div>
 </tumaet-ui-popover>

@@ -137,6 +137,7 @@ public class RateLimitConfigurationService {
             case COURSE_REQUEST -> properties.getCourseRequestRequestsPerMinute() != null ? properties.getCourseRequestRequestsPerMinute() : type.getDefaultRpm();
             case PROGRAMMING_BUILD_TRIGGER ->
                 properties.getProgrammingBuildTriggerRequestsPerMinute() != null ? properties.getProgrammingBuildTriggerRequestsPerMinute() : type.getDefaultRpm();
+            case RE_EVALUATION -> properties.getReEvaluationRequestsPerMinute() != null ? properties.getReEvaluationRequestsPerMinute() : type.getDefaultRpm();
         };
     }
 }

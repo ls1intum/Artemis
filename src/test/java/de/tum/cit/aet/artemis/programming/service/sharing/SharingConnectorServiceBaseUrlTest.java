@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 /**
  * Unit tests for the comparison of a received base URL with the one of the connected Sharing Platform.
@@ -23,13 +23,13 @@ class SharingConnectorServiceBaseUrlTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        service = new SharingConnectorService(mock(RestTemplate.class), mock(TaskScheduler.class));
+        service = new SharingConnectorService(mock(RestClient.class), mock(TaskScheduler.class));
         service.setSharingApiBaseUrl(URI.create(CONFIGURED).toURL());
     }
 
     @Test
     void withoutConfiguredUrlEveryValueIsLeftToTheChecksum() {
-        var unconnected = new SharingConnectorService(mock(RestTemplate.class), mock(TaskScheduler.class));
+        var unconnected = new SharingConnectorService(mock(RestClient.class), mock(TaskScheduler.class));
 
         assertThat(unconnected.matchesConfiguredApiBaseUrl("https://anything.example/api")).isTrue();
         assertThat(unconnected.matchesConfiguredApiBaseUrl("not a url")).isTrue();

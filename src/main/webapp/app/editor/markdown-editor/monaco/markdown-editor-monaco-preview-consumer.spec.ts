@@ -9,7 +9,6 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
-import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
@@ -119,8 +118,8 @@ describe('MarkdownEditorMonacoComponent with the programming exercise instructio
             ],
         })
             .overrideComponent(MarkdownEditorMonacoComponent, {
-                remove: { imports: [MonacoEditorComponent, PostingButtonComponent, RedirectToIrisButtonComponent] },
-                add: { imports: [MockComponent(MonacoEditorComponent), MockComponent(PostingButtonComponent), MockComponent(RedirectToIrisButtonComponent)] },
+                remove: { imports: [MonacoEditorComponent, RedirectToIrisButtonComponent] },
+                add: { imports: [MockComponent(MonacoEditorComponent), MockComponent(RedirectToIrisButtonComponent)] },
             })
             .compileComponents();
         globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
@@ -160,14 +159,14 @@ describe('MarkdownEditorMonacoComponent with the programming exercise instructio
         expect(secondTask[0].querySelector('.task-name')?.textContent).toBe('Implement Merge Sort');
 
         // The latest result passes the test of the first task, the test of the second task is not part of it.
-        expect(firstTask[0].querySelector('.test-icon.text-success')).not.toBeNull();
+        expect(firstTask[0].querySelector('.test-icon.text-state-success')).not.toBeNull();
         expect(firstTask[0].querySelector('.success')).not.toBeNull();
-        expect(secondTask[0].querySelector('.test-icon.text-secondary')).not.toBeNull();
-        expect(secondTask[0].querySelector('.test-icon.text-success')).toBeNull();
+        expect(secondTask[0].querySelector('.test-icon.text-muted-color')).not.toBeNull();
+        expect(secondTask[0].querySelector('.test-icon.text-state-success')).toBeNull();
 
         // The step wizard on top of the instructions summarizes both tasks.
         expect(previewWrapper().querySelectorAll('.stepwizard')).toHaveLength(1);
-        expect(previewWrapper().querySelectorAll('.btn-circle')).toHaveLength(2);
+        expect(previewWrapper().querySelectorAll('.stepwizard-button')).toHaveLength(2);
         expect(previewWrapper().querySelectorAll('.stepwizard-step--success')).toHaveLength(1);
         expect(previewWrapper().querySelectorAll('.stepwizard-step--not-executed')).toHaveLength(1);
         expect(previewWrapper().closest('.hidden')).not.toBeNull();
