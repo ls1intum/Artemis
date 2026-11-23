@@ -18,19 +18,31 @@ instead of loading it on demand.
 3. `analyze_eager_chunks.mjs` computes, for each discovered route component, the **eager set**:
    everything reachable from that route's own chunk by following only static edges. That's exactly
    what downloads the instant the route's chunk loads, regardless of whether the user ever
-   interacts further.
-4. `diff_eager_chunks.mjs` compares a fresh eager-set report against a baseline report. This is a
-   full delta report, not a pass/fail gate: **every** route is classified `regressed` (⚠️),
-   `improved` (✅), or `unchanged` (➖) based on the same threshold applied in both directions, with
-   a chunk-level drill-down for both regressions (what newly became eager) and improvements (what's
-   no longer eager). A long list of new chunks is usually one static import's dependency tree, so
-   the drill-down leads with the chunk(s) that caused it (e.g. `course-overview` →
-   `course-exercises.component.ts` — 83 chunks, 2.8 MB including its dependencies) and folds the
-   full size-sorted list away. Each chunk names its largest source modules (npm package for vendor
-   code, file name for app code) since the content-hashed filename alone says nothing about why it
-   is there. Reports without import edges (an older baseline) fall back to the plain list. Only non-`unchanged` routes get a table row — with ~215 routes, tabulating
-   every unchanged one would bury the ones that actually need a look; `unchanged` routes are still
-   counted in the summary line, just not listed individually.
+   interacts further. The report stores every chunk once, with its size, its static imports and
+   every module in it with the bytes that module contributes (a module is an npm package, summed
+   over all its files, or one of the project's own files); a route just names its chunks.
+4. `diff_eager_chunks.mjs` compares a fresh report against a baseline report. This is a full
+   delta report, not a pass/fail gate: **every** route is classified `regressed` (⚠️), `improved`
+   (✅) or `unchanged` (➖) based on the same threshold applied in both directions, and the same
+   order is used everywhere: regressions (largest growth first), then improvements (largest saving
+   first), then skipped routes. A long list of new chunks is usually one static import's dependency
+   tree, so for each changed route the report names the **imports** that caused the change, each with
+   its size and the modules it brings along. Only changed routes get a table row — with ~215 routes,
+   tabulating every unchanged one would bury the ones that actually need a look.
+
+    It writes two documents. The route table is an HTML table inside markdown, because a pipe table
+    cannot hold a fold or a cell that spans columns. GitHub keeps tables, `<details>`, `<pre>`,
+    `colspan` and `align` but strips `style` and `class`, and stripes and borders every table row, so
+    the open folds are text lines in a monospace block: the hierarchy is carried by characters (↳
+    and indentation) and the sizes are padded to one column, not coloured or tabulated.
+
+    - **The PR comment** (`--out`): a short legend and a collapsed "How to read the table" before the
+      table; one row per changed route with a collapsed line under it that names the imports ("imports
+      `a` and `b`"); opened, each import with its size and its five largest modules; a collapsed
+      "How to fix a regression" after the table.
+    - **The full report** (`--full-out`): the same layout with nothing cut. Per route a table with the
+      route row and the imports fold (every module, one row each), a fold with all chunks (file name,
+      size, every module), and at the end the unchanged routes.
 
 No browser or live server is needed — this is a pure build-time static analysis.
 
@@ -56,19 +68,24 @@ workflow artifact (`chunk-eager-report`). The `chunk-eager-quality` job (PR runs
    that still carries a non-expired artifact; if none does, the comparison is skipped (see Known
    limitations).
 4. Diffs and posts/updates a PR comment. GitHub rejects comments over 65,536 characters, so when
-   many routes change at once (e.g. a shared dependency) the comment is shortened to 60,000: the
-   summary always stays, then table rows and per-route drill-downs follow while they fit. The
-   complete report is uploaded as the `chunk-eager-diff-report` artifact, and a shortened comment
-   links to it. Only a comment posted by `github-actions[bot]` with the report marker is updated;
-   all of the PR's comments are searched for it. When no baseline can be resolved for a later push,
-   an existing report comment is replaced by a short "comparison skipped" note, so a report for an
-   older commit is not left standing; no comment is created just to say that.
+   many routes change at once (e.g. a shared dependency) the comment is cut to 60,000: the summary
+   and legend always stay, then routes follow with their fold while they fit, later routes as a bare
+   row, and the rest are named in a note. Only a comment posted by `github-actions[bot]` with the report
+   marker is updated; all of the PR's comments are searched for it. When no baseline can be resolved
+   for a later push, an existing report comment is replaced by a short "comparison skipped" note, so
+   a report for an older commit is not left standing; no comment is created just to say that.
+5. Writes the full report to the workflow run's **summary page** (`$GITHUB_STEP_SUMMARY`), which
+   renders it as inline markdown. Every comment links to it. An artifact would be a zip to download.
+   GitHub limits a step summary to 1 MiB; the script drops the chunk lists, then the table of
+   unchanged routes, to stay below that.
 
 No build runs twice: the PR side reuses `build-war`'s own build, and the baseline side is whatever
 that same job already computed when it ran on that `develop` commit — nothing is rebuilt just for
 the comparison. A PR's own report is kept for 14 days, a `develop` report for 90 (the artifact is
 the baseline for every PR forked from that commit). Chunk identities (`moduleKey`) are stored as
-SHA-1 hashes of the chunk's input paths, which keeps the report small.
+SHA-1 hashes of the chunk's input paths, and each chunk is stored once however many routes load it,
+which keeps the report around 1 MB. The report carries a `formatVersion`; the diff refuses a
+report in another layout instead of misreading it.
 
 **Bootstrap note**: until this PR itself merges to `develop` and `develop` rebuilds once, there is
 no `chunk-eager-report` artifact on any `develop` run yet. The `chunk-eager-quality` job handles
@@ -89,8 +106,8 @@ node supporting_scripts/chunk-eager-loading/analyze_eager_chunks.mjs \
 node supporting_scripts/chunk-eager-loading/diff_eager_chunks.mjs report.json --baseline other-report.json
 ```
 
-The diff prints the full report. `--out <file>` writes the version shortened for a PR comment
-(at most `--max-chars`, default 60,000 characters), `--full-out <file>` the full one.
+The diff prints a one-line summary and the changed routes. `--out <file>` writes the PR comment
+(at most `--max-chars`, default 60,000 characters), `--full-out <file>` the full report.
 
 Exits with code 1 if any route is classified `regressed` (0 otherwise, regardless of improvements —
 `ci-build.yml` currently ignores this exit code entirely; see Known limitations). Every report
@@ -128,14 +145,16 @@ the bug class this guards against (see `discover_route_entries.mjs`'s own header
   computed, just not posted). Internal PRs are unaffected. A fork-safe two-workflow split exists
   elsewhere in this repo for the coverage reporter (`pullrequest-coverage-reporter.yml`) if this
   ever needs the same treatment.
-- **The "pulled in by" attribution is a heuristic.** esbuild lists every chunk a chunk needs, not
+- **The "imports" attribution is a heuristic.** esbuild lists every chunk a chunk needs, not
   only the immediate imports, so the report cannot read the causing import edge directly. It picks
-  the changed chunk that needs the most other changed chunks, then repeats for what is left. That
-  matches the real regression it was checked against, but a chunk that merges an unrelated module
-  with the culprit is labelled by its largest module, which may be the neighbour. The full chunk
-  list stays available below it.
-- **The drill-down lists** (new chunks for regressions, removed chunks for improvements) match
-  chunks by their stable module inputs (not the content-hashed filename), but are still noisiest
-  when comparing builds from commits far apart in history — unrelated dependency/vendor-chunk
-  drift shows up as spurious entries on both sides. On the real CI path the baseline is the
-  merge-base, so the two builds differ only by the PR's own changes.
+  the changed chunk that needs the most other changed chunks, then repeats for what is left, and
+  names the import after the largest project file in that chunk. That matches the real regressions it
+  was checked against, but a chunk that merges an unrelated module with the culprit may be named
+  after the neighbour. Chunks shared by two imports are listed under the one that covers most. The
+  full report lists every chunk, so nothing is hidden.
+- **A module row is a group.** A module is an npm package or one project file, as the build sees it.
+  A package that the build splits over several chunks is summed over them within an import.
+- **Colour and styling are not available.** GitHub strips `style` and `class` from comments and
+  step summaries. The tree is a monospace block at least 84 characters wide, so it gets no stripes;
+  on a narrow screen it scrolls sideways inside its fold. GitHub also shades every second row of the
+  route table itself, so a fold row is shaded and a route row is not.
