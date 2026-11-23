@@ -19,6 +19,7 @@ import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, 
 import { EntityDeletionProgress } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { faClipboardCheck, faEllipsis, faEye, faFileExport, faListAlt, faSignal, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Observable, Subject } from 'rxjs';
@@ -144,15 +145,25 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     }
 
     /**
-     * Exports questions for the given quiz exercise in json file
-     * @param exportAll If true exports all questions, else exports only those whose export flag is true
+     * Downloads the whole quiz exercise as a zip file, the format that "Import from file" reads when a quiz is imported.
      */
-    exportQuizExercise(exportAll: boolean) {
+    exportQuizExercise() {
+        this.exerciseService.exportToFile(this.quizExercise()).subscribe({
+            next: (response) => downloadZipFileFromResponse(response),
+            error: () => this.alertService.error('error.exportFailed'),
+        });
+    }
+
+    /**
+     * Downloads the questions of the quiz exercise, and the images of its drag and drop questions, in the format that "Import Question(s)" reads in the quiz editor.
+     * It is not a quiz exercise: "Import from file" does not accept it.
+     */
+    exportQuizQuestions() {
         (this.isExamMode || this.quizExercise().exerciseGroup
             ? this.quizExerciseService.findForExam(this.quizExercise().id!)
             : this.quizExerciseService.find(this.quizExercise().id!)
         ).subscribe((exercise) => {
-            this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
+            this.quizExerciseService.exportQuiz(exercise.quizQuestions, true, exercise.title);
         });
     }
 
