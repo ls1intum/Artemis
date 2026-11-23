@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { faCancel, faCheck, faFileImport, faFilter, faPencilAlt, faPlus, faQuestion, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
@@ -80,6 +80,8 @@ export class FaqComponent implements OnInit, OnDestroy {
     readonly courseId = signal<number>(undefined!);
     readonly hasCategories = signal(false);
     readonly isAtLeastInstructor = signal(false);
+    /** Without any row action (a tutor sees none on accepted FAQs) the table has no empty column at its end. */
+    protected readonly hasRowActions = computed(() => this.isAtLeastInstructor() || this.filteredFaqs().some((faq) => faq.faqState !== FaqState.ACCEPTED));
     private managementAudience = false;
 
     private dialogErrorSource = new Subject<string>();
