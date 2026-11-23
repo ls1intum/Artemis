@@ -108,7 +108,7 @@
  * Turns a title bar into a size container so the controls projected into it can react to the width of the bar
  * instead of the width of the viewport. The two differ by whatever the sidebar currently takes, so a viewport
  * media query collapses labels far too late on a page that has one. Paired with `.title-bar-collapsible-label`
- * in `global.scss`.
+ * in `_layout.scss`.
  */
 @mixin title-bar-size-container {
     container: title-bar / inline-size;
