@@ -8,10 +8,13 @@ import { InitialCommitAuthor, InitialCommitAuthorMode } from 'app/course/shared/
 export const INITIAL_COMMIT_AUTHOR_NAME_MAX_LENGTH = 100;
 export const INITIAL_COMMIT_AUTHOR_EMAIL_MAX_LENGTH = 254;
 
-/** A name without angle brackets or control characters, which could not be told apart from the email of a git commit header. */
-const NAME_PATTERN = /^[^<>\p{Cc}\p{Zl}\p{Zp}]+$/u;
-/** One address without whitespace, angle brackets or a second at sign, and with a dot in the domain. */
-const EMAIL_PATTERN = /^[^\s<>@\p{Cc}]+@[^\s<>@\p{Cc}]+\.[^\s<>@\p{Cc}]+$/u;
+/**
+ * A name without angle brackets, control characters (Cc), format characters such as the right-to-left override (Cf) and line or paragraph separators (Zl, Zp): none of them
+ * can end the name or the email in a git commit header or change how it reads. The server uses the same character classes.
+ */
+const NAME_PATTERN = /^[^<>\p{Cc}\p{Cf}\p{Zl}\p{Zp}]+$/u;
+/** One address without angle brackets, a second at sign, any space or separator (Z), control (Cc) or format (Cf) character, with a dot in the domain. */
+const EMAIL_PATTERN = /^[^<>@\p{Cc}\p{Cf}\p{Z}]+@[^<>@\p{Cc}\p{Cf}\p{Z}]+\.[^<>@\p{Cc}\p{Cf}\p{Z}]+$/u;
 
 /** Like the server, the surrounding whitespace is not part of the value, so a field of spaces counts as empty. */
 function strippedPattern(pattern: RegExp, error: string): ValidatorFn {

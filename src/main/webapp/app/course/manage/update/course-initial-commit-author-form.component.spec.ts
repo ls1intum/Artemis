@@ -36,22 +36,35 @@ describe('createInitialCommitAuthorFormGroup', () => {
         expect(group.valid).toBe(true);
     });
 
-    it.each(['', '   ', 'Team <team>', 'Team>', 'Team\nauthor Forged', 'x'.repeat(101)])('rejects the name %j', (name) => {
-        const group = createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM, name, email: 'team@university.example' });
+    it.each(['', '   ', 'Team <team>', 'Team>', 'Team\nauthor Forged', 'Te\u0085am', 'Team\u202E', 'Te\u200Bam', 'Team\u2028Two', 'x'.repeat(101)])(
+        'rejects the name %j',
+        (name) => {
+            const group = createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM, name, email: 'team@university.example' });
 
-        expect(group.controls.name.invalid).toBe(true);
-        expect(group.controls.email.valid).toBe(true);
-    });
-
-    it.each(['', 'team', 'team@example', '@example.org', 'a@b@example.org', 'tea m@example.org', 'team@example.org\ncommitter forged', `${'a'.repeat(250)}@example.org`])(
-        'rejects the email %j',
-        (email) => {
-            const group = createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM, name: 'Course Team', email });
-
-            expect(group.controls.email.invalid).toBe(true);
-            expect(group.controls.name.valid).toBe(true);
+            expect(group.controls.name.invalid).toBe(true);
+            expect(group.controls.email.valid).toBe(true);
         },
     );
+
+    it.each([
+        '',
+        'team',
+        'team@example',
+        '@example.org',
+        'a@b@example.org',
+        'tea m@example.org',
+        'tea\u00A0m@example.org',
+        'team@exa\u00A0mple.org',
+        'te\u0085am@example.org',
+        'team@example.org\u202E',
+        'team@example.org\ncommitter forged',
+        `${'a'.repeat(250)}@example.org`,
+    ])('rejects the email %j', (email) => {
+        const group = createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM, name: 'Course Team', email });
+
+        expect(group.controls.email.invalid).toBe(true);
+        expect(group.controls.name.valid).toBe(true);
+    });
 
     it('accepts names with umlauts and an address with a plus tag', () => {
         const group = createInitialCommitAuthorFormGroup({ mode: InitialCommitAuthorMode.CUSTOM, name: 'Jürgen Müller', email: 'j.mueller+course@sub.university.example' });

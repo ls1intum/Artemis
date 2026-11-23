@@ -29,7 +29,8 @@ class InitialCommitAuthorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "", "   ", "Team\nauthor Forged <forged@example.org>", "Te\ram", "Team <team>", "Team>", "Team\u0000", "Team" + (char) 0x2028 + "Two" })
+    @ValueSource(strings = { "", "   ", "Team\nauthor Forged <forged@example.org>", "Te\ram", "Team <team>", "Team>", "Team\u0000", "Team" + (char) 0x2028 + "Two", "Te\u0085am",
+            "Team\u202E", "Te\u200Bam" })
     void validate_rejectsANameThatIsBlankOrCouldInjectGitHeaderData(String name) {
         assertThatThrownBy(() -> new InitialCommitAuthorDTO(InitialCommitAuthorMode.CUSTOM, name, "team@example.org").validate()).isInstanceOf(BadRequestAlertException.class)
                 .extracting(exception -> ((BadRequestAlertException) exception).getErrorKey()).isEqualTo("invalidInitialCommitAuthorName");
@@ -44,7 +45,8 @@ class InitialCommitAuthorTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "", "team", "team@example", "@example.org", "team@@example.org", "a@b@example.org", "team@example.org\nauthor x", "team@example.org>",
-            "<team@example.org", "tea m@example.org", "team@exa mple.org" })
+            "<team@example.org", "tea m@example.org", "team@exa mple.org", "tea\u00A0m@example.org", "team@exa\u00A0mple.org", "te\u0085am@example.org", "team@example.org\u202E",
+            "team@exam\u2028ple.org" })
     void validate_rejectsAnInvalidEmail(String email) {
         assertThatThrownBy(() -> new InitialCommitAuthorDTO(InitialCommitAuthorMode.CUSTOM, "Course Team", email).validate()).isInstanceOf(BadRequestAlertException.class)
                 .extracting(exception -> ((BadRequestAlertException) exception).getErrorKey()).isEqualTo("invalidInitialCommitAuthorEmail");

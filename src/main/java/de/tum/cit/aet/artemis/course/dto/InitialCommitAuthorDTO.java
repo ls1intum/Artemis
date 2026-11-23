@@ -33,11 +33,14 @@ public record InitialCommitAuthorDTO(@NotNull InitialCommitAuthorMode mode, @Nul
 
     private static final int MAX_EMAIL_LENGTH = 254;
 
-    /** A name of printable characters without angle brackets: none of them can end the name or the email in the commit header. */
-    private static final Pattern NAME_PATTERN = Pattern.compile("[^<>\\p{Cntrl}\\p{Zl}\\p{Zp}]+");
+    /**
+     * A name without angle brackets, control characters (Cc), format characters such as the right-to-left override (Cf) and line or paragraph separators (Zl, Zp): none of
+     * them can end the name or the email in the commit header or change how it reads. The client uses the same character classes.
+     */
+    private static final Pattern NAME_PATTERN = Pattern.compile("[^<>\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]+");
 
-    /** One address without whitespace, angle brackets, control characters or a second {@code @}, with a dot in the domain. */
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("[^\\s<>@\\p{Cntrl}]+@[^\\s<>@\\p{Cntrl}]+\\.[^\\s<>@\\p{Cntrl}]+");
+    /** One address without angle brackets, a second {@code @}, any space or separator (Z), control (Cc) or format (Cf) character, with a dot in the domain. */
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("[^<>@\\p{Cc}\\p{Cf}\\p{Z}]+@[^<>@\\p{Cc}\\p{Cf}\\p{Z}]+\\.[^<>@\\p{Cc}\\p{Cf}\\p{Z}]+");
 
     /**
      * Reads the setting of a course.
