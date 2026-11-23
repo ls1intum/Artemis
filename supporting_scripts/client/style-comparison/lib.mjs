@@ -63,6 +63,12 @@ export function usage(text, missing) {
     }
 }
 
+/** The filter of `--only a,b`: a name passes if it contains one of the texts, and every name passes without the option. */
+export function nameFilter(only) {
+    const texts = typeof only === 'string' ? only.split(',').filter(Boolean) : [];
+    return (name) => texts.length === 0 || texts.some((text) => name.includes(text));
+}
+
 /** Reads `--name value` and `--flag` options; everything else is a positional argument. */
 export function parseArguments(argv, defaults = {}) {
     const options = { ...defaults };

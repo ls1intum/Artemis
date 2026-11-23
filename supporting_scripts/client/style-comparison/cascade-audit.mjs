@@ -2,13 +2,13 @@
 // Lists where the declarations of one cascade layer lose although their selector is the more specific one.
 // See README.md and cascade-audit-browser.mjs.
 import cascadeAudit from './cascade-audit-browser.mjs';
-import { calm, login, openPage, parseArguments, settle, usage, users } from './lib.mjs';
+import { calm, login, nameFilter, openPage, parseArguments, settle, usage, users } from './lib.mjs';
 import { pagesOf, resolveCourseContent } from './pages.mjs';
 
 const { options } = parseArguments(process.argv.slice(2), { base: 'http://localhost:9000', course: '9005', layer: 'tumaet-ui', limit: '60' });
-usage('Usage: node cascade-audit.mjs [--base <url>] [--course <id>] [--layer <name>] [--only <regex>] [--limit <groups>]', options.help);
+usage('Usage: node cascade-audit.mjs [--base <url>] [--course <id>] [--layer <name>] [--only <text,text>] [--limit <groups>]', options.help);
 const base = options.base.replace(/\/$/, '');
-const only = options.only ? new RegExp(options.only) : undefined;
+const wanted = nameFilter(options.only);
 
 const { browser, page } = await openPage();
 await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
@@ -18,7 +18,7 @@ const pages = pagesOf(await resolveCourseContent(page, base, Number(options.cour
 const groups = new Map();
 for (const role of ['admin', 'student']) {
     await login(page, base, users[role]);
-    for (const [name, path] of pages[role].filter(([name]) => !only || only.test(name))) {
+    for (const [name, path] of pages[role].filter(([name]) => wanted(name))) {
         await page.goto(base + path);
         await settle(page);
         await calm(page);

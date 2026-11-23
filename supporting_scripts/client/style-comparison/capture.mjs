@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 // Records the computed styles of every element on the pages and overlays of a running client. See README.md.
 import { writeFileSync } from 'node:fs';
-import { PROPERTIES, calm, collectStyles, login, openPage, outputDirectory, parseArguments, settle, usage, users } from './lib.mjs';
+import { PROPERTIES, calm, collectStyles, login, nameFilter, openPage, outputDirectory, parseArguments, settle, usage, users } from './lib.mjs';
 import { overlaysOf, pagesOf, resolveCourseContent } from './pages.mjs';
 
 const { options, positional } = parseArguments(process.argv.slice(2), { base: 'http://localhost:9000', course: '9005', themes: 'light,dark' });
 const label = positional[0];
-usage('Usage: node capture.mjs <label> [--base <url>] [--course <id>] [--themes light,dark] [--only <regex>] [--screenshots] [--out <directory>]', options.help || !label);
+usage('Usage: node capture.mjs <label> [--base <url>] [--course <id>] [--themes light,dark] [--only <text,text>] [--screenshots] [--out <directory>]', options.help || !label);
 const base = options.base.replace(/\/$/, '');
-const only = options.only ? new RegExp(options.only) : undefined;
-const wanted = (name) => !only || only.test(name);
+const wanted = nameFilter(options.only);
 const directory = outputDirectory(options, label);
 const problems = [];
 

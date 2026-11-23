@@ -50,21 +50,69 @@ function globalStyles(directory) {
     return lines;
 }
 
+const ESCAPES = { n: '\n', t: '\t', r: '\r', b: '\b', f: '\f', v: '\v', 0: '\0' };
+
+/** Reads the JavaScript string literal that starts at `start`: its value and the position after it. */
+function readStringLiteral(source, start) {
+    const quote = source[start];
+    let value = '';
+    let index = start + 1;
+    while (index < source.length && source[index] !== quote) {
+        const character = source[index];
+        if (character === '\\') {
+            const next = source[index + 1];
+            if (next === 'u' && source[index + 2] === '{') {
+                const end = source.indexOf('}', index);
+                value += String.fromCodePoint(parseInt(source.slice(index + 3, end), 16));
+                index = end + 1;
+            } else if (next === 'u') {
+                value += String.fromCharCode(parseInt(source.slice(index + 2, index + 6), 16));
+                index += 6;
+            } else if (next === 'x') {
+                value += String.fromCharCode(parseInt(source.slice(index + 2, index + 4), 16));
+                index += 4;
+            } else {
+                // a backslash before a line break continues the literal on the next line
+                value += next === '\n' ? '' : (ESCAPES[next] ?? next);
+                index += 2;
+            }
+        } else if (quote === '`' && character === '$' && source[index + 1] === '{') {
+            // a template with an expression is not a stylesheet of the build
+            return undefined;
+        } else {
+            value += character;
+            index++;
+        }
+    }
+    return { value, end: index + 1 };
+}
+
+/** The build writes the styles of a component as `styles: ["…", "…"]` into the chunk of the component. */
 function componentStyles(directory) {
     const lines = new Map();
-    const literal = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\$]|\\.)*`/g;
+    const marker = 'styles:';
     for (const file of globSync(`${directory}/*.js`)) {
         const source = readFileSync(file, 'utf8');
-        for (const match of source.matchAll(/styles:\s*\[((?:\s*(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\$]|\\.)*`)\s*,?)+)\]/g)) {
-            for (const [text] of match[1].matchAll(literal)) {
+        let position = 0;
+        while ((position = source.indexOf(marker, position)) !== -1) {
+            let index = position + marker.length;
+            while (source[index] === ' ' || source[index] === '\n') index++;
+            position = index;
+            if (source[index] !== '[') continue;
+            index++;
+            for (;;) {
+                while (' \n,'.includes(source[index])) index++;
+                if (!'"\'`'.includes(source[index])) break;
+                const literal = readStringLiteral(source, index);
+                if (!literal) break;
                 try {
-                    // a string literal of the build output: JSON.parse reads it once its quotes are the ones of JSON
-                    const css = text.startsWith('"') ? JSON.parse(text) : JSON.parse(`"${text.slice(1, -1).replace(/\\'/g, "'").replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`);
-                    declarations(css, lines);
+                    declarations(literal.value, lines);
                 } catch {
                     // not a stylesheet
                 }
+                index = literal.end;
             }
+            position = index;
         }
     }
     return lines;

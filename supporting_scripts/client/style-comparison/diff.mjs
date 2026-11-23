@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // Compares two captures of capture.mjs and groups the differences. See README.md.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { outputDirectory, parseArguments, usage } from './lib.mjs';
+import { nameFilter, outputDirectory, parseArguments, usage } from './lib.mjs';
 
 const { options, positional } = parseArguments(process.argv.slice(2), { limit: '80' });
 const [before, after] = positional;
-usage('Usage: node diff.mjs <label before> <label after> [--only <regex>] [--limit <groups>] [--geometry] [--out <directory>]', options.help || !before || !after);
-const only = options.only ? new RegExp(options.only) : undefined;
+usage('Usage: node diff.mjs <label before> <label after> [--only <text,text>] [--limit <groups>] [--geometry] [--out <directory>]', options.help || !before || !after);
+const wanted = nameFilter(options.only);
 const beforeDirectory = outputDirectory(options, before);
 const afterDirectory = outputDirectory(options, after);
 
@@ -20,7 +20,7 @@ const structure = [];
 let compared = 0;
 for (const file of readdirSync(afterDirectory).filter((name) => name.endsWith('.json'))) {
     const state = file.replace('.json', '');
-    if (only && !only.test(state)) continue;
+    if (!wanted(state)) continue;
     if (!existsSync(`${beforeDirectory}/${file}`)) {
         structure.push(`${state}: only in "${after}"`);
         continue;
