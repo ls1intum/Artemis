@@ -20,8 +20,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { MenuHarness } from '@angular/aria/menu/testing';
-import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 
 /**
  * Test suite for TextBlockFeedbackEditorComponent.
