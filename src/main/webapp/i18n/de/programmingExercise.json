@@ -314,7 +314,7 @@
                 "activateLabel": "Security Framework aktivieren",
                 "subtitle": "Sicherheitsframework für Programmieraufgaben",
                 "frameworkVersion": "Framework-Version",
-                "frameworkVersionHelp": "Die Ares-Version, die in der Build-Datei des Test-Repositorys festgelegt ist. Wähle eine ältere Version nur, wenn die Aufgabe ein älteres Sandbox-Verhalten reproduzieren muss.",
+                "frameworkVersionHelp": "Das Ares-Release, mit dem die Tests laufen, festgelegt in der Build-Datei des Test-Repositorys. Neuere Releases unterstützen mehr Richtlinien-Einstellungen und beheben Probleme der Sandbox, daher verwenden neue Aufgaben das neueste. Wähle ein älteres Release nur, wenn sich die Aufgabe genau wie damit verhalten muss.",
                 "status": {
                     "loading": "Wird geladen",
                     "inactive": "Inaktiv",
@@ -329,7 +329,7 @@
                 "desc": {
                     "loading": "Der Zustand des Security Frameworks im Test-Repository wird gelesen.",
                     "inactive": "Alle Testklassen laufen ohne Sandbox.",
-                    "generating": "Die Sicherheitsrichtlinie wird in das Test-Repository committet.",
+                    "generating": "Die Sicherheitsrichtlinie wird im Test-Repository gespeichert.",
                     "configuredEdit": "Das Test-Repository ist für die Sandbox eingerichtet. Artemis hat die Dateien geprüft, aber noch kein Ares-Build hat bestätigt, dass Ares die Richtlinie akzeptiert.",
                     "configuredCreate": "Die Sicherheitsrichtlinie der Vorlage ist Teil des Test-Repositorys, mit dem die Aufgabe erstellt wird. Ob Ares sie akzeptiert, ist noch durch keinen Build bestätigt.",
                     "deleting": "Das Security Framework wird aus dieser Aufgabe entfernt.",
@@ -362,8 +362,8 @@
                 "sync": {
                     "loading": "Der Zustand des Test-Repositorys wird geladen…",
                     "inactive": "Beim Aktivieren wird die vorherige Richtlinie wiederhergestellt oder eine Standardrichtlinie erzeugt.",
-                    "generating": "Richtlinie wird in das exercise-tests-Repository committet …",
-                    "configured": "Richtlinie ist im Test-Repository committet · noch nicht durch einen Ares-Build bestätigt.",
+                    "generating": "Richtlinie wird im Test-Repository gespeichert …",
+                    "configured": "Richtlinie ist im Test-Repository gespeichert · noch nicht durch einen Ares-Build bestätigt.",
                     "deleting": "Die Sicherheitsrichtlinie wird aus dem Test-Repository entfernt …",
                     "error": "Synchronisierung fehlgeschlagen · versuche es erneut.",
                     "misconfigured": "Ares lässt die betroffenen Tests fehlschlagen, bis die Richtlinie repariert oder deaktiviert wird.",
@@ -398,7 +398,7 @@
                 "noLongerSupportedSuffix": "(nicht mehr unterstützt)",
                 "incompatibleSuffix": "(akzeptiert die Richtlinie nicht)",
                 "unverifiedSuffix": "(Kompatibilität nicht geprüft)",
-                "versionIncompatible": "Ares {{ version }} kann nicht festgelegt werden, weil es diese Teile der Richtlinie nicht akzeptiert: {{ details }}"
+                "versionIncompatible": "Version {{ version }} kann nicht festgelegt werden, weil sie diese Teile der Richtlinie nicht akzeptiert: {{ details }}"
             },
             "onlineIdeExperienceLevel": {
                 "title": "Anfängliche Erfahrungsstufe in der Online IDE",

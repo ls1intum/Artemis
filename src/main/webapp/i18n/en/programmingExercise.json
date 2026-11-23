@@ -314,7 +314,7 @@
                 "activateLabel": "Activate Security Framework",
                 "subtitle": "Programming Exercise Security Framework",
                 "frameworkVersion": "Framework version",
-                "frameworkVersionHelp": "The Ares version pinned in the build file of the tests repository. Pin an older version only if the exercise must reproduce an older sandbox behavior.",
+                "frameworkVersionHelp": "The Ares release the tests run with, pinned in the build file of the tests repository. Newer releases support more policy settings and fix sandbox issues, so new exercises use the latest one. Choose an older release only if the exercise must keep behaving exactly as it did with it.",
                 "status": {
                     "loading": "Loading",
                     "inactive": "Inactive",
@@ -329,7 +329,7 @@
                 "desc": {
                     "loading": "Reading the Security Framework state of the tests repository.",
                     "inactive": "All test classes run without the sandbox.",
-                    "generating": "Committing the security policy to the tests repository.",
+                    "generating": "Saving the security policy to the tests repository.",
                     "configuredEdit": "The tests repository is set up for the sandbox. Artemis checked its files, but no Ares build has confirmed yet that Ares accepted the policy.",
                     "configuredCreate": "The template's security policy is part of the tests repository the exercise is created with. Whether Ares accepts it is not confirmed by a build yet.",
                     "deleting": "Removing the Security Framework from this exercise.",
@@ -362,8 +362,8 @@
                 "sync": {
                     "loading": "Loading the state of the tests repository…",
                     "inactive": "Activating restores the previous policy or generates a default one.",
-                    "generating": "Committing policy to the exercise-tests repository…",
-                    "configured": "Policy committed to the tests repository · not yet confirmed by an Ares build.",
+                    "generating": "Saving the policy to the tests repository…",
+                    "configured": "Policy saved in the tests repository · not yet confirmed by an Ares build.",
                     "deleting": "Removing the security policy from the tests repository…",
                     "error": "Sync failed · retry the operation.",
                     "misconfigured": "Ares fails the affected tests until the policy is repaired or deactivated.",
@@ -386,7 +386,7 @@
                     "confirm": "Deactivate"
                 },
                 "stagedDeactivationHint": "Once the exercise is saved, student code runs without the sandbox, and nothing the security policy configures for the tests applies. Hidden tests are then protected only by the test visibility settings of Artemis.",
-                "templateVersionUnsupported": "The template uses {{ version }}, which is no longer supported.",
+                "templateVersionUnsupported": "The template uses version {{ version }}, which is no longer supported.",
                 "notApplied": {
                     "status": "The exercise was saved, but its Security Framework setting was not applied. Its status is {{ status }}. {{ details }}",
                     "version": "The exercise was saved, but the Security Framework pins Ares {{ actual }} instead of the chosen {{ expected }}.",
@@ -398,7 +398,7 @@
                 "noLongerSupportedSuffix": "(no longer supported)",
                 "incompatibleSuffix": "(does not accept the policy)",
                 "unverifiedSuffix": "(compatibility not verified)",
-                "versionIncompatible": "Ares {{ version }} cannot be pinned, because it does not accept these parts of the policy: {{ details }}"
+                "versionIncompatible": "Version {{ version }} cannot be pinned, because it does not accept these parts of the policy: {{ details }}"
             },
             "onlineIdeExperienceLevel": {
                 "title": "Starting experience level in the Online IDE",
