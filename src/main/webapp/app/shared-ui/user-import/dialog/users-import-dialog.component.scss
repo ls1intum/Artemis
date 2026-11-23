@@ -36,6 +36,7 @@ tr.import-warning > td {
     color: var(--warning) !important;
 }
 
-button[disabled] {
+// This stylesheet is not encapsulated. TUM AET UI buttons keep their own cursor.
+button[disabled]:not(.tumaet-ui-btn, .tumaet-ui-sort-button) {
     cursor: not-allowed;
 }

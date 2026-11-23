@@ -41,6 +41,10 @@ describe('HealthComponent', () => {
         expect(comp.getBadgeSeverity('DOWN')).toBe('danger');
     });
 
+    it('should return warn severity for DEGRADED status, an optional external system that is not available', () => {
+        expect(comp.getBadgeSeverity('DEGRADED')).toBe('warn');
+    });
+
     it('should call refresh on init', () => {
         const health: Health = { status: 'UP', components: { mail: { status: 'UP', details: { mailDetail: 'mail' } } } };
         vi.spyOn(healthService, 'checkHealth').mockReturnValue(of(health));

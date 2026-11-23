@@ -24,8 +24,23 @@ public class HyperionAgentProperties implements LlmPresetAssignments {
 
     static final String KEY = "artemis.hyperion.agent";
 
-    /** Hard cap on model turns for one attempt of a run. Bounds an attempt, not the whole run. */
+    /** Hard cap on authoring turns shared by all stages and repairs of a run. */
     private int maxTurns = 60;
+
+    /**
+     * The LLM preset that takes over a stalled repair once per run, for at most one work block. Empty disables the handoff; a profile may set its own. Like {@link #llmPreset},
+     * it must exist under {@code artemis.llm.presets} on core and every worker.
+     */
+    @Nullable
+    private String repairLlmPreset;
+
+    public @Nullable String getRepairLlmPreset() {
+        return repairLlmPreset;
+    }
+
+    public void setRepairLlmPreset(@Nullable String repairLlmPreset) {
+        this.repairLlmPreset = repairLlmPreset;
+    }
 
     /**
      * Wall-clock deadline for one run. Also the basis of the budget reservation TTL and the staged authoring budget.
@@ -90,12 +105,18 @@ public class HyperionAgentProperties implements LlmPresetAssignments {
     public List<LlmPresetAssignment> llmPresetAssignments() {
         List<LlmPresetAssignment> assignments = new ArrayList<>();
         assignments.add(LlmPresetAssignment.ofSingle(KEY + ".llm-preset", llmPreset, LlmPresetAssignment.Usage.CHAT).withoutRetries());
+        addOptional(assignments, KEY + ".repair-llm-preset", repairLlmPreset);
         profiles.forEach((name, profile) -> {
-            if (profile.getLlmPreset() != null && !profile.getLlmPreset().isBlank()) {
-                assignments.add(LlmPresetAssignment.ofSingle(KEY + ".profiles." + name + ".llm-preset", profile.getLlmPreset(), LlmPresetAssignment.Usage.CHAT).withoutRetries());
-            }
+            addOptional(assignments, KEY + ".profiles." + name + ".llm-preset", profile.getLlmPreset());
+            addOptional(assignments, KEY + ".profiles." + name + ".repair-llm-preset", profile.getRepairLlmPreset());
         });
         return List.copyOf(assignments);
+    }
+
+    private static void addOptional(List<LlmPresetAssignment> assignments, String key, @Nullable String preset) {
+        if (preset != null && !preset.isBlank()) {
+            assignments.add(LlmPresetAssignment.ofSingle(key, preset, LlmPresetAssignment.Usage.CHAT).withoutRetries());
+        }
     }
 
     public int getMaxTurns() {
@@ -188,6 +209,18 @@ public class HyperionAgentProperties implements LlmPresetAssignments {
         /** The LLM preset of this profile; the agent's {@code llm-preset} applies when unset. */
         @Nullable
         private String llmPreset;
+
+        /** The repair LLM preset of this profile; the agent's {@code repair-llm-preset} applies when unset. */
+        @Nullable
+        private String repairLlmPreset;
+
+        public @Nullable String getRepairLlmPreset() {
+            return repairLlmPreset;
+        }
+
+        public void setRepairLlmPreset(@Nullable String repairLlmPreset) {
+            this.repairLlmPreset = repairLlmPreset;
+        }
 
         @Nullable
         private Integer maxTurns;

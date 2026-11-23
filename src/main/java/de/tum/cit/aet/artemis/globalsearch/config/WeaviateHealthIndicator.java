@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import io.weaviate.client6.v1.api.WeaviateClient;
 
 /**
@@ -35,10 +36,10 @@ public class WeaviateHealthIndicator implements HealthIndicator {
             if (client.isReady()) {
                 return Health.up().withDetail("Address", address).build();
             }
-            return Health.down().withDetail("Address", address).withDetail("ready", false).build();
+            return Health.status(ConnectorHealth.DEGRADED).withDetail("Address", address).withDetail("ready", false).build();
         }
         catch (Exception e) {
-            return Health.down(e).withDetail("Address", address).build();
+            return Health.status(ConnectorHealth.DEGRADED).withException(e).withDetail("Address", address).build();
         }
     }
 }

@@ -51,14 +51,14 @@
         </div>
         <tumaet-ui-tabs [value]="selectedTab()" (valueChange)="onTabChange($event)">
             <tumaet-ui-tab-list>
-                <tumaet-ui-tab class="info-tab text-[0.9rem]!" [value]="Tabs.INFO">
+                <tumaet-ui-tab class="info-tab text-[0.9rem]" [value]="Tabs.INFO">
                     <span jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.info">Info</span>
                 </tumaet-ui-tab>
                 @if (!isOneToOneChat()) {
-                    <tumaet-ui-tab class="members-tab text-[0.9rem]!" [value]="Tabs.MEMBERS">
+                    <tumaet-ui-tab class="members-tab text-[0.9rem]" [value]="Tabs.MEMBERS">
                         <span jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.members">Members</span>
                     </tumaet-ui-tab>
-                    <tumaet-ui-tab class="settings-tab text-[0.9rem]!" data-testid="conversation-settings-tab" [value]="Tabs.SETTINGS">
+                    <tumaet-ui-tab class="settings-tab text-[0.9rem]" data-testid="conversation-settings-tab" [value]="Tabs.SETTINGS">
                         <span jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.settings">Settings</span>
                     </tumaet-ui-tab>
                 }
