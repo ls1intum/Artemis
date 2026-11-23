@@ -217,7 +217,7 @@ export class MessageEditorComponent {
                 this.editor ??= new MessageEditorDom(element, (value) => {
                     this.linkOpen.set(false);
                     this.lastValue = value;
-                    this.empty.set(value === '');
+                    this.empty.set(this.editor?.isBlank(value) ?? value === '');
                     this.contentChange.emit(value);
                     this.refreshFormatState();
                 });
@@ -225,7 +225,7 @@ export class MessageEditorComponent {
                     this.editor.load(content);
                     this.editorRevision.update((revision) => revision + 1);
                     this.lastValue = content;
-                    this.empty.set(content === '');
+                    this.empty.set(this.editor.isBlank(content));
                     this.existingLink = undefined;
                     this.composing = false;
                     this.composingText.set(false);
