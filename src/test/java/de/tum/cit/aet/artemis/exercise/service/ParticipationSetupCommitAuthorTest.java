@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -28,6 +27,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.vcs.SetupCommit;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -76,15 +76,15 @@ class ParticipationSetupCommitAuthorTest {
         sourceUri = () -> source;
         when(uriService.getRepositorySlugFromRepositoryUri(source)).thenReturn("test-template");
         when(participations.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), anyMap(), any()))
+        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), any()))
                 .thenReturn(new LocalVCRepositoryUri("https://artemis.example.org/git/TEST/test-student.git"));
     }
 
     private PersonIdent authorOfTheCopy() {
         ReflectionTestUtils.invokeMethod(service, "copyRepository", exercise, sourceUri, (Supplier<String>) () -> "main", (Supplier<Map<String, byte[]>>) Map::of, participation);
-        ArgumentCaptor<PersonIdent> author = ArgumentCaptor.forClass(PersonIdent.class);
-        verify(vcs).copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), anyMap(), author.capture());
-        return author.getValue();
+        ArgumentCaptor<SetupCommit> setupCommit = ArgumentCaptor.forClass(SetupCommit.class);
+        verify(vcs).copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), setupCommit.capture());
+        return setupCommit.getValue().author();
     }
 
     @Test

@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -75,7 +74,7 @@ class ParticipationLiveSaveCoordinationTest {
         when(participations.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var templateHead = new AtomicReference<>("baseline");
         var copiedHead = new AtomicReference<String>();
-        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), anyMap(), any())).thenAnswer(invocation -> {
+        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), any())).thenAnswer(invocation -> {
             copiedHead.set(templateHead.get());
             return destination;
         });
@@ -142,7 +141,7 @@ class ParticipationLiveSaveCoordinationTest {
         when(participations.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var bothCopying = new CountDownLatch(2);
         var finishCopies = new CountDownLatch(1);
-        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), anyMap(), any())).thenAnswer(invocation -> {
+        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), any())).thenAnswer(invocation -> {
             bothCopying.countDown();
             assertThat(finishCopies.await(10, TimeUnit.SECONDS)).isTrue();
             return destination;
@@ -199,7 +198,7 @@ class ParticipationLiveSaveCoordinationTest {
         var destination = new LocalVCRepositoryUri("https://artemis.example.org/git/TEST/test-examstudent.git");
         when(uriService.getRepositorySlugFromRepositoryUri(source)).thenReturn("test-template");
         when(participations.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), anyMap(), any())).thenReturn(destination);
+        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), any())).thenReturn(destination);
         Supplier<LocalVCRepositoryUri> sourceUri = () -> source;
         Supplier<String> branch = () -> "main";
 

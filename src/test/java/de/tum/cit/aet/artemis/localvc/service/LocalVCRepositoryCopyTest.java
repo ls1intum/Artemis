@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -29,6 +28,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import de.tum.cit.aet.artemis.localvc.service.vcs.SetupCommit;
 
 /**
  * Unit tests for the repository copy in {@link LocalVCService}, i.e. the step that provisions the student repository when a programming exercise is started.
@@ -76,7 +77,7 @@ class LocalVCRepositoryCopyTest {
         CyclicBarrier bothRequestsReady = new CyclicBarrier(2);
         Callable<LocalVCRepositoryUri> startExercise = () -> {
             bothRequestsReady.await(10, TimeUnit.SECONDS);
-            return localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null, Map.of(), null);
+            return localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null, SetupCommit.UNCHANGED);
         };
 
         List<Future<LocalVCRepositoryUri>> responses = executor.invokeAll(List.of(startExercise, startExercise));
@@ -93,8 +94,8 @@ class LocalVCRepositoryCopyTest {
         seedRepository("abc-exercise", "template");
         seedRepository("abc-student1", "work the student already pushed");
 
-        LocalVCRepositoryUri repositoryUri = localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null, Map.of(),
-                null);
+        LocalVCRepositoryUri repositoryUri = localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null,
+                SetupCommit.UNCHANGED);
 
         assertThat(repositoryUri.toString()).as("the repository that is already there is handed back").isEqualTo(uriFor("abc-student1").toString());
         assertThat(readFileFromBranchHead("abc-student1")).as("a repository that was already copied is never copied over").isEqualTo("work the student already pushed");
@@ -109,7 +110,7 @@ class LocalVCRepositoryCopyTest {
         Files.createDirectories(unborn);
         Git.init().setDirectory(unborn.toFile()).setBare(true).setInitialBranch(DEFAULT_BRANCH).call().close();
 
-        localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null, Map.of(), null);
+        localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null, SetupCommit.UNCHANGED);
 
         assertThat(readFileFromBranchHead("abc-student1")).as("the broken leftover is replaced by a working copy of the template").isEqualTo("template");
     }
@@ -125,7 +126,7 @@ class LocalVCRepositoryCopyTest {
         CyclicBarrier bothRequestsReady = new CyclicBarrier(2);
         Callable<LocalVCRepositoryUri> startExercise = () -> {
             bothRequestsReady.await(10, TimeUnit.SECONDS);
-            return localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null, Map.of(), null);
+            return localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null, SetupCommit.UNCHANGED);
         };
 
         List<Future<LocalVCRepositoryUri>> responses = executor.invokeAll(List.of(startExercise, startExercise));
@@ -143,7 +144,7 @@ class LocalVCRepositoryCopyTest {
         Files.createDirectories(corrupt.resolve("refs").resolve("heads"));
         Files.createDirectories(corrupt.resolve("objects"));
 
-        localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null, Map.of(), null);
+        localVCService.copyRepositoryWithoutHistory(PROJECT_KEY, "abc-exercise", DEFAULT_BRANCH, PROJECT_KEY, "student1", null, SetupCommit.UNCHANGED);
 
         try (var entries = Files.list(baseDir.resolve(PROJECT_KEY))) {
             assertThat(entries.map(entry -> entry.getFileName().toString())).as("the repository moved aside is removed rather than left next to the repaired one")

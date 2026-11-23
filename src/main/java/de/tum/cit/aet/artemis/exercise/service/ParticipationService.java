@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
+import de.tum.cit.aet.artemis.localvc.service.vcs.SetupCommit;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.OnlineIdeExperienceLevel;
@@ -732,7 +733,7 @@ public class ParticipationService {
                 PersonIdent setupCommitAuthor = courseConfigurationRepository.findInitialCommitAuthorByExerciseId(programmingExercise.getId())
                         .map(setting -> setting.toIdentity(gitService.getPlaceholderIdentity(), null)).orElse(null);
                 var newRepoUri = vcs.copyRepositoryWithoutHistory(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt(),
-                        additionalFilesSupplier.get(), setupCommitAuthor);
+                        new SetupCommit(additionalFilesSupplier.get(), setupCommitAuthor));
                 // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
                 if (participation.getStudent().isPresent()) {
                     newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
