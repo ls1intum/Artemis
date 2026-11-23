@@ -328,7 +328,7 @@
                     "threshold": "Beherrschungsschwelle",
                     "masteryMeaning": "Fortschritt und Beherrschung sind unterschiedliche Artemis-Messwerte. Die Lehrperson legt die Beherrschungsschwelle jeder Kompetenz fest.",
                     "competencyError": "Der Kompetenzfortschritt konnte nicht geladen werden.",
-                    "pointDetails": "Punkteübersicht und Bewertungsregeln des Kurses",
+                    "pointDetails": "Punkteübersicht",
                     "points": "Angerechnete Punkte",
                     "attainable": "Erreichbare Punkte",
                     "total": "Gesamtpunkte",
