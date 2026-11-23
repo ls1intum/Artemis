@@ -222,10 +222,8 @@
             },
             "statistics": {
                 "totalScore": "Gesamtpunktzahl",
-                "totalPresentationScore": "Dein gesamtes Präsentationsergebnis: {{ number }}",
-                "presentationScoreBonus": "Benötigtes Präsentationsergebnis für den Bonus: {{ number }}",
-                "totalPresentationPoints": "Deine Präsentationspunkte: {{ number }}",
-                "achievablePresentationPoints": "Erreichbare Präsentationspunkte: {{ number }}",
+                "currentPresentationScore": "Aktuelles Präsentationsergebnis: {{ current }}/{{ required }}",
+                "gradedPresentationPoints": "Präsentationspunkte: {{ earned }} / {{ attainable }} Pkt.",
                 "hideNotIncludedInScoreExercises": "Keine Optionalen",
                 "exerciseCount": "{{ number }} {{ type }}",
                 "yourPoints": "Deine Punktzahl: {{ number }}",
