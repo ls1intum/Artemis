@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -32,9 +31,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalV
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 public abstract class AbstractProgrammingIntegrationJenkinsLocalVCTemplateTest extends AbstractSpringIntegrationJenkinsLocalVCTemplateTest {
-
-    @Autowired
-    protected RestTemplate restTemplate;
 
     @Autowired
     protected JsonMapper objectMapper;

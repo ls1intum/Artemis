@@ -12,12 +12,15 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingPeriodDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamDateUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
@@ -80,7 +83,7 @@ public class ExamDateService {
             throw new IllegalArgumentException("This function should only be used for exam exercises");
         }
         Exam exam = exercise.getExam();
-        if (exam.isTestExam()) {
+        if (!exam.getExamMode().isReal()) {
             return isIndividualExerciseWorkingPeriodOver(exam, studentParticipation);
         }
         return isExamWithGracePeriodOver(exam);
@@ -191,6 +194,62 @@ public class ExamDateService {
         }
         int workingTimeChange = exam.getDuration() - originalExamDuration;
         return exam.getStartDate().plusSeconds(projectWorkingTimeAfterDurationChange(maxWorkingTime.get(), originalExamDuration, workingTimeChange));
+    }
+
+    /**
+     * Guards the start date of a supervised session against changes once students can conduct it.
+     * <p>
+     * A supervised session behaves like a real exam: the deadline of its attempts is derived from the start date of the
+     * exam. Unlike for real exams, a changed start date is not pushed to the clients of conducting students, so they would
+     * keep working towards the old deadline while the server enforces the new one. Therefore the start date can only be
+     * changed until the students are allowed to enter the session.
+     *
+     * @param examMode          the mode of the exam, other modes are not checked
+     * @param originalStartDate the start date before the change
+     * @param newStartDate      the start date after the change
+     * @param now               the current time
+     * @throws BadRequestAlertException if the start date changes after the conduction of the supervised session opened
+     */
+    public void checkSupervisedSessionStartChangeAllowedElseThrow(ExamMode examMode, ZonedDateTime originalStartDate, ZonedDateTime newStartDate, ZonedDateTime now) {
+        if (examMode != ExamMode.TEST_WITH_SUPERVISED_SESSION || originalStartDate == null || newStartDate == null
+                || ExamDateUtil.truncatedComparator().compare(originalStartDate, newStartDate) == 0) {
+            return;
+        }
+        if (now.isAfter(originalStartDate.minusMinutes(EXAM_START_WAIT_TIME_MINUTES))) {
+            throw new BadRequestAlertException("The start date of a supervised session cannot be changed once students can enter it.", "exam", "supervisedSessionStarted");
+        }
+    }
+
+    /**
+     * Guards the end of a supervised session against changes that would reclassify attempts that already exist.
+     * <p>
+     * The end of the supervised session is derived from the start date and the working time of the exam, and it decides
+     * whether an attempt is a supervised or a practice attempt. Moving it after the session has ended would turn practice
+     * attempts into supervised ones (shortening their deadline and rejecting their autosaves), and moving it back during
+     * the session would turn started supervised attempts into practice attempts. Both are rejected. Moving it later during
+     * the session is fine, because no attempt can have been started in the interval that is added to the session.
+     *
+     * @param examId                       the id of the exam
+     * @param examMode                     the mode of the exam, other modes are not checked
+     * @param originalSupervisedSessionEnd the end of the supervised session before the change
+     * @param newSupervisedSessionEnd      the end of the supervised session after the change
+     * @param now                          the current time
+     * @throws BadRequestAlertException if the change moves the end of the supervised session after it has ended, or past an attempt that was started
+     */
+    public void checkSupervisedSessionEndChangeAllowedElseThrow(long examId, ExamMode examMode, ZonedDateTime originalSupervisedSessionEnd, ZonedDateTime newSupervisedSessionEnd,
+            ZonedDateTime now) {
+        if (examMode != ExamMode.TEST_WITH_SUPERVISED_SESSION || originalSupervisedSessionEnd == null || newSupervisedSessionEnd == null
+                || ExamDateUtil.truncatedComparator().compare(originalSupervisedSessionEnd, newSupervisedSessionEnd) == 0) {
+            return;
+        }
+        if (!now.isBefore(originalSupervisedSessionEnd)) {
+            throw new BadRequestAlertException("The start date and the working time cannot be changed after the supervised session has ended.", "exam", "supervisedSessionEnded");
+        }
+        ZonedDateTime from = originalSupervisedSessionEnd.isBefore(newSupervisedSessionEnd) ? originalSupervisedSessionEnd : newSupervisedSessionEnd;
+        ZonedDateTime to = originalSupervisedSessionEnd.isBefore(newSupervisedSessionEnd) ? newSupervisedSessionEnd : originalSupervisedSessionEnd;
+        if (studentExamRepository.existsAttemptStartedBetween(examId, from, to)) {
+            throw new BadRequestAlertException("The supervised session cannot end before an attempt that was already started.", "exam", "supervisedSessionAttemptStarted");
+        }
     }
 
     /**

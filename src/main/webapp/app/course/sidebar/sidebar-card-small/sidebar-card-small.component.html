@@ -2,12 +2,12 @@
  operates differently over the CourseConversationsService, it will get adjusted in a followup PR -->
 <div
     id="test-sidebar-card-small"
-    class="d-flex justify-content-between rounded-3 border-start border-5 item-border highlight-card bg-module align-items-end py-1"
-    [ngClass]="sidebarItem().conversation?.hasUnreadMessage && !sidebarItem().conversation?.isMuted ? 'border-primary' : 'border-module'"
+    class="flex justify-between rounded-sm item-border highlight-card bg-module items-end py-1"
+    [ngClass]="sidebarItem().conversation?.hasUnreadMessage && !sidebarItem().conversation?.isMuted ? 'border-(--primary)' : 'border-module'"
     [routerLinkActive]="'bg-selected border-selected'"
 >
     <a
-        class="min-w-0 flex-1 self-center text-inherit! no-underline! focus-visible:outline-2 focus-visible:outline-offset-2"
+        class="min-w-0 flex-1 self-center text-inherit no-underline! focus-visible:outline-2 focus-visible:outline-offset-2"
         [routerLink]="itemSelected() ? '../communication' : './communication'"
         [queryParams]="{ conversationId: sidebarItem()?.id }"
         [attr.data-testid]="'conversation-link-' + sidebarItem().id"

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -14,6 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
@@ -89,7 +93,64 @@ class LimitRequestsPerMinuteAspectTest {
         verify(rateLimitService).enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.AUTHENTICATION);
     }
 
+    @Test
+    void testAspect_PerUserLimit_CountsTheSignedInUserWithoutRegardToTheClientAddress() throws Throwable {
+        Method method = TestService.class.getMethod("methodWithPerUserRateLimit");
+        when(joinPoint.getSignature()).thenReturn(methodSignature);
+        when(methodSignature.getMethod()).thenReturn(method);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("Student1", "pw", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+        try {
+            aspect.checkRateLimit(joinPoint);
+        }
+        finally {
+            SecurityContextHolder.clearContext();
+        }
+
+        verify(rateLimitService).enforceBudget("user:student1", RateLimitType.APOLLON_CONVERSION);
+        verify(rateLimitService, never()).enforcePerMinute(any(), any());
+    }
+
+    @Test
+    void testAspect_PerUserLimit_IsNotEnforcedForAnExemptAddress() throws Throwable {
+        Method method = TestService.class.getMethod("methodWithPerUserRateLimit");
+        when(joinPoint.getSignature()).thenReturn(methodSignature);
+        when(methodSignature.getMethod()).thenReturn(method);
+        var exemptAddress = new IPAddressString("192.168.1.1").toAddress();
+        when(rateLimitService.resolveClientId()).thenReturn(exemptAddress);
+        when(configurationService.isExempt(exemptAddress)).thenReturn(true);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("student1", "pw", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+        try {
+            aspect.checkRateLimit(joinPoint);
+        }
+        finally {
+            SecurityContextHolder.clearContext();
+        }
+
+        verify(rateLimitService, never()).enforceBudget(any(), any());
+        verify(rateLimitService, never()).enforcePerMinute(any(), any());
+    }
+
+    @Test
+    void testAspect_PerUserLimit_FallsBackToTheClientAddressWithoutSignedInUser() throws Throwable {
+        Method method = TestService.class.getMethod("methodWithPerUserRateLimit");
+        when(joinPoint.getSignature()).thenReturn(methodSignature);
+        when(methodSignature.getMethod()).thenReturn(method);
+        when(rateLimitService.resolveClientId()).thenReturn(new IPAddressString("192.168.1.1").toAddress());
+        SecurityContextHolder.clearContext();
+
+        aspect.checkRateLimit(joinPoint);
+
+        verify(rateLimitService).enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.APOLLON_CONVERSION);
+    }
+
     public static class TestService {
+
+        @LimitRequestsPerMinute(type = RateLimitType.APOLLON_CONVERSION, perUser = true)
+        public void methodWithPerUserRateLimit() {
+            // Test method
+        }
 
         @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
         public void methodWithTypeBasedRateLimit() {

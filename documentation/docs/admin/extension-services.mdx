@@ -2,7 +2,7 @@
 id: extensions-setup
 title: Setup of Extension Services
 sidebar_label: Extensions Setup
-last_reviewed: 2026-11-12
+last_reviewed: 2026-11-17
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -36,6 +36,9 @@ artemis:
         url: https://pyris.your-domain.com # Or http://localhost:8000 for local development
         secret-token: your-shared-secret # Must match the token configured in Pyris
 ```
+
+Pyris is called by the core nodes, and Pyris and the Weaviate instance behind it work together. Run them on the private network, use a separate Pyris for every installation that holds real data, and give every installation its own
+secret. See the [Network Model](/admin/production-setup/network-model#extension-services).
 
 Optionally, configure per-user rate limiting:
 

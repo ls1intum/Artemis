@@ -10,12 +10,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
 import de.tum.cit.aet.artemis.modeling.dto.ApollonModelDTO;
@@ -30,10 +28,10 @@ public class ApollonConversionService {
     @Value("${artemis.apollon.conversion-service-url}")
     private String apollonConversionUrl;
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
-    public ApollonConversionService(@Qualifier("apollonRestTemplate") RestTemplate apollonRestTemplate) {
-        this.restTemplate = apollonRestTemplate;
+    public ApollonConversionService(@Qualifier("apollonRestClient") RestClient apollonRestClient) {
+        this.restClient = apollonRestClient;
     }
 
     /**
@@ -46,14 +44,10 @@ public class ApollonConversionService {
     public InputStream convertModel(String model) throws IOException {
         log.debug("Calling Remote Service to convert for model.");
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
             var apollonModel = new ApollonModelDTO(model);
 
-            HttpEntity<ApollonModelDTO> requestEntity = new HttpEntity<>(apollonModel, headers);
-
-            var response = restTemplate.postForEntity(apollonConversionUrl + "/api/converter/pdf", requestEntity, Resource.class);
+            var response = restClient.post().uri(apollonConversionUrl + "/api/converter/pdf").contentType(MediaType.APPLICATION_JSON).body(apollonModel).retrieve()
+                    .toEntity(Resource.class);
 
             if (response.getBody() != null) {
                 return response.getBody().getInputStream();

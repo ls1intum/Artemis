@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, Injector, afterNextRender, effect, inject, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -28,6 +28,9 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
     imports: [FaIconComponent, ArtemisTranslatePipe, CollapsedPanelRailComponent],
 })
 export class FeedbackBottomPanelComponent {
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+    private readonly injector = inject(Injector);
+
     /** Whether the content is shown; the header always is. */
     readonly expanded = input(true);
     /** The title shown when the page puts no header of its own into `[panelHeader]`. */
@@ -52,4 +55,21 @@ export class FeedbackBottomPanelComponent {
 
     protected readonly faChevronDown = faChevronDown;
     protected readonly faCommentDots = faCommentDots;
+
+    constructor() {
+        // The header's collapse button and the collapsed rail are different buttons, so a focused one hands the focus to the other
+        let wasExpanded: boolean | undefined;
+        effect(() => {
+            const expanded = this.expanded();
+            if (wasExpanded !== undefined && wasExpanded !== expanded && this.host.nativeElement.contains(document.activeElement)) {
+                afterNextRender(() => this.focusToggle(), { injector: this.injector });
+            }
+            wasExpanded = expanded;
+        });
+    }
+
+    private focusToggle(): void {
+        const selector = this.expanded() ? '.feedback-bottom-panel__collapse' : '.collapsed-panel-rail__button';
+        this.host.nativeElement.querySelector<HTMLElement>(selector)?.focus();
+    }
 }

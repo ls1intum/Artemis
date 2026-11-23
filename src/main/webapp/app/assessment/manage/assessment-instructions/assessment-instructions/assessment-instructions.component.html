@@ -32,7 +32,7 @@
     @switch (exercise().type) {
         @case (ExerciseType.PROGRAMMING) {
             @let programmingExerciseValue = this.programmingExercise();
-            <div class="mb-4!">
+            <div class="mb-4">
                 <a jhiSecureLink [href]="programmingExerciseValue?.solutionParticipation?.repositoryUri">
                     <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution" />
                 </a>
@@ -91,7 +91,7 @@
     }
 } @else {
     @if (showAssessmentInstructions() && (gradingInstructionsValue || (gradingCriteriaValue && gradingCriteriaValue.length > 0))) {
-        <div [class]="embeddedInEditorChrome() ? '' : 'border p-2'">
+        <div [class]="embeddedInEditorChrome() ? '' : 'border border-(--border-color) p-2'">
             @if (gradingInstructionsValue) {
                 <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.assessmentInstructions">
                     <ng-container [ngTemplateOutlet]="assessmentNoteBody" />

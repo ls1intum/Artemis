@@ -26,7 +26,7 @@ import { Submission, getSubmissionResultByCorrectionRound, getSubmissionResultBy
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import { onError } from 'app/foundation/util/global.utils';
 import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
@@ -102,7 +102,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private complaintService = inject(ComplaintService);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private submissionService = inject(SubmissionService);
-    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private exampleSubmissionApi = inject(ExampleSubmissionApi);
     private athenaService = inject(AthenaService);
 
     /** Awarded, deducted and final points, scored as saving the assessment would; shown in the header of the submission panel. */
@@ -761,7 +761,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     useStudentSubmissionAsExampleSubmission(): void {
         if (this.submission() && this.modelingExercise()) {
-            this.exampleSubmissionService.import(this.submission()!.id!, this.modelingExercise()!.id!).subscribe({
+            this.exampleSubmissionApi.importExampleSubmission(this.modelingExercise()!.id!, this.submission()!.id!).subscribe({
                 next: () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });

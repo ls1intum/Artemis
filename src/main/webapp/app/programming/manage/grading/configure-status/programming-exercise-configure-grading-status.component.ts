@@ -2,7 +2,7 @@ import { Component, input } from '@angular/core';
 import { faCheckCircle, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
@@ -13,10 +13,13 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-programming-exercise-configure-grading-status',
     template: `
-        <div class="d-flex flex-column justify-content-between">
+        <div class="flex flex-col justify-between">
             @if (hasUnsavedTestCaseChanges() || hasUnsavedCategoryChanges()) {
-                <div id="test-case-status-unsaved-changes" class="d-flex align-items-center badge bg-warning mb-1">
-                    <fa-icon class="ms-2 text-white" [icon]="faExclamationTriangle" />
+                <div
+                    id="test-case-status-unsaved-changes"
+                    class="flex items-center rounded-md px-[0.65em] py-[0.35em] text-[0.75em] leading-none font-bold whitespace-nowrap text-white mb-1 bg-state-warning"
+                >
+                    <fa-icon class="ms-2" [icon]="faExclamationTriangle" />
                     @if (hasUnsavedTestCaseChanges() && hasUnsavedCategoryChanges()) {
                         <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.status.unsavedChanges"></span>
                     }
@@ -28,62 +31,48 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
                     }
                 </div>
             } @else {
-                <div id="test-case-status-no-unsaved-changes" class="d-flex align-items-center badge bg-success mb-1">
-                    <fa-icon class="ms-2 text-white" [icon]="faCheckCircle" />
+                <div
+                    id="test-case-status-no-unsaved-changes"
+                    class="flex items-center rounded-md px-[0.65em] py-[0.35em] text-[0.75em] leading-none font-bold whitespace-nowrap text-white mb-1 bg-state-success"
+                >
+                    <fa-icon class="ms-2" [icon]="faCheckCircle" />
                     <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.status.noUnsavedChanges"></span>
                 </div>
             }
-            <ng-template #noUnsavedChanges>
-                <div id="test-case-status-no-unsaved-changes" class="d-flex align-items-center badge bg-success mb-1">
-                    <fa-icon class="ms-2 text-white" [icon]="faCheckCircle" />
-                    <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.status.noUnsavedChanges"></span>
-                </div>
-            </ng-template>
             @if (exerciseIsReleasedAndHasResults()) {
                 @if (hasUpdatedGradingConfig()) {
-                    <div id="test-case-status-updated" class="d-flex align-items-center badge bg-warning">
+                    <div
+                        id="test-case-status-updated"
+                        class="flex items-center rounded-md px-[0.65em] py-[0.35em] text-[0.75em] leading-none font-bold whitespace-nowrap text-white bg-state-warning"
+                    >
                         <fa-icon
-                            class="ms-2 text-white"
+                            class="ms-2"
                             [icon]="faExclamationTriangle"
-                            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.updatedGradingConfigTooltip' | artemisTranslate"
+                            [tumAetUiTooltip]="'artemisApp.programmingExercise.configureGrading.updatedGradingConfigTooltip' | artemisTranslate"
                         />
                         <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.updatedGradingConfigShort"></span>
                     </div>
                 } @else {
-                    <div id="test-case-status-no-updated" class="d-flex align-items-center badge bg-success">
-                        <fa-icon class="ms-2 text-white" [icon]="faCheckCircle" />
+                    <div
+                        id="test-case-status-no-updated"
+                        class="flex items-center rounded-md px-[0.65em] py-[0.35em] text-[0.75em] leading-none font-bold whitespace-nowrap text-white bg-state-success"
+                    >
+                        <fa-icon class="ms-2" [icon]="faCheckCircle" />
                         <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.noUpdatedGradingConfig"></span>
                     </div>
                 }
-                <ng-template #noUpdatedGradingConfig>
-                    <div id="test-case-status-no-updated" class="d-flex align-items-center badge bg-success">
-                        <fa-icon class="ms-2 text-white" [icon]="faCheckCircle" />
-                        <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.noUpdatedGradingConfig"></span>
-                    </div>
-                </ng-template>
             } @else {
-                <div id="test-case-status-not-released" class="d-flex align-items-center badge bg-secondary">
-                    <fa-icon
-                        class="ms-2 text-white"
-                        [icon]="faQuestionCircle"
-                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.notReleasedTooltip' | artemisTranslate"
-                    />
+                <div
+                    id="test-case-status-not-released"
+                    class="flex items-center rounded-md px-[0.65em] py-[0.35em] text-[0.75em] leading-none font-bold whitespace-nowrap text-white bg-(--secondary)"
+                >
+                    <fa-icon class="ms-2" [icon]="faQuestionCircle" [tumAetUiTooltip]="'artemisApp.programmingExercise.configureGrading.notReleasedTooltip' | artemisTranslate" />
                     <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.notReleased"></span>
                 </div>
             }
-            <ng-template #notReleased>
-                <div id="test-case-status-not-released" class="d-flex align-items-center badge bg-secondary">
-                    <fa-icon
-                        class="ms-2 text-white"
-                        [icon]="faQuestionCircle"
-                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.notReleasedTooltip' | artemisTranslate"
-                    />
-                    <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.notReleased"></span>
-                </div>
-            </ng-template>
         </div>
     `,
-    imports: [FaIconComponent, TranslateDirective, NgbTooltip, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TranslateDirective, TumAetUiTooltipDirective, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseConfigureGradingStatusComponent {
     readonly exerciseIsReleasedAndHasResults = input.required<boolean>();

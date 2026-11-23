@@ -1,4 +1,4 @@
-<ul role="tree" class="m-0! block w-full list-none rounded-md bg-surface-0 p-4! dark:bg-surface-900" data-testid="knowledge-area-tree">
+<ul role="tree" class="m-0 block w-full list-none rounded-md bg-surface-0 p-4 dark:bg-surface-900" data-testid="knowledge-area-tree">
     <ng-container [ngTemplateOutlet]="nodeList" [ngTemplateOutletContext]="{ nodes: nodes(), level: 1 }" />
 </ul>
 
@@ -23,14 +23,14 @@
                             type="button"
                             tabindex="-1"
                             aria-hidden="true"
-                            class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-inherit"
-                            (click)="toggle(node.data)"
+                            class="flex size-7 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent text-inherit"
+                            (click)="toggleFromRowControl(node.data, $event)"
                         >
                             <fa-icon size="sm" [icon]="node.expanded ? faChevronDown : faChevronRight" />
                         </button>
                         <h5
-                            class="me-2 mb-0! cursor-pointer"
-                            (click)="toggle(node.data)"
+                            class="me-2 mb-0 cursor-pointer"
+                            (click)="toggleFromRowControl(node.data, $event)"
                             #keyboardAction12
                             role="button"
                             tabindex="-1"
@@ -44,7 +44,7 @@
                         <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate() ?? null" [ngTemplateOutletContext]="{ knowledgeArea: node.data }" />
                     </div>
                     @if (node.expanded) {
-                        <ul role="group" class="m-0! list-none p-0! ps-4!">
+                        <ul role="group" class="m-0 list-none p-0 ps-4">
                             <ng-container [ngTemplateOutlet]="nodeList" [ngTemplateOutletContext]="{ nodes: node.children, level: level + 1 }" />
                         </ul>
                     }
@@ -82,7 +82,7 @@
                 >
                     <div class="flex items-center gap-1 rounded-md p-2">
                         <span class="size-7 shrink-0" aria-hidden="true"></span>
-                        <h6 class="mb-0!" jhiTranslate="artemisApp.knowledgeArea.empty" data-testid="empty-node"></h6>
+                        <h6 class="mb-0" jhiTranslate="artemisApp.knowledgeArea.empty" data-testid="empty-node"></h6>
                     </div>
                 </li>
             }

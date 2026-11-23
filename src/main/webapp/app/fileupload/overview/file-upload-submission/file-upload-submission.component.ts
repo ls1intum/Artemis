@@ -99,8 +99,11 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate, Ex
         return filePath ? (filePath.split('/').pop() ?? '') : '';
     });
 
-    /** Whether the assessed submission panel is shown, which then fills the panel of the exercise page. */
-    readonly showsAssessedSubmission = computed(() => !!this.result()?.feedbacks?.length);
+    /**
+     * Whether the assessed submission panel is shown, which then fills the panel of the exercise page. A completed assessment
+     * without any feedback (e.g. 0 points) is framed too, so it does not look unassessed.
+     */
+    readonly showsAssessedSubmission = computed(() => !!this.result()?.completionDate || !!this.result()?.feedbacks?.length);
 
     submittedFileExtension = computed(() => {
         const fileName = this.submittedFileName();

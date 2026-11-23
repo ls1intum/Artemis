@@ -2,7 +2,7 @@
 id: weaviate-setup
 title: Weaviate Setup
 sidebar_label: Weaviate Setup
-last_reviewed: 2026-11-14
+last_reviewed: 2026-11-20
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -82,6 +82,12 @@ The result is `1024`. Then add to `application-local.yml`:
 
 ```yaml
 artemis:
+    llm:
+        endpoints:
+            ollama:
+                base-url: http://localhost:11434/v1    # as Artemis reaches Ollama; Ollama needs no key
+        presets:
+            embed: { endpoint: ollama, model: qwen3-embedding:0.6b, api: embeddings }
     weaviate:
         enabled: true
         http-host: localhost
@@ -90,13 +96,11 @@ artemis:
         scheme: http
         collection-prefix: Artemis_
         vectorizer-module: text2vec-openai
-        open-ai-base-url: http://localhost:11434      # as Artemis reaches Ollama; no /v1 suffix
-        open-ai-embedding-model: qwen3-embedding:0.6b
-        gpu-api-key: ollama                            # Ollama ignores it, but it must not be empty
+        embedding-llm-preset: embed
         open-ai-query-instruction: "Instruct: Given a student's search on a university learning platform, retrieve the course item (exercise, lecture, lecture unit, exam, FAQ, channel) it refers to\nQuery: "
 ```
 
-If Artemis itself runs in a Docker container, use `http://host.docker.internal:11434` instead of `localhost`.
+If Artemis itself runs in a Docker container, use `http://host.docker.internal:11434/v1` instead of `localhost`.
 
 Ollama in Docker on macOS runs on the CPU only. If a query takes more than about 2 seconds (check with `time` in front
 of the `curl` command above), the 3-second query limit makes searches fall back to keywords. Then either set
@@ -104,7 +108,7 @@ of the `curl` command above), the 3-second query limit makes searches fall back 
 GPU of Apple silicon: `brew install ollama`, `ollama serve`, `ollama pull qwen3-embedding:0.6b`, and stop the Compose
 service first so port 11434 is free.
 
-To use a remote GPU server instead, set `open-ai-base-url`, `open-ai-embedding-model` and `gpu-api-key` to its values.
+To use a remote GPU server instead, point the endpoint at it, add its `api-key` and set the preset's `model`.
 The [admin guide](/admin/global-search-weaviate#connect-an-embedding-model) lists all settings and the requirements for
 the server.
 
@@ -148,7 +152,7 @@ node is the only writer to Weaviate. It reads the outbox and applies the entries
    description. The cleaning removes code blocks, formulas, PlantUML, images, HTML and links. A chunk has at most 470
    estimated tokens and 2048 bytes; consecutive chunks overlap by about 10%.
 3. `SearchableEntityVectorWriter` reads the stored row and reuses the vector of every chunk whose hash is unchanged.
-   Only new chunks are embedded by `SearchableEntityEmbeddingClient`, which calls `POST {open-ai-base-url}/v1/embeddings`.
+   Only new chunks are embedded by `SearchableEntityEmbeddingClient`, which calls `POST {base-url}/embeddings` on the endpoint of the embeddings preset.
 4. The row is written with **all** its vectors, one per chunk, in chunk order. A row is never written with missing
    vectors, because Weaviate drops the vectors of a row that is replaced without them.
 
@@ -258,7 +262,7 @@ DISK_USE_WARNING_PERCENTAGE=80
 |---|---|---|
 | `OLLAMA_VERSION` | 0.40.13 | Ollama image version |
 | `OLLAMA_PORT` | 11434 | Port on the host |
-| `OLLAMA_EMBEDDING_MODEL` | qwen3-embedding:0.6b | Model the `ollama-pull` service downloads; use the same name in `open-ai-embedding-model` |
+| `OLLAMA_EMBEDDING_MODEL` | qwen3-embedding:0.6b | Model the `ollama-pull` service downloads; use the same name as the preset's `model` |
 
 The Compose file sets `OLLAMA_KEEP_ALIVE=-1`, so Ollama keeps the model in memory instead of unloading it after
 5 idle minutes.
@@ -340,9 +344,9 @@ If the Artemis log shows `Global search uses keyword search because the query co
 
 - the model is not downloaded yet: wait for `ollama-pull` to finish, or run
   `docker exec artemis-ollama ollama pull qwen3-embedding:0.6b`;
-- the model name in `open-ai-embedding-model` differs from the one Ollama serves: compare with
+- the `model` of the embeddings preset differs from the name Ollama serves: compare with
   `docker exec artemis-ollama ollama list`;
-- Artemis cannot reach `open-ai-base-url`: test it with the `curl` command from the [quick start](#hybrid-search-with-a-local-embedding-model)
+- Artemis cannot reach the endpoint's `base-url`: test it with the `curl` command from the [quick start](#hybrid-search-with-a-local-embedding-model)
   on the machine where Artemis runs.
 
 ### Resetting data

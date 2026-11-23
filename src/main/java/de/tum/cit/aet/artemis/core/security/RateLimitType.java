@@ -190,7 +190,54 @@ public enum RateLimitType {
      * Default: 30 requests per minute per client, overridable with
      * {@code artemis.rate-limiting.service-credential-failure-requests-per-minute}.
      */
-    SERVICE_CREDENTIAL_FAILURE(30);
+    SERVICE_CREDENTIAL_FAILURE(30),
+
+    /**
+     * Rate limit for the conversion of a modeling diagram to a PDF document, which starts a conversion that is comparatively expensive.
+     * It is counted per signed-in user, so users on one network address do not share it.
+     * <p>
+     * Default: 10 requests per minute per user, overridable with
+     * {@code artemis.rate-limiting.apollon-conversion-requests-per-minute}.
+     */
+    APOLLON_CONVERSION(10),
+
+    /**
+     * Rate limit for joining a batch of a quiz with its password. Every attempt counts, whether the password was right or not.
+     * It is counted per signed-in user, so users on one network address do not share it.
+     * <p>
+     * Default: 10 requests per minute per user, overridable with
+     * {@code artemis.rate-limiting.quiz-batch-join-requests-per-minute}.
+     */
+    QUIZ_BATCH_JOIN(10),
+
+    /**
+     * Rate limit for the manual build of a programming exercise participation, which each time starts a build job.
+     * It is counted per signed-in user, so users on one network address do not share it.
+     * <p>
+     * Default: 10 requests per minute per user, overridable with
+     * {@code artemis.rate-limiting.programming-build-trigger-requests-per-minute}.
+     */
+    PROGRAMMING_BUILD_TRIGGER(10),
+
+    /**
+     * Rate limit for sending a course request. The number of requests of a user that wait for a decision is capped separately, this limit keeps parallel requests
+     * from passing that cap together. It is counted per signed-in user, so users on one network address do not share it.
+     * <p>
+     * Default: 5 requests per minute per user, overridable with
+     * {@code artemis.rate-limiting.course-request-requests-per-minute}.
+     */
+    COURSE_REQUEST(5),
+
+    /**
+     * Rate limit for the re-evaluation of all automatic results of a programming exercise. The request recalculates and saves every latest result of the exercise, so
+     * it is heavy, and instructors need it rarely.
+     * <p>
+     * Counted per user and not per client address, because the request needs a signed-in instructor and many instructors can share one address.
+     * <p>
+     * Default: 6 requests per minute per user, overridable with
+     * {@code artemis.rate-limiting.re-evaluation-requests-per-minute}.
+     */
+    RE_EVALUATION(6);
 
     private final int defaultRpm;
 

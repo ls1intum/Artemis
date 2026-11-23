@@ -14,11 +14,9 @@ import { MockCodeEditorConflictStateService } from 'test/helpers/mocks/service/m
 import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock-code-editor-repository.service';
 import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { MockModule } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
@@ -59,17 +57,17 @@ describe('CodeEditorActionsComponent', () => {
     let commitStub: ReturnType<typeof vi.spyOn>;
     let pullStub: ReturnType<typeof vi.spyOn>;
     let resetRepositoryStub: ReturnType<typeof vi.spyOn>;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let conflictStateService: CodeEditorConflictStateService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), CodeEditorActionsComponent, TranslatePipeMock, FeatureToggleDirective],
+            imports: [CodeEditorActionsComponent, TranslatePipeMock, FeatureToggleDirective],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: CodeEditorConflictStateService, useClass: MockCodeEditorConflictStateService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -93,7 +91,7 @@ describe('CodeEditorActionsComponent', () => {
         commitStub = vi.spyOn(codeEditorRepositoryService, 'commit');
         pullStub = vi.spyOn(codeEditorRepositoryService, 'pull');
         resetRepositoryStub = vi.spyOn(codeEditorRepositoryService, 'resetRepository');
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         conflictStateService = TestBed.inject(CodeEditorConflictStateService);
     });
 

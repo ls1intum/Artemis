@@ -141,14 +141,14 @@ class IrisUsageAlertServiceTest {
     // noResponseMessageCount, noResponseSessionCount, thumbsUpRatio, thumbsDownRatio,
     // thumbsUpAbsoluteRate, thumbsDownAbsoluteRate, sessionsWithThumbsUp, sessionsWithThumbsDown,
     // thumbsUpCount, thumbsDownCount,
-    // avgResponseTimeSeconds, p50ResponseTimeSeconds, p95ResponseTimeSeconds, totalTokenCostEur)
+    // avgResponseTimeSeconds, p50ResponseTimeSeconds, p95ResponseTimeSeconds, totalTokenCostUsd)
 
     private void mockHighNoResponseRate() {
         // noResponseRate=15.0 which is > default threshold of 10.0
         // activeSessions=50 which is >= default minimumEligibleSessions of 10
         // The alert has no AI selection filter, so it must evaluate all users.
         when(dashboardService.computeOverview(any(), any(), eq(IrisDashboardAiSelection.ALL)))
-                .thenReturn(new IrisDashboardOverviewDTO(100, 50, 50.0, 200, 20, 15.0, 30, 15, 80.0, 20.0, 60.0, 15.0, 40, 10, 20, 5, 5.0, 4.0, 8.0, 10.0));
+                .thenReturn(new IrisDashboardOverviewDTO(100, 50, 50.0, 200, 20, 15.0, 30, 15, 80.0, 20.0, 60.0, 15.0, 40, 10, 20, 5, 5.0, 4.0, 8.0, 10.0, 0L));
         when(dashboardService.computeStaleBefore(any(), any())).thenReturn(ZonedDateTime.of(2026, 5, 27, 11, 55, 0, 0, ZoneOffset.UTC).toInstant());
     }
 
@@ -156,7 +156,7 @@ class IrisUsageAlertServiceTest {
         // noResponseRate=5.0 which is <= default threshold of 10.0
         // The alert has no AI selection filter, so it must evaluate all users.
         when(dashboardService.computeOverview(any(), any(), eq(IrisDashboardAiSelection.ALL)))
-                .thenReturn(new IrisDashboardOverviewDTO(100, 50, 50.0, 200, 20, 5.0, 10, 5, 80.0, 20.0, 60.0, 15.0, 40, 10, 20, 5, 5.0, 4.0, 8.0, 10.0));
+                .thenReturn(new IrisDashboardOverviewDTO(100, 50, 50.0, 200, 20, 5.0, 10, 5, 80.0, 20.0, 60.0, 15.0, 40, 10, 20, 5, 5.0, 4.0, 8.0, 10.0, 0L));
         when(dashboardService.computeStaleBefore(any(), any())).thenReturn(ZonedDateTime.of(2026, 5, 27, 11, 55, 0, 0, ZoneOffset.UTC).toInstant());
     }
 
