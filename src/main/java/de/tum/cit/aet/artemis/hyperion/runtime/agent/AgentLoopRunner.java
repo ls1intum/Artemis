@@ -130,17 +130,6 @@ public class AgentLoopRunner {
     /** The model's usable context window in tokens; compaction keeps the conversation below {@code contextWindow - RESERVE_TOKENS}. Configurable because deployments cap it. */
     private final int contextWindowTokens;
 
-    /**
-     * The model that may take over one stalled repair block, resolved from the run's repair LLM preset. It brings its own endpoint, options and price, so its calls are
-     * accounted for under that preset rather than the primary one.
-     *
-     * @param preset    the name of the repair LLM preset
-     * @param chatModel the preset's chat model
-     * @param options   the options every request of the handoff starts from
-     */
-    public record RepairModel(String preset, ChatModel chatModel, ChatOptions options) {
-    }
-
     @Nullable
     private final RepairModel repairModel;
 
@@ -196,18 +185,11 @@ public class AgentLoopRunner {
     }
 
     /**
-     * A runner that may hand one stalled repair block to the given model. Runners derived from it through {@link #forSettings} keep the handoff.
-     *
-     * @param repairModel the resolved repair preset, or {@code null} to disable the handoff
-     * @return a runner with the same model, options and context window that may hand off to {@code repairModel}
+     * @param repairModel the model that may take over one stalled repair block, or {@code null} to disable the handoff; {@link #forSettings} keeps it
+     * @return a runner with the same model, options and context window
      */
     public AgentLoopRunner withRepairModel(@Nullable RepairModel repairModel) {
         return new AgentLoopRunner(this, chatModel, effectiveOptions, contextWindowTokens, repairModel);
-    }
-
-    /** The runner of the handoff: the repair preset's model and options, on this runner's context window, without a further handoff. */
-    private AgentLoopRunner repairRunner(RepairModel repair) {
-        return new AgentLoopRunner(this, new HarmonyScrubbingChatModel(repair.chatModel()), repair.options(), contextWindowTokens, null);
     }
 
     /**
@@ -365,7 +347,8 @@ public class AgentLoopRunner {
                 }
                 if (decision == AuthoringProgressMonitor.Decision.STALLED) {
                     if (activeRunner == this && repairModel != null && progressSource.claimRepairModelHandoff()) {
-                        activeRunner = repairRunner(repairModel);
+                        // The repair preset's own model and options, on this runner's context window, without a further handoff.
+                        activeRunner = new AgentLoopRunner(this, new HarmonyScrubbingChatModel(repairModel.chatModel()), repairModel.options(), contextWindowTokens, null);
                         repairLastTurn = Math.min(maxTurns, turn - 1 + AuthoringProgressMonitor.BLOCK_TURNS);
                         emit(stepListener, "No verified improvement across two work blocks; handing the current repair to the LLM preset " + repairModel.preset()
                                 + " for at most 20 turns within the remaining job budget.");

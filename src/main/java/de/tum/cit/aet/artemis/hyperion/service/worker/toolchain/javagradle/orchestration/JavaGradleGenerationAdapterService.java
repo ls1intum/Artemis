@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HarmonyScrubbingChatModel;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureCooldown;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.RepairModel;
 import de.tum.cit.aet.artemis.hyperion.service.worker.GenerationObserver;
 import de.tum.cit.aet.artemis.hyperion.service.worker.ToolchainGenerationAdapter;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
@@ -213,7 +214,8 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
      * Resolves the run's repair preset like its primary preset, so a worker without it fails the run at its start rather than at the handoff. A repair preset equal to the
      * primary one would hand the repair to the same model, so it disables the handoff.
      */
-    AgentLoopRunner.@Nullable RepairModel repairModel(GenerationParameters parameters) {
+    @Nullable
+    RepairModel repairModel(GenerationParameters parameters) {
         String repairPreset = parameters.repairLlmPreset();
         if (repairPreset == null || repairPreset.equals(parameters.llmPreset())) {
             return null;
@@ -222,7 +224,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         var defaults = repair.getOptions();
         var builder = defaults instanceof OpenAiChatOptions openAi ? openAi.mutate() : OpenAiChatOptions.builder();
         builder.timeout(llmClientService.effectiveTimeout(repairPreset));
-        return new AgentLoopRunner.RepairModel(repairPreset, repair, builder.build());
+        return new RepairModel(repairPreset, repair, builder.build());
     }
 
     HyperionGenerationSettings settings(GenerationParameters parameters, ChatModel model) {

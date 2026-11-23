@@ -209,8 +209,8 @@ class AgentLoopRunnerTest {
         assertThat(tools.handedOff).isFalse();
     }
 
-    private static AgentLoopRunner.RepairModel repair(ChatModel model) {
-        return new AgentLoopRunner.RepairModel("repairpreset", model, org.springframework.ai.openai.OpenAiChatOptions.builder().model("repair").build());
+    private static RepairModel repair(ChatModel model) {
+        return new RepairModel("repairpreset", model, org.springframework.ai.openai.OpenAiChatOptions.builder().model("repair").build());
     }
 
     static class ProgressTools extends RecordingTools implements AuthoringProgress {
