@@ -7134,6 +7134,7 @@ components:
         course: {$ref: '#/components/schemas/CourseForExam'}
         channelName: {type: string}
         examArchivePath: {type: string}
+      x-parent: true
     Tokens:
       type: object
       description: Response containing consistency check tokens
@@ -10862,40 +10863,15 @@ components:
             text to be improved, minLength: 1}
       required: [problemStatementText]
     ExamWithExerciseGroups:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        examMode: {$ref: '#/components/schemas/ExamMode'}
-        examWithAttendanceCheck: {type: boolean}
-        visibleDate: {type: string, format: date-time}
-        startDate: {type: string, format: date-time}
-        endDate: {type: string, format: date-time}
-        publishResultsDate: {type: string, format: date-time}
-        examStudentReviewStart: {type: string, format: date-time}
-        examStudentReviewEnd: {type: string, format: date-time}
-        gracePeriod: {type: integer, format: int32}
-        workingTime: {type: integer, format: int32}
-        startText: {type: string}
-        endText: {type: string}
-        confirmationStartText: {type: string}
-        confirmationEndText: {type: string}
-        examMaxPoints: {type: integer, format: int32}
-        randomizeExerciseOrder: {type: boolean}
-        numberOfExercisesInExam: {type: integer, format: int32}
-        numberOfCorrectionRoundsInExam: {type: integer, format: int32}
-        examiner: {type: string}
-        moduleNumber: {type: string}
-        courseName: {type: string}
-        exampleSolutionPublicationDate: {type: string, format: date-time}
-        examSummaryPublicationDate: {type: string, format: date-time}
-        course: {$ref: '#/components/schemas/CourseForExam'}
-        examArchivePath: {type: string}
-        started: {type: boolean}
-        numberOfExamUsers: {type: integer, format: int64}
-        exerciseGroups:
-          type: array
-          items: {$ref: '#/components/schemas/ExerciseGroupWithExercises'}
+      allOf:
+      - {$ref: '#/components/schemas/Exam'}
+      - type: object
+        properties:
+          started: {type: boolean}
+          numberOfExamUsers: {type: integer, format: int64}
+          exerciseGroups:
+            type: array
+            items: {$ref: '#/components/schemas/ExerciseGroupWithExercises'}
     ExamUserDetails:
       type: object
       properties:

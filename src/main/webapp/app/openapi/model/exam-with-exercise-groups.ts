@@ -7,39 +7,10 @@
  *
  * NOTE: This file is auto-generated. Do not edit manually.
  */
-
-import type { ExamMode } from './exam-mode';
-import type { CourseForExam } from './course-for-exam';
+import type { Exam } from './exam';
 import type { ExerciseGroupWithExercises } from './exercise-group-with-exercises';
 
-export interface ExamWithExerciseGroups {
-    id?: number;
-    title?: string;
-    examMode?: ExamMode;
-    examWithAttendanceCheck?: boolean;
-    visibleDate?: string;
-    startDate?: string;
-    endDate?: string;
-    publishResultsDate?: string;
-    examStudentReviewStart?: string;
-    examStudentReviewEnd?: string;
-    gracePeriod?: number;
-    workingTime?: number;
-    startText?: string;
-    endText?: string;
-    confirmationStartText?: string;
-    confirmationEndText?: string;
-    examMaxPoints?: number;
-    randomizeExerciseOrder?: boolean;
-    numberOfExercisesInExam?: number;
-    numberOfCorrectionRoundsInExam?: number;
-    examiner?: string;
-    moduleNumber?: string;
-    courseName?: string;
-    exampleSolutionPublicationDate?: string;
-    examSummaryPublicationDate?: string;
-    course?: CourseForExam;
-    examArchivePath?: string;
+export interface ExamWithExerciseGroups extends Exam {
     started?: boolean;
     numberOfExamUsers?: number;
     exerciseGroups?: Array<ExerciseGroupWithExercises>;

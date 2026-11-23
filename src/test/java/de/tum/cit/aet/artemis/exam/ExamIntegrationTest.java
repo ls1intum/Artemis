@@ -1719,7 +1719,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         ExamWithExerciseGroupsDTO returnedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK,
                 ExamWithExerciseGroupsDTO.class);
 
-        assertThat(returnedExam.startDate()).isNull();
+        assertThat(returnedExam.exam().startDate()).isNull();
         assertThat(returnedExam.started()).isFalse();
     }
 
@@ -3111,12 +3111,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         exerciseRepository.save(quiz);
 
         ExamWithExerciseGroupsDTO received = request.get("/api/exam/exams/" + exam2.getId(), HttpStatus.OK, ExamWithExerciseGroupsDTO.class);
-        assertThat(received.id()).isEqualTo(exam2.getId());
-        assertThat(received.title()).isEqualTo(exam2.getTitle());
-        assertThat(received.examMode()).isEqualTo(exam2.getExamMode());
+        assertThat(received.exam().id()).isEqualTo(exam2.getId());
+        assertThat(received.exam().title()).isEqualTo(exam2.getTitle());
+        assertThat(received.exam().examMode()).isEqualTo(exam2.getExamMode());
         // exam-import.component reads exam.course to decide isImportInSameCourse
-        assertThat(received.course()).isNotNull();
-        assertThat(received.course().id()).isEqualTo(course1.getId());
+        assertThat(received.exam().course()).isNotNull();
+        assertThat(received.exam().course().id()).isEqualTo(course1.getId());
         assertThat(received.exerciseGroups()).hasSize(1);
         var group = received.exerciseGroups().getFirst();
         // the import modal renders and the body-builder re-posts group id/title/isMandatory
