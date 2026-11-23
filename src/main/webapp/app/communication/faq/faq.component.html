@@ -67,7 +67,7 @@
                             <span jhiTranslate="artemisApp.faq.table.categories"></span>
                         </th>
                         @if (hasRowActions()) {
-                            <th></th>
+                            <th><span class="sr-only" jhiTranslate="entity.actions"></span></th>
                         }
                     </tr>
                 </thead>
@@ -78,13 +78,13 @@
                                 <a [routerLink]="[faq.id, 'edit']">{{ faq.id }}</a>
                             </td>
                             <td>
-                                <div class="markdown-preview [&_p]:my-0!" [jhiMarkdown]="faq.questionTitle"></div>
+                                <div class="markdown-preview [&_p]:my-0" [jhiMarkdown]="faq.questionTitle"></div>
                             </td>
                             <td>
-                                <div class="markdown-preview [&_p]:my-0!" [jhiMarkdown]="faq.questionAnswer"></div>
+                                <div class="markdown-preview [&_p]:my-0" [jhiMarkdown]="faq.questionAnswer"></div>
                             </td>
                             <td>
-                                <div class="markdown-preview [&_p]:my-0!" [jhiMarkdown]="faq.faqState"></div>
+                                <div class="markdown-preview [&_p]:my-0" [jhiMarkdown]="faq.faqState"></div>
                             </td>
                             <td>
                                 <div class="flex">

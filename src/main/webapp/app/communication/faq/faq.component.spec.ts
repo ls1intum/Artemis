@@ -344,6 +344,7 @@ describe('FaqComponent', () => {
         faqComponent.isAtLeastInstructor.set(false);
         const accepted = createFaq(4, 'category4', '#0ab84f');
         accepted.faqState = FaqState.ACCEPTED;
+        faqComponent['allFaqs'].set([accepted]);
         faqComponent.filteredFaqs.set([accepted]);
         faqComponentFixture.detectChanges();
 
@@ -352,14 +353,30 @@ describe('FaqComponent', () => {
         expect(element.querySelectorAll('#faq-4 td')).toHaveLength(5);
         expect(element.querySelector('[data-testid="faq-row-actions"]')).toBeNull();
 
+        faqComponent['allFaqs'].set([accepted, faq1]);
         faqComponent.filteredFaqs.set([accepted, faq1]);
         faqComponentFixture.detectChanges();
         expect(element.querySelectorAll('thead th')).toHaveLength(6);
 
+        faqComponent['allFaqs'].set([accepted]);
         faqComponent.filteredFaqs.set([accepted]);
         faqComponent.isAtLeastInstructor.set(true);
         faqComponentFixture.detectChanges();
         expect(element.querySelectorAll('thead th')).toHaveLength(6);
+    });
+
+    it('keeps the actions column while a search shows only FAQs without an action', () => {
+        faqComponentFixture.detectChanges();
+        faqComponent.isAtLeastInstructor.set(false);
+        const accepted = createFaq(4, 'category4', '#0ab84f');
+        accepted.faqState = FaqState.ACCEPTED;
+        faqComponent['allFaqs'].set([accepted, faq1]);
+        faqComponent.filteredFaqs.set([accepted]);
+        faqComponentFixture.detectChanges();
+
+        const element = faqComponentFixture.nativeElement as HTMLElement;
+        expect(element.querySelectorAll('thead th')).toHaveLength(6);
+        expect(element.querySelector('thead th:last-child .sr-only')).not.toBeNull();
     });
 
     it('lists the categories in a popover that is only available when categories exist', () => {
