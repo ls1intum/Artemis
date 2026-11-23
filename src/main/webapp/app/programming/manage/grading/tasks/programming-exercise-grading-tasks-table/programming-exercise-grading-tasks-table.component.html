@@ -137,6 +137,13 @@
         <div class="task__row__cell" jhiTranslate="artemisApp.programmingExercise.configureGrading.gradingTableHeader.passedPercent"></div>
     </div>
     @for (task of tasks(); track task; let i = $index) {
-        <jhi-programming-exercise-task [index]="i" [task]="task" [openSubject]="allTasksExpandedSubject()" (updateTasksEvent)="updateTasks()" [isExamExercise]="isExamExercise()" />
+        <jhi-programming-exercise-task
+            [index]="i"
+            [task]="task"
+            [pointsRevision]="pointsRevision()"
+            [openSubject]="allTasksExpandedSubject()"
+            (updateTasksEvent)="updateTasks()"
+            [isExamExercise]="isExamExercise()"
+        />
     }
 </form>

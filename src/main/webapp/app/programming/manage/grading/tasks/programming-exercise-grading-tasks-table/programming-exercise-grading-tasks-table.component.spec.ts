@@ -13,7 +13,7 @@ import { MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ProgrammingExerciseGradingTasksTableComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseGradingTasksTableComponent>;
@@ -215,5 +215,40 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
         comp.changeSort('name');
 
         expect(comp.tasks()).toEqual(expected);
+    });
+    describe('rendered points', () => {
+        const renderedPoints = (testName: string): string => {
+            const rows = Array.from(fixture.nativeElement.querySelectorAll('.task__row')) as HTMLElement[];
+            const row = rows.find((candidate) => candidate.querySelector('.task__field')?.textContent?.trim() === testName)!;
+            return (row.querySelectorAll('.task__field')[1] as HTMLElement).textContent!.trim();
+        };
+
+        it('should update the points of all test cases when the weight of one test case changes', async () => {
+            TestBed.inject(ProgrammingExerciseTaskService);
+            fixture.componentRef.setInput('exercise', { id: 1, maxPoints: 10 } as ProgrammingExercise);
+            const httpMock = TestBed.inject(HttpTestingController);
+            fixture.detectChanges();
+            httpMock.expectOne('api/programming/programming-exercises/1/tasks-with-unassigned-test-cases').flush([
+                { taskName: 'Task 1', testCases: [{ id: 1, testName: 'testOne', weight: 1, bonusMultiplier: 1, bonusPoints: 0, active: true }] },
+                { taskName: 'Task 2', testCases: [{ id: 2, testName: 'testTwo', weight: 1, bonusMultiplier: 1, bonusPoints: 0, active: true }] },
+            ]);
+            fixture.detectChanges();
+            // both tasks are collapsed initially: expand them so that the test case rows are rendered
+            comp.toggleAllTasksExpanded(true);
+            await fixture.whenStable();
+            fixture.detectChanges();
+            expect(renderedPoints('testOne')).toBe('5P (50%)');
+            expect(renderedPoints('testTwo')).toBe('5P (50%)');
+
+            const weightInputs = fixture.nativeElement.querySelectorAll('.task__body input[type="number"]') as NodeListOf<HTMLInputElement>;
+            weightInputs[0].value = '3';
+            weightInputs[0].dispatchEvent(new Event('input'));
+            weightInputs[0].dispatchEvent(new Event('change'));
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(renderedPoints('testOne')).toBe('7.5P (75%)');
+            expect(renderedPoints('testTwo')).toBe('2.5P (25%)');
+        });
     });
 });

@@ -56,6 +56,11 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     readonly isSaving = signal(false);
     readonly tasks = signal<ProgrammingExerciseTask[]>([]);
     readonly allTasksExpandedSubject = signal<Subject<boolean>>(undefined!);
+    /**
+     * Incremented whenever the points of the tasks are recalculated. The service recalculates them in place, so the task objects keep their
+     * identity and the OnPush task rows would not notice; passing the revision to every row makes all of them render the new points.
+     */
+    readonly pointsRevision = signal(0);
 
     currentSort: Sort | undefined;
 
@@ -81,6 +86,7 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
 
     updateTasks = () => {
         this.tasks.set(this.taskService.updateTasks());
+        this.pointsRevision.update((revision) => revision + 1);
     };
 
     toggleShowInactiveTestsShown = () => {
