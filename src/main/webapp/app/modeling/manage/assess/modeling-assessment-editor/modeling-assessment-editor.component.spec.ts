@@ -389,7 +389,8 @@ describe('ModelingAssessmentEditorComponent', () => {
             (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
             submission.results![0].feedbacks = [];
             vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
-            const suggestion = { ...new Feedback(), reference: 'element:1', credits: 2, type: FeedbackType.MANUAL };
+            // Like every suggestion Athena returns, it comes with points and a description
+            const suggestion = { ...new Feedback(), reference: 'element:1', credits: 2, detailText: 'The association is missing.', type: FeedbackType.MANUAL };
             vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([suggestion]));
 
             component.ngOnInit();
