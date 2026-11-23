@@ -1,0 +1,16 @@
+.negative,
+.positive {
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+.negative {
+    color: var(--negative-color);
+    background-color: var(--negative-background);
+}
+
+.positive {
+    color: var(--positive-color);
+    background-color: var(--positive-background);
+}

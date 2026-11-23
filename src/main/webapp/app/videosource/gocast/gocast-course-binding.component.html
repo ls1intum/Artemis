@@ -54,13 +54,13 @@
                 }
 
                 @if (current.upstreamUnavailable) {
-                    <tumaet-ui-message severity="error" class="mt-6 block">
+                    <tumaet-ui-message severity="error" class="mt-6">
                         <span jhiTranslate="artemisApp.gocast.refreshUnavailable"></span>
                     </tumaet-ui-message>
                 }
 
                 @if (isRestricted()) {
-                    <tumaet-ui-message severity="warn" class="mt-6 block">
+                    <tumaet-ui-message severity="warn" class="mt-6">
                         <span jhiTranslate="artemisApp.gocast.restrictedWarning"></span>
                     </tumaet-ui-message>
                 }
