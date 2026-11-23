@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20261123122336-01-course-initial-commit-author" author="krusche">
+        <comment>The identity that authors the first commit of the template, solution and test repositories of new programming exercises. Existing courses keep the current
+            behaviour, the user who created the exercise, through the default.</comment>
+        <addColumn tableName="course_configuration">
+            <column name="initial_commit_author_mode" type="varchar(32)" defaultValue="EXERCISE_CREATOR"><constraints nullable="false"/></column>
+            <column name="initial_commit_author_name" type="varchar(100)"/>
+            <column name="initial_commit_author_email" type="varchar(254)"/>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="course_configuration" columnName="initial_commit_author_email"/>
+            <dropColumn tableName="course_configuration" columnName="initial_commit_author_name"/>
+            <dropColumn tableName="course_configuration" columnName="initial_commit_author_mode"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

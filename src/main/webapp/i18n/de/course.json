@@ -594,6 +594,34 @@
                 },
                 "replayWizard": "Einrichtungsassistent wiederholen"
             },
+            "initialCommitAuthor": {
+                "label": "Autor des ersten Commits",
+                "hint": "Jedes Repository einer neuen Programmieraufgabe beginnt mit einem Commit, den Artemis erstellt, und die Repositories der Studierenden kopieren ihn. Wähle, wer als Autor dieses Commits angezeigt wird. Die Auswahl gilt für Aufgaben, die danach erstellt werden.",
+                "creator": {
+                    "label": "Die Person, die die Aufgabe erstellt",
+                    "description": "So funktioniert es, wenn du nichts anderes wählst."
+                },
+                "placeholder": {
+                    "label": "Der Artemis-Platzhalter",
+                    "description": "Der Name und die E-Mail-Adresse, die der Artemis-Server für Commits konfiguriert, die er selbst erstellt."
+                },
+                "custom": {
+                    "label": "Ein Name und eine E-Mail-Adresse deiner Wahl",
+                    "description": "Zum Beispiel ein Kurs-Team. Verwende eine Adresse, die du Studierenden gerne zeigst."
+                },
+                "name": {
+                    "label": "Name des Autors",
+                    "required": "Gib einen Namen ein.",
+                    "tooLong": "Verwende höchstens {{ max }} Zeichen.",
+                    "invalid": "Der Name darf weder < oder > noch Zeilenumbrüche enthalten."
+                },
+                "email": {
+                    "label": "E-Mail-Adresse des Autors",
+                    "required": "Gib eine E-Mail-Adresse ein.",
+                    "tooLong": "Verwende höchstens {{ max }} Zeichen.",
+                    "invalid": "Gib eine gültige E-Mail-Adresse ein."
+                }
+            },
             "studentWelcomeContext": {
                 "label": "Startseite für Studierende: Lernansatz",
                 "hint": "Optional: Beschreiben Sie, wie Studierende in diesem Kurs lernen sollen (bis zu 2.000 Zeichen). Der Text erscheint beim ersten Besuch der Startseite und wird für optionale KI-Begrüßungen verwendet.",

@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
+import de.tum.cit.aet.artemis.course.domain.InitialCommitAuthorMode;
 
 /**
  * Spring Data JPA repository for the {@link CourseConfiguration} entity. The configuration holds the key to its course and
@@ -239,4 +240,23 @@ public interface CourseConfigurationRepository extends ArtemisJpaRepository<Cour
     @Transactional
     @Query("UPDATE CourseConfiguration c SET c.studentWelcomeContext = :context WHERE c.course.id = :courseId")
     int updateStudentWelcomeContext(@Param("courseId") long courseId, @Param("context") @Nullable String context);
+
+    /**
+     * Changes who authors the first commit of the repositories of new programming exercises of a course.
+     *
+     * @param courseId the authorized course identifier
+     * @param mode     the mode
+     * @param name     the author name of the custom mode, null for every other mode
+     * @param email    the author email address of the custom mode, null for every other mode
+     * @return the number of updated configuration rows
+     */
+    @Modifying
+    @Transactional // ok because of the update
+    @Query("""
+            UPDATE CourseConfiguration configuration
+            SET configuration.initialCommitAuthorMode = :mode, configuration.initialCommitAuthorName = :name, configuration.initialCommitAuthorEmail = :email
+            WHERE configuration.course.id = :courseId
+            """)
+    int updateInitialCommitAuthor(@Param("courseId") long courseId, @Param("mode") InitialCommitAuthorMode mode, @Param("name") @Nullable String name,
+            @Param("email") @Nullable String email);
 }

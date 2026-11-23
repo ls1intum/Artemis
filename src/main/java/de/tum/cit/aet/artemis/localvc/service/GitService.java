@@ -39,6 +39,7 @@ import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -455,11 +456,23 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the commit failed.
      */
     public String commitAndPush(Repository repo, String message, boolean emptyCommit, @Nullable User user) throws GitAPIException {
+        return commitAndPushAs(repo, message, emptyCommit, user != null ? new PersonIdent(user.getName(), user.getEmail()) : getPlaceholderIdentity());
+    }
+
+    /**
+     * Commits with the given message into the repository, as the given identity, and pushes it to the remote.
+     *
+     * @param repo        Local Repository Object.
+     * @param message     Commit Message
+     * @param emptyCommit whether the git service should also produce an empty commit
+     * @param identity    The identity that commits. The commit has no other author, so this is the author as well.
+     * @return the id of the commit that was created
+     * @throws GitAPIException if the commit failed.
+     */
+    public String commitAndPushAs(Repository repo, String message, boolean emptyCommit, PersonIdent identity) throws GitAPIException {
         return workingCopyLocks.withLock(workingCopyPath(repo), () -> {
-            String name = user != null ? user.getName() : artemisGitName;
-            String email = user != null ? user.getEmail() : artemisGitEmail;
             try (Git git = new Git(repo)) {
-                RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
+                RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(identity).call();
                 log.debug("commitAndPush -> Push {}", repo.getLocalPath());
                 setRemoteUrl(repo);
                 pushCommand(git).call();
@@ -469,6 +482,15 @@ public class GitService extends AbstractGitService {
                 return commit.getName();
             }
         });
+    }
+
+    /**
+     * The identity that the server configures for commits it makes itself, {@code artemis.git.name} and {@code artemis.git.email}.
+     *
+     * @return the placeholder identity
+     */
+    public PersonIdent getPlaceholderIdentity() {
+        return new PersonIdent(artemisGitName, artemisGitEmail);
     }
 
     /**
