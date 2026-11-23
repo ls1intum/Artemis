@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -74,7 +73,11 @@ public class UnwrappedSchemaOpenApiCustomizer implements OpenApiCustomizer {
         scanner.addIncludeFilter(new AssignableTypeFilter(Record.class));
         Map<String, String> parentByChild = new TreeMap<>();
         for (BeanDefinition definition : scanner.findCandidateComponents(ARTEMIS_PACKAGE)) {
-            Class<?> type = ClassUtils.resolveClassName(Objects.requireNonNull(definition.getBeanClassName()), UnwrappedSchemaOpenApiCustomizer.class.getClassLoader());
+            String className = definition.getBeanClassName();
+            if (className == null) {
+                continue;
+            }
+            Class<?> type = ClassUtils.resolveClassName(className, UnwrappedSchemaOpenApiCustomizer.class.getClassLoader());
             RecordComponent[] components = type.getRecordComponents();
             if (components == null) {
                 continue;
