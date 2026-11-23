@@ -600,7 +600,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                     // legacy fallback for feedback saved before Apollon had a title field). Like every other feedback,
                     // a missing title becomes the points-based default, which follows the score on each emit because
                     // it is never written back into Apollon's title field.
-                    this.applyTitle(feedback, assessment.title ?? '', assessment.score);
+                    // shortcut: Apollon 5.5.0 drops a title that reads like a default when the points change, though every
+                    // title Artemis hands it was typed; keep it and show it again until Apollon stops doing that.
+                    const titleDroppedByApollon = scoreChanged && assessment.title === undefined && !feedback.titleGenerated && !!feedback.text && Feedback.isTextTitle(feedback);
+                    this.applyTitle(feedback, titleDroppedByApollon ? feedback.text! : (assessment.title ?? ''), assessment.score);
+                    if (titleDroppedByApollon) {
+                        const restored = cloneWith(assessment, { title: feedback.text });
+                        // Deferred, so Apollon's own update finishes before the title is written back.
+                        void Promise.resolve().then(() => this.apollonEditor?.addOrUpdateAssessment(restored));
+                    }
                     // Always a string, so an empty description still marks `text` as a title (Feedback.isTextTitle).
                     feedback.detailText = assessment.feedback ?? '';
                 }

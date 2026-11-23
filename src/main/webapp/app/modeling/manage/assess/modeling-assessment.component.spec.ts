@@ -514,6 +514,21 @@ describe('ModelingAssessmentComponent', () => {
             expect(created.text).toBe('artemisApp.feedback.type.needsRevision');
         });
 
+        it('keeps a typed title that Apollon drops when only the points change, and shows it in Apollon again', async () => {
+            fixture.componentRef.setInput('umlModel', makeMockModel());
+            fixture.detectChanges();
+            const addOrUpdate = vi.spyOn(comp.apollonEditor!, 'addOrUpdateAssessment');
+            const [created] = comp.generateFeedbackFromAssessment([assessmentFor({ title: 'artemisApp.feedback.type.positive', score: 2 })]);
+
+            // Apollon clears a title that reads like a default together with the points change
+            comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, score: -1 })]);
+            expect(created.text).toBe('artemisApp.feedback.type.positive');
+            expect(created.titleGenerated).toBe(false);
+            expect(created.credits).toBe(-1);
+            await Promise.resolve();
+            expect(addOrUpdate).toHaveBeenCalledWith(expect.objectContaining({ modelElementId: PACKAGE_ID, title: 'artemisApp.feedback.type.positive', score: -1 }));
+        });
+
         it('references an element by its UML type, not by the kind Apollon reports', () => {
             fixture.componentRef.setInput('umlModel', makeMockModel());
 
