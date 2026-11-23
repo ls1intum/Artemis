@@ -693,7 +693,7 @@ describe('ExamResultOverviewComponent', () => {
                 }
                 // The row header cells have the rule below them like the other cells, and the last row leaves it to the footer.
                 expect(table().classList).toContain('tumaet:[&_tbody_th]:border-b');
-                expect(table().classList).toContain('tumaet:[&:has(>tfoot)>tbody>tr:last-child>td]:border-b-0');
+                expect(table().classList).toContain('tumaet:[&:has(>tfoot)>tbody:last-of-type>tr:last-child>td]:border-b-0');
                 expect(table().querySelector('tfoot')!.classList).not.toContain('border-t-2');
             });
 
