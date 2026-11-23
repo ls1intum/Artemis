@@ -122,9 +122,11 @@ an `autoconfigure.exclude` is replacing rather than merging the expected exclusi
 mismatch does exactly this. The two are coupled: a Boot minor bump needs the matching Cloud release
 train. Both are pinned in `gradle.properties`.
 
-**Aggregate health reports DOWN.** This does not by itself mean the server is broken. Check the
-readiness and liveness endpoints and look for "Started ArtemisApp" in the log; a single unconfigured
-optional integration pulls the aggregate down.
+**Aggregate health reports DEGRADED.** An optional external system (Athena, Pyris, Hermes, Apollon,
+Weaviate, the sharing platform, the Hyperion workers) is not reachable or not configured. This is not
+an error: the aggregate answers HTTP 200 and the admin health page names the component. A `DOWN`
+(HTTP 503) means a critical component fails, such as the database. For "is the server up?" use the
+readiness endpoint and look for "Started ArtemisApp" in the log.
 
 **Port already in use.** `./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --stop` frees 8080 and 9000 by killing the
 server and client. The LocalVC SSH listener on 7921 lives inside the server JVM, so it goes with it.

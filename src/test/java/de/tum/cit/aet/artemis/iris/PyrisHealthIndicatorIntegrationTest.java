@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
+import java.net.URI;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
@@ -10,10 +12,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.Status;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisRestartWatchService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
 
 class PyrisHealthIndicatorIntegrationTest extends AbstractIrisIntegrationTest {
@@ -214,4 +219,17 @@ class PyrisHealthIndicatorIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(h.getDetails().get(MODULE)).isEqualTo(RED + " "); // 🔴␠
     }
 
+    @Test
+    void shouldReturnDegradedWhenUrlIsNotAbsolute() {
+        // The production client converts the URI with toURL(), which throws an IllegalArgumentException for a relative URI. A misconfigured optional system must not fail the
+        // health request.
+        var indicator = new PyrisHealthIndicator(RestClient.builder().requestFactory(new SimpleClientHttpRequestFactory()).build(), mock(PyrisRestartWatchService.class));
+        ReflectionTestUtils.setField(indicator, "irisUrl", URI.create(""));
+        ReflectionTestUtils.setField(indicator, "artemisBaseUrl", "http://localhost");
+
+        Health health = indicator.health(false);
+
+        assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
+        assertThat(health.getDetails().get("error").toString()).contains("not an absolute URL");
+    }
 }

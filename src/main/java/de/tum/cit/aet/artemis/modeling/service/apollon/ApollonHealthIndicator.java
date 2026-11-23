@@ -43,7 +43,9 @@ public class ApollonHealthIndicator implements HealthIndicator {
             HttpStatusCode statusCode = response.getStatusCode();
             health = new ConnectorHealth(statusCode.is2xxSuccessful(), additionalInfo);
         }
-        catch (RestClientException error) {
+        catch (RestClientException | IllegalArgumentException error) {
+            // An IllegalArgumentException means that the configured URL is not an absolute URL, for example blank. As an optional system, Apollon
+            // reports DEGRADED for that and does not fail the whole health request.
             health = new ConnectorHealth(error);
         }
 

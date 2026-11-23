@@ -17,9 +17,9 @@ export async function enableIrisForCourse(request: APIRequestContext, courseId: 
 /**
  * Disables Iris for a course through the settings API, with the same signed-in user and retry as {@link enableIrisForCourse}.
  *
- * A course without a settings row counts as enabled, so a spec that needs a course without Iris must say so explicitly on a server that
- * runs the Iris module (as the nightly Iris run does). The settings endpoint only exists with that module, so callers check
- * `activeModuleFeatures` of `management/info` first.
+ * A new course is created with Iris enabled, so a spec that needs a course without Iris must say so explicitly on a server that runs the
+ * Iris module (as the nightly Iris run does). The settings endpoint only exists with that module, so callers check `activeModuleFeatures`
+ * of `management/info` first.
  */
 export async function disableIrisForCourse(request: APIRequestContext, courseId: number): Promise<void> {
     await setIrisEnabledForCourse(request, courseId, false);

@@ -98,11 +98,11 @@ public class PyrisHealthIndicator implements HealthIndicator {
         }
 
         ConnectorHealth connectorHealth;
-        URI healthUri = UriComponentsBuilder.fromUri(irisUrl).path("/api/v1/health/").build(true).toUri();
         var additionalInfo = new HashMap<String, Object>();
         additionalInfo.put(IRIS_URL_KEY, irisUrl);
 
         try {
+            URI healthUri = UriComponentsBuilder.fromUri(irisUrl).path("/api/v1/health/").build(true).toUri();
             ResponseEntity<String> response = restClient.get().uri(healthUri).header(ARTEMIS_BASE_URL_HEADER, artemisBaseUrl).retrieve().toEntity(String.class);
             String json = response.getBody();
 
@@ -126,6 +126,10 @@ public class PyrisHealthIndicator implements HealthIndicator {
         }
         catch (RestClientException e) {
             connectorHealth = fail(additionalInfo, "Connection to Pyris failed");
+        }
+        catch (IllegalArgumentException e) {
+            // The configured URL is not an absolute URL, for example blank. Pyris is optional, so this reports DEGRADED and does not fail the health request.
+            connectorHealth = fail(additionalInfo, "The Pyris URL is not an absolute URL");
         }
 
         var newHealth = connectorHealth.asOptionalActuatorHealth();

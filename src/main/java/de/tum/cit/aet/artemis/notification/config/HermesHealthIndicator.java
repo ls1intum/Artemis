@@ -88,7 +88,7 @@ public class HermesHealthIndicator implements HealthIndicator {
             if (report != null) {
                 addReportDetails(additionalInfo, report);
                 // A reachable relay that reports a disconnected provider returns 2xx but silently drops
-                // notifications (e.g. a missing/expired APNs certificate on the Hermes host), so treat it as DOWN.
+                // notifications (e.g. a missing/expired APNs certificate on the Hermes host), so treat it as DEGRADED.
                 up = up && isConnected(report.isApnsConnected()) && isConnected(report.isFirebaseConnected());
             }
             return new ConnectorHealth(up, additionalInfo).asOptionalActuatorHealth();

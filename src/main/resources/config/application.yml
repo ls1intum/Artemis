@@ -502,6 +502,8 @@ eureka:
         service-url:
             defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
         healthcheck:
+            # Keep this disabled: Eureka maps a health status it does not know, such as DEGRADED (see ConnectorHealth), to UNKNOWN
+            # and would then drop the instance from discovery like a DOWN one.
             enabled: false
         fetch-registry: true
         register-with-eureka: true

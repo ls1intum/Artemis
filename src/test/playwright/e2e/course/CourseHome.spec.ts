@@ -108,10 +108,11 @@ test.describe('Student course Home', { tag: '@fast' }, () => {
         await courseManagementAPIRequests.deleteCourse(course, admin);
         course = await courseManagementAPIRequests.createCourse({ allowCommunication: false, allowMessaging: false });
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        // Iris counts as enabled for a course without settings, so a server with the Iris module (the nightly Iris run) needs it switched off here.
+        // A new course is created with Iris enabled, and on a server with the Iris module (the nightly Iris run) a student who opted into AI, as the Iris
+        // specs of this file do for studentOne, then sees the Iris tile. The tile must be absent here, so Iris is switched off for this course explicitly.
+        // The page is signed in as admin at this point, see deleteCourse above.
         const info = await (await page.request.get('management/info')).json();
         if (info.activeModuleFeatures?.includes('iris')) {
-            await login(admin);
             await disableIrisForCourse(page.request, course.id!);
         }
         await login(studentOne, `/courses/${course.id}`);

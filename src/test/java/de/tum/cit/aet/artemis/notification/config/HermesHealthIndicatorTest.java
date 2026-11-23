@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.Status;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
@@ -108,14 +109,15 @@ class HermesHealthIndicatorTest {
     @Test
     void healthDegraded_whenRelayUrlIsBlank_withoutThrowing() {
         // Reproduces #14680: overriding artemis.push-notification-relay with an empty value left a URL that is not absolute, and the
-        // resulting IllegalArgumentException escaped the indicator. A misconfigured optional relay must report DEGRADED, not fail the health request.
-        // A real client is needed: the mock server accepts any URI, the IllegalArgumentException comes from the request factory of the client.
-        var indicatorWithBlankUrl = new HermesHealthIndicator(RestClient.create());
+        // IllegalArgumentException of the request factory escaped the indicator. A misconfigured optional relay must report DEGRADED, not fail the health request.
+        // The production client uses the SimpleClientHttpRequestFactory, which converts the URI with toURL() and throws for a relative URI. The mock server accepts any URI
+        // and the default factory of RestClient.create() fails with another exception, so only this factory reaches the code under test.
+        var indicatorWithBlankUrl = new HermesHealthIndicator(RestClient.builder().requestFactory(new SimpleClientHttpRequestFactory()).build());
         ReflectionTestUtils.setField(indicatorWithBlankUrl, "hermesUrl", "");
 
         Health health = indicatorWithBlankUrl.health();
 
         assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
-        assertThat(health.getDetails()).containsKey("error");
+        assertThat(health.getDetails()).containsEntry("error", "URI is not absolute");
     }
 }

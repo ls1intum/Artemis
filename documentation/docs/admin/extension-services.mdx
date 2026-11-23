@@ -16,12 +16,12 @@ This section describes the required setup for various extension services that ca
 ## Health of the extension services
 
 Extension services are optional. When one of them is not available, the core of Artemis (courses, exercises, exams, repositories, builds) keeps working, and only the feature that uses the service stops.
-Artemis therefore distinguishes two kinds of components on `/management/health` and in **Administration -> Monitoring -> Health**:
+Artemis therefore distinguishes two kinds of components on `/management/health` and in **Administration → Monitoring → Health**:
 
-| Component                                                                                                          | Status when it fails | HTTP status of `/management/health` |
-| ------------------------------------------------------------------------------------------------------------------ | -------------------- | ----------------------------------- |
-| Critical components: database, distributed data provider (Hazelcast, Redis), websocket broker, service registry    | `DOWN`               | 503                                 |
-| Optional external systems: Athena, Iris (Pyris), Hermes, Apollon, Weaviate, the sharing platform, Hyperion workers | `DEGRADED`           | 200                                 |
+| Component                                                                                                                                                                       | Status when it fails | HTTP status of `/management/health` |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ----------------------------------- |
+| Critical components: database, distributed data provider (Hazelcast, Redis), websocket broker, service registry, continuous integration server (LocalCI or Jenkins), disk space | `DOWN`               | 503                                 |
+| Optional external systems: Athena, Iris (Pyris), Hermes, Apollon, Weaviate, the sharing platform, Hyperion workers                                                              | `DEGRADED`           | 200                                 |
 
 The status of the whole instance is the most severe status of its components: `DOWN` before `OUT_OF_SERVICE` before `DEGRADED` before `UP`.
 An instance with a failing optional system reports `DEGRADED` and keeps answering with HTTP 200, so a container health check, a load balancer or a deployment check that only looks at the HTTP status does not restart or remove an instance because a service it does not need is in maintenance.
@@ -30,7 +30,7 @@ The failing component and its error stay visible in the health page and in the `
 Use the following endpoints for automation:
 
 - `/management/health/readiness` and `/management/health/liveness` answer whether this Artemis instance runs and can take traffic. Base restart and routing decisions on them.
-- `/management/health` is the complete picture for monitoring. A check that compares the status with `UP` must also accept `DEGRADED`, if an unavailable optional system should not fail it.
+- `/management/health` is the complete picture for monitoring. A check that compares the status with `UP`, whether by the HTTP status or by matching `"status":"UP"` in the body, must also accept `DEGRADED`, if an unavailable optional system should not fail it.
 
 ## EduTelligence Suite
 
@@ -197,8 +197,8 @@ artemis:
     push-notification-relay: <url>
 ```
 
-The value must be an absolute URL, it cannot be unset or left empty. If your instance does not need push notifications, you do not have to run Hermes.
-An unreachable or misconfigured relay is reported as `DEGRADED` and does not make the instance unhealthy, see [Health of the extension services](#health-of-the-extension-services).
+The value must be an absolute URL. Do not set it to an empty value: the property has a default, and an empty value makes the push notification services and the health check fail.
+An instance that does not run its own Hermes keeps using the default relay. If that relay is not reachable from your network, the Hermes component of the health page is permanently `DEGRADED`. This does not make the instance unhealthy, see [Health of the extension services](#health-of-the-extension-services), but it hides a real outage of another optional system in the aggregate status, so watch the components and not only the aggregate.
 
 ### Hyperion Service
 

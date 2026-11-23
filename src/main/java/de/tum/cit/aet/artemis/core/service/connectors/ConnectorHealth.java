@@ -10,11 +10,12 @@ import org.springframework.boot.health.contributor.Status;
  * <p>
  * A connector is either <b>critical</b> or <b>optional</b>, and the choice decides what a failed check means for the whole instance:
  * <ul>
- * <li>A critical connector (the database, the distributed data provider, the websocket broker, the service registry) that fails makes the
- * instance unable to do its job. It reports {@code DOWN} through {@link #asActuatorHealth()}, so the aggregate {@code /management/health}
- * answers with HTTP 503.</li>
- * <li>An optional external system (Athena, Pyris, Hermes, Apollon, Weaviate, the sharing platform) that fails leaves the core of Artemis
- * working. It reports {@link #DEGRADED} through {@link #asOptionalActuatorHealth()}. The aggregate then reads {@code DEGRADED}, but still
+ * <li>A critical component (the database, the distributed data provider, the websocket broker, the service registry, the continuous integration
+ * server) that fails makes the instance unable to do its job. It reports {@code DOWN}, for the connectors in this package and the websocket broker
+ * through {@link #asActuatorHealth()}, so the aggregate {@code /management/health} answers with HTTP 503.</li>
+ * <li>An optional external system (Athena, Pyris, Hermes, Apollon, Weaviate, the sharing platform, the Hyperion workers) that fails leaves the core
+ * of Artemis working. It reports {@link #DEGRADED}, through {@link #asOptionalActuatorHealth()} or directly with {@code Health.status(DEGRADED)}.
+ * The aggregate then reads {@code DEGRADED}, but still
  * answers with HTTP 200, so a container health check or load balancer does not restart or remove an instance because a service it
  * does not even depend on is in maintenance. The failing component and its details stay visible on the health page and in the
  * {@code artemis.health} metric.</li>
