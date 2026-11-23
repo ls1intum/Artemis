@@ -25,6 +25,8 @@ import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
 import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 import * as downloadUtil from 'app/foundation/util/download.util';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 
 describe('QuizExercise Management Buttons Component', () => {
     let comp: QuizExerciseManageButtonsComponent;
@@ -51,6 +53,7 @@ describe('QuizExercise Management Buttons Component', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 provideHttpClient(),
             ],
         })
@@ -547,6 +550,7 @@ describe('QuizExercise Management Buttons Component evaluate button', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 provideHttpClient(),
                 MockProvider(TumAetUiDialogService),
             ],
@@ -557,23 +561,51 @@ describe('QuizExercise Management Buttons Component evaluate button', () => {
         fixture = TestBed.createComponent(QuizExerciseManageButtonsComponent);
     });
 
-    it('groups the variant with editing and offers the exercise export and the question export in the menu', async () => {
+    async function openMoreActions(isAtLeastInstructor: boolean) {
         const quiz = Object.assign(new QuizExercise({ id: 123 }, undefined), {
             id: 456,
             isAtLeastTutor: true,
             isAtLeastEditor: true,
+            isAtLeastInstructor,
             isEditable: true,
         });
         fixture.componentRef.setInput('quizExercise', quiz);
         fixture.componentRef.setInput('isDetailPage', true);
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[data-testid="exercise-editing-actions"] jhi-create-variant-with-ai-button')).not.toBeNull();
-        expect(fixture.nativeElement.querySelectorAll('jhi-create-variant-with-ai-button')).toHaveLength(1);
         fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]').click();
         await fixture.whenStable();
+    }
+
+    it('groups the variant with editing in the actions', () => {
+        const quiz = Object.assign(new QuizExercise({ id: 123 }, undefined), { id: 456, isAtLeastTutor: true, isAtLeastEditor: true, isEditable: true });
+        fixture.componentRef.setInput('quizExercise', quiz);
+        fixture.componentRef.setInput('isDetailPage', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-editing-actions"] jhi-create-variant-with-ai-button')).not.toBeNull();
+        expect(fixture.nativeElement.querySelectorAll('jhi-create-variant-with-ai-button')).toHaveLength(1);
+    });
+
+    it('offers an instructor the exercise export and the question export', async () => {
+        await openMoreActions(true);
         expect(document.querySelectorAll('tumaet-ui-menu [tumAetUiMenuItem]')).toHaveLength(2);
-        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export"]')?.textContent).toContain('entity.action.export');
+        const exportItem = document.querySelector<HTMLButtonElement>('tumaet-ui-menu [data-testid="quiz-export"]')!;
+        expect(exportItem.textContent).toContain('entity.action.export');
+        expect(exportItem.getAttribute('aria-disabled')).not.toBe('true');
         expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export-questions"]')?.textContent).toContain('artemisApp.quizExercise.export.exportQuestions');
+    });
+
+    it('offers an editor only the question export, because the server exports a whole exercise for instructors only', async () => {
+        await openMoreActions(false);
+        expect(document.querySelectorAll('tumaet-ui-menu [tumAetUiMenuItem]')).toHaveLength(1);
+        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export"]')).toBeNull();
+        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export-questions"]')).not.toBeNull();
+    });
+
+    it('disables the exercise export while the exports are switched off, and keeps the question export', async () => {
+        await TestBed.inject(FeatureToggleService).setFeatureToggleState(FeatureToggle.Exports, false);
+        await openMoreActions(true);
+        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export"]')!.getAttribute('aria-disabled')).toBe('true');
+        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export-questions"]')!.getAttribute('aria-disabled')).not.toBe('true');
     });
 
     it('shows reset and delete only in the instructor administration section', () => {

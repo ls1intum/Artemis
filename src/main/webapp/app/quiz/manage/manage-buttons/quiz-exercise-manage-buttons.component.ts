@@ -8,6 +8,7 @@ import {
 } from '@tumaet/ui-angular';
 import { ExerciseDetailActionsComponent } from 'app/exercise/detail/exercise-detail-actions.component';
 import { Component, DestroyRef, OnInit, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -19,6 +20,7 @@ import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, 
 import { EntityDeletionProgress } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { faClipboardCheck, faEllipsis, faEye, faFileExport, faListAlt, faSignal, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -60,6 +62,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
     private exerciseService = inject(ExerciseService);
+    private featureToggleService = inject(FeatureToggleService);
     private entityDeletionService = inject(EntityDeletionService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
@@ -76,6 +79,9 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     readonly faListAlt = faListAlt;
     readonly faUndo = faUndo;
     readonly faClipboardCheck = faClipboardCheck;
+
+    /** The server rejects the export of a whole exercise while the exports are switched off. */
+    protected readonly exportsEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.Exports), { initialValue: false });
 
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
