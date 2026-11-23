@@ -7,41 +7,44 @@
             <div class="flex items-start gap-3">
                 <tumaet-ui-radio-button
                     inputId="initialCommitAuthorCreator"
+                    [ariaLabel]="'artemisApp.course.initialCommitAuthor.creator.label' | artemisTranslate"
                     name="initialCommitAuthorMode"
                     formControlName="mode"
                     [value]="InitialCommitAuthorMode.EXERCISE_CREATOR"
                     data-testid="initial-commit-author-creator"
                 />
-                <label for="initialCommitAuthorCreator" class="m-0 cursor-pointer">
+                <span class="m-0">
                     <span class="font-medium" jhiTranslate="artemisApp.course.initialCommitAuthor.creator.label"></span>
                     <span class="block text-sm text-muted-color" jhiTranslate="artemisApp.course.initialCommitAuthor.creator.description"></span>
-                </label>
+                </span>
             </div>
             <div class="flex items-start gap-3">
                 <tumaet-ui-radio-button
                     inputId="initialCommitAuthorPlaceholder"
+                    [ariaLabel]="'artemisApp.course.initialCommitAuthor.placeholder.label' | artemisTranslate"
                     name="initialCommitAuthorMode"
                     formControlName="mode"
                     [value]="InitialCommitAuthorMode.PLACEHOLDER"
                     data-testid="initial-commit-author-placeholder"
                 />
-                <label for="initialCommitAuthorPlaceholder" class="m-0 cursor-pointer">
+                <span class="m-0">
                     <span class="font-medium" jhiTranslate="artemisApp.course.initialCommitAuthor.placeholder.label"></span>
                     <span class="block text-sm text-muted-color" jhiTranslate="artemisApp.course.initialCommitAuthor.placeholder.description"></span>
-                </label>
+                </span>
             </div>
             <div class="flex items-start gap-3">
                 <tumaet-ui-radio-button
                     inputId="initialCommitAuthorCustom"
+                    [ariaLabel]="'artemisApp.course.initialCommitAuthor.custom.label' | artemisTranslate"
                     name="initialCommitAuthorMode"
                     formControlName="mode"
                     [value]="InitialCommitAuthorMode.CUSTOM"
                     data-testid="initial-commit-author-custom"
                 />
-                <label for="initialCommitAuthorCustom" class="m-0 cursor-pointer">
+                <span class="m-0">
                     <span class="font-medium" jhiTranslate="artemisApp.course.initialCommitAuthor.custom.label"></span>
                     <span class="block text-sm text-muted-color" jhiTranslate="artemisApp.course.initialCommitAuthor.custom.description"></span>
-                </label>
+                </span>
             </div>
         </div>
     </div>
@@ -58,6 +61,7 @@
                 <input
                     tumAetUiInput
                     id="initialCommitAuthorName"
+                    [attr.aria-label]="'artemisApp.course.initialCommitAuthor.name.label' | artemisTranslate"
                     type="text"
                     class="w-full"
                     formControlName="name"
@@ -75,6 +79,7 @@
                 <input
                     tumAetUiInput
                     id="initialCommitAuthorEmail"
+                    [attr.aria-label]="'artemisApp.course.initialCommitAuthor.email.label' | artemisTranslate"
                     type="email"
                     class="w-full"
                     formControlName="email"
