@@ -115,13 +115,13 @@
     </div>
 
     @if (useCount() === 0) {
-        <tumaet-ui-message class="mb-6 block" severity="info" data-testid="no-usage-message">
+        <tumaet-ui-message class="mb-6" severity="info" data-testid="no-usage-message">
             <span jhiTranslate="artemisApp.featureUsage.noUsageYet"></span>
         </tumaet-ui-message>
     }
 
     @if (roleDistribution().length) {
-        <tumaet-ui-card class="mb-6 block" data-testid="role-distribution">
+        <tumaet-ui-card class="mb-6" data-testid="role-distribution">
             <div class="text-sm text-muted-color mb-2" jhiTranslate="artemisApp.featureUsage.roleDistribution"></div>
             <div class="flex flex-wrap gap-2">
                 @for (share of roleDistribution(); track share.callerRole) {
@@ -209,7 +209,7 @@
     }
 
     @if (trendTarget(); as target) {
-        <tumaet-ui-card class="mt-6 block" data-testid="trend-card">
+        <tumaet-ui-card class="mt-6" data-testid="trend-card">
             <div class="flex items-center justify-between mb-2">
                 <div>
                     <span class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.trendTitle"></span>

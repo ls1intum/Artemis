@@ -248,6 +248,7 @@
                     "options": {
                         "tsConfig": "packages/tum-aet-ui/tsconfig.spec.json",
                         "providersFile": "packages/tum-aet-ui/test-providers.ts",
+                        "setupFiles": ["packages/tum-aet-ui/test-setup.ts"],
                         "coverageInclude": ["packages/tum-aet-ui/src/lib/**/*.ts"],
                         "coverageExclude": ["packages/tum-aet-ui/src/**/*.spec.ts", "packages/tum-aet-ui/src/**/*.stories.ts"],
                         "coverageReporters": ["text", "json-summary"],

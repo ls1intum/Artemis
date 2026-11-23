@@ -62,7 +62,7 @@
         <div class="mb-4" id="field_problemStatement" name="problemStatement">
             <label for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
             @if (programmingExerciseCreationConfig().isImportFromExistingExercise || programmingExerciseCreationConfig().isImportFromFile) {
-                <tumaet-ui-message severity="warn" class="block">
+                <tumaet-ui-message severity="warn">
                     <span class="font-bold">
                         {{ 'artemisApp.exercise.import.attention' | artemisTranslate }}
                     </span>
@@ -122,7 +122,7 @@
                 </div>
 
                 @if (isProblemStatementTooLong()) {
-                    <tumaet-ui-message severity="error" class="block w-full mt-2">
+                    <tumaet-ui-message severity="error" class="w-full mt-2">
                         <span [jhiTranslate]="'artemisApp.programmingExercise.problemStatement.tooLong'" [translateValues]="{ max: maxProblemStatementLength }"></span>
                     </tumaet-ui-message>
                 }

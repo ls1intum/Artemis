@@ -129,7 +129,7 @@
                                 @if (generateParticipationStatus === 'generating') {
                                     <div class="flex items-center justify-center">
                                         <p class="mb-0" jhiTranslate="artemisApp.examParticipation.preparingParticipation"></p>
-                                        <tumaet-ui-progress-spinner class="ml-2" [ariaLabel]="'loading' | artemisTranslate" />
+                                        <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
                                     </div>
                                 } @else if (generateParticipationStatus === 'failed') {
                                     <div class="flex items-center justify-center">

@@ -14,7 +14,7 @@ html {
     @include apollon.component-overrides;
 }
 
-@import '../global';
+@import '../application';
 
 // Needed for highlighting code in the markdown editor
 /* Bare specifier (not 'node_modules/…') so Tailwind's PostCSS @import resolver can resolve this .css file. */
