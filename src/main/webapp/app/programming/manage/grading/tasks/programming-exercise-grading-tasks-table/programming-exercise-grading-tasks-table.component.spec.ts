@@ -250,5 +250,48 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
             expect(renderedPoints('testOne')).toBe('7.5P (75%)');
             expect(renderedPoints('testTwo')).toBe('2.5P (25%)');
         });
+
+        it('should render the test cases of every task in the new order after sorting', async () => {
+            fixture.componentRef.setInput('exercise', { id: 1, maxPoints: 10 } as ProgrammingExercise);
+            const httpMock = TestBed.inject(HttpTestingController);
+            fixture.detectChanges();
+            httpMock.expectOne('api/programming/programming-exercises/1/tasks-with-unassigned-test-cases').flush([
+                {
+                    taskName: 'Task 1',
+                    testCases: [
+                        { id: 1, testName: 'testHeavy', weight: 3, bonusMultiplier: 1, bonusPoints: 0, active: true },
+                        { id: 2, testName: 'testLight', weight: 1, bonusMultiplier: 1, bonusPoints: 0, active: true },
+                    ],
+                },
+                {
+                    taskName: 'Task 2',
+                    testCases: [
+                        { id: 3, testName: 'testBig', weight: 5, bonusMultiplier: 1, bonusPoints: 0, active: true },
+                        { id: 4, testName: 'testSmall', weight: 2, bonusMultiplier: 1, bonusPoints: 0, active: true },
+                    ],
+                },
+            ]);
+            fixture.detectChanges();
+            comp.toggleAllTasksExpanded(true);
+            await fixture.whenStable();
+            fixture.detectChanges();
+            const renderedTestNames = (): string[][] =>
+                (Array.from(fixture.nativeElement.querySelectorAll('.task__body')) as HTMLElement[]).map((body) =>
+                    (Array.from(body.querySelectorAll('.task__row')) as HTMLElement[]).map((row) => row.querySelector('.task__field')!.textContent!.trim()),
+                );
+            expect(renderedTestNames()).toEqual([
+                ['testHeavy', 'testLight'],
+                ['testBig', 'testSmall'],
+            ]);
+
+            comp.changeSort('weight');
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(renderedTestNames()).toEqual([
+                ['testLight', 'testHeavy'],
+                ['testSmall', 'testBig'],
+            ]);
+        });
     });
 });
