@@ -270,9 +270,13 @@ public interface CourseConfigurationRepository extends ArtemisJpaRepository<Cour
     @Query("""
             SELECT new de.tum.cit.aet.artemis.course.dto.InitialCommitAuthorDTO(configuration.initialCommitAuthorMode, configuration.initialCommitAuthorName,
                 configuration.initialCommitAuthorEmail)
-            FROM CourseConfiguration configuration
-            WHERE configuration.course.id IN (SELECT exercise.course.id FROM Exercise exercise WHERE exercise.id = :exerciseId)
-                OR configuration.course.id IN (SELECT examGroup.exam.course.id FROM Exercise exercise JOIN exercise.exerciseGroup examGroup WHERE exercise.id = :exerciseId)
+            FROM Exercise exercise
+                LEFT JOIN exercise.course directCourse
+                LEFT JOIN exercise.exerciseGroup examGroup
+                LEFT JOIN examGroup.exam exam
+                LEFT JOIN exam.course examCourse
+                JOIN CourseConfiguration configuration ON configuration.course.id = COALESCE(directCourse.id, examCourse.id)
+            WHERE exercise.id = :exerciseId
             """)
     Optional<InitialCommitAuthorDTO> findInitialCommitAuthorByExerciseId(@Param("exerciseId") long exerciseId);
 }
