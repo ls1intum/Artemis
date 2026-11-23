@@ -239,8 +239,8 @@ switched off are switched on again. Add them back in the tests repository.
 The advanced view shows the state of the sandbox and every security policy of the tests repository. Changes to the
 policies, their test cases and the framework version stay unsaved until you select **Save Policies**; saving creates one
 commit that carries all of them. Two controls save right away after their own confirmation, without **Save Policies**:
-the sandbox toggle and **Scan dependencies**. Scanning dependencies keeps your unsaved changes, while turning the sandbox
-off discards them.
+the sandbox toggle and **Scan the libraries students use**. Switching the scan keeps your unsaved changes, while turning
+the sandbox off discards them.
 
 ### Turn the Sandbox On or Off
 
@@ -251,11 +251,13 @@ the dialog. Turning the sandbox off discards your unsaved changes.
 
 The card also shows the commit of the tests repository in which the settings were last saved, with its author and
 date, and the **Framework version**. A version you choose here is pinned when you save, and the review shows the change
-of the build file.
+of the build file. [Choose the Framework Version](#choose-the-framework-version) explains when an older version is
+useful.
 
-### Scan the Dependencies
+### Scan the Libraries Students Use
 
-**Scan dependencies** makes Ares also check the libraries that the student code uses, so that a forbidden access
+**Scan the libraries students use** makes Ares also check the libraries that the student code calls, for example a JSON
+or HTTP library, so that a forbidden access
 through a library is caught too. Artemis switches the programming language configuration of every policy, for example
 from `JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ` to `JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION`, and saves this in one
 commit. Every
@@ -265,7 +267,8 @@ file of the tests repository attaches the Ares agent, as the Java templates do, 
 ### Edit a Policy
 
 Each policy is one YAML file in the tests repository. **Add security policy** creates a new one; its **Name** determines
-the file name, and renaming a saved policy renames its file when you save. Each policy has three parts:
+the file name, and renaming a saved policy renames its file when you save. Expand a policy to edit it; its **View YAML**
+and delete buttons appear in its header. Each policy has three parts:
 
 - **Allow resource access** lists, in one tab per category, the paths, network endpoints, commands, thread classes and
   packages the student code may use. **Browse** picks paths or scripts from the template repository. Command
@@ -273,9 +276,10 @@ the file name, and renaming a saved policy renames its file when you save. Each 
   until you select at least one action for a path or an endpoint. Each row shows whether it is saved, unsaved,
   changed or removed.
 - **Configure test behaviour** replaces the exception of a failed test with your own message, hides the feedback of
-  tests between two dates, enforces a strict timeout per test and mirrors the output of the student code into the
-  results. The fields of a setting stay disabled while its toggle is off. The security feedback tab shows what students
-  see for a violation; its level cannot be chosen yet, so students see the full Ares message.
+  tests between two dates, enforces a strict timeout per test in milliseconds, seconds, minutes or hours, and mirrors
+  the output of the student code into the results. The fields of a setting stay disabled while its toggle is off. The
+  security feedback tab shows what students see for a violation; its levels run from minimum to maximum information,
+  but the level cannot be chosen yet, so students see the full Ares message.
 - **Assign test cases** chooses the tests that run under the policy: a whole test class, which also covers test cases
   added later, or single test cases. Artemis writes the assignment as the `@Policy` annotation of the class or of the
   test method. A test can use only one policy, so tests that another policy covers are locked, and so are the tests of
@@ -283,7 +287,8 @@ the file name, and renaming a saved policy renames its file when you save. Each 
   `@Policy` without a policy file keeps that annotation, and with it the strict default policy, until you assign it.
   Test methods that share a name, such as an overloaded `check()` and `check(int)`, can only be assigned with their
   whole class. **Declared test classes** lists the classes Ares treats as test code; the
-  classes of the assigned tests are always included, and you can add helper classes without tests.
+  classes of the assigned tests are always included, and you can add helper classes without tests. Both lists group
+  their classes by package, and selecting a package in **Add Test Class** declares all of its classes.
 
 Every policy needs at least one test case: Artemis finds a policy through the tests that use it. When you add a
 policy after deleting the last one, it starts with the language configuration of the build file and the package of
@@ -295,7 +300,8 @@ it lists the same path or package twice, is shown read-only; fix it in the tests
 
 ### Review and Save
 
-The bar below the policies counts your unsaved changes. **Discard** drops all of them. **Save Policies** opens the
+The bar below the policies counts your unsaved changes and shows **Discard** and **Save Policies** once there is
+something to save. **Discard** drops all of your changes. **Save Policies** opens the
 review, which shows a side-by-side comparison of every changed policy file and the test case assignments that change.
 When the assignments change, it also compares the `@Policy` annotations of the test classes that saving rewrites. If
 you assign single test cases of a class that used one policy as a whole, the review lists every other test case of the
