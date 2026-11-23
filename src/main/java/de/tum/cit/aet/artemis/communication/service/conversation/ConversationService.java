@@ -196,7 +196,10 @@ public class ConversationService {
         var conversationIds = conversationsOfUser.stream().map(Conversation::getId).toList();
         var userConversationInfos = conversationRepository.getUserInformationForConversations(conversationIds, requestingUser.getId()).stream()
                 .collect(Collectors.toMap(UserConversationInfo::getConversationId, Function.identity()));
-        var generalConversationInfos = conversationRepository.getGeneralInformationForConversations(conversationIds).stream()
+        // Every course member takes part in a course-wide channel, so its participants are not counted row by row but taken from the course member count below
+        var conversationIdsWithParticipantCount = conversationsOfUser.stream().filter(conversation -> !(conversation instanceof Channel channel && channel.getIsCourseWide()))
+                .map(Conversation::getId).toList();
+        var generalConversationInfos = conversationRepository.getGeneralInformationForConversations(conversationIdsWithParticipantCount).stream()
                 .collect(Collectors.toMap(GeneralConversationInfo::getConversationId, Function.identity()));
 
         Integer numberOfCourseMembers = null;
@@ -205,7 +208,7 @@ public class ConversationService {
                 if (numberOfCourseMembers == null) {
                     numberOfCourseMembers = courseRepository.countCourseMembers(course.getId());
                 }
-                generalConversationInfos.get(channel.getId()).setNumberOfParticipants(numberOfCourseMembers);
+                generalConversationInfos.put(channel.getId(), new GeneralConversationInfo(channel.getId(), numberOfCourseMembers));
             }
         }
 

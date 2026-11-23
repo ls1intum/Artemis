@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261123123900-01-participant-score-outdated-index" author="krusche" dbms="postgresql">
+        <comment>The scheduled participant score update looks for outdated scores about once a minute with
+            last_result_id IS NULL OR (last_rated_result_id IS NULL AND last_rated_score IS NOT NULL) and finds none,
+            but scanned every score without a rated result (practice runs) to do so. last_result_id is already indexed.
+            This partial index covers the second condition, where the rated score stays behind after its rated result
+            was deleted. It holds no rows while all scores are consistent. A composite index on the two columns is not
+            used by the planner, which keeps preferring the single column index on last_rated_result_id.
+            PostgreSQL only: MySQL has no partial indexes and keeps its current plan.</comment>
+        <sql>CREATE INDEX idx_participant_score_last_rated_score_orphaned ON participant_score (id)
+            WHERE last_rated_result_id IS NULL AND last_rated_score IS NOT NULL</sql>
+        <rollback>
+            <dropIndex tableName="participant_score" indexName="idx_participant_score_last_rated_score_orphaned"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

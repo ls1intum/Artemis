@@ -94,14 +94,31 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
             """)
     Long findChannelIdByExamId(@Param("examId") Long examId);
 
+    /**
+     * Find all course-wide channels and all other channels the user participates in, in a given course.
+     * <p>
+     * The membership is checked with {@code EXISTS} and not with a join of the participants: a join would repeat every course-wide
+     * channel once per participant, which needs a {@code DISTINCT} to undo and is the most expensive query of a busy course.
+     *
+     * @param courseId the ID of the course to search in
+     * @param userId   the ID of the user
+     * @return the channels of the user, ordered by name
+     */
     @Query("""
-            SELECT DISTINCT channel
+            SELECT channel
             FROM Channel channel
-                LEFT JOIN channel.conversationParticipants conversationParticipant
                 LEFT JOIN FETCH channel.course
                 LEFT JOIN FETCH channel.creator
             WHERE channel.course.id = :courseId
-                AND (channel.isCourseWide OR (channel.id = conversationParticipant.conversation.id AND conversationParticipant.user.id = :userId))
+                AND (
+                    channel.isCourseWide
+                    OR EXISTS (
+                        SELECT conversationParticipant.id
+                        FROM ConversationParticipant conversationParticipant
+                        WHERE conversationParticipant.conversation.id = channel.id
+                            AND conversationParticipant.user.id = :userId
+                    )
+                )
             ORDER BY channel.name
             """)
     List<Channel> findChannelsOfUser(@Param("courseId") Long courseId, @Param("userId") Long userId);
