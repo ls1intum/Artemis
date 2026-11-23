@@ -25,6 +25,9 @@ import { discoverRouteEntries } from './discover_route_entries.mjs';
 
 const EAGER_KIND = 'import-statement';
 
+// Bumped whenever the report layout changes, so a diff against a report from an older layout says so instead of misreading it.
+const REPORT_FORMAT_VERSION = 2;
+
 function parseArgs(argv) {
     const args = argv.slice(2);
     let statsPathArg, outPathArg;
@@ -83,33 +86,41 @@ function computeEagerSet(outputs, startChunk) {
 }
 
 const APP_PREFIX = 'src/main/webapp/app/';
-const TOP_MODULE_COUNT = 2;
 
 /** Readable owner of one metafile input: the npm package for vendor code, the bare file name for app code. */
 function ownerOf(inputPath) {
-    const normalized = inputPath.replace(/\\/g, '/');
+    const normalized = inputPath.replaceAll('\\', '/');
     const pkg = normalized.match(/.*node_modules\/((?:@[^/]+\/)?[^/]+)/);
-    if (pkg) return pkg[1];
-    return normalized.startsWith(APP_PREFIX) ? normalized.slice(normalized.lastIndexOf('/') + 1) : normalized;
+    if (pkg) return { name: pkg[1], app: false };
+    return normalized.startsWith(APP_PREFIX) ? { name: normalized.slice(normalized.lastIndexOf('/') + 1), app: true } : { name: normalized, app: false };
 }
 
 /**
- * Names the largest contributors to a chunk so a reader can tell WHY it is in a route's eager set:
- * a content-hashed filename like chunk-PSZYCLZY.js says nothing, "course/overview/course-exercises/
- * course-exercises.component.ts" does. Bytes are summed per owner, so a package that spreads over
- * hundreds of files counts once.
+ * Every module of a chunk with the bytes it contributes to the built output, largest first. A module
+ * is an npm package (summed over all its files) or one of the project's own files, so a reader can
+ * tell WHY a chunk is in a route's eager set: a content-hashed filename like chunk-PSZYCLZY.js says
+ * nothing, "hls.js" does. Stored as [name, bytes] pairs, plus a trailing 1 for project files.
  */
-function describeChunk(inputs) {
-    const bytesByOwner = new Map();
+function modulesOf(inputs) {
+    const byName = new Map();
     for (const [path, info] of Object.entries(inputs ?? {})) {
         const owner = ownerOf(path);
-        bytesByOwner.set(owner, (bytesByOwner.get(owner) ?? 0) + (info.bytesInOutput ?? 0));
+        const entry = byName.get(owner.name) ?? { bytes: 0, app: owner.app };
+        entry.bytes += info.bytesInOutput ?? 0;
+        byName.set(owner.name, entry);
     }
-    const ranked = [...bytesByOwner.entries()].sort((a, b) => b[1] - a[1]);
-    return {
-        topModules: ranked.slice(0, TOP_MODULE_COUNT).map(([owner]) => owner),
-        moreModules: Math.max(0, ranked.length - TOP_MODULE_COUNT),
-    };
+    return [...byName.entries()].sort((a, b) => b[1].bytes - a[1].bytes).map(([name, { bytes, app }]) => (app ? [name, bytes, 1] : [name, bytes]));
+}
+
+/** Stable identity of a chunk across builds: output filenames are content-hashed and change on every commit even for logically unchanged chunks, the set of source inputs does not. Stored as a hash, the diff only compares keys for equality. */
+function moduleKeyOf(inputs) {
+    return createHash('sha1')
+        .update(
+            Object.keys(inputs ?? {})
+                .sort()
+                .join('|'),
+        )
+        .digest('hex');
 }
 
 function analyzeRoute(outputs, routeName, entrySourcePath) {
@@ -119,48 +130,36 @@ function analyzeRoute(outputs, routeName, entrySourcePath) {
     }
     const [entryChunk] = match;
     const eagerSet = computeEagerSet(outputs, entryChunk);
-
-    // Static-import edges inside the eager set, recorded so the diff can tell the chunk a change
-    // was introduced through from the dependency tree it dragged in behind it.
-    const parentsByChunk = new Map([...eagerSet].map((file) => [file, []]));
-    for (const file of eagerSet) {
-        for (const imp of outputs[file].imports ?? []) {
-            if (imp.kind === EAGER_KIND && parentsByChunk.has(imp.path)) parentsByChunk.get(imp.path).push(file);
-        }
-    }
-
-    const chunks = [...eagerSet]
-        .map((file) => ({
-            chunk: file,
-            // Stable identity across builds: output filenames are content-hashed and change on
-            // every commit even for logically unchanged chunks, so filename can't be used to
-            // detect "is this chunk new" across builds. The set of source inputs is stable. It is
-            // stored as a hash: the joined paths made up most of the report's size, and the diff
-            // only ever compares keys for equality.
-            moduleKey: createHash('sha1')
-                .update(
-                    Object.keys(outputs[file].inputs ?? {})
-                        .sort()
-                        .join('|'),
-                )
-                .digest('hex'),
-            entryPoint: outputs[file].entryPoint ?? null,
-            bytes: outputs[file].bytes,
-            parents: parentsByChunk.get(file),
-            ...describeChunk(outputs[file].inputs),
-        }))
-        .sort((a, b) => b.bytes - a.bytes);
-
-    const eagerBytes = chunks.reduce((sum, c) => sum + c.bytes, 0);
+    const chunks = [...eagerSet].sort((a, b) => outputs[b].bytes - outputs[a].bytes);
 
     return {
         route: routeName,
         entrySourcePath,
         entryChunk,
         eagerChunkCount: chunks.length,
-        eagerBytes,
+        eagerBytes: chunks.reduce((sum, file) => sum + outputs[file].bytes, 0),
         chunks,
     };
+}
+
+/**
+ * Every chunk that is eager for at least one route, stored once (the routes only name them). A chunk
+ * records the static imports to other tracked chunks, which is what lets the diff tell the chunk a
+ * change was introduced through from the dependency tree it dragged in behind it.
+ */
+function buildChunkTable(outputs, routes) {
+    const used = new Set(routes.flatMap((route) => route.chunks ?? []));
+    return Object.fromEntries(
+        [...used].map((file) => [
+            file,
+            {
+                bytes: outputs[file].bytes,
+                moduleKey: moduleKeyOf(outputs[file].inputs),
+                imports: (outputs[file].imports ?? []).filter((imp) => imp.kind === EAGER_KIND && outputs[imp.path]).map((imp) => imp.path),
+                modules: modulesOf(outputs[file].inputs),
+            },
+        ]),
+    );
 }
 
 function gitFallback(args) {
@@ -211,13 +210,15 @@ function main() {
     const routes = Object.entries(routeEntries).map(([routeName, entrySourcePath]) => analyzeRoute(metafile.outputs, routeName, entrySourcePath));
 
     const report = {
+        formatVersion: REPORT_FORMAT_VERSION,
         generatedAt: new Date().toISOString(),
         source: statsPath,
         meta: resolveMeta(),
+        chunks: buildChunkTable(metafile.outputs, routes),
         routes,
     };
 
-    const json = JSON.stringify(report, null, 2);
+    const json = JSON.stringify(report);
     if (outPath) {
         writeFileSync(outPath, json);
         console.log(`Report written to ${outPath}`);

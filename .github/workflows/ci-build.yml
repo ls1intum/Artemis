@@ -248,17 +248,16 @@ jobs:
             --baseline develop-report/chunk-eager-report.json \
             --out chunk-diff-report.md \
             --full-out chunk-diff-report-full.md
-      - name: Upload full eager-chunk diff report
-        # The PR comment is shortened when the report would exceed GitHub's comment size limit;
-        # this artifact keeps the complete report, and the comment links to it.
+      - name: Publish the full eager-chunk report to the run summary
+        # The PR comment shows only the largest parts; the complete report (every import, module and
+        # chunk) is rendered on the workflow run's summary page, which the comment links to. An
+        # artifact would be a zip to download. The script keeps it below GitHub's 1 MiB limit per step.
         if: steps.resolve-develop-run.outcome == 'success'
-        id: upload-full-diff
         continue-on-error: true
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: chunk-eager-diff-report
-          path: chunk-diff-report-full.md
-          if-no-files-found: ignore
+        run: |
+          if [ -f chunk-diff-report-full.md ]; then
+            cat chunk-diff-report-full.md >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Find existing PR comment
         id: find-comment
         continue-on-error: true  # cosmetic lookup; a transient API blip must not fail the job
@@ -285,7 +284,6 @@ jobs:
         env:
           PR_NUMBER: ${{ inputs.pr_number }}
           EXISTING_COMMENT_ID: ${{ steps.find-comment.outputs.result }}
-          FULL_REPORT_URL: ${{ steps.upload-full-diff.outputs.artifact-url }}
           BASELINE_RESOLVED: ${{ steps.resolve-develop-run.outcome == 'success' }}
           HEAD_SHA: ${{ inputs.commit_sha }}
           BASE_SHA: ${{ steps.develop-sha.outputs.sha }}
@@ -302,9 +300,6 @@ jobs:
               } catch {
                 return;
               }
-              if (body.includes('<!-- chunk-eager-report-truncated -->') && process.env.FULL_REPORT_URL) {
-                body += `\n\n📄 [Full report](${process.env.FULL_REPORT_URL})`;
-              }
             } else {
               // Without a baseline, an earlier report would stay up as if it still applied to this
               // commit. Replace it with a note; never create a comment just to say nothing was compared.
@@ -312,7 +307,11 @@ jobs:
               const base = process.env.BASE_SHA ? `the merge-base with develop (\`${process.env.BASE_SHA.slice(0, 10)}\`)` : 'the merge-base with develop';
               body = `### Client Eager-Chunk Loading Report\n➖ Comparison skipped for \`${process.env.HEAD_SHA.slice(0, 10)}\`: no eager-chunk report is available for ${base}. The previous report no longer applies to this commit.`;
             }
-            body += `\n\n🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+            // The run page shows the full report as its summary.
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            body += process.env.BASELINE_RESOLVED === 'true'
+              ? `\n\n---\n📄 [Full report](${runUrl}): every route, import, module and chunk, on the run's summary page`
+              : `\n\n🔗 [Workflow Run](${runUrl})`;
             body += `\n<!-- Chunk Eager-Loading Report -->`;
 
             if (existingCommentId) {
