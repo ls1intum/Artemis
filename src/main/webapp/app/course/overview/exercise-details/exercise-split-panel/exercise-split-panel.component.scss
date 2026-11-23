@@ -11,9 +11,8 @@
 .assessment-feedback-section--complaint {
     color: inherit;
 
-    // The grid gap spaces the buttons, so the `ms-1` utility the second button carries has to go, and Bootstrap
-    // utilities are important.
-    ::ng-deep .btn {
+    // The grid gap spaces the buttons, so the margin utility the second button carries has to go.
+    ::ng-deep button[tumAetUiButton] {
         width: 100%;
         margin: 0 !important;
         font-size: 0.8125rem;

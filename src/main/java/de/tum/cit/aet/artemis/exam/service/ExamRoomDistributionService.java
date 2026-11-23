@@ -354,7 +354,7 @@ public class ExamRoomDistributionService {
     public void reseatStudent(long examUserId, String newRoomNumber, String newSeatName) {
         ExamUser examUser = examUserRepository.findWithExamWithExamUsersById(examUserId)
                 .orElseThrow(() -> new BadRequestAlertException("Exam user does not exist", ENTITY_NAME, "examUsers.notFound"));
-        Set<ExamUser> examUsers = examUser.getExam().getExamUsers();
+        Set<ExamUser> examUsers = getExamUsersOfExam(examUser);
         examUserService.setPlannedRoomAndSeatTransientForExamUsers(examUsers);
 
         String oldRoomNumber = examUser.getPlannedRoom();
@@ -378,6 +378,16 @@ public class ExamRoomDistributionService {
                 setRoomAndSeatAndSaveExamUser(lastStudentInOldRoom, oldRoomNumber, oldSeatName);
             }
         }
+    }
+
+    /**
+     * Returns all exam users of the exam of the given exam user.
+     *
+     * @param examUser an exam user whose exam and the exam users of that exam are loaded
+     * @return the exam users of the exam, including the given one
+     */
+    private static Set<ExamUser> getExamUsersOfExam(ExamUser examUser) {
+        return examUser.getExam().getExamUsers();
     }
 
     /**
@@ -425,7 +435,7 @@ public class ExamRoomDistributionService {
         ExamRoom newRoom = examRoomRepository.findByExamIdAndRoomNumberWithLayoutStrategies(examUser.getExam().getId(), newRoomNumber)
                 .orElseThrow(() -> new BadRequestAlertException("New room could not be found", ENTITY_NAME, "room.notFound"));
 
-        Set<ExamUser> examUsers = examUser.getExam().getExamUsers();
+        Set<ExamUser> examUsers = getExamUsersOfExam(examUser);
         Map<ExamSeatDTO, ExamUser> seatToUser = getExamUserInRoomBySeat(examUsers, newRoom);
 
         List<ExamSeatDTO> seatsOfNewRoom = examRoomService.getDefaultUsableSeats(newRoom, 0.0);
@@ -447,7 +457,7 @@ public class ExamRoomDistributionService {
      * @param newSeat  The new seat's name
      */
     private void seatStudentFixedSeat(ExamUser examUser, String newRoom, String newSeat) {
-        Set<ExamUser> examUsers = examUser.getExam().getExamUsers();
+        Set<ExamUser> examUsers = getExamUsersOfExam(examUser);
         checkSeatNotAlreadyTakenOrElseThrow(examUsers, newRoom, newSeat);
 
         setRoomAndSeatAndSaveExamUser(examUser, newRoom, newSeat);

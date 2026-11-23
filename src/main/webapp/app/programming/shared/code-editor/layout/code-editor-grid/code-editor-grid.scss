@@ -28,7 +28,7 @@
 
         /* The student's editor has no navbar, so the panel shows the shorter secondary header, and the fixed height would leave
            the card's white background below it. The header alone is the collapsed panel then. */
-        &:has(.card-second-header) {
+        &:has(.editor-panel-second-header) {
             height: auto !important;
         }
     }
@@ -75,7 +75,7 @@
             /* Even at phone widths, reserve the card's borders so they cannot overlap the neighbouring divider. */
             min-width: 2px;
 
-            .card {
+            .editor-panel {
                 height: 100%;
             }
         }
@@ -153,7 +153,41 @@
 }
 
 /* ==========================================================================
-   Shared secondary header (file browser, instructions, Monaco editor, build output)
+   Panels of the editor (file browser, instructions, Monaco editor, build output)
+   ========================================================================== */
+
+.editor-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    color: var(--body-color);
+    overflow-wrap: break-word;
+    background-color: var(--card-bg);
+    background-clip: border-box;
+    border: 1px solid var(--border-color);
+    border-radius: 0.15rem;
+}
+
+.editor-panel-body {
+    flex: 1 1 auto;
+    padding: 1rem;
+    color: var(--body-color);
+
+    input {
+        max-width: 100%;
+    }
+}
+
+.editor-panel-footer {
+    padding: 0.5rem 1rem;
+    color: var(--body-color);
+    background-color: color-mix(in srgb, var(--body-color) 3%, transparent);
+    border-top: 1px solid var(--border-color);
+}
+
+/* ==========================================================================
+   Shared primary header (file browser, instructions, Monaco editor, build output)
    ========================================================================== */
 
 .code-editor-panel-header {
@@ -181,7 +215,7 @@
    Shared secondary header (used by file browser, Monaco editor, and build output)
    ========================================================================== */
 
-.card-second-header {
+.editor-panel-second-header {
     display: flex;
     align-items: center;
     min-height: 38px;
@@ -206,8 +240,8 @@
 .editor-sidebar-left.collapsed--horizontal {
     flex: none !important;
 
-    .card-body,
-    .card-second-header {
+    .editor-panel-body,
+    .editor-panel-second-header {
         display: none !important;
     }
 
@@ -223,7 +257,7 @@
         column-gap: 10px;
 
         > :not(:first-child) {
-            border-left: 1px solid rgba(0, 0, 0, 0.125);
+            border-left: 1px solid var(--border-color);
             padding-left: 20px;
         }
     }
@@ -237,7 +271,7 @@
 
         > :not(:first-child) {
             padding-top: 5px;
-            border-top: 1px solid rgba(0, 0, 0, 0.125);
+            border-top: 1px solid var(--border-color);
         }
 
         span {
@@ -251,7 +285,7 @@
     flex: none !important;
 
     .instructions-wrapper__content,
-    .card-second-header,
+    .editor-panel-second-header,
     .editable-instruction-container__status {
         display: none !important;
     }
@@ -271,7 +305,7 @@
 }
 
 /* A rail inside a panel that is framed already (the file browser's card, the general feedback panel) would draw a second border over its frame */
-.editor-wrapper.assessment-workspace .card > jhi-collapsed-panel-rail,
+.editor-wrapper.assessment-workspace .editor-panel > jhi-collapsed-panel-rail,
 .editor-wrapper.assessment-workspace .feedback-bottom-panel > jhi-collapsed-panel-rail {
     --collapsed-panel-rail-border: 0;
     --collapsed-panel-rail-radius: 0;
@@ -283,7 +317,7 @@
 }
 
 /* Build output */
-.editor-bottom.collapsed--vertical .card-body {
+.editor-bottom.collapsed--vertical .editor-panel-body {
     display: none;
 }
 
@@ -431,7 +465,7 @@
 .rg-main-bottom,
 .rg-bottom-bottom {
     height: var(--code-editor-divider);
-    background: var(--bs-body-bg);
+    background: var(--body-bg);
     cursor: row-resize;
 
     /* Two thin horizontal lines, as on the handle of a vertical splitter */
@@ -538,15 +572,15 @@
 /* A collapsed side is a rail that stands for the panel. On the exercise page it is grey like a collapsed header, so it recedes
    behind the editor; in an assessment it stays white like the panels around it. */
 .editor-wrapper:not(.assessment-workspace) {
-    .editor-sidebars--left-collapsed .editor-sidebar-left .card,
-    .editor-sidebars--right-collapsed .editor-sidebar-right .card {
+    .editor-sidebars--left-collapsed .editor-sidebar-left .editor-panel,
+    .editor-sidebars--right-collapsed .editor-sidebar-right .editor-panel {
         background-color: var(--hover-slightly-darker-body-bg);
     }
 }
 
 .editor-wrapper.assessment-workspace {
-    .editor-sidebars--left-collapsed .editor-sidebar-left .card,
-    .editor-sidebars--right-collapsed .editor-sidebar-right .card {
+    .editor-sidebars--left-collapsed .editor-sidebar-left .editor-panel,
+    .editor-sidebars--right-collapsed .editor-sidebar-right .editor-panel {
         background-color: var(--module-bg);
     }
 }

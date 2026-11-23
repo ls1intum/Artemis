@@ -1,10 +1,11 @@
-@import '../../../../../../../../node_modules/bootstrap/scss/functions';
-@import '../../../../../../../../node_modules/bootstrap/scss/variables';
-@import '../../../../../../../../node_modules/bootstrap/scss/mixins';
 @import '../../../../../content/scss/artemis-variables';
 
 span {
     white-space: pre-wrap;
+
+    &.clickable {
+        cursor: pointer;
+    }
 
     &:hover {
         &.clickable {

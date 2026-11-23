@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
 import { ResultService } from 'app/exercise/result/result.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { MockProvider } from 'ng-mocks';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
@@ -14,7 +15,6 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { ActivatedRoute } from '@angular/router';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { HttpResponse } from '@angular/common/http';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 
@@ -131,7 +131,7 @@ describe('CodeEditorStudentContainerComponent', () => {
                 } as ProgrammingExerciseStudentParticipation),
             );
             vi.spyOn(TestBed.inject(SubmissionPolicyService), 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of({ active: false }));
-            getFeedbackDetailsSpy = vi.spyOn(TestBed.inject(ResultService), 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: [aiFeedback] })));
+            getFeedbackDetailsSpy = vi.spyOn(TestBed.inject(ResultApi), 'getResultDetails').mockReturnValue(of([aiFeedback]) as never);
         };
 
         it('shows the submission of the picked result, with just that result, read-only at its commit', () => {
@@ -143,10 +143,10 @@ describe('CodeEditorStudentContainerComponent', () => {
             expect(comp.viewedCommitHash()).toBe(commitHash);
             expect(comp.participation().submissions).toHaveLength(1);
             expect(comp.participation().submissions![0].id).toBe(36);
-            expect(getFeedbackDetailsSpy).toHaveBeenCalledWith(21, aiResult);
+            expect(getFeedbackDetailsSpy).toHaveBeenCalledWith(21, 55);
             // The feedback is on the result the editor reads from the start, so inline feedback and file badges can be derived at once
-            expect(comp.participation().submissions![0].results).toEqual([{ id: 55, feedbacks: [aiFeedback] }]);
-            expect(comp.latestResult()?.feedbacks).toEqual([aiFeedback]);
+            expect(comp.participation().submissions![0].results).toEqual([{ id: 55, feedbacks: [expect.objectContaining(aiFeedback)] }]);
+            expect(comp.latestResult()?.feedbacks).toEqual([expect.objectContaining(aiFeedback)]);
             expect(comp.canSubmitExercise()).toBe(false);
         });
 

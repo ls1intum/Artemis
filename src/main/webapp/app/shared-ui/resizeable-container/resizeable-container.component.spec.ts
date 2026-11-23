@@ -64,7 +64,7 @@ describe('ResizeableContainerComponent', () => {
             expect(panel.style.width).toBe('500px');
 
             pointer(panel, 'pointerup', 500, 100);
-            expect(panel.classList.contains('card-resizable')).toBe(false);
+            expect(panel.classList.contains('resizable-dragging')).toBe(false);
         });
 
         it('keeps the panel within its minimum width', () => {

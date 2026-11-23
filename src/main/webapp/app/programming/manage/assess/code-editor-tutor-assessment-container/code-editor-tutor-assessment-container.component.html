@@ -1,6 +1,6 @@
 @if (participationCouldNotBeFetched() || lockLimitReached() || assessmentNotPossibleYet() || resultNotFound()) {
-    <nav class="card">
-        <div class="card-body">
+    <nav class="rounded-sm border border-(--border-color) bg-surface-raised">
+        <div class="p-4">
             @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
                 <span id="assessment-not-possible-yet">
                     <fa-icon [icon]="faCircleInfo" class="text-state-info" [fixedWidth]="true" />
@@ -9,7 +9,7 @@
             }
             @if (participationCouldNotBeFetched()) {
                 <span>
-                    <fa-icon [icon]="faTimesCircle" class="text-danger" />
+                    <fa-icon [icon]="faTimesCircle" class="text-state-danger" />
                     <span jhiTranslate="artemisApp.editor.errors.participationNotFound"></span>
                 </span>
             }
@@ -22,7 +22,7 @@
             }
             @if (lockLimitReached()) {
                 <div>
-                    <fa-icon [icon]="faTimesCircle" class="text-danger" />
+                    <fa-icon [icon]="faTimesCircle" class="text-state-danger" />
                     <span jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"></span>
                 </div>
             }
@@ -190,14 +190,25 @@
                 <jhi-assessment-score-tags [score]="assessmentScore()" [maxPoints]="getTotalMaxPoints(exercise())" [course]="getCourseFromExercise(exercise())" />
             </span>
             @if (isAtLeastEditor() && !isTestRun()) {
-                <a class="btn btn-secondary btn-sm me-2 open-repository-button" [routerLink]="localRepositoryLink()" target="_blank" rel="noopener noreferrer">
+                <a
+                    tumAetUiButton
+                    severity="secondary"
+                    size="small"
+                    class="me-2 open-repository-button"
+                    [routerLink]="localRepositoryLink()"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
                     <fa-icon [icon]="faExternalLink" />
                     <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"></span>
                 </a>
             }
             @if (commitHistoryLink(); as link) {
                 <a
-                    class="btn btn-secondary btn-sm me-2 open-commit-history-button"
+                    tumAetUiButton
+                    severity="secondary"
+                    size="small"
+                    class="me-2 open-commit-history-button"
                     data-testid="open-commit-history-button"
                     [routerLink]="link"
                     target="_blank"
@@ -228,7 +239,7 @@
         <ng-template #editorSidebar>
             @if (exercise()) {
                 <jhi-assessment-instructions
-                    class="card-body markdown-preview instructions-wrapper__content overflow-auto"
+                    class="flex-auto p-4 markdown-preview instructions-wrapper__content overflow-auto!"
                     [exercise]="exercise()!"
                     [programmingParticipation]="participation()"
                     [gradingCriteria]="exercise().gradingCriteria"
@@ -241,12 +252,14 @@
     <ng-template #noSubmission>
         <!-- while assessment is not possible yet the submission does exist, so the card above explains that instead -->
         @if (!loadingInitialSubmission() && !assessmentNotPossibleYet() && !resultNotFound()) {
-            <div class="alert alert-warning text-center mt-4" role="alert">
-                <p jhiTranslate="artemisApp.programmingAssessment.notFound"></p>
-                <a [routerLink]="exerciseDashboardLink()" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
-                    <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard"></span>
-                </a>
-            </div>
+            <tumaet-ui-message severity="warn" class="mt-6">
+                <div class="text-center">
+                    <p jhiTranslate="artemisApp.programmingAssessment.notFound"></p>
+                    <a [routerLink]="exerciseDashboardLink()" tumAetUiButton severity="info" size="small" class="me-1 mb-1 assessment-dashboard">
+                        <span class="hidden min-[768px]:inline" jhiTranslate="entity.action.exerciseDashboard"></span>
+                    </a>
+                </div>
+            </tumaet-ui-message>
         }
     </ng-template>
 </div>

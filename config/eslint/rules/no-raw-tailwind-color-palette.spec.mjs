@@ -8,7 +8,7 @@ describe('no-raw-tailwind-color-palette', () => {
     it('flags raw palette / arbitrary color classes but allows brand-bound semantic tokens', () => {
         ruleTester.run('no-raw-tailwind-color-palette', rule, {
             valid: [
-                // Brand/neutral semantic tokens (tailwindcss-primeui) and Artemis NAMED state tokens.
+                // Brand/neutral semantic tokens (defined in tailwind.css) and Artemis NAMED state tokens.
                 { code: '<div class="text-primary"></div>' },
                 { code: '<p-message styleClass="text-primary"></p-message>' },
                 { code: '<div class="bg-primary"></div>' },

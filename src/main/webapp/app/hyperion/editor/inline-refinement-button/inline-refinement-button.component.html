@@ -6,7 +6,7 @@
             type="button"
             severity="primary"
             size="small"
-            class="gap-1! rounded-full! font-medium shadow-sm"
+            class="gap-1! rounded-full! font-medium shadow-sm!"
             data-testid="inline-refinement-trigger"
             (click)="expand()"
             [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.triggerButton' | artemisTranslate"
@@ -16,12 +16,12 @@
         </button>
     } @else {
         <!-- Expanded: Input field with submit -->
-        <div class="flex items-center gap-1 rounded-full border border-border bg-surface-raised px-2 py-1 shadow-lg">
+        <div class="flex items-center gap-1 rounded-full border border-(--border-color) bg-surface-raised px-2 py-1 shadow-lg">
             <input
                 [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.placeholder' | artemisTranslate"
                 #instructionInput
                 type="text"
-                class="w-full max-w-lg min-w-80 border-none bg-transparent px-2 py-1 text-sm text-text outline-none placeholder:text-text-secondary disabled:opacity-60"
+                class="w-full max-w-lg min-w-80 border-none bg-transparent px-2 py-1 text-color outline-none placeholder:text-muted-color disabled:opacity-60"
                 data-testid="inline-refinement-input"
                 [placeholder]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.placeholder' | artemisTranslate"
                 [ngModel]="instruction()"
@@ -30,7 +30,7 @@
                 [disabled]="isLoading()"
                 [attr.maxlength]="MAX_INSTRUCTION_LENGTH"
             />
-            <span class="px-1 text-xs whitespace-nowrap" [class.text-state-danger]="isNearLimit()" [class.text-text-secondary]="!isNearLimit()">
+            <span class="px-1 text-xs whitespace-nowrap" [class.text-state-danger]="isNearLimit()" [class.text-muted-color]="!isNearLimit()">
                 {{ instruction().length }}/{{ MAX_INSTRUCTION_LENGTH }}
             </span>
             <button

@@ -4,6 +4,28 @@
     overflow: hidden;
 }
 
+// The header, body and title of both panes. The panes themselves get their border, background and radius from utilities in the template.
+.pane-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid transparent;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+.pane-body {
+    flex: 1 1 auto;
+
+    input {
+        max-width: 100%;
+    }
+}
+
+.pane-title {
+    margin: 0;
+    font-size: 16px;
+    color: inherit;
+}
+
 .left {
     position: relative;
     display: flex;
@@ -14,7 +36,7 @@
     width: 100%;
 
     &.border-0 {
-        border-radius: var(--resizeable-container-border-radius, var(--bs-card-border-radius));
+        border-radius: var(--resizeable-container-border-radius, 0.15rem);
 
         // The splitter inside (the general feedback split) has square corners, so the rounded card clips them instead of showing its white behind them
         overflow: hidden;
@@ -24,7 +46,7 @@
         }
     }
 
-    .card-header {
+    .pane-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -36,7 +58,7 @@
 
     // Only beside the problem statement does the left side scroll on its own. Without it, e.g. in the course view, the
     // page around it already scrolls, and a second scroll area would only nest inside that one.
-    &.left--scrolls .card-body {
+    &.left--scrolls .pane-body {
         max-height: 100vh;
         overflow-y: auto;
     }
@@ -66,15 +88,15 @@
     // A page opts in to a cap relative to its container, for example `[--resizeable-container-right-max-width:45%]`.
     max-width: var(--resizeable-container-right-max-width, none);
 
-    .card {
+    .pane {
         width: inherit;
         min-width: 200px;
 
-        .card-header {
+        .pane-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            min-height: 45px; // as tall as the header of the left card
+            min-height: 45px; // as tall as the header of the left pane
             cursor: pointer;
 
             fa-icon {
@@ -83,14 +105,14 @@
                 margin: -15px;
             }
 
-            .card-title {
+            .pane-title {
                 display: flex;
                 margin-top: 0;
                 margin-bottom: 0;
             }
         }
 
-        .card-body {
+        .pane-body {
             max-height: 100vh;
             overflow-y: auto;
         }
@@ -152,7 +174,7 @@
             display: none;
         }
 
-        .card {
+        .pane {
             min-width: 0;
         }
 

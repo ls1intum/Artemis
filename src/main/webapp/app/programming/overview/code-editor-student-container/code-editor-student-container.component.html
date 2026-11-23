@@ -1,18 +1,18 @@
 <!-- As a page of its own, the editor is framed like the other editors of the course management, which sit on a module surface with a gutter. -->
-<div class="h-full" [id]="'exercise-' + exercise()?.id" [class.module-bg]="fullPage()" [class.p-3]="fullPage()" [class.pt-1]="fullPage()">
+<div class="h-full" [id]="'exercise-' + exercise()?.id" [class]="fullPage() ? 'bg-(--module-bg) p-4! pt-1!' : ''">
     @if (loadingParticipation() || participationCouldNotBeFetched()) {
-        <nav class="card">
-            <div class="card-body">
+        <nav class="rounded-[0.15rem] border border-(--border-color) bg-(--card-bg)">
+            <div class="p-4">
                 @if (loadingParticipation()) {
                     <span>
                         <fa-icon [icon]="faCircleNotch" animation="spin" />
-                        <p class="d-inline" jhiTranslate="artemisApp.editor.fetchingParticipation"></p>
+                        <p class="inline" jhiTranslate="artemisApp.editor.fetchingParticipation"></p>
                     </span>
                 }
                 @if (participationCouldNotBeFetched()) {
                     <span>
-                        <fa-icon [icon]="faTimesCircle" class="text-danger" />
-                        <p class="d-inline" jhiTranslate="artemisApp.editor.errors.participationNotFound"></p>
+                        <fa-icon [icon]="faTimesCircle" class="text-state-danger" />
+                        <p class="inline" jhiTranslate="artemisApp.editor.errors.participationNotFound"></p>
                     </span>
                 }
             </div>
@@ -60,9 +60,9 @@
                 }
             </div>
             <!-- prettier-ignore -->
-            <div editorToolbar class="d-inline-flex align-items-center">
+            <div editorToolbar class="inline-flex items-center">
               @if (repositoryIsLocked()) {
-                <jhi-code-editor-repository-is-locked class="me-3" />
+                <jhi-code-editor-repository-is-locked class="me-4!" />
               }
               @if (participation()) {
                 <jhi-updating-result
@@ -91,13 +91,13 @@
               }
             </div>
             <jhi-programming-exercise-instructions
-                [class.d-none]="lightweight()"
+                [class.hidden]="lightweight()"
                 editorSidebar
                 (onNoInstructionsAvailable)="showEditorInstructions = false"
                 [exercise]="exercise()"
                 [participation]="participation()"
                 [personalParticipation]="!fullPage()"
-                class="instructions-wrapper__content card-body p-0"
+                class="instructions-wrapper__content editor-panel-body p-0!"
             />
             <!-- Shown as a tab beside the build output -->
             <jhi-general-feedback editorBottomFeedback [feedbacks]="unreferencedFeedback" [course]="course()" [showTitle]="false" />

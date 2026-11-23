@@ -6,7 +6,7 @@ import { BehaviorSubject, EMPTY, Observable, Subject, of, throwError } from 'rxj
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -20,7 +20,6 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -71,7 +70,7 @@ import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/s
 import { ScienceService } from 'app/foundation/science/science.service';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
-import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -199,7 +198,6 @@ describe('CourseOverviewComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([]),
-                MockModule(NgbTooltipModule),
                 FaIconComponent,
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -231,12 +229,14 @@ describe('CourseOverviewComponent', () => {
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseConversationsService, useClass: MockCourseConversationsService },
-                { provide: NgbDropdown, useClass: MockDirective(NgbDropdown) },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ScienceSettingsService, useValue: scienceSettingsServiceMock },
-                { provide: FeatureToggleService, useValue: { getFeatureToggleActive: () => scienceFeatureActive.asObservable() } },
+                {
+                    provide: FeatureToggleService,
+                    useValue: { getFeatureToggleActive: () => scienceFeatureActive.asObservable(), getFeatureToggles: () => of(Object.values(FeatureToggle)) },
+                },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -394,8 +394,8 @@ describe('CourseOverviewComponent', () => {
         component.availableTabs.set(availableTabs({ lectures: true }));
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
-        expect(sidebarItems[0].title).toContain('Exercises');
-        expect(sidebarItems[1].title).toContain('Lectures');
+        expect(sidebarItems[1].title).toContain('Exercises');
+        expect(sidebarItems[2].title).toContain('Lectures');
     });
 
     it('should create sidebar items for student if questions are available for practice', () => {
@@ -403,23 +403,23 @@ describe('CourseOverviewComponent', () => {
         component.availableTabs.set(availableTabs({ lectures: true, training: true }));
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
-        expect(sidebarItems[0].title).toContain('Exercises');
-        expect(sidebarItems[1].title).toContain('Training');
-        expect(sidebarItems[2].title).toContain('Lectures');
+        expect(sidebarItems[1].title).toContain('Exercises');
+        expect(sidebarItems[2].title).toContain('Training');
+        expect(sidebarItems[3].title).toContain('Lectures');
     });
 
     it('should create competencies and learning path item if competencies or prerequisites are available and learning paths are enabled', () => {
         component.availableTabs.set(availableTabs({ competencies: true, learningPaths: true }));
         component.atlasEnabled = true;
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[3].title).toContain('Competencies');
-        expect(sidebarItems[4].title).toContain('Learning Path');
+        expect(sidebarItems[4].title).toContain('Competencies');
+        expect(sidebarItems[5].title).toContain('Learning Path');
     });
 
     it('should create faq item when accepted faqs exist', () => {
         component.availableTabs.set(availableTabs({ faq: true }));
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[3].title).toContain('FAQs');
+        expect(sidebarItems[4].title).toContain('FAQs');
     });
 
     it('loads conversations when switching to message tab once', async () => {
@@ -651,7 +651,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should show the exams item when the exams tab is available', () => {
         component.availableTabs.set(availableTabs({ exams: true }));
-        expect(component.getSidebarItems()[0].title).toContain('Exams');
+        expect(component.getSidebarItems()[1].title).toContain('Exams');
     });
 
     it('should not show the exams item when the exams tab is unavailable', () => {
@@ -667,6 +667,7 @@ describe('CourseOverviewComponent', () => {
 
         expect(items).toContainEqual(courseSidebarItemService.getCommunicationsItem());
         expect(items).toContainEqual(courseSidebarItemService.getTutorialGroupsItem());
+        expect(items[0].routerLink).toBe('home');
         expect(items).toContainEqual(courseSidebarItemService.getIrisItem());
     });
 

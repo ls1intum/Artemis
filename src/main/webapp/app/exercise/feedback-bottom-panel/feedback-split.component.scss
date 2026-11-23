@@ -23,3 +23,18 @@
 .feedback-split--collapsed .feedback-split__bottom {
     margin-top: 0.5rem;
 }
+
+// Stacked, the content and the panel take the height they need and the page scrolls
+:host(.feedback-split--stacked) {
+    height: auto;
+
+    .feedback-split__top,
+    .feedback-split__bottom {
+        height: auto;
+        flex: none;
+    }
+
+    .feedback-split__bottom {
+        margin-top: 0.5rem;
+    }
+}

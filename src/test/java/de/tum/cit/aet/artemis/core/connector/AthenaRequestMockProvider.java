@@ -22,7 +22,7 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.RequestMatcher;
 import org.springframework.test.web.client.ResponseActions;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -35,15 +35,13 @@ import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 @Lazy
 public class AthenaRequestMockProvider {
 
-    private final RestTemplate restTemplate;
+    private final MockRestClientServers mockRestClientServers;
+
+    private final RestClient restClient;
 
     private MockRestServiceServer mockServer;
 
-    private final RestTemplate shortTimeoutRestTemplate;
-
     private MockRestServiceServer mockServerShortTimeout;
-
-    private final RestTemplate veryShortTimeoutRestTemplate;
 
     private MockRestServiceServer mockServerVeryShortTimeout;
 
@@ -67,17 +65,19 @@ public class AthenaRequestMockProvider {
 
     public static final String ATHENA_RESTRICTED_MODULE_MODELING_TEST = "module_modeling_test_restricted";
 
-    public AthenaRequestMockProvider(@Qualifier("athenaRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate,
-            @Qualifier("veryShortTimeoutAthenaRestTemplate") RestTemplate veryShortTimeoutRestTemplate) {
-        this.restTemplate = restTemplate;
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
-        this.veryShortTimeoutRestTemplate = veryShortTimeoutRestTemplate;
+    public AthenaRequestMockProvider(MockRestClientServers mockRestClientServers, @Qualifier("athenaRestClient") RestClient restClient) {
+        this.mockRestClientServers = mockRestClientServers;
+        this.restClient = restClient;
     }
 
     public void enableMockingOfRequests() {
-        mockServer = MockRestServiceServer.createServer(restTemplate);
-        mockServerShortTimeout = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
-        mockServerVeryShortTimeout = MockRestServiceServer.createServer(veryShortTimeoutRestTemplate);
+        mockServer = mockRestClientServers.serverOf("athenaRestClient");
+        mockServerShortTimeout = mockRestClientServers.serverOf("shortTimeoutAthenaRestClient");
+        mockServerVeryShortTimeout = mockRestClientServers.serverOf("veryShortTimeoutAthenaRestClient");
+        // The servers live as long as the context, so a test starts from a clean one, like the fresh server that it replaces.
+        mockServer.reset();
+        mockServerShortTimeout.reset();
+        mockServerVeryShortTimeout.reset();
         closeable = MockitoAnnotations.openMocks(this);
     }
 
@@ -345,14 +345,18 @@ public class AthenaRequestMockProvider {
     }
 
     /**
-     * Verifies the expectations registered for the submission selection, which runs on its own rest template with a
+     * Verifies the expectations registered for the submission selection, which runs on its own rest client with a
      * very short timeout and is therefore not covered by {@link #verify()}.
      */
     public void verifySubmissionSelection() {
         mockServerVeryShortTimeout.verify();
     }
 
-    public RestTemplate getRestTemplate() {
-        return restTemplate;
+    public RestClient getRestClient() {
+        return restClient;
+    }
+
+    public MockRestServiceServer getMockServer() {
+        return mockServer;
     }
 }

@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faComments } from '@fortawesome/free-solid-svg-icons';
@@ -9,8 +9,7 @@ import { FileBadge, FileBadgeType } from 'app/programming/shared/code-editor/mod
     selector: 'jhi-file-browser-badge',
     templateUrl: './code-editor-file-browser-badge.component.html',
     styleUrls: ['./code-editor-file-browser-badge.component.scss'],
-    providers: [NgbModal],
-    imports: [NgbTooltip, FaIconComponent],
+    imports: [TumAetUiTooltipDirective, FaIconComponent],
 })
 export class CodeEditorFileBrowserBadgeComponent {
     private translateService = inject(TranslateService);

@@ -1,12 +1,10 @@
 import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { catchError, finalize, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { fromPairs, toPairs } from 'lodash-es';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/programming/manage/code-editor/file-browser/delete/code-editor-file-browser-delete';
-import { IFileDeleteDelegate } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faCircleNotch, faFile, faFolder, faFolderOpen, faListAlt, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { TEXT_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -39,6 +37,7 @@ import { CodeEditorConflictStateService } from 'app/programming/shared/code-edit
 import { findItemInList } from 'app/programming/shared/code-editor/treeview/helpers/tree-view-helper';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 export type InteractableEvent = {
     // Click event object; contains target information (used to blur the clicked header)
@@ -56,9 +55,9 @@ export interface FileTreeItem extends TreeItem<string> {
     selector: 'jhi-code-editor-file-browser',
     templateUrl: './code-editor-file-browser.component.html',
     styleUrls: ['./code-editor-file-browser.scss'],
-    providers: [NgbModal],
     imports: [
         FaIconComponent,
+        CodeEditorFileBrowserDeleteComponent,
         TranslateDirective,
         CodeEditorFileBrowserCreateNodeComponent,
         TreeViewComponent,
@@ -68,10 +67,10 @@ export interface FileTreeItem extends TreeItem<string> {
         CodeEditorFileBrowserFileComponent,
         ArtemisTranslatePipe,
         CollapsedPanelRailComponent,
+        TumAetUiButtonDirective,
     ],
 })
-export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileDeleteDelegate {
-    modalService = inject(NgbModal);
+export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy {
     private repositoryFileService = inject(CodeEditorRepositoryFileService);
     private repositoryService = inject(CodeEditorRepositoryService);
     private fileService = inject(CodeEditorFileService);
@@ -171,6 +170,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
     readonly renamingFile = signal<[string, string, FileType] | undefined>(undefined);
     // Tuple: [filePath, fileType]
     readonly creatingFile = signal<[string, FileType] | undefined>(undefined);
+    /** The file or folder the delete dialog asks about. */
+    readonly fileToDelete = signal<{ fileName: string; fileType: FileType } | undefined>(undefined);
+    readonly deleteDialogVisible = signal(false);
 
     // On develop this was a value-less type annotation (`treeViewMaxHeight: 5000`), i.e. undefined at runtime, so the
     // intended 5000 cap was never actually applied to the [maxHeight] binding. Kept undefined-at-runtime here (via the
@@ -703,18 +705,14 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
     };
 
     /**
-     * Opens a popup to delete the selected repository file
+     * Opens the dialog that asks for confirmation before the selected repository file or folder is deleted.
      */
     openDeleteFileModal(item: TreeViewItem<string>) {
         const { value: filePath } = item;
         const fileType = this.repositoryFiles()[filePath];
         if (filePath && fileType !== FileType.PROBLEM_STATEMENT) {
-            const modalRef = this.modalService.open(CodeEditorFileBrowserDeleteComponent, { keyboard: true, size: 'lg' });
-            modalRef.componentInstance.setInputs({
-                parent: this,
-                fileNameToDelete: filePath,
-                fileType,
-            });
+            this.fileToDelete.set({ fileName: filePath, fileType });
+            this.deleteDialogVisible.set(true);
         }
     }
 

@@ -25,8 +25,7 @@ import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { LtiInitializerComponent } from 'app/course/overview/exercise-details/lti-initializer/lti-initializer.component';
-import { PanelModule } from 'primeng/panel';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiPanelComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
@@ -60,10 +59,11 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
         CompetencyContributionComponent,
         LtiInitializerComponent,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
         ArtemisTranslatePipe,
         DiscussionSectionComponent,
-        PanelModule,
+        TumAetUiPanelComponent,
         TeamPracticeHintComponent,
     ],
 })

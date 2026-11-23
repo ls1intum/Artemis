@@ -6,12 +6,13 @@ type RequiredInputs = {
 };
 
 export function initializeDialog(component: AbstractDialogComponent, fixture: ComponentFixture<AbstractDialogComponent>, requiredInputs: RequiredInputs) {
-    // Populate the DynamicDialogConfig.data with the provided inputs,
+    // Populate the TumAetUiDialogConfig.data with the provided inputs,
     // so that AbstractDialogComponent.initialize() can apply them correctly
     // (including setting writable signals via .set()).
-    if (component.dialogConfig) {
+    if (component.dialogConfig?.data) {
+        const data = component.dialogConfig.data;
         Object.keys(requiredInputs).forEach((key) => {
-            component.dialogConfig!.data[key] = requiredInputs[key];
+            data[key] = requiredInputs[key];
         });
     }
 

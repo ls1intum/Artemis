@@ -63,8 +63,8 @@ class DiagramRenderingProfileValidationTest {
     private ConfigurationValidator createValidator() {
         Environment mockEnvironment = mock(Environment.class);
         when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
-        return new ConfigurationValidator(mockEnvironment, false, null, null, false, null, ConfigurationValidator.MIN_PORT, ConfigurationValidator.MIN_PORT, null, null, null, null,
-                false, "http://localhost");
+        return new ConfigurationValidator(mockEnvironment, false, null, null, false, null, ConfigurationValidator.MIN_PORT, ConfigurationValidator.MIN_PORT, null, null, false,
+                "http://localhost");
     }
 
     @Test

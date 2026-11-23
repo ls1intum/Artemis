@@ -29,23 +29,25 @@ export class AdminHyperionGenerationMonitoringApi {
      * @param exerciseId
      * @param generationId
      * @param reason
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    cancelGeneration(exerciseId: number, generationId: string, reason: string): Observable<void> {
+    cancelGeneration(exerciseId: number, generationId: string, reason: string, options?: import('./request-options').RequestOptions): Observable<void> {
         const generationIdPath = encodeURIComponent(String(generationId));
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'reason', reason);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/hyperion/admin/exercises/${exerciseId}/generations/${generationIdPath}${queryString ? `?${queryString}` : ''}`;
-        return this.http.delete<void>(url);
+        return this.http.delete<void>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getActiveGenerations(): Observable<Array<ActiveGeneration>> {
+    getActiveGenerations(options?: import('./request-options').RequestOptions): Observable<Array<ActiveGeneration>> {
         const url = `${this.basePath}/api/hyperion/admin/generations`;
-        return this.http.get<Array<ActiveGeneration>>(url);
+        return this.http.get<Array<ActiveGeneration>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

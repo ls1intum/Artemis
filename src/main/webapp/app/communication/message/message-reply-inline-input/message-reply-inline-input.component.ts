@@ -2,20 +2,22 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation, effect, inject, input,
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/communication/communication.util';
-import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { DraftMessageInputDirective } from '../draft-message-input.directive';
 import { Subscription } from 'rxjs';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
     templateUrl: './message-reply-inline-input.component.html',
     styleUrls: ['./message-reply-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe],
+    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective],
 })
 export class MessageReplyInlineInputComponent extends DraftMessageInputDirective<AnswerPost> implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
@@ -27,6 +29,8 @@ export class MessageReplyInlineInputComponent extends DraftMessageInputDirective
     private previousPostingId: number | undefined;
 
     readonly activeConversation = input<ConversationDTO>();
+
+    protected readonly faCircleNotch = faCircleNotch;
 
     readonly valueChange = output<void>();
 

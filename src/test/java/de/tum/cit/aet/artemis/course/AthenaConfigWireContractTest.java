@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import tools.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -50,6 +52,9 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
     private CourseTestRepository courseRepository;
 
     @Autowired
+    private AthenaRequestMockProvider athenaRequestMockProvider;
+
+    @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
@@ -67,6 +72,7 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
 
     @BeforeEach
     void setup() {
+        athenaRequestMockProvider.enableMockingOfRequests();
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
@@ -77,6 +83,11 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
 
         textExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(3),
                 ZonedDateTime.now().plusDays(5));
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        athenaRequestMockProvider.reset();
     }
 
     private void assertBothFlagsPresent(JsonNode course) {
@@ -148,6 +159,8 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void nextTextSubmissionToAssessCarriesTheAthenaFlags() throws Exception {
         TextExercise exercise = (TextExercise) assessableTextSubmission().getParticipation().getExercise();
+        // Athena is asked for the next submission and does not answer, so the server picks one itself
+        athenaRequestMockProvider.mockGetSelectedSubmissionAndExpectNetworkingException("text");
         JsonNode response = request.get("/api/text/exercises/" + exercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, JsonNode.class, lockParams());
         assertBothFlagsPresent(response.get("participation").get("exercise").get("course"));
     }
@@ -180,6 +193,8 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void nextProgrammingSubmissionToAssessCarriesTheAthenaFlags() throws Exception {
         ProgrammingExercise exercise = (ProgrammingExercise) assessableProgrammingSubmission().getParticipation().getExercise();
+        // Athena is asked for the next submission and does not answer, so the server picks one itself
+        athenaRequestMockProvider.mockGetSelectedSubmissionAndExpectNetworkingException("programming");
         JsonNode response = request.get("/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK, JsonNode.class,
                 lockParams());
         assertGradingFlagPresent(response.get("participation").get("exercise").get("course"));

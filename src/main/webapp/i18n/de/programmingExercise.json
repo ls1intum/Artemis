@@ -41,10 +41,10 @@
                 "invalidReason": "Der Bewertungsbereich enthält ungültige Werte."
             },
             "delete": {
-                "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?",
+                "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?",
                 "questionLocalVC": {
-                    "single": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!",
-                    "multiple": "Sollen die ausgewählten Aufgaben des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
+                    "single": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-state-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!",
+                    "multiple": "Sollen die ausgewählten Aufgaben des <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-state-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
                 },
                 "studentRepos": "Alle Studierenden-Repositories löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen, die Übung zuerst zu archivieren!",
                 "studentReposBuildPlans": "Alle Studierenden-Repositories und Studierenden-Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen, die Übung zuerst zu archivieren!",
@@ -159,7 +159,8 @@
                 "buildPlanConfigurationTooLong": "Die Build-Plan-Konfiguration ist zu lang. Die maximal zulässige Größe beträgt 1 MB.",
                 "dockerFlagsTooLong": "Die Docker-Flags sind zu lang. Die maximal zulässige Größe beträgt 8 KB.",
                 "branchRegexTooLong": "Der Branch-Regex ist zu lang. Die maximal zulässige Länge beträgt 128 Zeichen.",
-                "branchRegexInvalid": "Der Branch-Regex ist kein gültiger regulärer Ausdruck."
+                "branchRegexInvalid": "Der Branch-Regex ist kein gültiger regulärer Ausdruck.",
+                "branchRegexNotSupported": "Der Branch-Regex verwendet nicht unterstützte Syntax. Erlaubt sind Zeichen, Klassen wie [a-z0-9-], Gruppen mit Alternativen, die Anker ^ und $ sowie die Quantifizierer * + ? und gezählte Wiederholungen mit Werten bis 1000. Eine wiederholte Gruppe darf keine Alternativen, Quantifizierer oder Anker enthalten. Jede Alternative innerhalb einer Gruppe muss mindestens ein Zeichen erfordern."
             },
             "buildPhasesEditor": {
                 "title": "Build-Phasen",
@@ -809,8 +810,8 @@
                     "renamed": "Umbenannt"
                 },
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
-                "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
-                "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
+                "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-state-info\"> {{ currentCommitHash }} </span>",
+                "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-state-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
                 "lineStatBetweenSubmissionsTemplateLabel": "und der Vorlage hinzugefügt/entfernt wurden",
                 "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
                 "lineStatTooltipExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden",

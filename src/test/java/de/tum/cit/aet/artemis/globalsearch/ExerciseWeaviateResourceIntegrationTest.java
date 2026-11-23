@@ -1055,7 +1055,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          */
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testExamTypeFilterRespectsStudentExerciseAssignment() throws Exception {
+        void testExamModeFilterRespectsStudentExerciseAssignment() throws Exception {
             // Create an unassigned exercise in the ended exam
             var extraExerciseGroup = ExamFactory.generateExerciseGroup(true, endedExam);
             extraExerciseGroup = exerciseGroupRepository.save(extraExerciseGroup);

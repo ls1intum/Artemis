@@ -1,4 +1,4 @@
-<div data-testid="cardBuildOutput" class="card border build-output" [class.build-output--embedded]="!showHeader()">
+<div data-testid="cardBuildOutput" class="editor-panel build-output" [class.build-output--embedded]="!showHeader()">
     <!-- A tab that already names the build output shows it without its own header -->
     @if (showHeader() && collapsed()) {
         <jhi-collapsed-panel-rail
@@ -9,8 +9,8 @@
             (expand)="toggleEditorCollapse($event)"
         />
     } @else if (showHeader()) {
-        <div [class]="secondaryHeader() ? 'card-second-header' : 'card-header code-editor-panel-header d-flex'">
-            <h3 class="card-title">
+        <div [class]="secondaryHeader() ? 'editor-panel-second-header' : 'editor-panel-header code-editor-panel-header flex'">
+            <h3 class="editor-panel-title">
                 <fa-icon [icon]="faTerminal" />
                 <span jhiTranslate="artemisApp.editor.buildOutput"></span>
             </h3>
@@ -27,18 +27,18 @@
         </div>
     }
     @if (!isBuilding() && !rawBuildLogs().length) {
-        <div class="card-body">
+        <div class="editor-panel-body">
             <p class="text-center no-buildoutput" [jhiTranslate]="emptyStateTranslationKey()"></p>
         </div>
     }
     @if (isBuilding()) {
-        <div class="card-body">
+        <div class="editor-panel-body">
             <p class="text-center is-building"><fa-icon [icon]="faCircleNotch" animation="spin" /> <span jhiTranslate="artemisApp.editor.building"></span></p>
         </div>
     }
     @if (!isBuilding() && rawBuildLogs().length) {
-        <div class="card-body build-output__content">
-            <div class="buildoutput d-flex flex-column">
+        <div class="editor-panel-body build-output__content">
+            <div class="buildoutput flex flex-col">
                 @for (logEntry of rawBuildLogs(); track logEntry) {
                     <span class="build-output__entry">
                         <span class="build-output__entry-date">{{ logEntry.time | artemisDate: 'short' : true }}</span>

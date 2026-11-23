@@ -6,9 +6,7 @@
  * answer and wrong for a sub-heading inside it, and a consumer class on that host would merge additively with the
  * package's own rather than replacing it.
  *
- * So the same mechanism is applied locally. Bootstrap's unlayered `h1`-`h6` rules (size, `margin-bottom: .5rem`,
- * `font-weight: 500`, `line-height: 1.2`) and `global.scss`'s `body, h1, h2, h3, h4 { font-weight: 400 }` beat
- * Tailwind's `@layer utilities`, so `mb-2 text-sm font-semibold` on this element set none of them. A class inside an
+ * So the same mechanism is applied locally. A class inside an
  * Angular component carries the encapsulation attribute and outranks a bare `h3` on specificity, with no `!important`
  * anywhere. The values are named from the Tailwind type scale, which `tailwind.css` emits at `:root`, so this heading
  * and the `text-sm` utilities beside it cannot drift apart.

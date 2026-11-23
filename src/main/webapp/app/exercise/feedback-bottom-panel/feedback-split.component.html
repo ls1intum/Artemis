@@ -1,7 +1,7 @@
 <!-- The upper content is declared once and rendered in whichever branch is active, so it is not duplicated. -->
 <ng-template #top><ng-content select="[feedbackSplitTop]" /></ng-template>
 
-@if (hasBottom()) {
+@if (hasBottom() && !stacked()) {
     <!-- Collapsed, the panel keeps just its header (its own height) and the line between them is not there to drag. -->
     <tumaet-ui-splitter
         class="feedback-split"
@@ -22,4 +22,8 @@
     </tumaet-ui-splitter>
 } @else {
     <div class="feedback-split__top feedback-split__top--alone"><ng-container [ngTemplateOutlet]="top" /></div>
+    @if (hasBottom()) {
+        <!-- Stacked below the content on a narrow screen, where the page scrolls instead of giving the splitter a height -->
+        <div class="feedback-split__bottom"><ng-container [ngTemplateOutlet]="bottomTemplate() ?? null" /></div>
+    }
 }

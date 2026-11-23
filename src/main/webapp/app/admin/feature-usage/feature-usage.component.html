@@ -33,7 +33,7 @@
 </div>
 
 @if (loading() && !overview()) {
-    <div class="flex justify-center my-12!">
+    <div class="flex justify-center my-12">
         <fa-icon [icon]="faSpinner" animation="spin" size="3x" />
     </div>
 } @else if (overview(); as report) {
@@ -50,9 +50,9 @@
     </ul>
     <!-- Stated on the page, not only in the docs: the decision is made here, and reading these numbers as complete would
          under-rate every feature that mostly talks over the websocket. -->
-    <p class="text-muted-color text-sm mb-6!" jhiTranslate="artemisApp.featureUsage.limitations"></p>
+    <p class="text-muted-color text-sm mb-6" jhiTranslate="artemisApp.featureUsage.limitations"></p>
 
-    <div class="grid gap-4! mb-6!" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))">
+    <div class="grid gap-4 mb-6" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))">
         <!-- Every count here is a feature of the catalogue, the unit the tree below lists, so the headline and the rows an
              admin then works through cannot disagree. -->
         <tumaet-ui-card data-testid="kpi-used-features">
@@ -115,13 +115,13 @@
     </div>
 
     @if (useCount() === 0) {
-        <tumaet-ui-message class="mb-6! block" severity="info" data-testid="no-usage-message">
+        <tumaet-ui-message class="mb-6 block" severity="info" data-testid="no-usage-message">
             <span jhiTranslate="artemisApp.featureUsage.noUsageYet"></span>
         </tumaet-ui-message>
     }
 
     @if (roleDistribution().length) {
-        <tumaet-ui-card class="mb-6! block" data-testid="role-distribution">
+        <tumaet-ui-card class="mb-6 block" data-testid="role-distribution">
             <div class="text-sm text-muted-color mb-2" jhiTranslate="artemisApp.featureUsage.roleDistribution"></div>
             <div class="flex flex-wrap gap-2">
                 @for (share of roleDistribution(); track share.callerRole) {
@@ -140,7 +140,7 @@
         </tumaet-ui-tab-list>
     </tumaet-ui-tabs>
 
-    <div class="flex flex-wrap items-center gap-2 my-4!">
+    <div class="flex flex-wrap items-center gap-2 my-4">
         <tumaet-ui-icon-field [icon]="faSearch">
             <input
                 [attr.aria-label]="'artemisApp.featureUsage.search' | artemisTranslate"
@@ -175,7 +175,7 @@
             />
         }
         @if (activeTab() === TAB_FEATURES) {
-            <label class="inline-flex items-center gap-2 text-sm">
+            <label class="items-center gap-2 text-sm">
                 <tumaet-ui-toggle-switch [ngModel]="showNotAvailable()" (ngModelChange)="showNotAvailable.set($event)" data-testid="show-not-available" />
                 <span jhiTranslate="artemisApp.featureUsage.showNotAvailable"></span>
             </label>
@@ -209,7 +209,7 @@
     }
 
     @if (trendTarget(); as target) {
-        <tumaet-ui-card class="mt-6! block" data-testid="trend-card">
+        <tumaet-ui-card class="mt-6 block" data-testid="trend-card">
             <div class="flex items-center justify-between mb-2">
                 <div>
                     <span class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.trendTitle"></span>
@@ -234,7 +234,7 @@
                     />
                 </div>
             } @else {
-                <div class="flex justify-center py-6!">
+                <div class="flex justify-center py-6">
                     <fa-icon [icon]="faSpinner" animation="spin" size="2x" />
                 </div>
             }

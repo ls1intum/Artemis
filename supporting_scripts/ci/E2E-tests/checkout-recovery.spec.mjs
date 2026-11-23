@@ -23,12 +23,14 @@ for (const job of ['server-tests', 'server-tests-report', 'client-tests']) {
             return steps[index].run;
         }
 
+        const proxyImage = 'harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4';
+
         function execute(script, outputs) {
             const directory = mkdtempSync(join(tmpdir(), 'artemis checkout recovery '));
             directories.push(directory);
             const calls = join(directory, 'docker-calls');
             writeFileSync(calls, '');
-            writeFileSync(join(directory, 'docker'), '#!/bin/sh\nprintf \'%s\\n\' "$@" >> "$TEST_DOCKER_CALLS"\n', { mode: 0o700 });
+            writeFileSync(join(directory, 'docker'), `#!/bin/sh\nprintf '%s\\n' "$@" >> "$TEST_DOCKER_CALLS"\n`, { mode: 0o700 });
             for (const output of outputs) mkdirSync(join(directory, 'src/test/playwright', output), { recursive: true });
             const result = spawnSync('bash', ['-e', '-c', script], {
                 cwd: directory,
@@ -50,13 +52,17 @@ for (const job of ['server-tests', 'server-tests-report', 'client-tests']) {
                     '0:0',
                     '--volume',
                     `${directory}/src/test/playwright/${output}:/output`,
-                    'docker.io/library/alpine:3.24.4',
+                    proxyImage,
                     'chown',
                     '-R',
                     `${process.getuid()}:${process.getgid()}`,
                     '/output',
                 ]),
             );
+        });
+
+        it('never pulls from Docker Hub itself', () => {
+            expect(recovery()).not.toContain('docker.io');
         });
 
         it('does not need Docker when the output directories do not exist', () => {

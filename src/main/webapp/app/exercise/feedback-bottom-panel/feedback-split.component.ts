@@ -1,4 +1,7 @@
-import { ChangeDetectionStrategy, Component, OnInit, TemplateRef, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, Injector, OnInit, TemplateRef, afterNextRender, inject, input, output, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { map } from 'rxjs';
 import { NgTemplateOutlet } from '@angular/common';
 import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -21,6 +24,9 @@ const DEFAULT_SIZES = [68, 32];
  * Dragging the line until the panel is no taller than `[collapseSnapPercent]` asks the page to collapse it (`collapseRequested`), if the
  * page sets one: by default the height is only limited, and the panel collapses from its button. The page answers by setting `[expanded]`
  * to false; the height the user had before the drag is what the panel reopens with.
+ *
+ * Up to 992px the exercise page no longer gives the split a fixed height (see the resizeable container), so the content and the
+ * panel are stacked in the scrolling page instead.
  */
 @Component({
     selector: 'jhi-feedback-split',
@@ -28,8 +34,20 @@ const DEFAULT_SIZES = [68, 32];
     styleUrls: ['./feedback-split.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TumAetUiSplitterComponent, NgTemplateOutlet],
+    host: { '[class.feedback-split--stacked]': 'stacked()' },
 })
 export class FeedbackSplitComponent implements OnInit {
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+    private readonly injector = inject(Injector);
+
+    /** Whether the content and the panel are stacked rather than split, at the width where the page stops giving a fixed height. */
+    protected readonly stacked = toSignal(
+        inject(BreakpointObserver)
+            .observe('(max-width: 992px)')
+            .pipe(map((state) => state.matches)),
+        { initialValue: false },
+    );
+
     /** Whether the panel exists; without it only the upper content is shown. */
     readonly hasBottom = input(true);
     /** The split (percent) the content and the panel start with when the user has not dragged it yet. */
@@ -81,7 +99,14 @@ export class FeedbackSplitComponent implements OnInit {
         if (this.collapseSnapPercent() > 0 && sizes[1] <= this.collapseSnapPercent()) {
             // Not kept as the chosen split, so the panel reopens at a usable height rather than as the dragged sliver
             this.draggedSizes.set([...this.draggedSizes()]);
+            const separatorFocused = this.host.nativeElement.contains(document.activeElement);
             this.collapseRequested.emit();
+            if (separatorFocused) {
+                // The separator is hidden once the panel collapses, so the focus moves to the control that opens the panel again
+                afterNextRender(() => this.host.nativeElement.querySelector<HTMLElement>('.feedback-split__bottom .collapsed-panel-rail__button')?.focus(), {
+                    injector: this.injector,
+                });
+            }
         } else {
             this.draggedSizes.set(sizes);
             this.saveSizes(sizes);

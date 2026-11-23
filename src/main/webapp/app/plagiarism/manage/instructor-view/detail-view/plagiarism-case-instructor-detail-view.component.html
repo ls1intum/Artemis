@@ -2,12 +2,12 @@
     <div class="plagiarism-case">
         <div class="case-header">
             <div jhi-plagiarism-case-header [plagiarismCase]="plagiarismCase">
-                <div class="flex w-full! items-center px-3! min-[992px]:w-1/2! min-[1200px]:w-1/4! min-[1200px]:justify-end">
+                <div class="flex w-full items-center px-3 min-[992px]:w-1/2 min-[1200px]:w-1/4 min-[1200px]:justify-end">
                     <button
                         type="button"
                         tumAetUiButton
                         severity="secondary"
-                        class="m-1"
+                        class="m-1!"
                         (click)="printPlagiarismCase()"
                         [attr.aria-label]="'artemisApp.plagiarism.plagiarismCases.print' | artemisTranslate"
                     >
@@ -66,7 +66,7 @@
                 }
             </section>
             <section class="print:hidden">
-                <h2 class="mt-12!" jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.verdict"></h2>
+                <h2 class="mt-12" jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.verdict"></h2>
                 <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.text"></p>
                 <div class="verdict-container">
                     <tumaet-ui-tabs [(value)]="activeTab">
@@ -107,7 +107,7 @@
                             <tumaet-ui-tab-panel [value]="2" class="block pt-6" preserveContent>
                                 <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.pointDeductionDescription"></p>
                                 <div class="flex flex-wrap items-center">
-                                    <tumaet-ui-input-group class="w-auto">
+                                    <tumaet-ui-input-group class="w-auto!">
                                         <input
                                             tumAetUiInput
                                             [attr.aria-label]="'artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction' | artemisTranslate"
@@ -135,7 +135,7 @@
                             </tumaet-ui-tab-panel>
                             <tumaet-ui-tab-panel [value]="3" class="block pt-6" preserveContent>
                                 <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.warningDescription"></p>
-                                <div class="flex flex-col gap-4!">
+                                <div class="flex flex-col gap-4">
                                     <textarea
                                         tumAetUiInput
                                         [attr.aria-label]="'accessibility.verdictMessage' | artemisTranslate"
@@ -177,8 +177,8 @@
                 </div>
             </section>
             <section>
-                <h3 class="mt-12!" jhiTranslate="artemisApp.plagiarism.plagiarismCases.comparisons"></h3>
-                <div class="w-full px-3!">
+                <h3 class="mt-12" jhiTranslate="artemisApp.plagiarism.plagiarismCases.comparisons"></h3>
+                <div class="w-full px-3">
                     <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="false" />
                 </div>
             </section>

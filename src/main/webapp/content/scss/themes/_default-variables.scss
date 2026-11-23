@@ -41,10 +41,10 @@ $dark: $gray-900;
 
 $body-color: $gray-900;
 $text-body-secondary: $secondary;
+$body-secondary-color: rgba($body-color, 0.75);
 $body-bg: $gray-200;
 
 $navbar-dark-color: rgba($white, 0.6);
-$navbar-dark-hover-color: $white;
 
 // Global colors
 $artemis-dark: #353d47;
@@ -55,12 +55,10 @@ $border-color: #dee2e6;
 
 // Footer
 $footer-bg: $white;
-$header-footer-combined-height: 2rem;
 
 // Sidebar
 $sidebar-header-footer-combined-height: 88px;
 $sidebar-width: 235px;
-$spacing-modules: 1rem;
 
 // Module and Navigationbar
 $module-bg: $white;
@@ -77,16 +75,9 @@ $card-border-color: $border-color;
 // Navbar
 $navbar-foreground: $gray-400;
 $navbar-bg: $artemis-dark;
-$navbar-light-item-active-hover-bg: $artemis-dark;
 $navbar-breadcrumb-background: $body-bg;
 $navbar-light-color: rgba($white, 0.6);
-$navbar-light-hover-color: $white;
-$navbar-light-disabled-color: rgba($white, 0.25);
 $navbar-light-active-color: $white;
-$navbar-light-brand-color: $white;
-$navbar-light-brand-hover-color: $white;
-$navbar-light-toggler-border-color: rgba($white, 0.1);
-$navbar-light-toggler-icon-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.6%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 
 // Tooltip
 $tooltip-color: $white;
@@ -94,8 +85,6 @@ $tooltip-color: $white;
 // Backgrounds
 $dropdown-bg: $white;
 $popover-bg: $white;
-$list-group-bg: $white;
-$modal-content-bg: $white;
 
 // Exam
 $exam-height-offset: 88px;
@@ -113,8 +102,6 @@ $tab-bar-color-hover: $gray-600;
 $tab-bar-color-active: $primary;
 
 // Backgrounds
-$darker-body-bg: darken($body-bg, 20);
-$slightly-darker-body-bg: darken($body-bg, 10);
 $brighter-body-bg: lighten($body-bg, 20);
 $hover-slightly-darker-body-bg: #f1f5f9;
 
@@ -123,12 +110,7 @@ $theme-switch-box-border-color: $border-color;
 
 // Global.scss colors
 $colored-btn-font: #fff;
-$default-btn-font: #333;
-$default-btn-background: #fff;
-$default-btn-border: #ccc;
 
-$border-lightgrey: rgba(0, 0, 0, 0.125);
-$text-lightgrey: rgba(0, 0, 0, 0.125);
 $form-control-focus-background: white;
 $form-control-color: #303030;
 $artemis-control-background: #fff;
@@ -138,16 +120,12 @@ $artemis-control-color: #334155;
 $artemis-control-muted: #64748b;
 $artemis-control-disabled-background: #e2e8f0;
 $artemis-control-disabled-color: #64748b;
-$browserupgrade-color: black;
-$browserupgrade-color-background: #ccc;
 $ng-valid-border: green;
 $ng-invalid-border: red;
 $error-color: white;
 $error-background: red;
 $readonly-background: #eee;
-$jh-entity-details-dd-border: #eee;
 $editor-outline-background: #f8f9fa;
-$btn-total-score-color: #337ab7;
 
 $result-orange: orange;
 $result-late: gray;
@@ -161,20 +139,11 @@ $artemis-pre-color: #333;
 $artemis-pre-background: #f5f5f5;
 $artemis-pre-border: #ccc;
 
-$code-success-color: green;
-$code-success-background: #f2f9f2;
-$code-error-color: #c7254e;
-$code-error-background: #f9f2f4;
-$code-warning-color: #e68a00;
-$code-warning-background: #fff5e6;
-
 $code-password: transparent;
 $code-password-background: black;
 $code-password-selection: white;
 $code-password-selection-background: #3297fd;
 $code-password-hover: white;
-
-$displaycolor-background: #f8f9fa;
 
 $markdown-preview-editor-background: $module-bg;
 $markdown-preview-red: #ca2024;
@@ -191,40 +160,20 @@ $markdown-preview-blockquote-border: #dfe2e5;
 $connection-status: $success;
 $connection-status-disconnected: $danger;
 
-$mat-autocomplete-visible-box-shadow: rgb(100 100 100);
-$mat-form-field-outline: #ccc;
-
-// Feature Overview
-$fo-wrapper-background: white;
-$fo-header-font-color: white;
-$fo-container-box-icon-background: $gray-200;
-$fo-blue-font-color: #3070b3;
-$fo-box-overlay-background: $gray-100;
-
 // Markdown Editor
-$md-wrapper-body-bg: white;
 $md-wrapper-color: $artemis-dark;
 $md-tab-list-bg: white;
 $md-editor-background: white;
-$md-file-input-border-color: $border-color;
 $md-resize-icon-color: rgba(0, 0, 0, 0.125);
 
 // Communication
-$communication-conversation-sidebar: $gray-600;
-$communication-conversation-sidebar-active: $gray-900;
 $communication-conversation-sidebar-muted: $gray-500;
-$communication-conversation-sidebar-button-background-hover: $gray-400;
 
 $communication-light-gray: #979797;
 $communication-gray: #6a737d;
 $communication-blue: $link-color;
 $communication-light-blue: #e3ecf3;
 $communication-green: #33cd32;
-$communication-course-discussion-select-bg: white;
-
-$communication-pinned-post-highlight-color: lighten($communication-blue, 46%);
-
-$communication-answer-post-background-color: rgba(0, 0, 0, 0.02);
 
 $reaction-button-default-color: rgba(242, 242, 242);
 $reaction-button-hover-color: rgba(255, 255, 255);
@@ -242,7 +191,6 @@ $plagiarism-verdict-disabled-overlay-color: rgba($gray-300, 0.9);
 $plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
 
 // Component: course-exercise-card
-$course-exercise-card-border-color: lightgrey;
 $course-exercise-card-background: #fefefe;
 
 // Component: color selector
@@ -272,8 +220,6 @@ $lecture-scrim-color: $black;
 
 // Component: pdf-preview.component.scss
 $pdf-preview-pdf-container-shadow: scale-color($black, $alpha: -90%);
-$pdf-preview-canvas-shadow: scale-color($black, $alpha: -90%);
-$pdf-preview-container-overlay: scale-color($black, $alpha: -60%);
 $pdf-preview-enlarged-container-overlay: scale-color($black, $alpha: -80%);
 $pdf-preview-date-box-title-background: $gray-100;
 
@@ -286,11 +232,30 @@ $update-footer-background: white;
 // Edit Quiz
 $quiz-mapping-letter-number-mixin-color: white;
 
+// Quiz mapping editor and statistics (the same in both themes: these colours sit on question images and white drop locations)
+$quiz-mapping-number-background: #696969;
+$quiz-mapping-unlink-background: rgba(0, 0, 0, 0.5);
+$quiz-mapping-color-0: #2c3e50;
+$quiz-mapping-color-1: #2980b9;
+$quiz-mapping-color-2: #c0392b;
+$quiz-mapping-color-3: #27ae60;
+$quiz-mapping-color-4: #f1c40f;
+$quiz-mapping-color-5: #e67e22;
+$quiz-mapping-color-6: #8e44ad;
+$quiz-mapping-color-7: #1abc9c;
+$quiz-drop-list-receiving-background: rgba(173, 216, 230, 0.8);
+$quiz-drop-list-dragging-background: rgb(144, 238, 144);
+$quiz-statistic-picture-background: #fefefe;
+$quiz-statistic-drag-item-border: #696969;
+$quiz-statistic-drag-item-background: #fafafa;
+$quiz-statistic-letter-background: #428bca;
+$quiz-statistic-letter-solution-background: #5cb85c;
+$quiz-participation-overlay-shadow-near: rgba(0, 0, 0, 0.16);
+$quiz-participation-overlay-shadow-far: rgba(0, 0, 0, 0.23);
+
 $edit-quiz-footer-background: white;
 $quiz-exercise-detail-max-score-background: whitesmoke;
 $quiz-exercise-detail-max-score-color: black;
-$quiz-edit-question-border: lightgrey;
-$quiz-edit-question-background: #fefefe;
 
 $edit-quiz-q-dnd-drop-location-background: white;
 $edit-quiz-q-dnd-drop-location-color: black;
@@ -302,8 +267,6 @@ $quiz-drag-item-background: #f8fafc;
 $quiz-drag-item-border: #696969;
 $quiz-drag-item-color: black;
 
-$quiz-navigation-background: white;
-
 $quiz-participation-footer-background: white;
 $quiz-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $quiz-participation-footer-dnd-background: #86ccd5;
@@ -314,7 +277,6 @@ $quiz-participation-footer-content-quiz-score-color: $success;
 $quiz-participation-footer-content-quiz-score-incorrect-color: black;
 $quiz-participation-footer-content-time-warning-color: $warning;
 $quiz-participation-footer-content-time-critical-color: $danger;
-$quiz-participation-quiz-is-over-border-color: #3c763d;
 $quiz-participation-refresh-overlay-active-background: rgba(255, 255, 255, 0.6);
 $quiz-participation-btn-circle-light-border-color: white;
 
@@ -357,25 +319,15 @@ $dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
 $sa-question-container-input-background: white;
 $sa-question-container-input-border: #ced4da;
 $sa-question-input-invalid-background: lightgray;
-$sa-question-input-wrong-backgroud: red;
-$sa-question-input-correct-backgroud: orange;
-$sa-question-input-completely-correct-backgroud: lightgreen;
 
 $mc-question-answer-option-border: $gray-300;
 $mc-question-answer-option-hover-background: $gray-200;
 $mc-question-answer-option-selected-background: transparentize($primary, 0.7);
 
 // Programming Exercises
-$programming-exercise-instruction-step-wizard-card-header-background: #f5f5f5;
-$programming-exercise-instruction-step-wizard-card-header-border: #ddd;
-$programming-exercise-instruction-step-wizard-row-before-background: #ccc;
-$programming-exercise-instruction-step-wizard-btn-border-color: #ccc;
-$programming-exercise-instruction-step-wizard-circle-not-done-color: $secondary;
 $programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
 
 // SGI
-$edit-sqi-grading-instructions-update-border: lightgray;
-$edit-sqi-criterion-title-row-background: #f1f5f9;
 
 $sgi-assessment-layout-zero-background: #fff2cc;
 $sgi-assessment-layout-positive-background: #e3f0da;
@@ -392,8 +344,6 @@ $code-editor-file-browser-input-background: white;
 $code-editor-file-browser-input-color: black;
 $code-editor-file-browser-selected-file-background: #428bca;
 $code-editor-file-browser-badge-background: $code-editor-file-browser-tree-hover;
-$code-editor-diff-newline-background: rgba(63, 185, 80, 0.4);
-$code-editor-gutter-newline-background: rgba(63, 185, 80, 0.8);
 
 // Monaco editor
 $monaco-suggest-widget-background: $white;
@@ -409,14 +359,6 @@ $monaco-editor-add-feedback-button-background: $gray-400;
 $monaco-editor-add-feedback-button-hover-background: $gray-500;
 $monaco-editor-add-feedback-button-text: $black;
 
-// Git-Diff Viewer
-$git-diff-viewer-added-line-background: rgba(63, 185, 80, 0.5);
-$git-diff-viewer-added-line-gutter-background: rgba(63, 185, 80, 0.5);
-$git-diff-viewer-removed-line-background: rgba(248, 81, 73, 0.5);
-$git-diff-viewer-removed-line-gutter-background: rgba(248, 81, 73, 0.5);
-$git-diff-viewer-placeholder-line-background: rgba(200, 200, 200, 0.5);
-$git-diff-viewer-placeholder-line-gutter-background: rgba(200, 200, 200, 0.5);
-
 // Overview variables
 $overview-border-color: $border-color;
 $overview-light-border-color: lighten($overview-border-color, 5%);
@@ -424,22 +366,18 @@ $overview-light-background-color: rgba($overview-light-border-color, 0.3);
 $overview-light-primary-background-color: rgba($primary, 0.3);
 $overview-blue-border-color: $primary;
 $overview-tab-active-border-color: $artemis-dark;
-$overview-refresh-overlay-bg-color: rgba(255, 255, 255, 0.6);
-$overview-refresh-overlay-color: $artemis-dark;
 
 // Lecture Unit
 $lecture-unit-card-body-background: white;
-$lecture-unit-card-header-background: rgba($overview-light-border-color, 0.3);
 $lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
-$lecture-unit-card-hover-shadow: $primary;
 
-// Notification sidebar
-$notification-sb-background: $brighter-body-bg;
-$notification-sb-overlay-bg: rgba(0, 0, 0, 0.2);
-$notification-sb-box-shadow: rgba(0, 0, 0, 0.5);
-$notification-sb-even-child-bg: #f1f1f1;
-$notification-sb-hover-child-bg: rgba(62, 138, 204, 0.2);
-$notification-sb-icon-color: var(--bs-body-color);
+// Page ribbon (development, test server and exam test run)
+$page-ribbon-box-background: $white;
+$page-ribbon-box-shadow: rgba($black, 0.1);
+$page-ribbon-background: #a00;
+$page-ribbon-color: $white;
+$page-ribbon-shadow: rgba($black, 0.25);
+$page-ribbon-text-shadow: rgba($black, 0.35);
 
 // Text Editor
 $text-editor-background: #f8fafc;
@@ -449,32 +387,14 @@ $text-editor-border-color: #cbd5e1;
 
 // Exam (Manage)
 
-$exercise-group-border-color: #ccc;
-$exercise-group-header-background: #e2e8f0;
 $exercise-group-header-badge-color: $warning;
 
-// Grading system
-$base-grading-input-color: black;
-$base-grading-input-background: white;
-
-// Exam students
-$exam-students-dropdown-item-active: $success;
-$exam-students-dropdown-item-already-registered-color: #212529;
-$exam-students-dropdown-item-already-registered-background-color: #e9f6ec;
-$exam-students-dropdown-item-already-registered-background-hover-color: #daf2e0;
-$exam-students-datatable-row-newly-registered-background-color: #c4e7cc;
-
 // Data table
-$data-table-transitioning-container-active-background-color: rgba(255, 255, 255, 0.5);
 $data-table-dropdown-item-selected-background-color: $primary;
 
 // Team Participation Table
-$team-participation-table-last-row-border-bottom: #d1d4d7;
-$team-participation-table-even-row-background: #f2f2f2;
-$team-participation-table-header-inner-background: white;
 $team-participation-table-current-exercise-bg: lighten(#d4edda, 5%);
 $team-participation-table-current-exercise-text: #155724;
-$team-participation-table-box-shadow-color: gray;
 
 // Team Short Name
 $team-short-name-background: rgba(0, 0, 180, 0.05);
@@ -487,13 +407,8 @@ $exam-navigation-bar-synced-background-color: #3e8acc;
 $exam-navigation-bar-active-background: #276091;
 $exam-navigation-bar-exercise-index-color: black;
 $exam-timer-label-color: #212529;
-$exam-timer-remaining-time-background: white;
 $exam-timer-critical-background: $warning;
-$exam-participation-footer-background: white;
-$exam-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
-$exam-participation-footer-connected-background: #d1ecf1;
 $exam-participation-footer-disconnected-background: #fff2cc;
-$exam-text-exam-summary-background: #f8f9fa;
 $exam-update-footer-offset: 42px; // height of the update footer (connection status)
 
 // Assessment
@@ -602,8 +517,6 @@ $apollon-chrome-gap: 12px;
 
 // Feedback Suggestions (Athena)
 $feedback-suggestions-primary: rgb(181, 78, 254, 1);
-$feedback-suggestions-background: lighten($feedback-suggestions-primary, 24%);
-$feedback-suggestions-input-background: darken($feedback-suggestions-background, 2%);
 
 // Graph Colors
 $graph-light-grey: rgba(153, 153, 153, 1);
@@ -618,15 +531,12 @@ $graph-black: rgba(53, 61, 71, 1);
 
 // User-Management
 $user-management-background-color: rgba($black, 0.02);
-$user-management-border-color: rgba($black, 0.15);
 
 // Competency Rings
 $competency-rings-red: $red;
 $competency-rings-red-bg: transparentize($competency-rings-red, 0.8);
 $competency-rings-green: $green;
 $competency-rings-green-bg: transparentize($competency-rings-green, 0.8);
-$competency-rings-blue: $blue;
-$competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);
 
 // Iris Chatbot
 // TODO: Use standard colors
@@ -638,7 +548,6 @@ $iris-accent-background: $gray-300;
 $iris-label-color: $gray-600;
 $iris-accent-border-color: $gray-500;
 $iris-table-header-background: var(--gray-300);
-$iris-onboarding-backdrop: rgba($black, 0.4);
 $iris-blue-background: color-mix(in srgb, var(--primary) 10%, var(--white));
 $iris-shadow-color: $black;
 
@@ -647,13 +556,6 @@ $tutor-suggestion-background: $gray-400;
 
 // Image Cropper
 $cropper-overlay-color: transparent;
-
-// Settings
-$ssh-key-settings-table-hover-background: $gray-200;
-$ssh-key-settings-dropdown-buttons: $light;
-$ssh-key-settings-dropdown-buttons-hover: $gray-200;
-$ssh-key-settings-text-color: $black;
-$ssh-key-settings-shadow: rgba(0, 0, 0, 0.2);
 
 // Calendar
 $pastel-cyan: lighten($cyan, 35%);
@@ -676,10 +578,6 @@ $league-badge-master-color: hsl(270deg, 60%, 50%);
 $league-badge-star-color: #ffd700;
 $progress-bar-background: $gray-300;
 
-// Tutorial Groups
-$registration-suggestion-panel-bg: $white;
-$registration-suggestion-panel-selection-bg: #f1f5f9;
-
 // LLM Selection Popup
 $ai-modal-card-bg: $gray-100;
 $ai-modal-cloud-bg: linear-gradient(135deg, rgba(171, 171, 171, 0.55) 0%, rgba(188, 188, 188, 0.56) 100%);
@@ -690,7 +588,6 @@ $ai-modal-no-ai-bg: linear-gradient(135deg, $gray-200 0%, $gray-300 100%);
 $ai-modal-no-ai-bg-hover: linear-gradient(135deg, $gray-300 0%, $gray-400 100%);
 $ai-modal-icons-bg: rgba(0, 0, 0, 0.03);
 $ai-modal-description-color: $gray-600;
-$ai-modal-bg: rgba(0, 0, 0, 0.85);
 $ai-modal-subtitle: $black;
 $ai-modal-shadow-hover: rgba(0, 0, 0, 0.4);
 
@@ -710,7 +607,32 @@ $global-search-kbd-bg: $white;
 $global-search-kbd-border: $gray-300;
 $global-search-icon-bg: $gray-100;
 $global-search-border-color: $gray-200;
-$global-search-lecture-accent: #9333ea;
-$global-search-result-icon-bg: rgba($global-search-lecture-accent, 0.12);
-$global-search-result-hover-border: rgba($global-search-lecture-accent, 0.5);
-$global-search-result-hover-bg: rgba($global-search-lecture-accent, 0.05);
+
+// Tailwind colour utilities
+// The values behind `text-primary`, `text-color`, `text-muted-color`, `border-surface`, `bg-highlight` and the
+// neutral `surface` ramp (`bg-surface-100`); tailwind.css maps the utilities to these variables.
+$ui-primary: $primary;
+$ui-primary-contrast: #fff;
+$ui-text-color: #334155;
+$ui-text-muted-color: #64748b;
+$ui-border-color: #e2e8f0;
+$ui-highlight-background: mix($primary, #fff, 10%);
+$ui-highlight-color: mix($primary, #000, 60%);
+$ui-emphasis-background: #f1f5f9;
+$ui-emphasis-color: #1e293b;
+$ui-surface-0: #fff;
+$ui-surface-50: #f8fafc;
+$ui-surface-100: #f1f5f9;
+$ui-surface-200: #e2e8f0;
+$ui-surface-300: #cbd5e1;
+$ui-surface-400: #94a3b8;
+$ui-surface-500: #64748b;
+$ui-surface-600: #475569;
+$ui-surface-700: #334155;
+$ui-surface-800: #1e293b;
+$ui-surface-900: #0f172a;
+$ui-surface-950: #020617;
+
+// Tables of rendered markdown
+$markdown-table-color: $black;
+$markdown-table-border-color: $border-color;

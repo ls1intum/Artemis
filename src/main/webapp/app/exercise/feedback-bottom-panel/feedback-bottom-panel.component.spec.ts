@@ -79,6 +79,32 @@ describe('FeedbackBottomPanelComponent', () => {
         expect(fixture.componentInstance.expanded()).toBe(true);
     });
 
+    it('should keep the focus on the toggle when the panel collapses and opens again', async () => {
+        document.body.appendChild(fixture.nativeElement);
+        toggle().focus();
+
+        fixture.componentRef.setInput('expanded', false);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(document.activeElement).toBe(toggle());
+        expect(toggle().getAttribute('aria-expanded')).toBe('false');
+
+        fixture.componentRef.setInput('expanded', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(document.activeElement).toBe(toggle());
+        expect(toggle().getAttribute('aria-expanded')).toBe('true');
+        fixture.nativeElement.remove();
+    });
+
+    it('should leave the focus alone when it is elsewhere while the panel collapses', async () => {
+        fixture.componentRef.setInput('expanded', false);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(document.activeElement).not.toBe(toggle());
+    });
+
     it('should name the collapse button with the key the page gives', () => {
         expect(toggle().getAttribute('aria-label')).toBe('artemisApp.assessment.toggleGeneralFeedback');
 

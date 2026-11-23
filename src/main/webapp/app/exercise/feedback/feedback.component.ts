@@ -17,6 +17,8 @@ import { EMPTY, of } from 'rxjs';
 import { BuildLogEntryArray, BuildLogType } from 'app/localci/shared/entities/build-log.model';
 import { checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
+import { toFeedbacksOfResult } from 'app/assessment/shared/util/feedback-response.util';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { BuildLogService } from 'app/programming/shared/services/build-log.service';
@@ -75,7 +77,7 @@ const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
     ],
 })
 export class FeedbackComponent implements OnInit {
-    private resultService = inject(ResultService);
+    private resultApi = inject(ResultApi);
     private buildLogService = inject(BuildLogService);
     private feedbackService = inject(FeedbackService);
     private feedbackChartService = inject(FeedbackChartService);
@@ -226,7 +228,9 @@ export class FeedbackComponent implements OnInit {
         this.loadingFailed.set(false);
         const result = this.result();
         const feedbacks = result.feedbacks;
-        const request = feedbacks?.length ? of(feedbacks) : this.resultService.getFeedbackDetailsForResult(this.participation().id, result).pipe(map((response) => response.body));
+        const request = feedbacks?.length
+            ? of(feedbacks)
+            : this.resultApi.getResultDetails(this.participation().id!, result.id!).pipe(map((response) => toFeedbacksOfResult(response, result)));
         request
             .pipe(
                 takeUntilDestroyed(this.destroyRef),

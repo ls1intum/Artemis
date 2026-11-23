@@ -1,7 +1,7 @@
 <!-- The editors sit flush and frame their content themselves. Before the participation starts there is no editor panel, so
      the problem statement takes the left panel, and flush would put its text on the panel edge. -->
 <jhi-resizable-panels
-    class="flex-fill h-100 overflow-hidden"
+    class="h-full! flex-auto overflow-hidden!"
     [useViewportWidthForCollapse]="true"
     [flushLeftPanel]="flushEditorPanel()"
     [leftMinSizePercent]="leftMinSizePercent()"
@@ -25,7 +25,7 @@
                 [practiceParticipation]="practiceParticipation()"
                 [gradedParticipation]="gradedStudentParticipation()"
             />
-            <div class="mb-3">
+            <div class="mb-4">
                 <jhi-exercise-headers-information
                     [exercise]="exercise()"
                     [studentParticipation]="studentParticipation()"
@@ -43,12 +43,7 @@
                 <jhi-reset-repo-button [exercise]="exercise()" [participations]="exercise().studentParticipations!" [smallButtons]="false" />
             }
             @if (exampleSolutionInfo()?.exampleSolutionPublished) {
-                <p-panel
-                    [pt]="{ pcToggleButton: { root: { 'data-testid': 'example-solution-toggle' } } }"
-                    [header]="'artemisApp.exercise.exampleSolution' | artemisTranslate"
-                    [toggleable]="true"
-                    [collapsed]="true"
-                >
+                <tumaet-ui-panel data-testid="example-solution-panel" [header]="'artemisApp.exercise.exampleSolution' | artemisTranslate" toggleable [collapsed]="true">
                     <dl class="row-md jh-entity-details markdown-preview">
                         @if (exampleSolutionInfo()?.exampleSolutionUML && exampleSolutionInfo()?.modelingExercise) {
                             <dd>
@@ -64,10 +59,10 @@
                             </dd>
                         }
                         @if (exampleSolutionInfo()?.exampleSolution) {
-                            <dd class="editor-outline-background" [innerHTML]="exampleSolutionInfo()?.exampleSolution"></dd>
+                            <dd class="max-w-max bg-(--editor-outline-background)" [innerHTML]="exampleSolutionInfo()?.exampleSolution"></dd>
                         }
                         @if (exercise().type === ExerciseType.PROGRAMMING) {
-                            <dd class="editor-outline-background">
+                            <dd class="max-w-max bg-(--editor-outline-background)">
                                 <jhi-programming-exercise-example-solution-repo-download
                                     class="ms-2"
                                     [exerciseId]="exercise().id!"
@@ -76,20 +71,20 @@
                                 />
                             </dd>
                             @if (exampleSolutionInfo()?.programmingExercise?.releaseTestsWithExampleSolution) {
-                                <dd class="editor-outline-background">
+                                <dd class="max-w-max bg-(--editor-outline-background)">
                                     <jhi-programming-exercise-example-solution-repo-download
-                                        class="ms-2"
+                                        class="ms-2!"
                                         [exerciseId]="exercise().id!"
                                         [forStaff]="!!exercise().isAtLeastTutor"
                                         [includeTests]="true"
                                         [title]="'artemisApp.programmingExercise.export.downloadTestsWithExampleSolution'"
-                                        ngbTooltip="{{ 'artemisApp.programmingExercise.studentDownloadTestsTooltip' | artemisTranslate }}"
+                                        [tumAetUiTooltip]="'artemisApp.programmingExercise.studentDownloadTestsTooltip' | artemisTranslate"
                                     />
                                 </dd>
                             }
                         }
                     </dl>
-                </p-panel>
+                </tumaet-ui-panel>
             }
             @if (showRating()) {
                 @defer (on idle) {
@@ -107,7 +102,7 @@
                 }
             }
             @if (plagiarismCaseInfo()?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {
-                <a class="btn btn-info btn-sm me-2" [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfo()?.id]">
+                <a tumAetUiButton severity="info" size="small" class="me-2" [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfo()?.id]">
                     <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.resolvedPlagiarismCase"></span>
                 </a>
             }
@@ -140,7 +135,7 @@
         </ng-template>
         <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.iris'" [iconTemplate]="irisLogoTpl" [startsCollapsed]="irisPanelStartsCollapsed()">
             @defer (on idle) {
-                <jhi-iris-base-chatbot class="h-100" [layout]="'embedded'" [isChatHistoryAvailable]="false" />
+                <jhi-iris-base-chatbot class="h-full!" [layout]="'embedded'" [isChatHistoryAvailable]="false" />
             }
         </ng-template>
     }

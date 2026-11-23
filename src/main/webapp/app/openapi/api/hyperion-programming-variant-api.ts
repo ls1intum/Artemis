@@ -28,10 +28,11 @@ export class HyperionProgrammingVariantApi {
      *
      * @param exerciseId
      * @param variantGenerationRequest
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    generateProgrammingVariant(exerciseId: number, variantGenerationRequest: VariantGenerationRequest): Observable<ExerciseGenerationJobStart> {
+    generateProgrammingVariant(exerciseId: number, variantGenerationRequest: VariantGenerationRequest, options?: import('./request-options').RequestOptions): Observable<ExerciseGenerationJobStart> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generation/variants`;
-        return this.http.post<ExerciseGenerationJobStart>(url, variantGenerationRequest);
+        return this.http.post<ExerciseGenerationJobStart>(url, variantGenerationRequest, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

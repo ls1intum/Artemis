@@ -2,7 +2,8 @@ import { Component, OnDestroy, OnInit, computed, inject, input, signal, viewChil
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
-import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
+import { toFeedbacksOfResult } from 'app/assessment/shared/util/feedback-response.util';
 import { Observable, Subscription, of } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
@@ -56,7 +57,7 @@ import { DomainType } from 'app/programming/shared/code-editor/model/code-editor
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, ExerciseSubmission {
     private domainService = inject(DomainService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
-    private resultService = inject(ResultService);
+    private resultApi = inject(ResultApi);
     private submissionPolicyService = inject(SubmissionPolicyService);
     private route = inject(ActivatedRoute);
 
@@ -195,11 +196,11 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
                 }
                 // The results of this endpoint come without their feedback, so it is loaded here: the editor, the file badges and
                 // the feedback panel read it from the result as soon as they are created.
-                return this.resultService.getFeedbackDetailsForResult(participation.id, result).pipe(
-                    map((response) => {
+                return this.resultApi.getResultDetails(participation.id!, result.id!).pipe(
+                    map((feedbacks) => {
                         this.viewedResultId.set(resultId);
                         this.viewedCommitHash.set((submission as ProgrammingSubmission).commitHash);
-                        const pickedResult = cloneWith(result, { feedbacks: response.body ?? [] });
+                        const pickedResult = cloneWith(result, { feedbacks: toFeedbacksOfResult(feedbacks, result) });
                         return cloneWith(participation, { submissions: [cloneWith(submission, { results: [pickedResult] })] });
                     }),
                 );

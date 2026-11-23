@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261119105132-01-backfill-llm-usd-cost" author="bassner">
+        <comment>Estimate historical costs from the stored tariffs, interpreted as EUR under the old Artemis contract.
+            Use one fixed ECB reference rate, 1 EUR = 1.0968 USD on 18 November 2026
+            (https://data.ecb.europa.eu/data/datasets/EXR/EXR.D.USD.EUR.SP00.A).
+            Cache reads and writes are included in the total input count and priced separately.
+            Require valid counts and rates for every used token type and at least one positive used rate.
+            Rates above 1,000,000 EUR per million tokens are rejected as invalid, as are NaN and infinity.
+            Zero tariffs are accepted alongside positive ones; an all-zero tariff may mean prices were never configured.</comment>
+        <update tableName="llm_token_usage_request">
+            <column name="total_cost_usd" valueComputed="(
+                (CASE WHEN (num_input_tokens * 1.0 - num_cached_input_tokens - num_cache_write_input_tokens) > 0 THEN (num_input_tokens * 1.0 - num_cached_input_tokens - num_cache_write_input_tokens) * CAST(cost_per_million_input_tokens AS FLOAT(53)) ELSE 0 END) +
+                (CASE WHEN num_output_tokens > 0 THEN num_output_tokens * CAST(cost_per_million_output_tokens AS FLOAT(53)) ELSE 0 END) +
+                (CASE WHEN num_cached_input_tokens > 0 THEN num_cached_input_tokens * CAST(cost_per_million_cached_input_tokens AS FLOAT(53)) ELSE 0 END) +
+                (CASE WHEN num_cache_write_input_tokens > 0 THEN num_cache_write_input_tokens * CAST(cost_per_million_cache_write_input_tokens AS FLOAT(53)) ELSE 0 END)
+                ) * 1.0968 / 1000000.0"/>
+            <where><![CDATA[
+                total_cost_usd IS NULL
+                AND num_output_tokens >= 0
+                AND num_cached_input_tokens >= 0
+                AND num_cache_write_input_tokens >= 0
+                AND (num_input_tokens * 1.0 - num_cached_input_tokens - num_cache_write_input_tokens) >= 0
+                AND ((num_input_tokens * 1.0 - num_cached_input_tokens - num_cache_write_input_tokens) = 0 OR cost_per_million_input_tokens BETWEEN 0 AND 1000000)
+                AND (num_output_tokens = 0 OR cost_per_million_output_tokens BETWEEN 0 AND 1000000)
+                AND (num_cached_input_tokens = 0 OR cost_per_million_cached_input_tokens BETWEEN 0 AND 1000000)
+                AND (num_cache_write_input_tokens = 0 OR cost_per_million_cache_write_input_tokens BETWEEN 0 AND 1000000)
+                AND (
+                    ((num_input_tokens * 1.0 - num_cached_input_tokens - num_cache_write_input_tokens) > 0 AND cost_per_million_input_tokens > 0)
+                    OR (num_output_tokens > 0 AND cost_per_million_output_tokens > 0)
+                    OR (num_cached_input_tokens > 0 AND cost_per_million_cached_input_tokens > 0)
+                    OR (num_cache_write_input_tokens > 0 AND cost_per_million_cache_write_input_tokens > 0)
+                )
+            ]]></where>
+        </update>
+        <!-- The preceding application ignores USD totals. Preserve them when rolling back the application. -->
+        <rollback><empty/></rollback>
+    </changeSet>
+
+    <!-- Older Artemis versions map these rates to primitive floats and must be able to read new rows after a rollback. -->
+    <changeSet id="20261119105132-02-default-legacy-input-rate" author="bassner">
+        <addDefaultValue tableName="llm_token_usage_request" columnName="cost_per_million_input_tokens" columnDataType="float(12)" defaultValueNumeric="0"/>
+    </changeSet>
+
+    <changeSet id="20261119105132-03-default-legacy-output-rate" author="bassner">
+        <addDefaultValue tableName="llm_token_usage_request" columnName="cost_per_million_output_tokens" columnDataType="float(12)" defaultValueNumeric="0"/>
+    </changeSet>
+
+    <changeSet id="20261119105132-04-index-llm-usd-cost" author="bassner">
+        <createIndex tableName="llm_token_usage_request" indexName="idx_llm_token_usage_request_trace_usd">
+            <column name="trace_id"/>
+            <column name="total_cost_usd"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

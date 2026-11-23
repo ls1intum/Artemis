@@ -53,7 +53,7 @@ class AgentLoopRunnerTest {
             var toolCalls = IntStream.range(0, callsPerTurn).mapToObj(index -> new AssistantMessage.ToolCall(current + "-" + index, "function", "write", "{}")).toList();
             return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(toolCalls).build())));
         });
-        var settings = new HyperionGenerationSettings("smoke", "Smoke", 60, Duration.ofMinutes(90), 3_000_000, true, "CONTINUOUS", 200_000, null, false, false);
+        var settings = new HyperionGenerationSettings("smoke", "Smoke", 60, Duration.ofMinutes(90), 3_000_000, true, "CONTINUOUS", 200_000, "testpreset", null, false, false);
         RecordingTools tools = new RecordingTools();
 
         var result = runner(model).forSettings(settings).run("system", "brief", tools, settings.maxTurns(), () -> false, null, null);

@@ -6,19 +6,19 @@ Build-output
     height: inherit;
 
     /* Spaces the title from its icon in every language, which the translation used to do with a non-breaking space */
-    .card-title > fa-icon {
+    .editor-panel-title > fa-icon {
         margin-right: 0.35rem;
     }
 
     /* The collapse arrow is a cell at the end of the header, set off by a border like the collapse button of the other panels. The header
        has no padding on that side, and the cell takes back the padding above and below it, so it runs the height of the header. */
-    .card-header,
-    .card-second-header {
+    .editor-panel-header,
+    .editor-panel-second-header {
         padding-right: 0;
     }
 
     /* The header itself does nothing when it is clicked, so it is not a pointer */
-    .card-header {
+    .editor-panel-header {
         cursor: default;
     }
 
@@ -32,17 +32,17 @@ Build-output
         color: inherit;
         background: transparent;
         border: 0;
-        border-left: var(--bs-border-width) solid var(--bs-border-color);
+        border-left: 1px solid var(--border-color);
         cursor: pointer;
     }
 
-    .card-header &__chevron {
+    .editor-panel-header &__chevron {
         margin-block: -0.5rem;
     }
 
     &__chevron:hover,
     &__chevron:focus-visible {
-        color: var(--bs-primary);
+        color: var(--primary);
         background: var(--hover-slightly-darker-body-bg);
     }
 

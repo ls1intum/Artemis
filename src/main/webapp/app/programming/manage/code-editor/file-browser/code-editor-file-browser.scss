@@ -5,14 +5,14 @@ File browser
 .file-browser {
     height: 100%;
 
-    .card-body {
+    .editor-panel-body {
         overflow: auto;
         padding: 1rem 0.5rem;
     }
 
     // The toolbar is a row of cells, each button as high as the toolbar and set off from the next by a border, like the icons of
     // the collapsed panels and the collapse button of the right panel of the exercise details
-    .card-second-header {
+    .editor-panel-second-header {
         align-items: stretch;
         padding: 0;
 
@@ -20,11 +20,11 @@ File browser
             width: 60px;
             border: 0;
             border-radius: 0;
-            border-right: var(--bs-border-width) solid var(--bs-border-color);
+            border-right: 1px solid var(--border-color);
 
             &:hover:not(:disabled),
             &:focus-visible {
-                color: var(--bs-primary);
+                color: var(--primary);
                 background: var(--hover-slightly-darker-body-bg);
             }
         }
@@ -33,7 +33,7 @@ File browser
         #compress_tree,
         .collapse-panel-button {
             border-right: 0;
-            border-left: var(--bs-border-width) solid var(--bs-border-color);
+            border-left: 1px solid var(--border-color);
         }
 
         .collapse-panel-button {
@@ -52,7 +52,8 @@ File browser tree
         overflow-y: hidden !important;
 
         .treeview-item {
-            .list-group-item {
+            .file-tree-item {
+                position: relative;
                 padding: 0.3rem 0.5rem 0.3rem 1rem;
                 margin-bottom: 2px;
                 border: none;
@@ -88,7 +89,7 @@ File browser tree
                 overflow: hidden;
             }
 
-            .file-label-group .list-group-item__fileName {
+            .file-label-group .file-tree-item__fileName {
                 min-width: 0;
                 white-space: nowrap;
             }
@@ -98,18 +99,24 @@ File browser tree
                 flex: 1 1 auto;
             }
 
-            .rename-input-wrapper .list-group-item__input {
+            .rename-input-wrapper .file-tree-item__input {
                 width: 100%;
                 min-width: 7rem;
                 max-width: 18rem;
             }
 
-            .list-group-item:hover {
+            .file-tree-item:hover {
                 background-color: var(--code-editor-file-browser-tree-hover);
             }
 
-            .list-group-item:hover .file-icons,
-            .list-group-item:focus-within .file-icons {
+            /* A file with changes stays marked while hovered; only the selected file shows the selection colour. */
+            .file-tree-item.file-tree-item--changed:not(.node-selected),
+            .file-tree-item.file-tree-item--changed:not(.node-selected):hover {
+                background-color: var(--warning);
+            }
+
+            .file-tree-item:hover .file-icons,
+            .file-tree-item:focus-within .file-icons {
                 opacity: 1;
             }
         }
@@ -145,7 +152,7 @@ File browser tree
 /* Problem Statement */
 .file-browser {
     ::ng-deep .treeview-container {
-        .list-group-item.problem-statement-entry {
+        .file-tree-item.problem-statement-entry {
             position: relative;
 
             &:not(.node-selected) {
@@ -157,15 +164,15 @@ File browser tree
                     bottom: 6px;
                     width: 3px;
                     border-radius: 2px;
-                    background: var(--bs-primary);
+                    background: var(--primary);
                 }
 
                 .problem-statement-icon {
-                    color: var(--bs-primary);
+                    color: var(--primary);
                 }
 
-                .list-group-item__fileName {
-                    color: var(--bs-primary);
+                .file-tree-item__fileName {
+                    color: var(--primary);
                     font-weight: 600;
                 }
             }
@@ -175,7 +182,7 @@ File browser tree
             }
 
             &.node-selected .problem-statement-icon,
-            &.node-selected .list-group-item__fileName {
+            &.node-selected .file-tree-item__fileName {
                 color: inherit;
                 font-weight: inherit;
             }

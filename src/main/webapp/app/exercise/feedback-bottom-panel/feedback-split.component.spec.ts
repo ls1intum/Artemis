@@ -4,6 +4,8 @@ import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
 import { FeedbackSplitComponent } from 'app/exercise/feedback-bottom-panel/feedback-split.component';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { of } from 'rxjs';
 
 const STORAGE_KEY = 'feedback-split-spec';
 
@@ -108,6 +110,17 @@ describe('FeedbackSplitComponent', () => {
         dragTo([92, 8]);
 
         expect(fixture.componentInstance.collapseRequests).toBe(1);
+    });
+
+    it('should stack the content above the panel, without a splitter, on a narrow screen', () => {
+        TestBed.overrideProvider(BreakpointObserver, { useValue: { observe: () => of({ matches: true, breakpoints: {} }) } });
+        create();
+
+        expect(split()).toBeNull();
+        expect(top()).not.toBeNull();
+        expect(bottom()).not.toBeNull();
+        expect(top()!.compareDocumentPosition(bottom()!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('jhi-feedback-split').classList).toContain('feedback-split--stacked');
     });
 
     it('should not ask for the panel to collapse while it is dragged to a usable height', () => {

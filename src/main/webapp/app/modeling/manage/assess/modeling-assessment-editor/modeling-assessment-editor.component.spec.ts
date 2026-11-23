@@ -31,8 +31,7 @@ import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import dayjs from 'dayjs/esm';
 import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AssessmentComplaintAlertComponent } from 'app/assessment/manage/assessment-complaint-alert/assessment-complaint-alert.component';
@@ -64,7 +63,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     let complaintSpy: ReturnType<typeof vi.spyOn>;
     let router: Router;
     let submissionService: SubmissionService;
-    let exampleSubmissionService: ExampleSubmissionService;
+    let exampleSubmissionService: ExampleSubmissionApi;
     let paramMapSubject: BehaviorSubject<ParamMap>;
     let queryParamMapSubject: BehaviorSubject<ParamMap>;
 
@@ -125,7 +124,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         complaintService = TestBed.inject(ComplaintService);
         submissionService = TestBed.inject(SubmissionService);
         mockAuth = TestBed.inject(AccountService) as any as MockAccountService;
-        exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+        exampleSubmissionService = TestBed.inject(ExampleSubmissionApi);
         mockAuth.hasAnyAuthorityDirect([]);
         mockAuth.identity();
         fixture.detectChanges();
@@ -991,12 +990,12 @@ describe('ModelingAssessmentEditorComponent', () => {
             text: 'Test\n\nTest\n\nTest',
         } as ModelingSubmission);
 
-        const importSpy = vi.spyOn(exampleSubmissionService, 'import').mockReturnValue(of(new HttpResponse({ body: new ExampleSubmission() })));
+        const importSpy = vi.spyOn(exampleSubmissionService, 'importExampleSubmission').mockReturnValue(of({}));
 
         component.useStudentSubmissionAsExampleSubmission();
 
         expect(importSpy).toHaveBeenCalledOnce();
-        expect(importSpy).toHaveBeenCalledWith(component.submission()!.id, component.modelingExercise()!.id);
+        expect(importSpy).toHaveBeenCalledWith(component.modelingExercise()!.id, component.submission()!.id);
     });
 
     it('should display error when complaint resolved but assessment invalid', () => {

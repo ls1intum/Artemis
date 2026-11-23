@@ -42,14 +42,14 @@ Instructions
     align-self: stretch;
     margin-left: auto;
     padding: 0;
-    color: var(--bs-body-color);
+    color: var(--body-color);
     background: transparent;
     border: 0;
-    border-left: var(--bs-border-width) solid var(--bs-border-color);
+    border-left: 1px solid var(--border-color);
 
     &:hover,
     &:focus-visible {
-        color: var(--bs-primary);
+        color: var(--primary);
         background: var(--hover-slightly-darker-body-bg);
     }
 }

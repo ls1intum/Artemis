@@ -27,7 +27,7 @@
                 <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
-            <div class="w-screen module-bg rounded-lg p-4! flex flex-col">
+            <div class="w-screen bg-(--module-bg) rounded-lg p-4 flex flex-col">
                 @if (isCollapsed()) {
                     <div>
                         <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
