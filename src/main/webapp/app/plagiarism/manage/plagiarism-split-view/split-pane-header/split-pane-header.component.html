@@ -2,7 +2,7 @@
     <div
         class="split-pane-header-top"
         [class.active]="showFiles()"
-        [class.clickable]="hasFiles()"
+        [class.cursor-pointer]="hasFiles()"
         (click)="toggleShowFiles(true)"
         [attr.aria-expanded]="hasFiles() ? showFiles() : null"
         #keyboardAction2

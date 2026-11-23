@@ -50,7 +50,8 @@ class HyperionFaqRewriteServiceTest {
         var templateService = new HyperionPromptTemplateService();
         var observationRegistry = ObservationRegistry.create();
         var objectMapper = JsonObjectMapper.get();
-        this.hyperionFaqRewriteService = new HyperionFaqRewriteService(faqRepository, chatClient, templateService, observationRegistry, objectMapper);
+        this.hyperionFaqRewriteService = new HyperionFaqRewriteService(faqRepository, HyperionTestChatClients.returning(chatClient), templateService, observationRegistry,
+                objectMapper);
 
         existingFaq = new Faq();
         existingFaq.setId(100L);

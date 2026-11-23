@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureSearchApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
@@ -59,18 +60,17 @@ public class HyperionCompetencyContextService {
 
     private final Optional<HyperionPromptTemplateService> templateService;
 
-    @Nullable
     private final ChatClient chatClient;
 
     public HyperionCompetencyContextService(Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi,
             Optional<IrisLectureSearchApi> irisLectureSearchApi, Optional<LectureUnitApi> lectureUnitApi, Optional<HyperionPromptTemplateService> templateService,
-            @Nullable ChatClient chatClient) {
+            HyperionChatClientService chatClients) {
         this.courseCompetencyApi = courseCompetencyApi;
         this.competencyRelationApi = competencyRelationApi;
         this.irisLectureSearchApi = irisLectureSearchApi;
         this.lectureUnitApi = lectureUnitApi;
         this.templateService = templateService;
-        this.chatClient = chatClient;
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.COMPETENCY_CONTEXT);
     }
 
     /**
@@ -178,8 +178,8 @@ public class HyperionCompetencyContextService {
 
     @Nullable
     private String summarizeExercise(Exercise exercise) {
-        if (chatClient == null || templateService.isEmpty()) {
-            log.debug("Skipping exercise [{}] in context: LLM client or template service not available", exercise.getId());
+        if (templateService.isEmpty()) {
+            log.debug("Skipping exercise [{}] in context: template service not available", exercise.getId());
             return null;
         }
 

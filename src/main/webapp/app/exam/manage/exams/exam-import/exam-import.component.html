@@ -2,7 +2,7 @@
     <!-- State 1: Selection of an exam for import -->
     @if (!exam()) {
         <tumaet-ui-table-layout [loading]="loading()" [empty]="content().resultsOnPage.length === 0 && !loading()">
-            <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+            <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
                 <input
                     tumAetUiInput
                     tumAetUiInputSize="small"
@@ -79,18 +79,18 @@
     <!-- State 2: Selection of exercises to be imported after an exam was selected -->
     @if (exam(); as selectedExam) {
         @if (subsequentExerciseGroupSelection()) {
-            <div class="flex flex-col gap-6!">
+            <div class="flex flex-col gap-6">
                 <div>
                     @if (!isImportingExercises()) {
-                        <p class="my-0!" jhiTranslate="artemisApp.examManagement.exerciseGroup.selectExerciseGroupExplanation"></p>
+                        <p class="my-0" jhiTranslate="artemisApp.examManagement.exerciseGroup.selectExerciseGroupExplanation"></p>
                     }
                     @if (isImportingExercises()) {
-                        <p class="my-0!" jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.isImporting"></p>
+                        <p class="my-0" jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.isImporting"></p>
                     }
                 </div>
                 <jhi-exam-exercise-import [exam]="selectedExam" [importInSameCourse]="isImportInSameCourse()" [targetCourseId]="targetCourseId()" />
             </div>
-            <div class="flex justify-end pt-6!">
+            <div class="flex justify-end pt-6">
                 <button severity="secondary" tumAetUiButton type="button" [disabled]="isImportingExercises()" (click)="performImportOfExerciseGroups()">
                     @if (isImportingExercises()) {
                         <fa-icon [icon]="faSpinner" animation="spin" />

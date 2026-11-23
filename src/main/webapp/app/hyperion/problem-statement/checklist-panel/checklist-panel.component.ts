@@ -307,7 +307,7 @@ export class ChecklistPanelComponent {
     private static readonly SEVERITY_TAG_MAP: Record<string, 'danger' | 'warn' | 'info'> = { HIGH: 'danger', MEDIUM: 'warn', LOW: 'info' };
     /** The category chips use the colours of the matching radar axis. */
     private static readonly CATEGORY_COLOR_MAP: Record<string, string> = {
-        CLARITY: 'bg-primary text-white',
+        CLARITY: 'bg-(--primary) text-white',
         COHERENCE: 'bg-state-info text-white',
         COMPLETENESS: 'bg-state-success text-white',
     };

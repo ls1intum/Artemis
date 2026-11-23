@@ -1,6 +1,6 @@
 <div
     [id]="'competency-card-' + competency()?.id"
-    class="relative -mx-2 my-2 flex cursor-pointer flex-wrap items-center justify-between rounded-lg bg-(--overview-light-background-color) px-4! py-2 hover:bg-(--hover-slightly-darker-body-bg)"
+    class="relative -mx-2 my-2 flex cursor-pointer flex-wrap items-center justify-between rounded-lg bg-(--overview-light-background-color) px-4 py-2 hover:bg-(--hover-slightly-darker-body-bg)"
     [class]="isMastered ? 'text-(--text-body-secondary)' : ''"
 >
     @if (courseId() && !isPrerequisite() && competency()?.id) {
@@ -13,7 +13,7 @@
     <div class="hidden w-auto px-2 sm:block">
         <div class="flex min-w-10 items-center justify-center text-(--body-color)">
             <fa-icon
-                class="z-1"
+                class="z-1!"
                 [icon]="getIcon(competency()?.taxonomy)"
                 size="2x"
                 [tumAetUiTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency()?.taxonomy ?? 'none') | artemisTranslate"
@@ -23,12 +23,12 @@
     <div class="min-w-0 flex-1 px-2">
         <div class="-mx-2 flex min-h-[35px] flex-wrap items-center">
             <div class="w-auto px-2 sm:hidden">
-                <h4 class="m-0! font-medium">
+                <h4 class="m-0">
                     <fa-icon [icon]="getIcon(competency()?.taxonomy)" />
                 </h4>
             </div>
             <div class="min-w-0 flex-1 px-2 py-2">
-                <h4 class="m-0!">
+                <h4 class="m-0">
                     {{ competency()?.title }}
                     @if (isMastered) {
                         <tumaet-ui-tag class="align-middle" severity="success" data-testid="competency-mastered-badge">
@@ -42,7 +42,7 @@
                     }
                 </h4>
                 @if (competency()?.description) {
-                    <p class="markdown-preview m-0!" [jhiMarkdown]="competency()?.description"></p>
+                    <p class="markdown-preview m-0" [jhiMarkdown]="competency()?.description"></p>
                 }
                 @if (isPrerequisite() && competency()?.linkedCourseCompetency?.course) {
                     <div>
@@ -65,7 +65,7 @@
                 </div>
             }
             @if (!noProgressRings()) {
-                <div class="max-w-[95px] flex-1 px-2 py-1 text-end">
+                <div class="max-w-[95px] flex-1 px-2 py-1 text-right">
                     <jhi-competency-rings [progress]="progress" [mastery]="mastery" />
                 </div>
             }

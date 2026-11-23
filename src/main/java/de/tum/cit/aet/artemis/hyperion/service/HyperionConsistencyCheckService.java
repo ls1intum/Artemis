@@ -26,8 +26,8 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
 import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
 import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.domain.Severity;
@@ -73,7 +73,6 @@ public class HyperionConsistencyCheckService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    @Nullable
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templates;
@@ -94,7 +93,7 @@ public class HyperionConsistencyCheckService {
      * Creates the consistency-check orchestration service with all required persistence, prompt, and observability dependencies.
      *
      * @param programmingExerciseRepository repository for loading programming exercises with participations
-     * @param chatClient                    configured Spring AI chat client
+     * @param chatClients                   the chat clients of the Hyperion LLM presets
      * @param templates                     prompt template renderer
      * @param exerciseContextRenderer       renderer for exercise problem/repository context
      * @param reviewCommentContextRenderer  renderer for existing review-thread prompt context
@@ -103,11 +102,12 @@ public class HyperionConsistencyCheckService {
      * @param userRepository                repository for resolving current user id
      * @param objectMapper                  Spring-managed Jackson JsonMapper
      */
-    public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, @Nullable ChatClient chatClient, HyperionPromptTemplateService templates,
-            HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
-            ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, JsonMapper objectMapper) {
+    public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, HyperionChatClientService chatClients,
+            HyperionPromptTemplateService templates, HyperionProgrammingExerciseContextRendererService exerciseContextRenderer,
+            HyperionReviewCommentContextRendererService reviewCommentContextRenderer, ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService,
+            UserRepository userRepository, JsonMapper objectMapper) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.chatClient = chatClient;
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.CONSISTENCY_CHECK);
         this.templates = templates;
         this.exerciseContextRenderer = exerciseContextRenderer;
         this.reviewCommentContextRenderer = reviewCommentContextRenderer;
@@ -155,10 +155,6 @@ public class HyperionConsistencyCheckService {
      */
     @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
     public ConsistencyCheckResponseDTO checkConsistency(long exerciseId, boolean skipThreadContext) {
-        if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "ConsistencyCheck", "ConsistencyCheck.chatClientNotConfigured");
-        }
-
         log.info("Performing consistency check for exercise {}", exerciseId);
 
         Instant startTime = Instant.now();

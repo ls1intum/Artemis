@@ -84,7 +84,7 @@ describe('CourseTitleBarComponent', () => {
 
     it('should have the correct styling classes on the title bar', () => {
         const titleBar = fixture.debugElement.query(By.css('#course-title-bar'));
-        expect(titleBar.classes['module-bg']).toBeTruthy();
+        expect(titleBar.classes['bg-(--module-bg)']).toBeTruthy();
         expect(titleBar.classes['rounded-sm']).toBeTruthy();
         expect(titleBar.classes['sticky']).toBeTruthy();
         expect(titleBar.classes['top-0']).toBeTruthy();

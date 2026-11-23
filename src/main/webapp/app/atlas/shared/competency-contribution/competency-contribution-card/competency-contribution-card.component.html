@@ -1,6 +1,6 @@
 <a
     [id]="'competency-contribution-card-' + competencyId()"
-    class="block h-full rounded-xl text-inherit no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    class="block h-full rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     [routerLink]="['/courses', courseId(), 'competencies', competencyId()]"
     [tumAetUiTooltip]="
         'artemisApp.competency.competencyContribution.weightIconTooltips.' +
@@ -8,7 +8,7 @@
     "
 >
     <tumaet-ui-card class="h-full">
-        <h4 class="m-0 flex items-center justify-between gap-2 text-base font-medium">
+        <h4 class="m-0 flex items-center justify-between gap-2">
             <span class="min-w-0 truncate">{{ title() }}</span>
             <fa-layers class="icon-full-size shrink-0 text-state-success" aria-hidden="true">
                 <fa-icon [icon]="faArrowRight" />

@@ -222,7 +222,6 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
         var result = CompetencyOrchestrationResultDTO.failed("Lecture orchestration failed", reason);
         doReturn(result).when(orchestrationService).runLectureUnitWithQueuedFlush(textUnit.getId());
         int expectedStatus = switch (reason) {
-            case NO_CHAT_CLIENT -> 503;
             case LLM_ERROR -> 502;
             case INTERNAL_ERROR -> 500;
             default -> 422;
