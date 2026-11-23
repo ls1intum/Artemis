@@ -10,10 +10,10 @@
             [attr.aria-label]="'artemisApp.assessmentInstructions.instructions.resize' | artemisTranslate"
             [title]="'artemisApp.assessmentInstructions.instructions.resize' | artemisTranslate"
         ></div>
-        <div class="panel-surface rounded-lg border border-border bg-surface-raised">
+        <div class="panel-surface rounded-lg border border-(--border-color) bg-surface-raised">
             <div
                 data-testid="assessment-instructions-toggle"
-                class="feedback-panel-header border-b border-border bg-surface-hover px-6! py-4! text-(--tumaet-ui-primary-contrast-color) bg-(--tumaet-ui-primary-color)"
+                class="feedback-panel-header border-b border-border bg-surface-hover px-6 py-4 text-(--tumaet-ui-primary-contrast-color) bg-(--tumaet-ui-primary-color)"
                 (click)="collapsed.set(!collapsed())"
                 [attr.aria-expanded]="!collapsed()"
                 #keyboardAction16
@@ -23,7 +23,7 @@
                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction16.click() : undefined"
             >
-                <h3 class="panel-title text-lg font-medium">
+                <h3 class="panel-title">
                     <fa-icon [icon]="farListAlt" />&nbsp;
                     <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
                 </h3>
@@ -32,7 +32,7 @@
             <div class="wrapper-scroll-y scrollbar h-screen">
                 <jhi-assessment-instructions
                     [readOnly]="readOnly()"
-                    class="feedback-panel-body p-6! markdown-preview"
+                    class="feedback-panel-body p-6 markdown-preview"
                     [exercise]="exercise()"
                     [isAssessmentTraining]="isAssessmentTraining()"
                     [showAssessmentInstructions]="showAssessmentInstructions()"

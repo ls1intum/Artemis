@@ -1,7 +1,3 @@
-// The instructor trigger-build button of the programming module still opens its manual-result confirmation with the PrimeNG dialog service, so the page spec has to provide it
-// until that module is migrated. Remove with the import in programming-exercise-instructor-trigger-build-button.component.ts.
-// eslint-disable-next-line no-restricted-imports
-import { DialogService as LegacyDialogService } from 'primeng/dynamicdialog';
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -25,6 +21,7 @@ import { ResultProgressBarComponent } from 'app/exercise/result/result-progress-
 import { ParticipationSubmissionComponent } from 'app/exercise/participation-submission/participation-submission.component';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { ResultApi } from 'app/openapi/api/result-api';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
@@ -53,6 +50,7 @@ describe('ParticipationSubmissionComponent', () => {
     let comp: ParticipationSubmissionComponent;
     let fixture: ComponentFixture<ParticipationSubmissionComponent>;
     let participationService: ParticipationService;
+    let resultApi: ResultApi;
     let submissionService: SubmissionService;
     let textAssessmentService: TextAssessmentService;
     let fileUploadAssessmentService: FileUploadAssessmentService;
@@ -86,7 +84,6 @@ describe('ParticipationSubmissionComponent', () => {
                 MockProvider(ParticipationWebsocketService, { subscribeForLatestResultOfParticipation: () => new BehaviorSubject<Result | undefined>(undefined) }),
                 MockProvider(ProfileService, { isProfileActive: () => true }),
                 MockProvider(TumAetUiDialogService),
-                MockProvider(LegacyDialogService),
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(SubmissionService),
                 MockProvider(ExerciseService),
@@ -104,6 +101,7 @@ describe('ParticipationSubmissionComponent', () => {
                 fixture = TestBed.createComponent(ParticipationSubmissionComponent);
                 comp = fixture.componentInstance;
                 participationService = TestBed.inject(ParticipationService);
+                resultApi = TestBed.inject(ResultApi);
                 submissionService = TestBed.inject(SubmissionService);
                 textAssessmentService = TestBed.inject(TextAssessmentService);
                 modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
@@ -307,7 +305,7 @@ describe('ParticipationSubmissionComponent', () => {
             vi.spyOn(buildService, 'fetchQueueReleaseDateEstimationByParticipationId').mockReturnValue(of(dayjs().add(30, 'seconds')));
             vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: { id: 1, type: ParticipationType.PROGRAMMING } })));
             vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
-            vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({}));
+            vi.spyOn(resultApi, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({}));
             findAllSubmissionsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: [pendingSubmission, completedSubmission] })));
         });
 
@@ -389,7 +387,7 @@ describe('ParticipationSubmissionComponent', () => {
                 findAllSubmissionsOfParticipationStub.mockReturnValue(
                     of(new HttpResponse({ body: [{ ...liveSubmission, results: [{ id: 33, score: 100, rated: true }] }, pendingSubmission, completedSubmission] })),
                 );
-                vi.mocked(participationService.getBuildJobIdsForResultsOfParticipation).mockReturnValue(of({ '33': 'late-build-33' }));
+                vi.mocked(resultApi.getBuildJobIdsForResultsOfParticipation).mockReturnValue(of({ '33': 'late-build-33' }));
                 states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION });
                 fixture.detectChanges();
                 fixture.detectChanges();
@@ -498,7 +496,7 @@ describe('ParticipationSubmissionComponent', () => {
                     }),
                 ),
             );
-            vi.mocked(participationService.getBuildJobIdsForResultsOfParticipation).mockReturnValue(of({ '33': 'first-job', '44': 'second-job' }));
+            vi.mocked(resultApi.getBuildJobIdsForResultsOfParticipation).mockReturnValue(of({ '33': 'first-job', '44': 'second-job' }));
             states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION });
             fixture.detectChanges();
             fixture.detectChanges();
@@ -542,7 +540,7 @@ describe('ParticipationSubmissionComponent', () => {
             fixture.detectChanges();
             const newResult = { id: 22, score: 100, rated: true };
             findAllSubmissionsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: [{ ...pendingSubmission, results: [newResult] }, completedSubmission] })));
-            vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '22': 'build-job-22' }));
+            vi.spyOn(resultApi, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '22': 'build-job-22' }));
 
             states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION });
             fixture.detectChanges();
@@ -705,7 +703,7 @@ describe('ParticipationSubmissionComponent', () => {
         exercise.isAtLeastInstructor = true;
         vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: exercise })));
         findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: submissions }));
-        vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '4': '2' }));
+        vi.spyOn(resultApi, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '4': '2' }));
 
         comp.ngOnInit();
 
@@ -738,7 +736,7 @@ describe('ParticipationSubmissionComponent', () => {
         const findWithTemplateAndSolutionParticipationStub = vi
             .spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation')
             .mockReturnValue(of(new HttpResponse({ body: programmingExercise })));
-        vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '4': '2' }));
+        vi.spyOn(resultApi, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '4': '2' }));
 
         comp.ngOnInit();
 
@@ -771,7 +769,7 @@ describe('ParticipationSubmissionComponent', () => {
         const findWithTemplateAndSolutionParticipationStub = vi
             .spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation')
             .mockReturnValue(of(new HttpResponse({ body: programmingExercise })));
-        vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '4': '2' }));
+        vi.spyOn(resultApi, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '4': '2' }));
 
         comp.ngOnInit();
 
@@ -787,7 +785,7 @@ describe('ParticipationSubmissionComponent', () => {
             vi.spyOn(textAssessmentService, 'deleteAssessment').mockReturnValue(of(void 0));
             vi.spyOn(modelingAssessmentService, 'deleteAssessment').mockReturnValue(of(void 0));
             vi.spyOn(programmingAssessmentService, 'deleteAssessment').mockReturnValue(of(void 0));
-            vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '4': '2' }));
+            vi.spyOn(resultApi, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '4': '2' }));
         });
 
         it('should delete result of fileUploadSubmission', () => {
@@ -859,6 +857,21 @@ describe('ParticipationSubmissionComponent', () => {
         });
     });
 
+    it('should load the build job ids of the participation results from the assessment endpoint', () => {
+        const httpMock = TestBed.inject(HttpTestingController);
+        vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: { id: 1, type: ParticipationType.PROGRAMMING } })));
+        vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
+        findAllSubmissionsOfParticipationStub.mockReturnValue(of(new HttpResponse({ body: [] })));
+
+        comp.ngOnInit();
+        const request = httpMock.expectOne('/api/assessment/participations/1/results/build-job-ids');
+        expect(request.request.method).toBe('GET');
+        request.flush({ '11': 'build-job-11' });
+
+        expect(comp.resultIdToBuildJobIdMap()).toEqual({ '11': 'build-job-11' });
+        httpMock.verify();
+    });
+
     describe('should handle failed delete', () => {
         beforeEach(() => {
             const error = { message: '400 error', error: { message: 'error.hasComplaint' } } as HttpErrorResponse;
@@ -866,7 +879,7 @@ describe('ParticipationSubmissionComponent', () => {
             vi.spyOn(programmingAssessmentService, 'deleteAssessment').mockReturnValue(throwError(() => error));
             vi.spyOn(modelingAssessmentService, 'deleteAssessment').mockReturnValue(throwError(() => error));
             vi.spyOn(textAssessmentService, 'deleteAssessment').mockReturnValue(throwError(() => error));
-            vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '4': '2' }));
+            vi.spyOn(resultApi, 'getBuildJobIdsForResultsOfParticipation').mockReturnValue(of({ '4': '2' }));
         });
 
         it('should not delete result of fileUploadSubmission because of server error', () => {

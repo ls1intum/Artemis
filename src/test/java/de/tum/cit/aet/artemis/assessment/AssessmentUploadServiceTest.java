@@ -27,7 +27,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -127,6 +129,18 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
         assertManualAssessment(participation1.getId(), 80.0, "Great work, student one!");
         assertManualAssessment(participation2.getId(), 55.5, "Some issues, student two.");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldDownloadTheTemplateForAnyAcceptHeader() throws Exception {
+        userUtilService.enrollPrefixedUsersInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), TEST_PREFIX);
+        final HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+
+        final byte[] archive = request.get("/api/assessment/exercises/" + programmingExercise.getId() + "/manual-assessments/template", HttpStatus.OK, byte[].class, headers);
+
+        assertThat(readZipEntries(archive)).containsKey(CSV_FILE_NAME);
     }
 
     @Test

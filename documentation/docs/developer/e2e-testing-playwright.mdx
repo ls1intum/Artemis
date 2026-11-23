@@ -410,8 +410,8 @@ unrelated to any regression. A `data-testid` attribute survives UI refactors as 
 
 <Callout variant={CalloutVariant.danger}>
 
-    Never bind a locator to a class that exists for styling. Bootstrap, PrimeNG and Tailwind class names describe how
-    an element looks, so restyling it silently breaks every test that hunted for it that way, and nothing in the diff
+    Never bind a locator to a class that exists for styling. Tailwind utilities and the internal classes of a
+    component library describe how an element looks, so restyling it silently breaks every test that hunted for it that way, and nothing in the diff
     points at the tests.
 
     Both archive tests used to find the download button as `button.btn-primary[data-mode="Course"]`. When that button
@@ -429,32 +429,23 @@ a class never does. Keep the value stable and kebab-cased, and name it after wha
 
 #### Markup you do not own
 
-PrimeNG, Monaco and Apollon render their own DOM, so there is no template to put a `data-testid` in. That is not a
-reason to fall back on their class names: those are as much a styling detail as Bootstrap's, and they change between
-major versions.
+TUM AET UI components, Monaco and Apollon render their own DOM, so there is no template of yours to put a
+`data-testid` in. That is not a reason to fall back on their class names: those are a styling detail, and they change
+between versions.
 
-PrimeNG answers this with the [pass-through API](https://primeng.org/passthrough). `[pt]` names each internal section
-of a component, so the attribute lands where the class hunt used to be. Declare it as a component field rather than a
-template literal, so change detection does not hand the component a fresh object on every cycle:
+For a TUM AET UI component, put the `data-testid` on its host element and address what is inside by role. An overlay
+such as the list of a `tumaet-ui-select` or a `tumaet-ui-menu` is rendered outside the host, so open it through the
+host and pick the entry by role and name:
 
 ```typescript
-protected readonly passThrough = {
-    listContainer: { 'data-testid': 'taxonomy-select-overlay' },
-    option: { 'data-testid': 'taxonomy-select-option' },
-};
+await page.getByTestId('taxonomy-select').click();
+await page.getByRole('option', { name: 'Apply', exact: true }).click();
 ```
 
-```html
-<p-select [pt]="passThrough" ... />
-```
+A select or a menu is not a native `<select>`, so `selectOption()` does not work on it. Some components also mark
+their own parts with a `data-testid`, for example `table-scroll-body` and `table-empty` of the table layout.
 
-Two details are worth knowing. A section whose name starts with `pc` forwards to a whole PrimeNG component, so the
-attribute belongs on that component's root: `{ pcToggleButton: { root: { 'data-testid': 'example-solution-toggle' } } }`.
-And where one section renders more than one element, PrimeNG's own structural attributes tell them apart, without
-reaching for a class: icons carry a `data-p-icon` attribute that names them.
-
-For a helper that means "whichever dialog is currently open", ask for the role instead of naming a framework:
-`page.getByRole('dialog')` matches the PrimeNG and the ng-bootstrap dialog alike.
+For a helper that means "whichever dialog is currently open", ask for the role: `page.getByRole('dialog')`.
 
 Monaco is the one documented exception. It builds the editor, the code lines and the suggest widget itself, and its
 decoration API accepts a class name and nothing else, so `.monaco-editor`, `.view-line` and `.suggest-widget` have to
@@ -640,7 +631,7 @@ login or a page of the application.
 - Do not sleep after a resize or a navigation. If a helper needs more than its retry, the layout is still changing
   after it has loaded, and that is the finding.
 - Do not widen the tolerance until a contract passes. A difference of one pixel is a different layout.
-- Do not find elements by Bootstrap, Tailwind or PrimeNG classes. Ask for what the class stands for with
+- Do not find elements by Tailwind or component library classes. Ask for what the class stands for with
   `expectComputedStyle`.
 - Do not write a contract for what a unit test can state. jsdom has no layout engine, so a contract about sizes and
   positions is exactly what needs a browser; whether a template binds a class is not.

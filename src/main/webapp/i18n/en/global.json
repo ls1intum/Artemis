@@ -26,7 +26,8 @@
             "enabled": "Enabled",
             "disabled": "Disabled",
             "resizePanels": "Resize panels",
-            "selectAllRows": "Select all rows"
+            "selectAllRows": "Select all rows",
+            "unknownPerson": "Unknown person"
         },
         "weekdays": {
             "monday": "Monday",
@@ -473,6 +474,7 @@
         "quickActions": "Quick Actions",
         "controlCenter": "Control Center",
         "action": {
+            "deleteAll": "Delete All",
             "add": "Add",
             "create": "Create",
             "addblob": "Add blob",

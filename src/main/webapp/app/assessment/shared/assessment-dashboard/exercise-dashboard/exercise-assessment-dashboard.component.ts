@@ -41,7 +41,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TutorParticipation, TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { TutorParticipation, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -77,7 +77,8 @@ import { AssessmentDashboardInformationEntry } from 'app/assessment/shared/asses
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
-import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
+import type { TutorParticipationStatusEnum } from 'app/openapi/model/tutor-participation';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
@@ -91,6 +92,13 @@ export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
     toComplete?: boolean;
 }
+
+const tutorParticipationStatusByApiStatus: Record<TutorParticipationStatusEnum, TutorParticipationStatus> = {
+    NOT_PARTICIPATED: TutorParticipationStatus.NOT_PARTICIPATED,
+    REVIEWED_INSTRUCTIONS: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+    TRAINED: TutorParticipationStatus.TRAINED,
+    COMPLETED: TutorParticipationStatus.COMPLETED,
+};
 
 @Component({
     selector: 'jhi-exercise-assessment-dashboard',
@@ -136,7 +144,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private accountService = inject(AccountService);
     private route = inject(ActivatedRoute);
-    private tutorParticipationService = inject(TutorParticipationService);
+    private tutorParticipationApi = inject(TutorParticipationApi);
     private submissionService = inject(SubmissionService);
     private textSubmissionService = inject(TextSubmissionService);
     private modelingSubmissionService = inject(ModelingSubmissionService);
@@ -840,14 +848,22 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      */
     readInstruction() {
         this.isLoading.set(true);
-        this.tutorParticipationService
-            .create(this.exerciseId())
+        this.tutorParticipationApi
+            .initTutorParticipation(this.exerciseId())
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
-                next: (res: HttpResponse<TutorParticipationDTO>) => {
-                    const dto = res.body!;
-                    this.tutorParticipation.set(dto);
-                    this.tutorParticipationStatus.set(dto.status);
+                next: (dto) => {
+                    const status = tutorParticipationStatusByApiStatus[dto.status];
+                    this.tutorParticipation.set({
+                        id: dto.id,
+                        status,
+                        trainedExampleSubmissions: dto.trainedExampleSubmissions?.map(({ id, usedForTutorial, assessmentExplanation }) => ({
+                            id,
+                            usedForTutorial,
+                            assessmentExplanation,
+                        })),
+                    });
+                    this.tutorParticipationStatus.set(status);
                     this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
                 },
                 error: this.onError,

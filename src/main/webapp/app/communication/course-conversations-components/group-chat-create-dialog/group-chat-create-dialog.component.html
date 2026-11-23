@@ -1,14 +1,14 @@
 @if (isInitialized) {
-    <div class="flex flex-col gap-4!">
-        <div class="flex items-start justify-between gap-2 pt-4!">
-            <h4 class="m-0 text-xl! font-medium!" jhiTranslate="artemisApp.dialogs.createGroupChat.title">Start a group chat between you and a maximum of 9 other users</h4>
+    <div class="flex flex-col gap-4">
+        <div class="flex items-start justify-between gap-2 pt-4">
+            <h4 class="m-0 text-xl font-medium" jhiTranslate="artemisApp.dialogs.createGroupChat.title">Start a group chat between you and a maximum of 9 other users</h4>
             <button
                 type="button"
                 tumAetUiButton
                 severity="secondary"
                 variant="text"
                 rounded
-                class="size-8 shrink-0 p-0"
+                class="size-8 shrink-0 p-0!"
                 data-testid="dialog-close-button"
                 [attr.aria-label]="'entity.action.close' | artemisTranslate"
                 (click)="clear()"
@@ -16,7 +16,7 @@
                 <fa-icon [icon]="faXmark" />
             </button>
         </div>
-        <form class="flex flex-col gap-4!" (ngSubmit)="onSubmit()" [formGroup]="form">
+        <form class="flex flex-col gap-4" (ngSubmit)="onSubmit()" [formGroup]="form">
             <jhi-course-users-selector
                 formControlName="selectedUsers"
                 [courseId]="course()!.id!"

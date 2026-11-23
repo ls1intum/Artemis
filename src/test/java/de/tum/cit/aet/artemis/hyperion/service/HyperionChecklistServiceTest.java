@@ -81,8 +81,9 @@ class HyperionChecklistServiceTest {
         lenient().when(courseCompetencyApi.findAllForCourse(any(Long.class))).thenReturn(java.util.Set.of());
 
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, ObservationRegistry.NOOP, Optional.of(standardizedCompetencyApi),
-                Optional.of(courseCompetencyApi), taskRepository, programmingExerciseRepository, JsonObjectMapper.get(), llmTokenUsageService, userRepository);
+        this.hyperionChecklistService = new HyperionChecklistService(HyperionTestChatClients.returning(chatClient), templateService, ObservationRegistry.NOOP,
+                Optional.of(standardizedCompetencyApi), Optional.of(courseCompetencyApi), taskRepository, programmingExerciseRepository, JsonObjectMapper.get(),
+                llmTokenUsageService, userRepository);
     }
 
     @Test

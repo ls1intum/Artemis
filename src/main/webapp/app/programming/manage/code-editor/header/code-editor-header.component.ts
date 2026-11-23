@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch, faGear } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
 import { MAX_TAB_SIZE } from 'app/editor/monaco-editor/monaco-editor.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -11,7 +11,17 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-code-editor-header',
     templateUrl: './code-editor-header.component.html',
-    imports: [NgbDropdown, ArtemisTranslatePipe, FormsModule, FontAwesomeModule, TranslateDirective],
+    styleUrl: './code-editor-header.component.scss',
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        ArtemisTranslatePipe,
+        FormsModule,
+        FontAwesomeModule,
+        TranslateDirective,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CodeEditorHeaderComponent {

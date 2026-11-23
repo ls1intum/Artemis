@@ -25,7 +25,7 @@
                                 [checked]="activeFilters().has(category.category!)"
                                 (changed)="toggleFilters(category.category!)"
                             />
-                            <label class="flex cursor-pointer items-center" [for]="'category-' + category.category">
+                            <label class="cursor-pointer items-center" [for]="'category-' + category.category">
                                 <jhi-custom-exercise-category-badge [category]="category" />
                             </label>
                         </div>
@@ -91,7 +91,7 @@
                                     }
                                 </div>
                             </td>
-                            <td class="text-end">
+                            <td class="text-right">
                                 <div class="flex flex-wrap items-center justify-end gap-1" data-testid="faq-row-actions">
                                     @if (faq.faqState === FaqState.PROPOSED && isAtLeastInstructor()) {
                                         <button
@@ -152,7 +152,7 @@
         </tumaet-ui-table-layout>
     } @else if (loaded()) {
         <tumaet-ui-empty-state
-            class="mt-12!"
+            class="mt-12"
             [icon]="faQuestion"
             [title]="(hasFaqs() ? 'artemisApp.faq.home.empty.noMatchingTitle' : 'artemisApp.faq.home.empty.title') | artemisTranslate"
             [description]="(hasFaqs() ? 'artemisApp.faq.noMatching' : 'artemisApp.faq.noExisting') | artemisTranslate"

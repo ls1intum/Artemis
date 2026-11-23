@@ -40,6 +40,21 @@ public class GocastConfiguration {
         return builder.clone().baseUrl(settings.apiBaseUri().toString()).defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey).requestFactory(requestFactory).build();
     }
 
+    /**
+     * Creates a client for upload tickets, separate from the API-key client and without URI observations.
+     *
+     * @param uploadMaxAge the deadline for the complete outbound request, including a stalled write
+     * @return the streaming upload client
+     */
+    @Bean
+    public RestClient gocastUploadRestClient(@Value("${artemis.tum-live.upload-max-age:PT6H}") Duration uploadMaxAge) {
+        var httpClient = HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT).followRedirects(HttpClient.Redirect.NEVER).version(HttpClient.Version.HTTP_1_1).build();
+        var requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        // The factory cancels the HTTP exchange when this deadline expires, including while the request body is being sent.
+        requestFactory.setReadTimeout(uploadMaxAge);
+        return RestClient.builder().requestFactory(requestFactory).build();
+    }
+
     static URI validateBaseUrl(String value, String label) {
         try {
             URI uri = URI.create(value);

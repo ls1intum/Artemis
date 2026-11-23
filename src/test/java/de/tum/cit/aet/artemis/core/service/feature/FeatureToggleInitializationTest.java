@@ -48,6 +48,21 @@ class FeatureToggleInitializationTest {
     }
 
     @Test
+    void smartQuizzesDefaultsToDisabledAndKeepsAnExistingEnabledChoice() {
+        var provider = new LocalDataProviderService();
+        var websocket = mock(WebsocketMessagingService.class);
+        var profiles = mock(ProfileService.class);
+        var rateLimit = mock(RateLimitConfigurationService.class);
+        var service = new FeatureToggleService(websocket, provider, profiles, rateLimit, false, false, false, false);
+
+        assertThat(service.disabledFeatures()).contains(Feature.SmartQuizzes);
+        service.enableFeature(Feature.SmartQuizzes);
+
+        var reinitializedService = new FeatureToggleService(websocket, provider, profiles, rateLimit, false, false, false, false);
+        assertThat(reinitializedService.isFeatureEnabled(Feature.SmartQuizzes)).isTrue();
+    }
+
+    @Test
     void existingRuntimeChoicesSurviveReinitializationAndLectureConfigCanEnableDevelopment() {
         var provider = new LocalDataProviderService();
         DistributedMap<Feature, Boolean> map = provider.getMap("features");

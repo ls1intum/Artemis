@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionBulkRefinementRequestDTO;
@@ -69,7 +70,6 @@ public class HyperionQuizQuestionGenerationService {
 
     private static final int MAX_OPTION_TEXT_LENGTH = 2_000;
 
-    @Nullable
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templateService;
@@ -80,9 +80,9 @@ public class HyperionQuizQuestionGenerationService {
 
     private final UserRepository userRepository;
 
-    public HyperionQuizQuestionGenerationService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService,
+    public HyperionQuizQuestionGenerationService(HyperionChatClientService chatClients, HyperionPromptTemplateService templateService,
             HyperionCompetencyContextService competencyGraphService, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
-        this.chatClient = chatClient;
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.QUIZ_GENERATION);
         this.templateService = templateService;
         this.competencyGraphService = competencyGraphService;
         this.llmTokenUsageService = llmTokenUsageService;
@@ -99,10 +99,6 @@ public class HyperionQuizQuestionGenerationService {
     @Observed(name = "hyperion.quiz.generate", contextualName = "quiz question generation", lowCardinalityKeyValues = { "ai.span", "true" })
     public QuizQuestionGenerationResponseDTO generateQuizQuestions(Course course, QuizQuestionGenerationRequestDTO request) {
         log.debug("Generating quiz questions for course [{}]", course.getId());
-
-        if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "QuizQuestionGeneration", "QuizQuestionGeneration.chatClientNotConfigured");
-        }
 
         String optionalPrompt = sanitizeInput(request.optionalPrompt());
         String requestedQuestionTypes = request.questionTypes().stream().map(QuizQuestionGenerationType::getValue).collect(Collectors.joining(", "));
@@ -237,10 +233,6 @@ public class HyperionQuizQuestionGenerationService {
 
     private QuizQuestionRefinementResponseDTO refineQuizQuestion(Course course, QuizQuestionRefinementRequestDTO request, @Nullable Long userId) {
         log.debug("Refining quiz question for course [{}]", course.getId());
-
-        if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "QuizQuestionRefinement", "QuizQuestionRefinement.chatClientNotConfigured");
-        }
 
         String refinementPrompt = sanitizeInput(request.refinementPrompt());
         GeneratedQuizQuestionDTO originalQuestion = request.question();

@@ -195,7 +195,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                     this.irisSettingsSubscription?.unsubscribe();
                     this.isLoading.set(true);
                     return this.lectureService.findWithDetails(lectureId).pipe(
-                        tap((findLectureResult) => this.handleLectureDetails(findLectureResult.body!)),
+                        tap((lecture) => this.handleLectureDetails(lecture)),
                         catchError((errorResponse: HttpErrorResponse) => {
                             onError(this.alertService, errorResponse);
                             return EMPTY;

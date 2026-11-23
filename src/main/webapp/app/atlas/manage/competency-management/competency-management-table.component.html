@@ -1,9 +1,9 @@
-<h2 [jhiTranslate]="'artemisApp.' + competencyType() + '.title'" class="mt-6! mb-2"></h2>
+<h2 [jhiTranslate]="'artemisApp.' + competencyType() + '.title'" class="mt-6 mb-2"></h2>
 <tumaet-ui-table-layout
     [empty]="filteredAndSortedCompetencies().length === 0"
     [emptyTitle]="'artemisApp.' + competencyType() + (courseCompetencies().length ? '.manage.noSearchResults' : '.manage.empty')"
 >
-    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
         @if (courseCompetencies().length) {
             <input
                 #searchInput
