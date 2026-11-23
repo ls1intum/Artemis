@@ -159,11 +159,11 @@ describe('ExamParticipationCoverComponent', () => {
 
         const card: HTMLElement = fixture.nativeElement.firstElementChild;
         expect(card.getAttribute('data-testid')).toBe('exam-cover');
-        expect(card.classList).toContain('px-3!');
+        expect(card.classList).toContain('px-3');
         expect(card.classList).not.toContain('px-4!');
         expect(card.classList).not.toContain('px-6!');
         // the same 12px between the rule and the content as on the pages of the exam
-        expect(fixture.nativeElement.querySelector('[data-testid="exam-finished-header"]').classList).toContain('mb-3!');
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-finished-header"]').classList).toContain('mb-3');
     });
 
     it('should not reset the confirmation on a live schedule update while waiting for the exam start (issue #13071)', () => {

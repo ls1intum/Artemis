@@ -65,7 +65,7 @@
     }
 </div>
 @if (isInputLengthDisplayed() || (content()?.length ?? 0) > maxContentLength()!) {
-    <p class="mt-1 mb-0 text-end text-xs" data-testid="message-content-length" [class.text-state-danger]="(content()?.length ?? 0) > maxContentLength()!">
+    <p class="mt-1 mb-0 text-right text-xs" data-testid="message-content-length" [class.text-state-danger]="(content()?.length ?? 0) > maxContentLength()!">
         {{ content()?.length ?? 0 }} / {{ maxContentLength() }}
     </p>
 }

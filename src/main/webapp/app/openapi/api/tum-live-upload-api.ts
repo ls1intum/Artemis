@@ -15,6 +15,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { TumLiveUploadAvailability } from '../model/tum-live-upload-availability';
 import { TumLiveUploadState } from '../model/tum-live-upload-state';
 import { TumLiveUploadedUnit } from '../model/tum-live-uploaded-unit';
 import { TumLiveUploadStart } from '../model/tum-live-upload-start';
@@ -38,6 +39,17 @@ export class TumLiveUploadApi {
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/lecture/lecture-units/${lectureUnitId}/tumlive-upload${queryString ? `?${queryString}` : ''}`;
         return this.http.delete<void>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
+     */
+    getTumLiveUploadAvailability(courseId: number, options?: import('./request-options').RequestOptions): Observable<TumLiveUploadAvailability> {
+        const url = `${this.basePath}/api/lecture/courses/${courseId}/tumlive-upload-availability`;
+        return this.http.get<TumLiveUploadAvailability>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**

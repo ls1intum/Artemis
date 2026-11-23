@@ -12,7 +12,6 @@ import java.util.Map;
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -20,10 +19,10 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.core.connector.MockRestClientServers;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 
@@ -53,8 +52,7 @@ public class SharingPlatformMockProvider {
     private MockRestServiceServer mockSharingServer;
 
     @Autowired
-    @Qualifier("sharingRestTemplate")
-    private RestTemplate restTemplate;
+    private MockRestClientServers mockRestClientServers;
 
     @Autowired
     private RequestUtilService requestUtilService;
@@ -91,9 +89,9 @@ public class SharingPlatformMockProvider {
         SharingPluginConfig sharingPluginConfig = objectMapper.readerFor(SharingPluginConfig.class).readValue(content);
         assertThat(sharingPluginConfig.pluginName).isEqualTo("Artemis Sharing Connector");
 
-        MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
-        builder.ignoreExpectOrder(true);
-        mockSharingServer = builder.build();
+        mockSharingServer = mockRestClientServers.serverOf("sharingRestClient");
+        // A new connection request starts from a clean server, like the fresh server that it replaced.
+        mockSharingServer.reset();
     }
 
     /**

@@ -42,7 +42,7 @@
                         <span jhiTranslate="logs.table.name"></span> <fa-icon [icon]="sortIcon('name')" />
                     </button>
                 </div>
-                <div role="columnheader" class="shrink-0 text-end whitespace-nowrap" [attr.aria-sort]="ariaSort('level')">
+                <div role="columnheader" class="shrink-0 text-right whitespace-nowrap" [attr.aria-sort]="ariaSort('level')">
                     <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-inherit" (click)="toggleSort('level')">
                         <span jhiTranslate="logs.table.level"></span> <fa-icon [icon]="sortIcon('level')" />
                     </button>
@@ -53,7 +53,7 @@
             <div class="min-w-0 flex-1 truncate">
                 <small>{{ logger.name | slice: 0 : 140 }}</small>
             </div>
-            <div class="shrink-0 text-end whitespace-nowrap">
+            <div class="shrink-0 text-right whitespace-nowrap">
                 <tumaet-ui-button-group>
                     <tumaet-ui-button
                         size="small"

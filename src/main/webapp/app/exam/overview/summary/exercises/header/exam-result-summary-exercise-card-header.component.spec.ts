@@ -79,9 +79,9 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
             fixture.detectChanges();
 
             expect(title().tagName).toBe('H5');
-            expect(title().classList).toContain('m-0!');
-            expect(title().classList).toContain('text-base!');
-            expect(title().classList).toContain('font-semibold!');
+            expect(title().classList).toContain('m-0');
+            expect(title().classList).toContain('text-base');
+            expect(title().classList).toContain('font-semibold');
             expect(title().innerHTML).not.toContain('&nbsp;');
             expect(title().textContent).not.toContain('\u00a0');
         });

@@ -23,7 +23,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -556,7 +555,7 @@ public class HyperionQuizQuestionPoolBuildService {
      * @return what the build did
      */
     public BuildOutcome build(long courseId, @Nullable Long userId, String leaseToken, @Nullable ZonedDateTime deadline) {
-        modelService.chatClient();
+        modelService.generatorChatClient();
         long startedAt = System.nanoTime();
         Course course = courseRepository.findByIdElseThrow(courseId);
         ZonedDateTime now = ZonedDateTime.now();
@@ -677,8 +676,7 @@ public class HyperionQuizQuestionPoolBuildService {
 
         ChatResponse chatResponse;
         try {
-            chatResponse = modelService.chatClient().prompt().options(ChatOptions.builder().model(modelService.generatorModel())).system(systemPrompt).user(userPrompt).call()
-                    .chatResponse();
+            chatResponse = modelService.generatorChatClient().prompt().system(systemPrompt).user(userPrompt).call().chatResponse();
         }
         catch (Exception e) {
             log.warn("Generation of {} pool questions for lecture unit [{}] in course [{}] failed", batch.size(), first.getLectureUnitId(), course.getId(), e);

@@ -2,12 +2,12 @@
     <h1 jhiTranslate="error.title"></h1>
 
     @if (errorMessage()) {
-        <tumaet-ui-message severity="error" class="mb-4!">{{ errorMessage() }}</tumaet-ui-message>
+        <tumaet-ui-message severity="error" class="mb-4">{{ errorMessage() }}</tumaet-ui-message>
     }
     @if (error403()) {
-        <tumaet-ui-message severity="error" class="mb-4!"><span jhiTranslate="error.http.403"></span></tumaet-ui-message>
+        <tumaet-ui-message severity="error" class="mb-4"><span jhiTranslate="error.http.403"></span></tumaet-ui-message>
     }
     @if (error404()) {
-        <tumaet-ui-message severity="error" class="mb-4!"><span jhiTranslate="error.http.404"></span></tumaet-ui-message>
+        <tumaet-ui-message severity="error" class="mb-4"><span jhiTranslate="error.http.404"></span></tumaet-ui-message>
     }
 </div>

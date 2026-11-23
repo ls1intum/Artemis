@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -8,6 +7,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionChatClientService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -31,15 +31,15 @@ public class HyperionTemplateRepositoryService extends HyperionCodeGenerationSer
     /**
      * Creates a new TemplateRepository with required dependencies.
      *
-     * @param chatClient           AI chat client for generating template code
+     * @param chatClients          the chat clients of the Hyperion LLM presets
      * @param templates            service for rendering prompt templates
      * @param gitService           service for Git operations to read solution code
      * @param contextRenderer      service for rendering programming exercise context
      * @param llmTokenUsageService service for persisting LLM token usage telemetry
      */
-    public HyperionTemplateRepositoryService(ChatClient chatClient, HyperionPromptTemplateService templates, GitService gitService,
+    public HyperionTemplateRepositoryService(HyperionChatClientService chatClients, HyperionPromptTemplateService templates, GitService gitService,
             HyperionProgrammingExerciseContextRendererService contextRenderer, LLMTokenUsageService llmTokenUsageService) {
-        super(chatClient, templates, llmTokenUsageService);
+        super(chatClients, templates, llmTokenUsageService);
         this.gitService = gitService;
         this.contextRenderer = contextRenderer;
     }

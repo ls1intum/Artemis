@@ -26,7 +26,8 @@
             "enabled": "Enabled",
             "disabled": "Disabled",
             "resizePanels": "Resize panels",
-            "selectAllRows": "Select all rows"
+            "selectAllRows": "Select all rows",
+            "unknownPerson": "Unknown person"
         },
         "weekdays": {
             "monday": "Monday",

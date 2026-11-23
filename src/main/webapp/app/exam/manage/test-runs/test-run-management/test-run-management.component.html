@@ -1,6 +1,6 @@
 <div>
     <div *titleBarTitle class="flex items-center">
-        <h5 class="mb-0!">
+        <h5 class="mb-0">
             <span jhiTranslate="artemisApp.examManagement.testRun.title"></span>
         </h5>
     </div>
@@ -46,7 +46,7 @@
     <div class="pb-2.5">
         <span jhiTranslate="artemisApp.examManagement.testRun.text"></span>
     </div>
-    <tumaet-ui-message severity="warn" class="mb-6!" [text]="'artemisApp.examManagement.testRun.reminderToDelete' | artemisTranslate" />
+    <tumaet-ui-message severity="warn" class="mb-6" [text]="'artemisApp.examManagement.testRun.reminderToDelete' | artemisTranslate" />
     @if (testRuns()) {
         <tumaet-ui-table-layout
             [empty]="testRuns().length === 0 && !isLoading()"

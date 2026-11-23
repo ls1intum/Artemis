@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
+import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
 
 class AtlasTokenUsageAdvisorTest {
 
@@ -198,7 +198,7 @@ class AtlasTokenUsageAdvisorTest {
     }
 
     private static LLMTokenUsageService accounting(LLMTokenUsageTraceRepository repository) {
-        return new LLMTokenUsageService(repository, mock(LLMTokenUsageRequestRepository.class), new LLMModelCostConfiguration());
+        return new LLMTokenUsageService(repository, mock(LLMTokenUsageRequestRepository.class), LlmTestCatalog.empty());
     }
 
     private static Consumer<ChatResponse> record(LLMTokenUsageService service) {

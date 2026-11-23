@@ -94,6 +94,6 @@ class ConfigurationValidatorBoundaryTest {
         if (!environment.containsProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME)) {
             environment.setProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, "false");
         }
-        return new ConfigurationValidator(environment, requirePasskey, username, password, false, null, 8080, 50051, null, null, null, null, false, serverUrl);
+        return new ConfigurationValidator(environment, requirePasskey, username, password, false, null, 8080, 50051, null, null, false, serverUrl);
     }
 }

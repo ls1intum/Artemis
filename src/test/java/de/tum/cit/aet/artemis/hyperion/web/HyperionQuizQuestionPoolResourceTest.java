@@ -34,6 +34,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -180,7 +181,10 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         slideDeckReachedThePrompt.set(false);
         mockModel();
         when(quizQuestionPoolModelService.isConfigured()).thenReturn(true);
-        when(quizQuestionPoolModelService.chatClient()).thenReturn(ChatClient.create(azureOpenAiChatModel));
+        // each preset's client carries its model as default option, as the clients of LlmClientService do
+        when(quizQuestionPoolModelService.generatorChatClient())
+                .thenReturn(ChatClient.builder(azureOpenAiChatModel).defaultOptions(ChatOptions.builder().model(GENERATOR_MODEL)).build());
+        when(quizQuestionPoolModelService.judgeChatClient()).thenReturn(ChatClient.builder(azureOpenAiChatModel).defaultOptions(ChatOptions.builder().model(JUDGE_MODEL)).build());
         when(quizQuestionPoolModelService.generatorModel()).thenReturn(GENERATOR_MODEL);
         when(quizQuestionPoolModelService.judgeModel()).thenReturn(JUDGE_MODEL);
         featureToggleService.enableFeature(Feature.SmartQuizzes);

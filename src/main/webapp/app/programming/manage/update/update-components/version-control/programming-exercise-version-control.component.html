@@ -5,14 +5,14 @@
     ></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.versionControlMessage"></p>
     @if (isEditFieldDisplayedRecord().allowBranching) {
-        <div class="mb-4! flex items-center gap-2">
+        <div class="mb-4 flex items-center gap-2">
             <tumaet-ui-checkbox name="allowBranching" inputId="field_allowBranching" [(ngModel)]="programmingExercise().buildConfig!.allowBranching" />
             <label class="mb-0" for="field_allowBranching" jhiTranslate="artemisApp.programmingExercise.allowBranching.title"></label>
             <jhi-help-icon text="artemisApp.programmingExercise.allowBranching.description" />
         </div>
         @if (programmingExercise().buildConfig!.allowBranching) {
-            <div class="mb-4!">
-                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.branchRegex.title" for="field_branchRegex"></label>
+            <div class="mb-4">
+                <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.branchRegex.title" for="field_branchRegex"></label>
                 <jhi-help-icon text="artemisApp.programmingExercise.branchRegex.description" />
                 <input
                     tumAetUiInput
