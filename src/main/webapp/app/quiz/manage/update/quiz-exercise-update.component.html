@@ -3,7 +3,7 @@
     <div>
         <div>
             @if (!quizExercise().isEditable && quizExercise().id) {
-                <div class="mt-4!">
+                <div class="mt-4">
                     <tumaet-ui-message severity="warn">
                         @if (quizExercise().quizEnded) {
                             <span jhiTranslate="artemisApp.quizExercise.edit.editNotPossibleAfterEnd"></span>
@@ -11,7 +11,7 @@
                             <span jhiTranslate="artemisApp.quizExercise.edit.quizHasStarted"></span>
                         }
                     </tumaet-ui-message>
-                    <div class="mt-4! flex gap-2">
+                    <div class="mt-4 flex gap-2">
                         <button type="button" tumAetUiButton severity="secondary" size="small" (click)="navigateBack()">
                             <fa-icon [icon]="faArrowLeft" class="me-1" />
                             <span jhiTranslate="entity.action.back"></span>
@@ -25,9 +25,9 @@
                     </div>
                 </div>
             }
-            <div class="edit-quiz pt-4!" [hidden]="!quizExercise().isEditable && quizExercise().id">
+            <div class="edit-quiz pt-4" [hidden]="!quizExercise().isEditable && quizExercise().id">
                 <!-- Settings (single card with subsections) -->
-                <div class="section-card section-card--settings mb-4!">
+                <div class="section-card section-card--settings mb-4">
                     <div class="section-header">
                         <div class="section-header-icon">
                             <fa-icon [icon]="faGraduationCap" />
@@ -75,7 +75,7 @@
                                 />
                             </div>
                         }
-                        <div class="mt-4! grid grid-cols-1 gap-x-6 lg:grid-cols-3">
+                        <div class="mt-4 grid grid-cols-1 gap-x-6 lg:grid-cols-3">
                             <div>
                                 <div>
                                     <label jhiTranslate="artemisApp.exercise.difficulty"></label>
@@ -231,7 +231,7 @@
                                         <jhi-help-icon tumAetUiFormFieldLabel text="artemisApp.quizExercise.quizMode.explanation" />
                                         <tumaet-ui-select
                                             inputId="quizMode"
-                                            class="flex! w-full!"
+                                            class="flex! w-full"
                                             [options]="quizModeOptions()"
                                             optionLabel="label"
                                             optionValue="value"
@@ -309,7 +309,7 @@
                                             </div>
                                         }
                                     }
-                                    <p class="mb-0 text-sm text-muted-color" jhiTranslate="entity.timeZoneWarning" [translateValues]="{ timeZone: currentTimeZone }"></p>
+                                    <p class="mb-0! text-sm text-muted-color" jhiTranslate="entity.timeZoneWarning" [translateValues]="{ timeZone: currentTimeZone }"></p>
                                 </div>
                             </div>
                         }
@@ -355,7 +355,7 @@
                 }
 
                 <!-- Save -->
-                <div class="section-card section-card--save mb-4!">
+                <div class="section-card section-card--save mb-4">
                     <div class="section-header">
                         <div class="section-header-text">
                             @if (!pendingChangesCache() && !isSaving()) {

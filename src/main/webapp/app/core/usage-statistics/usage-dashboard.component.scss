@@ -1,5 +1,5 @@
-// Layout and spacing are Tailwind utilities in the template. What stays here is the semester pill: Bootstrap's unlayered
-// reset of <button> would otherwise win over the layered Tailwind border, radius and background utilities.
+// Layout and spacing are Tailwind utilities in the template. What stays here is the semester pill, with its border,
+// radius and background.
 .usage {
     &__pill {
         padding: 0.25rem 1rem;

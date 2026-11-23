@@ -1,11 +1,11 @@
 <form [formGroup]="onlineCourseConfigurationForm" (ngSubmit)="save()" #formDir="ngForm">
     <div class="flex shrink-0 items-center">
-        <h4 class="mb-0!" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.edit.configurationForCourse" [translateValues]="{ title: course()?.title }">
+        <h4 class="mb-0" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.edit.configurationForCourse" [translateValues]="{ title: course()?.title }">
             LTI Configuration for course {{ course()?.title }}
         </h4>
     </div>
-    <h4 class="mt-6! mb-0!" id="generalConfiguration" jhiTranslate="artemisApp.lti.generalConfiguration"></h4>
-    <div class="mt-2 mb-4!">
+    <h4 class="mt-6 mb-0" id="generalConfiguration" jhiTranslate="artemisApp.lti.generalConfiguration"></h4>
+    <div class="mt-2 mb-4">
         <label jhiTranslate="artemisApp.lti.userPrefix" for="field_userPrefix"></label>
         <jhi-help-icon text="artemisApp.lti.edit.userPrefixTooltip" />
         <input
@@ -28,17 +28,17 @@
             }
         }
     </div>
-    <div class="mb-4! flex items-center gap-1">
+    <div class="mb-4 flex items-center gap-1">
         <tumaet-ui-checkbox name="requireExistingUser" inputId="field_requireExistingUser" formControlName="requireExistingUser" />
         <label class="mb-0" jhiTranslate="artemisApp.lti.requireExistingUser" for="field_requireExistingUser"></label>
         <jhi-help-icon text="artemisApp.lti.edit.requireExistingUserTooltip" />
     </div>
     <div *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN">
-        <h4 class="mt-6! mb-0!" id="lti13" jhiTranslate="artemisApp.lti.version13"></h4>
-        <div class="mt-2 mb-4!">
+        <h4 class="mt-6 mb-0" id="lti13" jhiTranslate="artemisApp.lti.version13"></h4>
+        <div class="mt-2 mb-4">
             <span jhiTranslate="artemisApp.lti13.externalToolSettings"></span>
             <jhi-help-icon text="artemisApp.lti13.editExternalToolSettingsTooltip" />
-            <div class="mb-4!">
+            <div class="mb-4">
                 <div class="me-2 inline-block">
                     <button tumAetUiButton variant="outlined" type="button" id="lti-platform-toggle" [tumAetUiPopoverTrigger]="platformPopover">
                         {{
@@ -56,7 +56,7 @@
                                     tumAetUiButton
                                     variant="text"
                                     severity="secondary"
-                                    class="justify-start! text-start"
+                                    class="justify-start! text-left!"
                                     (click)="setPlatform(platform); platformPopover.close()"
                                     [attr.aria-current]="platform.id === onlineCourseConfiguration().ltiPlatformConfiguration?.id ? 'true' : null"
                                     [tumAetUiTooltip]="platform.customName"
@@ -77,7 +77,7 @@
             </div>
         </div>
     </div>
-    <div class="mt-4! flex">
+    <div class="mt-4 flex">
         <button type="button" id="cancel-save" tumAetUiButton severity="secondary" (click)="navigateToLtiConfigurationPage()">
             <fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span>
         </button>

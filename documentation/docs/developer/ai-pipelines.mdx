@@ -2,7 +2,7 @@
 id: ai-pipelines
 title: AI Pipelines and Service Boundaries
 sidebar_label: AI Pipelines
-last_reviewed: 2026-11-20
+last_reviewed: 2026-11-23
 ---
 
 This catalog describes the **Artemis-owned control plane** for AI-enabled workflows: the requests Artemis creates, the data and authorization it owns, and the integration contracts it exposes. It is not generated API documentation and does not replace the implementation documentation of Iris, Athena, or Logos.
@@ -17,7 +17,7 @@ Use this page together with the [Artemis Intelligence ecosystem map](/admin/arte
 | Athena                | Module selection/configuration, request forwarding, exercise/submission state, scheduling, and repository export authorization | Module processing and any module-specific model decisions in Athena              |
 | Hyperion              | Authoring workflows, prompts and context assembly, exercise/repository integration, and result persistence                     | Model access selected through Artemis Spring AI configuration                    |
 | Atlas                 | Companion-agent, competency-orchestration, tool, course, and competency contracts                                              | Model access selected through Artemis Spring AI configuration                             |
-| Artemis Global Search | Searchable-entity schemas, index lifecycle, query authorization, and result shaping                                            | Weaviate storage and optional vectorization                                      |
+| Artemis Global Search | Searchable-entity schemas, index lifecycle, embedding computation (through `LlmClientService`), query authorization, and result shaping | Weaviate storage and vector/keyword indexing                                     |
 
 ## Iris and Pyris
 
@@ -223,6 +223,16 @@ Artemis Global Search is a standalone Artemis feature, not an Iris pipeline. Whe
 The searchable-entity schema covers Artemis content such as courses, exercises, exams, lectures and lecture units, FAQs, and communication entities. Entity lifecycle callers update or remove the corresponding Artemis documents; startup migration services manage the Artemis schema lifecycle.
 
 A Weaviate instance can be shared with Iris, but the two consumers use independent collection namespaces and data flows. Artemis Global Search does not call Iris RAG, and Iris lecture answers do not use the Artemis Global Search authorization/query contract. For setup and operational details, use [Global Search & Weaviate Setup](/admin/global-search-weaviate) and [Weaviate Setup](./weaviate-setup).
+
+## Connect a feature to a language model
+
+Every Artemis feature that calls a language model, for chat or for embeddings, uses the catalog under `artemis.llm` and gets its client from `LlmClientService`. There are no exceptions, also not for a small or experimental feature:
+
+1. Add one key per task to the module's configuration that names a preset, for example `artemis.<module>.llm-preset` or a map `artemis.<module>.llm-presets`. Do not add keys for a URL, an API key, a model name or model options: the preset holds them. Document the key in `application-artemis.yml` and in [LLM configuration](/admin/llm-configuration#assignments).
+2. Register the key as an `LlmPresetAssignments` bean that exists only when the feature is enabled, with the usage the task needs (`CHAT` or `EMBEDDING`). The startup validation then fails when the key is missing or names an unknown preset or one with the wrong `api`, and logs the effective assignment.
+3. Get the client from `LlmClientService`: `chatClient` or `chatModel` for a normal task, `isolatedChatModel` for a task with its own time limit and retries or whose data must not reach tracing, and `embed` for embeddings. `embed` makes no SDK retries, so the caller decides whether and when to try again. If the task needs a kind of call that `LlmClientService` does not offer yet, add it there; the module itself never builds a provider client.
+
+`CourseHomeAiConfiguration` with `SpringAiCourseHomeClient` (one chat preset, own limits, no tracing) and `SearchableEntityEmbeddingClient` (embeddings) are small examples. `LlmClientArchitectureTest` fails when a class outside `core.service.llm` and `core.config.llm` builds a provider client or model, or reads an endpoint with its URL and key. It cannot see a module that reads its own URL and key and calls a model with a plain HTTP client, so reviews must reject that too.
 
 ## Change guidance
 

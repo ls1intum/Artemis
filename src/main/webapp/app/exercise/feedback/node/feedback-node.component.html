@@ -9,7 +9,7 @@
     >
         <div class="w-full">
             <div class="flex justify-between gap-8">
-                <h4 class="feedback-item__category m-0! text-base! font-semibold!">
+                <h4 class="feedback-item__category m-0 text-base font-semibold">
                     {{ feedbackItem()!.isAiFeedback ? feedbackItem()!.title : feedbackItem()!.name + (feedbackItem()!.title ? ' · ' + feedbackItem()!.title : '') }}
                 </h4>
                 @if (feedbackItem()!.isAiFeedback) {
@@ -52,9 +52,9 @@
                 </div>
             }
             @if (feedbackItem()!.text) {
-                <jhi-feedback-collapse class="mt-4! block" [feedback]="feedbackItem()!" />
+                <jhi-feedback-collapse class="mt-4 block" [feedback]="feedbackItem()!" />
             } @else {
-                <p class="mb-0!" jhiTranslate="artemisApp.result.noFeedback"></p>
+                <p class="mb-0" jhiTranslate="artemisApp.result.noFeedback"></p>
             }
         </div>
     </tumaet-ui-message>
@@ -74,7 +74,7 @@
         >
             <div class="flex items-center">
                 <fa-icon class="me-2" [icon]="isGroupExpanded() ? faAngleUp : faAngleDown" />
-                <h4 class="feedback-item__category m-0! text-base! font-semibold!">
+                <h4 class="feedback-item__category m-0 text-base font-semibold">
                     {{ 'artemisApp.feedback.group.' + feedbackItemGroup()!.name | artemisTranslate }} ({{ feedbackItemGroup()!.members.length }})
                 </h4>
             </div>

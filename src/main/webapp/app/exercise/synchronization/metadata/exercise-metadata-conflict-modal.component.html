@@ -8,7 +8,7 @@
         }
     </p>
 
-    <div class="global-toggle flex gap-2 mb-3!">
+    <div class="global-toggle flex gap-2 mb-3">
         <tumaet-ui-button size="small" [variant]="allLocal() ? 'solid' : 'outlined'" (clicked)="setAllDecisions(false)">
             <span jhiTranslate="artemisApp.exercise.metadataSync.keepAllLocal"></span>
         </tumaet-ui-button>
@@ -17,18 +17,18 @@
         </tumaet-ui-button>
     </div>
 
-    <div class="conflict-list flex flex-col gap-3!">
+    <div class="conflict-list flex flex-col gap-3">
         @for (conflict of conflicts(); track conflict.field) {
-            <div class="conflict-item border rounded-lg p-3!">
+            <div class="conflict-item border border-(--border-color) rounded-lg p-3">
                 <div class="conflict-header mb-2">
                     <span class="font-semibold" [jhiTranslate]="conflict.labelKey"></span>
                 </div>
 
                 @if (isBuildConfigField(conflict.field)) {
-                    <div class="grid grid-cols-12 gap-3!">
+                    <div class="grid grid-cols-12 gap-3">
                         <div class="col-span-12 md:col-span-6">
                             <div
-                                class="conflict-tile rounded-lg p-3! h-full"
+                                class="conflict-tile rounded-lg p-3 h-full"
                                 [ngClass]="{ 'conflict-tile--selected bg-surface-raised': !decisions()[conflict.field] }"
                                 [attr.aria-pressed]="!decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, false)"
@@ -50,7 +50,7 @@
                         </div>
                         <div class="col-span-12 md:col-span-6">
                             <div
-                                class="conflict-tile rounded-lg p-3! h-full"
+                                class="conflict-tile rounded-lg p-3 h-full"
                                 [ngClass]="{ 'conflict-tile--selected bg-surface-raised': decisions()[conflict.field] }"
                                 [attr.aria-pressed]="decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, true)"
@@ -72,10 +72,10 @@
                         </div>
                     </div>
                 } @else if (isCategoriesField(conflict.field)) {
-                    <div class="grid grid-cols-12 gap-3!">
+                    <div class="grid grid-cols-12 gap-3">
                         <div class="col-span-12 md:col-span-6">
                             <div
-                                class="conflict-tile rounded-lg p-3! h-full"
+                                class="conflict-tile rounded-lg p-3 h-full"
                                 [ngClass]="{ 'conflict-tile--selected bg-surface-raised': !decisions()[conflict.field] }"
                                 [attr.aria-pressed]="!decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, false)"
@@ -96,7 +96,7 @@
                         </div>
                         <div class="col-span-12 md:col-span-6">
                             <div
-                                class="conflict-tile rounded-lg p-3! h-full"
+                                class="conflict-tile rounded-lg p-3 h-full"
                                 [ngClass]="{ 'conflict-tile--selected bg-surface-raised': decisions()[conflict.field] }"
                                 [attr.aria-pressed]="decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, true)"
@@ -117,10 +117,10 @@
                         </div>
                     </div>
                 } @else if (isCompetencyLinksField(conflict.field)) {
-                    <div class="grid grid-cols-12 gap-3!">
+                    <div class="grid grid-cols-12 gap-3">
                         <div class="col-span-12 md:col-span-6">
                             <div
-                                class="conflict-tile rounded-lg p-3! h-full"
+                                class="conflict-tile rounded-lg p-3 h-full"
                                 [ngClass]="{ 'conflict-tile--selected bg-surface-raised': !decisions()[conflict.field] }"
                                 [attr.aria-pressed]="!decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, false)"
@@ -144,7 +144,7 @@
                         </div>
                         <div class="col-span-12 md:col-span-6">
                             <div
-                                class="conflict-tile rounded-lg p-3! h-full"
+                                class="conflict-tile rounded-lg p-3 h-full"
                                 [ngClass]="{ 'conflict-tile--selected bg-surface-raised': decisions()[conflict.field] }"
                                 [attr.aria-pressed]="decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, true)"
@@ -168,10 +168,10 @@
                         </div>
                     </div>
                 } @else if (isGradingCriteriaField(conflict.field)) {
-                    <div class="grid grid-cols-12 gap-3!">
+                    <div class="grid grid-cols-12 gap-3">
                         <div class="col-span-12 md:col-span-6">
                             <div
-                                class="conflict-tile rounded-lg p-3! h-full"
+                                class="conflict-tile rounded-lg p-3 h-full"
                                 [ngClass]="{ 'conflict-tile--selected bg-surface-raised': !decisions()[conflict.field] }"
                                 [attr.aria-pressed]="!decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, false)"
@@ -188,7 +188,7 @@
                         </div>
                         <div class="col-span-12 md:col-span-6">
                             <div
-                                class="conflict-tile rounded-lg p-3! h-full"
+                                class="conflict-tile rounded-lg p-3 h-full"
                                 [ngClass]="{ 'conflict-tile--selected bg-surface-raised': decisions()[conflict.field] }"
                                 [attr.aria-pressed]="decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, true)"
@@ -205,7 +205,7 @@
                         </div>
                     </div>
                 } @else {
-                    <div class="grid grid-cols-12 gap-3!">
+                    <div class="grid grid-cols-12 gap-3">
                         <div class="col-span-12 md:col-span-6">
                             <div
                                 class="conflict-tile rounded-lg p-2 px-3! h-full"
@@ -247,7 +247,7 @@
     </div>
 </div>
 
-<div class="flex justify-end gap-2 mt-3!">
+<div class="flex justify-end gap-2 mt-3">
     <tumaet-ui-button severity="secondary" variant="outlined" (clicked)="keepLocalChanges()">
         <span jhiTranslate="artemisApp.exercise.metadataSync.keepLocal"></span>
     </tumaet-ui-button>

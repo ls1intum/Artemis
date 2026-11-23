@@ -9,7 +9,7 @@
                 'container-closed': isNavbarCollapsed(),
             }"
         >
-            <div class="sidebar module-bg rounded-sm" [hidden]="isExamStarted() || isolatedView()">
+            <div class="sidebar bg-(--module-bg) rounded-sm" [hidden]="isExamStarted() || isolatedView()">
                 <jhi-course-sidebar
                     [course]="course()"
                     [sidebarItems]="sidebarItems()"
@@ -45,7 +45,7 @@
                     <div
                         class="course-body-container"
                         [ngClass]="{
-                            'module-bg scrollable-content rounded-sm p-4!': !hasSidebar(),
+                            'bg-(--module-bg) scrollable-content rounded-sm p-4!': !hasSidebar(),
                             'shell-divider-x': !isExamStarted(),
                         }"
                         [class.no-header-bar-height]="!hasSidebar() && !showCourseTitleBar()"

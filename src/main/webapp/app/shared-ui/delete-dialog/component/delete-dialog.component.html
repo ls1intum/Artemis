@@ -15,7 +15,7 @@
             </div>
         } @else if (categorizedEntitySummary() && categorizedEntitySummary()!.length > 0) {
             @if (hasLargeCount()) {
-                <p class="mb-2! font-semibold text-state-danger" role="alert" data-testid="delete-dialog-large-count-warning">
+                <p class="mb-2 font-semibold text-state-danger" role="alert" data-testid="delete-dialog-large-count-warning">
                     <fa-icon [icon]="faExclamationTriangle" class="me-1" />
                     <span jhiTranslate="entity.delete.summary.largeCountWarning"></span>
                 </p>

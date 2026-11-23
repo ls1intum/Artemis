@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-4!" (focusout)="onTouched()">
+<div class="flex flex-col gap-4" (focusout)="onTouched()">
     <div class="flex flex-col gap-1">
         @if (label()) {
             <label class="text-sm font-medium" [for]="id + '-search-input'">{{ label() }}</label>
@@ -37,16 +37,18 @@
             </div>
         </ng-template>
         @if (isSearching()) {
-            <small class="text-xs text-muted-color" jhiTranslate="artemisApp.userSelector.searchingText">Searching for users...</small>
+            <small class="leading-[calc(1/0.75)] text-muted-color" jhiTranslate="artemisApp.userSelector.searchingText">Searching for users...</small>
         }
         @if (searchFailed()) {
-            <small class="text-xs text-state-danger" jhiTranslate="artemisApp.userSelector.searchFailedText">Search failed</small>
+            <small class="leading-[calc(1/0.75)] text-state-danger" jhiTranslate="artemisApp.userSelector.searchFailedText">Search failed</small>
         }
         @if (searchStudents()) {
-            <small class="text-xs text-muted-color" jhiTranslate="artemisApp.userSelector.helpText">Type at least 3 characters to search for users by name or login</small>
+            <small class="leading-[calc(1/0.75)] text-muted-color" jhiTranslate="artemisApp.userSelector.helpText"
+                >Type at least 3 characters to search for users by name or login</small
+            >
         }
     </div>
-    <div class="flex flex-wrap items-center justify-end gap-4!">
+    <div class="flex flex-wrap items-center justify-end gap-4">
         @if (rolesToAllowSearchingIn().includes('students')) {
             <div class="flex items-center gap-2">
                 <tumaet-ui-checkbox inputId="students" [checked]="searchStudents()" (changed)="searchStudents.set($event.checked); onFilterChange()" />

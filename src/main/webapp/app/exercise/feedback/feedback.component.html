@@ -11,16 +11,16 @@
 <div class="relative">
     <!-- Message, if defined -->
     @if (messageKey()) {
-        <div class="mb-4!"><h6 [innerHTML]="messageKey() | artemisTranslate"></h6></div>
+        <div class="mb-4"><h6 [innerHTML]="messageKey() | artemisTranslate"></h6></div>
     }
     @if (showMissingAutomaticFeedbackInformation()) {
-        <div class="mb-4!">
+        <div class="mb-4">
             <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate: { date: latestDueDate() }"></h6>
         </div>
     }
 
     @if (loadingFailed()) {
-        <div class="text-state-danger mb-4!" role="alert">
+        <div class="text-state-danger mb-4" role="alert">
             <span jhiTranslate="artemisApp.result.detailsLoadingFailed"></span>
             <button type="button" tumAetUiButton variant="outlined" size="small" data-testid="retry-feedback-details" (click)="loadFeedbackDetails()">
                 {{ 'entity.action.retry' | artemisTranslate }}
@@ -152,7 +152,7 @@
             </div>
         }
         @if (buildLogsFailed()) {
-            <div class="text-state-danger mb-4!" role="alert">
+            <div class="text-state-danger mb-4" role="alert">
                 <span jhiTranslate="artemisApp.result.buildLogsLoadingFailed"></span>
                 <button type="button" tumAetUiButton variant="outlined" size="small" data-testid="retry-build-logs" (click)="loadBuildLogs()">
                     {{ 'entity.action.retry' | artemisTranslate }}
