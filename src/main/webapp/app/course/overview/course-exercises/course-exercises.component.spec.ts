@@ -320,8 +320,8 @@ describe('CourseExercisesComponent', () => {
             expect(component.isCollapsed()).toBe(false);
         });
 
-        it.each([true, false])('should restore the stored preference (collapsed: %s) when the focused page is left', (collapsed) => {
-            storedPreference(collapsed);
+        it('should restore a stored preference of an expanded list when the focused page is left', () => {
+            storedPreference(false);
             component.onSubRouteActivate({ setSidebarToggle: vi.fn(), focusMode: signal(true) });
             TestBed.tick();
             expect(component.isCollapsed()).toBe(true);
@@ -329,7 +329,87 @@ describe('CourseExercisesComponent', () => {
             component.onSubRouteDeactivate();
             TestBed.tick();
 
-            expect(component.isCollapsed()).toBe(collapsed);
+            expect(component.isCollapsed()).toBe(false);
+        });
+
+        it('should restore a stored preference of a collapsed list when the focused page is left', () => {
+            storedPreference(true);
+            component.onSubRouteActivate({ setSidebarToggle: vi.fn(), focusMode: signal(true) });
+            TestBed.tick();
+            // The student opens the list during the quiz; only a restore can collapse it again, a no-op would leave it open.
+            component.toggleSidebar();
+            TestBed.tick();
+            expect(component.isCollapsed()).toBe(false);
+            storedPreference(true);
+
+            component.onSubRouteDeactivate();
+            TestBed.tick();
+
+            expect(component.isCollapsed()).toBe(true);
+        });
+
+        it('should keep the list collapsed while a new page replaces the focused one before it knows its focus state', () => {
+            const restore = storedPreference(false);
+            component.onSubRouteActivate({ setSidebarToggle: vi.fn(), focusMode: signal(true) });
+            TestBed.tick();
+            expect(component.isCollapsed()).toBe(true);
+            restore.mockClear();
+
+            // Opening a running quiz swaps the details page for a new instance in one tick, before the exercise has loaded.
+            component.onSubRouteDeactivate();
+            const loadingPage = signal<boolean | undefined>(undefined);
+            component.onSubRouteActivate({ setSidebarToggle: vi.fn(), focusMode: loadingPage });
+            TestBed.tick();
+
+            expect(component.isCollapsed()).toBe(true);
+            expect(restore).not.toHaveBeenCalled();
+
+            loadingPage.set(true);
+            TestBed.tick();
+            expect(component.isCollapsed()).toBe(true);
+            expect(restore).not.toHaveBeenCalled();
+
+            loadingPage.set(false);
+            TestBed.tick();
+            expect(component.isCollapsed()).toBe(false);
+            expect(restore).toHaveBeenCalledOnce();
+        });
+
+        it('should make the collapsed list inert and open it to the keyboard again when it is expanded', () => {
+            (component as any)._course.set(course);
+            (component as any)._isCollapsed.set(true);
+            TestBed.tick();
+            fixture.detectChanges();
+            const wrapper = () => fixture.nativeElement.querySelector('.sidebar-collapsed') as HTMLElement | null;
+            expect(wrapper()!.hasAttribute('inert')).toBe(true);
+
+            (component as any)._isCollapsed.set(false);
+            TestBed.tick();
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('jhi-sidebar')!.parentElement.hasAttribute('inert')).toBe(false);
+        });
+
+        it('should move the focus from the list to the toggle of the page when the list collapses for focus', () => {
+            (component as any)._course.set(course);
+            (component as any)._isCollapsed.set(false);
+            TestBed.tick();
+            fixture.detectChanges();
+            const inList = document.createElement('button');
+            fixture.nativeElement.querySelector('jhi-sidebar').parentElement.append(inList);
+            const toggle = document.createElement('button');
+            toggle.setAttribute('data-testid', 'course-sidebar-toggle');
+            fixture.nativeElement.querySelector('.content-width').append(toggle);
+            document.body.append(fixture.nativeElement);
+            inList.focus();
+            expect(document.activeElement).toBe(inList);
+
+            component.onSubRouteActivate({ setSidebarToggle: vi.fn(), focusMode: signal(true) });
+            TestBed.tick();
+            fixture.detectChanges();
+
+            expect(component.isCollapsed()).toBe(true);
+            expect(document.activeElement).toBe(toggle);
+            fixture.nativeElement.remove();
         });
 
         it('should restore the stored preference when the focus ends on the same page', () => {

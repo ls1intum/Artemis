@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, DestroyRef, Signal, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, Injector, Signal, afterNextRender, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
@@ -34,8 +35,11 @@ import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
  */
 interface ExerciseDetailsRef {
     setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void;
-    /** Set while the page wants the list out of the way, for example during a running quiz. Pages that never do omit it. */
-    readonly focusMode?: Signal<boolean>;
+    /**
+     * Set while the page wants the list out of the way, for example during a running quiz. It is undefined while the page
+     * does not know yet, and the list keeps its state until it does. Pages that never ask for focus omit it.
+     */
+    readonly focusMode?: Signal<boolean | undefined>;
 }
 
 function isExerciseDetailsRef(component: unknown): component is ExerciseDetailsRef {
@@ -87,9 +91,14 @@ export class CourseExercisesComponent implements SidebarView {
     private sessionStorageService = inject(SessionStorageService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private destroyRef = inject(DestroyRef);
+    private injector = inject(Injector);
+    private document = inject(DOCUMENT);
     private changeDetectorRef = inject(ChangeDetectorRef);
     private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
     private courseTabRefreshService = inject(CourseTabRefreshService);
+
+    private readonly listWrapper = viewChild<ElementRef<HTMLElement>>('listWrapper');
+    private readonly contentArea = viewChild<ElementRef<HTMLElement>>('contentArea');
 
     private readonly _course = signal<Course | undefined>(undefined);
     private readonly _courseId = signal<number>(0);
@@ -166,10 +175,16 @@ export class CourseExercisesComponent implements SidebarView {
         // A focused page collapses the list without touching the stored preference of the student, who can still open it
         // by hand. When the page ends or is left, the list goes back to the stored preference.
         effect(() => {
-            const focused = this._activeExerciseDetails()?.focusMode?.() ?? false;
+            const details = this._activeExerciseDetails();
+            // Opening a quiz swaps the page for a new instance within one tick, before it has loaded. Such a page has no
+            // answer yet and must not restore the list, which the loaded page would collapse again one round trip later.
+            const focused = details ? (details.focusMode ? details.focusMode() : false) : false;
+            if (focused === undefined) {
+                return;
+            }
             untracked(() => {
                 if (focused) {
-                    this._isCollapsed.set(true);
+                    this.collapseForFocus();
                 } else if (this.sidebarFocused) {
                     this._isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('exercise'));
                 }
@@ -262,6 +277,15 @@ export class CourseExercisesComponent implements SidebarView {
             void this.router.navigate(target, { relativeTo: this.route, replaceUrl: true });
         } else {
             this._exerciseSelected.set(!!exerciseId);
+        }
+    }
+
+    /** Collapses the list for a focused page. Focus inside the list, which is no longer reachable then, moves to the toggle in the page header. */
+    private collapseForFocus(): void {
+        const hadFocus = !!this.listWrapper()?.nativeElement.contains(this.document.activeElement);
+        this._isCollapsed.set(true);
+        if (hadFocus) {
+            afterNextRender(() => this.contentArea()?.nativeElement.querySelector<HTMLElement>('[data-testid="course-sidebar-toggle"]')?.focus(), { injector: this.injector });
         }
     }
 

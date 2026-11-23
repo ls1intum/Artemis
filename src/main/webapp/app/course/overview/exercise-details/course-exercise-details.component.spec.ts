@@ -1388,6 +1388,10 @@ describe('CourseExerciseDetailsComponent', () => {
                 comp.handleNewExercise({ exercise: { type: ExerciseType.QUIZ, quizBatches: [{ started: true }] } as unknown as Exercise });
             };
 
+            it('should not know yet before the exercise has loaded, so the sidebars keep their state', () => {
+                expect(comp.focusMode()).toBeUndefined();
+            });
+
             it('should focus while the student takes a running graded quiz', () => {
                 runningQuiz();
 
