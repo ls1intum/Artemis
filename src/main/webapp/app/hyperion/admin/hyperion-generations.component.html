@@ -1,4 +1,4 @@
-<section class="flex flex-col gap-6!" aria-labelledby="hyperion-workers-title" [attr.aria-busy]="loading()">
+<section class="flex flex-col gap-6" aria-labelledby="hyperion-workers-title" [attr.aria-busy]="loading()">
     <h5 *adminTitleBarTitle id="hyperion-workers-title" class="m-0">{{ 'artemisApp.hyperion.workers.title' | artemisTranslate }}</h5>
     <div *adminTitleBarActions>
         <tumaet-ui-button severity="secondary" variant="outlined" size="small" [disabled]="loading()" (clicked)="refresh()" data-testid="hyperion-workers-refresh">
@@ -17,8 +17,8 @@
         </tumaet-ui-message>
     }
     @if (generationEnabled) {
-        <section aria-labelledby="hyperion-active-generations-title" class="flex flex-col gap-4!">
-            <h2 id="hyperion-active-generations-title" class="m-0 text-lg font-semibold">{{ 'artemisApp.hyperion.workers.activeRuns' | artemisTranslate }}</h2>
+        <section aria-labelledby="hyperion-active-generations-title" class="flex flex-col gap-4">
+            <h2 id="hyperion-active-generations-title" class="m-0">{{ 'artemisApp.hyperion.workers.activeRuns' | artemisTranslate }}</h2>
             @if (generationsUpdatedAt(); as updated) {
                 <p class="m-0 text-xs text-muted-color" data-testid="hyperion-generations-updated">
                     <span jhiTranslate="artemisApp.hyperion.workers.updated"></span> {{ updated | date: 'mediumTime' }}
@@ -118,7 +118,7 @@
     [closable]="!cancelling()"
     [closeOnEscape]="!cancelling()"
 >
-    <div class="flex flex-col gap-4!">
+    <div class="flex flex-col gap-4">
         <p jhiTranslate="artemisApp.hyperion.workers.cancelConfirmation" [translateValues]="{ exerciseId: cancelTarget()?.exerciseId }"></p>
         <label for="hyperion-admin-cancel-reason">{{ 'artemisApp.hyperion.workers.cancelReason' | artemisTranslate }}</label>
         <textarea

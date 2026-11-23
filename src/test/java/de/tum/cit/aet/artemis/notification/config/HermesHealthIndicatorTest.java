@@ -15,7 +15,7 @@ import org.springframework.boot.health.contributor.Status;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 /**
  * Unit tests for {@link HermesHealthIndicator}.
@@ -35,9 +35,9 @@ class HermesHealthIndicatorTest {
 
     @BeforeEach
     void setUp() {
-        RestTemplate restTemplate = new RestTemplate();
-        mockServer = MockRestServiceServer.createServer(restTemplate);
-        hermesHealthIndicator = new HermesHealthIndicator(restTemplate);
+        RestClient.Builder builder = RestClient.builder();
+        mockServer = MockRestServiceServer.bindTo(builder).build();
+        hermesHealthIndicator = new HermesHealthIndicator(builder.build());
         ReflectionTestUtils.setField(hermesHealthIndicator, "hermesUrl", HERMES_URL);
     }
 

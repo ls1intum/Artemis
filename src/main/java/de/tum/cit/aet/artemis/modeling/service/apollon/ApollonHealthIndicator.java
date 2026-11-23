@@ -11,8 +11,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
@@ -22,13 +22,13 @@ import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
 @Conditional(ApollonEnabled.class)
 public class ApollonHealthIndicator implements HealthIndicator {
 
-    private final RestTemplate shortTimeoutRestTemplate;
+    private final RestClient shortTimeoutRestClient;
 
     @Value("${artemis.apollon.conversion-service-url}")
     private String apollonConversionUrl;
 
-    public ApollonHealthIndicator(@Qualifier("shortTimeoutApollonRestTemplate") RestTemplate shortTimeoutRestTemplate) {
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+    public ApollonHealthIndicator(@Qualifier("shortTimeoutApollonRestClient") RestClient shortTimeoutRestClient) {
+        this.shortTimeoutRestClient = shortTimeoutRestClient;
     }
 
     /**
@@ -39,7 +39,7 @@ public class ApollonHealthIndicator implements HealthIndicator {
         Map<String, Object> additionalInfo = Map.of("url", apollonConversionUrl);
         ConnectorHealth health;
         try {
-            ResponseEntity<String> response = shortTimeoutRestTemplate.getForEntity(apollonConversionUrl + "/api/converter/status", String.class);
+            ResponseEntity<String> response = shortTimeoutRestClient.get().uri(apollonConversionUrl + "/api/converter/status").retrieve().toEntity(String.class);
             HttpStatusCode statusCode = response.getStatusCode();
             health = new ConnectorHealth(statusCode.is2xxSuccessful(), additionalInfo);
         }

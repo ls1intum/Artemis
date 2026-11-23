@@ -13,15 +13,15 @@
     } @else {
         <button
             type="button"
-            class="btn btn-primary"
+            tumAetUiButton
             (click)="requestAIFeedback()"
-            [class.btn-sm]="smallButtons()"
+            [size]="smallButtons() ? 'small' : 'default'"
             [disabled]="!showOptInPrompt() && isFeedbackRequestBlocked()"
             [id]="buttonIdPrefix() + exercise().id"
             [attr.aria-label]="buttonLabelKey() | artemisTranslate"
         >
             <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-            <span [class]="alwaysShowLabel() ? '' : 'd-none d-md-inline'" [jhiTranslate]="buttonLabelKey()"></span>
+            <span [class]="alwaysShowLabel() ? '' : 'hidden md:inline'" [jhiTranslate]="buttonLabelKey()"></span>
         </button>
     }
 }

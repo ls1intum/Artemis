@@ -61,7 +61,7 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
-    styleUrl: './text-exercise-update.component.scss',
+    styleUrl: '../../../../exercise/shared/exercise-update-grading-layout.scss',
     imports: [
         FormsModule,
         TranslateDirective,

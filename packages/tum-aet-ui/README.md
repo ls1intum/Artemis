@@ -77,7 +77,11 @@ Foundations:
 - shape: `--tumaet-ui-radius-{sm,md,xl,2xl}`;
 - elevation: `--tumaet-ui-shadow-{xs,sm,md,lg,xl}`;
 - focus: `--tumaet-ui-focus-color`;
-- resizable panel divider: `--tumaet-ui-splitter-divider-size` (defaults to `6px`).
+- resizable panel divider: `--tumaet-ui-splitter-divider-size` (defaults to `6px`);
+- accordion panel: `--tumaet-ui-accordion-header-padding`, `--tumaet-ui-accordion-content-padding`,
+  `--tumaet-ui-accordion-icon-size`, and `--tumaet-ui-accordion-icon-color`;
+- menu group label: `--tumaet-ui-menu-group-label-padding` and
+  `--tumaet-ui-menu-group-label-font-size`.
 
 Colors:
 

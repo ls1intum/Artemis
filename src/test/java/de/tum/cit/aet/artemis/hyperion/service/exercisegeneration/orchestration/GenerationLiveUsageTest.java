@@ -29,12 +29,12 @@ class GenerationLiveUsageTest {
     }
 
     private static GenerationUsage pricedRequest() {
-        return new GenerationUsage("model", 1000, 1f, 100, 2f, "pipeline", "provider-id", 800L, 0.1f, true);
+        return new GenerationUsage("model", 1000, 100, "pipeline", "provider-id", 800L, true, 0.00048);
     }
 
     /** An unpriced model reaches the accumulator exactly like this: zero prices, and the recorded request saying the estimate is not complete. */
     private static GenerationUsage unpricedRequest() {
-        return new GenerationUsage("mystery-model", 1000, 0f, 100, 0f, "pipeline", "provider-id", 800L, 0f, false);
+        return new GenerationUsage("mystery-model", 1000, 100, "pipeline", "provider-id", 800L, false, 0);
     }
 
     @Test
@@ -73,8 +73,8 @@ class GenerationLiveUsageTest {
 
         ExerciseGenerationLiveUsageDTO snapshot = liveUsage.snapshot();
         // 200 uncached input at 1, 800 cache reads at 0.1, 100 output at 2, per million.
-        assertThat(snapshot.estimatedCostEur()).isEqualTo(480 / 1_000_000.0);
-        assertThat(snapshot.estimatedCostComplete()).isTrue();
+        assertThat(snapshot.costUsd()).isEqualTo(480 / 1_000_000.0);
+        assertThat(snapshot.costUsdComplete()).isTrue();
     }
 
     @Test
@@ -84,8 +84,8 @@ class GenerationLiveUsageTest {
         liveUsage.recordAccountedRequest(unpricedRequest());
 
         ExerciseGenerationLiveUsageDTO snapshot = liveUsage.snapshot();
-        assertThat(snapshot.estimatedCostEur()).isNull();
-        assertThat(snapshot.estimatedCostComplete()).isFalse();
+        assertThat(snapshot.costUsd()).isNull();
+        assertThat(snapshot.costUsdComplete()).isFalse();
         assertThat(snapshot.inputTokens()).isEqualTo(1000);
     }
 
@@ -96,8 +96,8 @@ class GenerationLiveUsageTest {
         liveUsage.recordAccountedRequest(unpricedRequest());
         liveUsage.recordAccountedRequest(pricedRequest());
 
-        assertThat(liveUsage.snapshot().estimatedCostEur()).isNull();
-        assertThat(liveUsage.snapshot().estimatedCostComplete()).isFalse();
+        assertThat(liveUsage.snapshot().costUsd()).isNull();
+        assertThat(liveUsage.snapshot().costUsdComplete()).isFalse();
         assertThat(liveUsage.snapshot().modelCalls()).isEqualTo(2);
     }
 
@@ -108,7 +108,7 @@ class GenerationLiveUsageTest {
         assertThat(snapshot.modelCalls()).isZero();
         assertThat(snapshot.billableTokens()).isZero();
         assertThat(snapshot.tokenBudget()).isEqualTo(250_000);
-        assertThat(snapshot.estimatedCostEur()).isZero();
-        assertThat(snapshot.estimatedCostComplete()).isTrue();
+        assertThat(snapshot.costUsd()).isZero();
+        assertThat(snapshot.costUsdComplete()).isTrue();
     }
 }

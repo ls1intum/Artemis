@@ -28,7 +28,7 @@
                     @for (instructorActionItem of instructorActionItems(); track instructorActionItem) {
                         <a [routerLink]="instructorActionItem.routerLink" tumAetUiMenuItem>
                             @if (instructorActionItem.icon) {
-                                <fa-icon [fixedWidth]="true" [icon]="instructorActionItem.icon" class="ms-2 me-4!" />
+                                <fa-icon [fixedWidth]="true" [icon]="instructorActionItem.icon" class="ms-2 me-4" />
                             }
                             <span [jhiTranslate]="instructorActionItem.translation"></span>
                         </a>

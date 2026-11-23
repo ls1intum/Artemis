@@ -27,7 +27,7 @@
                         }
                     </div>
                 </tumaet-ui-popover>
-                <div class="flex flex-wrap items-center justify-end gap-2 text-end">
+                <div class="flex flex-wrap items-center justify-end gap-2 text-right">
                     <button
                         tumAetUiButton
                         severity="secondary"
@@ -60,7 +60,7 @@
     </div>
 
     @if (lectures()) {
-        <jhi-pdf-drop-zone class="mb-6! block" [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
+        <jhi-pdf-drop-zone class="mb-6 block" [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
         <jhi-pdf-upload-target-dialog
             [(visible)]="isPdfUploadTargetDialogVisible"
             [lectures]="lectures()"
@@ -107,7 +107,7 @@
                             </td>
                             <td>{{ lecture.startDate | artemisDate }}</td>
                             <td>{{ lecture.endDate | artemisDate }}</td>
-                            <td class="text-end">
+                            <td class="text-right">
                                 <!-- The actions stay in one row; their labels give way on narrow screens. -->
                                 <div class="flex items-center justify-end gap-1 whitespace-nowrap" data-testid="lecture-actions">
                                     @if (lecture.isAtLeastEditor) {
@@ -169,7 +169,7 @@
         </tumaet-ui-table-layout>
     } @else if (loaded()) {
         <tumaet-ui-empty-state
-            class="mt-12!"
+            class="mt-12"
             [icon]="faChalkboardTeacher"
             [title]="(lectures().length === 0 ? 'artemisApp.lecture.home.empty.title' : 'artemisApp.lecture.home.empty.noMatchingTitle') | artemisTranslate"
             [description]="(lectures().length === 0 ? 'artemisApp.lecture.home.empty.description' : 'artemisApp.lecture.home.empty.noMatchingDescription') | artemisTranslate"

@@ -57,14 +57,14 @@
                 <!--region Right Panel-->
                 <fa-icon right-header [icon]="farListAlt" />&nbsp;
                 <span right-header jhiTranslate="artemisApp.textAssessment.instructions"></span>
-                <tumaet-ui-message right-body severity="info" class="mb-6! block text-center">
+                <tumaet-ui-message right-body severity="info" class="mb-6 block text-center">
                     <span jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></span>
                 </tumaet-ui-message>
                 <jhi-assessment-instructions id="instructions-card" right-body [exercise]="exercise!" class="markdown-preview" />
                 <!--endregion-->
             </jhi-resizeable-container>
         </div>
-        <div class="mt-4!">
+        <div class="mt-4">
             @if (result() && result()!.id) {
                 <jhi-unreferenced-feedback
                     [feedbacks]="unreferencedFeedback()"
@@ -85,7 +85,7 @@
         } @else if (!loadingInitialSubmission()) {
             <div>
                 @if (noNewSubmissions()) {
-                    <tumaet-ui-message severity="warn" class="mt-6! block text-center">
+                    <tumaet-ui-message severity="warn" class="mt-6 block text-center">
                         <p jhiTranslate="artemisApp.textAssessment.notFound"></p>
                         <a [routerLink]="exerciseDashboardLink()" tumAetUiButton severity="info" size="small" class="me-1 mb-1 assessment-dashboard">
                             <span class="hidden md:inline" jhiTranslate="entity.action.exerciseDashboard"></span>

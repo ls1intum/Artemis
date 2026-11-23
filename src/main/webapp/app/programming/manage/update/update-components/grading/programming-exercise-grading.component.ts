@@ -17,10 +17,9 @@ import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiInputDirective, TumAetUiInputGroupAddonComponent, TumAetUiInputGroupComponent, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { Message } from 'primeng/message';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
@@ -33,14 +32,17 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
         IncludedInOverallScorePickerComponent,
         FormsModule,
         FaIconComponent,
-        NgbTooltip,
+        TumAetUiInputDirective,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiInputGroupComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTooltipDirective,
         SubmissionPolicyUpdateComponent,
         ProgrammingExerciseTimelineComponent,
         GradingInstructionsDetailsComponent,
         PresentationScoreComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
-        Message,
         PointsInputComponent,
     ],
 })

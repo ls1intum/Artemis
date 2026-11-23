@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Subscription, filter, firstValueFrom, skip } from 'rxjs';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -45,7 +45,7 @@ function isPendingAthenaFeedbackResult(result: Result | undefined): boolean {
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [TumAetUiButtonComponent, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
+    imports: [TumAetUiButtonComponent, TumAetUiButtonDirective, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
@@ -96,7 +96,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
      * selection first if needed; the exercise header and its post-submission popover opt in.
      */
     readonly showAiExperiencePrompt = input<boolean>(false);
-    /** Renders the action as a TUM UI button instead of a Bootstrap `.btn`. */
+    /** Renders the action as a `tumaet-ui-button` instead of a native button with the `tumAetUiButton` directive. */
     readonly asTumAetUiButton = input<boolean>(false);
     /** Keeps the button's text label visible on narrow viewports instead of collapsing to icon-only. */
     readonly alwaysShowLabel = input<boolean>(false);

@@ -1,7 +1,7 @@
 <div>
     <h3 jhiTranslate="artemisApp.studentDashboard.enroll.title"></h3>
     <tumaet-ui-table-layout [loading]="loading()" [empty]="filteredCoursesToSelect().length === 0 && !loading()" emptyTitle="artemisApp.studentDashboard.enroll.noCourse">
-        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
             <input
                 tumAetUiInput
                 tumAetUiInputSize="small"
@@ -41,10 +41,10 @@
                         <td>
                             <span>{{ course.description }}</span>
                         </td>
-                        <td class="text-end">
+                        <td class="text-right">
                             <jhi-course-prerequisites-button [course]="course" />
                         </td>
-                        <td class="text-end">
+                        <td class="text-right">
                             <jhi-course-registration-button [course]="course" (onRegistration)="removeCourseFromList(course.id!)" />
                         </td>
                     </tr>

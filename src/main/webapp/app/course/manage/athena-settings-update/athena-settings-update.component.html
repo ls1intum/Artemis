@@ -3,7 +3,7 @@
 </div>
 
 <!-- Width, spacing and row surface follow Iris's settings page, so the two AI-feedback settings pages look alike. -->
-<div class="mx-auto flex max-w-[800px] flex-col gap-4! pt-4!">
+<div class="mx-auto flex max-w-[800px] flex-col gap-4 pt-4">
     @if (loadFailed()) {
         <!-- Without the stored configuration the switches would show a state the course may not have, so none are shown. -->
         <tumaet-ui-message severity="error" data-testid="athena-settings-load-failed">
@@ -12,7 +12,7 @@
     } @else {
         @for (feature of features; track feature.key) {
             @let featureKey = 'artemisApp.course.athenaConfig.' + feature.key;
-            <div class="flex items-start gap-3! rounded-lg border border-solid border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-6 py-5!">
+            <div class="flex items-start gap-3 rounded-lg border border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-6 py-5">
                 <tumaet-ui-toggle-switch
                     class="shrink-0"
                     [inputId]="feature.testId + '-toggle'"
@@ -24,7 +24,10 @@
                 <!-- The title and hint describe the current state; the switch itself keeps the constant feature name. -->
                 <label [class.cursor-pointer]="loaded()" [for]="feature.testId + '-toggle'">
                     <span [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledLabel' : '.disabledLabel')"></span>
-                    <small class="block text-sm text-(--text-body-secondary)" [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledHint' : '.disabledHint')"></small>
+                    <small
+                        class="block leading-[calc(1.25/0.875)] text-(--text-body-secondary)"
+                        [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledHint' : '.disabledHint')"
+                    ></small>
                 </label>
             </div>
         }

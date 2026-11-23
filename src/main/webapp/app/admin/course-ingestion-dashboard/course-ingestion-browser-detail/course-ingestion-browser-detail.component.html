@@ -1,5 +1,5 @@
 @if (selection(); as current) {
-    <div class="flex flex-col gap-4!">
+    <div class="flex flex-col gap-4">
         <!-- What is selected and the way out of the pane share one row, with the trail above the heading. Given a row of
              its own the button opened an empty band across the pane, which is most of the space the header used. -->
         <div class="flex flex-wrap items-start justify-between gap-2">
@@ -49,23 +49,23 @@
                 'artemisApp.courseIngestionDashboard.browser.detailError' | artemisTranslate
             }}</tumaet-ui-message>
         } @else if (loading()) {
-            <div class="text-muted-color py-6!" jhiTranslate="artemisApp.courseIngestionDashboard.loading" data-testid="detail-loading"></div>
+            <div class="text-muted-color py-6" jhiTranslate="artemisApp.courseIngestionDashboard.loading" data-testid="detail-loading"></div>
         } @else {
             @switch (current.kind) {
                 @case ('type') {
                     <div data-testid="detail-type">
                         @if (typeCount(); as counts) {
                             <!-- The number carries the meaning, so it leads and the label sits under it. -->
-                            <div class="mb-4! flex flex-wrap gap-2" data-testid="detail-type-stats">
-                                <div class="min-w-20 flex-1 rounded-lg border border-solid px-4! py-2">
+                            <div class="mb-4 flex flex-wrap gap-2" data-testid="detail-type-stats">
+                                <div class="min-w-20 flex-1 rounded-lg border border-(--border-color) px-4 py-2">
                                     <div class="text-lg leading-tight font-semibold">{{ counts.indexed }}</div>
                                     <div class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.browser.statIndexed"></div>
                                 </div>
-                                <div class="min-w-20 flex-1 rounded-lg border border-solid px-4! py-2">
+                                <div class="min-w-20 flex-1 rounded-lg border border-(--border-color) px-4 py-2">
                                     <div class="text-lg leading-tight font-semibold">{{ counts.expected }}</div>
                                     <div class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.browser.statExpected"></div>
                                 </div>
-                                <div class="min-w-20 flex-1 rounded-lg border border-solid px-4! py-2" [class.text-state-danger]="counts.missing > 0">
+                                <div class="min-w-20 flex-1 rounded-lg border border-(--border-color) px-4 py-2" [class.text-state-danger]="counts.missing > 0">
                                     <div class="text-lg leading-tight font-semibold">{{ counts.missing }}</div>
                                     <div
                                         class="text-xs"
@@ -75,7 +75,7 @@
                                 </div>
                                 <!-- Orphaned makes the matrix cell red too, so the drill-down has to name the number that caused it. -->
                                 <div
-                                    class="min-w-20 flex-1 rounded-lg border border-solid px-4! py-2"
+                                    class="min-w-20 flex-1 rounded-lg border border-(--border-color) px-4 py-2"
                                     [class.text-state-danger]="counts.orphaned > 0"
                                     data-testid="detail-type-orphaned"
                                 >
@@ -90,7 +90,7 @@
                         }
 
                         @if (missingOfType().length > 0) {
-                            <div class="mb-4!" data-testid="detail-missing-list">
+                            <div class="mb-4" data-testid="detail-missing-list">
                                 <p class="text-sm text-state-danger m-0 mb-1" jhiTranslate="artemisApp.courseIngestionDashboard.browser.notIngested"></p>
                                 <ul class="list-none p-0 m-0 flex flex-col gap-1 max-h-40 overflow-y-auto">
                                     @for (missing of missingOfType(); track missing.entityId) {
@@ -109,17 +109,17 @@
                         <p class="text-sm font-medium m-0 mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.browser.storedObjects"></p>
                         @if (records().length === 1) {
                             <!-- One object: a collapsed row would hide the only thing there is to show. -->
-                            <div class="border border-solid rounded p-2" data-testid="detail-single-record">
+                            <div class="border border-(--border-color) rounded p-2" data-testid="detail-single-record">
                                 <jhi-course-ingestion-stored-fields [properties]="records()[0].properties" />
                             </div>
                         } @else {
                             @for (record of pagedRecords(); track record.entityId) {
                                 @let rowKey = 'record:' + record.entityId;
                                 @let expanded = expandedRows().has(rowKey);
-                                <div class="mb-2 border border-solid rounded">
+                                <div class="mb-2 border border-(--border-color) rounded">
                                     <button
                                         type="button"
-                                        class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-start text-sm cursor-pointer"
+                                        class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-left cursor-pointer"
                                         [attr.aria-expanded]="expanded"
                                         (click)="toggleRow(rowKey)"
                                         [attr.data-testid]="'detail-record-' + record.entityId"
@@ -139,7 +139,7 @@
                         }
                         @if (records().length > pageSize()) {
                             <tumaet-ui-paginator
-                                class="block mt-2"
+                                class="block mt-2!"
                                 [totalRecords]="records().length"
                                 [page]="recordsPage()"
                                 [pageSize]="pageSize()"
@@ -191,17 +191,17 @@
                 @case ('collection') {
                     <div data-testid="detail-collection">
                         @if (labelledContent().length === 1) {
-                            <div class="border border-solid rounded p-2" data-testid="detail-single-content">
+                            <div class="border border-(--border-color) rounded p-2" data-testid="detail-single-content">
                                 <jhi-course-ingestion-stored-fields [properties]="labelledContent()[0].object.properties" />
                             </div>
                         } @else {
                             @for (entry of pagedContent(); track entry.key) {
                                 @let rowKey = 'content:' + entry.key;
                                 @let expanded = expandedRows().has(rowKey);
-                                <div class="mb-2 border border-solid rounded">
+                                <div class="mb-2 border border-(--border-color) rounded">
                                     <button
                                         type="button"
-                                        class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-start text-sm cursor-pointer"
+                                        class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-left cursor-pointer"
                                         [attr.aria-expanded]="expanded"
                                         (click)="toggleRow(rowKey)"
                                         [attr.data-testid]="'detail-content-row'"
@@ -221,7 +221,7 @@
                         }
                         @if (labelledContent().length > pageSize()) {
                             <tumaet-ui-paginator
-                                class="block mt-2"
+                                class="block mt-2!"
                                 [totalRecords]="labelledContent().length"
                                 [page]="contentPage()"
                                 [pageSize]="pageSize()"

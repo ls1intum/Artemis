@@ -183,7 +183,7 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
                 await page.locator('#submitButton').click();
             } else {
                 await page.getByTestId('sidebar-create-menu-button').click();
-                await page.getByRole('button', { name: 'Create direct chat', exact: true }).click();
+                await page.getByRole('menuitem', { name: 'Create direct chat', exact: true }).click();
                 await courseMessages.addUserToGroupChat(instructor.username);
             }
             const response = await creation;

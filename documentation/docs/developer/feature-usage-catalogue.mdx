@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 153 features, 1190 REST endpoints in 29 modules, and 73 interaction overrides.
+Currently 20 product areas, 153 features, 1200 REST endpoints in 29 modules, and 76 interaction overrides.
 
 ## Courses
 
@@ -42,6 +42,7 @@ Currently 20 product areas, 153 features, 1190 REST endpoints in 29 modules, and
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
+| course | `CourseHomeResource` | 2 | 2 | 0 | 0 |
 | course | `CourseOverviewResource` | 0 | 7 | 1 | 0 |
 
 ### Enrollment
@@ -68,7 +69,7 @@ Currently 20 product areas, 153 features, 1190 REST endpoints in 29 modules, and
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| calendar | `CalendarResource` | 0 | 3 | 0 | 0 |
+| calendar | `CalendarResource` | 1 | 3 | 0 | 0 |
 
 ### Global search
 
@@ -371,7 +372,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | programming | `ProgrammingExerciseGradingResource` | 1 | 0 | 0 | 0 |
-| programming | `ProgrammingExerciseUpdateResource` | 1 | 0 | 0 | 0 |
+| programming | `ProgrammingExerciseReEvaluationResource` | 1 | 0 | 0 | 0 |
 | programming | `ProgrammingSubmissionResource` | 2 | 0 | 1 | 0 |
 
 ### Submission policies
@@ -619,7 +620,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| assessment | `PresentationAssessmentResource` | 6 | 3 | 0 | 0 |
+| assessment | `PresentationAssessmentResource` | 6 | 5 | 0 | 0 |
 
 ## Exams
 
@@ -753,7 +754,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | lecture | `AttachmentVideoUnitPlaylistResource` | 0 | 1 | 0 | 0 |
 | lecture | `LectureTranscriptionResource` | 0 | 1 | 0 | 0 |
-| lecture | `TumLiveUploadResource` | 2 | 0 | 2 | 0 |
+| lecture | `TumLiveUploadResource` | 2 | 0 | 4 | 0 |
 
 ### Create and manage lectures
 
@@ -1358,6 +1359,7 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | admin | `AdminBuildJobQueueResource` | 9 | 9 | 0 | 0 |
 | localvc | `PublicBuildAgentAddressResource` | 0 | 0 | 0 | 1 |
+| localvc | `PublicSshFingerprintsResource` | 0 | 0 | 0 | 1 |
 
 ### AI workers
 
@@ -1552,6 +1554,7 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/iris/chat/courses/{courseId}/sessions/overview` (`IRIS_CHAT`)
 * `GET api/iris/courses/{courseId}/iris-settings` (`IRIS_SETTINGS`)
 * `GET api/iris/courses/{courseId}/status` (`IRIS_CHAT`)
+* `GET api/lecture/courses/{courseId}/tumlive-upload-availability` (`LECTURE_VIDEO`)
 * `GET api/lecture/courses/{courseId}/tumlive-uploads` (`LECTURE_VIDEO`)
 * `GET api/lecture/lecture-units/{lectureUnitId}/tumlive-upload` (`LECTURE_VIDEO`)
 * `GET api/lecture/lectures/{lectureId}/title` (`LECTURE_PAGES`)
@@ -1570,6 +1573,7 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `POST api/core/public/email-allowed` (`REGISTRATION_PASSWORD`)
 * `POST api/iris/chat/sessions/current` (`IRIS_CHAT`)
 * `POST api/iris/tutor-suggestion/posts/{postId}/sessions/current` (`IRIS_TUTOR_SUGGESTIONS`)
+* `POST api/lecture/lecture-units/{lectureUnitId}/tumlive-upload/file` (`LECTURE_VIDEO`)
 * `PUT api/notification/courses/{courseId}/seen` (`COURSE_NOTIFICATIONS`)
 
 ### Counted as system calls
@@ -1581,5 +1585,6 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/core/sharing/config/is-enabled` (`SHARING_PLATFORM`)
 * `GET api/localci/public/programming-exercises/{exerciseId}/build-plan` (`PROGRAMMING_BUILD_CONFIGURATION`)
 * `GET api/localvc/public/observed-client-address` (`BUILD_AGENTS`)
+* `GET api/localvc/public/ssh-fingerprints` (`BUILD_AGENTS`)
 * `GET api/programming/sharing/export/{token}` (`SHARING_PLATFORM`)
 * `POST api/programming/public/programming-exercises/new-result` (`PROGRAMMING_RESULTS`)

@@ -836,8 +836,6 @@ public class CourseTestService {
         request1.setModel("gpt-4");
         request1.setNumInputTokens(100);
         request1.setNumOutputTokens(50);
-        request1.setCostPerMillionInputTokens(30.0f);
-        request1.setCostPerMillionOutputTokens(60.0f);
         request1.setServicePipelineId("test-pipeline");
         request1.setTrace(trace);
         llmTokenUsageRequestRepository.save(request1);
@@ -846,8 +844,6 @@ public class CourseTestService {
         request2.setModel("gpt-3.5-turbo");
         request2.setNumInputTokens(200);
         request2.setNumOutputTokens(100);
-        request2.setCostPerMillionInputTokens(0.5f);
-        request2.setCostPerMillionOutputTokens(1.5f);
         request2.setServicePipelineId("test-pipeline");
         request2.setTrace(trace);
         llmTokenUsageRequestRepository.save(request2);
@@ -3558,7 +3554,7 @@ public class CourseTestService {
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getLearningPathsEnabled(),
                 course.getPresentationAssessmentsEnabled(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getTimeZone(),
                 course.getCourseInformationSharingConfiguration(), course.isGradeRelevant(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(),
-                course.getMaxDailyOrchestrationOverride());
+                course.getMaxDailyOrchestrationOverride(), course.getCourseConfiguration() == null ? null : course.getCourseConfiguration().getStudentWelcomeContext());
     }
 
     public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JacksonException {
