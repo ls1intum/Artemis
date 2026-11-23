@@ -5,8 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -199,8 +201,11 @@ public class ConversationService {
         // Every course member takes part in a course-wide channel, so its participants are not counted row by row but taken from the course member count below
         var conversationIdsWithParticipantCount = conversationsOfUser.stream().filter(conversation -> !(conversation instanceof Channel channel && channel.getIsCourseWide()))
                 .map(Conversation::getId).toList();
-        var generalConversationInfos = conversationRepository.getGeneralInformationForConversations(conversationIdsWithParticipantCount).stream()
-                .collect(Collectors.toMap(GeneralConversationInfo::getConversationId, Function.identity()));
+        Map<Long, GeneralConversationInfo> generalConversationInfos = new HashMap<>();
+        if (!conversationIdsWithParticipantCount.isEmpty()) {
+            conversationRepository.getGeneralInformationForConversations(conversationIdsWithParticipantCount)
+                    .forEach(generalInfo -> generalConversationInfos.put(generalInfo.getConversationId(), generalInfo));
+        }
 
         Integer numberOfCourseMembers = null;
         for (Channel channel : filteredChannels) {

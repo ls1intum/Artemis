@@ -97,8 +97,9 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
     /**
      * Find all course-wide channels and all other channels the user participates in, in a given course.
      * <p>
-     * The membership is checked with {@code EXISTS} and not with a join of the participants: a join would repeat every course-wide
-     * channel once per participant, which needs a {@code DISTINCT} to undo and is the most expensive query of a busy course.
+     * The participants are joined with the user in the {@code ON} clause, not with all participants of the channel: a join of all participants
+     * would repeat every course-wide channel once per participant, which needs a {@code DISTINCT} to undo and is the most expensive query
+     * of a busy course. A user has at most one participant row per conversation, so every channel is returned once.
      *
      * @param courseId the ID of the course to search in
      * @param userId   the ID of the user
@@ -107,18 +108,13 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
     @Query("""
             SELECT channel
             FROM Channel channel
+                LEFT JOIN ConversationParticipant conversationParticipant
+                    ON conversationParticipant.conversation.id = channel.id
+                    AND conversationParticipant.user.id = :userId
                 LEFT JOIN FETCH channel.course
                 LEFT JOIN FETCH channel.creator
             WHERE channel.course.id = :courseId
-                AND (
-                    channel.isCourseWide
-                    OR EXISTS (
-                        SELECT conversationParticipant.id
-                        FROM ConversationParticipant conversationParticipant
-                        WHERE conversationParticipant.conversation.id = channel.id
-                            AND conversationParticipant.user.id = :userId
-                    )
-                )
+                AND (channel.isCourseWide OR conversationParticipant.id IS NOT NULL)
             ORDER BY channel.name
             """)
     List<Channel> findChannelsOfUser(@Param("courseId") Long courseId, @Param("userId") Long userId);

@@ -260,9 +260,11 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_courseWideChannelWithManyParticipants_shouldBeReturnedOnceWithCourseMemberCount() throws Exception {
+        // the users enrolled by the test setup: instructor1, tutor1, editor1, student1 and student42
+        final int enrolledCourseMembers = 5;
         var courseWideChannel = createCourseWideChannel(TEST_PREFIX + "everyone");
         addUsersToConversation(courseWideChannel.getId(), "tutor1", "student1", "student42");
-        var privateChannel = createChannel(false, TEST_PREFIX + "private");
+        createChannel(false, TEST_PREFIX + "private");
         var channelOfTutorOnly = createChannel(false, TEST_PREFIX + "tutors");
         addUsersToConversation(channelOfTutorOnly.getId(), "tutor1");
 
@@ -271,16 +273,16 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
         // the participants of the course-wide channel must not repeat it, and a channel the student is not a member of stays out
         assertThat(conversationsOfStudent).extracting(ConversationDTO::getId).containsExactly(courseWideChannel.getId());
-        assertThat(conversationsOfStudent.getFirst().getNumberOfMembers()).isEqualTo(courseRepository.countCourseMembers(exampleCourseId));
+        assertThat(conversationsOfStudent.getFirst().getNumberOfMembers()).isEqualTo(enrolledCourseMembers);
 
         userUtilService.changeUser(testPrefix + "tutor1");
         var conversationsOfTutor = request.getList("/api/communication/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
+        // the private channel without the tutor stays out
         assertThat(conversationsOfTutor).extracting(ConversationDTO::getId).containsExactlyInAnyOrder(courseWideChannel.getId(), channelOfTutorOnly.getId());
-        assertThat(conversationsOfTutor).extracting(ConversationDTO::getId).doesNotContain(privateChannel.getId());
-        conversationsOfTutor.stream().filter(conversation -> conversation.getId().equals(courseWideChannel.getId()))
-                .forEach(conversation -> assertThat(conversation.getNumberOfMembers()).isEqualTo(courseRepository.countCourseMembers(exampleCourseId)));
-        conversationsOfTutor.stream().filter(conversation -> conversation.getId().equals(channelOfTutorOnly.getId()))
-                .forEach(conversation -> assertThat(conversation.getNumberOfMembers()).isEqualTo(2));
+        assertThat(conversationsOfTutor).filteredOn(conversation -> conversation.getId().equals(courseWideChannel.getId())).singleElement()
+                .satisfies(conversation -> assertThat(conversation.getNumberOfMembers()).isEqualTo(enrolledCourseMembers));
+        assertThat(conversationsOfTutor).filteredOn(conversation -> conversation.getId().equals(channelOfTutorOnly.getId())).singleElement()
+                .satisfies(conversation -> assertThat(conversation.getNumberOfMembers()).isEqualTo(2));
     }
 
     @Test
