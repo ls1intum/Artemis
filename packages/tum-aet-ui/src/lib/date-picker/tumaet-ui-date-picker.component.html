@@ -38,8 +38,9 @@
                     <ng-content select="[tumAetUiDatePickerLabelAddon]" />
                 }
                 @if (shouldDisplayTimeZoneWarning()) {
+                    <!-- Font Awesome sizes `.fa-stack` in a stylesheet outside the cascade layers, so the size has to be important. -->
                     <fa-stack
-                        class="tumaet:h-4 tumaet:w-4"
+                        class="tumaet:h-4! tumaet:w-4!"
                         tabindex="0"
                         role="img"
                         [attr.aria-label]="'tumAetUi.datePicker.timeZoneWarning' | tumAetUiTranslate: { timeZone: currentTimeZone }"

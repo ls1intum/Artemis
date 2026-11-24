@@ -11,3 +11,12 @@
         margin-right: 0.25em;
     }
 }
+
+span.result,
+span.result:hover {
+    font-weight: normal;
+}
+
+span.score {
+    font-weight: bold;
+}

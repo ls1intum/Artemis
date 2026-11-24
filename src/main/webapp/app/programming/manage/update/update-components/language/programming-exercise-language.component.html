@@ -118,7 +118,7 @@
                 />
                 @for (e of packageName.errors! | keyvalue | removekeys: ['required', 'maxlength']; track e) {
                     @if (packageName.invalid && (packageName.dirty || packageName.touched)) {
-                        <tumaet-ui-message severity="error" class="mt-1 block">
+                        <tumaet-ui-message severity="error" class="mt-1">
                             @if (programmingExercise().projectType === ProjectType.MAVEN_BLACKBOX) {
                                 <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise().programmingLanguage + '_BLACKBOX'"></div>
                             }
@@ -129,7 +129,7 @@
                     }
                 }
                 @if (packageName.errors?.['maxlength'] && (packageName.dirty || packageName.touched)) {
-                    <tumaet-ui-message severity="error" class="mt-1 block">
+                    <tumaet-ui-message severity="error" class="mt-1">
                         <div jhiTranslate="artemisApp.exercise.form.packageName.maxlength" [translateValues]="{ max: MAX_PACKAGE_NAME_LENGTH }"></div>
                     </tumaet-ui-message>
                 }
@@ -159,13 +159,13 @@
                 />
                 @for (e of packageName.errors! | keyvalue | removekeys: ['required', 'maxlength']; track e) {
                     @if (packageName.invalid && (packageName.dirty || packageName.touched)) {
-                        <tumaet-ui-message severity="error" class="mt-1 block">
+                        <tumaet-ui-message severity="error" class="mt-1">
                             <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise().programmingLanguage"></div>
                         </tumaet-ui-message>
                     }
                 }
                 @if (packageName.errors?.['maxlength'] && (packageName.dirty || packageName.touched)) {
-                    <tumaet-ui-message severity="error" class="mt-1 block">
+                    <tumaet-ui-message severity="error" class="mt-1">
                         <div jhiTranslate="artemisApp.exercise.form.packageName.maxlength" [translateValues]="{ max: MAX_PACKAGE_NAME_LENGTH }"></div>
                     </tumaet-ui-message>
                 }
