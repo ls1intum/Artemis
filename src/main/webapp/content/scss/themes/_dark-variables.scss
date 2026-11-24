@@ -138,9 +138,6 @@ $form-control-focus-background: transparentize(#fff, 0.9);
 $form-control-color: $white;
 $ng-valid-border: green;
 $ng-invalid-border: red;
-$error-color: white;
-$error-background: red;
-$readonly-background: #eee;
 $editor-outline-background: transparent;
 
 $result-orange: orange;
@@ -154,12 +151,6 @@ $positive-background: $gray-800;
 $artemis-pre-color: white;
 $artemis-pre-background: $neutral-dark-l-10;
 $artemis-pre-border: $neutral-dark-l-20;
-
-$code-password: transparent;
-$code-password-background: black;
-$code-password-selection: white;
-$code-password-selection-background: #3297fd;
-$code-password-hover: white;
 
 $markdown-preview-editor-background: $module-bg;
 $markdown-preview-red: #ca2024;
@@ -270,8 +261,6 @@ $quiz-statistic-drag-item-border: #696969;
 $quiz-statistic-drag-item-background: #fafafa;
 $quiz-statistic-letter-background: #428bca;
 $quiz-statistic-letter-solution-background: #5cb85c;
-$quiz-participation-overlay-shadow-near: rgba(0, 0, 0, 0.16);
-$quiz-participation-overlay-shadow-far: rgba(0, 0, 0, 0.23);
 
 $edit-quiz-footer-background: $body-bg;
 $quiz-exercise-detail-max-score-background: $artemis-dark;

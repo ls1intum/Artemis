@@ -11,6 +11,20 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
 public interface WorkloadApi {
 
     /**
+     * Distinguishes immediate cancellation from a cooperative request to finish useful work.
+     *
+     * @param cancelled       cancellation or loss of execution ownership; resource use must stop
+     * @param finishRequested cooperative request to finish, allowing a bounded verification drain
+     */
+    record StopSignal(BooleanSupplier cancelled, BooleanSupplier finishRequested) implements BooleanSupplier {
+
+        @Override
+        public boolean getAsBoolean() {
+            return cancelled.getAsBoolean() || finishRequested.getAsBoolean();
+        }
+    }
+
+    /**
      * Identifies the installed handler, independently of the configured worker profile.
      *
      * @return the exact supported workload schema and execution profile

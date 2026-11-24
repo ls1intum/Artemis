@@ -20,7 +20,7 @@
                             {{ action.competencyTitle }}
                             <span class="ms-1 text-muted-color">#{{ action.competencyId }}</span>
                             @if (weightBandTag(action.weight); as tag) {
-                                <tumaet-ui-tag severity="secondary" class="ms-2!" [value]="(tag.translationKey | artemisTranslate) + ' · ' + (tag.weight | number: '1.1-1')" />
+                                <tumaet-ui-tag severity="secondary" class="ms-2" [value]="(tag.translationKey | artemisTranslate) + ' · ' + (tag.weight | number: '1.1-1')" />
                             }
                         </td>
                         <td>{{ action.detail }}</td>

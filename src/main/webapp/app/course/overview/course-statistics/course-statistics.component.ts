@@ -258,6 +258,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         attainablePoints: this.safeScore(this.reachablePoints()),
         maximumPoints: this.safeScore(this.overallMaxPoints()),
         overallPercentage: this.safeScore(this.totalRelativeScore()),
+        presentationScore: this.safeScore(this.overallPresentationScore()),
     }));
 
     doughnutChartColors: string[] = [

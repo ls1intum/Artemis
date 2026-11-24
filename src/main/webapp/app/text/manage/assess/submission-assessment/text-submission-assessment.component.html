@@ -75,7 +75,7 @@
             </div>
 
             <div assessmentWorkspaceInstructions>
-                <tumaet-ui-message severity="info" class="mb-6 block text-center">
+                <tumaet-ui-message severity="info" class="mb-6 text-center">
                     <span jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></span>
                 </tumaet-ui-message>
                 <jhi-assessment-instructions id="instructions-card" [exercise]="exercise!" [embeddedInEditorChrome]="true" [tabbed]="true" class="markdown-preview" />
@@ -135,7 +135,7 @@
         } @else if (!loadingInitialSubmission()) {
             <div>
                 @if (noNewSubmissions()) {
-                    <tumaet-ui-message severity="warn" class="mt-6 block text-center">
+                    <tumaet-ui-message severity="warn" class="mt-6 text-center">
                         <p jhiTranslate="artemisApp.textAssessment.notFound"></p>
                         <a [routerLink]="exerciseDashboardLink()" tumAetUiButton severity="info" size="small" class="me-1 mb-1 assessment-dashboard">
                             <span class="hidden md:inline" jhiTranslate="entity.action.exerciseDashboard"></span>
