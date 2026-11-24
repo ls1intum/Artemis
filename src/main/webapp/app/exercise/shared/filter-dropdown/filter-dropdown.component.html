@@ -62,7 +62,7 @@
         tumAetUiButton
         variant="text"
         size="small"
-        class="aria-disabled:cursor-default aria-disabled:opacity-60"
+        class="aria-disabled:opacity-60"
         [attr.aria-disabled]="!activeFilters().length"
         [tumAetUiTooltip]="activeFilters().length ? '' : ('artemisApp.participation.resetDisabled' | artemisTranslate)"
         (click)="activeFilters().length && filterChange.emit([])"

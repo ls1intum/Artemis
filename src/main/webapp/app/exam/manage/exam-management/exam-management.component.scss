@@ -63,6 +63,10 @@ $breakpoint-md: 48rem; // Tailwind 'md' breakpoint (768px)
 
 .title-bar-actions-wrapper ::ng-deep {
     @include title-bar-compact-controls;
+
+    .tumaet-ui-select-button-option {
+        padding-block: 0;
+    }
 }
 
 a.exam-title-link {

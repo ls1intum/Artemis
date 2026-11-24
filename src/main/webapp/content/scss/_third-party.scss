@@ -1,0 +1,87 @@
+// Styles of third-party libraries, and the rules that adapt them and TUM AET UI to Artemis. Not in a cascade layer:
+// most of these libraries ship their styles outside a layer, so a rule that has to override them must be outside one, too.
+
+// Mathematical formulas in the markdown editor
+
+/*
+ * Bare specifier (not 'node_modules/…') so Tailwind's PostCSS @import resolver can resolve this .css file;
+ * the 'node_modules/' prefix is treated as a relative path under PostCSS and breaks the build.
+ */
+@import 'katex/dist/katex.min.css';
+
+// Emojis in message reactions
+@import 'node_modules/@ctrl/ngx-emoji-mart/picker';
+@import '@angular/cdk/a11y-prebuilt.css';
+
+/* ==========================================================================
+Angular CDK
+========================================================================== */
+
+// Kit overlays (dialogs, calendars, select panels, tooltips) open in this one container, so they all share one layer.
+// Stacking order of the layers an Artemis page can show, lowest first:
+//   1049-1053  Iris onboarding tour: click guard 1049, tour root and spotlight 1050, card 1051, coach mark 1052, highlighted target 1053
+//   1200       this container: kit dialogs and everything the kit opens above them
+//   100000     alert overlay
+// `delete-dialog-layering.spec.ts` compiles the default theme, which includes this file, and checks that a confirmation opened from inside a kit dialog
+// (delete button in the presentation edit dialog) stacks above it.
+.cdk-overlay-container {
+    z-index: $kit-overlay-container-z-index;
+}
+
+/* ==========================================================================
+TUM AET UI
+========================================================================== */
+
+// `tumaet:disabled:opacity-60` compiles to `:disabled`, which never matches an `<a>`.
+a[tumAetUiButton].disabled {
+    opacity: 0.6;
+}
+
+/* ==========================================================================
+Apollon
+========================================================================== */
+
+.apollon-editor label {
+    margin-bottom: 0;
+}
+
+/* Apollon renders its popovers (the edit popup of an element, selects, color pickers) in a Base UI portal under <body>.
+   That portal is unpositioned and has no z-index, so a popover opened from an editor inside a kit dialog is painted behind
+   the dialog: the overlay container above is appended to <body> too (to <html> only while an element is fullscreen) and sits at
+   $kit-overlay-container-z-index, and the dialog hides the popover without any error. This puts the portal one layer above the
+   overlay container, still below the alert overlay, and hands pointer events back to its children so the transparent layer never
+   swallows a click. */
+body > [data-base-ui-portal] {
+    position: fixed;
+    z-index: $apollon-popover-portal-z-index;
+    inset: 0;
+    pointer-events: none;
+
+    > * {
+        pointer-events: auto;
+    }
+}
+
+/* An Apollon surface taken fullscreen (the editor frame, the assessed canvas) is promoted
+   to <body> and sits at $modeling-editor-fullscreen-z-index, so anything portaled out of it
+   would paint behind it. There are two such portals and they attach to different roots:
+
+   - Apollon's popovers use a Base UI portal under <body>. It is unpositioned, so it
+     needs the position/inset as well as the z-index; pointer events are handed back
+     to its children so the transparent full-screen layer never swallows a click.
+   - TUM AET UI dialogs use Angular CDK, whose overlay container is appended to <html>
+     and already positions itself - only the z-index is missing there. */
+html:fullscreen body:has(> .apollon-fullscreen-frame) > [data-base-ui-portal] {
+    position: fixed;
+    z-index: $modeling-editor-fullscreen-z-index + 1;
+    inset: 0;
+    pointer-events: none;
+
+    > * {
+        pointer-events: auto;
+    }
+}
+
+html:fullscreen:has(> body > .apollon-fullscreen-frame) > .cdk-overlay-container {
+    z-index: $modeling-editor-fullscreen-z-index + 1;
+}

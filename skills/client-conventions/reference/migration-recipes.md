@@ -191,9 +191,12 @@ Tailwind utilities live in a CSS layer, so unlayered CSS wins over them. The ele
 correct-looking utility into a no-op. Lint and unit tests
 do not catch them; open the screen and read the computed style.
 
-| Case                                                                         | Symptom                                                          | Fix                  |
-| ---------------------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------- |
-| Class of a TUM AET UI component, which is unlayered, e.g. `tumAetUiMenuItem` | `text-state-danger` on a menu item stays the default text colour | `text-state-danger!` |
+| Case                                              | Symptom                                 | Fix     |
+| ------------------------------------------------- | --------------------------------------- | ------- |
+| Rule in the SCSS of the component, e.g. `p { … }` | `mt-6` on the paragraph changes nothing | `mt-6!` |
+
+The styles of TUM AET UI are in the layer `tumaet-ui`, below the utilities: a utility on a TUM AET UI
+component (`text-state-danger` on a menu item, `p-0` on a button) applies without the modifier.
 
 A hover-only control also needs a way to appear without a pointer. `group-hover:` only applies
 where `(hover: hover)` matches, so add `[@media(hover:none)]:opacity-100!` or the control stays
