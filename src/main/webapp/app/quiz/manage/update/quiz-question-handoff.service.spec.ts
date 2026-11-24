@@ -43,9 +43,17 @@ describe('QuizQuestionHandoffService', () => {
     });
 
     it('should drop the offer when cleared', () => {
-        service.offer(1, [question('a')]);
-        service.clear();
+        const offerId = service.offer(1, [question('a')]);
+        service.clear(offerId);
 
         expect(service.take(1)).toEqual([]);
+    });
+
+    it('should keep a later offer when an earlier one is cleared', () => {
+        const earlier = service.offer(1, [question('a')]);
+        service.offer(1, [question('b')]);
+        service.clear(earlier);
+
+        expect(service.take(1).map((q) => q.id)).toEqual(['b']);
     });
 });

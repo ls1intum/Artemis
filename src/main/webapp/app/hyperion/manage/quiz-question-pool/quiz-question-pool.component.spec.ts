@@ -213,6 +213,25 @@ describe('QuizQuestionPoolComponent', () => {
         expect(handoffService.take(1)).toEqual([]);
     });
 
+    it('should keep the questions of a later draw when the navigation of an earlier one is superseded', async () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
+        const drawn = questions();
+        vi.spyOn(poolService, 'selectQuestions')
+            .mockReturnValueOnce(of({ questions: drawn.slice(0, 1), requested: 1, competencyIdsWithoutQuestions: [] }))
+            .mockReturnValueOnce(of({ questions: drawn.slice(1, 2), requested: 1, competencyIdsWithoutQuestions: [] }));
+        let resolveFirst!: (opened: boolean) => void;
+        vi.mocked(router.navigate)
+            .mockReturnValueOnce(new Promise<boolean>((resolve) => (resolveFirst = resolve)))
+            .mockResolvedValueOnce(true);
+
+        component.createQuiz({ competencyIds: [9], count: 1 });
+        component.createQuiz({ competencyIds: [9], count: 1 });
+        resolveFirst(false);
+        await Promise.resolve();
+
+        expect(handoffService.take(1)).toEqual([drawn[1].question]);
+    });
+
     it('should say so when the draw yields fewer questions than requested', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
         vi.spyOn(poolService, 'selectQuestions').mockReturnValue(of({ questions: questions().slice(0, 1), requested: 5, competencyIdsWithoutQuestions: [10] }));

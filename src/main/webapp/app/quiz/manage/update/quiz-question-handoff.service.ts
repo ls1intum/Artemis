@@ -8,16 +8,21 @@ import { GeneratedQuestion } from 'app/hyperion/quiz/quiz-ai-generation-modal/qu
  */
 @Service()
 export class QuizQuestionHandoffService {
-    private pending?: { courseId: number; questions: GeneratedQuestion[] };
+    private pending?: { offerId: number; courseId: number; questions: GeneratedQuestion[] };
+
+    private lastOfferId = 0;
 
     /**
      * Stores questions for the next new quiz of a course, replacing any that were stored before.
      *
      * @param courseId  the course whose quiz editor may take the questions
      * @param questions the questions the editor should append
+     * @returns the id of this offer, which {@link clear} takes
      */
-    offer(courseId: number, questions: GeneratedQuestion[]): void {
-        this.pending = { courseId, questions: [...questions] };
+    offer(courseId: number, questions: GeneratedQuestion[]): number {
+        this.lastOfferId += 1;
+        this.pending = { offerId: this.lastOfferId, courseId, questions: [...questions] };
+        return this.lastOfferId;
     }
 
     /**
@@ -32,9 +37,14 @@ export class QuizQuestionHandoffService {
     }
 
     /**
-     * Drops the stored questions, for when the quiz editor they were offered for does not open.
+     * Drops the stored questions of one offer, for when the quiz editor they were offered for does not open. A later offer that replaced
+     * it stays stored.
+     *
+     * @param offerId the id {@link offer} returned
      */
-    clear(): void {
-        this.pending = undefined;
+    clear(offerId: number): void {
+        if (this.pending?.offerId === offerId) {
+            this.pending = undefined;
+        }
     }
 }
