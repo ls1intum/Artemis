@@ -16,6 +16,11 @@
         min-width: 8rem;
     }
 
+    // The small field has 10px of start padding, 60px of end padding for the buttons and a 14px text: about the width of its date.
+    :host(.tumaet-ui-date-picker--small.tumaet-ui-date-picker--date-only) {
+        min-width: 9.5rem;
+    }
+
     // The inline variant has no field and keeps the natural width of its controls.
     :host(.tumaet-ui-date-picker--inline) {
         min-width: 0;

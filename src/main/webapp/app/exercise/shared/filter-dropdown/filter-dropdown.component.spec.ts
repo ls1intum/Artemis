@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FilterDropdownComponent } from './filter-dropdown.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
-/** Exercise the real dropdowns and their portaled options, including changes while a panel remains open. */
+/** Exercise the real button and its portaled popover, including changes while the panel remains open. */
 describe('Participation filter toolbar', () => {
     let fixture: ComponentFixture<FilterDropdownComponent>;
     let changed: ReturnType<typeof vi.fn<(values: string[]) => void>>;
@@ -27,6 +27,72 @@ describe('Participation filter toolbar', () => {
         await fixture.whenStable();
     });
 
+    function filterButton(from: ComponentFixture<FilterDropdownComponent> = fixture): HTMLButtonElement {
+        return from.nativeElement.querySelector('[data-testid="filter-dropdown-button"]') as HTMLButtonElement;
+    }
+
+    async function openPanel(from: ComponentFixture<FilterDropdownComponent> = fixture): Promise<void> {
+        filterButton(from).click();
+        from.detectChanges();
+        await from.whenStable();
+        from.detectChanges();
+    }
+
+    function panel(): HTMLElement {
+        return document.querySelector('.cdk-overlay-container fieldset') as HTMLElement;
+    }
+
+    function resetButton(): HTMLButtonElement {
+        return document.querySelector('[data-testid="filter-dropdown-reset"]') as HTMLButtonElement;
+    }
+
+    it('is one button that keeps the toolbar at its height, and the groups only exist once the panel is open', async () => {
+        expect(fixture.nativeElement.querySelectorAll('button')).toHaveLength(1);
+        expect(fixture.nativeElement.querySelectorAll('input, tumaet-ui-checkbox, tumaet-ui-multi-select')).toHaveLength(0);
+        expect(panel()).toBeNull();
+
+        await openPanel();
+
+        expect(panel()).not.toBeNull();
+        expect(filterButton().getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('shows the number of active filters on the button and in its accessible name', async () => {
+        expect(fixture.nativeElement.querySelector('[data-testid="filter-dropdown-count"]')).toBeNull();
+        expect(filterButton().getAttribute('aria-label')).toBe('artemisApp.exercise.filter');
+
+        fixture.componentRef.setInput('activeFilters', ['BuildFailed', 'NoSubmissions', 'Manual']);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="filter-dropdown-count"]').textContent).toContain('3');
+        expect(filterButton().getAttribute('aria-label')).toBe('artemisApp.exercise.filter (3)');
+    });
+
+    it('lists the items of a group as labeled checkboxes and keeps the other categories when one is toggled', async () => {
+        fixture.componentRef.setInput('activeFilters', ['Manual']);
+        fixture.detectChanges();
+        await openPanel();
+
+        const checkboxes = Array.from(panel().querySelectorAll('input[type="checkbox"]')) as HTMLInputElement[];
+        expect(checkboxes).toHaveLength(6);
+        expect(checkboxes[0].labels?.[0].textContent).toContain('artemisApp.exercise.showBuildFailed');
+        expect(checkboxes.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.labels?.[0].textContent?.trim())).toEqual(['artemisApp.exercise.showManual']);
+
+        // the panel stays open for several selections
+        checkboxes[2].click();
+        fixture.detectChanges();
+        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Successful']);
+        checkboxes[3].click();
+        fixture.detectChanges();
+        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Successful', 'Unsuccessful']);
+        expect(filterButton().getAttribute('aria-expanded')).toBe('true');
+
+        checkboxes[2].click();
+        fixture.detectChanges();
+        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Unsuccessful']);
+    });
+
     it('gives checkboxes unique ids across toolbar instances and keeps each label associated', async () => {
         const groups = [{ labelKey: 'Practice', items: ['NoPracticeMode'] }];
         fixture.componentRef.setInput('groupedFilters', groups);
@@ -37,17 +103,22 @@ describe('Participation filter toolbar', () => {
             second.componentRef.setInput('activeFilters', []);
             second.detectChanges();
             await second.whenStable();
-            const firstInput = fixture.nativeElement.querySelector('input[type="checkbox"]') as HTMLInputElement;
-            const secondInput = second.nativeElement.querySelector('input[type="checkbox"]') as HTMLInputElement;
-            expect(firstInput.id).not.toBe(secondInput.id);
-            expect(fixture.nativeElement.querySelector('label').htmlFor).toBe(firstInput.id);
-            expect(second.nativeElement.querySelector('label').htmlFor).toBe(secondInput.id);
             const secondChanged = vi.fn();
             second.componentInstance.filterChange.subscribe(secondChanged);
-            second.nativeElement.querySelector('label').click();
+
+            await openPanel(second);
+            const secondInput = document.querySelector('.cdk-overlay-container input[type="checkbox"]') as HTMLInputElement;
+            expect(secondInput.labels?.[0].textContent).toContain('artemisApp.exercise.showNoPracticeMode');
+            secondInput.labels![0].click();
             second.detectChanges();
             expect(secondChanged).toHaveBeenCalledWith(['NoPracticeMode']);
-            expect(firstInput.checked).toBe(false);
+            expect(changed).not.toHaveBeenCalled();
+
+            // a second panel open at the same time must not reuse the id of the first one
+            await openPanel();
+            const ids = Array.from(document.querySelectorAll('.cdk-overlay-container input[type="checkbox"]')).map((checkbox) => checkbox.id);
+            expect(ids).toHaveLength(2);
+            expect(new Set(ids).size).toBe(2);
         } finally {
             second.destroy();
         }
@@ -60,9 +131,9 @@ describe('Participation filter toolbar', () => {
         ]);
         fixture.componentRef.setInput('activeFilters', ['Manual', 'Automatic']);
         fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
-        const buttons = fixture.nativeElement.querySelectorAll('tumaet-ui-button-group button') as NodeListOf<HTMLButtonElement>;
+        await openPanel();
+
+        const buttons = panel().querySelectorAll('tumaet-ui-button-group button') as NodeListOf<HTMLButtonElement>;
         expect(buttons).toHaveLength(3);
         expect(buttons[0].getAttribute('aria-pressed')).toBe('true');
         buttons[1].click();
@@ -83,125 +154,65 @@ describe('Participation filter toolbar', () => {
         expect(changed).toHaveBeenLastCalledWith(['Manual', 'Automatic']);
     });
 
-    function openGroup(index: number): HTMLElement {
-        const trigger = fixture.nativeElement.querySelectorAll('[role="combobox"]')[index] as HTMLElement;
-        trigger.click();
+    it('renders single-option groups as labeled checkboxes after the groups and combines them with the other selections', async () => {
+        fixture.componentRef.setInput('groupedFilters', [
+            { labelKey: 'Locked', items: ['Locked'] },
+            { labelKey: 'Results', items: ['Successful', 'Unsuccessful'] },
+            { labelKey: 'Mode', items: ['NoPracticeMode'] },
+        ]);
+        fixture.componentRef.setInput('activeFilters', ['Successful', 'Locked']);
         fixture.detectChanges();
-        return trigger;
-    }
+        await openPanel();
 
-    function toggleOption(index: number): void {
-        (document.querySelectorAll('[role="option"]')[index] as HTMLElement).click();
+        const checkboxes = Array.from(panel().querySelectorAll('input[type="checkbox"]')) as HTMLInputElement[];
+        // the two items of the group first, then the single checkboxes
+        expect(checkboxes.map((checkbox) => checkbox.labels?.[0].textContent?.trim())).toEqual([
+            'artemisApp.exercise.showSuccessful',
+            'artemisApp.exercise.showUnsuccessful',
+            'artemisApp.exercise.showLocked',
+            'artemisApp.exercise.showNoPracticeMode',
+        ]);
+        expect(checkboxes.map((checkbox) => checkbox.checked)).toEqual([true, false, true, false]);
+
+        checkboxes[3].labels![0].click();
         fixture.detectChanges();
-    }
-
-    it('keeps the panel open for multiple selections and retains other categories', async () => {
-        fixture.componentRef.setInput('activeFilters', ['Manual']);
+        expect(changed).toHaveBeenLastCalledWith(['Successful', 'Locked', 'NoPracticeMode']);
+        checkboxes[2].click();
         fixture.detectChanges();
-        await fixture.whenStable();
-        const trigger = openGroup(1);
-        toggleOption(0);
-        toggleOption(1);
-        await fixture.whenStable();
-
-        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Successful', 'Unsuccessful']);
-        expect(trigger.getAttribute('aria-expanded')).toBe('true');
-        expect(document.querySelectorAll('[role="option"][aria-selected="true"]')).toHaveLength(2);
-        expect(trigger.textContent).toContain('2');
-        expect(trigger.textContent).toContain('artemisApp.participation.filters.selected');
-        toggleOption(0);
-        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Unsuccessful']);
+        expect(changed).toHaveBeenLastCalledWith(['Successful', 'NoPracticeMode']);
     });
 
-    it('summarizes selections and resets all categories', async () => {
-        const trigger = fixture.nativeElement.querySelector('[role="combobox"]') as HTMLElement;
-        expect(trigger.textContent).toContain('artemisApp.exercise.showAll');
-        fixture.componentRef.setInput('activeFilters', ['BuildFailed']);
+    it('resets all categories, and the reset is disabled while nothing is selected', async () => {
+        await openPanel();
+        expect(resetButton().getAttribute('aria-disabled')).toBe('true');
+        resetButton().click();
         fixture.detectChanges();
-        await fixture.whenStable();
-        expect(trigger.textContent).toContain('artemisApp.exercise.showBuildFailed');
+        expect(changed).not.toHaveBeenCalled();
+
         fixture.componentRef.setInput('activeFilters', ['BuildFailed', 'NoSubmissions', 'Manual']);
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(trigger.textContent).toContain('2');
-        expect(trigger.textContent).not.toContain('artemisApp.exercise.showBuildFailed');
-
-        (fixture.nativeElement.querySelector('button[tumAetUiButton]') as HTMLButtonElement).click();
+        expect(resetButton().getAttribute('aria-disabled')).toBe('false');
+        resetButton().click();
         fixture.detectChanges();
+
         expect(changed).toHaveBeenLastCalledWith([]);
-        expect(trigger.textContent).toContain('artemisApp.exercise.showAll');
-        expect(fixture.nativeElement.querySelector('button[tumAetUiButton]').getAttribute('aria-disabled')).toBe('true');
+        expect(fixture.nativeElement.querySelector('[data-testid="filter-dropdown-count"]')).toBeNull();
+        expect(Array.from(panel().querySelectorAll('input[type="checkbox"]')).every((checkbox) => !(checkbox as HTMLInputElement).checked)).toBe(true);
     });
 
-    it('stays open on scroll and input refresh, and closes when the backdrop is clicked', () => {
-        const trigger = openGroup(0);
-        fixture.nativeElement.dispatchEvent(new Event('scroll', { bubbles: true }));
+    it('stays open when the groups are refreshed and closes with Escape', async () => {
+        await openPanel();
         fixture.componentRef.setInput('groupedFilters', [
             { labelKey: 'Submissions', items: ['BuildFailed', 'NoSubmissions'] },
             { labelKey: 'Results', items: ['Successful', 'Unsuccessful'] },
         ]);
         fixture.detectChanges();
-        expect(trigger.getAttribute('aria-expanded')).toBe('true');
-        const backdrop = document.querySelector('.cdk-overlay-backdrop');
-        expect(backdrop).not.toBeNull();
-        backdrop?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        fixture.detectChanges();
-        expect(trigger.getAttribute('aria-expanded')).toBe('false');
-    });
+        expect(filterButton().getAttribute('aria-expanded')).toBe('true');
 
-    it('renders single-option groups as labeled checkboxes and combines them with dropdown selections', async () => {
-        fixture.componentRef.setInput('groupedFilters', [
-            { labelKey: 'Results', items: ['Successful', 'Unsuccessful'] },
-            { labelKey: 'Mode', items: ['NoPracticeMode'] },
-            { labelKey: 'Assessment status', items: ['Locked'] },
-        ]);
-        fixture.componentRef.setInput('activeFilters', ['Successful', 'Locked']);
+        panel().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
         fixture.detectChanges();
         await fixture.whenStable();
-
-        const checkboxes: NodeListOf<HTMLInputElement> = fixture.nativeElement.querySelectorAll('input[type="checkbox"]');
-        expect(fixture.nativeElement.querySelectorAll('[role="combobox"]')).toHaveLength(1);
-        expect(checkboxes).toHaveLength(2);
-        expect(checkboxes[0].checked).toBe(false);
-        expect(checkboxes[1].checked).toBe(true);
-        expect(checkboxes[0].labels?.[0].textContent).toContain('artemisApp.exercise.showNoPracticeMode');
-        (checkboxes[0].labels![0] as HTMLLabelElement).click();
-        fixture.detectChanges();
-        expect(changed).toHaveBeenLastCalledWith(['Successful', 'Locked', 'NoPracticeMode']);
-
-        checkboxes[1].click();
-        fixture.detectChanges();
-        expect(changed).toHaveBeenLastCalledWith(['Successful', 'NoPracticeMode']);
-        (fixture.nativeElement.querySelector('button[tumAetUiButton]') as HTMLButtonElement).click();
-        fixture.detectChanges();
-        expect(changed).toHaveBeenLastCalledWith([]);
-        expect(Array.from(checkboxes, (checkbox) => checkbox.checked)).toEqual([false, false]);
-    });
-
-    it('places checkboxes after dropdowns', () => {
-        fixture.componentRef.setInput('groupedFilters', [
-            { labelKey: 'Locked', items: ['Locked'] },
-            { labelKey: 'Submissions', items: ['NoSubmissions', 'ValidSubmissions'] },
-        ]);
-        fixture.detectChanges();
-        const controls = fixture.nativeElement.querySelectorAll('tumaet-ui-multi-select, tumaet-ui-checkbox');
-        expect(controls[0].tagName).toBe('TUMAET-UI-MULTI-SELECT');
-        expect(controls[1].tagName).toBe('TUMAET-UI-CHECKBOX');
-    });
-
-    it('supports keyboard selection and Escape', () => {
-        const trigger = fixture.nativeElement.querySelector('[role="combobox"]') as HTMLElement;
-        for (const [key, keyCode] of [
-            ['Enter', 13],
-            ['ArrowDown', 40],
-            [' ', 32],
-        ] as const) {
-            trigger.dispatchEvent(new KeyboardEvent('keydown', { key, keyCode, bubbles: true }));
-            fixture.detectChanges();
-        }
-        expect(changed).toHaveBeenLastCalledWith(['NoSubmissions']);
-        trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-        fixture.detectChanges();
-        expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        expect(filterButton().getAttribute('aria-expanded')).toBe('false');
     });
 });

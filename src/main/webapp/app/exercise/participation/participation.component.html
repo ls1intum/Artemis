@@ -92,19 +92,18 @@
     </div>
 }
 
-<!-- Filter dropdown in the table caption bar -->
+<!-- Search and filter button in the 40px toolbar of the table. The filter groups are in the popover of the button. -->
 
 <ng-template #filterActionsTemplate>
-    <jhi-filter-dropdown [groupedFilters]="filterGroups()" [activeFilters]="activeFilters()" (filterChange)="updateParticipationFilter($event)">
-        @if (!hideParticipantInformation()) {
-            <jhi-search-filter
-                class="me-2 w-64 max-w-full shrink-0"
-                size="small"
-                [placeholderKey]="tableOptions().searchPlaceholder ?? 'artemisApp.participation.searchStudents'"
-                (newSearchEvent)="onSearchChange($event)"
-            />
-        }
-    </jhi-filter-dropdown>
+    @if (!hideParticipantInformation()) {
+        <jhi-search-filter
+            class="max-w-lg min-w-24 flex-1"
+            size="small"
+            [placeholderKey]="tableOptions().searchPlaceholder ?? 'artemisApp.participation.searchStudents'"
+            (newSearchEvent)="onSearchChange($event)"
+        />
+    }
+    <jhi-filter-dropdown [groupedFilters]="filterGroups()" [activeFilters]="activeFilters()" (filterChange)="updateParticipationFilter($event)" />
 </ng-template>
 
 <!-- Row actions -->

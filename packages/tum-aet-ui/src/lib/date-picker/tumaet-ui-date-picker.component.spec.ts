@@ -58,6 +58,31 @@ describe('TumAetUiDatePickerComponent', () => {
         return fixture.debugElement.query(By.css('input[type="text"]')).nativeElement;
     }
 
+    it('uses the normal padding by default and the compact one for the small size', () => {
+        expect(input().className).toContain('tumaet:py-2');
+        expect(input().className).not.toContain('tumaet:text-sm');
+        expect(fixture.nativeElement.classList).not.toContain('tumaet-ui-date-picker--small');
+
+        fixture.componentRef.setInput('size', 'small');
+        fixture.detectChanges();
+
+        // a toolbar field: the text of a small input and less room, but still the end padding for the clear and calendar buttons
+        expect(input().className).toContain('tumaet:text-sm');
+        expect(input().className).toContain('tumaet:py-1.5');
+        expect(input().className).toContain('tumaet:pe-15');
+        expect(input().className).not.toContain('tumaet:py-2 ');
+        expect(fixture.nativeElement.classList).toContain('tumaet-ui-date-picker--small');
+    });
+
+    it('keeps the error border when the size changes', () => {
+        fixture.componentRef.setInput('size', 'small');
+        fixture.componentRef.setInput('invalid', true);
+        fixture.detectChanges();
+
+        expect(input().className).toContain('tumaet:border-state-danger');
+        expect(input().className).toContain('tumaet:text-sm');
+    });
+
     it('reflects an external value as formatted text and is valid', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
         fixture.detectChanges();

@@ -16,6 +16,8 @@ export interface AuditsQuery {
     toDate?: string;
     /** Which of the three audit logs to read. Defaults to the general log on the server if omitted. */
     logType?: AuditLogType;
+    /** Only the entries of this principal (login). The server matches it exactly, so that the search stays on the index. */
+    principal?: string;
 }
 
 @Service()

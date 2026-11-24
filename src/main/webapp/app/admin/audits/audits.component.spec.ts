@@ -213,6 +213,121 @@ describe('AuditsComponent', () => {
         });
     });
 
+    describe('search by login', () => {
+        let navigate: ReturnType<typeof vi.fn>;
+
+        beforeEach(() => {
+            vi.useFakeTimers();
+            comp.ngOnInit();
+            navigate = TestBed.inject(Router).navigate as unknown as ReturnType<typeof vi.fn>;
+            navigate.mockClear();
+        });
+
+        it('waits until the typing stops before it navigates, and then puts the term into the URL', () => {
+            comp.onSearchInput('s');
+            comp.onSearchInput('st');
+            comp.onSearchInput('stud');
+            vi.advanceTimersByTime(299);
+
+            expect(navigate).not.toHaveBeenCalled();
+            expect(comp['searchInput']()).toBe('stud');
+
+            vi.advanceTimersByTime(1);
+
+            expect(navigate).toHaveBeenCalledTimes(1);
+            expect(navigate.mock.calls.at(-1)![1]!.queryParams!['search']).toBe('stud');
+        });
+
+        it('trims the term, and ignores a change that leaves the applied term as it is', () => {
+            comp.onSearchInput('  student1  ');
+            vi.advanceTimersByTime(300);
+            expect(navigate.mock.calls.at(-1)![1]!.queryParams!['search']).toBe('student1');
+            navigate.mockClear();
+
+            // a space at the end is not a different search
+            comp.onSearchInput('student1 ');
+            vi.advanceTimersByTime(300);
+
+            expect(navigate).not.toHaveBeenCalled();
+        });
+
+        it('starts again on the first page, because the page numbers of another result do not carry over', () => {
+            comp.updatePage(4);
+
+            comp.onSearchInput('student1');
+            vi.advanceTimersByTime(300);
+
+            expect(comp.page()).toBe(1);
+            expect(navigate.mock.calls.at(-1)![1]!.queryParams!['page']).toBe(1);
+        });
+
+        it('leaves an emptied search out of the URL instead of writing an empty parameter', () => {
+            comp.onSearchInput('student1');
+            vi.advanceTimersByTime(300);
+            navigate.mockClear();
+
+            comp.onSearchInput('');
+            vi.advanceTimersByTime(300);
+
+            expect(navigate).toHaveBeenCalledTimes(1);
+            expect(navigate.mock.calls.at(-1)![1]!.queryParams!['search']).toBeUndefined();
+        });
+
+        it('keeps the search while the tab or the date range changes', () => {
+            comp.onSearchInput('student1');
+            vi.advanceTimersByTime(300);
+            navigate.mockClear();
+
+            comp.onLogTypeChange(AuditLogType.SECURITY);
+
+            expect(navigate.mock.calls.at(-1)![1]!.queryParams!['search']).toBe('student1');
+            expect(navigate.mock.calls.at(-1)![1]!.queryParams!['logType']).toBe(AuditLogType.SECURITY);
+        });
+
+        it('reads the search from the URL into the field and sends it to the server as the principal', () => {
+            const query = vi.spyOn(service, 'query').mockReturnValue(of(new HttpResponse<Audit[]>()));
+            mockActivatedRoute.setParameters({ sort: 'id,desc', search: 'student1' });
+
+            comp.ngOnInit();
+
+            // a reload or the back button brings the term back into the search field
+            expect(comp.search()).toBe('student1');
+            expect(comp['searchInput']()).toBe('student1');
+            expect(query.mock.calls.at(-1)![0]).toEqual(expect.objectContaining({ principal: 'student1' }));
+        });
+
+        it('sends no principal while there is no search, so that the server returns the events of everyone', () => {
+            const query = vi.spyOn(service, 'query').mockReturnValue(of(new HttpResponse<Audit[]>()));
+
+            comp.ngOnInit();
+
+            expect(query.mock.calls.at(-1)![0]).not.toHaveProperty('principal');
+        });
+
+        it('does not overwrite what is being typed while the URL catches up with the term the page applied itself', () => {
+            comp.onSearchInput('stud');
+            vi.advanceTimersByTime(300);
+            // the user has typed on, while the navigation for "stud" brings its term back
+            comp.onSearchInput('studen');
+            mockActivatedRoute.setParameters({ sort: 'id,desc', search: 'stud' });
+            comp['handleNavigation']();
+
+            expect(comp['searchInput']()).toBe('studen');
+            expect(comp.search()).toBe('stud');
+        });
+
+        it('follows a term that the URL changes, as the back button does', () => {
+            comp.onSearchInput('stud');
+            vi.advanceTimersByTime(300);
+
+            mockActivatedRoute.setParameters({ sort: 'id,desc' });
+            comp['handleNavigation']();
+
+            expect(comp.search()).toBe('');
+            expect(comp['searchInput']()).toBe('');
+        });
+    });
+
     describe('date picker events', () => {
         let navigate: ReturnType<typeof vi.fn>;
 
