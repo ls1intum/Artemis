@@ -1,14 +1,16 @@
-:host {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: 100%;
-    height: 100%;
-    min-height: 0;
-    min-width: 0;
-    overflow-x: auto;
-}
+@layer tumaet-ui {
+    :host {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        min-height: 0;
+        min-width: 0;
+        overflow-x: auto;
+    }
 
-.tumaet-ui-vs-viewport {
-    width: 100%;
+    .tumaet-ui-vs-viewport {
+        width: 100%;
+    }
 }

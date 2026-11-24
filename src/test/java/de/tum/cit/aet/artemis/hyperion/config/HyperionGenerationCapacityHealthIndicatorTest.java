@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.health.contributor.Status;
 
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService;
 
 class HyperionGenerationCapacityHealthIndicatorTest {
@@ -16,10 +17,10 @@ class HyperionGenerationCapacityHealthIndicatorTest {
     private final HyperionGenerationCapacityHealthIndicator indicator = new HyperionGenerationCapacityHealthIndicator(workers);
 
     @Test
-    void reachableSupervisorWithoutQualifiedEngineReportsDown() {
+    void reachableSupervisorWithoutQualifiedEngineReportsDegraded() {
         when(workers.reachableWorkers()).thenReturn(1);
         var health = indicator.health();
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
         assertThat(health.getDetails()).containsEntry("reachableWorkers", 1).containsEntry("capableWorkers", 0).containsEntry("availableWorkers", 0);
     }
 

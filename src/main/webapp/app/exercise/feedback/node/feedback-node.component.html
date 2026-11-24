@@ -1,6 +1,6 @@
 @if (feedbackItem()) {
     <tumaet-ui-message
-        class="feedback-item mb-2 block"
+        class="feedback-item mb-2"
         [class.border-s-2]="feedbackItem()!.isAiFeedback && !!feedbackItem()!.feedbackReference.severity"
         [class.border-state-danger]="feedbackItem()!.isAiFeedback && feedbackItem()!.feedbackReference.severity === 'high'"
         [class.border-state-warning]="feedbackItem()!.isAiFeedback && feedbackItem()!.feedbackReference.severity === 'medium'"
