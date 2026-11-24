@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -189,7 +190,9 @@ final class AresTestCases {
      *                                   source writes or imports them qualified, and marked with {@code ?} where the simple name may refer to a type of
      *                                   the package, of {@code java.lang}, of a wildcard import or of the file itself
      * @param visibleInOtherPackages whether it is public or protected, so that a subclass in another package overrides it, too
-     * @param importedNames          the simple type names that only a single-type import resolves, which a member type a subclass inherits would shadow
+     * @param importedNames          the first names of the type names whose meaning a member type in scope of the class would change: the simple names
+     *                                   that only a single-type import resolves, and the packages that start a qualified name, e.g. {@code a} in
+     *                                   {@code a.Inner}
      */
     record TestSignature(String name, String text, boolean visibleInOtherPackages, Set<String> importedNames) {
 
@@ -200,6 +203,15 @@ final class AresTestCases {
         boolean dependsOnPackage() {
             return text.indexOf(UNRESOLVED_TYPE) >= 0;
         }
+    }
+
+    /**
+     * How the file names the types of the parameters where a method is declared.
+     *
+     * @param resolve   the qualified name of a simple type name: the type of a single-type import unless a type of the file shadows it; null if it is unknown
+     * @param isPackage whether the first name of a qualified type name names a package, see {@link #isPackageName}
+     */
+    private record TypeNames(UnaryOperator<String> resolve, Predicate<String> isPackage) {
     }
 
     /**
@@ -278,7 +290,8 @@ final class AresTestCases {
             }
             return resolved;
         };
-        String text = method.group(1) + "(" + parameterTypes(parameters, resolve) + ")";
+        TypeNames names = new TypeNames(resolve, name -> isPackageName(masked, name, declaration, typeVariables, importedNames));
+        String text = method.group(1) + "(" + parameterTypes(parameters, names) + ")";
         return new TestSignature(method.group(1), text, visible, Set.copyOf(importedNames));
     }
 
@@ -444,7 +457,23 @@ final class AresTestCases {
             importedNames.add(firstName);
             return resolved + bound.substring(firstName.length());
         }
-        return dot >= 0 && Character.isLowerCase(firstName.charAt(0)) ? bound : null;
+        return dot >= 0 && isPackageName(masked, firstName, offset, typeVariables, importedNames) ? bound : null;
+    }
+
+    /**
+     * Whether the first name of a qualified type name that no import resolves names a package, e.g. {@code a} in {@code a.Inner}: by the Java naming
+     * conventions, a package is in lower case, and no type variable and no type that the file declares in scope has the name, e.g. no member type
+     * {@code a}. A member type that the class inherits from another file would change the meaning as well, so the name is recorded with the names that only
+     * an import resolves, see {@link TestSignature#importedNames()}.
+     *
+     * @param offset where the type name is used
+     */
+    private static boolean isPackageName(String masked, String firstName, int offset, Set<String> typeVariables, Set<String> importedNames) {
+        if (!Character.isLowerCase(firstName.charAt(0)) || typeVariables.contains(firstName) || AresPolicyAnnotations.isShadowedAt(masked, firstName, offset)) {
+            return false;
+        }
+        importedNames.add(firstName);
+        return true;
     }
 
     /**
@@ -471,11 +500,10 @@ final class AresTestCases {
     }
 
     /**
-     * @param resolve the qualified name of a simple type name where the method is declared: the type of a single-type import unless a type of the file
-     *                    shadows it; null if it is unknown
+     * @param names how the file names types where the method is declared
      * @return the erased types of the parameters, separated by commas, see {@link TestSignature#text()}; a variable arity parameter is an array
      */
-    private static String parameterTypes(String parameters, UnaryOperator<String> resolve) {
+    private static String parameterTypes(String parameters, TypeNames names) {
         List<String> types = new ArrayList<>();
         StringBuilder parameter = new StringBuilder();
         int typeArguments = 0;
@@ -497,7 +525,7 @@ final class AresTestCases {
                 }
             }
             else if (character == ',' && typeArguments == 0) {
-                addFormalParameter(types, parameter.toString(), resolve);
+                addFormalParameter(types, parameter.toString(), names);
                 parameter.setLength(0);
             }
             else if (typeArguments == 0) {
@@ -506,7 +534,7 @@ final class AresTestCases {
             position++;
         }
         if (!parameter.toString().isBlank()) {
-            addFormalParameter(types, parameter.toString(), resolve);
+            addFormalParameter(types, parameter.toString(), names);
         }
         return String.join(",", types);
     }
@@ -523,18 +551,18 @@ final class AresTestCases {
     /**
      * Adds the erased type of a parameter, unless it is an explicit receiver parameter.
      */
-    private static void addFormalParameter(List<String> types, String parameter, UnaryOperator<String> resolve) {
+    private static void addFormalParameter(List<String> types, String parameter, TypeNames names) {
         if (!RECEIVER_PARAMETER.matcher(parameter).find()) {
-            types.add(erasedType(parameter, resolve));
+            types.add(erasedType(parameter, names));
         }
     }
 
     /**
      * @param parameter the declaration of a parameter without its annotations and type arguments, e.g. {@code final java.util.List values}
-     * @param resolve   the qualified name of a simple type name where the method is declared, see {@link #parameterTypes(String, UnaryOperator)}
+     * @param names     how the file names types where the method is declared, see {@link TypeNames}
      * @return its type, with the brackets of an array, e.g. {@code java.util.List}, {@code int} or {@code ?String[]}, see {@link TestSignature#text()}
      */
-    private static String erasedType(String parameter, UnaryOperator<String> resolve) {
+    private static String erasedType(String parameter, TypeNames names) {
         String declaration = FINAL_MODIFIER.matcher(parameter).replaceAll(" ").strip();
         Matcher name = PARAMETER_NAME.matcher(declaration);
         String dimensions = "";
@@ -552,10 +580,10 @@ final class AresTestCases {
             return baseType + arrayDimensions;
         }
         // A name that starts with a type, e.g. Outer.Inner, depends on what that type resolves to in the file, also a type in lower case that an import names,
-        // e.g. outer.Inner with import models.outer. Otherwise a name that starts with a package, by the Java naming conventions in lower case, is fully
-        // qualified.
-        String resolvedType = resolve.apply(firstName);
-        if (resolvedType == null && dot >= 0 && Character.isLowerCase(firstName.charAt(0))) {
+        // e.g. outer.Inner with import models.outer, or that the file declares, e.g. a member type a. Otherwise a name that starts with a package, by the Java
+        // naming conventions in lower case, is fully qualified.
+        String resolvedType = names.resolve().apply(firstName);
+        if (resolvedType == null && dot >= 0 && names.isPackage().test(firstName)) {
             return baseType + arrayDimensions;
         }
         return (resolvedType != null ? resolvedType + baseType.substring(firstName.length()) : UNRESOLVED_TYPE + baseType) + arrayDimensions;

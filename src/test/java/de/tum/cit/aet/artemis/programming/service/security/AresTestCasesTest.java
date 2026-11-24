@@ -133,7 +133,8 @@ class AresTestCasesTest {
                 """;
 
         AresTestCases.TestSignature check = new AresTestCases.TestSignature("check", "check()", false, Set.of());
-        AresTestCases.TestSignature overload = new AresTestCases.TestSignature("check", "check(java.util.Map,int[],?String[])", true, Set.of());
+        // java starts a package, which a member type named java in scope of a class would change, like an import.
+        AresTestCases.TestSignature overload = new AresTestCases.TestSignature("check", "check(java.util.Map,int[],?String[])", true, Set.of("java"));
         // List is resolved only through its import, which a member type inherited by a subclass would shadow.
         AresTestCases.TestSignature sorts = new AresTestCases.TestSignature("sorts", "sorts(java.util.List)", true, Set.of("List"));
         // The braces in the arguments of an annotation end no member, so the modifier before it still counts.
@@ -160,8 +161,39 @@ class AresTestCasesTest {
 
         // outer is the imported type models.outer, although its name is in lower case like a package, so outer.Inner is models.outer.Inner.
         AresTestCases.TestSignature runs = new AresTestCases.TestSignature("runs", "runs(models.outer.Inner)", true, Set.of("outer"));
-        AresTestCases.TestSignature sorts = new AresTestCases.TestSignature("sorts", "sorts(java.util.List)", true, Set.of());
+        AresTestCases.TestSignature sorts = new AresTestCases.TestSignature("sorts", "sorts(java.util.List)", true, Set.of("java"));
         assertThat(AresTestCases.testSignatures(AresPolicyAnnotations.mask(source)).values()).containsExactlyInAnyOrder(runs, sorts);
+    }
+
+    @Test
+    void aLowerCaseNameStartsAPackageOnlyIfNoTypeOfTheFileInScopeHasIt() {
+        String source = """
+                class SortingTest {
+
+                    @Test
+                    public void runs(a.Inner value) {
+                    }
+
+                    static class Nested {
+
+                        static class a {
+
+                            static class Inner {
+                            }
+                        }
+
+                        @Test
+                        public void runs(a.Inner value) {
+                        }
+                    }
+                }
+                """;
+
+        // In SortingTest, a.Inner is the type Inner of the package a, which an inherited member type a would change. In Nested, the member type a shadows the
+        // package, so a.Inner names a type of the file, not the package a.
+        AresTestCases.TestSignature inPackage = new AresTestCases.TestSignature("runs", "runs(a.Inner)", true, Set.of("a"));
+        AresTestCases.TestSignature memberType = new AresTestCases.TestSignature("runs", "runs(?a.Inner)", true, Set.of());
+        assertThat(AresTestCases.testSignatures(AresPolicyAnnotations.mask(source)).values()).containsExactlyInAnyOrder(inPackage, memberType);
     }
 
     @Test

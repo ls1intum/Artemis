@@ -828,6 +828,43 @@ class SecurityPolicyRepositoryFilesTest {
         assertUnsupported(SecurityFrameworkState.UnsupportedReasonType.ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS, "de.example.MoreSortingTest");
     }
 
+    @ParameterizedTest
+    @CsvSource({ "'', false", "MoreSortingTest, true", "Shapes, true", "SortingTest, true" })
+    void aMemberTypeInScopeChangesAQualifiedParameterTypeThatStartsInLowerCase(String declaringClass, boolean unsupported) throws IOException {
+        writeBuildFile();
+        writeSource("test/a/Inner.java", "package a;\n\npublic class Inner {\n}\n");
+        String memberType = "    public static class a {\n\n        public static class Inner {\n        }\n    }\n\n";
+        String annotated = "    " + SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\n    @Test\n    public void runs(a.Inner value)";
+        String parent = TEST_CLASS.formatted("de.example", "SortingTest").replace("    @Test\n    void runs()", annotated);
+        writeSource("test/de/example/SortingTest.java",
+                "SortingTest".equals(declaringClass) ? parent.replace("class SortingTest {\n\n", "class SortingTest {\n\n" + memberType) : parent);
+        // A superinterface of the subclass in another file may declare the member type, too.
+        writeSource("test/de/example/Shapes.java", "package de.example;\n\ninterface Shapes {\n\n" + ("Shapes".equals(declaringClass) ? memberType : "") + "}\n");
+        String override = """
+                package de.example;
+
+                import org.junit.jupiter.api.Test;
+
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+
+                @Public
+                %s
+                class MoreSortingTest extends SortingTest implements Shapes {
+
+                %s    @Test
+                    public void runs(a.Inner value) {
+                    }
+                }
+                """.formatted(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION, "MoreSortingTest".equals(declaringClass) ? memberType : "");
+        writeSource("test/de/example/MoreSortingTest.java", override);
+        SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
+
+        // a.Inner names the type Inner of the package a in both classes, so the subclass overrides the test. A member type a in scope, declared in the
+        // subclass or inherited from a supertype, makes it the member type a.Inner instead, so the method is an overload and the inherited test still runs with
+        // the sandbox.
+        assertKeepsAnInheritedActivePolicy("de.example.MoreSortingTest", unsupported);
+    }
+
     @Test
     void anOverrideWhoseParameterTypeIsShadowedByAMemberTypeKeepsTheInheritedPolicy() throws IOException {
         writeBuildFile();

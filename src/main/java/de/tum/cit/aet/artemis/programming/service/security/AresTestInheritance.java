@@ -157,8 +157,8 @@ final class AresTestInheritance {
     /**
      * @param declaringType the class that declares the signature
      * @param memberTypes   the member types in scope in each class of the hierarchy, see {@link #isOverridden}
-     * @return whether every type name of the signature that an import resolves really names the imported type: no member type in scope of the class, also no
-     *         unknown one of a supertype outside the repository, shadows it
+     * @return whether every type name of the signature that an import resolves, or that starts with a package, e.g. {@code a.Inner}, really names that type:
+     *         no member type in scope of the class, also no unknown one of a supertype outside the repository, has the name of the import or the package
      */
     private static boolean importsAreNotShadowed(AresTestCases.TestSignature signature, AresTestSources.TypeDeclaration declaringType,
             Map<String, Optional<Set<String>>> memberTypes) {
