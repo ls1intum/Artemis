@@ -158,11 +158,11 @@
     }
 
     /* Without a frame, the tinted header is the top edge of the table, and its ends are rounded like the other surfaces. */
-    .tumaet-ui-table-layout-body .tumaet-ui-table:not(td *, th *) > thead > tr:first-child > th:first-child {
+    .tumaet-ui-table-layout-body table:not(td *, th *) > thead > tr:first-child > th:first-child {
         border-start-start-radius: var(--tumaet-ui-radius-md);
     }
 
-    .tumaet-ui-table-layout-body .tumaet-ui-table:not(td *, th *) > thead > tr:first-child > th:last-child {
+    .tumaet-ui-table-layout-body table:not(td *, th *) > thead > tr:first-child > th:last-child {
         border-start-end-radius: var(--tumaet-ui-radius-md);
     }
 

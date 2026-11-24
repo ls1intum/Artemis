@@ -106,7 +106,7 @@ export interface TableConfig {
     showSearch: boolean;
     /** Translation key for the search input placeholder. Default: 'artemisApp.course.exercise.search.searchPlaceholder' */
     searchPlaceholder: string;
-    /** Search input size. Leave undefined for the default size. */
+    /** Search input size. Default: 'small', the height that fits the 40px toolbar of the table layout (a large field is 42px and is clipped by it). */
     searchSize?: 'small' | 'large';
     /** Translation key for the message shown when the table has no rows. Default: 'artemisApp.dataTable.search.noResults' */
     emptyMessageTranslation: string;
@@ -311,7 +311,7 @@ export class TableViewComponent<T> {
             pageSizeOptions: opts.hidePageSizeOptions ? undefined : (opts.pageSizeOptions ?? DEFAULT_TABLE_CONFIG.pageSizeOptions),
             showSearch: opts.showSearch ?? DEFAULT_TABLE_CONFIG.showSearch,
             searchPlaceholder: opts.searchPlaceholder ?? DEFAULT_TABLE_CONFIG.searchPlaceholder,
-            searchSize: opts.searchSize,
+            searchSize: opts.searchSize ?? 'small',
             emptyMessageTranslation: opts.emptyMessageTranslation ?? DEFAULT_TABLE_CONFIG.emptyMessageTranslation,
             fill: opts.fill ?? DEFAULT_TABLE_CONFIG.fill,
             rowActionsFrozen: opts.rowActionsFrozen ?? DEFAULT_TABLE_CONFIG.rowActionsFrozen,
