@@ -219,6 +219,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void exerciseDetailsIncludeAthenaResultBeforeAssessmentDueDate() throws Exception {
         var now = ZonedDateTime.now();
+        programmingExercise.setReleaseDate(now.minusDays(1));
         programmingExercise.setAssessmentDueDate(now.plusDays(1));
         programmingExerciseRepository.save(programmingExercise);
         var submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
