@@ -19,7 +19,7 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
 @Component({
     selector: 'jhi-doughnut-chart',
     templateUrl: './doughnut-chart.component.html',
-    styleUrls: ['./doughnut-chart.component.scss'],
+    styleUrls: ['./doughnut-chart.component.css'],
     imports: [RouterLink, NgClass, FaIconComponent, TumAetUiDoughnutChartComponent, ArtemisTranslatePipe],
 })
 export class DoughnutChartComponent implements OnInit {

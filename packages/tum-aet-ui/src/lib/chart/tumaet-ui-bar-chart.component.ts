@@ -56,7 +56,7 @@ let nextBarChartId = 0;
 @Component({
     selector: 'tumaet-ui-bar-chart',
     templateUrl: './tumaet-ui-bar-chart.component.html',
-    styleUrl: './tumaet-ui-bar-chart.component.scss',
+    styleUrls: ['./tumaet-ui-chart.layout.css', './tumaet-ui-bar-chart.component.css'],
     imports: [
         TumAetUiChartClipPathComponent,
         TumAetUiChartCanvasDirective,

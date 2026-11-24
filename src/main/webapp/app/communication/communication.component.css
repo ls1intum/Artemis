@@ -1,0 +1,109 @@
+.post-result-information {
+    font-size: small;
+    font-style: italic;
+}
+
+.post-separation-line {
+    height: 1px;
+    background: var(--communication-light-gray);
+}
+
+.bold-line {
+    height: 2px;
+    background: var(--communication-light-gray);
+}
+
+.icon {
+    color: var(--communication-gray);
+}
+
+.resolved {
+    color: var(--communication-green);
+}
+
+.post-header-author-date {
+    line-height: 1.1;
+}
+
+.post-content-padding {
+    padding-left: 3.42rem;
+}
+
+.post-authority-icon-student {
+    display: none;
+}
+
+.reference {
+    font-weight: 200;
+    display: inline-flex;
+}
+
+.hideAfter5Seconds {
+    animation: cssanimation 5s forwards;
+}
+
+@keyframes cssanimation {
+    0% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Phones: below the 576px breakpoint the JS mobile checks use as well. */
+@media (max-width: 575.98px) {
+    .post-header-author-date {
+        flex-direction: column;
+        gap: 0 !important;
+    }
+
+    .post-content-padding {
+        margin-left: 0;
+    }
+
+    .post-header-date-separator {
+        display: none;
+    }
+
+    .post-header-date span {
+        color: var(--tumaet-ui-muted-color);
+        font-size: 0.75rem !important;
+    }
+}
+
+.post-delete-button-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 0;
+    background-color: color-mix(in srgb, var(--primary) 30%, transparent);
+    animation: increaseWidth 6s forwards linear;
+}
+
+@media (prefers-reduced-motion) {
+    .post-delete-button-background {
+        animation: none;
+    }
+}
+
+.post-delete-button-label {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes increaseWidth {
+    from {
+        width: 0;
+    }
+
+    to {
+        width: 100%;
+    }
+}

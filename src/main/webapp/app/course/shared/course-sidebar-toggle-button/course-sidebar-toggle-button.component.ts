@@ -9,7 +9,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-course-sidebar-toggle-button',
     imports: [FaIconComponent, TumAetUiButtonDirective, TumAetUiTooltipDirective, ArtemisTranslatePipe],
     templateUrl: './course-sidebar-toggle-button.component.html',
-    styleUrl: './course-sidebar-toggle-button.component.scss',
+    styleUrl: './course-sidebar-toggle-button.component.css',
 })
 export class CourseSidebarToggleButtonComponent {
     readonly isCollapsed = input<boolean>(false);

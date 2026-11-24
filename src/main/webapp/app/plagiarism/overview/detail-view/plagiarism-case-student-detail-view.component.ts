@@ -23,7 +23,7 @@ import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-an
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',
     templateUrl: './plagiarism-case-student-detail-view.component.html',
-    styleUrls: ['./plagiarism-case-student-detail-view.component.scss'],
+    styleUrls: ['./plagiarism-case-student-detail-view.component.css'],
     providers: [CommunicationService],
     imports: [
         PlagiarismCaseHeaderComponent,

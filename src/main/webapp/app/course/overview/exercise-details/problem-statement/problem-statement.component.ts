@@ -14,7 +14,7 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 @Component({
     selector: 'jhi-problem-statement',
     templateUrl: './problem-statement.component.html',
-    styleUrls: ['../../course-overview/course-overview.scss'],
+    styleUrls: ['../../course-overview/course-overview.css'],
     imports: [ProgrammingExerciseInstructionComponent, TranslateDirective, MarkdownDirective, NgClass],
 })
 export class ProblemStatementComponent implements OnInit {

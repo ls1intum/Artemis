@@ -41,7 +41,7 @@ interface StageTiming {
 @Component({
     selector: 'jhi-hyperion-run-progress',
     templateUrl: './hyperion-run-progress.component.html',
-    styleUrl: './hyperion-run-progress.component.scss',
+    styleUrl: './hyperion-run-progress.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisTranslatePipe, HyperionRunActivityComponent, HyperionStageComponent],
 })

@@ -61,7 +61,7 @@ export function latestSubmissionRoute(exercise: Exercise, participation: Student
 @Component({
     selector: 'jhi-result-history-dropdown',
     templateUrl: './result-history-dropdown.component.html',
-    styleUrls: ['./result-history-dropdown.component.scss'],
+    styleUrls: ['./result-history-dropdown.component.css'],
     imports: [
         TumAetUiTagComponent,
         TumAetUiButtonComponent,

@@ -1,0 +1,154 @@
+/*
+ * The month and the calendar controls are projected into the shell title bar, so these styles sit at the top level
+ * rather than nested under the page wrapper — projected content is no longer inside `.frame`.
+ */
+.calendar-bar-controls {
+    /* Passes the bar's shrinking on to the filter below; without it this group keeps the row at its content width. */
+    min-width: 0;
+}
+
+/*
+ * The filter is the control that gives way when the bar runs out of room: it may grow to show the chips but must
+ * be free to shrink, otherwise the neighbouring buttons are squeezed until their labels are cut off.
+ */
+.calendar-bar-controls tumaet-ui-multi-select {
+    min-width: 0;
+    max-width: 30rem;
+}
+
+/* The buttons keep their label width; only the filter above shrinks. */
+.calendar-bar-controls tumaet-ui-select-button,
+.calendar-bar-controls tumaet-ui-button-group,
+.calendar-bar-controls > div,
+.calendar-bar-controls > button {
+    flex: 0 0 auto;
+}
+
+/*
+ * The compact filter: an icon and the number of selected options, in place of the chips once the bar no longer has
+ * room for them. Same threshold as `.title-bar-collapsible-label`, so the filter and the subscribe button give way
+ * together rather than one at a time.
+ *
+ * The funnel sits left of the chips at any width; only the count next to it is reserved for the narrow bar.
+ */
+.calendar-bar-controls .filter-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-inline-end: 0.375rem;
+    line-height: normal;
+}
+
+.calendar-bar-controls .filter-count {
+    display: none;
+}
+
+.calendar-bar-controls .chips-section {
+    display: flex;
+    gap: 0.375rem;
+    min-width: 0;
+    align-items: center;
+
+    /* One line only. The chips wrap by default, which made the 40px title bar 128px tall. */
+    flex-wrap: nowrap;
+    overflow: hidden;
+
+    /* The bar pins its controls' line-height to the content height; chips need their own or they grow past it. */
+    line-height: normal;
+}
+
+.calendar-bar-controls .chips-section .chip {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    box-sizing: border-box;
+    padding: 0.125rem 0.35rem;
+    border-radius: 0.25rem;
+    background: var(--body-bg);
+    font-size: 0.75rem;
+    line-height: normal;
+    flex: 0 0 auto;
+}
+
+.calendar-bar-controls .chips-section .chip .remove-button {
+    all: unset;
+}
+
+/*
+ * Last in the block on purpose: `.chips-section` above declares the same property at the same specificity, so the
+ * hiding rule has to come after it to win.
+ */
+@container title-bar (max-width: 68rem) {
+    .calendar-bar-controls tumaet-ui-multi-select {
+        max-width: 5.5rem;
+    }
+
+    .calendar-bar-controls .chips-section {
+        display: none;
+    }
+
+    .calendar-bar-controls .filter-count {
+        display: inline;
+    }
+}
+
+/*
+ * Shared by the chips in the bar and the options in the dropdown, so a category reads the same in both. Declared
+ * at the top level, not under the bar: the dropdown is rendered in an overlay outside it.
+ */
+.filter-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-circle {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 0.25rem;
+    flex: 0 0 auto;
+}
+
+.exam-chip {
+    background-color: var(--pastel-teal);
+}
+
+.lecture-chip {
+    background-color: var(--pastel-blue);
+}
+
+.tutorial-chip {
+    background-color: var(--pastel-purple);
+}
+
+.exercise-chip {
+    background-color: var(--pastel-cyan);
+}
+
+.frame {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.frame .calendar-presentation-container {
+    position: relative;
+}
+
+.frame .calendar-presentation-container .loading-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: var(--calendar-loading-overlay-background);
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: delayLoading 0s 0.5s forwards;
+    opacity: 0;
+}
+
+@keyframes delayLoading {
+    to {
+        opacity: 1;
+    }
+}

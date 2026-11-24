@@ -49,7 +49,7 @@ const exerciseSelected: ValidatorFn = (control: AbstractControl): ValidationErro
 @Component({
     selector: 'jhi-presentation-assessment-form-dialog',
     templateUrl: './presentation-assessment-form-dialog.component.html',
-    styleUrl: './presentation-assessment-form-dialog.component.scss',
+    styleUrl: './presentation-assessment-form-dialog.component.css',
     imports: [
         NgTemplateOutlet,
         FormsModule,

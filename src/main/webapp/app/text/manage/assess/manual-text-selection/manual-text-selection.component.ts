@@ -18,7 +18,7 @@ const SPACE = ' ';
 @Component({
     selector: 'jhi-manual-text-selection',
     templateUrl: './manual-text-selection.component.html',
-    styleUrls: ['./manual-text-selection.component.scss'],
+    styleUrls: ['./manual-text-selection.component.css'],
 })
 export class ManualTextSelectionComponent {
     protected route = inject(ActivatedRoute);

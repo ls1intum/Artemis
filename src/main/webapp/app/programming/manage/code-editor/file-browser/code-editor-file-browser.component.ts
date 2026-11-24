@@ -64,7 +64,7 @@ export interface FileTreeItem extends TreeItem<string> {
 @Component({
     selector: 'jhi-code-editor-file-browser',
     templateUrl: './code-editor-file-browser.component.html',
-    styleUrls: ['./code-editor-file-browser.scss'],
+    styleUrls: ['./code-editor-file-browser.css'],
     imports: [
         FaIconComponent,
         CodeEditorFileBrowserDeleteComponent,

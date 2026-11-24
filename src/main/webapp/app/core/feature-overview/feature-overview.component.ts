@@ -12,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-feature-overview',
     templateUrl: './feature-overview.component.html',
-    styleUrl: './feature-overview.component.scss',
+    styleUrl: './feature-overview.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgOptimizedImage, FaIconComponent, RouterLink, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective],
 })

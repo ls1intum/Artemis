@@ -20,7 +20,7 @@ const MESSAGE_SEVERITY: Record<TumAetUiMessageSeverity, string> = {
 @Component({
     selector: 'tumaet-ui-message',
     templateUrl: './tumaet-ui-message.component.html',
-    styleUrl: './tumaet-ui-message.component.scss',
+    styleUrl: './tumaet-ui-message.component.css',
     imports: [FaIconComponent, TumAetUiTranslatePipe],
     host: {
         '[attr.role]': 'messageRole()',

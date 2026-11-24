@@ -35,7 +35,7 @@ import { OpenCodeEditorButtonComponent } from 'app/course/overview/exercise-deta
     providers: [ExternalCloningService],
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
-    styleUrls: ['../../course-overview/course-overview.scss'],
+    styleUrls: ['../../course-overview/course-overview.css'],
     host: {
         '[class]': 'columnClasses()',
     },

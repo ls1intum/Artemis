@@ -107,7 +107,7 @@ export interface HolidayCalendarWeek {
 @Component({
     selector: 'jhi-holiday-month-grid',
     templateUrl: './holiday-month-grid.component.html',
-    styleUrl: './holiday-month-grid.component.scss',
+    styleUrl: './holiday-month-grid.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     // On the window rather than the grid: a drag released outside the calendar still has to end.
     host: {

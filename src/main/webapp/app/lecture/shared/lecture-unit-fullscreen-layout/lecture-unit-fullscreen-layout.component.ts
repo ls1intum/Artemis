@@ -49,7 +49,7 @@ const MIN_PANEL_PERCENT = 5;
     standalone: true,
     imports: [CommonModule, TumAetUiSplitterComponent, ArtemisTranslatePipe],
     templateUrl: './lecture-unit-fullscreen-layout.component.html',
-    styleUrl: './lecture-unit-fullscreen-layout.component.scss',
+    styleUrl: './lecture-unit-fullscreen-layout.component.css',
     encapsulation: ViewEncapsulation.None,
 })
 export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
