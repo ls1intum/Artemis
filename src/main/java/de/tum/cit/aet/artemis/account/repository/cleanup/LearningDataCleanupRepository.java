@@ -195,4 +195,43 @@ public interface LearningDataCleanupRepository extends ArtemisJpaRepository<Quiz
     @Transactional
     @Query("DELETE FROM CourseHomeVisit v WHERE v.userId = :userId")
     int deleteHomeVisits(@Param("userId") long userId);
+
+    @Query("""
+            SELECT session.user.id AS userId, COUNT(session) AS count
+            FROM PracticeSession session
+            WHERE session.user.id IN :userIds
+            GROUP BY session.user.id
+            """)
+    List<UserReferenceCount> countPracticeSessions(@Param("userIds") Collection<Long> userIds);
+
+    /**
+     * Deletes the practice sessions of an account and their associated logs.
+     *
+     * @param userId the account being deleted
+     * @return how many practice sessions were deleted
+     */
+    default int deletePracticeSessions(long userId) {
+        deletePracticeLogs(userId);
+        return deletePracticeSessionRows(userId);
+    }
+
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM PracticeLog log
+            WHERE log.practiceSession IN (
+                SELECT session
+                FROM PracticeSession session
+                WHERE session.user.id = :userId
+            )
+            """)
+    int deletePracticeLogs(@Param("userId") long userId);
+
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM PracticeSession session
+            WHERE session.user.id = :userId
+            """)
+    int deletePracticeSessionRows(@Param("userId") long userId);
 }
