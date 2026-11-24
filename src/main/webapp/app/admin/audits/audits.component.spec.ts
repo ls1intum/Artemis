@@ -301,7 +301,11 @@ describe('AuditsComponent', () => {
             const slow = new Subject<HttpResponse<Audit[]>>();
             const fast = new Subject<HttpResponse<Audit[]>>();
             const query = vi.spyOn(service, 'query').mockReturnValue(slow);
-            const response = (id: number, total: string) => new HttpResponse<Audit[]>({ body: [{ id } as Audit], headers: new HttpHeaders({ 'X-Total-Count': total }) });
+            const response = (id: number, total: string) =>
+                new HttpResponse<Audit[]>({
+                    body: [new Audit({ remoteAddress: '127.0.0.1', sessionId: '123' }, `user${id}`, '20140101', 'AUTHENTICATION_SUCCESS')],
+                    headers: new HttpHeaders({ 'X-Total-Count': total }),
+                });
             comp.ngOnInit();
             query.mockReturnValue(fast);
             mockActivatedRoute.setParameters({ sort: 'id,desc', search: 'student1' });
@@ -309,7 +313,7 @@ describe('AuditsComponent', () => {
             fast.next(response(2, '1'));
             slow.next(response(1, '500'));
 
-            expect(comp.audits()).toEqual([{ id: 2 }]);
+            expect(comp.audits().map((audit) => audit.principal)).toEqual(['user2']);
             expect(comp.totalItems()).toBe(1);
         });
 
@@ -318,11 +322,18 @@ describe('AuditsComponent', () => {
             const query = vi.spyOn(service, 'query').mockReturnValueOnce(failing);
             comp.ngOnInit();
             failing.error(new Error('failed'));
-            query.mockReturnValue(of(new HttpResponse<Audit[]>({ body: [{ id: 3 } as Audit], headers: new HttpHeaders({ 'X-Total-Count': '1' }) })));
+            query.mockReturnValue(
+                of(
+                    new HttpResponse<Audit[]>({
+                        body: [new Audit({ remoteAddress: '127.0.0.1', sessionId: '123' }, 'user3', '20140101', 'AUTHENTICATION_SUCCESS')],
+                        headers: new HttpHeaders({ 'X-Total-Count': '1' }),
+                    }),
+                ),
+            );
 
             mockActivatedRoute.setParameters({ sort: 'id,desc', search: 'student1' });
 
-            expect(comp.audits()).toEqual([{ id: 3 }]);
+            expect(comp.audits().map((audit) => audit.principal)).toEqual(['user3']);
         });
 
         it('sends no principal while there is no search, so that the server returns the events of everyone', () => {
