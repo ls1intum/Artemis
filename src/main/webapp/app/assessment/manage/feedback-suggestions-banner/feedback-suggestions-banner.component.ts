@@ -32,7 +32,7 @@ export type FeedbackSuggestionsBannerAppearance = 'banner' | 'chrome';
 @Component({
     selector: 'jhi-feedback-suggestions-banner',
     templateUrl: './feedback-suggestions-banner.component.html',
-    styleUrls: ['./feedback-suggestions-banner.component.scss'],
+    styleUrls: ['./feedback-suggestions-banner.component.css'],
     imports: [TumAetUiMessageComponent, TumAetUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     host: {
         '[class.feedback-suggestions-banner--chrome]': "appearance() === 'chrome'",

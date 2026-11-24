@@ -31,7 +31,7 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
         QuizTrainingDialogComponent,
     ],
     templateUrl: './course-training.component.html',
-    styleUrl: './course-training.component.scss',
+    styleUrl: './course-training.component.css',
 })
 export class CourseTrainingComponent {
     private readonly router = inject(Router);

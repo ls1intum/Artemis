@@ -25,7 +25,7 @@ const GRAPHEME_SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'graphem
 @Component({
     selector: 'jhi-monaco-editor',
     template: '',
-    styleUrls: ['monaco-editor.component.scss'],
+    styleUrls: ['monaco-editor.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
 })

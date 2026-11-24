@@ -35,7 +35,7 @@ export function postingReferencePlaceholder(index: number): string {
  */
 @Component({
     selector: 'jhi-posting-markdown',
-    // A span like the one the posting always rendered in: _rendered-content.scss keeps its last paragraph inline, so a label such as "(edited)" follows the text.
+    // A span like the one the posting always rendered in: rendered-content.css keeps its last paragraph inline, so a label such as "(edited)" follows the text.
     template: '<span class="markdown-preview posting-markdown" [innerHTML]="rendered().html"></span>',
 })
 export class PostingMarkdownComponent {

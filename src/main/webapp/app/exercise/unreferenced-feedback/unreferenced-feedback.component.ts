@@ -14,7 +14,7 @@ import { round, roundValueSpecifiedByCourseSettings } from 'app/foundation/util/
 @Component({
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
-    styleUrls: ['./unreferenced-feedback.component.scss'],
+    styleUrls: ['./unreferenced-feedback.component.css'],
     imports: [TranslateDirective, UnreferencedFeedbackDetailComponent, TumAetUiButtonDirective, TumAetUiMessageComponent, ArtemisTranslatePipe],
 })
 export class UnreferencedFeedbackComponent implements GradingInstructionSelectionHost {

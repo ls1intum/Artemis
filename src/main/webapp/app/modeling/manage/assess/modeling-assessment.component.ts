@@ -62,7 +62,7 @@ type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor 
 @Component({
     selector: 'jhi-modeling-assessment',
     templateUrl: './modeling-assessment.component.html',
-    styleUrls: ['./modeling-assessment.component.scss'],
+    styleUrls: ['./modeling-assessment.component.css'],
     host: { '(document:fullscreenchange)': 'onFullscreenChange()' },
     imports: [ModelingExplanationEditorComponent, ApollonRailDisclosureComponent],
 })

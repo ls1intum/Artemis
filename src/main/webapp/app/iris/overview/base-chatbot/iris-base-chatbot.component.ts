@@ -114,7 +114,7 @@ const LIVE_DRAFT_CATCH_UP_MS = 400;
 @Component({
     selector: 'jhi-iris-base-chatbot',
     templateUrl: './iris-base-chatbot.component.html',
-    styleUrls: ['./iris-base-chatbot.component.scss'],
+    styleUrls: ['./iris-base-chatbot.component.css'],
     host: {
         '[class.layout-client]': "layout() === 'client'",
         '[class.layout-widget]': "layout() === 'widget'",

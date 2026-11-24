@@ -94,7 +94,7 @@ export interface HiddenPageMap {
 @Component({
     selector: 'jhi-pdf-preview-component',
     templateUrl: './pdf-preview.component.html',
-    styleUrls: ['./pdf-preview.component.scss'],
+    styleUrls: ['./pdf-preview.component.css'],
     imports: [
         TumAetUiButtonDirective,
         TumAetUiPopoverComponent,

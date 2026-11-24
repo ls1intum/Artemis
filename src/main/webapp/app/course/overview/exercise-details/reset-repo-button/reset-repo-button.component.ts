@@ -21,7 +21,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-reset-repo-button',
     templateUrl: './reset-repo-button.component.html',
-    styleUrls: ['./reset-repo-button.component.scss'],
+    styleUrls: ['./reset-repo-button.component.css'],
     imports: [
         ExerciseActionButtonComponent,
         FeatureToggleDirective,

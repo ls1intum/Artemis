@@ -37,7 +37,7 @@ export interface AssessmentInstructionsTab {
 @Component({
     selector: 'jhi-assessment-instructions',
     templateUrl: './assessment-instructions.component.html',
-    styleUrl: './assessment-instructions.component.scss',
+    styleUrl: './assessment-instructions.component.css',
     imports: [
         ExpandableSectionComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,

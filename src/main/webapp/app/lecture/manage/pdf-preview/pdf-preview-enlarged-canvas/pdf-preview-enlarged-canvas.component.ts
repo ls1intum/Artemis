@@ -8,7 +8,7 @@ type NavigationDirection = 'next' | 'prev';
 @Component({
     selector: 'jhi-pdf-preview-enlarged-canvas-component',
     templateUrl: './pdf-preview-enlarged-canvas.component.html',
-    styleUrls: ['./pdf-preview-enlarged-canvas.component.scss'],
+    styleUrls: ['./pdf-preview-enlarged-canvas.component.css'],
     imports: [ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent, CdkTrapFocus],
 })
 export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit {

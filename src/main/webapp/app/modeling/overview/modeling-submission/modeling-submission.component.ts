@@ -58,7 +58,7 @@ const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
 @Component({
     selector: 'jhi-modeling-submission',
     templateUrl: './modeling-submission.component.html',
-    styleUrls: ['./modeling-submission.component.scss'],
+    styleUrls: ['./modeling-submission.component.css'],
     imports: [
         ResizeableContainerComponent,
         ModelingEditorComponent,

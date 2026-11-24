@@ -52,7 +52,7 @@ export enum State {
     selector: 'jhi-quiz-question-list-edit-existing',
     templateUrl: './quiz-question-list-edit-existing.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrls: ['../../shared/quiz.scss'],
+    styleUrls: ['../../shared/quiz.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         TranslateDirective,

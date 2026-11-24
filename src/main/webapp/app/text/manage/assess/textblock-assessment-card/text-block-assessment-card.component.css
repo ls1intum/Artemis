@@ -1,0 +1,53 @@
+span {
+    white-space: pre-wrap;
+}
+
+span.clickable {
+    cursor: pointer;
+}
+
+span:hover.clickable {
+    background: var(--textblock-assessment-span-hover-background);
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+span.highlighted {
+    color: var(--textblock-assessment-text-feedback-highlighted-color);
+    background-color: var(--textblock-assessment-text-feedback-highlighted-background);
+}
+
+span.text-with-feedback {
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+/* The sentence the open feedback applies to is marked by a line at its start and at its end, in the colour of its text. An inset
+   shadow, since an inline sentence that wraps shows it only at the start of its first line and the end of its last. */
+span.text-with-feedback.active {
+    box-shadow:
+        inset 2px 0 0 currentcolor,
+        inset -2px 0 0 currentcolor;
+}
+
+span.text-with-feedback.positive-feedback {
+    color: var(--textblock-assessment-text-feedback-positive-color);
+    background-color: var(--textblock-assessment-text-feedback-positive-background);
+}
+
+span.text-with-feedback.negative-feedback {
+    color: var(--textblock-assessment-text-feedback-negative-color);
+    background-color: var(--textblock-assessment-text-feedback-negative-background);
+}
+
+span.text-with-feedback.neutral-feedback {
+    color: var(--textblock-assessment-text-feedback-neutral-color);
+    background-color: var(--textblock-assessment-text-feedback-neutral-background);
+}
+
+/* A block, so its margin counts: the feedback of a sentence sits below it with the same room around it as in the student's view of the text */
+jhi-text-block-feedback-editor {
+    display: block;
+    margin: 0.5rem 0;
+    border-width: 0;
+}

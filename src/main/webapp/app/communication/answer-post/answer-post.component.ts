@@ -44,7 +44,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-answer-post',
     templateUrl: './answer-post.component.html',
-    styleUrls: ['./answer-post.component.scss'],
+    styleUrls: ['../communication.component.css', './answer-post.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         SavedPostingBannerComponent,

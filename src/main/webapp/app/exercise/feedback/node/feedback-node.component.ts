@@ -18,7 +18,7 @@ import hljs from 'app/foundation/util/highlight-languages.util';
 @Component({
     selector: 'jhi-feedback-node',
     templateUrl: './feedback-node.component.html',
-    styleUrls: ['./feedback-node.scss'],
+    styleUrls: ['./feedback-node.css'],
     imports: [TumAetUiTooltipDirective, TumAetUiMessageComponent, FaIconComponent, FeedbackCollapseComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackNodeComponent implements OnInit {
