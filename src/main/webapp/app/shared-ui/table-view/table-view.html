@@ -6,7 +6,7 @@
     [emptyTitle]="resolvedOptions().emptyMessageTranslation"
 >
     <!-- `hidden` instead of @if: an @if around a projected node is not projected into its slot when whitespace is preserved (NG8011). -->
-    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 gap-2!" [class]="resolvedOptions().searchFullWidth ? 'flex-col items-stretch' : 'items-center'" [hidden]="!showCaption()">
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 gap-2" [class]="resolvedOptions().searchFullWidth ? 'flex-col items-stretch' : 'items-center'" [hidden]="!showCaption()">
         @if (resolvedOptions().showSearch) {
             <jhi-search-filter
                 [class]="resolvedOptions().searchFullWidth ? 'min-w-0 w-full' : 'min-w-24 max-w-lg flex-1'"
@@ -70,7 +70,7 @@
                             @if (col.filterType === 'boolean') {
                                 <select
                                     tumAetUiInput
-                                    class="mt-1! w-full"
+                                    class="mt-1 w-full"
                                     [attr.aria-label]="col.headerKey ? (col.headerKey | artemisTranslate) : col.header"
                                     (change)="filterColumnInput(col.field, $event)"
                                 >
@@ -81,7 +81,7 @@
                             } @else {
                                 <input
                                     tumAetUiInput
-                                    class="mt-1! w-full"
+                                    class="mt-1 w-full"
                                     [type]="col.filterType === 'numeric' ? 'number' : col.filterType === 'date' ? 'date' : 'text'"
                                     [attr.aria-label]="col.headerKey ? (col.headerKey | artemisTranslate) : col.header"
                                     (input)="filterColumnInput(col.field, $event)"

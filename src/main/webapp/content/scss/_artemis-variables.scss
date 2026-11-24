@@ -27,6 +27,11 @@ $font-size-base: 0.9rem;
 // Popovers:
 $popover-max-width: 100%;
 
+// Layer of the container that holds the kit overlays (dialogs, calendars, select panels, tooltips), and the layer of the portal that holds the popovers of Apollon
+// right above it, so that a popover opened from an editor inside a dialog is not painted behind that dialog.
+$kit-overlay-container-z-index: 1200;
+$apollon-popover-portal-z-index: $kit-overlay-container-z-index + 1;
+
 // Modeling editor:
 $modeling-editor-fullscreen-z-index: 4000;
 
