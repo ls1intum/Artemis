@@ -57,7 +57,7 @@ interface YourOverallPointsEntry extends ChartSeriesEntry {
 @Component({
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
-    styleUrl: './course-statistics.component.scss',
+    styleUrl: './course-statistics.component.css',
     imports: [
         FaIconComponent,
         TranslateDirective,

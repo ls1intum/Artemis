@@ -122,7 +122,7 @@ export enum TutorialGroupDetailAccessLevel {
     ],
     providers: [TumAetUiConfirmationService],
     templateUrl: './tutorial-group-detail.component.html',
-    styleUrl: './tutorial-group-detail.component.scss',
+    styleUrl: './tutorial-group-detail.component.css',
 })
 export class TutorialGroupDetailComponent {
     protected readonly currentTutorialLectureId = inject(LectureService).currentTutorialLectureId;

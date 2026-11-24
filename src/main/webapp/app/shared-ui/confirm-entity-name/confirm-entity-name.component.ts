@@ -20,7 +20,7 @@ import { TumAetUiInputDirective } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-confirm-entity-name',
     templateUrl: './confirm-entity-name.component.html',
-    styleUrls: ['./confirm-entity-name.component.scss'],
+    styleUrls: ['./confirm-entity-name.component.css'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,

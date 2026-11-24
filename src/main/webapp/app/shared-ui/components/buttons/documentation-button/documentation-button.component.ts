@@ -36,7 +36,7 @@ export type DocumentationType = keyof typeof DocumentationLinks;
 
 @Component({
     selector: 'jhi-documentation-button',
-    styleUrls: ['./documentation-button.component.scss'],
+    styleUrls: ['./documentation-button.component.css'],
     template: `
         @let tooltip = getTooltipForType();
         <a

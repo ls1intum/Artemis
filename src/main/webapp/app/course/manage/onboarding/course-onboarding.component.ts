@@ -22,7 +22,7 @@ import dayjs from 'dayjs/esm';
 @Component({
     selector: 'jhi-course-onboarding',
     templateUrl: './course-onboarding.component.html',
-    styleUrls: ['./course-onboarding.component.scss'],
+    styleUrls: ['./course-onboarding.component.css'],
     imports: [
         TranslateDirective,
         ArtemisTranslatePipe,

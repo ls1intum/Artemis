@@ -59,7 +59,7 @@ export interface LectureUnitCompletionEvent {
 @Component({
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
-    styleUrls: ['../../../../course/overview/course-overview/course-overview.scss'],
+    styleUrls: ['../../../../course/overview/course-overview/course-overview.css'],
     imports: [
         ArtemisTranslatePipe,
         TumAetUiButtonDirective,

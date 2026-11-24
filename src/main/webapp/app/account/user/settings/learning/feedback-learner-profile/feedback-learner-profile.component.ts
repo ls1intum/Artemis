@@ -14,7 +14,7 @@ import { FeedbackOnboardingModalComponent } from 'app/account/user/settings/lear
 @Component({
     selector: 'jhi-feedback-learner-profile',
     templateUrl: './feedback-learner-profile.component.html',
-    styleUrls: ['../learner-profile.component.scss'],
+    styleUrls: ['../learner-profile.component.css'],
     imports: [ArtemisTranslatePipe, TranslateDirective, FormsModule, TumAetUiButtonComponent, TumAetUiPanelComponent, TumAetUiSelectComponent, FeedbackOnboardingModalComponent],
 })
 export class FeedbackLearnerProfileComponent implements OnInit {

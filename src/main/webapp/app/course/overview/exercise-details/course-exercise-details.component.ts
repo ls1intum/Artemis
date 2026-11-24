@@ -65,7 +65,7 @@ interface InstructorActionItem {
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
-    styleUrls: ['../course-overview/course-overview.scss', './course-exercise-details.component.scss'],
+    styleUrls: ['../course-overview/course-overview.css', './course-exercise-details.component.css'],
     providers: [ExerciseCacheService],
     imports: [ExerciseHeaderComponent, ExerciseSplitPanelComponent, ProgrammingExerciseBuildWindowNoticeComponent],
 })

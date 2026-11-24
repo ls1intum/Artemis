@@ -1,0 +1,42 @@
+.date-box {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+
+.date-box .button-container {
+    display: flex;
+    gap: 10px;
+}
+
+.type-section {
+    margin-bottom: 1rem;
+}
+
+.type-section .type-header {
+    padding: 0.5rem;
+    background-color: var(--pdf-preview-date-box-title-background);
+    font-weight: 600;
+}
+
+.type-section .exercise-options .exercise-option {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.type-section .exercise-options .exercise-option:hover:not(.active) {
+    background-color: var(--pdf-preview-date-box-title-background);
+}
+
+.type-section .exercise-options .exercise-option.active {
+    background-color: var(--tumaet-ui-highlight-background);
+    color: var(--tumaet-ui-highlight-color);
+}
+
+.type-section .exercise-options .exercise-option.active .text-muted-color {
+    color: inherit;
+}
+
+.type-section .exercise-options .exercise-option input {
+    cursor: pointer;
+}

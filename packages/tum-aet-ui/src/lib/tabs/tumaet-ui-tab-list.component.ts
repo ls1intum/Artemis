@@ -17,7 +17,7 @@ import { TumAetUiTabsService, tabKey, tabValue } from './tumaet-ui-tabs.service'
 @Component({
     selector: 'tumaet-ui-tab-list',
     templateUrl: './tumaet-ui-tab-list.component.html',
-    styleUrl: './tumaet-ui-tab-list.component.scss',
+    styleUrl: './tumaet-ui-tab-list.component.css',
     imports: [FaIconComponent],
     hostDirectives: [TabList],
     host: {

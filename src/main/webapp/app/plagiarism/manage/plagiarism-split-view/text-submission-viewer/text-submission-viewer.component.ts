@@ -27,7 +27,7 @@ type FilesWithType = { [p: string]: FileType };
 
 @Component({
     selector: 'jhi-text-submission-viewer',
-    styleUrls: ['./text-submission-viewer.component.scss'],
+    styleUrls: ['./text-submission-viewer.component.css'],
     templateUrl: './text-submission-viewer.component.html',
     encapsulation: ViewEncapsulation.None,
     imports: [TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent, SplitPaneHeaderComponent, FaIconComponent, TranslateDirective, NgClass, ArtemisTranslatePipe],
