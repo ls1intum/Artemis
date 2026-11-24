@@ -70,7 +70,10 @@ public class HyperionQuizQuestionPoolSelectionService {
      */
     public Selection select(long courseId, QuizQuestionPoolSelectionRequestDTO request) {
         List<Long> competencyIds = request.competencyIds().stream().distinct().toList();
-        List<QuizQuestionPoolItem> eligible = findEligible(courseId, competencyIds, request.lectureUnitIds(), request.questionTypes(), request.difficulties());
+        List<QuizQuestionPoolItem> eligible = itemRepository.findAllForSelection(courseId, competencyIds, QuizQuestionPoolItemState.FILTERED).stream()
+                .filter(item -> item.getQuestion() != null).filter(item -> matches(request.lectureUnitIds(), item.getLectureUnitId()))
+                .filter(item -> matches(request.questionTypes(), item.getQuestionType())).filter(item -> matches(request.difficulties(), item.getDifficulty())).sorted(DRAW_ORDER)
+                .toList();
         List<QuizQuestionPoolItem> drawn = draw(eligible, competencyIds, request.count());
         ZonedDateTime now = ZonedDateTime.now();
         for (QuizQuestionPoolItem item : drawn) {
@@ -83,28 +86,6 @@ public class HyperionQuizQuestionPoolSelectionService {
         }
         List<Long> empty = competencyIds.stream().filter(competencyId -> eligible.stream().noneMatch(item -> item.getCompetencyId().equals(competencyId))).toList();
         return new Selection(drawn, empty);
-    }
-
-    /**
-     * Finds the questions a draw may take, in draw order: judged questions whose material has not changed and that are approved, or await a
-     * decision after the filter accepted them without flagging them for review. Every filter left {@code null} or empty matches everything.
-     *
-     * @param courseId       the course
-     * @param competencyIds  the competencies the questions were generated for
-     * @param lectureUnitIds the lecture units whose material grounds the questions
-     * @param questionTypes  the question types
-     * @param difficulties   the difficulties
-     * @return the matching items, least often and longest ago drawn first
-     */
-    public List<QuizQuestionPoolItem> findEligible(long courseId, @Nullable Collection<Long> competencyIds, @Nullable Collection<Long> lectureUnitIds,
-            @Nullable Collection<QuizQuestionGenerationType> questionTypes, @Nullable Collection<QuizQuestionDifficulty> difficulties) {
-        Collection<Long> competencies = competencyIds == null || competencyIds.isEmpty() ? itemRepository.findCompetencyIdsForCourse(courseId) : competencyIds;
-        if (competencies.isEmpty()) {
-            return List.of();
-        }
-        return itemRepository.findAllForSelection(courseId, competencies, QuizQuestionPoolItemState.FILTERED).stream().filter(item -> item.getQuestion() != null)
-                .filter(item -> matches(lectureUnitIds, item.getLectureUnitId())).filter(item -> matches(questionTypes, item.getQuestionType()))
-                .filter(item -> matches(difficulties, item.getDifficulty())).sorted(DRAW_ORDER).toList();
     }
 
     /**
