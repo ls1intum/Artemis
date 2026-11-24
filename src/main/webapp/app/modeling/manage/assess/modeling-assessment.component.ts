@@ -626,16 +626,17 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * Stores the title and description of an Apollon assessment box in a manual feedback, the way Artemis keeps titled
      * feedback for every exercise type (and sends it to Athena): `text` holds the title and `detailText` the description.
      * Without a title of its own, the description stays in `text` and `detailText` stays empty, so the feedback keeps the
-     * shape it always had. A title without a description becomes the comment, since an empty description is not kept.
+     * shape it always had. A title without a description keeps an empty `detailText`, which tells it apart from an untitled
+     * comment when it is shown again.
      */
     private applyTitleAndDescription(feedback: Feedback, assessment: Assessment): void {
         const title = this.ownTitleOf(assessment);
         const description = assessment.feedback?.length ? assessment.feedback : undefined;
-        if (title !== undefined && description !== undefined) {
+        if (title !== undefined) {
             feedback.text = title;
-            feedback.detailText = description;
+            feedback.detailText = description ?? '';
         } else {
-            feedback.text = title ?? assessment.feedback;
+            feedback.text = assessment.feedback;
             feedback.detailText = undefined;
         }
     }
@@ -655,8 +656,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             const title = this.stripSuggestionPrefix(feedback.text ?? '');
             return { title: title || undefined, description: feedback.detailText ?? '' };
         }
-        if (Feedback.hasDetailText(feedback)) {
-            return { title: feedback.text || undefined, description: feedback.detailText! };
+        // A defined detail text, even an empty one, means that `text` holds the title.
+        if (feedback.detailText !== undefined && feedback.detailText !== null) {
+            return { title: feedback.text || undefined, description: feedback.detailText };
         }
         return { description: feedback.text ?? '' };
     }
