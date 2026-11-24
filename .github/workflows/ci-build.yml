@@ -96,10 +96,14 @@ jobs:
         # browser-stats.json (the esbuild metafile for the eager-chunk report below) is moved out first:
         # the `webapp` task copies everything in build/webapp-dist into the WAR, where it would
         # otherwise be served publicly.
-        run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false --stats-json && mv build/resources/main/static/browser-stats.json build/client-stats.json && mv build/resources/main/static build/webapp-dist
+        run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false --stats-json && { mv build/resources/main/static/browser-stats.json build/client-stats.json || echo "::warning::browser-stats.json is missing; the eager-chunk report is skipped"; } && mv build/resources/main/static build/webapp-dist
       - name: Generate eager-chunk loading report
         # Feeds the chunk-eager-quality job below (PR runs) and, on develop pushes, becomes the
         # next baseline that PR runs compare against. See supporting_scripts/chunk-eager-loading/README.md.
+        #
+        # Advisory: this step runs before `Build .war`, so a failure here (e.g. malformed stats) must
+        # not stop WAR packaging. A missing report only skips the comparison.
+        continue-on-error: true
         #
         # CHUNK_REPORT_SHA/_BRANCH override GITHUB_SHA/GITHUB_REF_NAME, which for pull_request
         # runs describe a synthetic merge commit (ref literally becomes "<pr-number>/merge"), not
@@ -112,6 +116,8 @@ jobs:
           CHUNK_REPORT_BRANCH: ${{ github.head_ref }}
         run: node supporting_scripts/chunk-eager-loading/analyze_eager_chunks.mjs build/client-stats.json --out chunk-eager-report.json
       - name: Upload eager-chunk report artifact
+        # Advisory, like the generation step above: an upload failure must not stop `Build .war`.
+        continue-on-error: true
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: chunk-eager-report
@@ -311,7 +317,10 @@ jobs:
               try {
                 body = fs.readFileSync('chunk-diff-report.md', 'utf8');
               } catch {
-                return;
+                // The comparison crashed before writing a report. An earlier comment would stay up as
+                // if it still applied, so replace it; never create a comment just to say it failed.
+                if (!existingCommentId) return;
+                body = `### Client Eager-Chunk Loading Report\n➖ Comparison failed for \`${process.env.HEAD_SHA.slice(0, 10)}\`: the report could not be generated. The previous report no longer applies to this commit.`;
               }
             } else {
               // Without a baseline, an earlier report would stay up as if it still applied to this
