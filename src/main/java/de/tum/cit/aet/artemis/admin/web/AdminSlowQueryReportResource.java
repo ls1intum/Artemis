@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
  * Exposes two operations:
  * <ul>
  * <li>{@code GET  /api/admin/performance/slow-queries} – returns the current JSON report
- * of all slow queries and N+1 suspects captured since the last reset.</li>
+ * of all repeated-query findings captured since the last reset.</li>
  * <li>{@code POST /api/admin/performance/slow-queries/reset} – clears all accumulated
  * data, allowing a fresh collection window to start.</li>
  * </ul>
@@ -65,7 +65,7 @@ public class AdminSlowQueryReportResource {
     @GetMapping("slow-queries")
     public ResponseEntity<SlowQueryReportDTO> getReport() {
         SlowQueryReportDTO report = collector.getReport(indexCatalog.indexes());
-        log.debug("[SlowQuery] Report requested: {} slow queries, {} repeated-query findings", report.slowQueryCount(), report.repeatedQueryCount());
+        log.debug("[SlowQuery] Report requested: {} repeated-query findings", report.repeatedQueryCount());
         return ResponseEntity.ok(report);
     }
 

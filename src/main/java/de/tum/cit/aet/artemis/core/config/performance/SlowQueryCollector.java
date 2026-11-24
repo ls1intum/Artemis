@@ -11,7 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -21,20 +20,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Thread-safe in-memory store for the slow-query detector.
+ * Thread-safe in-memory store for the repeated-query detector.
  * <p>
- * Collects three categories of findings:
- * <ul>
- * <li><b>Slow queries</b> – individual statements whose execution time exceeded the configured
- * threshold ({@link SlowQueryProperties#getSlowQueryThresholdMs()}).</li>
- * <li><b>Repeated queries</b> – query templates that ran more than once within a single HTTP
- * request, either with different parameters (N+1) or with identical ones (duplicate); see
- * {@link RepeatedQueryFinding}.</li>
- * <li><b>Endpoint timings</b> – one entry per HTTP request, regardless of whether any individual
- * query was slow: total query count, DB time, and a per-query breakdown, so an endpoint whose
- * total DB engagement is high across many individually-unremarkable queries is still visible.
- * Deliberately unfiltered (no threshold of its own yet) -- see {@link EndpointTimingRecord}.</li>
- * </ul>
+ * Collects the query templates that ran more than once within a single HTTP request, either with
+ * different parameters (N+1) or with identical ones (duplicate); see {@link RepeatedQueryFinding}.
  * <p>
  * Only active when the {@code e2e-performance} Spring profile is enabled.
  */
@@ -49,9 +38,6 @@ public class SlowQueryCollector {
             .thenComparing(QueryCallSite::repositoryMethod, Comparator.nullsLast(Comparator.naturalOrder()));
 
     private final SlowQueryProperties properties;
-
-    /** Captured slow queries, ordered by insertion time. */
-    private final CopyOnWriteArrayList<SlowQueryRecord> slowQueries = new CopyOnWriteArrayList<>();
 
     /**
      * Per-request statistics, keyed by normalized SQL template and the code that issued it; every
@@ -74,9 +60,6 @@ public class SlowQueryCollector {
      */
     private final Map<FindingKey, RepeatedQueryFinding> repeatedQueries = new LinkedHashMap<>();
 
-    /** One entry per completed HTTP request, capped like {@link #slowQueries}. */
-    private final CopyOnWriteArrayList<EndpointTimingRecord> endpointTimings = new CopyOnWriteArrayList<>();
-
     /** Set once a repeated-query finding was dropped, which makes the set of findings of the run incomplete. Cleared by {@link #reset()}. */
     private volatile boolean truncated;
 
@@ -92,9 +75,6 @@ public class SlowQueryCollector {
      * @param parameterSignature hash of the raw SQL and its bound parameter values: equal for two
      *                               executions of the exact same statement with the exact same
      *                               values, different otherwise -- see {@link SlowQueryListener#parameterSignature}.
-     * @param executionTimeMs    Measured wall-clock execution time in milliseconds.
-     * @param joinCount          Number of SQL {@code join} keywords in the raw query text -- see
-     *                               {@link SlowQueryRecord#joinCount()}.
      * @param callSiteResolver   resolves where the query was issued from; invoked for every
      *                               query of a request, since each execution is counted under
      *                               the code that issued it, and not for background queries.
@@ -108,88 +88,44 @@ public class SlowQueryCollector {
      * @param phase              Playwright phase from the {@code X-Playwright-Phase} header — {@code "action"}
      *                               for requests the browser page itself issued, {@code "setup"} for
      *                               {@code page.request}/{@code context.request} traffic; may be {@code null}.
-     * @param threadName         Name of the executing thread, for attributing background/async queries
-     *                               ({@code httpEndpoint == null}) to a subsystem without any request context.
      */
-    public void record(String normalizedSql, long parameterSignature, long executionTimeMs, int joinCount, Supplier<QueryCallSite> callSiteResolver, String httpMethod,
-            String httpEndpoint, String testName, String phase, String threadName) {
-
-        // --- Per-request statistics (feed both repeated-query detection and the endpoint timing) ---
+    public void record(String normalizedSql, long parameterSignature, Supplier<QueryCallSite> callSiteResolver, String httpMethod, String httpEndpoint, String testName,
+            String phase) {
         if (httpEndpoint != null) {
             TemplateKey key = new TemplateKey(normalizedSql, resolveCallSite(callSiteResolver));
-            TemplateStats stats = requestTemplates.get().computeIfAbsent(key, k -> new TemplateStats(joinCount));
+            TemplateStats stats = requestTemplates.get().computeIfAbsent(key, k -> new TemplateStats());
             stats.executions++;
-            stats.totalDurationMs += executionTimeMs;
             stats.parameterSignatures.merge(parameterSignature, 1, Integer::sum);
-        }
-
-        // --- Slow-query detection ---
-        if (executionTimeMs >= properties.getSlowQueryThresholdMs()) {
-            if (slowQueries.size() < properties.getMaxRecordedQueries()) {
-                slowQueries.add(new SlowQueryRecord(normalizedSql, executionTimeMs, joinCount, httpMethod, httpEndpoint, testName, phase, threadName, Instant.now()));
-                if (log.isDebugEnabled()) {
-                    log.debug("[SlowQuery] {}ms | {} {} | test='{}' | phase='{}' | thread='{}' | sql={}", executionTimeMs, httpMethod, httpEndpoint, testName, phase, threadName,
-                            abbreviate(normalizedSql));
-                }
-            }
-            else {
-                log.warn("[SlowQuery] Circuit-breaker: max {} entries reached, ignoring further slow queries", properties.getMaxRecordedQueries());
-            }
         }
     }
 
     /**
      * Discards the calling thread's per-request statistics. Called at the end of each HTTP
      * request (via a {@link jakarta.servlet.Filter}, on the same request-handling thread), after
-     * {@link #recordEndpointTiming}, so that nothing bleeds into whichever request this thread
-     * handles next -- also when {@link #recordEndpointTiming} was never reached.
+     * {@link #finishRequest}, so that nothing bleeds into whichever request this thread
+     * handles next -- also when {@link #finishRequest} was never reached.
      */
     public void resetRequestState() {
         requestTemplates.remove();
     }
 
     /**
-     * Turns the calling thread's accumulated per-request statistics into one
-     * {@link EndpointTimingRecord} and its {@link RepeatedQueryFinding}s, then clears them. Called
-     * once per HTTP request, on the same request-handling thread, after {@link #record} has been
-     * called for every query the request triggered.
+     * Turns the calling thread's accumulated per-request statistics into the request's
+     * {@link RepeatedQueryFinding}s, then clears them. Called once per HTTP request,
+     * on the same request-handling thread, after {@link #record} has been called for every query the request triggered.
      *
-     * @param httpMethod      HTTP verb of the request.
-     * @param httpEndpoint    route template of the request.
-     * @param testName        Playwright test name from the {@code X-Playwright-Test-Name} header; may be {@code null}.
-     * @param phase           Playwright phase from the {@code X-Playwright-Phase} header; may be {@code null}.
-     * @param totalDurationMs Wall-clock time for the whole request, measured by the caller.
+     * @param httpMethod   HTTP verb of the request.
+     * @param httpEndpoint route template of the request.
+     * @param testName     Playwright test name from the {@code X-Playwright-Test-Name} header; may be {@code null}.
+     * @param phase        Playwright phase from the {@code X-Playwright-Phase} header; may be {@code null}.
      */
-    public void recordEndpointTiming(String httpMethod, String httpEndpoint, String testName, String phase, long totalDurationMs) {
+    public void finishRequest(String httpMethod, String httpEndpoint, String testName, String phase) {
         Map<TemplateKey, TemplateStats> templates = requestTemplates.get();
         requestTemplates.remove();
         if (templates.isEmpty()) {
-            // No queries at all (e.g. a static asset request never reached a repository) -- not
-            // interesting enough to record a row for.
             return;
         }
-
-        // the timing breakdown stays per template, summed over the code that issued it
-        Map<String, QueryCountEntry> perTemplate = new LinkedHashMap<>();
-        long dbTimeMs = 0;
-        int queryCount = 0;
-        for (Map.Entry<TemplateKey, TemplateStats> e : templates.entrySet()) {
-            String sql = e.getKey().sql();
-            TemplateStats stats = e.getValue();
-            perTemplate.merge(sql, new QueryCountEntry(sql, stats.executions, stats.totalDurationMs, stats.joinCount),
-                    (a, b) -> new QueryCountEntry(sql, a.count() + b.count(), a.totalDurationMs() + b.totalDurationMs(), a.joinCount()));
-            dbTimeMs += stats.totalDurationMs;
-            queryCount += stats.executions;
-        }
         addRepeatedQueryFindings(templates, httpMethod, httpEndpoint, testName, phase);
-        List<QueryCountEntry> queries = new ArrayList<>(perTemplate.values());
-
-        if (endpointTimings.size() < properties.getMaxRecordedQueries()) {
-            endpointTimings.add(new EndpointTimingRecord(httpMethod, httpEndpoint, testName, phase, totalDurationMs, dbTimeMs, queryCount, queries, Instant.now()));
-        }
-        else {
-            log.warn("[EndpointTiming] Circuit-breaker: max {} entries reached, ignoring further endpoint timings", properties.getMaxRecordedQueries());
-        }
     }
 
     /**
@@ -199,14 +135,11 @@ public class SlowQueryCollector {
      * @return an immutable snapshot of all collected findings.
      */
     public SlowQueryReportDTO getReport(Map<String, List<TableIndex>> indexes) {
-        List<SlowQueryRecord> slowSnapshot = new ArrayList<>(slowQueries);
         List<RepeatedQueryFinding> repeatedSnapshot;
         synchronized (repeatedQueries) {
             repeatedSnapshot = new ArrayList<>(repeatedQueries.values());
         }
-        List<EndpointTimingRecord> endpointTimingSnapshot = new ArrayList<>(endpointTimings);
-        return new SlowQueryReportDTO(Instant.now(), properties.getSlowQueryThresholdMs(), slowSnapshot.size(), repeatedSnapshot.size(), slowSnapshot, repeatedSnapshot,
-                endpointTimingSnapshot, indexes, truncated);
+        return new SlowQueryReportDTO(Instant.now(), repeatedSnapshot.size(), repeatedSnapshot, indexes, truncated);
     }
 
     /**
@@ -218,11 +151,9 @@ public class SlowQueryCollector {
      * for other threads from here anyway.
      */
     public void reset() {
-        slowQueries.clear();
         synchronized (repeatedQueries) {
             repeatedQueries.clear();
         }
-        endpointTimings.clear();
         truncated = false;
         log.info("[SlowQuery] Collector reset");
     }
@@ -330,10 +261,6 @@ public class SlowQueryCollector {
         return Math.max(finding.executions() - 1, 0);
     }
 
-    private static String abbreviate(String s) {
-        return s != null && s.length() > 120 ? s.substring(0, 120) + "..." : s;
-    }
-
     /** What makes two repeated-query findings the same finding: the same repetition, of the same query, by the same code, in the same test. */
     private record FindingKey(RepeatedQueryFinding.Type type, String sql, String repositoryMethod, String callerMethod, String httpMethod, String httpEndpoint, String testName,
             String phase, List<QueryCallSite> callSites) {
@@ -346,17 +273,9 @@ public class SlowQueryCollector {
     /** Mutable per-request accumulator for one {@link TemplateKey}; only ever touched by the request's own thread. */
     private static final class TemplateStats {
 
-        private final int joinCount; // same template -> same join count every time
-
         private int executions;
-
-        private long totalDurationMs;
 
         /** parameter signature -> how many times exactly that statement ran. */
         private final Map<Long, Integer> parameterSignatures = new HashMap<>();
-
-        private TemplateStats(int joinCount) {
-            this.joinCount = joinCount;
-        }
     }
 }

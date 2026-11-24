@@ -376,27 +376,6 @@ def query_counts_label(q: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Slow queries (context only: timing in CI is too noisy to judge a PR by)
-# ---------------------------------------------------------------------------
-
-def compute_slow_query_groups(slow_queries: list) -> list:
-    """Groups raw slow-query captures by (endpoint, SQL template) -- the same query crossing the
-    threshold many times across a few tests is one row, not hundreds. The thread only tells
-    background queries apart; for a request it is whichever server thread happened to serve it."""
-    groups = {}
-    for q in slow_queries:
-        thread_name = None if q.get("httpEndpoint") else q.get("threadName")
-        key = (q.get("httpMethod"), q.get("httpEndpoint"), q.get("sql", ""), thread_name)
-        g = groups.setdefault(key, {"count": 0, "worst_ms": 0, "join_count": q.get("joinCount", 0), "occurrences": []})
-        g["count"] += 1
-        g["worst_ms"] = max(g["worst_ms"], q.get("executionTimeMs", 0))
-        g["occurrences"].append({"test": q.get("testName"), "phase": q.get("phase"), "ms": q.get("executionTimeMs", 0), "has_endpoint": bool(q.get("httpEndpoint"))})
-    items = list(groups.items())
-    items.sort(key=lambda kv: kv[1]["worst_ms"], reverse=True)
-    return items
-
-
-# ---------------------------------------------------------------------------
 # Baseline comparison
 # ---------------------------------------------------------------------------
 
@@ -668,7 +647,6 @@ td.sql-cell summary { cursor: pointer; }
 .badge-existing { background: rgba(107, 114, 128, .12); color: var(--muted); }
 .phase-action { background: rgba(22, 163, 74, .15); color: #16a34a; }
 .phase-setup { background: rgba(107, 114, 128, .15); color: var(--muted); }
-.phase-background { background: rgba(107, 114, 128, .08); color: var(--muted); font-style: italic; }
 table.nested-table { width: auto; min-width: 320px; margin: 6px 0 0; font-size: 12px; }
 table.nested-table th, table.nested-table td { padding: 4px 8px; }
 .static-badge { display: inline-block; margin-top: 4px; padding: 0; border: none; background: none; font: inherit; font-size: 12px; color: var(--sql-keyword); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
@@ -681,9 +659,6 @@ table.nested-table th, table.nested-table td { padding: 4px 8px; }
 .sql-string { color: var(--sql-string); }
 .sql-number { color: var(--sql-number); }
 .sql-placeholder { color: var(--sql-placeholder); font-weight: 600; }
-.group-row { cursor: pointer; }
-.expand-cell { width: 20px; text-align: center; color: var(--muted); }
-.detail-row td { background: var(--tile-bg); padding: 10px 10px 14px 30px; }
 .problem-controls { position: sticky; top: 0; z-index: 2; background: var(--bg); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
 .problem-controls .filter-box { margin: 0; flex: 1 1 240px; }
 .filter-chip { appearance: none; border: 1px solid var(--border); background: var(--tile-bg); color: var(--fg); border-radius: 999px; padding: 4px 11px; font: inherit; font-size: 12.5px; cursor: pointer; }
@@ -758,20 +733,15 @@ document.querySelectorAll('table.sortable').forEach(function (table) {
     });
 });
 
-// A filter hides non-matching rows; in a grouped table the group row decides for its detail row,
-// and matches on the detail row's text too (test names and phases are only listed there).
+// A filter hides the rows that do not match.
 document.querySelectorAll('.filter-box').forEach(function (input) {
     input.addEventListener('input', function () {
         var table = document.getElementById(input.dataset.target);
         if (!table) return;
         var query = input.value.toLowerCase();
         Array.prototype.forEach.call(table.tBodies[0].rows, function (row) {
-            if (row.classList.contains('detail-row')) return;
-            var detail = row.dataset.detailTarget ? document.getElementById(row.dataset.detailTarget) : null;
-            var text = row.textContent + (detail ? ' ' + detail.textContent : '');
-            var visible = text.toLowerCase().indexOf(query) !== -1;
+            var visible = row.textContent.toLowerCase().indexOf(query) !== -1;
             row.style.display = visible ? '' : 'none';
-            if (detail && !visible) detail.hidden = true;
         });
     });
 });
@@ -812,49 +782,6 @@ document.addEventListener('click', function (e) {
     });
     if (firstRow) firstRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
-
-// Grouped tables: a group row expands its detail row; sorting moves each detail row along with its
-// group row (the generic sort above would split them, since a detail row has one colspan cell).
-function setupGroupedTable(tableId, colIndex) {
-    var table = document.getElementById(tableId);
-    if (!table) return;
-    var tbody = table.tBodies[0];
-    table.querySelectorAll('.group-row').forEach(function (row) {
-        row.addEventListener('click', function (e) {
-            if (e.target.closest('details') || e.target.closest('table.sortable') || e.target.closest('.static-badge')) return;
-            var detail = document.getElementById(row.dataset.detailTarget);
-            var arrow = row.querySelector('.expand-arrow');
-            detail.hidden = !detail.hidden;
-            arrow.innerHTML = detail.hidden ? '&#9654;' : '&#9660;';
-        });
-    });
-    table.querySelectorAll('th[data-col]').forEach(function (th) {
-        th.addEventListener('click', function () {
-            var col = th.dataset.col;
-            var idx = colIndex[col];
-            var type = th.dataset.type;
-            var groupRows = Array.prototype.slice.call(tbody.querySelectorAll('.group-row'));
-            var asc = !(table.dataset.sortCol === col && table.dataset.sortDir === 'asc');
-            groupRows.sort(function (a, b) {
-                var x = a.cells[idx].dataset.sort !== undefined ? a.cells[idx].dataset.sort : a.cells[idx].textContent.trim();
-                var y = b.cells[idx].dataset.sort !== undefined ? b.cells[idx].dataset.sort : b.cells[idx].textContent.trim();
-                if (type === 'number') { x = parseFloat(x) || 0; y = parseFloat(y) || 0; }
-                else { x = x.toLowerCase(); y = y.toLowerCase(); }
-                if (x < y) return asc ? -1 : 1;
-                if (x > y) return asc ? 1 : -1;
-                return 0;
-            });
-            groupRows.forEach(function (row) {
-                tbody.appendChild(row);
-                tbody.appendChild(document.getElementById(row.dataset.detailTarget));
-            });
-            table.dataset.sortCol = col;
-            table.dataset.sortDir = asc ? 'asc' : 'desc';
-        });
-    });
-}
-
-setupGroupedTable('slow-queries-table', { endpoint: 1, occurrences: 3, joins: 4, duration: 5 });
 
 // Repeated queries: the search box and the chips filter cards and rows together. A chip that is
 // pressed includes its problems; "only new" narrows to new ones instead.
@@ -934,22 +861,13 @@ def html_sql_cell(sql: str) -> str:
     return f"<details><summary><code>{highlight_sql(trunc_plain(sql, 100))}</code></summary><pre>{highlight_sql(sql)}</pre></details>"
 
 
-def html_phase(phase: str, has_endpoint: bool = True) -> str:
+def html_phase(phase: str) -> str:
     """setup = test fixture traffic (page.request/context.request), action = what the browser page did."""
-    if not has_endpoint:
-        return '<span class="badge phase-background">background</span>'
     if phase == "action":
         return '<span class="badge phase-action">action</span>'
     if phase == "setup":
         return '<span class="badge phase-setup">setup</span>'
     return '<span class="muted">?</span>'
-
-
-def html_endpoint(method: str, endpoint: str, thread_name: str = None) -> str:
-    if not method and not endpoint:
-        label = f"(background: {thread_name})" if thread_name else "(background)"
-        return f'<span class="muted">{html.escape(label)}</span>'
-    return html.escape(f"{method or '?'} {endpoint or '?'}")
 
 
 def html_status(item: dict, has_baseline: bool) -> str:
@@ -1124,47 +1042,6 @@ def build_problems_html(problems: list, static_findings: list, has_baseline: boo
     return "\n".join(parts)
 
 
-def slow_query_occurrences_html(occurrences: list) -> str:
-    ranked = sorted(occurrences, key=lambda o: o["ms"], reverse=True)
-    shown = ranked[:MAX_OCCURRENCES_SHOWN]
-    rows = "".join(
-        "<tr>"
-        f'<td class="num" data-sort="{o["ms"]}">{o["ms"]} ms</td>'
-        f'<td data-sort="{1 if o.get("phase") == "action" else 0}">{html_phase(o.get("phase"), o.get("has_endpoint", True))}</td>'
-        f'<td>{html.escape(o["test"]) if o.get("test") else "<span class=muted>—</span>"}</td>'
-        "</tr>" for o in shown)
-    return ('<table class="nested-table sortable"><thead><tr><th data-type="number">Duration</th><th data-type="number">Phase</th><th data-type="string">Test</th></tr></thead>'
-            f'<tbody>{rows}</tbody></table>{capped_note(len(ranked) - len(shown), "occurrences")}')
-
-
-def build_slow_queries_table_html(slow_queries: list, threshold_ms) -> str:
-    if not slow_queries:
-        return f'<p class="ok">✅ No query slower than {threshold_ms} ms.</p>'
-    rows = []
-    for idx, ((method, endpoint, sql, thread_name), g) in enumerate(compute_slow_query_groups(slow_queries)):
-        detail_id = f"slow-query-detail-{idx}"
-        rows.append(
-            '<tr class="group-row" data-detail-target="' + detail_id + '">'
-            '<td class="expand-cell"><span class="expand-arrow">&#9654;</span></td>'
-            f"<td>{html_endpoint(method, endpoint, thread_name)}</td>"
-            f'<td class="sql-cell">{html_sql_cell(sql)}</td>'
-            f'<td class="num" data-sort="{g["count"]}">{g["count"]}×</td>'
-            f'<td class="num" data-sort="{g["join_count"]}">{g["join_count"]}</td>'
-            f'<td class="num" data-sort="{g["worst_ms"]}">{g["worst_ms"]} ms</td>'
-            "</tr>"
-            f'<tr class="detail-row" id="{detail_id}" hidden><td></td><td colspan="5">{slow_query_occurrences_html(g["occurrences"])}</td></tr>'
-        )
-    return (
-        '<input class="filter-box" type="search" placeholder="Filter by endpoint, test, phase, or SQL…" data-target="slow-queries-table">\n'
-        '<div class="table-scroll"><table class="grouped-table" id="slow-queries-table">\n<thead><tr><th></th>'
-        '<th data-type="string" data-col="endpoint">Endpoint</th><th>Query</th>'
-        '<th data-type="number" data-col="occurrences">Occurrences</th>'
-        '<th data-type="number" data-col="joins" title="Tables joined in this one query">Joins</th>'
-        '<th data-type="number" data-col="duration">Worst duration</th>'
-        f"</tr></thead>\n<tbody>{''.join(rows)}</tbody>\n</table></div>"
-    )
-
-
 def static_location(f: dict) -> str:
     location = (f.get("file") or "").replace("\\", "/").split("/src/main/java/")[-1]
     return f"{location}:{f['line']}" if f.get("line") else location
@@ -1229,9 +1106,6 @@ def build_new_findings_html(problems: list, static_findings: list) -> str:
 def build_html_report(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "", phase: str = "") -> str:
     has_baseline = baseline is not None
     title = report_title(phase)
-    threshold_ms = report.get("thresholdMs", "?")
-    slow_queries = report.get("slowQueries", [])
-    slow_count = len(compute_slow_query_groups(slow_queries))
     has_indexes = bool(report.get("indexes"))
     problems = build_problems(groups, report.get("indexes"))
     n_plus_one = sum(1 for p in problems if p["category"] == "n_plus_one")
@@ -1273,7 +1147,7 @@ more than once in one request, either with different parameters (<strong>N+1</st
 statement at a time (<strong>row-by-row insert</strong>). They are grouped by where the fix goes: the method that loops, the endpoint for data that several places
 load again, or the table for inserts. <strong>Static findings</strong> come from scanning the source code. A problem marked 🔍 is flagged by a static rule
 for the very same code. A query marked ⚠ <strong>not indexed</strong> has no index that starts with the columns it filters on, so once the
-table is large every repetition reads all of it; this comes from the database's indexes, not from timing. <strong>Slow queries</strong> are shown for context only: query timing in CI is too noisy to judge a change by.</p></details>
+table is large every repetition reads all of it; this comes from the database's indexes, not from timing.</p></details>
 <div class="stats">
 <div class="stat-tile"><span class="stat-value">{n_plus_one}</span><span class="stat-label">N+1</span><span class="stat-sub">a method queries once per item</span></div>
 <div class="stat-tile"><span class="stat-value">{duplicates}</span><span class="stat-label">Duplicate</span><span class="stat-sub">the same data loaded again</span></div>
@@ -1286,7 +1160,6 @@ table is large every repetition reads all of it; this comes from the database's 
 <div class="tabs" role="tablist">
 {new_tab}<button class="tab-btn{"" if has_baseline else " active"}" type="button" role="tab" aria-selected="{"false" if has_baseline else "true"}" aria-controls="panel-repeated-queries">🔁 Repeated Queries <span class="tab-count">{len(problems)}</span></button>
 <button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-static-findings">🔍 Static Findings <span class="tab-count">{len(static_findings)}</span></button>
-<button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-slow-queries">🐢 Slow Queries <span class="tab-count">{slow_count}</span></button>
 </div>
 
 {new_panel}<section class="tab-panel" id="panel-repeated-queries" role="tabpanel"{" hidden" if has_baseline else ""}>
@@ -1294,10 +1167,6 @@ table is large every repetition reads all of it; this comes from the database's 
 </section>
 <section class="tab-panel" id="panel-static-findings" role="tabpanel" hidden>
 {build_static_findings_table_html(static_findings, has_baseline)}
-</section>
-<section class="tab-panel" id="panel-slow-queries" role="tabpanel" hidden>
-<p class="muted">Queries slower than {html.escape(str(threshold_ms))} ms. Context only, not compared against develop.</p>
-{build_slow_queries_table_html(slow_queries, threshold_ms)}
 </section>
 </div>
 <script>{HTML_REPORT_JS}</script>

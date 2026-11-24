@@ -33,29 +33,31 @@ class AdminSlowQueryReportResourceTest {
         resource = new AdminSlowQueryReportResource(collector, indexCatalog);
     }
 
-    private void recordSlowQuery() {
-        collector.record("select 1", 1, 500, 0, () -> null, "GET", "/api/x", null, null, "tomcat-1");
+    private void recordRepeatedQuery() {
+        collector.record("select 1", 1, () -> null, "GET", "/api/x", null, null);
+        collector.record("select 1", 2, () -> null, "GET", "/api/x", null, null);
+        collector.finishRequest("GET", "/api/x", null, null);
     }
 
     @Test
     void theReportHoldsTheCollectedFindingsAndTheIndexesOfTheDatabase() {
-        recordSlowQuery();
+        recordRepeatedQuery();
 
         var response = resource.getReport();
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().slowQueryCount()).isEqualTo(1);
+        assertThat(response.getBody().repeatedQueryCount()).isEqualTo(1);
         assertThat(response.getBody().indexes()).containsKey("participation");
         collector.resetRequestState();
     }
 
     @Test
     void resetStartsANewCollectionWindow() {
-        recordSlowQuery();
+        recordRepeatedQuery();
 
         assertThat(resource.reset().getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        assertThat(resource.getReport().getBody().slowQueryCount()).isZero();
+        assertThat(resource.getReport().getBody().repeatedQueryCount()).isZero();
         collector.resetRequestState();
     }
 }

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,7 +35,7 @@ import net.ttddyy.dsproxy.proxy.ParameterSetOperation;
  * injected by the Playwright test fixture).</li>
  * <li>Computes a parameter signature (raw SQL + bound values), which tells an N+1 (same template,
  * different values) apart from a duplicate (same template, same values).</li>
- * <li>Delegates to {@link SlowQueryCollector#record} for threshold evaluation and storage.</li>
+ * <li>Delegates to {@link SlowQueryCollector#record} for storage.</li>
  * </ol>
  * <p>
  * Only active when the {@code e2e-performance} Spring profile is enabled.
@@ -72,14 +71,6 @@ public class SlowQueryListener implements QueryExecutionListener {
 
     private static final Pattern WHITESPACE_RUNS = Pattern.compile("\\s+");
 
-    /**
-     * Matches the SQL {@code join} keyword (any variant -- {@code inner}/{@code left}/{@code right}
-     * join all end in the literal word "join"), used to count how many tables a query touches. A
-     * purely structural signal, unlike duration: the same query joins the same number of tables
-     * regardless of how fast or slow the environment it runs in happens to be.
-     */
-    private static final Pattern JOIN_KEYWORD = Pattern.compile("\\bjoin\\b", Pattern.CASE_INSENSITIVE);
-
     private final SlowQueryCollector collector;
 
     public SlowQueryListener(SlowQueryCollector collector) {
@@ -97,12 +88,10 @@ public class SlowQueryListener implements QueryExecutionListener {
             return;
         }
 
-        long executionTimeMs = execInfo.getElapsedTime();
         QueryInfo queryInfo = queryInfoList.get(0);
         String rawSql = queryInfo.getQuery();
         String normalizedSql = normalizeSql(rawSql);
         long parameterSignature = parameterSignature(rawSql, queryInfo.getParametersList());
-        int joinCount = countJoins(rawSql);
 
         // Extract HTTP context — may be null for async/background queries
         String httpMethod = null;
@@ -133,8 +122,7 @@ public class SlowQueryListener implements QueryExecutionListener {
             // No request context bound (e.g. startup, scheduled tasks)
         }
 
-        collector.record(normalizedSql, parameterSignature, executionTimeMs, joinCount, QueryCallSite::resolve, httpMethod, httpEndpoint, testName, phase,
-                Thread.currentThread().getName());
+        collector.record(normalizedSql, parameterSignature, QueryCallSite::resolve, httpMethod, httpEndpoint, testName, phase);
     }
 
     /**
@@ -190,19 +178,6 @@ public class SlowQueryListener implements QueryExecutionListener {
         catch (IllegalArgumentException _) {
             return header;
         }
-    }
-
-    /** Counts SQL {@code join} keywords in the raw (un-normalised) query text. */
-    static int countJoins(String rawSql) {
-        if (rawSql == null) {
-            return 0;
-        }
-        Matcher matcher = JOIN_KEYWORD.matcher(rawSql);
-        int count = 0;
-        while (matcher.find()) {
-            count++;
-        }
-        return count;
     }
 
     /**

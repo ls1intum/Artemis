@@ -342,7 +342,7 @@ class HtmlTest(unittest.TestCase):
     def test_html_report_renders_every_section(self):
         groups = report.group_repeated_queries([repeated(), repeated(normalizedSql="insert into result (id) values (?)")])
         report.link_static_confirmations(groups, [LOOP_FINDING])
-        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z", "thresholdMs": 100, "slowQueries": []}, groups, [LOOP_FINDING], None)
+        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, [LOOP_FINDING], None)
         for fragment in ('class="problem problem-card cat-n_plus_one"', "Row-by-row inserts", 'id="static-findings-table"', 'data-finding-indices="0"', "static rule agrees"):
             self.assertIn(fragment, page)
 
@@ -353,7 +353,7 @@ class HtmlTest(unittest.TestCase):
         static_findings = [dict(OTHER_FINDING), dict(LOOP_FINDING)]
         report.link_static_confirmations(groups, static_findings)
         report.mark_new(groups, static_findings, baseline)
-        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z", "thresholdMs": 100, "slowQueries": []}, groups, static_findings, baseline, phase="phase1")
+        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, static_findings, baseline, phase="phase1")
         self.assertIn("<title>Query Report (Phase 1)</title>", page)
         self.assertIn('aria-selected="true" aria-controls="panel-new">🆕 New in this PR <span class="tab-count">2</span>', page)
         new_panel = page[page.index('id="panel-new"'):page.index('id="panel-repeated-queries"')]
@@ -365,7 +365,7 @@ class HtmlTest(unittest.TestCase):
     def test_without_a_baseline_there_is_no_new_tab(self):
         groups = report.group_repeated_queries([repeated()])
         report.link_static_confirmations(groups, [])
-        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z", "thresholdMs": 100, "slowQueries": []}, groups, [], None)
+        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, [], None)
         self.assertNotIn("panel-new", page)
         self.assertIn('aria-selected="true" aria-controls="panel-repeated-queries"', page)
 
@@ -373,7 +373,7 @@ class HtmlTest(unittest.TestCase):
         findings = [repeated(callerMethod=f"Service{i}.run", executions=50 - i) for i in range(report.TOP_PROBLEMS + 3)]
         groups = report.group_repeated_queries(findings)
         report.link_static_confirmations(groups, [])
-        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z", "thresholdMs": 100, "slowQueries": []}, groups, [], None)
+        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, [], None)
         self.assertEqual(page.count('<article class="problem '), report.TOP_PROBLEMS)
         self.assertEqual(page.count('<tr class="problem"'), 3)
 

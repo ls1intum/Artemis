@@ -34,7 +34,7 @@ class SlowQueryCollectorTest {
     }
 
     private void query(String sql, long signature, Supplier<QueryCallSite> site) {
-        collector.record(sql, signature, 1, 0, site, "GET", ENDPOINT, "CourseStats.spec", "action", "tomcat-1");
+        collector.record(sql, signature, site, "GET", ENDPOINT, "CourseStats.spec", "action");
     }
 
     private void query(String sql, long signature) {
@@ -42,7 +42,7 @@ class SlowQueryCollectorTest {
     }
 
     private List<RepeatedQueryFinding> finishRequest() {
-        collector.recordEndpointTiming("GET", ENDPOINT, "CourseStats.spec", "action", 10);
+        collector.finishRequest("GET", ENDPOINT, "CourseStats.spec", "action");
         collector.resetRequestState();
         return collector.getReport(Map.of()).repeatedQueries();
     }
@@ -178,7 +178,7 @@ class SlowQueryCollectorTest {
         for (long id = 1; id <= 3; id++) {
             query(SQL, id, countingSite);
         }
-        collector.record(SQL, 4, 1, 0, countingSite, null, null, null, null, "scheduling-1");
+        collector.record(SQL, 4, countingSite, null, null, null, null);
 
         finishRequest();
         assertThat(resolutions).hasValue(3);
@@ -200,21 +200,9 @@ class SlowQueryCollectorTest {
     }
 
     @Test
-    void endpointTimingSumsATemplateOverItsCallSites() {
-        query(SQL, 1);
-        query(SQL, 2, () -> new QueryCallSite("UserRepository.findByIdElseThrow", "ExamDeletionService.delete"));
-        finishRequest();
-
-        assertThat(collector.getReport(Map.of()).endpointTimings()).singleElement().satisfies(timing -> {
-            assertThat(timing.queryCount()).isEqualTo(2);
-            assertThat(timing.queries()).singleElement().satisfies(entry -> assertThat(entry.count()).isEqualTo(2));
-        });
-    }
-
-    @Test
     void backgroundQueriesWithoutRequestAreNotCountedAsRepeated() {
         for (long id = 1; id <= 3; id++) {
-            collector.record(SQL, id, 1, 0, () -> SITE, null, null, null, null, "scheduling-1");
+            collector.record(SQL, id, () -> SITE, null, null, null, null);
         }
 
         assertThat(collector.getReport(Map.of()).repeatedQueries()).isEmpty();
@@ -272,12 +260,11 @@ class SlowQueryCollectorTest {
             for (long id = 1; id <= request; id++) {
                 query(SQL, id);
             }
-            collector.recordEndpointTiming("GET", ENDPOINT, "CourseStats.spec", "action", 10);
+            collector.finishRequest("GET", ENDPOINT, "CourseStats.spec", "action");
             collector.resetRequestState();
         }
 
         assertThat(collector.getReport(Map.of()).repeatedQueries()).singleElement().satisfies(finding -> assertThat(finding.executions()).isEqualTo(4));
-        assertThat(collector.getReport(Map.of()).endpointTimings()).hasSize(3);
         assertThat(collector.getReport(Map.of()).truncated()).isFalse();
     }
 
@@ -292,11 +279,10 @@ class SlowQueryCollectorTest {
         assertThat(finishRequest()).hasSize(1);
         assertThat(collector.getReport(Map.of()).truncated()).isFalse();
 
-        // the endpoint timings are full, but they hold no findings: nothing is missing from the findings
+        // the same finding again uses no further room
         query(SQL, 3);
         query(SQL, 4);
         assertThat(finishRequest()).hasSize(1);
-        assertThat(collector.getReport(Map.of()).endpointTimings()).hasSize(1);
         assertThat(collector.getReport(Map.of()).truncated()).isFalse();
 
         // the one allowed finding is used up, so this other one is dropped
