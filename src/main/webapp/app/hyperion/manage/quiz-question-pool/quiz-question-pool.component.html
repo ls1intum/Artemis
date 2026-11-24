@@ -218,7 +218,8 @@
 
     @if (canReview()) {
         <jhi-quiz-question-pool-create-quiz-dialog
-            [(visible)]="createQuizDialogVisible"
+            [visible]="createQuizDialogVisible()"
+            (visibleChange)="setCreateQuizDialogVisible($event)"
             [competencies]="quizCompetencies()"
             [lectureUnits]="lectureUnits()"
             [candidates]="selectionCandidates()"

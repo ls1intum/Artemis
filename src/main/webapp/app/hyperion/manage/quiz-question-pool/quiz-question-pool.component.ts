@@ -226,6 +226,9 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
 
     private pollingSubscription?: Subscription;
 
+    /** The pending draw for a new quiz; closing the create-quiz dialog or changing the course cancels it. */
+    private createQuizSubscription?: Subscription;
+
     /** Advances whenever polling is requested; a final refresh stops polling only while no later request has been made. */
     private pollGeneration = 0;
 
@@ -380,6 +383,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         this.competencyOptions.set([]);
         this.settings.set(undefined);
         this.settingsDialogVisible.set(false);
+        this.cancelDraw();
         this.createQuizDialogVisible.set(false);
         this.selectionCandidates.set([]);
         this.selectedCompetencyId.set(undefined);
@@ -431,7 +435,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             return;
         }
         this.isCreatingQuiz.set(true);
-        this.poolService
+        this.createQuizSubscription = this.poolService
             .selectQuestions(courseId, request)
             .pipe(
                 finalize(() => this.isCreatingQuiz.set(false)),
@@ -456,6 +460,23 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                 },
                 error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.createQuiz.failed'),
             });
+    }
+
+    /**
+     * Shows or hides the create-quiz dialog; hiding it cancels a pending draw, so the quiz editor does not open afterwards.
+     *
+     * @param visible whether the dialog is shown
+     */
+    setCreateQuizDialogVisible(visible: boolean): void {
+        if (!visible) {
+            this.cancelDraw();
+        }
+        this.createQuizDialogVisible.set(visible);
+    }
+
+    private cancelDraw(): void {
+        this.createQuizSubscription?.unsubscribe();
+        this.createQuizSubscription = undefined;
     }
 
     /**

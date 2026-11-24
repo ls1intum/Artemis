@@ -20,7 +20,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizQuestionPoolComponent } from './quiz-question-pool.component';
 import { QuizQuestionPoolService } from './quiz-question-pool.service';
-import { PoolProgress, PoolQuestion, PoolQuestionPage, PoolQuestionQuery, PoolSettings } from './quiz-question-pool.types';
+import { PoolProgress, PoolQuestion, PoolQuestionPage, PoolQuestionQuery, PoolSelection, PoolSettings } from './quiz-question-pool.types';
 
 describe('QuizQuestionPoolComponent', () => {
     let fixture: ComponentFixture<QuizQuestionPoolComponent>;
@@ -176,6 +176,25 @@ describe('QuizQuestionPoolComponent', () => {
         expect(infoSpy).not.toHaveBeenCalled();
         expect(component.createQuizDialogVisible()).toBe(false);
         expect(component.isCreatingQuiz()).toBe(false);
+    });
+
+    it('should cancel a pending draw when the create-quiz dialog is closed', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
+        const response = new Subject<PoolSelection>();
+        vi.spyOn(poolService, 'selectQuestions').mockReturnValue(response);
+        const offerSpy = vi.spyOn(handoffService, 'offer');
+        component.setCreateQuizDialogVisible(true);
+
+        component.createQuiz({ competencyIds: [9], count: 2 });
+        expect(component.isCreatingQuiz()).toBe(true);
+        component.setCreateQuizDialogVisible(false);
+        response.next({ questions: questions().slice(0, 2), requested: 2, competencyIdsWithoutQuestions: [] });
+
+        expect(response.observed).toBe(false);
+        expect(offerSpy).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+        expect(component.isCreatingQuiz()).toBe(false);
+        expect(component.createQuizDialogVisible()).toBe(false);
     });
 
     it('should say so when the draw yields fewer questions than requested', () => {
@@ -673,6 +692,26 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.isRunning()).toBe(false);
         expect(progressSpy.mock.calls.filter((call) => call[0] === 1)).toHaveLength(pollsOfFirstCourse);
         expect(progressSpy).toHaveBeenCalledWith(2);
+    });
+
+    it('should drop a draw started during an earlier visit of the same course', () => {
+        const params = new Subject<Record<string, string>>();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: false }, params.asObservable());
+        const response = new Subject<PoolSelection>();
+        vi.spyOn(poolService, 'selectQuestions').mockReturnValue(response);
+        const offerSpy = vi.spyOn(handoffService, 'offer');
+        params.next({ courseId: '1' });
+        component.createQuiz({ competencyIds: [9], count: 2 });
+
+        params.next({ courseId: '2' });
+        params.next({ courseId: '1' });
+        response.next({ questions: questions().slice(0, 2), requested: 2, competencyIdsWithoutQuestions: [] });
+
+        expect(component.courseId()).toBe(1);
+        expect(response.observed).toBe(false);
+        expect(offerSpy).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+        expect(component.isCreatingQuiz()).toBe(false);
     });
 
     it('should ignore a late build start and a late settings save of a previous course', () => {
