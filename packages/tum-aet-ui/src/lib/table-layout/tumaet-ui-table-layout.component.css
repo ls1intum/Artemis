@@ -11,8 +11,10 @@
         max-height: max(14rem, 100dvh - var(--table-layout-offset, 12rem));
         overflow: hidden;
 
-        // No frame of its own: a table sits flat on the panel of its page, which already has the corners and the background. The toolbar, the
-        // column header and the footer keep their separating lines.
+        /*
+         * No frame of its own: a table sits flat on the panel of its page, which already has the corners and the background.
+         * The toolbar, the column header and the footer keep their separating lines.
+         */
         background-color: var(--tumaet-ui-content-background);
     }
 
