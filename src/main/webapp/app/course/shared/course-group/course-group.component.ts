@@ -29,7 +29,7 @@ import { CourseRoleMember } from 'app/course/shared/course-group/course-role-mem
 @Component({
     selector: 'jhi-course-group',
     templateUrl: './course-group.component.html',
-    styleUrls: ['./course-group.component.scss'],
+    styleUrls: ['./course-group.component.css'],
     imports: [
         UsersImportDialogComponent,
         TranslateDirective,

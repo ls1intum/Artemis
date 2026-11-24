@@ -50,7 +50,7 @@ function scrollParent(element: HTMLElement): HTMLElement | undefined {
 @Component({
     selector: 'tumaet-ui-table-layout',
     templateUrl: './tumaet-ui-table-layout.component.html',
-    styleUrl: './tumaet-ui-table-layout.component.scss',
+    styleUrl: './tumaet-ui-table-layout.component.css',
     imports: [TumAetUiEmptyStateComponent, TumAetUiProgressSpinnerComponent, TumAetUiTranslatePipe],
     host: {
         '[class.tumaet-ui-table-layout-fill]': 'fill()',

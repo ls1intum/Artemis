@@ -53,7 +53,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-text-editor',
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
-    styleUrls: ['./text-editor.component.scss'],
+    styleUrls: ['./text-editor.component.css'],
     // The page gives its panel no padding, so the editor adds it, unless the assessed submission panel fills the panel to its
     // edges; an exam summary has its own frame.
     host: {

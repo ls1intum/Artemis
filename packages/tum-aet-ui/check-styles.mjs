@@ -12,7 +12,7 @@ const packageDirectoryArgument = process.argv.indexOf('--package-dir');
 const packageDirectory = packageDirectoryArgument >= 0 ? resolve(process.argv[packageDirectoryArgument + 1]) : resolve(packageRoot, 'dist');
 const stylesheetPath = resolve(packageDirectory, 'styles.css');
 const manifestPath = resolve(packageDirectory, 'package.json');
-const runtimePaths = globSync(resolve(packageRoot, 'src/**/*.{html,scss,ts}')).filter((path) => !path.endsWith('.spec.ts') && !path.endsWith('.stories.ts'));
+const runtimePaths = globSync(resolve(packageRoot, 'src/**/*.{html,css,ts}')).filter((path) => !path.endsWith('.spec.ts') && !path.endsWith('.stories.ts'));
 const artifactRuntimePaths = globSync(resolve(packageDirectory, 'fesm2022/**/*.mjs'));
 const [css, manifestSource, cdkOverlayCss, ...sources] = await Promise.all([
     readFile(stylesheetPath, 'utf8'),
@@ -98,15 +98,13 @@ function isOneLayerBlock(styles) {
     }
     return false;
 }
-const componentStylePaths = runtimePaths.filter((path) => path.endsWith('.scss'));
+const componentStylePaths = runtimePaths.filter((path) => path.endsWith('.css'));
 for (const [index, path] of runtimePaths.entries()) {
     const source = runtimeSources[index];
     const name = path.slice(packageRoot.length + 1);
-    if (path.endsWith('.scss')) {
+    if (path.endsWith('.css')) {
         const styles = source
             .replace(/\/\*[\s\S]*?\*\//g, '')
-            .replace(/^\s*\/\/.*$/gm, '')
-            .replace(/^\s*@(use|forward)\b.*$/gm, '')
             .trim();
         if (styles && !isOneLayerBlock(styles)) {
             errors.push(`${name} has styles outside the cascade layer tumaet-ui`);
@@ -121,7 +119,7 @@ for (const [index, path] of runtimePaths.entries()) {
     // Angular scopes the keyframes of a component only at the top level of its stylesheet. Inside the layer they are
     // global names, so they need the prefix of the package.
     for (const match of source.matchAll(/@keyframes\s+([\w-]+)/g)) {
-        if (path.endsWith('.scss') && !match[1].startsWith('tumaet-')) {
+        if (path.endsWith('.css') && !match[1].startsWith('tumaet-')) {
             errors.push(`${name} declares the keyframes ${match[1]} without the tumaet- prefix`);
         }
     }

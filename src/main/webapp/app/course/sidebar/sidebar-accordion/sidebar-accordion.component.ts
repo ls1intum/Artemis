@@ -35,7 +35,7 @@ function isVariantGroupCard(item: SidebarCardElement): boolean {
 @Component({
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
-    styleUrls: ['./sidebar-accordion.component.scss'],
+    styleUrls: ['./sidebar-accordion.component.css'],
     imports: [FaIconComponent, NgClass, SidebarCardComponent, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
 })
 export class SidebarAccordionComponent implements OnInit, OnDestroy {

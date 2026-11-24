@@ -1,6 +1,6 @@
 {
     "name": "@tumaet/ui-angular",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "TUM AET UI: Angular components from the Applied Education Technologies research group at TUM",
     "keywords": [
         "angular",
@@ -33,7 +33,7 @@
         "lint": "eslint .",
         "lint:fix": "eslint --fix .",
         "pack:check": "pnpm run build:styles && ng build tum-aet-ui --configuration pack --no-progress && node check-styles.mjs --package-dir dist-pack && node pack.mjs",
-        "stylelint": "stylelint \"{src,.storybook}/**/*.{css,scss}\" \"{tailwind,tailwind-theme,themes}.css\"",
+        "stylelint": "stylelint \"{src,.storybook}/**/*.css\" \"{tailwind,tailwind-theme,themes}.css\"",
         "test": "ng test tum-aet-ui --no-watch --no-progress",
         "test:coverage": "ng test tum-aet-ui --no-watch --no-progress --coverage",
         "test:watch": "ng test tum-aet-ui",
@@ -106,7 +106,6 @@
         "publint": "catalog:",
         "react": "catalog:",
         "rxjs": "catalog:",
-        "sass": "catalog:",
         "semver": "catalog:",
         "storybook": "catalog:",
         "stylelint": "catalog:",

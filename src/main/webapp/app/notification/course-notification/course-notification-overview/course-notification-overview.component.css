@@ -1,0 +1,252 @@
+/*
+ * CSS animations for enter/leave (used with Angular's animate.enter/animate.leave)
+ * Wrapper for animation - similar pattern to alerts
+ */
+.notification-animation-wrapper {
+    margin: 0.5rem 0;
+}
+
+.notification-animation-wrapper:first-child {
+    margin-top: 1rem;
+}
+
+.notification-animation-wrapper:last-child {
+    margin-bottom: 0;
+}
+
+/* Notification item enter animation: fade in + height expand */
+.notification-item-entering {
+    max-height: 0;
+    overflow: hidden;
+    animation:
+        notification-height-in 0.2s ease-in-out forwards,
+        notification-fade-in 0.2s ease-in-out forwards;
+}
+
+@keyframes notification-height-in {
+    from {
+        max-height: 0;
+    }
+
+    to {
+        max-height: 200px;
+    }
+}
+
+@keyframes notification-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Notification item leave animation: fade out + height collapse */
+.notification-item-leaving {
+    max-height: 200px;
+    overflow: hidden;
+    animation:
+        notification-height-out 0.15s ease-in-out forwards,
+        notification-fade-out 0.15s ease-in-out forwards;
+}
+
+@keyframes notification-height-out {
+    to {
+        max-height: 0;
+    }
+}
+
+@keyframes notification-fade-out {
+    to {
+        opacity: 0;
+    }
+}
+
+.course-notification-overview {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.course-notification-overview-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0.25rem;
+    line-height: 1;
+    color: var(--navbar-dark-color);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.course-notification-overview-toggle:hover,
+.course-notification-overview-toggle:focus {
+    color: var(--link-color);
+    outline: none;
+}
+
+.course-notification-overview-bubble {
+    position: absolute;
+    top: -0.2rem;
+    right: -0.2rem;
+}
+
+.course-notification-overview-overlay {
+    position: absolute;
+    top: 1.9rem;
+    right: 0;
+    display: none;
+    background-color: var(--module-bg);
+    color: var(--tumaet-ui-text-color);
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: 0.3rem;
+    width: 29rem;
+    padding: 1.4rem;
+    box-shadow: var(--tumaet-ui-shadow-md);
+}
+
+.course-notification-overview-overlay.is-shown {
+    display: block;
+}
+
+.course-notification-overview-notification-container {
+    max-height: 30rem;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: visible;
+}
+
+.course-notification-overview-notification-container::-webkit-scrollbar {
+    background-color: transparent;
+}
+
+.course-notification-overview-notification-container::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+.course-notification-overview-notification-container::-webkit-scrollbar-thumb {
+    background-color: var(--tumaet-ui-border-color);
+    border-radius: 5rem;
+    border: 0.25rem solid transparent;
+    background-clip: content-box;
+}
+
+/* Bordered CSS triangle so the pointer stays visible in light and dark mode */
+.course-notification-overview-triangle {
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 9px solid var(--secondary);
+    position: absolute;
+    bottom: 100%;
+    right: 0.2rem;
+}
+
+.course-notification-overview-triangle::after {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 1px;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid var(--module-bg);
+}
+
+.course-notification-overview-overlay-headline {
+    font-weight: 700;
+    font-size: 1.1rem;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.course-notification-overview-category-wrap {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.course-notification-overview-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.course-notification-overview-mark-all-as-read {
+    margin-left: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 0 !important;
+    color: var(--link-color) !important;
+    text-decoration: underline;
+    font-weight: 400;
+}
+
+.course-notification-overview-mark-all-as-read:hover,
+.course-notification-overview-mark-all-as-read:focus {
+    color: var(--link-color) !important;
+    text-decoration: underline;
+}
+
+.course-notification-overview-category {
+    margin-right: 1rem;
+    border-bottom: 0.3rem solid var(--module-bg);
+    cursor: pointer;
+    position: relative;
+    transition: border-color ease-in-out 0.2s;
+}
+
+.course-notification-overview-category:hover,
+.course-notification-overview-category.is-selected {
+    border-color: var(--primary);
+}
+
+.course-notification-overview-category-wrap:hover .course-notification-overview-category.is-selected:not(:hover) {
+    border-color: var(--secondary);
+}
+
+/* Margins are now handled by .notification-animation-wrapper */
+.course-notification-overview-notification-wrap {
+    width: 100%;
+}
+
+.course-notification-overview-notification-empty-prompt {
+    padding: 3rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.course-notification-overview-notification-empty-prompt-icon {
+    font-size: 3rem;
+    color: var(--secondary);
+}
+
+.course-notification-overview-notification-loading {
+    padding: 3rem 0;
+    font-size: 3rem;
+    text-align: center;
+    color: var(--secondary);
+}
+
+.course-notification-overview-category-notice {
+    border-radius: 50%;
+    height: 0.5rem;
+    width: 0.5rem;
+    display: inline-block;
+    background-color: var(--primary);
+}
+
+.course-notification-overview-headline-button-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}

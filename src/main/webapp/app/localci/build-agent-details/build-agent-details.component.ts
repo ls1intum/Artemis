@@ -39,7 +39,6 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-build-agent-details',
     templateUrl: './build-agent-details.component.html',
-    styleUrl: './build-agent-details.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TumAetUiTableLayoutComponent,

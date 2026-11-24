@@ -38,7 +38,7 @@ export function prettifyActivityName(name: string): string {
 @Component({
     selector: 'jhi-iris-activity-feed',
     templateUrl: './iris-activity-feed.component.html',
-    styleUrl: './iris-activity-feed.component.scss',
+    styleUrl: './iris-activity-feed.component.css',
     imports: [FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

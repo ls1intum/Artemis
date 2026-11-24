@@ -13,7 +13,7 @@ import { AssessmentScoreTagsComponent } from 'app/assessment/manage/assessment-s
 @Component({
     selector: 'jhi-assessment-submission-panel',
     templateUrl: './assessment-submission-panel.component.html',
-    styleUrls: ['./assessment-submission-panel.component.scss'],
+    styleUrls: ['./assessment-submission-panel.component.css'],
     imports: [FaIconComponent, TranslateDirective, AssessmentScoreTagsComponent],
 })
 export class AssessmentSubmissionPanelComponent {

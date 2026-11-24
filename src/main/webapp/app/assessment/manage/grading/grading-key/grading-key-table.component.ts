@@ -22,7 +22,7 @@ import { ScoresStorageService } from 'app/course/manage/course-scores/scores-sto
 @Component({
     selector: 'jhi-grade-key-table',
     templateUrl: './grading-key-table.component.html',
-    styleUrls: ['../grading-key-overview/grading-key-overview.scss'],
+    styleUrls: ['../grading-key-overview/grading-key-overview.css'],
     imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent, TumAetUiTableDirective],
 })
 export class GradingKeyTableComponent implements OnInit {

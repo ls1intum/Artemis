@@ -1,0 +1,26 @@
+.frame {
+    height: 25rem;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    border-bottom-left-radius: 0.75rem;
+    border-bottom-right-radius: 0.75rem;
+}
+
+.frame .week-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    border-bottom-left-radius: 0.75rem;
+    border-bottom-right-radius: 0.75rem;
+    box-shadow: var(--tumaet-ui-shadow-md);
+}
+
+.frame .scroll-container {
+    height: 22rem;
+    overflow: auto;
+}
