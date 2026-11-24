@@ -509,6 +509,27 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.totalChanges()).toBe(0);
     });
 
+    it('keeps the conflict of an assignment when someone deletes the policy before another reload', () => {
+        const oneByOne = editor();
+        oneByOne.policies = oneByOne.policies?.map((file) => ({ ...file, assignedTests: ['de.example.SortingTest#first', 'de.example.SortingTest#second'] }));
+        service.getPolicies.mockReturnValue(of(oneByOne));
+        create(configured(), false);
+        comp['onPolicyChange'](withAssignment(comp.policies()[0], ['de.example.SortingTest#second'], []));
+        service.getPolicies.mockReturnValue(of(editor('c'.repeat(40))));
+        comp['reload'](true);
+        service.getPolicies.mockReturnValue(of({ ...editor('d'.repeat(40)), policies: [] }));
+
+        comp['reload'](true);
+
+        // The policy is kept as a new one, which assigns the whole class, so the removal still has to be decided before it is saved.
+        expect(comp.policies()).toHaveLength(1);
+        expect(comp.policies()[0].file).toBeUndefined();
+        expect(comp.policies()[0].tests).toEqual(['de.example.SortingTest']);
+        expect(comp.policies()[0].assignmentConflicts).toEqual([{ testClass: 'de.example.SortingTest', removedTestCases: ['de.example.SortingTest#first'] }]);
+        expect(comp.problems()).toContain('artemisApp.programmingExercise.security.advanced.problem.assignmentConflict');
+        expect(comp.banner()).toEqual({ kind: 'orphaned', files: 'SecurityPolicy.yaml' });
+    });
+
     it('shows the translated reason of a refused commit', () => {
         create(configured(), false);
         const translateService = TestBed.inject(TranslateService);

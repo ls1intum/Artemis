@@ -857,7 +857,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     /**
      * @param takenNames the names of the other policies; the new one gets a number if its name is taken, so it is saved to a file of its own
      * @param committedLanguageConfiguration the language configuration the committed policies use, which new policies follow
-     * @returns the policy as a new one with all of its current settings, assignments and rows as unsaved changes
+     * @returns the policy as a new one with all of its current settings, assignments, conflicts and rows as unsaved changes
      */
     private asNewPolicy(policy: EditorPolicy, takenNames: readonly string[], committedLanguageConfiguration: string | undefined): EditorPolicy {
         this.newPolicyCounter++;
@@ -881,6 +881,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
             baseExtraClasses: [],
             extraClasses: [...policy.extraClasses],
             ownLanguageConfiguration: chosen,
+            // A conflict stays until the instructor decides, also when the policy's file was deleted meanwhile, as the new policy assigns the whole class too.
+            assignmentConflicts: policy.assignmentConflicts ? deepClone(policy.assignmentConflicts) : undefined,
         };
     }
 
