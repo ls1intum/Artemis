@@ -108,7 +108,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s,
+        opacity 0.2s;
 }
 
 .nav-button:hover:not(:disabled) {

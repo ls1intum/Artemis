@@ -1,6 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { By } from '@angular/platform-browser';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { UserRegistrationModalComponent } from './user-registration-modal.component';
 import { UserForRegistration } from './user-for-registration.model';
@@ -76,6 +81,39 @@ describe('UserRegistrationModalComponent', () => {
             expect(component.selectedUsers()).toEqual([]);
             expect(component.isViewingSelected()).toBe(false);
         });
+
+        it('should cancel a pending search and clear loading on close()', () => {
+            vi.useFakeTimers();
+            try {
+                component.onSearch('alice');
+
+                component.close();
+                vi.advanceTimersByTime(300);
+
+                expect(component.hasSearched()).toBe(false);
+                expect(component.isLoading()).toBe(false);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+    });
+
+    describe('onVisibleChange (close button or backdrop)', () => {
+        it('should close like cancel, so the selection does not reappear on the next open', () => {
+            component.open();
+            component.selectedUsers.set([makeUser(1)]);
+
+            component.onVisibleChange(false);
+
+            expect(component.isOpen()).toBe(false);
+            expect(component.selectedUsers()).toEqual([]);
+        });
+
+        it('should open when the dialog becomes visible', () => {
+            component.onVisibleChange(true);
+
+            expect(component.isOpen()).toBe(true);
+        });
     });
 
     describe('onSearch', () => {
@@ -110,6 +148,58 @@ describe('UserRegistrationModalComponent', () => {
 
             expect(component.searchTerm()).toBe('alice');
             expect(component.hasSearched()).toBe(false);
+        });
+
+        it('should drop the previous results and show loading immediately while the debounce is pending', () => {
+            component.hasSearched.set(true);
+            component.searchResults.set([makeUser(1)]);
+            component.totalSearchResults.set(1);
+
+            component.onSearch('bob');
+
+            expect(component.searchResults()).toEqual([]);
+            expect(component.totalSearchResults()).toBe(0);
+            expect(component.isLoading()).toBe(true);
+            expect(component.isRegisterDisabled()).toBe(true);
+        });
+
+        it('should ignore a pending response for the previous term once the term changes', () => {
+            let resolvePrevious!: (v: any) => void;
+            mockSearchFn.mockReturnValueOnce(
+                new Observable((obs: any) => {
+                    resolvePrevious = (v) => {
+                        obs.next(v);
+                        obs.complete();
+                    };
+                }),
+            );
+            component.searchTerm.set('alice');
+            component.onTableLazyLoad(lazyEvent); // pending request for 'alice'
+
+            component.onSearch('bob');
+            resolvePrevious({ content: [makeUser(1)], totalElements: 1 });
+
+            expect(component.searchResults()).toEqual([]);
+            expect(component.isLoading()).toBe(true);
+        });
+
+        it('should ignore a pending response once the term is cleared', () => {
+            let resolvePrevious!: (v: any) => void;
+            mockSearchFn.mockReturnValueOnce(
+                new Observable((obs: any) => {
+                    resolvePrevious = (v) => {
+                        obs.next(v);
+                        obs.complete();
+                    };
+                }),
+            );
+            component.searchTerm.set('alice');
+            component.onTableLazyLoad(lazyEvent);
+
+            component.onSearch('');
+            resolvePrevious({ content: [makeUser(1)], totalElements: 1 });
+
+            expect(component.searchResults()).toEqual([]);
             expect(component.isLoading()).toBe(false);
         });
 
@@ -122,6 +212,24 @@ describe('UserRegistrationModalComponent', () => {
             expect(component.isLoading()).toBe(true);
         });
 
+        it('should ignore a lazy load from a table mounted while the debounce is pending and load once when it fires', () => {
+            mockSearchFn.mockReturnValue(of({ content: [makeUser(1)], totalElements: 1 }));
+            const reload = vi.fn();
+            vi.spyOn(component, 'tableViewRef').mockReturnValue({ reload } as any);
+            component.hasSearched.set(true);
+
+            component.onSearch('ali');
+            component.onTableLazyLoad(lazyEvent); // the table loads on init when it mounts during the debounce
+
+            expect(mockSearchFn).not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(300);
+            expect(reload).toHaveBeenCalledExactlyOnceWith({ page: 0 });
+            component.onTableLazyLoad(lazyEvent); // emitted by reload()
+
+            expect(mockSearchFn).toHaveBeenCalledExactlyOnceWith('ali', 0, 10);
+        });
+
         it('should debounce rapid calls and only trigger once for the last term', () => {
             component.onSearch('a');
             component.onSearch('al');
@@ -129,10 +237,10 @@ describe('UserRegistrationModalComponent', () => {
             component.onSearch('alice');
 
             vi.advanceTimersByTime(299);
-            expect(component.isLoading()).toBe(false);
+            expect(component.hasSearched()).toBe(false);
 
             vi.advanceTimersByTime(1);
-            expect(component.isLoading()).toBe(true);
+            expect(component.hasSearched()).toBe(true);
             expect(component.searchTerm()).toBe('alice');
         });
     });
@@ -293,6 +401,43 @@ describe('UserRegistrationModalComponent', () => {
             expect(mockAlertService.error).toHaveBeenCalledWith('userRegistrationModal.registerError');
             expect(component.isLoading()).toBe(false);
         });
+
+        describe('when the modal was dismissed and reopened before the registration finished', () => {
+            let finishRegistration: Subject<void>;
+
+            beforeEach(() => {
+                finishRegistration = new Subject<void>();
+                mockRegisterFn.mockReturnValue(finishRegistration);
+                component.isOpen.set(true);
+                component.selectedUsers.set([makeUser(1)]);
+                component.register();
+
+                component.onVisibleChange(false);
+                component.open();
+                component.selectedUsers.set([makeUser(2)]);
+            });
+
+            it('should notify the parent of the success but keep the new session open with its selection', () => {
+                const registeredSpy = vi.fn();
+                component.registered.subscribe(registeredSpy);
+
+                finishRegistration.next();
+                finishRegistration.complete();
+
+                expect(registeredSpy).toHaveBeenCalledOnce();
+                expect(component.isOpen()).toBe(true);
+                expect(component.selectedUsers()).toEqual([makeUser(2)]);
+            });
+
+            it('should report the failure but leave the loading state of the new session alone', () => {
+                component.isLoading.set(true);
+
+                finishRegistration.error(new Error('fail'));
+
+                expect(mockAlertService.error).toHaveBeenCalledWith('userRegistrationModal.registerError');
+                expect(component.isLoading()).toBe(true);
+            });
+        });
     });
 
     describe('computed: showTable', () => {
@@ -370,5 +515,67 @@ describe('UserRegistrationModalComponent', () => {
 
             expect(component.selectedInCurrentResults()).toEqual([makeUser(1), makeUser(2)]);
         });
+    });
+});
+
+describe('UserRegistrationModalComponent with its real dialog', () => {
+    let component: UserRegistrationModalComponent;
+    let fixture: ComponentFixture<UserRegistrationModalComponent>;
+    let mockRegisterFn: ReturnType<typeof vi.fn>;
+
+    const dialog = () => fixture.debugElement.query(By.directive(TumAetUiDialogComponent)).componentInstance as TumAetUiDialogComponent;
+
+    beforeEach(async () => {
+        mockRegisterFn = vi.fn();
+        await TestBed.configureTestingModule({
+            imports: [UserRegistrationModalComponent],
+            providers: [{ provide: AlertService, useValue: { error: vi.fn() } }, { provide: TranslateService, useClass: MockTranslateService }, provideArtemisTumAetUiTranslator()],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(UserRegistrationModalComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('titleKey', 'test.title');
+        fixture.componentRef.setInput('searchFn', vi.fn());
+        fixture.componentRef.setInput('registerFn', mockRegisterFn);
+        fixture.detectChanges();
+    });
+
+    it('should show the dialog while the modal is open', () => {
+        component.open();
+        fixture.detectChanges();
+
+        expect(dialog().visible()).toBe(true);
+    });
+
+    it('should reset the selection when the dialog itself is dismissed, as by the close button, the backdrop or Escape', () => {
+        component.open();
+        component.selectedUsers.set([{ id: 1, login: 'user1', name: 'User 1', isRegistered: false }]);
+        fixture.detectChanges();
+
+        dialog().visible.set(false);
+        fixture.detectChanges();
+
+        expect(component.isOpen()).toBe(false);
+        expect(component.selectedUsers()).toEqual([]);
+    });
+
+    it('should not let a registration started before the dismissal close the reopened dialog', () => {
+        const finishRegistration = new Subject<void>();
+        mockRegisterFn.mockReturnValue(finishRegistration);
+        component.open();
+        component.selectedUsers.set([{ id: 1, login: 'user1', name: 'User 1', isRegistered: false }]);
+        fixture.detectChanges();
+        component.register();
+
+        dialog().visible.set(false);
+        fixture.detectChanges();
+        component.open();
+        fixture.detectChanges();
+        finishRegistration.next();
+        finishRegistration.complete();
+        fixture.detectChanges();
+
+        expect(component.isOpen()).toBe(true);
+        expect(dialog().visible()).toBe(true);
     });
 });
