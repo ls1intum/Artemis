@@ -168,18 +168,18 @@
                                         <label [for]="'competency-' + message.id + '-' + competency.competencyId">
                                             {{ competency.competencyTitle }}
                                             @if (competency.alreadyMapped) {
-                                                <tumaet-ui-tag severity="info" size="sm" class="ms-2!">
+                                                <tumaet-ui-tag severity="info" size="sm" class="ms-2">
                                                     <span jhiTranslate="artemisApp.agent.chat.exerciseMapping.existing"></span>
                                                 </tumaet-ui-tag>
                                             }
                                             @if (competency.suggested && !competency.alreadyMapped) {
-                                                <tumaet-ui-tag severity="success" size="sm" class="ms-2!">
+                                                <tumaet-ui-tag severity="success" size="sm" class="ms-2">
                                                     <span jhiTranslate="artemisApp.agent.chat.exerciseMapping.aiSuggested"></span>
                                                 </tumaet-ui-tag>
                                             }
                                         </label>
                                         <tumaet-ui-select
-                                            class="inline-flex max-w-36 min-w-32"
+                                            class="inline-flex min-w-32"
                                             [(ngModel)]="competency.weight"
                                             [options]="weightOptions()"
                                             optionLabel="label"

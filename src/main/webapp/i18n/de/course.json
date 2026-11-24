@@ -613,6 +613,34 @@
                 },
                 "replayWizard": "Einrichtungsassistent wiederholen"
             },
+            "initialCommitAuthor": {
+                "label": "Autor des ersten Commits",
+                "hint": "Wähle, wer als Autor des ersten Commits angezeigt wird, den Artemis erstellt: im Template-, Lösungs- und Test-Repository von Programmieraufgaben, die du erstellst oder aus einer Datei importierst, und im Repository jeder Studentin und jedes Studenten, das Artemis ab jetzt erstellt. Bestehende Repositories behalten ihren Verlauf. Bei der ersten Option wird nichts umgeschrieben: Das Repository einer Studentin oder eines Studenten behält den Autor des ersten Commits des Template-Repositorys, der von der Person abweichen kann, die die Aufgabe erstellt hat.",
+                "creator": {
+                    "label": "Die Person, die die Aufgabe erstellt",
+                    "description": "Es wird nichts umgeschrieben. Repositories behalten den Autor, mit dem sie erstellt wurden."
+                },
+                "placeholder": {
+                    "label": "Der Artemis-Platzhalter",
+                    "description": "Der Name und die E-Mail-Adresse, die der Artemis-Server für Commits konfiguriert, die er selbst erstellt."
+                },
+                "custom": {
+                    "label": "Ein Name und eine E-Mail-Adresse deiner Wahl",
+                    "description": "Zum Beispiel ein Kurs-Team. Verwende eine Adresse, die du Studierenden gerne zeigst."
+                },
+                "name": {
+                    "label": "Name des Autors",
+                    "required": "Gib einen Namen ein.",
+                    "tooLong": "Verwende höchstens {{ max }} Zeichen.",
+                    "invalid": "Der Name darf weder < oder > noch Zeilenumbrüche enthalten."
+                },
+                "email": {
+                    "label": "E-Mail-Adresse des Autors",
+                    "required": "Gib eine E-Mail-Adresse ein.",
+                    "tooLong": "Verwende höchstens {{ max }} Zeichen.",
+                    "invalid": "Gib eine gültige E-Mail-Adresse ein."
+                }
+            },
             "studentWelcomeContext": {
                 "label": "Startseite für Studierende: Lernansatz",
                 "hint": "Optional: Beschreiben Sie, wie Studierende in diesem Kurs lernen sollen (bis zu 2.000 Zeichen). Der Text erscheint beim ersten Besuch der Startseite und wird für optionale KI-Begrüßungen verwendet.",

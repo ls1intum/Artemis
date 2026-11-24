@@ -38,7 +38,7 @@ class ParticipationSubmitTargetSelectionTest {
     private final TeamRepository teams = mock(TeamRepository.class);
 
     private final ParticipationService service = new ParticipationService(Optional.empty(), Optional.empty(), null, participations, null, null, null, teams, null, null, null, null,
-            null, Optional.empty());
+            null, Optional.empty(), null, null);
 
     private final TextExercise exercise = new TextExercise();
 
