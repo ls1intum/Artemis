@@ -3,7 +3,7 @@
         <p [jhiTranslate]="TRANSLATION_BASE + '.description'"></p>
     </div>
     @if (!exerciseDueDate() || currentDateTime().isBefore(exerciseDueDate())) {
-        <tumaet-ui-message class="mt-2 mb-4 block" severity="info">
+        <tumaet-ui-message class="mt-2 mb-4" severity="info">
             <span [jhiTranslate]="TRANSLATION_BASE + '.dueDate'"></span>
         </tumaet-ui-message>
     }
@@ -20,7 +20,7 @@
                 [attr.placeholder]="TRANSLATION_BASE + '.placeholder' | artemisTranslate"
             />
             @if (form.controls['name'].invalid && (form.controls['name'].dirty || form.controls['name'].touched)) {
-                <tumaet-ui-message class="mt-2 block" severity="error">
+                <tumaet-ui-message class="mt-2" severity="error">
                     @if (form.get('name')?.errors?.['required']) {
                         <div [jhiTranslate]="TRANSLATION_BASE + '.requiredValidationErrorName'"></div>
                     }
@@ -45,7 +45,7 @@
                 [attr.placeholder]="TRANSLATION_BASE + '.placeholder' | artemisTranslate"
             />
             @if (form.controls['description'].invalid && (form.controls['description'].dirty || form.controls['description'].touched)) {
-                <tumaet-ui-message class="mt-2 block" severity="error">
+                <tumaet-ui-message class="mt-2" severity="error">
                     @if (form.get('description')?.errors?.['required']) {
                         <div [jhiTranslate]="TRANSLATION_BASE + '.requiredValidationErrorDescription'"></div>
                     }

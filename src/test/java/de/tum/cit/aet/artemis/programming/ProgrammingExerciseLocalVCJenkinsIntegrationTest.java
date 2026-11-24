@@ -409,7 +409,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void copyRepository_testNotCreatedError() throws Exception {
-        doThrow(new IOException("Checkout got interrupted!")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString(), anyMap());
+        doThrow(new IOException("Checkout got interrupted!")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString(), anyMap(), any());
 
         programmingExerciseTestService.copyRepository_testNotCreatedError();
     }
@@ -418,7 +418,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void copyRepository_testRuntimeExceptionIsReportedLikeAnIOException() throws Exception {
         doThrow(new JGitInternalException("Simulated JGit runtime failure!")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString(),
-                anyMap());
+                anyMap(), any());
 
         programmingExerciseTestService.copyRepository_testNotCreatedError();
     }
@@ -440,7 +440,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     void copyRepository_withAHealthyExistingTarget_reusesItWithoutCopying() throws Exception {
         // The copy must not be attempted at all, which this stub would turn into a failed start if it were.
         doThrow(new IOException("the repository that is already there must not be copied over")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(),
-                anyString(), anyMap());
+                anyString(), anyMap(), any());
 
         programmingExerciseTestService.copyRepository_withAHealthyExistingTarget_reusesIt();
     }
@@ -448,7 +448,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void configureRepository_testBadRequestError() throws Exception {
-        doThrow(new IOException()).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString(), anyMap());
+        doThrow(new IOException()).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString(), anyMap(), any());
         programmingExerciseTestService.configureRepository_testBadRequestError();
     }
 

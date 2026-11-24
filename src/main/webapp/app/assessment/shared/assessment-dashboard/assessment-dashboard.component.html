@@ -116,7 +116,7 @@
         </div>
     }
     @if (isTestRun() && exam()?.numberOfCorrectionRoundsInExam && exam()!.numberOfCorrectionRoundsInExam! > 1) {
-        <tumaet-ui-message class="mt-6 block" severity="warn" jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint" />
+        <tumaet-ui-message class="mt-6" severity="warn" jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint" />
     }
     @if (course()) {
         <div class="space-y-6 pb-6">
@@ -140,7 +140,7 @@
                 />
             </div>
             <tumaet-ui-panel class="min-w-0 overflow-hidden">
-                <div tumAetUiPanelHeader class="flex w-full min-w-0 flex-wrap! items-center justify-between gap-6!">
+                <div tumAetUiPanelHeader class="flex w-full min-w-0 flex-wrap items-center justify-between gap-6">
                     <span class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></span>
                     @if (!isTestRun() && allExercises().length > 0) {
                         <div class="flex flex-wrap justify-end gap-x-12 gap-y-4">
@@ -204,7 +204,7 @@
                                         <span class="block whitespace-nowrap break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.dueDates"></span>
                                     </th>
                                 }
-                                <th class="w-10 min-w-10 text-right! xl:w-[8%] 2xl:w-[16%]">
+                                <th class="w-10 min-w-10 text-right xl:w-[8%] 2xl:w-[16%]">
                                     <span class="sr-only xl:not-sr-only" jhiTranslate="artemisApp.assessmentDashboard.actions"></span>
                                 </th>
                             </tr>
@@ -338,7 +338,7 @@
                 </tumaet-ui-table-layout>
             </tumaet-ui-panel>
             @if (course() && course().isAtLeastInstructor && tutorIssues().length > 0) {
-                <tumaet-ui-message severity="warn" class="block">
+                <tumaet-ui-message severity="warn">
                     <span class="flex flex-col gap-2">
                         <span class="flex items-center gap-2">
                             <fa-icon [icon]="faTriangleExclamation" class="shrink-0" />
@@ -383,7 +383,7 @@
             }
             @if (stats().tutorLeaderboardEntries?.length) {
                 <tumaet-ui-panel class="min-w-0 overflow-hidden">
-                    <div tumAetUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-6!">
+                    <div tumAetUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-6">
                         @if (!isExamMode()) {
                             <span class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.courseTitle"></span>
                         }
