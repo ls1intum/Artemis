@@ -218,13 +218,29 @@ class HyperionQuizQuestionFilterServiceTest {
 
         service.evaluate(course, 7L, question(), GROUNDING_BLOCK);
 
+        assertThat(sentUserMessage()).contains("PUT is idempotent.").contains("Question type: single-choice").contains("Required number of correct options: 1 of 4")
+                .contains("Which method is idempotent?").contains("- [correct] PUT").contains("  Explanation: Repeating PUT leaves the same state.")
+                .contains("- [wrong] POST\n- [wrong] PATCH").contains("Explanation of the question: PUT is idempotent.");
+    }
+
+    @Test
+    void evaluate_statesThatEveryOptionOfAnAllCorrectQuestionIsRequiredToBeCorrect() {
+        respondWith(verdict(Map.of()));
+        List<GeneratedQuizAnswerOptionDTO> options = List.of(new GeneratedQuizAnswerOptionDTO("PUT is idempotent", true, null, null),
+                new GeneratedQuizAnswerOptionDTO("DELETE is idempotent", true, null, null), new GeneratedQuizAnswerOptionDTO("GET is safe", true, null, null),
+                new GeneratedQuizAnswerOptionDTO("HEAD is safe", true, null, null));
+        GeneratedQuizQuestionDTO allCorrect = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.MULTIPLE_CHOICE, "Properties of HTTP methods",
+                "Which statements about HTTP methods are true?", options, null, "Apply the definitions of safe and idempotent methods.");
+
+        service.evaluate(course, 7L, allCorrect, GROUNDING_BLOCK);
+
+        assertThat(sentUserMessage()).contains("Question type: multiple-choice").contains("Required number of correct options: 4 of 4");
+    }
+
+    private String sentUserMessage() {
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel).call(prompt.capture());
-        String userMessage = prompt.getValue().getInstructions().stream().filter(message -> message instanceof UserMessage).map(message -> message.getText()).findFirst()
-                .orElseThrow();
-        assertThat(userMessage).contains("PUT is idempotent.").contains("Question type: single-choice").contains("Which method is idempotent?").contains("- [correct] PUT")
-                .contains("  Explanation: Repeating PUT leaves the same state.").contains("- [wrong] POST\n- [wrong] PATCH")
-                .contains("Explanation of the question: PUT is idempotent.");
+        return prompt.getValue().getInstructions().stream().filter(message -> message instanceof UserMessage).map(message -> message.getText()).findFirst().orElseThrow();
     }
 
     @Test
