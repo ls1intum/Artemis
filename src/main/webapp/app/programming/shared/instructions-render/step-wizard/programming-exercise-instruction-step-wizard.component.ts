@@ -24,7 +24,7 @@ interface StepWizardStep {
 @Component({
     selector: 'jhi-programming-exercise-instructions-step-wizard',
     templateUrl: './programming-exercise-instruction-step-wizard.component.html',
-    styleUrls: ['./programming-exercise-instruction-step-wizard.scss'],
+    styleUrls: ['./programming-exercise-instruction-step-wizard.css'],
     imports: [TranslateDirective, TumAetUiTooltipDirective, FaIconComponent],
 })
 export class ProgrammingExerciseInstructionStepWizardComponent {

@@ -26,7 +26,7 @@ enum MappingResult {
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
     providers: [DragAndDropQuestionUtil],
-    styleUrls: ['./drag-and-drop-question.component.scss', '../../../overview/participation/quiz-participation.scss'],
+    styleUrls: ['./drag-and-drop-question.component.css', '../../../overview/participation/quiz-participation.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         NgClass,

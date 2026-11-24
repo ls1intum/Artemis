@@ -143,7 +143,7 @@ node {
 }
 
 ext.tumAetUiRuntimeSources = fileTree("packages/tum-aet-ui/src") {
-    include "**/*.html", "**/*.scss", "**/*.ts"
+    include "**/*.html", "**/*.css", "**/*.ts"
     exclude "**/*.spec.ts", "**/*.stories.ts"
 }
 
@@ -254,6 +254,9 @@ ext["testcontainers-redis-module.version"] = testcontainers_redis_version
 // with the BOM on every Spring Boot bump and delete an override that the BOM has caught up with.
 ext["logback.version"] = logback_version
 ext["tomcat.version"] = tomcat_version
+// Hibernate: the Spring Boot 4.2.0 BOM manages 7.4.15.Final, this is a newer patch release. The override applies to hibernate-core, hibernate-envers and the
+// annotation processors, which all read hibernate.version. Compare with the BOM on every Spring Boot bump.
+ext["hibernate.version"] = hibernate_version
 
 // Pin the entire Jackson 2.x and 3.x families to releases outside every known jackson-databind vulnerable
 // range. Spring Boot / Spring AI manage older jackson BOMs as dependency-management constraints, which beat

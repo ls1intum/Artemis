@@ -20,7 +20,7 @@ let nextHandoffId = 0;
 @Component({
     selector: 'jhi-global-search-iris-handoff',
     templateUrl: './global-search-iris-handoff.component.html',
-    styleUrl: './global-search-iris-handoff.component.scss',
+    styleUrl: './global-search-iris-handoff.component.css',
     imports: [FaIconComponent, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { '(window:keydown)': 'onWindowKeydown($event)' },

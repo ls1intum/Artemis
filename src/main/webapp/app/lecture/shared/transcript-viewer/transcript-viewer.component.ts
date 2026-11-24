@@ -14,7 +14,7 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
     standalone: true,
     imports: [TumAetUiButtonDirective, TumAetUiInputDirective, CommonModule, FormsModule, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './transcript-viewer.component.html',
-    styleUrls: ['./transcript-viewer.component.scss'],
+    styleUrls: ['./transcript-viewer.component.css'],
 })
 export class TranscriptViewerComponent {
     /** Transcript segments to display */

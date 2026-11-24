@@ -2,7 +2,6 @@ import { globSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postcss from 'postcss';
-import { compile } from 'sass';
 import semver from 'semver';
 import ts from 'typescript';
 import { BindingType, parseTemplate, TmplAstRecursiveVisitor, tmplAstVisitAll } from '@angular/compiler';
@@ -27,7 +26,7 @@ const productionGradleProfile = readFileSync(resolve(repoRoot, 'gradle/profile_p
 const packageTailwind = readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/tailwind.css'), 'utf8');
 const packageTailwindTheme = readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/tailwind-theme.css'), 'utf8');
 const packageStyleBuilder = readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/build-styles.mjs'), 'utf8');
-const packageRuntimeFiles = globSync(['packages/tum-aet-ui/src/**/*.{html,scss,ts}'], { cwd: repoRoot })
+const packageRuntimeFiles = globSync(['packages/tum-aet-ui/src/**/*.{html,css,ts}'], { cwd: repoRoot })
     .filter((file) => !file.endsWith('.spec.ts') && !file.endsWith('.stories.ts'))
     .map((file) => ({ file, source: readFileSync(resolve(repoRoot, file), 'utf8') }));
 const packageRuntimeSources = packageRuntimeFiles.map(({ source }) => source).join('\n');
@@ -41,7 +40,7 @@ const artemisExternalTemplates = globSync('src/main/webapp/**/*.html', { cwd: re
     source: readFileSync(resolve(repoRoot, file), 'utf8'),
 }));
 const packageStyles = globSync(
-    ['packages/tum-aet-ui/src/**/*.{css,scss}', 'packages/tum-aet-ui/tailwind.css', 'packages/tum-aet-ui/tailwind-theme.css', 'packages/tum-aet-ui/themes.css'],
+    ['packages/tum-aet-ui/src/**/*.css', 'packages/tum-aet-ui/tailwind.css', 'packages/tum-aet-ui/tailwind-theme.css', 'packages/tum-aet-ui/themes.css'],
     {
         cwd: repoRoot,
     },
@@ -50,7 +49,7 @@ const packageStyles = globSync(
     .join('\n');
 const storybookTheme = readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/themes.css'), 'utf8');
 const hostTailwind = readFileSync(resolve(repoRoot, 'src/main/webapp/tailwind.css'), 'utf8');
-const hostGlobalStyles = globSync('src/main/webapp/content/scss/_*.scss', { cwd: repoRoot })
+const hostGlobalStyles = globSync('src/main/webapp/content/css/*.css', { cwd: repoRoot })
     .map((file) => readFileSync(resolve(repoRoot, file), 'utf8'))
     .join('\n');
 const workspace = parse(readFileSync(resolve(repoRoot, 'pnpm-workspace.yaml'), 'utf8'));
@@ -134,17 +133,16 @@ function contrastRatio(first, second) {
     return (lighter + 0.05) / (darker + 0.05);
 }
 
-function compiledThemeProperties(file) {
-    const css = compile(resolve(repoRoot, file), {
-        loadPaths: [repoRoot, resolve(repoRoot, 'node_modules')],
-        quietDeps: true,
-        silenceDeprecations: ['color-functions', 'global-builtin', 'if-function', 'import'],
-    }).css;
-    const properties = {};
-    postcss.parse(css).walkDecls(/^--(?:artemis-alert|module-bg|danger$|success$|warning$|info$)/, (declaration) => {
-        properties[declaration.prop] = declaration.value;
-    });
-    return properties;
+/** The tokens of an Artemis theme as the browser resolves them: light.css, for the dark theme overridden by dark.css. */
+function themeProperties(theme) {
+    const declared = {};
+    for (const file of theme === 'dark' ? ['light.css', 'dark.css'] : ['light.css']) {
+        postcss.parse(readFileSync(resolve(repoRoot, 'src/main/webapp/content/css/themes', file), 'utf8')).walkDecls(/^--/, (declaration) => {
+            declared[declaration.prop] = declaration.value;
+        });
+    }
+    const resolved = (value, depth = 0) => (depth > 20 ? value : value.replace(/var\((--[\w-]+)\)/g, (reference, name) => (name in declared ? resolved(declared[name], depth + 1) : reference)));
+    return Object.fromEntries(Object.entries(declared).map(([name, value]) => [name, resolved(value)]));
 }
 
 function dependencyCatalog(specifier) {
@@ -385,7 +383,7 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(styles.filter((style) => style === packageStylesheet)).toHaveLength(1);
         expect(styles).not.toContain(packageTheme);
         expect(hostTailwind).not.toContain(packageTheme);
-        expect(styles.indexOf(packageStylesheet)).toBeGreaterThan(styles.indexOf('src/main/webapp/content/scss/themes/theme-default.scss'));
+        expect(styles.indexOf(packageStylesheet)).toBeGreaterThan(styles.indexOf('src/main/webapp/content/css/application.css'));
         expect(styles.indexOf(packageStylesheet)).toBeGreaterThan(styles.indexOf('src/main/webapp/tailwind.css'));
     });
 
@@ -541,11 +539,8 @@ describe('@tumaet/ui-angular integration contract', () => {
         }
     });
 
-    it.each([
-        ['light', 'src/main/webapp/content/scss/themes/theme-default.scss'],
-        ['dark', 'src/main/webapp/content/scss/themes/theme-dark.scss'],
-    ])('keeps %s Artemis filled, alert, and tinted state colors readable', (theme, file) => {
-        const properties = compiledThemeProperties(file);
+    it.each(['light', 'dark'])('keeps %s Artemis filled, alert, and tinted state colors readable', (theme) => {
+        const properties = themeProperties(theme);
 
         if (theme === 'light') {
             for (const [state, contrast] of [

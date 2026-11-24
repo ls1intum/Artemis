@@ -34,7 +34,7 @@ const MIN_TRANSCRIPT_WIDTH = 250;
     standalone: true,
     imports: [TumAetUiButtonDirective, YouTubePlayer, TranscriptViewerComponent, ArtemisTranslatePipe, ResizableDirective],
     templateUrl: './youtube-player.component.html',
-    styleUrls: ['./youtube-player.component.scss'],
+    styleUrls: ['./youtube-player.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
     host: { class: 'youtube-player-host' },

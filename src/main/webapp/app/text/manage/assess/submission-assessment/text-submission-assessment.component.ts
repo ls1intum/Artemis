@@ -54,7 +54,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-text-submission-assessment',
     templateUrl: './text-submission-assessment.component.html',
-    styleUrls: ['./text-submission-assessment.component.scss'],
+    styleUrls: ['./text-submission-assessment.component.css'],
     imports: [
         AssessmentLayoutComponent,
         ResizeableContainerComponent,

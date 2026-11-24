@@ -29,7 +29,7 @@ const DIAGRAM_TYPES: readonly UMLDiagramType[] = [
 @Component({
     selector: 'jhi-apollon-diagram-create-form',
     templateUrl: './apollon-diagram-create-form.component.html',
-    styleUrls: ['./apollon-diagram-create-form.component.scss'],
+    styleUrls: ['./apollon-diagram-create-form.component.css'],
     providers: [ApollonDiagramService],
     imports: [FormsModule, TranslateDirective, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiSelectComponent],
 })

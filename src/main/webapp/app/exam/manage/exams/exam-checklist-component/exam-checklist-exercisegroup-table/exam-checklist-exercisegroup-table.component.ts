@@ -12,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-exam-checklist-exercisegroup-table',
     templateUrl: './exam-checklist-exercisegroup-table.component.html',
-    styleUrls: ['./exam-checklist-exercisegroup-table.component.scss'],
+    styleUrls: ['./exam-checklist-exercisegroup-table.component.css'],
     imports: [TranslateDirective, TumAetUiTableDirective, TumAetUiTooltipDirective, FaIconComponent, NoDataComponent, ArtemisTranslatePipe],
 })
 export class ExamChecklistExerciseGroupTableComponent {

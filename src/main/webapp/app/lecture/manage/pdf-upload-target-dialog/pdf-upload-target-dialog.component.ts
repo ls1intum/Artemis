@@ -41,7 +41,7 @@ export interface PdfUploadTarget {
         TumAetUiSelectComponent,
     ],
     templateUrl: './pdf-upload-target-dialog.component.html',
-    styleUrl: './pdf-upload-target-dialog.component.scss',
+    styleUrl: './pdf-upload-target-dialog.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PdfUploadTargetDialogComponent {

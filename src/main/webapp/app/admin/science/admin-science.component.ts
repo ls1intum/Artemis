@@ -50,7 +50,7 @@ const toCourseOption = (course: CourseForRoleAssignment): CourseOption => {
 @Component({
     selector: 'jhi-admin-science',
     templateUrl: './admin-science.component.html',
-    styleUrl: './admin-science.component.scss',
+    styleUrl: './admin-science.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,

@@ -25,7 +25,7 @@ import {
 @Component({
     selector: 'jhi-science-settings',
     templateUrl: 'science-settings.component.html',
-    styleUrls: ['../../user-settings.scss'],
+    styleUrls: ['../../user-settings.css'],
     providers: [TumAetUiConfirmationService],
     imports: [
         FormsModule,
