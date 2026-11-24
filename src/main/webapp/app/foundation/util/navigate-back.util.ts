@@ -4,6 +4,10 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 
+function teamIdOf(submission: Submission): number | undefined {
+    return (submission.participation as StudentParticipation).team?.id;
+}
+
 /**
  * Navigate from Assessment Editor to Dashboard:
  *   1. For Team Exercises: Navigate to Team Dashboard with all Submissions of the Team
@@ -27,9 +31,9 @@ export function assessmentNavigateBack(location: Location, router: Router, exerc
             if (exercise.exerciseGroup) {
                 const exam = exercise.exerciseGroup.exam!;
                 void router.navigateByUrl(`/course-management/${course?.id}/exams/${exam.id}/assessment-dashboard/${exercise.id}`);
-            } else if (exercise.teamMode && submission) {
-                const teamId = (submission.participation as StudentParticipation).team?.id;
-                void router.navigateByUrl(`/courses/${course?.id}/exercises/${exercise.id}/teams/${teamId}`);
+            } else if (exercise.teamMode && submission && teamIdOf(submission) !== undefined) {
+                // Without a loaded team the link would end in `/teams/undefined`, so the assessment dashboard is used then.
+                void router.navigateByUrl(`/courses/${course?.id}/exercises/${exercise.id}/teams/${teamIdOf(submission)}`);
             } else {
                 void router.navigateByUrl(`/course-management/${course?.id}/assessment-dashboard/${exercise.id}`);
             }
