@@ -76,6 +76,34 @@ grade-relevant and the data is deleted sooner, a year by default.
 course is pending, because a pending proceeding extends the retention period by law: a course on hold is never warned
 about, and never included in, the automatic deletion of old student data. Turn it off once the matter is settled.
 
+### Author of the First Commit
+
+Artemis creates the first commit of a repository itself, and **Author of the first commit** decides who is shown as
+its author, for example in the commit history of the repository:
+
+- **The user who creates the exercise** is the default and the behavior of every course that never changed this
+  setting. Nothing is rewritten: a repository keeps the author it was created with. A student repository keeps the
+  author of the first commit of the template repository. That author can differ from the creator of the exercise if
+  the course used another option when the exercise was created or imported.
+- **The Artemis placeholder** uses the name and email address that the server configures as `artemis.git.name` and
+  `artemis.git.email`, so no person appears as the author.
+- **A name and email address of your choice** uses an identity you enter, for example a course team. Students see this
+  address in the commit history, so use one that you are happy to show them. The name may have up to 100 characters and
+  the address up to 254. A name must not contain `<` or `>` or line breaks, and the address must be a valid email address.
+
+The setting applies to these repositories, after you saved it:
+
+- the template, solution and test repository of a programming exercise that you create from scratch or import from a
+  file. A file import carries no history, so its first commit is the import itself;
+- the repository of every student, for each repository that Artemis creates from then on. This includes the exercises
+  that existed before you chose, and exercises that were imported from another exercise. A student repository starts
+  with one commit that copies the template, and the setting decides its author.
+
+It does not change repositories that already exist, and it does not rewrite history. An exercise that you import from
+another exercise keeps the history of its source, so its template, solution and test repository keep the author of the
+first commit they were copied with. The auxiliary repositories keep their author as well. The setting is part of the
+form of an existing course. It is not shown while a course is created, so it starts with the default.
+
 ## Exercises and Grading
 
 <Image src={exercisesAndGrading} alt="Exercises and grading section, with the complaint settings" size={ImageSize.large} caption="Exercises and grading" />
