@@ -20,7 +20,7 @@ test.describe('Quiz Exercise Drop Location Spec', { tag: '@slow' }, () => {
             const nameField = await quizExerciseDragAndDropQuiz.openEditPopoverOfSelectedElement();
 
             // click() only succeeds on the element that receives the pointer, so a popover painted
-            // behind the dialog (#14701) fails here instead of passing a visibility check.
+            // behind the dialog fails here instead of passing a visibility check.
             await nameField.click();
             await expect(nameField).toBeFocused();
             await nameField.fill('ShapeFactory');

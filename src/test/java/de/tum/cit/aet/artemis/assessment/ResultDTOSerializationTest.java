@@ -50,8 +50,8 @@ class ResultDTOSerializationTest {
     }
 
     /**
-     * A modeling assessment box with a title but no description is stored as the title in {@code text} and an empty detail text. The empty
-     * string has to survive the {@code NON_EMPTY} DTO, or the client cannot tell it from a feedback that holds its description in {@code text}.
+     * A modeling assessment box with a title but no description has the title in {@code text} and an empty detail text, which the client tells
+     * apart from a feedback without a detail text.
      */
     @Test
     void shouldKeepAnEmptyDetailText() throws Exception {
