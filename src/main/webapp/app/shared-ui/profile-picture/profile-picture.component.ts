@@ -9,7 +9,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-profile-picture',
     templateUrl: './profile-picture.component.html',
-    styleUrls: ['./profile-picture.component.scss'],
+    styleUrls: ['./profile-picture.component.css'],
     imports: [NgOptimizedImage, RouterLink, CommonModule, FontAwesomeModule],
 })
 export class ProfilePictureComponent {

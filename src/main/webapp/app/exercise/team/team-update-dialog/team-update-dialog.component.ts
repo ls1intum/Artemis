@@ -30,7 +30,7 @@ export type StudentTeamConflict = { studentLogin: string; teamId: string };
 @Component({
     selector: 'jhi-team-update-dialog',
     templateUrl: './team-update-dialog.component.html',
-    styleUrls: ['./team-update-dialog.component.scss'],
+    styleUrls: ['./team-update-dialog.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         ArtemisTranslatePipe,

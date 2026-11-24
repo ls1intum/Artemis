@@ -25,7 +25,7 @@ import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
         LoadingIndicatorOverlayComponent,
     ],
     templateUrl: './tutorial-registrations-register-modal.component.html',
-    styleUrl: './tutorial-registrations-register-modal.component.scss',
+    styleUrl: './tutorial-registrations-register-modal.component.css',
 })
 export class TutorialRegistrationsRegisterModalComponent {
     private translateService = inject(TranslateService);

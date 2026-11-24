@@ -56,7 +56,7 @@ interface AssessmentSave {
 @Component({
     selector: 'jhi-example-modeling-submission',
     templateUrl: './example-modeling-submission.component.html',
-    styleUrls: ['./example-modeling-submission.component.scss'],
+    styleUrls: ['./example-modeling-submission.component.css'],
     imports: [
         TranslateDirective,
         FormsModule,

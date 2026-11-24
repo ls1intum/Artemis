@@ -64,7 +64,7 @@ import { QuizParticipationBase } from './quiz-participation.base';
     selector: 'jhi-quiz',
     templateUrl: './quiz-participation.component.html',
     providers: [ArtemisDurationFromSecondsPipe],
-    styleUrls: ['./quiz-participation.component.scss'],
+    styleUrls: ['./quiz-participation.component.css'],
     imports: [
         NgClass,
         NgTemplateOutlet,

@@ -10,7 +10,7 @@ import { ResizableDirective, ResizableSizeEvent } from 'app/shared-ui/directives
 @Component({
     selector: 'jhi-modeling-explanation-surface',
     templateUrl: './modeling-explanation-surface.component.html',
-    styleUrls: ['./modeling-explanation-surface.component.scss'],
+    styleUrls: ['./modeling-explanation-surface.component.css'],
     imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, ResizableDirective],
 })
 export class ModelingExplanationSurfaceComponent {

@@ -1,0 +1,203 @@
+/*
+ * Shared styles for onboarding wizard page components
+ * These must be imported by each page component because Angular's
+ * view encapsulation prevents the parent's styles from reaching
+ * child component templates.
+ */
+
+/* ── Step page hero headers ──────────────────────────── */
+.step-hero {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--step-hero-bg-start, color-mix(in srgb, var(--primary) 4%, transparent));
+}
+
+.step-hero .step-hero-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: var(--white);
+    background: var(--step-hero-color, var(--primary));
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--black) 12%, transparent);
+}
+
+.step-hero .step-hero-action {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--body-bg);
+    color: var(--body-color);
+    font-weight: 500;
+    font-size: 0.8rem;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.step-hero .step-hero-action:hover {
+    background: var(--overview-card-hover-bg);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--black) 6%, transparent);
+}
+
+.step-hero .step-hero-text h4 {
+    margin: 0 0 0.15rem;
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.step-hero .step-hero-text p {
+    margin: 0;
+    color: var(--text-body-secondary);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* Step-specific hero colors */
+.step-hero--general {
+    --step-hero-color: var(--indigo);
+    --step-hero-bg-start: color-mix(in srgb, var(--step-hero-color) 6%, transparent);
+}
+
+.step-hero--enrollment {
+    --step-hero-color: var(--info);
+    --step-hero-bg-start: color-mix(in srgb, var(--step-hero-color) 6%, transparent);
+}
+
+.step-hero--communication {
+    --step-hero-color: var(--purple);
+    --step-hero-bg-start: color-mix(in srgb, var(--step-hero-color) 6%, transparent);
+}
+
+.step-hero--assessment {
+    --step-hero-color: var(--warning);
+    --step-hero-bg-start: color-mix(in srgb, var(--step-hero-color) 6%, transparent);
+}
+
+.step-hero--explore {
+    --step-hero-color: var(--teal);
+    --step-hero-bg-start: color-mix(in srgb, var(--step-hero-color) 6%, transparent);
+}
+
+/*
+ * ── Indented settings below a toggle ──────────────────
+ * The date pickers inside need at least 15rem. On a phone the nested indents would push them past the clipping edge of
+ * the wizard card and hide the clear and calendar buttons, so the indent only applies from the sm breakpoint up.
+ */
+.step-indent {
+    margin-inline-start: 1.5rem;
+}
+
+/* ── Step page form body ─────────────────────────────── */
+.step-body {
+    padding: 1.5rem 2rem 2rem;
+
+    /* Override markdown editor CSS variables so they cascade into child components */
+    --md-editor-background: var(--onboarding-input-bg, var(--white));
+    --md-tab-list-bg: var(--onboarding-input-bg, var(--white));
+}
+
+.step-body ::ng-deep .markdown-preview,
+.step-body ::ng-deep .background-editor-high {
+    background-color: var(--onboarding-input-bg, var(--white));
+}
+
+/* ── Feature toggle buttons (green/red with icons) ──── */
+.feature-toggle {
+    display: inline-flex;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.feature-toggle .toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 1.1rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    border: none;
+    background: var(--overview-card-nested-bg, var(--body-bg));
+    color: var(--text-body-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.feature-toggle .toggle-btn:first-child {
+    border-right: 1px solid var(--border-color);
+}
+
+.feature-toggle .toggle-btn.active-enabled {
+    background: var(--success);
+    color: var(--white);
+    border-color: var(--success);
+}
+
+.feature-toggle .toggle-btn.active-disabled {
+    background: var(--danger);
+    color: var(--white);
+    border-color: var(--danger);
+}
+
+/* ── Color preview button reset ────────────────────── */
+.color-preview {
+    border: none;
+    padding: 0;
+    background: none;
+    appearance: none;
+}
+
+/* ── Learn more link ────────────────────────────────── */
+.iris-learn-more {
+    font-size: 0.8rem;
+    font-weight: 400;
+    cursor: pointer;
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.iris-learn-more:hover {
+    text-decoration: underline;
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 768px) {
+    .step-hero {
+        flex-direction: column;
+        text-align: center;
+        padding: 0.75rem 1rem;
+        gap: 0.75rem;
+    }
+
+    .step-hero .step-hero-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+
+    .step-body {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .step-indent {
+        margin-inline-start: 0;
+    }
+
+    .step-body {
+        padding: 0.75rem;
+    }
+}

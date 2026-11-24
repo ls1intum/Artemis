@@ -12,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-score-display',
     templateUrl: './score-display.component.html',
-    styleUrls: ['./score-display.component.scss'],
+    styleUrls: ['./score-display.component.css'],
     imports: [TumAetUiTooltipDirective, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ScoreDisplayComponent {

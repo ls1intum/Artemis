@@ -1,0 +1,91 @@
+/*
+ * CSS-only Fireworks Animation
+ * Adapted from Heather Allen at https://codepen.io/hmaw/pen/qBEMLxV
+ */
+
+/* The particles start as one white dot; the `bang` keyframes disperse them to fixed positions with one hue each. */
+.pyro > .before,
+.pyro > .after {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    box-shadow:
+        0 0 white,
+        0 0 white,
+        0 0 white,
+        0 0 white,
+        0 0 white,
+        0 0 white,
+        0 0 white,
+        0 0 white,
+        0 0 white,
+        0 0 white,
+        0 0 white;
+    z-index: 1000;
+    animation:
+        1s bang ease-out infinite backwards,
+        1s gravity ease-in infinite backwards,
+        5s position linear infinite backwards;
+}
+
+.pyro > .after {
+    animation-delay: 1.25s, 1.25s, 1.25s;
+    animation-duration: 1.25s, 1.25s, 6.25s;
+}
+
+@keyframes bang {
+    to {
+        box-shadow:
+            -212px -362.6667px oklch(70% 0.25 20deg),
+            -39px -194.6667px oklch(70% 0.25 157deg),
+            134px -332.6667px oklch(70% 0.25 294deg),
+            -193px -276.6667px oklch(70% 0.25 71deg),
+            -20px -26.6667px oklch(70% 0.25 208deg),
+            153px -82.6667px oklch(70% 0.25 345deg),
+            -174px 55.3333px oklch(70% 0.25 122deg),
+            -1px -112.6667px oklch(70% 0.25 259deg),
+            172px -86.6667px oklch(70% 0.25 36deg),
+            -155px -366.6667px oklch(70% 0.25 173deg),
+            18px 47.3333px oklch(70% 0.25 310deg);
+    }
+}
+
+@keyframes gravity {
+    to {
+        transform: translateY(200px);
+        opacity: 0;
+    }
+}
+
+@keyframes position {
+    0%,
+    19.9% {
+        margin-top: 10%;
+        margin-left: 40%;
+    }
+
+    20%,
+    39.9% {
+        margin-top: 40%;
+        margin-left: 30%;
+    }
+
+    40%,
+    59.9% {
+        margin-top: 20%;
+        margin-left: 70%;
+    }
+
+    60%,
+    79.9% {
+        margin-top: 30%;
+        margin-left: 20%;
+    }
+
+    80%,
+    99.9% {
+        margin-top: 30%;
+        margin-left: 80%;
+    }
+}

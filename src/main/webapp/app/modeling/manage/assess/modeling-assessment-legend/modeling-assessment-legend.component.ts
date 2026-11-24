@@ -15,7 +15,7 @@ export interface ModelingAssessmentLegendHighlight {
 @Component({
     selector: 'jhi-modeling-assessment-legend',
     templateUrl: './modeling-assessment-legend.component.html',
-    styleUrls: ['./modeling-assessment-legend.component.scss'],
+    styleUrls: ['./modeling-assessment-legend.component.css'],
     imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiTooltipDirective],
     host: { class: 'assessment-legend apollon-glass' },
 })

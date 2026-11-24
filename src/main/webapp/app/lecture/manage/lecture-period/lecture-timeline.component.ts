@@ -8,7 +8,7 @@ import { Dayjs } from 'dayjs/esm';
 @Component({
     selector: 'jhi-lecture-timeline',
     templateUrl: './lecture-timeline.component.html',
-    styleUrl: './lecture-timeline.component.scss',
+    styleUrl: './lecture-timeline.component.css',
     imports: [TranslateDirective, ArtemisTranslatePipe, TumAetUiDatePickerComponent, TumAetUiMessageComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

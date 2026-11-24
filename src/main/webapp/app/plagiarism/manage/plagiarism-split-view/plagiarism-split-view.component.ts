@@ -21,7 +21,7 @@ const MIN_PANE_SIZE = 10;
 
 @Component({
     selector: 'jhi-plagiarism-split-view',
-    styleUrls: ['./plagiarism-split-view.component.scss'],
+    styleUrls: ['./plagiarism-split-view.component.css'],
     templateUrl: './plagiarism-split-view.component.html',
     imports: [TumAetUiSplitterComponent, TextSubmissionViewerComponent, FaIconComponent, TumAetUiButtonDirective, TumAetUiTooltipDirective, ArtemisTranslatePipe],
 })

@@ -57,7 +57,7 @@ interface OutcomeCheckLine {
 @Component({
     selector: 'jhi-hyperion-run-outcome',
     templateUrl: './hyperion-run-outcome.component.html',
-    styleUrl: './hyperion-run-outcome.component.scss',
+    styleUrl: './hyperion-run-outcome.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisTranslatePipe, TranslateDirective, TumAetUiMessageComponent, TumAetUiPanelComponent, HyperionStatusComponent],
 })

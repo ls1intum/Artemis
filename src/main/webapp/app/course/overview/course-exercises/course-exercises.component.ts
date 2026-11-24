@@ -77,7 +77,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 @Component({
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
-    styleUrls: ['../course-overview/course-overview.scss'],
+    styleUrls: ['../course-overview/course-overview.css'],
     imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective, ArtemisTranslatePipe, TumAetUiEmptyStateComponent],
 })
 export class CourseExercisesComponent implements SidebarView {

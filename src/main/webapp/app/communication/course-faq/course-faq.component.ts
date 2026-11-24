@@ -24,7 +24,7 @@ import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComp
 @Component({
     selector: 'jhi-course-faq',
     templateUrl: './course-faq.component.html',
-    styleUrl: '../../course/overview/course-overview/course-overview.scss',
+    styleUrl: '../../course/overview/course-overview/course-overview.css',
     encapsulation: ViewEncapsulation.None,
     imports: [
         CourseTitleBarActionsDirective,

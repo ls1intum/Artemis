@@ -13,7 +13,7 @@ export interface ColoredDifficultyLevel {
 @Component({
     selector: 'jhi-difficulty-level',
     templateUrl: './difficulty-level.component.html',
-    styleUrls: ['./difficulty-level.component.scss'],
+    styleUrls: ['./difficulty-level.component.css'],
     imports: [TumAetUiTooltipDirective, CommonModule],
 })
 export class DifficultyLevelComponent implements OnInit, OnDestroy {
