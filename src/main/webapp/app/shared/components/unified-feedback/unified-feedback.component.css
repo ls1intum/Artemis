@@ -140,10 +140,10 @@
     justify-content: space-between;
     gap: 0.5rem;
     margin-bottom: 0.75rem;
-
-    /* Editable mode's title is a growing textarea (can wrap to multiple lines), so its row must top-align
-     instead of vertically centering the points input/toolbar against it. Read-only mode keeps centering. */
 }
+
+/* Editable mode's title is a growing textarea (can wrap to multiple lines), so its row must top-align
+   instead of vertically centering the points input/toolbar against it. Read-only mode keeps centering. */
 
 .unified-feedback-header:has(.unified-feedback-title-input) {
     align-items: flex-start;
@@ -269,10 +269,10 @@
     white-space: nowrap;
     border-radius: 999px;
     padding: 0.15rem 0.6rem;
-
-    /* Color and background follow the sign of the points value directly, not the surrounding card state color.
-     Reuses the same tinted alert tokens the card states draw from, so both stay visually consistent. */
 }
+
+/* Color and background follow the sign of the points value directly, not the surrounding card state color.
+   Reuses the same tinted alert tokens the card states draw from, so both stay visually consistent. */
 
 .unified-feedback-points--positive {
     color: var(--artemis-alert-success-color);
@@ -322,9 +322,7 @@
     background: var(--card-bg);
 }
 
-.unified-feedback-title-input {
-    /* The same solid ring on every page and theme, in the text colour: black on a light theme, and still visible on a dark one */
-}
+/* The same solid ring on every page and theme, in the text colour: black on a light theme, and still visible on a dark one */
 
 .unified-feedback-title-input:focus-visible {
     outline: 2px solid var(--body-color);
@@ -388,9 +386,7 @@
     background: var(--card-bg);
 }
 
-.unified-feedback-detail-input {
-    /* The same solid ring on every page and theme, in the text colour: black on a light theme, and still visible on a dark one */
-}
+/* The same solid ring on every page and theme, in the text colour: black on a light theme, and still visible on a dark one */
 
 .unified-feedback-detail-input:focus-visible {
     outline: 2px solid var(--body-color);
