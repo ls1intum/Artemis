@@ -67,8 +67,12 @@ public class SlowQueryCollector {
      */
     private final ThreadLocal<Map<TemplateKey, TemplateStats>> requestTemplates = ThreadLocal.withInitial(HashMap::new);
 
-    /** Repeated-query findings of all requests, see {@link #addRepeatedQueryFindings}; capped like {@link #slowQueries}. */
-    private final CopyOnWriteArrayList<RepeatedQueryFinding> repeatedQueries = new CopyOnWriteArrayList<>();
+    /**
+     * Repeated-query findings, see {@link #addRepeatedQueryFindings}: one per {@link FindingKey}, the request that
+     * could have saved the most executions. Requests of the same test repeating the same finding therefore use no
+     * further room, and the cap counts distinct findings. Guarded by its own monitor.
+     */
+    private final Map<FindingKey, RepeatedQueryFinding> repeatedQueries = new LinkedHashMap<>();
 
     /** One entry per completed HTTP request, capped like {@link #slowQueries}. */
     private final CopyOnWriteArrayList<EndpointTimingRecord> endpointTimings = new CopyOnWriteArrayList<>();
@@ -196,7 +200,10 @@ public class SlowQueryCollector {
      */
     public SlowQueryReportDTO getReport(Map<String, List<TableIndex>> indexes) {
         List<SlowQueryRecord> slowSnapshot = new ArrayList<>(slowQueries);
-        List<RepeatedQueryFinding> repeatedSnapshot = new ArrayList<>(repeatedQueries);
+        List<RepeatedQueryFinding> repeatedSnapshot;
+        synchronized (repeatedQueries) {
+            repeatedSnapshot = new ArrayList<>(repeatedQueries.values());
+        }
         List<EndpointTimingRecord> endpointTimingSnapshot = new ArrayList<>(endpointTimings);
         return new SlowQueryReportDTO(Instant.now(), properties.getSlowQueryThresholdMs(), slowSnapshot.size(), repeatedSnapshot.size(), slowSnapshot, repeatedSnapshot,
                 endpointTimingSnapshot, indexes, truncated);
@@ -212,7 +219,9 @@ public class SlowQueryCollector {
      */
     public void reset() {
         slowQueries.clear();
-        repeatedQueries.clear();
+        synchronized (repeatedQueries) {
+            repeatedQueries.clear();
+        }
         endpointTimings.clear();
         truncated = false;
         log.info("[SlowQuery] Collector reset");
@@ -294,17 +303,40 @@ public class SlowQueryCollector {
     }
 
     private void addRepeatedQueryFinding(RepeatedQueryFinding finding) {
-        if (repeatedQueries.size() < properties.getMaxRecordedQueries()) {
-            repeatedQueries.add(finding);
+        FindingKey key = new FindingKey(finding.type(), finding.normalizedSql(), finding.repositoryMethod(), finding.callerMethod(), finding.httpMethod(), finding.httpEndpoint(),
+                finding.testName(), finding.phase(), finding.callSites());
+        synchronized (repeatedQueries) {
+            RepeatedQueryFinding existing = repeatedQueries.get(key);
+            if (existing != null) {
+                if (avoidableExecutions(finding) > avoidableExecutions(existing)) {
+                    repeatedQueries.put(key, finding);
+                }
+            }
+            else if (repeatedQueries.size() < properties.getMaxRecordedQueries()) {
+                repeatedQueries.put(key, finding);
+            }
+            else {
+                truncated = true;
+                log.warn("[RepeatedQuery] Circuit-breaker: max {} entries reached, ignoring further repeated-query findings", properties.getMaxRecordedQueries());
+            }
         }
-        else {
-            truncated = true;
-            log.warn("[RepeatedQuery] Circuit-breaker: max {} entries reached, ignoring further repeated-query findings", properties.getMaxRecordedQueries());
+    }
+
+    /** Executions the request could have saved: a duplicate needs one per distinct parameter set, anything else one in total. */
+    private static int avoidableExecutions(RepeatedQueryFinding finding) {
+        if (finding.type() == RepeatedQueryFinding.Type.DUPLICATE) {
+            return Math.max(finding.executions() - Math.max(finding.distinctParameterSets(), 1), 0);
         }
+        return Math.max(finding.executions() - 1, 0);
     }
 
     private static String abbreviate(String s) {
         return s != null && s.length() > 120 ? s.substring(0, 120) + "..." : s;
+    }
+
+    /** What makes two repeated-query findings the same finding: the same repetition, of the same query, by the same code, in the same test. */
+    private record FindingKey(RepeatedQueryFinding.Type type, String sql, String repositoryMethod, String callerMethod, String httpMethod, String httpEndpoint, String testName,
+            String phase, List<QueryCallSite> callSites) {
     }
 
     /** One SQL template as issued by one piece of code. */

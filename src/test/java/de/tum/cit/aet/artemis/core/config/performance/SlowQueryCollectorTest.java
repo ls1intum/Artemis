@@ -267,6 +267,21 @@ class SlowQueryCollectorTest {
     }
 
     @Test
+    void sameFindingOfSeveralRequestsIsKeptOnceWithItsWorstRequest() {
+        for (int request = 2; request <= 4; request++) {
+            for (long id = 1; id <= request; id++) {
+                query(SQL, id);
+            }
+            collector.recordEndpointTiming("GET", ENDPOINT, "CourseStats.spec", "action", 10);
+            collector.resetRequestState();
+        }
+
+        assertThat(collector.getReport(Map.of()).repeatedQueries()).singleElement().satisfies(finding -> assertThat(finding.executions()).isEqualTo(4));
+        assertThat(collector.getReport(Map.of()).endpointTimings()).hasSize(3);
+        assertThat(collector.getReport(Map.of()).truncated()).isFalse();
+    }
+
+    @Test
     void reportIsOnlyTruncatedAfterAFindingWasDropped() {
         SlowQueryProperties properties = new SlowQueryProperties();
         properties.setMaxRecordedQueries(1);
@@ -279,13 +294,15 @@ class SlowQueryCollectorTest {
 
         // the endpoint timings are full, but they hold no findings: nothing is missing from the findings
         query(SQL, 3);
+        query(SQL, 4);
         assertThat(finishRequest()).hasSize(1);
         assertThat(collector.getReport(Map.of()).endpointTimings()).hasSize(1);
         assertThat(collector.getReport(Map.of()).truncated()).isFalse();
 
-        // the one allowed finding is used up, so this one is dropped
-        query(SQL, 4);
-        query(SQL, 5);
+        // the one allowed finding is used up, so this other one is dropped
+        String other = "select * from lecture where course_id=?";
+        query(other, 5);
+        query(other, 6);
         assertThat(finishRequest()).hasSize(1);
         assertThat(collector.getReport(Map.of()).truncated()).isTrue();
 
