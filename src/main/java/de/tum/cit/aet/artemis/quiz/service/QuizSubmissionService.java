@@ -227,6 +227,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             resultRepository.save(result);
             studentParticipationRepository.save(participation);
             quizSubmission.setResults(Set.of(result));
+            // The client shows the first submission it receives, so it is sent the graded one only, not a duplicate that has no result
+            participation.setSubmissions(new HashSet<>(Set.of(quizSubmission)));
 
             ltiApi.ifPresent(api -> api.onNewResult(participation));
             sendQuizResultToUser(quizExerciseId, participation);

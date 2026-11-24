@@ -570,6 +570,10 @@ public class WeaviateOutboxDispatcher {
         try {
             WeaviateOutboxBacklogDTO queued = outboxRepository.findBacklogByOrigin(WeaviateOutboxOrigin.LIVE);
             long size = queued.size();
+            if (size == 0) {
+                // Whatever failed has been written or superseded since, for example by a newer row that was written for the same entity
+                liveFailure = null;
+            }
             Duration age = queued.oldestCreatedAt() == null ? Duration.ZERO : Duration.between(queued.oldestCreatedAt().toInstant(), now);
             boolean backlog = size >= BACKLOG_ALERT_SIZE || age.compareTo(BACKLOG_ALERT_AGE) >= 0;
             if (!backlog) {

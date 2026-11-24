@@ -23,6 +23,7 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.InOrder;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -47,6 +48,8 @@ import de.tum.cit.aet.artemis.globalsearch.service.embedding.SearchableEntityEmb
  * Unit tests for the backlog report of {@link WeaviateOutboxDispatcher}: a queue of rows for user actions that does not shrink is reported at {@code ERROR},
  * once per interval, and the end of it is reported once.
  */
+// Isolated: the tests read the log of a shared logger, which a Spring context that starts in parallel reconfigures
+@Isolated
 class WeaviateOutboxDispatcherBacklogTest {
 
     private static final String COURSE = SearchableEntitySchema.TypeValues.COURSE;
@@ -243,6 +246,36 @@ class WeaviateOutboxDispatcherBacklogTest {
 
         assertThat(errors()).singleElement()
                 .satisfies(event -> assertThat(event.getFormattedMessage()).contains("none recorded").doesNotContain(READ_ONLY_FAILURE).doesNotContain("Free capacity"));
+    }
+
+    @Test
+    void testMonitorBacklog_aFailureIsForgottenOnceTheQueueIsEmpty() {
+        Instant start = Instant.now().plus(Duration.ofHours(1));
+        failOneWrite(READ_ONLY_FAILURE);
+        // The failed row was superseded by a newer write, which does not confirm a row of its own
+        queue(0, null);
+        dispatcher.monitorBacklog(start);
+
+        Instant later = start.plus(WeaviateOutboxDispatcher.BACKLOG_CHECK_INTERVAL);
+        queue(3, later.minus(Duration.ofMinutes(40)));
+        dispatcher.monitorBacklog(later);
+
+        assertThat(errors()).singleElement()
+                .satisfies(event -> assertThat(event.getFormattedMessage()).contains("none recorded").doesNotContain(READ_ONLY_FAILURE).doesNotContain("Free capacity"));
+    }
+
+    @Test
+    void testMonitorBacklog_aFailureIsKeptWhileRowsAreQueuedBelowTheThresholds() {
+        Instant start = Instant.now().plus(Duration.ofHours(1));
+        failOneWrite(READ_ONLY_FAILURE);
+        queue(2, start.minus(Duration.ofMinutes(1)));
+        dispatcher.monitorBacklog(start);
+
+        Instant later = start.plus(WeaviateOutboxDispatcher.BACKLOG_CHECK_INTERVAL);
+        queue(3, later.minus(Duration.ofMinutes(40)));
+        dispatcher.monitorBacklog(later);
+
+        assertThat(errors()).singleElement().satisfies(event -> assertThat(event.getFormattedMessage()).contains(READ_ONLY_FAILURE));
     }
 
     @Test

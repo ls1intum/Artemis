@@ -38,6 +38,7 @@ import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,6 +94,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromStudentDTO;
@@ -1398,6 +1400,39 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
             assertThat(quizSubmissionTestRepository.findWithEagerSubmittedAnswersById(oldest.getId()).getSubmittedAnswers()).hasSameSizeAs(payload.submittedAnswers());
             assertThat(quizSubmissionTestRepository.findWithEagerSubmittedAnswersById(newer.getId()).getSubmittedAnswers()).isEmpty();
+        }
+
+        /**
+         * The result calculation after the quiz grades the submission the student saved, the oldest one, and sends the student that one only: the client shows the
+         * first submission of the pushed participation, which must be the one that has the result.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+        void testCalculateAllResults_withTwoSubmissions_gradesAndSendsTheOldestOne() throws Throwable {
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
+            var student = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+            var participation = participationRepository.findByExerciseId(quizExercise.getId()).iterator().next();
+            QuizSubmission oldest = quizSubmissionTestRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).getFirst();
+            QuizSubmission newer = new QuizSubmission();
+            newer.setParticipation(participation);
+            quizSubmissionTestRepository.save(newer);
+            var payload = jsonMapper.readValue(jsonMapper.writeValueAsString(QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null)),
+                    QuizSubmissionFromLiveClientDTO.class);
+            quizSubmissionService.saveSubmissionForLiveMode(quizExercise.getId(), payload, student, false);
+
+            quizSubmissionService.calculateAllResults(quizExercise.getId());
+
+            var sent = ArgumentCaptor.forClass(StudentQuizParticipationWithSolutionsDTO.class);
+            verify(websocketMessagingService, timeout(5000)).sendMessageToUser(eq(student.getLogin()), userTopic("/topic/exercise/" + quizExercise.getId() + "/participation"),
+                    sent.capture());
+            assertThat(sent.getValue().submissions()).singleElement().satisfies(submission -> {
+                assertThat(submission.id()).isEqualTo(oldest.getId());
+                assertThat(submission.results()).hasSize(1);
+            });
         }
 
         /**
