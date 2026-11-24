@@ -194,20 +194,11 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), courseScores,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of(), courseExercises);
-        if (withDueDate) {
-            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(0.0);
-            assertThat(studentScoresDTO.relativeScore()).isEqualTo(0.0);
-            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(0.0);
-        }
-        else {
-            // The text participation contributes nothing because its results were deleted above. That deletion used to
-            // be a no-op: the results were an ordered list whose position column stayed at its database default for
-            // every result saved through the result repository, so the list came back with a null in it, and the null
-            // was filtered out before the delete. The expected values used to encode that.
-            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.0);
-            assertThat(studentScoresDTO.relativeScore()).isEqualTo(24.0);
-            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(120.0);
-        }
+        // Including an exercise in the course score no longer depends on its due date. Reachable points are still
+        // calculated separately from the assessment due date.
+        assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.0);
+        assertThat(studentScoresDTO.relativeScore()).isEqualTo(24.0);
+        assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(120.0);
 
         Map<Long, BonusSourceResultDTO> bonusSourceResultDTOMap = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId()));
 
@@ -243,6 +234,24 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(totalCourseScores.studentScores().currentRelativeScore()).isZero();
 
         assertThat(courseForDashboard.participationResults().size()).isEqualTo(5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getScoresAndParticipationResultsIncludesManuallyAssessedExercisePointsBeforeDueDate() {
+        var exercise = course.getExercises().stream().filter(TextExercise.class::isInstance).findFirst().orElseThrow();
+        exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exerciseRepository.save(exercise);
+
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, null, student.getId());
+        CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
+
+        assertThat(totalCourseScores.maxPoints()).isGreaterThan(0.0);
+        assertThat(totalCourseScores.reachablePoints()).isGreaterThan(0.0);
+        assertThat(totalCourseScores.studentScores().absoluteScore()).isGreaterThan(0.0);
     }
 
     @Test

@@ -653,9 +653,8 @@ public class CourseScoreCalculationService {
      */
     private boolean includeIntoScoreCalculation(ExerciseCourseScoreDTO exercise) {
         boolean isExerciseIncluded = exercise.includedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED;
-        boolean isExerciseFinished = !isAssessedAutomatically(exercise) && (exercise.dueDate() == null || exercise.dueDate().isBefore(ZonedDateTime.now()));
 
-        return isExerciseIncluded && (isExerciseFinished || isAutomaticAssessmentDone(exercise));
+        return isExerciseIncluded;
     }
 
     /**
