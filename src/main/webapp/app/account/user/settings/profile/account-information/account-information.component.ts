@@ -35,7 +35,7 @@ const GENERIC_ERROR_MESSAGE_KEY = 'settings.messages.error.fail';
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './account-information.component.html',
-    styleUrls: ['../../user-settings.scss'],
+    styleUrls: ['../../user-settings.css'],
     providers: [TumAetUiConfirmationService],
     imports: [
         TranslateDirective,

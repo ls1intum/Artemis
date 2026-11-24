@@ -5,7 +5,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 
 @Component({
     selector: 'jhi-feedback-text',
-    styleUrls: ['./feedback-text.scss'],
+    styleUrls: ['./feedback-text.css'],
     templateUrl: './feedback-text.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective],

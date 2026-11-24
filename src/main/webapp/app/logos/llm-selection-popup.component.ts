@@ -12,7 +12,7 @@ import { LLMModalResult, LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/a
 @Component({
     selector: 'jhi-llm-selection-modal',
     templateUrl: './llm-selection-popup.component.html',
-    styleUrls: ['./llm-selection-popup.component.scss'],
+    styleUrls: ['./llm-selection-popup.component.css'],
     imports: [TranslateDirective, AiModeSelectorComponent, TumAetUiDialogComponent, ArtemisTranslatePipe],
 })
 export class LLMSelectionModalComponent implements OnInit, OnDestroy {

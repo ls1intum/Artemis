@@ -1,0 +1,19 @@
+.artemis-apollon-theme {
+    --artemis-apollon-chrome-border-width: 1px;
+}
+
+.artemis-apollon-theme .artemis-apollon-chrome-action {
+    width: auto;
+    min-width: 0;
+    gap: 6px;
+    padding-inline: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.artemis-apollon-theme .artemis-apollon-chrome-action > fa-icon {
+    font-size: 1rem;
+}

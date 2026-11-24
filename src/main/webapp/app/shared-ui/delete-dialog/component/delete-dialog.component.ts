@@ -35,7 +35,7 @@ let nextSummaryId = 0;
 @Component({
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
-    styleUrls: ['./delete-dialog.component.scss'],
+    styleUrls: ['./delete-dialog.component.css'],
     imports: [
         FormsModule,
         TranslateDirective,

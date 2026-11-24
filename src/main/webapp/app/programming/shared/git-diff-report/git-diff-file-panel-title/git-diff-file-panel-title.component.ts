@@ -6,7 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-git-diff-file-panel-title',
     templateUrl: './git-diff-file-panel-title.component.html',
-    styleUrls: ['./git-diff-file-panel-title.component.scss'],
+    styleUrls: ['./git-diff-file-panel-title.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, TumAetUiTagComponent],
 })

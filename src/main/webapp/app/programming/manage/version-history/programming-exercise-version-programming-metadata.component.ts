@@ -63,7 +63,7 @@ interface MetadataField {
 @Component({
     selector: 'jhi-programming-exercise-version-programming-metadata',
     templateUrl: './programming-exercise-version-programming-metadata.component.html',
-    styleUrls: ['./programming-exercise-version-programming-metadata.component.scss'],
+    styleUrls: ['./programming-exercise-version-programming-metadata.component.css'],
     imports: [TumAetUiButtonDirective, TumAetUiPanelComponent, TumAetUiTooltipDirective, RouterLink, CdkCopyToClipboard, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

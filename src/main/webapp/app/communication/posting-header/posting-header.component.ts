@@ -24,7 +24,7 @@ import { TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angul
 @Component({
     selector: 'jhi-posting-header',
     templateUrl: './posting-header.component.html',
-    styleUrls: ['../communication.component.scss'],
+    styleUrls: ['../communication.component.css'],
     imports: [
         ProfilePictureComponent,
         NgClass,

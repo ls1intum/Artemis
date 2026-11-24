@@ -50,7 +50,7 @@ type AiSelectionOption = { label: string; value: IrisDashboardAiSelection };
         AdminTitleBarActionsDirective,
     ],
     templateUrl: './iris-dashboard.component.html',
-    styleUrls: ['./iris-dashboard.component.scss'],
+    styleUrls: ['./iris-dashboard.component.css'],
 })
 export class IrisDashboardComponent implements OnInit, OnDestroy {
     private dashboardService = inject(IrisDashboardService);

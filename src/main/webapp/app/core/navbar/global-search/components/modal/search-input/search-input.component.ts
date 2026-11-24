@@ -10,7 +10,7 @@ import { FILTER_MENU_LISTBOX_ID, FilterChipView } from '../../../models/search-m
     standalone: true,
     imports: [FaIconComponent, ArtemisTranslatePipe],
     templateUrl: './search-input.component.html',
-    styleUrls: ['./search-input.component.scss'],
+    styleUrls: ['./search-input.component.css'],
 })
 export class SearchInputComponent {
     protected readonly faSearch = faSearch;

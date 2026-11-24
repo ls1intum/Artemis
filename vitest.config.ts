@@ -33,15 +33,9 @@ export default defineConfig({
     },
     css: {
         // .postcssrc.json (Tailwind) is a production-build concern. Vitest would otherwise auto-load it and run
-        // PostCSS over every component's inline `styles`, whose SCSS `//` comments are invalid CSS and make PostCSS
-        // throw. Tests don't need Tailwind generation, so run no PostCSS plugins here.
+        // PostCSS over the styles of every component. Tests don't need Tailwind generation, so run no PostCSS
+        // plugins here.
         postcss: { plugins: [] },
-        preprocessorOptions: {
-            scss: {
-                loadPaths: [path.resolve(__dirname)],
-                silenceDeprecations: ['color-functions', 'global-builtin', 'import', 'if-function'],
-            },
-        },
     },
     // JIT mode required for ng-mocks compatibility; fastCompile is required under Angular 22 so the
     // plugin inlines external templateUrl/styleUrl (the two-pass JIT path's compiler markers are gone).

@@ -42,7 +42,7 @@ export interface FeedbackAnalysisState {
 @Component({
     selector: 'jhi-feedback-analysis',
     templateUrl: './feedback-analysis.component.html',
-    styleUrls: ['./feedback-analysis.component.scss'],
+    styleUrls: ['./feedback-analysis.component.css'],
     imports: [
         TumAetUiButtonDirective,
         TumAetUiInputDirective,

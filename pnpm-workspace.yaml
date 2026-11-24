@@ -57,7 +57,6 @@ catalog:
   # Must equal the react and react-dom overrides below - see the note there.
   react: 19.3.1
   rxjs: 7.8.2
-  sass: 1.108.2
   semver: 7.8.6
   storybook: 10.6.7
   stylelint: 18.0.0

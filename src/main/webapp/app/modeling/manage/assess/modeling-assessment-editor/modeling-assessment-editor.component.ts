@@ -56,7 +56,7 @@ import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, alertUpdateAfterComplaintFailure, isCre
 @Component({
     selector: 'jhi-modeling-assessment-editor',
     templateUrl: './modeling-assessment-editor.component.html',
-    styleUrls: ['./modeling-assessment-editor.component.scss'],
+    styleUrls: ['./modeling-assessment-editor.component.css'],
     imports: [
         AssessmentLayoutComponent,
         ComplaintsForTutorComponent,

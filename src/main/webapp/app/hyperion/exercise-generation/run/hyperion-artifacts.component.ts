@@ -12,7 +12,7 @@ import { ExerciseGenerationFileChange } from 'app/hyperion/exercise-generation/h
 @Component({
     selector: 'jhi-hyperion-artifacts',
     templateUrl: './hyperion-artifacts.component.html',
-    styleUrl: './hyperion-artifacts.component.scss',
+    styleUrl: './hyperion-artifacts.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
